@@ -15,11 +15,19 @@ import java.lang.invoke.VarHandle;
 /**
  * Implementation of {@link Hash.Strategy} for case-insensitive String comparison, that speeds up case-insensitive hashCode
  * evaluation by accessing private String internals via VarHandle.
- * Case-insensitive hashCode contributes quite a lot in overall performance on case-insensitive platforms (Win, MacOS).
- * We don't have a luxury of predefined and cached String.hashCode for case-insensitive comparisons, hence case-insensitive
- * hash code evaluation must be as fast, as possible.
- * It is possible to speed it up a bit (~20-30%) for ASCII strings (most frequent in context of paths/file names) by accessing
- * private String internals via Unsafe/VarHandle -- this is that we're doing here.
+ * <p/>
+ * Case-insensitive hashCode/equals contributes quite a lot in overall performance on case-insensitive platforms (Win, MacOS),
+ * because case-insensitive hashCode is not cached, as regular String.hashCode does -- case-insensitive hash code re-evaluated
+ * every time, hence it is better to be as fast, as possible.
+ * <p/>
+ * It is possible to speed up case-insensitive hashCode computation for ASCII strings (=most frequent in context of paths/file
+ * names) by accessing private String internals via Unsafe/VarHandle -- this is that we're doing here.
+ * <p/>
+ * Micro-benchmarks shows ~20-30% speed up for ASCII strings, but macro-benchmarks of it's use in VFS show that application-level
+ * performance improvements are smaller than noise -- hence the class is not used now. Feel free to try it in your scenarios.
+ * <p/>
+ * (The class is better to be inside/around {@link com.intellij.util.containers.CollectionFactory}, but platform-util module sticks
+ * to java8, while we need VarHandle here)
  */
 @ApiStatus.Internal
 public final class OptimizedCaseInsensitiveStringHashing implements Hash.Strategy<String> {
