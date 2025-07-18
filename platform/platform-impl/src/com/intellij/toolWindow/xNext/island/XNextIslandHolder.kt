@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow.xNext.island
 
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.ui.ClientProperty
 import org.jetbrains.annotations.ApiStatus
@@ -10,7 +9,6 @@ import java.awt.Graphics
 import java.awt.Paint
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.border.Border
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
@@ -38,18 +36,6 @@ class XNextIslandHolder : JPanel() {
       }
     }
     super.addImpl(comp, constraints, index)
-  }
-
-  override fun setBorder(border: Border?) {
-    if (border !is XNextRoundedBorder) {
-      logger<XNextIslandHolder>().warn("Border type is invalid. Expected JRoundedCornerBorder, but received: ${border?.javaClass?.name ?: "null"}.")
-      return
-    }
-    super.setBorder(border)
-  }
-
-  fun setSuperBorder(border: Border?) {
-    super.setBorder(border)
   }
 
   override fun isOpaque(): Boolean {

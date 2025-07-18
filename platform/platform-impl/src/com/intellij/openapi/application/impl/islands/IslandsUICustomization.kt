@@ -87,7 +87,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
           child.putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, true)
         }
         else {
-          setSuperBorder(originalBorderBuilder())
+          border = originalBorderBuilder()
         }
       }
     }
@@ -241,7 +241,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
     if (builder is Function0<*>) {
       val border = builder()
       if (border is Border) {
-        holder.setSuperBorder(border)
+        holder.border = border
       }
     }
     holder.background = JBColor.PanelBackground
