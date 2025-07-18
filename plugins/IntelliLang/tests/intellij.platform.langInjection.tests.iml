@@ -28,5 +28,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.langInjection.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.langInjection.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.markdown.plugin.main" scope="TEST" />
   </component>
 </module>
