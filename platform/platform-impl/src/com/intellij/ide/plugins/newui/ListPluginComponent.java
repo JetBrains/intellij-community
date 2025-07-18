@@ -339,12 +339,10 @@ public final class ListPluginComponent extends JPanel {
   private void createEnableDisableButton(@NotNull Supplier<PluginUiModel> modelFunction) {
     myEnableDisableButton = createEnableDisableButton(__ -> {
       PluginUiModel pluginToSwitch = modelFunction.get();
-      if (myModelFacade.getState(myPlugin).isDisabled()) {
-        myModelFacade.enable(pluginToSwitch);
-      }
-      else {
-        myModelFacade.disable(pluginToSwitch);
-      }
+      PluginEnableDisableAction action = myModelFacade.getState(myPlugin).isDisabled()
+                                         ? PluginEnableDisableAction.ENABLE_GLOBALLY
+                                         : PluginEnableDisableAction.DISABLE_GLOBALLY;
+      myModelFacade.setEnabledState(Collections.singletonList(pluginToSwitch), action);
     });
 
     myLayout.addButtonComponent(myEnableDisableButton);
@@ -716,11 +714,12 @@ public final class ListPluginComponent extends JPanel {
   @Deprecated(forRemoval = true)
   public void updateErrors() {
     PluginUiModel plugin = getDescriptorForActions();
-    if(myOnlyUpdateMode) {
+    if (myOnlyUpdateMode) {
       updateErrors(List.of());
-    } else {
+    }
+    else {
       PluginModelAsyncOperationsExecutor.INSTANCE.updateErrors(myModelFacade.getModel().getSessionId(), plugin.getPluginId(), res -> {
-        updateErrors(MyPluginModel.getErrors(res));
+        updateErrors(res);
         return null;
       });
     }

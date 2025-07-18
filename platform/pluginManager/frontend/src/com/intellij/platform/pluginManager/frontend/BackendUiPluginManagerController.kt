@@ -162,8 +162,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginInstallerApi.getInstance().setEnableStateForDependencies(sessionId, descriptorIds, enable) }
   }
 
-  override fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult {
-    return awaitForResult { PluginInstallerApi.getInstance().getErrors(sessionId, pluginId) }
+  override suspend fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult {
+    return PluginInstallerApi.getInstance().getErrors(sessionId, pluginId)
   }
 
   override fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId> {

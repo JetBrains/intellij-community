@@ -1345,7 +1345,14 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
-  private fun updateIcon(errors: List<HtmlChunk?> = pluginModel.getErrors(descriptorForActions!!)) {
+  private fun updateIcon() {
+    val descriptor = descriptorForActions ?: return
+    PluginModelAsyncOperationsExecutor.updateErrors(coroutineScope, pluginModel.getModel().sessionId, descriptor.pluginId) {
+      updateIcon(it)
+    }
+  }
+
+  private fun updateIcon(errors: List<HtmlChunk?>) {
     if (iconLabel == null) {
       return
     }
@@ -1362,9 +1369,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     val descriptor = descriptorForActions ?: return
     if (showComponent?.isNotFreeInFreeMode != true) {
       PluginModelAsyncOperationsExecutor.updateErrors(coroutineScope, pluginModel.getModel().sessionId, descriptor.pluginId) {
-        val errors = MyPluginModel.getErrors(it)
-        updateIcon(errors)
-        errorComponent!!.setErrors(errors) { this.handleErrors() }
+        updateIcon(it)
+        errorComponent!!.setErrors(it) { this.handleErrors() }
       }
     }
   }

@@ -164,8 +164,12 @@ class UiPluginManager {
     return getController().isDisabledInDiff(sessionId, pluginId)
   }
 
-  fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult {
+  suspend fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult {
     return getController().getErrors(sessionId, pluginId)
+  }
+
+  fun getErrorsSync(sessionId: String, pluginId: PluginId): CheckErrorsResult {
+    return runBlockingMaybeCancellable { getErrors(sessionId, pluginId) }
   }
 
   fun setEnableStateForDependencies(sessionId: String, descriptorIds: Set<PluginId>, enable: Boolean): SetEnabledStateResult {

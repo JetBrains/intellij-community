@@ -10,7 +10,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.HtmlChunk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -40,11 +40,12 @@ object PluginModelAsyncOperationsExecutor {
 
   @JvmOverloads
   @ApiStatus.Internal
-  fun updateErrors(cs: CoroutineScope = service<FrontendRpcCoroutineContext>().coroutineScope, sessionId: String, pluginId: PluginId, callback: (CheckErrorsResult) -> Unit) {
+  fun updateErrors(cs: CoroutineScope = service<FrontendRpcCoroutineContext>().coroutineScope, sessionId: String, pluginId: PluginId, callback: (List<HtmlChunk>) -> Unit) {
     cs.launch(Dispatchers.IO) {
       val errors = UiPluginManager.getInstance().getErrors(sessionId, pluginId)
+      val htmlChunks = MyPluginModel.getErrors(errors)
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        callback(errors)
+        callback(htmlChunks)
       }
     }
   }

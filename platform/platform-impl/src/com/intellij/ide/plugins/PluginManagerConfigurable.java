@@ -2148,7 +2148,17 @@ public final class PluginManagerConfigurable
 
   @RequiresEdt
   private void onPluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData) {
-    myPluginModelFacade.getModel().pluginInstalledFromDisk(callbackData);
+    PluginModelAsyncOperationsExecutor.INSTANCE
+      .updateErrors(myCoroutineScope, myPluginModelFacade.getModel().getSessionId(), callbackData.getPluginDescriptor().getPluginId(),
+                    errors -> {
+                      //noinspection unchecked
+                      updateAfterPluginInstalledFromDisk(callbackData, (List<HtmlChunk>)errors);
+                      return null;
+                    });
+  }
+
+  private void updateAfterPluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData, List<HtmlChunk> errors) {
+    myPluginModelFacade.getModel().pluginInstalledFromDisk(callbackData, errors);
 
     boolean select = myInstalledPanel == null;
     updateSelectionTab(INSTALLED_TAB);

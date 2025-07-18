@@ -554,7 +554,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return MarketplaceRequests.getLastCompatiblePluginUpdate(allIds, BuildNumber.fromString(buildNumber), throwExceptions)
   }
 
-  override fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult {
+  override suspend fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult {
     val session = findSession(sessionId) ?: return CheckErrorsResult()
     return getErrors(session, pluginId)
   }

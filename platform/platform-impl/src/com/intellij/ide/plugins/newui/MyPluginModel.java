@@ -146,10 +146,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     });
   }
 
-  public void pluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData) {
+  public void pluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData, List<HtmlChunk> errors) {
     IdeaPluginDescriptor descriptor = callbackData.getPluginDescriptor();
-    CheckErrorsResult errors = UiPluginManager.getInstance().getErrors(mySessionId.toString(), descriptor.getPluginId());
-    appendOrUpdateDescriptor(new PluginUiModelAdapter(descriptor), callbackData.getRestartNeeded(), getErrors(errors));
+    appendOrUpdateDescriptor(new PluginUiModelAdapter(descriptor), callbackData.getRestartNeeded(), errors);
   }
 
   public void addComponent(@NotNull ListPluginComponent component) {
@@ -1061,7 +1060,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     if (isDeleted(descriptor)) {
       return List.of();
     }
-    CheckErrorsResult response = UiPluginManager.getInstance().getErrors(mySessionId.toString(), pluginId);
+    CheckErrorsResult response = UiPluginManager.getInstance().getErrorsSync(mySessionId.toString(), pluginId);
     return getErrors(response);
   }
 

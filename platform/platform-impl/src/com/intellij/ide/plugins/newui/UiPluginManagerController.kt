@@ -58,7 +58,7 @@ interface UiPluginManagerController {
   fun getCustomRepoPlugins(): List<PluginUiModel>
   fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>>
   suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean
-  fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult
+  suspend fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult
   fun isPluginInstalled(pluginId: PluginId): Boolean
   fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean
   fun setEnableStateForDependencies(sessionId: String, descriptorIds: Set<PluginId>, enable: Boolean): SetEnabledStateResult
