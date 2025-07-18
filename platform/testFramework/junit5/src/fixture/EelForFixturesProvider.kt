@@ -4,8 +4,8 @@ package com.intellij.testFramework.junit5.fixture
 import com.intellij.platform.eel.EelApi
 import com.intellij.testFramework.junit5.fixture.EelForFixturesProvider.Companion.makeFixturesEelAware
 import com.intellij.testFramework.junit5.impl.TypedStoreKey
-import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.getTyped
-import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.putTyped
+import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.get
+import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.set
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -29,19 +29,17 @@ fun interface EelForFixturesProvider {
 
     @TestOnly
     @ApiStatus.Internal
-    private val EEL_FOR_FIXTURES_PROVIDER = TypedStoreKey<EelForFixturesProvider>("EEL_FOR_FIXTURES_PROVIDER", EelForFixturesProvider::class)
+    private val EEL_FOR_FIXTURES_PROVIDER = TypedStoreKey.createKey<EelForFixturesProvider>()
 
     @TestOnly
     @ApiStatus.Internal
-    fun ExtensionContext.makeFixturesEelAware(eelForFixturesProvider: EelForFixturesProvider) {
-      getStore(ExtensionContext.Namespace.GLOBAL).putTyped(EEL_FOR_FIXTURES_PROVIDER, eelForFixturesProvider)
-    }
+    fun ExtensionContext.makeFixturesEelAware(eelForFixturesProvider: EelForFixturesProvider): Unit =
+      set(EEL_FOR_FIXTURES_PROVIDER, eelForFixturesProvider)
 
     @TestOnly
     @ApiStatus.Internal
     internal fun ExtensionContext.getEelForParametrizedTestProvider(): EelForFixturesProvider? =
-      getStore(ExtensionContext.Namespace.GLOBAL).getTyped(EEL_FOR_FIXTURES_PROVIDER)
-
+      get(EEL_FOR_FIXTURES_PROVIDER)
   }
 }
 
