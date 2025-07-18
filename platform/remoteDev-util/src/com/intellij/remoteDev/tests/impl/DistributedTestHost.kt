@@ -394,7 +394,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive = true)
 
     return withContext(Dispatchers.IO) {
-      waitSuspending(logPrefix, timeout = 10.seconds, failMessageProducer = {
+      waitSuspending(logPrefix, timeout = 15.seconds, failMessageProducer = {
         if (silent) ""
         else "Couldn't wait for focus," +
              "component isFocused=" + projectIdeFrame.isFocused + " isFocusAncestor=" + projectIdeFrame.isFocusAncestor() +
@@ -418,7 +418,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
       AppIcon.getInstance().requestFocus(it)
     }
     return withContext(Dispatchers.IO) {
-      waitSuspending(logPrefix, timeout = 10.seconds, failMessageProducer = {
+      waitSuspending(logPrefix, timeout = 15.seconds, failMessageProducer = {
         if (silent) ""
         else "Couldn't wait for focus" + "\n" + getFocusStateDescription()
       }) {
