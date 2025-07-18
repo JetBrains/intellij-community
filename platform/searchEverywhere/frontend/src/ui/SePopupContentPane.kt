@@ -89,6 +89,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     }
   }
   private val hintHelper = HintHelper(textField)
+  private val minWidth = Registry.intValue("search.everywhere.new.minimum.width", 700)
 
   private val resultListModel = SeResultListModel { resultList.selectionModel }
   private val resultList: JBList<SeResultListRow> = JBList(resultListModel)
@@ -102,8 +103,6 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   var isCompactViewMode: Boolean = true
     private set
   var popupExtendedSize: Dimension? = initPopupExtendedSize
-
-  private val minWidth = Registry.intValue("search.everywhere.new.minimum.width", 700)
 
   init {
     layout = GridLayout()
