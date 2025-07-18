@@ -18,6 +18,11 @@ import kotlin.io.path.inputStream
 
 object GrazieRemote {
 
+  fun isJLangAvailableLocally(lang: Lang): Boolean {
+    if (lang.isEnglish()) return true
+    return GrazieDynamic.getLangDynamicFolder(lang).resolve(lang.ltRemote!!.file).exists()
+  }
+
   fun isAvailableLocally(lang: Lang): Boolean {
     if (lang.isEnglish()) return true
     return GrazieDynamic.getLangDynamicFolder(lang).exists()

@@ -18,7 +18,7 @@ internal class WordListAdapter : WordList, EditableWordListAdapter() {
       val lowered = word.lowercase()
       // NOTE: dictionary may not contain a lowercase form, but may contain any form in a different case
       // current dictionary interface does not support caseSensitive
-      dictionaries.values.any { (it.lookup(word) == Present) || it.lookup(lowered) == Present }
+      dictionaries.values.any { it.lookup(word) == Present || it.lookup(lowered) == Present }
     }
 
     return inDictionary || aggregator.contains(word, caseSensitive)

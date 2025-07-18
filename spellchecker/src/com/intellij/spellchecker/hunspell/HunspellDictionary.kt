@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.hunspell
 
+import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.LanguageISO
+import ai.grazie.nlp.langs.alphabet.Alphabet
 import ai.grazie.spell.lists.hunspell.HunspellWordList
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.io.FileUtilRt
@@ -38,15 +40,18 @@ class HunspellDictionary : Dictionary {
 
     this.name = name ?: path
     this.language = language
+    this.alphabet = if (this.language == null) null else Language.entries.firstOrNull { it.iso == this.language }?.alphabet
     this.dict = HunspellWordList.create(
       bundle.aff.readText(),
       bundle.dic.readText(),
       if (bundle.trigrams.exists()) bundle.trigrams.readLines() else null
     ) { ProgressManager.checkCanceled() }
 
-    InputStreamReader(bundle.dic.inputStream()).use { reader ->
-      reader.forEachLine { line ->
-        line.takeWhile { it != ' ' && it != '/' }.lowercase().chars().forEach { this.alphabet.add(it) }
+    if (this.alphabet == null) {
+      InputStreamReader(bundle.dic.inputStream()).use { reader ->
+        reader.forEachLine { line ->
+          line.takeWhile { it != ' ' && it != '/' }.lowercase().chars().forEach { this.letters.add(it) }
+        }
       }
     }
   }
@@ -57,20 +62,24 @@ class HunspellDictionary : Dictionary {
 
     this.name = name
     this.language = language
+    this.alphabet = Language.entries.firstOrNull { it.iso == language }?.alphabet
     this.dict = HunspellWordList.create(
       aff,
       dic,
       trigrams
     ) { ProgressManager.checkCanceled() }
 
-    dic.lines().forEach { line ->
-      line.takeWhile { it != ' ' && it != '/' }.lowercase().chars().forEach { this.alphabet.add(it) }
+    if (this.alphabet == null) {
+      dic.lines().forEach { line ->
+        line.takeWhile { it != ' ' && it != '/' }.lowercase().chars().forEach { this.letters.add(it) }
+      }
     }
   }
 
   private val name: String
   val dict: HunspellWordList
-  private val alphabet: HashSet<Int> = HashSet()
+  private val letters: HashSet<Int> = HashSet()
+  private val alphabet: Alphabet?
   private val language: LanguageISO?
 
   fun language(): String? = language?.name ?: dict.language()
@@ -78,9 +87,8 @@ class HunspellDictionary : Dictionary {
   override fun getName() = name
 
   override fun contains(word: String): Boolean? {
+    if (isAlien(word)) return null
     if (dict.contains(word, false)) return true
-    // mark a word as alien if it contains non-alphabetical characters
-    if (word.lowercase().chars().anyMatch { it !in this.alphabet }) return null
     return false
   }
 
@@ -91,4 +99,10 @@ class HunspellDictionary : Dictionary {
   }
 
   override fun getWords(): MutableSet<String> = throw UnsupportedOperationException()
+
+  private fun isAlien(word: String): Boolean {
+    // mark a word as alien if it contains non-alphabetical characters
+    if (this.alphabet != null) return !this.alphabet.matchEntire(word)
+    return word.lowercase().chars().anyMatch { it !in this.letters }
+  }
 }

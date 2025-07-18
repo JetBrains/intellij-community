@@ -2,6 +2,7 @@
 package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.jlanguage.Lang
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.util.ui.UIUtil
 import java.nio.charset.StandardCharsets
@@ -9,6 +10,8 @@ import java.nio.charset.StandardCharsets
 
 class PropertiesSupportTest : GrazieTestBase() {
   fun `test grammar check in file`() {
+    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
+
     EncodingProjectManager.getInstance(project).setDefaultCharsetForPropertiesFiles(null, StandardCharsets.UTF_8)
     EncodingProjectManager.getInstance(project).setNative2AsciiForPropertiesFiles(null, false)
     

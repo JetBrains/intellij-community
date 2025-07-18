@@ -2,11 +2,13 @@
 package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
 
 class YamlSupportTest : GrazieTestBase() {
   fun `test grammar check in yaml file`() {
+    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
     runHighlightTestForFile("ide/language/yaml/Example.yaml")
   }
 

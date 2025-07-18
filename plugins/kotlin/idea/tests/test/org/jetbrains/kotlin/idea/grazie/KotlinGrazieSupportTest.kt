@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.grazie
 
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContentTest
 import com.intellij.grazie.text.TextExtractor
@@ -21,6 +22,7 @@ class KotlinGrazieSupportTest28 : GrazieTestBase() {
     }
 
     fun `test grammar check in docs`() {
+        enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
         runHighlightTestForFile("grazie/Docs.kt")
     }
 
@@ -29,6 +31,7 @@ class KotlinGrazieSupportTest28 : GrazieTestBase() {
     }
 
     fun `test umlauts doesn't produce false positives`() {
+        enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
         runHighlightTestForFile("grazie/Umlauts.kt")
     }
 

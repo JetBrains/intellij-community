@@ -1,6 +1,7 @@
 package com.intellij.grazie.remote
 
 import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.TextChecker
 import com.intellij.openapi.diagnostic.Logger
@@ -15,7 +16,7 @@ import org.junit.runners.JUnit4
 import java.nio.file.Path
 
 @RunWith(JUnit4::class)
-class LanguageToolBundleInfoTest: BasePlatformTestCase() {
+class LanguageToolBundleInfoTest : BasePlatformTestCase() {
   @get:Rule
   val temporaryDirectory = TemporaryDirectory()
 
@@ -46,30 +47,32 @@ class LanguageToolBundleInfoTest: BasePlatformTestCase() {
   fun `verify hardcoded checksums are valid`() {
     // Do not run this test on build server, since artifact downloading will produce flaky failures
     Assume.assumeTrue("Must not be run under TeamCity", !IS_UNDER_TEAMCITY)
-    val remotes = LanguageToolDescriptor.entries
+    val langs = Lang.entries
     val expected = linkedMapOf<String, String>()
     val actual = linkedMapOf<String, String>()
-    for (remote in remotes) {
-      println("Checking $remote")
-      val key = remote.iso.toString().uppercase()
+    for (lang in langs) {
+      println("Checking $lang")
+      val key = lang.iso.toString().uppercase()
       if (expected.contains(key)) {
         println("Already checked for $key")
         continue
       }
-      val path = downloadBundle(remote)
+      val path = downloadLanguages(lang)
       expected[key] = "private const val ${key}_CHECKSUM = \"${GrazieRemote.checksum(path)}\""
-      actual[key] = "private const val ${key}_CHECKSUM = \"${remote.checksum}\""
+      actual[key] = "private const val ${key}_CHECKSUM = \"${lang.ltRemote!!.checksum}\""
     }
     assertEquals("In case language tool was updated, please update checksums in RemoteLangDescriptor.kt", expected.values.joinToString("\n"), actual.values.joinToString("\n"))
   }
 
-  private fun downloadBundle(remote: LanguageToolDescriptor): Path {
+  // copy-paste from [LanguageDownloader]
+  private fun downloadLanguages(lang: Lang): Path {
     val downloaderService = DownloadableFileService.getInstance()
-    val downloader = downloaderService.createDownloader(
-      listOf(downloaderService.createFileDescription(remote.url, remote.storageName)),
-      "Downloading ${remote.iso}"
-    )
-    val result = downloader.download(temporaryDirectory.createDir().toFile()).single()
-    return result.first.toPath()
+    val folder = GrazieDynamic.getLangDynamicFolder(lang)
+    val descriptors = listOf(lang.ltRemote!!)
+      .map { downloaderService.createFileDescription(it.url, it.storageName) }
+    downloaderService
+      .createDownloader(descriptors, "Downloading ${lang.iso}")
+      .download(folder.toFile())
+    return folder.resolve(lang.ltRemote!!.storageName)
   }
 }

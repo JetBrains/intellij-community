@@ -1756,6 +1756,20 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+jvm_import(
+  name = "grazie-tests-ai-grazie-spell-hunspell-ru",
+  jar = "@hunspell-ru-jvm-0_2_281_http//file",
+  source_jar = "@hunspell-ru-jvm-0_2_281-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "grazie-tests-ai-grazie-spell-hunspell-uk",
+  jar = "@hunspell-uk-jvm-0_2_281_http//file",
+  source_jar = "@hunspell-uk-jvm-0_2_281-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 java_library(
   name = "grazie-tests-jetbrains-intellij-deps-languagetool-language-be",
   exports = [

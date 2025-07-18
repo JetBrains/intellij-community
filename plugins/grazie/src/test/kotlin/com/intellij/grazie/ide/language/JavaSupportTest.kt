@@ -20,6 +20,7 @@ class JavaSupportTest : GrazieTestBase() {
   }
 
   fun `test grammar check in docs`() {
+    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
     runHighlightTestForFile("ide/language/java/Docs.java")
   }
 
@@ -28,7 +29,7 @@ class JavaSupportTest : GrazieTestBase() {
   }
 
   fun `test grammar check in comments`() {
-    configureGrazieSettings(setOf(Lang.AMERICAN_ENGLISH, Lang.GERMANY_GERMAN, Lang.UKRAINIAN, Lang.BELARUSIAN))
+    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.UKRAINIAN, Lang.BELARUSIAN))
     runHighlightTestForFile("ide/language/java/Comments.java")
   }
 
@@ -63,10 +64,12 @@ class JavaSupportTest : GrazieTestBase() {
   }
 
   fun `test spellchecking normalization`() {
+    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.PORTUGAL_PORTUGUESE))
     runHighlightTestForFile("ide/language/java/Normalization.java")
   }
 
   fun `test multiline compounds`() {
+    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
     doTest(
       """
         public class Main {

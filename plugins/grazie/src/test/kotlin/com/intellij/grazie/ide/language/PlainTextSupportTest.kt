@@ -2,6 +2,7 @@
 package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.jlanguage.Lang
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.ui.TextFieldWithAutoCompletion
@@ -9,6 +10,7 @@ import com.intellij.ui.TextFieldWithAutoCompletion
 
 class PlainTextSupportTest : GrazieTestBase() {
   fun `test grammar check in file`() {
+    enableProofreadingFor(setOf(Lang.RUSSIAN))
     runHighlightTestForFile("ide/language/plain/Example.txt")
   }
 

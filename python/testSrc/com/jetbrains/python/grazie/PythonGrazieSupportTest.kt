@@ -2,6 +2,7 @@
 package com.jetbrains.python.grazie
 
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.jlanguage.Lang
 
 class PythonGrazieSupportTest : GrazieTestBase() {
   override fun getBasePath() = "python/testData/grazie/"
@@ -12,6 +13,7 @@ class PythonGrazieSupportTest : GrazieTestBase() {
   }
 
   fun `test grammar check in docs`() {
+    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
     runHighlightTestForFile("Docs.py")
   }
 

@@ -3,10 +3,8 @@ package com.intellij.grazie
 
 import com.intellij.DynamicBundle
 import com.intellij.grazie.jlanguage.Lang
-import com.intellij.grazie.remote.GrazieRemote.isAvailableLocally
+import com.intellij.grazie.remote.GrazieRemote.isJLangAvailableLocally
 import com.intellij.grazie.remote.GrazieRemote.isValidBundleForLanguage
-import com.intellij.grazie.remote.HunspellDescriptor
-import com.intellij.grazie.remote.LanguageToolDescriptor
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
@@ -53,7 +51,7 @@ object GrazieDynamic : DynamicPluginListener {
   }
 
   private fun collectValidLocalBundles(): List<Path> {
-    val languages = Lang.entries.filter { isAvailableLocally(it) }
+    val languages = Lang.entries.filter { isJLangAvailableLocally(it) }
     val bundles = buildSet {
       for (language in languages) {
         val path = getLangDynamicFolder(language).resolve(language.ltRemote!!.file)
@@ -71,7 +69,7 @@ object GrazieDynamic : DynamicPluginListener {
   }
 
   override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-    if (pluginDescriptor.pluginId?.idString == GraziePlugin.id) {
+    if (pluginDescriptor.pluginId.idString == GraziePlugin.id) {
       myDynClassLoaders.clear()
     }
   }
