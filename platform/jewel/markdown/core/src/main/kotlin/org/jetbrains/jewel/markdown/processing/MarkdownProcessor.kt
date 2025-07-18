@@ -18,6 +18,7 @@ import org.commonmark.node.SourceSpan
 import org.commonmark.node.ThematicBreak
 import org.commonmark.parser.Parser
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
@@ -59,6 +60,7 @@ import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
  *   and convert them into a [MimeType]. By default, this uses [MimeType.Known.fromMarkdownLanguageName], but you can
  *   provide your own implementation to, for example, support languages that Jewel doesn't recognize yet.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public class MarkdownProcessor(
     public val extensions: List<MarkdownProcessorExtension> = emptyList(),
@@ -323,6 +325,7 @@ public class MarkdownProcessor(
      * Processes the children of a CommonMark [Node]. This function is public so that it can be accessed from
      * [MarkdownProcessorExtension]s, but should not be used in other scenarios.
      */
+    @ApiStatus.Internal
     @InternalJewelApi
     public fun processChildren(node: Node): List<MarkdownBlock> = buildList {
         node.forEachChild { child ->
@@ -353,6 +356,7 @@ public class MarkdownProcessor(
     }
 
     /** Creates a copy of this [MarkdownProcessor] with the same properties, plus the provided [extension]. */
+    @ApiStatus.Experimental
     @ExperimentalJewelApi
     public operator fun plus(extension: MarkdownProcessorExtension): MarkdownProcessor = withExtension(extension)
 

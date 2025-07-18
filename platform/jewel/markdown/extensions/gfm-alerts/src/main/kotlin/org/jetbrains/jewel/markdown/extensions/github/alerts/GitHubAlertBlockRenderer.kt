@@ -15,6 +15,7 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.LayoutDirection.Ltr
 import androidx.compose.ui.unit.dp
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock
@@ -30,6 +31,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.Text
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public class GitHubAlertBlockRenderer(private val styling: AlertStyling, private val rootStyling: MarkdownStyling) :
     MarkdownBlockRendererExtension {

@@ -18,18 +18,13 @@ configurations {
 
 detekt {
     autoCorrect = true
+    config.from(files(rootProject.file("detekt.yml")))
+    buildUponDefaultConfig = true
 }
 
 dependencies {
+    // Use the Jewel custom rules
     detektPlugins(project(":detekt-plugin"))
-}
-
-tasks {
-    named("detekt") {
-        if (!project.name.startsWith("detekt-plugin")) {
-            dependsOn(":detekt-plugin:build")
-        }
-    }
 }
 
 ktfmt {

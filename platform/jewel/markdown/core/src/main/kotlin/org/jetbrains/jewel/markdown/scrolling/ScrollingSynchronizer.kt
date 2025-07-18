@@ -12,6 +12,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.TextLayoutResult
 import java.util.TreeMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.util.myLogger
 import org.jetbrains.jewel.markdown.MarkdownBlock
@@ -81,6 +82,7 @@ import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
  * @see [LocatableMarkdownBlock]
  * @see [PerLine]
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public abstract class ScrollingSynchronizer {
     /** Scroll the preview to the position that match the given [sourceLine] the best. */

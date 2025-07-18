@@ -2,6 +2,7 @@ package org.jetbrains.jewel.markdown.rendering
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.BlockQuote
@@ -26,6 +27,7 @@ import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
  * @see render
  */
 @Suppress("ComposableNaming")
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public interface MarkdownBlockRenderer {
     public val rootStyling: MarkdownStyling
@@ -325,7 +327,9 @@ public interface MarkdownBlockRenderer {
      *
      * @see createCopy
      */
-    @ExperimentalJewelApi public operator fun plus(extension: MarkdownRendererExtension): MarkdownBlockRenderer
+    @ApiStatus.Experimental
+    @ExperimentalJewelApi
+    public operator fun plus(extension: MarkdownRendererExtension): MarkdownBlockRenderer
 
     /** The companion object for [MarkdownBlockRenderer]. */
     public companion object

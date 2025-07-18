@@ -43,6 +43,7 @@ import com.intellij.util.ui.JBValue
 import java.awt.Dimension
 import java.awt.Insets
 import javax.swing.UIManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 
 private val logger = Logger.getInstance("JewelBridge")
@@ -99,6 +100,7 @@ public fun retrieveIntAsDpOrUnspecified(key: String): Dp =
         Dp.Unspecified
     }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun retrieveIntAsNonNegativeDpOrUnspecified(key: String): Dp =
     try {
@@ -148,6 +150,7 @@ public fun JBDimension.toDpSize(): DpSize {
  * Converts a [Dimension] to a non-negative [DpSize]. If the receiver is a [JBDimension] instance, this function
  * delegates to the specific [toNonNegativeDpSize] for it, which is scaling-aware.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Dimension.toNonNegativeDpSize(): DpSize =
     if (this is JBDimension) {
@@ -160,6 +163,7 @@ public fun Dimension.toNonNegativeDpSize(): DpSize =
  * Converts a [JBDimension] to a non-negative [DpSize], in a scaling-aware way. This means that the resulting [DpSize]
  * will be constructed by first obtaining the unscaled values. This avoids double scaling.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun JBDimension.toNonNegativeDpSize(): DpSize {
     val scaleFactor = scale(1f)
@@ -174,6 +178,7 @@ public fun retrieveArcAsCornerSizeOrDefault(key: String, default: CornerSize): C
     return CornerSize(intValue / 2)
 }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun retrieveArcAsNonNegativeCornerSizeOrDefault(key: String, default: CornerSize): CornerSize {
     val intValue = retrieveIntAsNonNegativeDpOrUnspecified(key)

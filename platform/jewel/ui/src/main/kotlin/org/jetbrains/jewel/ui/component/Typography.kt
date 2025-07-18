@@ -36,6 +36,7 @@ import java.awt.font.FontRenderContext
 import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.awt.image.BufferedImage.TYPE_INT_ARGB
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Typography.DefaultLineHeightMultiplier
@@ -269,6 +270,7 @@ private val image = BufferedImage(1, 1, TYPE_INT_ARGB)
  *
  * This is useful to set a valid [TextStyle.lineHeight] when trying to match the metrics used by Swing and the IJP.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Px
 public fun Font.computeLineHeightPx(): Int {
