@@ -5,7 +5,6 @@ import com.google.common.collect.Sets;
 import com.intellij.frontend.FrontendApplicationInfo;
 import com.intellij.frontend.FrontendType;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.ide.dnd.DnDDropHandler;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDSupport;
@@ -74,10 +73,8 @@ import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.awt.event.KeyEvent;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
@@ -548,12 +545,7 @@ public final class TerminalToolWindowManager implements Disposable {
 
       @Override
       public void showTabs() {
-        ShowContentAction action = new ShowContentAction(toolWindow, toolWindow.getComponent(), toolWindow.getContentManager());
-        DataContext dataContext = DataManager.getInstance().getDataContext(toolWindow.getComponent());
-        KeyEvent fakeKeyEvent = new KeyEvent(toolWindow.getComponent(), ActionEvent.ACTION_PERFORMED,
-                                             System.currentTimeMillis(), 0, 0, '\0');
-        AnActionEvent event = AnActionEvent.createFromInputEvent(fakeKeyEvent, ActionPlaces.UNKNOWN, null, dataContext);
-        action.actionPerformed(event);
+        performAction("ShowContent");
       }
 
       @Override
