@@ -249,7 +249,11 @@
       "Default.background": "#27282E",
       "Active.background": "#273828",
       "Alert.background": "#3D3223",
-      "Expiring.background": "#CC3645"
+      "Expiring.background": "#CC3645",
+      "Default.borderColor": "#B4B8BF",
+      "Active.borderColor": "#4E8052",
+      "Alert.borderColor": "#826A41",
+      "Expiring.borderColor": "#DB5C5C"
     },
 
     "Bookmark": {
