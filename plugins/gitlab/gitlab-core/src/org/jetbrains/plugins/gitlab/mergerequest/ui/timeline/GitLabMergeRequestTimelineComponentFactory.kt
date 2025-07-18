@@ -14,11 +14,13 @@ import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentF
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
@@ -30,11 +32,14 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.StyleSheetUtil
+import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.*
@@ -142,15 +147,23 @@ internal object GitLabMergeRequestTimelineComponentFactory {
     val timelineOrErrorPanel = Wrapper()
 
     val timelineItems = MutableStateFlow<List<GitLabMergeRequestTimelineItemViewModel>>(listOf())
-    val timelineItemContent = ComponentListPanelFactory.createVertical(cs, timelineItems,
-                                                                       panelInitializer = {
-                                                                         add(LoadingLabel().apply {
-                                                                           border = Borders.empty(ComponentType.FULL.paddingInsets)
-                                                                         }, ListLayout.Alignment.CENTER)
-                                                                       }) { item ->
+    val timelineItemContent = ComponentListPanelFactory.createVertical(cs, timelineItems) { item ->
       createItemComponent(project, avatarIconsProvider, item)
     }
-    timelineOrErrorPanel.setContent(timelineItemContent)
+    val timelineItemsAndLoadingLabel = VerticalListPanel(gap = 0).apply {
+      val panel = this
+      border = Borders.empty()
+
+      add(timelineItemContent)
+      add(LoadingLabel().apply {
+        border = Borders.empty(ComponentType.FULL.paddingInsets)
+        panel.launchOnShow("LoadingLabel.visibility") {
+          val cs = this
+          bindVisibilityIn(cs, timelineVm.isLoading)
+        }
+      }, ListLayout.Alignment.CENTER)
+    }
+    timelineOrErrorPanel.setContent(timelineItemsAndLoadingLabel)
 
     cs.launch(Dispatchers.Main) {
       timelineVm.timelineItems.collect {
@@ -158,7 +171,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
           onSuccess = { items ->
             timelineItems.emit(items)
 
-            timelineOrErrorPanel.setContent(timelineItemContent)
+            timelineOrErrorPanel.setContent(timelineItemsAndLoadingLabel)
             PopupHandler.installPopupMenu(timelinePanel, timelineActionGroup, ActionPlaces.POPUP)
           },
           onFailure = { exception ->
