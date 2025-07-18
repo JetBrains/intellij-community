@@ -167,6 +167,8 @@ object SearchEverywherePsiElementFeaturesProviderUtils {
     is PsiElementNavigationItem -> element.targetElement!!
     is PsiElement -> element
     is ItemWithPresentation<*> -> getPsiElement(element.item)
-    else -> throw IllegalArgumentException("Unsupported element type: ${element::class.java}")
+    else -> throw UnexpectedElementType(element::class.java)
   }
 }
+
+class UnexpectedElementType(type: Class<*>) : IllegalArgumentException("Unexpected element type: $type")
