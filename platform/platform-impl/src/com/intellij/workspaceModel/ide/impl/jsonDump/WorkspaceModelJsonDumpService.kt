@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.devkit.workspaceModel.jsonDump
+package com.intellij.workspaceModel.ide.impl.jsonDump
 
-import com.intellij.devkit.workspaceModel.DevKitWorkspaceModelBundle
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.idea.LoggerFactory
 import com.intellij.notification.Notification
@@ -21,17 +20,19 @@ import com.intellij.openapi.vfs.writeText
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportSequentialProgress
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelIdeBundle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.datatransfer.StringSelection
 
 private val LOG = logger<WorkspaceModelJsonDumpService>()
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class WorkspaceModelJsonDumpService(private val project: Project, private val coroutineScope: CoroutineScope) {
   @OptIn(ExperimentalSerializationApi::class)
@@ -49,7 +50,7 @@ class WorkspaceModelJsonDumpService(private val project: Project, private val co
     val wsmSerializers = WorkspaceModelSerializers()
     val rootEntities = snapshot.allUniqueEntities().rootEntitiesClasses().toList()
 
-    return withBackgroundProgress(project, DevKitWorkspaceModelBundle.message("progress.title.dumping.workspace.entities.json.to.clipboard")) {
+    return withBackgroundProgress(project, WorkspaceModelIdeBundle.message("progress.title.dumping.workspace.entities.json.to.clipboard")) {
       reportSequentialProgress(rootEntities.size) { reporter ->
         buildJsonArray {
           for (rootEntityClass in rootEntities) {
@@ -97,8 +98,9 @@ class WorkspaceModelJsonDumpService(private val project: Project, private val co
         LocalFileSystem.getInstance().refreshAndFindFileByNioFile(it)
       }?.takeIf { it.isDirectory }
       if (logDirectory2 == null) {
-        val title = DevKitWorkspaceModelBundle.message("notification.title.cannot.find.log.directory")
-        Notifications.Bus.notify(Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, "", NotificationType.INFORMATION))
+        val groupAndTitle = WorkspaceModelIdeBundle.message("notification.title.cannot.find.log.directory")
+        val content = WorkspaceModelIdeBundle.message("notification.content.cannot.find.log.directory")
+        Notifications.Bus.notify(Notification(groupAndTitle, groupAndTitle, content, NotificationType.INFORMATION))
         return@launch
       }
       val jsonEntities = getWorkspaceEntitiesAsJsonArray()

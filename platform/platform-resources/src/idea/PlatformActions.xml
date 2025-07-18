@@ -1305,6 +1305,16 @@
         <action id="PrintModulesAndEntitySources" internal="true"
                 class="com.intellij.internal.PrintModulesAndEntitySources"
                 text="Print Modules and Entity Sources to Log"/>
+        <action id="WorkspaceEntitiesJsonClipboard" internal="true"
+                class="com.intellij.workspaceModel.ide.impl.jsonDump.DumpWorkspaceEntitiesToClipboardAction"
+                text="Dump Workspace Entities to Clipboard as Json"/>
+        <action id="WorkspaceEntitiesJsonLog" internal="true"
+                class="com.intellij.workspaceModel.ide.impl.jsonDump.DumpWorkspaceEntitiesToLogAction"
+                text="Dump Workspace Entities to Log as Json"/>
+        <action id="WorkspaceEntitiesJsonLogFile" internal="true"
+                class="com.intellij.workspaceModel.ide.impl.jsonDump.DumpWorkspaceEntitiesToLogFileAction"
+                text="Dump Workspace Entities to a File as Json"/>
+
       </group>
       <action id="ShowEdtUtilizationChart" internal="true" class="com.intellij.internal.ShowEdtUtilizationChartAction"/>
       <action internal="true" id="ShowMainMenu" class="com.intellij.internal.ui.ShowMainMenuAction"/>
