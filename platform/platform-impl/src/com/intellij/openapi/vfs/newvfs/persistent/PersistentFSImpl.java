@@ -71,7 +71,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 @SuppressWarnings("NonDefaultConstructor")
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
-  private static final boolean simplifyFindChildInfo = Boolean.getBoolean("intellij.vfs.simplify.findChildInfo");
 
   private static final Logger LOG = Logger.getInstance(PersistentFSImpl.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(30));
@@ -624,18 +623,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         return children;
       }
 
-      if (simplifyFindChildInfo) {
-        return children;
-      }
-
       //MAYBE RC: why do we access FS on lookup? maybe it is better to look only VFS (i.e. snapshot), and issue
       //          refresh request if children is not loaded -- and rely on automatic refresh to update VFS if
       //          actual FS children are changed?
       //          This way here we'll have read-only scan without concurrent modification problems
       //          I.e. the whole code below is (seems to be) just a 'small local refresh' -- executed during
       //          children lookup, under the VFS lock.
-      //          I really want to remove it entirely, and just rely on automatic/explicit refresh, but seems like there is a lot
-      //          to do to implement this
+      //          I really want to remove it entirely, and just rely on automatic/explicit refresh, but seems like
+      //          there is a lot to do to implement this: i.e. an attempt to skip this 'local refresh' fails tests
       Pair<@NotNull FileAttributes, String> childData = getChildData(fs, parent, childName, null, null); // todo: use BatchingFileSystem
       if (childData == null) {
         return children;
