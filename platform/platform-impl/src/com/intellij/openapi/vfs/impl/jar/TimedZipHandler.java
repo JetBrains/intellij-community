@@ -41,6 +41,7 @@ public final class TimedZipHandler extends ZipHandlerBase {
    */
   private static final Object2ObjectLinkedOpenHashMap<TimedZipHandler, ScheduledFuture<?>> handlersLRUCache =
     new Object2ObjectLinkedOpenHashMap<>(LRU_CACHE_SIZE + 1);
+  private volatile boolean clearingHandlersLRUCache = false;
   /** Executor for delayed ({@linkplain #RETENTION_MS}) zipFile closing */
   private static final ScheduledExecutorService postponedInvalidationsExecutor =
     createBoundedScheduledExecutorService("Zip Handle Janitor", 1);
@@ -48,10 +49,16 @@ public final class TimedZipHandler extends ZipHandlerBase {
   @ApiStatus.Internal
   public static void closeOpenZipReferences() {
     synchronized (handlersLRUCache) {
-      for (var handler : handlersLRUCache.keySet()) {
-        handler.clearCaches();
+      clearingHandlersLRUCache = true;
+      try {
+        for (var handler : handlersLRUCache.keySet()) {
+          handler.clearCaches();
+        }
+        handlersLRUCache.clear();
       }
-      handlersLRUCache.clear();
+      finally {
+        clearingHandlersLRUCache = false;
+      }
     }
   }
 
@@ -137,8 +144,10 @@ public final class TimedZipHandler extends ZipHandlerBase {
 
         ScheduledFuture<?> invalidationRequest = schedulePostponedInvalidation();
 
-        synchronized (handlersLRUCache) {
-          handlersLRUCache.putAndMoveToFirst(TimedZipHandler.this, invalidationRequest);
+        if (!clearingHandlersLRUCache) {
+          synchronized (handlersLRUCache) {
+            handlersLRUCache.putAndMoveToFirst(TimedZipHandler.this, invalidationRequest);
+          }
         }
       }
       finally {
