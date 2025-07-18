@@ -749,7 +749,7 @@ autocomplete_light django-autocomplete-light
 autoconfigure afn
 autodatetimefields django-AutoDateTimeFields
 autofixture django-autofixture
-autogen pyautogen
+autogen ag2
 autogenerate_config_docs openstack-doc-tools
 autograd_gamma autograd-gamma
 autohide_help django-autohide-help
