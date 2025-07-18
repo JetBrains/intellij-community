@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.Completions
 import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.MatchesExpectedType
 import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.matchesExpectedType
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighers
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinPositionContextDetector
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
@@ -85,6 +86,9 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         // no completion inside number literals
         if (AFTER_NUMBER_LITERAL.accepts(position)) return
         val positionContext = KotlinPositionContextDetector.detect(position)
+
+        registerRestartCompletion(result, parameters, positionContext)
+
         val resultSet = result
             .withRelevanceSorter(parameters, positionContext)
             .withPrefixMatcher(parameters)
@@ -100,6 +104,21 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         if (!addedResults && parameters.invocationCount == 1) {
             val newParameters = KotlinFirCompletionParameters.Original.create(parameters.delegate.withInvocationCount(2)) ?: return
             Completions.complete(newParameters, positionContext, resultSet)
+        }
+    }
+
+    private fun registerRestartCompletion(
+        result: CompletionResultSet,
+        parameters: KotlinFirCompletionParameters,
+        positionContext: KotlinRawPositionContext
+    ) {
+        if (positionContext is KotlinExpressionNameReferencePositionContext &&
+            parameters.offset > 0
+        ) {
+            val findElementAt = parameters.originalFile.findElementAt(parameters.offset - 1)
+            if (findElementAt != null && findElementAt.node.elementType == KtTokens.DOT) {
+                result.restartCompletionOnPrefixChange(".")
+            }
         }
     }
 

@@ -107,9 +107,9 @@
                  restartRequired="false"/>
 
     <!-- shared completion -->
-    <lookup.charFilter implementation="org.jetbrains.kotlin.idea.completion.KotlinCompletionCharFilter"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.completion.implCommon.LookupCancelService"/>
     <!-- k2 completion -->
+    <lookup.charFilter implementation="org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionCharFilter"/>
     <completion.contributor language="kotlin"
                             id="KotlinCompletionContributor"
                             order="first"
@@ -123,6 +123,11 @@
                  description="Allow chained completion items in Kotlin"
                  defaultValue="true"
                  restartRequired="true"/>
+
+    <registryKey key="kotlin.k2.dot.add.enabled"
+                 description="Allow adding '.' to completion lookup"
+                 defaultValue="true"
+                 restartRequired="false"/>
 
     <registryKey key="kotlin.k2.smart.completion.enabled"
                  description="Enable smart completion for Kotlin in K2 mode"
