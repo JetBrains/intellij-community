@@ -34,6 +34,8 @@ jvm_library(
     "//plugins/IntelliLang/intellilang-jps-plugin:java-langInjection-jps",
     "@lib//:asm",
     "//platform/util/jdom",
+    "//plugins/IntelliLang/plugin",
+    "//plugins/IntelliLang/backend",
   ]
 )
 ### auto-generated section `build intellij.platform.langInjection.tests` end

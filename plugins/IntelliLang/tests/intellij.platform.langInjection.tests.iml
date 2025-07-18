@@ -7,24 +7,26 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.java.testFramework" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.langInjection" />
+    <orderEntry type="module" module-name="intellij.platform.langInjection" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.xml.langInjection" />
-    <orderEntry type="module" module-name="intellij.xml.impl" />
-    <orderEntry type="module" module-name="intellij.yaml.backend" />
-    <orderEntry type="module" module-name="intellij.java.langInjection" />
+    <orderEntry type="module" module-name="intellij.xml.langInjection" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.yaml.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.langInjection" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.jps.build" />
-    <orderEntry type="module" module-name="intellij.yaml" />
-    <orderEntry type="module" module-name="intellij.platform.jps.model" />
-    <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" />
-    <orderEntry type="library" name="assertJ" level="project" />
-    <orderEntry type="module" module-name="intellij.java.langInjection.jps" />
-    <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.yaml" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="module" module-name="intellij.java.langInjection.jps" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="ASM" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.langInjection.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.langInjection.backend" scope="TEST" />
   </component>
 </module>
