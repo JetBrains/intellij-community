@@ -3192,18 +3192,6 @@ f:com.intellij.ide.plugins.InstalledPluginsState
 - wasUninstalledWithoutRestart(com.intellij.openapi.extensions.PluginId):Z
 - wasUpdated(com.intellij.openapi.extensions.PluginId):Z
 - wasUpdatedWithRestart(com.intellij.openapi.extensions.PluginId):Z
-c:com.intellij.ide.plugins.InstalledPluginsTableModel
-- pf:view:java.util.List
-- <init>(com.intellij.openapi.project.Project):V
-- pf:getEnabledMap():java.util.Map
-- pf:getProject():com.intellij.openapi.project.Project
-- p:handleBeforeChangeEnableState(com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.util.Pair):V
-- ps:isDeleted(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
-- ps:isEnabled(com.intellij.openapi.extensions.PluginId,java.util.Map):Z
-- f:isLoaded(com.intellij.openapi.extensions.PluginId):Z
-- ps:isLoaded(com.intellij.openapi.extensions.PluginId,java.util.Map):Z
-- pF:setEnabled(com.intellij.openapi.extensions.PluginId,com.intellij.ide.plugins.PluginEnabledState):V
-- p:updatePluginDependencies(java.util.Map):V
 f:com.intellij.ide.plugins.LinkPanel
 - <init>(javax.swing.JPanel,Z):V
 - <init>(javax.swing.JPanel,Z,Z,java.lang.Object,java.lang.Object):V
