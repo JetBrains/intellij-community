@@ -78,6 +78,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Objects;
 
+import static java.lang.Math.pow;
+
 /**
  * Image editor UI
  *
@@ -394,15 +396,18 @@ public final class ImageEditorUI extends JPanel implements UiDataProvider, CopyP
       EditorOptions editorOptions = options.getEditorOptions();
       ZoomOptions zoomOptions = editorOptions.getZoomOptions();
       if (zoomOptions.isWheelZooming() && e.isControlDown()) {
-        int rotation = e.getWheelRotation();
+        double rotation = e.getPreciseWheelRotation();
         double oldZoomFactor = zoomModel.getZoomFactor();
         Point oldPosition = myScrollPane.getViewport().getViewPosition();
 
-        if (rotation > 0) {
+        if (rotation >= 1) {
           zoomModel.zoomOut();
         }
-        else if (rotation < 0) {
+        else if (rotation <= -1) {
           zoomModel.zoomIn();
+        }
+        else if (rotation != 0) {
+          zoomModel.setZoomFactor(zoomModel.getZoomFactor() * pow(2.0, -rotation));
         }
 
         // reset view, otherwise view size is not obtained correctly sometimes
