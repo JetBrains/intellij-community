@@ -300,6 +300,9 @@ class PluginUiModelAdapter(
   override val sinceBuild: String?
     get() = pluginDescriptor.sinceBuild
 
+  override val isBundledUpdate: Boolean
+    get() = DefaultUiPluginManagerController.isBundledUpdate(pluginDescriptor)
+
   override val untilBuild: String?
     get() = pluginDescriptor.untilBuild
 

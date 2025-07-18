@@ -133,6 +133,8 @@ interface PluginUiModel {
   @get:NlsSafe
   val sinceBuild: String?
 
+  val isBundledUpdate: Boolean
+
   @get:NlsSafe
   val untilBuild: String?
 

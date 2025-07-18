@@ -76,6 +76,7 @@ class PluginDto(
   override var description: String? = null
 
   override var sinceBuild: String? = null
+  override var isBundledUpdate: Boolean = false
   override var untilBuild: String? = null
 
   override fun getDescriptor(): IdeaPluginDescriptor {
@@ -160,6 +161,7 @@ class PluginDto(
         sinceBuild = model.sinceBuild
         untilBuild = model.untilBuild
         releaseDate = model.releaseDate
+        isBundledUpdate = model.isBundledUpdate
         isImplementationDetail = model.isImplementationDetail
       }
     }

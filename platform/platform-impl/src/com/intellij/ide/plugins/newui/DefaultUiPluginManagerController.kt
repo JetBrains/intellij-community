@@ -827,7 +827,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return ids.toSet()
   }
 
-  private fun isBundledUpdate(descriptor: IdeaPluginDescriptor?): Boolean {
+  fun isBundledUpdate(descriptor: IdeaPluginDescriptor?): Boolean {
     if (descriptor == null || descriptor.isBundled) {
       return false
     }
