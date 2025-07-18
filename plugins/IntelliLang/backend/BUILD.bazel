@@ -47,6 +47,21 @@ jvm_provided_library(
   lib = "//platform/projectModel-api:projectModel"
 )
 
+jvm_provided_library(
+  name = "ide_provided",
+  lib = "//platform/platform-api:ide"
+)
+
+jvm_provided_library(
+  name = "editor-ui_provided",
+  lib = "//platform/editor-ui-api:editor-ui"
+)
+
+jvm_provided_library(
+  name = "core-ui_provided",
+  lib = "//platform/core-ui"
+)
+
 jvm_library(
   name = "backend",
   module_name = "intellij.platform.langInjection.backend",
@@ -62,6 +77,9 @@ jvm_library(
     ":langInjection_provided",
     ":util-ui_provided",
     ":projectModel_provided",
+    ":ide_provided",
+    ":editor-ui_provided",
+    ":core-ui_provided",
   ],
   runtime_deps = [":backend_resources"]
 )
