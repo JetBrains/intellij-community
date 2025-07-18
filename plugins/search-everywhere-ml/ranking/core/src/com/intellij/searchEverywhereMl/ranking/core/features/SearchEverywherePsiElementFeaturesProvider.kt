@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.local.LanguageUsageStatistics
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
+import com.intellij.navigation.PsiElementNavigationItem
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.util.io.FileUtil
@@ -163,6 +164,7 @@ object SearchEverywherePsiElementFeaturesProviderUtils {
   fun getPsiElement(element: Any): PsiElement = when (element) {
     is PsiItemWithSimilarity<*> -> getPsiElement(element.value)
     is PsiItemWithPresentation -> element.item
+    is PsiElementNavigationItem -> element.targetElement!!
     is PsiElement -> element
     is ItemWithPresentation<*> -> getPsiElement(element.item)
     else -> throw IllegalArgumentException("Unsupported element type: ${element::class.java}")
