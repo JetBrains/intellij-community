@@ -1497,8 +1497,8 @@ jvm_import(
 
 jvm_import(
   name = "expects-compiler-plugin",
-  jar = "@expects-compiler-plugin-2_2_0-RC2-0_1_http//file",
-  source_jar = "@expects-compiler-plugin-2_2_0-RC2-0_1-sources_http//file",
+  jar = "@expects-compiler-plugin-2_2_0-0_1_http//file",
+  source_jar = "@expects-compiler-plugin-2_2_0-0_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -2750,8 +2750,8 @@ jvm_import(
 
 jvm_import(
   name = "jetbrains-kotlin-compose-compiler-plugin",
-  jar = "@kotlin-compose-compiler-plugin-2_2_0-RC2_http//file",
-  source_jar = "@kotlin-compose-compiler-plugin-2_2_0-RC2-sources_http//file",
+  jar = "@kotlin-compose-compiler-plugin-2_2_0_http//file",
+  source_jar = "@kotlin-compose-compiler-plugin-2_2_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3344,8 +3344,8 @@ jvm_import(
 
 jvm_import(
   name = "kotlin-metadata",
-  jar = "@kotlin-metadata-jvm-2_2_0-RC2_http//file",
-  source_jar = "@kotlin-metadata-jvm-2_2_0-RC2-sources_http//file",
+  jar = "@kotlin-metadata-jvm-2_2_0_http//file",
+  source_jar = "@kotlin-metadata-jvm-2_2_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3365,8 +3365,8 @@ jvm_import(
 
 jvm_import(
   name = "kotlin-reflect",
-  jar = "@kotlin-reflect-2_2_0-RC2_http//file",
-  source_jar = "@kotlin-reflect-2_2_0-RC2-sources_http//file",
+  jar = "@kotlin-reflect-2_2_0_http//file",
+  source_jar = "@kotlin-reflect-2_2_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3379,15 +3379,15 @@ java_library(
 
 jvm_import(
   name = "kotlin-script-runtime",
-  jar = "@kotlin-script-runtime-2_2_0-RC2_http//file",
-  source_jar = "@kotlin-script-runtime-2_2_0-RC2-sources_http//file",
+  jar = "@kotlin-script-runtime-2_2_0_http//file",
+  source_jar = "@kotlin-script-runtime-2_2_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlin-stdlib",
-  jar = "@kotlin-stdlib-2_2_0-RC2_http//file",
-  source_jar = "@kotlin-stdlib-2_2_0-RC2-sources_http//file",
+  jar = "@kotlin-stdlib-2_2_0_http//file",
+  source_jar = "@kotlin-stdlib-2_2_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3400,8 +3400,8 @@ java_library(
 
 jvm_import(
   name = "kotlin-test",
-  jar = "@kotlin-test-2_2_0-RC2_http//file",
-  source_jar = "@kotlin-test-2_2_0-RC2-sources_http//file",
+  jar = "@kotlin-test-2_2_0_http//file",
+  source_jar = "@kotlin-test-2_2_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3443,8 +3443,8 @@ jvm_import(
 
 jvm_import(
   name = "kotlin-test-junit",
-  jar = "@kotlin-test-junit-2_2_0-RC2_http//file",
-  source_jar = "@kotlin-test-junit-2_2_0-RC2-sources_http//file",
+  jar = "@kotlin-test-junit-2_2_0_http//file",
+  source_jar = "@kotlin-test-junit-2_2_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -7417,8 +7417,8 @@ jvm_import(
 
 jvm_import(
   name = "noria-compiler-plugin",
-  jar = "@noria-compiler-plugin-2_2_0-RC2-0_1_http//file",
-  source_jar = "@noria-compiler-plugin-2_2_0-RC2-0_1-sources_http//file",
+  jar = "@noria-compiler-plugin-2_2_0-0_1_http//file",
+  source_jar = "@noria-compiler-plugin-2_2_0-0_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8637,15 +8637,15 @@ jvm_import(
 
 jvm_import(
   name = "rhizomedb-compiler-plugin",
-  jar = "@rhizomedb-compiler-plugin-2_2_0-RC2-0_1_http//file",
-  source_jar = "@rhizomedb-compiler-plugin-2_2_0-RC2-0_1-sources_http//file",
+  jar = "@rhizomedb-compiler-plugin-2_2_0-0_1_http//file",
+  source_jar = "@rhizomedb-compiler-plugin-2_2_0-0_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "rpc-compiler-plugin",
-  jar = "@rpc-compiler-plugin-2_2_0-RC2-0_1_http//file",
-  source_jar = "@rpc-compiler-plugin-2_2_0-RC2-0_1-sources_http//file",
+  jar = "@rpc-compiler-plugin-2_2_0-0_1_http//file",
+  source_jar = "@rpc-compiler-plugin-2_2_0-0_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
