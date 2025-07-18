@@ -1,5 +1,5 @@
 ### auto-generated section `build intellij.platform.langInjection.backend` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
 
 jvm_resources(
   name = "backend_resources",
@@ -7,11 +7,62 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_provided_library(
+  name = "backend_provided",
+  lib = "//platform/backend"
+)
+
+jvm_provided_library(
+  name = "core_provided",
+  lib = "//platform/core-api:core"
+)
+
+jvm_provided_library(
+  name = "util_provided",
+  lib = "//platform/util"
+)
+
+jvm_provided_library(
+  name = "analysis-impl_provided",
+  lib = "//platform/analysis-impl"
+)
+
+jvm_provided_library(
+  name = "analysis_provided",
+  lib = "//platform/analysis-api:analysis"
+)
+
+jvm_provided_library(
+  name = "langInjection_provided",
+  lib = "//plugins/IntelliLang:langInjection"
+)
+
+jvm_provided_library(
+  name = "util-ui_provided",
+  lib = "//platform/util:util-ui"
+)
+
+jvm_provided_library(
+  name = "projectModel_provided",
+  lib = "//platform/projectModel-api:projectModel"
+)
+
 jvm_library(
   name = "backend",
   module_name = "intellij.platform.langInjection.backend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:jetbrains-annotations-provided",
+    ":backend_provided",
+    ":core_provided",
+    ":util_provided",
+    ":analysis-impl_provided",
+    ":analysis_provided",
+    ":langInjection_provided",
+    ":util-ui_provided",
+    ":projectModel_provided",
+  ],
   runtime_deps = [":backend_resources"]
 )
 ### auto-generated section `build intellij.platform.langInjection.backend` end

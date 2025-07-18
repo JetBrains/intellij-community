@@ -3,4 +3,20 @@
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.langInjection"/>
   </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <psi.referenceContributor language="" implementation="org.intellij.plugins.intelliLang.references.InjectedReferencesContributor"/>
+    <psi.symbolReferenceProvider implementationClass="org.intellij.plugins.intelliLang.references.LanguageReferenceContributor"
+                                 hostLanguage=""
+                                 hostElementClass="com.intellij.psi.PsiComment"
+                                 targetClass="org.intellij.plugins.intelliLang.references.LanguageSymbol"/>
+    <lang.foldingBuilder language="UAST" implementationClass="org.intellij.plugins.intelliLang.references.LanguageCommentFolding"/>
+    <referenceInjector implementation="org.intellij.plugins.intelliLang.references.FileReferenceInjector"/>
+    <localInspection implementationClass="org.intellij.plugins.intelliLang.references.InjectedReferencesInspection"
+                     enabledByDefault="true" level="ERROR"
+                     language=""
+                     groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"
+                     key="inspection.injected.references.display.name" bundle="messages.IntelliLangBundle"/>
+
+  </extensions>
 </idea-plugin>
