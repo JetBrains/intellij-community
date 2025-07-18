@@ -76,7 +76,15 @@ internal fun toPsiClass(
     typeOwnerKind: TypeOwnerKind,
     isBoxed: Boolean = true,
 ): PsiClass? {
+    // Try the underlying symbol's PSI first, if any.
+    // For the declaration from the Library, this will give
+    // [FirKotlinUastLibraryPsiProviderService] a chance to provide a PSI.
+    (ktType as? KaClassType)?.symbol?.let { classSymbol ->
+        psiForUast(classSymbol, context) as? PsiClass
+    }?.let { return it }
+    // Next, try SLC conversion if from Kotlin
     (context as? KtClass)?.toLightClass()?.let { return it }
+    // Then, use JavaPsiFacade if from Java
     return PsiTypesUtil.getPsiClass(
         toPsiType(
             ktType,

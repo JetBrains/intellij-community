@@ -2667,6 +2667,41 @@ interface UastResolveApiFixtureTestBase {
         }
     }
 
+    fun checkResolveAnnotationConstructorCallFromLibrary(myFixture: JavaCodeInsightTestFixture) {
+        val mockLibraryFacility = myFixture.configureLibraryByText(
+            "Anno.kt", """
+                package test.pkg
+
+                annotation class Anno(
+                    val p: String
+                )
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                import test.pkg.Anno
+                
+                @Anno("hi")
+                class Test
+            """.trimIndent()
+        )
+
+        try {
+            val uFile = myFixture.file.toUElementOfType<UFile>()!!
+            uFile.accept(object : AbstractUastVisitor() {
+                override fun visitAnnotation(node: UAnnotation): Boolean {
+                    val resolved = node.resolve()
+                    TestCase.assertNotNull(resolved)
+
+                    TestCase.assertEquals("Anno", resolved!!.name)
+                    return super.visitAnnotation(node)
+                }
+            })
+        } finally {
+            mockLibraryFacility.tearDown(myFixture.module)
+        }
+    }
+
     fun checkResolveTopLevelInlineReifiedFromLibrary(myFixture: JavaCodeInsightTestFixture, withJvmName: Boolean) {
         val anno = if (withJvmName) "@file:JvmName(\"Mocking\")" else ""
         val mockLibraryFacility = myFixture.configureLibraryByText(
