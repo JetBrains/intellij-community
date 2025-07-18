@@ -2,7 +2,6 @@
 package com.intellij.polySymbols.references
 
 import com.intellij.model.psi.PsiExternalReferenceHost
-import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.PolySymbolNameSegment.MatchProblem
@@ -16,7 +15,7 @@ interface PsiPolySymbolReferenceProvider<T : PsiExternalReferenceHost> {
 
   fun getReferencedSymbolNameOffset(psiElement: T): Int = 0
 
-  fun getOffsetsToReferencedSymbols(psiElement: T, hints: PsiSymbolReferenceHints): Map<Int, PolySymbol> =
+  fun getOffsetsToReferencedSymbols(psiElement: T): Map<Int, PolySymbol> =
     getReferencedSymbol(psiElement)
       ?.let { mapOf(getReferencedSymbolNameOffset(psiElement) to it) }
     ?: emptyMap()
