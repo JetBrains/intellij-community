@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.ide.gdpr.ConsentOptions
@@ -34,9 +34,11 @@ internal suspend fun loadEuaDocument(appInfoDeferred: Deferred<ApplicationInfoEx
   }
 }
 
-internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Document?,
-                                                appInfoDeferred: Deferred<ApplicationInfoEx>,
-                                                asyncScope: CoroutineScope): (suspend () -> Boolean)? {
+internal suspend fun prepareShowEuaIfNeededTask(
+  document: EndUserAgreement.Document?,
+  appInfoDeferred: Deferred<ApplicationInfoEx>,
+  asyncScope: CoroutineScope,
+): (suspend () -> Boolean)? {
   val updateCached = asyncScope.launch(CoroutineName("eua cache updating") + Dispatchers.IO) {
     EndUserAgreement.updateCachedContentToLatestBundledVersion()
   }

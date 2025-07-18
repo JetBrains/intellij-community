@@ -1,6 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplaceGetOrSet")
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.ui
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -24,7 +23,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.IconLoader.setUseDarkIcons
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.AppIcon.MacAppIcon
 import com.intellij.ui.Color16.Companion.toColor16
@@ -40,19 +38,22 @@ import com.intellij.ui.svg.loadWithSizes
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.ResourceUtil
 import com.intellij.util.io.URLUtil
+import com.intellij.util.system.OS
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
 import sun.awt.AWTAccessor
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.image.BufferedImage
-import java.io.File
 import java.lang.reflect.InvocationTargetException
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.function.Predicate
 import javax.swing.Action
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.border.Border
+import kotlin.io.path.extension
 import kotlin.math.roundToInt
 
 private const val VENDOR_PREFIX = "jetbrains-"
@@ -74,23 +75,23 @@ fun updateAppWindowIcon(window: Window) {
     images = ArrayList(3)
     val appInfo = ApplicationInfoImpl.getShadowInstance()
     val scaleContext = ScaleContext.create(window)
-    if (SystemInfoRt.isUnix) {
-      loadAppIconImage(svgPath = appInfo.applicationSvgIconUrl, scaleContext = scaleContext, size = 128)?.let {
+    if (OS.CURRENT == OS.Linux) {
+      loadAppIconImage(appInfo.applicationSvgIconUrl, scaleContext, size = 128)?.let {
         images.add(it)
       }
     }
-    loadAppIconImage(svgPath = appInfo.applicationSvgIconUrl, scaleContext = scaleContext, size = 32)?.let {
+    loadAppIconImage(appInfo.applicationSvgIconUrl, scaleContext, size = 32)?.let {
       images.add(it)
     }
-    if (SystemInfoRt.isWindows) {
-      loadAppIconImage(svgPath = appInfo.smallApplicationSvgIconUrl, scaleContext = scaleContext, size = 16)?.let {
+    if (OS.CURRENT == OS.Windows) {
+      loadAppIconImage(appInfo.smallApplicationSvgIconUrl, scaleContext, size = 16)?.let {
         images.add(it)
       }
     }
     for (i in images.indices) {
       val image = images[i]
       if (image is JBHiDPIScaledImage) {
-        images.set(i, image.delegate)
+        images[i] = image.delegate
       }
     }
 
@@ -98,7 +99,7 @@ fun updateAppWindowIcon(window: Window) {
   }
 
   if (!images.isEmpty()) {
-    if (!SystemInfoRt.isMac) {
+    if (OS.CURRENT != OS.macOS) {
       window.iconImages = images
     }
     else if (!isMacDocIconSet) {
@@ -143,9 +144,8 @@ private fun findAppIconSvgData(path: String, pixScale: Float): ByteArray? {
 }
 
 // todo[tav] JBR supports loading icon resource (id=2000) from the exe launcher, remove when OpenJDK supports it as well
-fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int = 16): Icon {
-  return loadSmallApplicationIcon(scaleContext, size, requestReleaseIcon = !ApplicationInfoImpl.getShadowInstance().isEAP)
-}
+fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int = 16): Icon =
+  loadSmallApplicationIcon(scaleContext, size, requestReleaseIcon = !ApplicationInfoImpl.getShadowInstance().isEAP)
 
 internal fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, requestReleaseIcon: Boolean): Icon {
   val appInfo = ApplicationInfoImpl.getShadowInstance()
@@ -157,40 +157,30 @@ internal fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, req
   else {
     if (upscale) appInfo.applicationSvgIconUrl else appInfo.smallApplicationSvgIconUrl
   }
-  return JBImageIcon(loadAppIconImage(svgPath = svgUrl, scaleContext = scaleContext, size = size) ?: error("Can't load '${svgUrl}'"))
+  return JBImageIcon(loadAppIconImage(svgUrl, scaleContext, size) ?: error("Can't load '${svgUrl}'"))
 }
 
 fun findAppIcon(): String? {
-  val binPath = PathManager.getBinPath()
-  val binFiles = File(binPath).list()
-  if (binFiles != null) {
-    for (child in binFiles) {
-      if (child.endsWith(".svg")) {
-        return "$binPath/$child"
-      }
-    }
+  val svgFile = Files.list(Path.of(PathManager.getBinPath())).use { stream ->
+    stream.filter { it.extension == "svg" }.findFirst().orElse(null)
   }
+  if (svgFile != null) return svgFile.toString()
   val url = ApplicationInfo::class.java.getResource(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl)
   return if (url != null && URLUtil.FILE_PROTOCOL == url.protocol) URLUtil.urlToFile(url).absolutePath else null
 }
 
-// used in Rider
-fun isWindowIconAlreadyExternallySet(): Boolean {
-  return when {
-    SystemInfoRt.isWindows -> java.lang.Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm
-    // to prevent mess with java dukes when running from source
-    SystemInfoRt.isMac -> isMacDocIconSet || !PluginManagerCore.isRunningFromSources()
-    else -> false
-  }
+fun isWindowIconAlreadyExternallySet(): Boolean = when (OS.CURRENT) {
+  OS.Windows -> java.lang.Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm
+  // to prevent mess with java dukes when running from source
+  OS.macOS -> isMacDocIconSet || !PluginManagerCore.isRunningFromSources()
+  else -> false
 }
 
 object AppUIUtil {
   @JvmStatic
-  fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? {
-    return loadAppIconImage(svgPath = ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl,
-                            scaleContext = ctx,
-                            size = size)?.let { JBImageIcon(it) }
-  }
+  fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? =
+    loadAppIconImage(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl, ctx, size)
+      ?.let { JBImageIcon(it) }
 
   @JvmStatic
   fun invokeLaterIfProjectAlive(project: Project, runnable: Runnable) {
@@ -208,7 +198,7 @@ object AppUIUtil {
   @JvmStatic
   fun invokeOnEdt(runnable: Runnable) {
     @Suppress("DEPRECATION")
-    invokeOnEdt(runnable = runnable, expired = null)
+    invokeOnEdt(runnable, expired = null)
   }
 
   @JvmStatic
@@ -404,7 +394,7 @@ object AppUIUtil {
   fun isInFullScreen(window: Window?): Boolean = window is IdeFrame && (window as IdeFrame).isInFullScreen
 
   private fun adjustFractionalMetrics(defaultValue: Any): Any {
-    if (!SystemInfoRt.isMac || GraphicsEnvironment.isHeadless() || AppMode.isRemoteDevHost()) {
+    if (OS.CURRENT != OS.macOS || GraphicsEnvironment.isHeadless() || AppMode.isRemoteDevHost()) {
       return defaultValue
     }
     val gc = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.defaultConfiguration
@@ -423,40 +413,43 @@ object AppUIUtil {
    * But even when the height is small, the calculation is still quite heavy, and it should not be calculated during each paint.
    * Better to calculate it once, store, and then recalculate only when required [width] is changed.
    */
-  fun createHorizontalGradientTexture(graphics: Graphics,
-                                      colorStart: Color,
-                                      colorEnd: Color,
-                                      width: Int,
-                                      xStart: Int = 0,
-                                      yStart: Int = 0): TexturePaint {
-    return createGradientTexture(graphics, colorStart, colorEnd, width, 2, xStart, yStart) { image, colorStart16, delta16, pixels ->
-      for (x in 0 until image.width) {
-        val rel = x * 1.0 / (image.width - 1)
-        val curColor = colorStart16 + delta16 * rel
-        for (y in 0 until image.height) {
-          pixels[y][x] = curColor
-        }
-      }
-    }
-  }
-
-  fun createVerticalGradientTexture(graphics: Graphics,
-                                    colorStart: Color,
-                                    colorEnd: Color,
-                                    height: Int,
-                                    xStart: Int = 0,
-                                    yStart: Int = 0): TexturePaint {
-    return createGradientTexture(graphics, colorStart, colorEnd, 2, height, xStart, yStart) { image, colorStart16, delta16, pixels ->
+  @Suppress("DuplicatedCode")
+  fun createHorizontalGradientTexture(
+    graphics: Graphics,
+    colorStart: Color,
+    colorEnd: Color,
+    width: Int,
+    xStart: Int = 0,
+    yStart: Int = 0,
+  ): TexturePaint = createGradientTexture(graphics, colorStart, colorEnd, width, 2, xStart, yStart) { image, colorStart16, delta16, pixels ->
+    for (x in 0 until image.width) {
+      val rel = x * 1.0 / (image.width - 1)
+      val curColor = colorStart16 + delta16 * rel
       for (y in 0 until image.height) {
-        val rel = y * 1.0 / (image.height - 1)
-        val curColor = colorStart16 + delta16 * rel
-        for (x in 0 until image.width) {
-          pixels[y][x] = curColor
-        }
+        pixels[y][x] = curColor
       }
     }
   }
 
+  @Suppress("DuplicatedCode")
+  fun createVerticalGradientTexture(
+    graphics: Graphics,
+    colorStart: Color,
+    colorEnd: Color,
+    height: Int,
+    xStart: Int = 0,
+    yStart: Int = 0,
+  ): TexturePaint = createGradientTexture(graphics, colorStart, colorEnd, 2, height, xStart, yStart) { image, colorStart16, delta16, pixels ->
+    for (y in 0 until image.height) {
+      val rel = y * 1.0 / (image.height - 1)
+      val curColor = colorStart16 + delta16 * rel
+      for (x in 0 until image.width) {
+        pixels[y][x] = curColor
+      }
+    }
+  }
+
+  @Suppress("DuplicatedCode")
   private fun createGradientTexture(
     graphics: Graphics,
     colorStart: Color,

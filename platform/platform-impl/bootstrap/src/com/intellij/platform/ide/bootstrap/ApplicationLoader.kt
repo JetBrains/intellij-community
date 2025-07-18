@@ -105,10 +105,7 @@ internal suspend fun loadApp(
       ApplicationManager.setApplication(app)
     }
 
-    val languageAndRegionTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
-      null
-    }
-    else {
+    val languageAndRegionTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) null else {
       async(CoroutineName("language and region")) {
         euaDocumentDeferred.await()?.let {
           getLanguageAndRegionDialogIfNeeded(it)
@@ -116,15 +113,11 @@ internal suspend fun loadApp(
       }
     }
     
-    val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
-      null
-    }
-    else {
+    val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) null else {
       async(CoroutineName("eua document")) {
         prepareShowEuaIfNeededTask(euaDocumentDeferred.await(), appInfoDeferred, asyncScope)
       }
     }
-
 
     initServiceContainerJob.join()
 
@@ -396,10 +389,7 @@ private suspend fun initLafManagerAndCss(app: ApplicationImpl, asyncScope: Corou
       }
     }
 
-    if (app.isHeadlessEnvironment) {
-      null
-    }
-    else {
+    if (app.isHeadlessEnvironment) null else {
       asyncScope.launch {
         // preload EditorColorsManager only when LafManager is ready - that's why out of coroutineScope
         initGlobalStyleSheet()
