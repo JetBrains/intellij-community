@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.kotlin.inspections
 import com.intellij.codeInspection.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.util.containers.toArray
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
@@ -131,12 +132,14 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
             )
           }
           else -> {
-            holder.registerProblem(
-              extractElementToHighlight(expression),
-              DevKitKotlinBundle.message("inspections.forbidden.method.in.suspend.context.text", calledSymbol.name.asString()),
-              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-              *generalFixes()
-            )
+            if (Registry.`is`("devkit.inspections.forbidden.method.in.suspend.context")) {
+              holder.registerProblem(
+                extractElementToHighlight(expression),
+                DevKitKotlinBundle.message("inspections.forbidden.method.in.suspend.context.text", calledSymbol.name.asString()),
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                *generalFixes()
+              )
+            }
           }
         }
       }

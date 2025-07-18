@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.LanguageLevelModuleExtension
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
@@ -269,6 +270,9 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
 
   @Test
   fun `custom marked function`() {
+    RegistryManager.getInstance().get("devkit.inspections.forbidden.method.in.suspend.context")
+      .setValue(true, testRootDisposable)
+
     myFixture.configureByText("file.kt", """
       import com.intellij.util.concurrency.annotations.*
       
@@ -725,6 +729,9 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
 
   @Test
   fun `call as parameter should be checked`() {
+    RegistryManager.getInstance().get("devkit.inspections.forbidden.method.in.suspend.context")
+      .setValue(true, testRootDisposable)
+
     myFixture.configureByText("file.kt", """
       import com.intellij.util.concurrency.annotations.*
       

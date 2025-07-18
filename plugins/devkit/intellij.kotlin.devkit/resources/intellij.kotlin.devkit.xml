@@ -94,6 +94,9 @@
                      key="inspection.remote.dev.rpc.interface.does.not.extend.remote.api.name"/>
 
     <iconProvider implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteIconProvider" order="first"/>
+
+    <registryKey key="devkit.inspections.forbidden.method.in.suspend.context" defaultValue="false"
+                 description="Enables checks for RequiresBlockingContext in suspend contexts"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">
