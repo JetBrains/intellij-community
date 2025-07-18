@@ -30,8 +30,6 @@ private const val REPORTED_ITEMS_LIMIT = 50
 @ApiStatus.Internal
 @IntellijInternalApi
 object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
-  private val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
-
   override fun getGroup(): EventLogGroup = GROUP
 
   internal fun onItemSelected(
@@ -134,8 +132,8 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       add(CONTRIBUTOR_FEATURES_LIST.with(
         contributors.map { contributor ->
           val contributorFeatures = buildList {
-            addAll(contributorFeaturesProvider.getFeatures(contributor, mixedListInfo, searchState.sessionStartTime))
-            addAll(contributorFeaturesProvider.getEssentialContributorFeatures(contributor))
+            addAll(SearchEverywhereContributorFeaturesProvider.getFeatures(contributor, mixedListInfo, searchState.sessionStartTime))
+            addAll(SearchEverywhereContributorFeaturesProvider.getEssentialContributorFeatures(contributor))
           }
 
           ObjectEventData(contributorFeatures)

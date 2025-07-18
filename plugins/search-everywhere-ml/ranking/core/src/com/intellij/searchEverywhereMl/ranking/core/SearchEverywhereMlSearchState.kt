@@ -52,8 +52,6 @@ internal class SearchEverywhereMlSearchState(
       return tab.isMlRankingEnabled
     }
 
-  private val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
-
   private val model: SearchEverywhereRankingModel by lazy { modelProvider.getModel(tab as SearchEverywhereTab.TabWithMlRanking) }
 
   fun getElementFeatures(element: Any,
@@ -130,6 +128,6 @@ internal class SearchEverywhereMlSearchState(
   }
 
   fun getContributorFeatures(contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {
-    return contributorFeaturesProvider.getFeatures(contributor, mixedListInfo, sessionStartTime)
+    return SearchEverywhereContributorFeaturesProvider.getFeatures(contributor, mixedListInfo, sessionStartTime)
   }
 }
