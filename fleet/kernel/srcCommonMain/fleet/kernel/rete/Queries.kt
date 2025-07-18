@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.first
 import kotlin.jvm.JvmName
 
 /**
- * There is always a match in Single, run with it. If the match is invalidate while the body is running, cancel everything. 
+ * There is always a match in Single, run with it. If the match is invalidate while the body is running, cancel everything.
  */
 suspend fun <T, R> StateQuery<T>.withCurrentMatch(f: suspend CoroutineScope.(T) -> R): WithMatchResult<R> {
   return matchesFlow().first().withMatch(f)
@@ -63,18 +63,20 @@ fun <T> Query<Maybe, T>.orNull(): StateQuery<T?> =
 
 
 @Suppress("UNCHECKED_CAST")
-fun <T> Query<Many, T>.singleOrNone(): Query<Maybe, T> = checkMatchesCount(0..1) as Query<Maybe, T>
-
-@Suppress("UNCHECKED_CAST")
-fun <T> Query<Many, T>.single(): StateQuery<T> = checkMatchesCount(1..1) as Query<Single, T>
-
-private fun <T> Query<*, T>.checkMatchesCount(range: IntRange): Query<*, T> =
-  run {
-    var count = 0
-    transform { token, emit ->
-      count += if (token.added) 1 else -1
-      check(count in range) { "Query produced $count matches while it was supposed to have only $range" }
-      emit(token)
+fun <T> Query<Many, T>.singleOrNone(msg: ((List<T>) -> String)? = null): Query<Maybe, T> =
+  let { source ->
+    Query {
+      val none = Any()
+      var value: Any? = none
+      source.producer().transform { token, emit ->
+        when {
+          token.added && value != none -> error("More than one match, ${listOf(value, token.value).let { msg?.invoke(it as List<T>) ?: "values: ${it}" }}")
+          token.added && value == none -> value = token.value as Any?
+          !token.added && value == none -> error("Nothing to retract")
+          !token.added && value != none -> value = none
+        }
+        emit(token)
+      }
     }
   }
 
