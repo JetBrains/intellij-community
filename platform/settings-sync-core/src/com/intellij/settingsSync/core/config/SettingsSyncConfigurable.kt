@@ -125,7 +125,9 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
                                                                       SettingsSyncLocalSettings.getInstance())
 
     configPanel = panel {
-      var userProviderHolder: UserProviderHolder? = currentUser()
+      val userProviderHolder: UserProviderHolder? = currentUser()
+      val authService = userProviderHolder?.let { RemoteCommunicatorHolder.getProvider(userProviderHolder.providerCode) } ?.authService
+      syncPanelHolder.crossSyncSupported.set(authService?.crossSyncSupported() ?: true)
       updateUserAccountsList()
       val infoRow = row {
         text(message("settings.sync.info.message"))
@@ -536,7 +538,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
 
   private fun tryChangeAccount(selectedValue: UserProviderHolder) {
     if (selectedValue == UserProviderHolder.addAccount) {
-      if (!disableCurrentSyncDialog()) {
+      if (SettingsSyncSettings.getInstance().syncEnabled && !disableCurrentSyncDialog()) {
         return
       }
       val syncTypeDialog = AddAccountDialog(configPanel)
@@ -547,19 +549,23 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       }
     }
     else {
-      val wasEnabled = enableCheckbox.isSelected
-      if (wasEnabled) {
-        if (!disableCurrentSyncDialog()){
-          return
+      val wasEnabled = SettingsSyncSettings.getInstance().syncEnabled
+      if (enableCheckbox.isSelected) {
+        if (wasEnabled) {
+          if (!disableCurrentSyncDialog()) {
+            return
+          }
+          userDropDownLink.selectedItem = selectedValue
+          refreshActionRequired()
+          enableCheckbox.doClick()
+        } else {
+          userDropDownLink.selectedItem = selectedValue
+          enableButtonAction()
         }
-      }
-      userDropDownLink.selectedItem = selectedValue
-      refreshActionRequired()
-      if (wasEnabled && !enableCheckbox.isSelected) {
-        enableCheckbox.doClick()
+      } else {
+        userDropDownLink.selectedItem = selectedValue
       }
     }
-
   }
 
 
