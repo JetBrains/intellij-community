@@ -160,7 +160,7 @@ abstract class KotlinIntroduceVariableContext(
 
         if (!needBraces) {
             property = commonContainer.addBefore(property, anchor) as KtDeclaration
-            commonContainer.addBefore(psiFactory.createNewLine(), anchor)
+            commonContainer.addBefore(psiFactory.createNewLine(1), anchor)
         } else {
             var emptyBody: KtExpression = psiFactory.createEmptyBody()
             val firstChild = emptyBody.firstChild
