@@ -64,12 +64,7 @@
 *f:com.intellij.platform.eel.EelExecApi$RedirectStdErr
 - com.intellij.platform.eel.EelExecApi$InteractionOptions
 - <init>(com.intellij.platform.eel.EelExecApi$RedirectTo):V
-- f:component1():com.intellij.platform.eel.EelExecApi$RedirectTo
-- f:copy(com.intellij.platform.eel.EelExecApi$RedirectTo):com.intellij.platform.eel.EelExecApi$RedirectStdErr
-- bs:copy$default(com.intellij.platform.eel.EelExecApi$RedirectStdErr,com.intellij.platform.eel.EelExecApi$RedirectTo,I,java.lang.Object):com.intellij.platform.eel.EelExecApi$RedirectStdErr
-- equals(java.lang.Object):Z
 - f:getTo():com.intellij.platform.eel.EelExecApi$RedirectTo
-- hashCode():I
 *e:com.intellij.platform.eel.EelExecApi$RedirectTo
 - java.lang.Enum
 - sf:NULL:com.intellij.platform.eel.EelExecApi$RedirectTo

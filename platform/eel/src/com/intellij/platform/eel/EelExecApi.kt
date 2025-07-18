@@ -240,7 +240,7 @@ sealed interface EelExecApi {
    * Do not use pty, but redirect `stderr` to [to]
    */
   @ApiStatus.Experimental
-  data class RedirectStdErr(val to: RedirectTo) : InteractionOptions
+  class RedirectStdErr(val to: RedirectTo) : InteractionOptions
 
   @ApiStatus.Experimental
   enum class RedirectTo {
