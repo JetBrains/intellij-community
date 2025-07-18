@@ -9,8 +9,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.getPresentablePath
+import com.intellij.platform.backend.observation.launchTracked
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -23,14 +23,17 @@ import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 class AddManagedFilesAction : MavenAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val cs = MavenCoroutineScopeProvider.getCoroutineScope(e.project)
-    cs.launch { actionPerformedAsync(e) }
+    cs.launchTracked { actionPerformedAsync(e) }
   }
 
   suspend fun actionPerformedAsync(e: AnActionEvent) {
-    val project = MavenActionUtil.getProject(e.dataContext) ?: return
-    val manager = MavenProjectsManager.getInstanceIfCreated(project) ?: return
+    val project = MavenActionUtil.getProject(e.dataContext) ?: run {
+      MavenLog.LOG.warn("Project not found")
+      return
+    }
+    val manager = MavenProjectsManager.getInstance(project)
 
-    val singlePomSelection: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
+    val singlePomSelection: FileChooserDescriptor = FileChooserDescriptorFactory.singleFileOrDir()
       .withFileFilter { file -> MavenActionUtil.isMavenProjectFile(file) && !manager.isManagedFile(file) }
 
     val files = withContext(Dispatchers.EDT) {
@@ -50,6 +53,8 @@ class AddManagedFilesAction : MavenAction() {
       openProjectProvider.forceLinkToExistingProjectAsync(projectFile, project)
     }
     else {
+      MavenLog.LOG.warn("Maven project files not found: $selectedFiles")
+
       val projectPath = getPresentablePath(projectFile.path)
 
       val message = if (projectFile.isDirectory)
