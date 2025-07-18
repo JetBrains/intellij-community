@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
@@ -277,6 +278,7 @@ private fun calculatePaddings(
  * @param decorationBoxModifier Modifier to be applied to the decoration box
  * @see com.intellij.ui.components.JBTextArea
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun TextArea(

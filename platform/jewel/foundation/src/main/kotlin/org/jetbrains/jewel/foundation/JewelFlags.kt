@@ -1,5 +1,7 @@
 package org.jetbrains.jewel.foundation
 
+import org.jetbrains.annotations.ApiStatus
+
 /**
  * JewelFlags is an object that holds configuration flags used in the Jewel library.
  *
@@ -22,6 +24,7 @@ public object JewelFlags {
      * Note that this flag affects popups, menus and tooltips rendering from Jewel Components. It does not affect
      * `Dialog`s.
      */
+    @ApiStatus.Experimental
     @ExperimentalJewelApi
     public var useCustomPopupRenderer: Boolean = System.getProperty("jewel.customPopupRender", "false").toBoolean()
 }

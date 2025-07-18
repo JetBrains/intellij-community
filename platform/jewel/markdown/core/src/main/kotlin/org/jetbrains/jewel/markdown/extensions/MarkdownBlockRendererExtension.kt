@@ -2,14 +2,16 @@ package org.jetbrains.jewel.markdown.extensions
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock
 import org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 
-@ExperimentalJewelApi
 /** An extension for [MarkdownBlockRenderer] that can render one or more [MarkdownBlock.CustomBlock]s. */
+@ApiStatus.Experimental
+@ExperimentalJewelApi
 public interface MarkdownBlockRendererExtension {
     /**
      * Check whether the provided [block] can be rendered by this extension.

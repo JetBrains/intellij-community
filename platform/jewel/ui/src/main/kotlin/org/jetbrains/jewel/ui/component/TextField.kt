@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.offset
 import kotlin.math.max
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
@@ -177,6 +178,7 @@ public fun TextField(
  * @param interactionSource Source of interactions for this text field
  * @see com.intellij.ui.components.JBTextField
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun TextField(

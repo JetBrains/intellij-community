@@ -46,6 +46,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.takeOrElse
 import androidx.compose.ui.window.PopupProperties
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
@@ -262,6 +263,7 @@ public fun ComboBox(
  * @param labelContent Composable content for the label area of the combo box
  * @param popupContent Composable content for the popup
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun ComboBox(

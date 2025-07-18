@@ -57,11 +57,6 @@ kotlin {
     }
 }
 
-detekt {
-    config.from(files(rootProject.file("detekt.yml")))
-    buildUponDefaultConfig = true
-}
-
 val sarifReport: Provider<RegularFile> = layout.buildDirectory.file("reports/ktlint-${project.name}.sarif")
 
 tasks {

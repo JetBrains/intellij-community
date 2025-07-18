@@ -3,6 +3,7 @@ package org.jetbrains.jewel.ui.util
 
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.InternalJewelApi
 
 /**
@@ -11,6 +12,7 @@ import org.jetbrains.jewel.foundation.InternalJewelApi
  * This interface provides a mechanism to resolve strings based on a given key. It is used to fetch UI strings from the
  * IDE's internal resource bundle.
  */
+@ApiStatus.Internal
 @InternalJewelApi
 public interface MessageResourceResolver {
     /**

@@ -1,12 +1,5 @@
 f:org.jetbrains.jewel.bridge.BridgeIconDataKt
 - sf:readFromLaF(org.jetbrains.jewel.foundation.theme.ThemeIconData$Companion):org.jetbrains.jewel.foundation.theme.ThemeIconData
-f:org.jetbrains.jewel.bridge.BridgePainterHintsProvider
-- org.jetbrains.jewel.ui.painter.PalettePainterHintsProvider
-- sf:$stable:I
-- sf:Companion:org.jetbrains.jewel.bridge.BridgePainterHintsProvider$Companion
-- hints(java.lang.String,androidx.compose.runtime.Composer,I):java.util.List
-f:org.jetbrains.jewel.bridge.BridgePainterHintsProvider$Companion
-- f:invoke(Z):org.jetbrains.jewel.ui.painter.PalettePainterHintsProvider
 f:org.jetbrains.jewel.bridge.BridgeResourceResolverKt
 - sf:bridgePainterProvider(java.lang.String):org.jetbrains.jewel.ui.painter.ResourcePainterProvider
 - sf:bridgePainterProvider(org.jetbrains.jewel.ui.icon.IconKey):org.jetbrains.jewel.ui.painter.ResourcePainterProvider
@@ -38,7 +31,6 @@ f:org.jetbrains.jewel.bridge.BridgeUtilsKt
 - sf:retrieveArcAsCornerSize(java.lang.String):androidx.compose.foundation.shape.CornerSize
 - sf:retrieveArcAsCornerSizeOrDefault(java.lang.String,androidx.compose.foundation.shape.CornerSize):androidx.compose.foundation.shape.CornerSize
 - sf:retrieveArcAsCornerSizeWithFallbacks(java.lang.String[]):androidx.compose.foundation.shape.CornerSize
-- sf:retrieveArcAsNonNegativeCornerSizeOrDefault(java.lang.String,androidx.compose.foundation.shape.CornerSize):androidx.compose.foundation.shape.CornerSize
 - sf:retrieveColor-0YGnOg8(java.lang.String,Z,J,J):J
 - sf:retrieveColor-4WTKRHQ(java.lang.String,J):J
 - sf:retrieveColorOrNull(java.lang.String):androidx.compose.ui.graphics.Color
@@ -50,7 +42,6 @@ f:org.jetbrains.jewel.bridge.BridgeUtilsKt
 - sf:retrieveIntAsDp-3F_vd3o(java.lang.String,androidx.compose.ui.unit.Dp):F
 - bs:retrieveIntAsDp-3F_vd3o$default(java.lang.String,androidx.compose.ui.unit.Dp,I,java.lang.Object):F
 - sf:retrieveIntAsDpOrUnspecified(java.lang.String):F
-- sf:retrieveIntAsNonNegativeDpOrUnspecified(java.lang.String):F
 - sf:retrievePlatformTextStyle():androidx.compose.ui.text.PlatformTextStyle
 - sf:retrieveTextStyle-WdJyH8Q(java.lang.String,J,J,Z,I,J):androidx.compose.ui.text.TextStyle
 - bs:retrieveTextStyle-WdJyH8Q$default(java.lang.String,J,J,Z,I,J,I,java.lang.Object):androidx.compose.ui.text.TextStyle
@@ -61,8 +52,6 @@ f:org.jetbrains.jewel.bridge.BridgeUtilsKt
 - sf:toComposeColorOrUnspecified(java.awt.Color):J
 - sf:toDpSize(com.intellij.util.ui.JBDimension):J
 - sf:toDpSize(java.awt.Dimension):J
-- sf:toNonNegativeDpSize(com.intellij.util.ui.JBDimension):J
-- sf:toNonNegativeDpSize(java.awt.Dimension):J
 - sf:toPaddingValues(com.intellij.util.ui.JBInsets):androidx.compose.foundation.layout.PaddingValues
 - sf:toPaddingValues(java.awt.Insets):androidx.compose.foundation.layout.PaddingValues
 a:org.jetbrains.jewel.bridge.JewelBridgeException
@@ -78,21 +67,10 @@ f:org.jetbrains.jewel.bridge.JewelBridgeException$KeysNotFoundException
 - sf:$stable:I
 - <init>(java.util.List,java.lang.String):V
 f:org.jetbrains.jewel.bridge.JewelComposePanelWrapperKt
-- sf:JewelComposeNoThemePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
-- bs:JewelComposeNoThemePanel$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
 - sf:JewelComposePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - bs:JewelComposePanel$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
-- sf:JewelToolWindowComposePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
-- bs:JewelToolWindowComposePanel$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
-- sf:JewelToolWindowNoThemeComposePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
-- bs:JewelToolWindowNoThemeComposePanel$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
 - sf:compose(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - bs:compose$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
-- sf:composeForToolWindowWithoutTheme(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
-- bs:composeForToolWindowWithoutTheme$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
-- sf:composeWithoutTheme(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
-- bs:composeWithoutTheme$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
-- sf:getLocalComponent():androidx.compose.runtime.ProvidableCompositionLocal
 f:org.jetbrains.jewel.bridge.ToolWindowExtensionsKt
 - sf:addComposeTab(com.intellij.openapi.wm.ToolWindow,java.lang.String,Z,Z,kotlin.jvm.functions.Function3):V
 - bs:addComposeTab$default(com.intellij.openapi.wm.ToolWindow,java.lang.String,Z,Z,kotlin.jvm.functions.Function3,I,java.lang.Object):V
@@ -102,22 +80,6 @@ f:org.jetbrains.jewel.bridge.TypographyKt
 - sf:medium(org.jetbrains.jewel.ui.component.Typography,androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
 - sf:regular(org.jetbrains.jewel.ui.component.Typography,androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
 - sf:small(org.jetbrains.jewel.ui.component.Typography,androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
-f:org.jetbrains.jewel.bridge.actionSystem.RootDataProviderModifier
-- androidx.compose.ui.node.ModifierNodeElement
-- com.intellij.openapi.actionSystem.UiDataProvider
-- sf:$stable:I
-- <init>():V
-- create():org.jetbrains.jewel.bridge.actionSystem.RootDataProviderNode
-- equals(java.lang.Object):Z
-- hashCode():I
-- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
-- update(org.jetbrains.jewel.bridge.actionSystem.RootDataProviderNode):V
-f:org.jetbrains.jewel.bridge.actionSystem.RootDataProviderNode
-- androidx.compose.ui.Modifier$Node
-- com.intellij.openapi.actionSystem.UiDataProvider
-- sf:$stable:I
-- <init>():V
-- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory$Companion
@@ -164,7 +126,5 @@ f:org.jetbrains.jewel.bridge.theme.IntUiBridgeSplitButtonKt
 f:org.jetbrains.jewel.bridge.theme.IntUiBridgeTextKt
 - sf:retrieveConsoleTextStyle():androidx.compose.ui.text.TextStyle
 - sf:retrieveDefaultTextStyle():androidx.compose.ui.text.TextStyle
-- sf:retrieveDefaultTextStyle(F):androidx.compose.ui.text.TextStyle
 - sf:retrieveEditorTextStyle():androidx.compose.ui.text.TextStyle
 f:org.jetbrains.jewel.bridge.theme.SwingBridgeThemeKt
-- sf:SwingBridgeTheme(kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V

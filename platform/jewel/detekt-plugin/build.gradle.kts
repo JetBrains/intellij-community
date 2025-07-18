@@ -3,11 +3,12 @@
 plugins { jewel }
 
 dependencies {
-    compileOnly("io.gitlab.arturbosch.detekt:detekt-api:1.23.8")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
-    testImplementation("io.gitlab.arturbosch.detekt:detekt-core:1.23.8")
-    testImplementation("io.gitlab.arturbosch.detekt:detekt-test:1.23.8")
-    testImplementation("org.assertj:assertj-core:3.26.3")
+    compileOnly(libs.detekt.api)
+
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.detekt.core)
+    testImplementation(libs.detekt.test)
+    testImplementation(libs.assertj.core)
 }
 
 kotlin.compilerOptions.freeCompilerArgs.add("-Xmulti-dollar-interpolation")

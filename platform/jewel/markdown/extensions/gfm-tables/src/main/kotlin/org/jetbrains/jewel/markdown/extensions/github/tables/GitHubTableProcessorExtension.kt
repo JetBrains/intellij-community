@@ -16,6 +16,7 @@ import org.commonmark.parser.Parser.Builder
 import org.commonmark.parser.Parser.ParserExtension
 import org.commonmark.renderer.text.TextContentRenderer
 import org.commonmark.renderer.text.TextContentRenderer.TextContentRendererExtension
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.MarkdownBlock
@@ -33,6 +34,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
  *
  * @see TablesExtension
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public object GitHubTableProcessorExtension : MarkdownProcessorExtension {
     override val parserExtension: ParserExtension = GitHubTablesCommonMarkExtension
@@ -129,6 +131,7 @@ private object GitHubTablesCommonMarkExtension : ParserExtension, TextContentRen
     }
 }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public class GitHubTableRendererExtension(tableStyling: GfmTableStyling, rootStyling: MarkdownStyling) :
     MarkdownRendererExtension {
