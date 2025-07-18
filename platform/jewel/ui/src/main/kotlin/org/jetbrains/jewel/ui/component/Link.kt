@@ -366,10 +366,9 @@ private fun LinkImpl(
     icon: IconKey?,
 ) {
     var linkState by remember(interactionSource, enabled) { mutableStateOf(LinkState.of(enabled = enabled)) }
-    remember(enabled) { linkState = linkState.copy(enabled = enabled) }
 
     val inputModeManager = LocalInputModeManager.current
-    LaunchedEffect(interactionSource) {
+    LaunchedEffect(interactionSource, enabled) {
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
                 is PressInteraction.Press -> linkState = linkState.copy(pressed = true)
