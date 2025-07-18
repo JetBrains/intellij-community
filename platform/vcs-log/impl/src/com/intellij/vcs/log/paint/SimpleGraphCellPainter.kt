@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.paint
 
 import com.intellij.ui.JBColor
@@ -92,6 +92,8 @@ open class SimpleGraphCellPainter(private val colorGenerator: ColorGenerator) : 
     private val ordinaryStroke = BasicStroke(lineThickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
     private val selectedStroke = BasicStroke(selectedLineThickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
 
+    private val headNodePainter = HeadNodePainter(scaleContext, selectedLineThickness, lineThickness, rowHeight)
+
     private fun getDashedStroke(dash: FloatArray): Stroke {
       return BasicStroke(lineThickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0f, dash,
                          dash[0] / 2)
@@ -172,6 +174,7 @@ open class SimpleGraphCellPainter(private val colorGenerator: ColorGenerator) : 
       val circle = Ellipse2D.Double(x0 - radius, y0 - radius, diameter, diameter)
       when (element.nodeType) {
         NodePrintElement.Type.FILL -> g2.fill(circle)
+        NodePrintElement.Type.OUTLINE_AND_FILL -> headNodePainter.paint(g2, x0, y0, isSelected, commitStyle)
         NodePrintElement.Type.OUTLINE -> {
           g2.color = NEUTRAL_COLOR
           g2.draw(circle)

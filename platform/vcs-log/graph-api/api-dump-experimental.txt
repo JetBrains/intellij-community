@@ -5,5 +5,6 @@ com.intellij.vcs.log.graph.NodePrintElement
 - java.lang.Enum
 - sf:FILL:com.intellij.vcs.log.graph.NodePrintElement$Type
 - sf:OUTLINE:com.intellij.vcs.log.graph.NodePrintElement$Type
+- sf:OUTLINE_AND_FILL:com.intellij.vcs.log.graph.NodePrintElement$Type
 - s:valueOf(java.lang.String):com.intellij.vcs.log.graph.NodePrintElement$Type
 - s:values():com.intellij.vcs.log.graph.NodePrintElement$Type[]

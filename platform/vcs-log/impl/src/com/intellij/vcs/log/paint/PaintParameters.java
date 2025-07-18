@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.paint;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -26,6 +26,10 @@ public final class PaintParameters {
   }
 
   public static double getCircleRadius(int rowHeight) {
-    return (double)(CIRCLE_RADIUS * rowHeight) / ROW_HEIGHT;
+    return getCircleRadius(CIRCLE_RADIUS, rowHeight);
+  }
+
+  public static double getCircleRadius(int radius, int rowHeight) {
+    return (double)(radius * rowHeight) / ROW_HEIGHT;
   }
 }
