@@ -9,6 +9,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.spellchecker.SpellCheckerSeveritiesProvider
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 class TextProblemSeverities : SeveritiesProvider() {
@@ -44,10 +45,12 @@ class TextProblemSeverities : SeveritiesProvider() {
 
     @JvmField
     @Deprecated("Use STYLE_SUGGESTION instead", ReplaceWith("STYLE_SUGGESTION"))
+    @ApiStatus.ScheduledForRemoval
     val STYLE_ERROR: HighlightSeverity = STYLE_SUGGESTION
 
     @JvmField
     @Deprecated("Use STYLE_SUGGESTION instead", ReplaceWith("STYLE_SUGGESTION"))
+    @ApiStatus.ScheduledForRemoval
     val STYLE_WARNING: HighlightSeverity = STYLE_SUGGESTION
 
     @JvmField
@@ -62,6 +65,16 @@ class TextProblemSeverities : SeveritiesProvider() {
 
     @JvmField
     val STYLE_SUGGESTION_ATTRIBUTES: TextAttributesKey = TextAttributesKey.createTextAttributesKey("TEXT_STYLE_SUGGESTION")
+
+    @JvmField
+    @Deprecated("Use STYLE_SUGGESTION_ATTRIBUTES instead", ReplaceWith("STYLE_SUGGESTION_ATTRIBUTES"))
+    @ApiStatus.ScheduledForRemoval
+    val STYLE_ERROR_ATTRIBUTES: TextAttributesKey = STYLE_SUGGESTION_ATTRIBUTES
+
+    @JvmField
+    @Deprecated("Use STYLE_SUGGESTION_ATTRIBUTES instead", ReplaceWith("STYLE_SUGGESTION_ATTRIBUTES"))
+    @ApiStatus.ScheduledForRemoval
+    val STYLE_WARNING_ATTRIBUTES: TextAttributesKey = STYLE_SUGGESTION_ATTRIBUTES
 
     @JvmField
     val GRAMMAR_ERROR_ATTRIBUTES: TextAttributesKey = TextAttributesKey.createTextAttributesKey("GRAMMAR_ERROR")
