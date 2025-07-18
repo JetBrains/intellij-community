@@ -12,11 +12,11 @@ interface ToolCallListener {
     val TOPIC: Topic<ToolCallListener> = Topic(ToolCallListener::class.java)
   }
 
-  fun beforeMcpToolCall(mcpToolDescriptor: McpToolDescriptor) {}
+  fun beforeMcpToolCall(mcpToolDescriptor: McpToolDescriptor, additionalData: McpCallAdditionalData) {}
 
-  fun afterMcpToolCall(mcpToolDescriptor: McpToolDescriptor, events: List<McpToolSideEffectEvent>, error: Throwable?) {}
+  fun afterMcpToolCall(mcpToolDescriptor: McpToolDescriptor, events: List<McpToolSideEffectEvent>, error: Throwable?, additionalData: McpCallAdditionalData) {}
 
-  fun toolActivity(mcpToolDescriptor: McpToolDescriptor, @NlsContexts.Label toolActivityDescription: String) {}
+  fun toolActivity(mcpToolDescriptor: McpToolDescriptor, @NlsContexts.Label toolActivityDescription: String, additionalData: McpCallAdditionalData) {}
 }
 
 sealed interface McpToolSideEffectEvent
@@ -29,5 +29,5 @@ class FileMovedEvent(val file: VirtualFile, val oldParent: VirtualFile, val newP
 class FileContentChangeEvent(val file: VirtualFile, val oldContent: String?, val newContent: String) : FileEvent
 
 fun CoroutineContext.reportToolActivity(@NlsContexts.Label toolDescription: String) {
-  application.messageBus.syncPublisher(ToolCallListener.TOPIC).toolActivity(this.currentToolDescriptor, toolDescription)
+  application.messageBus.syncPublisher(ToolCallListener.TOPIC).toolActivity(this.currentToolDescriptor, toolDescription, this.mcpCallAdditionalData)
 }

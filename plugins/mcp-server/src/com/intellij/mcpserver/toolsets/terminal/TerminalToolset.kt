@@ -55,7 +55,7 @@ class TerminalToolset : McpToolset {
     val project = currentCoroutineContext().project
     checkUserConfirmationIfNeeded(McpServerBundle.message("label.do.you.want.to.execute.command.in.terminal"), command, project)
 
-    val id = currentCoroutineContext().clientInfoOrNull?.name ?: "mcp_session"
+    val id = currentCoroutineContext().clientInfo.name
     val window = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID)
     return executeShellCommand(window = window,
                                project = project,
