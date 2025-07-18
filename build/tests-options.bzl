@@ -82,7 +82,7 @@ def _normalize_runtime_dep(dep):
         return "@community//platform/util:util-tests_test_lib"
     return dep
 
-def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], **kwargs):
+def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags = [], **kwargs):
     # Merge user-provided args with our default ones
     all_jvm_flags = JAVA_TEST_FLAGS + ADD_OPENS_FLAGS + jvm_flags
     all_args = JAVA_TEST_ARGS + args
@@ -102,6 +102,7 @@ def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], **kw
         # settings size also sets test timeout to 1 hours
         # which is also a reasonable tests timeout for current state of things
         size = "enormous",
+        tags = tags,
         data = [
             # so com.intellij.tests.JUnit5BazelRunner.guessBazelWorkspaceDir will find a real workspace root
             "@community//:intellij.idea.community.main.iml",
