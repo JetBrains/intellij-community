@@ -27,12 +27,11 @@ internal interface XLineBreakpointInlineVariantProxy {
 
     @Suppress("UNCHECKED_CAST") // Casts are required for gods of Kotlin-Java type inference.
     override fun isMatching(breakpoint: XLineBreakpointProxy): Boolean {
-      val type = variant.type as XLineBreakpointType<XBreakpointProperties<*>>
-      val b = (breakpoint as? XLineBreakpointProxy.Monolith)?.breakpoint as? XLineBreakpointImpl<XBreakpointProperties<*>>
-      if (b == null) return false
       val v = variant as XLineBreakpointType<XBreakpointProperties<*>>.XLineBreakpointVariant
+      val b = (breakpoint as? XLineBreakpointProxy.Monolith)?.breakpoint as? XLineBreakpointImpl<XBreakpointProperties<*>> ?: return false
+      val type: XLineBreakpointType<XBreakpointProperties<*>> = v.type
 
-      return type == variant.type && type.variantAndBreakpointMatch(b, v)
+      return type == b.type && type.variantAndBreakpointMatch(b, v)
     }
 
     override fun createBreakpoint(project: Project, file: VirtualFile, line: Int) {
