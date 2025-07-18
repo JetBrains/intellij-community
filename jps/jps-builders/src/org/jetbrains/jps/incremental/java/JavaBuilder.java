@@ -58,7 +58,9 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 import org.jetbrains.jps.util.Iterators;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticListener;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -472,15 +474,14 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       final Iterable<? extends File> classPath;
       final ModulePath modulePath;
       final Iterable<? extends File> upgradeModulePath;
-      if (moduleInfoFile != null || Iterators.contains(options, PATCH_MODULE_OPTION)) { // has modules or trying to patch a module
+      if (moduleInfoFile != null) { // has modules
 
         final ModulePathSplitter splitter = MODULE_PATH_SPLITTER.get(context);
         final Pair<ModulePath, Collection<File>> pair = splitter.splitPath(
           moduleInfoFile, outs.keySet(), ProjectPaths.getCompilationModulePath(chunk, false), collectAdditionalRequires(options)
         );
 
-        // always add everything to ModulePath if module path usagfe is forced or '--patch-module' is explicitly specified in the command line
-        final boolean useModulePathOnly = moduleInfoFile == null || Boolean.parseBoolean(System.getProperty(USE_MODULE_PATH_ONLY_OPTION))/*compilerConfig.useModulePathOnly()*/;
+        final boolean useModulePathOnly = Boolean.parseBoolean(System.getProperty(USE_MODULE_PATH_ONLY_OPTION))/*compilerConfig.useModulePathOnly()*/;
         if (useModulePathOnly) {
           // in Java 9, named modules are not allowed to read classes from the classpath
           // moreover, the compiler requires all transitive dependencies to be on the module path
