@@ -10,10 +10,16 @@ public class PatchLine {
   private final @NotNull Type myType;
   private final @NotNull String myText;
   private boolean mySuppressNewLine;
+  private final int myOriginalLineNumber;
 
   public PatchLine(@NotNull Type type, @NotNull String text) {
+    this(type, text, -1);
+  }
+
+  public PatchLine(@NotNull Type type, @NotNull String text, int originalLineNumber) {
     myType = type;
     myText = text;
+    myOriginalLineNumber = originalLineNumber;
   }
 
   public @NotNull Type getType() {
@@ -32,12 +38,17 @@ public class PatchLine {
     mySuppressNewLine = suppressNewLine;
   }
 
+  public int getOriginalLineNumber() {
+    return myOriginalLineNumber;
+  }
+
   @Override
   public String toString() {
     return "PatchLine{" +
            "myType=" + myType +
            ", myText='" + myText + '\'' +
            ", mySuppressNewLine=" + mySuppressNewLine +
+           ", myOriginalLineNumber=" + myOriginalLineNumber +
            '}';
   }
 }

@@ -365,7 +365,7 @@ public final class PatchReader {
           lastLine.setSuppressNewLine(true);
           continue;
         }
-        lastLine = parsePatchLine(hunkCurLine, 1, before < linesBefore || after < linesAfter);
+        lastLine = parsePatchLine(hunkCurLine, 1, before < linesBefore || after < linesAfter, iterator.previousIndex());
         if (lastLine == null) {
           iterator.previous();
           break;
@@ -393,11 +393,11 @@ public final class PatchReader {
       }
     }
 
-    private static @Nullable PatchLine parsePatchLine(final String line, final int prefixLength) {
-      return parsePatchLine(line, prefixLength, true);
+    private static @Nullable PatchLine parsePatchLine(final String line, final int prefixLength, final int originalLineNumber) {
+      return parsePatchLine(line, prefixLength, true, originalLineNumber);
     }
 
-    private static @Nullable PatchLine parsePatchLine(final String line, final int prefixLength, boolean expectMeaningfulLines) {
+    private static @Nullable PatchLine parsePatchLine(final String line, final int prefixLength, boolean expectMeaningfulLines, final int originalLineNumber) {
       if (!expectMeaningfulLines) return null;
 
       PatchLine.Type type;
@@ -420,7 +420,7 @@ public final class PatchReader {
       else {
         lineText = line.substring(prefixLength);
       }
-      return new PatchLine(type, lineText);
+      return new PatchLine(type, lineText, originalLineNumber);
     }
 
     private static @Nullable PatchHunk readNextHunkContext(ListIterator<String> iterator) throws PatchSyntaxException {
@@ -465,12 +465,12 @@ public final class PatchReader {
       PatchLine lastAfterPatchLine = null;
       if (beforeLines.isEmpty()) {
         for (String line : afterLines) {
-          hunk.addLine(parsePatchLine(line, 2));
+          hunk.addLine(parsePatchLine(line, 2, -1));
         }
       }
       else if (afterLines.isEmpty()) {
         for (String line : beforeLines) {
-          hunk.addLine(parsePatchLine(line, 2));
+          hunk.addLine(parsePatchLine(line, 2, -1));
         }
       }
       else {
@@ -487,26 +487,26 @@ public final class PatchReader {
           }
           else if (startsWith(beforeLine, " ") &&
                    (startsWith(afterLine, " ") || afterLine == null /* handle some weird cases with line breaks truncated at EOF */)) {
-            addContextDiffLine(hunk, beforeLine, PatchLine.Type.CONTEXT);
+            addContextDiffLine(hunk, beforeLine, PatchLine.Type.CONTEXT, -1);
             beforeLineIndex++;
             afterLineIndex++;
           }
           else if (startsWith(beforeLine, "-")) {
-            lastBeforePatchLine = addContextDiffLine(hunk, beforeLine, PatchLine.Type.REMOVE);
+            lastBeforePatchLine = addContextDiffLine(hunk, beforeLine, PatchLine.Type.REMOVE, -1);
             beforeLineIndex++;
           }
           else if (startsWith(afterLine, "+")) {
-            lastAfterPatchLine = addContextDiffLine(hunk, afterLine, PatchLine.Type.ADD);
+            lastAfterPatchLine = addContextDiffLine(hunk, afterLine, PatchLine.Type.ADD, -1);
             afterLineIndex++;
           }
           else if (startsWith(beforeLine, "!") && startsWith(afterLine, "!")) {
             while (beforeLineIndex < beforeLines.size() && beforeLines.get(beforeLineIndex).startsWith("! ")) {
-              lastBeforePatchLine = addContextDiffLine(hunk, beforeLines.get(beforeLineIndex), PatchLine.Type.REMOVE);
+              lastBeforePatchLine = addContextDiffLine(hunk, beforeLines.get(beforeLineIndex), PatchLine.Type.REMOVE, -1);
               beforeLineIndex++;
             }
 
             while (afterLineIndex < afterLines.size() && afterLines.get(afterLineIndex).startsWith("! ")) {
-              lastAfterPatchLine = addContextDiffLine(hunk, afterLines.get(afterLineIndex), PatchLine.Type.ADD);
+              lastAfterPatchLine = addContextDiffLine(hunk, afterLines.get(afterLineIndex), PatchLine.Type.ADD, -1);
               afterLineIndex++;
             }
           }
@@ -522,8 +522,8 @@ public final class PatchReader {
       return line != null && line.startsWith(prefix);
     }
 
-    private static PatchLine addContextDiffLine(final PatchHunk hunk, final String line, final PatchLine.Type type) {
-      final PatchLine patchLine = new PatchLine(type, line.length() < 2 ? "" : line.substring(2));
+    private static PatchLine addContextDiffLine(final PatchHunk hunk, final String line, final PatchLine.Type type, final int originalLineNumber) {
+      final PatchLine patchLine = new PatchLine(type, line.length() < 2 ? "" : line.substring(2), originalLineNumber);
       hunk.addLine(patchLine);
       return patchLine;
     }

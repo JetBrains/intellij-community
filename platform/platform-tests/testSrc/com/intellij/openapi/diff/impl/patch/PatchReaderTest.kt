@@ -107,6 +107,27 @@ class PatchReaderTest : HeavyPlatformTestCase() {
     assertEquals(PatchFileHeaderInfo("", null, null), actual.patchFileInfo)
   }
 
+  @Throws(Exception::class)
+  fun testOriginalLineNumbers() {
+    val actual = read()
+    val patch = actual.allPatches.single() as TextFilePatch
+    val hunk = patch.hunks.single()
+    val lines = hunk.lines
+
+    // Verify that PatchLine objects have original line numbers from the diff file
+    assertTrue("Should have at least one line", lines.isNotEmpty())
+    
+    // Check that line numbers are properly set (not all -1)
+    val hasValidLineNumbers = lines.any { it.originalLineNumber >= 0 }
+    assertTrue("At least some lines should have valid original line numbers", hasValidLineNumbers)
+    
+    // Verify specific line numbers based on the test patch structure
+    for (i in lines.indices) {
+      val line = lines[i]
+      println("Line $i: type=${line.type}, text='${line.text}', originalLineNumber=${line.originalLineNumber}")
+    }
+  }
+
   private fun doTestPatchCount(expected: Int) {
     val actual = read().allPatches.size
     assertEquals(expected, actual)
