@@ -18,6 +18,8 @@
                      language=""
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"
                      key="inspection.injected.references.display.name" bundle="messages.IntelliLangBundle"/>
+    <completion.contributor language="any"
+                            implementationClass="org.intellij.plugins.intelliLang.references.LanguageWordInCommentCompletionContributor"/>
 
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.InjectLanguageAction</className>

@@ -42,7 +42,6 @@
     <projectService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
                     serviceImplementation="org.intellij.plugins.intelliLang.Configuration$Prj"/>
 
-    <completion.contributor language="any" implementationClass="org.intellij.plugins.intelliLang.references.LanguageWordInCommentCompletionContributor" />
     <registryKey key="org.intellij.intelliLang.comment.completion" defaultValue="true"
                  description="Enables completion of 'language=' in comments"/>
   </extensions>
