@@ -43,6 +43,7 @@ import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.ReplicatorInputStream;
+import io.opentelemetry.api.metrics.BatchCallback;
 import io.opentelemetry.api.metrics.Meter;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.*;
@@ -111,6 +112,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   /** How many times folder case-sensitivity was read from underlying FS */
   private final AtomicLong caseSensitivityReads = new AtomicLong();
 
+  private final BatchCallback otelMonitoringHandle;
+
 
   public PersistentFSImpl(@NotNull Application app) {
     this.app = app;
@@ -162,7 +165,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     // Services might throw `AlreadyDisposedException`-s after and we have to suppress those exceptions or wrap with PCE-s.
     ShutDownTracker.getInstance().registerCacheShutdownTask(this::disconnect);
 
-    setupOTelMonitoring(TelemetryManager.getInstance().getMeter(PlatformScopesKt.VFS));
+    otelMonitoringHandle = setupOTelMonitoring(TelemetryManager.getInstance().getMeter(PlatformScopesKt.VFS));
 
     LOG.info("VFS.MAX_FILE_LENGTH_TO_CACHE: " + PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE);
   }
@@ -273,6 +276,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       LOG.warn("Detected cancellation during dispose of PersistentFS. Application was likely closed before VFS got completely initialized",
                e);
     }
+    otelMonitoringHandle.close();
   }
 
   @Override
@@ -2614,23 +2618,27 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  private void setupOTelMonitoring(@NotNull Meter meter) {
+  private BatchCallback setupOTelMonitoring(@NotNull Meter meter) {
     var fileByIdCacheHitsCounter = meter.counterBuilder("VFS.fileByIdCache.hits").buildObserver();
     var fileByIdCacheMissesCounter = meter.counterBuilder("VFS.fileByIdCache.misses").buildObserver();
     var fileChildByNameCounter = meter.counterBuilder("VFS.fileChildByName").buildObserver();
     var caseSensitivityReadsCounter = meter.counterBuilder("VFS.folderCaseSensitivityReads").buildObserver();
     var invertedFileNameIndexRequestsCount = meter.counterBuilder("VFS.invertedFileNameIndex.requests").buildObserver();
-    meter.batchCallback(() -> {
-                          fileByIdCacheHitsCounter.record(fileByIdCacheHits.get());
-                          fileByIdCacheMissesCounter.record(fileByIdCacheMisses.get());
-                          fileChildByNameCounter.record(childByName.get());
-                          caseSensitivityReadsCounter.record(caseSensitivityReads.get());
-                          FSRecordsImpl vfs = vfsPeer;
-                          if (vfs != null) {
-                            invertedFileNameIndexRequestsCount.record(vfs.invertedNameIndexRequestsServed());
-                          }
-                        }, fileByIdCacheHitsCounter, fileByIdCacheMissesCounter, fileChildByNameCounter, caseSensitivityReadsCounter,
-                        invertedFileNameIndexRequestsCount);
+    return meter.batchCallback(
+      () -> {
+        fileByIdCacheHitsCounter.record(fileByIdCacheHits.get());
+        fileByIdCacheMissesCounter.record(fileByIdCacheMisses.get());
+        fileChildByNameCounter.record(childByName.get());
+        caseSensitivityReadsCounter.record(caseSensitivityReads.get());
+        FSRecordsImpl vfs = vfsPeer;
+        if (vfs != null) {
+          invertedFileNameIndexRequestsCount.record(vfs.invertedNameIndexRequestsServed());
+        }
+      },
+      fileByIdCacheHitsCounter, fileByIdCacheMissesCounter, fileChildByNameCounter,
+      caseSensitivityReadsCounter,
+      invertedFileNameIndexRequestsCount
+    );
   }
 
   private static class LengthAndContentIdReader implements RecordReader<LengthAndContentIdReader> {
