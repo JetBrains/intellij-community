@@ -23,7 +23,7 @@ public class DelegateIncludeUnknownMethods {
     boolean containsAll(Object o1, Object o2);
   }
 
-  <warning descr="Cannot find method in target type: 'containsAll'"><warning descr="Cannot find methods in target type: 'clearXYZ and abcdXYZ'">@Delegate(types = SomeCollection.class, excludes = SomeExcludeCollection.class)</warning></warning>
+  <warning descr="Cannot find method in target type: 'containsAll'"><warning descr="Cannot find methods in target type: 'clearXYZ' and 'abcdXYZ'">@Delegate(types = SomeCollection.class, excludes = SomeExcludeCollection.class)</warning></warning>
   private final Collection<String> collection = new ArrayList<String>();
 
   public static void main(String[] args) {

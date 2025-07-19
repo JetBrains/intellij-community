@@ -90,7 +90,7 @@ public final class DelegateHandler {
 
         if (!invalidMethodSignature.isEmpty()) {
           final String invalidMethodNames =
-            invalidMethodSignature.stream().map(MethodSignatureBackedByPsiMethod::getName).collect(NlsMessages.joiningAnd());
+            invalidMethodSignature.stream().map(MethodSignatureBackedByPsiMethod::getName).map(n-> "'%s'".formatted(n)).collect(NlsMessages.joiningAnd());
 
           @SuppressWarnings("unchecked")
           final Supplier<LocalQuickFix>[] fixes = invalidMethodSignature.stream().map(MethodSignatureBackedByPsiMethod::getMethod)
