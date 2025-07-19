@@ -60,7 +60,7 @@ internal suspend fun waitSuspending(
   subjectOfWaiting: String,
   timeout: Duration,
   delay: Duration = 500.milliseconds,
-  failMessageProducer: (() -> String),
+  onFailure: (() -> Unit),
   checker: suspend () -> Boolean,
 ): Boolean {
   return runCatching {
@@ -73,10 +73,9 @@ internal suspend fun waitSuspending(
             delay(delay)
           }
         },
-        failMessageProducer = { failMessageProducer() }
       )
     }
   }
-    .onFailure { LOG.error(it.message) }
+    .onFailure { onFailure.invoke() }
     .isSuccess
 }

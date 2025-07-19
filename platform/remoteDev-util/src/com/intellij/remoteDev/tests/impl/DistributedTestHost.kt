@@ -194,7 +194,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
               return withContext(providedCoroutineContext) {
                 assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when test method starts" }
                 if (!app.isHeadlessEnvironment && isNotRdHost && (requestFocusBeforeStart ?: isCurrentThreadEdt())) {
-                  requestFocus(silent = false)
+                  requestFocus()
                 }
 
                 assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when after request focus" }
@@ -316,8 +316,8 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
         }
 
-        session.requestFocus.setSuspend(Dispatchers.EDT + ModalityState.any().asContextElement()) { _, silent ->
-          requestFocus(silent)
+        session.requestFocus.setSuspend(Dispatchers.EDT + ModalityState.any().asContextElement()) { _, reportFailures ->
+          requestFocus(reportFailures)
         }
 
         session.makeScreenshot.setSuspend(sessionBgtDispatcher) { _, fileName ->
@@ -348,7 +348,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
   }
 
 
-  private suspend fun requestFocus(silent: Boolean): Boolean {
+  private suspend fun requestFocus(reportFailures: Boolean = true): Boolean {
     LOG.info("Requesting focus")
 
     val projects = ProjectManagerEx.getOpenProjects()
@@ -360,14 +360,14 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
     val currentProject = projects.singleOrNull()
     return if (currentProject == null) {
-      requestFocusNoProject(silent)
+      requestFocusNoProject(reportFailures)
     }
     else {
-      requestFocusWithProjectIfNeeded(currentProject, silent)
+      requestFocusWithProjectIfNeeded(currentProject, reportFailures)
     }
   }
 
-  private suspend fun requestFocusWithProjectIfNeeded(project: Project, silent: Boolean): Boolean {
+  private suspend fun requestFocusWithProjectIfNeeded(project: Project, reportFailures: Boolean): Boolean {
     val projectIdeFrame = WindowManager.getInstance().getFrame(project)
     if (projectIdeFrame == null) {
       LOG.info("No frame yet, nothing to focus")
@@ -381,12 +381,12 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         true
       }
       else {
-        requestFocusWithProject(projectIdeFrame, project, frameName, silent)
+        requestFocusWithProject(projectIdeFrame, project, frameName, reportFailures)
       }
     }
   }
 
-  private suspend fun requestFocusWithProject(projectIdeFrame: JFrame, project: Project, frameName: String, silent: Boolean): Boolean {
+  private suspend fun requestFocusWithProject(projectIdeFrame: JFrame, project: Project, frameName: String, reportFailures: Boolean): Boolean {
     val logPrefix = "Requesting project focus for '$frameName'"
     LOG.info(logPrefix)
 
@@ -394,19 +394,23 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive = true)
 
     return withContext(Dispatchers.IO) {
-      waitSuspending(logPrefix, timeout = 15.seconds, failMessageProducer = {
-        if (silent) ""
-        else "Couldn't wait for focus," +
-             "component isFocused=" + projectIdeFrame.isFocused + " isFocusAncestor=" + projectIdeFrame.isFocusAncestor() +
-             "\n" + getFocusStateDescription()
-
+      waitSuspending(logPrefix, timeout = 10.seconds, onFailure = {
+        val message = "Couldn't wait for focus," +
+                      "component isFocused=" + projectIdeFrame.isFocused + " isFocusAncestor=" + projectIdeFrame.isFocusAncestor() +
+                      "\n" + getFocusStateDescription()
+        if (reportFailures) {
+          LOG.error(message)
+        }
+        else {
+          LOG.info(message)
+        }
       }) {
         projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused
       }
     }
   }
 
-  private suspend fun requestFocusNoProject(silent: Boolean): Boolean {
+  private suspend fun requestFocusNoProject(reportFailures: Boolean): Boolean {
     val logPrefix = "Request for focus (no opened project case)"
     LOG.info(logPrefix)
 
@@ -418,9 +422,14 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
       AppIcon.getInstance().requestFocus(it)
     }
     return withContext(Dispatchers.IO) {
-      waitSuspending(logPrefix, timeout = 15.seconds, failMessageProducer = {
-        if (silent) ""
-        else "Couldn't wait for focus" + "\n" + getFocusStateDescription()
+      waitSuspending(logPrefix, timeout = 10.seconds, onFailure = {
+        val message = "Couldn't wait for focus" + "\n" + getFocusStateDescription()
+        if (reportFailures) {
+          LOG.error(message)
+        }
+        else {
+          LOG.info(message)
+        }
       }) {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner != null
       }
