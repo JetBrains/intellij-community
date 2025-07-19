@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.GutterMarkPreprocessor
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.ui.ClickListener
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.event.MouseEvent
 import java.util.*
@@ -24,7 +25,8 @@ internal fun showClientIdGutterIconRenderer(project: Project): Boolean {
   return LineStatusClientIdRenderer.getInstance(project) != null
 }
 
-internal fun createClientIdGutterIconRenderer(project: Project, clientIds: List<ClientId>): GutterIconRenderer? {
+@ApiStatus.Internal
+fun createClientIdGutterIconRenderer(project: Project, clientIds: List<ClientId>): GutterIconRenderer? {
   if (clientIds.isEmpty()) return null
   val renderer = LineStatusClientIdRenderer.getInstance(project) ?: return null
   return ClientIdGutterIconRenderer(clientIds, renderer)
