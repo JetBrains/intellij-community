@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.openapi.vfs.writeText
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -15,6 +16,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScri
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.getSettingsScriptName
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.settingsScript
+import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWrapper
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfiguration
 import java.nio.file.Path
 import kotlin.io.path.writeText
@@ -39,6 +41,11 @@ fun VirtualFile.createBuildFile(
   return findOrCreateFile(getBuildScriptName(gradleDsl)).apply {
     writeText(buildScript(gradleVersion, gradleDsl, configure))
   }
+}
+
+@RequiresWriteLock
+fun VirtualFile.createGradleWrapper(gradleVersion: GradleVersion) {
+  generateGradleWrapper(this, gradleVersion)
 }
 
 fun TestFilesConfiguration.withSettingsFile(
@@ -74,6 +81,16 @@ fun TestFilesConfiguration.withBuildFile(
   withFile(relativeModulePath + "/" + getBuildScriptName(gradleDsl), content)
 }
 
+fun TestFilesConfiguration.withGradleWrapper(
+  gradleVersion: GradleVersion,
+  relativeModulePath: String = ".",
+) {
+  withFiles {
+    it.findOrCreateDirectory(relativeModulePath)
+      .createGradleWrapper(gradleVersion)
+  }
+}
+
 fun Path.createSettingsFile(
   gradleVersion: GradleVersion,
   gradleDsl: GradleDsl = GradleDsl.KOTLIN,
@@ -92,4 +109,8 @@ fun Path.createBuildFile(
   return findOrCreateFile(getBuildScriptName(gradleDsl)).apply {
     writeText(buildScript(gradleVersion, gradleDsl, configure))
   }
+}
+
+fun Path.createGradleWrapper(gradleVersion: GradleVersion) {
+  generateGradleWrapper(this, gradleVersion)
 }

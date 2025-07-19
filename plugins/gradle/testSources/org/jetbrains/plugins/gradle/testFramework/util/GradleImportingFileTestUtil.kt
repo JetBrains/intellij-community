@@ -43,3 +43,12 @@ fun GradleImportingTestCase.createBuildFile(
       }
   }
 }
+
+fun GradleImportingTestCase.createGradleWrapper(
+  relativeModulePath: String = ".",
+) {
+  runWriteActionAndGet {
+    projectRoot.findOrCreateDirectory(relativeModulePath)
+      .createGradleWrapper(currentGradleVersion)
+  }
+}

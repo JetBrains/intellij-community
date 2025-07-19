@@ -1,19 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing.syncAction
 
-import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.use
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions.assertContentRoots
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
-import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWrapper
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.createGradleWrapper
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.junit.Test
 
@@ -86,7 +86,7 @@ class GradleProjectRootSyncContributorTest : GradlePhasedSyncTestCase() {
       createBuildFile("../linked-project") {
         withJavaPlugin()
       }
-      generateGradleWrapper(linkedProjectRoot, currentGradleVersion)
+      createGradleWrapper("../linked-project")
 
       val settings = GradleSettings.getInstance(project)
       val projectSettings = GradleProjectSettings(linkedProjectRoot.toCanonicalPath())

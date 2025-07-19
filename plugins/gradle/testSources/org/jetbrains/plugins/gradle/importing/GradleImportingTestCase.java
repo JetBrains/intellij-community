@@ -254,7 +254,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   @NotNull
-  protected GradleVersion getCurrentGradleVersion() {
+  public GradleVersion getCurrentGradleVersion() {
     return GradleVersion.version(gradleVersion);
   }
 
@@ -522,11 +522,10 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
 
     myProjectSettings.setDistributionType(DistributionType.DEFAULT_WRAPPED);
 
-    WriteAction.runAndWait(() -> GradleWrapperUtil.generateGradleWrapper(myProjectRoot.toNioPath(), getCurrentGradleVersion()));
+    GradleWrapperUtil.generateGradleWrapper(myProjectRoot, getCurrentGradleVersion());
 
-    String projectPath = getProjectPath();
-    WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(projectPath);
-    PathAssembler pathAssembler = new PathAssembler(StartParameter.DEFAULT_GRADLE_USER_HOME, new File(projectPath));
+    WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(myProjectRoot.toNioPath());
+    PathAssembler pathAssembler = new PathAssembler(StartParameter.DEFAULT_GRADLE_USER_HOME, new File(getProjectPath()));
     PathAssembler.LocalDistribution localDistribution = pathAssembler.getDistribution(wrapperConfiguration);
 
     File zip = localDistribution.getZipFile();

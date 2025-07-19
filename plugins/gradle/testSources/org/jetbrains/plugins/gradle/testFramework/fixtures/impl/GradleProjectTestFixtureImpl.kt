@@ -22,11 +22,11 @@ import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWrapper
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
 import org.jetbrains.plugins.gradle.testFramework.util.awaitGradleOpenProjectConfiguration
 import org.jetbrains.plugins.gradle.testFramework.util.refreshAndAwait
+import org.jetbrains.plugins.gradle.testFramework.util.withGradleWrapper
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 import org.jetbrains.plugins.gradle.util.whenExternalSystemTaskFinished
@@ -72,7 +72,7 @@ internal class GradleProjectTestFixtureImpl(
       fileFixture = FileTestFixtureImpl("GradleTestFixture/$gradleVersion/$projectName") {
         configureProject()
         excludeFiles(".gradle", "build")
-        withFiles { generateGradleWrapper(it.toNioPath(), gradleVersion) }
+        withGradleWrapper(gradleVersion)
         withFiles { createProjectCaches(it) }
       }
       fileFixture.setUp()
