@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
@@ -158,6 +159,14 @@ object LessonUtil {
     }
   }
 
+  fun TaskRuntimeContext.selectNeededItem(isTotalItem: (Any) -> Boolean): Boolean? {
+    return (previous.ui as? JList<*>)?.let { ui ->
+      if (!ui.isShowing) return false
+      val selectedIndex = ui.selectedIndex
+      selectedIndex != -1 && isTotalItem(ui.model.getElementAt(selectedIndex))
+    }
+  }
+
   fun TaskRuntimeContext.checkPositionOfEditor(sample: LessonSample,
                                                checkCaret: TaskRuntimeContext.(LessonSample) -> Boolean = { checkCaretValid(it) }
   ): TaskContext.RestoreNotification? {
@@ -236,6 +245,10 @@ object LessonUtil {
 
   fun TaskRuntimeContext.checkInsideSearchEverywhere(): Boolean {
     return UIUtil.getParentOfType(SearchEverywhereUI::class.java, focusOwner) != null
+  }
+
+  fun isMainEditorComponent(component: Component?): Boolean {
+    return component is EditorComponentImpl && component.editor.editorKind == EditorKind.MAIN_EDITOR
   }
 
   fun findItem(ui: JList<*>, checkList: (item: Any) -> Boolean): Int? {
