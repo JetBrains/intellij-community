@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.*
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions.Companion.isLiteralValue
@@ -59,8 +61,13 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
         }
     }
 
+    override fun getApplicableRanges(element: KtQualifiedExpression): List<TextRange> =
+        ApplicabilityRange.single(element) {
+            CallChainExpressions.from(element)?.firstCalleeExpression
+        }
+
     override fun isApplicableByPsi(element: KtQualifiedExpression): Boolean {
-        val callChainExpressions = CallChainExpressions.Companion.from(element)
+        val callChainExpressions = CallChainExpressions.from(element)
         if (callChainExpressions == null) return false
         // Do not apply for lambdas with return inside
         if (callChainExpressions.firstCallExpression.lambdaArguments.singleOrNull()?.anyDescendantOfType<KtReturnExpression>() == true)
@@ -70,7 +77,7 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
     }
 
     override fun KaSession.prepareContext(element: KtQualifiedExpression): CallChainConversion? {
-        val callChainExpressions = CallChainExpressions.Companion.from(element) ?: return null
+        val callChainExpressions = CallChainExpressions.from(element) ?: return null
         val conversionId = ConversionId(callChainExpressions.firstCalleeExpression, callChainExpressions.secondCalleeExpression)
         val candidateConversions = getPotentialConversions(element, conversionId).ifEmpty { return null }
 
@@ -151,7 +158,7 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
         if (!conversion.replacement.startsWith(CallChainConversions.JOIN_TO)) return false
         val lambdaArgSignature = firstCall.lastFunctionalArgumentSignatureOrNull() ?: return false
         val lambdaType = lambdaArgSignature.returnType as? KaFunctionType ?: return false
-        return !lambdaType.returnType.isSubtypeOf(ClassId.Companion.topLevel(StandardNames.FqNames.charSequence.toSafe()))
+        return !lambdaType.returnType.isSubtypeOf(ClassId.topLevel(StandardNames.FqNames.charSequence.toSafe()))
     }
 
     /**

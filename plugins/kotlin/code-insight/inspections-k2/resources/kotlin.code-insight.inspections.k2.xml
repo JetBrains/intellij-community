@@ -576,7 +576,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="WARNING"
+                     level="WEAK WARNING"
                      key="inspection.simplifiable.call.chain.display.name" bundle="messages.KotlinBundle"
                      />
 
