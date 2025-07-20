@@ -9,6 +9,7 @@ import com.intellij.mcpserver.*
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.toolsets.Constants
+import com.intellij.mcpserver.toolsets.Constants.MAX_USAGE_TEXT_CHARS
 import com.intellij.mcpserver.util.*
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.writeCommandAction
@@ -240,9 +241,9 @@ class TextToolset : McpToolset {
       val startLineStartOffset = document.getLineStartOffset(startLineNumber)
       val endLineNumber = document.getLineNumber(textRange.endOffset)
       val endLineEndOffset = document.getLineEndOffset(endLineNumber)
-      val textBeforeOccurrence = document.getText(TextRange(startLineStartOffset, textRange.startOffset))
-      val textInner = document.getText(TextRange(textRange.startOffset, textRange.endOffset))
-      val textAfterOccurrence = document.getText(TextRange(textRange.endOffset, endLineEndOffset))
+      val textBeforeOccurrence = document.getText(TextRange(startLineStartOffset, textRange.startOffset)).take(MAX_USAGE_TEXT_CHARS)
+      val textInner = document.getText(TextRange(textRange.startOffset, textRange.endOffset)).take(MAX_USAGE_TEXT_CHARS)
+      val textAfterOccurrence = document.getText(TextRange(textRange.endOffset, endLineEndOffset)).take(MAX_USAGE_TEXT_CHARS)
       UsageInfoEntry(projectDir.relativizeIfPossible(file), startLineNumber + 1, "$textBeforeOccurrence||$textInner||$textAfterOccurrence")
     }
 
