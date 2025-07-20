@@ -23,6 +23,7 @@ import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.GithubIssue;
 import org.jetbrains.plugins.github.api.data.GithubIssueBase;
 import org.jetbrains.plugins.github.api.data.GithubIssueCommentWithHtml;
+import org.jetbrains.plugins.github.api.data.GithubIssueLabel;
 import org.jetbrains.plugins.github.api.data.GithubIssueState;
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
@@ -203,7 +204,21 @@ final class GithubRepository extends BaseRepository {
 
       @Override
       public @NotNull TaskType getType() {
-        return TaskType.BUG;
+        List<GithubIssueLabel> labels = issue.getLabels();
+        if (labels == null || labels.isEmpty()) return TaskType.OTHER;
+
+        // Map GitHub's default labels to TaskType
+        for (GithubIssueLabel label : labels) {
+          String name = label.getName();
+          switch (name) {
+            case "bug":
+              return TaskType.BUG;
+            case "enhancement":
+              return TaskType.FEATURE;
+          }
+        }
+
+        return TaskType.OTHER;
       }
 
       @Override
