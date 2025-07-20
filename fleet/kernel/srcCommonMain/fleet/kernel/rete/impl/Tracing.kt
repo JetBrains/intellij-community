@@ -9,6 +9,7 @@ import fleet.kernel.rete.Query
 import fleet.kernel.rete.RevalidationPort
 import fleet.util.logging.KLogger
 import fleet.fastutil.longs.LongSet
+import fleet.fastutil.longs.toLongArray
 import fleet.kernel.rete.Many
 import kotlin.coroutines.CoroutineContext
 
@@ -52,12 +53,12 @@ internal fun <T> Query<*, T>.tracing(trackingKey: QueryTracingKey?): Query<*, T>
   }
 
 internal fun RevalidationPort.tracing(patterns: LongSet, tracingKey: QueryTracingKey?): RevalidationPort = let { port ->
-  tracingKey?.logger?.info { "${tracingKey}: subscribing revalidation port $port with patterns $patterns" }
+  tracingKey?.logger?.info { "${tracingKey}: subscribing revalidation port $port with patterns ${patterns.toLongArray().toList()}" }
   when (tracingKey) {
     null -> port
     else -> RevalidationPort {
       port.revalidate().also { newPatterns ->
-        tracingKey.logger.info { "${tracingKey}: propagated revalidation towards the port $port, newPatterns: $newPatterns" }
+        tracingKey.logger.info { "${tracingKey}: propagated revalidation towards the port $port, newPatterns: ${newPatterns.toLongArray().toList()}" }
       }
     }
   }
