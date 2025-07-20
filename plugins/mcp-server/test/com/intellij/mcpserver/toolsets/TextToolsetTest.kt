@@ -3,13 +3,18 @@
 package com.intellij.mcpserver.toolsets
 
 import com.intellij.mcpserver.McpToolsetTestBase
+import com.intellij.mcpserver.toolsets.Constants.MAX_USAGE_TEXT_CHARS
 import com.intellij.mcpserver.toolsets.general.TextToolset
+import com.intellij.testFramework.junit5.fixture.virtualFileFixture
 import io.kotest.common.runBlocking
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import org.junit.jupiter.api.Test
+import kotlin.test.assertTrue
 
 class TextToolsetTest : McpToolsetTestBase() {
+  private val longContentFixture = sourceRootFixture.virtualFileFixture("long_content.txt", "x".repeat(1001) + "SEARCH_TARGET" + "y".repeat(1001))
+
   @Test
   fun get_file_text_by_path() = runBlocking {
     testMcpTool(
@@ -31,5 +36,17 @@ class TextToolsetTest : McpToolsetTestBase() {
       },
       "ok"
     )
+  }
+
+  @Test
+  fun search_in_files_by_text_truncates_long_lines() = runBlocking {
+    testMcpTool(
+      TextToolset::search_in_files_by_text.name,
+      buildJsonObject {
+        put("searchText", JsonPrimitive("SEARCH_TARGET"))
+      }
+    ) { actualResult ->
+      assertTrue { actualResult.textContent.text?.contains("x".repeat(MAX_USAGE_TEXT_CHARS) + "||SEARCH_TARGET||" + "y".repeat(MAX_USAGE_TEXT_CHARS)) ?: false }
+    }
   }
 }
