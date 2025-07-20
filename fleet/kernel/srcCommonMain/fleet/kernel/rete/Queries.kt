@@ -67,15 +67,19 @@ fun <T> Query<Many, T>.singleOrNone(msg: ((List<T>) -> String)? = null): Query<M
   let { source ->
     Query {
       val none = Any()
-      var value: Any? = none
-      source.producer().transform { token, emit ->
-        when {
-          token.added && value != none -> error("More than one match, ${listOf(value, token.value).let { msg?.invoke(it as List<T>) ?: "values: ${it}" }}")
-          token.added && value == none -> value = token.value as Any?
-          !token.added && value == none -> error("Nothing to retract")
-          !token.added && value != none -> value = none
+      val producer = source.producer()
+      Producer { emit ->
+        val marker = Any()
+        var value: Any? = none
+        producer.collect { token ->
+          when {
+            token.added && value != none -> error("More than one match, ${listOf(value, token.value).let { msg?.invoke(it as List<T>) ?: "values: ${it}" }}")
+            token.added && value == none -> value = token.value as Any?
+            !token.added && value == none -> error("Nothing to retract")
+            !token.added && value != none -> value = none
+          }
+          emit(token)
         }
-        emit(token)
       }
     }
   }
