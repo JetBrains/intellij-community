@@ -55,19 +55,7 @@ class SearchEverywhereMlSettingsService : SerializablePersistentStateComponent<S
   @Suppress("unused")
   var enableActionsTabMlRanking: Boolean
     set(value) {
-      updateState {
-        if (value) {
-          val state = when (SearchEverywhereTab.Actions.currentExperimentType) {
-            SearchEverywhereMlExperiment.ExperimentType.ExperimentalModel -> RankingState.RANKING_WITH_EXPERIMENTAL_MODEL
-            else -> RankingState.RANKING_WITH_DEFAULT_MODEL
-          }
-          it.copy(actionsRankingState = state)
-        }
-        else {
-          // If the user unchecks the ML ranking option, we change the state to RANKING_DISABLED_BY_USER
-          it.copy(actionsRankingState = RankingState.RANKING_DISABLED_BY_USER)
-        }
-      }
+      updateStateByUser(SearchEverywhereTab.Actions, value)
     }
     get() = state.actionsRankingState.isMlRankingEnabled ?: SearchEverywhereTab.Actions.isMlRankingEnabledByDefault
 
@@ -80,19 +68,7 @@ class SearchEverywhereMlSettingsService : SerializablePersistentStateComponent<S
   @Suppress("unused")
   var enableFilesTabMlRanking: Boolean
     set(value) {
-      updateState {
-        if (value) {
-          val state = when (SearchEverywhereTab.Files.currentExperimentType) {
-            SearchEverywhereMlExperiment.ExperimentType.ExperimentalModel -> RankingState.RANKING_WITH_EXPERIMENTAL_MODEL
-            else -> RankingState.RANKING_WITH_DEFAULT_MODEL
-          }
-          it.copy(filesRankingState = state)
-        }
-        else {
-          // If the user unchecks the ML ranking option, we change the state to RANKING_DISABLED_BY_USER
-          it.copy(filesRankingState = RankingState.RANKING_DISABLED_BY_USER)
-        }
-      }
+      updateStateByUser(SearchEverywhereTab.Files, value)
     }
     get() = state.filesRankingState.isMlRankingEnabled ?: SearchEverywhereTab.Files.isMlRankingEnabledByDefault
 
@@ -105,19 +81,7 @@ class SearchEverywhereMlSettingsService : SerializablePersistentStateComponent<S
   @Suppress("unused")
   var enableClassesTabMlRanking: Boolean
     set(value) {
-      updateState {
-        if (value) {
-          val state = when (SearchEverywhereTab.Classes.currentExperimentType) {
-            SearchEverywhereMlExperiment.ExperimentType.ExperimentalModel -> RankingState.RANKING_WITH_EXPERIMENTAL_MODEL
-            else -> RankingState.RANKING_WITH_DEFAULT_MODEL
-          }
-          it.copy(classesRankingState = state)
-        }
-        else {
-          // If the user unchecks the ML ranking option, we change the state to RANKING_DISABLED_BY_USER
-          it.copy(classesRankingState = RankingState.RANKING_DISABLED_BY_USER)
-        }
-      }
+      updateStateByUser(SearchEverywhereTab.Classes, value)
     }
     get() = state.classesRankingState.isMlRankingEnabled ?: SearchEverywhereTab.Classes.isMlRankingEnabledByDefault
 
@@ -130,19 +94,7 @@ class SearchEverywhereMlSettingsService : SerializablePersistentStateComponent<S
   @Suppress("unused")
   var enableAllTabMlRanking: Boolean
     set(value) {
-      updateState {
-        if (value) {
-          val state = when (SearchEverywhereTab.All.currentExperimentType) {
-            SearchEverywhereMlExperiment.ExperimentType.ExperimentalModel -> RankingState.RANKING_WITH_EXPERIMENTAL_MODEL
-            else -> RankingState.RANKING_WITH_DEFAULT_MODEL
-          }
-          it.copy(allRankingState = state)
-        }
-        else {
-          // If the user unchecks the ML ranking option, we change the state to RANKING_DISABLED_BY_USER
-          it.copy(allRankingState = RankingState.RANKING_DISABLED_BY_USER)
-        }
-      }
+      updateStateByUser(SearchEverywhereTab.All, value)
     }
     get() = state.allRankingState.isMlRankingEnabled ?: SearchEverywhereTab.All.isMlRankingEnabledByDefault
 
@@ -151,6 +103,26 @@ class SearchEverywhereMlSettingsService : SerializablePersistentStateComponent<S
 
   @Suppress("unused")
   fun isEnableAllTabMlRankingVisible(): Boolean = isSettingVisibleForTab(SearchEverywhereTab.All)
+
+  /**
+   * Updates the ranking state for the specified tab based on user input.
+   *
+   * @param tab The tab for which the ranking state is to be updated.
+   * @param newValue A boolean indicating whether to enable (true) or disable (false) ML ranking for the specified tab.
+   */
+  private fun updateStateByUser(tab: SearchEverywhereTab.TabWithMlRanking, newValue: Boolean) {
+    updateState {
+      if (newValue) {
+        val state = when (tab.currentExperimentType) {
+          SearchEverywhereMlExperiment.ExperimentType.ExperimentalModel -> RankingState.RANKING_WITH_EXPERIMENTAL_MODEL
+          else -> RankingState.RANKING_WITH_DEFAULT_MODEL
+        }
+        it.withTabState(tab, state)
+      } else {
+        it.withTabState(tab, RankingState.RANKING_DISABLED_BY_USER)
+      }
+    }
+  }
 
   /**
    * Determines whether the ML ranking setting should be enabled (interactive) for a tab.
