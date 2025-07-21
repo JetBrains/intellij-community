@@ -7,7 +7,6 @@ import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ModuleSdkData
-import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
@@ -182,34 +181,40 @@ private fun KotlinMppGradleProjectResolver.Context.initializeModuleData() {
             val path = ExternalSystemApiUtil.toCanonicalPath(target.jar!!.archiveFile!!.absolutePath)
             val allSourceSetOfCompilation = target.jar!!.compilations.flatMap { it.allSourceSets }
 
-            allSourceSetOfCompilation.forEach { sourceSet ->
-                resolverCtx.artifactsMap.storeModuleId(
-                    artifactPath = path,
-                    moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx),
-                    /*
-                    Using 'kotlin' as moduleId to mark the artifact as being owned by the Kotlin plugin.
-                    As of writing this comment, the exact moduleId is not relevant; there won't be code that will query
-                    artifacts with this ownerId. This acts more as 'tinting' this artifact to be owned by someone else than the
-                    platform. This will disable some special logic from the platform that is mostly relevant for pure java projects.
 
-                    (e.g., retaining some artifacts despite being resolved to _some_ source modules)
-                     */
-                    ownerId = "kotlin"
-                )
-            }
+            allSourceSetOfCompilation
+                .sortedWith(sourceSetComparator(mppModel))
+                .forEach { sourceSet ->
+                    resolverCtx.artifactsMap.storeModuleId(
+                        artifactPath = path,
+                        moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx),
+                        /*
+                        Using 'kotlin' as moduleId to mark the artifact as being owned by the Kotlin plugin.
+                        As of writing this comment, the exact moduleId is not relevant; there won't be code that will query
+                        artifacts with this ownerId. This acts more as 'tinting' this artifact to be owned by someone else than the
+                        platform. This will disable some special logic from the platform that is mostly relevant for pure java projects.
+
+                        (e.g., retaining some artifacts despite being resolved to _some_ source modules)
+                         */
+                        ownerId = "kotlin"
+                    )
+                }
         }
 
         // Collect compilation output archives
         mppModel.targets.flatMap { it.compilations }.forEach { compilation ->
             val archiveFile = compilation.archiveFile ?: return@forEach
             val path = ExternalSystemApiUtil.toCanonicalPath(archiveFile.absolutePath)
-            compilation.allSourceSets.forEach { sourceSet ->
-                resolverCtx.artifactsMap.storeModuleId(
-                    artifactPath = path,
-                    moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx),
-                    ownerId = "kotlin"
-                )
-            }
+
+            compilation.allSourceSets
+                .sortedWith(sourceSetComparator(mppModel))
+                .forEach { sourceSet ->
+                    resolverCtx.artifactsMap.storeModuleId(
+                        artifactPath = path,
+                        moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx),
+                        ownerId = "kotlin"
+                    )
+                }
         }
     }
 
@@ -232,6 +237,19 @@ private fun KotlinMppGradleProjectResolver.Context.initializeModuleData() {
         }
     }
 }
+
+private fun sourceSetComparator(mppModel: KotlinMPPGradleModel): Comparator<KotlinSourceSet> =
+    // Sort source sets: platform-specific (most dependent) first, then common (less dependent)
+    Comparator<KotlinSourceSet> { a, b ->
+        // If A depends on B, then B should come after A
+        when {
+            a.isDependsOn(mppModel, b) -> -1
+            b.isDependsOn(mppModel, a) -> 1
+            else -> 0
+        }
+    }
+
+
 
 private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataNodes() {
     val mainModuleData = moduleDataNode.data
