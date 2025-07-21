@@ -8,6 +8,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <lineIndentProvider implementation="org.jetbrains.kotlin.idea.formatter.KotlinLineIndentProvider"/>
 
+    <moveLeftRightHandler language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinMoveLeftRightHandler"/>
+
     <statementUpDownMover
             id="ktExpression"
             order="before declaration"
