@@ -117,10 +117,9 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
    *
    * [addBreakpoint] is not called in parallel, to have only one source of truth and avoid races.
    */
-  override suspend fun awaitBreakpointCreation(breakpointDto: XBreakpointDto): XBreakpointProxy? {
-    return findOrAwaitElement(breakpointsChangedWithReplay, logMessage = breakpointDto.id.toString()) {
-      val breakpointId = breakpointDto.id
-      val currentBreakpoint = breakpoints[breakpointDto.id]
+  override suspend fun awaitBreakpointCreation(breakpointId: XBreakpointId): XBreakpointProxy? {
+    return findOrAwaitElement(breakpointsChangedWithReplay, logMessage = breakpointId.toString()) {
+      val currentBreakpoint = breakpoints[breakpointId]
       if (currentBreakpoint != null) {
         Ref.create(currentBreakpoint)
       }

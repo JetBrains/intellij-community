@@ -88,7 +88,7 @@ sealed interface XToggleLineBreakpointResponse
 @ApiStatus.Internal
 @Serializable
 data class XLineBreakpointInstalledResponse(
-  val breakpoint: XBreakpointDto,
+  val breakpointId: XBreakpointId,
 ) : XToggleLineBreakpointResponse
 
 @ApiStatus.Internal
@@ -132,5 +132,5 @@ data class XLineBreakpointVariantDto(
 @Serializable
 data class VariantSelectedResponse(
   val selectedVariantIndex: Int,
-  @Serializable(with = SendChannelSerializer::class) val breakpointCallback: SendChannel<XBreakpointDto>,
+  @Serializable(with = SendChannelSerializer::class) val breakpointCallback: SendChannel<XBreakpointId>,
 )

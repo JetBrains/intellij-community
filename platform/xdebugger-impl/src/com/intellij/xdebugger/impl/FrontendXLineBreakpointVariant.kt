@@ -13,6 +13,7 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
+import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeId
 import fleet.util.channels.use
 import kotlinx.coroutines.CoroutineScope
@@ -99,7 +100,7 @@ internal fun computeBreakpointProxy(
             result.complete(null)
           }
           is XLineBreakpointInstalledResponse -> {
-            result.complete(createBreakpoint(project, response.breakpoint))
+            result.complete(createBreakpoint(project, response.breakpointId))
           }
           is XLineBreakpointMultipleVariantResponse -> {
             result.handle { _, _ ->
@@ -132,13 +133,13 @@ private fun responseWithVariantChoice(
 ) {
   project.service<FrontendXLineBreakpointVariantService>().cs.launch {
     result.compute {
-      val breakpointCallback = Channel<XBreakpointDto>()
+      val breakpointCallback = Channel<XBreakpointId>()
       selectionCallback.use {
         it.send(VariantSelectedResponse(selectedIndex, breakpointCallback))
       }
       try {
-        val breakpointDto = breakpointCallback.receive()
-        createBreakpoint(project, breakpointDto)
+        val breakpointId = breakpointCallback.receive()
+        createBreakpoint(project, breakpointId)
       }
       catch (_: ClosedReceiveChannelException) {
         null
@@ -149,10 +150,10 @@ private fun responseWithVariantChoice(
 
 private suspend fun createBreakpoint(
   project: Project,
-  breakpointDto: XBreakpointDto,
+  breakpointId: XBreakpointId,
 ): XLineBreakpointProxy? {
   val breakpointManagerProxy = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
-  return breakpointManagerProxy.awaitBreakpointCreation(breakpointDto) as? XLineBreakpointProxy
+  return breakpointManagerProxy.awaitBreakpointCreation(breakpointId) as? XLineBreakpointProxy
 }
 
 private class FrontendXLineBreakpointVariantImpl(private val dto: XLineBreakpointVariantDto) : FrontendXLineBreakpointVariant {
