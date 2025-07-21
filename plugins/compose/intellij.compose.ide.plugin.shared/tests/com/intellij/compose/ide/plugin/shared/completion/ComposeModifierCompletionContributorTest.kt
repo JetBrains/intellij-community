@@ -30,9 +30,11 @@ import io.kotest.matchers.collections.shouldContainInOrder
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
+import io.mockk.clearAllMocks
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.unmockkAll
 import io.mockk.verifyAll
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -573,5 +575,18 @@ abstract class ComposeModifierCompletionContributorTest : KotlinLightCodeInsight
   fun completeWith(lookupString: String) {
     myFixture.lookup.currentItem = myFixture.lookupElements?.find { it.lookupString.contains(lookupString) }
     myFixture.finishLookup('\n')
+  }
+
+  override fun tearDown() {
+    try {
+      clearAllMocks()
+      unmockkAll()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 }
