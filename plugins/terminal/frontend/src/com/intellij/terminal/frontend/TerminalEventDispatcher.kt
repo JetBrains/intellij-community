@@ -7,6 +7,8 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
@@ -77,15 +79,21 @@ internal abstract class TerminalEventDispatcher(
   }
 
   private fun dispatchKeyEvent(e: TimedKeyEvent) {
+    LOG.trace { "Key event received: ${e.original}" }
+
     if (!skipAction(e.original)) {
       if (e.original.id != KeyEvent.KEY_TYPED || !ignoreNextKeyTypedEvent) {
         ignoreNextKeyTypedEvent = false
         handleKeyEvent(e)
       }
+      else {
+        LOG.trace { "Key event skipped (key typed ignored): ${e.original}" }
+      }
     }
     else {
       // KeyEvent will be handled by action system, so we need to remember that the next KeyTyped event is not needed
       ignoreNextKeyTypedEvent = true
+      LOG.trace { "Key event skipped (there is an action for it): ${e.original}" }
     }
   }
 
@@ -229,6 +237,8 @@ internal abstract class TerminalEventDispatcher(
       "Terminal.DownCommandCompletion",
       "Terminal.InsertInlineCompletion",
     )
+
+    private val LOG = logger<TerminalEventDispatcher>()
   }
 }
 

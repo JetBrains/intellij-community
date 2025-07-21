@@ -1,6 +1,7 @@
 package com.intellij.terminal.backend
 
 import com.intellij.idea.AppMode
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.toTermSize
 import com.jediterm.terminal.RequestOrigin
@@ -49,6 +50,8 @@ private suspend fun handleInputEvents(channel: ReceiveChannel<TerminalInputEvent
 }
 
 private fun handleInputEvent(event: TerminalInputEvent, services: JediTermServices) {
+  BackendTerminalSession.LOG.trace { "Input event received: $event" }
+
   val terminalStarter = services.terminalStarter
 
   TerminalActivityTracker.getInstance().registerActivity()

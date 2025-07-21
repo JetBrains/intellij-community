@@ -54,6 +54,10 @@ data class TerminalWriteBytesEvent(val bytes: ByteArray) : TerminalInputEventBas
   override fun hashCode(): Int {
     return bytes.contentHashCode()
   }
+
+  override fun toString(): String {
+    return "TerminalWriteBytesEvent(bytes=${bytes.contentToString()})"
+  }
 }
 
 @ApiStatus.Internal

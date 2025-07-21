@@ -1,5 +1,7 @@
 package com.intellij.terminal.frontend
 
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
@@ -15,11 +17,14 @@ internal class TerminalTypeAhead(
   
   companion object {
     val KEY: Key<TerminalTypeAhead> = Key.create("TerminalTypeAhead")
+
+    private val LOG = logger<TerminalTypeAhead>()
   }
 
   fun stringTyped(string: String) {
     if (isDisabled()) return
     outputModel.insertAtCursor(string)
+    LOG.trace { "String typed prediction inserted: '$string'" }
   }
   
   fun backspace() {
@@ -27,6 +32,7 @@ internal class TerminalTypeAhead(
     val commandStartOffset = blocksModel.blocks.lastOrNull()?.commandStartOffset
     if (commandStartOffset != null && outputModel.cursorOffsetState.value > commandStartOffset) {
       outputModel.backspace()
+      LOG.trace { "Backspace prediction applied" }
     }
   }
 

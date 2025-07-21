@@ -10,6 +10,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.LookupTypedHandler
 import com.intellij.ide.DataManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
@@ -57,6 +58,8 @@ internal open class TerminalEventsHandlerImpl(
     get() = editor.getUserData(TerminalVfsSynchronizer.KEY)
 
   override fun keyTyped(e: TimedKeyEvent) {
+    LOG.trace { "Key typed event received: ${e.original}" }
+
     updateLookupOnTyping(e.original.keyChar)
     val selectionModel = editor.selectionModel
     if (selectionModel.hasSelection()) {
@@ -65,12 +68,14 @@ internal open class TerminalEventsHandlerImpl(
 
     if (ignoreNextKeyTypedEvent) {
       e.original.consume()
+      LOG.trace { "Key event ignored: ${e.original}" }
       return
     }
     if (!Character.isISOControl(e.original.keyChar)) { // keys filtered out here will be processed in processTerminalKeyPressed
       try {
         if (processCharacter(e)) {
           e.original.consume()
+          LOG.trace { "Key event consumed: ${e.original}" }
         }
       }
       catch (ex: Exception) {
@@ -80,10 +85,12 @@ internal open class TerminalEventsHandlerImpl(
   }
 
   override fun keyPressed(e: TimedKeyEvent) {
+    LOG.trace { "Key pressed event received: ${e.original}" }
     ignoreNextKeyTypedEvent = false
     if (processTerminalKeyPressed(e)) {
       e.original.consume()
       ignoreNextKeyTypedEvent = true
+      LOG.trace { "Key event consumed: ${e.original}" }
     }
   }
 
@@ -107,6 +114,7 @@ internal open class TerminalEventsHandlerImpl(
       // although it send the char '.'
       if (keyCode == KeyEvent.VK_DELETE && keyChar == '.') {
         terminalInput.sendBytes(byteArrayOf('.'.code.toByte()))
+        LOG.trace { "Key event skipped (numLock on): ${e.original}" }
         return true
       }
       // CTRL + Space is not handled in KeyEvent; handle it manually
@@ -145,11 +153,13 @@ internal open class TerminalEventsHandlerImpl(
 
   private fun processCharacter(e: TimedKeyEvent): Boolean {
     if (isAltPressedOnly(e.original) && settings.altSendsEscape()) {
+      LOG.trace { "Key event skipped (alt pressed only): ${e.original}" }
       return false
     }
     val keyChar = e.original.keyChar
     if (keyChar == '`' && e.original.modifiersEx and InputEvent.META_DOWN_MASK != 0) {
       // Command + backtick is a short-cut on Mac OSX, so we shouldn't type anything
+      LOG.trace { "Key event skipped (command + backtick): ${e.original}" }
       return false
     }
     val typedString = keyChar.toString()
