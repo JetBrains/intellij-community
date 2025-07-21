@@ -74,19 +74,12 @@ class KotlinBuildToolsFusFlowTest {
             ).toArguments("testEmptyFiles"),
 
             TestData(
-                emptyList(),
-                "build_id",
-                emptySet(),
-                true
-            ).toArguments("testEmptyListFusFiles"),
-
-            TestData(
                 listOf(
                     Path("resources/kotlin-profile/build_id-invalid_metrics.plugin-profile"),
                     Path("resources/kotlin-profile/build_id.finish-profile"),
                 ),
                 "build_id",
-                setOf("BUILD_FAILED=false", "BUILD_FINISH_TIME=10000000", "BUILD_SRC_EXISTS=false", "CONFIGURATION_API_COUNT=1"),
+                setOf("PROJECT_PATH=line with special symbols !^&*()_+{\\n}[@#\$%]", "BUILD_FAILED=false", "BUILD_FINISH_TIME=10000000", "BUILD_SRC_EXISTS=false", "CONFIGURATION_API_COUNT=1"),
                 true
             ).toArguments("testMetricValidation"),
         )

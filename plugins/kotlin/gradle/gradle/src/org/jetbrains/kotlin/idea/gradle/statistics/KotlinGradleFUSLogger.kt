@@ -6,6 +6,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.util.io.delete
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -13,11 +14,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.gradle.diagnostic.KotlinGradleBuildErrorsChecker
 import org.jetbrains.kotlin.idea.gradle.statistics.v2.flow.KotlinBuildToolFusFlowProcessor
 import org.jetbrains.kotlin.statistics.BuildSessionLogger
-import org.jetbrains.kotlin.statistics.BuildSessionLogger.Companion.STATISTICS_FOLDER_NAME
 import org.jetbrains.kotlin.statistics.fileloggers.MetricsContainer
-import java.io.File
-import kotlin.io.path.Path
-import kotlin.io.path.exists
+import java.nio.file.Path
+import kotlin.io.path.*
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -48,20 +48,32 @@ class KotlinGradleFUSLogger(private val project: Project, private val coroutineS
     private val mutex: Mutex = Mutex()
     private val gradleErrorsChecker = KotlinGradleBuildErrorsChecker(project)
 
+    companion object {
+        private const val STATISTICS_FOLDER_NAME = "kotlin-profile"
+        private const val MAX_FILE_AGE_DAYS = 31
+        private val maxFileAge = MAX_FILE_AGE_DAYS.days.inWholeMilliseconds
+
+        fun clearOldFiles(fusStatisticDir: Path) {
+            fusStatisticDir.listDirectoryEntries()
+                .filter { it.isRegularFile() }
+                .filter {
+                    val lastModified = it.getLastModifiedTime().toMillis()
+                    (lastModified > 0) && (System.currentTimeMillis() - maxFileAge > lastModified)
+                }.forEach { it.delete() }
+        }
+    }
+
     private suspend fun reportStatistics() {
         mutex.withLock {
             withContext(Dispatchers.IO) {
                 for (gradleUserHome in gradleUserDirs) {
-                    cleanUpOldFiles(gradleUserHome)
-                    KotlinBuildToolFusFlowProcessor.process(gradleUserHome)
-                    KotlinGradleFUSLoggerProcessor.process(gradleUserHome)
+                    val fusStatisticDir = Path(gradleUserHome, STATISTICS_FOLDER_NAME)
+                    clearOldFiles(fusStatisticDir)
+                    KotlinBuildToolFusFlowProcessor.process(fusStatisticDir)
+                    KotlinGradleFUSLoggerProcessor.process(fusStatisticDir)
                 }
             }
         }
-    }
-
-    private fun cleanUpOldFiles(file: String) {
-
     }
 
     private var gradleUserDirs: Set<String>
@@ -128,8 +140,8 @@ class KotlinGradleFUSLogger(private val project: Project, private val coroutineS
  */
 
 private object KotlinGradleFUSLoggerProcessor {
-    fun process(gradleUserHome: String) {
-        for (statisticFile in BuildSessionLogger.listProfileFiles(File(gradleUserHome, STATISTICS_FOLDER_NAME))) {
+    fun process(statisticsFolder: Path) {
+        for (statisticFile in BuildSessionLogger.listProfileFiles(statisticsFolder.toFile())) {
             var fileWasRead = true
             try {
                 var previousEvent: MetricsContainer? = null
