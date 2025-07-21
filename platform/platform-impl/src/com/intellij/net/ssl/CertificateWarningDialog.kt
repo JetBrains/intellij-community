@@ -27,6 +27,7 @@ import com.intellij.util.net.ssl.CertificateWrapper
 import com.intellij.util.net.ssl.CertificateWrapper.CommonField
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.Color
 import java.awt.Component
@@ -102,11 +103,19 @@ internal class CertificateWarningDialog(
         icon(AllIcons.General.WarningDialog)
         val errorText = error?.let { IdeBundle.message("ssl.certificate.warning", it, if (hasUntrusted) IdeBundle.message("ssl.certificate.warning.plural") else IdeBundle.message("ssl.certificate.warning.singular")) }
                         ?: IdeBundle.message("ssl.certificate.warning.default")
-        text(HtmlChunk.text(errorText).bold().toString())
+        text(HtmlChunk.text(errorText).bold().toString()).applyToComponent {
+          if (ScreenReader.isActive()) {
+            isFocusable = true
+          }
+        }
       }
       if (remoteHost != null) {
         row(IdeBundle.message("ssl.certificate.server.address")) {
-          text(remoteHost).align(AlignX.LEFT)
+          text(remoteHost).align(AlignX.LEFT).applyToComponent {
+            if (ScreenReader.isActive()) {
+              isFocusable = true
+            }
+          }
         }
       }
       row {
