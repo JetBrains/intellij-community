@@ -48,7 +48,7 @@ internal class BranchesDashboardTreeController(
     selectionHandler.filterBy(selectedFilters, repositories)
   }
 
-  fun navigateLogToRef(selection: BranchNodeDescriptor.LogNavigatable) {
+  fun navigateLogToRef(selection: VcsLogNavigatable) {
     selectionHandler.navigateTo(selection, true)
   }
 
