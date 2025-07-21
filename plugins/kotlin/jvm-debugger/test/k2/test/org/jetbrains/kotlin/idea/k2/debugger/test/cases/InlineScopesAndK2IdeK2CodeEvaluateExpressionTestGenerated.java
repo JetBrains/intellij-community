@@ -2669,6 +2669,11 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("../testData/evaluation/multipleBreakpoints/inlineStackTraceWithNestedLambdas.kt");
             }
 
+            @TestMetadata("inlineStackTraceWithTryFinally.kt")
+            public void testInlineStackTraceWithTryFinally() throws Exception {
+                runTest("../testData/evaluation/multipleBreakpoints/inlineStackTraceWithTryFinally.kt");
+            }
+
             @TestMetadata("invisibleDeclarations.kt")
             public void testInvisibleDeclarations() throws Exception {
                 runTest("../testData/evaluation/multipleBreakpoints/invisibleDeclarations.kt");
