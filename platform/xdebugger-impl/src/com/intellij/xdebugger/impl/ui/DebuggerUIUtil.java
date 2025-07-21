@@ -44,7 +44,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
-import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueModifier;
@@ -313,6 +312,7 @@ public final class DebuggerUIUtil {
     final JComponent mainPanel = propertiesPanel.getMainPanel();
     final Balloon balloon = showBreakpointEditor(project, mainPanel, point, component, showMoreOptions, breakpoint);
     balloonRef.set(balloon);
+    propertiesPanel.setBalloon(balloon);
 
     Disposable disposable = Disposer.newDisposable();
 

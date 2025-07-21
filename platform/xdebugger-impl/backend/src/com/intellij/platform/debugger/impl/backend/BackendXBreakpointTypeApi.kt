@@ -220,6 +220,26 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     }
   }
 
+  override suspend fun rememberRemovedBreakpoint(breakpointId: XBreakpointId) {
+    val requestId = requestCounter.getAndIncrement()
+    LOG.info("[$requestId] Remembering removed breakpoint: $breakpointId")
+    val breakpoint = breakpointId.findValue() ?: return
+    edtWriteAction {
+      (XDebuggerManager.getInstance(breakpoint.project).breakpointManager as XBreakpointManagerImpl).rememberRemovedBreakpoint(breakpoint)
+      LOG.info("[$requestId] Remembered removed breakpoint: $breakpointId")
+    }
+  }
+
+  override suspend fun restoreRemovedBreakpoint(projectId: ProjectId) {
+    val requestId = requestCounter.getAndIncrement()
+    LOG.info("[$requestId] Restoring removed breakpoint in $projectId")
+    val project = projectId.findProjectOrNull() ?: return
+    edtWriteAction {
+      val restored = (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).restoreLastRemovedBreakpoint()
+      LOG.info("[$requestId] Restored removed breakpoint: ${(restored as? XBreakpointBase<*, *, *>)?.breakpointId}")
+    }
+  }
+
   private fun getCurrentBreakpointTypeDtos(project: Project): List<XBreakpointTypeDto> {
     return XBreakpointType.EXTENSION_POINT_NAME.extensionList.map { it.toRpc(project) }
   }

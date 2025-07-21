@@ -3,8 +3,8 @@ package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -16,7 +16,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
@@ -28,6 +27,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -61,7 +61,10 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
 
   private void createUIComponents() {
     myRestoreLink = new ActionLink(XDebuggerBundle.message("xbreakpoints.restore.label"), e -> {
-      WriteAction.run(() -> ((XBreakpointManagerImpl)XDebuggerManager.getInstance(myBreakpoint.getProject()).getBreakpointManager()).restoreLastRemovedBreakpoint());
+      myBreakpointManager.restoreRemovedBreakpoint(myBreakpoint);
+      if (myBalloon != null) {
+        myBalloon.hide();
+      }
     });
   }
 
@@ -80,7 +83,13 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     myDelegate = delegate;
   }
 
+  @ApiStatus.Internal
+  public void setBalloon(@NotNull Balloon balloon) {
+    myBalloon = balloon;
+  }
+
   private Delegate myDelegate;
+  private @Nullable Balloon myBalloon;
 
   private XSuspendPolicyPanel mySuspendPolicyPanel;
   private XBreakpointActionsPanel myActionsPanel;
@@ -122,8 +131,11 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
          asProxy(breakpoint), showActionOptions, showAllOptions, isEditorBalloon);
   }
 
+  private final @NotNull XBreakpointManagerProxy myBreakpointManager;
+
   public XLightBreakpointPropertiesPanel(Project project, XBreakpointManagerProxy breakpointManager, XBreakpointProxy breakpoint,
                                          boolean showActionOptions, boolean showAllOptions, boolean isEditorBalloon) {
+    myBreakpointManager = breakpointManager;
     myBreakpoint = breakpoint;
     myShowAllOptions = showAllOptions;
     myIsEditorBalloon = isEditorBalloon;

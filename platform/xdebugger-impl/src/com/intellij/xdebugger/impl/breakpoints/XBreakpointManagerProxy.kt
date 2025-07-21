@@ -3,10 +3,12 @@ package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.debugger.impl.rpc.XBreakpointDto
+import com.intellij.util.ThrowableRunnable
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
@@ -41,6 +43,9 @@ interface XBreakpointManagerProxy {
   fun getLastRemovedBreakpoint(): XBreakpointProxy?
 
   fun removeBreakpoint(breakpoint: XBreakpointProxy)
+
+  fun rememberRemovedBreakpoint(breakpoint: XBreakpointProxy)
+  fun restoreRemovedBreakpoint(breakpoint: XBreakpointProxy)
 
   fun findBreakpointAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): XLineBreakpointProxy? =
     findBreakpointsAtLine(type, file, line).firstOrNull()
@@ -122,6 +127,22 @@ interface XBreakpointManagerProxy {
         return
       }
       breakpointManager.removeBreakpoint(breakpoint.breakpoint)
+    }
+
+    override fun restoreRemovedBreakpoint(breakpoint: XBreakpointProxy) {
+      if (breakpoint !is XBreakpointProxy.Monolith) {
+        return
+      }
+      WriteAction.run<RuntimeException?>(ThrowableRunnable {
+        breakpointManager.restoreLastRemovedBreakpoint()
+      })
+    }
+
+    override fun rememberRemovedBreakpoint(breakpoint: XBreakpointProxy) {
+      if (breakpoint !is XBreakpointProxy.Monolith) {
+        return
+      }
+      breakpointManager.rememberRemovedBreakpoint(breakpoint.breakpoint)
     }
 
     override fun findBreakpointAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): XLineBreakpointProxy? {

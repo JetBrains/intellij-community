@@ -39,6 +39,9 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
   }
 
   suspend fun removeBreakpoint(breakpointId: XBreakpointId)
+
+  suspend fun rememberRemovedBreakpoint(breakpointId: XBreakpointId)
+  suspend fun restoreRemovedBreakpoint(projectId: ProjectId)
 }
 
 @ApiStatus.Internal

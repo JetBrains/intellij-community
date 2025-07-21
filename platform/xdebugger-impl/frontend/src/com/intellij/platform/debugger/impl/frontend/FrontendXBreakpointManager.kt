@@ -50,6 +50,8 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
 
   private val lightBreakpoints: ConcurrentMap<LightBreakpointPosition, FrontendXLightLineBreakpoint> = ConcurrentCollectionFactory.createConcurrentMap()
 
+  private var lastRemovedBreakpoint: XBreakpointProxy? = null
+
   // TODO[IJPL-160384]: support persistance between sessions
   override val breakpointsDialogSettings: XBreakpointsDialogState?
     get() = _breakpointsDialogSettings
@@ -281,8 +283,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   }
 
   override fun getLastRemovedBreakpoint(): XBreakpointProxy? {
-    // TODO: Send through RPC
-    return null
+    return lastRemovedBreakpoint
   }
 
   override fun removeBreakpoint(breakpoint: XBreakpointProxy) {
@@ -297,6 +298,20 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
       cs.launch {
         XBreakpointTypeApi.getInstance().removeBreakpoint(breakpoint.id)
       }
+    }
+  }
+
+  override fun rememberRemovedBreakpoint(breakpoint: XBreakpointProxy) {
+    lastRemovedBreakpoint = breakpoint
+    cs.launch {
+      XBreakpointTypeApi.getInstance().rememberRemovedBreakpoint(breakpoint.id)
+    }
+  }
+
+  override fun restoreRemovedBreakpoint(breakpoint: XBreakpointProxy) {
+    lastRemovedBreakpoint = null
+    cs.launch {
+      XBreakpointTypeApi.getInstance().restoreRemovedBreakpoint(breakpoint.project.projectId())
     }
   }
 
