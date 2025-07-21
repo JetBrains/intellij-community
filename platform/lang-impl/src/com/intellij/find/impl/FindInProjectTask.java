@@ -55,6 +55,7 @@ import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexEx;
+import com.intellij.util.indexing.FilesDeque;
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.ContentOrigin;
@@ -75,7 +76,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
 import static com.intellij.find.impl.FindInProjectUtil.FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE;
-import static com.intellij.find.impl.NonIndexableFilesDequeKt.nonIndexableFiles;
 import static com.intellij.openapi.roots.impl.FilesScanExecutor.processOnAllThreadsInReadActionWithRetries;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 
@@ -589,7 +589,7 @@ final class FindInProjectTask {
     searchItems.addAll(FindModelExtension.EP_NAME.getExtensionList());
 
     if (Boolean.TRUE.equals(project.getUserData(FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE))) {
-      searchItems.add(ReadAction.nonBlocking(() -> nonIndexableFiles(project)).executeSynchronously());
+      searchItems.add(ReadAction.nonBlocking(() -> FilesDeque.Companion.nonIndexableDequeue(project)).executeSynchronously());
     }
 
     return searchItems;
