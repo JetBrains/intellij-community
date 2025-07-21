@@ -2,6 +2,7 @@
 package com.intellij.ui.messages
 
 import com.intellij.BundleBase
+import com.intellij.CommonBundle
 import com.intellij.diagnostic.LoadingState
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
@@ -134,6 +135,7 @@ class AlertDialog(project: Project?,
         }
       }
       myCloseButton.preferredSize = JBDimension(22, 22)
+      myCloseButton.accessibleContext.accessibleName = CommonBundle.message("button.without.mnemonic.close")
     }
     else {
       myCloseButton = null
