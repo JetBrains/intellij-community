@@ -1308,8 +1308,10 @@ public final class PluginManagerConfigurable
               }
             }
             if (!parser.tags.isEmpty()) {
+              String sessionId = myPluginModelFacade.getModel().getSessionId();
+
               for (Iterator<PluginUiModel> I = descriptors.iterator(); I.hasNext(); ) {
-                if (!ContainerUtil.intersects(PluginUiModelKt.calculateTags(I.next()), parser.tags)) {
+                if (!ContainerUtil.intersects(PluginUiModelKt.calculateTags(I.next(), sessionId), parser.tags)) {
                   I.remove();
                 }
               }

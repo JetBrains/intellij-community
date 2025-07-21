@@ -6,15 +6,16 @@ import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.api.ReviewsPageContainer
 import com.intellij.ide.plugins.getTags
+import com.intellij.ide.plugins.newui.UiPluginManager.Companion.getInstance
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.PlatformUtils
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.text.DecimalFormat
 import java.util.*
-import java.util.Date
 
 /**
  * A lightweight model for representing plugin information in the UI.
@@ -228,6 +229,23 @@ fun PluginUiModel.presentableSize(): String? {
 @ApiStatus.Internal
 fun PluginUiModel.calculateTags(): List<String> {
   return this.getDescriptor().getTags()
+}
+
+@ApiStatus.Internal
+fun PluginUiModel.calculateTags(sessionId: String): List<String> {
+  val result = this.getDescriptor().getTags()
+  if (getInstance().isPluginRequiresUltimateButItIsDisabled(sessionId, pluginId)) {
+    return buildList {
+      addAll(result)
+      if (PlatformUtils.isPyCharmPro()) {
+        add(Tags.Pro.name)
+      }
+      else {
+        add(Tags.Ultimate.name)
+      }
+    }
+  }
+  return result
 }
 
 @NlsSafe

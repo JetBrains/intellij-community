@@ -26,7 +26,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
@@ -48,24 +47,20 @@ import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.scale.JBUIScale.scale
-import com.intellij.util.PlatformUtils
 import com.intellij.util.system.OS
 import com.intellij.util.ui.*
 import com.intellij.util.ui.AsyncProcessIcon.BigCentered
 import com.intellij.util.ui.StartupUiUtil.labelFont
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.xml.util.XmlStringUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionEvent
-import java.util.Collections
+import java.lang.Runnable
+import java.util.*
 import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.accessibility.AccessibleContext
@@ -930,20 +925,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       myVersion2!!.isVisible = isVersion
     }
 
-    val isNotFreeInFreeMode = showComponent?.isNotFreeInFreeMode == true
-    var tags = plugin.calculateTags()
-
-    if (isNotFreeInFreeMode) {
-      tags = buildList {
-        addAll(tags)
-        if (PlatformUtils.isPyCharmPro()) {
-          add(Tags.Pro.name)
-        }
-        else {
-          add(Tags.Ultimate.name)
-        }
-      }
-    }
+    val tags = plugin.calculateTags(pluginModel.getModel().sessionId)
 
     tagPanel!!.setTags(tags)
 
@@ -979,6 +961,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     showLicensePanel()
 
+    val isNotFreeInFreeMode = showComponent?.isNotFreeInFreeMode == true
     unavailableWithoutSubscriptionBanner?.isVisible = isNotFreeInFreeMode
     partiallyAvailableBanner?.isVisible = !isNotFreeInFreeMode && PluginManagerCore.dependsOnUltimateOptionally(showComponent?.pluginDescriptor)
 

@@ -711,9 +711,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   public @NotNull SortedSet<String> getTags() {
     if (ContainerUtil.isEmpty(myTags)) {
       myTags = new TreeSet<>(String::compareToIgnoreCase);
+      String sessionId = getSessionId();
 
       for (PluginUiModel descriptor : getInstalledDescriptors()) {
-        myTags.addAll(PluginUiModelKt.calculateTags(descriptor));
+        myTags.addAll(PluginUiModelKt.calculateTags(descriptor, sessionId));
       }
     }
     return Collections.unmodifiableSortedSet(myTags);
