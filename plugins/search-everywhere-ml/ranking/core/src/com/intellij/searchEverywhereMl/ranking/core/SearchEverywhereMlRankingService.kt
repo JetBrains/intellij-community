@@ -69,7 +69,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
       return if (isShowDiff()) SearchEverywhereFoundElementInfoBeforeDiff(element, priority, contributor, mlWeight, mlElementInfo.features, correction)
       else SearchEverywhereFoundElementInfoWithMl(element, priority, contributor, mlWeight, mlElementInfo.features, correction)
     } catch (ex: UnexpectedElementType) {
-      thisLogger().error("Failed to compute element features", ex)
+      thisLogger().warnWithDebug("Unexpected element type: ${element::class.java}", ex)
       return foundElementInfoWithoutMl
     }
   }
