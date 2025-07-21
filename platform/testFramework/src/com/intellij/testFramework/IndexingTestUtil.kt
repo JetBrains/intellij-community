@@ -99,7 +99,7 @@ private class IndexWaiter(private val project: Project) {
     if (application.isDispatchThread) {
       do {
         TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
-          PlatformTestUtil.waitWithEventsDispatching("Indexing timeout", { !shouldWait() }, 600)
+          PlatformTestUtil.waitWithEventsDispatching("Indexing timeout", { !shouldWait() }, indexWaitingTimeout.seconds.toInt())
         }
       }
       while (dispatchAllEventsInIdeEventQueue()) // make sure that all the scheduled write actions are executed

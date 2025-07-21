@@ -11,10 +11,9 @@ import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAre
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
-import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils
-import com.intellij.util.indexing.diagnostic.IndexStatisticGroup
-import com.intellij.util.indexing.diagnostic.ScanningType
+import com.intellij.testFramework.registerExtension
+import com.intellij.util.application
+import com.intellij.util.indexing.diagnostic.*
 import com.intellij.util.indexing.diagnostic.dto.*
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
 import org.junit.Assert
@@ -26,6 +25,8 @@ import kotlin.io.path.createTempDirectory
 import kotlin.io.path.extension
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 /**
  * Tests for [IndexDiagnosticDumper].
@@ -231,6 +232,38 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
 
     val deserialized = deserializeDiagnostic(mapper, indexDiagnostic)
     Assert.assertEquals(indexDiagnostic, deserialized)
+  }
+
+  fun `test scanning diagnostics handles exceptions in listeners`() {
+    val faultyListener = object : ProjectIndexingActivityHistoryListener {
+      override fun onStartedScanning(history: ProjectScanningHistory) {
+        throw AssertionError("test error")
+      }
+
+      override fun onFinishedScanning(history: ProjectScanningHistory) {
+        throw AssertionError("test error")
+      }
+
+      override fun onStartedDumbIndexing(history: ProjectDumbIndexingHistory) {
+        throw AssertionError("test error")
+      }
+
+      override fun onFinishedDumbIndexing(history: ProjectDumbIndexingHistory) {
+        throw AssertionError("test error")
+      }
+    }
+    application.registerExtension(IndexDiagnosticDumper.projectIndexingActivityHistoryListenerEpName, faultyListener, testRootDisposable)
+    // Registration of extension will trigger indexing, but this is implicit knowledge. Invoke full indexing explicitly.
+    UnindexedFilesScanner(project).queue()
+    waitUntilIndexesAreReady(project, 10.seconds.toJavaDuration())
+
+    // Repeat.
+    // If the previous scanning request has stopped ScanningExecutorService with an exception,
+    // the following waitUntilIndexesAreReady should time out
+    UnindexedFilesScanner(project).queue()
+    waitUntilIndexesAreReady(project, 10.seconds.toJavaDuration())
+
+    // should not throw, should not time out
   }
 
   private fun deserializeDiagnostic(mapper: ObjectMapper, indexDiagnostic: JsonIndexingActivityDiagnostic) =

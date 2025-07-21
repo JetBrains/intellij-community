@@ -133,23 +133,24 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
             runningTask?.cancel() // We expect that running task is null. But it's better to be on the safe side
             val scanningParameters = task.task.getScanningParameters()
             if (scanningParameters is ScanningIterators) {
-              val deferred = async(CoroutineName("Scanning")) {
-                try {
-                  runScanningTask(task.task, scanningParameters)
-                }
-                finally {
-                  // Scanning may throw exception (or error).
-                  // In this case, we should either clear or flush the indexing queue; otherwise, dumb mode will not end in the project.
-                  // TODO: we should flush the queue before setting the future, otherwise we have a race in UnindexedFilesScannerTest:
-                  //  it clears "allowFlushing" after future is set, expecting that if flush might be called, it had already been called
-                  val indexingScheduled = project.service<PerProjectIndexingQueue>().flushNow(scanningParameters.indexingReason)
-                  if (!indexingScheduled) {
-                    modCount.incrementAndGet()
+              val history = supervisorScope {
+                runningTask = coroutineContext.job
+                withContext(CoroutineName("Scanning")) {
+                  try {
+                    runScanningTask(task.task, scanningParameters)
+                  }
+                  finally {
+                    // Scanning may throw exception (or error).
+                    // In this case, we should either clear or flush the indexing queue; otherwise, dumb mode will not end in the project.
+                    // TODO: we should flush the queue before setting the future, otherwise we have a race in UnindexedFilesScannerTest:
+                    //  it clears "allowFlushing" after future is set, expecting that if flush might be called, it had already been called
+                    val indexingScheduled = project.service<PerProjectIndexingQueue>().flushNow(scanningParameters.indexingReason)
+                    if (!indexingScheduled) {
+                      modCount.incrementAndGet()
+                    }
                   }
                 }
               }
-              runningTask = deferred
-              val history = deferred.await()
               task.futureHistory.set(history)
               logInfo("Task finished (scanning id=${history.scanningSessionId}): $task")
             }
