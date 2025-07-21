@@ -233,6 +233,7 @@ internal class CertificateWarningDialog(
       RoundedLineBorder(JBColor.border(), 10),
       JBUI.Borders.empty(3)
     )
+    certificatesTree.accessibleContext.accessibleName = IdeBundle.message("ssl.certificate.tree.accessible.name")
     return certificatesTree
   }
 
