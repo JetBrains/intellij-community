@@ -63,6 +63,8 @@ com.intellij.execution.ui.TargetAwareRunConfigurationEditor
 - a:targetChanged(java.lang.String):V
 com.intellij.openapi.module.WorkingDirectoryProvider
 - a:getWorkingDirectoryPath(com.intellij.openapi.module.Module):java.lang.String
+c:com.intellij.terminal.JBTerminalWidget
+- p:getCurrentDirectory():java.lang.String
 com.intellij.terminal.JBTerminalWidgetListener
 - canMoveTabLeft():Z
 - canMoveTabRight():Z

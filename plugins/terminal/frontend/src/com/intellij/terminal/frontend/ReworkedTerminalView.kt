@@ -243,6 +243,10 @@ internal class ReworkedTerminalView(
     return getCurEditor().document.immutableCharSequence
   }
 
+  override fun getCurrentDirectory(): String? {
+    return sessionModel.terminalState.value.currentDirectory
+  }
+
   override fun getTerminalSize(): TermSize? {
     return getCurEditor().calculateTerminalSize()
   }

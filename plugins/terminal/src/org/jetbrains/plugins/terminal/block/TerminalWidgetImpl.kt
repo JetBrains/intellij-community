@@ -133,6 +133,10 @@ internal class TerminalWidgetImpl(
     return TerminalUtil.hasRunningCommands(connector)
   }
 
+  override fun getCurrentDirectory(): String? {
+    return view.getCurrentDirectory()
+  }
+
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
     view.addTerminationCallback(onTerminated, parentDisposable)
   }

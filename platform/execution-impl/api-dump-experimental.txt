@@ -24,6 +24,7 @@ f:com.intellij.execution.util.EnvFilesUtilKt
 - *bs:configureEnvsFromFiles$default(com.intellij.execution.EnvFilesOptions,Z,I,java.lang.Object):java.util.Map
 com.intellij.terminal.ui.TerminalWidget
 - com.intellij.openapi.ui.ComponentContainer
+- *:getCurrentDirectory():java.lang.String
 - *a:getTerminalSizeInitializedFuture():java.util.concurrent.CompletableFuture
 - *:getText():java.lang.CharSequence
 - *:isCommandRunning():Z

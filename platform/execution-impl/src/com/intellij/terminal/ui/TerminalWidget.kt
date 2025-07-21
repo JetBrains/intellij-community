@@ -90,6 +90,15 @@ interface TerminalWidget : ComponentContainer {
     return false
   }
 
+  /**
+   * Returns the OS-dependent absolute path to the current working directory of the shell.
+   * Note that due to OS and shell-dependent way of computing the value, it might not be available.
+   */
+  @ApiStatus.Experimental
+  fun getCurrentDirectory(): String? {
+    return null
+  }
+
   @RequiresEdt(generateAssertion = false)
   fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable)
 }

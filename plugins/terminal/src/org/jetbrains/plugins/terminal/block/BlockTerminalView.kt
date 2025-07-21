@@ -302,6 +302,10 @@ class BlockTerminalView(
     return "$outputText\n$promptText"
   }
 
+  override fun getCurrentDirectory(): String? {
+    return promptView.controller.model.promptState?.currentDirectory
+  }
+
   override fun dispose() {}
 
   private fun getDisposed(): () -> Boolean = outputView.controller.outputModel.editor.getDisposed()

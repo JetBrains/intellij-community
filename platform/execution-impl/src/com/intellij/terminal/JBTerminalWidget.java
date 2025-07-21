@@ -306,6 +306,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
     return false;
   }
 
+  protected @Nullable String getCurrentDirectory() {
+    return null;
+  }
+
   private final TerminalWidgetBridge myBridge = new TerminalWidgetBridge();
 
   public @NotNull TerminalWidget asNewWidget() {
@@ -442,6 +446,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
       catch (IllegalStateException e) {
         return true;
       }
+    }
+
+    @Override
+    public @Nullable String getCurrentDirectory() {
+      return widget().getCurrentDirectory();
     }
 
     @Override

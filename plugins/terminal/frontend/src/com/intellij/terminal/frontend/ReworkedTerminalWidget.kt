@@ -80,6 +80,10 @@ internal class ReworkedTerminalWidget(
     }
   }
 
+  override fun getCurrentDirectory(): String? {
+    return view.getCurrentDirectory()
+  }
+
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
     view.addTerminationCallback(onTerminated, parentDisposable)
   }
