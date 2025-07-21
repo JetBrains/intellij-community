@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -611,12 +611,20 @@ public class EnterHandler extends BaseEnterHandler {
 
         if (docProvider != null) {
           if (docProvider.findExistingDocComment(comment) != comment) return comment;
-          String docStub = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> docProvider.generateDocumentationContentStub(comment));
 
-          if (docStub != null && !docStub.isEmpty()) {
-            myOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
-            myOffset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
-            myDocument.insertString(myOffset, docStub);
+          int newOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
+          newOffset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), newOffset, LINE_SEPARATOR);
+          if (docProvider.insertDocumentationContentStub(comment, myDocument, newOffset)) {
+            myOffset = newOffset;
+          }
+          else {
+            String docStub = DumbService.getInstance(project)
+              .computeWithAlternativeResolveEnabled(() -> docProvider.generateDocumentationContentStub(comment));
+
+            if (docStub != null && !docStub.isEmpty()) {
+              myOffset = newOffset;
+              myDocument.insertString(myOffset, docStub);
+            }
           }
         }
 
