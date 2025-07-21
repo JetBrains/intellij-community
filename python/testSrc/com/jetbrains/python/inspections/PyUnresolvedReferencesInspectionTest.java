@@ -815,14 +815,14 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> doTestByText("""
-       def foo(cls):
-           return cls
-                                  
-                                  
-       @foo
-       class Bar2(object):
-           def __init__(self):
-               print(self.<warning descr="Unresolved attribute reference 'hello' for class 'Bar2'">hello</warning>)
+                           def foo(cls):
+                               return cls
+                           
+                           
+                           @foo
+                           class Bar2(object):
+                               def __init__(self):
+                                   print(self.<warning descr="Unresolved attribute reference 'hello' for class 'Bar2'">hello</warning>)
                            """)
     );
   }
@@ -888,6 +888,27 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
                        ...
                    class ForwardReference[T]: ...
                    """);
+    });
+  }
+
+  // PY-78413
+  public void testAsyncAwaitWarningOnImportedFun() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFileTest();
+    });
+  }
+
+  // PY-78413
+  public void testAsyncAwaitWarningOnImportedFunReturnAwaitable() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFileTest();
+    });
+  }
+
+  // PY-78413
+  public void testAsyncAwaitWarningOnImportedFunOverloaded() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFileTest();
     });
   }
 

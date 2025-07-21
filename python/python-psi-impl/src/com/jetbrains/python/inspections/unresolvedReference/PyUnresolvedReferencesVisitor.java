@@ -134,9 +134,15 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     if (unresolved) {
       boolean ignoreUnresolved = ignoreUnresolved(node, reference) || !evaluateVersionsForElement(node).contains(myVersion);
       if (!ignoreUnresolved) {
-        final HighlightSeverity severity = reference instanceof PsiReferenceEx
+        HighlightSeverity severity = reference instanceof PsiReferenceEx
                                            ? ((PsiReferenceEx)reference).getUnresolvedHighlightSeverity(myTypeEvalContext)
                                            : HighlightSeverity.ERROR;
+        if (severity == null) {
+          if (isAwaitCallToImportedNonAsyncFunction(reference)) {
+            // special case: type of prefixExpression.getQualifier() is null but we want to check whether the called function is async
+            severity = HighlightSeverity.WEAK_WARNING;
+          }
+        }
         if (severity == null) return;
         registerUnresolvedReferenceProblem(node, reference, severity);
       }
@@ -146,6 +152,27 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
              !isContainingFileImportAllowed(node, (PsiFile)target)) {
       registerProblem(node, PyPsiBundle.message("INSP.unresolved.refs.import.resolves.to.its.containing.file"));
     }
+  }
+
+  private boolean isAwaitCallToImportedNonAsyncFunction(@NotNull PsiReference reference) {
+    if (reference.getElement() instanceof PyPrefixExpression prefixExpression
+        && PyNames.DUNDER_AWAIT.equals(prefixExpression.getOperator().getSpecialMethodName())
+        && getReferenceQualifier(reference) instanceof PyCallExpression callExpression) {
+
+      @NotNull List<@NotNull PyCallable> callees =
+        callExpression.multiResolveCalleeFunction(PyResolveContext.defaultContext(myTypeEvalContext));
+
+      if (callees.isEmpty()) {
+        return false;
+      }
+      for (PyCallable callee : callees) {
+        if (callee instanceof PyFunction pyFunction && pyFunction.isAsync()) {
+          return false;
+        }
+      }
+      return true; // no signature is declared async -> warning
+    }
+    return false;
   }
 
   private void registerUnresolvedReferenceProblem(@NotNull PyElement node, final @NotNull PsiReference reference,
@@ -262,6 +289,14 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
             description = PyPsiBundle.message("INSP.unresolved.refs.cannot.find.reference.in.type", refText, type.getName());
           }
           markedQualified = true;
+        }
+        else {
+          if (isAwaitCallToImportedNonAsyncFunction(reference)) {
+            description = PyPsiBundle.message("INSP.await.call.on.imported.untyped.function", qualifier.getText());
+            node = qualifier; // show warning on the function call
+            rangeInElement = TextRange.create(0, qualifier.getTextRange().getLength());
+            markedQualified = true;
+          }
         }
       }
       if (!markedQualified) {
