@@ -139,6 +139,7 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
     val selectionReason = selectionReason
     if (data is Dependency.Data.Artifact && selectionReason != null && selectionReason.startsWith("between versions")) {
       val conflictedVersion = selectionReason.substringAfter("between versions ${data.version} and ", "")
+      status.add(DAOmitted)
       if (conflictedVersion.isNotEmpty()) {
         val title = ExternalSystemBundle.message("external.system.dependency.analyzer.warning.version.conflict.title", conflictedVersion)
         val message = ExternalSystemBundle.message("external.system.dependency.analyzer.warning.version.conflict", conflictedVersion)
