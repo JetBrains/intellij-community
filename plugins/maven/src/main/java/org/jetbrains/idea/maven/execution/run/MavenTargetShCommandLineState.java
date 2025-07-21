@@ -1,10 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution.run;
 
-import com.intellij.build.BuildDescriptor;
-import com.intellij.build.BuildTreeFilters;
-import com.intellij.build.BuildView;
-import com.intellij.build.DefaultBuildDescriptor;
+import com.intellij.build.*;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.StartBuildEvent;
 import com.intellij.build.events.impl.StartBuildEventImpl;
@@ -104,8 +101,7 @@ public class MavenTargetShCommandLineState extends CommandLineState implements T
     processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor));
     buildView.attachToProcess(new MavenHandlerFilterSpyWrapper(processHandler, useMaven4(), false));
 
-
-    AnAction[] actions = new AnAction[]{BuildTreeFilters.createFilteringActionsGroup(buildView)};
+    AnAction[] actions = new AnAction[]{BuildTreeFilters.createFilteringActionsGroup(new WeakFilterableSupplier<>(buildView))};
     DefaultExecutionResult res = new DefaultExecutionResult(buildView, processHandler, actions);
     List<AnAction> restartActions = new ArrayList<>();
     restartActions.add(new JvmToggleAutoTestAction());

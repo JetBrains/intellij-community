@@ -22,8 +22,7 @@ f:com.intellij.build.BuildConsoleUtils
 *:com.intellij.build.BuildProgressObservable
 - a:addListener(com.intellij.build.BuildProgressListener,com.intellij.openapi.Disposable):V
 f:com.intellij.build.BuildTreeFilters
-- *sf:createFilteringActionsGroup(com.intellij.build.Filterable):com.intellij.openapi.actionSystem.DefaultActionGroup
-- *sf:install(com.intellij.build.Filterable):V
+- *sf:createFilteringActionsGroup(java.util.function.Supplier):com.intellij.openapi.actionSystem.DefaultActionGroup
 c:com.intellij.build.BuildView
 - com.intellij.build.BuildProgressListener
 - com.intellij.build.Filterable

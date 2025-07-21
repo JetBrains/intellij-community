@@ -254,7 +254,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
     EditSourceAction edit = new EditSourceAction();
     ActionUtil.copyFrom(edit, "EditSource");
     sourceActionGroup.add(edit);
-    DefaultActionGroup filteringActionsGroup = BuildTreeFilters.createFilteringActionsGroup(this);
+    DefaultActionGroup filteringActionsGroup = BuildTreeFilters.createFilteringActionsGroup(new WeakFilterableSupplier<>(this));
     final DefaultActionGroup navigationActionGroup = new DefaultActionGroup();
     final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     final AnAction prevAction = actionsManager.createPrevOccurenceAction(this);

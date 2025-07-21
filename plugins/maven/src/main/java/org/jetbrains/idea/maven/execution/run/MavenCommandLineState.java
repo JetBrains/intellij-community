@@ -198,7 +198,7 @@ public class MavenCommandLineState extends JavaCommandLineState implements Remot
       buildView.attachToProcess(new MavenHandlerFilterSpyWrapper(processHandler, useMaven4(), false));
     }
 
-    AnAction[] actions = new AnAction[]{BuildTreeFilters.createFilteringActionsGroup(buildView)};
+    AnAction[] actions = new AnAction[]{BuildTreeFilters.createFilteringActionsGroup(new WeakFilterableSupplier<>(buildView))};
     DefaultExecutionResult res = new DefaultExecutionResult(buildView, processHandler, actions);
     List<AnAction> restartActions = new ArrayList<>();
     restartActions.add(new JvmToggleAutoTestAction());

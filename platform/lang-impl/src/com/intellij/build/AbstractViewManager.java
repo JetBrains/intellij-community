@@ -49,7 +49,7 @@ import static com.intellij.build.ExecutionNode.getEventResultIcon;
  * @author Vladislav.Soroka
  */
 public abstract class AbstractViewManager implements ViewManager, BuildProgressListener, BuildProgressObservable, Disposable {
-  private static final Logger LOG = Logger.getInstance(ViewManager.class);
+  private static final Logger LOG = Logger.getInstance(AbstractViewManager.class);
   private static final Key<Boolean> PINNED_EXTRACTED_CONTENT = new Key<>("PINNED_EXTRACTED_CONTENT");
 
   protected final Project myProject;
@@ -148,7 +148,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     toolbarActions.removeAll();
     toolbarActions.addAll(view.createConsoleActions());
     toolbarActions.add(new PinBuildViewAction(buildsView));
-    toolbarActions.add(BuildTreeFilters.createFilteringActionsGroup(view));
+    toolbarActions.add(BuildTreeFilters.createFilteringActionsGroup(new WeakFilterableSupplier<>(view)));
   }
 
   protected @Nullable Icon getContentIcon() {
