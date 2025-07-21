@@ -1638,6 +1638,16 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/contextParameters/multipleParameters.kt");
             }
 
+            @TestMetadata("parameterizedContextParameters.kt")
+            public void testParameterizedContextParameters() throws Exception {
+                runTest("testData/refactoring/extractFunction/contextParameters/parameterizedContextParameters.kt");
+            }
+
+            @TestMetadata("parameterizedContextParametersOnProperty.kt")
+            public void testParameterizedContextParametersOnProperty() throws Exception {
+                runTest("testData/refactoring/extractFunction/contextParameters/parameterizedContextParametersOnProperty.kt");
+            }
+
             @TestMetadata("typeRelations.kt")
             public void testTypeRelations() throws Exception {
                 runTest("testData/refactoring/extractFunction/contextParameters/typeRelations.kt");

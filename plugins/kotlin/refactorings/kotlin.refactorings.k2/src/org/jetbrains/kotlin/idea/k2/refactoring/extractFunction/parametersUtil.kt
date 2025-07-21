@@ -20,12 +20,14 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.fir.BuiltinTypes
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.suggestNameByName
@@ -83,7 +85,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher.isSe
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
-import org.jetbrains.kotlin.utils.addIfNotNull
 
 /**
  * Represents a parameter candidate as it's original declaration and a reference in code.
@@ -136,21 +137,28 @@ internal fun ExtractionData.inferParametersInfo(
     }
 
     val unknownContextParameters = analyze(virtualBlock) {
-        val parameters = mutableSetOf<KtParameter>()
+        val parameters = linkedMapOf<KaType, KtParameter>()
         for (referenceExpression in virtualBlock.collectDescendantsOfType<KtReferenceExpression> { it.resolveResult != null }) {
             val call = referenceExpression.resolveToCall()
+            val substitutions = buildSubstitutor {
+                referenceExpression.resolveResult!!.originalRefExpr.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.typeArgumentsMapping?.let {
+                    substitutions(it)
+                }
+            }
             if (call is KaErrorCallInfo) {
                 val diagnostic = call.diagnostic
                 if (diagnostic is KaFirDiagnostic.NoContextArgument) {
-                    val contextParameterSymbol = diagnostic.symbol as? KaContextParameterSymbol
-                    if (contextParameterSymbol != null &&
-                        extractedDescriptorToParameter.none { it.value.contextParameter && (it.value.originalDescriptor as? KtParameter)?.returnType?.isSubtypeOf(contextParameterSymbol.returnType) == true }) {
-                        parameters.addIfNotNull(contextParameterSymbol.psi as? KtParameter)
+                    val parameter = (diagnostic.symbol as? KaContextParameterSymbol)?.psi as? KtParameter
+                    if (parameter != null) {
+                        val implicitContextParameterType = substitutions.substitute(parameter.returnType)
+                        if (extractedDescriptorToParameter.none { it.value.contextParameter && (it.value.originalDescriptor as? KtParameter)?.returnType?.isSubtypeOf(implicitContextParameterType) == true }) {
+                            parameters.putIfAbsent(implicitContextParameterType, parameter)
+                        }
                     }
                 }
             }
         }
-        parameters.distinctBy { it.returnType }
+        parameters.mapKeys { it.key.createPointer() }
     }
 
     val varNameValidator = KotlinDeclarationNameValidator(
@@ -199,13 +207,13 @@ internal fun ExtractionData.inferParametersInfo(
         }
     }
 
-    unknownContextParameters.forEach { contextParam ->
+    unknownContextParameters.forEach { (type, contextParam) ->
         val name = contextParam.name ?: "_"
         val parameter = MutableParameter(
             name,
             contextParam.ownerDeclaration as KtNamedDeclaration,
             false,
-            contextParam.returnType,
+            type.restore() ?: builtinTypes.any,
             targetSibling as KtElement,
             contextParameter = true
         )
