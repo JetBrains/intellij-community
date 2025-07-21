@@ -24,6 +24,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/util/jdom",
+    "//plugins/kotlin/formatter/minimal",
   ],
   runtime_deps = [
     ":minimal_resources",

@@ -31,6 +31,7 @@
   <xi:include href="facets-base.xml"/>
   <xi:include href="jvm.xml"/>
   <xi:include href="searching-k2.xml"/>
+  <xi:include href="kotlin.base.code-insight.minimal.xml"/>
 
   <xi:include href="extensions.xml"/>
 

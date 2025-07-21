@@ -65,9 +65,6 @@
             qualifiedName="org.jetbrains.kotlin.projectStructureInsightsProvider"
             interface="org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureInsightsProvider"
             dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.kotlin.smartEnterProcessorFixer" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.lang.SmartEnterProcessorWithFixers$Fixer"/>
-    </extensionPoint>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.supportAvailability"
             interface="org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability"
@@ -360,15 +357,6 @@
     <lang.unwrapDescriptor
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.unwrap.KotlinUnwrapDescriptor"/>
-
-    <statementUpDownMover
-            id="ktExpression"
-            order="before declaration"
-            implementation="org.jetbrains.kotlin.idea.codeInsight.upDownMover.KotlinExpressionMover"/>
-    <statementUpDownMover
-            id="ktDeclaration"
-            order="before ktExpression"
-            implementation="org.jetbrains.kotlin.idea.codeInsight.upDownMover.KotlinDeclarationMover"/>
 
     <moveLeftRightHandler language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinMoveLeftRightHandler"/>
 

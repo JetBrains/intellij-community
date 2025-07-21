@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.upDownMover;
 
@@ -141,9 +141,9 @@ public class KotlinDeclarationMover extends AbstractKotlinUpDownMover {
     }
 
     private static final Class[] DECLARATION_CONTAINER_CLASSES =
-            {KtClassBody.class, KtAnonymousInitializer.class, KtFunction.class, KtPropertyAccessor.class, KtFile.class};
+            {KtClassBody.class, KtAnonymousInitializer.class, KtFunction.class, KtPropertyAccessor.class, PsiFile.class};
 
-    private static final Class[] CLASSBODYLIKE_DECLARATION_CONTAINER_CLASSES = {KtClassBody.class, KtFile.class};
+    private static final Class[] CLASSBODYLIKE_DECLARATION_CONTAINER_CLASSES = {KtClassBody.class, PsiFile.class};
 
     private static @Nullable KtDeclaration getMovableDeclaration(@Nullable PsiElement element) {
         if (element == null) return null;

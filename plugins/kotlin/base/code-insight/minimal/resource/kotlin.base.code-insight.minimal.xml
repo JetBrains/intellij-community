@@ -5,4 +5,17 @@
       <with attribute="implementationClass" implements="com.intellij.lang.SmartEnterProcessorWithFixers$Fixer"/>
     </extensionPoint>
   </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <lineIndentProvider implementation="org.jetbrains.kotlin.idea.formatter.KotlinLineIndentProvider"/>
+
+    <statementUpDownMover
+            id="ktExpression"
+            order="before declaration"
+            implementation="org.jetbrains.kotlin.idea.codeInsight.upDownMover.KotlinExpressionMover"/>
+    <statementUpDownMover
+            id="ktDeclaration"
+            order="before ktExpression"
+            implementation="org.jetbrains.kotlin.idea.codeInsight.upDownMover.KotlinDeclarationMover"/>
+
+  </extensions>
 </idea-plugin>

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.upDownMover;
 
@@ -15,7 +15,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.base.psi.PsiLinesUtilsKt;
+import org.jetbrains.kotlin.idea.KotlinFileType;
+import org.jetbrains.kotlin.idea.util.FormatterUtilKt;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.psi.*;
 
@@ -59,7 +60,7 @@ public abstract class AbstractKotlinUpDownMover extends LineMover {
                 }
 
                 if (comment != null) {
-                    int extension = PsiLinesUtilsKt.getLineCount(comment);
+                    int extension = FormatterUtilKt.getLineCount(comment);
                     if (extendDown) {
                         bottomExtension = extension;
                     }
@@ -164,6 +165,6 @@ public abstract class AbstractKotlinUpDownMover extends LineMover {
 
     @Override
     public boolean checkAvailable(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {
-        return (file instanceof KtFile) && super.checkAvailable(editor, file, info, down);
+        return file.getFileType() instanceof KotlinFileType && super.checkAvailable(editor, file, info, down);
     }
 }

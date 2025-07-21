@@ -27,7 +27,6 @@ jvm_library(
     "//platform/util",
     "//platform/code-style-api:codeStyle",
     "//platform/platform-impl:ide-impl",
-    "//plugins/kotlin/base/code-insight/minimal",
     "//platform/projectModel-api:projectModel",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/lang-impl",
