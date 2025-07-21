@@ -20,6 +20,7 @@ jvm_library(
     "//platform/diff-api:diff",
     "//platform/util/diff",
     "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-serialization-core",
   ],
   runtime_deps = [":vcs-core_resources"]
 )
@@ -40,6 +41,7 @@ jvm_library(
     "//libraries/junit5",
     "//libraries/junit5-params",
     "//libraries/assertj-core",
+    "@lib//:kotlinx-serialization-core",
   ],
   runtime_deps = [":vcs-core_resources"]
 )

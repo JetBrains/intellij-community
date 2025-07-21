@@ -114,9 +114,22 @@ c:com.intellij.openapi.vcs.VcsException
 - setIsWarning(Z):com.intellij.openapi.vcs.VcsException
 - setVirtualFile(com.intellij.openapi.vfs.VirtualFile):V
 f:com.intellij.openapi.vcs.VcsKey
+- sf:Companion:com.intellij.openapi.vcs.VcsKey$Companion
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.openapi.vcs.VcsKey
+- bs:copy$default(com.intellij.openapi.vcs.VcsKey,java.lang.String,I,java.lang.Object):com.intellij.openapi.vcs.VcsKey
 - equals(java.lang.Object):Z
-- getName():java.lang.String
+- f:getName():java.lang.String
 - hashCode():I
+bf:com.intellij.openapi.vcs.VcsKey$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.openapi.vcs.VcsKey$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.openapi.vcs.VcsKey
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.openapi.vcs.VcsKey):V
+f:com.intellij.openapi.vcs.VcsKey$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 com.intellij.openapi.vcs.changes.ByteBackedContentRevision
 - com.intellij.openapi.vcs.changes.ContentRevision
 - a:getContentAsBytes():B[]
