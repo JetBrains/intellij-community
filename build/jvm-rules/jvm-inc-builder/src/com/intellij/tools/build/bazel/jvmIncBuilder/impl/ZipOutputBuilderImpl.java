@@ -162,23 +162,25 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
         }
       }
       else {
-        // augment entry map with all currently present directory entries
-        for (String dirName : myDirIndex.keySet()) {
-          ZipEntry existingEntry = myExistingDirectories.get(dirName);
-          if (existingEntry == null && "/".equals(dirName)) {
-            continue; // keep root '/' entry if it were present in the original zip
-          }
-          if (existingEntry != null) {
-            myEntries.put(dirName, EntryData.create(myReadZipFile, existingEntry));
-          }
-          else {
-            myEntries.put(dirName, EntryData.create(dirName, EntryData.NO_DATA_BYTES));
-          }
-        }
         boolean useTempOutput = myReadZipFile != null /*srcZip exists*/ && Files.exists(myWriteZipPath) && Files.isSameFile(myReadZipPath, myWriteZipPath);
         Path outputPath = useTempOutput? getTempOutputPath() : myWriteZipPath;
         try (var zos = new ZipOutputStream(openOutputStream(outputPath))) {
           zos.setLevel(Deflater.BEST_SPEED);
+
+          // augment entry map with all currently present directory entries
+          for (String dirName : myDirIndex.keySet()) {
+            ZipEntry existingEntry = myExistingDirectories.get(dirName);
+            if (existingEntry == null && "/".equals(dirName)) {
+              continue; // keep root '/' entry if it were present in the original zip
+            }
+            if (existingEntry != null) {
+              myEntries.put(dirName, EntryData.create(myReadZipFile, existingEntry));
+            }
+            else {
+              myEntries.put(dirName, EntryData.create(dirName, EntryData.NO_DATA_BYTES));
+            }
+          }
+
           for (Iterator<Map.Entry<String, EntryData>> it = myEntries.entrySet().iterator(); it.hasNext(); ) {
             EntryData data = it.next().getValue();
             ZipEntry zipEntry = data.getZipEntry();
@@ -201,6 +203,8 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
       }
     }
     finally {
+      myExistingDirectories.clear();
+      myDirIndex.clear();
       mySwap.clear();
     }
   }

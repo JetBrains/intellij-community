@@ -23,7 +23,6 @@ public class OutputSinkImpl implements OutputSink {
 
   private static final String IMPORT_WILDCARD_SUFFIX = ".*";
   private final ZipOutputBuilder myOut;
-  private @Nullable final ZipOutputBuilder myAbiOut;
   private @Nullable final ZipOutputBuilder myJavaAbiOut;
   private final Map<OutputOrigin.Kind, Map<OutputFile.Kind, Set<String>>> myOutputsIndex = new EnumMap<>(OutputOrigin.Kind.class);
 
@@ -39,7 +38,6 @@ public class OutputSinkImpl implements OutputSink {
   public OutputSinkImpl(StorageManager sm) throws IOException {
     myOut = sm.getOutputBuilder();
     ZipOutputBuilderImpl abiOut = sm.getAbiOutputBuilder();
-    myAbiOut = abiOut;
     myJavaAbiOut = abiOut != null? new JavaAbiFilter(abiOut) : null;
   }
 

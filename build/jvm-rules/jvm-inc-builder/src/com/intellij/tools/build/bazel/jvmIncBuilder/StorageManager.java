@@ -178,6 +178,9 @@ public class StorageManager implements CloseableExt {
       closeDataStorages(saveChanges);
     }
     finally {
+      if (myDataSwapStore.getFileStore() instanceof OffHeapStore store) {
+        store.truncate(0); // forcibly clean byte buffers
+      }
       myDataSwapStore.close();
     }
   }
