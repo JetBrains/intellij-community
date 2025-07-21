@@ -8,16 +8,10 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
-import com.intellij.util.indexing.FileBasedIndex
-import com.intellij.util.indexing.FileBasedIndexEx
-import com.intellij.util.indexing.FindSymbolParameters
-import com.intellij.util.indexing.IdFilter
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+import com.intellij.util.indexing.*
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import org.jetbrains.annotations.ApiStatus
@@ -34,37 +28,19 @@ val GOTO_FILE_SEARCH_IN_NON_INDEXABLE: Key<Boolean> = Key.create("search.in.non.
 @ApiStatus.Internal
 class NonIndexableFileNavigationContributor : ChooseByNameContributorEx, DumbAware {
 
-  private inline fun processFileTree(
-    roots: Set<VirtualFile>,
-    scope: GlobalSearchScope,
-    workspaceFileIndex: WorkspaceFileIndexEx,
-    crossinline processor: (VirtualFile) -> Boolean,
-  ) {
-    // to avoid processing subtrees multiple times, we process roots first and then do not enter them again
-    roots.forEach { root -> if (!processor(root)) return }
-    val rootsChildren = roots.asSequence().flatMap { it.children?.asSequence() ?: emptySequence() }
-    rootsChildren.forEach { root ->
-      val res = VfsUtil.visitChildrenRecursively(root, object : VirtualFileVisitor<Any?>() {
-        override fun visitFileEx(file: VirtualFile): Result = when {
-          file in roots -> SKIP_CHILDREN
-          !scope.contains(file) -> SKIP_CHILDREN
-          file.isIndexedOrExcluded(workspaceFileIndex) -> SKIP_CHILDREN
-          !processor(file) -> skipTo(root) // terminate processing
-          else -> CONTINUE
-        }
-      })
-      if (res.skipChildren && res.skipToParent == root) return
-    }
-  }
-
   override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
     val project = scope.project ?: return
     if (!isGotoFileToNonIndexableEnabled(project)) return
-
-    val workspaceFileIndex = WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx
-
-    val roots = workspaceFileIndex.contentUnindexedRoots()
-    processFileTree(roots, scope, workspaceFileIndex) { file -> processor.process(file.name) }
+    val filenamesProcessed = hashSetOf<String>()
+    iterateNonIndexableFilesImpl(project, scope, { file ->
+      val filename = file.name
+      if (filenamesProcessed.add(filename)) {
+        processor.process(filename)
+      }
+      else {
+        true
+      }
+    })
   }
 
 

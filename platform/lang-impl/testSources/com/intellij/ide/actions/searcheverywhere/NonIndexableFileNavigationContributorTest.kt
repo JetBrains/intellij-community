@@ -21,10 +21,7 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.workspaceModel.update
 import com.intellij.util.CommonProcessors
-import com.intellij.util.indexing.testEntities.IndexableKindFileSetTestContributor
-import com.intellij.util.indexing.testEntities.IndexingTestEntity
-import com.intellij.util.indexing.testEntities.NonIndexableKindFileSetTestContributor
-import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
+import com.intellij.util.indexing.testEntities.*
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.toPath
@@ -57,6 +54,7 @@ class NonIndexableFileNavigationContributorTest {
   fun setUp() {
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonIndexableKindFileSetTestContributor(), disposable)
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(IndexableKindFileSetTestContributor(), disposable)
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonRecursiveFileSetContributor(), disposable)
   }
 
 
@@ -142,6 +140,35 @@ class NonIndexableFileNavigationContributorTest {
   }
 
   @Test
+  fun `indexable non-recursive file set inside non-indexable`(): Unit = runBlocking {
+    val nonIndexable = baseDir.newVirtualDirectory("non-indexable").toVirtualFileUrl(urlManager)
+    val indexableNonRecursive = baseDir.newVirtualDirectory("non-indexable/indexable-non-recursive").toVirtualFileUrl(urlManager)
+    baseDir.newVirtualFile("non-indexable/indexable-non-recursive/file.txt")
+
+    workspaceModel.update { storage ->
+      storage.addEntity(NonIndexableTestEntity(nonIndexable, NonPersistentEntitySource))
+      storage.addEntity(NonRecursiveTestEntity(indexableNonRecursive, NonPersistentEntitySource))
+    }
+
+    val names = processNames()
+    assertThat(names).containsExactlyInAnyOrder("file.txt", "non-indexable")
+  }
+
+  @Test
+  fun `unindexed and non-recursive file set at the same level`(): Unit = runBlocking {
+    val root = baseDir.newVirtualDirectory("root").toVirtualFileUrl(urlManager)
+    baseDir.newVirtualFile("root/file.txt")
+
+    workspaceModel.update { storage ->
+      storage.addEntity(NonIndexableTestEntity(root, NonPersistentEntitySource))
+      storage.addEntity(NonRecursiveTestEntity(root, NonPersistentEntitySource))
+    }
+
+    val names = processNames()
+    assertThat(names).containsExactlyInAnyOrder("file.txt") // `root` is excluded because it's under non-recursive content root
+  }
+
+  @Test
   @DisabledOnOs(OS.WINDOWS)
   fun `symlink to file`(): Unit = runBlocking {
     val unindexed = baseDir.newVirtualDirectory("u1").toVirtualFileUrl(urlManager)
@@ -171,7 +198,7 @@ class NonIndexableFileNavigationContributorTest {
     VfsTestUtil.syncRefresh()
 
     val names = processNames()
-    assertThat(names).containsExactlyInAnyOrder("u1", "u2", "link-1", "link-1", "link-2", "link-2")
+    assertThat(names).containsExactlyInAnyOrder("u1", "u2", "link-1", "link-2")
   }
 
   @Test
