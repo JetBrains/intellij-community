@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
@@ -134,17 +135,15 @@ class SeProvidersHolder(
       }
 
       // From com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader.createTabs
-      try {
+      (runCatching {
         withContext(Dispatchers.EDT) {
           TabsCustomizationStrategy.getInstance().getSeparateTabContributors(allContributors.values.toList())
             .filterIsInstance<SearchEverywhereContributor<Any>>()
             .associateBy { SeProviderId(it.searchProviderId) }
         }
-      }
-      catch (e: Exception) {
-        Logger.getInstance(SearchEverywhereHeader::class.java).error(e)
-        allContributors.filter { it.value.isShownInSeparateTab }
-      }.forEach {
+      }.getOrLogException { t ->
+        Logger.getInstance(SearchEverywhereHeader::class.java).error(t)
+      } ?: allContributors.filter { it.value.isShownInSeparateTab }).forEach {
         separateTabContributors[it.key] = it.value
       }
     }
