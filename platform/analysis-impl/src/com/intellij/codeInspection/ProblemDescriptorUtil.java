@@ -11,6 +11,7 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotation.QuickFixInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsContexts;
@@ -58,7 +59,13 @@ public final class ProblemDescriptorUtil {
 
   public static @NotNull String extractHighlightedText(@Nullable TextRange range, @Nullable PsiElement psiElement) {
     if (psiElement == null || !psiElement.isValid()) return "";
-    CharSequence fileText = psiElement.getContainingFile().getViewProvider().getDocument().getImmutableCharSequence();
+    PsiFile file = psiElement.getContainingFile();
+    // file doesn't have contents, i.e., it's a dir or package
+    if (file == null) return "";
+    Document doc = file.getViewProvider().getDocument();
+    // doc may represent a binary file, i.e., image
+    if (doc == null) return "";
+    CharSequence fileText = doc.getImmutableCharSequence();
     TextRange elementRange = psiElement.getTextRange();
     CharSequence elementSequence;
     if (elementRange == null) {
