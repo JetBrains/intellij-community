@@ -10,7 +10,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 
-class JavaRenameActionCommandProvider: AbstractRenameActionCommandProvider() {
+public class JavaRenameActionCommandProvider: AbstractRenameActionCommandProvider() {
   override fun findRenameOffset(offset: Int, psiFile: PsiFile): Int? {
     var currentOffset = offset
     if (currentOffset == 0) return null

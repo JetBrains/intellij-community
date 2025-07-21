@@ -21,12 +21,12 @@ import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.APP)
 @ApiStatus.Internal
-class AddJdkService(private val coroutineScope: CoroutineScope) {
+public class AddJdkService(private val coroutineScope: CoroutineScope) {
   /**
    * Creates a JDK and calls [onJdkAdded] later if JDK creation was successful.
    * If you need to acquire a [Sdk] immediately, use [createIncompleteJdk].
    */
-  fun createJdkFromPath(path: String, onJdkAdded: (Sdk) -> Unit = {}) {
+  public fun createJdkFromPath(path: String, onJdkAdded: (Sdk) -> Unit = {}) {
     coroutineScope.launch {
       val jdk = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         SdkConfigurationUtil.createAndAddSDK(path, JavaSdk.getInstance())
@@ -39,7 +39,7 @@ class AddJdkService(private val coroutineScope: CoroutineScope) {
    * Creates and registers an incomplete JDK with a unique name pointing to the given [path].
    * Initiates the JDK setup in a coroutine.
    */
-  fun createIncompleteJdk(path: String): Sdk? {
+  public fun createIncompleteJdk(path: String): Sdk? {
     val jdkType = JavaSdk.getInstance()
     val sdk = SdkConfigurationUtil.createIncompleteSDK(path, jdkType) ?: return null
 
@@ -53,8 +53,8 @@ class AddJdkService(private val coroutineScope: CoroutineScope) {
 
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
-class ConfigureJdkService(val project: Project, private val coroutineScope: CoroutineScope) {
-  fun setProjectJdkIfNull(sdk: Sdk, notify: Boolean = false) {
+public class ConfigureJdkService(public val project: Project, private val coroutineScope: CoroutineScope) {
+  public fun setProjectJdkIfNull(sdk: Sdk, notify: Boolean = false) {
     if (project.isDisposed) return
     val rootsManager = ProjectRootManager.getInstance(project)
     if (rootsManager.projectSdk == null) {

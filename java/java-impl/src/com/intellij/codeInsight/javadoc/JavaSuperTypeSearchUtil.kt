@@ -12,13 +12,13 @@ import com.intellij.psi.util.MethodSignatureUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-object JavaSuperTypeSearchUtil {
+public object JavaSuperTypeSearchUtil {
 
   /**
    * Performs automatic supertype search as described in the
    * [JavaDoc Documentation Comment Specification](https://docs.oracle.com/en/java/javase/22/docs/specs/javadoc/doc-comment-spec.html#inheritdoc).
    */
-  fun <T> automaticSupertypeSearch(
+  public fun <T> automaticSupertypeSearch(
     psiClass: PsiClass,
     method: PsiMethod,
     target: PsiDocTagValue?,

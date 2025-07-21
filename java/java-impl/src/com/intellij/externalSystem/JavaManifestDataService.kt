@@ -20,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus
 private const val GRADLE_MAIN_SUFFIX = ".main"
 
 @ApiStatus.Internal
-class JavaManifestDataService : WorkspaceDataService<JavaManifestData> {
+public class JavaManifestDataService : WorkspaceDataService<JavaManifestData> {
 
   override fun getTargetDataKey(): Key<JavaManifestData> = JavaManifestData.KEY
 

@@ -3,7 +3,7 @@ package com.intellij.lang.logging
 
 import com.siyeh.ig.psiutils.JavaLoggingUtils
 
-class ApacheCommonsLogger : JvmLogger by JvmLoggerFieldDelegate(
+public class ApacheCommonsLogger : JvmLogger by JvmLoggerFieldDelegate(
   JavaLoggingUtils.COMMONS_LOGGING_FACTORY,
   "getLog",
   "%s.class",

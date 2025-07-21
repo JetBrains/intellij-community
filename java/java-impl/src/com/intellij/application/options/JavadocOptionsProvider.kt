@@ -19,8 +19,8 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.options.BeanConfigurable
 
-class JavadocOptionsProvider : BeanConfigurable<CodeInsightSettings>(CodeInsightSettings.getInstance(),
-                                                                     JavaBundle.message("javadoc.option.javadoc.title")) {
+public class JavadocOptionsProvider : BeanConfigurable<CodeInsightSettings>(CodeInsightSettings.getInstance(),
+                                                                            JavaBundle.message("javadoc.option.javadoc.title")) {
 
   init {
     checkBox(JavaBundle.message("javadoc.option.automatically.insert.closing.tag.javadoc"), instance::JAVADOC_GENERATE_CLOSING_TAG)

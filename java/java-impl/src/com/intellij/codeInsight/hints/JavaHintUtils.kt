@@ -230,9 +230,9 @@ private fun inlayInfo(callArgument: PsiExpression, methodParam: PsiParameter, sh
   return InlayInfo(paramToShow, offset, showOnlyIfExistedBefore)
 }
 
-fun inlayOffset(callArgument: PsiExpression): Int = inlayOffset(callArgument, false)
+public fun inlayOffset(callArgument: PsiExpression): Int = inlayOffset(callArgument, false)
 
-fun inlayOffset(callArgument: PsiExpression, atEnd: Boolean): Int {
+public fun inlayOffset(callArgument: PsiExpression, atEnd: Boolean): Int {
   if (callArgument.textRange.isEmpty) {
     val next = callArgument.nextSibling as? PsiWhiteSpace
     if (next != null) return next.textRange.endOffset

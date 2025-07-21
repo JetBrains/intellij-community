@@ -24,7 +24,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import javax.swing.JComponent
 
-class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Simple(), AutoImportOptionsProvider {
+public class JavaAutoImportOptions(public val project: Project) : UiDslUnnamedConfigurable.Simple(), AutoImportOptionsProvider {
   private val excludeTable = object : ImportTable(project,
                                                   JavaBundle.message("exclude.from.imports.no.exclusions"),
                                                   JavaBundle.message("exclude.table.mask"),
@@ -158,7 +158,7 @@ class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Sim
     }
   }
 
-  fun addExcludePackage(packageName: String) {
+  public fun addExcludePackage(packageName: String) {
     excludeTable.addRow(packageName)
   }
 }

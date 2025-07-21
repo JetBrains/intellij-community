@@ -6,6 +6,7 @@ import com.intellij.java.frontback.psi.impl.ClassFileInformation
 import com.intellij.java.frontback.psi.impl.ClassFileInformationType
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.FileIndexFacade
@@ -21,9 +22,9 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
-class JavaClassVirtualFileCustomDataProvider : VirtualFileCustomDataProvider<ClassFileInformation> {
-  companion object {
-    val LOG = logger<JavaClassVirtualFileCustomDataProvider>()
+public class JavaClassVirtualFileCustomDataProvider : VirtualFileCustomDataProvider<ClassFileInformation> {
+  public companion object {
+    public val LOG: Logger = logger<JavaClassVirtualFileCustomDataProvider>()
   }
 
   override val id: String = "javaClassVirtualFile"

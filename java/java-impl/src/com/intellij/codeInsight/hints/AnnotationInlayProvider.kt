@@ -43,11 +43,11 @@ private val HINT_FORMAT = HintFormat(
   HintMarginPadding.OnlyPadding,
 )
 
-class AnnotationInlayProvider : InlayHintsProvider {
-  companion object {
-    const val PROVIDER_ID: String = "java.annotation.hints"
-    const val SHOW_INFERRED: String = "showInferred"
-    const val SHOW_EXTERNAL: String = "showExternal"
+public class AnnotationInlayProvider : InlayHintsProvider {
+  public companion object {
+    public const val PROVIDER_ID: String = "java.annotation.hints"
+    public const val SHOW_INFERRED: String = "showInferred"
+    public const val SHOW_EXTERNAL: String = "showExternal"
   }
 
   override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
@@ -189,7 +189,7 @@ private fun <T> Array<T>.joinPresentations(separator: () -> Unit, transform: (T)
   }
 }
 
-class InsertAnnotationAction() : AnAction() {
+public class InsertAnnotationAction() : AnAction() {
   override fun update(e: AnActionEvent) {
     if (e.hasAnnotationProviderId()) {
       e.presentation.isEnabledAndVisible = e.psiFile?.virtualFile?.isInLocalFileSystem == true
@@ -216,7 +216,7 @@ class InsertAnnotationAction() : AnAction() {
   }
 }
 
-abstract class ToggleAnnotationsOptionAction(
+public abstract class ToggleAnnotationsOptionAction(
   private val optionId: String,
   private val turnOnKey: @PropertyKey(resourceBundle = JavaBundle.BUNDLE) String,
   private val turnOffKey: @PropertyKey(resourceBundle = JavaBundle.BUNDLE) String,
@@ -252,14 +252,14 @@ abstract class ToggleAnnotationsOptionAction(
   }
 }
 
-class ToggleInferredAnnotationsAction : ToggleAnnotationsOptionAction(
+public class ToggleInferredAnnotationsAction : ToggleAnnotationsOptionAction(
   optionId = AnnotationInlayProvider.SHOW_INFERRED,
   turnOnKey = "settings.inlay.java.turn.on.showInferred.annotations",
   turnOffKey = "settings.inlay.java.turn.off.showInferred.annotations",
   shouldEnableAndShowToggle = { tag -> tag == SHOW_EXTERNAL_AND_INTERNAL_TOGGLES_TAG }
 )
 
-class ToggleExternalAnnotationsAction : ToggleAnnotationsOptionAction(
+public class ToggleExternalAnnotationsAction : ToggleAnnotationsOptionAction(
   optionId = AnnotationInlayProvider.SHOW_EXTERNAL,
   turnOnKey = "settings.inlay.java.turn.on.showExternal.annotations",
   turnOffKey = "settings.inlay.java.turn.off.showExternal.annotations",

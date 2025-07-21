@@ -8,7 +8,7 @@ import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 
-class GenerateLoggerAction : BaseGenerateAction(GenerateLoggerHandler()) {
+public class GenerateLoggerAction : BaseGenerateAction(GenerateLoggerHandler()) {
 
   override fun isValidForFile(project: Project, editor: Editor, psiFile: PsiFile): Boolean {
     val element = psiFile.findElementAt(editor.caretModel.offset) ?: return false

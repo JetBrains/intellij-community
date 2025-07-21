@@ -18,7 +18,7 @@ import com.intellij.psi.impl.PsiImplUtil
 import com.intellij.psi.util.*
 import com.intellij.psi.util.PsiUtil.resolveClassInClassTypeOnly
 
-fun generateActions(ref: PsiReferenceExpression): List<IntentionAction> {
+public fun generateActions(ref: PsiReferenceExpression): List<IntentionAction> {
   if (!checkReference(ref)) return emptyList()
   val fieldRequests = CreateFieldRequests(ref).collectRequests()
   val extensions = EP_NAME.extensionList

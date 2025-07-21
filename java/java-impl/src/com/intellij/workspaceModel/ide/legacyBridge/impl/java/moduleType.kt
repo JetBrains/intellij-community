@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.ide.legacyBridge.impl.java
 
 import com.intellij.platform.workspace.jps.entities.ModuleTypeId
 
-const val JAVA_MODULE_ENTITY_TYPE_ID_NAME = "JAVA_MODULE"
+public const val JAVA_MODULE_ENTITY_TYPE_ID_NAME: String = "JAVA_MODULE"
 
 @JvmField
-val JAVA_MODULE_ENTITY_TYPE_ID = ModuleTypeId(JAVA_MODULE_ENTITY_TYPE_ID_NAME)
+public val JAVA_MODULE_ENTITY_TYPE_ID: ModuleTypeId = ModuleTypeId(JAVA_MODULE_ENTITY_TYPE_ID_NAME)

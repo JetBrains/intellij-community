@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.problems
 
 import com.intellij.psi.*
 
-class MemberCollector(private val memberFilter: (PsiMember) -> Boolean) : JavaRecursiveElementWalkingVisitor() {
+public class MemberCollector(private val memberFilter: (PsiMember) -> Boolean) : JavaRecursiveElementWalkingVisitor() {
 
   private val members = mutableListOf<PsiMember>()
 
@@ -24,8 +24,8 @@ class MemberCollector(private val memberFilter: (PsiMember) -> Boolean) : JavaRe
     if (memberFilter(psiEnumConstant)) members.add(psiEnumConstant)
   }
 
-  companion object {
-    fun collectMembers(psiElement: PsiElement, filter: (PsiMember) -> Boolean): List<PsiMember> {
+  public companion object {
+    public fun collectMembers(psiElement: PsiElement, filter: (PsiMember) -> Boolean): List<PsiMember> {
       val collector = MemberCollector(filter)
       psiElement.accept(collector)
       return collector.members

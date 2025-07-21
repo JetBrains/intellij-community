@@ -3,13 +3,13 @@ package com.intellij.codeInsight
 
 import com.intellij.java.JavaBundle
 
-class ExternalAnnotationLineMarkerProvider : NonCodeAnnotationsLineMarkerProvider(
+public class ExternalAnnotationLineMarkerProvider : NonCodeAnnotationsLineMarkerProvider(
   JavaBundle.message("line.marker.type.external.annotations"), LineMarkerType.External)
 
-class InferredNullabilityAnnotationsLineMarkerProvider : NonCodeAnnotationsLineMarkerProvider(
+public class InferredNullabilityAnnotationsLineMarkerProvider : NonCodeAnnotationsLineMarkerProvider(
   JavaBundle.message("line.marker.type.inferred.nullability.annotations"), LineMarkerType.InferredNullability)
 
-class InferredContractAnnotationsLineMarkerProvider : NonCodeAnnotationsLineMarkerProvider(
+public class InferredContractAnnotationsLineMarkerProvider : NonCodeAnnotationsLineMarkerProvider(
   JavaBundle.message("line.marker.type.inferred.contract.annotations"), LineMarkerType.InferredContract) {
   override fun isEnabledByDefault(): Boolean = false
 }

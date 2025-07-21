@@ -6,15 +6,15 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface LibraryUsageImportProcessor<T : PsiElement> {
-  fun imports(file: PsiFile): List<T>
+public interface LibraryUsageImportProcessor<T : PsiElement> {
+  public fun imports(file: PsiFile): List<T>
 
   /**
    * Checks if the statement represents a single element or on-demand import.
    *
    * @return true if the import statement is a single element, false otherwise.
    */
-  fun isSingleElementImport(import: T): Boolean
-  fun importQualifier(import: T): String?
-  fun resolve(import: T): PsiElement?
+  public fun isSingleElementImport(import: T): Boolean
+  public fun importQualifier(import: T): String?
+  public fun resolve(import: T): PsiElement?
 }

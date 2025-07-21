@@ -16,27 +16,27 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.addIfNotNull
 
 
-interface LookupPositionMatcher {
-  fun match(position: PsiElement): Boolean
-  fun createIncorrectElementMatcher(position: PsiElement): (LookupElement) -> Boolean
+public interface LookupPositionMatcher {
+  public fun match(position: PsiElement): Boolean
+  public fun createIncorrectElementMatcher(position: PsiElement): (LookupElement) -> Boolean
 }
 
-object JavaIncorrectElements {
+public object JavaIncorrectElements {
   private val matcherKey = Key<(LookupElement) -> Boolean>("JavaIncorrectElements.matcher")
   private val positions = listOf(
     ExceptionPositionMatcher, TryWithResourcesPositionMatcher, AnnotationPositionMatcher, TypeParameterPositionMatcher,
     ImplementsDeclarationPositionMatcher, ExtendsDeclarationPositionMatcher
   )
 
-  fun matchPosition(position: PsiElement): LookupPositionMatcher? {
+  public fun matchPosition(position: PsiElement): LookupPositionMatcher? {
     return positions.firstOrNull { it.match(position) }
   }
 
-  fun putMatcher(elementMatcher: (LookupElement) -> Boolean, context: UserDataHolder) {
+  public fun putMatcher(elementMatcher: (LookupElement) -> Boolean, context: UserDataHolder) {
     context.putUserData(matcherKey, elementMatcher)
   }
 
-  fun tryGetMatcher(context: UserDataHolder): ((LookupElement) -> Boolean)? {
+  public fun tryGetMatcher(context: UserDataHolder): ((LookupElement) -> Boolean)? {
     return context.getUserData(matcherKey)
   }
 }

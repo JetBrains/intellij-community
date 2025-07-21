@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 @Service(Service.Level.PROJECT)
 @State(name = "ProcessedFilesStorage", storages = [Storage(StoragePathMacros.CACHE_FILE)], reloadable = false)
 @ApiStatus.Internal
-class ProcessedFilesStorageService : PersistentStateComponentWithModificationTracker<ProcessedFilesStorageService.MyState>, Disposable {
+public class ProcessedFilesStorageService : PersistentStateComponentWithModificationTracker<ProcessedFilesStorageService.MyState>, Disposable {
   override fun initializeComponent() {
     if (dropOutdatedPaths()) {
       tracker.incModificationCount()
@@ -35,19 +35,19 @@ class ProcessedFilesStorageService : PersistentStateComponentWithModificationTra
     this.state = state
   }
 
-  class MyState {
+  public class MyState {
     @XMap
     @JvmField
-    val timestamps: MutableMap<String, Long> = ConcurrentHashMap()
+    public val timestamps: MutableMap<String, Long> = ConcurrentHashMap()
   }
 
-  fun isVisited(vFile: VirtualFile): Boolean {
+  public fun isVisited(vFile: VirtualFile): Boolean {
     val fileTime = state.timestamps[pathMd5Hash(vFile)] ?: return false
     val currentTime = System.currentTimeMillis()
     return !isDayPassed(lastTime = fileTime, currentTime = currentTime)
   }
 
-  fun visit(vFile: VirtualFile): Boolean {
+  public fun visit(vFile: VirtualFile): Boolean {
     val hash = pathMd5Hash(vFile)
     val currentTime = System.currentTimeMillis()
     val oldTime = state.timestamps.put(hash, currentTime)
@@ -65,8 +65,8 @@ class ProcessedFilesStorageService : PersistentStateComponentWithModificationTra
 
   override fun dispose(): Unit = Unit
 
-  companion object {
-    fun getInstance(project: Project): ProcessedFilesStorageService = project.service()
+  public companion object {
+    public fun getInstance(project: Project): ProcessedFilesStorageService = project.service()
   }
 }
 

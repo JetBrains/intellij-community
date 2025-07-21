@@ -18,10 +18,10 @@ import com.intellij.workspaceModel.ide.legacyBridge.findLibraryEntity
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import org.jetbrains.annotations.ApiStatus
 
-object JavaBridgeCoordinateEntitySource : EntitySource
+public object JavaBridgeCoordinateEntitySource : EntitySource
 
 @ApiStatus.Internal
-fun IdeModifiableModelsProvider.setModuleCoordinates(module: Module, moduleData: ModuleData) {
+public fun IdeModifiableModelsProvider.setModuleCoordinates(module: Module, moduleData: ModuleData) {
   val moduleCoordinates = moduleData.publication?.toMavenCoordinates() ?: return
   val moduleEntity = module.findModuleEntity(actualStorageBuilder) ?: return
   actualStorageBuilder.modifyModuleEntity(moduleEntity) {
@@ -30,7 +30,7 @@ fun IdeModifiableModelsProvider.setModuleCoordinates(module: Module, moduleData:
 }
 
 @ApiStatus.Internal
-fun IdeModifiableModelsProvider.setLibraryCoordinates(library: Library, libraryData: LibraryData) {
+public fun IdeModifiableModelsProvider.setLibraryCoordinates(library: Library, libraryData: LibraryData) {
   val libraryCoordinates = libraryData.toMavenCoordinates() ?: return
   val libraryEntity = library.findLibraryEntity(actualStorageBuilder) ?: return
   actualStorageBuilder.modifyLibraryEntity(libraryEntity) {
@@ -39,7 +39,7 @@ fun IdeModifiableModelsProvider.setLibraryCoordinates(library: Library, libraryD
 }
 
 @ApiStatus.Internal
-fun ProjectCoordinate.toMavenCoordinates(): MavenCoordinates? {
+public fun ProjectCoordinate.toMavenCoordinates(): MavenCoordinates? {
   val groupId = groupId ?: return null
   val artifactId = artifactId ?: return null
   val version = version ?: return null

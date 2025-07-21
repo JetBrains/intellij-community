@@ -6,9 +6,9 @@ import com.intellij.codeInspection.SuppressQuickFix
 import com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection
 import com.intellij.psi.PsiElement
 
-class JavadocHtmlLintInspection : LocalInspectionTool(), ExternalAnnotatorBatchInspection {
-  companion object {
-    const val SHORT_NAME: String = "JavadocHtmlLint"
+public class JavadocHtmlLintInspection : LocalInspectionTool(), ExternalAnnotatorBatchInspection {
+  public companion object {
+    public const val SHORT_NAME: String = "JavadocHtmlLint"
   }
 
   override fun getBatchSuppressActions(element: PsiElement?): Array<out SuppressQuickFix> = SuppressQuickFix.EMPTY_ARRAY

@@ -13,26 +13,26 @@ import com.intellij.platform.workspace.storage.annotations.Parent
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 @Experimental
-interface ModuleMavenCoordinateEntity : WorkspaceEntity {
+public interface ModuleMavenCoordinateEntity : WorkspaceEntity {
 
   @Parent
-  val module: ModuleEntity
+  public val module: ModuleEntity
 
-  val coordinates: MavenCoordinates
+  public val coordinates: MavenCoordinates
 
   //region generated code
   @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ModuleMavenCoordinateEntity> {
+  public interface Builder : WorkspaceEntity.Builder<ModuleMavenCoordinateEntity> {
     override var entitySource: EntitySource
-    var module: ModuleEntity.Builder
-    var coordinates: MavenCoordinates
+    public var module: ModuleEntity.Builder
+    public var coordinates: MavenCoordinates
   }
 
-  companion object : EntityType<ModuleMavenCoordinateEntity, Builder>() {
+  public companion object : EntityType<ModuleMavenCoordinateEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(
+    public operator fun invoke(
       coordinates: MavenCoordinates,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
@@ -48,16 +48,16 @@ interface ModuleMavenCoordinateEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyModuleMavenCoordinateEntity(
+public fun MutableEntityStorage.modifyModuleMavenCoordinateEntity(
   entity: ModuleMavenCoordinateEntity,
   modification: ModuleMavenCoordinateEntity.Builder.() -> Unit,
 ): ModuleMavenCoordinateEntity {
   return modifyEntity(ModuleMavenCoordinateEntity.Builder::class.java, entity, modification)
 }
 
-var ModuleEntity.Builder.mavenCoordinates: ModuleMavenCoordinateEntity.Builder?
+public var ModuleEntity.Builder.mavenCoordinates: ModuleMavenCoordinateEntity.Builder?
   by WorkspaceEntity.extensionBuilder(ModuleMavenCoordinateEntity::class.java)
 //endregion
 
-val ModuleEntity.mavenCoordinates: ModuleMavenCoordinateEntity?
+public val ModuleEntity.mavenCoordinates: ModuleMavenCoordinateEntity?
   by WorkspaceEntity.extension()

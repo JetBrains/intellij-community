@@ -12,30 +12,30 @@ import java.io.File
  *
  * @param T Release data representation for the configuration provider.
  */
-interface ExternalJavaConfigurationProvider<T> {
+public interface ExternalJavaConfigurationProvider<T> {
 
-  companion object {
-    val EP_NAME: ExtensionPointName<ExternalJavaConfigurationProvider<*>> = ExtensionPointName.create("com.intellij.openapi.projectRoots.externalJavaConfigurationProvider")
+  public companion object {
+    public val EP_NAME: ExtensionPointName<ExternalJavaConfigurationProvider<*>> = ExtensionPointName.create("com.intellij.openapi.projectRoots.externalJavaConfigurationProvider")
   }
 
   /**
    * @return the configuration file supported by this provider.
    */
-  fun getConfigurationFile(project: Project): File
+  public fun getConfigurationFile(project: Project): File
 
   /**
    * @return the release data [T] corresponding to the [text] content of the configuration file.
    */
-  fun getReleaseData(text: String): T?
+  public fun getReleaseData(text: String): T?
 
   /**
    * @return true if the release data matches the given SDK.
    */
-  fun matchAgainstSdk(releaseData: T, sdk: Sdk): Boolean
+  public fun matchAgainstSdk(releaseData: T, sdk: Sdk): Boolean
 
   /**
    * @return true if the release data matches the given path.
    */
-  fun matchAgainstPath(releaseData: T, path: String): Boolean
+  public fun matchAgainstPath(releaseData: T, path: String): Boolean
 
 }

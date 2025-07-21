@@ -38,11 +38,11 @@ private val LOG = logger<ExternalJavaConfigurationService>()
  * @see ExternalJavaConfigurationProvider
  */
 @Service(Service.Level.PROJECT)
-class ExternalJavaConfigurationService(val project: Project, private val scope: CoroutineScope) : Disposable {
+public class ExternalJavaConfigurationService(public val project: Project, private val scope: CoroutineScope) : Disposable {
 
-  sealed class JdkCandidate<T> {
-    data class Jdk<T>(val releaseData: T, val jdk: Sdk, val project: Boolean) : JdkCandidate<T>()
-    data class Path<T>(val releaseData: T, val path: String) : JdkCandidate<T>()
+  public sealed class JdkCandidate<T> {
+    public data class Jdk<T>(val releaseData: T, val jdk: Sdk, val project: Boolean) : JdkCandidate<T>()
+    public data class Path<T>(val releaseData: T, val path: String) : JdkCandidate<T>()
   }
 
   internal fun <T> registerListener(disposable: Disposable, configProvider: ExternalJavaConfigurationProvider<T>) {
@@ -65,7 +65,7 @@ class ExternalJavaConfigurationService(val project: Project, private val scope: 
   /**
    * Updates the project JDK according to the configuration file of [configProvider].
    */
-  fun <T> updateJdkFromConfig(configProvider: ExternalJavaConfigurationProvider<T>) {
+  public fun <T> updateJdkFromConfig(configProvider: ExternalJavaConfigurationProvider<T>) {
     scope.launch {
       val releaseData: T = getReleaseData(configProvider) ?: return@launch
       val file = configProvider.getConfigurationFile(project)
@@ -84,7 +84,7 @@ class ExternalJavaConfigurationService(val project: Project, private val scope: 
   /**
    * @return a JDK candidate based on the configuration file.
    */
-  suspend fun <T> getReleaseData(configProvider: ExternalJavaConfigurationProvider<T>): T? {
+  public suspend fun <T> getReleaseData(configProvider: ExternalJavaConfigurationProvider<T>): T? {
     val text = readAction {
       val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(configProvider.getConfigurationFile(project).toPath().toAbsolutePath())
       virtualFile?.let { FileDocumentManager.getInstance().getDocument(it)?.text }
@@ -96,7 +96,7 @@ class ExternalJavaConfigurationService(val project: Project, private val scope: 
   /**
    * @return a matching JDK candidate for the release data among registered and detected JDKs.
    */
-  fun <T> findCandidate(releaseData: T, configProvider: ExternalJavaConfigurationProvider<T>): JdkCandidate<T>? {
+  public fun <T> findCandidate(releaseData: T, configProvider: ExternalJavaConfigurationProvider<T>): JdkCandidate<T>? {
     val fileName = configProvider.getConfigurationFile(project).name
 
     val wsl =  SystemInfo.isWindows && project.guessProjectDir()?.let { WslPath.isWslUncPath(it.path) } == true

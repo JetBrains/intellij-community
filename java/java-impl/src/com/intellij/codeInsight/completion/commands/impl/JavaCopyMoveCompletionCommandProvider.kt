@@ -9,7 +9,7 @@ import com.intellij.psi.PsiModifier.STATIC
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
 
-class JavaMoveCompletionCommandProvider : AbstractMoveCompletionCommandProvider() {
+public class JavaMoveCompletionCommandProvider : AbstractMoveCompletionCommandProvider() {
   override fun findMoveClassOffset(offset: Int, psiFile: PsiFile): Int? {
     var currentOffset = offset
     if (currentOffset == 0) return null
@@ -41,7 +41,7 @@ class JavaMoveCompletionCommandProvider : AbstractMoveCompletionCommandProvider(
   }
 }
 
-class JavaCopyCompletionCommandProvider : AbstractCopyClassCompletionCommandProvider() {
+public class JavaCopyCompletionCommandProvider : AbstractCopyClassCompletionCommandProvider() {
   override fun findMoveClassOffset(offset: Int, psiFile: PsiFile): Int? {
     var currentOffset = offset
     if (currentOffset == 0) return null

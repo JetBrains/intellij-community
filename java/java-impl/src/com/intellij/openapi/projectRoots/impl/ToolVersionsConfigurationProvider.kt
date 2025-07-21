@@ -10,11 +10,11 @@ import java.io.File
 
 private val LOG = logger<ToolVersionsConfigurationProvider>()
 
-data class AsdfReleaseData(val name: String, val vendor: String, val version: String) {
-  companion object {
+public data class AsdfReleaseData(val name: String, val vendor: String, val version: String) {
+  public companion object {
     private val regex: Regex = Regex("([\\w\\-]+)-([0-9][^-_+b\\s]*)\\S*")
 
-    fun parse(text: String): AsdfReleaseData? {
+    public fun parse(text: String): AsdfReleaseData? {
       val matchResult = regex.matchEntire(text) ?: return null
       return AsdfReleaseData(
         text,
@@ -26,7 +26,7 @@ data class AsdfReleaseData(val name: String, val vendor: String, val version: St
 
   val normalizedVersion: String = version.split(".").take(3).joinToString(".")
 
-  fun matchVersionString(versionString: @NlsSafe String): Boolean {
+  public fun matchVersionString(versionString: @NlsSafe String): Boolean {
     LOG.info("Matching '$versionString'")
     if (normalizedVersion !in versionString) return false
 
@@ -57,7 +57,7 @@ data class AsdfReleaseData(val name: String, val vendor: String, val version: St
   }
 }
 
-class ToolVersionsConfigurationProvider : ExternalJavaConfigurationProvider<AsdfReleaseData> {
+public class ToolVersionsConfigurationProvider : ExternalJavaConfigurationProvider<AsdfReleaseData> {
   override fun getConfigurationFile(project: Project): File = File(project.basePath, ".tool-versions")
 
   override fun getReleaseData(text: String): AsdfReleaseData? {

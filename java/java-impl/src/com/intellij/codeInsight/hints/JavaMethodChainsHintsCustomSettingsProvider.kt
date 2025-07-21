@@ -3,4 +3,4 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.chain.AbstractDeclarativeCallChainCustomSettingsProvider
 
-class JavaMethodChainsHintsCustomSettingsProvider : AbstractDeclarativeCallChainCustomSettingsProvider(defaultChainLength = 2)
+public class JavaMethodChainsHintsCustomSettingsProvider : AbstractDeclarativeCallChainCustomSettingsProvider(defaultChainLength = 2)

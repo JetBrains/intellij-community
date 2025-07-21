@@ -16,7 +16,7 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Configures the project JDK according to configuration files from external config tools.
  */
-class ExternalJavaConfigurationActivity : ProjectActivity {
+public class ExternalJavaConfigurationActivity : ProjectActivity {
 
   private val disposableMap = mutableMapOf<Class<*>, Disposable>()
 

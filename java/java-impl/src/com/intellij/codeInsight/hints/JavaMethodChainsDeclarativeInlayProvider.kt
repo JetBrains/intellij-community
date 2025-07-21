@@ -7,9 +7,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.siyeh.ig.psiutils.ExpressionUtils
 
-class JavaMethodChainsDeclarativeInlayProvider : AbstractDeclarativeCallChainProvider<PsiMethodCallExpression, PsiType, Unit>() {
-  companion object {
-    const val PROVIDER_ID: String = "java.method.chains"
+public class JavaMethodChainsDeclarativeInlayProvider : AbstractDeclarativeCallChainProvider<PsiMethodCallExpression, PsiType, Unit>() {
+  public companion object {
+    public const val PROVIDER_ID: String = "java.method.chains"
   }
 
   override fun PsiType.buildTree(expression: PsiElement, project: Project, context: Unit, treeBuilder: PresentationTreeBuilder) {

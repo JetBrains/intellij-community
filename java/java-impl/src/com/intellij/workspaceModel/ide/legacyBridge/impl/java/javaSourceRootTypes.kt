@@ -5,13 +5,13 @@ package com.intellij.workspaceModel.ide.legacyBridge.impl.java
 import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 
 @JvmField
-val JAVA_SOURCE_ROOT_ENTITY_TYPE_ID = SourceRootTypeId("java-source")
+public val JAVA_SOURCE_ROOT_ENTITY_TYPE_ID: SourceRootTypeId = SourceRootTypeId("java-source")
 
 @JvmField
-val JAVA_TEST_ROOT_ENTITY_TYPE_ID = SourceRootTypeId("java-test")
+public val JAVA_TEST_ROOT_ENTITY_TYPE_ID: SourceRootTypeId = SourceRootTypeId("java-test")
 
 @JvmField
-val JAVA_RESOURCE_ROOT_ENTITY_TYPE_ID = SourceRootTypeId("java-resource")
+public val JAVA_RESOURCE_ROOT_ENTITY_TYPE_ID: SourceRootTypeId = SourceRootTypeId("java-resource")
 
 @JvmField
-val JAVA_TEST_RESOURCE_ROOT_ENTITY_TYPE_ID = SourceRootTypeId("java-test-resource")
+public val JAVA_TEST_RESOURCE_ROOT_ENTITY_TYPE_ID: SourceRootTypeId = SourceRootTypeId("java-test-resource")

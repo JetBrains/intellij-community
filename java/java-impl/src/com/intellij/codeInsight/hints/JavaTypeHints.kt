@@ -11,8 +11,8 @@ import com.intellij.psi.*
  * @param myFoldingLevel level at which generics will be shown as placeholders, so they require click to expand it.
  * @param maxLength length of the text after which everything will be folded
  */
-class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactory, private val myFoldingLevel: Int, private val maxLength: Int = DEFAULT_LENGTH) {
-  fun typeHint(type: PsiType): InlayPresentation = myFactory.roundWithBackground(hint(type, 0, Context(maxLength)))
+public class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactory, private val myFoldingLevel: Int, private val maxLength: Int = DEFAULT_LENGTH) {
+  public fun typeHint(type: PsiType): InlayPresentation = myFactory.roundWithBackground(hint(type, 0, Context(maxLength)))
 
   private val captureOfLabel = "capture of "
 
@@ -150,15 +150,15 @@ class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactor
     return SequencePresentation(seq)
   }
 
-  companion object {
+  public companion object {
     @JvmStatic
-    fun presentation(type: PsiType, factory: PresentationFactory): InlayPresentation {
+    public fun presentation(type: PsiType, factory: PresentationFactory): InlayPresentation {
       val base = JavaTypeHintsPresentationFactory(factory, 3).typeHint(type)
       return factory.roundWithBackground(base)
     }
 
     @JvmStatic
-    fun presentationWithColon(type: PsiType, factory: PresentationFactory): InlayPresentation {
+    public fun presentationWithColon(type: PsiType, factory: PresentationFactory): InlayPresentation {
       val presentations = JavaTypeHintsPresentationFactory(factory, 3).hint(type, 0, Context(DEFAULT_LENGTH))
       return factory.roundWithBackground(factory.seq(factory.smallText(": "), presentations))
     }

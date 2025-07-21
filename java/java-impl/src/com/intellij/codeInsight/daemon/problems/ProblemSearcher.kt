@@ -11,7 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil
  * Pair of reported element and context. 
  * Context is mainly used for display purposes.
  */
-class Problem(val reportedElement: PsiElement, val context: PsiElement) {
+public class Problem(public val reportedElement: PsiElement, public val context: PsiElement) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false

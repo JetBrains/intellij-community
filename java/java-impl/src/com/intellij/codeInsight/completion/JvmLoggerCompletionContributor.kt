@@ -9,7 +9,7 @@ import com.intellij.psi.PsiReferenceExpression
 import com.intellij.util.ProcessingContext
 import com.siyeh.ig.psiutils.ExpressionUtils
 
-class JvmLoggerCompletionContributor : CompletionContributor() {
+public class JvmLoggerCompletionContributor : CompletionContributor() {
   init {
     extend(CompletionType.BASIC,
            psiElement().withParent(PsiReferenceExpression::class.java).andNot(

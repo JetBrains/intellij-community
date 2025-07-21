@@ -6,9 +6,9 @@ import com.intellij.ui.dsl.builder.Cell
 import kotlin.reflect.KMutableProperty0
 
 @Suppress("unused")
-object JavadocUIUtil {
+public object JavadocUIUtil {
   @Deprecated(message = "Will be removed. Inline if you need this functionality")
-  fun <T> Cell<ComboBox<T>>.bindItem(property: KMutableProperty0<T>): Cell<ComboBox<T>> = applyToComponent {
+  public fun <T> Cell<ComboBox<T>>.bindItem(property: KMutableProperty0<T>): Cell<ComboBox<T>> = applyToComponent {
     selectedItem = property.get()
     addActionListener {
       @Suppress("UNCHECKED_CAST")

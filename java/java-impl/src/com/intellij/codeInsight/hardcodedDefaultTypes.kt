@@ -88,7 +88,7 @@ private fun isDefinedInClass(method: PsiMethod, className: String): Boolean =
   method.containingClass?.qualifiedName == className ||
   DeepestSuperMethodsSearch.search(method).findAll().any { it.containingClass?.qualifiedName == className }
 
-fun getDefaultType(method: PsiMethod, substitutor: PsiSubstitutor, argIndex: Int, argument: PsiExpression): PsiType? {
+public fun getDefaultType(method: PsiMethod, substitutor: PsiSubstitutor, argIndex: Int, argument: PsiExpression): PsiType? {
   for (provider in providers[MethodArgument(method.name, argIndex)]) {
     return provider.getDefaultType(method, substitutor, argument) ?: continue
   }

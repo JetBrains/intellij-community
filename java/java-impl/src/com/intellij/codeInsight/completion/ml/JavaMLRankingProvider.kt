@@ -9,8 +9,8 @@ import com.intellij.lang.java.JavaLanguage
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class JavaMLRankingProvider : CatBoostJarCompletionModelProvider(JavaBundle.message("settings.completion.ml.java.display.name"),
-                                                                 "java_features", "java_model") {
+public class JavaMLRankingProvider : CatBoostJarCompletionModelProvider(JavaBundle.message("settings.completion.ml.java.display.name"),
+                                                                        "java_features", "java_model") {
 
   override fun isLanguageSupported(language: Language): Boolean = JavaLanguage.INSTANCE == language
 

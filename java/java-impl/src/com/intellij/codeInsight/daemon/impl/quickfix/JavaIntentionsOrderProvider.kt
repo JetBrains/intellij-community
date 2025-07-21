@@ -6,7 +6,7 @@ import com.intellij.codeInsight.intention.impl.DefaultIntentionsOrderProvider
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.IntentionsOrderProvider
 
-class JavaIntentionsOrderProvider : IntentionsOrderProvider {
+public class JavaIntentionsOrderProvider : IntentionsOrderProvider {
   override fun getSortedIntentions(context: CachedIntentions, intentions: List<IntentionActionWithTextCaching>): List<IntentionActionWithTextCaching> {
     val (errors, others) = intentions.partition { intention -> isCompilationFix(context, intention) }
     val errorsSortedByPriority = errors

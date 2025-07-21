@@ -11,14 +11,14 @@ import java.util.*
 
 private val LOG = logger<SdkmanrcConfigurationProvider>()
 
-data class SdkmanReleaseData(val target: String,
-                             val version: String,
-                             val flavour: String? = null,
-                             val vendor: String? = null) {
-  companion object {
+public data class SdkmanReleaseData(val target: String,
+                                    val version: String,
+                                    val flavour: String? = null,
+                                    val vendor: String? = null) {
+  public companion object {
     private val regex: Regex = Regex("(\\d+(?:\\.\\d+)*)(?:\\.([^-]+))?-?(.*)?")
 
-    fun parse(text: String): SdkmanReleaseData? {
+    public fun parse(text: String): SdkmanReleaseData? {
       val matchResult = regex.find(text) ?: return null
       return SdkmanReleaseData(
         text,
@@ -29,7 +29,7 @@ data class SdkmanReleaseData(val target: String,
     }
   }
 
-  fun matchVersionString(versionString: @NlsSafe String): Boolean {
+  public fun matchVersionString(versionString: @NlsSafe String): Boolean {
     LOG.info("Matching '$versionString'")
     if (version !in versionString) return false
 
@@ -61,7 +61,7 @@ data class SdkmanReleaseData(val target: String,
 
 }
 
-class SdkmanrcConfigurationProvider: ExternalJavaConfigurationProvider<SdkmanReleaseData> {
+public class SdkmanrcConfigurationProvider: ExternalJavaConfigurationProvider<SdkmanReleaseData> {
   override fun getConfigurationFile(project: Project): File = File(project.basePath, ".sdkmanrc")
 
   override fun getReleaseData(text: String): SdkmanReleaseData? {
