@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -18,8 +21,10 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @author Ilya.Kazakevich
  */
-final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
+final class TypeEvalContextCacheImpl implements TypeEvalContextCache, Disposable {
   private final @NotNull CachedValue<ConcurrentMap<TypeEvalConstraints, TypeEvalContext>> myCachedMapStorage;
+  private final LowMemoryWatcher myLowMemoryWatcher;
+  private final SimpleModificationTracker myLowMemoryModificationTracker = new SimpleModificationTracker();
 
   TypeEvalContextCacheImpl(@NotNull Project project) {
     myCachedMapStorage = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<>() {
@@ -28,8 +33,13 @@ final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
         // This method is called if cache is empty. Create new map for it.
         // Concurrent map allows several threads to call get and put, so it is thread safe but not atomic
         final ConcurrentMap<TypeEvalConstraints, TypeEvalContext> map = ContainerUtil.createConcurrentSoftValueMap();
-        return new CachedValueProvider.Result<>(map, PsiModificationTracker.MODIFICATION_COUNT);
+        return new CachedValueProvider.Result<>(map, PsiModificationTracker.MODIFICATION_COUNT, myLowMemoryModificationTracker);
       }
+    });
+
+    myLowMemoryWatcher = LowMemoryWatcher.register(() -> {
+      myLowMemoryModificationTracker.incModificationCount();
+      myCachedMapStorage.getValue();
     });
   }
 
@@ -46,5 +56,10 @@ final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
     TypeEvalContext oldValue =
       map.putIfAbsent(key, standard);// ConcurrentMap guarantees happens-before so from this moment get() should work in other threads
     return oldValue == null ? standard : oldValue;
+  }
+
+  @Override
+  public void dispose() {
+    myLowMemoryWatcher.stop();
   }
 }
