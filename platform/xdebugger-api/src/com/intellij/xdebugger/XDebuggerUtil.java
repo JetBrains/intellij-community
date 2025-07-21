@@ -2,7 +2,6 @@
 
 package com.intellij.xdebugger;
 
-import com.intellij.idea.AppMode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.breakpoints.*;
@@ -129,9 +127,6 @@ public abstract class XDebuggerUtil {
 
   public static boolean areInlineBreakpointsEnabled(@Nullable VirtualFile file) {
     return Registry.is(INLINE_BREAKPOINTS_KEY) &&
-           // It's a temporary workaround for completely broken lambda breakpoints in RD, IDEA-358375.
-           !AppMode.isRemoteDevHost() &&
-           !PlatformUtils.isJetBrainsClient() &&
            !ContainerUtil.exists(InlineBreakpointsDisabler.Companion.getEP().getExtensionList(),
                                  disabler -> disabler.areInlineBreakpointsDisabled(file));
   }

@@ -45,7 +45,7 @@ private data class UpdateUICallback(val callOnUpdate: Runnable)
 class XBreakpointVisualRepresentation(
   cs: CoroutineScope,
   private val myBreakpoint: XLightLineBreakpointProxy,
-  isEnabled: Boolean,
+  private val isEnabled: Boolean,
   private val myBreakpointManager: XBreakpointManagerProxy,
 ) {
   private val myProject: Project = myBreakpoint.project
@@ -227,6 +227,7 @@ class XBreakpointVisualRepresentation(
     if (file == null) return
     if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) return
 
+    if (!isEnabled) return
     val service = RedrawInlaysService.getInstance(myProject)
     service.launch {
       val document = readAction { findDocument(file, mayDecompile = true) } ?: return@launch

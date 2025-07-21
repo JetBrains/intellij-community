@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.findDocument
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
@@ -32,10 +33,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
+import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeId
 import com.intellij.xdebugger.impl.rpc.models.findValue
@@ -243,6 +241,30 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     }
   }
 
+  override suspend fun computeInlineBreakpointVariants(projectId: ProjectId, fileId: VirtualFileId, onlyLine: Int?): List<InlineBreakpointVariantsOnLine> {
+    val project = projectId.findProject()
+    val file = fileId.virtualFile() ?: return emptyList()
+    val document = readAction { file.findDocument() } ?: return emptyList()
+    val lineToVariants = InlineBreakpointsVariantsManager.getInstance(project).calculateBreakpointsVariants(document, onlyLine)
+    return lineToVariants.map { (line, variants) ->
+      InlineBreakpointVariantsOnLine(line, variants.map { it.toRpc() })
+    }
+  }
+
+  override suspend fun createVariantBreakpoint(projectId: ProjectId, fileId: VirtualFileId, line: Int, variantIndex: Int) {
+    val project = projectId.findProject()
+    val file = fileId.virtualFile() ?: return
+    val document = readAction { file.findDocument() } ?: return
+    // TODO avoid collecting variants again
+    val variants = InlineBreakpointsVariantsManager.getInstance(project).calculateBreakpointsVariants(document, line)
+      .getOrDefault(line, emptyList())
+    val variant = variants.getOrNull(variantIndex)?.variant ?: return
+    edtWriteAction {
+      val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
+      XDebuggerUtilImpl.addLineBreakpoint(breakpointManager, variant, file, line)
+    }
+  }
+
   override suspend fun copyLineBreakpoint(breakpointId: XBreakpointId, fileId: VirtualFileId, line: Int) {
     val requestId = requestCounter.getAndIncrement()
     val file = fileId.virtualFile() ?: return
@@ -320,3 +342,18 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
 
 @Service(Service.Level.PROJECT)
 private class BackendXBreakpointTypeApiProjectCoroutineScope(val cs: CoroutineScope)
+
+private suspend fun InlineVariantWithMatchingBreakpoint.toRpc(): InlineBreakpointVariantWithMatchingBreakpointDto {
+  return InlineBreakpointVariantWithMatchingBreakpointDto(
+    variant = variant?.toRpc(),
+    breakpointId = breakpoint?.breakpointId,
+  )
+}
+
+private suspend fun XLineBreakpointType<*>.XLineBreakpointVariant.toRpc(): XInlineBreakpointVariantDto {
+  return XInlineBreakpointVariantDto(
+    highlightRange = readAction { highlightRange?.toRpc() },
+    icon = type.enabledIcon.rpcId(),
+    tooltipDescription = tooltipDescription,
+  )
+}

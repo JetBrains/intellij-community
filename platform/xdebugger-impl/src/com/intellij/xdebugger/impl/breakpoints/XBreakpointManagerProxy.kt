@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.breakpoints
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ThrowableRunnable
@@ -52,6 +53,8 @@ interface XBreakpointManagerProxy {
   fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): List<XLineBreakpointProxy>
 
   suspend fun <T> withLightBreakpointIfPossible(editor: Editor?, info: XLineBreakpointInstallationInfo, block: suspend () -> T): T
+
+  suspend fun getBreakpointVariants(document: Document, onlyLine: Int?): Map<Int, List<InlineVariantWithMatchingBreakpointProxy>>
 
   class Monolith(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {
     override val breakpointsDialogSettings: XBreakpointsDialogState?
@@ -155,6 +158,13 @@ interface XBreakpointManagerProxy {
 
     override suspend fun <T> withLightBreakpointIfPossible(editor: Editor?, info: XLineBreakpointInstallationInfo, block: suspend () -> T): T {
       return block()
+    }
+
+    override suspend fun getBreakpointVariants(document: Document, onlyLine: Int?): Map<Int, List<InlineVariantWithMatchingBreakpointProxy>> {
+      return InlineBreakpointsVariantsManager.getInstance(breakpointManager.project).calculateBreakpointsVariants(document, onlyLine)
+        .mapValues { (_, variants) ->
+          variants.map { (breakpoint, variant) -> InlineVariantWithMatchingBreakpointProxy(breakpoint?.asProxy(), variant?.asProxy()) }
+        }
     }
   }
 }
