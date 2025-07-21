@@ -17,16 +17,21 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParameterUtils.findContextParameterInChangeInfo
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParameterUtils.isAnonymousParameter
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParameterUtils.isConvertibleContextParameter
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParameterUtils.runChangeSignatureForParameter
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.renameParameterInPlace
+import org.jetbrains.kotlin.lexer.KtTokens.OVERRIDE_KEYWORD
 import org.jetbrains.kotlin.psi.KtContextReceiverList
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 
 class ConvertContextParameterToRegularParameterIntention : SelfTargetingIntention<KtParameter>(
     KtParameter::class.java, KotlinBundle.lazyMessage("convert.context.parameter.to.regular.parameter")
@@ -34,8 +39,9 @@ class ConvertContextParameterToRegularParameterIntention : SelfTargetingIntentio
     override fun startInWriteAction(): Boolean = false
 
     override fun isApplicableTo(element: KtParameter, caretOffset: Int): Boolean {
-        return isConvertibleContextParameter(element)
-                && (element.parent as? KtContextReceiverList)?.ownerDeclaration is KtNamedFunction
+        if (!isConvertibleContextParameter(element)) return false
+        val ownerFunction = (element.parent as? KtContextReceiverList)?.ownerDeclaration as? KtNamedFunction ?: return false
+        return !isAnonymousParameter(element) || !ownerFunction.hasModifier(OVERRIDE_KEYWORD) // KTIJ-34978
     }
 
     override fun applyTo(element: KtParameter, editor: Editor?) {
@@ -71,20 +77,47 @@ class ConvertContextParameterToRegularParameterIntention : SelfTargetingIntentio
     private fun renameAnonymousContextParameter(contextParameter: KtParameter, ownerFunction: KtNamedFunction) {
         runWithModalProgressBlocking(contextParameter.project, KotlinBundle.message("convert.context.parameter.to.regular.parameter.progress")) {
             var initialNameForAnonymousParameter: String? = null
+            val contextParametersInOverrides = mutableListOf<KtParameter>()
             readAction {
                 analyze(contextParameter) {
                     initialNameForAnonymousParameter = suggestParameterNameByType(contextParameter, ownerFunction)
+                    if (ownerFunction.containingClassOrObject != null) {
+                        collectContextParametersFromOverrides(contextParameter, ownerFunction, contextParametersInOverrides)
+                    }
                 }
             }
 
             initialNameForAnonymousParameter?.let { initialName ->
                 withContext(Dispatchers.EDT) {
                     writeAction {
-                        contextParameter.setName(initialName)
+                        (contextParametersInOverrides + contextParameter).forEach { contextParameter ->
+                            if (contextParameter.isWritable) {
+                                contextParameter.setName(initialName)
+                            }
+                        }
                     }
                 }
             }
         }
+    }
+
+    private fun collectContextParametersFromOverrides(
+        contextParameter: KtParameter,
+        ownerFunction: KtNamedFunction,
+        result: MutableList<KtParameter>,
+    ) {
+        val parameterIndex = contextParameter.parameterIndex().takeIf { it >= 0 } ?: return
+        val overriders = KotlinFindUsagesSupport.searchOverriders(ownerFunction, ownerFunction.useScope).mapNotNull {
+            (it as? KtNamedFunction)
+        }
+        overriders.mapNotNullTo(result) { ktFunction ->
+            findContextParameterByIndex(ktFunction, parameterIndex)
+        }
+    }
+
+    private fun findContextParameterByIndex(function: KtNamedFunction, index: Int): KtParameter? {
+        if (!function.containingKtFile.isUnderKotlinSourceRootTypes()) return null
+        return function.contextReceiverList?.contextParameters()?.getOrNull(index)
     }
 
     private fun KaSession.suggestParameterNameByType(ktParameter: KtParameter, ownerFunction: KtNamedFunction): String? {

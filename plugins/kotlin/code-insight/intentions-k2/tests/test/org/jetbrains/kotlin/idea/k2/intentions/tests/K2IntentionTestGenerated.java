@@ -14688,6 +14688,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/abstractOverride3.kt");
             }
 
+            @TestMetadata("anonymousLeafOverride.kt")
+            public void testAnonymousLeafOverride() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/anonymousLeafOverride.kt");
+            }
+
+            @TestMetadata("anonymousMiddleOverride.kt")
+            public void testAnonymousMiddleOverride() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/anonymousMiddleOverride.kt");
+            }
+
             @TestMetadata("anonymousMultipleContextsWithUserTypes.kt")
             public void testAnonymousMultipleContextsWithUserTypes() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/anonymousMultipleContextsWithUserTypes.kt");
@@ -14696,6 +14706,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("anonymousPotentialRenameConflict.kt")
             public void testAnonymousPotentialRenameConflict() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/anonymousPotentialRenameConflict.kt");
+            }
+
+            @TestMetadata("anonymousRootOfHierarchy.kt")
+            public void testAnonymousRootOfHierarchy() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/anonymousRootOfHierarchy.kt");
+            }
+
+            @TestMetadata("anonymousRootOfHierarchyAndUsageInOverride.kt")
+            public void testAnonymousRootOfHierarchyAndUsageInOverride() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/anonymousRootOfHierarchyAndUsageInOverride.kt");
             }
 
             @TestMetadata("anonymousSingle.kt")
@@ -14821,6 +14841,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("memberFunction1.kt")
             public void testMemberFunction1() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/memberFunction1.kt");
+            }
+
+            @TestMetadata("namedLeafOverride.kt")
+            public void testNamedLeafOverride() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/namedLeafOverride.kt");
+            }
+
+            @TestMetadata("namedMiddleOverride.kt")
+            public void testNamedMiddleOverride() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/namedMiddleOverride.kt");
+            }
+
+            @TestMetadata("namedRootOfHierarchy.kt")
+            public void testNamedRootOfHierarchy() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/namedRootOfHierarchy.kt");
             }
 
             @TestMetadata("wrappedWithUnderscores.kt")
