@@ -39,7 +39,8 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
   companion object {
     const val NAME: @NonNls String = "openFile"
     const val PREFIX: @NonNls String = "$CMD_PREFIX$NAME"
-    const val SPAN_NAME: @NonNls String = "firstCodeAnalysis"
+    const val OPEN_FILE_SPAN_NAME: @NonNls String = "openFile"
+    const val FIRST_CODE_ANALYSIS_SPAN_NAME: @NonNls String = "firstCodeAnalysis"
 
     @JvmStatic
     fun findFile(filePath: String, project: Project): VirtualFile? {
@@ -85,7 +86,7 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
       listenJob
     }
 
-    spanRef.set(startSpan(SPAN_NAME))
+    spanRef.set(startSpan(FIRST_CODE_ANALYSIS_SPAN_NAME))
     setFilePath(projectPath = projectPath, span = spanRef.get(), file = file)
 
     // focus window
@@ -93,11 +94,17 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
       ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive = true)
     }
 
+    var openFileSpan: Span? = null
+    if (useWaitForCodeAnalysisCode(options)) {
+      openFileSpan = startSpan(OPEN_FILE_SPAN_NAME).setAttribute("path", file.path)
+    }
+
     val fileEditor = (project.serviceAsync<FileEditorManager>() as FileEditorManagerEx)
       .openFile(file = file, options = FileEditorOpenOptions(requestFocus = true))
 
     if (useWaitForCodeAnalysisCode(options)) {
       waitForAnalysisWithNewApproach(project, spanRef, timeout, suppressErrors)
+      openFileSpan!!.end()
       return
     }
 
