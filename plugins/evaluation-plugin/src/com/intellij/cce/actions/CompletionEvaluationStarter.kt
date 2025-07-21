@@ -27,6 +27,7 @@ import com.intellij.ide.commandNameFromExtension
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.application.ex.ApplicationEx.FORCE_EXIT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.currentClassLogger
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
@@ -220,7 +221,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
         workspace.readAdditionalStats(LAYOUT_NAME)?.let {
           outputWorkspace.saveAdditionalStats(LAYOUT_NAME, it)
         }
-        val sessionFiles = workspace.sessionsStorage.getSessionFiles()
+        val sessionFiles = workspace.getSessionFilesSafe()
         for (sessionFile in sessionFiles) {
           outputWorkspace.sessionsStorage.saveSessions(workspace.sessionsStorage.getSessions(sessionFile.first))
         }
@@ -234,6 +235,23 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
         process.start(outputWorkspace)
       }
     }
+
+    /**
+     * Let's not fail the aggregation of the evaluation report if some
+     * child builds failed (and so some files are missing).
+     */
+    private fun EvaluationWorkspace.getSessionFilesSafe(): List<Pair<String, String>> =
+      try {
+        sessionsStorage.getSessionFiles()
+      }
+      catch (e: Throwable) {
+        logger.warn("Failed to get session files from workspace ${this.path()}. Probably some evaluation builds failed")
+        emptyList()
+      }
+  }
+
+  companion object {
+    val logger = currentClassLogger()
   }
 }
 
