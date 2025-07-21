@@ -3,29 +3,28 @@ package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.toolWindow.ToolWindowSplitContentProviderBean
+import com.intellij.ui.content.Content
 import javax.swing.SwingConstants
 
 internal abstract class ToolWindowSplitActionBase(
   private val isVertical: Boolean,
-) : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
-  override fun actionPerformed(e: AnActionEvent) {
-    val toolWindow = e.getData(PlatformDataKeys.TOOL_WINDOW) ?: return
+) : ToolWindowContextMenuActionBase(), ActionRemoteBehaviorSpecification.Frontend {
+  override fun actionPerformed(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
     val splitProvider = ToolWindowSplitContentProviderBean.getForToolWindow(toolWindow.id) ?: return
-    val decorator = e.findNearestDecorator() ?: return
-    val selectedContent = e.guessCurrentContent() ?: return
+    val decorator = findNearestDecorator(e) ?: return
+    if (content == null) return
 
-    val newContent = splitProvider.createContentCopy(toolWindow.project, selectedContent)
+    val newContent = splitProvider.createContentCopy(toolWindow.project, content)
     decorator.splitWithContent(newContent, if (isVertical) SwingConstants.RIGHT else SwingConstants.BOTTOM, -1)
   }
 
-  override fun update(e: AnActionEvent) {
-    val toolWindow = e.getData(PlatformDataKeys.TOOL_WINDOW)
-    e.presentation.isEnabledAndVisible = toolWindow != null && ToolWindowContentUi.isToolWindowReorderAllowed(toolWindow) &&
+  override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
+    e.presentation.isEnabledAndVisible = ToolWindowContentUi.isToolWindowReorderAllowed(toolWindow) &&
                                          ToolWindowSplitContentProviderBean.getForToolWindow(toolWindow.id) != null
   }
 

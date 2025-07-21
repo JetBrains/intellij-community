@@ -3,25 +3,25 @@ package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.ui.content.Content
 import javax.swing.SwingConstants
 
 internal abstract class ToolWindowSplitAndMoveActionBase(
   private val isVertical: Boolean,
-) : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
-  override fun actionPerformed(e: AnActionEvent) {
-    val content = e.guessCurrentContent() ?: return
-    val decorator = e.findNearestDecorator() ?: return
+) : ToolWindowContextMenuActionBase(), ActionRemoteBehaviorSpecification.Frontend {
+  override fun actionPerformed(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
+    if (content == null) return
+    val decorator = findNearestDecorator(e) ?: return
     decorator.splitWithContent(content, if (isVertical) SwingConstants.RIGHT else SwingConstants.BOTTOM, -1)
   }
 
-  override fun update(e: AnActionEvent) {
-    val toolWindow = e.getData(PlatformDataKeys.TOOL_WINDOW)
-    val contentManager = e.getData(ToolWindowContentUi.CONTENT_MANAGER_DATA_KEY)
-    e.presentation.isEnabledAndVisible = toolWindow != null && ToolWindowContentUi.isToolWindowReorderAllowed(toolWindow) &&
+  override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
+    val contentManager = content?.manager
+    e.presentation.isEnabledAndVisible = ToolWindowContentUi.isToolWindowReorderAllowed(toolWindow) &&
                                          contentManager != null && contentManager.contentCount > 1
   }
 

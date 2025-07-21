@@ -4,12 +4,15 @@ package com.intellij.openapi.wm;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.wm.impl.content.BaseLabel;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
+import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
 
 public abstract class ToolWindowContextMenuActionBase extends AnAction {
 
@@ -58,5 +61,11 @@ public abstract class ToolWindowContextMenuActionBase extends AnAction {
       }
     }
     return selectedContent;
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable InternalDecoratorImpl findNearestDecorator(@NotNull AnActionEvent e) {
+    Component context = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+    return InternalDecoratorImpl.findNearestDecorator(context);
   }
 }

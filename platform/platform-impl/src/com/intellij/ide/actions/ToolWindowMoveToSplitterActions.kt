@@ -5,14 +5,16 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.toolWindow.InternalDecoratorImpl
+import com.intellij.ui.content.Content
 
 internal abstract class ToolWindowMoveToSplitterAction(
   private val isNext: Boolean,
-) : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
-  override fun actionPerformed(e: AnActionEvent) {
+) : ToolWindowContextMenuActionBase(), ActionRemoteBehaviorSpecification.Frontend {
+  override fun actionPerformed(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
     val component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT)
     val curDecorator = InternalDecoratorImpl.findNearestDecorator(component) ?: return
     val topDecorator = InternalDecoratorImpl.findTopLevelDecorator(component) ?: return
@@ -21,13 +23,12 @@ internal abstract class ToolWindowMoveToSplitterAction(
     newDecorator?.requestContentFocus()
   }
 
-  override fun update(e: AnActionEvent) {
+  override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
     val component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT)
     val topDecorator = InternalDecoratorImpl.findTopLevelDecorator(component)
-    val toolWindow = topDecorator?.toolWindow
     e.presentation.isEnabled = topDecorator?.mode?.isSplit == true
     e.presentation.isVisible = (e.presentation.isEnabled || !e.isFromContextMenu) &&
-                               toolWindow != null && ToolWindowContentUi.isToolWindowReorderAllowed(toolWindow)
+                               ToolWindowContentUi.isToolWindowReorderAllowed(toolWindow)
 
   }
 
