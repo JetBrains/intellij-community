@@ -267,7 +267,7 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
       try {
         listener.block()
       }
-      catch (e: Exception) {
+      catch (e: Throwable) {
         if (e is ControlFlowException) {
           // Make all listeners run first.
           continue
