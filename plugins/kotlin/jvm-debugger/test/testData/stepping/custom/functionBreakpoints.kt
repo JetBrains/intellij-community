@@ -120,6 +120,13 @@ fun funWithContext() {
     println()
 }
 
+//FunctionBreakpoint!
+fun fooList(lst: List<String>) {}
+//FunctionBreakpoint!
+fun fooArray(arr: Array<String>) {}
+//FunctionBreakpoint!
+fun fooArray2D(arr: Array<Array<String>>) {}
+
 fun main() {
     A()
     B()
@@ -157,4 +164,8 @@ fun main() {
     Context().run {
         funWithContext()
     }
+
+    fooList(listOf())
+    fooArray(arrayOf())
+    fooArray2D(arrayOf(arrayOf()))
 }
