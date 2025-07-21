@@ -108,12 +108,20 @@ public record Presentation(
     @NotNull HighlightingKind highlightingKind
   ) {}
 
+  /**
+   * Kind of highlighting to display in the editor when the action is selected but not invoked yet.
+   */
   public enum HighlightingKind {
-
+    /**
+     * Highlighting to emphasize the text range which will be affected by the action.
+     */
     AFFECTED_RANGE,
+    /**
+     * Highlighting to show the text range which will be deleted by the action.
+     */
     DELETED_RANGE,
     /**
-     * special range to define scope of applicability
+     * Highlighting to designate the range where the action is applicable. It might be ignored in some contexts.
      */
     APPLICABLE_TO_RANGE,
   }
