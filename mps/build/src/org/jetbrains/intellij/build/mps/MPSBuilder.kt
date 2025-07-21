@@ -24,7 +24,8 @@ class MPSBuilder {
             options.incrementalCompilation = true
             options.useCompiledClassesFromProjectOutput = false
             options.targetOs = OsFamily.ALL
-            options.buildStepsToSkip += listOf(BuildOptions.MAC_SIGN_STEP, BuildOptions.MAC_NOTARIZE_STEP)
+            options.buildStepsToSkip += listOf(BuildOptions.MAC_SIGN_STEP, BuildOptions.MAC_NOTARIZE_STEP,
+                BuildOptions.WIN_SIGN_STEP)
 
             val fusp = FeatureUsageStatisticsProperties("FUS", "https://resources.jetbrains.com/storage/fus/config/v4/FUS/")
             val buildTools = ProprietaryBuildTools(ProprietaryBuildTools.DUMMY.signTool,

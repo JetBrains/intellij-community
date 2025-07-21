@@ -111,31 +111,31 @@ class MPSProperties : JetBrainsProductProperties() {
         buildSourcesArchive = true
     }
 
-    override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: Path) {
+    override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {
         val communityHome = COMMUNITY_ROOT.communityRoot
-        FileSet(Path.of("$communityHome/lib/ant")).includeAll().copyToDir(Path.of("$targetDirectory/lib/ant"))
+        FileSet(Path.of("$communityHome/lib/ant")).includeAll().copyToDir(Path.of("$targetDir/lib/ant"))
 
         // copy binaries
-        FileSet(Path.of("$communityHome/bin/linux/")).includeAll().copyToDir(Path.of("$targetDirectory/bin/linux/"))
-        FileSet(Path.of("$communityHome/bin/mac/")).includeAll().copyToDir(Path.of("$targetDirectory/bin/mac/"))
-        FileSet(Path.of("$communityHome/bin/win/")).includeAll().copyToDir(Path.of("$targetDirectory/bin/win/"))
+        FileSet(Path.of("$communityHome/bin/linux/")).includeAll().copyToDir(Path.of("$targetDir/bin/linux/"))
+        FileSet(Path.of("$communityHome/bin/mac/")).includeAll().copyToDir(Path.of("$targetDir/bin/mac/"))
+        FileSet(Path.of("$communityHome/bin/win/")).includeAll().copyToDir(Path.of("$targetDir/bin/win/"))
 
         // copy Window restarter
-        copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, JvmArchitecture.x64), Path.of("$targetDirectory/bin/win/amd64"))
-        copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, JvmArchitecture.aarch64), Path.of("$targetDirectory/bin/win/aarch64"))
+        copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, JvmArchitecture.x64), Path.of("$targetDir/bin/win/amd64"))
+        copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, JvmArchitecture.aarch64), Path.of("$targetDir/bin/win/aarch64"))
 
-        copyExecutables(context, targetDirectory)
+        copyExecutables(context, targetDir)
 
         // copy jre version
-        FileSet(Path.of("$communityHome/build/dependencies")).include("dependencies.properties").copyToDir(Path.of("$targetDirectory/build/dependencies/"))
+        FileSet(Path.of("$communityHome/build/dependencies")).include("dependencies.properties").copyToDir(Path.of("$targetDir/build/dependencies/"))
 
         //for compatibility with users projects which refer to IDEA_HOME/lib/annotations.jar
-        File("$targetDirectory/lib/annotations-java5.jar").renameTo(File("$targetDirectory/lib/annotations.jar"))
+        File("$targetDir/lib/annotations-java5.jar").renameTo(File("$targetDir/lib/annotations.jar"))
 
         // scripts needed for mac signing
-        FileSet(Path.of("$communityHome/platform/build-scripts/tools/mac/scripts/")).includeAll().copyToDir(Path.of("$targetDirectory/build/tools/mac/scripts/"))
+        FileSet(Path.of("$communityHome/platform/build-scripts/tools/mac/scripts/")).includeAll().copyToDir(Path.of("$targetDir/build/tools/mac/scripts/"))
 
-        generateBuildTxt(context, Path.of("$targetDirectory/lib"))
+        generateBuildTxt(context, Path.of("$targetDir/lib"))
     }
 
     private suspend fun copyExecutables(context: BuildContext, targetDirectory: Path) {
@@ -170,7 +170,7 @@ class MPSProperties : JetBrainsProductProperties() {
     override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "platform"
 
     override fun createWindowsCustomizer(projectHome: String): WindowsDistributionCustomizer? {
-        return null
+        return MPSWindowsDistributionCustomizer(projectHome)
     }
 
     override fun createLinuxCustomizer(projectHome: String): LinuxDistributionCustomizer? {
@@ -179,5 +179,17 @@ class MPSProperties : JetBrainsProductProperties() {
 
     override fun createMacCustomizer(projectHome: String): MacDistributionCustomizer? {
         return null
+    }
+
+    private class MPSWindowsDistributionCustomizer(projectHome: String) : WindowsDistributionCustomizer() {
+        init {
+            icoPath = "$projectHome/build/resources/mps.ico"
+            icoPathForEAP = "$projectHome/build/resources/mps.ico"
+            // The following properties are required by the build script but are only used when building installers
+            // We ignore installer artifacts in Platform builds but set these to reasonable values anyway
+            installerImagesPath = "$projectHome/build/resources"
+            fileAssociations = listOf("mps", "mpsr", "model")
+            associateIpr = false
+        }
     }
 }
