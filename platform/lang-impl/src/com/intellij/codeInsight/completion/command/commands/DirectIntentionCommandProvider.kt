@@ -472,7 +472,10 @@ internal class DirectIntentionCommandProvider : CommandProvider {
     if (modCommandAction is PsiBasedModCommandAction<*>) {
       modCommandAction.getPresentation(ActionContext.from(editor, psiFile))
         ?.rangesToHighlight()
-        ?.firstOrNull { highlightRange -> highlightRange.highlightingKind() == Presentation.HighlightingKind.APPLICABLE_TO_RANGE }
+        ?.firstOrNull { highlightRange ->
+          highlightRange.highlightingKind() == Presentation.HighlightingKind.APPLICABLE_TO_RANGE  &&
+          highlightRange.range.startOffset <= currentOffset
+        }
         ?.let {
           return HighlightInfoLookup(it.range().intersection(TextRange(it.range().startOffset, currentOffset)),
                                      EditorColors.SEARCH_RESULT_ATTRIBUTES, 0)
