@@ -61,20 +61,12 @@ class UiPluginManager {
     return getController().getUpdates()
   }
 
-  fun isPluginDisabled(pluginId: PluginId): Boolean {
-    return getController().isPluginDisabled(pluginId)
-  }
-
   fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
     return getController().loadPluginDetails(model)
   }
 
   fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
     return getController().loadPluginReviews(pluginId, page)
-  }
-
-  fun tryUnloadPluginIfAllowed(parentComponent: JComponent?, pluginId: PluginId, isUpdate: Boolean): Boolean {
-    return getController().tryUnloadPluginIfAllowed(parentComponent, pluginId, isUpdate)
   }
 
   fun allowLoadUnloadWithoutRestart(pluginId: PluginId): Boolean {
@@ -89,10 +81,6 @@ class UiPluginManager {
 
   suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult> {
     return getController().loadErrors(sessionId)
-  }
-
-  fun loadErrorsBlocking(sessionId: String): Map<PluginId, CheckErrorsResult> {
-    return runBlockingCancellable { loadErrors(sessionId) }
   }
 
   fun getPlugin(pluginId: PluginId): PluginUiModel? {

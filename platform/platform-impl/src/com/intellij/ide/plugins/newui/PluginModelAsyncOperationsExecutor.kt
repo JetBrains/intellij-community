@@ -86,4 +86,27 @@ object PluginModelAsyncOperationsExecutor {
       }
     }
   }
+
+  fun updateButtons(
+    cs: CoroutineScope,
+    installedPluginComponents: List<ListPluginComponent>,
+    pluginComponentsMap: Map<PluginId, List<ListPluginComponent>>,
+    detailPanels: List<PluginDetailsPageComponent>,
+  ) {
+    cs.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      for (component in installedPluginComponents) {
+        component.updateButtons()
+      }
+      for (plugins in pluginComponentsMap.values) {
+        for (plugin in plugins) {
+          if (plugin.myInstalledDescriptorForMarketplace != null) {
+            plugin.updateButtons()
+          }
+        }
+      }
+      for (detailPanel in detailPanels) {
+        detailPanel.updateAll()
+      }
+    }
+  }
 }

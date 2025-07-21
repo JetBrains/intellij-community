@@ -256,12 +256,6 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     awaitForResult { PluginInstallerApi.getInstance().deletePluginFiles(pluginId) }
   }
 
-  override fun tryUnloadPluginIfAllowed(
-    parentComponent: JComponent?, pluginId: PluginId, isUpdate: Boolean,
-  ): Boolean {
-    return awaitForResult { PluginInstallerApi.getInstance().allowLoadUnloadWithoutRestart(pluginId.idString) }
-  }
-
   override fun isNeedUpdate(pluginId: PluginId): Boolean {
     return awaitForResult { PluginManagerApi.getInstance().isNeedUpdate(pluginId) }
   }

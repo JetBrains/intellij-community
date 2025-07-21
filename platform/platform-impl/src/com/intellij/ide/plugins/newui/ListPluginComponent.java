@@ -771,7 +771,7 @@ public final class ListPluginComponent extends JPanel {
     }
   }
 
-  public void hideProgress(boolean success, boolean restartRequired) {
+  public void hideProgress(boolean success, boolean restartRequired, PluginUiModel installedPlugin) {
     myIndicator = null;
     myLayout.removeProgressComponent();
 
@@ -783,8 +783,7 @@ public final class ListPluginComponent extends JPanel {
         if (myInstallButton != null) {
           myInstallButton.setEnabled(false, IdeBundle.message("plugin.status.installed"));
           if (myInstallButton.isVisible()) {
-            PluginUiModel foundPlugin = UiPluginManager.getInstance().findPluginSync(myPlugin.getPluginId());
-            myInstalledDescriptorForMarketplace = foundPlugin;
+            myInstalledDescriptorForMarketplace = installedPlugin;
             if (myInstalledDescriptorForMarketplace != null) {
               if (myMarketplace) {
                 myInstallButton.setVisible(false);

@@ -738,15 +738,19 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   fun showPlugins(selection: List<ListPluginComponent?>) {
-    val size = selection.size
-    showPlugin(if (size == 1) selection[0] else null, size > 1)
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
+      val size = selection.size
+      showPlugin(if (size == 1) selection[0] else null, size > 1)
+    }
   }
 
   fun showPlugin(component: ListPluginComponent?) {
-    showPlugin(component, false)
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
+      showPlugin(component, false)
+    }
   }
 
-  private fun showPlugin(component: ListPluginComponent?, multiSelection: Boolean) {
+  private suspend fun showPlugin(component: ListPluginComponent?, multiSelection: Boolean) {
     if (showComponent == component && (component == null || updateDescriptor === component.updatePluginDescriptor)) {
       return
     }
@@ -853,13 +857,13 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
-  fun showPluginImpl(pluginUiModel: PluginUiModel, updateDescriptor: PluginUiModel?) {
+  suspend fun showPluginImpl(pluginUiModel: PluginUiModel, updateDescriptor: PluginUiModel?) {
     plugin = pluginUiModel
     this.updateDescriptor = if (updateDescriptor != null && updateDescriptor.canBeEnabled) updateDescriptor else null
     isPluginCompatible = !pluginUiModel.isIncompatibleWithCurrentOs
     isPluginAvailable = isPluginCompatible && updateDescriptor?.canBeEnabled ?: true
     if (isMarketplace) {
-      installedDescriptorForMarketplace = UiPluginManager.getInstance().findPluginSync(plugin!!.pluginId)
+      installedDescriptorForMarketplace = withContext(Dispatchers.IO) { UiPluginManager.getInstance().findPlugin(plugin!!.pluginId) }
       nameAndButtons!!.setProgressDisabledButton((if (this.updateDescriptor == null) installButton?.getComponent() else updateButton)!!)
     }
     showPlugin()
@@ -1243,7 +1247,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
-  fun updateAll() {
+  suspend fun updateAll() {
     if (plugin != null) {
       if (indicator != null) {
         PluginModelFacade.removeProgress(descriptorForActions!!, indicator!!)
@@ -1453,7 +1457,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     nameAndButtons?.removeProgressComponent()
   }
 
-  fun hideProgress(success: Boolean, restartRequired: Boolean) {
+  fun hideProgress(success: Boolean, restartRequired: Boolean, installedPlugin: PluginUiModel? = null) {
     indicator = null
     nameAndButtons!!.removeProgressComponent()
     if (pluginManagerCustomizer != null) {
@@ -1469,7 +1473,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
           if (installButton != null) {
             installButton.setEnabled(false, IdeBundle.message("plugin.status.installed"))
             if (installButton.isVisible()) {
-              installedDescriptorForMarketplace = UiPluginManager.getInstance().findPluginSync(plugin!!.pluginId)
+              installedDescriptorForMarketplace = installedPlugin
               installedDescriptorForMarketplace?.let {
                 installButton.setVisible(false)
                 myVersion1!!.text = it.version

@@ -41,7 +41,6 @@ interface UiPluginManagerController {
   fun closeSession(sessionId: String)
   fun uninstallDynamicPlugin(parentComponent: JComponent?, sessionId: String, pluginId: PluginId, isUpdate: Boolean): Boolean
   fun deletePluginFiles(pluginId: PluginId)
-  fun tryUnloadPluginIfAllowed(parentComponent: JComponent?, pluginId: PluginId, isUpdate: Boolean): Boolean
   fun allowLoadUnloadWithoutRestart(pluginId: PluginId): Boolean
   fun getPlugin(id: PluginId): PluginUiModel?
   fun allowLoadUnloadSynchronously(pluginId: PluginId): Boolean

@@ -470,7 +470,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
         if (installedDescriptor != null) {
           gridComponent.setPluginModel(installedDescriptor);
         }
-        gridComponent.hideProgress(success, restartRequired);
+        gridComponent.hideProgress(success, restartRequired, installedDescriptor);
         if (gridComponent.myInstalledDescriptorForMarketplace != null) {
           gridComponent.updateErrors(errorList);
         }
@@ -482,14 +482,14 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
         if (installedDescriptor != null) {
           listComponent.setPluginModel(installedDescriptor);
         }
-        listComponent.hideProgress(success, restartRequired);
+        listComponent.hideProgress(success, restartRequired, installedDescriptor);
         listComponent.updateErrors(errorList);
       }
     }
     for (PluginDetailsPageComponent panel : myDetailPanels) {
       if (panel.isShowingPlugin(descriptor.getPluginId())) {
         panel.setPlugin(installedDescriptor);
-        panel.hideProgress(success, restartRequired);
+        panel.hideProgress(success, restartRequired, installedDescriptor);
       }
     }
 
@@ -507,7 +507,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       }
       if (success) {
         appendOrUpdateDescriptor(installedDescriptor != null ? installedDescriptor : descriptor, restartRequired, errorList);
-        appendDependsAfterInstall(success, restartRequired, errors);
+        appendDependsAfterInstall(success, restartRequired, errors, installedDescriptor);
         if (installedDescriptor == null && descriptor.isFromMarketplace() && myDownloaded != null && myDownloaded.ui != null) {
           ListPluginComponent component = myDownloaded.ui.findComponent(descriptor.getPluginId());
           if (component != null) {
@@ -599,7 +599,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     myInstalling = installing;
   }
 
-  private void appendDependsAfterInstall(boolean success, boolean restartRequired, Map<PluginId, List<HtmlChunk>> errors) {
+  private void appendDependsAfterInstall(boolean success,
+                                         boolean restartRequired,
+                                         Map<PluginId, List<HtmlChunk>> errors,
+                                         @Nullable PluginUiModel installedDescriptor) {
     if (myDownloaded == null || myDownloaded.ui == null) {
       return;
     }
@@ -616,7 +619,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       for (Map.Entry<PluginId, List<ListPluginComponent>> entry : myMarketplacePluginComponentMap.entrySet()) {
         if (id.equals(entry.getKey().getIdString())) {
           for (ListPluginComponent component : entry.getValue()) {
-            component.hideProgress(success, restartRequired);
+            component.hideProgress(success, restartRequired, installedDescriptor);
           }
           break;
         }
@@ -806,7 +809,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   }
 
   public boolean setEnabledStateAsync(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
-                                 @NotNull PluginEnableDisableAction action) {
+                                      @NotNull PluginEnableDisableAction action) {
     List<PluginId> pluginIds = ContainerUtil.map(descriptors, it -> it.getPluginId());
     PluginModelAsyncOperationsExecutor.INSTANCE.enablePlugins(getCoroutineScope(), mySessionId.toString(), pluginIds, action.isEnable(),
                                                               getProject(), result -> {
@@ -906,19 +909,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   }
 
   private void updateButtons() {
-    for (ListPluginComponent component : myInstalledPluginComponents) {
-      component.updateButtons();
-    }
-    for (List<ListPluginComponent> plugins : myMarketplacePluginComponentMap.values()) {
-      for (ListPluginComponent plugin : plugins) {
-        if (plugin.myInstalledDescriptorForMarketplace != null) {
-          plugin.updateButtons();
-        }
-      }
-    }
-    for (PluginDetailsPageComponent detailPanel : myDetailPanels) {
-      detailPanel.updateAll();
-    }
+    PluginModelAsyncOperationsExecutor.INSTANCE.updateButtons(getCoroutineScope(),
+                                                              myInstalledPluginComponents,
+                                                              myMarketplacePluginComponentMap,
+                                                              myDetailPanels);
   }
 
   private void applyChangedStates(Map<PluginId, Boolean> changedStates) {
