@@ -540,7 +540,8 @@ object UpdateChecker {
 
   @JvmStatic
   @JvmName("isIgnored")
-  internal fun isIgnored(descriptor: IdeaPluginDescriptor): Boolean =
+  @ApiStatus.Internal
+  fun isIgnored(descriptor: IdeaPluginDescriptor): Boolean =
     descriptor.ignoredKey in ignoredPlugins
 
   @JvmStatic

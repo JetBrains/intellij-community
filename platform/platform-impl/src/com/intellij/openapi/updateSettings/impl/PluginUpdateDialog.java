@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
@@ -51,7 +52,7 @@ import java.util.stream.Collectors;
  * @author Alexander Lobas
  */
 @ApiStatus.Internal
-public final class PluginUpdateDialog extends DialogWrapper {
+public class PluginUpdateDialog extends DialogWrapper {
   private final @NotNull Collection<PluginDownloader> myDownloaders;
   private final boolean myPlatformUpdate;
   private final MyPluginModel myPluginModel;
@@ -86,8 +87,7 @@ public final class PluginUpdateDialog extends DialogWrapper {
     myPlatformUpdate = platformUpdate;
 
     myIgnoreAction = new ActionLink(IdeBundle.message("updates.ignore.updates.button", downloaders.size()), e -> {
-      close(CANCEL_EXIT_CODE);
-      UpdateChecker.ignorePlugins(ContainerUtil.map(myGroup.ui.plugins, ListPluginComponent::getPluginDescriptor));
+      doIgnoreUpdateAction(e);
     });
 
     myAutoUpdateOption =
@@ -159,6 +159,11 @@ public final class PluginUpdateDialog extends DialogWrapper {
     if (rootPane != null) {
       rootPane.setPreferredSize(new JBDimension(800, 600));
     }
+  }
+
+  protected void doIgnoreUpdateAction(ActionEvent e) {
+    close(CANCEL_EXIT_CODE);
+    UpdateChecker.ignorePlugins(ContainerUtil.map(myGroup.ui.plugins, ListPluginComponent::getPluginDescriptor));
   }
 
   private void updateButtons() {
