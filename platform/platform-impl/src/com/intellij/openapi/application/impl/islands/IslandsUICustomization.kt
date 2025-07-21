@@ -12,10 +12,7 @@ import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splittable
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.IdeFrame
-import com.intellij.openapi.wm.IdeGlassPane
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
@@ -73,7 +70,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
   override val shouldPaintEditorFadeout: Boolean = !isManyIslandEnabled
 
   override val toolWindowUIDecorator: ToolWindowUIDecorator = object : ToolWindowUIDecorator() {
-    override fun decorateAndReturnHolder(divider: JComponent, child: JComponent, originalBorderBuilder: () -> Border): JComponent {
+    override fun decorateAndReturnHolder(divider: JComponent, child: JComponent, toolWindow: ToolWindow, originalBorderBuilder: () -> Border): JComponent {
       return XNextIslandHolder().apply {
         layout = BorderLayout()
         add(divider, BorderLayout.NORTH)
@@ -83,7 +80,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
         if (isManyIslandEnabled) {
           background = JBUI.CurrentTheme.ToolWindow.background()
-          IslandsRoundedBorder.createToolWindowBorder(this)
+          IslandsRoundedBorder.createToolWindowBorder(toolWindow, this)
           child.putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, true)
         }
         else {
@@ -146,18 +143,8 @@ internal class IslandsUICustomization : InternalUICustomization() {
     // XXX: dialogs
 
     for (frame in WindowManager.getInstance().allProjectFrames) {
-      val toolwindows = mutableSetOf<String>()
-
       UIUtil.forEachComponentInHierarchy(frame.component) {
         when (it) {
-          is XNextIslandHolder -> {
-            setToolWindowManyBorder(it)
-
-            val id = it.getClientProperty("ToolWindow.ID")
-            if (id is String) {
-              toolwindows.add(id)
-            }
-          }
           is EditorsSplitters -> {
             IslandsRoundedBorder.createEditorBorder(it, editorTabPainterAdapter)
             clearParentNoBackground(it)
@@ -177,10 +164,10 @@ internal class IslandsUICustomization : InternalUICustomization() {
       if (project != null) {
         val manager = ToolWindowManager.getInstance(project) as ToolWindowManagerEx
         for (toolwindow in manager.toolWindows) {
-          if (!toolwindows.contains(toolwindow.id) && toolwindow is ToolWindowImpl) {
+          if (toolwindow is ToolWindowImpl) {
             toolwindow.getNullableDecorator()?.also {
               UIUtil.findComponentOfType(it, XNextIslandHolder::class.java)?.also { holder ->
-                setToolWindowManyBorder(holder)
+                setToolWindowManyBorder(toolwindow, holder)
               }
             }
           }
@@ -195,22 +182,12 @@ internal class IslandsUICustomization : InternalUICustomization() {
     // XXX: dialogs
 
     for (frame in WindowManager.getInstance().allProjectFrames) {
-      val toolwindows = mutableSetOf<String>()
-
       UIUtil.forEachComponentInHierarchy(frame.component) {
         if (it is JComponent) {
           ClientProperty.removeRecursive(it, IdeBackgroundUtil.NO_BACKGROUND)
         }
 
         when (it) {
-          is XNextIslandHolder -> {
-            setOriginalToolWindowBorder(it)
-
-            val id = it.getClientProperty("ToolWindow.ID")
-            if (id is String) {
-              toolwindows.add(id)
-            }
-          }
           is EditorsSplitters -> {
             it.border = null
           }
@@ -224,7 +201,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
       if (project != null) {
         val manager = ToolWindowManager.getInstance(project) as ToolWindowManagerEx
         for (toolwindow in manager.toolWindows) {
-          if (!toolwindows.contains(toolwindow.id) && toolwindow is ToolWindowImpl) {
+          if (toolwindow is ToolWindowImpl) {
             toolwindow.getNullableDecorator()?.also {
               UIUtil.findComponentOfType(it, XNextIslandHolder::class.java)?.also { holder ->
                 setOriginalToolWindowBorder(holder)
@@ -247,9 +224,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
     holder.background = JBColor.PanelBackground
   }
 
-  private fun setToolWindowManyBorder(holder: XNextIslandHolder) {
+  private fun setToolWindowManyBorder(toolwindow: ToolWindow, holder: XNextIslandHolder) {
     holder.background = JBUI.CurrentTheme.ToolWindow.background()
-    IslandsRoundedBorder.createToolWindowBorder(holder)
+    IslandsRoundedBorder.createToolWindowBorder(toolwindow, holder)
     clearParentNoBackground(holder)
 
     for (child in holder.components) {

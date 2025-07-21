@@ -3,16 +3,20 @@ package com.intellij.openapi.application.impl.islands
 
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
+import com.intellij.openapi.wm.impl.isInternal
 import com.intellij.toolWindow.xNext.island.XNextRoundedBorder
 import com.intellij.ui.tabs.impl.TabPainterAdapter
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import java.awt.Component
 import java.awt.Graphics
+import java.awt.Insets
 import java.awt.Paint
 import javax.swing.JComponent
 
-internal class IslandsRoundedBorder(fillColor: (JComponent) -> Paint?) :
+internal open class IslandsRoundedBorder(fillColor: (JComponent) -> Paint?) :
   XNextRoundedBorder(
     fillColor,
     fillColor,
@@ -24,8 +28,15 @@ internal class IslandsRoundedBorder(fillColor: (JComponent) -> Paint?) :
     JBInsets.create("Island.border2.insets", JBInsets(3, 3, 3, 3))) {
 
   companion object {
-    fun createToolWindowBorder(component: JComponent) {
-      component.border = IslandsRoundedBorder { it.background }
+    fun createToolWindowBorder(toolwindow: ToolWindow, component: JComponent) {
+      component.border = object : IslandsRoundedBorder({ it.background }) {
+        override fun getBorderInsets(c: Component): Insets? {
+          if (!toolwindow.type.isInternal) {
+            return JBInsets.emptyInsets()
+          }
+          return super.getBorderInsets(c)
+        }
+      }
     }
 
     fun createEditorBorder(editorsSplitters: EditorsSplitters, editorTabPainter: TabPainterAdapter) {
