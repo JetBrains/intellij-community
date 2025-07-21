@@ -1,7 +1,10 @@
 package org.jetbrains.plugins.textmate
 
 import org.jetbrains.plugins.textmate.atomics.updateAndGet
+import org.jetbrains.plugins.textmate.concurrent.TextMateLock
 import org.jetbrains.plugins.textmate.concurrent.TextMateThreadLocal
+import org.jetbrains.plugins.textmate.concurrent.createTextMateLockJvm
+import org.jetbrains.plugins.textmate.concurrent.createTextMateThreadLocalJvm
 import org.jetbrains.plugins.textmate.logging.Slf4jTextMateLogger
 import org.jetbrains.plugins.textmate.logging.TextMateLogger
 import org.slf4j.LoggerFactory
@@ -28,4 +31,8 @@ internal fun getLogger(clazz: KClass<*>): TextMateLogger {
 
 internal fun <T> createTextMateThreadLocal(): TextMateThreadLocal<T> {
   return createTextMateThreadLocalJvm()
+}
+
+internal fun createTextMateLock(): TextMateLock {
+  return createTextMateLockJvm()
 }

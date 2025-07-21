@@ -46,5 +46,6 @@
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />
   </component>
 </module>
