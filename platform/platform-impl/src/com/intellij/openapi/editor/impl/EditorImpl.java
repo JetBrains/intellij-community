@@ -2753,7 +2753,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (!myMouseDragStarted) {
       var point = convertPoint(e.getComponent(), e.getPoint(), myEditorComponent);
-      var sensitivity = Registry.intValue("editor.drag.sensitivity", 5, 0, 25);
+      var sensitivity = dragSensitivity();
       myMouseDragStarted = myLastMousePressedPoint == null
                            || !myLastPressedOnGutter // Small drags aren't a problem in the editor, only on the gutter.
                            || Math.abs(myLastMousePressedPoint.x - point.x) >= sensitivity
@@ -2947,6 +2947,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myScrollingTimer.start(dx, dy);
       onSubstantialDrag(e);
     }
+  }
+
+  /**
+   * Returns the sensitivity of the editor's drag and drop.
+   * <p>
+   * Mouse drags shorter than this value by both axes are interpreted as clicks, not drags.
+   * </p>
+   * @return the value in user-space pixels, ignoring any user scaling
+   */
+  @ApiStatus.Internal
+  public static int dragSensitivity() {
+    return Registry.intValue("editor.drag.sensitivity", 5, 0, 25);
   }
 
   private static @NotNull Point convertPoint(@NotNull Component from, @NotNull Point point, @NotNull Component to) {

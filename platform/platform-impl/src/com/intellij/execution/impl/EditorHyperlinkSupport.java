@@ -9,7 +9,6 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
@@ -65,7 +64,7 @@ public final class EditorHyperlinkSupport {
   private EditorHyperlinkSupport(@NotNull Editor editor, @NotNull Project project, boolean trackChangesManually) {
     myEditor = (EditorEx)editor;
     myProject = project;
-    myLinkEffectSupport = new EditorHyperlinkEffectSupport(myEditor);
+    myLinkEffectSupport = new EditorHyperlinkEffectSupport(myEditor, new MyEffectSupplier());
     myFilterRunner = new AsyncFilterRunner(this, myEditor, trackChangesManually);
 
     editor.addEditorMouseListener(new EditorMouseListener() {
@@ -468,18 +467,18 @@ public final class EditorHyperlinkSupport {
     }
   }
 
-  static @NotNull TextAttributes getFollowedHyperlinkAttributes(@NotNull RangeHighlighter range) {
-    HyperlinkInfoTextAttributes attrs = range.getUserData(HYPERLINK);
-    TextAttributes result = attrs == null ? null : attrs.followedHyperlinkAttributes();
-    if (result == null) {
-      result = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES);
+  private static class MyEffectSupplier implements EditorHyperlinkEffectSupplier {
+    @Override
+    public @Nullable TextAttributes getFollowedHyperlinkAttributes(@NotNull RangeHighlighterEx highlighter) {
+      HyperlinkInfoTextAttributes attrs = highlighter.getUserData(HYPERLINK);
+      return attrs == null ? null : attrs.followedHyperlinkAttributes();
     }
-    return result;
-  }
 
-  static @Nullable TextAttributes getHoveredHyperlinkAttributes(@NotNull RangeHighlighter range) {
-    HyperlinkInfoTextAttributes attrs = range.getUserData(HYPERLINK);
-    return attrs == null ? null : attrs.hoveredHyperlinkAttributes();
+    @Override
+    public @Nullable TextAttributes getHoveredHyperlinkAttributes(@NotNull RangeHighlighterEx highlighter) {
+      HyperlinkInfoTextAttributes attrs = highlighter.getUserData(HYPERLINK);
+      return attrs == null ? null : attrs.hoveredHyperlinkAttributes();
+    }
   }
 
   /**
