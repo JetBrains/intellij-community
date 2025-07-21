@@ -472,8 +472,7 @@ class MavenProjectResolver(private val myProject: Project) {
         result.unresolvedArtifactIds,
         result.nativeModelMap,
         effectiveRepositoryPath,
-        keepPreviousArtifacts,
-        keepPreviousResolutionResults)
+        keepPreviousArtifacts)
     }
     else {
       mavenProject.updateState(result.readingProblems)

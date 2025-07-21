@@ -105,7 +105,6 @@ class MavenProject(val file: VirtualFile) {
     nativeModelMap: Map<String, String>,
     effectiveRepositoryPath: Path,
     keepPreviousArtifacts: Boolean,
-    keepPreviousPlugins: Boolean,
   ): MavenProjectChanges {
     val newState = doUpdateState(
       myState,
@@ -119,7 +118,7 @@ class MavenProject(val file: VirtualFile) {
       effectiveRepositoryPath,
       keepPreviousArtifacts,
       true,
-      keepPreviousPlugins,
+      false,
       directory,
       file.extension,
       dependencyHash
