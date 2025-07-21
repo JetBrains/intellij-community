@@ -11,12 +11,14 @@ defaults:
 
 jobs:
   checks:
+    name: CI code checks
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
+        name: Check out repository
 
-      - name: Set up JDK 21
+      - name: Set up JBR 21
         uses: actions/setup-java@v4
         with:
           java-version: 21
@@ -37,3 +39,54 @@ jobs:
       - name: Run ktfmt and ktlint checks on IDE plugin
         # We can only use static analysis that doesn't depend on compilation in the IDE plugin
         run: ./gradlew :samples:ide-plugin:ktfmtCheck :samples:ide-plugin:lintKotlinMain --continue --no-daemon
+
+  check_paths:
+    name: Check changed files
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      run_formalities: ${{ steps.filter.outputs.run_formalities }}
+
+    steps:
+      - uses: actions/checkout@v4
+        name: Check out repository
+
+      - uses: dorny/paths-filter@v3
+        name: Check which files are changed
+        id: filter
+        with:
+          filters: |
+            run_formalities:
+              - '!all(platform/jewel/ui/generated/org/jetbrains/jewel/ui/icons/AllIconsKeys.java)'
+
+  formalities:
+    name: PR formalities
+    runs-on: ubuntu-latest
+    needs: check_paths
+    if: needs.check_paths.outputs.run_formalities == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+        name: Check out repository
+        with:
+          # Assume we don't have more than 10 commits in the branch —
+          # if we do, it'll fail on the single-commit check anyway.
+          fetch-depth: 10
+
+      - name: Validate PR has single commit
+        run: |
+          commit_count=$(git rev-list --count ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
+          if [ "$commit_count" -ne 1 ]; then
+            echo "ERROR: This pull request must contain exactly one commit."
+            echo "Please squash your commits into a single commit."
+            exit 1
+          fi
+
+      - name: Grant execute permission for validation script
+        run: chmod +x validate-commit-message.sh
+
+      - name: Validate commit message
+        env:
+          JEWEL_YT_TOKEN: ${{ secrets.JEWEL_YT_TOKEN }}
+        run: ./validate-commit-message.sh "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
