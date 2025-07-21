@@ -55,7 +55,7 @@
     <orderEntry type="module" module-name="intellij.java.analysis" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.scripting" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.scripting.shared" scope="TEST" />
   </component>
 </module>

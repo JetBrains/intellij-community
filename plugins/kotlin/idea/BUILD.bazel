@@ -78,8 +78,7 @@ jvm_library(
     "//platform/usageView",
     "//plugins/kotlin/base/platforms",
     "//plugins/kotlin/base/project-structure",
-    "//plugins/kotlin/base/scripting",
-    "//plugins/kotlin/base/scripting.k1",
+    "//plugins/kotlin/base/scripting/scripting.k1",
     "//platform/util/progress",
     "//plugins/kotlin/base/external-build-system",
     "//plugins/kotlin/base/analysis",
@@ -157,6 +156,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
     "//plugins/kotlin/kotlin.ide:ide",
     "@lib//:kotlinc-analysis-api-platform-interface",
+    "//plugins/kotlin/base/scripting/scripting.shared",
   ],
   exports = [
     "//plugins/kotlin/highlighting/highlighting-k1:kotlin-highlighting-k1",

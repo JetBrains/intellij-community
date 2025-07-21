@@ -24,7 +24,6 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.plugin.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.test" />
-    <orderEntry type="module" module-name="kotlin.base.scripting" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
@@ -69,5 +68,6 @@
     <orderEntry type="module" module-name="kotlin.base.scripting.k1" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections.shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.scripting.shared" scope="TEST" />
   </component>
 </module>

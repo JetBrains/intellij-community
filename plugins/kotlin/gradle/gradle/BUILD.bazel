@@ -53,7 +53,6 @@ jvm_library(
     "//plugins/kotlin/base/project-model",
     "//plugins/kotlin/base/platforms",
     "//plugins/kotlin/base/plugin",
-    "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/statistics",
     "//plugins/kotlin/formatter",

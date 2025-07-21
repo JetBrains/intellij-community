@@ -55,7 +55,6 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//java/java-impl:impl",
     "//plugins/kotlin/base/analysis",
-    "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/kotlin.searching/base",
     "//plugins/kotlin/kotlin.searching:searching-k2",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",

@@ -110,8 +110,6 @@ jvm_library(
     "//platform/backend/workspace",
     "//platform/platform-api:ide",
     "//platform/analysis-impl",
-    "//plugins/kotlin/base/scripting",
-    "//plugins/kotlin/base/scripting:scripting_test_lib",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/kotlin.searching:searching-k2",
     "//java/java-psi-impl:psi-impl",

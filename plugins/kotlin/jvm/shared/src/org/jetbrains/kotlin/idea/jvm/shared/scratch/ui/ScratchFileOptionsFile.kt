@@ -6,7 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.idea.core.util.AbstractFileGistService
+import org.jetbrains.kotlin.idea.core.script.v1.AbstractFileGistService
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileOptions
 
 @Service(Service.Level.PROJECT)

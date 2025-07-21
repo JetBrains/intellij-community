@@ -21,9 +21,9 @@
     <orderEntry type="module" module-name="kotlin.base.analysis" exported="" />
     <orderEntry type="module" module-name="kotlin.base.analysis-api-platform" exported="" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" exported="" />
-    <orderEntry type="module" module-name="kotlin.base.scripting" exported="" />
     <orderEntry type="module" module-name="kotlin.base.scripting.k1" exported="" />
     <orderEntry type="module" module-name="kotlin.base.scripting.k2" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.scripting.shared" exported="" />
     <orderEntry type="module" module-name="kotlin.base.analysis-api.utils" exported="" />
     <orderEntry type="module" module-name="kotlin.base.facet" exported="" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" exported="" />

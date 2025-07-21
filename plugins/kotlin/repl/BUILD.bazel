@@ -41,7 +41,6 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//platform/editor-ui-ex:editor-ex",
     "//plugins/kotlin/base/project-structure",
-    "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/base/fe10/analysis",
@@ -58,7 +57,8 @@ jvm_library(
     "//java/execution/impl",
     "//platform/execution-impl",
     "//plugins/kotlin/jsr223",
-    "//plugins/kotlin/base/scripting.k1",
+    "//plugins/kotlin/base/scripting/scripting.k1",
+    "//plugins/kotlin/base/scripting/scripting.shared",
   ],
   runtime_deps = [":repl_resources"]
 )

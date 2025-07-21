@@ -19,8 +19,8 @@ import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.gradle.scripting.shared.getGradleProjectSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceUntilWithRangeUntilInspection
-import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.shared.getKtFile
 import org.jetbrains.kotlin.idea.test.KotlinSdkCreationChecker
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.test.runAll
@@ -168,7 +168,6 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
                 "Configuration for ${file.path} is missing",
                 ScriptConfigurationManager.getInstance(project).hasConfiguration(psiFile)
             )
-
             val bindingContext = psiFile.analyzeWithContent()
 
             val diagnostics = bindingContext.diagnostics.filter { it.severity == Severity.ERROR }

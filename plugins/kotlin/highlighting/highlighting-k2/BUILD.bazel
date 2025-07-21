@@ -55,12 +55,12 @@ jvm_library(
     "//plugins/kotlin/kotlin.searching/base",
     "//plugins/kotlin/kotlin.searching:searching-k2",
     "//plugins/kotlin/base/analysis",
-    "//plugins/kotlin/base/scripting",
-    "//plugins/kotlin/base/scripting.k2",
+    "//plugins/kotlin/base/scripting/scripting.k2",
     "@lib//:kotlinc-kotlin-scripting-common",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "//platform/util/coroutines",
     "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/base/scripting/scripting.shared",
   ],
   runtime_deps = [":kotlin-highlighting-k2_resources"]
 )
@@ -120,9 +120,7 @@ jvm_library(
     "//platform/workspace/jps",
     "//platform/backend",
     "//plugins/kotlin/base/analysis",
-    "//plugins/kotlin/base/scripting",
-    "//plugins/kotlin/base/scripting:scripting_test_lib",
-    "//plugins/kotlin/base/scripting.k2",
+    "//plugins/kotlin/base/scripting/scripting.k2",
     "@lib//:kotlinc-kotlin-scripting-common",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
@@ -130,6 +128,7 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
     "//platform/util/coroutines",
     "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/base/scripting/scripting.shared",
   ],
   runtime_deps = [":kotlin-highlighting-k2_resources"]
 )

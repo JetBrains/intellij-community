@@ -3,16 +3,13 @@ package org.jetbrains.kotlin.base.fir.scripting.projectStructure
 
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.project.Project
-import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
 import org.jetbrains.kotlin.base.fir.scripting.projectStructure.modules.KaScriptDependencyLibraryModuleImpl
 import org.jetbrains.kotlin.base.fir.scripting.projectStructure.modules.KaScriptModuleImpl
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.KotlinScriptEntity
-import org.jetbrains.kotlin.idea.KotlinScriptLibraryEntity
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.FirKaModuleFactory
 import org.jetbrains.kotlin.psi.KtFile
 

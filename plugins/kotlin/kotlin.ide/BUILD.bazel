@@ -37,7 +37,7 @@ jvm_library(
     "//platform/diff-impl",
     "@lib//:kotlinc-kotlin-scripting-common",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
-    "//plugins/kotlin/base/scripting",
+    "//plugins/kotlin/base/scripting/scripting.shared",
   ],
   runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
 )

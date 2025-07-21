@@ -23,7 +23,6 @@ jvm_library(
     "//platform/util",
     "//plugins/gradle",
     "//platform/core-impl",
-    "//plugins/kotlin/base/scripting",
     "//platform/diff-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/analysis-api:analysis",
@@ -49,6 +48,8 @@ jvm_library(
     "@lib//:kotlinc-kotlin-script-runtime",
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/scripting/scripting.shared",
+    "//java/java-psi-api:psi",
   ],
   runtime_deps = [":kotlin-gradle-scripting-shared_resources"]
 )

@@ -43,7 +43,6 @@
     <orderEntry type="module" module-name="kotlin.compiler-reference-index.tests.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.k2.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.base.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.copyright.fir.tests" />

@@ -8,12 +8,12 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.registerExtension
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationWithSdk
-import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
-import org.jetbrains.kotlin.idea.core.script.defaultDefinition
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationWithSdk
+import org.jetbrains.kotlin.idea.core.script.shared.definition.defaultDefinition
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.DefaultScriptConfigurationHandler
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
+import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
+import org.jetbrains.kotlin.idea.core.script.shared.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition

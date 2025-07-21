@@ -1,4 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.jvm.shared">
+  <dependencies>
+    <module name="kotlin.base.scripting.shared"/>
+  </dependencies>
   <extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idea.jvm.shared.bytecode.compilationConfigurationEnricher"

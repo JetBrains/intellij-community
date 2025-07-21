@@ -56,8 +56,6 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/debugger/openapi:java-debugger",
     "//java/debugger/impl",
-    "//plugins/kotlin/base/scripting",
-    "//plugins/kotlin/base/scripting:scripting_test_lib",
     "//platform/editor-ui-ex:editor-ex",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",

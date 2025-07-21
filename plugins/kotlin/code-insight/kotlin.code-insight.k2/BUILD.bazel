@@ -163,7 +163,7 @@ jvm_library(
     "//java/testFramework",
     "//plugins/kotlin/base/statistics",
     "//plugins/kotlin/bundled-compiler-plugins-support",
-    "//plugins/kotlin/base/scripting.k2",
+    "//plugins/kotlin/base/scripting/scripting.k2",
   ],
   runtime_deps = [":kotlin-code-insight-k2_resources"]
 )

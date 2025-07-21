@@ -18,7 +18,6 @@ internal object LibrariesRequiredForWorkspace {
   val workspaceJpsEntities = ModuleLibrary("intellij.platform.workspace.jps")
   private val intellijJava = ModuleLibrary("intellij.java")
 
-  private val kotlinBaseScripting = ModuleLibrary("kotlin.base.scripting")
   private val rider = ModuleLibrary("intellij.rider")
   private val riderUnityPlugin = ModuleLibrary("intellij.rider.plugins.unity")
   private val riderModel = ModuleLibrary("intellij.rider.model.generated")
@@ -45,9 +44,6 @@ internal object LibrariesRequiredForWorkspace {
       }
       "kotlin.base.facet" -> {
         listOf(intellijJava, kotlinJpsCommon)
-      }
-      "kotlin.base.scripting" -> {
-        listOf(kotlinBaseScripting)
       }
       "intellij.bazel.plugin" -> {
         listOf(bazelCommons)

@@ -1,0 +1,68 @@
+### auto-generated section `build kotlin.base.scripting.k2` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "scripting.k2_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "scripting.k2",
+  module_name = "kotlin.base.scripting.k2",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "@lib//:kotlinc-kotlin-script-runtime",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "@lib//:kotlinc-kotlin-scripting-jvm",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "@lib//:kotlinx-coroutines-core",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//platform/util/progress",
+    "//platform/workspace/storage",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-structure",
+    "//platform/core-ui",
+    "//platform/util/jdom",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/projectModel-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lang-impl",
+    "//platform/diff-impl",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//java/openapi:java",
+    "//java/java-indexing-impl:indexing-impl",
+    "//platform/collaboration-tools",
+    "//java/java-impl:impl",
+    "//platform/backend/workspace",
+    "//plugins/kotlin/code-insight/utils",
+    "//platform/workspace/jps",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//java/idea-ui:ui",
+    "@lib//:kotlinc-kotlin-scripting-dependencies",
+    "//platform/observable",
+    "//jps/model-api:model",
+    "//platform/refactoring",
+    "@lib//:guava",
+    "//plugins/kotlin/base/scripting/scripting.shared",
+    "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+  ],
+  runtime_deps = [":scripting.k2_resources"]
+)
+### auto-generated section `build kotlin.base.scripting.k2` end

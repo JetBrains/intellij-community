@@ -7,5 +7,6 @@
     <module name="kotlin.base.fir.analysis-api-platform"/>
     <module name="kotlin.base.fir.project-structure"/>
     <module name="kotlin.base.scripting.k2"/>
+    <module name="kotlin.base.scripting.shared"/>
   </dependencies>
 </idea-plugin>

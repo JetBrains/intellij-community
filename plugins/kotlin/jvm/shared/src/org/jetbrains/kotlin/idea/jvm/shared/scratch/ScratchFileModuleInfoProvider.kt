@@ -7,8 +7,8 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
-import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
-import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_SUFFIX
 
 class ScratchFileModuleInfoProvider : ScratchFileListener {

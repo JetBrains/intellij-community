@@ -24,8 +24,8 @@
     <orderEntry type="module" module-name="kotlin.base.project-model" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.platforms" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.base.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.scripting.k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.scripting.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.analysis" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.analysis-api-platform" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.facet" scope="RUNTIME" />

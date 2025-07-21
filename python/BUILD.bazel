@@ -582,6 +582,7 @@ jvm_library(
   deps = [
     "//python:python-helpers",
     "@lib//ant/lib:ant-antlr",
+    "@lib//:kotlin-stdlib",
   ],
   runtime_deps = [":python-helpers-tests_test_resources"]
 )

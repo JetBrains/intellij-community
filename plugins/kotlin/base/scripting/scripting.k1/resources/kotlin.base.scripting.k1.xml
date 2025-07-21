@@ -1,0 +1,107 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.core.script.k1">
+  <dependencies>
+    <module name="kotlin.base.scripting.shared"/>
+  </dependencies>
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scripting.idea.listener"
+            interface="org.jetbrains.kotlin.idea.core.script.k1.configuration.listener.ScriptChangeListener"
+            area="IDEA_PROJECT" dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scripting.idea.scriptingSupport"
+            interface="org.jetbrains.kotlin.idea.core.script.k1.configuration.ScriptingSupport"
+            area="IDEA_PROJECT"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scripting.idea.loader"
+            interface="org.jetbrains.kotlin.idea.core.script.k1.configuration.loader.ScriptConfigurationLoader"
+            area="IDEA_PROJECT"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.core.script.k1.highlighter.ScriptExternalHighlightingPass$Registrar"/>
+
+    <projectConfigurable groupId="language"
+                         bundle="messages.KotlinBundle"
+                         key="kotlin.scripting.configurable"
+                         id="preferences.language.Kotlin.scripting"
+                         instance="org.jetbrains.kotlin.idea.core.script.k1.configuration.KotlinScriptingSettingsConfigurable"
+                         parentId="preferences.language.Kotlin"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider"
+                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionsManager"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider"
+                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider"
+                    serviceImplementation="org.jetbrains.kotlin.analysis.api.descriptors.KotlinFe10CompilerPluginsProvider"/>
+
+    <projectView.externalLibraries.workspaceModelNodesProvider implementation="org.jetbrains.kotlin.idea.core.script.k1.KotlinScriptExternalLibrariesNodesProvider"/>
+
+    <workspaceModel.fileIndexContributor implementation="org.jetbrains.kotlin.idea.core.script.k1.dependencies.KotlinScriptWorkspaceFileIndexContributor"/>
+
+    <java.shortNamesCache implementation="org.jetbrains.kotlin.idea.core.script.k1.JavaClassesInScriptDependenciesShortNameCache"/>
+
+    <cachesInvalidator implementation="org.jetbrains.kotlin.idea.core.script.k1.ScriptCacheDependenciesFileInvalidator"/>
+
+    <registryKey
+            key="kotlin.scripting.fs.roots.storage.enabled"
+            description="Cache resolved dependencies paths across all scripts"
+            defaultValue="false"
+            restartRequired="true"/>
+
+    <registryKey
+            key="kotlin.scripting.index.dependencies.sources"
+            description="Index script dependencies sources eagerly (not deferred)"
+            defaultValue="false"
+            restartRequired="true"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.scripting.resolve.ScriptReportSink"
+                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.k1.IdeScriptReportSink"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettingsStorage"
+                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl"/>
+
+    <trafficLightRendererContributor implementation="org.jetbrains.kotlin.idea.core.script.k1.ScriptTrafficLightRendererContributor"/>
+
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.core.script.k1.configuration.MultipleScriptDefinitionsChecker"/>
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.core.script.k1.configuration.ScriptingSupportChecker"/>
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.core.script.k1.configuration.IndexScriptDependenciesSourcesNotificationProvider"/>
+
+    <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.k1.dependencies.KotlinScriptResolveScopeProvider"/>
+    <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.k1.dependencies.ScriptDependenciesResolveScopeProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <scriptHighlightingExtension implementation="org.jetbrains.kotlin.idea.core.script.k1.highlighter.ScriptHighlightingExtension"/>/>
+    <scriptDefinitionsSource
+            id="StandardScriptDefinitionContributor"
+            order="last"
+            implementation="org.jetbrains.kotlin.idea.core.script.k1.BundledScriptDefinitionSource"/>
+
+    <scriptDefinitionsSource id="ConsoleScriptDefinitionContributor"
+                             implementation="org.jetbrains.kotlin.idea.core.script.k1.ConsoleScriptDefinitionSource"/>
+
+    <ideScriptConfigurationControlFacade implementation="org.jetbrains.kotlin.idea.core.script.k1.configuration.DefaultIdeScriptingConfigurationFacade"/>
+
+    <scriptDefinitionsSource
+            id="ScriptTemplatesFromCompilerSettingsProvider"
+            implementation="org.jetbrains.kotlin.idea.core.script.k1.ScriptTemplatesFromCompilerSettingsProvider"/>
+
+    <scriptDefinitionsSource
+            id="ScriptTemplatesFromDependenciesProvider"
+            implementation="org.jetbrains.kotlin.idea.core.script.k1.ScriptTemplatesFromDependenciesProvider"/>
+
+    <scriptDefinitionsProvider id="MainKtsScriptDefinitionProvider"
+                               implementation="org.jetbrains.kotlin.idea.core.script.k1.MainKtsScriptDefinitionProvider"/>
+
+    <scriptDefinitionsSource id="ScriptDefinitionForExtensionAndIdeConsoleRootsSource"
+                             implementation="org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionForExtensionAndIdeConsoleRootsSource"/>
+
+    <ktModuleFactory implementation="org.jetbrains.kotlin.idea.core.script.k1.modules.ScriptingKaModuleFactory"/>
+    <idea.base.projectStructure.moduleInfoProviderExtension
+            implementation="org.jetbrains.kotlin.idea.core.script.k1.modules.ScriptingModuleInfoProviderExtension"/>
+  </extensions>
+</idea-plugin>

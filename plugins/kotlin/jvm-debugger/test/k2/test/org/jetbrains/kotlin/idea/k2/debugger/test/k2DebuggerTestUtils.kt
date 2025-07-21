@@ -18,13 +18,12 @@ import org.jetbrains.kotlin.idea.caches.resolve.IdePackageOracleFactory
 import org.jetbrains.kotlin.idea.caches.resolve.KotlinCacheServiceImpl
 import org.jetbrains.kotlin.idea.caches.resolve.ResolveOptimizingOptionsProvider
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinModificationTrackerProviderImpl
-import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactoryService
 import org.jetbrains.kotlin.resolve.CodeAnalyzerInitializer
 import org.jetbrains.kotlin.resolve.DummyCodeAnalyzerInitializer
 import org.jetbrains.kotlin.resolve.ResolutionAnchorProvider
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService
-import kotlin.jvm.java
 
 /**
  * Needed for DebuggerTestCompilerFacility to be able to compile testdata, probably need to be rewritten to compile with K2 compiler

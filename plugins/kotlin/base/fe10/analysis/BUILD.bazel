@@ -40,7 +40,6 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/base/project-structure",
-    "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/base/analysis",
     "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
@@ -52,7 +51,8 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-impl-base",
     "//plugins/kotlin/base/plugin",
     "@lib//:kotlinc-analysis-api-platform-interface",
-    "//plugins/kotlin/base/scripting.k1",
+    "//plugins/kotlin/base/scripting/scripting.k1",
+    "//plugins/kotlin/base/scripting/scripting.shared",
   ]
 )
 ### auto-generated section `build kotlin.base.fe10.analysis` end

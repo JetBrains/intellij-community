@@ -45,7 +45,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:fastutil-min",
     "//java/openapi:java",
-    "//plugins/kotlin/base/scripting",
+    "//plugins/kotlin/base/scripting/scripting.k2",
   ],
   runtime_deps = [":project-structure_resources"]
 )
@@ -100,8 +100,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:fastutil-min",
     "//java/openapi:java",
-    "//plugins/kotlin/base/scripting",
-    "//plugins/kotlin/base/scripting:scripting_test_lib",
+    "//plugins/kotlin/base/scripting/scripting.k2",
   ],
   runtime_deps = [":project-structure_resources"]
 )

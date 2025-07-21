@@ -28,7 +28,6 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/diff-impl",
     "//plugins/kotlin/base/util",
-    "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/idea",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/psi",
@@ -41,6 +40,7 @@ jvm_library(
     "//java/java-frontback-psi-impl:frontback-psi-impl",
     "//plugins/kotlin/base/code-insight",
     "//java/java-psi-impl:psi-impl",
+    "//plugins/kotlin/base/scripting/scripting.k2",
   ],
   runtime_deps = [":k2_resources"]
 )

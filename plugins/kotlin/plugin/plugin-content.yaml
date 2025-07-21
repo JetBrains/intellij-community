@@ -105,9 +105,9 @@
   - name: kotlin.base.facet
   - name: kotlin.base.project-structure
   - name: kotlin.base.external-build-system
-  - name: kotlin.base.scripting
   - name: kotlin.base.scripting.k1
   - name: kotlin.base.scripting.k2
+  - name: kotlin.base.scripting.shared
   - name: kotlin.base.analysis-api-platform
   - name: kotlin.base.analysis
   - name: kotlin.base.code-insight

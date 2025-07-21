@@ -14,8 +14,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDirectory
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.script.getAllDefinitions
-import org.jetbrains.kotlin.idea.core.script.kotlinScriptTemplateInfo
+import org.jetbrains.kotlin.idea.core.script.shared.getAllDefinitions
+import org.jetbrains.kotlin.idea.core.script.shared.kotlinScriptTemplateInfo
 import javax.swing.Icon
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ide

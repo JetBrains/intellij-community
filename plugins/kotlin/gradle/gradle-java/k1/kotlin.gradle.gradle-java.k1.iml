@@ -38,7 +38,6 @@
     <orderEntry type="module" module-name="kotlin.base.plugin" />
     <orderEntry type="module" module-name="kotlin.base.facet" />
     <orderEntry type="module" module-name="kotlin.base.platforms" />
-    <orderEntry type="module" module-name="kotlin.base.scripting" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" />
@@ -83,5 +82,6 @@
     <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.scripting.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.scripting.k1" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.scripting.shared" scope="TEST" />
   </component>
 </module>

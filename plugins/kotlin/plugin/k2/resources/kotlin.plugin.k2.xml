@@ -25,7 +25,7 @@
   <xi:include href="jvm-debugger.xml"/>
   <xi:include href="jvm-debugger-k2.xml"/>
   <xi:include href="dep-spellchecker.xml"/>
-  <xi:include href="scripting-base.xml"/>
+  <xi:include href="scripting-v1.xml"/>
   <xi:include href="native.xml"/>
   <xi:include href="native-k2.xml"/>
   <xi:include href="facets-base.xml"/>
@@ -44,8 +44,6 @@
   </xi:include>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.core.script.ModuleScriptAdditionalIdeaDependenciesProvider"/>
-
     <bundledFirCompilerPluginProvider
             implementation="org.jetbrains.kotlin.idea.fir.extensions.MainByRegistrarContentBundledFirCompilerPluginProvider"
             order="first"/>
@@ -261,6 +259,7 @@
     <module name="kotlin.jvm.k2"/>
 
     <module name="kotlin.base.scripting.k2"/>
+    <module name="kotlin.base.scripting.shared"/>
 
     <module name="kotlin.code-insight.intentions.shared"/>
     <module name="kotlin.code-insight.inspections.shared"/>

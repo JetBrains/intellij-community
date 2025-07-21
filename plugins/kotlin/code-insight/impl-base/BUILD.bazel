@@ -72,7 +72,6 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/plugin",
     "@lib//:fastutil-min",
-    "//plugins/kotlin/base/scripting",
   ],
   runtime_deps = [":impl-base_resources"]
 )

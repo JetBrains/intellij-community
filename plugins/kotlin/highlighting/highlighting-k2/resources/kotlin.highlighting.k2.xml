@@ -12,8 +12,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.base.highlighting.AbstractScriptHighlightHelper"
-                    serviceImplementation="org.jetbrains.kotlin.idea.highlighting.ScriptHighlightHelper"/>
     <highlightRangeExtension implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinDiagnosticHighlightVisitor"/>
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinTypeSemanticHighlightingVisitor"/>
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinVariableReferenceSemanticHighlightingVisitor"/>
@@ -21,7 +19,6 @@
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinDslSemanticHighlightingVisitor"/>
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinDiagnosticHighlightVisitor"/>
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinUnusedDeclarationHighlightingVisitor"/>
-    <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinScriptHighlightingVisitor"/>
 
     <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighting.KotlinHighlightExitPointsHandlerFactory"/>
 

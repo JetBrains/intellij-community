@@ -915,9 +915,9 @@ plugins/kotlin/base/project-model
 plugins/kotlin/base/project-structure
 plugins/kotlin/base/psi
 plugins/kotlin/base/resources
-plugins/kotlin/base/scripting
-plugins/kotlin/base/scripting.k1
-plugins/kotlin/base/scripting.k2
+plugins/kotlin/base/scripting/scripting.k1
+plugins/kotlin/base/scripting/scripting.k2
+plugins/kotlin/base/scripting/scripting.shared
 plugins/kotlin/base/statistics
 plugins/kotlin/base/test
 plugins/kotlin/base/util

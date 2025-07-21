@@ -19,8 +19,8 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotli
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinTestJs
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntity
-import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryEntity
+import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil.getTestRoot
 import java.io.File
 import java.nio.file.Files

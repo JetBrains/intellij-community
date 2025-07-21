@@ -54,7 +54,6 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/compiler-configuration",
     "//plugins/kotlin/base/facet",
-    "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//platform/util/jdom",
     "//platform/util-class-loader:util-classLoader",
@@ -68,6 +67,7 @@ jvm_library(
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//java/java-analysis-api:analysis",
+    "//plugins/kotlin/base/scripting/scripting.shared",
   ],
   runtime_deps = [":analysis_resources"]
 )

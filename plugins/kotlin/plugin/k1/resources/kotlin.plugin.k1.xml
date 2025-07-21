@@ -25,7 +25,7 @@
   <xi:include href="caches-fe10.xml"/>
   <xi:include href="jps.xml"/>
   <xi:include href="statistics.xml"/>
-  <xi:include href="scripting-base.xml"/>
+  <xi:include href="scripting-v1.xml"/>
   <xi:include href="dep-spellchecker.xml"/>
   <xi:include href="kotlinx-serialization.xml"/>
   <xi:include href="native.xml"/>
@@ -123,5 +123,6 @@
     <module name="kotlin.performanceExtendedPlugin"/>
 
     <module name="kotlin.base.scripting.k1"/>
+    <module name="kotlin.base.scripting.shared"/>
   </content>
 </idea-plugin>

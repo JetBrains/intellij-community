@@ -41,14 +41,14 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "//plugins/kotlin/base/psi",
     "//platform/platform-util-io:ide-util-io",
-    "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/repl",
     "//platform/vcs-impl",
     "//java/execution/impl",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//platform/core-ui",
-    "//plugins/kotlin/base/scripting.k1",
+    "//plugins/kotlin/base/scripting/scripting.k1",
+    "//plugins/kotlin/base/scripting/scripting.shared",
   ],
   runtime_deps = [":k1_resources"]
 )

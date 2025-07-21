@@ -12,36 +12,36 @@ import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
-import org.jetbrains.kotlin.idea.core.script.getAllDefinitions
-import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettingsStorage
+import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettingsStorage
+import org.jetbrains.kotlin.idea.core.script.v1.IdeScriptDefinitionProvider
 
 class IDESettingsFUSCollector : ProjectUsagesCollector() {
     override fun getGroup() = GROUP
 
     override fun getMetrics(project: Project): Set<MetricEvent> {
-      if (KotlinPlatformUtils.isAndroidStudio) {
-        return emptySet()
-      }
-
-      val metrics = mutableSetOf<MetricEvent>()
-      val pluginInfo = getPluginInfoById(KotlinIdePlugin.id)
-
-      // filling up scriptingAutoReloadEnabled Event
-      for (definition in getAllDefinitions(project)) {
-        if (definition.canAutoReloadScriptConfigurationsBeSwitchedOff) {
-          val scriptingAutoReloadEnabled = KotlinScriptingSettingsStorage.getInstance(project).autoReloadConfigurations(definition)
-          metrics.add(scriptingAREvent.metric(definition.name, scriptingAutoReloadEnabled, pluginInfo))
+        if (KotlinPlatformUtils.isAndroidStudio) {
+            return emptySet()
         }
-      }
 
-      val settings: KotlinCodeInsightSettings = KotlinCodeInsightSettings.getInstance()
-      val projectSettings: KotlinCodeInsightWorkspaceSettings = KotlinCodeInsightWorkspaceSettings.getInstance(project)
+        val metrics = mutableSetOf<MetricEvent>()
+        val pluginInfo = getPluginInfoById(KotlinIdePlugin.id)
 
-      // filling up addUnambiguousImportsOnTheFly and optimizeImportsOnTheFly Events
-      metrics.add(unambiguousImportsEvent.metric(settings.addUnambiguousImportsOnTheFly, pluginInfo))
-      metrics.add(optimizeImportsEvent.metric(projectSettings.optimizeImportsOnTheFly, pluginInfo))
+        // filling up scriptingAutoReloadEnabled Event
+        IdeScriptDefinitionProvider.getInstance(project).getDefinitions().forEach { definition ->
+            if (definition.canAutoReloadScriptConfigurationsBeSwitchedOff) {
+                val scriptingAutoReloadEnabled = KotlinScriptingSettingsStorage.getInstance(project).autoReloadConfigurations(definition)
+                metrics.add(scriptingAREvent.metric(definition.name, scriptingAutoReloadEnabled, pluginInfo))
+            }
+        }
 
-      return metrics
+        val settings: KotlinCodeInsightSettings = KotlinCodeInsightSettings.getInstance()
+        val projectSettings: KotlinCodeInsightWorkspaceSettings = KotlinCodeInsightWorkspaceSettings.getInstance(project)
+
+        // filling up addUnambiguousImportsOnTheFly and optimizeImportsOnTheFly Events
+        metrics.add(unambiguousImportsEvent.metric(settings.addUnambiguousImportsOnTheFly, pluginInfo))
+        metrics.add(optimizeImportsEvent.metric(projectSettings.optimizeImportsOnTheFly, pluginInfo))
+
+        return metrics
     }
 
     private val GROUP = EventLogGroup("kotlin.ide.settings", 4)

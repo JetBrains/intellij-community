@@ -37,7 +37,6 @@ jvm_library(
     "//plugins/kotlin/base/kdoc",
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/project-structure",
-    "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//plugins/kotlin/base/code-insight",

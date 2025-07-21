@@ -1,6 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.jvm.k2">
   <dependencies>
     <module name="kotlin.jvm.shared"/>
+    <module name="kotlin.base.scripting.k2"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

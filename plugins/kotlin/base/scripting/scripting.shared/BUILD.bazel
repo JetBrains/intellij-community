@@ -1,0 +1,45 @@
+### auto-generated section `build kotlin.base.scripting.shared` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "scripting.shared_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "scripting.shared",
+  module_name = "kotlin.base.scripting.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-script-runtime",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:kotlinc-kotlin-scripting-jvm",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
+    "//plugins/kotlin/base/facet",
+    "//platform/util",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/scripting",
+    "//plugins/kotlin/base/util",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/analysis-api:analysis",
+    "//platform/workspace/storage",
+    "//platform/backend/workspace",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+    "//java/java-psi-impl:psi-impl",
+  ],
+  runtime_deps = [":scripting.shared_resources"]
+)
+### auto-generated section `build kotlin.base.scripting.shared` end

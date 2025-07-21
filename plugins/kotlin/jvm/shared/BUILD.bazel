@@ -41,7 +41,6 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/platforms",
     "//plugins/kotlin/base/project-structure",
-    "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
@@ -84,6 +83,7 @@ jvm_library(
     "//platform/ide-core",
     "//platform/util",
     "//platform/editor-ui-api:editor-ui",
+    "//plugins/kotlin/base/scripting/scripting.shared",
   ],
   runtime_deps = [":shared_resources"]
 )

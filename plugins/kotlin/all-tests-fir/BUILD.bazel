@@ -43,7 +43,6 @@ jvm_library(
     "//plugins/kotlin/compiler-reference-index/tests.k2",
     "//plugins/kotlin/bundled-compiler-plugins-support",
     "//plugins/kotlin/uast/uast-kotlin-fir/tests",
-    "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/compiler-plugins/parcelize/tests",
     "//plugins/kotlin/compiler-plugins/parcelize/tests/k2",
     "//plugins/kotlin/copyright/fir-tests:kotlin-copyright-fir-tests",
