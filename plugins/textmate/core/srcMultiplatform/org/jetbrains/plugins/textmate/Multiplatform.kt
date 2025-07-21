@@ -1,10 +1,9 @@
 package org.jetbrains.plugins.textmate
 
 import org.jetbrains.plugins.textmate.atomics.updateAndGet
+import org.jetbrains.plugins.textmate.concurrent.TextMateThreadLocal
 import org.jetbrains.plugins.textmate.logging.Slf4jTextMateLogger
 import org.jetbrains.plugins.textmate.logging.TextMateLogger
-import org.jetbrains.plugins.textmate.regex.TextMateThreadLocal
-import org.jetbrains.plugins.textmate.regex.createTextMateThreadLocalJvm
 import org.slf4j.LoggerFactory
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.reflect.KClass
