@@ -158,6 +158,7 @@ enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>)
     PROJECT_PATH(PathFusMetric("PROJECT_PATH")),
 
     OS_TYPE(OverrideRegexStringFusMetric("OS_TYPE","(Windows|Windows |Windows Server |Mac|Linux|FreeBSD|Solaris|Other|Mac OS X)\\d*")),
+    OS_VERSION(VersionStringFusMetric("OS_VERSION")),
 
     IDES_INSTALLED(ConcatenatedAllowedListValuesStringFusMetric("IDES_INSTALLED",listOf("AS", "OC", "CL", "IU", "IC", "WC"))),
 
