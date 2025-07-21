@@ -352,7 +352,7 @@ object CommandLineProcessor {
       FUSProjectHotStartUpMeasurer.noProjectFound()
     }
     else if (commands.size > 1) {
-      FUSProjectHotStartUpMeasurer.openingMultipleProjects()
+      FUSProjectHotStartUpMeasurer.openingMultipleProjects(false)
     }
     else {
       when (val command = commands[0]) {

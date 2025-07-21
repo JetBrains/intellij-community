@@ -48,7 +48,7 @@ object FUSProjectHotStartUpMeasurer {
   private val channel = Channel<Event>(Int.MAX_VALUE)
   private val counter = AtomicInteger(0)
 
-  private data class ProjectId(private val id: Int) {
+  private data class ProjectId(val projectOrder: Int) {
     constructor() : this(counter.incrementAndGet())
   }
 
@@ -141,9 +141,7 @@ object FUSProjectHotStartUpMeasurer {
     class NoMoreEditorsEvent(val time: Long, override val projectId: ProjectId) : FUSReportableEvent, ProjectDependentEvent
 
     data object IdeStarterStartedEvent : Event
-    data object MultipleProjectsEvent : FUSReportableEvent {
-      val time: Long = System.nanoTime()
-    }
+    data class MultipleProjectsEvent(val reopening: Boolean, val time: Long = System.nanoTime()) : FUSReportableEvent
   }
 
   /**
@@ -175,8 +173,9 @@ object FUSProjectHotStartUpMeasurer {
 
   private fun reportViolation(violation: Violation) {
     if (violation == Violation.MultipleProjects) {
-      openingMultipleProjects()
-    } else {
+      thisLogger().error("Use `openingMultipleProjects()` instead")
+    }
+    else {
       channel.trySend(Event.ViolationEvent(violation))
       channel.close()
     }
@@ -191,7 +190,7 @@ object FUSProjectHotStartUpMeasurer {
     when (openPaths.size) {
       0 -> reportViolation(Violation.NoProjectFound)
       1 -> reportProjectType(ProjectsType.Reopened)
-      else -> reportViolation(Violation.MultipleProjects)
+      else -> openingMultipleProjects(true)
     }
   }
 
@@ -228,9 +227,9 @@ object FUSProjectHotStartUpMeasurer {
     block.invoke(projectMarker.id)
   }
 
-  fun openingMultipleProjects() {
+  fun openingMultipleProjects(reopening: Boolean) {
     if (!currentThreadContext().isProperContext()) return
-    channel.trySend(Event.MultipleProjectsEvent)
+    channel.trySend(Event.MultipleProjectsEvent(reopening))
   }
 
   fun reportAlreadyOpenedProject() {
@@ -485,7 +484,8 @@ object FUSProjectHotStartUpMeasurer {
           for ((projectId, frameBecameVisibleEvent) in frameBecameVisibleEventMap) {
             if (reportedFrameBecameVisibleEventMap.containsKey(projectId)) continue
             val durationFromStart = getDurationFromStart(frameBecameVisibleEvent.time, reportedFirstUiShownEvent)
-            val projectsType = projectTypeReportEvent?.projectsType ?: ProjectsType.Unknown
+            val projectsType = projectTypeReportEvent?.projectsType
+                               ?: (if (multipleProjectsOpenedEvent?.reopening == true) ProjectsType.Reopened else ProjectsType.Unknown)
             val data: MutableList<EventPair<*>> = mutableListOf(DURATION.with(durationFromStart), PROJECTS_TYPE.with(projectsType))
             val settingsExist = projectPathReportEvents[projectId]?.hasSettings
             if (settingsExist != null) {
@@ -496,7 +496,8 @@ object FUSProjectHotStartUpMeasurer {
               FRAME_BECAME_VISIBLE_EVENT.log(data)
             }
             else {
-              //todo[lene] introduce new event
+              addProjectIdField(data, projectId)
+              MULTIPLE_PROJECT_FRAME_BECAME_VISIBLE_EVENT.log(data)
             }
             reportedFrameBecameVisibleEventMap[projectId] = LastHandledEvent(frameBecameVisibleEvent, durationFromStart)
           }
@@ -515,7 +516,7 @@ object FUSProjectHotStartUpMeasurer {
               FRAME_BECAME_INTERACTIVE_EVENT.log(durationFromStart)
             }
             else {
-              //todo[lene] introduce new event
+              MULTIPLE_PROJECT_FRAME_BECAME_INTERACTIVE_EVENT.log(durationFromStart, projectId.projectOrder)
             }
             reportedFrameBecameInteractiveEvenMap[projectId] = LastHandledEvent(frameBecameInteractiveEvent, durationFromStart)
           }
@@ -561,7 +562,8 @@ object FUSProjectHotStartUpMeasurer {
               CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT.log(data)
             }
             else {
-              //todo[lene] introduce new event
+              addProjectIdField(data, projectId)
+              MULTIPLE_PROJECT_CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT.log(data)
             }
             reportedFirstEditorEvenMap[projectId] = lastHandledEvent
           }
@@ -575,6 +577,13 @@ object FUSProjectHotStartUpMeasurer {
         }
       }
     }
+  }
+
+  private fun addProjectIdField(
+    data: MutableList<EventPair<*>>,
+    projectId: ProjectId,
+  ) {
+    data.add(PROJECT_ORDER_FIELD.with(projectId.projectOrder))
   }
 
   private object MyMarker : CoroutineContext.Key<MyMarker>, CoroutineContext.Element, IntelliJContextElement {
@@ -615,7 +624,7 @@ internal class WelcomeScreenPerformanceCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = WELCOME_SCREEN_GROUP
 }
 
-private val GROUP = EventLogGroup("reopen.project.startup.performance", 2)
+private val GROUP = EventLogGroup("reopen.project.startup.performance", 3)
 
 private enum class UIResponseType {
   Splash,
@@ -625,6 +634,8 @@ private enum class UIResponseType {
 private val UI_RESPONSE_TYPE = EventFields.Enum("type", UIResponseType::class.java)
 private val FIRST_UI_SHOWN_EVENT: EventId2<Duration, UIResponseType> = GROUP.registerEvent("first.ui.shown", DURATION, UI_RESPONSE_TYPE)
 
+private val PROJECT_ORDER_FIELD = EventFields.Int("project_order")
+
 private val PROJECTS_TYPE: EnumEventField<FUSProjectHotStartUpMeasurer.ProjectsType> =
   EventFields.Enum("projects_type", FUSProjectHotStartUpMeasurer.ProjectsType::class.java)
 private val HAS_SETTINGS: BooleanEventField = EventFields.Boolean("has_settings")
@@ -632,8 +643,13 @@ private val VIOLATION: EnumEventField<FUSProjectHotStartUpMeasurer.Violation> =
   EventFields.Enum("violation", FUSProjectHotStartUpMeasurer.Violation::class.java)
 private val FRAME_BECAME_VISIBLE_EVENT = GROUP.registerVarargEvent("frame.became.visible",
                                                                    DURATION, HAS_SETTINGS, PROJECTS_TYPE, VIOLATION)
+private val MULTIPLE_PROJECT_FRAME_BECAME_VISIBLE_EVENT = GROUP.registerVarargEvent("multiple.project.frame.became.visible",
+                                                                                    DURATION, HAS_SETTINGS, PROJECTS_TYPE, VIOLATION,
+                                                                                    PROJECT_ORDER_FIELD)
 
 private val FRAME_BECAME_INTERACTIVE_EVENT = GROUP.registerEvent("frame.became.interactive", DURATION)
+private val MULTIPLE_PROJECT_FRAME_BECAME_INTERACTIVE_EVENT = GROUP.registerEvent("multiple.project.frame.became.interactive",
+                                                                                  DURATION, PROJECT_ORDER_FIELD)
 
 private enum class SourceOfSelectedEditor {
   TextEditor,
@@ -650,7 +666,10 @@ private val LOADED_CACHED_DOC_RENDER_MARKUP_FIELD = EventFields.Boolean("loaded_
 private val SOURCE_OF_SELECTED_EDITOR_FIELD: EnumEventField<SourceOfSelectedEditor> =
   EventFields.Enum("source_of_selected_editor", SourceOfSelectedEditor::class.java)
 private val NO_EDITORS_TO_OPEN_FIELD = EventFields.Boolean("no_editors_to_open")
-private val CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT = GROUP.registerVarargEvent("code.loaded.and.visible.in.editor", *createCodeLoadedEventFields())
+private val CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT = GROUP.registerVarargEvent("code.loaded.and.visible.in.editor", *createCodeLoadedEventFields(false))
+
+private val MULTIPLE_PROJECT_CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT = GROUP.registerVarargEvent("multiple.project.code.loaded.and.visible.in.editor",
+                                                                                                 *createCodeLoadedEventFields(true))
 
 private fun getField(type: MarkupType): EventField<Boolean> {
   return when (type) {
@@ -663,10 +682,13 @@ private fun getField(type: MarkupType): EventField<Boolean> {
   }
 }
 
-private fun createCodeLoadedEventFields(): Array<EventField<*>> {
+private fun createCodeLoadedEventFields(forMultipleProjectsEvent: Boolean): Array<EventField<*>> {
   val fields = mutableListOf<EventField<*>>(DURATION, EventFields.FileType, HAS_SETTINGS, NO_EDITORS_TO_OPEN_FIELD, SOURCE_OF_SELECTED_EDITOR_FIELD)
   for (type in MarkupType.entries) {
     fields.add(getField(type))
+  }
+  if (forMultipleProjectsEvent) {
+    fields.add(PROJECT_ORDER_FIELD)
   }
   return fields.toTypedArray()
 }
