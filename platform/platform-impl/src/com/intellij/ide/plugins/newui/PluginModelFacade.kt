@@ -17,6 +17,10 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     return MyPluginModel.isInstallingOrUpdate(model.pluginId)
   }
 
+  fun closeSession() {
+    UiPluginManager.getInstance().closeSession(getModel().sessionId)
+  }
+
   open fun getState(model: PluginUiModel): PluginEnabledState {
     return pluginModel.getState(model.pluginId)
   }

@@ -38,7 +38,7 @@ interface UiPluginManagerController {
   fun loadPluginDetails(model: PluginUiModel): PluginUiModel?
   fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>?
   fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata?
-  fun closeSession(sessionId: String)
+  suspend fun closeSession(sessionId: String)
   fun uninstallDynamicPlugin(parentComponent: JComponent?, sessionId: String, pluginId: PluginId, isUpdate: Boolean): Boolean
   fun deletePluginFiles(pluginId: PluginId)
   fun allowLoadUnloadWithoutRestart(pluginId: PluginId): Boolean

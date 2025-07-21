@@ -19,8 +19,8 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.kernel.withKernel
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
@@ -37,8 +37,10 @@ class UiPluginManager {
     return getController().getPlugins()
   }
 
-  fun closeSession(uuid: UUID) {
-    getController().closeSession(uuid.toString())
+  fun closeSession(uuid: String) {
+    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
+      getController().closeSession(uuid)
+    }
   }
 
   fun initSession(uuid: UUID): InitSessionResult {
@@ -74,7 +76,7 @@ class UiPluginManager {
   }
 
   fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent? = null, callback: (Map<PluginId, Boolean>) -> Unit = {}) {
-    service<FrontendRpcCoroutineContext>().coroutineScope.launch {
+    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO)  {
       callback(getController().resetSession(sessionId, removeSession, parentComponent))
     }
   }

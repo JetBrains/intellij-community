@@ -128,7 +128,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return PluginManagerSessionService.getInstance().createSession(sessionId)
   }
 
-  override fun closeSession(sessionId: String) {
+  override suspend fun closeSession(sessionId: String) {
     PluginManagerSessionService.getInstance().removeSession(sessionId)
   }
 

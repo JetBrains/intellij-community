@@ -2020,6 +2020,7 @@ public final class PluginManagerConfigurable
     pluginsState.runShutdownCallback();
     pluginsState.resetChangesAppliedWithoutRestart();
 
+    myPluginModelFacade.closeSession();
     if (myDisposer != null) {
       Disposer.dispose(myDisposer);
       CoroutineScopeKt.cancel(myCoroutineScope, null);
