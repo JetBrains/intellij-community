@@ -56,3 +56,15 @@ class Test {
         Function<String, @Nullable String> f = s  -> null;
     }
 }
+class WithContract {
+  @org.jetbrains.annotations.Contract("!null -> !null; null -> null")
+  public static String maybeTrim(String s) {
+    if (s == null) return null;
+    return s.trim();
+  }
+
+  public static String maybeTrimNoContract(String s) {
+    if (s == null) return <warning descr="Return of 'null'">null</warning>;
+    return s.trim();
+  }
+}
