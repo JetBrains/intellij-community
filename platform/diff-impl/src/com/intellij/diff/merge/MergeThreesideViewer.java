@@ -536,7 +536,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       MergeConflictType conflictType = conflictTypes.get(index);
 
       boolean isInImportRange = fragmentsWithMetadata.isIndexInImportRange(index);
-      TextMergeChange change = new TextMergeChange(index, isInImportRange, fragment, conflictType, myTextMergeViewer);
+      TextMergeChange change = new TextMergeChange(index, isInImportRange, fragment, conflictType, this);
 
       myAllMergeChanges.add(change);
       onChangeAdded(change);
@@ -1189,7 +1189,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       Document document = getContent(ThreeSide.BASE).getDocument();
       List<RangeMarker> markers = ContainerUtil.map(newRanges, range ->
         document.createRangeMarker(DiffUtil.getLinesRange(document, range.start, range.end)));
-      myChangeReferenceProcessor.process(side, changes, markers);
+      myChangeReferenceProcessor.process(side, (List<TextMergeChange>)changes, markers);
       markers.forEach(RangeMarker::dispose);
     }
   }

@@ -19,8 +19,8 @@ import javax.swing.Icon
 class SimpleThreesideDiffChange(
   fragment: MergeLineFragment,
   conflictType: MergeConflictType,
-  private val myInnerFragments: MergeInnerDifferences?,
-  private val myViewer: SimpleThreesideDiffViewer,
+  override val innerFragments: MergeInnerDifferences?,
+  private val myViewer: SimpleThreesideDiffViewer
 ) : ThreesideDiffChangeBase(conflictType) {
   private val myLineStarts = IntArray(3)
   private val myLineEnds = IntArray(3)
@@ -29,7 +29,7 @@ class SimpleThreesideDiffChange(
     private set
 
   init {
-    for (side in ThreeSide.values()) {
+    for (side in ThreeSide.entries) {
       myLineStarts[side.index] = fragment.getStartLine(side)
       myLineEnds[side.index] = fragment.getEndLine(side)
     }
@@ -59,25 +59,12 @@ class SimpleThreesideDiffChange(
   //
   // Getters
   //
-  override fun getStartLine(side: ThreeSide): Int {
-    return side.select(myLineStarts)
-  }
+  override fun getStartLine(side: ThreeSide): Int = side.select(myLineStarts)
+  override fun getEndLine(side: ThreeSide): Int = side.select(myLineEnds)
 
-  override fun getEndLine(side: ThreeSide): Int {
-    return side.select(myLineEnds)
-  }
+  override fun isResolved(side: ThreeSide): Boolean = false
 
-  override fun isResolved(side: ThreeSide): Boolean {
-    return false
-  }
-
-  override fun getEditor(side: ThreeSide): Editor {
-    return myViewer.getEditor(side)
-  }
-
-  override fun getInnerFragments(): MergeInnerDifferences? {
-    return myInnerFragments
-  }
+  override fun getEditor(side: ThreeSide): Editor = myViewer.getEditor(side)
 
   fun markInvalid() {
     this.isValid = false
@@ -113,28 +100,24 @@ class SimpleThreesideDiffChange(
       if (!isChanged) return@RendererBuilder null
 
       val text: String = getApplyActionText(myViewer, sourceSide, modifiedSide)
-      val arrowDirection = fromLeft(
-        sourceSide == ThreeSide.LEFT ||
-        modifiedSide == ThreeSide.RIGHT
-      )
+      val arrowDirection = fromLeft(sourceSide == ThreeSide.LEFT ||
+                                    modifiedSide == ThreeSide.RIGHT)
       val icon = DiffUtil.getArrowIcon(arrowDirection)
-      createIconRenderer(
-        sourceSide, modifiedSide, text, icon,
-        Runnable { myViewer.replaceChange(this, sourceSide, modifiedSide) })
+      createIconRenderer(modifiedSide, text, icon,
+                         Runnable { myViewer.replaceChange(this, sourceSide, modifiedSide) })
     })
   }
 
   private fun createIconRenderer(
-    sourceSide: ThreeSide,
     modifiedSide: ThreeSide,
-    @NlsContexts.Tooltip tooltipText: @NlsContexts.Tooltip String,
+    tooltipText: @NlsContexts.Tooltip String,
     icon: Icon,
-    perform: Runnable,
+    perform: Runnable
   ): GutterIconRenderer {
     return object : DiffGutterRenderer(icon, tooltipText) {
       override fun handleMouseClick() {
-        if (!this.isValid) return
-        val project = myViewer.getProject()
+        if (!isValid) return
+        val project = myViewer.project
         val document: Document = myViewer.getEditor(modifiedSide).getDocument()
         DiffUtil.executeWriteCommand(document, project, DiffBundle.message("message.replace.change.command"), perform)
       }
@@ -146,27 +129,30 @@ class SimpleThreesideDiffChange(
     // Modification
     //
     @JvmStatic
-    @Nls
     fun getApplyActionText(
       viewer: DiffViewerBase,
       sourceSide: ThreeSide,
-      modifiedSide: ThreeSide,
+      modifiedSide: ThreeSide
     ): @Nls String {
-      var key: Key<String?>? = null
-      if (sourceSide == ThreeSide.BASE && modifiedSide == ThreeSide.LEFT) {
-        key = DiffUserDataKeysEx.VCS_DIFF_ACCEPT_BASE_TO_LEFT_ACTION_TEXT
-      }
-      else if (sourceSide == ThreeSide.BASE && modifiedSide == ThreeSide.RIGHT) {
-        key = DiffUserDataKeysEx.VCS_DIFF_ACCEPT_BASE_TO_RIGHT_ACTION_TEXT
-      }
-      else if (sourceSide == ThreeSide.LEFT && modifiedSide == ThreeSide.BASE) {
-        key = DiffUserDataKeysEx.VCS_DIFF_ACCEPT_LEFT_TO_BASE_ACTION_TEXT
-      }
-      else if (sourceSide == ThreeSide.RIGHT && modifiedSide == ThreeSide.BASE) {
-        key = DiffUserDataKeysEx.VCS_DIFF_ACCEPT_RIGHT_TO_BASE_ACTION_TEXT
+      val key: Key<String>? = when {
+        sourceSide == ThreeSide.BASE && modifiedSide == ThreeSide.LEFT -> {
+          DiffUserDataKeysEx.VCS_DIFF_ACCEPT_BASE_TO_LEFT_ACTION_TEXT
+        }
+        sourceSide == ThreeSide.BASE && modifiedSide == ThreeSide.RIGHT -> {
+          DiffUserDataKeysEx.VCS_DIFF_ACCEPT_BASE_TO_RIGHT_ACTION_TEXT
+        }
+        sourceSide == ThreeSide.LEFT && modifiedSide == ThreeSide.BASE -> {
+          DiffUserDataKeysEx.VCS_DIFF_ACCEPT_LEFT_TO_BASE_ACTION_TEXT
+        }
+        sourceSide == ThreeSide.RIGHT && modifiedSide == ThreeSide.BASE -> {
+          DiffUserDataKeysEx.VCS_DIFF_ACCEPT_RIGHT_TO_BASE_ACTION_TEXT
+        }
+        else -> {
+          null
+        }
       }
       if (key != null) {
-        val customValue = DiffUtil.getUserData<@Nls String?>(viewer.getRequest(), viewer.getContext(), key)
+        val customValue = DiffUtil.getUserData<@Nls String>(viewer.request, viewer.context, key)
         if (customValue != null) return customValue
       }
 

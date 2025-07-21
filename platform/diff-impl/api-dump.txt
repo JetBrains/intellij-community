@@ -1000,19 +1000,20 @@ c:com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 - p:processContextHints():V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - p:updateContextHints():V
-c:com.intellij.diff.tools.simple.SimpleThreesideDiffChange
+f:com.intellij.diff.tools.simple.SimpleThreesideDiffChange
 - com.intellij.diff.tools.simple.ThreesideDiffChangeBase
+- sf:Companion:com.intellij.diff.tools.simple.SimpleThreesideDiffChange$Companion
 - <init>(com.intellij.diff.fragments.MergeLineFragment,com.intellij.diff.util.MergeConflictType,com.intellij.diff.tools.util.text.MergeInnerDifferences,com.intellij.diff.tools.simple.SimpleThreesideDiffViewer):V
-- p:getEditor(com.intellij.diff.util.ThreeSide):com.intellij.openapi.editor.Editor
+- sf:getApplyActionText(com.intellij.diff.tools.util.base.DiffViewerBase,com.intellij.diff.util.ThreeSide,com.intellij.diff.util.ThreeSide):java.lang.String
 - getEndLine(com.intellij.diff.util.ThreeSide):I
-- p:getInnerFragments():com.intellij.diff.tools.util.text.MergeInnerDifferences
 - getStartLine(com.intellij.diff.util.ThreeSide):I
-- p:installOperations():V
 - isResolved(com.intellij.diff.util.ThreeSide):Z
-- isValid():Z
-- markInvalid():V
-- processChange(I,I,I,com.intellij.diff.util.ThreeSide):Z
-- reinstallHighlighters():V
+- f:isValid():Z
+- f:markInvalid():V
+- f:processChange(I,I,I,com.intellij.diff.util.ThreeSide):Z
+- f:reinstallHighlighters():V
+f:com.intellij.diff.tools.simple.SimpleThreesideDiffChange$Companion
+- f:getApplyActionText(com.intellij.diff.tools.util.base.DiffViewerBase,com.intellij.diff.util.ThreeSide,com.intellij.diff.util.ThreeSide):java.lang.String
 c:com.intellij.diff.tools.simple.SimpleThreesideDiffViewer
 - com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx
 - pf:myTextDiffProvider:com.intellij.diff.tools.util.text.SimpleThreesideTextDiffProvider
@@ -1046,31 +1047,30 @@ pa:com.intellij.diff.tools.simple.SimpleThreesideDiffViewer$SelectedChangesActio
 - pa:isVisible(com.intellij.diff.util.ThreeSide):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.diff.tools.simple.ThreesideDiffChangeBase
-- pf:myHighlighters:java.util.List
 - pf:myInnerHighlighters:java.util.List
 - pf:myOperations:java.util.List
-- p:myType:com.intellij.diff.util.MergeConflictType
 - <init>(com.intellij.diff.util.MergeConflictType):V
-- p:createHighlighter(com.intellij.diff.util.ThreeSide):V
-- p:createInnerHighlighter(com.intellij.diff.util.ThreeSide):V
-- destroy():V
-- p:destroyHighlighters():V
-- p:destroyInnerHighlighters():V
-- p:destroyOperations():V
-- getConflictType():com.intellij.diff.util.MergeConflictType
+- pf:createHighlighter(com.intellij.diff.util.ThreeSide):V
+- pf:createInnerHighlighter(com.intellij.diff.util.ThreeSide):V
+- f:destroy():V
+- pf:destroyHighlighters():V
+- pf:destroyInnerHighlighters():V
+- pf:destroyOperations():V
+- f:getConflictType():com.intellij.diff.util.MergeConflictType
 - getDiffType():com.intellij.diff.util.TextDiffType
 - pa:getEditor(com.intellij.diff.util.ThreeSide):com.intellij.openapi.editor.Editor
 - a:getEndLine(com.intellij.diff.util.ThreeSide):I
 - pa:getInnerFragments():com.intellij.diff.tools.util.text.MergeInnerDifferences
 - a:getStartLine(com.intellij.diff.util.ThreeSide):I
-- p:installHighlighters():V
-- p:installInnerHighlighters():V
+- pf:installHighlighters():V
+- pf:installInnerHighlighters():V
 - p:installOperations():V
-- isChange(com.intellij.diff.util.Side):Z
-- isChange(com.intellij.diff.util.ThreeSide):Z
-- isConflict():Z
+- f:isChange(com.intellij.diff.util.Side):Z
+- f:isChange(com.intellij.diff.util.ThreeSide):Z
+- f:isConflict():Z
 - a:isResolved(com.intellij.diff.util.ThreeSide):Z
-- updateGutterActions(Z):V
+- f:setConflictType(com.intellij.diff.util.MergeConflictType):V
+- f:updateGutterActions(Z):V
 a:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx
 - com.intellij.diff.tools.util.side.ThreesideTextDiffViewer
 - pf:myStatusPanel:com.intellij.diff.tools.util.StatusPanel

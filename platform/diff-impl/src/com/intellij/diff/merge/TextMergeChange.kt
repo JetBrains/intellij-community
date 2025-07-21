@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge
 
 import com.intellij.diff.fragments.MergeLineFragment
@@ -9,13 +9,12 @@ import com.intellij.diff.util.DiffGutterOperation.ModifiersRendererBuilder
 import com.intellij.diff.util.DiffGutterOperation.WithModifiers
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.diff.DiffBundle
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.JBColor
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.addAllIfNotNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
@@ -23,26 +22,21 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 class TextMergeChange @RequiresEdt constructor(
-//
-  // Getters
-  //
   val index: Int,
   val isImportChange: Boolean,
   val fragment: MergeLineFragment,
   conflictType: MergeConflictType,
-  private val myMergeViewer: TextMergeViewer,
+  private val viewer: MergeThreesideViewer,
 ) : ThreesideDiffChangeBase(conflictType) {
-  protected val myViewer: MergeThreesideViewer
 
-  protected val myResolved: BooleanArray = BooleanArray(2)
+  private val myResolved: BooleanArray = BooleanArray(2)
+
   var isOnesideAppliedConflict: Boolean = false
     private set
 
   @get:ApiStatus.Internal
   var isResolvedWithAI: Boolean = false
     private set
-
-  private var myInnerFragments: MergeInnerDifferences? = null // warning: might be out of date
 
   @RequiresEdt
   fun reinstallHighlighters() {
@@ -52,19 +46,19 @@ class TextMergeChange @RequiresEdt constructor(
     destroyOperations()
     installOperations()
 
-    myViewer.repaintDividers()
+    viewer.repaintDividers()
   }
 
   @RequiresEdt
   fun setResolved(side: Side, value: Boolean) {
     myResolved[side.index] = value
 
-    if (this.isResolved) {
+    if (isResolved) {
       destroyInnerHighlighters()
     }
     else {
       // Destroy only resolved side to reduce blinking
-      val document: Document = myViewer.getEditor(side.select<ThreeSide>(ThreeSide.LEFT, ThreeSide.RIGHT)).getDocument()
+      val document = viewer.getEditor(side.select(ThreeSide.LEFT, ThreeSide.RIGHT)).getDocument()
       for (highlighter in myInnerHighlighters) {
         if (document == highlighter.getDocument()) {
           highlighter.dispose() // it's OK to call dispose() few times
@@ -81,160 +75,146 @@ class TextMergeChange @RequiresEdt constructor(
   }
 
   fun markOnesideAppliedConflict() {
-    this.isOnesideAppliedConflict = true
+    isOnesideAppliedConflict = true
   }
 
   @ApiStatus.Internal
   fun markChangeResolvedWithAI() {
-    this.isResolvedWithAI = true
+    isResolvedWithAI = true
   }
 
-  override fun isResolved(side: ThreeSide): Boolean {
-    return when (side) {
-      ThreeSide.LEFT -> isResolved(Side.LEFT)
-      ThreeSide.BASE -> this.isResolved
-      ThreeSide.RIGHT -> isResolved(Side.RIGHT)
-    }
+  override fun isResolved(side: ThreeSide): Boolean = when (side) {
+    ThreeSide.LEFT -> isResolved(Side.LEFT)
+    ThreeSide.BASE -> isResolved
+    ThreeSide.RIGHT -> isResolved(Side.RIGHT)
   }
 
   val startLine: Int
-    get() = myViewer.getModel().getLineStart(this.index)
+    get() = viewer.model.getLineStart(index)
 
   val endLine: Int
-    get() = myViewer.getModel().getLineEnd(this.index)
+    get() = viewer.model.getLineEnd(index)
 
   override fun getStartLine(side: ThreeSide): Int {
-    if (side == ThreeSide.BASE) return this.startLine
+    if (side == ThreeSide.BASE) return startLine
     return fragment.getStartLine(side)
   }
 
   override fun getEndLine(side: ThreeSide): Int {
-    if (side == ThreeSide.BASE) return this.endLine
+    if (side == ThreeSide.BASE) return endLine
     return fragment.getEndLine(side)
   }
 
-  override fun getDiffType(): TextDiffType {
-    val baseType = super.getDiffType()
-    if (!this.isResolvedWithAI) return baseType
+  override val diffType: TextDiffType
+    get() {
+      val baseType = super.diffType
+      if (!isResolvedWithAI) return baseType
 
-    return MyAIResolvedDiffType(baseType)
-  }
+      return MyAIResolvedDiffType(baseType)
+    }
 
   override fun getEditor(side: ThreeSide): Editor {
-    return myViewer.getEditor(side)
+    return viewer.getEditor(side)
   }
 
-  override fun getInnerFragments(): MergeInnerDifferences? {
-    return myInnerFragments
-  }
+  @set:RequiresEdt
+  public override var innerFragments: MergeInnerDifferences? = null
+    set(innerFragments) {
+      if (field == null && innerFragments == null) return
+      field = innerFragments
 
-  @RequiresEdt
-  fun setInnerFragments(innerFragments: MergeInnerDifferences?) {
-    if (myInnerFragments == null && innerFragments == null) return
-    myInnerFragments = innerFragments
+      reinstallHighlighters()
 
-    reinstallHighlighters()
-
-    destroyInnerHighlighters()
-    installInnerHighlighters()
-  }
+      destroyInnerHighlighters()
+      installInnerHighlighters()
+    }
 
   //
   // Gutter actions
   //
   @RequiresEdt
   override fun installOperations() {
-    if (myViewer.isExternalOperationInProgress()) return
+    if (viewer.isExternalOperationInProgress) return
 
-    ContainerUtil.addIfNotNull<DiffGutterOperation?>(myOperations, createResolveOperation())
-    ContainerUtil.addIfNotNull<DiffGutterOperation?>(myOperations, createAcceptOperation(Side.LEFT, OperationType.APPLY))
-    ContainerUtil.addIfNotNull<DiffGutterOperation?>(myOperations, createAcceptOperation(Side.LEFT, OperationType.IGNORE))
-    ContainerUtil.addIfNotNull<DiffGutterOperation?>(myOperations, createAcceptOperation(Side.RIGHT, OperationType.APPLY))
-    ContainerUtil.addIfNotNull<DiffGutterOperation?>(myOperations, createAcceptOperation(Side.RIGHT, OperationType.IGNORE))
-    ContainerUtil.addIfNotNull<DiffGutterOperation?>(myOperations, createResetOperation())
+    myOperations.addAllIfNotNull(
+      createResolveOperation(),
+      createAcceptOperation(Side.LEFT, OperationType.APPLY),
+      createAcceptOperation(Side.LEFT, OperationType.IGNORE),
+      createAcceptOperation(Side.RIGHT, OperationType.APPLY),
+      createAcceptOperation(Side.RIGHT, OperationType.IGNORE),
+      createResetOperation()
+    )
   }
 
   private fun createOperation(side: ThreeSide, builder: ModifiersRendererBuilder): DiffGutterOperation? {
     if (isResolved(side)) return null
 
-    val editor = myViewer.getEditor(side)
+    val editor = viewer.getEditor(side)
     val offset = DiffGutterOperation.lineToOffset(editor, getStartLine(side))
 
-    return WithModifiers(editor, offset, myViewer.getModifierProvider(), builder)
+    return WithModifiers(editor, offset, viewer.modifierProvider, builder)
   }
 
   private fun createResolveOperation(): DiffGutterOperation? {
-    return createOperation(
-      ThreeSide.BASE,
-      ModifiersRendererBuilder { ctrlPressed: Boolean, shiftPressed: Boolean, altPressed: Boolean -> createResolveRenderer() })
+    return createOperation(ThreeSide.BASE, ModifiersRendererBuilder { _: Boolean, _: Boolean, _: Boolean -> createResolveRenderer() })
   }
 
   private fun createAcceptOperation(versionSide: Side, type: OperationType): DiffGutterOperation? {
-    val side: ThreeSide? = versionSide.select<ThreeSide>(ThreeSide.LEFT, ThreeSide.RIGHT)
-    return createOperation(side!!, ModifiersRendererBuilder { ctrlPressed: Boolean, shiftPressed: Boolean, altPressed: Boolean ->
-      if (!isChange(versionSide)) return@createOperation null
+    val side = versionSide.select(ThreeSide.LEFT, ThreeSide.RIGHT)
+    return createOperation(side, ModifiersRendererBuilder(fun(ctrlPressed: Boolean, _: Boolean, _: Boolean): GutterIconRenderer? {
+      if (!isChange(versionSide)) return null
       if (type == OperationType.APPLY) {
-        return@createOperation createApplyRenderer(versionSide, ctrlPressed)
+        return createApplyRenderer(versionSide, ctrlPressed)
       }
       else {
-        return@createOperation createIgnoreRenderer(versionSide, ctrlPressed)
+        return createIgnoreRenderer(versionSide, ctrlPressed)
       }
-    })
+    }))
   }
 
   private fun createResetOperation(): DiffGutterOperation? {
-    if (!this.isResolved || !this.isResolvedWithAI) return null
+    if (!isResolved || !isResolvedWithAI) return null
 
-    val editor = myViewer.getEditor(ThreeSide.BASE)
+    val editor = viewer.getEditor(ThreeSide.BASE)
     val offset = DiffGutterOperation.lineToOffset(editor, getStartLine(ThreeSide.BASE))
 
 
     return DiffGutterOperation.Simple(editor, offset, DiffGutterOperation.RendererBuilder {
       createIconRenderer(DiffBundle.message("action.presentation.diff.revert.text"), AllIcons.Diff.Revert, false, Runnable {
-        myViewer.executeMergeCommand(
-          DiffBundle.message("merge.dialog.reset.change.command"),
-          mutableListOf<TextMergeChange?>(this),
-          Runnable { myViewer.resetResolvedChange(this) })
+        viewer.executeMergeCommand(DiffBundle.message("merge.dialog.reset.change.command"),
+                                   mutableListOf(this),
+                                   Runnable { viewer.resetResolvedChange(this) })
       })
     })
   }
 
   private fun createApplyRenderer(side: Side, modifier: Boolean): GutterIconRenderer? {
     if (isResolved(side)) return null
-    val icon = if (this.isOnesideAppliedConflict) DiffUtil.getArrowDownIcon(side) else DiffUtil.getArrowIcon(side)
-    return createIconRenderer(DiffBundle.message("action.presentation.diff.accept.text"), icon, isConflict(), Runnable {
-      myViewer.executeMergeCommand(
-        DiffBundle.message("merge.dialog.accept.change.command"),
-        mutableListOf<TextMergeChange?>(this),
-        Runnable { myViewer.replaceSingleChange(this, side, modifier) })
+    val icon = if (isOnesideAppliedConflict) DiffUtil.getArrowDownIcon(side) else DiffUtil.getArrowIcon(side)
+    return createIconRenderer(DiffBundle.message("action.presentation.diff.accept.text"), icon, isConflict, Runnable {
+      viewer.executeMergeCommand(DiffBundle.message("merge.dialog.accept.change.command"),
+                                 mutableListOf(this),
+                                 Runnable { viewer.replaceSingleChange(this, side, modifier) })
     })
   }
 
   private fun createIgnoreRenderer(side: Side, modifier: Boolean): GutterIconRenderer? {
     if (isResolved(side)) return null
-    return createIconRenderer(
-      DiffBundle.message("action.presentation.merge.ignore.text"),
-      AllIcons.Diff.Remove,
-      isConflict(),
-      Runnable {
-        myViewer.executeMergeCommand(
-          DiffBundle.message("merge.dialog.ignore.change.command"), mutableListOf<TextMergeChange?>(this),
-          Runnable { myViewer.ignoreChange(this, side, modifier) })
-      })
+    return createIconRenderer(DiffBundle.message("action.presentation.merge.ignore.text"), AllIcons.Diff.Remove, isConflict, Runnable {
+      viewer.executeMergeCommand(DiffBundle.message("merge.dialog.ignore.change.command"),
+                                 mutableListOf(this),
+                                 Runnable { viewer.ignoreChange(this, side, modifier) })
+    })
   }
 
   private fun createResolveRenderer(): GutterIconRenderer? {
-    if (!this.isConflict() || !myViewer.canResolveChangeAutomatically(this, ThreeSide.BASE)) return null
+    if (!isConflict || !viewer.canResolveChangeAutomatically(this, ThreeSide.BASE)) return null
 
-    return createIconRenderer(
-      DiffBundle.message("action.presentation.merge.resolve.text"),
-      AllIcons.Diff.MagicResolve,
-      false,
-      Runnable {
-        myViewer.executeMergeCommand(
-          DiffBundle.message("merge.dialog.resolve.conflict.command"), mutableListOf<TextMergeChange?>(this),
-          Runnable { myViewer.resolveSingleChangeAutomatically(this, ThreeSide.BASE) })
-      })
+    return createIconRenderer(DiffBundle.message("action.presentation.merge.resolve.text"), AllIcons.Diff.MagicResolve, false, Runnable {
+      viewer.executeMergeCommand(DiffBundle.message("merge.dialog.resolve.conflict.command"),
+                                 mutableListOf(this),
+                                 Runnable { viewer.resolveSingleChangeAutomatically(this, ThreeSide.BASE) })
+    })
   }
 
   private enum class OperationType {
@@ -246,47 +226,44 @@ class TextMergeChange @RequiresEdt constructor(
   //
   fun storeState(): State {
     return State(
-      this.index,
-      this.startLine,
-      this.endLine,
+      index,
+      startLine,
+      endLine,
 
       myResolved[0],
       myResolved[1],
 
-      this.isOnesideAppliedConflict,
-      this.isResolvedWithAI
-    )
+      isOnesideAppliedConflict,
+      isResolvedWithAI)
   }
 
   fun restoreState(state: State) {
     myResolved[0] = state.myResolved1
     myResolved[1] = state.myResolved2
 
-    this.isOnesideAppliedConflict = state.myOnesideAppliedConflict
-    this.isResolvedWithAI = state.myIsResolvedByAI
+    isOnesideAppliedConflict = state.myOnesideAppliedConflict
+    isResolvedWithAI = state.myIsResolvedByAI
   }
 
   @ApiStatus.Internal
   fun resetState() {
     myResolved[0] = false
     myResolved[1] = false
-    this.isOnesideAppliedConflict = false
-    this.isResolvedWithAI = false
+    isOnesideAppliedConflict = false
+    isResolvedWithAI = false
   }
 
   class State(
     index: Int,
     startLine: Int,
     endLine: Int,
-    private val myResolved1: Boolean,
-    private val myResolved2: Boolean,
-    private val myOnesideAppliedConflict: Boolean,
-    private val myIsResolvedByAI: Boolean,
+    val myResolved1: Boolean,
+    val myResolved2: Boolean,
+    val myOnesideAppliedConflict: Boolean,
+    val myIsResolvedByAI: Boolean,
   ) : MergeModelBase.State(index, startLine, endLine)
 
   init {
-    myViewer = myMergeViewer.getViewer()
-
     reinstallHighlighters()
   }
 
@@ -310,13 +287,12 @@ class TextMergeChange @RequiresEdt constructor(
 
   companion object {
     private fun createIconRenderer(
-      @NlsContexts.Tooltip text: @NlsContexts.Tooltip String,
+      text: @NlsContexts.Tooltip String,
       icon: Icon,
       ctrlClickVisible: Boolean,
       perform: Runnable,
     ): GutterIconRenderer {
-      @Nls val appendix: @Nls String? =
-        if (ctrlClickVisible) DiffBundle.message("tooltip.merge.ctrl.click.to.resolve.conflict") else null
+      val appendix: @Nls String? = if (ctrlClickVisible) DiffBundle.message("tooltip.merge.ctrl.click.to.resolve.conflict") else null
       val tooltipText = DiffUtil.createTooltipText(text, appendix)
       return object : DiffGutterRenderer(icon, tooltipText) {
         override fun handleMouseClick() {

@@ -9,9 +9,14 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 abstract class ThreesideDiffChangeBase(var conflictType: MergeConflictType) {
-  protected val myHighlighters: MutableList<RangeHighlighter> = ArrayList<RangeHighlighter>()
-  protected val myInnerHighlighters: MutableList<RangeHighlighter> = ArrayList<RangeHighlighter>()
-  protected val myOperations: MutableList<DiffGutterOperation> = ArrayList<DiffGutterOperation>()
+  private val highlighters: MutableList<RangeHighlighter> = mutableListOf()
+
+  @JvmField
+  protected val myInnerHighlighters: MutableList<RangeHighlighter> = mutableListOf()
+  @JvmField
+  protected val myOperations: MutableList<DiffGutterOperation> = mutableListOf()
+
+  protected abstract val innerFragments: MergeInnerDifferences?
 
   @RequiresEdt
   fun destroy() {
@@ -22,7 +27,7 @@ abstract class ThreesideDiffChangeBase(var conflictType: MergeConflictType) {
 
   @RequiresEdt
   protected fun installHighlighters() {
-    assert(myHighlighters.isEmpty())
+    assert(highlighters.isEmpty())
 
     createHighlighter(ThreeSide.BASE)
     if (isChange(Side.LEFT)) createHighlighter(ThreeSide.LEFT)
@@ -40,10 +45,10 @@ abstract class ThreesideDiffChangeBase(var conflictType: MergeConflictType) {
 
   @RequiresEdt
   protected fun destroyHighlighters() {
-    for (highlighter in myHighlighters) {
+    for (highlighter in highlighters) {
       highlighter.dispose()
     }
-    myHighlighters.clear()
+    highlighters.clear()
   }
 
   @RequiresEdt
@@ -83,10 +88,8 @@ abstract class ThreesideDiffChangeBase(var conflictType: MergeConflictType) {
 
   protected abstract fun getEditor(side: ThreeSide): Editor
 
-  protected abstract val innerFragments: MergeInnerDifferences?
-
   open val diffType: TextDiffType
-    get() = DiffUtil.getDiffType(this.conflictType)
+    get() = DiffUtil.getDiffType(conflictType)
 
   val isConflict: Boolean
     get() = conflictType.type == MergeConflictType.Type.CONFLICT
@@ -105,37 +108,35 @@ abstract class ThreesideDiffChangeBase(var conflictType: MergeConflictType) {
   protected fun createHighlighter(side: ThreeSide) {
     val editor = getEditor(side)
 
-    val type = this.diffType
+    val type = diffType
     val startLine = getStartLine(side)
     val endLine = getEndLine(side)
 
     val resolved = isResolved(side)
-    val ignored = !resolved && this.innerFragments != null
+    val ignored = !resolved && innerFragments != null
     val shouldHideWithoutLineNumbers = side == ThreeSide.BASE && !isChange(Side.LEFT) && isChange(Side.RIGHT)
-    myHighlighters.addAll(
-      LineHighlighterBuilder(editor, startLine, endLine, type)
-        .withIgnored(ignored)
-        .withResolved(resolved)
-        .withHideWithoutLineNumbers(shouldHideWithoutLineNumbers)
-        .withHideStripeMarkers(side == ThreeSide.BASE)
-        .done()
-    )
+    highlighters.addAll(LineHighlighterBuilder(editor, startLine, endLine, type)
+                            .withIgnored(ignored)
+                            .withResolved(resolved)
+                            .withHideWithoutLineNumbers(shouldHideWithoutLineNumbers)
+                            .withHideStripeMarkers(side == ThreeSide.BASE)
+                            .done())
   }
 
   protected fun createInnerHighlighter(side: ThreeSide) {
     if (isResolved(side)) return
-    val innerFragments = this.innerFragments
+    val innerFragments = innerFragments
     if (innerFragments == null) return
 
     val ranges = innerFragments.get(side)
     if (ranges == null) return
 
     val editor = getEditor(side)
-    val start = DiffUtil.getLinesRange(editor.getDocument(), getStartLine(side), getEndLine(side)).getStartOffset()
+    val start = DiffUtil.getLinesRange(editor.getDocument(), getStartLine(side), getEndLine(side)).startOffset
     for (fragment in ranges) {
-      val innerStart = start + fragment.getStartOffset()
-      val innerEnd = start + fragment.getEndOffset()
-      myInnerHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, innerStart, innerEnd, this.diffType))
+      val innerStart = start + fragment.startOffset
+      val innerEnd = start + fragment.endOffset
+      myInnerHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, innerStart, innerEnd, diffType))
     }
   }
 }
