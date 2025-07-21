@@ -7534,6 +7534,13 @@ jvm_import(
   source_jar = "@opentelemetry-exporter-common-1_48_0-sources_http//file"
 )
 
+java_library(
+  name = "opentelemetry-exporter-otlp-common-provided",
+  exports = [":opentelemetry-exporter-otlp-common"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
 jvm_import(
   name = "opentelemetry-extension-kotlin",
   jar = "@opentelemetry-extension-kotlin-1_48_0_http//file",
