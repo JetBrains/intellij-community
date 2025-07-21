@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.TestModuleProperties;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.ModuleId;
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
+import com.intellij.pom.java.JavaRelease;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -127,21 +128,21 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
   @Test
   public void testPreviewLanguageLevel() throws Exception {
-    int feature = LanguageLevel.HIGHEST.feature();
+    LanguageLevel highest = JavaRelease.getHighest();
+    LanguageLevel highestPreview = highest.getPreviewLevel();
+
     importProject(
       "apply plugin: 'java'\n" +
-      "java.sourceCompatibility = " + feature+ "\n" +
-      "apply plugin: 'java'\n" +
+      "java.sourceCompatibility = " + highest.feature() + "\n" +
       "compileTestJava {\n" +
-      "  sourceCompatibility = " + feature +"\n" +
+      "  sourceCompatibility = " + highest.feature() + "\n" +
       "  options.compilerArgs << '--enable-preview'" +
       "}\n"
     );
 
     assertModules("project", "project.main", "project.test");
-    assertEquals(LanguageLevel.HIGHEST, getLanguageLevelForModule("project"));
-    assertEquals(LanguageLevel.HIGHEST, getLanguageLevelForModule("project.main"));
-    LanguageLevel highestPreview = LanguageLevel.getEntries().get(LanguageLevel.HIGHEST.ordinal() + 1);
+    assertEquals(highest, getLanguageLevelForModule("project"));
+    assertEquals(highest, getLanguageLevelForModule("project.main"));
     assertEquals(highestPreview, getLanguageLevelForModule("project.test"));
   }
 

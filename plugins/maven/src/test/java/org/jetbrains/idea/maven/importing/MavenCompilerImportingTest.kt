@@ -10,6 +10,7 @@ import com.intellij.idea.TestFor
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
+import com.intellij.pom.java.JavaRelease
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
@@ -332,7 +333,9 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   private suspend fun doTestPreviewConfigurationParameter(configurationParameter: String?) {
-    val feature = LanguageLevel.HIGHEST.feature()
+    val highest = JavaRelease.getHighest()
+    val highestPreview = highest.getPreviewLevel()
+
     importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
@@ -344,7 +347,7 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
             <artifactId>maven-compiler-plugin</artifactId>
             <version>3.10.1</version>
             <configuration>
-                <release>${feature}</release>
+                <release>${highest.feature()}</release>
                 ${configurationParameter ?: ""}
                 <forceJavacCompilerUse>true</forceJavacCompilerUse>
             </configuration>
@@ -353,7 +356,7 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
       </build>
     """.trimIndent())
     assertModules("project")
-    assertEquals(LanguageLevel.entries[LanguageLevel.HIGHEST.ordinal + 1], getLanguageLevelForModule())
+    assertEquals(highestPreview, getLanguageLevelForModule())
   }
 
   @Test
