@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
-import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.openapi.application.EDT
@@ -62,6 +61,28 @@ object PluginModelAsyncOperationsExecutor {
       val result = UiPluginManager.getInstance().enablePlugins(sessionId, descriptorIds, enable, project)
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         callback(result)
+      }
+    }
+  }
+
+  fun updatePlugin(
+    cs: CoroutineScope,
+    modelFacade: PluginModelFacade,
+    plugin: PluginUiModel,
+    updateDescriptor: PluginUiModel?,
+    pluginManagerCustomizer: PluginManagerCustomizer?,
+    modalityState: ModalityState,
+    component: JComponent?,
+  ) {
+    cs.launch(Dispatchers.IO) {
+      val model = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(modelFacade, plugin, updateDescriptor, modalityState)
+      withContext(Dispatchers.EDT + modalityState.asContextElement()) {
+        if (model != null) {
+          model.action()
+        }
+        else {
+          modelFacade.installOrUpdatePlugin(component, plugin, updateDescriptor, modalityState)
+        }
       }
     }
   }

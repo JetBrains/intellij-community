@@ -34,6 +34,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.system.OS;
 import com.intellij.util.ui.*;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -97,6 +98,7 @@ public final class ListPluginComponent extends JPanel {
   private ProgressIndicatorEx myIndicator;
   private EventHandler myEventHandler;
   private PluginManagerCustomizer myCustomizer;
+  private CoroutineScope myCoroutineScope;
   private @NotNull EventHandler.SelectionType mySelection = EventHandler.SelectionType.NONE;
 
   public ListPluginComponent(@NotNull PluginModelFacade pluginModelFacade,
@@ -104,12 +106,14 @@ public final class ListPluginComponent extends JPanel {
                              @NotNull PluginsGroup group,
                              @NotNull LinkListener<Object> searchListener,
                              @NotNull List<HtmlChunk> errors,
+                             @NotNull CoroutineScope coroutineScope,
                              boolean marketplace) {
     myPlugin = pluginUiModel;
     myGroup = group;
     myModelFacade = pluginModelFacade;
     mySearchListener = searchListener;
     myMarketplace = marketplace;
+    myCoroutineScope = coroutineScope;
     PluginId pluginId = myPlugin.getPluginId();
     boolean compatible = !myPlugin.isIncompatibleWithCurrentOs();
     myIsAvailable = (compatible || isInstalledAndEnabled()) && pluginUiModel.getCanBeEnabled();
@@ -726,16 +730,13 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private void updatePlugin(PluginUiModel plugin) {
-    if (myCustomizer != null) {
-      UpdateButtonCustomizationModel model = myCustomizer.getUpdateButtonCustomizationModel(myModelFacade, plugin, myUpdateDescriptor,
-                                                                                            ModalityState.stateForComponent(
-                                                                                              myUpdateButton));
-      if (model != null) {
-        model.getAction().invoke();
-        return;
-      }
-    }
-    myModelFacade.installOrUpdatePlugin(this, plugin, myUpdateDescriptor, ModalityState.stateForComponent(myUpdateButton));
+    PluginModelAsyncOperationsExecutor.INSTANCE.updatePlugin(myCoroutineScope,
+                                                             myModelFacade,
+                                                             plugin,
+                                                             myUpdateDescriptor,
+                                                             myCustomizer,
+                                                             ModalityState.stateForComponent(myUpdateButton),
+                                                             this);
   }
 
   private void updateIcon(boolean errors, boolean disabled) {

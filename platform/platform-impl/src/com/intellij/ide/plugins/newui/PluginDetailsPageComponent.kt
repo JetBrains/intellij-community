@@ -463,20 +463,25 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun updatePlugin() {
-    val modalityState = ModalityState.stateForComponent(updateButton!!)
-    val customizedAction = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(pluginModel,
-                                                                                      descriptorForActions!!,
-                                                                                      updateDescriptor,
-                                                                                      modalityState)?.action
-    if (customizedAction != null) {
-      customizedAction()
-    }
-    else {
-      pluginModel.installOrUpdatePlugin(
-        this,
-        descriptorForActions!!, updateDescriptor,
-        modalityState,
-      )
+    coroutineScope.launch {
+      val modalityState = ModalityState.stateForComponent(updateButton!!)
+      val customizedAction = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(pluginModel,
+                                                                                        descriptorForActions!!,
+                                                                                        updateDescriptor,
+                                                                                        modalityState)?.action
+
+      withContext(Dispatchers.EDT + ModalityState.stateForComponent(this@PluginDetailsPageComponent).asContextElement()) {
+        if (customizedAction != null) {
+          customizedAction()
+        }
+        else {
+          pluginModel.installOrUpdatePlugin(
+            this@PluginDetailsPageComponent,
+            descriptorForActions!!, updateDescriptor,
+            modalityState,
+          )
+        }
+      }
     }
   }
 
@@ -497,7 +502,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
-  private fun customizeInstallButton() {
+  private suspend fun customizeInstallButton() {
     val pluginToInstall = plugin ?: return
     if (gearButton!!.isEnabled) {
       installButton?.setVisible(false)
@@ -527,7 +532,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   }
 
-  private fun customizeEnableDisableButton() {
+  private suspend fun customizeEnableDisableButton() {
     if (pluginManagerCustomizer == null) return
     val uiModel = descriptorForActions ?: return
     if (uiModel.isBundled) return
@@ -1419,19 +1424,21 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun applyCustomization() {
-    if (plugin == null || pluginManagerCustomizer == null) return
-    customizeEnableDisableButton()
-    customizeInstallButton()
-    updateAdditionalText()
-    if (updateDescriptor != null) {
-      nameAndButtons!!.setProgressDisabledButton(updateButton!!)
-    }
-    else {
-      if (installButton!!.isVisible()) {
-        nameAndButtons!!.setProgressDisabledButton(installButton!!.getComponent())
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
+      if (plugin == null || pluginManagerCustomizer == null) return@launch
+      customizeEnableDisableButton()
+      customizeInstallButton()
+      updateAdditionalText()
+      if (updateDescriptor != null) {
+        nameAndButtons!!.setProgressDisabledButton(updateButton!!)
       }
       else {
-        nameAndButtons!!.setProgressDisabledButton(gearButton!!)
+        if (installButton!!.isVisible()) {
+          nameAndButtons!!.setProgressDisabledButton(installButton!!.getComponent())
+        }
+        else {
+          nameAndButtons!!.setProgressDisabledButton(gearButton!!)
+        }
       }
     }
   }

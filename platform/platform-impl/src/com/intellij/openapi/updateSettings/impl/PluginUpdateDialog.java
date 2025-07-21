@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
@@ -33,6 +34,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -132,7 +134,8 @@ public final class PluginUpdateDialog extends DialogWrapper {
           node.setDependencies(dependencies);
           model = new PluginUiModelAdapter(node);
         }
-        @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(new PluginModelFacade(myPluginModel), model, group, LinkListener.NULL, errors, true);
+        CoroutineScope scope = ApplicationManager.getApplication().getService(CoreUiCoroutineScopeHolder.class).coroutineScope;
+        @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(new PluginModelFacade(myPluginModel), model, group, LinkListener.NULL, errors, scope, true);
         component.setOnlyUpdateMode();
         component.getChooseUpdateButton().addActionListener(e -> updateButtons());
         return component;

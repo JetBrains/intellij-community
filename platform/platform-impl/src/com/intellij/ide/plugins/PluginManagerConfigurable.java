@@ -481,7 +481,7 @@ public final class PluginManagerConfigurable
           protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
                                                                      @NotNull PluginsGroup group,
                                                                      @NotNull List<HtmlChunk> errors) {
-            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, true);
+            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, myCoroutineScope, true);
           }
         };
 
@@ -867,7 +867,7 @@ public final class PluginManagerConfigurable
           protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
                                                                      @NotNull PluginsGroup group,
                                                                      @NotNull List<HtmlChunk> errors) {
-            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, true);
+            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, myCoroutineScope, true);
           }
         };
 
@@ -1043,7 +1043,7 @@ public final class PluginManagerConfigurable
           protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
                                                                      @NotNull PluginsGroup group,
                                                                      @NotNull List<HtmlChunk> errors) {
-            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, false);
+            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, myCoroutineScope, false);
           }
         };
 
@@ -1218,7 +1218,7 @@ public final class PluginManagerConfigurable
           protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
                                                                      @NotNull PluginsGroup group,
                                                                      @NotNull List<HtmlChunk> errors) {
-            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, false);
+            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, myCoroutineScope, false);
           }
         };
 

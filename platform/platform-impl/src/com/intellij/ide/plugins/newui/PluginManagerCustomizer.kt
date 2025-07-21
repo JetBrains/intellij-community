@@ -15,19 +15,19 @@ import javax.swing.JComponent
 interface PluginManagerCustomizer {
   fun initCustomizer(parentComponent: JComponent)
 
-  fun getInstallButonCustomizationModel(
+  suspend fun getInstallButonCustomizationModel(
     pluginModelFacade: PluginModelFacade,
     pluginToInstallModel: PluginUiModel,
     modalityState: ModalityState,
   ): OptionsButonCustomizationModel?
 
-  fun getDisableButtonCustomizationModel(
+  suspend fun getDisableButtonCustomizationModel(
     pluginModelFacade: PluginModelFacade,
     pluginModel: PluginUiModel,
     modalityState: ModalityState,
   ): OptionsButonCustomizationModel?
 
-  fun getUpdateButtonCustomizationModel(
+  suspend fun getUpdateButtonCustomizationModel(
     pluginModelFacade: PluginModelFacade,
     pluginModel: PluginUiModel,
     updateModel: PluginUiModel?,
