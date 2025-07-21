@@ -4,11 +4,14 @@ package com.intellij.openapi.ui.messages;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -208,7 +211,21 @@ public class MessageDialog extends DialogWrapper {
   }
 
   protected JTextPane createMessageComponent(final @NlsContexts.DialogMessage String message) {
-    final JTextPane messageComponent = new JTextPane();
+    final JTextPane messageComponent = new JTextPane() {
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+          accessibleContext = new AccessibleJEditorPane() {
+            @Override
+            public AccessibleRole getAccessibleRole() {
+              return AccessibleRole.LABEL;
+            }
+          };
+        }
+        return accessibleContext;
+      }
+    };
+    messageComponent.getAccessibleContext().setAccessibleName(StringUtil.unescapeXmlEntities(StringUtil.stripHtml(message, " ")));
     return Messages.configureMessagePaneUi(messageComponent, message);
   }
 

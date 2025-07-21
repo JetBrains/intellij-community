@@ -29,6 +29,7 @@ import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
 import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
 import javax.swing.*
 import javax.swing.border.Border
 import javax.swing.plaf.basic.BasicHTML
@@ -354,6 +355,15 @@ class AlertDialog(project: Project?,
           }
           return super.getPreferredSize()
         }
+
+        override fun getAccessibleContext(): AccessibleContext? {
+          if (accessibleContext == null) {
+            accessibleContext = object : AccessibleJEditorPane() {
+              override fun getAccessibleRole(): AccessibleRole? = AccessibleRole.LABEL
+            }
+          }
+          return accessibleContext
+        }
       }, myMessage!!.replace("(\r\n|\n)".toRegex(), "<br/>"))
 
       messageComponent.font = JBFont.regular()
@@ -454,11 +464,10 @@ class AlertDialog(project: Project?,
     kit.styleSheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED) + "}")
     component.editorKit = kit
     component.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
-
-    if (BasicHTML.isHTMLString(message)) {
-      component.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY,
-                                  StringUtil.unescapeXmlEntities(StringUtil.stripHtml(message!!, " ")))
-    }
+    component.putClientProperty(
+      AccessibleContext.ACCESSIBLE_NAME_PROPERTY,
+      if (BasicHTML.isHTMLString(message)) StringUtil.unescapeXmlEntities(StringUtil.stripHtml(message!!, " ")) else message
+    )
 
     component.text = message
 
