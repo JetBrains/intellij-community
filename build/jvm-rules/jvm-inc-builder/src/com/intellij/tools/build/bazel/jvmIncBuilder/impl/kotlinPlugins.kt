@@ -91,7 +91,7 @@ fun configurePlugins(
         CliOptionValue(pluginId, JvmAbiCommandLineProcessor.OUTPUT_PATH_OPTION.optionName, ""), // Placeholder to satisfy the "required option" condition. The output is collected into memory
         CliOptionValue(pluginId, JvmAbiCommandLineProcessor.REMOVE_DATA_CLASS_COPY_IF_CONSTRUCTOR_IS_PRIVATE_OPTION.optionName, "true"),
         CliOptionValue(pluginId, JvmAbiCommandLineProcessor.REMOVE_PRIVATE_CLASSES_OPTION.optionName, "true"),
-        CliOptionValue(pluginId, JvmAbiCommandLineProcessor.REMOVE_DEBUG_INFO_OPTION.optionName, "true"),
+        CliOptionValue(pluginId, JvmAbiCommandLineProcessor.REMOVE_DEBUG_INFO_OPTION.optionName, "false"), // retain debug info, so that debug info in targets that depend on this one can be properly generated
       )
     ))
   }

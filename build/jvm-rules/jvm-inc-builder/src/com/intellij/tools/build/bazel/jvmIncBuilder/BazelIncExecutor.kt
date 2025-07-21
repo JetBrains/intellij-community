@@ -11,7 +11,6 @@ import kotlinx.coroutines.job
 import org.jetbrains.bazel.jvm.*
 import org.jetbrains.bazel.jvm.util.*
 import org.jetbrains.jps.javac.ExternalRefCollectorCompilerToolExtension
-import org.jetbrains.kotlin.config.IncrementalCompilation
 import java.io.InputStream
 import java.io.Writer
 import java.nio.file.Files
@@ -45,10 +44,6 @@ internal class BazelIncExecutor : WorkRequestExecutor {
 
     private fun configureGlobals() {
       ExternalRefCollectorCompilerToolExtension.enable()
-      System.setProperty(IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY, "true")
-      System.setProperty(IncrementalCompilation.INCREMENTAL_COMPILATION_JS_PROPERTY, "true")
-      System.setProperty("kotlin.jps.dumb.mode", "true")
-
       // TMH assertions
       System.setProperty(ThreadingModelInstrumenter.INSTRUMENT_ANNOTATIONS_PROPERTY, "true")
       System.setProperty(ThreadingModelInstrumenter.GENERATE_LINE_NUMBERS_PROPERTY, "true")

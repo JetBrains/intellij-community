@@ -93,8 +93,15 @@ public class BuildContextImpl implements BuildContext {
     options.add("-module-name");
     options.add(CLFlags.KOTLIN_MODULE_NAME.getMandatoryScalarValue(flags));
 
-    options.add("-no-stdlib");
-    options.add("-no-reflect");
+    if (KotlinCompilerConfig.ENABLE_INCREMENTAL_COMPILATION) {
+      options.add("-Xenable-incremental-compilation");
+    }
+    if (!KotlinCompilerConfig.INCLUDE_STDLIB) {
+      options.add("-no-stdlib");
+    }
+    if (!KotlinCompilerConfig.INCLUDE_REFLECTION) {
+      options.add("-no-reflect");
+    }
 
     String apiVersion = CLFlags.API_VERSION.getOptionalScalarValue(flags);
     if (apiVersion != null) {
