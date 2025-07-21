@@ -420,7 +420,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testOpenBinary() {
-    doTest("BufferedReader",
+    doTest("BufferedReader[_BufferedReaderStream]",
            "expr = open('foo', 'rb')\n");
   }
 
@@ -441,7 +441,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testIoOpenBinary() {
-    doTest("BufferedReader",
+    doTest("BufferedReader[_BufferedReaderStream]",
            """
              import io
              expr = io.open('foo', 'rb')
