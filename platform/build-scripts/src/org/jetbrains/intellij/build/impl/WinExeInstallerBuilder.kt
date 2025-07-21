@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.trace.Span
@@ -27,7 +26,6 @@ import kotlin.io.path.isRegularFile
 import kotlin.io.path.setLastModifiedTime
 import kotlin.time.Duration.Companion.hours
 
-@Suppress("SpellCheckingInspection")
 internal suspend fun buildNsisInstaller(
   winDistPath: Path,
   additionalDirectoryToInclude: Path,
@@ -87,6 +85,7 @@ internal suspend fun buildNsisInstaller(
     spanBuilder("run NSIS tool to build .exe installer for Windows").use {
       val timeout = 2.hours
       if (OsFamily.currentOs == OsFamily.WINDOWS) {
+        @Suppress("SpellCheckingInspection")
         runProcess(
           args = listOf(
             nsisBin.toString(),
@@ -102,6 +101,7 @@ internal suspend fun buildNsisInstaller(
         )
       }
       else {
+        @Suppress("SpellCheckingInspection")
         runProcess(
           args = listOf(
             nsisBin.toString(),
@@ -180,7 +180,7 @@ private suspend fun prepareConfigurationFiles(nsiConfDir: Path, customizer: Wind
 
   Files.writeString(nsiConfDir.resolve("config.nsi"), $$"""
     !define INSTALLER_ARCH $${expectedArch}
-    !define IMAGES_LOCATION "$${FileUtilRt.toSystemDependentName(customizer.installerImagesPath!!)}"
+    !define IMAGES_LOCATION "$${Path.of(customizer.installerImagesPath!!)}"
 
     !define MANUFACTURER "$${appInfo.shortCompanyName}"
     !define MUI_PRODUCT "$${customizer.getFullNameIncludingEdition(appInfo)}"
@@ -209,9 +209,9 @@ private suspend fun prepareConfigurationFiles(nsiConfDir: Path, customizer: Wind
 private fun amendVersionNumber(base: String): String = base + ".0".repeat(3 - base.count { it == '.' })
 
 private suspend fun prepareSignTool(nsiConfDir: Path, context: BuildContext, uninstallerCopy: Path): Path {
-  val toolFile = context.proprietaryBuildTools.signTool
-                   .commandLineClient(context, OsFamily.currentOs, JvmArchitecture.currentJvmArch)
-                 ?: error("No command line sign tool is configured")
+  val toolFile =
+    context.proprietaryBuildTools.signTool.commandLineClient(context, OsFamily.currentOs, JvmArchitecture.currentJvmArch)
+    ?: error("No command line sign tool is configured")
   val scriptFile = Files.writeString(nsiConfDir.resolve("sign-tool.cmd"), when (OsFamily.currentOs) {
     // moving the file back and forth is required for NSIS to fail if signing didn't happen
     OsFamily.WINDOWS -> """
