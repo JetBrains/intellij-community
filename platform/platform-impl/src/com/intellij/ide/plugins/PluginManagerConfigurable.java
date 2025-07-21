@@ -1897,29 +1897,11 @@ public final class PluginManagerConfigurable
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      Set<PluginUiModel> models = new HashSet<>();
-      PluginsGroup group = myPluginModelFacade.getModel().getDownloadedGroup();
-
-      if (group == null || group.ui == null) {
-        ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-
-        for (PluginUiModel descriptor : UiPluginManager.getInstance().getPlugins()) {
-          if (!appInfo.isEssentialPlugin(descriptor.getPluginId()) &&
-              !descriptor.isBundled() && descriptor.isEnabled() != myEnable) {
-            models.add(descriptor);
-          }
-        }
-      }
-      else {
-        for (ListPluginComponent component : group.ui.plugins) {
-          PluginUiModel plugin = component.getPluginModel();
-          if (myPluginModelFacade.isEnabled(plugin) != myEnable) {
-            models.add(plugin);
-          }
-        }
-      }
-
-      setState(myPluginModelFacade, models, myEnable);
+      PluginModelAsyncOperationsExecutor.INSTANCE.switchPlugins(myCoroutineScope, myPluginModelFacade, myEnable, models -> {
+        //noinspection unchecked
+        setState(myPluginModelFacade, (List<PluginUiModel>)models, myEnable);
+        return null;
+      });
     }
   }
 

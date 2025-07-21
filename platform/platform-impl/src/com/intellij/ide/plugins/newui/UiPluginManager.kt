@@ -14,7 +14,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -33,7 +32,7 @@ import javax.swing.JComponent
 @Service
 @ApiStatus.Internal
 class UiPluginManager {
-  fun getPlugins(): List<PluginUiModel> {
+  suspend fun getPlugins(): List<PluginUiModel> {
     return getController().getPlugins()
   }
 

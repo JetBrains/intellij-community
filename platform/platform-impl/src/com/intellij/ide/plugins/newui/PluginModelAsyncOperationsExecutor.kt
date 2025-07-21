@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
@@ -107,6 +108,32 @@ object PluginModelAsyncOperationsExecutor {
       for (detailPanel in detailPanels) {
         detailPanel.updateAll()
       }
+    }
+  }
+
+  fun switchPlugins(coroutineScope: CoroutineScope, pluginModelFacade: PluginModelFacade, enable: Boolean, callback: (List<PluginUiModel>) -> Unit) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      val models = mutableListOf<PluginUiModel>()
+      val group = pluginModelFacade.getModel().downloadedGroup
+      if (group == null || group.ui == null) {
+        val appInfo = ApplicationInfoEx.getInstanceEx()
+
+        val plugins = withContext(Dispatchers.IO) { UiPluginManager.getInstance().getPlugins() }
+        for (descriptor in plugins) {
+          if (!appInfo.isEssentialPlugin(descriptor.pluginId) && !descriptor.isBundled && descriptor.isEnabled != enable) {
+            models.add(descriptor)
+          }
+        }
+      }
+      else {
+        for (component in group.ui.plugins) {
+          val plugin: PluginUiModel = component.pluginModel
+          if (pluginModelFacade.isEnabled(plugin) != enable) {
+            models.add(plugin)
+          }
+        }
+      }
+      callback(models)
     }
   }
 }

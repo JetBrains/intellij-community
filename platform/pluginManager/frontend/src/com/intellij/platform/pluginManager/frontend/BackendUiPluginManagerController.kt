@@ -47,8 +47,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
 
   override fun getTarget(): PluginSource = PluginSource.REMOTE
 
-  override fun getPlugins(): List<PluginUiModel> {
-    return awaitForResult { PluginManagerApi.getInstance().getPlugins().withSource() }
+  override suspend fun getPlugins(): List<PluginUiModel> {
+    return PluginManagerApi.getInstance().getPlugins().withSource()
   }
 
   override fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel> {

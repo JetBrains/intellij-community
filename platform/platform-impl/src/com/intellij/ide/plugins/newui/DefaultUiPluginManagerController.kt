@@ -49,7 +49,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   override fun getTarget(): PluginSource = PluginSource.LOCAL
 
-  override fun getPlugins(): List<PluginUiModel> {
+  override suspend fun getPlugins(): List<PluginUiModel> {
     return PluginManagerCore.plugins.map { PluginUiModelAdapter(it).withSource() }
   }
 
@@ -765,7 +765,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
         LOG.warn("pending dynamic plugins probably won't finish their installation: " + session.dynamicPluginsToInstall + " " + session.dynamicPluginsToUninstall)
       }
     }
-    result.errors = getPlugins().map { it.pluginId }.associateWith { getErrors(session, it) }
+    result.errors = PluginManagerCore.plugins.map { it.pluginId }.associateWith { getErrors(session, it) }
     installCallback(result)
   }
 

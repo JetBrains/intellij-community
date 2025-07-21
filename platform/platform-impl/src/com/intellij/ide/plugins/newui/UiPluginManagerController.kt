@@ -28,7 +28,7 @@ import javax.swing.JComponent
 interface UiPluginManagerController {
   fun isEnabled(): Boolean
   fun getTarget(): PluginSource
-  fun getPlugins(): List<PluginUiModel>
+  suspend fun getPlugins(): List<PluginUiModel>
   fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel>
   fun initSession(sessionId: String): InitSessionResult
   fun getInstalledPlugins(): List<PluginUiModel>
