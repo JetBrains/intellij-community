@@ -46,13 +46,6 @@ class WslIjentDeployingStrategy(
     return computeDetached { commandLine.createProcess() }
   }
 
-  override suspend fun getTargetDescriptor(): EelDescriptor {
-    val root = project?.basePath?.let {
-      MultiRoutingFileSystem.sanitizeRoot(it)
-    }?.let(WslEelProvider::parsePath)?.first ?: distribution.getUNCRootPath().toString()
-    return WslEelDescriptor(distribution, root)
-  }
-
   override suspend fun getConnectionStrategy(): IjentConnectionStrategy {
     return object : IjentConnectionStrategy {
       override suspend fun canUseVirtualSockets(): Boolean {

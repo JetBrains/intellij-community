@@ -36,6 +36,7 @@ import java.nio.file.*
 import java.nio.file.FileSystems.getDefault
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.Path
+import kotlin.io.path.pathString
 
 private val WSLDistribution.roots: Set<String>
   get() {
@@ -47,8 +48,8 @@ private val WSLDistribution.roots: Set<String>
     return localRoots
   }
 
-private suspend fun WSLDistribution.getIjent(): IjentPosixApi {
-  return WslIjentManager.instanceAsync().getIjentApi(this, null, false)
+private suspend fun WSLDistribution.getIjent(descriptor: EelDescriptor): IjentPosixApi {
+  return WslIjentManager.instanceAsync().getIjentApi(descriptor, this, null, false)
 }
 
 @ApiStatus.Internal
@@ -230,7 +231,10 @@ class WslEelProvider : EelProvider {
         false
       }
     }
-    WslIjentManager.instanceAsync().getIjentApi(wslPath.distribution, project, false)
+
+    val descriptor = WslEelDescriptor(wslPath.distribution, wslPath.wslRoot)
+
+    WslIjentManager.instanceAsync().getIjentApi(descriptor, wslPath.distribution, project, false)
 
     (getDefault().provider() as MultiRoutingFileSystemProvider).theOnlyFileSystem.getBackend(wslPath.wslRoot + "\\")
   }
@@ -268,8 +272,12 @@ class WslEelMachine(val distribution: WSLDistribution) : EelMachine {
   override val osFamily: EelOsFamily = EelOsFamily.Posix
   override val name: @NonNls String = "WSL: ${distribution.presentableName}"
 
-  override suspend fun toEelApi(): EelApi {
-    return distribution.getIjent()
+  override suspend fun toEelApi(descriptor: EelDescriptor): EelApi {
+    check(descriptor is WslEelDescriptor && descriptor.machine == this) {
+      "Wrong descriptor: $descriptor for machine: $this"
+    }
+
+    return distribution.getIjent(descriptor)
   }
 
   override fun equals(other: Any?): Boolean {
@@ -292,6 +300,8 @@ class WslEelMachine(val distribution: WSLDistribution) : EelMachine {
 }
 
 class WslEelDescriptor(val distribution: WSLDistribution, internal val fsRoot: String) : EelPathBoundDescriptor {
+  constructor(distribution: WSLDistribution): this(distribution, distribution.getUNCRootPath().pathString)
+
   override val rootPath: Path get() = fsRoot.let(::Path)
   override val machine: EelMachine = WslEelMachine(distribution)
 

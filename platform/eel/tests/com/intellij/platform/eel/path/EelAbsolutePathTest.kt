@@ -74,7 +74,7 @@ class EelAbsolutePathTest {
     override val machine: EelMachine = object : EelMachine {
       override val name: String = "mock"
       override val osFamily: EelOsFamily = this@DummyEelDescriptor.osFamily
-      override suspend fun toEelApi(): EelApi {
+      override suspend fun toEelApi(descriptor: EelDescriptor): EelApi {
         return Assertions.fail<Nothing>()
       }
     }

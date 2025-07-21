@@ -18,8 +18,8 @@ class IjentSessionRegistry(private val coroutineScope: CoroutineScope) {
   private val counter = AtomicLong()
 
   private class IjentBundle(
-    val factory: suspend (ijentId: IjentId) -> IjentApi,
-    val deferred: Deferred<IjentApi>?,
+    val factory: suspend (ijentId: IjentId) -> IjentSession<IjentPosixApi>,
+    val deferred: Deferred<IjentSession<IjentPosixApi>>?,
     val oneOff: Boolean,
   )
 
@@ -33,7 +33,7 @@ class IjentSessionRegistry(private val coroutineScope: CoroutineScope) {
    */
   fun register(
     ijentName: String,
-    launcher: suspend (ijentId: IjentId) -> IjentApi,
+    launcher: suspend (ijentId: IjentId) -> IjentSession<IjentPosixApi>,
   ): IjentId {
     val ijentId = IjentId("ijent-${counter.getAndIncrement()}-${ijentName.replace(Regex("[^A-Za-z0-9-]"), "-")}")
     ijents[ijentId] = IjentBundle(launcher, null, oneOff = false)
@@ -65,7 +65,7 @@ class IjentSessionRegistry(private val coroutineScope: CoroutineScope) {
    * An instance of [IjentApi] that has ever thrown [IjentUnavailableException] will never be returned by this function again.
    */
   @OptIn(ExperimentalCoroutinesApi::class)
-  suspend fun get(ijentId: IjentId): IjentApi {
+  suspend fun get(ijentId: IjentId): IjentSession<IjentPosixApi> {
     val bundle = ijents.compute(ijentId, @Suppress("NAME_SHADOWING") { ijentId, oldBundle ->
       require(oldBundle != null) {
         "Not registered: $ijentId"
@@ -73,7 +73,7 @@ class IjentSessionRegistry(private val coroutineScope: CoroutineScope) {
 
       val oldDeferred = oldBundle.deferred
 
-      val reusedOldDeferred: Deferred<IjentApi>? = when {
+      val reusedOldDeferred: Deferred<IjentSession<IjentPosixApi>>? = when {
         oldDeferred == null -> null
         oldBundle.oneOff -> oldDeferred
         !oldDeferred.isCompleted -> oldDeferred

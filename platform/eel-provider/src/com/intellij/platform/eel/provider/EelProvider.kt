@@ -90,7 +90,7 @@ val localEel: LocalEelApi by lazy {
 @ApiStatus.Internal
 fun EelDescriptor.upgradeBlocking(): EelApi = toEelApiBlocking()
 
-fun EelMachine.toEelApiBlocking(): EelApi = runBlockingMaybeCancellable { toEelApi() }
+fun EelMachine.toEelApiBlocking(descriptor: EelDescriptor): EelApi = runBlockingMaybeCancellable { toEelApi(descriptor) }
 
 @ApiStatus.Experimental
 fun EelDescriptor.toEelApiBlocking(): EelApi {
@@ -113,7 +113,10 @@ data object LocalEelMachine : EelMachine {
     }
   }
 
-  override suspend fun toEelApi(): EelApi = localEel
+  override suspend fun toEelApi(descriptor: EelDescriptor): EelApi {
+    check(descriptor === LocalEelDescriptor) { "Wrong descriptor: $descriptor for machine: $this" }
+    return localEel
+  }
 }
 
 @ApiStatus.Experimental

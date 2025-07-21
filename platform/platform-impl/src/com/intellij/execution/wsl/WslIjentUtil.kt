@@ -18,6 +18,7 @@ import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.spawnProcess
+import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.suspendingLazy
@@ -37,7 +38,7 @@ fun fetchLoginShellEnv(
   rootUser: Boolean,
 ): Map<String, String> =
   runBlockingCancellable {
-    wslIjentManager.getIjentApi(wslDistribution, project, rootUser).exec.fetchLoginShellEnvVariables()
+    wslIjentManager.getIjentApi(null, wslDistribution, project, rootUser).exec.fetchLoginShellEnvVariables()
   }
 
 /**
@@ -65,7 +66,7 @@ fun runProcessBlocking(
   options: WSLCommandLineOptions,
   ptyOptions: LocalPtyOptions?,
 ): Process = runBlockingCancellable {
-  val ijentApi = wslIjentManager.getIjentApi(wslDistribution, project, options.isSudo)
+  val ijentApi: IjentPosixApi = wslIjentManager.getIjentApi(null, wslDistribution, project, options.isSudo)
 
   val args = processBuilder.command().toMutableList()
 

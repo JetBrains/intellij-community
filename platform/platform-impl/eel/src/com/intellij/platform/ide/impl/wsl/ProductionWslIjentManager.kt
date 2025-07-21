@@ -7,8 +7,11 @@ import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ijent.IjentId
 import com.intellij.platform.ijent.IjentPosixApi
+import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.IjentSessionRegistry
 import com.intellij.platform.ijent.spi.IjentThreadPool
 import com.intellij.platform.util.coroutines.childScope
@@ -37,21 +40,22 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
     )
   }
 
-  override suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi {
+  override suspend fun getIjentApi(descriptor: EelDescriptor?, wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi {
+    val descriptor = (descriptor ?: project?.getEelDescriptor() ?: WslEelDescriptor(wslDistribution)) as WslEelDescriptor
+
     val ijentSessionRegistry = IjentSessionRegistry.instanceAsync()
     val ijentId = myCache.computeIfAbsent("""wsl:${wslDistribution.id}${if (rootUser) ":root" else ""}""") { ijentName ->
       val ijentId = ijentSessionRegistry.register(ijentName) { ijentId ->
-        val ijent = deployAndLaunchIjent(
+        val ijentSession = wslDistribution.createIjentSession(
           scope,
           project,
           ijentId.toString(),
-          wslDistribution,
           wslCommandLineOptionsModifier = { it.setSudo(rootUser) },
         )
         scope.coroutineContext.job.invokeOnCompletion {
-          ijent.close()
+          ijentSession.close()
         }
-        ijent
+        ijentSession
       }
       scope.coroutineContext.job.invokeOnCompletion {
         ijentSessionRegistry.unregister(ijentId)
@@ -59,7 +63,7 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
       }
       ijentId
     }
-    return ijentSessionRegistry.get(ijentId) as IjentPosixApi
+    return ijentSessionRegistry.get(ijentId).getIjentInstance(descriptor)
   }
 
   init {

@@ -52,7 +52,7 @@ interface EelMachine {
    * Converts this machine into a [EelApi] — starts or reuses a running environment.
    */
   @ApiStatus.Experimental
-  suspend fun toEelApi(): EelApi
+  suspend fun toEelApi(descriptor: EelDescriptor): EelApi
 }
 
 /**
@@ -136,7 +136,7 @@ interface EelDescriptor {
 
   @ApiStatus.Experimental
   suspend fun toEelApi(): EelApi {
-    return machine.toEelApi()
+    return machine.toEelApi(this)
   }
 
   /**

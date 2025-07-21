@@ -13,7 +13,7 @@ internal class EelTestDescriptor(override val rootPath: Path, val id: String, ov
   override val machine: EelMachine = object : EelMachine {
     override val name: @NonNls String = "mock $id"
     override val osFamily: EelOsFamily get() = this@EelTestDescriptor.osFamily
-    override suspend fun toEelApi(): EelApi = apiProvider()
+    override suspend fun toEelApi(descriptor: EelDescriptor): EelApi = apiProvider()
   }
 
   override suspend fun toEelApi(): EelApi {
