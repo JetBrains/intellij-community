@@ -64,7 +64,7 @@ internal class VcsLogStatusBarProgress(project: Project, logProviders: Map<Virtu
   }
 
   inner class MyProgressListener : VcsLogProgress.ProgressListener {
-    override fun progressStarted(keys: MutableCollection<out VcsLogProgress.ProgressKey>) {
+    override fun progressStarted(keys: Collection<VcsLogProgress.ProgressKey>) {
       if (disposableFlag.isDisposed) return
       if (keys.contains(VcsLogPersistentIndex.INDEXING)) {
         start()
@@ -76,7 +76,7 @@ internal class VcsLogStatusBarProgress(project: Project, logProviders: Map<Virtu
       stop()
     }
 
-    override fun progressChanged(keys: MutableCollection<out VcsLogProgress.ProgressKey>) {
+    override fun progressChanged(keys: Collection<VcsLogProgress.ProgressKey>) {
       if (disposableFlag.isDisposed) return
       if (keys.contains(VcsLogPersistentIndex.INDEXING)) {
         start()

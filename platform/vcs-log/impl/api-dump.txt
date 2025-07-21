@@ -218,17 +218,19 @@ f:com.intellij.vcs.log.data.VcsLogData
 - refresh(java.util.Collection):V
 - refresh(java.util.Collection,Z):V
 - removeDataPackChangeListener(com.intellij.vcs.log.data.DataPackChangeListener):V
-c:com.intellij.vcs.log.data.VcsLogProgress
+f:com.intellij.vcs.log.data.VcsLogProgress
 - com.intellij.openapi.Disposable
+- sf:Companion:com.intellij.vcs.log.data.VcsLogProgress$Companion
 - <init>(com.intellij.openapi.Disposable):V
-- addProgressIndicatorListener(com.intellij.vcs.log.data.VcsLogProgress$ProgressListener,com.intellij.openapi.Disposable):V
-- createProgressIndicator(com.intellij.vcs.log.data.VcsLogProgress$ProgressKey):com.intellij.openapi.progress.ProgressIndicator
-- createProgressIndicator(Z,com.intellij.vcs.log.data.VcsLogProgress$ProgressKey):com.intellij.openapi.progress.ProgressIndicator
+- f:addProgressIndicatorListener(com.intellij.vcs.log.data.VcsLogProgress$ProgressListener,com.intellij.openapi.Disposable):V
+- f:createProgressIndicator(com.intellij.vcs.log.data.VcsLogProgress$ProgressKey):com.intellij.openapi.progress.ProgressIndicator
+- f:createProgressIndicator(Z,com.intellij.vcs.log.data.VcsLogProgress$ProgressKey):com.intellij.openapi.progress.ProgressIndicator
 - dispose():V
-- getRunningKeys():java.util.Set
-- isRunning():Z
-- removeProgressIndicatorListener(com.intellij.vcs.log.data.VcsLogProgress$ProgressListener):V
-- s:updateCurrentKey(com.intellij.vcs.log.data.VcsLogProgress$ProgressKey):V
+- f:isRunning():Z
+- f:removeProgressIndicatorListener(com.intellij.vcs.log.data.VcsLogProgress$ProgressListener):V
+- sf:updateCurrentKey(com.intellij.vcs.log.data.VcsLogProgress$ProgressKey):V
+f:com.intellij.vcs.log.data.VcsLogProgress$Companion
+- f:updateCurrentKey(com.intellij.vcs.log.data.VcsLogProgress$ProgressKey):V
 c:com.intellij.vcs.log.data.VcsLogProgress$ProgressKey
 - <init>(java.lang.String):V
 - equals(java.lang.Object):Z

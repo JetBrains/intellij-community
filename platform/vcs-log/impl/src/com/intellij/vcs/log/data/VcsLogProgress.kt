@@ -1,219 +1,196 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.data;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.log.data
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.util.CheckedDisposable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
+import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.NonNls
+import java.util.*
 
-import java.util.*;
-import java.util.function.Consumer;
+class VcsLogProgress(parent: Disposable) : Disposable {
+  private val disposableFlag = Disposer.newCheckedDisposable()
+  private val lock = Any()
+  private val listeners = ArrayList<ProgressListener>()
+  private val tasksWithVisibleProgress = HashSet<VcsLogProgressIndicator>()
+  private val tasksWithSilentProgress = HashSet<ProgressIndicator>()
+  private var isDisposed = false
 
-public class VcsLogProgress implements Disposable {
-  private final @NotNull CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
-  private final @NotNull Object myLock = new Object();
-  private final @NotNull List<ProgressListener> myListeners = new ArrayList<>();
-  private final @NotNull Set<VcsLogProgressIndicator> myTasksWithVisibleProgress = new HashSet<>();
-  private final @NotNull Set<ProgressIndicator> myTasksWithSilentProgress = new HashSet<>();
-  private boolean myDisposed = false;
+  val isRunning: Boolean
+    get() = synchronized(lock) {
+      !tasksWithVisibleProgress.isEmpty()
+    }
 
-  public VcsLogProgress(@NotNull Disposable parent) {
-    Disposer.register(parent, this);
-    Disposer.register(this, myDisposableFlag);
+  private val runningKeys: Set<ProgressKey>
+    get() = synchronized(lock) {
+      tasksWithVisibleProgress.mapTo(mutableSetOf()) { it.key }
+    }
+
+  init {
+    Disposer.register(parent, this)
+    Disposer.register(this, disposableFlag)
   }
 
-  public @NotNull ProgressIndicator createProgressIndicator(@NotNull ProgressKey key) {
-    return createProgressIndicator(true, key);
+  fun createProgressIndicator(key: ProgressKey): ProgressIndicator {
+    return createProgressIndicator(true, key)
   }
 
-  public @NotNull ProgressIndicator createProgressIndicator(boolean visible, @NotNull ProgressKey key) {
+  fun createProgressIndicator(visible: Boolean, key: ProgressKey): ProgressIndicator {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      return new EmptyProgressIndicator();
+      return EmptyProgressIndicator()
     }
-    return new VcsLogProgressIndicator(visible, key);
+    return VcsLogProgressIndicator(visible, key)
   }
 
-  public void addProgressIndicatorListener(@NotNull ProgressListener listener, @Nullable Disposable parentDisposable) {
-    synchronized (myLock) {
-      myListeners.add(listener);
+  fun addProgressIndicatorListener(listener: ProgressListener, parentDisposable: Disposable?) {
+    synchronized(lock) {
+      listeners.add(listener)
       if (parentDisposable != null) {
-        Disposer.register(parentDisposable, () -> removeProgressIndicatorListener(listener));
+        Disposer.register(parentDisposable) { removeProgressIndicatorListener(listener) }
       }
-      if (isRunning()) {
-        Set<ProgressKey> keys = getRunningKeys();
-        ApplicationManager.getApplication().invokeLater(() -> listener.progressStarted(keys));
+      if (isRunning) {
+        val keys = runningKeys
+        ApplicationManager.getApplication().invokeLater { listener.progressStarted(keys) }
       }
     }
   }
 
-  public void removeProgressIndicatorListener(@NotNull ProgressListener listener) {
-    synchronized (myLock) {
-      myListeners.remove(listener);
+  fun removeProgressIndicatorListener(listener: ProgressListener) {
+    synchronized(lock) {
+      listeners.remove(listener)
     }
   }
 
-  public boolean isRunning() {
-    synchronized (myLock) {
-      return !myTasksWithVisibleProgress.isEmpty();
-    }
-  }
-
-  public @NotNull Set<ProgressKey> getRunningKeys() {
-    synchronized (myLock) {
-      return ContainerUtil.map2Set(myTasksWithVisibleProgress, VcsLogProgressIndicator::getKey);
-    }
-  }
-
-  private void started(@NotNull VcsLogProgressIndicator indicator) {
-    synchronized (myLock) {
-      if (myDisposed) {
-        indicator.cancel();
-        return;
+  private fun started(indicator: VcsLogProgressIndicator) {
+    synchronized(lock) {
+      if (isDisposed) {
+        indicator.cancel()
+        return
       }
-      if (indicator.isVisible()) {
-        Set<ProgressKey> oldKeys = getRunningKeys();
-        myTasksWithVisibleProgress.add(indicator);
-        if (myTasksWithVisibleProgress.size() == 1) {
-          ProgressKey key = indicator.getKey();
-          fireNotification(listener -> listener.progressStarted(Collections.singleton(key)));
+      if (indicator.isVisible) {
+        val oldKeys = runningKeys
+        tasksWithVisibleProgress.add(indicator)
+        if (tasksWithVisibleProgress.size == 1) {
+          val key = indicator.key
+          fireNotification { it.progressStarted(setOf(key)) }
         }
         else {
-          keysUpdated(oldKeys);
+          keysUpdated(oldKeys)
         }
       }
       else {
-        myTasksWithSilentProgress.add(indicator);
+        tasksWithSilentProgress.add(indicator)
       }
     }
   }
 
-  private void stopped(@NotNull VcsLogProgressIndicator indicator) {
-    synchronized (myLock) {
-      if (indicator.isVisible()) {
-        myTasksWithVisibleProgress.remove(indicator);
-        if (myTasksWithVisibleProgress.isEmpty()) fireNotification(ProgressListener::progressStopped);
+  private fun stopped(indicator: VcsLogProgressIndicator) {
+    synchronized(lock) {
+      if (indicator.isVisible) {
+        tasksWithVisibleProgress.remove(indicator)
+        if (tasksWithVisibleProgress.isEmpty()) {
+          fireNotification { it.progressStopped() }
+        }
       }
       else {
-        myTasksWithSilentProgress.remove(indicator);
+        tasksWithSilentProgress.remove(indicator)
       }
     }
   }
 
-  private void keysUpdated(@NotNull Set<ProgressKey> oldKeys) {
-    synchronized (myLock) {
-      Set<ProgressKey> newKeys = getRunningKeys();
-      if (!oldKeys.equals(newKeys)) {
-        fireNotification(listener -> listener.progressChanged(newKeys));
+  private fun keysUpdated(oldKeys: Set<ProgressKey>) {
+    synchronized(lock) {
+      val newKeys = runningKeys
+      if (oldKeys != newKeys) {
+        fireNotification { it.progressChanged(newKeys) }
       }
     }
   }
 
-  private void fireNotification(@NotNull Consumer<? super ProgressListener> action) {
-    synchronized (myLock) {
-      List<ProgressListener> list = new ArrayList<>(myListeners);
-      ApplicationManager.getApplication().invokeLater(() -> list.forEach(action), o -> myDisposableFlag.isDisposed());
+  private fun fireNotification(action: (ProgressListener) -> Unit) {
+    synchronized(lock) {
+      val list = listeners.toList()
+      ApplicationManager.getApplication().invokeLater({ list.forEach(action) }, { disposableFlag.isDisposed() })
     }
   }
 
-  @Override
-  public void dispose() {
-    synchronized (myLock) {
-      myDisposed = true;
-      for (ProgressIndicator indicator : myTasksWithVisibleProgress) {
-        indicator.cancel();
+  override fun dispose() {
+    synchronized(lock) {
+      isDisposed = true
+      for (indicator in tasksWithVisibleProgress) {
+        indicator.cancel()
       }
-      for (ProgressIndicator indicator : myTasksWithSilentProgress) {
-        indicator.cancel();
-      }
-    }
-  }
-
-  private final class VcsLogProgressIndicator extends ProgressIndicatorBase {
-    private @NotNull ProgressKey myKey;
-    private final boolean myVisible;
-
-    private VcsLogProgressIndicator(boolean visible, @NotNull ProgressKey key) {
-      myKey = key;
-      myVisible = visible;
-      if (!visible) dontStartActivity();
-    }
-
-    @Override
-    public void start() {
-      synchronized (getLock()) {
-        super.start();
-        started(this);
-      }
-    }
-
-    @Override
-    public void stop() {
-      synchronized (getLock()) {
-        super.stop();
-        stopped(this);
-      }
-    }
-
-    public void updateKey(@NotNull ProgressKey key) {
-      synchronized (myLock) {
-        Set<ProgressKey> oldKeys = getRunningKeys();
-        myKey = key;
-        keysUpdated(oldKeys);
-      }
-    }
-
-    public boolean isVisible() {
-      return myVisible;
-    }
-
-    public @NotNull ProgressKey getKey() {
-      synchronized (myLock) {
-        return myKey;
+      for (indicator in tasksWithSilentProgress) {
+        indicator.cancel()
       }
     }
   }
 
-  public interface ProgressListener {
-    void progressStarted(@NotNull Collection<? extends ProgressKey> keys);
+  private inner class VcsLogProgressIndicator(val isVisible: Boolean, key: ProgressKey) : ProgressIndicatorBase() {
+    var key: ProgressKey = key
+      get() {
+        synchronized(this@VcsLogProgress.lock) {
+          return field
+        }
+      }
+      set(value) {
+        synchronized(this@VcsLogProgress.lock) {
+          val oldKeys = runningKeys
+          field = value
+          keysUpdated(oldKeys)
+        }
+      }
 
-    void progressChanged(@NotNull Collection<? extends ProgressKey> keys);
+    init {
+      if (!isVisible) dontStartActivity()
+    }
 
-    void progressStopped();
+    override fun start() {
+      synchronized(this.lock) {
+        super.start()
+        started(this)
+      }
+    }
+
+    override fun stop() {
+      synchronized(this.lock) {
+        super.stop()
+        stopped(this)
+      }
+    }
   }
 
-  public static class ProgressKey {
-    private final @NotNull String myName;
+  interface ProgressListener {
+    fun progressStarted(keys: Collection<ProgressKey>)
 
-    public ProgressKey(@NonNls @NotNull String name) {
-      myName = name;
+    fun progressChanged(keys: Collection<ProgressKey>)
+
+    fun progressStopped()
+  }
+
+  open class ProgressKey(private val name: @NonNls String) {
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (other == null || javaClass != other.javaClass) return false
+      val key = other as ProgressKey
+      return name == key.name
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      ProgressKey key = (ProgressKey)o;
-      return Objects.equals(myName, key.myName);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myName);
+    override fun hashCode(): Int {
+      return Objects.hash(name)
     }
   }
 
-  public static void updateCurrentKey(@NotNull ProgressKey key) {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator instanceof VcsLogProgressIndicator) {
-      ((VcsLogProgressIndicator)indicator).updateKey(key);
+  companion object {
+    @JvmStatic
+    fun updateCurrentKey(key: ProgressKey) {
+      val indicator = ProgressManager.getInstance().getProgressIndicator()
+      if (indicator is VcsLogProgressIndicator) {
+        indicator.key = key
+      }
     }
   }
 }
