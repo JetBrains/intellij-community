@@ -52,6 +52,11 @@ class SearchEverywhereMlSettingsService : SerializablePersistentStateComponent<S
     setRegistryListeners()
   }
 
+  // region Service Properties
+  // Each property and corresponding method is used by the AdvancedSettingsBean.
+  // Property name is specified in the plugin.xml, the corresponding methods that
+  // control visibility and the enabled/disabled state are accessed by reflection.
+
   @Suppress("unused")
   var enableActionsTabMlRanking: Boolean
     set(value) {
@@ -103,6 +108,7 @@ class SearchEverywhereMlSettingsService : SerializablePersistentStateComponent<S
 
   @Suppress("unused")
   fun isEnableAllTabMlRankingVisible(): Boolean = isSettingVisibleForTab(SearchEverywhereTab.All)
+  // endregion
 
   /**
    * Updates the ranking state for the specified tab based on user input.
