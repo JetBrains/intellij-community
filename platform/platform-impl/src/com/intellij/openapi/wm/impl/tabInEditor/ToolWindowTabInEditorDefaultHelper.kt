@@ -30,7 +30,7 @@ private val ORIGINAL_PREFERRED_FOCUSABLE_KEY: Key<JComponent?> = Key.create<JCom
 
 internal class ToolWindowTabInEditorDefaultHelper : ToolWindowTabInEditorHelper {
   override fun updatePresentation(e: AnActionEvent, toolWindow: ToolWindow, tabEditorFile: ToolWindowTabFile?) {
-    val content = ToolWindowContextMenuActionBase.getContextContent(e, toolWindow)
+    val content = ToolWindowContextMenuActionBase.getContextContent(e)
     val enabled = content != null &&
                   toolWindow.id != ToolWindowId.STRUCTURE_VIEW &&
                   toolWindow.id != ToolWindowId.PROBLEMS_VIEW ||
@@ -64,9 +64,9 @@ internal class ToolWindowTabInEditorDefaultHelper : ToolWindowTabInEditorHelper 
     }
     else {
       val toolWindow = e.getData(PlatformDataKeys.TOOL_WINDOW)
-      val content = toolWindow?.let { ToolWindowContextMenuActionBase.getContextContent(e, it) }
+      val content = ToolWindowContextMenuActionBase.getContextContent(e)
 
-      content ?: return
+      if (toolWindow == null || content == null) return
 
       val contentComponent = content.component
       if (contentComponent is Placeholder) {
