@@ -25,7 +25,7 @@ internal class FrontendRecentFilesMutableState(project: Project) : RecentFilesMu
 
   override suspend fun convertVirtualFileIdToModel(virtualFileId: VirtualFileId): SwitcherVirtualFile? {
     val localFile = virtualFileId.virtualFile() ?: return null
-    return convertVirtualFileToViewModel(localFile, project)
+    return SwitcherVirtualFile(localFile, "deleted file", AllIcons.FileTypes.Unknown)
   }
 
   override fun convertModelToVirtualFile(model: SwitcherVirtualFile): VirtualFile? {
