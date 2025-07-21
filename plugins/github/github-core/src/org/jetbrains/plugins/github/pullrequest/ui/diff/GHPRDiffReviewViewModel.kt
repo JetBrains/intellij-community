@@ -9,6 +9,7 @@ import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
 import com.intellij.diff.util.Range
+import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.vcsUtil.VcsFileUtil
@@ -27,11 +28,12 @@ import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 import org.jetbrains.plugins.github.pullrequest.ui.comment.lineLocation
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.ranges
+import kotlin.collections.emptyList
 
 interface GHPRDiffReviewViewModel {
   val commentableRanges: List<Range>
   val canComment: Boolean
-
+  val changedRanges: List<Range>
   val threads: StateFlow<Collection<GHPRReviewThreadDiffViewModel>>
   val newComments: StateFlow<Collection<GHPRNewCommentDiffViewModel>>
   val aiComments: StateFlow<Collection<GHPRAICommentViewModel>>
@@ -58,6 +60,7 @@ internal class GHPRDiffReviewViewModelImpl(
 
   override val commentableRanges: List<Range> = diffData.patch.ranges
   override val canComment: Boolean = threadsVms.canComment
+  override val changedRanges: List<Range> = diffData.patch.hunks.flatMap { hunk -> PatchHunkUtil.getChangeOnlyRanges(hunk) }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   // Filter out only the threads relevant to the diff

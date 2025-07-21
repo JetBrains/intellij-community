@@ -35,13 +35,12 @@ import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewUnifiedPosition
+import org.jetbrains.plugins.github.pullrequest.ui.diff.util.LineRangeUtil
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPREditorMappedComponentModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewEditorGutterControlsState
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.createRenderer
 import org.jetbrains.plugins.github.util.GithubSettings
-import kotlin.math.max
-import kotlin.math.min
 
 internal class GHPRReviewDiffExtension : DiffExtension() {
   override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer, context: DiffContext, request: DiffRequest) {
@@ -117,17 +116,30 @@ private class DiffEditorModel(
       val linesWithNewComments = newComments.mapNotNullTo(mutableSetOf()) { locationToLine(it.location) }
       GHPRReviewEditorGutterControlsState(
         linesWithComments, linesWithNewComments,
-        if (diffVm.canComment) transferRanges(diffVm.commentableRanges) else emptyList()
+        if (diffVm.canComment) transferRanges(diffVm.commentableRanges, diffVm.changedRanges) else emptyList()
       )
     }.stateInNow(cs, null)
 
-  private fun transferRanges(ranges: List<Range>): List<LineRange> = ranges.mapNotNull {
-    val leftRange = getSideRange(it, Side.LEFT)
-    val rightRange = getSideRange(it, Side.RIGHT)
-    if (leftRange != null && rightRange != null) {
-      LineRange(min(leftRange.start, rightRange.start), max(leftRange.end, rightRange.end))
+  private fun transferRanges(ranges: List<Range>, changedRanges: List<Range>): List<LineRange> {
+    val leftRange = ranges.mapNotNull {
+      getSideRange(it, Side.LEFT)
     }
-    else leftRange ?: rightRange
+    val rightRange = ranges.mapNotNull {
+      getSideRange(it, Side.RIGHT)
+    }
+
+    if (leftRange.isEmpty() || rightRange.isEmpty()) {
+      return leftRange.takeIf { it.isNotEmpty() } ?: rightRange
+    }
+
+    val leftChangedRanges: List<LineRange> = changedRanges.mapNotNull {
+      getSideRange(it, Side.LEFT)
+    }
+    val rightChangedRanges: List<LineRange> = changedRanges.mapNotNull {
+      getSideRange(it, Side.RIGHT)
+    }
+
+    return LineRangeUtil.extract(leftRange, rightRange, leftChangedRanges, rightChangedRanges)
   }
 
   private fun getSideRange(range: Range, side: Side): LineRange? {
