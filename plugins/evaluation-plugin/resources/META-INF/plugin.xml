@@ -28,6 +28,7 @@
     <module name="intellij.evaluationPlugin.languages.sql"/>
     <module name="intellij.evaluationPlugin.languages.terraform"/>
     <module name="intellij.evaluationPlugin.languages.xml"/>
+    <module name="intellij.evaluationPlugin.languages.terminal"/>
     <module name="intellij.evaluationPlugin.languages.yaml"/>
     <module name="intellij.evaluationPlugin.inlineCompletion"/>
     <module name="intellij.evaluationPlugin.fullLine"/>

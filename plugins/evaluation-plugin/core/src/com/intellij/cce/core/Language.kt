@@ -30,6 +30,7 @@ enum class Language(val displayName: String, private val extensions: List<String
   JSON("JSON", listOf("json"), "JSON"),
   XML("XML", listOf("xml", "xsd", "xsl", "wsdl"), "XML"),
   MARKDOWN("Markdown", listOf("md"), "Markdown"),
+  TERMINAL("TerminalOutput", listOf("terminal_output"), "TerminalOutput"),
   ANOTHER("Another", listOf(), ""),
   UNSUPPORTED("Unsupported", listOf(), ""); // TODO: There are no unsupported languages
 
