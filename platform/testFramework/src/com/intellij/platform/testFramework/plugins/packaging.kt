@@ -182,13 +182,13 @@ private fun ContentModuleSpec.buildContentDir(dir: DirectoryContentBuilder, conf
 }
 
 private fun PluginSpec.buildClasses(dir: DirectoryContentBuilder) {
-  for (classFqn in classFiles) {
-    val url = this::class.java.classLoader.getResource(classFqn.replace('.', '/') + ".class")
+  for ((classFqn, classLoader) in classFiles) {
+    val url = (classLoader ?: this::class.java.classLoader).getResource(classFqn.replace('.', '/') + ".class")
               ?: error("$classFqn not found")
     dir.dirsFile(classFqn.replace('.', '/') + ".class", url.readBytes())
   }
-  for (pkg in packageClassFiles) {
-    for (url in this::class.java.classLoader.getResources(pkg.replace('.', '/'))) {
+  for ((pkg, classLoader) in packageClassFiles) {
+    for (url in (classLoader ?: this::class.java.classLoader).getResources(pkg.replace('.', '/'))) {
       require(url.toString().endsWith('/')) { url }
       val entries = url.readText().splitToSequence("\n").filter { !it.isBlank() }
       for (entry in entries) {

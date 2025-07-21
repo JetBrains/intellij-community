@@ -3,6 +3,7 @@ package com.intellij.platform.testFramework.plugins
 
 import com.intellij.ide.plugins.ModuleLoadingRule
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 
 private val idCounter = AtomicInteger()
@@ -90,16 +91,18 @@ fun PluginSpecBuilder.pluginAlias(id: String) {
   pluginAliases += id
 }
 
-inline fun <reified T> PluginSpecBuilder.includeClassFile(): Unit = includeClassFile(T::class.java.name)
+inline fun <reified T> PluginSpecBuilder.includeClassFile(): Unit =
+  includeClassFile(T::class.java.name, T::class.java.classLoader)
 
-fun PluginSpecBuilder.includeClassFile(classFqn: String) {
-  classFiles += classFqn
+fun PluginSpecBuilder.includeClassFile(classFqn: String, classLoader: ClassLoader? = null) {
+  classFiles += PluginSpecClassReference(classFqn, classLoader)
 }
 
-inline fun <reified T> PluginSpecBuilder.includePackageClassFiles(): Unit = includePackageClassFiles(T::class.java.packageName)
+inline fun <reified T> PluginSpecBuilder.includePackageClassFiles(): Unit =
+  includePackageClassFiles(T::class.java.packageName, T::class.java.classLoader)
 
-fun PluginSpecBuilder.includePackageClassFiles(packageFqn: String) {
-  packageClassFiles += packageFqn
+fun PluginSpecBuilder.includePackageClassFiles(packageFqn: String, classLoader: ClassLoader? = null) {
+  packageClassFiles += PluginSpecClassReference(packageFqn, classLoader)
 }
 
 fun PluginSpecBuilder.dependsIntellijModulesLang(): Unit = depends("com.intellij.modules.lang")

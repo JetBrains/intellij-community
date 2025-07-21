@@ -38,9 +38,11 @@ class PluginSpec internal constructor(
 
   val body: String?,
 
-  val classFiles: List<String>,
-  val packageClassFiles: List<String>,
+  val classFiles: List<PluginSpecClassReference>,
+  val packageClassFiles: List<PluginSpecClassReference>,
 )
+
+data class PluginSpecClassReference(val className: String, val classLoader: ClassLoader? = null)
 
 class PluginSpecBuilder(
   var id: String? = null,
@@ -73,8 +75,8 @@ class PluginSpecBuilder(
 
   @Language("XML") var body: String? = null,
 
-  internal var classFiles: List<String> = emptyList(),
-  internal var packageClassFiles: List<String> = emptyList(),
+  internal var classFiles: List<PluginSpecClassReference> = emptyList(),
+  internal var packageClassFiles: List<PluginSpecClassReference> = emptyList(),
 ) {
   fun build(): PluginSpec = PluginSpec(
     id = id, name = name, packagePrefix = packagePrefix, implementationDetail = implementationDetail, isSeparateJar = isSeparateJar,
