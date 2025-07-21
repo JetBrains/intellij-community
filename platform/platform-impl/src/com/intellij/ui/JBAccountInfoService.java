@@ -251,7 +251,6 @@ public interface JBAccountInfoService {
     ALL_PRODUCTS_PACK,
     DOTULTIMATE,
     STUDENT,
-    DATA_SPELL,
     NONE
   }
 
