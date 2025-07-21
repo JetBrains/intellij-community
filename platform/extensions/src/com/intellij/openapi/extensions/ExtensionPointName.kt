@@ -161,6 +161,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     getRootPoint().processWithPluginDescriptor(consumer = consumer)
   }
 
+  @Deprecated("Pass CoroutineScope to addExtensionPointListener")
   fun addExtensionPointListener(listener: ExtensionPointListener<T>, parentDisposable: Disposable?) {
     getRootPoint().addExtensionPointListener(listener = listener,
                                                  invokeForLoadedExtensions = false,
@@ -174,6 +175,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
                                                  coroutineScope = coroutineScope)
   }
 
+  @Deprecated("Pass CoroutineScope to addExtensionPointListener")
   fun addExtensionPointListener(listener: ExtensionPointListener<T>) {
     getRootPoint().addExtensionPointListener(listener = listener, invokeForLoadedExtensions = false, parentDisposable = null)
   }
