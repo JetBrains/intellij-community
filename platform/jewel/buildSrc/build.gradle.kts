@@ -21,7 +21,6 @@ dependencies {
     implementation(libs.detekt.gradlePlugin)
     implementation(libs.dokka.gradlePlugin)
     implementation(libs.kotlin.gradlePlugin)
-    implementation(libs.kotlinSarif)
     implementation(libs.kotlinpoet)
     implementation(libs.kotlinter.gradlePlugin)
     implementation(libs.ktfmt.gradlePlugin)

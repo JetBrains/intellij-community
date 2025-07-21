@@ -57,16 +57,9 @@ kotlin {
     }
 }
 
-val sarifReport: Provider<RegularFile> = layout.buildDirectory.file("reports/ktlint-${project.name}.sarif")
-
 tasks {
     detektMain {
-        val sarifOutputFile = layout.buildDirectory.file("reports/detekt-${project.name}.sarif")
         exclude { it.file.absolutePath.startsWith(layout.buildDirectory.asFile.get().absolutePath) }
-        reports {
-            sarif.required = true
-            sarif.outputLocation = sarifOutputFile
-        }
     }
 
     formatKotlinMain { exclude { it.file.absolutePath.replace('\\', '/').contains("build/generated") } }
@@ -79,15 +72,7 @@ tasks {
             mapOf(
                 "plain" to layout.buildDirectory.file("reports/ktlint-${project.name}.txt").get().asFile,
                 "html" to layout.buildDirectory.file("reports/ktlint-${project.name}.html").get().asFile,
-                "sarif" to sarifReport.get().asFile,
             )
         }
-    }
-}
-
-configurations.named("sarif") {
-    outgoing {
-        artifact(tasks.detektMain.flatMap { it.sarifReportFile }) { builtBy(tasks.detektMain) }
-        artifact(sarifReport) { builtBy(tasks.lintKotlinMain) }
     }
 }
