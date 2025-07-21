@@ -557,7 +557,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     taskListDeferred: Deferred<List<RegisterToolWindowTaskData>>?,
   ) {
     withContext(ModalityState.any().asContextElement()) {
-      launch(Dispatchers.EDT) {
+      val defaultPaneInitialization = launch(Dispatchers.EDT) {
         this@ToolWindowManagerImpl.projectFrame = pane.frame
 
         // Make sure we haven't already created the root tool window pane.
@@ -571,6 +571,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         toolWindowPanes.put(pane.paneId, pane)
       }
       connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
+      defaultPaneInitialization.join()
       toolWindowSetInitializer.initUi(reopeningEditorJob, taskListDeferred)
     }
 
