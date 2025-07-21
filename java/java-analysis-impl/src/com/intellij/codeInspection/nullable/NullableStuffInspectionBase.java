@@ -255,6 +255,17 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           if (context != null) {
             checkRedundantInContainerScope(annotation, manager.findDefaultTypeUseNullability(context), nullability);
           }
+          if (nullability == Nullability.NOT_NULL && PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter) {
+            PsiType notAnnotated = type.annotate(TypeAnnotationProvider.EMPTY);
+            TypeNullability notAnnotatedNullability = notAnnotated.getNullability();
+            if (notAnnotatedNullability.nullability() == Nullability.NOT_NULL &&
+                notAnnotatedNullability.source() instanceof NullabilitySource.ExtendsBound) {
+              reportProblem(holder, annotation,
+                            new RemoveAnnotationQuickFix(annotation, null),
+                            "inspection.nullable.problems.redundant.annotation.inherited.notnull");
+              
+            }
+          }
         }
         if (type instanceof PsiPrimitiveType) {
           LocalQuickFix additionalFix = null;
