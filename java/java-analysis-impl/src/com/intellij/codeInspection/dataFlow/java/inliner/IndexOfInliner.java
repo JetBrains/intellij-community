@@ -28,12 +28,12 @@ public class IndexOfInliner implements CallInliner {
     if (qualifier == null) return false;
     PsiExpression arg = call.getArgumentList().getExpressions()[0];
     DfaVariableValue res = builder.createTempVariable(PsiTypes.intType());
-    String name = call.getMethodExpression().getReferenceName();
     RelationType relationType = RelationType.LT;
-    if ("lastIndexOf".equals(name) && TypeUtils.isJavaLangString(arg.getType())) {
+    if (TypeUtils.isJavaLangString(arg.getType())) {
        String strArg = ObjectUtils.tryCast(ExpressionUtils.computeConstantExpression(arg), String.class);
       if (strArg == null || strArg.isEmpty()) {
         // a.lastIndexOf(b) could equal to a.length() if b is an empty string
+        // also, a.indexOf(b) could be equal to a.length() if both a and b are empty
         relationType = RelationType.LE;
       }
     }
