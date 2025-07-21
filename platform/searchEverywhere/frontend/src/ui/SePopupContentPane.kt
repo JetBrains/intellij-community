@@ -78,7 +78,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     vm.currentTabIndex,
     vm.coroutineScope,
     vm.ShowInFindToolWindowAction(onShowFindToolWindow)
-  )
+  ) { updatePopupWidthIfNecessary() }
 
   private val textField = object : SeTextField() {
     override fun getAccessibleContext(): AccessibleContext {
@@ -661,7 +661,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     if (compact == isCompactViewMode) return
     isCompactViewMode = compact
 
-    resizePopupHandler(calcPreferredSize(isCompactViewMode))
+    updatePopupSize()
   }
 
   fun getExpandedSize(): Dimension {
@@ -680,14 +680,28 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     return Dimension(JBUI.scale(minWidth), minimumHeight)
   }
 
-  private fun calcPreferredSize(compact: Boolean): Dimension {
+  private fun updatePopupWidthIfNecessary() {
+    if (!isShowing || popupExtendedSize != null) return
+    if (headerPane.width < headerPane.preferredSize.width) updatePopupSize()
+  }
+
+  private fun updatePopupSize() {
+    if (!isShowing) return
+    resizePopupHandler(calcPreferredSize(isCompactViewMode, true))
+  }
+
+  private fun calcPreferredSize(compact: Boolean, avoidWidthDecreasing: Boolean = false): Dimension {
     val preferredHeight = if (compact) {
       headerPane.preferredSize.height + textField.preferredSize.height
     }
     else {
       popupExtendedSize?.height ?: JBUI.CurrentTheme.BigPopup.maxListHeight()
     }
-    return Dimension(popupExtendedSize?.width ?: resultsScrollPane.preferredSize.width, preferredHeight)
+
+    val preferredWidth = popupExtendedSize?.width ?: maxOf(resultsScrollPane.preferredSize.width,
+                                                           headerPane.preferredSize.width,
+                                                           if (avoidWidthDecreasing) headerPane.width else 0)
+    return Dimension(preferredWidth, preferredHeight)
   }
 
   private fun logTabSwitchedEvent(e: AnActionEvent) {
