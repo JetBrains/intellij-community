@@ -52,6 +52,7 @@ import java.util.function.Consumer;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.containers.CollectionFactory.createFilePathMap;
 import static com.intellij.util.containers.CollectionFactory.createFilePathSet;
+import static com.intellij.util.containers.FastUtilHashingStrategies.getCaseInsensitiveStringStrategy;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 final class RefreshWorker {
@@ -250,7 +251,6 @@ final class RefreshWorker {
     }
     else {
       String[] childrenNames = fs.list(dir);
-      //MAYBE RC: use OptimizedCaseInsensitiveStringHashing?
       childrenWithAttributes = createFilePathMap(childrenNames.length, dirIsCaseSensitive);
       for (String name : childrenNames) {
         childrenWithAttributes.put(name, null);
@@ -258,23 +258,25 @@ final class RefreshWorker {
     }
     myIoTime.addAndGet(System.nanoTime() - t);
 
-    //MAYBE RC: use OptimizedCaseInsensitiveStringHashing?
     Set<String> newNames = createFilePathSet(childrenWithAttributes.keySet(), dirIsCaseSensitive);
     vfsNames.forEach(newNames::remove);
 
-    //MAYBE RC: use OptimizedCaseInsensitiveStringHashing?
     Set<String> deletedNames = createFilePathSet(vfsNames, dirIsCaseSensitive);
     childrenWithAttributes.keySet().forEach(deletedNames::remove);
 
-    //MAYBE RC: use OptimizedCaseInsensitiveStringHashing?
     ObjectOpenCustomHashSet<String> actualNames = dirIsCaseSensitive ?
                                                   null :
-                                                  (ObjectOpenCustomHashSet<String>)createFilePathSet(childrenWithAttributes.keySet(), false);
+                                                  new ObjectOpenCustomHashSet<>(
+                                                    childrenWithAttributes.keySet(),
+                                                    getCaseInsensitiveStringStrategy()
+                                                  );
     if (LOG.isTraceEnabled()) {
       LOG.trace("current=" + vfsNames + " +" + newNames + " -" + deletedNames);
     }
 
-    List<ChildInfo> newKids = newNames.isEmpty() && deletedNames.isEmpty() ? List.of() : new ArrayList<>(newNames.size());
+    List<ChildInfo> newKids = newNames.isEmpty() && deletedNames.isEmpty() ?
+                              List.of() :
+                              new ArrayList<>(newNames.size());
     for (String newName : newNames) {
       if (VfsUtil.isBadName(newName)) continue;
       FakeVirtualFile child = new FakeVirtualFile(dir, newName);
@@ -437,7 +439,7 @@ final class RefreshWorker {
 
   /**
    * If attributes are computed in a cancellable context, then single-thread refresh gets a performance degradation.
-   * The reason is {@link com.intellij.openapi.vfs.DiskQueryRelay#accessDiskWithCheckCanceled(Object)},
+   * The reason is {@link DiskQueryRelay#accessDiskWithCheckCanceled(Object)},
    * which starts constant exchanging messages with an IO thread.
    * The non-cancellable section here is merely a reification of the existing implicit assumption on cancellability,
    * so it does not make anything worse.
