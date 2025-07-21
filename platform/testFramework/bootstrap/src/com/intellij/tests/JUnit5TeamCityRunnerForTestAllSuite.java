@@ -45,7 +45,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
       System.exit(1);
     }
     try {
-      Launcher launcher = LauncherFactory.create(LauncherConfig.builder().enableLauncherSessionListenerAutoRegistration(false).build());
+      Launcher launcher = LauncherFactory.create(LauncherConfig.builder().enableLauncherSessionListenerAutoRegistration(true).build());
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
       List<? extends DiscoverySelector> selectors;
       List<Filter<?>> filters = new ArrayList<>(0);
