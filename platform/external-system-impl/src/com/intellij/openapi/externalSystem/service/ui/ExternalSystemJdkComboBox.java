@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.actionSystem.*;
@@ -15,13 +14,13 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
-import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,6 +34,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBoxRendererKt.externalSystemJdkComboBoxRenderer;
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 /**
@@ -55,35 +55,7 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
 
   public ExternalSystemJdkComboBox(@Nullable Project project) {
     myProject = project;
-    setRenderer(new ColoredListCellRenderer<>() {
-
-      @Override
-      protected void customizeCellRenderer(@NotNull JList list, JdkComboBoxItem value, int index, boolean selected, boolean hasFocus) {
-        if (value == null) return;
-        CompositeAppearance appearance = new CompositeAppearance();
-        appearance.setIcon(AllIcons.Nodes.PpJdk);
-        SimpleTextAttributes attributes = getTextAttributes(value.valid, selected);
-        CompositeAppearance.DequeEnd ending = appearance.getEnding();
-
-        ending.addText(value.label, attributes);
-        if (value.comment != null && !value.comment.equals(value.jdkName)) {
-          final SimpleTextAttributes textAttributes;
-          if (!value.valid) {
-            textAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES;
-          }
-          else {
-            textAttributes = SystemInfo.isMac && selected
-                             ? new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.WHITE)
-                             : SimpleTextAttributes.GRAY_ATTRIBUTES;
-          }
-
-          ending.addComment(value.comment, textAttributes);
-        }
-
-        final CompositeAppearance compositeAppearance = ending.getAppearance();
-        compositeAppearance.customize(this);
-      }
-    });
+    setRenderer(externalSystemJdkComboBoxRenderer());
   }
 
   public @Nullable Project getProject() {
@@ -294,7 +266,7 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
     return path;
   }
 
-  private static SimpleTextAttributes getTextAttributes(final boolean valid, final boolean selected) {
+  static SimpleTextAttributes getTextAttributes(final boolean valid, final boolean selected) {
     if (!valid) {
       return SimpleTextAttributes.ERROR_ATTRIBUTES;
     }
@@ -307,10 +279,10 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
   }
 
   static class JdkComboBoxItem {
-    private final @NlsSafe String jdkName;
-    private final @NlsContexts.Label String label;
-    private final @NlsContexts.HintText String comment;
-    private final boolean valid;
+    final @NlsSafe String jdkName;
+    final @NlsContexts.Label String label;
+    final @NlsContexts.HintText String comment;
+    final boolean valid;
 
     JdkComboBoxItem(@NlsSafe String jdkName, @NlsContexts.Label String label, @NlsContexts.HintText String comment, boolean valid) {
       this.jdkName = jdkName;
