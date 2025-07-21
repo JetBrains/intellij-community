@@ -166,7 +166,7 @@ private suspend fun prepareConfigurationFiles(nsiConfDir: Path, customizer: Wind
 
   val uninstallerCopy = context.paths.artifactDir.resolve("Uninstall-${context.applicationInfo.productCode}-${arch.dirName}.exe")
   val uninstallerSignCmd = when {
-    !context.options.isInDevelopmentMode -> {
+    !context.isStepSkipped(BuildOptions.WIN_SIGN_STEP) -> {
       val signTool = prepareSignTool(nsiConfDir, context, uninstallerCopy)
       "'${signTool}' '%1'"
     }
