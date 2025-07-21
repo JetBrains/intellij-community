@@ -11,6 +11,7 @@ import java.util.stream.Stream
 import kotlin.io.path.Path
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 
 class KotlinBuildToolsFusFlowTest {
     @ParameterizedTest(name = "{0}")
@@ -18,7 +19,12 @@ class KotlinBuildToolsFusFlowTest {
     fun testFusFlowProcessor(fusProfileFile: List<Path>, buildId: String, expectedFusMetrics: Set<String>, checkExactMatch: Boolean) {
         val aggregatedFusMetric = KotlinBuildToolFusFlowProcessor.aggregateMetricsForBuildId(buildId, fusProfileFile)
 
-        val actualFusMetric = aggregatedFusMetric.map { "${it.metric.metricRawName}=${it.value}" }.toSet()
+        val actualFusMetric = aggregatedFusMetric?.map { "${it.metric.metricRawName}=${it.value}" }?.toSet()
+        if (actualFusMetric == null) {
+            assertFails { "aggregatedFusMetric should not be null" }
+            return
+        }
+
         if (checkExactMatch) {
             assertEquals(
                 expectedFusMetrics, actualFusMetric

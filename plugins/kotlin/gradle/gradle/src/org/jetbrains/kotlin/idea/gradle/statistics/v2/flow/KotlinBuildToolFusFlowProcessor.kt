@@ -40,8 +40,14 @@ object KotlinBuildToolFusFlowProcessor {
         try {
             val pathsByBuildId = filterFilesToRead(gradleUserHome)
             pathsByBuildId.forEach { buildId, paths ->
-                processFilesForBuildId(buildId, paths)
-                paths.forEach { Files.deleteIfExists(it) }
+                val aggregatedFusMetric = aggregateMetricsForBuildId(buildId, paths) ?: return@forEach
+
+                kotlinBuildToolsFusEvenList.forEach {
+                    KotlinBuildToolFusFlowCollector.send(it, buildId, aggregatedFusMetric)
+                }
+
+                removeAllFusReportsForBuild(gradleUserHome, buildId)
+
             }
         } catch (e: Exception) {
             Logger.getInstance(KotlinBuildToolFusFlowProcessor::class.java)
@@ -61,14 +67,24 @@ object KotlinBuildToolFusFlowProcessor {
         }
     }
 
-    fun processFilesForBuildId(buildId: String, listFiles: List<Path>) {
-        kotlinBuildToolsFusEvenList.forEach {
-            KotlinBuildToolFusFlowCollector.send(it, buildId, aggregateMetricsForBuildId(buildId, listFiles))
+    /**
+     * Deletes all Feature Usage Statistics (FUS) report files for a specific build.
+     * 
+     * This method removes all files in the statistics folder that start with the specified build ID.
+     * So reports for both new and old reporting flows will be deleted to avoid duplications.
+     * 
+     * @param gradleUserHome The path to the Gradle user home directory
+     * @param buildId The ID of the build whose FUS report files should be deleted
+     */
+    private fun removeAllFusReportsForBuild(gradleUserHome: String, buildId: String) {
+        val staticFolder = Path(gradleUserHome, STATISTICS_FOLDER_NAME)
+        staticFolder.listDirectoryEntries().filter { it.name.startsWith(buildId) }.forEach {
+            Files.deleteIfExists(it)
         }
     }
 
-    fun aggregateMetricsForBuildId(buildId: String, listFiles: List<Path>): Set<AggregatedFusMetric<*>> =
-        listFiles.mapNotNull {
+    fun aggregateMetricsForBuildId(buildId: String, files: List<Path>): Set<AggregatedFusMetric<*>>? =
+        files.mapNotNull {
             val rawMetricsForBuild = readFile(it)
             if (rawMetricsForBuild.buildId != buildId) {
                 Logger.getInstance(KotlinBuildToolFusFlowProcessor::class.java)
@@ -78,7 +94,7 @@ object KotlinBuildToolFusFlowProcessor {
             rawMetricsForBuild
         }.reduceOrNull { rawMetricsForBuild1, rawMetricsForBuild2 ->
             rawMetricsForBuild1.add(rawMetricsForBuild2)
-        }?.aggregateMetrics() ?: emptySet()
+        }?.aggregateMetrics()
 
 
     private fun readFile(

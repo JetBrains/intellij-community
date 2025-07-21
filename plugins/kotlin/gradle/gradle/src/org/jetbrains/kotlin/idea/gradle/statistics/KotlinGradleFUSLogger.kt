@@ -52,11 +52,16 @@ class KotlinGradleFUSLogger(private val project: Project, private val coroutineS
         mutex.withLock {
             withContext(Dispatchers.IO) {
                 for (gradleUserHome in gradleUserDirs) {
-                    KotlinGradleFUSLoggerProcessor.process(gradleUserHome)
+                    cleanUpOldFiles(gradleUserHome)
                     KotlinBuildToolFusFlowProcessor.process(gradleUserHome)
+                    KotlinGradleFUSLoggerProcessor.process(gradleUserHome)
                 }
             }
         }
+    }
+
+    private fun cleanUpOldFiles(file: String) {
+
     }
 
     private var gradleUserDirs: Set<String>
