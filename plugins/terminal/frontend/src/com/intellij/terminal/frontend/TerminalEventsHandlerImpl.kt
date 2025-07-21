@@ -2,6 +2,7 @@
 package com.intellij.terminal.frontend
 
 import com.google.common.base.Ascii
+import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.BackspaceHandler
@@ -12,6 +13,7 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.session.TerminalState
@@ -19,6 +21,7 @@ import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
 import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
+import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.Companion.REWORKED_TERMINAL_COMPLETION_POPUP
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
@@ -27,6 +30,7 @@ import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
+import java.io.File
 import java.nio.charset.Charset
 import javax.swing.SwingUtilities
 import kotlin.math.abs
@@ -59,8 +63,8 @@ internal open class TerminalEventsHandlerImpl(
 
   override fun keyTyped(e: TimedKeyEvent) {
     LOG.trace { "Key typed event received: ${e.original}" }
-
-    updateLookupOnTyping(e.original.keyChar)
+    val charTyped = e.original.keyChar
+    updateLookupOnTyping(charTyped)
     val selectionModel = editor.selectionModel
     if (selectionModel.hasSelection()) {
       selectionModel.removeSelection()
@@ -71,7 +75,7 @@ internal open class TerminalEventsHandlerImpl(
       LOG.trace { "Key event ignored: ${e.original}" }
       return
     }
-    if (!Character.isISOControl(e.original.keyChar)) { // keys filtered out here will be processed in processTerminalKeyPressed
+    if (!Character.isISOControl(charTyped)) { // keys filtered out here will be processed in processTerminalKeyPressed
       try {
         if (processCharacter(e)) {
           e.original.consume()
@@ -93,6 +97,12 @@ internal open class TerminalEventsHandlerImpl(
       else {
         moveCaretAction()
       }
+    }
+    val project = editor.project
+    if (project != null && typeAhead?.isDisabled() == false &&
+        (Character.isLetterOrDigit(charTyped) || charTyped == '-' || charTyped == File.separatorChar) &&
+        Registry.`is`(REWORKED_TERMINAL_COMPLETION_POPUP)) {
+      AutoPopupController.getInstance(project).scheduleAutoPopup(editor)
     }
   }
 

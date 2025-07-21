@@ -50,7 +50,7 @@ internal class TerminalTypeAhead(
     }
   }
 
-  private fun isDisabled() = PlatformUtils.isJetBrainsClient() || isDisabledInRegistry() || !isTypingCommand()
+  fun isDisabled() = PlatformUtils.isJetBrainsClient() || isDisabledInRegistry() || !isTypingCommand()
 
   private fun isDisabledInRegistry(): Boolean = !Registry.`is`("terminal.type.ahead", false)
   
