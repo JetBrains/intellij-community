@@ -248,14 +248,15 @@ public class KotlinCompilerRunner implements CompilerRunner {
                              enumClassesWithStar);
   }
 
-  private static void processLookupTracker(LookupTrackerImpl lookupTracker, OutputSink callback) {
+  private void processLookupTracker(LookupTrackerImpl lookupTracker, OutputSink callback) {
+    Map<String, NodeSource> pathMapperCache = new HashMap<>();
     for (var entry : lookupTracker.getLookups().entrySet()) {
       String symbolOwner = entry.getKey().getScope().replace('.', '/');
       String symbolName = entry.getKey().getName();
       LookupNameUsage usage = new LookupNameUsage(symbolOwner, symbolName);
 
       for (String file : entry.getValue()) {
-        callback.registerUsage(file, usage);
+        callback.registerUsage(pathMapperCache.computeIfAbsent(file, k -> myPathMapper.toNodeSource(k)), usage);
       }
     }
   }
