@@ -25,18 +25,10 @@ public class TextMateLexer {
   @Deprecated
   public TextMateLexer(@NotNull TextMateLanguageDescriptor languageDescriptor,
                        int lineLimit) {
-    this(languageDescriptor, lineLimit, false);
-  }
-
-  /**
-   * @deprecated use {@link TextMateLexerCore}
-   */
-  @Deprecated
-  public TextMateLexer(@NotNull TextMateLanguageDescriptor languageDescriptor, int lineLimit, boolean stripWhitespaces) {
     RegexProvider regexProvider = new CaffeineCachingRegexProvider(new RememberingLastMatchRegexFactory(new JoniRegexFactory()));
     TextMateSelectorCachingWeigher weigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
     TextMateCachingSyntaxMatcher syntaxMatcher = new TextMateCachingSyntaxMatcher(new TextMateSyntaxMatcherImpl(regexProvider, weigher));
-    myLexerCore = new TextMateLexerCore(languageDescriptor, syntaxMatcher, lineLimit, stripWhitespaces);
+    myLexerCore = new TextMateLexerCore(languageDescriptor, syntaxMatcher, lineLimit, false);
   }
 
   public void init(CharSequence text, int startOffset) {
