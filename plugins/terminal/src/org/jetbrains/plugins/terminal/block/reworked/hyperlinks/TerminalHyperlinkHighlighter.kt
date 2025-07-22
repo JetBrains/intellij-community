@@ -5,6 +5,7 @@ import com.intellij.execution.filters.Filter
 import com.intellij.execution.impl.EditorHyperlinkListener
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.execution.impl.ExpirableTokenProvider
+import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -147,7 +148,7 @@ class TerminalHyperlinkHighlighter private constructor(
           hyperlinkHighlighter.highlightHyperlinks(startOffset)
         }
       })
-      if (Registry.`is`("terminal.generic.hyperlinks", false)) {
+      if (Registry.`is`("terminal.generic.hyperlinks", false) && AppModeAssertions.isMonolith()) {
         hyperlinkHighlighter.addFilter(GenericFileFilter(project, LocalFileSystem.getInstance()))
       }
       return hyperlinkHighlighter
