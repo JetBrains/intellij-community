@@ -24,6 +24,7 @@ import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionScope
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorReworkedImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellMergedCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderReworkedImpl
 import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
@@ -79,10 +80,10 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
     tracer.spanBuilder("terminal-completion-all").use {
       val suggestions = runBlockingCancellable {
         val expandedTokens = expandAliases(context, allTokens, aliasesStorage)
-        computeSuggestions(expandedTokens, context)
+        computeSuggestions(expandedTokens, context, parameters.isAutoPopup)
       }
       tracer.spanBuilder("terminal-completion-submit-suggestions-to-lookup").use {
-        submitSuggestions(suggestions, allTokens, result, ShellType.ZSH)
+        submitSuggestions(suggestions, allTokens, result, ShellType.ZSH, parameters.isAutoPopup)
       }
     }
   }
@@ -92,10 +93,22 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
     allTokens: List<String>,
     result: CompletionResultSet,
     shellType: ShellType,
+    isAutoPopup: Boolean,
   ) {
     val prefixReplacementIndex = suggestions.firstOrNull()?.prefixReplacementIndex ?: 0
     val prefix = allTokens.last().substring(prefixReplacementIndex)
     val resultSet = result.withPrefixMatcher(PlainPrefixMatcher(prefix, true))
+
+    // A partial pop-up implementation is required, as users find automatic pop-ups intrusive.
+    // This approach makes the pop-up discoverable while being less disruptive.
+    // The pop-up is triggered only when entering a command's argument
+    // (e.g., file after `ls`, folder after `cd`, branch after `git checkout`).
+    if (isAutoPopup) {
+      val containsShellCommand = suggestions.any { it.type == ShellSuggestionType.COMMAND }
+      if (containsShellCommand) {
+        return
+      }
+    }
 
     val elements = suggestions.map { it.toLookupElement(shellType) }
     resultSet.addAllElements(elements)
@@ -105,7 +118,7 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
     }
   }
 
-  private suspend fun computeSuggestions(tokens: List<String>, context: TerminalCompletionContext): List<ShellCompletionSuggestion> {
+  private suspend fun computeSuggestions(tokens: List<String>, context: TerminalCompletionContext, isAutoPopup: Boolean): List<ShellCompletionSuggestion> {
     if (tokens.isEmpty()) {
       return emptyList()
     }
@@ -124,7 +137,7 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
     }
 
     if (commandArguments.isEmpty()) {
-      if (context.shellType == ShellType.POWERSHELL) {
+      if (context.shellType == ShellType.POWERSHELL || isAutoPopup) {
         // Return no completions for command name to pass the completion to the PowerShell
         return emptyList()
       }
