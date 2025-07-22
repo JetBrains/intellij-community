@@ -53,6 +53,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -247,15 +248,15 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   protected @NotNull List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<>();
 
-    group.add(new ApplySelectedChangesAction(this, Side.LEFT));
-    group.add(new ApplySelectedChangesAction(this, Side.RIGHT));
-    group.add(new ResolveSelectedChangesAction(this, Side.LEFT));
-    group.add(new ResolveSelectedChangesAction(this, Side.RIGHT));
-    group.add(new IgnoreSelectedChangesSideAction(this, Side.LEFT));
-    group.add(new IgnoreSelectedChangesSideAction(this, Side.RIGHT));
-    group.add(new ResolveSelectedConflictsAction(this));
-    group.add(new IgnoreSelectedChangesAction(this));
-    group.add(new ResetResolvedChangeAction(this));
+    group.add(new MergeThreesideViewerActions.ApplySelectedChangesAction(this, Side.LEFT));
+    group.add(new MergeThreesideViewerActions.ApplySelectedChangesAction(this, Side.RIGHT));
+    group.add(new MergeThreesideViewerActions.ResolveSelectedChangesAction(this, Side.LEFT));
+    group.add(new MergeThreesideViewerActions.ResolveSelectedChangesAction(this, Side.RIGHT));
+    group.add(new MergeThreesideViewerActions.IgnoreSelectedChangesSideAction(this, Side.LEFT));
+    group.add(new MergeThreesideViewerActions.IgnoreSelectedChangesSideAction(this, Side.RIGHT));
+    group.add(new MergeThreesideViewerActions.ResolveSelectedConflictsAction(this));
+    group.add(new MergeThreesideViewerActions.IgnoreSelectedChangesAction(this));
+    group.add(new MergeThreesideViewerActions.ResetResolvedChangeAction(this));
 
     group.add(Separator.getInstance());
     group.add(ActionManager.getInstance().getAction("Diff.Conflicts.Additional.Actions"));
@@ -361,7 +362,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     doRediff();
   }
 
-  protected boolean setInitialOutputContent(@NotNull CharSequence baseContent) {
+  private boolean setInitialOutputContent(@NotNull CharSequence baseContent) {
     final Document outputDocument = myMergeRequest.getOutputContent().getDocument();
 
     return DiffUtil.executeWriteCommand(outputDocument, getProject(), DiffBundle.message("message.init.merge.content.command"), () -> {
@@ -426,11 +427,18 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       List<DocumentContent> contents = myMergeRequest.getContents();
       MergeRange importRange = ReadAction.compute(() -> {
         sequences.addAll(ContainerUtil.map(contents, content -> content.getDocument().getImmutableCharSequence()));
-        initPsiFiles();
-        myResolveImportsPossible = canImportsBeProcessedAutomatically();
-        return getTextSettings().isAutoResolveImportConflicts() && myResolveImportsPossible
-               ? MergeImportUtil.getImportMergeRange(myProject, myPsiFiles)
-               : null;
+        boolean isAutoResolveImportConflicts = getTextSettings().isAutoResolveImportConflicts();
+        if (myConflictResolver.isAvailable() || isAutoResolveImportConflicts) {
+          initPsiFiles();
+        }
+        if (isAutoResolveImportConflicts) {
+          boolean canImportsBeProcessedAutomatically = canImportsBeProcessedAutomatically();
+          myResolveImportsPossible = canImportsBeProcessedAutomatically;
+          if (canImportsBeProcessedAutomatically) {
+            return MergeImportUtil.getImportMergeRange(myProject, myPsiFiles);
+          }
+        }
+        return null;
       });
 
       MergeLineFragmentsWithImportMetadata lineFragments = getLineFragments(indicator, sequences, importRange, ignorePolicy);
@@ -495,12 +503,10 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   private void initPsiFiles() {
     if (myProject == null) return;
     ArrayList<PsiFile> files = new ArrayList<>();
-    for (ThreeSide value : ThreeSide.getEntries()) {
+    for (ThreeSide value : ThreeSide.values()) {
       PsiFile psiFile = getPsiFile(value, myProject, myMergeRequest);
       if (psiFile != null) {
         files.add(psiFile);
-      } else {
-        return;
       }
     }
     myPsiFiles = files;
@@ -604,7 +610,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
   private boolean canSideBeProcessed(ThreeSide side) {
-    if (myProject == null || DumbService.isDumb(myProject) || myPsiFiles.isEmpty()) return false;
+    if (DumbService.isDumb(myProject)) return false;
     AtomicReference<Boolean> atLeastOnReferenceFound = new AtomicReference<>(false);
     return SyntaxTraverser.psiTraverser(side.select(myPsiFiles))
              .traverse(TreeTraversal.PLAIN_BFS)
@@ -799,7 +805,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     myContentPanel.repaintDividers();
   }
 
-  protected void onChangeResolved(@NotNull TextMergeChange change) {
+  private void onChangeResolved(@NotNull TextMergeChange change) {
     if (change.isResolved()) {
       onChangeRemoved(change);
     }
@@ -886,7 +892,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
   @RequiresEdt
-  public void markChangeResolved(@NotNull TextMergeChange change) {
+  void markChangeResolved(@NotNull TextMergeChange change) {
     if (change.isResolved()) return;
     change.setResolved(Side.LEFT, true);
     change.setResolved(Side.RIGHT, true);
@@ -896,7 +902,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
   @RequiresEdt
-  public void markChangeResolved(@NotNull TextMergeChange change, @NotNull Side side) {
+  private void markChangeResolved(@NotNull TextMergeChange change, @NotNull Side side) {
     if (change.isResolved(side)) return;
     change.setResolved(side, true);
 
@@ -1099,7 +1105,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     if (firstUnresolved != null) doScrollToChange(firstUnresolved, true);
   }
 
-  private boolean hasResolvableConflictedChanges() {
+  boolean hasResolvableConflictedChanges() {
     return ContainerUtil.exists(getAllChanges(), change -> canResolveChangeAutomatically(change, ThreeSide.BASE));
   }
 
@@ -1305,86 +1311,6 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     myAcceptResolveAction.setEnabled(enable);
   }
 
-  private static abstract class ApplySelectedChangesActionBase extends AnAction implements DumbAware {
-    protected @NotNull MergeThreesideViewer myViewer;
-
-    protected ApplySelectedChangesActionBase(@NotNull MergeThreesideViewer viewer) { myViewer = viewer; }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      if (DiffUtil.isFromShortcut(e)) {
-        // consume shortcut even if there are nothing to do - avoid calling some other action
-        e.getPresentation().setEnabledAndVisible(true);
-        return;
-      }
-
-      Presentation presentation = e.getPresentation();
-      Editor editor = e.getData(CommonDataKeys.EDITOR);
-
-      ThreeSide side = myViewer.getEditorSide(editor);
-      if (side == null) {
-        presentation.setEnabledAndVisible(false);
-        return;
-      }
-
-      if (!isVisible(side)) {
-        presentation.setEnabledAndVisible(false);
-        return;
-      }
-
-      presentation.setText(getText(side));
-
-      presentation.setEnabledAndVisible(isSomeChangeSelected(side) && !myViewer.isExternalOperationInProgress());
-    }
-
-    @Override
-    public void actionPerformed(final @NotNull AnActionEvent e) {
-      Editor editor = e.getData(CommonDataKeys.EDITOR);
-      final ThreeSide side = myViewer.getEditorSide(editor);
-      if (editor == null || side == null) return;
-
-      final List<TextMergeChange> selectedChanges = getSelectedChanges(side);
-      if (selectedChanges.isEmpty()) return;
-
-      String title = DiffBundle.message("message.do.in.merge.command", e.getPresentation().getText());
-      myViewer.executeMergeCommand(title, selectedChanges.size() > 1, selectedChanges, () -> apply(side, selectedChanges));
-    }
-
-    @RequiresWriteLock
-    protected abstract void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes);
-
-    private boolean isSomeChangeSelected(@NotNull ThreeSide side) {
-      EditorEx editor = myViewer.getEditor(side);
-      return DiffUtil.isSomeRangeSelected(editor,
-                                          lines -> ContainerUtil.exists(myViewer.getAllChanges(), change -> isChangeSelected(change, lines, side)));
-    }
-
-    @RequiresEdt
-    protected @NotNull @Unmodifiable List<TextMergeChange> getSelectedChanges(@NotNull ThreeSide side) {
-      EditorEx editor = myViewer.getEditor(side);
-      BitSet lines = DiffUtil.getSelectedLines(editor);
-      return ContainerUtil.filter(myViewer.getChanges(), change -> isChangeSelected(change, lines, side));
-    }
-
-    protected boolean isChangeSelected(@NotNull TextMergeChange change, @NotNull BitSet lines, @NotNull ThreeSide side) {
-      if (!isEnabled(change)) return false;
-      int line1 = change.getStartLine(side);
-      int line2 = change.getEndLine(side);
-      return DiffUtil.isSelectedByLine(lines, line1, line2);
-    }
-
-    protected abstract @Nls String getText(@NotNull ThreeSide side);
-
-    protected abstract boolean isVisible(@NotNull ThreeSide side);
-
-    protected abstract boolean isEnabled(@NotNull TextMergeChange change);
-  }
-
   @ApiStatus.Internal
   void logMergeCancelled(boolean withConfirmation, boolean discardChanges) {
     logDialogButton(MergeResult.CANCEL, withConfirmation, discardChanges, true);
@@ -1418,253 +1344,6 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     if (statsResult == null) return;
     myAggregator.setUnresolved(getChanges().size());
     MergeStatisticsCollector.logMergeFinished(myProject, statsResult, source, myAggregator);
-  }
-
-  private static class IgnoreSelectedChangesSideAction extends ApplySelectedChangesActionBase {
-    private final @NotNull Side mySide;
-
-    IgnoreSelectedChangesSideAction(@NotNull MergeThreesideViewer viewer, @NotNull Side side) {
-      super(viewer);
-      mySide = side;
-      ActionUtil.copyFrom(this, mySide.select("Diff.IgnoreLeftSide", "Diff.IgnoreRightSide"));
-    }
-
-    @Override
-    protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
-      for (TextMergeChange change : changes) {
-        myViewer.ignoreChange(change, mySide, false);
-      }
-    }
-
-    @Override
-    protected String getText(@NotNull ThreeSide side) {
-      return DiffBundle.message("action.presentation.merge.ignore.text");
-    }
-
-    @Override
-    protected boolean isVisible(@NotNull ThreeSide side) {
-      return side == mySide.select(ThreeSide.LEFT, ThreeSide.RIGHT);
-    }
-
-    @Override
-    protected boolean isEnabled(@NotNull TextMergeChange change) {
-      return !change.isResolved(mySide);
-    }
-  }
-
-  private static class IgnoreSelectedChangesAction extends ApplySelectedChangesActionBase {
-    IgnoreSelectedChangesAction(@NotNull MergeThreesideViewer viewer) {
-      super(viewer);
-      getTemplatePresentation().setIcon(AllIcons.Diff.Remove);
-    }
-
-    @Override
-    protected String getText(@NotNull ThreeSide side) {
-      return DiffBundle.message("action.presentation.merge.ignore.text");
-    }
-
-    @Override
-    protected boolean isVisible(@NotNull ThreeSide side) {
-      return side == ThreeSide.BASE;
-    }
-
-    @Override
-    protected boolean isEnabled(@NotNull TextMergeChange change) {
-      return !change.isResolved();
-    }
-
-    @Override
-    protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
-      for (TextMergeChange change : changes) {
-        myViewer.markChangeResolved(change);
-      }
-    }
-  }
-
-  private static class ResetResolvedChangeAction extends ApplySelectedChangesActionBase {
-    ResetResolvedChangeAction(@NotNull MergeThreesideViewer viewer) {
-      super(viewer);
-      getTemplatePresentation().setIcon(AllIcons.Diff.Revert);
-    }
-
-    @Override
-    protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
-      for (TextMergeChange change : changes) {
-        myViewer.resetResolvedChange(change);
-      }
-    }
-
-    @Override
-    protected @Unmodifiable @NotNull List<TextMergeChange> getSelectedChanges(@NotNull ThreeSide side) {
-      EditorEx editor = myViewer.getEditor(side);
-      BitSet lines = DiffUtil.getSelectedLines(editor);
-      return ContainerUtil.filter(myViewer.getAllChanges(), change -> isChangeSelected(change, lines, side));
-    }
-
-    @Override
-    protected @Nls String getText(@NotNull ThreeSide side) {
-      return DiffBundle.message("action.presentation.diff.revert.text");
-    }
-
-    @Override
-    protected boolean isVisible(@NotNull ThreeSide side) {
-      return true;
-    }
-
-    @Override
-    protected boolean isEnabled(@NotNull TextMergeChange change) {
-      return change.isResolvedWithAI();
-    }
-  }
-
-  private static class ApplySelectedChangesAction extends ApplySelectedChangesActionBase {
-    private final @NotNull Side mySide;
-
-    ApplySelectedChangesAction(@NotNull MergeThreesideViewer viewer, @NotNull Side side) {
-      super(viewer);
-      mySide = side;
-      ActionUtil.copyFrom(this, mySide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide"));
-    }
-
-    @Override
-    protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
-      myViewer.replaceChanges(changes, mySide, false);
-    }
-
-    @Override
-    protected String getText(@NotNull ThreeSide side) {
-      return side != ThreeSide.BASE ? DiffBundle.message("action.presentation.diff.accept.text") : getTemplatePresentation().getText();
-    }
-
-    @Override
-    protected boolean isVisible(@NotNull ThreeSide side) {
-      if (side == ThreeSide.BASE) return true;
-      return side == mySide.select(ThreeSide.LEFT, ThreeSide.RIGHT);
-    }
-
-    @Override
-    protected boolean isEnabled(@NotNull TextMergeChange change) {
-      return !change.isResolved(mySide);
-    }
-  }
-
-  private static class ResolveSelectedChangesAction extends ApplySelectedChangesActionBase {
-    private final @NotNull Side mySide;
-
-    ResolveSelectedChangesAction(@NotNull MergeThreesideViewer viewer, @NotNull Side side) {
-      super(viewer);
-      mySide = side;
-    }
-
-    @Override
-    protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
-      myViewer.replaceChanges(changes, mySide, true);
-    }
-
-    @Override
-    protected String getText(@NotNull ThreeSide side) {
-      return DiffBundle.message("action.presentation.merge.resolve.using.side.text", mySide.getIndex());
-    }
-
-    @Override
-    protected boolean isVisible(@NotNull ThreeSide side) {
-      if (side == ThreeSide.BASE) return true;
-      return side == mySide.select(ThreeSide.LEFT, ThreeSide.RIGHT);
-    }
-
-    @Override
-    protected boolean isEnabled(@NotNull TextMergeChange change) {
-      return !change.isResolved(mySide);
-    }
-  }
-
-  private static class ResolveSelectedConflictsAction extends ApplySelectedChangesActionBase {
-    ResolveSelectedConflictsAction(@NotNull MergeThreesideViewer viewer) {
-      super(viewer);
-      ActionUtil.copyFrom(this, "Diff.ResolveConflict");
-    }
-
-    @Override
-    protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
-      myViewer.resolveChangesAutomatically(changes, ThreeSide.BASE);
-    }
-
-    @Override
-    protected String getText(@NotNull ThreeSide side) {
-      return DiffBundle.message("action.presentation.merge.resolve.automatically.text");
-    }
-
-    @Override
-    protected boolean isVisible(@NotNull ThreeSide side) {
-      return side == ThreeSide.BASE;
-    }
-
-    @Override
-    protected boolean isEnabled(@NotNull TextMergeChange change) {
-      return myViewer.canResolveChangeAutomatically(change, ThreeSide.BASE);
-    }
-  }
-
-  public static class ApplyNonConflictsAction extends DumbAwareAction {
-    private final @NotNull ThreeSide mySide;
-    private final MergeThreesideViewer myViewer;
-
-    public ApplyNonConflictsAction(MergeThreesideViewer viewer, @NotNull ThreeSide side, @NotNull @Nls String text) {
-      String id = side.select("Diff.ApplyNonConflicts.Left", "Diff.ApplyNonConflicts", "Diff.ApplyNonConflicts.Right");
-      ActionUtil.copyFrom(this, id);
-      mySide = side;
-      getTemplatePresentation().setText(text);
-      this.myViewer = viewer;
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(myViewer.hasNonConflictedChanges(mySide) && !myViewer.isExternalOperationInProgress());
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      myViewer.applyNonConflictedChanges(mySide);
-    }
-
-    @Override
-    public boolean displayTextInToolbar() {
-      return true;
-    }
-
-    @Override
-    public boolean useSmallerFontForTextInToolbar() {
-      return true;
-    }
-  }
-
-  public static class MagicResolvedConflictsAction extends DumbAwareAction {
-    private final MergeThreesideViewer myViewer;
-
-    public MagicResolvedConflictsAction(MergeThreesideViewer viewer) {
-      ActionUtil.copyFrom(this, "Diff.MagicResolveConflicts");
-      this.myViewer = viewer;
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(myViewer.hasResolvableConflictedChanges() && !myViewer.isExternalOperationInProgress());
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      myViewer.applyResolvableConflictedChanges();
-    }
   }
 
   private static class ShowDiffWithBaseAction extends DumbAwareAction {
