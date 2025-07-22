@@ -36,7 +36,7 @@ class BookmarksPopupUiComponent(data: ComponentData) : UiComponent(data) {
   fun doubleClickBookmark(predicate: (String) -> Boolean) {
     withRetries(times = 3) {
       bookmarksTree.doubleClickRow(Point(5, 5), predicate)
-      waitNotFound(2.seconds)
+      waitNotFound()
     }
   }
 }
