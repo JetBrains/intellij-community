@@ -55,13 +55,6 @@ public final class VcsLogUiUtil {
     };
     logData.getProgress().addProgressIndicatorListener(new VcsLogProgress.ProgressListener() {
       @Override
-      public void progressStarted(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
-        if (isProgressVisible(keys, logId)) {
-          progressStripe.startLoading();
-        }
-      }
-
-      @Override
       public void progressChanged(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
         if (isProgressVisible(keys, logId)) {
           progressStripe.startLoading();
@@ -69,11 +62,6 @@ public final class VcsLogUiUtil {
         else {
           progressStripe.stopLoading();
         }
-      }
-
-      @Override
-      public void progressStopped() {
-        progressStripe.stopLoading();
       }
     }, disposableParent);
 

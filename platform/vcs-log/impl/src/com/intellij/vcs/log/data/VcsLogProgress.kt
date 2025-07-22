@@ -53,9 +53,9 @@ class VcsLogProgress(parent: Disposable) : Disposable {
       if (parentDisposable != null) {
         Disposer.register(parentDisposable) { removeProgressIndicatorListener(listener) }
       }
-      if (isRunning) {
-        val keys = runningKeys
-        ApplicationManager.getApplication().invokeLater { listener.progressStarted(keys) }
+      val keys = runningKeys
+      if (runningKeys.isNotEmpty()) {
+        fireNotification(listOf(listener), keys)
       }
     }
   }
@@ -75,13 +75,7 @@ class VcsLogProgress(parent: Disposable) : Disposable {
       if (indicator.isVisible) {
         val oldKeys = runningKeys
         tasksWithVisibleProgress.add(indicator)
-        if (tasksWithVisibleProgress.size == 1) {
-          val key = indicator.key
-          fireNotification { it.progressStarted(setOf(key)) }
-        }
-        else {
-          keysUpdated(oldKeys)
-        }
+        keysUpdated(oldKeys)
       }
       else {
         tasksWithSilentProgress.add(indicator)
@@ -92,10 +86,9 @@ class VcsLogProgress(parent: Disposable) : Disposable {
   private fun stopped(indicator: VcsLogProgressIndicator) {
     synchronized(lock) {
       if (indicator.isVisible) {
+        val oldKeys = runningKeys
         tasksWithVisibleProgress.remove(indicator)
-        if (tasksWithVisibleProgress.isEmpty()) {
-          fireNotification { it.progressStopped() }
-        }
+        keysUpdated(oldKeys)
       }
       else {
         tasksWithSilentProgress.remove(indicator)
@@ -107,16 +100,19 @@ class VcsLogProgress(parent: Disposable) : Disposable {
     synchronized(lock) {
       val newKeys = runningKeys
       if (oldKeys != newKeys) {
-        fireNotification { it.progressChanged(newKeys) }
+        fireNotification(listeners.toList(), newKeys)
       }
     }
   }
 
-  private fun fireNotification(action: (ProgressListener) -> Unit) {
-    synchronized(lock) {
-      val list = listeners.toList()
-      ApplicationManager.getApplication().invokeLater({ list.forEach(action) }, { disposableFlag.isDisposed() })
-    }
+  private fun fireNotification(listeners: List<ProgressListener>, keys: Collection<ProgressKey>) {
+    ApplicationManager.getApplication().invokeLater({
+                                                      listeners.forEach {
+                                                        it.progressChanged(keys)
+                                                      }
+                                                    }, {
+                                                      disposableFlag.isDisposed()
+                                                    })
   }
 
   override fun dispose() {
@@ -166,11 +162,7 @@ class VcsLogProgress(parent: Disposable) : Disposable {
   }
 
   interface ProgressListener {
-    fun progressStarted(keys: Collection<ProgressKey>)
-
     fun progressChanged(keys: Collection<ProgressKey>)
-
-    fun progressStopped()
   }
 
   open class ProgressKey(private val name: @NonNls String) {

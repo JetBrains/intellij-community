@@ -1041,11 +1041,6 @@ public class VcsLogGraphTable extends TableWithProgress
 
   private class MyProgressListener implements VcsLogProgress.ProgressListener {
     @Override
-    public void progressStarted(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
-      progressChanged(keys);
-    }
-
-    @Override
     public void progressChanged(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
       if (VcsLogUiUtil.isProgressVisible(keys, getId())) {
         getEmptyText().setText(VcsLogBundle.message("vcs.log.loading.status"));
@@ -1053,11 +1048,6 @@ public class VcsLogGraphTable extends TableWithProgress
       else {
         updateEmptyText();
       }
-    }
-
-    @Override
-    public void progressStopped() {
-      updateEmptyText();
     }
   }
 
