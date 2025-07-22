@@ -8,13 +8,13 @@ import com.intellij.codeInsight.intention.IntentionActionProvider
 import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ExtensionPointListener
-import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
@@ -98,17 +98,15 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
       }
     })
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC, AdditionalLibraryRootsListener { _, _, _, _ -> updateAllNotifications() })
-    EditorNotificationProvider.EP_NAME.getPoint(project)
-      .addExtensionPointListener(coroutineScope, false, object : ExtensionPointListener<EditorNotificationProvider> {
-        override fun extensionAdded(extension: EditorNotificationProvider, pluginDescriptor: PluginDescriptor) {
-          updateAllNotifications()
-        }
+    connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+        updateAllNotifications()
+      }
 
-        override fun extensionRemoved(extension: EditorNotificationProvider, pluginDescriptor: PluginDescriptor) {
-          @Suppress("DEPRECATION")
-          updateNotifications(extension)
-        }
-      })
+      override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+        updateAllNotifications()
+      }
+    })
 
     updateAllRequestFlowJob = coroutineScope.launch {
       updateAllRequests
