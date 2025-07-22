@@ -1298,6 +1298,7 @@ com.intellij.ui.popup.list.ComboBoxPopup$Context
 com.intellij.ui.popup.list.FilterableListPopupStep
 - com.intellij.openapi.ui.popup.ListPopupStep
 - a:updateFilter(java.lang.String):V
+f:com.intellij.ui.render.RenderersKt
 com.intellij.ui.tree.ChildrenProvider
 - a:getChildren(java.lang.Object):java.util.List
 com.intellij.ui.tree.project.ProjectFileNode

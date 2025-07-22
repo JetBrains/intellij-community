@@ -12163,7 +12163,6 @@ c:com.intellij.ui.FontInfoRenderer
 - <init>():V
 - p:applyAdditionalHints(java.awt.Graphics2D):V
 - p:customizeCellRenderer(javax.swing.JList,java.lang.Object,I,Z,Z):V
-- p:getFontSize():java.lang.Integer
 - getPreferredSize():java.awt.Dimension
 - p:isEditorFont():Z
 f:com.intellij.ui.GotItMessage

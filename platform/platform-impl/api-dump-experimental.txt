@@ -425,6 +425,8 @@ f:com.intellij.ui.dsl.builder.components.ValidationTooltipKt
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ui.dsl.builder.components.ValidationType
 - s:values():com.intellij.ui.dsl.builder.components.ValidationType[]
+f:com.intellij.ui.render.RenderersKt
+- *sf:fontInfoRenderer(Z):javax.swing.ListCellRenderer
 *f:com.intellij.ui.split.SplitComponentFactory
 - *sf:Companion:com.intellij.ui.split.SplitComponentFactory$Companion
 - f:createComponent(com.intellij.ui.split.SplitComponentModel):com.intellij.openapi.ui.ComponentContainer

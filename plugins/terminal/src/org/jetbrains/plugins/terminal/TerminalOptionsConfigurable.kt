@@ -24,18 +24,21 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.Strings
 import com.intellij.terminal.TerminalUiSettingsManager
-import com.intellij.ui.*
+import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.FontComboBox
+import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.selectedValueIs
 import com.intellij.ui.layout.selectedValueMatches
+import com.intellij.ui.render.fontInfoRenderer
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.launchOnceOnShow
@@ -51,7 +54,6 @@ import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import java.awt.Color
 import java.awt.Component
-import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -446,9 +448,7 @@ private fun findColorByKey(vararg colorKeys: String): Color =
   throw IllegalStateException("Can't find color for keys " + colorKeys.contentToString())
 
 private fun fontComboBox(): FontComboBox = FontComboBox().apply {
-  renderer = object : FontInfoRenderer() {
-    override fun isEditorFont(): Boolean = true
-  }
+  renderer = fontInfoRenderer(true)
   isMonospacedOnly = true
 }
 

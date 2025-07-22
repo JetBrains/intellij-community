@@ -756,6 +756,7 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - *f:getAccessibleContextProvider():java.awt.Component
 - f:getPreferredHeight():java.lang.Integer
 - getPreferredSize():java.awt.Dimension
+- f:getPreferredWidth():java.lang.Integer
 - f:getSelectionArc():I
 - f:getSelectionArcCorners():com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
 - f:getSelectionColor():java.awt.Color
@@ -763,6 +764,7 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - p:paintComponent(java.awt.Graphics):V
 - *f:setAccessibleContextProvider(java.awt.Component):V
 - f:setPreferredHeight(java.lang.Integer):V
+- f:setPreferredWidth(java.lang.Integer):V
 - f:setSelectionArc(I):V
 - f:setSelectionArcCorners(com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners):V
 - f:setSelectionColor(java.awt.Color):V
