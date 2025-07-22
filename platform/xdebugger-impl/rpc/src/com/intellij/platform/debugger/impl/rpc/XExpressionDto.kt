@@ -12,15 +12,14 @@ import org.jetbrains.annotations.ApiStatus
 @Serializable
 data class XExpressionDto(
   val expression: String,
-  // TODO[IJPL-160146]: Serialize Language
-  @Transient val language: Language? = null,
+  val language: LanguageDto?,
   val customInfo: String?,
   val mode: EvaluationMode,
 )
 
 @ApiStatus.Internal
 fun XExpression.toRpc(): XExpressionDto {
-  return XExpressionDto(expression, language, customInfo, mode)
+  return XExpressionDto(expression, language?.toRpc(), customInfo, mode)
 }
 
 @ApiStatus.Internal
@@ -34,7 +33,7 @@ private class SerializedXExpression(private val dto: XExpressionDto) : XExpressi
   }
 
   override fun getLanguage(): Language? {
-    return dto.language
+    return dto.language?.language()
   }
 
   override fun getCustomInfo(): String? {
@@ -45,3 +44,14 @@ private class SerializedXExpression(private val dto: XExpressionDto) : XExpressi
     return dto.mode
   }
 }
+
+@ApiStatus.Internal
+@Serializable
+data class LanguageDto(
+  val id: String,
+  @Transient val language: Language? = null,
+)
+
+private fun Language.toRpc(): LanguageDto = LanguageDto(id, this)
+
+private fun LanguageDto.language(): Language? = language ?: Language.findLanguageByID(id)
