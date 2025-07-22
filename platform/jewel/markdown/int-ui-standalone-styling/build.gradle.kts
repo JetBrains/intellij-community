@@ -10,6 +10,7 @@ dependencies {
     api(projects.intUi.intUiStandalone)
     compileOnly(projects.markdown.extensions.gfmAlerts)
     compileOnly(projects.markdown.extensions.gfmTables)
+    compileOnly(projects.markdown.extensions.images)
 
     testImplementation(compose.desktop.uiTestJUnit4)
 }

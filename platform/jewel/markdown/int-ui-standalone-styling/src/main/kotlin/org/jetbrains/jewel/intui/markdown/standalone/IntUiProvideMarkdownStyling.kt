@@ -17,6 +17,9 @@ import org.jetbrains.jewel.markdown.MarkdownMode
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownProcessor
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownStyling
+import org.jetbrains.jewel.markdown.extensions.images.DefaultImageSourceResolver
+import org.jetbrains.jewel.markdown.extensions.images.ImageSourceResolver
+import org.jetbrains.jewel.markdown.extensions.images.LocalMarkdownImageSourceResolver
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
@@ -51,6 +54,7 @@ public fun ProvideMarkdownStyling(
             }
         },
     codeHighlighter: CodeHighlighter = remember { NoOpCodeHighlighter },
+    markdownImageSourceResolver: ImageSourceResolver = DefaultImageSourceResolver(),
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(
@@ -58,6 +62,7 @@ public fun ProvideMarkdownStyling(
         LocalMarkdownProcessor provides markdownProcessor,
         LocalMarkdownBlockRenderer provides markdownBlockRenderer,
         LocalCodeHighlighter provides codeHighlighter,
+        LocalMarkdownImageSourceResolver provides markdownImageSourceResolver,
     ) {
         content()
     }
@@ -73,6 +78,7 @@ public fun ProvideMarkdownStyling(
     codeHighlighter: CodeHighlighter,
     markdownMode: MarkdownMode = MarkdownMode.Standalone,
     markdownProcessor: MarkdownProcessor = remember(markdownMode) { MarkdownProcessor(markdownMode = markdownMode) },
+    markdownImageSourceResolver: ImageSourceResolver = DefaultImageSourceResolver(),
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(
@@ -80,6 +86,7 @@ public fun ProvideMarkdownStyling(
         LocalMarkdownProcessor provides markdownProcessor,
         LocalMarkdownBlockRenderer provides markdownBlockRenderer,
         LocalCodeHighlighter provides codeHighlighter,
+        LocalMarkdownImageSourceResolver provides markdownImageSourceResolver,
     ) {
         content()
     }
