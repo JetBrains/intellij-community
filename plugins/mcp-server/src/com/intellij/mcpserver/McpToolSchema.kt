@@ -3,7 +3,7 @@ package com.intellij.mcpserver
 import kotlinx.serialization.json.*
 
 /**
- * Schema of the input parameter of an MCP tool.
+ * Schema of the input or output of an MCP tool.
  *
  * Schema may consists of several blocks:
  *  * properties - in fact a map of parameter names to their schemas
@@ -41,18 +41,14 @@ import kotlinx.serialization.json.*
  *     },
  * ```
  */
-class McpToolInputSchema(
+class McpToolSchema(
+  val propertiesSchema: JsonObject,
   /**
-   * Parameters to type schema map
+   * Names of required properties
    */
-  val parameters: Map<String, JsonElement>,
-
+  val requiredProperties: Set<String>,
   /**
-   * Names of required parameters
-   */
-  val requiredParameters: Set<String>,
-  /**
-   * Type definitions that can be referred in the parameter schema
+   * Type definitions that can be referred in the schema
    *
    * Currently not supported
    */
@@ -66,19 +62,37 @@ class McpToolInputSchema(
 
   companion object {
     const val DEFAULT_DEFINITIONS_PATH: String = "definitions"
-  }
+    private val json = Json { prettyPrint = true }
 
-  val properties: JsonObject = buildJsonObject {
-    for ((name, type) in parameters) {
-      put(name, type)
+    fun ofPropertiesMap(
+      properties: Map<String, JsonElement>,
+      requiredProperties: Set<String>,
+      definitions: Map<String, JsonElement>,
+      definitionsPath: String = DEFAULT_DEFINITIONS_PATH,
+    ): McpToolSchema {
+      val propertiesJson = buildJsonObject {
+        for ((name, type) in properties) {
+          put(name, type)
+        }
+      }
+      return ofPropertiesSchema(propertiesJson, requiredProperties, definitions, definitionsPath)
+    }
+
+    fun ofPropertiesSchema(
+      properties: JsonObject,
+      requiredProperties: Set<String>,
+      definitions: Map<String, JsonElement>,
+      definitionsPath: String = DEFAULT_DEFINITIONS_PATH,
+    ): McpToolSchema {
+      return McpToolSchema(propertiesSchema = properties, requiredProperties = requiredProperties, definitions = definitions, definitionsPath = definitionsPath)
     }
   }
 
   private val schemaObject = buildJsonObject {
     put("type", "object")
-    put("properties", properties)
+    put("properties", propertiesSchema)
     put("required", buildJsonArray {
-      for (requiredParameter in requiredParameters) {
+      for (requiredParameter in requiredProperties) {
         add(requiredParameter)
       }
     })
@@ -92,8 +106,6 @@ class McpToolInputSchema(
       })
     }
   }
-
-  private val json = Json { prettyPrint = true }
 
   fun prettyPrint(): String {
     return json.encodeToString(schemaObject)

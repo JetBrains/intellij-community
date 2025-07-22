@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="io.github.smiley4.schema.kenerator.jsonschema" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.github.smiley4:schema-kenerator-jsonschema:2.1.2">
+    <properties include-transitive-deps="false" maven-id="io.github.smiley4:schema-kenerator-jsonschema:2.2.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-jsonschema/2.1.2/schema-kenerator-jsonschema-2.1.2.jar">
-          <sha256sum>2bd17b095b093480dd9aa6bbdf9672cb2bd886a19907df9a4abf293bc88f9a7c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-jsonschema/2.2.0/schema-kenerator-jsonschema-2.2.0.jar">
+          <sha256sum>81981241b8df2eeee48efac05798e7beaa2b8d6bd5d610b3f5a4fea07b0eff6e</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-jsonschema/2.1.2/schema-kenerator-jsonschema-2.1.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-jsonschema/2.2.0/schema-kenerator-jsonschema-2.2.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-jsonschema/2.1.2/schema-kenerator-jsonschema-2.1.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-jsonschema/2.2.0/schema-kenerator-jsonschema-2.2.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

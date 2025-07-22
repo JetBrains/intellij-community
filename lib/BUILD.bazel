@@ -2163,22 +2163,22 @@ jvm_import(
 
 jvm_import(
   name = "io-github-smiley4-schema-kenerator-core",
-  jar = "@schema-kenerator-core-2_1_2_http//file",
-  source_jar = "@schema-kenerator-core-2_1_2-sources_http//file",
+  jar = "@schema-kenerator-core-2_2_0_http//file",
+  source_jar = "@schema-kenerator-core-2_2_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "io-github-smiley4-schema-kenerator-jsonschema",
-  jar = "@schema-kenerator-jsonschema-2_1_2_http//file",
-  source_jar = "@schema-kenerator-jsonschema-2_1_2-sources_http//file",
+  jar = "@schema-kenerator-jsonschema-2_2_0_http//file",
+  source_jar = "@schema-kenerator-jsonschema-2_2_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "io-github-smiley4-schema-kenerator-serialization",
-  jar = "@schema-kenerator-serialization-2_1_2_http//file",
-  source_jar = "@schema-kenerator-serialization-2_1_2-sources_http//file",
+  jar = "@schema-kenerator-serialization-2_2_0_http//file",
+  source_jar = "@schema-kenerator-serialization-2_2_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

@@ -25,6 +25,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -52,6 +53,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 
 private val logger = logger<McpServerService>()
+private val structuredToolOutputEnabled get() = Registry.`is`("mcp.server.structured.tool.output")
 
 @Service(Service.Level.APP)
 class McpServerService(val cs: CoroutineScope) {
@@ -136,9 +138,6 @@ class McpServerService(val cs: CoroutineScope) {
       }
     })
 
-
-
-
     return cs.embeddedServer(CIO, host = "127.0.0.1", port = freePort) {
       installHostValidation()
       installHttpRequestPropagation()
@@ -184,12 +183,20 @@ class McpServerService(val cs: CoroutineScope) {
   }
 
 private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromInitialRequest: String?): RegisteredTool {
+  val outputSchema = if (structuredToolOutputEnabled)  {
+    descriptor.outputSchema?.let {
+      Tool.Output(
+        it.propertiesSchema,
+        it.requiredProperties.toList())
+    }
+  }
+  else null
   val tool = Tool(name = descriptor.name,
                   description = descriptor.description,
                   inputSchema = Tool.Input(
-                    properties = descriptor.inputSchema.properties,
-                    required = descriptor.inputSchema.requiredParameters.toList()),
-                  outputSchema = null,
+                    properties = descriptor.inputSchema.propertiesSchema,
+                    required = descriptor.inputSchema.requiredProperties.toList()),
+                  outputSchema = outputSchema,
                   annotations = null)
   return RegisteredTool(tool) { request ->
     val httpRequest = currentCoroutineContext().httpRequestOrNull
@@ -335,6 +342,7 @@ private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromIniti
         is McpToolCallResultContent.Text -> TextContent(content.text)
       }
     }
-    return@RegisteredTool CallToolResult(content = contents, structuredContent = null, isError = callResult.isError)}
+    val structuredContent = if (structuredToolOutputEnabled) callResult.structuredContent else null
+    return@RegisteredTool CallToolResult(content = contents, structuredContent = structuredContent, callResult.isError)}
   }
 }

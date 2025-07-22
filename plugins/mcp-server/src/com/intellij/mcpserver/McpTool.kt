@@ -24,10 +24,13 @@ sealed interface McpToolCallResultContent {
   }
 }
 
-class McpToolCallResult(val content: Array<McpToolCallResultContent>, val isError: Boolean = false) {
+class McpToolCallResult(val content: Array<McpToolCallResultContent>, val structuredContent: JsonObject? = null, val isError: Boolean = false) {
   companion object {
-    fun error(errorMessage: String): McpToolCallResult = McpToolCallResult(arrayOf(McpToolCallResultContent.Text(errorMessage)), true)
-    fun text(text: String): McpToolCallResult = McpToolCallResult(arrayOf(McpToolCallResultContent.Text(text)))
+    fun error(errorMessage: String): McpToolCallResult = McpToolCallResult(content = arrayOf(McpToolCallResultContent.Text(errorMessage)),
+                                                                           structuredContent = null,
+                                                                           isError = true)
+    fun text(text: String, structuredContent: JsonObject? = null): McpToolCallResult = McpToolCallResult(content = arrayOf(McpToolCallResultContent.Text(text)),
+                                                                                                         structuredContent = structuredContent)
   }
   override fun toString(): String {
     val result = content.joinToString("\n")

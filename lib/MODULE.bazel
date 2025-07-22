@@ -2813,45 +2813,45 @@ http_file(
 )
 
 http_file(
-  name = "schema-kenerator-core-2_1_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-core/2.1.2/schema-kenerator-core-2.1.2.jar",
-  sha256 = "233ab1c77dfe17d0e5f3f5bbb7c4df88a63c8d2510d9455e0a78b4375ba1d3d3",
-  downloaded_file_path = "schema-kenerator-core-2.1.2.jar"
+  name = "schema-kenerator-core-2_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-core/2.2.0/schema-kenerator-core-2.2.0.jar",
+  sha256 = "c1c197ed03acaf46773176a001836219b6299fe267dc4751c2c28ae98edfa0f3",
+  downloaded_file_path = "schema-kenerator-core-2.2.0.jar"
 )
 
 http_file(
-  name = "schema-kenerator-core-2_1_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-core/2.1.2/schema-kenerator-core-2.1.2-sources.jar",
-  sha256 = "5babbe126991186162bec1e0b6056455659fa60cc796f9c9c633821e1c8a286c",
-  downloaded_file_path = "schema-kenerator-core-2.1.2-sources.jar"
+  name = "schema-kenerator-core-2_2_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-core/2.2.0/schema-kenerator-core-2.2.0-sources.jar",
+  sha256 = "dfc5be80a3576567b8f7ecb5a080e53a7b725c6fa0b936c0ff9f93e5f53b842b",
+  downloaded_file_path = "schema-kenerator-core-2.2.0-sources.jar"
 )
 
 http_file(
-  name = "schema-kenerator-jsonschema-2_1_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-jsonschema/2.1.2/schema-kenerator-jsonschema-2.1.2.jar",
-  sha256 = "2bd17b095b093480dd9aa6bbdf9672cb2bd886a19907df9a4abf293bc88f9a7c",
-  downloaded_file_path = "schema-kenerator-jsonschema-2.1.2.jar"
+  name = "schema-kenerator-jsonschema-2_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-jsonschema/2.2.0/schema-kenerator-jsonschema-2.2.0.jar",
+  sha256 = "81981241b8df2eeee48efac05798e7beaa2b8d6bd5d610b3f5a4fea07b0eff6e",
+  downloaded_file_path = "schema-kenerator-jsonschema-2.2.0.jar"
 )
 
 http_file(
-  name = "schema-kenerator-jsonschema-2_1_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-jsonschema/2.1.2/schema-kenerator-jsonschema-2.1.2-sources.jar",
-  sha256 = "a37164de16ab3a743508c5ce832440e8739a9bb5cdb55e1e3670155cdc4aed41",
-  downloaded_file_path = "schema-kenerator-jsonschema-2.1.2-sources.jar"
+  name = "schema-kenerator-jsonschema-2_2_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-jsonschema/2.2.0/schema-kenerator-jsonschema-2.2.0-sources.jar",
+  sha256 = "20f78e3c29776a8700cf4403b79bd655f6d5294312f6b3283ee15f41a0ed7f2d",
+  downloaded_file_path = "schema-kenerator-jsonschema-2.2.0-sources.jar"
 )
 
 http_file(
-  name = "schema-kenerator-serialization-2_1_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-serialization/2.1.2/schema-kenerator-serialization-2.1.2.jar",
-  sha256 = "94e34625dab2aa5af5d02c74e5aa210bb6c2738673dd9685dadeb15a0d6eb55c",
-  downloaded_file_path = "schema-kenerator-serialization-2.1.2.jar"
+  name = "schema-kenerator-serialization-2_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-serialization/2.2.0/schema-kenerator-serialization-2.2.0.jar",
+  sha256 = "9c4a9713b2722b3b124210e89c3702c3e18c19156a3a06fa6bcef43a850299ca",
+  downloaded_file_path = "schema-kenerator-serialization-2.2.0.jar"
 )
 
 http_file(
-  name = "schema-kenerator-serialization-2_1_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-serialization/2.1.2/schema-kenerator-serialization-2.1.2-sources.jar",
-  sha256 = "2dc0e0770a760a15020cb6fc973b06160a5ec561203b7c7444d7ac1f46101c41",
-  downloaded_file_path = "schema-kenerator-serialization-2.1.2-sources.jar"
+  name = "schema-kenerator-serialization-2_2_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-serialization/2.2.0/schema-kenerator-serialization-2.2.0-sources.jar",
+  sha256 = "9da2d37117e0be4aaf4fe7fb47c6aee1a2c0d8ca01b3ee3e56941f8293d882ac",
+  downloaded_file_path = "schema-kenerator-serialization-2.2.0-sources.jar"
 )
 
 http_file(

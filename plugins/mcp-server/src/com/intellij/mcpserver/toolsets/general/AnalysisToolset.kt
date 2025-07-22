@@ -218,8 +218,9 @@ class AnalysisToolset : McpToolset {
   data class FileProblemsResult(
     val filePath: String,
     val errors: List<FileProblem>,
+    @property:McpDescription(Constants.TIMED_OUT_DESCRIPTION)
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
-    val timedOut: Boolean = false,
+    val timedOut: Boolean? = false,
   )
 
   @Serializable
@@ -234,8 +235,9 @@ class AnalysisToolset : McpToolset {
   @Serializable
   data class ProjectProblemsResult(
     val problems: List<ProjectProblem>,
+    @property:McpDescription(Constants.TIMED_OUT_DESCRIPTION)
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
-    val timedOut: Boolean = false,
+    val timedOut: Boolean? = false,
   )
 
   @Serializable
