@@ -7,12 +7,14 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Parent
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 
 interface ParentTestEntity : WorkspaceEntity {
   val child: ChildTestEntity?
   val secondChild: SiblingEntity?
   val customParentProperty: String
+  val parentEntityRoot: VirtualFileUrl
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -21,6 +23,7 @@ interface ParentTestEntity : WorkspaceEntity {
     var child: ChildTestEntity.Builder?
     var secondChild: SiblingEntity.Builder?
     var customParentProperty: String
+    var parentEntityRoot: VirtualFileUrl
   }
 
   companion object : EntityType<ParentTestEntity, Builder>() {
@@ -29,11 +32,13 @@ interface ParentTestEntity : WorkspaceEntity {
     @JvmName("create")
     operator fun invoke(
       customParentProperty: String,
+      parentEntityRoot: VirtualFileUrl,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
     ): Builder {
       val builder = builder()
       builder.customParentProperty = customParentProperty
+      builder.parentEntityRoot = parentEntityRoot
       builder.entitySource = entitySource
       init?.invoke(builder)
       return builder

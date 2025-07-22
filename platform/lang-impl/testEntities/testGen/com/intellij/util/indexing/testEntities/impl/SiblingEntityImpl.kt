@@ -20,6 +20,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.indexing.testEntities.ParentTestEntity
 import com.intellij.util.indexing.testEntities.SiblingEntity
 

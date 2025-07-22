@@ -20,6 +20,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.indexing.testEntities.ChildTestEntity
 import com.intellij.util.indexing.testEntities.ParentTestEntity
 import com.intellij.util.indexing.testEntities.SiblingEntity
@@ -52,6 +53,12 @@ internal class ParentTestEntityImpl(private val dataSource: ParentTestEntityData
     get() {
       readField("customParentProperty")
       return dataSource.customParentProperty
+    }
+
+  override val parentEntityRoot: VirtualFileUrl
+    get() {
+      readField("parentEntityRoot")
+      return dataSource.parentEntityRoot
     }
 
   override val entitySource: EntitySource
@@ -87,6 +94,7 @@ internal class ParentTestEntityImpl(private val dataSource: ParentTestEntityData
       // Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
 
+      index(this, "parentEntityRoot", this.parentEntityRoot)
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
@@ -100,6 +108,9 @@ internal class ParentTestEntityImpl(private val dataSource: ParentTestEntityData
       if (!getEntityData().isCustomParentPropertyInitialized()) {
         error("Field ParentTestEntity#customParentProperty should be initialized")
       }
+      if (!getEntityData().isParentEntityRootInitialized()) {
+        error("Field ParentTestEntity#parentEntityRoot should be initialized")
+      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -111,6 +122,7 @@ internal class ParentTestEntityImpl(private val dataSource: ParentTestEntityData
       dataSource as ParentTestEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.customParentProperty != dataSource.customParentProperty) this.customParentProperty = dataSource.customParentProperty
+      if (this.parentEntityRoot != dataSource.parentEntityRoot) this.parentEntityRoot = dataSource.parentEntityRoot
       updateChildToParentReferences(parents)
     }
 
@@ -204,6 +216,16 @@ internal class ParentTestEntityImpl(private val dataSource: ParentTestEntityData
         changedProperty.add("customParentProperty")
       }
 
+    override var parentEntityRoot: VirtualFileUrl
+      get() = getEntityData().parentEntityRoot
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).parentEntityRoot = value
+        changedProperty.add("parentEntityRoot")
+        val _diff = diff
+        if (_diff != null) index(this, "parentEntityRoot", value)
+      }
+
     override fun getEntityClass(): Class<ParentTestEntity> = ParentTestEntity::class.java
   }
 }
@@ -211,8 +233,10 @@ internal class ParentTestEntityImpl(private val dataSource: ParentTestEntityData
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ParentTestEntityData : WorkspaceEntityData<ParentTestEntity>() {
   lateinit var customParentProperty: String
+  lateinit var parentEntityRoot: VirtualFileUrl
 
   internal fun isCustomParentPropertyInitialized(): Boolean = ::customParentProperty.isInitialized
+  internal fun isParentEntityRootInitialized(): Boolean = ::parentEntityRoot.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ParentTestEntity> {
     val modifiable = ParentTestEntityImpl.Builder(null)
@@ -241,7 +265,7 @@ internal class ParentTestEntityData : WorkspaceEntityData<ParentTestEntity>() {
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
-    return ParentTestEntity(customParentProperty, entitySource) {
+    return ParentTestEntity(customParentProperty, parentEntityRoot, entitySource) {
     }
   }
 
@@ -258,6 +282,7 @@ internal class ParentTestEntityData : WorkspaceEntityData<ParentTestEntity>() {
 
     if (this.entitySource != other.entitySource) return false
     if (this.customParentProperty != other.customParentProperty) return false
+    if (this.parentEntityRoot != other.parentEntityRoot) return false
     return true
   }
 
@@ -268,18 +293,21 @@ internal class ParentTestEntityData : WorkspaceEntityData<ParentTestEntity>() {
     other as ParentTestEntityData
 
     if (this.customParentProperty != other.customParentProperty) return false
+    if (this.parentEntityRoot != other.parentEntityRoot) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
     result = 31 * result + customParentProperty.hashCode()
+    result = 31 * result + parentEntityRoot.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
     result = 31 * result + customParentProperty.hashCode()
+    result = 31 * result + parentEntityRoot.hashCode()
     return result
   }
 }
