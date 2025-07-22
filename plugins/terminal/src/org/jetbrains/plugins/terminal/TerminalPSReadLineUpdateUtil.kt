@@ -56,8 +56,8 @@ object TerminalPSReadLineUpdateUtil {
     val os = OS.CURRENT
     val isWin10 = os == OS.Windows && os.isAtLeast(10, 0) && !os.isAtLeast(11, 0)
     val updateRejected = PropertiesComponent.getInstance().getBoolean(UPDATE_REJECTED_PROPERTY)
-    val alreadyEnabled = options.envVariables[ASK_UPDATE_ENV] == "true"
-    val alreadyDisabled = options.envVariables[ASK_UPDATE_ENV] == "false"
+    val alreadyEnabled = options.envVariables[ASK_UPDATE_ENV].equals("true", ignoreCase = true)
+    val alreadyDisabled = options.envVariables[ASK_UPDATE_ENV].equals("false", ignoreCase = true)
     // Perform configuration again if the value is already configured to add localization-related envs.
     return if (isWin10 && !updateRejected && !alreadyDisabled || alreadyEnabled) {
       configureAskingForUpdate(options)
