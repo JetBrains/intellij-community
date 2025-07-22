@@ -2,14 +2,13 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider;
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +64,7 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern 
     for (int i = 0; i < arguments.size(); i++) {
       final var member = arguments.get(i);
       if (member instanceof PyKeywordPattern keywordPattern)  {
-        if (resolveTypeMember(classType, keywordPattern.getKeyword(), context) == null) {
+        if (getMemberType(classType, keywordPattern.getKeyword(), context) == null) {
           return false;
         }
         final var valuePattern = keywordPattern.getValuePattern();
@@ -93,9 +92,7 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern 
     
     if (pattern instanceof PyKeywordPattern keywordPattern) {
       if (context.getType(this) instanceof PyClassType classType) {
-        final PyTypedElement instanceAttribute = as(resolveTypeMember(classType, keywordPattern.getKeyword(), context), PyTypedElement.class);
-        if (instanceAttribute == null) return null;
-        return context.getType(instanceAttribute);
+        return Ref.deref(getMemberType(classType, keywordPattern.getKeyword(), context));
       }
       return null;
     }
@@ -117,10 +114,10 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern 
         List<String> matchArgs = getMatchArgs(classType, context);
         if (matchArgs == null || index >= matchArgs.size()) return null;
 
-        final PyTypedElement instanceAttribute = as(resolveTypeMember(classType, matchArgs.get(index), context), PyTypedElement.class);
-        if (instanceAttribute == null) return null;
+        final Ref<PyType> memberType = getMemberType(classType, matchArgs.get(index), context);
+        if (memberType == null) return null;
 
-        return PyTypeChecker.substitute(context.getType(instanceAttribute), PyTypeChecker.unifyReceiver(classType, context), context);
+        return PyTypeChecker.substitute(memberType.get(), PyTypeChecker.unifyReceiver(classType, context), context);
       }
       return null;
     }).collect(PyTypeUtil.toUnion());
@@ -141,15 +138,19 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern 
     final PyClass cls = type.getPyClass();
     List<String> matchArgs = cls.getOwnMatchArgs();
     if (matchArgs == null) {
+      matchArgs = PyNamedTupleTypeProvider.Companion.getGeneratedMatchArgs(type, context);
+    }
+    if (matchArgs == null) {
       matchArgs = PyDataclassTypeProvider.Companion.getGeneratedMatchArgs(cls, context);
     }
+    
     return matchArgs;
   }
 
   @Nullable
-  static PsiElement resolveTypeMember(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
+  static Ref<PyType> getMemberType(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
     final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
-    final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
-    return !ContainerUtil.isEmpty(results) ? results.get(0).getElement() : null;
+    final List<PyTypedResolveResult> results = type.getMemberTypes(name, null, AccessDirection.READ, resolveContext);
+    return ContainerUtil.isEmpty(results) ? null : Ref.create(getFirstItem(results).getType());
   }
 }
