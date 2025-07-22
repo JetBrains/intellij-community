@@ -55,7 +55,7 @@ internal class TestPythonRepositoryManager(
   }
 
   override suspend fun getVersions(packageName: String, repository: PyPackageRepository?): List<String> {
-    TODO("Not yet implemented")
+    return packageDetails?.availableVersions?.toList().orEmpty()
   }
 
   override suspend fun getLatestVersion(packageName: String, repository: PyPackageRepository?): PyPackageVersion {
