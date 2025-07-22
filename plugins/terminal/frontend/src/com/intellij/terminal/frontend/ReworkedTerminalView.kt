@@ -151,7 +151,7 @@ internal class ReworkedTerminalView(
     terminalSearchController = TerminalSearchController(project)
 
     blocksModel = TerminalBlocksModelImpl(outputEditor.document)
-    val typeAhead = TerminalTypeAhead(outputModel, blocksModel)
+    val typeAhead = TerminalTypeAhead(outputModel, blocksModel, outputEditor)
     outputEditor.putUserData(TerminalTypeAhead.KEY, typeAhead)
     TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
     outputEditor.putUserData(TerminalBlocksModel.KEY, blocksModel)

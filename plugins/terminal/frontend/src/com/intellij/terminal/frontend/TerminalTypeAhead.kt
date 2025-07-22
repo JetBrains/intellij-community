@@ -1,7 +1,9 @@
 package com.intellij.terminal.frontend
 
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
@@ -9,10 +11,12 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 
 internal class TerminalTypeAhead(
   private val outputModel: TerminalOutputModel,
   private val blocksModel: TerminalBlocksModel,
+  private val editor: Editor,
 ) {
   
   companion object {
@@ -21,9 +25,19 @@ internal class TerminalTypeAhead(
     private val LOG = logger<TerminalTypeAhead>()
   }
 
+  private fun runUpdate(update: Runnable) {
+    val lookup = LookupManager.getActiveLookup(editor)
+    if (lookup != null && lookup.editor.isReworkedTerminalEditor) {
+      lookup.performGuardedChange(update)
+    }
+    else {
+      update.run()
+    }
+  }
+
   fun stringTyped(string: String) {
     if (isDisabled()) return
-    outputModel.insertAtCursor(string)
+    runUpdate { outputModel.insertAtCursor(string) }
     LOG.trace { "String typed prediction inserted: '$string'" }
   }
   
@@ -31,7 +45,7 @@ internal class TerminalTypeAhead(
     if (isDisabled()) return
     val commandStartOffset = blocksModel.blocks.lastOrNull()?.commandStartOffset
     if (commandStartOffset != null && outputModel.cursorOffsetState.value > commandStartOffset) {
-      outputModel.backspace()
+      runUpdate {outputModel.backspace()}
       LOG.trace { "Backspace prediction applied" }
     }
   }
