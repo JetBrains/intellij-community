@@ -12,7 +12,7 @@ pluginManagement {
         gradlePluginPortal()
         mavenCentral()
     }
-    plugins { kotlin("jvm") version "2.1.0" }
+    plugins { kotlin("jvm") version "2.2.20" }
 }
 
 dependencyResolutionManagement {
@@ -27,8 +27,8 @@ dependencyResolutionManagement {
 }
 
 plugins {
-    id("com.gradle.enterprise") version "3.15.1"
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.7.0"
+    id("com.gradle.develocity") version "4.1"
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
 include(
@@ -53,11 +53,10 @@ include(
     ":ui-tests",
 )
 
-gradleEnterprise {
+develocity {
     buildScan {
-        publishAlwaysIf(System.getenv("CI") == "true")
-        termsOfServiceUrl = "https://gradle.com/terms-of-service"
-        termsOfServiceAgree = "yes"
+        publishing.onlyIf { System.getenv("CI") == "true" }
+        termsOfUseUrl.set("https://gradle.com/help/legal-terms-of-use")
+        termsOfUseAgree.set("yes")
     }
 }
-
