@@ -16,10 +16,15 @@ class GitCheckoutFromInputAction
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    val repositories = getRepositoriesForTopLevelActions(e) { it.place == GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE }
-    e.presentation.isEnabledAndVisible = project != null && !repositories.isEmpty()
+    if (project == null || e.place != GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
 
-    disableActionIfAnyRepositoryIsFresh(e, repositories.orEmpty(), GitBundle.message("action.not.possible.in.fresh.repo.checkout"))
+    val repositories = getRepositoriesForTopLevelActions(e)
+    e.presentation.isEnabledAndVisible = !repositories.isEmpty()
+
+    disableActionIfAnyRepositoryIsFresh(e, repositories, GitBundle.message("action.not.possible.in.fresh.repo.checkout"))
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
@@ -27,8 +32,8 @@ class GitCheckoutFromInputAction
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project!!
-    val repositories = getRepositoriesForTopLevelActions(e) { it.place == GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE }
+    val project = e.project ?: return
+    val repositories = getRepositoriesForTopLevelActions(e)
 
     // TODO: on type check ref validity, on OK check ref existence.
     val dialog = GitRefDialog(project, repositories,
