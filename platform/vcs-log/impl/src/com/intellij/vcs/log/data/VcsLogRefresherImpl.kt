@@ -14,17 +14,15 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogData.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
-import com.intellij.platform.vcs.impl.shared.telemetry.VcsTelemetrySpan
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.DataPack.ErrorDataPack
 import com.intellij.vcs.log.data.SingleTaskController.SingleTask
 import com.intellij.vcs.log.data.SingleTaskController.SingleTaskImpl
+import com.intellij.vcs.log.data.util.trace
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.impl.RequirementsImpl
-import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Future
@@ -92,7 +90,7 @@ internal class VcsLogRefresherImpl(
 
   private fun loadFirstBlock(): DataPack {
     try {
-      return trace(Initializing) {
+      return tracer.trace(Initializing) {
         val commitCountRequirements = CommitCountRequirements(recentCommitCount)
         val data = loadRecentData(providers.keys.associateWith { commitCountRequirements })
         val compoundList = multiRepoJoin(data.getCommits()).take(recentCommitCount)
@@ -110,7 +108,7 @@ internal class VcsLogRefresherImpl(
 
   private fun loadUpdatedDataPack(dataPack: DataPack, loadedInfo: LogInfo, roots: Collection<VirtualFile>): DataPack? =
     try {
-      trace(Refreshing) {
+      tracer.trace(Refreshing) {
         val permanentGraph = dataPack.permanentGraph
         val currentRefs = dataPack.refsModel.allRefsByRoot
         var commitCount = recentCommitCount
@@ -149,7 +147,7 @@ internal class VcsLogRefresherImpl(
 
   private fun loadFullLog(): DataPack =
     try {
-      trace(LoadingFullLog) {
+      tracer.trace(LoadingFullLog) {
         val logInfo = readFullLogFromVcs()
         val graphCommits = multiRepoJoin(logInfo.getCommits())
         DataPack.build(graphCommits, logInfo.getRefs(), providers, storage, true)
@@ -164,7 +162,7 @@ internal class VcsLogRefresherImpl(
     }
 
   private fun loadSmallDataPack(): DataPack =
-    trace(PartialRefreshing) {
+    tracer.trace(PartialRefreshing) {
       LOG.debug("Building a small datapack for $smallDataPackCommitsCount commits")
       try {
         val commitCount = smallDataPackCommitsCount
@@ -194,13 +192,13 @@ internal class VcsLogRefresherImpl(
     }
 
   private fun loadRecentData(requirements: Map<VirtualFile, VcsLogProvider.Requirements>): LogInfo {
-    return trace(ReadingRecentCommits) {
+    return tracer.trace(ReadingRecentCommits) {
       val logInfo = LogInfo(storage)
       for ((root, requirements) in requirements) {
         val provider = requireNotNull(providers[root]) { "Cannot find provider for root $root" }
-        trace(ReadingRecentCommitsInRoot) {
+        tracer.trace(ReadingRecentCommitsInRoot) {
           val data = provider.readFirstBlock(root, requirements)
-          val commits = trace(CompactingCommits) {
+          val commits = tracer.trace(CompactingCommits) {
             data.getCommits().map {
               compactCommit(it, root)
             }
@@ -224,10 +222,10 @@ internal class VcsLogRefresherImpl(
   }
 
   private fun readFullLogFromVcs(): LogInfo =
-    trace(ReadingAllCommits) {
+    tracer.trace(ReadingAllCommits) {
       val logInfo = LogInfo(storage)
       for ((root, provider) in providers.entries) {
-        trace(ReadingAllCommitsInRoot) { span ->
+        tracer.trace(ReadingAllCommitsInRoot) { span ->
           span.setAttribute("rootName", root.getName())
           val graphCommits = mutableListOf<GraphCommit<Int>>()
           val data = provider.readAllHashes(root) {
@@ -257,7 +255,7 @@ internal class VcsLogRefresherImpl(
   ): List<GraphCommit<Int>>? {
     if (fullLog.isEmpty()) return recentCommits
 
-    return trace(JoiningNewAndOldCommits) {
+    return tracer.trace(JoiningNewAndOldCommits) {
       val prevRefIndices = previousRefs.values.flatMapTo(mutableSetOf()) { it.getCommits() }
       val newRefIndices = newRefs.values.flatMapTo(mutableSetOf()) { it.getCommits() }
 
@@ -278,7 +276,7 @@ internal class VcsLogRefresherImpl(
   }
 
   private fun <T : GraphCommit<Int>> multiRepoJoin(commits: Collection<List<T>>): List<T> =
-    trace(JoiningMultiRepoCommits) {
+    tracer.trace(JoiningMultiRepoCommits) {
       VcsLogMultiRepoJoiner<Int, T>().join(commits)
     }
 
@@ -361,8 +359,6 @@ internal class VcsLogRefresherImpl(
       }
     }
   }
-
-  private inline fun <T> trace(span: VcsTelemetrySpan, operation: (Span) -> T): T = tracer.spanBuilder(span.getName()).use(operation)
 }
 
 private val smallDataPackCommitsCount: Int
