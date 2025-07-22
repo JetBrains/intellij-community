@@ -3459,14 +3459,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  // not used on macOS and some other platforms - lazy creation
-  private static final class BasicScrollBarUiButtonHolder {
-    private static final MethodHandle decrButtonField =
-      MethodHandleUtil.getPrivateField(BasicScrollBarUI.class, "decrButton", JButton.class);
-    private static final MethodHandle incrButtonField =
-      MethodHandleUtil.getPrivateField(BasicScrollBarUI.class, "incrButton", JButton.class);
-  }
-
   final class MyScrollBar extends OpaqueAwareScrollBar {
     private static final @NonNls String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
     private ScrollBarUI myPersistentUI;
