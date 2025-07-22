@@ -24,13 +24,13 @@ label_flag(
 
 label_flag(
     name = "jvm-builder",
-    build_setting_default = "//src/jvm-builder:jvm-builder_deploy.jar",
+    build_setting_default = "//jvm-inc-builder:jvm-inc-builder_deploy.jar",
     visibility = ["//visibility:public"],
 )
 
 label_flag(
     name = "jvm-builder-jvm_flags",
-    build_setting_default = "//src/jvm-builder:jvm-builder-jvm_flags",
+    build_setting_default = "//jvm-inc-builder:jvm-inc-builder-jvm_flags",
     visibility = ["//visibility:public"],
 )
 
