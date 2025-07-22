@@ -82,6 +82,23 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   @NotNull
   Condition<?> getDisposed();
 
+  /**
+   * Gets the service by its interface class.
+   * <p>
+   * <p>This method is thread-safe and does not require wrapping in a read or write action.
+   * <p>
+   * If container is disposed, a {@link java.util.concurrent.CancellationException} will be thrown.
+   * Note that accessing {@link #isDisposed()} is not recommended - it's better to rely on cancellation.
+   * Container disposal is treated as a cancellation.
+   * <p>
+   * While internally {@link com.intellij.serviceContainer.AlreadyDisposedException} may be thrown
+   * (which extends {@link java.util.concurrent.CancellationException}),
+   * callers should only rely on {@link java.util.concurrent.CancellationException} being thrown.
+   *
+   * @param serviceClass service interface class
+   * @return service instance, or null if no service found
+   * @throws java.util.concurrent.CancellationException if the container is disposed
+   */
   <T> T getService(@NotNull Class<T> serviceClass);
 
   /**
