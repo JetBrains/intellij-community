@@ -1397,6 +1397,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     window.setAutoRequestFocus(myRequestFocus);
 
+    if (myCaption instanceof TitlePanel titlePanel) {
+      window.getAccessibleContext()
+        .setAccessibleName(StringUtil.unescapeXmlEntities(titlePanel.getLabel().getText()).replace("&nbsp;", " "));
+    }
+
     if (roundedCornerParams != null) {
       WindowRoundedCornersManager.setRoundedCorners(window, roundedCornerParams);
     }
