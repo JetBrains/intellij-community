@@ -175,8 +175,8 @@ f:org.jetbrains.jewel.samples.showcase.components.TooltipsKt
 f:org.jetbrains.jewel.samples.showcase.components.TypographyKt
 - sf:TypographyShowcase(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.views.ComponentsViewKt
-- sf:ComponentsToolBar(org.jetbrains.jewel.samples.showcase.views.ComponentsViewModel,org.jetbrains.jewel.ui.component.styling.IconButtonMetrics,androidx.compose.runtime.Composer,I):V
-- sf:ComponentsView(org.jetbrains.jewel.samples.showcase.views.ComponentsViewModel,org.jetbrains.jewel.ui.component.styling.IconButtonMetrics,androidx.compose.runtime.Composer,I):V
+- sf:ComponentsToolBar(org.jetbrains.jewel.ui.component.styling.IconButtonMetrics,java.util.List,org.jetbrains.jewel.samples.showcase.views.ViewInfo,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
+- sf:ComponentsView(org.jetbrains.jewel.samples.showcase.views.ComponentsViewModel,org.jetbrains.jewel.ui.component.styling.IconButtonMetrics,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.views.ComponentsViewModel
 - sf:$stable:I
 - <init>(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible,org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenScrolling):V
