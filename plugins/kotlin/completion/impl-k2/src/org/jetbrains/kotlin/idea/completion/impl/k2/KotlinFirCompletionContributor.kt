@@ -112,6 +112,8 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         parameters: KotlinFirCompletionParameters,
         positionContext: KotlinRawPositionContext
     ) {
+        if (!RegistryManager.getInstance().`is`("kotlin.k2.dot.add.enabled")) return
+
         if (positionContext is KotlinExpressionNameReferencePositionContext &&
             parameters.offset > 0
         ) {
