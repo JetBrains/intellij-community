@@ -8,3 +8,5 @@
 fun <T> test(list: List<String>) {
     list.<caret>maxByOrNull<T, T> { it }
 }
+
+// IGNORE_K2
