@@ -13,6 +13,7 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
 import com.jetbrains.python.run.TargetConfigurationWithLocalFsAccessExKt;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,14 +58,15 @@ public final class PyConfigurableInterpreterList {
   /**
    * @param module if not null and module resides on certain target, returns only SDKs for this target
    */
-  public @NotNull List<Sdk> getAllPythonSdks(final @Nullable Project project, @Nullable Module module) {
+  @ApiStatus.Internal
+  public @NotNull List<Sdk> getAllPythonSdks(final @Nullable Project project, @Nullable Module module, boolean allowRemoteInFreeTier) {
     var targetModuleSitsOn = (module != null)
                              ? PythonInterpreterTargetEnvironmentFactory.Companion.getTargetModuleResidesOn(module)
                              : null;
 
     List<Sdk> result = new ArrayList<>();
     for (Sdk sdk : getModel().getSdks()) {
-      if (!PythonSdkUtil.isPythonSdk(sdk)) {
+      if (!PythonSdkUtil.isPythonSdk(sdk, allowRemoteInFreeTier)) {
         continue;
       }
 
@@ -81,7 +83,7 @@ public final class PyConfigurableInterpreterList {
   }
 
   public @NotNull List<Sdk> getAllPythonSdks() {
-    return getAllPythonSdks(null, null);
+    return getAllPythonSdks(null, null, false);
   }
 
   private static class PyInterpreterComparator implements Comparator<Sdk> {

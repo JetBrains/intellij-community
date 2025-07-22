@@ -71,20 +71,38 @@ public final class PythonSdkUtil {
   private static final Key<PySkeletonHeader> CACHED_SKELETON_HEADER = Key.create("CACHED_SKELETON_HEADER");
 
   public static boolean isPythonSdk(@NotNull Sdk sdk) {
+    return isPythonSdk(sdk, false);
+  }
+
+  @ApiStatus.Internal
+  public static boolean isPythonSdk(@NotNull Sdk sdk, boolean allowRemoteInFreeTier) {
     if (!PyNames.PYTHON_SDK_ID_NAME.equals(sdk.getSdkType().getName())) {
       return false;
     }
 
     // PY-79923: Should explicitly filter sdks created while pro was active
-    if (PlatformUtils.isPyCharm() && !PlatformUtils.isDataSpell()) {
-      return !isRemote(sdk) || !PluginManagerCore.isDisabled(ULTIMATE_PLUGIN_ID);
+    if (isFreeTier()) {
+      return allowRemoteInFreeTier || (!isRemote(sdk));
     }
 
     return true;
   }
 
-  public static @Unmodifiable List<Sdk> getAllSdks() {
-    return ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(), PythonSdkUtil::isPythonSdk);
+  /**
+   * @return PyCharm with Pro mode disabled
+   */
+  @ApiStatus.Internal
+  public static boolean isFreeTier() {
+    return PlatformUtils.isPyCharm() && (!PlatformUtils.isDataSpell()) && PluginManagerCore.isDisabled(ULTIMATE_PLUGIN_ID);
+  }
+
+  public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks() {
+    return getAllSdks(false);
+  }
+
+  @ApiStatus.Internal
+  public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks(boolean allowRemoteInFreeTier) {
+    return ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(), sdk -> isPythonSdk(sdk, allowRemoteInFreeTier));
   }
 
   private static @Nullable PySkeletonHeader readSkeletonHeader(@NotNull VirtualFile file, @NotNull Sdk pythonSdk) {

@@ -64,6 +64,7 @@ import com.jetbrains.python.debugger.PyTargetPathMapper;
 import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.library.PythonLibraryType;
+import com.jetbrains.python.packaging.PyExecutionException;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
@@ -1047,22 +1048,21 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return interpreterPath;
   }
 
-  private @NotNull HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter() {
-    return getPythonTargetInterpreter(myConfig.getProject(), getSdk());
+  private @NotNull HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter() throws ExecutionException {
+    Sdk sdk = getSdk();
+    if (sdk == null) {
+      throw new PyExecutionException(PyBundle.message("runcfg.error.message.cannot.find.python.interpreter"));
+    }
+    return getPythonTargetInterpreter(myConfig.getProject(), sdk);
   }
 
-  public static @NotNull HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter(@NotNull Project project, @Nullable Sdk sdk) {
-    if (sdk == null) {
-      throw new IllegalStateException("SDK is not defined for Run Configuration");
-    }
-    else {
+  public static @NotNull HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter(@NotNull Project project, @NotNull Sdk sdk) {
       HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest =
         PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project);
       if (helpersAwareTargetRequest == null) {
         throw new IllegalStateException("Cannot find execution environment for SDK " + sdk);
       }
       return helpersAwareTargetRequest;
-    }
   }
 
   /**

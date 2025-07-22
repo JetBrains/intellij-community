@@ -4,7 +4,6 @@ package com.jetbrains.python.configuration;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,7 +23,8 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.*;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ui.JBUI;
@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import static com.jetbrains.python.sdk.PySdkRenderingKt.groupModuleSdksByTypes;
+import static com.jetbrains.python.sdk.PythonSdkUtil.isRemote;
 
 public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
@@ -65,6 +66,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private final @NotNull ComboBox<Object> mySdkCombo;
 
   private final @NotNull PyInstalledPackagesPanel myPackagesPanel;
+  private final @Nullable PyPanelWithPromo myPanelWithPromo;
 
   private final @Nullable Disposable myDisposable;
 
@@ -85,6 +87,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     final PackagesNotificationPanel packagesNotificationPanel = new PyPackagesNotificationPanel();
     myPackagesPanel = new PyInstalledPackagesPanel(myProject, packagesNotificationPanel);
     myPackagesPanel.setShowGrid(false);
+    boolean freeTier = PythonSdkUtil.isFreeTier();
+    myPanelWithPromo = freeTier ? new PyPanelWithPromo(myPackagesPanel) : null;
 
     final PyCustomSdkUiProvider customUiProvider = PyCustomSdkUiProvider.getInstance();
     myDisposable = customUiProvider == null ? null : Disposer.newDisposable();
@@ -95,7 +99,9 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     additionalAction = new DropDownLink<>(PyBundle.message("active.sdk.dialog.link.add.interpreter.text"),
                                           link -> createAddInterpreterPopup(project, module, link, this::updateSdkListAndSelect));
 
-    myMainPanel = buildPanel(project, mySdkCombo, additionalAction, myPackagesPanel, packagesNotificationPanel, customizer);
+    myMainPanel =
+      buildPanel(project, mySdkCombo, additionalAction, freeTier ? myPanelWithPromo.getPanel() : myPackagesPanel, packagesNotificationPanel,
+                 customizer);
 
     myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
     myProjectSdksModel = myInterpreterList.getModel();
@@ -160,9 +166,10 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private static @NotNull JPanel buildPanel(@NotNull Project project,
                                             @NotNull ComboBox<?> sdkComboBox,
                                             @NotNull JComponent additionalAction,
-                                            @NotNull PyInstalledPackagesPanel installedPackagesPanel,
+                                            @NotNull JPanel promotionPanel,
                                             @NotNull PackagesNotificationPanel packagesNotificationPanel,
                                             @Nullable Pair<PyCustomSdkUiProvider, Disposable> customizer) {
+
     final JPanel result = new JPanel(new GridBagLayout());
 
     final GridBagConstraints c = new GridBagConstraints();
@@ -196,7 +203,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     c.gridwidth = 3;
     c.gridheight = GridBagConstraints.RELATIVE;
     c.fill = GridBagConstraints.BOTH;
-    result.add(installedPackagesPanel, c);
+    result.add(promotionPanel, c);
 
     c.gridheight = GridBagConstraints.REMAINDER;
     c.gridx = 0;
@@ -218,6 +225,18 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   protected void onSdkSelected() {
     final Sdk sdk = getOriginalSelectedSdk();
+
+    if (sdk != null) {
+      // Non-null means we are in free tier mode, so must switch between packages and promo panel
+      if (myPanelWithPromo != null) {
+        boolean remote = isRemote(sdk);
+        myPanelWithPromo.setPromoMode(remote);
+        if (remote) {
+          return;
+        }
+      }
+    }
+
     refreshPackages(sdk);
   }
 
@@ -273,8 +292,9 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     Sdk sdk = null;
     if (myModule == null) {
       sdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
-    } else {
-      sdk =  ModuleRootManager.getInstance(myModule).getSdk();
+    }
+    else {
+      sdk = ModuleRootManager.getInstance(myModule).getSdk();
     }
 
     if (sdk != null && PythonSdkUtil.isPythonSdk(sdk)) {
@@ -315,7 +335,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   protected @NotNull List<Sdk> getAvailableSdks() {
-    return myInterpreterList.getAllPythonSdks(myProject, myModule);
+    return myInterpreterList.getAllPythonSdks(myProject, myModule, true);
   }
 
   private void updateSdkListAndSelect(@Nullable Sdk selectedSdk) {
