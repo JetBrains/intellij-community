@@ -43,6 +43,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.platform.eel.provider.utils.EelProcessUtilsKt.getStderrString;
 import static com.intellij.platform.eel.provider.utils.EelProcessUtilsKt.getStdoutString;
+import static com.jetbrains.python.SdkUiUtilKt.isVirtualEnv;
 
 
 /**
@@ -147,7 +148,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
   @Override
   public boolean canInstallToUser() {
-    return !PythonSdkUtil.isVirtualEnv(mySdk);
+    return !isVirtualEnv(mySdk);
   }
 
   @Override

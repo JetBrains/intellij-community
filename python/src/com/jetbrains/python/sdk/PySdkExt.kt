@@ -30,12 +30,13 @@ import com.intellij.util.PathUtil
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.isCondaVirtualEnv
+import com.jetbrains.python.isVirtualEnv
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.conda.isConda
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReadyToUseSdk
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -149,7 +150,7 @@ fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDat
 
 @Internal
 fun filterSharedCondaEnvs(module: Module?, existingSdks: List<Sdk>): List<Sdk> {
-  return existingSdks.filter { PythonSdkUtil.isPythonSdk(it) && PythonSdkUtil.isConda(it) && !it.isAssociatedWithAnotherModule(module) }
+  return existingSdks.filter { PythonSdkUtil.isPythonSdk(it) && it.isCondaVirtualEnv && !it.isAssociatedWithAnotherModule(module) }
 }
 
 @Internal
@@ -451,10 +452,8 @@ internal suspend fun suggestAssociatedSdkName(sdkHome: String, associatedPath: S
 }
 
 internal val Sdk.isSystemWide: Boolean
-  get() = !PythonSdkUtil.isRemote(this) && !this.isVenv && !this.isConda()
+  get() = !PythonSdkUtil.isRemote(this) && !this.isVirtualEnv && !this.isCondaVirtualEnv
 
-internal val Sdk.isVenv: Boolean
-  get() = PythonSdkUtil.isVirtualEnv(this)
 
 private val Sdk.associatedPathFromAdditionalData: String?
   get() = (sdkAdditionalData as? PythonSdkAdditionalData)?.associatedModulePath

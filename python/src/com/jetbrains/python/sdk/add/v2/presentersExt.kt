@@ -11,9 +11,9 @@ import com.intellij.python.community.services.systemPython.createVenvFromSystemP
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.getOr
+import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
-import com.jetbrains.python.sdk.conda.isConda
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import kotlinx.coroutines.flow.first
 import java.nio.file.Path
@@ -78,7 +78,7 @@ suspend fun PythonAddInterpreterModel.selectCondaEnvironment(base: Boolean): PyR
     .getOr { return it }
     .envIdentity
   val existingSdk = ProjectJdkTable.getInstance().findJdk(identity.userReadableName)
-  if (existingSdk != null && existingSdk.isConda()) return PyResult.success(existingSdk)
+  if (existingSdk != null && existingSdk.isCondaVirtualEnv) return PyResult.success(existingSdk)
 
   val sdk = PyCondaCommand(
     fullCondaPathOnTarget = state.condaExecutable.get(),

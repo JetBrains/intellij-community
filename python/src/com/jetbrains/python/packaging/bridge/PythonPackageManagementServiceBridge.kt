@@ -15,6 +15,7 @@ import com.intellij.webcore.packaging.PackageVersionComparator
 import com.intellij.webcore.packaging.RepoPackage
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.getOrThrow
+import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
@@ -29,7 +30,6 @@ import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
-import com.jetbrains.python.sdk.conda.isConda
 import com.jetbrains.python.util.runWithModalBlockingOrInBackground
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -49,7 +49,7 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
 
   var useConda: Boolean = true
   val isConda: Boolean
-    get() = sdk.isConda()
+    get() = sdk.isCondaVirtualEnv
 
   override fun getInstalledPackagesList(): List<InstalledPackage> {
     val packages = runWithModalBlockingOrInBackground(project, PyBundle.message("python.packaging.list.packages")) {

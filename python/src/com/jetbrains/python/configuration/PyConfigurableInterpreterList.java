@@ -13,14 +13,15 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
 import com.jetbrains.python.run.TargetConfigurationWithLocalFsAccessExKt;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
-import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+
+import static com.jetbrains.python.SdkUiUtilKt.*;
+import static com.jetbrains.python.sdk.PythonSdkUtil.isRemote;
 
 /**
  * Manages the SDK model shared between PythonSdkConfigurable and PyActiveSdkConfigurable.
@@ -122,20 +123,6 @@ public final class PyConfigurableInterpreterList {
       if (isRemote2) return -1;
 
       return compareSdk(o1, o2);
-    }
-
-    private static boolean isRemote(@NotNull Sdk sdk) {
-      return (sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataMarker);
-    }
-
-    private static boolean isVirtualEnv(@NotNull Sdk sdk) {
-      return sdk.getSdkAdditionalData() instanceof PythonSdkAdditionalData pythonSdkAdditionalData
-             && pythonSdkAdditionalData.getFlavor() instanceof VirtualEnvSdkFlavor;
-    }
-
-    private static boolean isCondaVirtualEnv(@NotNull Sdk sdk) {
-      return sdk.getSdkAdditionalData() instanceof PythonSdkAdditionalData pythonSdkAdditionalData
-             && pythonSdkAdditionalData.getFlavor() instanceof CondaEnvSdkFlavor;
     }
 
     private static int compareSdk(final Sdk o1, final Sdk o2) {

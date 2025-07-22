@@ -8,6 +8,9 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 
 import java.util.Comparator;
 
+import static com.jetbrains.python.SdkUiUtilKt.isCondaVirtualEnv;
+import static com.jetbrains.python.SdkUiUtilKt.isVirtualEnv;
+
 public final class PreferredSdkComparator implements Comparator<Sdk> {
   public static final PreferredSdkComparator INSTANCE = new PreferredSdkComparator();
 
@@ -27,8 +30,8 @@ public final class PreferredSdkComparator implements Comparator<Sdk> {
       return detectedWeight2 - detectedWeight1;
     }
 
-    int venv1weight = PythonSdkUtil.isVirtualEnv(o1) || PythonSdkUtil.isCondaVirtualEnv(o1) ? 0 : 1;
-    int venv2weight = PythonSdkUtil.isVirtualEnv(o2) || PythonSdkUtil.isCondaVirtualEnv(o2) ? 0 : 1;
+    int venv1weight = isVirtualEnv(o1) || isCondaVirtualEnv(o1) ? 0 : 1;
+    int venv2weight = isVirtualEnv(o2) || isCondaVirtualEnv(o2) ? 0 : 1;
     if (venv1weight != venv2weight) {
       return venv2weight - venv1weight;
     }

@@ -3,15 +3,15 @@ package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
-import com.jetbrains.python.sdk.conda.isConda
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 class CondaPackageManagerProvider : PythonPackageManagerProvider {
   override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? =
-    if (sdk.isConda()) createCondaPackageManager(project, sdk) else null
+    if (sdk.isCondaVirtualEnv) createCondaPackageManager(project, sdk) else null
 
   private fun createCondaPackageManager(project: Project, sdk: Sdk): PythonPackageManager =
     CondaPackageManager(project, sdk)

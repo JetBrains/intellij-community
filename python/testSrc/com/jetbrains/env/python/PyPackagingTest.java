@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
+import static com.jetbrains.python.SdkUiUtilKt.isVirtualEnv;
 import static com.jetbrains.python.packaging.PyRequirementsKt.pyRequirement;
 import static org.junit.Assert.*;
 
@@ -76,7 +77,7 @@ public class PyPackagingTest extends PyEnvTestCase {
                                                                                         false);
           final Sdk venvSdk = createTempSdk(venvSdkHome, SdkCreationType.EMPTY_SDK);
           assertNotNull(venvSdk);
-          assertTrue(PythonSdkUtil.isVirtualEnv(venvSdk));
+          assertTrue(isVirtualEnv(venvSdk));
           assertInstanceOf(PythonSdkFlavor.getPlatformIndependentFlavor(venvSdk.getHomePath()), VirtualEnvSdkFlavor.class);
           final List<PyPackage> packages = PyPackageManager.getInstance(venvSdk).refreshAndGetPackages(false);
           final PyPackage setuptools = findPackage("setuptools", packages);
