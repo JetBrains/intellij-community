@@ -24,9 +24,12 @@ class TomlRequirementsLanguageInjector : MultiHostInjector {
       return
 
     val injectionHost = context as PsiLanguageInjectionHost
-    val textRange = TextRange.create(1, injectionHost.textLength - 1)
+    val endOffset = injectionHost.textLength - 1
+    if (endOffset < 1) return
+
+    val textRange = TextRange.create(1, endOffset)
     registrar
-      .startInjecting(RequirementsLanguage.Companion.INSTANCE)
+      .startInjecting(RequirementsLanguage.INSTANCE)
       .addPlace(null, null, injectionHost, textRange)
       .doneInjecting()
   }
