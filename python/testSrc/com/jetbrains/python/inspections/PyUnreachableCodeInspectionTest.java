@@ -116,6 +116,25 @@ def func(x: Any | None = None):
         print("foo")
                    """);
   }
+  
+  // PY-82707
+  public void testClassInheritingFromAny() {
+    doTestByText("""
+from typing import Any
+
+class A(Any): ...
+
+a = A()
+if a is not None:
+    print("hi")  # reachable
+
+match a:
+    case int():
+        print()
+    case str():
+        print()  # reachable
+                   """);
+  }
 
   // PY-81729
   public void testTypeVarOrNoneAfterIsNotNoneCast(){

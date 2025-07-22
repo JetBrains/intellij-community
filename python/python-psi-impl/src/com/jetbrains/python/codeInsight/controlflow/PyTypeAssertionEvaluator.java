@@ -287,6 +287,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   private static boolean match(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context) {
     return !(actual instanceof PyStructuralType) &&
            !PyTypeChecker.isUnknown(actual, context) &&
+           !(PyTypeUtil.inheritsAny(actual, context)) &&
            PyTypeChecker.match(expected, actual, context);
   }
 
