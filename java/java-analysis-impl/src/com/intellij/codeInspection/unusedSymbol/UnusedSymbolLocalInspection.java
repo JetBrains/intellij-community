@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LocalRefUseInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithUnnamedPatternFix;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInspection.*;
@@ -409,8 +410,22 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
 
   private static @NotNull LocalQuickFix toLocalQuickFix(IntentionAction fix) {
     ModCommandAction action = fix.asModCommandAction();
-    return action == null ? new LocalQuickFixBackedByIntentionAction(fix) :
+    return action == null ? new OrderedLocalQuickFixBackedByIntentionAction(fix) :
            LocalQuickFix.from(action);
+  }
+
+  private static class OrderedLocalQuickFixBackedByIntentionAction extends LocalQuickFixBackedByIntentionAction implements PriorityAction {
+    private final @NotNull Priority myPriority;
+
+    private OrderedLocalQuickFixBackedByIntentionAction(@NotNull IntentionAction action) {
+      super(action);
+      myPriority = action instanceof PriorityAction priorityAction ? priorityAction.getPriority() : Priority.HIGH;
+    }
+
+    @Override
+    public @NotNull Priority getPriority() {
+      return myPriority;
+    }
   }
 
   @Override
