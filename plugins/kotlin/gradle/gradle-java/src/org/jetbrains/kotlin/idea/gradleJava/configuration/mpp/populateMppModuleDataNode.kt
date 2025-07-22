@@ -288,20 +288,14 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
                 it.group = externalProject.group
                 it.version = externalProject.version
 
-                when (compilation.name) {
-                    KotlinCompilation.MAIN_COMPILATION_NAME -> {
-                        it.publication = ProjectId(externalProject.group, externalProject.name, externalProject.version)
-                    }
-
-                    KotlinCompilation.TEST_COMPILATION_NAME -> {
-                        it.productionModuleId = getInternalModuleName(
-                            gradleModule,
-                            externalProject,
-                            compilation,
-                            resolverCtx,
-                            KotlinCompilation.MAIN_COMPILATION_NAME
-                        )
-                    }
+                if (compilation.name == KotlinCompilation.TEST_COMPILATION_NAME) {
+                    it.productionModuleId = getInternalModuleName(
+                        gradleModule,
+                        externalProject,
+                        compilation,
+                        resolverCtx,
+                        KotlinCompilation.MAIN_COMPILATION_NAME
+                    )
                 }
 
                 it.ideModuleGroup = moduleGroup
