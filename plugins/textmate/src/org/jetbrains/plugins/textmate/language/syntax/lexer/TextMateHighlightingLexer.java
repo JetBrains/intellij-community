@@ -41,7 +41,7 @@ public class TextMateHighlightingLexer extends LexerBase {
                                    int lineLimit) {
     RegexProvider regexProvider = new CaffeineCachingRegexProvider(new RememberingLastMatchRegexFactory(new JoniRegexFactory()));
     TextMateSelectorWeigher weigher = new TextMateCachingSelectorWeigher(TextMateCachingSelectorWeigherKt.createSelectorWeigherCache(new TextMateSelectorWeigherImpl()));
-    TextMateCachingSyntaxMatcher syntaxMatcher = new TextMateCachingSyntaxMatcher(new TextMateSyntaxMatcherImpl(regexProvider, weigher));
+    TextMateSyntaxMatcher syntaxMatcher = TextMateCachingSyntaxMatcherCoreKt.createCachingSyntaxMatcher(new TextMateSyntaxMatcherImpl(regexProvider, weigher));
     myLexer = new TextMateLexerCore(languageDescriptor, syntaxMatcher, lineLimit, false);
   }
   
