@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.build.bazel.uiDesigner.compiler;
 
-import com.intellij.tools.build.bazel.uiDesigner.core.Spacer;
 import com.intellij.tools.build.bazel.uiDesigner.lw.LwComponent;
 import com.intellij.tools.build.bazel.uiDesigner.lw.LwContainer;
 import org.jetbrains.org.objectweb.asm.Type;
@@ -18,7 +17,7 @@ public final class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
 
   @Override
   public String mapComponentClass(final String componentClassName) {
-    if (componentClassName.equals(Spacer.class.getName())) {
+    if ("com.intellij.uiDesigner.core.Spacer".equals(componentClassName)) {
       return JPanel.class.getName();
     }
     return super.mapComponentClass(componentClassName);
