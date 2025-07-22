@@ -28,7 +28,9 @@ import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.impl.VcsLogStorageLocker;
 import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import io.opentelemetry.api.trace.Span;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -329,6 +331,14 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     return myCurrentUser;
   }
 
+  /**
+   * @return true if only one user commits to this repository
+   */
+  public boolean isSingleUser() {
+    Set<VcsUser> users = new ObjectOpenCustomHashSet<>(getCurrentUser().values(), new VcsUserUtil.VcsUserHashingStrategy());
+    return myUserRegistry.all(user -> users.contains(user));
+  }
+
   public @NotNull Project getProject() {
     return myProject;
   }
@@ -412,11 +422,6 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
 
   public @NotNull VcsLogProvider getLogProvider(@NotNull VirtualFile root) {
     return myLogProviders.get(root);
-  }
-
-  @ApiStatus.Internal
-  public @NotNull VcsUserRegistryImpl getUserRegistry() {
-    return myUserRegistry;
   }
 
   public @NotNull VcsLogUserResolver getUserNameResolver() {

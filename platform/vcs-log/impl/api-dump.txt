@@ -213,6 +213,7 @@ f:com.intellij.vcs.log.data.VcsLogData
 - getUserNameResolver():com.intellij.vcs.log.data.VcsLogUserResolver
 - initialize():V
 - s:isIndexSwitchedOnInRegistry():Z
+- isSingleUser():Z
 - refresh(java.util.Collection):V
 - refresh(java.util.Collection,Z):V
 - removeDataPackChangeListener(com.intellij.vcs.log.data.DataPackChangeListener):V
