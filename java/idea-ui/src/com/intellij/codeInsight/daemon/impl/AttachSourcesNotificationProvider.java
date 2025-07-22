@@ -21,7 +21,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
@@ -48,7 +47,6 @@ import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.psi.util.JavaMultiReleaseUtil;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationProvider;
-import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -74,14 +72,6 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
 
   private static final ExtensionPointName<AttachSourcesProvider> EXTENSION_POINT_NAME =
     new ExtensionPointName<>("com.intellij.attachSourcesProvider");
-
-  AttachSourcesNotificationProvider() {
-    EXTENSION_POINT_NAME.addChangeListener(() -> {
-      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-        EditorNotifications.getInstance(project).updateNotifications(this);
-      }
-    }, null);
-  }
 
   @Override
   public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
