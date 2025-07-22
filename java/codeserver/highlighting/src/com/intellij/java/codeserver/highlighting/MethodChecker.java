@@ -135,7 +135,9 @@ final class MethodChecker {
     PsiModifierList superModifierList = superMethod.getModifierList();
     if (superModifierList.hasModifierProperty(PsiModifier.PRIVATE)) return;
     if (superModifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)
-        && !JavaPsiFacade.getInstance(myVisitor.project()).arePackagesTheSame(aClass, superClass)) return;
+        && !JavaPsiFacade.getInstance(myVisitor.project()).arePackagesTheSame(aClass, superClass)) {
+      return;
+    }
     boolean isSuperMethodStatic = superModifierList.hasModifierProperty(PsiModifier.STATIC);
     if (isMethodStatic != isSuperMethodStatic) {
       var errorKind = isMethodStatic ? JavaErrorKinds.METHOD_STATIC_OVERRIDES_INSTANCE : JavaErrorKinds.METHOD_INSTANCE_OVERRIDES_STATIC;
@@ -271,7 +273,7 @@ final class MethodChecker {
         PsiClassType exception = checkedExceptions.get(index);
         myVisitor.report(JavaErrorKinds.METHOD_INHERITANCE_CLASH_DOES_NOT_THROW.create(
           anchor,
-          new JavaErrorKinds.IncompatibleOverrideExceptionContext(method, superMethod, exception, 
+          new JavaErrorKinds.IncompatibleOverrideExceptionContext(method, superMethod, exception,
                                                                   exceptionContexts.isEmpty() ? null : exceptionContexts.get(index))));
         return;
       }
