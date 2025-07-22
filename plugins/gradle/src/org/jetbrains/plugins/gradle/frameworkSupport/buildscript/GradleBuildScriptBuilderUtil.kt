@@ -69,8 +69,36 @@ fun isTaskConfigurationAvoidanceSupported(gradleVersion: GradleVersion): Boolean
   return GradleVersionUtil.isGradleAtLeast(gradleVersion, "4.9")
 }
 
+fun isKotlinSupported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "5.6.2")
+}
+
 fun isJunit5Supported(gradleVersion: GradleVersion): Boolean {
   return GradleVersionUtil.isGradleAtLeast(gradleVersion, "4.7")
+}
+
+fun isSpockSupported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "5.6")
+}
+
+fun isRobolectricSupported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "4.6")
+}
+
+fun isTopLevelJavaConventionsSupported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.2")
+}
+
+fun isJavaConventionsBlockSupported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.1")
+}
+
+fun isConfigurationCacheSupported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "8.1")
+}
+
+fun isIsolatedProjectsSupported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "8.8")
 }
 
 fun isPlatformDependencySupported(gradleVersion: GradleVersion): Boolean {

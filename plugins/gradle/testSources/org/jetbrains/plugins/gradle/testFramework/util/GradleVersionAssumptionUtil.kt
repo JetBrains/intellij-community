@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJunit5Supported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.*
 import org.junit.jupiter.api.Assumptions
 
 
@@ -34,43 +34,43 @@ fun assumeThatJunit5IsSupported(gradleVersion: GradleVersion) {
 }
 
 fun assumeThatKotlinIsSupported(gradleVersion: GradleVersion) {
-  assumeThatGradleIsAtLeast(gradleVersion, "5.6.2") {
+  Assumptions.assumeTrue(isKotlinSupported(gradleVersion)) {
     "Gradle ${gradleVersion.version} doesn't support Kotlin."
   }
 }
 
 fun assumeThatSpockIsSupported(gradleVersion: GradleVersion) {
-  assumeThatGradleIsAtLeast(gradleVersion, "5.6") {
+  Assumptions.assumeTrue(isSpockSupported(gradleVersion)) {
     "Gradle ${gradleVersion.version} doesn't support Spock."
   }
 }
 
 fun assumeThatRobolectricIsSupported(gradleVersion: GradleVersion) {
-  assumeThatGradleIsAtLeast(gradleVersion, "4.6") {
+  Assumptions.assumeTrue(isRobolectricSupported(gradleVersion)) {
     "Gradle ${gradleVersion.version} doesn't support Robolectric."
   }
 }
 
 fun assumeThatTopLevelJavaConventionsIsSupported(gradleVersion: GradleVersion) {
-  assumeThatGradleIsOlderThan(gradleVersion, "8.2") {
+  Assumptions.assumeTrue(isTopLevelJavaConventionsSupported(gradleVersion)) {
     "Gradle ${gradleVersion.version} doesn't support top-level java conventions."
   }
 }
 
 fun assumeThatJavaConventionsBlockIsSupported(gradleVersion: GradleVersion) {
-  assumeThatGradleIsAtLeast(gradleVersion, "7.1") {
+  Assumptions.assumeTrue(isJavaConventionsBlockSupported(gradleVersion)) {
     "Gradle ${gradleVersion.version} doesn't support java conventions block."
   }
 }
 
 fun assumeThatConfigurationCacheIsSupported(gradleVersion: GradleVersion) {
-  assumeThatGradleIsAtLeast(gradleVersion, "8.1") {
+  Assumptions.assumeTrue(isConfigurationCacheSupported(gradleVersion)) {
     "Gradle ${gradleVersion.version} doesn't support stable configuration caches."
   }
 }
 
 fun assumeThatIsolatedProjectsIsSupported(gradleVersion: GradleVersion) {
-  assumeThatGradleIsAtLeast(gradleVersion, "8.8") {
+  Assumptions.assumeTrue(isIsolatedProjectsSupported(gradleVersion)) {
     "Gradle ${gradleVersion.version} doesn't support isolated projects."
   }
 }
