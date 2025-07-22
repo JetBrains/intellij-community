@@ -2,7 +2,8 @@ package org.jetbrains.jewel.bridge.theme
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ui.JBColor
-import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.bridge.toComposeColorOrUnspecified
 import org.jetbrains.jewel.foundation.BorderColors
@@ -15,7 +16,7 @@ public fun GlobalColors.Companion.readFromLaF(): GlobalColors =
         borders = BorderColors.readFromLaF(),
         outlines = OutlineColors.readFromLaF(),
         text = TextColors.readFromLaF(),
-        panelBackground = retrieveColorOrUnspecified("Panel.background"),
+        panelBackground = UIUtil.getPanelBackground().toComposeColor(),
     )
 
 public fun BorderColors.Companion.readFromLaF(): BorderColors =
@@ -27,18 +28,20 @@ public fun BorderColors.Companion.readFromLaF(): BorderColors =
 
 public fun TextColors.Companion.readFromLaF(): TextColors =
     TextColors(
-        normal = JBColor.foreground().toComposeColor(),
-        selected = retrieveColorOrUnspecified("Label.selectedForeground"),
-        disabled = retrieveColorOrUnspecified("Label.disabledForeground"),
-        info = retrieveColorOrUnspecified("Label.infoForeground"),
-        error = retrieveColorOrUnspecified("Label.errorForeground"),
+        normal = JBUI.CurrentTheme.Label.foreground().toComposeColor(),
+        selected = JBUI.CurrentTheme.Label.foreground(true).toComposeColor(),
+        disabled = JBUI.CurrentTheme.Label.disabledForeground().toComposeColor(),
+        disabledSelected = JBUI.CurrentTheme.Label.disabledForeground(true).toComposeColor(),
+        info = JBUI.CurrentTheme.ContextHelp.FOREGROUND.toComposeColor(),
+        error = JBUI.CurrentTheme.Label.errorForeground().toComposeColor(),
+        warning = JBUI.CurrentTheme.Label.warningForeground().toComposeColor(),
     )
 
 public fun OutlineColors.Companion.readFromLaF(): OutlineColors =
     OutlineColors(
-        focused = retrieveColorOrUnspecified("*.focusColor"),
-        focusedWarning = retrieveColorOrUnspecified("Component.warningFocusColor"),
-        focusedError = retrieveColorOrUnspecified("Component.errorFocusColor"),
-        warning = retrieveColorOrUnspecified("Component.inactiveWarningFocusColor"),
-        error = retrieveColorOrUnspecified("Component.inactiveErrorFocusColor"),
+        focused = JBUI.CurrentTheme.Focus.focusColor().toComposeColor(),
+        focusedWarning = JBUI.CurrentTheme.Focus.warningColor(true).toComposeColor(),
+        focusedError = JBUI.CurrentTheme.Focus.errorColor(true).toComposeColor(),
+        warning = JBUI.CurrentTheme.Focus.warningColor(false).toComposeColor(),
+        error = JBUI.CurrentTheme.Focus.errorColor(false).toComposeColor(),
     )
