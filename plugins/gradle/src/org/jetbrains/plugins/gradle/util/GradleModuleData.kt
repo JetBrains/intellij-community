@@ -2,6 +2,7 @@
 @file:Suppress("unused") // API
 package org.jetbrains.plugins.gradle.util
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.project.ModuleData
@@ -9,6 +10,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
+
+private val LOG = Logger.getInstance(GradleModuleData::class.java)
 
 @ApiStatus.Experimental
 class GradleModuleData(private val dataNode: DataNode<out ModuleData>) {
@@ -26,14 +29,21 @@ class GradleModuleData(private val dataNode: DataNode<out ModuleData>) {
   val directoryToRunTask: String
     get() = moduleData.getDirectoryToRunTask()
 
+  val gradlePathOrNull: String?
+    get() = moduleData.gradlePathOrNull
 
+  val gradleIdentityPathOrNull: String?
+    get() = moduleData.gradleIdentityPathOrNull
+
+  @Deprecated("Use gradlePathOrNull instead")
   val gradlePath: String
     get() = moduleData.gradlePath
 
+  @Deprecated("Use gradleIdentityPathOrNull instead")
   val gradleIdentityPath: String
     get() = moduleData.gradleIdentityPath
 
-  @Deprecated("Use gradleIdentityPath instead")
+  @Deprecated("Use gradleIdentityPathOrNull instead")
   val fullGradlePath: String
     get() = gradleIdentityPath
 
@@ -76,9 +86,12 @@ var ModuleData.gradlePath: String
   get() = getProperty("gradlePath") ?: throw IllegalStateException("Missing gradlePath on $id")
   set(value) = setProperty("gradlePath", value)
 
-@Suppress("unused") /* Safe API even when unused right now */
 val ModuleData.gradlePathOrNull: String?
-  get() = getProperty("gradlePath")
+  get() = getProperty("gradlePath").also {
+    if (it == null) {
+      LOG.warn("gradlePath is null for ModuleData with id = $id")
+    }
+  }
 
 /**
  * The path of the project in the current build setup.
@@ -90,7 +103,11 @@ var ModuleData.gradleIdentityPath: String
   set(value) = setProperty("gradleIdentityPath", value)
 
 val ModuleData.gradleIdentityPathOrNull: String?
-  get() = getProperty("gradleIdentityPath")
+  get() = getProperty("gradleIdentityPath").also {
+    if (it == null) {
+      LOG.warn("gradleIdentityPath is null for ModuleData with id = $id")
+    }
+  }
 
 var ModuleData.isIncludedBuild: Boolean
   get() = getProperty("isIncludedBuild")?.toBooleanStrictOrNull() ?: false

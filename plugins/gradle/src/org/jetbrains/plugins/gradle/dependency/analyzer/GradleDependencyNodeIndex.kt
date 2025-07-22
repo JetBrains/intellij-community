@@ -72,7 +72,8 @@ class GradleDependencyNodeIndex(
       .getOrThrow()
     val taskOutputPath = taskOutputEelPath.asNioPath()
     try {
-      val taskPath = moduleData.gradleIdentityPath.removeSuffix(":") + ":" + TASK_NAME
+      val gradleIdentityPath = moduleData.gradleIdentityPathOrNull ?: return emptyList()
+      val taskPath = gradleIdentityPath.removeSuffix(":") + ":" + TASK_NAME
       val initScript = loadCollectDependencyInitScript(TASK_NAME, taskOutputEelPath)
 
       TaskExecutionUtil.runTask(
