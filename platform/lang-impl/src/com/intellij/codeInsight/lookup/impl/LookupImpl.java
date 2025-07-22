@@ -310,10 +310,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       return false;
     }
 
+    cellRenderer.itemAdded(item, presentation);
     LookupArranger arranger = myArranger;
     arranger.registerMatcher(item, matcher);
     arranger.addElement(item, presentation);
-    cellRenderer.itemAdded(item, presentation);
+    cellRenderer.itemAddedToArranger(item);
     return true;
   }
 
