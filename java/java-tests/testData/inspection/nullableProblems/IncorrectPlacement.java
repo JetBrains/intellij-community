@@ -5,8 +5,8 @@ public class IncorrectPlacement extends <warning descr="Nullability annotation i
   
   <warning descr="Nullability annotation is not applicable to constructors">@Nullable</warning> IncorrectPlacement() {}
   
-  void test(<warning descr="Receiver parameter is inherently not-null">@Nullable</warning> IncorrectPlacement this) {
-    <warning descr="Outer type is inherently not-null">@Nullable</warning> IncorrectPlacement.Inner a1;
+  void test(<warning descr="Receiver parameter is inherently non-null">@Nullable</warning> IncorrectPlacement this) {
+    <warning descr="Outer type is inherently non-null">@Nullable</warning> IncorrectPlacement.Inner a1;
     IncorrectPlacement.@Nullable Inner a2;
   }
   

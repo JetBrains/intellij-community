@@ -8,8 +8,8 @@ import java.util.function.Supplier;
 class Main {
 
   public static void main(String[] args) {
-    Main.<<warning descr="Not-null type parameter 'T' cannot be instantiated with @Nullable type">@Nullable</warning> Object>fNonNullBound(() -> getNullableObject());
-    Main.<<warning descr="Not-null type parameter 'T' cannot be instantiated with @Nullable type">@Nullable</warning> Object>fNonNullBound(Main::getNullableObject);
+    Main.<<warning descr="Non-null type parameter 'T' cannot be instantiated with @Nullable type">@Nullable</warning> Object>fNonNullBound(() -> getNullableObject());
+    Main.<<warning descr="Non-null type parameter 'T' cannot be instantiated with @Nullable type">@Nullable</warning> Object>fNonNullBound(Main::getNullableObject);
 
   }
 
@@ -28,7 +28,7 @@ class Main {
   @NullableScope
   static class NullableScopeClass {
     void test() {
-      Main.<<warning descr="Not-null type parameter 'T' cannot be instantiated under @NullableScope">Object</warning>>fNonNullBound(Main::getNullableObject);
+      Main.<<warning descr="Non-null type parameter 'T' cannot be instantiated under @NullableScope">Object</warning>>fNonNullBound(Main::getNullableObject);
     }
   }
 }

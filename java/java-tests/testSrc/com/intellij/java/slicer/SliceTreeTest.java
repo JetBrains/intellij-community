@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.slicer;
 
 import com.intellij.analysis.AnalysisScope;
@@ -244,12 +244,12 @@ public class SliceTreeTest extends SliceTestCase {
           6| |String |l;| in X
             52| |l = |d|;| in X.set(String)
               51| |void| set(String |d|) {| in X.set(String)
-                17| |set(|new| String()|);| in X.X(String) (filter: not-null)
+                17| |set(|new| String()|);| in X.X(String) (filter: non-null)
         Value: nn()
           6| |String |l;| in X
             52| |l = |d|;| in X.set(String)
               51| |void| set(String |d|) {| in X.set(String)
-                18| |set(|nn()|);| in X.X(String) (filter: not-null)
+                18| |set(|nn()|);| in X.X(String) (filter: non-null)
         Value: CON
           6| |String |l;| in X
             52| |l = |d|;| in X.set(String)
@@ -259,20 +259,20 @@ public class SliceTreeTest extends SliceTestCase {
           6| |String |l;| in X
             52| |l = |d|;| in X.set(String)
               51| |void| set(String |d|) {| in X.set(String)
-                21| |set(|nn|);| in X.X(String) (filter: not-null)
+                21| |set(|nn|);| in X.X(String) (filter: non-null)
         Value: g
           6| |String |l;| in X
             52| |l = |d|;| in X.set(String)
               51| |void| set(String |d|) {| in X.set(String)
-                27| |set(|g|);| in X.X(String) (filter: not-null)
+                27| |set(|g|);| in X.X(String) (filter: non-null)
         Value: t == null ? "null" : t
           6| |String |l;| in X
             52| |l = |d|;| in X.set(String)
               51| |void| set(String |d|) {| in X.set(String)
-                48| |x.set(|t == |null| ? |"null"| : t|);| in X.fs(String, X) (filter: not-null)
+                48| |x.set(|t == |null| ? |"null"| : t|);| in X.fs(String, X) (filter: non-null)
         Value: d
           6| |String |l;| in X
-            55| |l = |d|;| in X.setFromNN(String) (filter: not-null)
+            55| |l = |d|;| in X.setFromNN(String) (filter: non-null)
       Other Values
         Value: private String d;
           6| |String |l;| in X
