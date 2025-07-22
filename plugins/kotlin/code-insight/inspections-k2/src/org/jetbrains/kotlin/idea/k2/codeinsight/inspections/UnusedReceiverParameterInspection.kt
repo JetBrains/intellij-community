@@ -13,6 +13,7 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -221,8 +222,11 @@ private fun removeUnusedTypeParameters(typeParameters: List<KtTypeParameter>) {
  */
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
-private fun KaCallableSymbol.hasContextReceiverOfType(type: KaType): Boolean {
-    return contextReceivers.any { type.isSubtypeOf(it.type) }
+private fun KaCallableMemberCall<*, *>.hasContextReceiverOfType(type: KaType): Boolean {
+    val substitutor = buildSubstitutor {
+        substitutions(typeArgumentsMapping)
+    }
+    return symbol.contextReceivers.any { type.isSubtypeOf(substitutor.substitute(it.type)) }
 }
 
 /**
@@ -252,7 +256,7 @@ private fun isUsageOfSymbol(symbol: KaDeclarationSymbol, element: KtElement): Bo
 
             partiallyAppliedSymbol.dispatchReceiver?.getThisReceiverOwner() == symbol ||
                     partiallyAppliedSymbol.extensionReceiver?.getThisReceiverOwner() == symbol ||
-                    (receiverType != null && resolvedCall.symbol.hasContextReceiverOfType(receiverType)) // potentially captured by context receiver
+                    (receiverType != null && resolvedCall.hasContextReceiverOfType(receiverType)) // potentially captured by context receiver
         }
 
         else -> false

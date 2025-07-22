@@ -11396,6 +11396,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantWith/nested.kt");
         }
 
+        @TestMetadata("notApplicable_contextParameter.kt")
+        public void testNotApplicable_contextParameter() throws Exception {
+            runTest("testData/inspectionsLocal/redundantWith/notApplicable_contextParameter.kt");
+        }
+
+        @TestMetadata("notApplicable_contextParameterWithSubstitution.kt")
+        public void testNotApplicable_contextParameterWithSubstitution() throws Exception {
+            runTest("testData/inspectionsLocal/redundantWith/notApplicable_contextParameterWithSubstitution.kt");
+        }
+
         @TestMetadata("notApplicable_delegatedProperty.kt")
         public void testNotApplicable_delegatedProperty() throws Exception {
             runTest("testData/inspectionsLocal/redundantWith/notApplicable_delegatedProperty.kt");
