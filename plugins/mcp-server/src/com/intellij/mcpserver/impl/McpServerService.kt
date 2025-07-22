@@ -184,7 +184,9 @@ private fun McpTool.mcpToolToRegisteredTool(): RegisteredTool {
                   description = descriptor.description,
                   inputSchema = Tool.Input(
                     properties = descriptor.inputSchema.properties,
-                    required = descriptor.inputSchema.requiredParameters.toList()))
+                    required = descriptor.inputSchema.requiredParameters.toList()),
+                  outputSchema = null,
+                  annotations = null)
   return RegisteredTool(tool) { request ->
     val projectPath = (request._meta[IJ_MCP_SERVER_PROJECT_PATH] as? JsonPrimitive)?.content
     val project = if (!projectPath.isNullOrBlank()) {
@@ -304,7 +306,7 @@ private fun McpTool.mcpToolToRegisteredTool(): RegisteredTool {
         is McpToolCallResultContent.Text -> TextContent(content.text)
       }
     }
-    return@RegisteredTool CallToolResult(content = contents, callResult.isError)}
+    return@RegisteredTool CallToolResult(content = contents, structuredContent = null, isError = callResult.isError)}
   }
 }
 
