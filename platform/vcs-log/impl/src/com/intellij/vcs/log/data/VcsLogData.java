@@ -34,7 +34,6 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.util.*;
@@ -438,14 +437,6 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   public @NotNull VcsLogIndex getIndex() {
-    //noinspection TestOnlyProblems
-    return getModifiableIndex();
-  }
-
-  @TestOnly
-  @NotNull
-  @ApiStatus.Internal
-  public VcsLogModifiableIndex getModifiableIndex() {
     return myIndex;
   }
 
