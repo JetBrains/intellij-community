@@ -38,9 +38,18 @@ import org.jetbrains.jewel.ui.typography
 
 @ExperimentalLayoutApi
 @Composable
-public fun ComponentsView(viewModel: ComponentsViewModel, toolbarButtonMetrics: IconButtonMetrics) {
-    Row(Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground)) {
-        ComponentsToolBar(viewModel, toolbarButtonMetrics)
+public fun ComponentsView(
+    viewModel: ComponentsViewModel,
+    toolbarButtonMetrics: IconButtonMetrics,
+    modifier: Modifier = Modifier,
+) {
+    Row(modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground)) {
+        ComponentsToolBar(
+            buttonMetrics = toolbarButtonMetrics,
+            views = viewModel.getViews(),
+            currentView = viewModel.getCurrentView(),
+            setCurrentView = { viewModel.setCurrentView(it) },
+        )
         Divider(Orientation.Vertical, Modifier.fillMaxHeight())
         ComponentView(viewModel.getCurrentView())
     }
@@ -48,19 +57,25 @@ public fun ComponentsView(viewModel: ComponentsViewModel, toolbarButtonMetrics: 
 
 @ExperimentalLayoutApi
 @Composable
-public fun ComponentsToolBar(viewModel: ComponentsViewModel, buttonMetrics: IconButtonMetrics) {
+public fun ComponentsToolBar(
+    buttonMetrics: IconButtonMetrics,
+    views: List<ViewInfo>,
+    currentView: ViewInfo,
+    setCurrentView: (ViewInfo) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     ZeroDelayNeverHideTooltips {
-        Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
+        Column(modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
             val iconButtonStyle = JewelTheme.iconButtonStyle
             val style = remember(iconButtonStyle) { IconButtonStyle(iconButtonStyle.colors, buttonMetrics) }
-            viewModel.getViews().forEach {
+            views.forEach { viewInfo ->
                 SelectableIconActionButton(
-                    key = it.iconKey,
-                    contentDescription = "Show ${it.title}",
-                    selected = viewModel.getCurrentView() == it,
-                    onClick = { viewModel.setCurrentView(it) },
+                    key = viewInfo.iconKey,
+                    contentDescription = "Show ${viewInfo.title}",
+                    selected = currentView == viewInfo,
+                    onClick = { setCurrentView(viewInfo) },
                     style = style,
-                    tooltip = { Text(it.title) },
+                    tooltip = { Text(viewInfo.title) },
                     tooltipPlacement = TooltipPlacement.ComponentRect(Alignment.CenterEnd, Alignment.CenterEnd),
                     extraHints = arrayOf(Size(20)),
                 )
