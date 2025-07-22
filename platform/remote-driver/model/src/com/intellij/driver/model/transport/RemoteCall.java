@@ -27,6 +27,7 @@ public abstract class RemoteCall implements Serializable {
   private final LockSemantics lockSemantics;
   private final String className;
   private final String methodName;
+
   public RemoteCall(int sessionId,
                     String timedSpan,
                     String pluginId,
@@ -46,6 +47,7 @@ public abstract class RemoteCall implements Serializable {
     this.rdTarget = rdTarget;
     this.args = args;
   }
+
   private final Object[] args;
 
   public @NotNull RdTarget getRdTarget() {

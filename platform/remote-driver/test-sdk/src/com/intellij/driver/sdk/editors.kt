@@ -129,8 +129,8 @@ fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEd
   }
 }
 
-fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true) = step("Open file $relativePath") {
-  withContext {
+fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true) {
+  step("Open file $relativePath") {
     val openedFile = if (!isRemDevMode) {
       val fileToOpen = findFile(relativePath = relativePath, project = project)
       if (fileToOpen == null) {

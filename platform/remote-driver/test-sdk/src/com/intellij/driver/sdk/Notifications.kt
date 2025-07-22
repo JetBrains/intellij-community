@@ -2,6 +2,7 @@ package com.intellij.driver.sdk
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
+import com.intellij.driver.client.utility
 import com.intellij.driver.model.OnDispatcher
 
 @Remote("com.intellij.notification.Notification")
@@ -19,6 +20,6 @@ interface ActionCenter {
 
 fun Driver.getNotifications(project: Project? = null): Collection<Notification> {
   return withContext(OnDispatcher.EDT) {
-    utility(ActionCenter::class).getNotifications(project ?: singleProject())
+    utility<ActionCenter>().getNotifications(project ?: singleProject())
   }
 }
