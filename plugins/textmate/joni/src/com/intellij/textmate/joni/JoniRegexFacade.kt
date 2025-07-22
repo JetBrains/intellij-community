@@ -13,7 +13,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.milliseconds
 
-class JoniRegexFacade(private val myRegex: Regex) : RegexFacade {
+internal class JoniRegexFacade(private val myRegex: Regex) : RegexFacade {
   override fun match(string: TextMateString, checkCancelledCallback: Runnable?): MatchData {
     return match(string = string,
                  byteOffset = TextMateByteOffset(0),

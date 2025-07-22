@@ -24,8 +24,8 @@ inline fun <K, V, T> TextMateCache<K, V>.use(key: K, body: (V) -> T): T {
 }
 
 suspend fun <K, V> withCache(
-  cleanupInterval: Duration?,
   cacheFn: () -> TextMateCache<K, V>,
+  cleanupInterval: Duration?,
   body: CoroutineScope.(TextMateCache<K, V>) -> Unit,
 ) {
   coroutineScope {

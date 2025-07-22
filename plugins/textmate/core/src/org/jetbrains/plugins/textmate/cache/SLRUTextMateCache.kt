@@ -6,7 +6,7 @@ import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.decrementAndFetch
 import kotlin.concurrent.atomics.incrementAndFetch
 
-internal class SLRUTextMateCache<K : Any, V : Any?>(
+class SLRUTextMateCache<K : Any, V : Any?>(
   capacity: Int,
   private val computeFn: (K) -> V,
   private val disposeFn: (V) -> Unit,

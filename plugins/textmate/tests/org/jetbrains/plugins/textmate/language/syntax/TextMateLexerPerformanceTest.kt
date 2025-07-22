@@ -17,28 +17,44 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateSyntaxMatche
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateSyntaxMatcherImpl
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
-import org.jetbrains.plugins.textmate.regex.CaffeineCachingRegexFactory
+import org.jetbrains.plugins.textmate.regex.CaffeineCachingRegexProvider
+import org.jetbrains.plugins.textmate.regex.DefaultRegexProvider
 import org.jetbrains.plugins.textmate.regex.RememberingLastMatchRegexFactory
+import org.jetbrains.plugins.textmate.regex.withCachingRegexFactory
 import java.io.File
 import java.nio.charset.StandardCharsets
 
 class TextMateLexerPerformanceTest : UsefulTestCase() {
   fun testPerformance() {
-    val regexFactory = CaffeineCachingRegexFactory(RememberingLastMatchRegexFactory(JoniRegexFactory()))
+    val regexFactory = CaffeineCachingRegexProvider(RememberingLastMatchRegexFactory(JoniRegexFactory()))
     val weigher = TextMateSelectorCachingWeigher(TextMateSelectorWeigherImpl())
     doPerformanceTest(TextMateCachingSyntaxMatcher(TextMateSyntaxMatcherImpl(regexFactory, weigher)))
   }
 
   fun testPerformanceCaffeineRegexFactoryCache() {
-    val regexFactory = CaffeineCachingRegexFactory(RememberingLastMatchRegexFactory(JoniRegexFactory()))
+    val regexProvider = CaffeineCachingRegexProvider(RememberingLastMatchRegexFactory(JoniRegexFactory()))
     val weigher = TextMateSelectorCachingWeigher(TextMateSelectorWeigherImpl())
-    doPerformanceTest(TextMateSyntaxMatcherImpl(regexFactory, weigher))
+    doPerformanceTest(TextMateSyntaxMatcherImpl(regexProvider, weigher))
+  }
+
+  fun testPerformanceSlruCache() {
+    withCachingRegexFactory(RememberingLastMatchRegexFactory(JoniRegexFactory())) { regexProvider ->
+      val weigher = TextMateSelectorCachingWeigher(TextMateSelectorWeigherImpl())
+      doPerformanceTest(TextMateCachingSyntaxMatcher(TextMateSyntaxMatcherImpl(regexProvider, weigher)))
+    }
+  }
+
+  fun testPerformanceSlruRegexFactoryCache() {
+    withCachingRegexFactory(RememberingLastMatchRegexFactory(RememberingLastMatchRegexFactory(JoniRegexFactory()))) { regexProvider ->
+      val weigher = TextMateSelectorCachingWeigher(TextMateSelectorWeigherImpl())
+      doPerformanceTest(TextMateSyntaxMatcherImpl(regexProvider, weigher))
+    }
   }
 
   fun testPerformanceNoCache() {
-    val regexFactory = RememberingLastMatchRegexFactory(JoniRegexFactory())
+    val regexProvider = DefaultRegexProvider(RememberingLastMatchRegexFactory(JoniRegexFactory()))
     val weigher = TextMateSelectorCachingWeigher(TextMateSelectorWeigherImpl())
-    doPerformanceTest(TextMateSyntaxMatcherImpl(regexFactory, weigher))
+    doPerformanceTest(TextMateSyntaxMatcherImpl(regexProvider, weigher))
   }
 
   private fun doPerformanceTest(syntaxMatcher: TextMateSyntaxMatcher) {
