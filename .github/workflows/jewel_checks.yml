@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: 21
-          distribution: zulu
+          distribution: jetbrains
           cache: gradle
 
       - name: Grant execute permission for gradlew
