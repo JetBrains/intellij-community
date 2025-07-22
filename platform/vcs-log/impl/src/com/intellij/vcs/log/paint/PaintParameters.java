@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.Internal
 public final class PaintParameters {
 
-  private static final int WIDTH_NODE = 15;
+  private static final int WIDTH_NODE = 20;
   private static final int CIRCLE_RADIUS = 4;
   private static final double THICK_LINE = 1.5;
   private static final double SELECT_THICK_LINE = 2.5;
