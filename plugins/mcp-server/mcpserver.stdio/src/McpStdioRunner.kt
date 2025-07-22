@@ -32,7 +32,7 @@ suspend fun main() {
   }
 
   val envsToPass = System.getenv().filter { (key, _) -> key.startsWith(IJ_MCP_PREFIX) }
-  val sseClientTransport = SseClientTransport(httpClient, "http://localhost:$port/") {
+  val sseClientTransport = SseClientTransport(httpClient, "http://localhost:$port/sse") {
     envsToPass.forEach { (key, value) -> header(key, value)}
   }
 

@@ -132,7 +132,7 @@ class SseTransportHolder(project: Project) : TransportHolder() {
   override val transport: AbstractTransport by lazy {
     SseClientTransport(HttpClient {
       install(SSE)
-    }, "http://localhost:${McpServerService.getInstance().port}/") {
+    }, "http://localhost:${McpServerService.getInstance().port}/sse") {
       header(IJ_MCP_SERVER_PROJECT_PATH, project.basePath)
     }
   }
