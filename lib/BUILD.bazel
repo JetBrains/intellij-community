@@ -8953,13 +8953,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "rhizomedb-compiler-plugin-provided",
-  exports = [":rhizomedb-compiler-plugin"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 jvm_import(
   name = "rpc-compiler-plugin",
   jar = "@rpc-compiler-plugin-2_2_0-0_1_http//file",
