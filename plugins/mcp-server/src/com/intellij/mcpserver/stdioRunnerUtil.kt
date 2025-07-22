@@ -87,10 +87,13 @@ fun createStdioServerJsonEntry(cmd: GeneralCommandLine): JsonObject {
  * }
  * ```
  */
-fun createSseServerJsonEntry(port: Int): JsonObject {
+fun createSseServerJsonEntry(port: Int, projectBasePath: String?): JsonObject {
   return buildJsonObject {
     put("type", "sse")
     put("url", "http://localhost:$port/sse")
+    put("headers", buildJsonObject {
+      put(IJ_MCP_SERVER_PROJECT_PATH, projectBasePath)
+    })
   }
 }
 

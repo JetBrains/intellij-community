@@ -156,7 +156,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
         indent {
           row {
             button(McpServerBundle.message("copy.mcp.server.sse.configuration"), {
-              val json = createSseServerJsonEntry(McpServerService.getInstance().port)
+              val json = createSseServerJsonEntry(McpServerService.getInstance().port, null)
               CopyPasteManager.getInstance().setContents(TextTransferable(McpClient.json.encodeToString(json) as CharSequence))
               showCopiedBallon(it)
             })
