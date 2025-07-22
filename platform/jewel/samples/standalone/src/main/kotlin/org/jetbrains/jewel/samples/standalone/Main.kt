@@ -12,9 +12,11 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.window.application
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.decodeToSvgPainter
+import org.jetbrains.jewel.foundation.JewelFlags
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.intui.markdown.standalone.ProvideMarkdownStyling
+import org.jetbrains.jewel.intui.standalone.component.ProvideNativeWindowPopupRenderer
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.intui.standalone.theme.createDefaultTextStyle
 import org.jetbrains.jewel.intui.standalone.theme.createEditorTextStyle
@@ -35,6 +37,11 @@ import org.jetbrains.jewel.window.styling.TitleBarStyle
 @ExperimentalLayoutApi
 public fun main() {
     JewelLogger.getInstance("StandaloneSample").info("Starting Jewel Standalone sample")
+    JewelFlags.useCustomPopupRenderer = true
+
+    // If we don't enable the blending, the popup will be rendered with a white background
+    // This must be called before the first compose block is executed
+    System.setProperty("compose.interop.blending", "true")
 
     val icon = svgResource("icons/jewel-logo.svg")
 
@@ -77,8 +84,10 @@ public fun main() {
                     processKeyShortcuts(keyEvent = keyEvent, onNavigateTo = MainViewModel::onNavigateTo)
                 },
                 content = {
-                    TitleBarView()
-                    ProvideMarkdownStyling { currentView.content() }
+                    ProvideNativeWindowPopupRenderer(window) {
+                        TitleBarView()
+                        ProvideMarkdownStyling { currentView.content() }
+                    }
                 },
             )
         }

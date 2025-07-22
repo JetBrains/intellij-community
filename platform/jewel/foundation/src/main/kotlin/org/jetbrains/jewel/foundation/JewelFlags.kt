@@ -27,4 +27,9 @@ public object JewelFlags {
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     public var useCustomPopupRenderer: Boolean = System.getProperty("jewel.customPopupRender", "false").toBoolean()
+
+    @get:ApiStatus.Internal
+    @InternalJewelApi
+    public val isSwingBlendEnabled: Boolean
+        get() = System.getProperty("compose.interop.blending", "false").toBoolean()
 }

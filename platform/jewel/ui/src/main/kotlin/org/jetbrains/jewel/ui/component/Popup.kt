@@ -26,6 +26,7 @@ import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
+import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.JewelFlags
 
 /**
@@ -104,7 +105,9 @@ public val LocalPopupRenderer: ProvidableCompositionLocal<PopupRenderer> = stati
     DefaultPopupRenderer
 }
 
-private object DefaultPopupRenderer : PopupRenderer {
+@ApiStatus.Internal
+@InternalJewelApi
+public object DefaultPopupRenderer : PopupRenderer {
     @Composable
     override fun Popup(
         popupPositionProvider: PopupPositionProvider,
