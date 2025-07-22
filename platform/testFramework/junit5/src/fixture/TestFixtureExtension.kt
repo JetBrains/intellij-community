@@ -6,6 +6,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.junit5.fixture.EelForFixturesProvider.Companion.getEelForParametrizedTestProvider
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
+import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.*
 import org.junit.platform.commons.support.HierarchyTraversalMode
 import org.junit.platform.commons.support.ReflectionSupport
@@ -24,10 +25,16 @@ internal class TestFixtureExtension : BeforeAllCallback,
 
   override fun beforeAll(context: ExtensionContext) {
     before(context, static = true)
+    if (context.testInstanceLifecycle.getOrNull() == TestInstance.Lifecycle.PER_CLASS) {
+      before(context, static = false)
+    }
   }
 
   override fun beforeEach(context: ExtensionContext) {
-    // If test is parametrized with eel -- postpone fixture initialization till interception: we can't call it before it:
+    if (context.testInstanceLifecycle.getOrNull() == TestInstance.Lifecycle.PER_CLASS) {
+      return
+    }
+    // If the test is parametrized with eel -- postpone fixture initialization till interception: we can't call it before it:
     // we need invocation context.
     if (context.getEelForParametrizedTestProvider() == null) {
       before(context, static = false)
@@ -69,19 +76,25 @@ internal class TestFixtureExtension : BeforeAllCallback,
       pendingFixtures.add(fixture.init(testScope, TestContextImpl(context, eelApi)))
     }
     awaitFixtureInitialization(testScope, pendingFixtures)
-    context.getStore(ExtensionContext.Namespace.GLOBAL).put("TestFixtureExtension", testScope)
+    context.getStore(ExtensionContext.Namespace.GLOBAL).put("TestFixtureExtension_$static", testScope)
   }
 
   override fun afterEach(context: ExtensionContext) {
-      after(context)
+    if (context.testInstanceLifecycle.getOrNull() == TestInstance.Lifecycle.PER_CLASS) {
+      return
+    }
+    after(context, static = false)
   }
 
   override fun afterAll(context: ExtensionContext) {
-    after(context)
+    if (context.testInstanceLifecycle.getOrNull() == TestInstance.Lifecycle.PER_CLASS) {
+      after(context, static = false)
+    }
+    after(context, static = true)
   }
 
-  private fun after(context: ExtensionContext) {
-    val testScope = context.getStore(ExtensionContext.Namespace.GLOBAL).get("TestFixtureExtension") ?: return
+  private fun after(context: ExtensionContext, static: Boolean) {
+    val testScope = context.getStore(ExtensionContext.Namespace.GLOBAL).get("TestFixtureExtension_$static") ?: return
     @Suppress("SSBasedInspection")
     runBlocking {
       (testScope as CoroutineScope).coroutineContext.job.cancelAndJoin()
