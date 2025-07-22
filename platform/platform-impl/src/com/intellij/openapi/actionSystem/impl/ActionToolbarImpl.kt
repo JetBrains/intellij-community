@@ -1016,7 +1016,6 @@ open class ActionToolbarImpl @JvmOverloads constructor(
   protected open fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) {
     myListeners.getMulticaster().actionsUpdated()
     if (!forced && !presentationFactory.isNeedRebuild) {
-      if (newVisibleActions == myVisibleActions) return
       if (replaceButtonsForNewActionInstances(newVisibleActions)) return
     }
     myForcedUpdateRequested = false
@@ -1055,16 +1054,22 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     for (index in myVisibleActions.indices) {
       val prev: AnAction = myVisibleActions[index]
       val next: AnAction = newVisibleActions[index]
-      if (next === prev) {
+      if (next.javaClass != prev.javaClass) return false
+
+      if (prev is Separator) {
+        if (next !is Separator) return false
+        if (myShowSeparatorTitles && prev.text != next.text) return false
         continue
       }
-      if (next.javaClass != prev.javaClass) return false
-      if (next is CustomComponentAction) return false
 
-      // replace only regular action buttons without text (same size 16x16)
       val nextP = presentationFactory.getPresentation(next)
-      if (nextP.getClientProperty(ActionUtil.COMPONENT_PROVIDER) != null ||
-          nextP.getClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR) == true) {
+
+      val nextIsCustom = next is CustomComponentAction ||
+                         nextP.getClientProperty(ActionUtil.COMPONENT_PROVIDER) != null
+      val prevIsCustom = nextP.getClientProperty(CustomComponentAction.COMPONENT_KEY) != null
+      if (nextIsCustom != prevIsCustom) return false // ActionUtil.COMPONENT_PROVIDER can change dynamically
+      if (nextIsCustom) {
+        if (next === prev) continue // keep old custom component untouched
         return false
       }
 
@@ -1073,13 +1078,20 @@ open class ActionToolbarImpl @JvmOverloads constructor(
         val component = components[buttonIndex]
         buttonIndex++
 
-        if (component is ActionButton && component.action === prev && component.javaClass == ActionButton::class.java) {
+        if (component is ActionButton && component.action === prev) {
           actionButton = component
           break
         }
       }
       if (actionButton == null) return false
 
+      // replace only regular action buttons without text (same size 16x16)
+      if (nextP.getClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR) == true) return false
+      if (actionButton.javaClass != ActionButton::class.java) return false
+
+      if (next === prev) continue // keep old component untouched
+
+      // create a new button and replace it in-place
       pairs.add(Replacement(buttonIndex - 1, next))
     }
 
