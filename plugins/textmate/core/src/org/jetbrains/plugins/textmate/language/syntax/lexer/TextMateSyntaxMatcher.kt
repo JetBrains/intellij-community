@@ -5,6 +5,7 @@ import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh
+import org.jetbrains.plugins.textmate.regex.DefaultRegexProvider
 import org.jetbrains.plugins.textmate.regex.MatchData
 import org.jetbrains.plugins.textmate.regex.RegexFactory
 import org.jetbrains.plugins.textmate.regex.RegexProvider
@@ -40,6 +41,10 @@ class TextMateSyntaxMatcherImpl(
   private val regexProvider: RegexProvider,
   private val mySelectorWeigher: TextMateSelectorWeigher,
 ) : TextMateSyntaxMatcher {
+
+  @Deprecated("Use TextMateSyntaxMatcherImpl(RegexFactory, TextMateSelectorWeigher)")
+  constructor(regexFactory: RegexFactory,
+              weigher: TextMateSelectorWeigher) : this(DefaultRegexProvider(regexFactory), weigher)
 
   override fun matchRule(
     syntaxNodeDescriptor: SyntaxNodeDescriptor,

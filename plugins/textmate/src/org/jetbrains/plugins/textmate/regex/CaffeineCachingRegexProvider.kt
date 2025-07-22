@@ -22,3 +22,21 @@ class CaffeineCachingRegexProvider(private val regexFactory: RegexFactory) : Reg
     return regexFactory.string(string).use(body)
   }
 }
+
+@Deprecated("Use CaffeineCachingRegexProvider")
+class CachingRegexFactory(private val regexFactory: RegexFactory) : RegexFactory {
+  private val REGEX_CACHE: Cache<CharSequence, RegexFacade> = Caffeine.newBuilder()
+    .maximumSize(1000)
+    .expireAfterAccess(1, TimeUnit.MINUTES)
+    .removalListener { _: CharSequence?, v: RegexFacade?, _ -> v?.close() }
+    .executor(Dispatchers.Default.asExecutor())
+    .build()
+
+  override fun regex(pattern: CharSequence): RegexFacade {
+    return REGEX_CACHE.get(pattern) { regexFactory.regex(pattern) }
+  }
+
+  override fun string(string: CharSequence): TextMateString {
+    return regexFactory.string(string)
+  }
+}
