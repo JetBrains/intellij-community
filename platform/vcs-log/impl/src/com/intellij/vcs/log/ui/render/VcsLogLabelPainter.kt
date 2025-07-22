@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.render
 import com.intellij.vcs.log.VcsLogRefManager
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.getLogProvider
 import com.intellij.vcs.log.ui.VcsBookmarkRef
 import java.awt.Color
 import javax.swing.JComponent

@@ -21,6 +21,7 @@ import com.intellij.vcs.log.data.CommitIdByStringCondition
 import com.intellij.vcs.log.data.DataPack.ErrorDataPack
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.VcsLogStorage
+import com.intellij.vcs.log.data.roots
 import com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder

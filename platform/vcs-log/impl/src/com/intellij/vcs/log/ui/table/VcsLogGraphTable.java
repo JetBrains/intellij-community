@@ -585,7 +585,9 @@ public class VcsLogGraphTable extends TableWithProgress
     sink.set(VcsLogInternalDataKeys.VCS_LOG_GRAPH_TABLE, this);
 
     if (roots.size() == 1) {
-      sink.set(VcsDataKeys.VCS, myLogData.getLogProvider(Objects.requireNonNull(getFirstItem(roots))).getSupportedVcs());
+      VirtualFile root = Objects.requireNonNull(getFirstItem(roots));
+      VcsLogProvider provider = Objects.requireNonNull(myLogData.getLogProviders().get(root));
+      sink.set(VcsDataKeys.VCS, provider.getSupportedVcs());
     }
     if (selectedRows.length == 1) {
       List<VcsRef> refsAtRow = getModel().getRefsAtRow(selectedRows[0]);

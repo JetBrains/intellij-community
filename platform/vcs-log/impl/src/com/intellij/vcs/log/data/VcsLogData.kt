@@ -1,484 +1,406 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.data;
+package com.intellij.vcs.log.data
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.CheckedDisposable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogData;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.index.*;
-import com.intellij.vcs.log.impl.VcsLogCachesInvalidator;
-import com.intellij.vcs.log.impl.VcsLogErrorHandler;
-import com.intellij.vcs.log.impl.VcsLogIndexer;
-import com.intellij.vcs.log.impl.VcsLogStorageLocker;
-import com.intellij.vcs.log.util.PersistentUtil;
-import com.intellij.vcs.log.util.VcsLogUtil;
-import com.intellij.vcs.log.util.VcsUserUtil;
-import io.opentelemetry.api.trace.Span;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.vcs.log.*
+import com.intellij.vcs.log.data.SingleTaskController.SingleTask
+import com.intellij.vcs.log.data.SingleTaskController.SingleTaskImpl
+import com.intellij.vcs.log.data.index.*
+import com.intellij.vcs.log.data.util.trace
+import com.intellij.vcs.log.impl.VcsLogCachesInvalidator
+import com.intellij.vcs.log.impl.VcsLogErrorHandler
+import com.intellij.vcs.log.impl.VcsLogStorageLocker
+import com.intellij.vcs.log.util.PersistentUtil
+import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.util.VcsUserUtil.VcsUserHashingStrategy
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
+import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import java.util.function.Consumer
 
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
-
-import static com.intellij.platform.vcs.impl.shared.telemetry.VcsScopeKt.VcsScope;
-
-public final class VcsLogData implements Disposable, VcsLogDataProvider {
-  private static final Logger LOG = Logger.getInstance(VcsLogData.class);
+class VcsLogData(
+  val project: Project,
+  val logProviders: Map<VirtualFile, VcsLogProvider>,
+  private val errorHandler: VcsLogErrorHandler,
+  isIndexEnabled: Boolean,
+  parentDisposable: Disposable,
+) : Disposable, VcsLogDataProvider {
+  private val disposableFlag = Disposer.newCheckedDisposable()
+  private val lock = Any()
 
   @ApiStatus.Internal
-  public static final VcsLogProgress.ProgressKey DATA_PACK_REFRESH = new VcsLogProgress.ProgressKey("data pack");
+  val progress: VcsLogProgress = VcsLogProgress(this)
 
-  private final @NotNull Project myProject;
-  private final @NotNull Map<VirtualFile, VcsLogProvider> myLogProviders;
-  private final @NotNull MiniDetailsGetter myMiniDetailsGetter;
-  private final @NotNull CommitDetailsGetter myDetailsGetter;
-  private final @NotNull CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
+  private val storageLocker: VcsLogStorageLocker = VcsLogStorageLocker.getInstance()
+  private val storageId: String = PersistentUtil.calcLogId(project, logProviders)
+  val storage: VcsLogStorage
+  val index: VcsLogIndex
+
+  /**
+   * Cached details of the latest commits.
+   * We store them separately from the cache of [DataGetter], to make sure that they are always available,
+   * which is important because these details will be constantly visible to the user,
+   * thus it would be annoying to re-load them from VCS if the cache overflows.
+   */
+  val topCommitsCache: TopCommitsCache
+
+  val miniDetailsGetter: MiniDetailsGetter
+  override val fullCommitDetailsCache: VcsLogCommitDataCache<VcsFullCommitDetails> get() = commitDetailsGetter
+
+  val commitDetailsGetter: CommitDetailsGetter
+  override val commitMetadataCache: VcsLogCommitDataCache<VcsCommitMetadata> get() = miniDetailsGetter
+
+  private val refresher: VcsLogRefresherImpl
+  val dataPack: DataPack get() = refresher.currentDataPack
+  private val dataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList<DataPackChangeListener>()
+
+  val containingBranchesGetter: ContainingBranchesGetter = ContainingBranchesGetter(this, this)
+
+  @Suppress("unused") // need a hard reference for scope
+  private val indexDiagnosticRunner: IndexDiagnosticRunner
 
   /**
    * Current username, as specified in the VCS settings.
    * It can be configured differently for different roots => store in a map.
    */
-  private final Map<VirtualFile, VcsUser> myCurrentUser = new ConcurrentHashMap<>();
+  @Volatile
+  var currentUser: Map<VirtualFile, VcsUser> = emptyMap()
+    private set
 
-  /**
-   * Cached details of the latest commits.
-   * We store them separately from the cache of {@link DataGetter}, to make sure that they are always available,
-   * which is important because these details will be constantly visible to the user,
-   * thus it would be annoying to re-load them from VCS if the cache overflows.
-   */
-  private final @NotNull TopCommitsCache myTopCommitsDetailsCache;
-  private final @NotNull VcsUserRegistryImpl myUserRegistry;
-  private final @NotNull VcsLogUserResolver myUserResolver;
-  private final @NotNull VcsLogStorageLocker myStorageLocker;
-  private final @NotNull String myStorageId;
-  private final @NotNull VcsLogStorage myStorage;
-  private final @NotNull ContainingBranchesGetter myContainingBranchesGetter;
-  private final @NotNull VcsLogProgress myProgress;
-  private final @NotNull VcsLogRefresherImpl myRefresher;
-  private final @NotNull List<DataPackChangeListener> myDataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  @Volatile
+  private var state = State.CREATED
 
-  private final @NotNull VcsLogErrorHandler myErrorHandler;
-  private final @NotNull VcsLogModifiableIndex myIndex;
-  private final @NotNull IndexDiagnosticRunner myIndexDiagnosticRunner;
+  @Volatile
+  private var initializationTask: SingleTask? = null
 
-  private final @NotNull Object myLock = new Object();
-  private @NotNull State myState = State.CREATED;
-  private @Nullable SingleTaskController.SingleTask myInitialization = null;
+  private val userRegistry: VcsUserRegistryImpl = project.service<VcsUserRegistry>() as VcsUserRegistryImpl
+  val allUsers: Set<VcsUser> get() = userRegistry.users
+  val userNameResolver: VcsLogUserResolver = MyVcsLogUserResolver()
 
-  public VcsLogData(@NotNull Project project,
-                    @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                    @NotNull VcsLogErrorHandler errorHandler,
-                    boolean isIndexEnabled, @NotNull Disposable parentDisposable) {
-    myProject = project;
-    myLogProviders = logProviders;
-    myUserRegistry = (VcsUserRegistryImpl)project.getService(VcsUserRegistry.class);
-    myErrorHandler = errorHandler;
-
-    myProgress = new VcsLogProgress(this);
-
-    myStorageLocker = VcsLogStorageLocker.Companion.getInstance();
-    myStorageId = PersistentUtil.calcLogId(myProject, myLogProviders);
-    // storage can not be opened twice, so we have to wait for other clients (previously opened/closed project) to close it first
-    myStorageLocker.acquireLock(myStorageId);
-    try {
-      Pair<VcsLogStorage, VcsLogModifiableIndex> storageAndIndex = createStorageAndIndex(myProgress, isIndexEnabled);
-      myStorage = storageAndIndex.first;
-      myIndex = storageAndIndex.second;
+  init {
+    Disposer.register(parentDisposable, this)
+    // storage cannot be opened twice, so we have to wait for other clients (previously opened/closed project) to close it first
+    storageLocker.acquireLock(storageId)
+    val (storage, index) = try {
+      createStorageAndIndex(progress, isIndexEnabled)
     }
-    catch (Throwable e) {
-      myStorageLocker.releaseLock(myStorageId);
-      throw e;
+    catch (e: Throwable) {
+      storageLocker.releaseLock(storageId)
+      throw e
     }
+    this.storage = storage
+    this.index = index
 
-    myTopCommitsDetailsCache = new TopCommitsCache(myStorage);
-    myMiniDetailsGetter = new MiniDetailsGetter(myProject, myStorage, logProviders, myTopCommitsDetailsCache, myIndex, this);
-    myDetailsGetter = new CommitDetailsGetter(myStorage, logProviders, this);
+    topCommitsCache = TopCommitsCache(storage)
+    miniDetailsGetter = MiniDetailsGetter(project, storage, logProviders, topCommitsCache, index, this)
+    commitDetailsGetter = CommitDetailsGetter(storage, logProviders, this)
+    indexDiagnosticRunner = IndexDiagnosticRunner(index, storage, logProviders.keys, { dataPack }, commitDetailsGetter, errorHandler, this)
 
-    var commitDataConsumer = new VcsLogCommitDataConsumerImpl(myUserRegistry, myIndex, myTopCommitsDetailsCache);
-    myRefresher = new VcsLogRefresherImpl(myProject, myStorage, myLogProviders, myProgress, commitDataConsumer,
-                                          this::fireDataPackChangeEvent, getRecentCommitsCount());
-    Disposer.register(this, myRefresher);
-
-    myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
-    myUserResolver = new MyVcsLogUserResolver();
-
-    myIndexDiagnosticRunner = new IndexDiagnosticRunner(myIndex, myStorage, myLogProviders.keySet(),
-                                                        this::getDataPack, myDetailsGetter, myErrorHandler, this);
-
-    Disposer.register(parentDisposable, this);
-    Disposer.register(this, () -> {
-      synchronized (myLock) {
-        if (myInitialization != null) {
-          myInitialization.cancel();
-        }
+    val commitDataConsumer = VcsLogCommitDataConsumerImpl(userRegistry, index, topCommitsCache)
+    refresher = VcsLogRefresherImpl(project, storage, logProviders, progress, commitDataConsumer,
+                                    Consumer { fireDataPackChangeEvent(it) },
+                                    getRecentCommitsCount())
+    Disposer.register(this, refresher)
+    Disposer.register(this, Disposable {
+      synchronized(lock) {
+        initializationTask?.cancel()
       }
-    });
-    Disposer.register(this, myDisposableFlag);
+    })
+    Disposer.register(this, disposableFlag)
   }
 
-  private @NotNull Pair<VcsLogStorage, VcsLogModifiableIndex> createStorageAndIndex(@NotNull VcsLogProgress progress, boolean isIndexEnabled) {
-    if (!VcsLogCachesInvalidator.getInstance().isValid()) {
-      // this is not recoverable
-      // restart won't help here
-      // and cannot shut down ide because of this
-      // so use memory storage (probably leading to out of memory at some point) + no index
-
-      LOG.error("Could not delete caches at " + PersistentUtil.LOG_CACHE);
-      myErrorHandler.displayMessage(VcsLogBundle.message("vcs.log.fatal.error.message", PersistentUtil.LOG_CACHE,
-                                                         ApplicationNamesInfo.getInstance().getFullProductName()));
-      return new Pair<>(new InMemoryStorage(), new EmptyIndex());
-    }
-
-    Map<VirtualFile, VcsLogIndexer> indexers = VcsLogPersistentIndex.getAvailableIndexers(myLogProviders);
-    boolean isIndexSwitchedOnInRegistry = isIndexSwitchedOnInRegistry();
-    boolean isIndexSwitchedOn = isIndexEnabled && isIndexSwitchedOnInRegistry;
-
-    VcsLogStorage storage;
-    VcsLogStorageBackend indexBackend;
-    try {
-      if (Registry.is("vcs.log.index.sqlite.storage", false)) {
-        SqliteVcsLogStorageBackend sqliteBackend =
-          new SqliteVcsLogStorageBackend(myProject, myStorageId, myLogProviders, myErrorHandler, this);
-        storage = sqliteBackend;
-        indexBackend = sqliteBackend;
-      }
-      else {
-        Set<VirtualFile> indexingRoots = isIndexSwitchedOn ? new LinkedHashSet<>(indexers.keySet()) : Collections.emptySet();
-        Pair<VcsLogStorage, VcsLogStorageBackend> storageAndIndexBackend = VcsLogStorageImpl.createStorageAndIndexBackend(myProject,
-                                                                                                                          myStorageId,
-                                                                                                                          myLogProviders,
-                                                                                                                          indexingRoots,
-                                                                                                                          myErrorHandler,
-                                                                                                                          this);
-        storage = storageAndIndexBackend.first;
-        indexBackend = storageAndIndexBackend.second;
-      }
-    }
-    catch (IOException e) {
-      LOG.error("Falling back to in-memory hashes", e);
-      return new Pair<>(new InMemoryStorage(), new EmptyIndex());
-    }
-
-    if (indexBackend == null || !isIndexSwitchedOn || indexers.isEmpty()) {
-      if (!isIndexSwitchedOnInRegistry) LOG.info("Vcs log index is turned off in the registry");
-      if (!isIndexEnabled) LOG.info("Vcs log index is turned off for " + VcsLogUtil.getProvidersMapText(myLogProviders));
-      if (indexers.isEmpty()) LOG.info("No indexers found for project " + myProject.getName());
-      return new Pair<>(storage, new EmptyIndex());
-    }
-
-    VcsLogPersistentIndex index = new VcsLogPersistentIndex(myProject, myLogProviders, indexers, storage, indexBackend, progress,
-                                                            myErrorHandler, this);
-    return new Pair<>(storage, index);
-  }
-
-  public void initialize() {
-    myRefresher.initialize();
-    readCurrentUser();
-  }
-
-  private void readCurrentUser() {
-    synchronized (myLock) {
-      if (myState.equals(State.CREATED)) {
-        myState = State.INITIALIZED;
-        Task.Backgroundable backgroundable = new Task.Backgroundable(myProject,
-                                                                     VcsLogBundle.message("vcs.log.initial.reading.current.user.process"),
-                                                                     false) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            indicator.setIndeterminate(true);
-            resetState();
-            doReadCurrentUser();
-          }
-
-          @Override
-          public void onCancel() {
-            synchronized (myLock) {
-              // Here be dragons:
-              // VcsLogProgressManager can cancel us when it's getting disposed,
-              // and we can also get canceled by invalid git executable.
-              // Since we do not know what's up, we just restore the state,
-              // and it is entirely possible to start another initialization after that.
-              // Eventually, everything gets canceled for good in VcsLogData.dispose.
-              // But still.
-              if (myState.equals(State.INITIALIZED)) {
-                myState = State.CREATED;
-                myInitialization = null;
-              }
-            }
-          }
-
-          @Override
-          public void onThrowable(@NotNull Throwable error) {
-            synchronized (myLock) {
-              LOG.error(error);
-              if (myState.equals(State.INITIALIZED)) {
-                myState = State.CREATED;
-                myInitialization = null;
-              }
-            }
-          }
-
-          @Override
-          public void onSuccess() {
-            synchronized (myLock) {
-              if (myState.equals(State.INITIALIZED)) {
-                myInitialization = null;
-              }
-            }
-          }
-        };
-        CoreProgressManager manager = (CoreProgressManager)ProgressManager.getInstance();
-        ProgressIndicator indicator = myProgress.createProgressIndicator(DATA_PACK_REFRESH);
-        Future<?> future = manager.runProcessWithProgressAsynchronously(backgroundable, indicator, null);
-        myInitialization = new SingleTaskController.SingleTaskImpl(future, indicator);
-      }
-    }
-  }
-
-  private void doReadCurrentUser() {
-    Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.ReadingCurrentUser.getName()).startSpan();
-    for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
-      VirtualFile root = entry.getKey();
-      try {
-        VcsUser me = entry.getValue().getCurrentUser(root);
-        if (me != null) {
-          myCurrentUser.put(root, me);
-        }
-        else {
-          LOG.info("Username not configured for root " + root);
-        }
-      }
-      catch (VcsException e) {
-        LOG.warn("Couldn't read the username from root " + root, e);
-      }
-    }
-    span.end();
-  }
-
-  private void fireDataPackChangeEvent(final @NotNull DataPack dataPack) {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      for (DataPackChangeListener listener : myDataPackChangeListeners) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Starting data pack change listener " + listener);
-        }
-        listener.onDataPackChange(dataPack);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Finished data pack change listener " + listener);
-        }
-      }
-    }, o -> myDisposableFlag.isDisposed());
-  }
-
-  public void addDataPackChangeListener(final @NotNull DataPackChangeListener listener) {
-    myDataPackChangeListeners.add(listener);
-  }
-
-  public void removeDataPackChangeListener(@NotNull DataPackChangeListener listener) {
-    myDataPackChangeListeners.remove(listener);
-  }
-
-  public @NotNull DataPack getDataPack() {
-    return myRefresher.getCurrentDataPack();
-  }
-
-  @Override
-  public @Nullable CommitId getCommitId(int commitIndex) {
-    VcsCommitMetadata cachedData = myMiniDetailsGetter.getCachedData(commitIndex);
-    if (cachedData != null) {
-      return new CommitId(cachedData.getId(), cachedData.getRoot());
-    }
-    return myStorage.getCommitId(commitIndex);
-  }
-
-  @Override
-  public int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root) {
-    return myStorage.getCommitIndex(hash, root);
-  }
-
-  public @NotNull VcsLogStorage getStorage() {
-    return myStorage;
-  }
-
-  private void resetState() {
-    myTopCommitsDetailsCache.clear();
-  }
-
-  public @NotNull Set<VcsUser> getAllUsers() {
-    return myUserRegistry.getUsers();
-  }
-
-  public @NotNull Map<VirtualFile, VcsUser> getCurrentUser() {
-    return myCurrentUser;
-  }
-
-  /**
-   * @return true if only one user commits to this repository
-   */
-  public boolean isSingleUser() {
-    Set<VcsUser> users = new ObjectOpenCustomHashSet<>(getCurrentUser().values(), new VcsUserUtil.VcsUserHashingStrategy());
-    return myUserRegistry.all(user -> users.contains(user));
-  }
-
-  public @NotNull Project getProject() {
-    return myProject;
-  }
-
-  public @NotNull Collection<VirtualFile> getRoots() {
-    return myLogProviders.keySet();
-  }
-
-  public @NotNull Map<VirtualFile, VcsLogProvider> getLogProviders() {
-    return myLogProviders;
-  }
-
-  public @NotNull ContainingBranchesGetter getContainingBranchesGetter() {
-    return myContainingBranchesGetter;
+  fun initialize() {
+    refresher.initialize()
+    readCurrentUser()
   }
 
   /**
    * Makes the log perform refresh for the given root.
    * This refresh can be optimized, i.e., it can query VCS just for the part of the log.
    *
-   * @param optimized - if request should be optimized see {@link VcsLogRefresher#refresh}
+   * @param optimized - if request should be optimized see [VcsLogRefresher.refresh]
    */
-  public void refresh(@NotNull Collection<VirtualFile> roots, boolean optimized) {
-    initialize();
-    myRefresher.refresh(roots, optimized);
+  @JvmOverloads
+  fun refresh(roots: Collection<VirtualFile>, optimized: Boolean = false) {
+    initialize()
+    refresher.refresh(roots, optimized)
   }
 
-  public void refresh(@NotNull Collection<VirtualFile> roots) {
-    refresh(roots, false);
+  /**
+   * @return true if only one user commits to this repository
+   */
+  val isSingleUser: Boolean
+    get() {
+      val users = ObjectOpenCustomHashSet(currentUser.values, VcsUserHashingStrategy())
+      return userRegistry.all { user -> users.contains(user) }
+    }
+
+  override fun getCommitId(commitIndex: Int): CommitId? {
+    val cachedData = miniDetailsGetter.getCachedData(commitIndex)
+    if (cachedData != null) {
+      return CommitId(cachedData.getId(), cachedData.getRoot())
+    }
+    return storage.getCommitId(commitIndex)
   }
 
-  public @NotNull CommitDetailsGetter getCommitDetailsGetter() {
-    return myDetailsGetter;
+  override fun getCommitIndex(hash: Hash, root: VirtualFile): Int {
+    return storage.getCommitIndex(hash, root)
   }
 
-  @Override
-  public @NotNull VcsLogCommitDataCache<VcsFullCommitDetails> getFullCommitDetailsCache() {
-    return getCommitDetailsGetter();
+  fun addDataPackChangeListener(listener: DataPackChangeListener) {
+    dataPackChangeListeners.add(listener)
   }
 
-  public @NotNull MiniDetailsGetter getMiniDetailsGetter() {
-    return myMiniDetailsGetter;
+  fun removeDataPackChangeListener(listener: DataPackChangeListener) {
+    dataPackChangeListeners.remove(listener)
   }
 
-  @Override
-  public @NotNull VcsLogCommitDataCache<VcsCommitMetadata> getCommitMetadataCache() {
-    return getMiniDetailsGetter();
+  private fun fireDataPackChangeEvent(dataPack: DataPack) {
+    ApplicationManager.getApplication().invokeLater(Runnable {
+      for (listener in dataPackChangeListeners) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Starting data pack change listener $listener")
+        }
+        listener.onDataPackChange(dataPack)
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Finished data pack change listener $listener")
+        }
+      }
+    }, { disposableFlag.isDisposed() })
   }
 
-  @Override
-  public void dispose() {
+  override fun dispose() {
     try {
-      SingleTaskController.SingleTask initialization;
+      val initialization: SingleTask?
 
-      synchronized (myLock) {
-        initialization = myInitialization;
-        myInitialization = null;
-        myState = State.DISPOSED;
+      synchronized(lock) {
+        initialization = initializationTask
+        initializationTask = null
+        state = State.DISPOSED
       }
 
       if (initialization != null) {
-        initialization.cancel();
+        initialization.cancel()
         try {
-          initialization.waitFor(1, TimeUnit.MINUTES);
+          initialization.waitFor(1, TimeUnit.MINUTES)
         }
-        catch (InterruptedException | ExecutionException | TimeoutException e) {
-          LOG.warn(e);
+        catch (e: InterruptedException) {
+          LOG.warn(e)
+        }
+        catch (e: ExecutionException) {
+          LOG.warn(e)
+        }
+        catch (e: TimeoutException) {
+          LOG.warn(e)
         }
       }
-      resetState();
+      topCommitsCache.clear()
 
-      if (myStorage instanceof VcsLogStorageImpl concreteStorage && !concreteStorage.isDisposed()) {
-        LOG.error("Storage for $name was not disposed");
-        Disposer.dispose(concreteStorage);
+      if (storage is VcsLogStorageImpl && !storage.isDisposed) {
+        LOG.error("Storage for \$name was not disposed")
+        Disposer.dispose(storage)
       }
     }
     finally {
-      myStorageLocker.releaseLock(myStorageId);
+      storageLocker.releaseLock(storageId)
     }
   }
 
-  public @NotNull VcsLogProvider getLogProvider(@NotNull VirtualFile root) {
-    return myLogProviders.get(root);
+  private fun readCurrentUser() {
+    synchronized(lock) {
+      if (state != State.CREATED) {
+        return
+      }
+      state = State.INITIALIZED
+      val title = VcsLogBundle.message("vcs.log.initial.reading.current.user.process")
+      val backgroundable: Task.Backgroundable = object : Task.Backgroundable(project, title, false) {
+        override fun run(indicator: ProgressIndicator) {
+          indicator.setIndeterminate(true)
+          topCommitsCache.clear()
+          currentUser = doReadCurrentUser()
+        }
+
+        override fun onCancel() {
+          synchronized(lock) {
+            // Here be dragons:
+            // VcsLogProgressManager can cancel us when it's getting disposed,
+            // and we can also get canceled by invalid git executable.
+            // Since we do not know what's up, we just restore the state,
+            // and it is entirely possible to start another initialization after that.
+            // Eventually, everything gets canceled for good in VcsLogData.dispose.
+            // But still.
+            if (state == State.INITIALIZED) {
+              state = State.CREATED
+              initializationTask = null
+            }
+          }
+        }
+
+        override fun onThrowable(error: Throwable) {
+          synchronized(lock) {
+            LOG.error(error)
+            if (state == State.INITIALIZED) {
+              state = State.CREATED
+              initializationTask = null
+            }
+          }
+        }
+
+        override fun onSuccess() {
+          synchronized(lock) {
+            if (state == State.INITIALIZED) {
+              initializationTask = null
+            }
+          }
+        }
+      }
+      val manager = ProgressManager.getInstance() as CoreProgressManager
+      val indicator = progress.createProgressIndicator(DATA_PACK_REFRESH)
+      val future = manager.runProcessWithProgressAsynchronously(backgroundable, indicator, null)
+      initializationTask = SingleTaskImpl(future, indicator)
+    }
   }
 
-  public @NotNull VcsLogUserResolver getUserNameResolver() {
-    return myUserResolver;
+  private fun doReadCurrentUser(): Map<VirtualFile, VcsUser> =
+    TelemetryManager.getInstance().getTracer(VcsScope).trace(VcsBackendTelemetrySpan.LogData.ReadingCurrentUser) {
+      buildMap {
+        for ((root, provider) in logProviders.entries) {
+          try {
+            val user = provider.getCurrentUser(root)
+            if (user == null) {
+              LOG.info("Username not configured for root $root")
+              continue
+            }
+            put(root, user)
+          }
+          catch (e: VcsException) {
+            LOG.warn("Couldn't read the username from root $root", e)
+          }
+        }
+      }
+    }
+
+  private fun createStorageAndIndex(progress: VcsLogProgress, isIndexEnabled: Boolean): Pair<VcsLogStorage, VcsLogModifiableIndex> {
+    if (!VcsLogCachesInvalidator.getInstance().isValid()) {
+      // this is not recoverable
+      // restart won't help here
+      // and cannot shut down ide because of this
+      // so use memory storage (probably leading to out of memory at some point) + no index
+
+      LOG.error("Could not delete caches at " + PersistentUtil.LOG_CACHE)
+      errorHandler.displayMessage(VcsLogBundle.message("vcs.log.fatal.error.message", PersistentUtil.LOG_CACHE,
+                                                       ApplicationNamesInfo.getInstance().fullProductName))
+      return InMemoryStorage() to EmptyIndex()
+    }
+
+    val indexers = VcsLogPersistentIndex.getAvailableIndexers(logProviders)
+    val isIndexSwitchedOnInRegistry = isIndexSwitchedOnInRegistry()
+    val isIndexSwitchedOn = isIndexEnabled && isIndexSwitchedOnInRegistry
+
+    val storage: VcsLogStorage
+    val indexBackend: VcsLogStorageBackend?
+    try {
+      if (`is`("vcs.log.index.sqlite.storage", false)) {
+        val sqliteBackend = SqliteVcsLogStorageBackend(project, storageId, logProviders, errorHandler, this)
+        storage = sqliteBackend
+        indexBackend = sqliteBackend
+      }
+      else {
+        val indexingRoots = if (isIndexSwitchedOn) LinkedHashSet<VirtualFile>(indexers.keys) else emptySet()
+        val storageAndIndexBackend = VcsLogStorageImpl.createStorageAndIndexBackend(project, storageId, logProviders, indexingRoots, errorHandler, this)
+        storage = storageAndIndexBackend.first
+        indexBackend = storageAndIndexBackend.second
+      }
+    }
+    catch (e: IOException) {
+      LOG.error("Falling back to in-memory hashes", e)
+      return InMemoryStorage() to EmptyIndex()
+    }
+
+    if (indexBackend == null || !isIndexSwitchedOn || indexers.isEmpty()) {
+      if (!isIndexSwitchedOnInRegistry) {
+        LOG.info("Vcs log index is turned off in the registry")
+      }
+      if (!isIndexEnabled) {
+        LOG.info("Vcs log index is turned off for " + VcsLogUtil.getProvidersMapText(logProviders))
+      }
+      if (indexers.isEmpty()) {
+        LOG.info("No indexers found for project " + project.getName())
+      }
+      return storage to EmptyIndex()
+    }
+
+    val index = VcsLogPersistentIndex(project, logProviders, indexers, storage, indexBackend, progress, errorHandler, this)
+    return storage to index
   }
 
-  @ApiStatus.Internal
-  public @NotNull VcsLogProgress getProgress() {
-    return myProgress;
-  }
-
-  public @NotNull TopCommitsCache getTopCommitsCache() {
-    return myTopCommitsDetailsCache;
-  }
-
-  public @NotNull VcsLogIndex getIndex() {
-    return myIndex;
-  }
-
-  private enum State {
+  private enum class State {
     CREATED, INITIALIZED, DISPOSED
   }
 
-  private final class MyVcsLogUserResolver extends VcsLogUserResolverBase implements Disposable {
-    private final @NotNull DataPackChangeListener myListener = newDataPack -> {
-      clearCache();
-    };
-
-    MyVcsLogUserResolver() {
-      addDataPackChangeListener(myListener);
-      Disposer.register(VcsLogData.this, this);
+  private inner class MyVcsLogUserResolver : VcsLogUserResolverBase(), Disposable {
+    private val listener = DataPackChangeListener {
+      clearCache()
     }
 
-    @Override
-    public @NotNull Map<VirtualFile, VcsUser> getCurrentUsers() {
-      return VcsLogData.this.getCurrentUser();
+    init {
+      addDataPackChangeListener(listener)
+      Disposer.register(this@VcsLogData, this)
     }
 
-    @Override
-    public @NotNull Set<VcsUser> getAllUsers() {
-      return VcsLogData.this.getAllUsers();
-    }
+    override val currentUsers: Map<VirtualFile, VcsUser>
+      get() = this@VcsLogData.currentUser
 
-    @Override
-    public void dispose() {
-      removeDataPackChangeListener(myListener);
+    override val allUsers: Set<VcsUser>
+      get() = this@VcsLogData.allUsers
+
+    override fun dispose() {
+      removeDataPackChangeListener(listener)
     }
   }
 
-  public static boolean isIndexSwitchedOnInRegistry() {
-    return getIndexingRegistryValue().asBoolean();
-  }
+  companion object {
+    private val LOG = logger<VcsLogData>()
 
-  public static @NotNull RegistryValue getIndexingRegistryValue() {
-    return Registry.get("vcs.log.index.enable");
-  }
+    @JvmField
+    @ApiStatus.Internal
+    val DATA_PACK_REFRESH: VcsLogProgress.ProgressKey = VcsLogProgress.ProgressKey("data pack")
 
-  public static int getRecentCommitsCount() {
-    return Registry.intValue("vcs.log.recent.commits.count");
+    @JvmStatic
+    fun isIndexSwitchedOnInRegistry(): Boolean = getIndexingRegistryValue().asBoolean()
+
+    @JvmStatic
+    fun getIndexingRegistryValue(): RegistryValue = Registry.get("vcs.log.index.enable")
+
+    @JvmStatic
+    fun getRecentCommitsCount(): Int = Registry.intValue("vcs.log.recent.commits.count")
   }
+}
+
+val VcsLogData.roots: Collection<VirtualFile> get() = logProviders.keys
+
+fun VcsLogData.getLogProvider(root: VirtualFile): VcsLogProvider {
+  return logProviders[root] ?: error("Unknown root $root")
 }

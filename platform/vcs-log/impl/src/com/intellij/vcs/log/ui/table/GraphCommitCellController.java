@@ -148,7 +148,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
     if (details instanceof LoadingDetails) {
       CommitId commitId = myLogData.getCommitId(commit);
       if (commitId != null) {
-        if (myLogData.getRoots().size() > 1) {
+        if (myLogData.getLogProviders().size() > 1) {
           return VcsLogBundle.message("vcs.log.graph.arrow.tooltip.jump.to.hash.in.root", commitId.getHash().toShortString(),
                                       commitId.getRoot().getName());
         }
