@@ -106,6 +106,7 @@ internal abstract class TerminalEventDispatcher(
       IdeEventQueue.getInstance().addDispatcher(this, parentDisposable)
       sendShortcutAction.register(editor.contentComponent, getActionsToSkip())
       myRegistered = true
+      LOG.trace { "Dispatcher registered: start capturing key events" }
     }
   }
 
@@ -116,6 +117,7 @@ internal abstract class TerminalEventDispatcher(
       sendShortcutAction.unregister(editor.contentComponent)
       actionsToSkip = emptyList()
       myRegistered = false
+      LOG.trace { "Dispatcher unregistered: finish capturing key events" }
     }
   }
 
