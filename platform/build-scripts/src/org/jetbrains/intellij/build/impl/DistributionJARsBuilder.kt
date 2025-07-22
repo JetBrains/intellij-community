@@ -125,7 +125,7 @@ internal suspend fun buildDistribution(
       buildSearchableOptions(productRunner, context)
     }
 
-    val bundledPluginLayouts = getPluginLayoutsByJpsModuleNames(
+    val pluginLayouts = getPluginLayoutsByJpsModuleNames(
       modules = context.getBundledPluginModules(),
       productLayout = context.productProperties.productLayout,
     )
@@ -142,15 +142,12 @@ internal suspend fun buildDistribution(
     }
 
     val buildNonBundledPlugins = async(CoroutineName("build non-bundled plugins")) {
-      val pluginsToPublish = state.pluginsToPublish + bundledPluginLayouts.filterNot {
-        satisfiesBundlingRequirements(it, osFamily = null, arch = null, context)
-      }
       val compressPluginArchive = !isUpdateFromSources && context.options.compressZipFiles
-      buildNonBundledPlugins(pluginsToPublish, compressPluginArchive, buildPlatformJob, state, searchableOptionSet, context)
+      buildNonBundledPlugins(state.pluginsToPublish, compressPluginArchive, buildPlatformJob, state, searchableOptionSet, context)
     }
 
     val bundledPluginItems = buildBundledPluginsForAllPlatforms(
-      state, bundledPluginLayouts, isUpdateFromSources, buildPlatformJob, searchableOptionSet, moduleOutputPatcher, context
+      state, pluginLayouts, isUpdateFromSources, buildPlatformJob, searchableOptionSet, moduleOutputPatcher, context
     )
 
     ContentReport(buildPlatformJob.await(), bundledPluginItems, buildNonBundledPlugins.await())
