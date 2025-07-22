@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nls
 
 internal class KotlinPluginPrePushHandler : IssueIDPrePushHandler() {
   override val paths: List<String> = listOf("plugins/kotlin/")
-  override val commitMessageRegex = Regex(".*(?:KTIJ|KT|IDEA|IJPL)-\\d+.*", RegexOption.DOT_MATCHES_ALL /* line breaks matter */)
+  override val commitMessageRegex = Regex(".*(?:KTIJ|KTNB|KT|IDEA|IJPL)-\\d+.*", RegexOption.DOT_MATCHES_ALL /* line breaks matter */)
   override val pathsToIgnore = super.pathsToIgnore.toMutableList()
     .apply { add("/fleet/plugins/kotlin/") }
     .apply { add("/plugins/kotlin/jupyter/") }
