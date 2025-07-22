@@ -200,6 +200,7 @@ private fun logIjentError(ijentLabel: String, exception: Throwable) {
 private suspend fun ijentProcessStderrLogger(process: Process, ijentLabel: String, lastStderrMessages: MutableSharedFlow<String?>) {
   try {
     process.errorStream.reader().useLines { lines ->
+      val logIjentStderr = LogIjentStderr()
       for (line in lines) {
         yield()
         if (line.isNotEmpty()) {
@@ -243,64 +244,72 @@ private val logTargets: Map<String, Logger> =
     loggerName.removePrefix("#com.intellij.platform.ijent.")
   }
 
-private fun logIjentStderr(ijentLabel: String, line: String) {
-  val hostDateTime = ZonedDateTime.now()
+private class LogIjentStderr {
+  private var lastLoggingHandler: ((String) -> Unit)? = null
 
-  val (rawRemoteDateTime, level, message) =
-    ijentLogMessageRegex.matchEntire(line)?.destructured
-    ?: run {
-      val message = "$ijentLabel log: $line"
-      // It's important to always log such messages,
-      // but if logs are supposed to be written to a separate file in debug level,
-      // they're logged in debug level.
-      if (LOG.isDebugEnabled) {
-        LOG.debug(message)
+  operator fun invoke(ijentLabel: String, line: String) {
+    val hostDateTime = ZonedDateTime.now()
+
+    val (rawRemoteDateTime, level, message) =
+      ijentLogMessageRegex.matchEntire(line)?.destructured
+      ?: run {
+        val message = "$ijentLabel log: $line"
+        // It's important to always log such messages,
+        // but if logs are supposed to be written to a separate file in debug level,
+        // they're logged in debug level.
+        val logger = lastLoggingHandler ?: LOG::info
+        logger(message)
+        return
       }
-      else {
-        LOG.info(message)
-      }
+
+    val dateTimeDiff = try {
+      java.time.Duration.between(ZonedDateTime.parse(rawRemoteDateTime), hostDateTime).toKotlinDuration()
+    }
+    catch (_: DateTimeParseException) {
+      val logger = lastLoggingHandler ?: LOG::info
+      logger(message)
       return
     }
 
-  val dateTimeDiff = try {
-    java.time.Duration.between(ZonedDateTime.parse(rawRemoteDateTime), hostDateTime).toKotlinDuration()
-  }
-  catch (_: DateTimeParseException) {
-    LOG.debug { "$ijentLabel log: $line" }
-    return
-  }
+    val logger: ((String) -> Unit)? = run {
+      val logTargetPrefix = message
+        .take(256)  // I hope that there will never be a span/target name longer than 256 characters.
+        .split("ijent::#", limit = 2)
+        .getOrNull(1)
+        ?.substringBefore("::")
+        ?.takeWhile { it.isLetter() || it == '_' }
 
-  val logger: ((String) -> Unit) = run {
-    val logTargetPrefix = message
-      .take(256)  // I hope that there will never be a span/target name longer than 256 characters.
-      .split("ijent::#", limit = 2)
-      .getOrNull(1)
-      ?.substringBefore("::")
-      ?.takeWhile { it.isLetter() || it == '_' }
+      val logger = logTargets[logTargetPrefix] ?: IjentLogger.OTHER_LOG
 
-    val logger = logTargets[logTargetPrefix] ?: IjentLogger.OTHER_LOG
-
-    when (level) {
-      "TRACE" -> if (logger.isTraceEnabled) logger::trace else return
-      "INFO" -> logger::info
-      "WARN" -> logger::warn
-      "ERROR" -> logger::error
-      "DEBUG" -> logger::debug
-      else -> if (logger.isDebugEnabled) logger::debug else return
+      when (level) {
+        "TRACE" -> if (logger.isTraceEnabled) logger::trace else null
+        "INFO" -> logger::info
+        "WARN" -> logger::warn
+        "ERROR" -> logger::error
+        "DEBUG" -> if (logger.isDebugEnabled) logger::debug else null
+        else -> lastLoggingHandler
+      }
     }
-  }
 
-  logger(buildString {
-    append(ijentLabel)
-    append(" log: ")
-    if (dateTimeDiff.absoluteValue > 50.milliseconds) {  // The timeout is taken at random.
-      append(rawRemoteDateTime)
-      append(" (time diff ")
-      append(dateTimeDiff)
-      append(") ")
+    lastLoggingHandler = logger
+
+    if (logger == null) {
+      return
     }
-    append(message)
-  })
+
+
+    logger(buildString {
+      append(ijentLabel)
+      append(" log: ")
+      if (dateTimeDiff.absoluteValue > 50.milliseconds) {  // The timeout is taken at random.
+        append(rawRemoteDateTime)
+        append(" (time diff ")
+        append(dateTimeDiff)
+        append(") ")
+      }
+      append(message)
+    })
+  }
 }
 
 private suspend fun ijentProcessExitAwaiter(
