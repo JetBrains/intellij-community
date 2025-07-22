@@ -12047,6 +12047,48 @@ http_file(
 )
 
 http_file(
+  name = "coil-test-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-test-jvm/3.2.0/coil-test-jvm-3.2.0.jar",
+  sha256 = "bea462cdc351c04dc4895f028b847d65a7dbae72a9b3999ea1089cd56ded43ad",
+  downloaded_file_path = "coil-test-jvm-3.2.0.jar"
+)
+
+http_file(
+  name = "coil-core-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0.jar",
+  sha256 = "2c64e5a3be4c59a2bf1ead26891cd9c455c37a2802d258ea50a960e7dd1e121a",
+  downloaded_file_path = "coil-core-jvm-3.2.0.jar"
+)
+
+http_file(
+  name = "skiko-awt-0_9_4_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/skiko/skiko-awt/0.9.4/skiko-awt-0.9.4.jar",
+  sha256 = "8e26ab1ae75f65786f6b973a66e89a2836d199a5561c4c2edbc1f3f67ad2197f",
+  downloaded_file_path = "skiko-awt-0.9.4.jar"
+)
+
+http_file(
+  name = "kotlinx-coroutines-core-jvm-1_10_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.10.2/kotlinx-coroutines-core-jvm-1.10.2.jar",
+  sha256 = "5ca175b38df331fd64155b35cd8cae1251fa9ee369709b36d42e0a288ccce3fd",
+  downloaded_file_path = "kotlinx-coroutines-core-jvm-1.10.2.jar"
+)
+
+http_file(
+  name = "okio-jvm-3_11_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0.jar",
+  sha256 = "2d22541a192f901a45c95274567d6957ac1ed613d49e41db4e5e5d86139cf022",
+  downloaded_file_path = "okio-jvm-3.11.0.jar"
+)
+
+http_file(
+  name = "kotlin-stdlib-2_1_20_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.1.20/kotlin-stdlib-2.1.20.jar",
+  sha256 = "1bcc74e8ce84e2c25eaafde10f1248349cce3062b6e36978cbeec610db1e930a",
+  downloaded_file_path = "kotlin-stdlib-2.1.20.jar"
+)
+
+http_file(
   name = "commonmark-0_24_0-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/commonmark/commonmark/0.24.0/commonmark-0.24.0-sources.jar",
   sha256 = "6380700a0c031e8ec2e3d1a582f9028037eb775ad543485f99cb1c29341936eb",
@@ -12121,20 +12163,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-jvm/3.2.0/coil-jvm-3.2.0.jar",
   sha256 = "7d0182c987052d6502135a6a6cc7cc68288ef48f990d75ad4c4ae03e25be786e",
   downloaded_file_path = "coil-jvm-3.2.0.jar"
-)
-
-http_file(
-  name = "coil-core-jvm-3_2_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0.jar",
-  sha256 = "2c64e5a3be4c59a2bf1ead26891cd9c455c37a2802d258ea50a960e7dd1e121a",
-  downloaded_file_path = "coil-core-jvm-3.2.0.jar"
-)
-
-http_file(
-  name = "okio-jvm-3_11_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0.jar",
-  sha256 = "2d22541a192f901a45c95274567d6957ac1ed613d49e41db4e5e5d86139cf022",
-  downloaded_file_path = "okio-jvm-3.11.0.jar"
 )
 
 http_file(

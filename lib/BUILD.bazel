@@ -8473,6 +8473,50 @@ jvm_import(
   source_jar = "@kotlin-scripting-jvm-2_0_21-sources_http//file"
 )
 
+java_library(
+  name = "platform-jewel-markdown-core-io-coil-kt-coil3-test-jvm",
+  exports = [
+    ":coil-test-jvm-3_2_0_http_import",
+    ":coil-core-jvm-3_2_0_http_import",
+    ":skiko-awt-0_9_4_http_import",
+    ":kotlinx-coroutines-core-jvm-1_10_2_http_import",
+    ":okio-jvm-3_11_0_http_import",
+    ":kotlin-stdlib-2_1_20_http_import",
+    ":annotations-13_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "coil-test-jvm-3_2_0_http_import",
+  jar = "@coil-test-jvm-3_2_0_http//file"
+)
+
+jvm_import(
+  name = "coil-core-jvm-3_2_0_http_import",
+  jar = "@coil-core-jvm-3_2_0_http//file"
+)
+
+jvm_import(
+  name = "skiko-awt-0_9_4_http_import",
+  jar = "@skiko-awt-0_9_4_http//file"
+)
+
+jvm_import(
+  name = "kotlinx-coroutines-core-jvm-1_10_2_http_import",
+  jar = "@kotlinx-coroutines-core-jvm-1_10_2_http//file"
+)
+
+jvm_import(
+  name = "okio-jvm-3_11_0_http_import",
+  jar = "@okio-jvm-3_11_0_http//file"
+)
+
+jvm_import(
+  name = "kotlin-stdlib-2_1_20_http_import",
+  jar = "@kotlin-stdlib-2_1_20_http//file"
+)
+
 jvm_import(
   name = "platform-jewel-markdown-core-org-commonmark-commonmark",
   jar = "@commonmark-0_24_0_http//file",
@@ -8540,18 +8584,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "coil-core-jvm-3_2_0_http_import",
-  jar = "@coil-core-jvm-3_2_0_http//file",
-  source_jar = "@coil-core-jvm-3_2_0-sources_http//file"
-)
-
-jvm_import(
-  name = "okio-jvm-3_11_0_http_import",
-  jar = "@okio-jvm-3_11_0_http//file",
-  source_jar = "@okio-jvm-3_11_0-sources_http//file"
-)
-
-jvm_import(
   name = "coil-compose-core-jvm-3_2_0_http_import",
   jar = "@coil-compose-core-jvm-3_2_0_http//file",
   source_jar = "@coil-compose-core-jvm-3_2_0-sources_http//file"
@@ -8594,6 +8626,20 @@ jvm_import(
   name = "coil-svg-jvm-3_2_0_http_import",
   jar = "@coil-svg-jvm-3_2_0_http//file",
   source_jar = "@coil-svg-jvm-3_2_0-sources_http//file"
+)
+
+java_library(
+  name = "platform-jewel-markdown-extensions-images-io-coil-kt-coil3-test-jvm",
+  exports = [
+    ":coil-test-jvm-3_2_0_http_import",
+    ":coil-core-jvm-3_2_0_http_import",
+    ":skiko-awt-0_9_4_http_import",
+    ":kotlinx-coroutines-core-jvm-1_10_2_http_import",
+    ":okio-jvm-3_11_0_http_import",
+    ":kotlin-stdlib-2_1_20_http_import",
+    ":annotations-13_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
 )
 
 jvm_import(

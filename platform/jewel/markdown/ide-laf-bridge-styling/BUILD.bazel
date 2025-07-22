@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.platform.jewel.markdown.ideLafBridgeStyling` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom_ide-laf-bridge-styling",
@@ -20,6 +20,16 @@ jvm_resources(
   strip_prefix = "src/main/resources"
 )
 
+jvm_provided_library(
+  name = "platform_jewel_markdown_extensions_gfm-alerts_provided",
+  lib = "//platform/jewel/markdown/extensions/gfm-alerts"
+)
+
+jvm_provided_library(
+  name = "platform_jewel_markdown_extensions_gfm-tables_provided",
+  lib = "//platform/jewel/markdown/extensions/gfm-tables"
+)
+
 jvm_library(
   name = "ide-laf-bridge-styling",
   module_name = "intellij.platform.jewel.markdown.ideLafBridgeStyling",
@@ -36,13 +46,13 @@ jvm_library(
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
     "//platform/jewel/ide-laf-bridge",
-    "//platform/jewel/markdown/extensions/gfm-alerts",
-    "//platform/jewel/markdown/extensions/gfm-tables",
-    "//platform/platform-api:ide",
     "//platform/ide-core",
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
     "//libraries/compose-foundation-desktop",
+    "//platform/platform-api:ide",
+    ":platform_jewel_markdown_extensions_gfm-alerts_provided",
+    ":platform_jewel_markdown_extensions_gfm-tables_provided",
   ],
   exports = [
     "//platform/jewel/markdown/core",

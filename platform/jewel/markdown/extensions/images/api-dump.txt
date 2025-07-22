@@ -1,0 +1,1 @@
+f:org.jetbrains.jewel.markdown.extensions.images.ImageSourceResolverKt
