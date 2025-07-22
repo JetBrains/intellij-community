@@ -62,10 +62,7 @@ internal class KaScriptModuleImpl(
             relatedLibraries.forEach {
                 project.ideProjectStructureProvider.getKaScriptLibraryModules(it)
             }
-
-            val sdk = ScriptDependencyAware.getInstance(project).getScriptSdk(virtualFile)
-            sdk?.let { add(it.toKaLibraryModule(project)) }
-        }.toList()
+        }.toList() + sdkDependencies
     }
 
     fun scriptLibraryDependencies(virtualFile: VirtualFile): Sequence<KaLibraryModule> {

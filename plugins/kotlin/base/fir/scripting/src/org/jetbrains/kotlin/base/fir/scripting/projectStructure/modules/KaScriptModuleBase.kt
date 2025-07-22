@@ -8,12 +8,15 @@ import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaModuleBase
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModule
 import org.jetbrains.kotlin.idea.base.scripting.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.scripting.getPlatform
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.KotlinScriptSearchScope
+import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -69,6 +72,9 @@ abstract class KaScriptModuleBase(
     override fun toString(): String {
         return "${this::class.simpleName}($virtualFile), platform=$targetPlatform, moduleDescription=`$moduleDescription`, scriptDefinition=`$scriptDefinition`"
     }
+
+    protected val sdkDependencies: List<KaLibraryModule>
+        get() = listOfNotNull(ScriptDependencyAware.getInstance(project).getScriptSdk(virtualFile)?.toKaLibraryModule(project))
 
     override val directFriendDependencies: List<KaModule> get() = emptyList()
 }
