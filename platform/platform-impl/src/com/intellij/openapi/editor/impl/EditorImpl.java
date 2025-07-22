@@ -26,7 +26,6 @@ import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.actions.ChangeEditorFontSizeStrategy;
-import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.editor.event.*;
@@ -104,8 +103,6 @@ import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.ScrollPaneUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.DropTarget;
@@ -141,7 +138,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final float MIN_FONT_SIZE = 4;
   private static final Logger LOG = Logger.getInstance(EditorImpl.class);
   static final Logger EVENT_LOG = Logger.getInstance("editor.input.events");
-  private static final Object DND_COMMAND_GROUP = ObjectUtils.sentinel("DndCommand");
+  static final Object DND_COMMAND_GROUP = ObjectUtils.sentinel("DndCommand");
   private static final Object MOUSE_DRAGGED_COMMAND_GROUP = ObjectUtils.sentinel("MouseDraggedGroup");
   private static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
   static final Key<Boolean> CONTAINS_BIDI_TEXT = Key.create("contains.bidi.text");
@@ -1208,7 +1205,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myScrollingModel.initListeners();
 
-    myEditorComponent.setTransferHandler(new MyTransferHandler());
+    myEditorComponent.setTransferHandler(new EditorTransferHandler());
     myEditorComponent.setAutoscrolls(false); // we have our own auto-scrolling code
 
     this.myLayeredPane = new PanelWithFloatingToolbar();
@@ -3031,7 +3028,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return offset;
   }
 
-  private void clearDnDContext() {
+  void clearDnDContext() {
     if (myDraggedRange != null) {
       myDraggedRange.dispose();
       myDraggedRange = null;
@@ -3731,7 +3728,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull EditorInputMethodSupport getInputMethodSupport() {
     if (myInputMethodSupport == null) {
       MyInputMethodHandler handler = new MyInputMethodHandler();
-      myInputMethodSupport = new EditorInputMethodSupport(handler, new MyInputMethodListener(handler));
+      myInputMethodSupport = new EditorInputMethodSupport(handler, new EditorInputMethodListener(handler));
     }
     return myInputMethodSupport;
   }
@@ -3790,12 +3787,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private EditorDropHandler getDropHandler() {
+  EditorDropHandler getDropHandler() {
     return myDropHandler;
   }
 
   public void setDropHandler(@NotNull EditorDropHandler dropHandler) {
     myDropHandler = dropHandler;
+  }
+
+  RangeMarker getDraggedRange() {
+    return myDraggedRange;
+  }
+
+  void setDraggedRange(RangeMarker draggedRange) {
+    myDraggedRange = draggedRange;
   }
 
   /**
@@ -3883,11 +3888,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return inlay != null && (inlay.getPlacement() == Inlay.Placement.ABOVE_LINE || inlay.getPlacement() == Inlay.Placement.BELOW_LINE);
   }
 
-  private final class MyInputMethodListener implements InputMethodListener {
+  private static final class EditorInputMethodListener implements InputMethodListener {
 
     private final MyInputMethodHandler myHandler;
 
-    private MyInputMethodListener(@NotNull MyInputMethodHandler handler) {
+    private EditorInputMethodListener(@NotNull MyInputMethodHandler handler) {
       myHandler = handler;
     }
 
@@ -5288,125 +5293,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }, EditorBundle.message("paste.command.name"), DND_COMMAND_GROUP, UndoConfirmationPolicy.DEFAULT, editor.getDocument());
 
     return true;
-  }
-
-  private static final class MyTransferHandler extends TransferHandler {
-    private static final TransferHandler transferHandlerStub = new TransferHandler() {
-      @Override
-      protected Transferable createTransferable(JComponent c) {
-        return null;
-      }
-    };
-    private static final JComponent componentStub = new JComponent() {
-      @Override
-      public TransferHandler getTransferHandler() {
-        return transferHandlerStub;
-      }
-    };
-    private static final MouseEvent mouseEventStub = new MouseEvent(new Component() {
-    }, 0, 0L, 0, 0, 0, 0, false, 0);
-
-    private static @NotNull EditorImpl getEditor(@NotNull JComponent comp) {
-      if (comp instanceof EditorComponentImpl editorComponent) {
-        return editorComponent.getEditor();
-      }
-      return ((EditorGutterComponentImpl)comp).getEditor();
-    }
-
-    @Override
-    public boolean importData(@NotNull TransferSupport support) {
-      Component comp = support.getComponent();
-      return comp instanceof JComponent && handleDrop(getEditor((JComponent)comp), support.getTransferable(), support.getDropAction());
-    }
-
-    @Override
-    public boolean canImport(@NotNull JComponent comp, DataFlavor @NotNull [] transferFlavors) {
-      EditorImpl editor = getEditor(comp);
-      EditorDropHandler dropHandler = editor.getDropHandler();
-      if (dropHandler != null && dropHandler.canHandleDrop(transferFlavors)) {
-        return true;
-      }
-
-      //should be used a better representation class
-      if (Registry.is("debugger.click.disable.breakpoints") && ArrayUtil.contains(GutterDraggableObject.flavor, transferFlavors)) {
-        return true;
-      }
-
-      if (editor.isViewer()) return false;
-
-      int offset = editor.getCaretModel().getOffset();
-      if (editor.getDocument().getRangeGuard(offset, offset) != null) return false;
-
-      return ArrayUtil.contains(DataFlavor.stringFlavor, transferFlavors);
-    }
-
-    @Override
-    protected @Nullable Transferable createTransferable(@NotNull JComponent c) {
-      EditorImpl editor = getEditor(c);
-      String s = editor.getSelectionModel().getSelectedText();
-      if (s == null) return null;
-      int selectionStart = editor.getSelectionModel().getSelectionStart();
-      int selectionEnd = editor.getSelectionModel().getSelectionEnd();
-      editor.myDraggedRange = editor.getDocument().createRangeMarker(selectionStart, selectionEnd);
-      Transferable transferable = CopyAction.getSelection(editor);
-      return transferable == null ? new StringSelection(s) : transferable;
-    }
-
-    @Override
-    public int getSourceActions(@NotNull JComponent c) {
-      return COPY_OR_MOVE;
-    }
-
-    @Override
-    protected void exportDone(@NotNull JComponent source, @Nullable Transferable data, int action) {
-      if (data == null) return;
-
-      Component last = DnDManager.getInstance().getLastDropHandler();
-
-      if (last != null) {
-        if (!(last instanceof EditorComponentImpl) && !(last instanceof EditorGutterComponentImpl)) {
-          return;
-        }
-        if (last != source && Boolean.TRUE.equals(DISABLE_REMOVE_ON_DROP.get(getEditor((JComponent)last)))) {
-          return;
-        }
-      }
-
-      EditorImpl editor = getEditor(source);
-      if (action == MOVE && !editor.isViewer() && editor.myDraggedRange != null) {
-        ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> removeDraggedOutFragment(editor));
-      }
-
-      editor.clearDnDContext();
-
-      // IDEA-316937 Project leak via TransferHandler$SwingDragGestureRecognizer.
-      // This is a dirty, makeshift solution.
-      // Swing limits us because javax.swing.TransferHandler.recognizer
-      // is a private field, and we cannot reset its value to null to avoid the memory leak.
-      // To prevent project leaks, we pass a contextless componentStub for it to replace the previous value of the recognizer field.
-      if (source != componentStub) {
-        exportAsDrag(componentStub, mouseEventStub, MOVE);
-      }
-    }
-
-    private static void removeDraggedOutFragment(@NotNull EditorImpl editor) {
-      if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), editor.getProject())) {
-        return;
-      }
-      CommandProcessor.getInstance().executeCommand(editor.myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-        Document doc = editor.getDocument();
-        doc.startGuardedBlockChecking();
-        try {
-          doc.deleteString(editor.myDraggedRange.getStartOffset(), editor.myDraggedRange.getEndOffset());
-        }
-        catch (ReadOnlyFragmentModificationException e) {
-          EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
-        }
-        finally {
-          doc.stopGuardedBlockChecking();
-        }
-      }), EditorBundle.message("move.selection.command.name"), DND_COMMAND_GROUP, UndoConfirmationPolicy.DEFAULT, editor.getDocument());
-    }
   }
 
   private final class EditorDocumentAdapter implements PrioritizedDocumentListener {
