@@ -34,7 +34,9 @@ public class ThreadingModelInstrumenter implements BytecodeInstrumenter {
 
   @Override
   public Set<OutputOrigin.Kind> getSupportedOrigins() {
-    return EnumSet.of(OutputOrigin.Kind.java, OutputOrigin.Kind.kotlin);
+    // todo: Instrumentation of kotlinc-produced code is turned off to comply with the current JPS behavior.
+    // todo: Uncomment as soon as 'kotlin.jps.instrument.bytecode' flag is set to 'true'
+    return EnumSet.of(OutputOrigin.Kind.java/*, OutputOrigin.Kind.kotlin*/);
   }
 
   @Override
