@@ -105,18 +105,21 @@ public class TasksExecutionSettingsBuilder {
 
       GradleModuleData gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module);
       if (gradleModuleData == null) continue;
+      String gradlePath = gradleModuleData.getGradlePathOrNull();
+      if (gradlePath == null) continue;
+      String gradleIdentityPath = gradleModuleData.getGradleIdentityPathOrNull();
+      if (gradleIdentityPath == null) continue;
 
       boolean isGradleProjectDirUsedToRunTasks = gradleModuleData.getDirectoryToRunTask().equals(gradleModuleData.getGradleProjectDir());
       if (!isGradleProjectDirUsedToRunTasks) {
         rootProjectPath = gradleModuleData.getDirectoryToRunTask();
       }
 
-      String gradlePath = gradleModuleData.getGradlePath();
       List<TaskData> taskDataList =
         ContainerUtil.mapNotNull(gradleModuleData.findAll(ProjectKeys.TASK), taskData -> taskData.isInherited() ? null : taskData);
       if (taskDataList.isEmpty()) continue;
 
-      String taskPathPrefix = trimEnd(gradleModuleData.getFullGradlePath(), ":") + ":";
+      String taskPathPrefix = trimEnd(gradleIdentityPath, ":") + ":";
       List<String> gradleModuleTasks = ContainerUtil.map(taskDataList, data -> trimStart(data.getName(), taskPathPrefix));
 
       Collection<String> projectInitScripts = initScripts.getModifiable(rootProjectPath);
