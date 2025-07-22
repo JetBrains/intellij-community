@@ -1062,7 +1062,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       TextMergeChange.State state = super.processDocumentChange(index, oldLine1, oldLine2, shift);
 
       TextMergeChange mergeChange = myAllMergeChanges.get(index);
-      if (mergeChange.getStartLine() == mergeChange.getEndLine() &&
+      if (mergeChange.getResultStartLine() == mergeChange.getResultEndLine() &&
           mergeChange.getConflictType().getType() == MergeConflictType.Type.DELETED && !mergeChange.isResolved()) {
         markChangeResolved(mergeChange);
       }
@@ -1135,8 +1135,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     DocumentContent baseDiffContent = ThreeSide.BASE.select(myMergeRequest.getContents());
     Document baseDocument = baseDiffContent.getDocument();
 
-    int resultStartLine = change.getStartLine();
-    int resultEndLine = change.getEndLine();
+    int resultStartLine = change.getResultStartLine();
+    int resultEndLine = change.getResultEndLine();
     Document resultDocument = getEditor().getDocument();
 
     CharSequence baseContent = DiffUtil.getLinesContent(baseDocument, baseStartLine, baseEndLine);

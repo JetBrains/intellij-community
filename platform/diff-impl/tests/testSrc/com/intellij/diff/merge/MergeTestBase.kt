@@ -299,7 +299,7 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
 
     fun Int.assertRange(start: Int, end: Int) {
       val change = change(this)
-      assertEquals(Pair(start, end), Pair(change.startLine, change.endLine))
+      assertEquals(Pair(start, end), Pair(change.resultStartLine, change.resultEndLine))
     }
 
     fun Int.assertRange(start1: Int, end1: Int, start2: Int, end2: Int, start3: Int, end3: Int) {
@@ -318,7 +318,7 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     fun Int.assertContent(expected: String) {
       val change = change(this)
       val document = editor.document
-      val actual = DiffUtil.getLinesContent(document, change.startLine, change.endLine)
+      val actual = DiffUtil.getLinesContent(document, change.resultStartLine, change.resultEndLine)
       assertEquals(parseSource(expected), actual)
     }
 
@@ -384,7 +384,7 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
 
       private fun recordChangeState(viewer: MergeThreesideViewer, change: TextMergeChange): ChangeState {
         val document = viewer.editor.document
-        val content = DiffUtil.getLinesContent(document, change.startLine, change.endLine)
+        val content = DiffUtil.getLinesContent(document, change.resultStartLine, change.resultEndLine)
 
         val resolved =
           if (change.isResolved) BOTH

@@ -89,19 +89,19 @@ class TextMergeChange @RequiresEdt constructor(
     ThreeSide.RIGHT -> isResolved(Side.RIGHT)
   }
 
-  val startLine: Int
+  val resultStartLine: Int
     get() = viewer.model.getLineStart(index)
 
-  val endLine: Int
+  val resultEndLine: Int
     get() = viewer.model.getLineEnd(index)
 
   override fun getStartLine(side: ThreeSide): Int {
-    if (side == ThreeSide.BASE) return startLine
+    if (side == ThreeSide.BASE) return resultStartLine
     return fragment.getStartLine(side)
   }
 
   override fun getEndLine(side: ThreeSide): Int {
-    if (side == ThreeSide.BASE) return endLine
+    if (side == ThreeSide.BASE) return resultEndLine
     return fragment.getEndLine(side)
   }
 
@@ -227,8 +227,8 @@ class TextMergeChange @RequiresEdt constructor(
   fun storeState(): State {
     return State(
       index,
-      startLine,
-      endLine,
+      resultStartLine,
+      resultEndLine,
 
       resolved[0],
       resolved[1],
