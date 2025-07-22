@@ -61,7 +61,6 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
@@ -122,7 +121,6 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
-import java.lang.invoke.MethodHandle;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
@@ -3806,24 +3804,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Deprecated
   public void setHighlightingPredicate(@Nullable Predicate<? super RangeHighlighter> filter) {
     if (filter == null) {
-      removeHighlightingPredicate(PredicateWrapper.KEY);
+      removeHighlightingPredicate(EditorHighlightingPredicateWrapper.KEY);
     }
     else {
-      PredicateWrapper wrapper = new PredicateWrapper(filter);
-      addHighlightingPredicate(PredicateWrapper.KEY, wrapper);
-    }
-  }
-
-  private static class PredicateWrapper implements EditorHighlightingPredicate {
-    private static final Key<PredicateWrapper> KEY = Key.create("default-highlighting-predicate");
-
-    private final @NotNull Predicate<? super RangeHighlighter> filter;
-
-    PredicateWrapper(@NotNull Predicate<? super RangeHighlighter> filter) { this.filter = filter; }
-
-    @Override
-    public boolean shouldRender(@NotNull RangeHighlighter highlighter) {
-      return filter.test(highlighter);
+      EditorHighlightingPredicateWrapper wrapper = new EditorHighlightingPredicateWrapper(filter);
+      addHighlightingPredicate(EditorHighlightingPredicateWrapper.KEY, wrapper);
     }
   }
 
