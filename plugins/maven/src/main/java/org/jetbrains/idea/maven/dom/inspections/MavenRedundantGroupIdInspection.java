@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.dom.inspections;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
@@ -15,7 +16,7 @@ import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.model.MavenDomParent;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
-public final class MavenRedundantGroupIdInspection extends XmlSuppressableInspectionTool {
+public final class MavenRedundantGroupIdInspection extends XmlSuppressableInspectionTool implements DumbAware {
 
   @Override
   public @NotNull String getGroupDisplayName() {
@@ -45,17 +46,7 @@ public final class MavenRedundantGroupIdInspection extends XmlSuppressableInspec
           if (groupId.equals(parentGroupId)) {
             XmlTag xmlTag = projectModel.getGroupId().getXmlTag();
 
-            LocalQuickFix fix = new LocalQuickFix() {
-              @Override
-              public @IntentionFamilyName @NotNull String getFamilyName() {
-                return MavenDomBundle.message("inspection.redundant.groupId.fix");
-              }
-
-              @Override
-              public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-                descriptor.getPsiElement().delete();
-              }
-            };
+            LocalQuickFix fix = new MavenRedundantGroupIdQuickFix();
 
             return new ProblemDescriptor[]{
               manager.createProblemDescriptor(xmlTag,
@@ -69,5 +60,17 @@ public final class MavenRedundantGroupIdInspection extends XmlSuppressableInspec
     }
 
     return null;
+  }
+
+  private static final class MavenRedundantGroupIdQuickFix implements LocalQuickFix, DumbAware {
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return MavenDomBundle.message("inspection.redundant.groupId.fix");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      descriptor.getPsiElement().delete();
+    }
   }
 }
