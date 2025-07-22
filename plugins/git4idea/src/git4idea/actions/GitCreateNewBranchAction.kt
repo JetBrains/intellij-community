@@ -48,7 +48,8 @@ class GitCreateNewBranchAction : DumbAwareAction() {
 
   private fun collectData(e: AnActionEvent): Data {
     val project = e.project ?: return Data.Invisible
-    val repositories = getRepositoriesForTopLevelActions(e) { it.place == GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE }
+    if (e.place != GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE) return Data.Invisible
+    val repositories = getRepositoriesForTopLevelActions(e)
     if (repositories.any { it.isFresh }) {
       return Data.Disabled(GitBundle.message("action.New.Branch.disabled.fresh.description"))
     }
