@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.rpc
+package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.rpcId
@@ -10,28 +10,26 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy.Monolith.Companion.getEditorsProvider
+import com.intellij.xdebugger.impl.rpc.XBreakpointTypeId
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 
 private fun CustomizedBreakpointPresentation.toRpc(): XBreakpointCustomPresentationDto {
   return XBreakpointCustomPresentationDto(icon?.rpcId(), errorMessage, timestamp)
 }
 
-@ApiStatus.Internal
-suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
+internal suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
   val editorsProvider = getEditorsProvider(type, this, project)
   val xDebuggerManager = XDebuggerManager.getInstance(project) as XDebuggerManagerImpl
   return XBreakpointDto(
     id = breakpointId,
     initialState = getDtoState(xDebuggerManager.currentSession),
     typeId = XBreakpointTypeId(type.id),
-    localEditorsProvider = editorsProvider,
-    editorsProviderFileTypeId = editorsProvider?.fileType?.name,
+    editorsProviderDto = editorsProvider?.toRpc(),
     state = channelFlow {
       val currentSessionFlow = xDebuggerManager.currentSessionFlow
       breakpointChangedFlow().combine(currentSessionFlow) { _, currentSession ->

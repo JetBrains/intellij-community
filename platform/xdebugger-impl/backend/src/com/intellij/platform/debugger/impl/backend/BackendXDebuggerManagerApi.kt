@@ -14,6 +14,7 @@ import com.intellij.util.asDisposable
 import com.intellij.xdebugger.*
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointListener
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl.reshowInlayRunToCursor
@@ -23,7 +24,6 @@ import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
-import com.intellij.xdebugger.impl.rpc.toRpc
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
@@ -50,8 +50,6 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
 
   private suspend fun createSessionDto(currentSession: XDebugSessionImpl, debugProcess: XDebugProcess): XDebugSessionDto {
     currentSession.sessionInitializedDeferred().await()
-    val editorsProvider = debugProcess.editorsProvider
-    val fileTypeId = editorsProvider.fileType.name
     val initialSessionState = XDebugSessionState(
       currentSession.isPaused, currentSession.isStopped, currentSession.isReadOnly, currentSession.isPauseActionSupported(), currentSession.isSuspended,
     )
@@ -73,7 +71,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     }.toRpc()
     return XDebugSessionDto(
       currentSession.id,
-      XDebuggerEditorsProviderDto(fileTypeId, editorsProvider),
+      debugProcess.editorsProvider.toRpc(),
       initialSessionState,
       currentSession.suspendData(),
       currentSession.sessionName,
@@ -280,4 +278,8 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
 
     return XBreakpointsSetDto(initialBreakpoints, eventsFlow.toRpc())
   }
+}
+
+internal fun XDebuggerEditorsProvider.toRpc(): XDebuggerEditorsProviderDto {
+  return XDebuggerEditorsProviderDto(fileType.name, this)
 }

@@ -1,13 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Backend request counter.
  * It stored the last completed request id that came from the frontend.
  */
-internal class BackendBreakpointRequestCounter {
+@ApiStatus.Internal
+class BackendBreakpointRequestCounter {
   private val lastCompletedRequestId = AtomicLong()
 
   fun getRequestId(): Long {

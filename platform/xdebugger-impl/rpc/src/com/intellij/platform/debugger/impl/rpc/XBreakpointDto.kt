@@ -6,12 +6,10 @@ import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
-import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeId
 import fleet.rpc.core.RpcFlow
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -20,8 +18,7 @@ data class XBreakpointDto(
   val id: XBreakpointId,
   val initialState: XBreakpointDtoState,
   val state: RpcFlow<XBreakpointDtoState>,
-  @Transient val localEditorsProvider: XDebuggerEditorsProvider? = null,
-  val editorsProviderFileTypeId: String?,
+  val editorsProviderDto: XDebuggerEditorsProviderDto?,
   val typeId: XBreakpointTypeId,
 )
 

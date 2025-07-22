@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.rpc.XDebuggerEditorsProviderDto
 import com.intellij.platform.debugger.impl.rpc.XExpressionDto
 import com.intellij.platform.debugger.impl.rpc.XSourcePositionDto
 import com.intellij.platform.debugger.impl.rpc.toRpc
@@ -41,4 +42,13 @@ internal class FrontendXDebuggerEditorsProvider(
     }
     return Language.findLanguageByID("ThinClientLanguage")?.associatedFileType ?: FileTypes.PLAIN_TEXT
   }
+}
+
+internal fun getEditorsProvider(
+  editorsProviderDto: XDebuggerEditorsProviderDto,
+  documentIdProvider: suspend (FrontendDocumentId, XExpressionDto, XSourcePositionDto?, EvaluationMode) -> BackendDocumentId?,
+): XDebuggerEditorsProvider {
+  val localEditorsProvider = editorsProviderDto.editorsProvider
+  if (localEditorsProvider != null) return localEditorsProvider
+  return FrontendXDebuggerEditorsProvider(editorsProviderDto.fileTypeId, documentIdProvider)
 }

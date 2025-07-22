@@ -61,7 +61,11 @@ internal open class FrontendXBreakpointProxy(
    */
   private val _state: MutableStateFlow<XBreakpointDtoState> = MutableStateFlow(dto.initialState)
 
-  private val editorsProvider = dto.localEditorsProvider ?: createFrontendEditorsProvider()
+  private val editorsProvider = dto.editorsProviderDto?.let {
+    getEditorsProvider(it, documentIdProvider = { frontendDocumentId, expression, position, mode ->
+      XBreakpointApi.getInstance().createDocument(frontendDocumentId, id, expression, position, mode)
+    })
+  }
 
   protected val currentState: XBreakpointDtoState get() = _state.value
 
@@ -127,13 +131,6 @@ internal open class FrontendXBreakpointProxy(
 
   private fun onBreakpointChange() {
     _onBreakpointChange(this)
-  }
-
-  private fun createFrontendEditorsProvider(): FrontendXDebuggerEditorsProvider? {
-    val fileTypeId = dto.editorsProviderFileTypeId ?: return null
-    return FrontendXDebuggerEditorsProvider(fileTypeId) { frontendDocumentId, expression, position, mode ->
-      XBreakpointApi.getInstance().createDocument(frontendDocumentId, id, expression, position, mode)
-    }
   }
 
   override fun getDisplayText(): String = currentState.displayText

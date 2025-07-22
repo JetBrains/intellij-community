@@ -36,7 +36,6 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeId
 import com.intellij.xdebugger.impl.rpc.models.findValue
-import com.intellij.xdebugger.impl.rpc.toRpc
 import fleet.rpc.core.toRpc
 import fleet.util.channels.use
 import kotlinx.coroutines.*

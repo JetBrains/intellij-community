@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
-import com.intellij.diagnostic.logging.LogConsoleManagerBase
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironmentProxy
 import com.intellij.execution.ui.ConsoleView
@@ -21,7 +20,6 @@ import com.intellij.platform.debugger.impl.frontend.frame.FrontendXSuspendContex
 import com.intellij.platform.debugger.impl.frontend.storage.FrontendXStackFramesStorage
 import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
 import com.intellij.platform.debugger.impl.rpc.*
-import com.intellij.platform.debugger.impl.shared.XDebuggerSessionAdditionalTabId
 import com.intellij.platform.execution.impl.frontend.createFrontendProcessHandler
 import com.intellij.platform.execution.impl.frontend.executionEnvironment
 import com.intellij.platform.util.coroutines.childScope
@@ -64,7 +62,6 @@ class FrontendXDebuggerSession private constructor(
   override val consoleView: ConsoleView?,
 ) : XDebugSessionProxy {
   private val cs = scope.childScope("Session ${sessionDto.id}")
-  private val localEditorsProvider = sessionDto.editorsProviderDto.editorsProvider
   private val eventsDispatcher = EventDispatcher.create(XDebugSessionListener::class.java)
   override val id: XDebugSessionId = sessionDto.id
 
@@ -120,12 +117,10 @@ class FrontendXDebuggerSession private constructor(
   override val isSuspended: Boolean
     get() = sessionState.value.isSuspended
 
-  override val editorsProvider: XDebuggerEditorsProvider =
-    localEditorsProvider
-    ?: FrontendXDebuggerEditorsProvider(sessionDto.editorsProviderDto.fileTypeId,
-                                        documentIdProvider = { frontendDocumentId, expression, position, mode ->
-                                          XDebugSessionApi.getInstance().createDocument(frontendDocumentId, id, expression, position, mode)
-                                        })
+  override val editorsProvider: XDebuggerEditorsProvider = getEditorsProvider(
+    sessionDto.editorsProviderDto, documentIdProvider = { frontendDocumentId, expression, position, mode ->
+    XDebugSessionApi.getInstance().createDocument(frontendDocumentId, sessionDto.id, expression, position, mode)
+  })
 
   override val isLibraryFrameFilterSupported: Boolean = sessionDto.isLibraryFrameFilterSupported
 
