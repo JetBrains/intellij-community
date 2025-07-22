@@ -16,8 +16,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.sh.codeInsight.ShPsiReferenceSupport"
                         serviceImplementation="com.intellij.sh.backend.codeInsight.ShBackendPsiReferenceSupport" />
-    <applicationService serviceInterface="com.intellij.sh.formatter.ShFormatterService"
-                        serviceImplementation="com.intellij.sh.backend.formatter.ShBackendFormatterService" />
+    <applicationService serviceInterface="com.intellij.sh.formatter.ShFormatterDownloader"
+                        serviceImplementation="com.intellij.sh.backend.formatter.ShBackendFormatterDownloader" />
 
     <psi.referenceContributor language="Shell Script" implementation="com.intellij.sh.backend.ShUrlReferenceContributor"/>
     <lang.psiStructureViewFactory language="Shell Script" implementationClass="com.intellij.sh.backend.ShStructureViewFactory"/>

@@ -182,7 +182,7 @@ public final class ShShfmtFormatterUtil {
     return file.getName().contains(SHFMT);
   }
 
-  public static void checkShfmtForUpdate(@NotNull Project project) {
+  static void checkShfmtForUpdate(@NotNull Project project) {
     Application application = ApplicationManager.getApplication();
     if (application.getUserData(UPDATE_NOTIFICATION_SHOWN) != null) return;
     application.putUserData(UPDATE_NOTIFICATION_SHOWN, true);
