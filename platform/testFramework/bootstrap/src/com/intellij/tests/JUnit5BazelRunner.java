@@ -116,8 +116,8 @@ public final class JUnit5BazelRunner {
       Path ideaHome;
       Path tempDir = getBazelTempDir();
 
-      // TODO Probably could be derived from the environment
-      boolean sandbox = Boolean.parseBoolean(System.getenv(jbEnvSandbox));
+      String jbEnvSandboxValue = System.getenv(jbEnvSandbox);
+      boolean sandbox = Boolean.parseBoolean(jbEnvSandboxValue != null ? jbEnvSandboxValue : "true");
       System.err.println("Use sandbox: " + sandbox);
 
       if (sandbox) {
