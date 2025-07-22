@@ -8,9 +8,11 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
+@ApiStatus.Internal
 class VcsLogProgress(parent: Disposable) : Disposable {
   private val disposableFlag = Disposer.newCheckedDisposable()
   private val lock = Any()

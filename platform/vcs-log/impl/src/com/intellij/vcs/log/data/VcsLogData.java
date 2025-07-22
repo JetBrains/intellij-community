@@ -43,6 +43,7 @@ import static com.intellij.platform.vcs.impl.shared.telemetry.VcsScopeKt.VcsScop
 public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
 
+  @ApiStatus.Internal
   public static final VcsLogProgress.ProgressKey DATA_PACK_REFRESH = new VcsLogProgress.ProgressKey("data pack");
 
   private final @NotNull Project myProject;
@@ -422,6 +423,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     return myUserResolver;
   }
 
+  @ApiStatus.Internal
   public @NotNull VcsLogProgress getProgress() {
     return myProgress;
   }

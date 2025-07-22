@@ -188,7 +188,6 @@ com.intellij.vcs.log.data.VcsCommitExternalStatus
 f:com.intellij.vcs.log.data.VcsLogData
 - com.intellij.openapi.Disposable
 - com.intellij.vcs.log.VcsLogDataProvider
-- sf:DATA_PACK_REFRESH:com.intellij.vcs.log.data.VcsLogProgress$ProgressKey
 - <init>(com.intellij.openapi.project.Project,java.util.Map,com.intellij.vcs.log.impl.VcsLogErrorHandler,Z,com.intellij.openapi.Disposable):V
 - addDataPackChangeListener(com.intellij.vcs.log.data.DataPackChangeListener):V
 - dispose():V
@@ -206,7 +205,6 @@ f:com.intellij.vcs.log.data.VcsLogData
 - getLogProvider(com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.VcsLogProvider
 - getLogProviders():java.util.Map
 - getMiniDetailsGetter():com.intellij.vcs.log.data.MiniDetailsGetter
-- getProgress():com.intellij.vcs.log.data.VcsLogProgress
 - getProject():com.intellij.openapi.project.Project
 - s:getRecentCommitsCount():I
 - getRoots():java.util.Collection
@@ -218,27 +216,6 @@ f:com.intellij.vcs.log.data.VcsLogData
 - refresh(java.util.Collection):V
 - refresh(java.util.Collection,Z):V
 - removeDataPackChangeListener(com.intellij.vcs.log.data.DataPackChangeListener):V
-f:com.intellij.vcs.log.data.VcsLogProgress
-- com.intellij.openapi.Disposable
-- sf:Companion:com.intellij.vcs.log.data.VcsLogProgress$Companion
-- <init>(com.intellij.openapi.Disposable):V
-- f:addProgressIndicatorListener(com.intellij.vcs.log.data.VcsLogProgress$ProgressListener,com.intellij.openapi.Disposable):V
-- f:createProgressIndicator(com.intellij.vcs.log.data.VcsLogProgress$ProgressKey):com.intellij.openapi.progress.ProgressIndicator
-- f:createProgressIndicator(Z,com.intellij.vcs.log.data.VcsLogProgress$ProgressKey):com.intellij.openapi.progress.ProgressIndicator
-- dispose():V
-- f:isRunning():Z
-- f:removeProgressIndicatorListener(com.intellij.vcs.log.data.VcsLogProgress$ProgressListener):V
-- sf:updateCurrentKey(com.intellij.vcs.log.data.VcsLogProgress$ProgressKey):V
-f:com.intellij.vcs.log.data.VcsLogProgress$Companion
-- f:updateCurrentKey(com.intellij.vcs.log.data.VcsLogProgress$ProgressKey):V
-c:com.intellij.vcs.log.data.VcsLogProgress$ProgressKey
-- <init>(java.lang.String):V
-- equals(java.lang.Object):Z
-- hashCode():I
-com.intellij.vcs.log.data.VcsLogProgress$ProgressListener
-- a:progressChanged(java.util.Collection):V
-- a:progressStarted(java.util.Collection):V
-- a:progressStopped():V
 f:com.intellij.vcs.log.data.VcsLogSorter
 - <init>():V
 - s:sortByDateTopoOrder(java.util.Collection):java.util.List
@@ -1317,7 +1294,6 @@ c:com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 - addVisiblePackChangeListener(com.intellij.vcs.log.visible.VisiblePackChangeListener):V
 - dispose():V
 - isValid():Z
-- s:isVisibleKeyFor(com.intellij.vcs.log.data.VcsLogProgress$ProgressKey,java.lang.String):Z
 - moreCommitsNeeded(java.lang.Runnable):V
 - onFiltersChange(com.intellij.vcs.log.VcsLogFilterCollection):V
 - onGraphOptionsChange(com.intellij.vcs.log.graph.PermanentGraph$Options):V
@@ -1325,13 +1301,6 @@ c:com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 - removeVisiblePackChangeListener(com.intellij.vcs.log.visible.VisiblePackChangeListener):V
 - setDataPack(Z,com.intellij.vcs.log.data.DataPack):V
 - setValid(Z,Z):V
-c:com.intellij.vcs.log.visible.VisiblePackRefresherImpl$VisiblePackProgressKey
-- com.intellij.vcs.log.data.VcsLogProgress$ProgressKey
-- <init>(java.lang.String,Z):V
-- equals(java.lang.Object):Z
-- getLogId():java.lang.String
-- hashCode():I
-- isVisible():Z
 f:com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 - sf:EMPTY_COLLECTION:com.intellij.vcs.log.VcsLogFilterCollection
 - sf:INSTANCE:com.intellij.vcs.log.visible.filters.VcsLogFilterObject
