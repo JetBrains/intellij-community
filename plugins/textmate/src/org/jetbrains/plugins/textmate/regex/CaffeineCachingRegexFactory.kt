@@ -8,14 +8,12 @@ import kotlinx.coroutines.asExecutor
 import java.util.concurrent.TimeUnit
 
 class CaffeineCachingRegexFactory(private val delegate: RegexFactory) : RegexFactory {
-  companion object {
-    private val REGEX_CACHE: Cache<CharSequence, RegexFacade> = Caffeine.newBuilder()
-      .maximumSize(100_000)
-      .expireAfterAccess(1, TimeUnit.MINUTES)
-      .removalListener { _: CharSequence?, v: RegexFacade?, _ -> v?.close() }
-      .executor(Dispatchers.Default.asExecutor())
-      .build()
-  }
+  private val REGEX_CACHE: Cache<CharSequence, RegexFacade> = Caffeine.newBuilder()
+    .maximumSize(1000)
+    .expireAfterAccess(1, TimeUnit.MINUTES)
+    .removalListener { _: CharSequence?, v: RegexFacade?, _ -> v?.close() }
+    .executor(Dispatchers.Default.asExecutor())
+    .build()
 
   override fun regex(pattern: CharSequence): RegexFacade {
     return REGEX_CACHE.get(pattern) {
