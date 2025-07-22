@@ -12922,17 +12922,17 @@ http_file(
 )
 
 http_file(
-  name = "rpc-compiler-plugin-2_2_0-0_1_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fleet/rpc-compiler-plugin/2.2.0-0.1/rpc-compiler-plugin-2.2.0-0.1.jar",
-  sha256 = "6ab5967af41359692cc109c1399e2db624b0d67176cd08f5a43400c5ea28bf8d",
-  downloaded_file_path = "rpc-compiler-plugin-2.2.0-0.1.jar"
+  name = "rpc-compiler-plugin-2_2_0-0_2_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fleet/rpc-compiler-plugin/2.2.0-0.2/rpc-compiler-plugin-2.2.0-0.2.jar",
+  sha256 = "aba987ad87817fc6574e3362fbc3159712bc9c592e48d13484c2f505b5ad42f1",
+  downloaded_file_path = "rpc-compiler-plugin-2.2.0-0.2.jar"
 )
 
 http_file(
-  name = "rpc-compiler-plugin-2_2_0-0_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fleet/rpc-compiler-plugin/2.2.0-0.1/rpc-compiler-plugin-2.2.0-0.1-sources.jar",
-  sha256 = "d9c2249fda810f3b21b8181db554742eccfd47e318bf823909a89f7f5b164347",
-  downloaded_file_path = "rpc-compiler-plugin-2.2.0-0.1-sources.jar"
+  name = "rpc-compiler-plugin-2_2_0-0_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fleet/rpc-compiler-plugin/2.2.0-0.2/rpc-compiler-plugin-2.2.0-0.2-sources.jar",
+  sha256 = "657cc195ad234338f43e16734d74926963ada16143c3559f70683f79f1b5c064",
+  downloaded_file_path = "rpc-compiler-plugin-2.2.0-0.2-sources.jar"
 )
 
 http_file(

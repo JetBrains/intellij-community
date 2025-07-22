@@ -8983,8 +8983,8 @@ jvm_import(
 
 jvm_import(
   name = "rpc-compiler-plugin",
-  jar = "@rpc-compiler-plugin-2_2_0-0_1_http//file",
-  source_jar = "@rpc-compiler-plugin-2_2_0-0_1-sources_http//file",
+  jar = "@rpc-compiler-plugin-2_2_0-0_2_http//file",
+  source_jar = "@rpc-compiler-plugin-2_2_0-0_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
