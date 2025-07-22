@@ -20,6 +20,8 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.jetbrains.python.PYTHON_FREE_PLUGIN_ID
+import com.jetbrains.python.PYTHON_PROF_PLUGIN_ID
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -45,8 +47,7 @@ private class SetupPythonInterpreterStep(
   private val preferences: SetupSdkPreferences,
 ) : ForegroundEvaluationStep {
   companion object {
-    private const val pythonPluginId = "PythonCore"
-    private const val pythonPluginProId = "Pythonid"
+
   }
 
   override val name: String = "Set up Python Interpreter step"
@@ -101,8 +102,8 @@ private class SetupPythonInterpreterStep(
   }
 
   private fun getSdk(sdkHomePath: String): Sdk? {
-    val pythonPluginEnabled = PluginManagerCore.getPlugin(PluginId.getId(pythonPluginId))?.isEnabled ?: false
-    val pythonPluginProEnabled = PluginManagerCore.getPlugin(PluginId.getId(pythonPluginProId))?.isEnabled ?: false
+    val pythonPluginEnabled = PluginManagerCore.getPlugin(PluginId.getId(PYTHON_FREE_PLUGIN_ID))?.isEnabled ?: false
+    val pythonPluginProEnabled = PluginManagerCore.getPlugin(PluginId.getId(PYTHON_PROF_PLUGIN_ID))?.isEnabled ?: false
     if (!pythonPluginEnabled && !pythonPluginProEnabled) {
       println("Python plugin isn't installed. Install it before evaluation on python project")
       return null

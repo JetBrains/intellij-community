@@ -24,6 +24,7 @@ import com.intellij.openapi.util.WriteExternalException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBFont
+import com.jetbrains.python.PYTHON_PROF_PLUGIN_ID
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.icons.PythonIcons
 import org.jdom.Element
@@ -156,7 +157,7 @@ private open class PythonLockedRunConfigurationTypeBase(val theId: String, @Nls 
   init {
     // Do not enable "lock" configs for non PyCharm or Idea (as it's capable of running the Python plugin) IDEs or if the Python plugin is enabled.
     if ((!PlatformUtils.isPyCharm() && !PlatformUtils.isIntelliJ()) ||
-        PluginManager.getInstance().findEnabledPlugin(PluginId.getId("Pythonid")) != null ||
+        PluginManager.getInstance().findEnabledPlugin(PluginId.getId(PYTHON_PROF_PLUGIN_ID)) != null ||
         PlatformUtils.isDataSpell()) {
       throw ExtensionNotApplicableException.create()
     }
