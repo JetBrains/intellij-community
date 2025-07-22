@@ -151,15 +151,20 @@ fun buildLines(
   cancellationToken: CancellationToken,
 ): List<LineData> {
   val lines = ArrayList<LineData>()
+  var offsetChanged: Boolean
   var offset = 0L
   var lineOffset = 0L
   val length = text.length.toLong()
   val hasFoldings = foldings.asIterable().iterator().hasNext()
   val folds = mutableListOf<Interval<*, Fold>>()
   while (offset < length) {
+    offsetChanged = false
     val fold = if (hasFoldings) foldings.query(offset, offset).filter { it.from == offset }.maxByOrNull { it.to - it.from } else null
     fold?.let {
-      offset = fold.to
+      if (fold.to != offset) {
+        offset = fold.to
+        offsetChanged = true
+      }
       folds.add(fold)
     }
     if (offset < length && text[offset.toInt()] == '\n') {
@@ -178,8 +183,12 @@ fun buildLines(
       )
       folds.clear()
       lineOffset = offset + 1
+      offset++
+      offsetChanged = true
     }
-    offset++
+    if (!offsetChanged) {
+      offset++
+    }
   }
   val endLines = softWrapBuilder.buildSoftLines(
     text = text,
