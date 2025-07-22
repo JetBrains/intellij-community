@@ -3883,55 +3883,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return inlay != null && (inlay.getPlacement() == Inlay.Placement.ABOVE_LINE || inlay.getPlacement() == Inlay.Placement.BELOW_LINE);
   }
 
-
-  static final class MyInputMethodHandleSwingThreadWrapper implements InputMethodRequests {
-    private final @NotNull InputMethodRequests myDelegate;
-
-    MyInputMethodHandleSwingThreadWrapper(@NotNull InputMethodRequests delegate) {
-      myDelegate = delegate;
-    }
-
-    @Override
-    public @NotNull Rectangle getTextLocation(TextHitInfo offset) {
-      return execute(() -> myDelegate.getTextLocation(offset));
-    }
-
-    @Override
-    public TextHitInfo getLocationOffset(int x, int y) {
-      return execute(() -> myDelegate.getLocationOffset(x, y));
-    }
-
-    @Override
-    public int getInsertPositionOffset() {
-      return execute(() -> myDelegate.getInsertPositionOffset());
-    }
-
-    @Override
-    public @NotNull AttributedCharacterIterator getCommittedText(int beginIndex, int endIndex,
-                                                                 AttributedCharacterIterator.Attribute[] attributes) {
-      return execute(() -> myDelegate.getCommittedText(beginIndex, endIndex, attributes));
-    }
-
-    @Override
-    public int getCommittedTextLength() {
-      return execute(myDelegate::getCommittedTextLength);
-    }
-
-    @Override
-    public @Nullable AttributedCharacterIterator cancelLatestCommittedText(AttributedCharacterIterator.Attribute[] attributes) {
-      return null;
-    }
-
-    @Override
-    public AttributedCharacterIterator getSelectedText(AttributedCharacterIterator.Attribute[] attributes) {
-      return execute(() -> myDelegate.getSelectedText(attributes));
-    }
-
-    private static <T> T execute(@NotNull ThrowableComputable<T, RuntimeException> computable) {
-      return UIUtil.invokeAndWaitIfNeeded(() -> EditorThreading.compute(computable));
-    }
-  }
-
   private final class MyInputMethodListener implements InputMethodListener {
 
     private final MyInputMethodHandler myHandler;
