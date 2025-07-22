@@ -35,6 +35,7 @@ dependencies {
     api(projects.ideLafBridge)
     compileOnly(projects.markdown.extensions.gfmAlerts)
     compileOnly(projects.markdown.extensions.gfmTables)
+    compileOnly(projects.markdown.extensions.images)
 
     intellijPlatform { intellijIdeaCommunity(libs.versions.idea) }
 

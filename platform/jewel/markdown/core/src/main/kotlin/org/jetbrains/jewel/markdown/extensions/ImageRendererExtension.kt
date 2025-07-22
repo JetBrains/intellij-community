@@ -10,5 +10,5 @@ import org.jetbrains.jewel.markdown.InlineMarkdown
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public interface ImageRendererExtension {
-    @Composable public fun renderImagesContent(image: InlineMarkdown.Image): InlineTextContent
+    @Composable public fun renderImageContent(image: InlineMarkdown.Image): InlineTextContent
 }

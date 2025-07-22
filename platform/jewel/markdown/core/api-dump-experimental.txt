@@ -207,7 +207,7 @@ f:org.jetbrains.jewel.markdown.SemanticsKt
 *:org.jetbrains.jewel.markdown.WithTextContent
 - a:getContent():java.lang.String
 *:org.jetbrains.jewel.markdown.extensions.ImageRendererExtension
-- a:renderImagesContent(org.jetbrains.jewel.markdown.InlineMarkdown$Image,androidx.compose.runtime.Composer,I):androidx.compose.foundation.text.InlineTextContent
+- a:renderImageContent(org.jetbrains.jewel.markdown.InlineMarkdown$Image,androidx.compose.runtime.Composer,I):androidx.compose.foundation.text.InlineTextContent
 *:org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension
 - a:canProcess(org.commonmark.node.CustomBlock):Z
 - a:processMarkdownBlock(org.commonmark.node.CustomBlock,org.jetbrains.jewel.markdown.processing.MarkdownProcessor):org.jetbrains.jewel.markdown.MarkdownBlock$CustomBlock
