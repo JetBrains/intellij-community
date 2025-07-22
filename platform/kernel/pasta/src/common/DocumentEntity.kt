@@ -71,7 +71,7 @@ class DocumentEntity(override val eid: EID) : Entity {
   ): T {
     val mutableDocument = DbMutableDocument(this, changeScope, initialMeta.mutable())
     val result = f(mutableDocument)
-    for (component in mutableDocument.components.asMap().values) {
+    for (component in mutableDocument.components.asMap().values.sortedBy { it.getOrder() }) {
       runCatching {
         component.onCommit()
       }.onFailure {
