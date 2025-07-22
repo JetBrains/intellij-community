@@ -898,4 +898,117 @@ def excluding_fixed_size_list(p: list[str]):
             assert_type(shorter_than_two, list[str])
                    """);
   }
+
+  // PY-79834 
+  public void testMatchNamedTuplePositionalArgs() {
+    doTestByText("""
+from typing import NamedTuple, assert_type
+
+class Point(NamedTuple):
+    x: int
+    y: str
+
+p: Point
+
+match p:
+    case Point(x_val, y_val):
+        assert_type(x_val, int)
+        assert_type(y_val, str)
+        assert_type(p, Point)
+                   """);
+  }
+
+  // PY-79834 
+  public void testMatchNamedTupleKeywordArgs() {
+    doTestByText("""
+from typing import NamedTuple, assert_type
+
+class Point(NamedTuple):
+    x: int
+    y: str
+
+p: Point
+
+match p:
+    case Point(x=x_val, y=y_val):
+        assert_type(x_val, int)
+        assert_type(y_val, str)
+        assert_type(p, Point)
+                   """);
+  }
+
+  // PY-79834 
+  public void testMatchNamedTupleMixedArgs() {
+    doTestByText("""
+from typing import NamedTuple, assert_type
+
+class Point(NamedTuple):
+    x: int
+    y: str
+    z: bool
+
+p: Point
+
+match p:
+    case Point(x_val, y=y_val, z=z_val):
+        assert_type(x_val, int)
+        assert_type(y_val, str)
+        assert_type(z_val, bool)
+        assert_type(p, Point)
+      """);
+  }
+
+  // PY-79834 
+  public void testMatchNamedTupleOutOfOrderKeywordArgs() {
+    doTestByText("""
+from typing import NamedTuple, assert_type
+
+class Point(NamedTuple):
+    x: int
+    y: str
+    z: bool
+
+p: Point
+
+match p:
+    case Point(z=z_val, x=x_val, y=y_val):
+        assert_type(x_val, int)
+        assert_type(y_val, str)
+        assert_type(z_val, bool)
+        assert_type(p, Point)
+                   """);
+  }
+
+  // PY-79834 
+  public void testMatchFunctionCollectionsNamedTuple() {
+    doTestByText("""
+from collections import namedtuple
+
+Point = namedtuple('Point', ['x', 'y'])
+
+p1: Point
+
+match p1:
+    case Point(x_val, y_val):
+        assert_type(x_val, Any)
+        assert_type(y_val, Any)
+                   """);
+  }
+
+  // PY-79834 
+  public void testMatchFunctionTypingNamedTuple() {
+    doTestByText("""
+from typing import NamedTuple, assert_type
+
+ColorPoint = NamedTuple('ColorPoint', [('x', int), ('y', int), ('color', str)])
+
+p2: ColorPoint
+                   
+match p2:
+    case ColorPoint(x_val, y_val, color_val):
+        assert_type(x_val, int)
+        assert_type(y_val, int)
+        assert_type(color_val, str)
+                   """);
+  }
 }
