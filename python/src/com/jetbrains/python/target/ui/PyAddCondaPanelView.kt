@@ -22,10 +22,7 @@ import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.extendWithTargetSpecificFields
-import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction
-import com.jetbrains.python.sdk.add.PyAddSdkStateListener
 import com.jetbrains.python.sdk.add.PyAddSdkView
-import com.jetbrains.python.target.ui.TargetPanelExtension
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.annotations.Nls
