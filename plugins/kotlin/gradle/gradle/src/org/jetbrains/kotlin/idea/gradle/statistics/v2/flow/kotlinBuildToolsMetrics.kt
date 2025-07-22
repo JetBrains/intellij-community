@@ -37,6 +37,7 @@ enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>)
     KOTLIN_PROGRESSIVE_MODE(KotlinBuildToolBooleanOverrideFusMetric("KOTLIN_PROGRESSIVE_MODE")),
     KOTLIN_KTS_USED(KotlinBuildToolBooleanFusMetric("KOTLIN_KTS_USED")),
     KOTLIN_INCREMENTAL_NATIVE_ENABLED(KotlinBuildToolBooleanFusMetric("KOTLIN_INCREMENTAL_NATIVE_ENABLED")),
+    KMP_TOP_LEVEL_DEPENDENCIES_BLOCK(KotlinBuildToolBooleanFusMetric("KMP_TOP_LEVEL_DEPENDENCIES_BLOCK")),
 
     JS_GENERATE_EXTERNALS(KotlinBuildToolBooleanFusMetric("JS_GENERATE_EXTERNALS")),
 
