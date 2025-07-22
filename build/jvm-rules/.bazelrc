@@ -50,7 +50,7 @@ common --incompatible_enable_proto_toolchain_resolution
 build --action_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
 
 # Remote-caches related
-common:remotecache --remote_cache=https://packages.jetbrains.team/files/p/ij/intellij-bazel-cache
+#common:remotecache --remote_cache=https://packages.jetbrains.team/files/p/ij/intellij-bazel-cache
 common --remote_upload_local_results=false
 common:ci --remote_upload_local_results=true
 
