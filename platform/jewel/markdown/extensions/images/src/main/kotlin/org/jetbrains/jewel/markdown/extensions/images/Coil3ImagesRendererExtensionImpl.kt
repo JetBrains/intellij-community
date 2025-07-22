@@ -1,8 +1,7 @@
 package org.jetbrains.jewel.markdown.extensions.images
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -71,8 +70,8 @@ public class Coil3ImagesRendererExtensionImpl(private val imageLoader: ImageLoad
                     // This approach doesn't allow images from appearing larger with different screen scaling,
                     // but simply maintains behavior consistent with standalone AsyncImage rendering.
                     Placeholder(
-                        width = imageSize.width.toDp().toSp(),
-                        height = imageSize.height.toDp().toSp(),
+                        width = imageSize.width.dp.toSp(),
+                        height = imageSize.height.dp.toSp(),
                         placeholderVerticalAlign = PlaceholderVerticalAlign.Bottom,
                     )
                 }
@@ -81,11 +80,7 @@ public class Coil3ImagesRendererExtensionImpl(private val imageLoader: ImageLoad
             }
 
         return InlineTextContent(placeholder) {
-            Image(
-                painter = painter,
-                contentDescription = image.title,
-                modifier = imageResult?.image?.let { Modifier.height(it.width.dp).width(it.width.dp) } ?: Modifier,
-            )
+            Image(painter = painter, contentDescription = image.title, modifier = Modifier.fillMaxSize())
         }
     }
 
