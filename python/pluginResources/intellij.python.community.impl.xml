@@ -1090,6 +1090,15 @@
 
       <separator/>
 
+      <action id="PipSetDefaultRequirementsAction"
+              class="com.jetbrains.python.packaging.pip.actions.PipSetDefaultRequirementsAction"
+              icon="com.intellij.icons.AllIcons.General.GreenCheckmark"/>
+      <action id="PipUpdateEnvAction"
+              class="com.jetbrains.python.packaging.pip.actions.PipUpdateEnvAction"
+              icon="com.intellij.icons.AllIcons.Actions.Refresh"/>
+
+      <separator/>
+
       <add-to-group group-id="EditorContextBarMenu" anchor="first"/>
     </group>
   </actions>

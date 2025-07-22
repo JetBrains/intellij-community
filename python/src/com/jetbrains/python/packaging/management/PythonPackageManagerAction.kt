@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
@@ -56,7 +57,7 @@ abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwa
 
   override fun update(e: AnActionEvent) {
     val virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE)
-    val isWatchedFile = virtualFile?.name?.let { fileNamesPattern.matches(it) } ?: false
+    val isWatchedFile = isWatchedFile(virtualFile)
     val manager = if (isWatchedFile) getManager(e) else null
 
     with(e.presentation) {
@@ -64,6 +65,8 @@ abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwa
       isEnabled = manager?.isRunLocked() == false
     }
   }
+
+  protected open fun isWatchedFile(virtualFile: VirtualFile?): Boolean = virtualFile?.name?.let { fileNamesPattern.matches(it) } ?: false
 
   /**
    * This action saves the current document on fs because tools are command line tools, and they need actual files to be up to date

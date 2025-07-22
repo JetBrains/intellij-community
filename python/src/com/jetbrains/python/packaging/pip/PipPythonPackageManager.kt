@@ -7,6 +7,7 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator.Companion.findPathInHelpers
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageUtil
@@ -60,6 +61,13 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
     else {
       engine.syncProject()
     }
+  }
+
+  suspend fun syncRequirementsTxt(requirementsFile: VirtualFile): PyResult<Unit> {
+    engine.syncRequirementsTxt(requirementsFile).getOr {
+      return it
+    }
+    return reloadPackages().mapSuccess { }
   }
 
   override suspend fun updatePackageCommand(
