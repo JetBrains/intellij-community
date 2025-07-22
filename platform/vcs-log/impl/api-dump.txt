@@ -189,7 +189,6 @@ f:com.intellij.vcs.log.data.VcsLogData
 - com.intellij.openapi.Disposable
 - com.intellij.vcs.log.VcsLogDataProvider
 - sf:Companion:com.intellij.vcs.log.data.VcsLogData$Companion
-- <init>(com.intellij.openapi.project.Project,java.util.Map,com.intellij.vcs.log.impl.VcsLogErrorHandler,Z,com.intellij.openapi.Disposable):V
 - f:addDataPackChangeListener(com.intellij.vcs.log.data.DataPackChangeListener):V
 - dispose():V
 - f:getAllUsers():java.util.Set
@@ -210,7 +209,6 @@ f:com.intellij.vcs.log.data.VcsLogData
 - f:getStorage():com.intellij.vcs.log.data.VcsLogStorage
 - f:getTopCommitsCache():com.intellij.vcs.log.data.TopCommitsCache
 - f:getUserNameResolver():com.intellij.vcs.log.data.VcsLogUserResolver
-- f:initialize():V
 - sf:isIndexSwitchedOnInRegistry():Z
 - f:isSingleUser():Z
 - f:refresh(java.util.Collection):V

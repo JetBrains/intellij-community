@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.function.Consumer
 
-class VcsLogData(
+class VcsLogData @ApiStatus.Internal constructor(
   val project: Project,
   val logProviders: Map<VirtualFile, VcsLogProvider>,
   private val errorHandler: VcsLogErrorHandler,
@@ -131,6 +131,7 @@ class VcsLogData(
     Disposer.register(this, disposableFlag)
   }
 
+  @ApiStatus.Internal
   fun initialize() {
     refresher.initialize()
     readCurrentUser()
