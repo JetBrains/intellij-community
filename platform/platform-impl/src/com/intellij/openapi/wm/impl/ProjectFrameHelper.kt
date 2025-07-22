@@ -135,6 +135,8 @@ abstract class ProjectFrameHelper internal constructor(
     frameHeaderHelper = coroutineScope.createFrameHeaderHelper(frame, frameDecorator, rootPane)
     installLinuxResizeHandler(coroutineScope, frame, glassPane)
 
+    glassPane.colorfulToolbar = { frameHeaderHelper.isColorfulToolbar() }
+
     frame.setFrameHelper(object : FrameHelper {
       override fun uiDataSnapshot(sink: DataSink) {
         return this@ProjectFrameHelper.uiDataSnapshot(sink)

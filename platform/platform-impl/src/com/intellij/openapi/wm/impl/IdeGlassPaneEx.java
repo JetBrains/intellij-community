@@ -17,5 +17,7 @@ public interface IdeGlassPaneEx extends IdeGlassPane {
 
   boolean isInModalContext();
 
+  boolean isColorfulToolbar();
+
   @NotNull JRootPane getRootPane();
 }

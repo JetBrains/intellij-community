@@ -66,6 +66,8 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
   private var paintersInstalled = false
   private var loadingIndicator: IdePaneLoadingLayer? = null
 
+  internal var colorfulToolbar: (() -> Boolean)? = null
+
   @JvmOverloads
   constructor(rootPane: JRootPane, installPainters: Boolean = false) {
     pane = rootPane
@@ -513,6 +515,10 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
 
   override fun isInModalContext(): Boolean {
     return components.any { it is TransparentLayeredPane }
+  }
+
+  override fun isColorfulToolbar(): Boolean {
+    return colorfulToolbar?.invoke() == true
   }
 
   override fun paintComponent(g: Graphics) {

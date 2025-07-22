@@ -3,12 +3,13 @@ package com.intellij.openapi.application.impl.islands
 
 import com.intellij.ide.ProjectWidgetGradientLocationService
 import com.intellij.ide.ProjectWindowCustomizerService
-import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.GradientTextureCache
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.AbstractPainter
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.impl.IdeGlassPaneEx
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.paint.PaintUtil
@@ -41,7 +42,10 @@ internal class IslandsGradientPainter(private val frame: IdeFrame, private val m
   }
 
   private fun doPaint(component: Component, g: Graphics2D) {
-    if (DistractionFreeModeController.shouldMinimizeCustomHeader()) {
+    if (CustomWindowHeaderUtil.isCompactHeader()) {
+      return
+    }
+    if (component is IdeGlassPaneEx && !component.isColorfulToolbar) {
       return
     }
 

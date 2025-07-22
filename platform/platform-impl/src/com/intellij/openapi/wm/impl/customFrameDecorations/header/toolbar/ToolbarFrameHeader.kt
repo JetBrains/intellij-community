@@ -260,6 +260,8 @@ internal class ToolbarFrameHeader(
     check(updateRequests.tryEmit(Unit))
   }
 
+  override fun isColorfulToolbar(): Boolean = !isCompactHeader
+
   override fun paintComponent(g: Graphics) {
     if (mode == ShowMode.MENU && menuBarHeaderTitle.isVisible ||
         toolbarHeaderTitle.parent != null || isCompactHeader ||

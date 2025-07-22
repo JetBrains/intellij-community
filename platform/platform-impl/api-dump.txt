@@ -742,8 +742,11 @@ com.intellij.openapi.wm.impl.IdeGlassPaneEx
 - a:getComponent(I):java.awt.Component
 - a:getComponentCount():I
 - a:getRootPane():javax.swing.JRootPane
+- a:isColorfulToolbar():Z
 - a:isInModalContext():Z
 - a:remove(java.awt.Component):V
+f:com.intellij.openapi.wm.impl.IdeGlassPaneImpl
+- isColorfulToolbar():Z
 com.intellij.openapi.wm.impl.TitleInfoProvider
 - sf:Companion:com.intellij.openapi.wm.impl.TitleInfoProvider$Companion
 - a:addUpdateListener(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V

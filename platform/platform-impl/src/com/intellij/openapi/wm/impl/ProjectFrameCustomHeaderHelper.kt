@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.*
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.hideNativeLinuxTitle
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.isDecoratedMenu
@@ -149,6 +148,8 @@ internal class ProjectFrameCustomHeaderHelper(
       }
     }
   }
+
+  fun isColorfulToolbar(): Boolean = frameHeaderHelper.toolbarHolder?.isColorfulToolbar() == true
 
   fun getCustomTitleBar(): WindowDecorations.CustomTitleBar? {
     val titlePane = (frameHeaderHelper as? FrameHeaderHelper.Decorated)?.customFrameTitlePane
