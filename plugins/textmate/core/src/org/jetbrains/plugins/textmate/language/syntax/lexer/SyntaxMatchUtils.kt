@@ -44,8 +44,7 @@ internal object SyntaxMatchUtils {
             digitIndex++
           }
           if (hasGroupIndex && matchData.count() > groupIndex) {
-            val range = matchData.byteRange(groupIndex)
-            val replacement = matchingString.bytes.decodeToString(range.start.offset, range.end.offset)
+            val replacement = matchingString.subSequenceByByteRange(matchData.byteRange(groupIndex))
             append(BACK_REFERENCE_REPLACEMENT_REGEX.replace(replacement, "\\\\$0"))
             charIndex = digitIndex
             continue
@@ -88,8 +87,7 @@ internal object SyntaxMatchUtils {
         val groupIndex = (matcher.groups[1] ?: matcher.groups[2])?.value?.toIntOrNull() ?: -1
         if (groupIndex >= 0 && matchData.count() > groupIndex) {
           append(string, lastPosition, matcher.range.first)
-          val range = matchData.byteRange(groupIndex)
-          val capturedText = matchingString.bytes.decodeToString(range.start.offset, range.end.offset)
+          val capturedText = matchingString.subSequenceByByteRange(matchData.byteRange(groupIndex)).toString()
           val replacement = capturedText.trimStart('.')
           val command = matcher.groups[3]?.value
           when (command) {

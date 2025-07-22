@@ -27,7 +27,7 @@ class TextMateLexerState(
     result
   }
 
-  val matchedEOL: Boolean = matchData.matched && line != null && matchData.byteRange().end.offset == line.bytes.size
+  val matchedEOL: Boolean = matchData.matched && line != null && matchData.byteRange().end.offset == line.bytesLength
 
   val string: TextMateString? = if (matchData.matched) line else null
 
