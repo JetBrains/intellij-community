@@ -63,7 +63,7 @@ internal sealed class GitObject {
 
         fun parse(value: String): Author {
           val matchResult = AUTHOR_REGEX.matchEntire(value)
-                            ?: error("Invalid author format: $value")
+          requireNotNull(matchResult) { "Invalid author format: $value" }
 
           val (nameAndEmail, timestamp, timezone) = matchResult.destructured
           return Author(nameAndEmail, timestamp.toLong(), timezone)
@@ -214,11 +214,7 @@ internal sealed class GitObject {
     override val dependencies: List<Oid> = entries.values.filter { it.mode != FileMode.GITLINK }.map { it.oid }
 
     @JvmInline
-    value class FileName(val value: String) : Comparable<FileName> {
-      override fun compareTo(other: FileName): Int {
-        return value.compareTo(other.value)
-      }
-    }
+    value class FileName(val value: String)
 
     @NonNls
     enum class FileMode(val value: String) {
@@ -227,6 +223,10 @@ internal sealed class GitObject {
       DIR("40000"),
       REGULAR("100644"),
       EXEC("100755");
+
+      fun isFile(): Boolean {
+        return this == REGULAR || this == EXEC || this == SYMLINK
+      }
 
       companion object {
         fun fromValue(value: String): FileMode? {
@@ -265,8 +265,29 @@ internal sealed class GitObject {
       }
 
       fun buildBody(entries: Map<FileName, Entry>): ByteArray {
+        val sortedEntries = entries.entries
+          .sortedWith { entry1, entry2 ->
+            val name1 = entry1.key.value
+            val name2 = entry2.key.value
+
+            val commonPrefix = name1.commonPrefixLengthWith(name2)
+            when (commonPrefix) {
+              name1.length -> {
+                val effectiveChar = if (entry1.value.mode == FileMode.DIR) '/' else 0.toChar()
+                effectiveChar.compareTo(name2[commonPrefix])
+              }
+              name2.length -> {
+                val effectiveChar = if (entry2.value.mode == FileMode.DIR) '/' else 0.toChar()
+                name1[commonPrefix].compareTo(effectiveChar)
+              }
+              else -> {
+                name1[commonPrefix].compareTo(name2[commonPrefix])
+              }
+            }
+          }
+
         return ByteArrayOutputStream().use { baos ->
-          entries.toSortedMap().forEach { (name, entry) ->
+          sortedEntries.forEach { (name, entry) ->
             baos.writeSequence(
               entry.mode.value.toByteArray(),
               " ".toByteArray(),
@@ -277,6 +298,14 @@ internal sealed class GitObject {
           }
           baos.toByteArray()
         }
+      }
+
+      private fun String.commonPrefixLengthWith(other: String): Int {
+        val minLength = minOf(length, other.length)
+        for (i in 0 until minLength) {
+          if (this[i] != other[i]) return i
+        }
+        return minLength
       }
 
       private fun ByteArrayOutputStream.writeSequence(vararg arrays: ByteArray) {

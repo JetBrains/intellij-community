@@ -67,7 +67,6 @@ import git4idea.util.GitFileUtils
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.CancellablePromise
 import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStreamWriter
 import java.nio.file.Files
@@ -979,7 +978,8 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
         }.toPath()
       }
 
-      val encoding = GitConfigUtil.getCommitEncodingCharset(project, root)
+      val encoding = GitConfigUtil.getCommitEncodingCharsetCached(project, root)
+
       OutputStreamWriter(Files.newOutputStream(file), encoding).use { out ->
         out.write(message)
       }

@@ -7,11 +7,13 @@ import com.intellij.dvcs.push.PushSpec
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.io.write
+import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsRef
@@ -33,6 +35,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.collections.contains
 
 const val USER_NAME = "John Doe"
 const val USER_EMAIL = "John.Doe@example.com"
@@ -210,4 +213,11 @@ internal fun GitRepository.resolveConflicts() {
 
 internal fun getPrettyFormatTagForFullCommitMessage(project: Project): String {
   return if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(project)) "%B" else "%s%n%n%-b"
+}
+
+internal fun filterChangesByFileName(targetCommit: VcsFullCommitDetails, fileNames: Collection<String>): List<Change> {
+  return targetCommit.changes.filter {
+    val name = it.beforeRevision?.file?.name ?: it.afterRevision?.file?.name
+    name in fileNames
+  }
 }

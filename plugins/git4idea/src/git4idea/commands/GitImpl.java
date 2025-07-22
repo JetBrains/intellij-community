@@ -793,6 +793,18 @@ public class GitImpl extends GitImplBase {
     }
   }
 
+  @Override
+  public @NotNull GitCommandResult updateReference(@NotNull GitRepository repository, @NotNull String reference,
+                                                   @NotNull Hash newObjectId,
+                                                   @Nullable String reflogMessage) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.UPDATE_REF);
+    h.addParameters(reference, newObjectId.asString());
+    if (reflogMessage != null) {
+      h.addParameters("-m", reflogMessage);
+    }
+    return runCommand(h);
+  }
+
   private @NotNull GitCommandResult doLsRemote(final @NotNull Project project,
                                                final @NotNull File workingDir,
                                                final @NotNull String remoteId,

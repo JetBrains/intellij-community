@@ -12,6 +12,8 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
+import git4idea.repo.GitProjectConfigurationCache;
+import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -143,6 +145,14 @@ public final class GitConfigUtil {
     }
     catch (VcsException ignore) {
     }
+    return StandardCharsets.UTF_8;
+  }
+
+  public static @NotNull Charset getCommitEncodingCharsetCached(@NotNull Project project, @NotNull VirtualFile root) {
+    String encoding = GitProjectConfigurationCache.getInstance(project)
+      .readRepositoryConfig(root, COMMIT_ENCODING);
+    Charset charset = tryParseEncoding(encoding);
+    if (charset != null) return charset;
     return StandardCharsets.UTF_8;
   }
 

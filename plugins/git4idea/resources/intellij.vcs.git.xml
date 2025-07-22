@@ -40,6 +40,10 @@
     </action>
 
     <action id="Git.InMemory.Reword.Commit" class="git4idea.inMemory.rebase.log.reword.GitInMemoryRewordAction"/>
+    <action id="Git.InMemory.Extract.Selected.Changes" class="git4idea.inMemory.rebase.log.changes.GitExtractSelectedChangesAction">
+      <add-to-group group-id="Vcs.RepositoryChangesBrowserMenu" relative-to-action="Vcs.ApplySelectedChanges" anchor="after"/>
+    </action>
+
     <action id="Git.New.Branch.In.Log" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$NewBranchAction"/>
     <action id="Git.Log.Branches.Change.Branch.Filter"
             class="git4idea.ui.branch.dashboard.BranchesDashboardActions$UpdateBranchFilterInLogAction">
@@ -622,6 +626,8 @@
                  description="Enables the 'Drop Selected Changes' action in Git log changes tree context menu."/>
     <registryKey key="git.in.memory.reword.commit.enabled" defaultValue="false"
                  description="Enables the 'Edit Commit Message… (In-Memory)' action in the Git log"/>
+    <registryKey key="git.in.memory.extract.selected.changes.enabled" defaultValue="false"
+                 description="Enables the 'Extract Selected Changes to a separate commit… (In-Memory)' action in the Git log"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>

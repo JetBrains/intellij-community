@@ -16,6 +16,7 @@ import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import git4idea.findProtectedRemoteBranch
 import git4idea.i18n.GitBundle
+import git4idea.rebase.GitSingleCommitEditingAction
 import git4idea.rebase.log.GitCommitEditingActionBase.Companion.findContainingBranches
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
@@ -83,6 +84,10 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
         sink[VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION] = commitEditingData.selection
         sink[VcsLogInternalDataKeys.LOG_DATA] = commitEditingData.logData
       }
+    }
+    if (commitEditingData is GitSingleCommitEditingAction.SingleCommitEditingData
+        && commitEditingData.selectedChanges.isNotEmpty()) {
+      editor.setChangesSupplier { commitEditingData.selectedChanges }
     }
     editor.text = originMessage
     editor.editorField.setCaretPosition(0)

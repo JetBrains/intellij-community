@@ -4,6 +4,7 @@ package git4idea.rebase.log
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.ui.VcsLogUiEx
 import git4idea.repo.GitRepository
 
 internal abstract class GitMultipleCommitEditingAction : GitCommitEditingActionBase<GitCommitEditingActionBase.MultipleCommitEditingData>() {
@@ -11,6 +12,7 @@ internal abstract class GitMultipleCommitEditingAction : GitCommitEditingActionB
     repository: GitRepository,
     selection: VcsLogCommitSelection,
     logData: VcsLogData,
+    logUiEx: VcsLogUiEx?,
     selectedChanges: List<Change>,
-  ) = CommitEditingDataCreationResult.Created(MultipleCommitEditingData(repository, selection, logData))
+  ) = CommitEditingDataCreationResult.Created(MultipleCommitEditingData(repository, selection, logData, logUiEx))
 }

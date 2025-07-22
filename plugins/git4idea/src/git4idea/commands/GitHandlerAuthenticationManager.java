@@ -265,18 +265,6 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
     VirtualFile root = myHandler.getExecutableContext().getRoot();
     if (root == null) return null;
 
-    GitRepository repo = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
-    if (repo != null) {
-      return GitProjectConfigurationCache.getInstance(myProject).readRepositoryConfig(repo, GitConfigUtil.CORE_SSH_COMMAND);
-    }
-    else {
-      try {
-        return GitConfigUtil.getValue(myProject, root, GitConfigUtil.CORE_SSH_COMMAND);
-      }
-      catch (VcsException e) {
-        LOG.warn(e);
-        return null;
-      }
-    }
+    return GitProjectConfigurationCache.getInstance(myProject).readRepositoryConfig(root, GitConfigUtil.CORE_SSH_COMMAND);
   }
 }

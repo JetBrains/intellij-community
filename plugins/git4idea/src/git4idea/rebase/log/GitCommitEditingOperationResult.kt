@@ -19,6 +19,7 @@ internal sealed class GitCommitEditingOperationResult {
     private val base: GitRebaseParams.RebaseUpstream,
     private val oldHead: String,
     private val newHead: String,
+    val commitToFocus: Hash? = null,
   ) : GitCommitEditingOperationResult() {
     private val firstChangedHash = findFirstChangedHash()
 

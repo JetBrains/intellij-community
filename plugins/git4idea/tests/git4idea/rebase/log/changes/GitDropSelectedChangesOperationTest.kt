@@ -3,8 +3,6 @@ package git4idea.rebase.log.changes
 
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.log.VcsCommitMetadata
-import com.intellij.vcs.log.VcsFullCommitDetails
-import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.rebase.log.GitCommitEditingOperationResult
@@ -12,7 +10,8 @@ import git4idea.test.GitSingleRepoTest
 import git4idea.test.assertCommitted
 import git4idea.test.assertStagedChanges
 import git4idea.test.commit
-import git4idea.test.findGitLogProvider
+import git4idea.test.filterChangesByFileName
+
 import kotlinx.coroutines.runBlocking
 
 class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
@@ -22,7 +21,7 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
     file("b").create().add()
     file("c").create().add()
     file("d").create().add()
-    val targetCommit = commit("Add b, c, d").details()
+    val targetCommit = commitDetails(commit("Add b, c, d"))
 
     file("e").create().addCommit("Add e")
 
@@ -49,7 +48,7 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
 
     file("b").create().add()
     file("a").write(newContent).add()
-    val targetCommit = commit("Add b, modify a").details()
+    val targetCommit = commitDetails(commit("Add b, modify a"))
 
     refresh()
     updateChangeListManager()
@@ -69,7 +68,7 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
 
     file("a").delete().add()
     file("b").create().add()
-    val targetCommit = commit("Delete a, add b").details()
+    val targetCommit = commitDetails(commit("Delete a, add b"))
 
     refresh()
     updateChangeListManager()
@@ -89,7 +88,7 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
 
     file("b").create(oldContent).add()
     file("c").create().add()
-    val targetCommit = commit("Add b, c").details()
+    val targetCommit = commitDetails(commit("Add b, c"))
 
     file("d").create().addCommit("Add d")
 
@@ -135,7 +134,7 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
     git("commit --amend --no-edit")
 
     repo.update()
-    val amendedInitialCommit = repo.currentRevision!!.details()
+    val amendedInitialCommit = commitDetails(repo.currentRevision!!)
 
     val changesToDrop = filterChangesByFileName(amendedInitialCommit, listOf("c"))
 
@@ -158,7 +157,7 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
 
     file("b").create().add()
     file("c").create().add()
-    val targetCommit = commit("Add b, c").details()
+    val targetCommit = commitDetails(commit("Add b, c"))
 
     file("fix").create().add()
     commit("fixup! ${targetCommit.id}")
@@ -186,7 +185,7 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
 
     file("b").create().add()
     file("c").create().add()
-    val targetCommit = commit("Add b, c").details()
+    val targetCommit = commitDetails(commit("Add b, c"))
 
     file("local-staged").create().add()
     file("local").create(oldContent)
@@ -213,7 +212,7 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
 
     file("b").create().add()
     file("c").create().add()
-    val targetCommit = commit("Add b, c").details()
+    val targetCommit = commitDetails(commit("Add b, c"))
 
     file("d").create().addCommit("Add d")
 
@@ -248,7 +247,7 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
 
     file("b").create().add()
     file("c").create().add()
-    val targetCommit = commit("Add b, c").details()
+    val targetCommit = commitDetails(commit("Add b, c"))
 
     file("d").create().addCommit("Add d")
 
@@ -269,7 +268,7 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
 
     file("b").create().add()
     file("c").create().add()
-    val targetCommit = commit("Add b, c").details()
+    val targetCommit = commitDetails(commit("Add b, c"))
 
     refresh()
     updateChangeListManager()
@@ -287,13 +286,4 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
     runBlocking {
       GitDropSelectedChangesOperation(repo, targetCommit, changes).execute()
     }
-
-  private fun String.details() = VcsLogUtil.getDetails(findGitLogProvider(repo.project), repo.root, listOf(this)).first()
-
-  private fun filterChangesByFileName(targetCommit: VcsFullCommitDetails, fileNames: List<String>): List<Change> {
-    return targetCommit.changes.filter {
-      val name = it.beforeRevision?.file?.name ?: it.afterRevision?.file?.name
-      name in fileNames
-    }
-  }
 }

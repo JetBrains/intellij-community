@@ -7,6 +7,7 @@ import git4idea.config.GitConfigUtil
 import git4idea.inMemory.objects.GitObject
 import git4idea.inMemory.objects.Oid
 import git4idea.test.GitSingleRepoTest
+import git4idea.test.commit
 import git4idea.test.gitAsBytes
 import git4idea.test.tac
 import kotlin.jvm.java
@@ -170,6 +171,24 @@ class GitObjectRepositoryTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     repository.commitTree(tree.oid, emptyList(), message, SAMPLE_AUTHOR)
+  }
+
+  fun `test tree sorts directory entries with trailing slash`() {
+    val repository = GitObjectRepository(repo)
+
+    val blob = repository.createBlob(SAMPLE_CONTENT.toByteArray())
+
+    // to ensure incorrect initial order
+    val entries = sortedMapOf(
+      compareBy { it.value },
+      GitObject.Tree.FileName("dir") to GitObject.Tree.Entry(GitObject.Tree.FileMode.DIR, blob.oid),
+      GitObject.Tree.FileName("dir-file.txt") to GitObject.Tree.Entry(GitObject.Tree.FileMode.REGULAR, blob.oid)
+    )
+
+    val newTree = repository.createTree(entries)
+    repository.persistObject(newTree)
+
+    verifyObjectExistsInGit(newTree)
   }
 
   private fun createTreeEntries(blob: GitObject.Blob): Map<GitObject.Tree.FileName, GitObject.Tree.Entry> {

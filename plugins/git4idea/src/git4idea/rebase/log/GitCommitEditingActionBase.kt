@@ -26,6 +26,8 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
+import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.table.size
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitUtil
@@ -142,6 +144,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     repository: GitRepository,
     selection: VcsLogCommitSelection,
     logData: VcsLogData,
+    logUiEx: VcsLogUiEx?,
     selectedChanges: List<Change>,
   ): CommitEditingDataCreationResult<T> {
     return createCommitEditingData(repository, selection, logData)
@@ -305,6 +308,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     val project = e.project
     val selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION)
     val logDataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData?
+    val logUiEx = e.getData(VcsLogInternalDataKeys.LOG_UI_EX)
     val selectedChanges = e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS)?.toList() ?: emptyList()
 
     if (project == null || selection == null || logDataProvider == null) {
@@ -324,7 +328,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       )
     }
 
-    return createCommitEditingData(repository, selection, logDataProvider, selectedChanges)
+    return createCommitEditingData(repository, selection, logDataProvider, logUiEx, selectedChanges)
   }
 
   protected open fun getProhibitedStateMessage(
@@ -343,6 +347,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     val repository: GitRepository,
     val selection: VcsLogCommitSelection,
     val logData: VcsLogData,
+    val logUiEx: VcsLogUiEx? = null,
   ) {
     val project = repository.project
   }

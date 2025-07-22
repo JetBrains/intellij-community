@@ -2,6 +2,7 @@
 package git4idea.inMemory.objects
 
 import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.impl.HashImpl
 
 internal class Oid private constructor(private val bytes: ByteArray) {
   init {
@@ -47,4 +48,8 @@ internal class Oid private constructor(private val bytes: ByteArray) {
   }
 
   override fun hashCode(): Int = bytes.contentHashCode()
+}
+
+internal fun Oid.toHash(): Hash {
+  return HashImpl.build(hex())
 }
