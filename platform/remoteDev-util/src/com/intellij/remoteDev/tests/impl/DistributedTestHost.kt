@@ -395,8 +395,8 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
     return withContext(Dispatchers.IO) {
       waitSuspending(logPrefix, timeout = 10.seconds, onFailure = {
-        val message = "Couldn't wait for focus," +
-                      "component isFocused=" + projectIdeFrame.isFocused + " isFocusAncestor=" + projectIdeFrame.isFocusAncestor() +
+        val message = "Couldn't wait for focus of '$frameName'," +
+                      "\n" + "component isFocused=" + projectIdeFrame.isFocused + " isFocusAncestor=" + projectIdeFrame.isFocusAncestor() +
                       "\n" + getFocusStateDescription()
         if (reportFailures) {
           LOG.error(message)
