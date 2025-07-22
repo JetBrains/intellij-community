@@ -1049,14 +1049,12 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     if (newVisibleActions.size != myVisibleActions.size) return false
     val components = getComponents()
     val pairs = ArrayList<Pair<Int, AnAction>>()
-    var count = 0
-    val size = myVisibleActions.size
-    var buttonIndex = 0
-    while (count < size) {
-      val prev: AnAction = myVisibleActions[count]
-      val next: AnAction = newVisibleActions[count]
+
+    var buttonIndex = 0 // avoid N^2 button search
+    for (index in myVisibleActions.indices) {
+      val prev: AnAction = myVisibleActions[index]
+      val next: AnAction = newVisibleActions[index]
       if (next === prev) {
-        count++
         continue
       }
       if (next.javaClass != prev.javaClass) return false
@@ -1067,6 +1065,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
           nextP.getClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR) == true) {
         return false
       }
+
       var pair: Pair<Int, AnAction>? = null
       while (buttonIndex < components.size && pair == null) {
         val component = components[buttonIndex]
@@ -1077,9 +1076,10 @@ open class ActionToolbarImpl @JvmOverloads constructor(
         buttonIndex++
       }
       if (pair == null) return false
+
       pairs.add(pair)
-      count++
     }
+
     if (pairs.size == newVisibleActions.size) return false
     myVisibleActions = newVisibleActions
     for (pair in pairs) {
