@@ -253,24 +253,6 @@ open class VcsLogManager @Internal constructor(
     Disposer.dispose(statusBarProgress)
   }
 
-  /**
-   * Dispose VcsLogManager and execute some activity after it.
-   * Obsolete in favor of suspending [dispose].
-   *
-   * @param callback activity to run after log is disposed. Is executed in background thread. null means execution of additional activity after disposing is not required.
-   */
-  @Obsolete
-  @Internal
-  @RequiresEdt
-  fun dispose(callback: Runnable?) {
-    if (!startDisposing()) return
-    disposeUi()
-    ApplicationManager.getApplication().executeOnPooledThread {
-      disposeData()
-      callback?.run()
-    }
-  }
-
   @Internal
   @RequiresBackgroundThread
   private fun disposeData() {

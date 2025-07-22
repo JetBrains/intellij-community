@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.settingsSync.core.SettingsSyncBundle
 import com.intellij.settingsSync.core.SettingsSyncMain
-import git4idea.GitVcs
 import git4idea.log.showExternalGitLogInToolwindow
 import java.util.function.Supplier
 
@@ -36,8 +35,7 @@ private class SettingsSyncHistoryAction : DumbAwareAction() {
       stripeTitle = Supplier { SettingsSyncBundle.message("title.settings.sync") }
     }
 
-    showExternalGitLogInToolwindow(project, toolWindow, GitVcs.getInstance(project), listOf(virtualFile),
-                                   SettingsSyncBundle.message("history.tab.name"), "")
+    showExternalGitLogInToolwindow(project, toolWindow, listOf(virtualFile), SettingsSyncBundle.message("history.tab.name"), "")
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
