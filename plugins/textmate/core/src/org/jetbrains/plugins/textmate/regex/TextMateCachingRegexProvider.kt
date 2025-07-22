@@ -8,21 +8,17 @@ fun <T> withCachingRegexFactory(
   regexFactory: RegexFactory,
   body: (RegexProvider) -> T,
 ): T {
-  val cache = SLRUTextMateCache<CharSequence, RegexFacade>(
+  SLRUTextMateCache<CharSequence, RegexFacade>(
     computeFn = { pattern -> regexFactory.regex(pattern) },
     disposeFn = { regex -> regex.close() },
     capacity = 1000,
     protectedRatio = 0.5,
-  )
-  return try {
-    body(CachingRegexProvider(cache, regexFactory))
-  }
-  finally {
-    cache.clear()
+  ).use { cache ->
+    return body(TextMateCachingRegexProvider(cache, regexFactory))
   }
 }
 
-private class CachingRegexProvider(
+class TextMateCachingRegexProvider(
   private val cache: TextMateCache<CharSequence, RegexFacade>,
   private val regexFactory: RegexFactory,
 ) : RegexProvider {

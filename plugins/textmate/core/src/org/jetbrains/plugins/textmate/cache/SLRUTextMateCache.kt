@@ -179,6 +179,10 @@ class SLRUTextMateCache<K : Any, V : Any?>(
     }
   }
 
+  override fun close() {
+    clear()
+  }
+
   override fun size(): Int = lock.withLock {
     probationaryCache.size() + protectedCache.size()
   }
