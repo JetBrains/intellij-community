@@ -35,7 +35,9 @@ import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forLi
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription.OnParent
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexChangedEvent
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexListener
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl.Companion.EP_NAME
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -50,7 +52,7 @@ import org.jetbrains.annotations.TestOnly
 class ProjectEntityIndexingService(
   private val project: Project,
   private val scope: CoroutineScope,
-) {
+): WorkspaceFileIndexListener {
 
   private val tracker = CustomEntitiesCausingReindexTracker()
 
@@ -71,6 +73,9 @@ class ProjectEntityIndexingService(
       val parameters = computeScanningParameters(changes)
       UnindexedFilesScanner(project, parameters).queue()
     }
+  }
+
+  override fun workspaceFileIndexChanged(event: WorkspaceFileIndexChangedEvent) {
   }
 
   private enum class Change {

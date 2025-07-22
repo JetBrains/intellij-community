@@ -316,8 +316,9 @@ internal class WorkspaceFileIndexDataImpl(
   }
 
   private fun <E : WorkspaceEntity> processChangesByContributor(contributor: WorkspaceFileIndexContributor<E>,
-                                                                storageKind: EntityStorageKind,
-                                                                event: VersionedStorageChange) {
+                                                                event: VersionedStorageChange,
+                                                                storeRegistrar: StoreFileSetsRegistrarImpl,
+                                                                removeRegistrar: RemoveFileSetsRegistrarImpl) {
     val removedEntities = LinkedHashSet<E>()
     val addedEntities = LinkedHashSet<E>()
     val entitiesInStorage = LinkedHashSet<E>()
@@ -342,8 +343,6 @@ internal class WorkspaceFileIndexDataImpl(
       }
     }
 
-    val removeRegistrar = RemoveFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
-    val storeRegistrar = StoreFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
     WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
       for (removed in removedEntities) {
         contributor.registerFileSets(removed, removeRegistrar, event.storageBefore)
@@ -446,10 +445,18 @@ internal class WorkspaceFileIndexDataImpl(
   override fun onEntitiesChanged(event: VersionedStorageChange,
                                  storageKind: EntityStorageKind) = WorkspaceFileIndexDataMetrics.onEntitiesChangedTimeNanosec.addMeasuredTime {
     ThreadingAssertions.assertWriteAccess()
+    val removeRegistrar = RemoveFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
+    val storeRegistrar = StoreFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
     contributorList.filter { it.storageKind == storageKind }.forEach { 
-      processChangesByContributor(it, storageKind, event)
+      processChangesByContributor(it, event, storeRegistrar, removeRegistrar)
     }
     resetFileCache()
+    if (storeRegistrar.storedFileSets.isNotEmpty() || removeRegistrar.removedFileSets.isNotEmpty()) {
+      val changeLog = WorkspaceFileIndexChangedEventImpl(project,
+                                                         removedFileSets = removeRegistrar.removedFileSets,
+                                                         storedFileSets = storeRegistrar.storedFileSets,)
+      project.messageBus.syncPublisher(WorkspaceFileIndexListener.TOPIC).workspaceFileIndexChanged(changeLog)
+    }
   }
 
   override fun updateDirtyEntities() {
@@ -618,6 +625,9 @@ private class RemoveFileSetsRegistrarImpl(
   private val fileSets: MutableMap<VirtualFile, StoredFileSetCollection>,
   private val fileSetsByPackagePrefix: PackagePrefixStorage,
 ) : WorkspaceFileSetRegistrar {
+
+  val removedFileSets = ArrayList<WorkspaceFileSet>()
+
   override fun registerFileSet(root: VirtualFileUrl, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
     val rootFile = root.virtualFile
     if (rootFile == null) {
@@ -629,7 +639,10 @@ private class RemoveFileSetsRegistrarImpl(
   }
 
   override fun registerFileSet(root: VirtualFile, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
-    fileSets.removeValueIf(root) { it is WorkspaceFileSetImpl && isOriginatedFrom(it, entity) }
+    val removedFileSet = fileSets.removeValueIf(root) { it is WorkspaceFileSetImpl && isOriginatedFrom(it, entity) }
+    if (removedFileSet is WorkspaceFileSetImpl) {
+      removedFileSets.add(removedFileSet)
+    }
     if (customData is JvmPackageRootDataInternal) {
       fileSetsByPackagePrefix.removeByPrefixAndPointer(customData.packagePrefix, entity.createPointer())
     }
@@ -707,6 +720,9 @@ private class StoreFileSetsRegistrarImpl(
   private val fileSets: MutableMap<VirtualFile, StoredFileSetCollection>,
   private val fileSetsByPackagePrefix: PackagePrefixStorage,
 ) : WorkspaceFileSetRegistrar {
+
+  val storedFileSets = ArrayList<WorkspaceFileSet>()
+
   override fun registerFileSet(
     root: VirtualFileUrl,
     kind: WorkspaceFileKind,
@@ -756,7 +772,10 @@ private class StoreFileSetsRegistrarImpl(
       data = customData ?: DummyWorkspaceFileSetData,
       recursive = recursive,
     )
-    fileSets.putValue(root, fileSet)
+    val registeredFileSet = fileSets.putValue(root, fileSet)
+    if (registeredFileSet is WorkspaceFileSetImpl) {
+      storedFileSets.add(registeredFileSet)
+    }
     if (customData is JvmPackageRootDataInternal) {
       fileSetsByPackagePrefix.addFileSet(customData.packagePrefix, fileSet)
     }

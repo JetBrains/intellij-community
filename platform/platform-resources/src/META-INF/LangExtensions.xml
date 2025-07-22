@@ -1725,6 +1725,8 @@
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
     <listener class="com.intellij.codeInsight.completion.command.CustomLookupIntentionPreviewListener"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
+    <listener class="com.intellij.util.indexing.ProjectEntityIndexingService"
+              topic="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexListener"/>
   </projectListeners>
   <actions>
     <group id="Structure.ViewOptions" searchable="false" popup="true" icon="AllIcons.Actions.GroupBy"/>
