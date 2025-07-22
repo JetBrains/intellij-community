@@ -69,12 +69,7 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   public boolean isExcludedFile(final @NotNull VirtualFile file) {
     return myFileIndex.isExcluded(file);
   }
-
-  @Override
-  public boolean isIndexable(@NotNull VirtualFile file) {
-    return myWorkspaceFileIndex.isIndexable(file);
-  }
-
+  
   @ApiStatus.Internal
   @Override
   public boolean isUnderSourceRootOfType(@NotNull VirtualFile file, @NotNull Set<?> rootTypes) {

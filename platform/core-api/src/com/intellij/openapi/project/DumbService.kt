@@ -370,15 +370,6 @@ abstract class DumbService {
                                          runWhenSmartAndBalloonStillShowing: Runnable,
                                          actionIds: List<String>)
 
-  /**
-   * Shows balloon about non-indexable file blocking those actions until it is hidden (by key input, mouse event, etc.).
-   * @param runWhenSmartAndBalloonStillShowing will be executed in smart mode on EDT, balloon won't be dismissed by user's actions
-   */
-  @ApiStatus.Internal
-  abstract fun showNonIndexableFileActionBalloon(balloonText: @NlsContexts.PopupContent String,
-                                         runWhenSmartAndBalloonStillShowing: Runnable,
-                                         actionIds: List<String>)
-
   abstract val project: Project
 
   /**

@@ -8,7 +8,6 @@ import com.intellij.ide.actions.ActionsCollector
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.CommonDataKeys.VIRTUAL_FILE
 import com.intellij.openapi.actionSystem.ex.ActionUtil.SHOW_TEXT_IN_TOOLBAR
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performAction
 import com.intellij.openapi.actionSystem.ex.ActionUtil.updateAction
@@ -22,7 +21,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
@@ -30,7 +28,6 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.ide.core.permissions.Permission
 import com.intellij.platform.ide.core.permissions.PermissionDeniedException
 import com.intellij.platform.ide.core.permissions.RequiresPermissions
@@ -175,10 +172,6 @@ object ActionUtil {
   private val WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE: Key<Boolean> = Key.create("WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE")
 
   @ApiStatus.Internal
-  @JvmField
-  val IS_FILE_INDEXABLE: Key<Boolean> = Key.create("IS_FILE_INDEXABLE")
-
-  @ApiStatus.Internal
   @JvmStatic
   fun showDumbModeWarning(
     project: Project?,
@@ -193,26 +186,6 @@ object ActionUtil {
     if (project == null) return
     DumbService.getInstance(project).showDumbModeNotificationForAction(
       getActionsUnavailableMessage(actionNames), ActionManager.getInstance().getId(action))
-  }
-
-  @JvmStatic
-  private fun showNonIndexableFileWarning(
-    project: Project?,
-    action: AnAction,
-    file: String,
-    event: AnActionEvent,
-  ) {
-    val actionName = event.presentation.text
-    if (LOG.isDebugEnabled) {
-      LOG.debug("Showing dumb mode warning for ${actionName ?: ""}", Throwable())
-    }
-    val message = when {
-      actionName == null -> IdeBundle.message("popup.content.this.action.not.available.in.non.indexable.file", file)
-      else -> IdeBundle.message("popup.content.action.not.available.in.non.indexable.file", actionName, file)
-    }
-    if (project == null) return
-    DumbService.getInstance(project).showDumbModeNotificationForAction(
-      message, ActionManager.getInstance().getId(action))
   }
 
   @ApiStatus.Internal
@@ -276,20 +249,7 @@ object ActionUtil {
       return AnActionResult.ignored("action is not compatible with LightEdit")
     }
     val wasEnabledBefore = presentation.getClientProperty(WAS_ENABLED_BEFORE_DUMB)
-    val project = e.project
-    val file = e.getData(VIRTUAL_FILE)
-    val isIndexable =
-      if (project != null && !action.isDumbAware && action.actionUpdateThread == ActionUpdateThread.BGT && file != null && file.fileSystem is LocalFileSystem) {
-        FileIndexFacade.getInstance(project).isIndexable(file)
-      }
-      else null
-
-    presentation.putClientProperty(IS_FILE_INDEXABLE, isIndexable)
-
-    val dumbMode = when {
-      project == null -> isDumbMode(null)
-      else -> DumbService.isDumb(project) || (isIndexable == false)
-    }
+    val dumbMode = isDumbMode(e.project)
     if (wasEnabledBefore != null && !dumbMode) {
       presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, null)
       presentation.isEnabled = wasEnabledBefore
@@ -425,11 +385,9 @@ object ActionUtil {
   @JvmStatic
   fun performAction(action: AnAction, event: AnActionEvent): AnActionResult {
     val project = event.project
-    val file = event.getData(VIRTUAL_FILE)
-    if (project != null && (DumbService.isDumb(project) || (event.presentation.getClientProperty(IS_FILE_INDEXABLE) == false)) && !action.isDumbAware) {
+    if (project != null && DumbService.getInstance(project).isDumb && !action.isDumbAware) {
       if (event.presentation.getClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE) != false) {
-        if (DumbService.isDumb(project)) showDumbModeWarning(project, action, event)
-        else showNonIndexableFileWarning(project, action, file?.name ?: "", event)
+        showDumbModeWarning(project, action, event)
       }
       return AnActionResult.ignored("action is not DumbAware")
     }
@@ -767,3 +725,4 @@ object ActionUtil {
     ActionContextElement.reset(component, getActionThreadContext())
   }
 }
+

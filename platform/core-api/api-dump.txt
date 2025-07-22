@@ -791,8 +791,6 @@ com.intellij.openapi.project.DumbAware
 com.intellij.openapi.project.DumbAwareRunnable
 - com.intellij.openapi.project.DumbAware
 - java.lang.Runnable
-a:com.intellij.openapi.project.DumbService
-- a:showDumbModeActionBalloon(java.lang.String,java.lang.Runnable,java.util.List):V
 com.intellij.openapi.project.DumbService$DumbModeListener
 - enteredDumbMode():V
 - exitDumbMode():V
@@ -826,8 +824,6 @@ com.intellij.openapi.project.RootsChangeRescanningInfo
 - sf:TOTAL_RESCAN:com.intellij.openapi.project.RootsChangeRescanningInfo
 com.intellij.openapi.roots.ContentIterator
 - a:processFile(com.intellij.openapi.vfs.VirtualFile):Z
-a:com.intellij.openapi.roots.FileIndexFacade
-- a:isIndexable(com.intellij.openapi.vfs.VirtualFile):Z
 com.intellij.openapi.startup.ProjectActivity
 - a:execute(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.openapi.startup.StartupActivity

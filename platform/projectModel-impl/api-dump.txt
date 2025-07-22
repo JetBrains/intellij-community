@@ -367,7 +367,6 @@ c:com.intellij.openapi.roots.impl.ProjectFileIndexFacade
 - isInProjectScope(com.intellij.openapi.vfs.VirtualFile):Z
 - isInSource(com.intellij.openapi.vfs.VirtualFile):Z
 - isInSourceContent(com.intellij.openapi.vfs.VirtualFile):Z
-- isIndexable(com.intellij.openapi.vfs.VirtualFile):Z
 - isUnderIgnored(com.intellij.openapi.vfs.VirtualFile):Z
 - isValidAncestor(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):Z
 a:com.intellij.openapi.roots.impl.SdkFinder

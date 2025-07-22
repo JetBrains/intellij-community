@@ -64,27 +64,9 @@ class DumbServiceBalloon(private val myProject: Project,
     tryShowBalloonTillSmartMode(balloonText, runWhenSmartAndBalloonStillShowing, runWhenCancelled)
   }
 
-  @ApiStatus.Experimental
-  fun showNonIndexableFileActionBalloon(
-    balloonText: @NlsContexts.PopupContent String,
-    runWhenSmartAndBalloonStillShowing: Runnable,
-    runWhenCancelled: Runnable,
-  ) {
-    if (LightEdit.owns(myProject)) return
-    ThreadingAssertions.assertEventDispatchThread()
-    if (myBalloon != null) {
-      //here should be an assertion that it does not happen, but now we have two dispatches of one InputEvent, see IDEA-227444
-      return
-    }
-    tryShowBalloonTillSmartMode(balloonText, runWhenSmartAndBalloonStillShowing, runWhenCancelled, false)
-  }
-
-  private fun tryShowBalloonTillSmartMode(
-    balloonText: @NlsContexts.PopupContent String,
-    runWhenSmartAndBalloonNotHidden: Runnable,
-    runWhenCancelled: Runnable,
-    fileIsIndexable: Boolean = true,
-  ) {
+  private fun tryShowBalloonTillSmartMode(balloonText: @NlsContexts.PopupContent String,
+                                          runWhenSmartAndBalloonNotHidden: Runnable,
+                                          runWhenCancelled: Runnable) {
     LOG.assertTrue(myBalloon == null)
     val startTimestamp = System.nanoTime()
     DumbModeBalloonRequested.log(myProject)
@@ -113,15 +95,13 @@ class DumbServiceBalloon(private val myProject: Project,
     })
     myService.runWhenSmart {
       val balloon: Balloon = myBalloon ?: return@runWhenSmart
-      if (myService.isDumb || !fileIsIndexable) return@runWhenSmart
-
       DumbModeBalloonProceededToActions.log(myProject, TimeoutUtil.getDurationMillis(startTimestamp))
       runWhenSmartAndBalloonNotHidden.run()
       myBalloon = null
       balloon.hide()
     }
     DataManager.getInstance().dataContextFromFocusAsync.onSuccess { context: DataContext ->
-      if (!myService.isDumb && fileIsIndexable) {
+      if (!myService.isDumb) {
         return@onSuccess
       }
       if (myBalloon == null) {

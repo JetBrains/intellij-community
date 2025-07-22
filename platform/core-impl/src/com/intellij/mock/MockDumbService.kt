@@ -93,10 +93,6 @@ class MockDumbService(override val project: Project) : DumbService() {
     throw UnsupportedOperationException()
   }
 
-  override fun showNonIndexableFileActionBalloon(balloonText: @NlsContexts.PopupContent String, runWhenSmartAndBalloonStillShowing: Runnable, actionIds: List<String>) {
-    throw UnsupportedOperationException()
-  }
-
   override fun suspendIndexingAndRun(activityName: String, activity: Runnable) {
     activity.run()
   }

@@ -16,8 +16,6 @@ com.intellij.lexer.FlexLexer
 - a:reset(java.lang.CharSequence,I,I,I):V
 - a:yybegin(I):V
 - a:yystate():I
-c:com.intellij.mock.MockFileIndexFacade
-- isIndexable(com.intellij.openapi.vfs.VirtualFile):Z
 com.intellij.openapi.application.ex.ApplicationEx
 - com.intellij.openapi.application.Application
 - sf:ELEVATE:I
