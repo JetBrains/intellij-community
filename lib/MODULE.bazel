@@ -12124,6 +12124,132 @@ http_file(
 )
 
 http_file(
+  name = "coil-test-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-test-jvm/3.2.0/coil-test-jvm-3.2.0.jar",
+  sha256 = "bea462cdc351c04dc4895f028b847d65a7dbae72a9b3999ea1089cd56ded43ad",
+  downloaded_file_path = "coil-test-jvm-3.2.0.jar"
+)
+
+http_file(
+  name = "skiko-awt-0_9_4_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/skiko/skiko-awt/0.9.4/skiko-awt-0.9.4.jar",
+  sha256 = "8e26ab1ae75f65786f6b973a66e89a2836d199a5561c4c2edbc1f3f67ad2197f",
+  downloaded_file_path = "skiko-awt-0.9.4.jar"
+)
+
+http_file(
+  name = "kotlinx-coroutines-core-jvm-1_10_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.10.2/kotlinx-coroutines-core-jvm-1.10.2.jar",
+  sha256 = "5ca175b38df331fd64155b35cd8cae1251fa9ee369709b36d42e0a288ccce3fd",
+  downloaded_file_path = "kotlinx-coroutines-core-jvm-1.10.2.jar"
+)
+
+http_file(
+  name = "kotlin-stdlib-2_1_20_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.1.20/kotlin-stdlib-2.1.20.jar",
+  sha256 = "1bcc74e8ce84e2c25eaafde10f1248349cce3062b6e36978cbeec610db1e930a",
+  downloaded_file_path = "kotlin-stdlib-2.1.20.jar"
+)
+
+http_file(
+  name = "ktor-client-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-jvm/3.2.0/ktor-client-jvm-3.2.0.jar",
+  sha256 = "738e90ad920c98e115daaa782d47c0a86727890fd23bdffd9ada9857c3574a39",
+  downloaded_file_path = "ktor-client-jvm-3.2.0.jar"
+)
+
+http_file(
+  name = "ktor-client-core-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-core-jvm/3.2.0/ktor-client-core-jvm-3.2.0.jar",
+  sha256 = "a4639d376821a19b242e13a70215c09db08e43cc781c5867c6c4721887b59642",
+  downloaded_file_path = "ktor-client-core-jvm-3.2.0.jar"
+)
+
+http_file(
+  name = "ktor-http-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-http-jvm/3.2.0/ktor-http-jvm-3.2.0.jar",
+  sha256 = "c41040cd7bca00c151042dfca67f78c60ca9997c9506d6a597e4ff4973313be8",
+  downloaded_file_path = "ktor-http-jvm-3.2.0.jar"
+)
+
+http_file(
+  name = "ktor-utils-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-utils-jvm/3.2.0/ktor-utils-jvm-3.2.0.jar",
+  sha256 = "a6a55a466a83928fe699a996875e176475d698c210172b167524939dfbd36627",
+  downloaded_file_path = "ktor-utils-jvm-3.2.0.jar"
+)
+
+http_file(
+  name = "ktor-http-cio-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-http-cio-jvm/3.2.0/ktor-http-cio-jvm-3.2.0.jar",
+  sha256 = "975f3396cbada0263be6a3ba999b10a5b1ef5efafb9e7a1498a576706bd2b90c",
+  downloaded_file_path = "ktor-http-cio-jvm-3.2.0.jar"
+)
+
+http_file(
+  name = "ktor-network-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-network-jvm/3.2.0/ktor-network-jvm-3.2.0.jar",
+  sha256 = "17ad0dc3ff2546408e31fb076d212725d92e75c5f4c0aa6adc11e13b91f9f2a5",
+  downloaded_file_path = "ktor-network-jvm-3.2.0.jar"
+)
+
+http_file(
+  name = "ktor-io-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-io-jvm/3.2.0/ktor-io-jvm-3.2.0.jar",
+  sha256 = "9ee74a08749ee3aca21d15d14ad643f6ec15cb5743de8c71a413ed0ad3b91a4d",
+  downloaded_file_path = "ktor-io-jvm-3.2.0.jar"
+)
+
+http_file(
+  name = "ktor-events-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-events-jvm/3.2.0/ktor-events-jvm-3.2.0.jar",
+  sha256 = "85fe66bc383a6140d2218a6eeb2f451ae1523bf31a7b6956ea12051e55dd6b47",
+  downloaded_file_path = "ktor-events-jvm-3.2.0.jar"
+)
+
+http_file(
+  name = "ktor-websocket-serialization-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-websocket-serialization-jvm/3.2.0/ktor-websocket-serialization-jvm-3.2.0.jar",
+  sha256 = "b7dab1a6fcd41d61bfb648a774e82b5410dbde9f6663f89b2e34bba4542e4f8b",
+  downloaded_file_path = "ktor-websocket-serialization-jvm-3.2.0.jar"
+)
+
+http_file(
+  name = "ktor-serialization-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-serialization-jvm/3.2.0/ktor-serialization-jvm-3.2.0.jar",
+  sha256 = "c2c46064a53a19606f85223ae25b1852fd853e50607632d8123b7c2d1623b911",
+  downloaded_file_path = "ktor-serialization-jvm-3.2.0.jar"
+)
+
+http_file(
+  name = "ktor-websockets-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-websockets-jvm/3.2.0/ktor-websockets-jvm-3.2.0.jar",
+  sha256 = "9c1dd8dc32d5e348f3698fe721d7e67d85ec62162b940200d0154c9954e0d283",
+  downloaded_file_path = "ktor-websockets-jvm-3.2.0.jar"
+)
+
+http_file(
+  name = "ktor-sse-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-sse-jvm/3.2.0/ktor-sse-jvm-3.2.0.jar",
+  sha256 = "73ec48705bfa8f13c49e9f1e859ec2cb8f13779d90aee7888fa82df39a052fe8",
+  downloaded_file_path = "ktor-sse-jvm-3.2.0.jar"
+)
+
+http_file(
+  name = "kotlinx-coroutines-slf4j-1_10_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-slf4j/1.10.2/kotlinx-coroutines-slf4j-1.10.2.jar",
+  sha256 = "d65dee3cafa6f7bfaefedb493fc68b5c63abe750734fb8af92fac7a0d3101457",
+  downloaded_file_path = "kotlinx-coroutines-slf4j-1.10.2.jar"
+)
+
+http_file(
+  name = "kotlin-stdlib-2_1_21_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.1.21/kotlin-stdlib-2.1.21.jar",
+  sha256 = "263bdc679e1f62012db7b091796279b6d71cf36f4797a98ff1ace05835f201c8",
+  downloaded_file_path = "kotlin-stdlib-2.1.21.jar"
+)
+
+http_file(
   name = "mpfilepicker-3_1_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/darkrockstudios/mpfilepicker/3.1.0/mpfilepicker-3.1.0.jar",
   sha256 = "93e571b342f2bc87aa192fc7eb6d177ac5075415617824674b0d5fa063840f4e",
