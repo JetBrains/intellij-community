@@ -133,7 +133,6 @@ import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 
-import static com.intellij.openapi.editor.ex.util.EditorUtil.isCaretInsideSelection;
 
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable,
                                                                     CodeStyleSettingsListener, FocusListener {
@@ -230,7 +229,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int mySavedSelectionEnd = -1;
 
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
-  private MyEditable myEditable;
+  private final EditorCopyPastProvider myEditable = new EditorCopyPastProvider(this);
 
   private @NotNull MyColorSchemeDelegate myScheme;
   private final @NotNull SelectionModelImpl mySelectionModel;
@@ -3560,32 +3559,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private @NotNull MyEditable getViewer() {
-    MyEditable editable = myEditable;
-    if (editable == null) {
-      myEditable = editable = EditorThreading.compute(() -> new MyEditable());
-    }
-    return editable;
-  }
-
   @Override
   public @NotNull CopyProvider getCopyProvider() {
-    return getViewer();
+    return myEditable;
   }
 
   @Override
   public @NotNull CutProvider getCutProvider() {
-    return getViewer();
+    return myEditable;
   }
 
   @Override
   public @NotNull PasteProvider getPasteProvider() {
-    return getViewer();
+    return myEditable;
   }
 
   @Override
   public @NotNull DeleteProvider getDeleteProvider() {
-    return getViewer();
+    return myEditable;
   }
 
   /**
@@ -3607,83 +3598,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myCharacterGrid = new CharacterGridImpl(this);
       }
       return myCharacterGrid;
-    }
-  }
-
-  private final class MyEditable implements CutProvider, CopyProvider, PasteProvider, DeleteProvider, DumbAware {
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-
-    @Override
-    public void performCopy(@NotNull DataContext dataContext) {
-      executeAction(IdeActions.ACTION_EDITOR_COPY, dataContext);
-    }
-
-    @Override
-    public boolean isCopyEnabled(@NotNull DataContext dataContext) {
-      return true;
-    }
-
-    @Override
-    public boolean isCopyVisible(@NotNull DataContext dataContext) {
-      Caret caret = dataContext.getData(CommonDataKeys.CARET);
-      return caret != null
-             ? isCaretInsideSelection(caret)
-             : getSelectionModel().hasSelection(true);
-    }
-
-    @Override
-    public void performCut(@NotNull DataContext dataContext) {
-      executeAction(IdeActions.ACTION_EDITOR_CUT, dataContext);
-    }
-
-    @Override
-    public boolean isCutEnabled(@NotNull DataContext dataContext) {
-      return !isViewer();
-    }
-
-    @Override
-    public boolean isCutVisible(@NotNull DataContext dataContext) {
-      Caret caret = dataContext.getData(CommonDataKeys.CARET);
-      return isCutEnabled(dataContext) &&
-             (caret != null
-              ? isCaretInsideSelection(caret)
-              : getSelectionModel().hasSelection(true));
-    }
-
-    @Override
-    public void performPaste(@NotNull DataContext dataContext) {
-      executeAction(IdeActions.ACTION_EDITOR_PASTE, dataContext);
-    }
-
-    @Override
-    public boolean isPastePossible(@NotNull DataContext dataContext) {
-      // Copy of isPasteEnabled. See interface method javadoc.
-      return !isViewer();
-    }
-
-    @Override
-    public boolean isPasteEnabled(@NotNull DataContext dataContext) {
-      return !isViewer();
-    }
-
-    @Override
-    public void deleteElement(@NotNull DataContext dataContext) {
-      executeAction(IdeActions.ACTION_EDITOR_DELETE, dataContext);
-    }
-
-    @Override
-    public boolean canDeleteElement(@NotNull DataContext dataContext) {
-      return !isViewer();
-    }
-
-    private void executeAction(@NotNull String actionId, @NotNull DataContext dataContext) {
-      EditorAction action = (EditorAction)ActionManager.getInstance().getAction(actionId);
-      if (action != null) {
-        action.actionPerformed(EditorImpl.this, dataContext);
-      }
     }
   }
 
