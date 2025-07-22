@@ -574,7 +574,10 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     updateIconWidth(fastPresentation.icon)
     scheduleUpdateLookupWidthFromVisibleItems()
     AsyncRendering.rememberPresentation(element, fastPresentation)
+  }
 
+  @ApiStatus.Internal
+  fun itemAddedToArranger(element: LookupElement) {
     // Fast path for the first 20 matched items to
     // avoid initial lookup flickering as much as possible
     if (itemAddedCount.incrementAndGet() < 20 && lookup.arranger.matchingItems.contains(element)) {
