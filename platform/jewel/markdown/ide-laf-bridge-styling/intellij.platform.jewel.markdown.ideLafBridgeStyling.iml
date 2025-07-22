@@ -14,9 +14,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>
-                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.0/kotlin-compose-compiler-plugin-2.2.0.jar</arg>
-              </args>
+              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.0/kotlin-compose-compiler-plugin-2.2.0.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -40,13 +38,13 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.ui" exported="" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ideLafBridge" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmAlerts" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmTables" />
-    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmAlerts" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmTables" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop.junit" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
   </component>
 </module>

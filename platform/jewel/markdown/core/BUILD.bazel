@@ -19,6 +19,12 @@ jvm_resources(
   strip_prefix = "src/main/resources"
 )
 
+jvm_resources(
+  name = "core_test_resources",
+  files = glob(["src/test/resources/**/*"]),
+  strip_prefix = "src/test/resources"
+)
+
 jvm_library(
   name = "core",
   module_name = "intellij.platform.jewel.markdown.core",
@@ -30,8 +36,8 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
     "//platform/jewel/ui",
-    "//platform/jewel/foundation",
     "@lib//:platform-jewel-markdown-core-org-commonmark-commonmark",
+    "//platform/jewel/foundation",
     "//libraries/compose-foundation-desktop",
   ],
   exports = ["@lib//:platform-jewel-markdown-core-org-commonmark-commonmark"],
@@ -51,13 +57,17 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/jewel/ui",
     "//platform/jewel/ui:ui_test_lib",
+    "@lib//:platform-jewel-markdown-core-org-commonmark-commonmark",
     "//platform/jewel/foundation",
     "//platform/jewel/foundation:foundation_test_lib",
-    "@lib//:platform-jewel-markdown-core-org-commonmark-commonmark",
     "//libraries/compose-foundation-desktop",
+    "@lib//:platform-jewel-markdown-core-io-coil-kt-coil3-test-jvm",
     "//libraries/compose-foundation-desktop-junit",
   ],
-  runtime_deps = [":core_resources"],
+  runtime_deps = [
+    ":core_resources",
+    ":core_test_resources",
+  ],
   plugins = ["@lib//:compose-plugin"]
 )
 
