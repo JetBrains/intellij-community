@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.vfs.*;
@@ -45,7 +45,7 @@ public class BulkVirtualFileListenerAdapter implements BulkFileListener {
       final VFileContentChangeEvent ce = (VFileContentChangeEvent)event;
       final VirtualFile file = ce.getFile();
       adapted.contentsChanged(
-        new VirtualFileEvent(event.getRequestor(), file, file.getParent(), ce.getOldModificationStamp(), ce.getModificationStamp()));
+        new VirtualFileEvent(event.getRequestor(), file, event.getPath(), file.getParent(), ce.getOldModificationStamp(), ce.getModificationStamp()));
     }
     else if (event instanceof VFileCopyEvent) {
       final VFileCopyEvent ce = (VFileCopyEvent)event;
@@ -59,12 +59,12 @@ public class BulkVirtualFileListenerAdapter implements BulkFileListener {
       final VFileCreateEvent ce = (VFileCreateEvent)event;
       final VirtualFile newChild = ce.getFile();
       if (newChild != null) {
-        adapted.fileCreated(new VirtualFileEvent(event.getRequestor(), newChild, ce.getParent(), 0, 0));
+        adapted.fileCreated(new VirtualFileEvent(event.getRequestor(), newChild, event.getPath(), ce.getParent(), 0, 0));
       }
     }
     else if (event instanceof VFileDeleteEvent) {
       final VFileDeleteEvent de = (VFileDeleteEvent)event;
-      adapted.fileDeleted(new VirtualFileEvent(event.getRequestor(), de.getFile(), de.getFile().getParent(), 0, 0));
+      adapted.fileDeleted(new VirtualFileEvent(event.getRequestor(), de.getFile(),  de.getPath(), de.getFile().getParent(), 0, 0));
     }
     else if (event instanceof VFileMoveEvent) {
       final VFileMoveEvent me = (VFileMoveEvent)event;
@@ -82,11 +82,11 @@ public class BulkVirtualFileListenerAdapter implements BulkFileListener {
       final VFileContentChangeEvent ce = (VFileContentChangeEvent)event;
       final VirtualFile file = ce.getFile();
       adapted.beforeContentsChange(
-        new VirtualFileEvent(event.getRequestor(), file, file.getParent(), ce.getOldModificationStamp(), ce.getModificationStamp()));
+        new VirtualFileEvent(event.getRequestor(), file, event.getPath(), file.getParent(), ce.getOldModificationStamp(), ce.getModificationStamp()));
     }
     else if (event instanceof VFileDeleteEvent) {
       final VFileDeleteEvent de = (VFileDeleteEvent)event;
-      adapted.beforeFileDeletion(new VirtualFileEvent(event.getRequestor(), de.getFile(), de.getFile().getParent(), 0, 0));
+      adapted.beforeFileDeletion(new VirtualFileEvent(event.getRequestor(), de.getFile(), de.getPath(), de.getFile().getParent(), 0, 0));
     }
     else if (event instanceof VFileMoveEvent) {
       final VFileMoveEvent me = (VFileMoveEvent)event;

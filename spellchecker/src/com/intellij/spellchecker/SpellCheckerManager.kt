@@ -367,7 +367,7 @@ private class CustomDictFileListener(private val project: Project, private val m
   }
 
   override fun contentsChanged(event: VirtualFileEvent) {
-    val path = FileUtilRt.toSystemDependentName(event.file.path)
+    val path = FileUtilRt.toSystemDependentName(event.path)
     if (!manager.spellChecker!!.isDictionaryLoad(path)) {
       return
     }
