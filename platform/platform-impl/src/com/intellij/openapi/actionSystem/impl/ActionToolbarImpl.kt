@@ -1043,6 +1043,14 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     compForSize.repaint()
   }
 
+  /**
+   * Try to update toolbar without calling [JComponent.remove] on all old components.
+   *
+   * We assume that Toolbar might have non-action [JComponent.getComponents],
+   * so we need to find the old action component to replace it.
+   *
+   * For non-trivial cases, fallback to the full rebuild.
+   */
   private fun replaceButtonsForNewActionInstances(newVisibleActions: List<AnAction>): Boolean {
     data class Replacement(val buttonIndex: Int, val nextAction: AnAction)
 
@@ -1054,7 +1062,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     for (index in myVisibleActions.indices) {
       val prev: AnAction = myVisibleActions[index]
       val next: AnAction = newVisibleActions[index]
-      if (next.javaClass != prev.javaClass) return false
+      if (next.javaClass != prev.javaClass) return false // in theory, that should be OK, but better to be safe
 
       if (prev is Separator) {
         if (next !is Separator) return false
@@ -1070,7 +1078,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       if (nextIsCustom != prevIsCustom) return false // ActionUtil.COMPONENT_PROVIDER can change dynamically
       if (nextIsCustom) {
         if (next === prev) continue // keep old custom component untouched
-        return false
+        return false // can't find what component to replace
       }
 
       var actionButton: ActionButton? = null
@@ -1085,17 +1093,24 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       }
       if (actionButton == null) return false
 
-      // replace only regular action buttons without text (same size 16x16)
-      if (nextP.getClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR) == true) return false
-      if (actionButton.javaClass != ActionButton::class.java) return false
-
-      if (next === prev) continue // keep old component untouched
+      if (next === prev) {
+        val nextHasText = nextP.getClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR) == true
+        val prevHasText = when (actionButton.javaClass) {
+          ActionButtonWithText::class.java -> true
+          ActionButton::class.java -> false
+          else -> return false // unexpected
+        }
+        if (nextHasText == prevHasText) {
+          continue // keep old component untouched
+        }
+      }
 
       // create a new button and replace it in-place
       pairs.add(Replacement(buttonIndex - 1, next))
     }
 
-    if (pairs.size == newVisibleActions.size) return false
+    if (pairs.size == newVisibleActions.size) return false // no gain from in-place updates
+
     myVisibleActions = newVisibleActions
     for (pair in pairs) {
       val index: Int = pair.buttonIndex
