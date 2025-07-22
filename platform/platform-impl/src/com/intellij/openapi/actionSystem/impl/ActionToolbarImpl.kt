@@ -34,7 +34,6 @@ import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
@@ -1046,9 +1045,11 @@ open class ActionToolbarImpl @JvmOverloads constructor(
   }
 
   private fun replaceButtonsForNewActionInstances(newVisibleActions: List<AnAction>): Boolean {
+    data class Replacement(val buttonIndex: Int, val nextAction: AnAction)
+
     if (newVisibleActions.size != myVisibleActions.size) return false
     val components = getComponents()
-    val pairs = ArrayList<Pair<Int, AnAction>>()
+    val pairs = ArrayList<Replacement>()
 
     var buttonIndex = 0 // avoid N^2 button search
     for (index in myVisibleActions.indices) {
@@ -1059,6 +1060,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       }
       if (next.javaClass != prev.javaClass) return false
       if (next is CustomComponentAction) return false
+
       // replace only regular action buttons without text (same size 16x16)
       val nextP = presentationFactory.getPresentation(next)
       if (nextP.getClientProperty(ActionUtil.COMPONENT_PROVIDER) != null ||
@@ -1066,26 +1068,27 @@ open class ActionToolbarImpl @JvmOverloads constructor(
         return false
       }
 
-      var pair: Pair<Int, AnAction>? = null
-      while (buttonIndex < components.size && pair == null) {
+      var actionButton: ActionButton? = null
+      while (buttonIndex < components.size) {
         val component = components[buttonIndex]
-        val action = if (component is ActionButton) component.action else null
-        if (action === prev && component.javaClass == ActionButton::class.java) {
-          pair = Pair.create(buttonIndex, next)
-        }
         buttonIndex++
-      }
-      if (pair == null) return false
 
-      pairs.add(pair)
+        if (component is ActionButton && component.action === prev && component.javaClass == ActionButton::class.java) {
+          actionButton = component
+          break
+        }
+      }
+      if (actionButton == null) return false
+
+      pairs.add(Replacement(buttonIndex - 1, next))
     }
 
     if (pairs.size == newVisibleActions.size) return false
     myVisibleActions = newVisibleActions
     for (pair in pairs) {
-      val index: Int = pair.first
+      val index: Int = pair.buttonIndex
       remove(index)
-      addActionButtonImpl(pair.second, index)
+      addActionButtonImpl(pair.nextAction, index)
       val button = getComponent(index)
       button.bounds = components[index].bounds
       button.validate()
