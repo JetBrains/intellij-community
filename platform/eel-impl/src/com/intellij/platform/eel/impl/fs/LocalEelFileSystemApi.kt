@@ -405,22 +405,29 @@ abstract class PosixNioBasedEelFileSystemApi(
   }
 
   override suspend fun directoryHash(path: EelPath): Flow<EelFileSystemApi.DirectoryHashEntry> = flow {
+    // TODO: buffer size was just a guess, performance of this buffer is to be researched
+    val bufferSize = 10 * 1024
     val q = ArrayDeque<Path>()
     q.add(path.toNioPath())
 
     while (q.isNotEmpty()) {
-      val currentItem = q.removeFirst();
+      val currentItem = q.removeFirst()
       val sourceAttrs = currentItem.fileAttributesView<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
       if (sourceAttrs.isDirectory) {
         q.addAll(currentItem.listDirectoryEntries().sortedByDescending { it.pathString })
       } else if (sourceAttrs.isRegularFile) {
-        // TODO: buffered read?
-        val data = Files.newInputStream(currentItem, StandardOpenOption.READ).readAllBytes()
-        val hash = Hashing.xxh3_64().hashBytesToLong(data)
-        val currentPathAsEel = EelPath.parse(currentItem.toString(), descriptor)
-        emit(EelFileSystemApi.DirectoryHashEntry.Hash(currentPathAsEel, hash))
+        val buff = ByteArray(bufferSize)
+        Files.newInputStream(currentItem).use { fileStream ->
+          val hashingStream = Hashing.xxh3_64().hashStream()
+          while (true) {
+            val bytesRead = fileStream.readNBytes(buff, 0, bufferSize)
+            hashingStream.putBytes(buff, 0, bytesRead)
+            if (bytesRead < bufferSize) { break }
+          }
+          val currentPathAsEel = EelPath.parse(currentItem.toString(), descriptor)
+          emit(EelFileSystemApi.DirectoryHashEntry.Hash(currentPathAsEel, hashingStream.asLong))
+        }
       } else {
-        //LOG.info("found a file other than directory or a regular file when doing local directory hash")
       }
     }
   }
@@ -464,22 +471,31 @@ abstract class WindowsNioBasedEelFileSystemApi(
   }
 
   override suspend fun directoryHash(path: EelPath): Flow<EelFileSystemApi.DirectoryHashEntry> = flow {
+    // TODO: buffer size was just a guess, performance of this buffer is to be researched
+    val bufferSize = 10 * 1024
     val q = ArrayDeque<Path>()
     q.add(path.toNioPath())
 
     while (q.isNotEmpty()) {
-      val currentItem = q.removeFirst();
+      val currentItem = q.removeFirst()
       val sourceAttrs = currentItem.fileAttributesView<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
       if (sourceAttrs.isDirectory) {
         q.addAll(currentItem.listDirectoryEntries().sortedByDescending { it.pathString })
       } else if (sourceAttrs.isRegularFile) {
-        // TODO: buffered read?
-        val data = Files.newInputStream(currentItem, StandardOpenOption.READ).readAllBytes()
-        val hash = Hashing.xxh3_64().hashBytesToLong(data)
-        val currentPathAsEel = EelPath.parse(currentItem.toString(), descriptor)
-        emit(EelFileSystemApi.DirectoryHashEntry.Hash(currentPathAsEel, hash))
+        val buff = ByteArray(bufferSize)
+        Files.newInputStream(currentItem).use { fileStream ->
+          val hashingStream = Hashing.xxh3_64().hashStream()
+          while (true) {
+            val bytesRead = fileStream.readNBytes(buff, 0, bufferSize)
+            hashingStream.putBytes(buff, 0, bytesRead)
+            if (bytesRead < bufferSize) {
+              break
+            }
+          }
+          val currentPathAsEel = EelPath.parse(currentItem.toString(), descriptor)
+          emit(EelFileSystemApi.DirectoryHashEntry.Hash(currentPathAsEel, hashingStream.asLong))
+        }
       } else {
-        //LOG.info("found a file other than directory or a regular file when doing local directory hash")
       }
     }
   }
