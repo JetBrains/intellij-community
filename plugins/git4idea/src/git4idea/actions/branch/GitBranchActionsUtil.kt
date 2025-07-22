@@ -42,14 +42,15 @@ object GitBranchActionsUtil {
   /**
    * For top level (without explicit repository selection) actions:
    * if [com.intellij.dvcs.repo.RepositoryManager.isSyncEnabled] will delegate to [getAffectedRepositories],
-   * otherwise get [SELECTED_REPO_KEY]
+   * otherwise get [GitBranchActionsDataKeys.SELECTED_REPOSITORY]
    */
   @JvmStatic
-  fun getRepositoriesForTopLevelActions(e: AnActionEvent, isTopLevelAction: (AnActionEvent) -> Boolean): List<GitRepository> {
+  fun getRepositoriesForTopLevelActions(e: AnActionEvent): List<GitRepository> {
     val project = e.project ?: return emptyList()
 
-    if (isTopLevelAction(e) && !GitVcsSettings.getInstance(project).shouldExecuteOperationsOnAllRoots()) {
-      return e.getData(GitBranchActionsDataKeys.SELECTED_REPOSITORY)?.let(::listOf).orEmpty()
+    if (!GitVcsSettings.getInstance(project).shouldExecuteOperationsOnAllRoots()) {
+      val selectedRepository = e.getData(GitBranchActionsDataKeys.SELECTED_REPOSITORY)
+      if (selectedRepository != null) return listOf(selectedRepository)
     }
 
     return getAffectedRepositories(e)
