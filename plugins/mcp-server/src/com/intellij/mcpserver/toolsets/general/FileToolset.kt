@@ -71,8 +71,9 @@ class FileToolset : McpToolset {
     val traversedDirectory: String,
     val tree: String,
     val errors: List<String>,
+    @property:McpDescription(Constants.TIMED_OUT_DESCRIPTION)
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
-    val listingTimedOut: Boolean = false,
+    val listingTimedOut: Boolean? = false,
   )
 
   @McpTool
@@ -187,8 +188,9 @@ class FileToolset : McpToolset {
   data class FilesListResult(
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val probablyHasMoreMatchingFiles: Boolean = false,
+    @property:McpDescription(Constants.TIMED_OUT_DESCRIPTION)
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
-    val timedOut: Boolean = false,
+    val timedOut: Boolean? = false,
     val files: List<String>
   )
 

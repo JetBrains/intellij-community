@@ -163,8 +163,9 @@ class ExecutionToolset : McpToolset {
   data class RunConfigurationResult(
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val exitCode: Int? = null,
+    @property:McpDescription(Constants.TIMED_OUT_DESCRIPTION)
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
-    val timedOut: Boolean = false,
+    val timedOut: Boolean? = false,
     val output: String
   )
 }

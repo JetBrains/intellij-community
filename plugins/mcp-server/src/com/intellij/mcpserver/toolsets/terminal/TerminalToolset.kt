@@ -71,8 +71,9 @@ class TerminalToolset : McpToolset {
   @OptIn(ExperimentalSerializationApi::class)
   @Serializable
   class CommandExecutionResult(
+    @property:McpDescription(Constants.TIMED_OUT_DESCRIPTION)
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
-    val is_timed_out: Boolean? = null,
+    val is_timed_out: Boolean? = false,
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val command_exit_code: Int? = null,
     val command_output: String)

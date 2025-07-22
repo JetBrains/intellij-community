@@ -1,6 +1,8 @@
 package com.intellij.mcpserver.impl.util
 
-import com.intellij.mcpserver.McpToolInputSchema
+import com.intellij.mcpserver.McpToolCallResult
+import com.intellij.mcpserver.McpToolCallResultContent
+import com.intellij.mcpserver.McpToolSchema
 import com.intellij.mcpserver.annotations.McpDescription
 import io.github.smiley4.schemakenerator.core.CoreSteps.initial
 import io.github.smiley4.schemakenerator.core.data.AnnotationData
@@ -18,12 +20,15 @@ import io.github.smiley4.schemakenerator.jsonschema.jsonDsl.JsonObject
 import io.github.smiley4.schemakenerator.serialization.SerializationSteps.analyzeTypeUsingKotlinxSerialization
 import io.github.smiley4.schemakenerator.serialization.analyzer.AnnotationAnalyzer
 import kotlinx.serialization.json.*
+import kotlinx.serialization.serializerOrNull
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KCallable
 import kotlin.reflect.KParameter
+import kotlin.reflect.full.isSubtypeOf
+import kotlin.reflect.typeOf
 
 
-fun KCallable<*>.parametersSchema(): McpToolInputSchema {
+fun KCallable<*>.parametersSchema(): McpToolSchema {
   val parameterSchemas = mutableMapOf<String, JsonElement>()
   val definitions = mutableMapOf<String, JsonElement>()
   val requiredParameters = mutableSetOf<String>()
@@ -50,7 +55,40 @@ fun KCallable<*>.parametersSchema(): McpToolInputSchema {
     }
     if (!parameter.isOptional) requiredParameters.add(parameterName)
   }
-  return McpToolInputSchema(parameters = parameterSchemas, requiredParameters = requiredParameters, definitions = definitions, definitionsPath = McpToolInputSchema.DEFAULT_DEFINITIONS_PATH)
+  return McpToolSchema.ofPropertiesMap(properties = parameterSchemas, requiredProperties = requiredParameters, definitions = definitions, definitionsPath = McpToolSchema.DEFAULT_DEFINITIONS_PATH)
+}
+
+fun KCallable<*>.returnTypeSchema(): McpToolSchema? {
+  val type = this.returnType
+  // output schema should be provided only for non-primitive types and serializable types
+  if (type == typeOf<String>()) return null
+  if (type == typeOf<Char>()) return null
+  if (type == typeOf<Boolean>()) return null
+  if (type == typeOf<Int>()) return null
+  if (type == typeOf<Long>()) return null
+  if (type == typeOf<Double>()) return null
+  if (type == typeOf<Float>()) return null
+  if (type == typeOf<Byte>()) return null
+  if (type == typeOf<Short>()) return null
+  if (type == typeOf<Unit>()) return null
+  if (type == typeOf<McpToolCallResult>()) return null
+  if (type.isSubtypeOf(typeOf<Enum<*>>())) return null
+  if (type.isSubtypeOf(typeOf<McpToolCallResult>())) return null
+  if (type.isSubtypeOf(typeOf<McpToolCallResultContent>())) return null
+  if (serializerOrNull(type) == null) return null
+
+  val intermediateJsonSchemaData = initial(type)
+    .analyzeTypeUsingKotlinxSerialization()
+    .generateJsonSchema()
+    .handleCoreAnnotations()
+    .handleMcpDescriptionAnnotations(this)
+    .removeNumericBounds()
+
+  val schema = intermediateJsonSchemaData.compileInlining()
+  val jsonSchema = schema.json.toKt() as? kotlinx.serialization.json.JsonObject ?: error("Non-primitive type is expected in return type: ${type.classifier} in $this")
+  val properties = jsonSchema["properties"] as? kotlinx.serialization.json.JsonObject ?: error("Properties are expected in return type: ${type.classifier} in $this")
+  val required = jsonSchema["required"] as? kotlinx.serialization.json.JsonArray ?: error("Required is expected in return type: ${type.classifier} in $this")
+  return McpToolSchema.ofPropertiesSchema(properties = properties, requiredProperties = required.map { it.jsonPrimitive.content }.toSet(), definitions = emptyMap(), definitionsPath = McpToolSchema.DEFAULT_DEFINITIONS_PATH)
 }
 
 private fun JsonNode.toKt(): JsonElement {

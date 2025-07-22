@@ -47,6 +47,9 @@
     <registryKey defaultValue="true"
                  description="Detect MCP clients to suggest enable MCP server on project startup"
                  key="mcp.server.detect.mcp.clients"/>
+    <registryKey defaultValue="true"
+                 description="Whether to return output schema and structured output from tools"
+                 key="mcp.server.structured.tool.output"/>
 
     <applicationConfigurable
       instance="com.intellij.mcpserver.settings.McpServerSettingsConfigurable"

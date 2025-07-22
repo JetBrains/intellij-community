@@ -14,5 +14,6 @@ class McpToolDescriptor(
   /**
    * Input schema for the tool
    */
-  val inputSchema: McpToolInputSchema,
+  val inputSchema: McpToolSchema,
+  val outputSchema: McpToolSchema? = null,
 )

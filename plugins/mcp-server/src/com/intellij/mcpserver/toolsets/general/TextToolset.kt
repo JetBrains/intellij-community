@@ -263,7 +263,8 @@ class TextToolset : McpToolset {
     val entries: List<UsageInfoEntry>,
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val probablyHasMoreMatchingEntries: Boolean = false,
+    @property:McpDescription(Constants.TIMED_OUT_DESCRIPTION)
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
-    val timedOut: Boolean = false
+    val timedOut: Boolean? = false
   )
 }
