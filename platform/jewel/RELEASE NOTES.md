@@ -1,15 +1,17 @@
 # Jewel Release Notes
 
-## 0.29 (2025-07-17)
+## 0.29 (2025-07-22)
 
-| Supported IJP versions    | Compose Multiplatform version |
-|---------------------------|-------------------------------|
-| 2025.2 RC (TBC), 2025.1.4 | 1.8.2                         |
+| Supported IJP versions | Compose Multiplatform version |
+|------------------------|-------------------------------|
+| 2025.2.1+, 2025.1.5+   | 1.8.2                         |
 
 ### ⚠️ Important Changes
 
 * **IJP 243 is no longer supported** as of this release. Jewel policy remains to support the current stable version and the upcoming IJP version.
-* **JEWEL-97** We added _very_ experimental support for native popups in the IDE, based on `JBPopup`. You can enable this feature via the new `JewelFlags` API (may take effect only after a recomposition), but we do not recommend doing so yet ([#3105](https://github.com/JetBrains/intellij-community/pull/3105))
+* **JEWEL-97** We added _very_ experimental support for native popups in the IDE, based on `JBPopup`. You can enable this feature via the new
+  `JewelFlags` API (may take effect only after a recomposition), but we do not recommend doing so
+  yet ([#3105](https://github.com/JetBrains/intellij-community/pull/3105))
   * This has no effect in standalone; we'll work on that in the future.
   * This flag means all usages of the Compose `Popup` component, such as tooltips and menus, will render in separate native windows.
   * Enabling this flag _will_ have impacts on several aspects of your application and UI unit tests.
@@ -33,7 +35,8 @@
 
 ### New features
 
-* **JEWEL-97** Added support to use `JBPopup` API for `Popup`s, `Tooltip`s and `Menu`s. This allows popups to grow larger than, and go outside the composable area, if needed ([#3105](https://github.com/JetBrains/intellij-community/pull/3105))
+* **JEWEL-97** Added support to use `JBPopup` API for `Popup`s, `Tooltip`s and `Menu`s. This allows popups to grow larger than, and go outside the
+  composable area, if needed ([#3105](https://github.com/JetBrains/intellij-community/pull/3105))
 * **JEWEL-525** Added level-based bullet points and ordered items styling, up to the third level. This closely mirrors how Markdown lists are rendered
   in IJ and GitHub. ([#3063](https://github.com/JetBrains/intellij-community/pull/3063))
 * **JEWEL-558** Added support for contrast scrollbars in the bridge ([#3019](https://github.com/JetBrains/intellij-community/pull/3019))
@@ -47,7 +50,8 @@
 * **JEWEL-812** Added an improved clipboard that delegates to the IDE's clipboard in the bridge, instead of to AWT's
   clipboard ([#3050](https://github.com/JetBrains/intellij-community/pull/3050))
 * **JEWEL-827** Enabled full keyboard navigation in the tab-strip component ([#3066](https://github.com/JetBrains/intellij-community/pull/3066))
-* **JEWEL-845** Added a context menu with two default options when right-clicking `ExternalLink`, like the Swing equivalents ([#3105](https://github.com/JetBrains/intellij-community/pull/3105))
+* **JEWEL-845** Added a context menu with two default options when right-clicking `ExternalLink`, like the Swing
+  equivalents ([#3105](https://github.com/JetBrains/intellij-community/pull/3105))
 * **IJPL-188624** Added a single `intellij.platform.compose.markdown` module to include all Markdown dependencies, including extensions
   ([`bad53dd9`](https://github.com/JetBrains/intellij-community/commit/bad53dd9))
 
