@@ -124,8 +124,6 @@
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.testing.PyTestParameterCompletionContributor"/>
 
-    <projectService serviceImplementation="com.jetbrains.python.configuration.PyConfigurableInterpreterList"/>
-
     <projectService serviceImplementation="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiserSettings"/>
     <projectService serviceImplementation="com.jetbrains.python.packaging.PyPackagingSettings"/>
 

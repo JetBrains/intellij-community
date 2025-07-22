@@ -34,7 +34,7 @@ fun TestFixture<SdkFixture<PythonBinary>>.pyVenvFixture(
     val module = moduleFixture?.init()
     val venvDir = where.init()
     val venvPython = createVenv(basePython, venvDir).getOrThrow()
-    val venvSdk = TypeVanillaPython3.createSdk(venvPython)
+    val venvSdk = withContext(Dispatchers.IO){ TypeVanillaPython3.createSdk(venvPython)}
     if (addToSdkTable) {
       venvSdk.persist()
       if (module != null) {

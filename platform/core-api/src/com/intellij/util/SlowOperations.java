@@ -36,10 +36,18 @@ public final class SlowOperations {
     private static final Logger LOG = Logger.getInstance(SlowOperations.class);
   }
 
+  /**
+   * Set this property to force slow ops check
+   */
+  @ApiStatus.Internal
+  public static final String FORBID_SLOW_OPS_PROPERTY = "intellij.idea.forbid.slow.ops";
+
   private static final Set<String> ourKnownIssues = ConcurrentHashMap.newKeySet();
 
-  private static final String ERROR_EDT = "Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.";
-  private static final String ERROR_RA = "Non-cancelable slow operations are prohibited inside read action. See SlowOperations.assertNonCancelableSlowOperationsAreAllowed javadoc.";
+  private static final String ERROR_EDT =
+    "Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.";
+  private static final String ERROR_RA =
+    "Non-cancelable slow operations are prohibited inside read action. See SlowOperations.assertNonCancelableSlowOperationsAreAllowed javadoc.";
 
   /** Do not use. For Action System only */
   @ApiStatus.Internal
@@ -73,7 +81,7 @@ public final class SlowOperations {
   private static String ourTargetClass;
   private static final Set<String> ourReportedClasses = new HashSet<>();
 
-  private SlowOperations() {}
+  private SlowOperations() { }
 
   /**
    * If you get an exception from this method, then you need to move the computation to a background thread (BGT)
@@ -85,19 +93,19 @@ public final class SlowOperations {
    * <p/>
    * Action Subsystem<br><br>
    * <l>
-   *   <li>
-   *     {@code AnAction#update}, {@code ActionGroup#getChildren}, and {@code ActionGroup#canBePerformed} should be either fast
-   *     or moved to background thread by returning {@link com.intellij.openapi.actionSystem.ActionUpdateThread#BGT} in
-   *     {@code AnAction#getActionUpdateThread}.
-   *   </li>
-   *   <li>
-   *     Use {@link com.intellij.openapi.actionSystem.UiDataProvider} and
-   *     {@link com.intellij.openapi.actionSystem.DataSink#lazy} to move slow code to BGT.
-   *     That slow code is called only if an action requests it.
-   *   </li>
-   *   <li>
-   *     {@code AnAction#actionPerformed} shall be explicitly coded not to block the UI thread.
-   *   </li>
+   * <li>
+   * {@code AnAction#update}, {@code ActionGroup#getChildren}, and {@code ActionGroup#canBePerformed} should be either fast
+   * or moved to background thread by returning {@link com.intellij.openapi.actionSystem.ActionUpdateThread#BGT} in
+   * {@code AnAction#getActionUpdateThread}.
+   * </li>
+   * <li>
+   * Use {@link com.intellij.openapi.actionSystem.UiDataProvider} and
+   * {@link com.intellij.openapi.actionSystem.DataSink#lazy} to move slow code to BGT.
+   * That slow code is called only if an action requests it.
+   * </li>
+   * <li>
+   * {@code AnAction#actionPerformed} shall be explicitly coded not to block the UI thread.
+   * </li>
    * </l>
    * <p/>
    * The described logic is implemented by {@link com.intellij.openapi.actionSystem.impl.ActionUpdater}.
@@ -197,6 +205,9 @@ public final class SlowOperations {
 
   @ApiStatus.Internal
   public static boolean isAlwaysAllowed() {
+    if (SystemProperties.getBooleanProperty(FORBID_SLOW_OPS_PROPERTY, false)) {
+      return false;
+    }
     if (ourAlwaysAllow == 1) {
       return true;
     }
@@ -276,10 +287,9 @@ public final class SlowOperations {
   }
 
   /**
+   * @param activityName see {@link #startSection(String)} javadoc
    * @deprecated Redesign the logic - move BGT-only activities to BGT.
    * Otherwise, file a ticket and use {@link #knownIssue(String)} if not possible.
-   *
-   * @param activityName see {@link #startSection(String)} javadoc
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
@@ -295,10 +305,9 @@ public final class SlowOperations {
    * <b>This method is not for muting the assertion in places. It is intended for the common platform code.
    *
    * @param sectionName reuse {@link #GENERIC} and other existing section names as much as possible.
-   * <p/>
-   * Use a new name <b>iff</b> you need a dedicated on/off switch for the assertion inside.
-   * In that case, remember to add the corresponding {@code ide.slow.operations.assertion.<sectionName>} Registry key.
-   *
+   *                    <p/>
+   *                    Use a new name <b>iff</b> you need a dedicated on/off switch for the assertion inside.
+   *                    In that case, remember to add the corresponding {@code ide.slow.operations.assertion.<sectionName>} Registry key.
    * @see Registry
    */
   @ApiStatus.Internal
