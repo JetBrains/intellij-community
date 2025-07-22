@@ -178,8 +178,16 @@ public final class ExternalSystemJdkUtil {
     return parentSdk;
   }
 
+  /**
+   * @deprecated use {@link #suggestJdkHomePaths()} instead.
+   */
+  @Deprecated
   public static @NotNull Collection<String> suggestJdkHomePaths() {
     return getJavaSdkType().suggestHomePaths();
+  }
+
+  public static @NotNull Collection<String> suggestJdkHomePaths(@NotNull Project project) {
+    return getJavaSdkType().suggestHomePaths(project);
   }
 
   public static @NotNull SdkType getJavaSdkType() {

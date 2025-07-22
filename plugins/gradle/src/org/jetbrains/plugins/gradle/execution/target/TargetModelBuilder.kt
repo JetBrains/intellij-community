@@ -7,9 +7,9 @@ import org.gradle.tooling.ModelBuilder
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.internal.consumer.AbstractLongRunningOperation
 import org.gradle.tooling.model.build.BuildEnvironment
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
-import java.nio.file.Path
+import java.io.File
+import java.nio.file.Files
 
 internal class TargetModelBuilder<T>(
   private val connection: TargetProjectConnection,
@@ -92,11 +92,14 @@ internal class TargetModelBuilder<T>(
     It couldn't be solved by delegating, due to the overall structure of the BuildParameters because it strictly relies on
     internal and package private classes such as org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters.
 */
-  @ApiStatus.Internal
-  fun patchJavaHome(javaHome: Path) {
+  override fun setJavaHome(javaHome: File?): TargetModelBuilder<T> {
+    if (javaHome != null && !Files.isDirectory(javaHome.toPath())) {
+      return `this`
+    }
     val builderField = AbstractLongRunningOperation::class.java.getDeclaredField("operationParamsBuilder")
     val javaHomeField = builderField.type.getDeclaredField("javaHome")
     javaHomeField.setAccessible(true)
-    javaHomeField.set(builderField.get(this), javaHome.toFile())
+    javaHomeField.set(builderField.get(this), javaHome)
+    return `this`
   }
 }

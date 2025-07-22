@@ -221,6 +221,7 @@ f:com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 - s:resolveDependentJdk(com.intellij.openapi.projectRoots.Sdk):com.intellij.openapi.projectRoots.Sdk
 - s:resolveJdkName(com.intellij.openapi.projectRoots.Sdk,java.lang.String):com.intellij.openapi.projectRoots.Sdk
 - s:suggestJdkHomePaths():java.util.Collection
+- s:suggestJdkHomePaths(com.intellij.openapi.project.Project):java.util.Collection
 c:com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler
 - com.intellij.build.process.BuildProcessHandler
 - com.intellij.openapi.Disposable

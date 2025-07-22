@@ -16,6 +16,7 @@ import io.opentelemetry.api.trace.StatusCode
 import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.ProjectConnection
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.AUTO_JAVA_HOME
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -53,6 +54,10 @@ object GradleWrapperHelper {
       return
     }
     val context = GradleExecutionContextImpl(projectPath, id, GradleExecutionSettings(settings), listener, cancellationToken)
+
+    context.settings.remoteProcessIdleTtlInMs = 100
+    context.settings.putUserData(AUTO_JAVA_HOME, true)
+
     GradleExecutionHelper.execute(context) { connection ->
       settings.wrapperPropertyFile = ensureInstalledWrapper(connection, gradleVersion, context)
     }
@@ -68,8 +73,6 @@ object GradleWrapperHelper {
       .startSpan()
     try {
       span.makeCurrent().use {
-        context.settings.remoteProcessIdleTtlInMs = 100
-
         if (context.settings.hasTargetEnvironmentConfiguration()) {
           // todo add the support for org.jetbrains.plugins.gradle.settings.DistributionType.WRAPPED
           executeWrapperTask(connection, context)

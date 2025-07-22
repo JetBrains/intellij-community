@@ -17,9 +17,8 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.platform.eel.provider.EelProviderUtil;
-import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
@@ -35,13 +34,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.connection.GradleConnectorService;
-import org.jetbrains.plugins.gradle.execution.target.TargetModelBuilder;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTask;
@@ -50,7 +49,10 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 
 /**
@@ -75,6 +77,11 @@ public final class GradleExecutionHelper {
   public GradleExecutionHelper() { }
 
   private static final Logger LOG = Logger.getInstance(GradleExecutionHelper.class);
+
+  // do not use
+  // this flag is used only for the situation where is not possible to execute a Gradle task in an appropriate way and we have to use
+  // the bundled JDK for the execution
+  public static final Key<Boolean> AUTO_JAVA_HOME = Key.create("AUTO_JAVA_HOME");
 
   /**
    * @deprecated Use the {@link ProjectConnection#newBuild} function directly.
@@ -263,7 +270,7 @@ public final class GradleExecutionHelper {
 
     setupEnvironment(operation, settings);
 
-    setupJavaHome(operation, settings, id);
+    setupJavaHome(operation, settings, id, listener, buildEnvironment);
 
     setupProgressListeners(operation, settings, id, listener, buildEnvironment);
 
@@ -343,33 +350,43 @@ public final class GradleExecutionHelper {
   private static void setupJavaHome(
     @NotNull LongRunningOperation operation,
     @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskId id
+    @NotNull ExternalSystemTaskId id,
+    @NotNull ExternalSystemTaskNotificationListener listener,
+    @Nullable BuildEnvironment buildEnvironment
   ) {
-    var javaHome = GradleDaemonJvmHelper.isExecutingUpdateDaemonJvmTask(settings)
-                   ? GradleDaemonJvmHelper.getGradleJvmForUpdateDaemonJvmTask(id)
-                   : settings.getJavaHome();
+    var javaHome = getJavaHomeForOperation(settings, id, listener, buildEnvironment);
     if (javaHome == null) {
       return;
     }
-    Path javaHomePath = Path.of(javaHome);
-    if (!Files.isDirectory(javaHomePath)) {
-      return;
-    }
-    if (EelProviderUtil.getEelDescriptor(javaHomePath) == LocalEelDescriptor.INSTANCE) {
-      //noinspection IO_FILE_USAGE
-      operation.setJavaHome(new File(javaHome));
-      LOG.debug("Java home to set for Gradle operation: " + javaHomePath);
-    }
-    else {
-      try {
-        if (operation instanceof TargetModelBuilder) {
-          ((TargetModelBuilder<?>)operation).patchJavaHome(javaHomePath);
+    //noinspection IO_FILE_USAGE
+    operation.setJavaHome(new File(javaHome));
+    LOG.debug("Java home to set for Gradle operation: " + javaHome);
+  }
+
+  private static @Nullable String getJavaHomeForOperation(
+    @NotNull GradleExecutionSettings settings,
+    @NotNull ExternalSystemTaskId id,
+    @NotNull ExternalSystemTaskNotificationListener listener,
+    @Nullable BuildEnvironment buildEnvironment
+  ) {
+    if (Boolean.TRUE.equals(settings.getUserData(AUTO_JAVA_HOME)) && buildEnvironment != null) {
+      var project = id.getProject();
+      var gradle = buildEnvironment.getGradle();
+      var gradleVersion = GradleVersion.version(gradle.getGradleVersion());
+
+      for (var sdkPath : ExternalSystemJdkUtil.suggestJdkHomePaths(project)) {
+        var javaVersion = ExternalSystemJdkUtil.getJavaVersion(sdkPath);
+        if (javaVersion != null && GradleJvmSupportMatrix.isSupported(gradleVersion, javaVersion)) {
+          listener.onTaskOutput(
+            id,
+            GradleBundle.message("gradle.auto.jdk.was.selected", sdkPath) + System.lineSeparator(),
+            true
+          );
+          return sdkPath;
         }
       }
-      catch (Exception e) {
-        LOG.debug("Unable to set %s as the java home for the operation", javaHomePath);
-      }
     }
+    return settings.getJavaHome();
   }
 
   private static void setupArguments(
@@ -524,7 +541,7 @@ public final class GradleExecutionHelper {
 
         modelBuilder.withCancellationToken(context.getCancellationToken());
 
-        setupJavaHome(modelBuilder, context.getSettings(), taskId);
+        setupJavaHome(modelBuilder, context.getSettings(), taskId, listener, null);
 
         // do not use connection.getModel methods since it doesn't allow to handle progress events
         // and we can miss gradle tooling client side events like distribution download.
