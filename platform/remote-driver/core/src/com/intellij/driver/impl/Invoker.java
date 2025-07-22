@@ -9,6 +9,8 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.client.ClientKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.progress.CeProcessCanceledException;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.ClearableLazyValue;
@@ -151,7 +153,8 @@ public class Invoker implements InvokerMBean {
       };
       if (call.getLockSemantics() == LockSemantics.NO_LOCK && app instanceof ApplicationEx applicationEx) {
         applicationEx.invokeAndWaitRelaxed(runnable, modalityState[0]);
-      } else {
+      }
+      else {
         app.invokeAndWait(runnable, modalityState[0]);
       }
       result = res[0];
@@ -263,6 +266,9 @@ public class Invoker implements InvokerMBean {
       catch (InvocationTargetException e) {
         if (e.getCause() instanceof IllegalComponentStateException) {
           throw (IllegalComponentStateException)e.getCause();
+        }
+        if (e.getCause() instanceof CeProcessCanceledException || e.getCause() instanceof ProcessCanceledException) {
+          call(call, supplier);
         }
 
         throw new DriverIllegalStateException(e);
@@ -417,7 +423,11 @@ public class Invoker implements InvokerMBean {
     }
     catch (ClassNotFoundException e) {
       throw new DriverIllegalStateException(
-        (rdTarget == RdTarget.DEFAULT ? "" : rdTarget + ": ") + "No such class '" + call.getClassName() + "' in plugin " + call.getPluginId(), e);
+        (rdTarget == RdTarget.DEFAULT ? "" : rdTarget + ": ") +
+        "No such class '" +
+        call.getClassName() +
+        "' in plugin " +
+        call.getPluginId(), e);
     }
     return clazz;
   }
@@ -499,7 +509,7 @@ public class Invoker implements InvokerMBean {
         return instance;
       }
 
-      if(isKotlinClass(clazz)) {
+      if (isKotlinClass(clazz)) {
         if (clazz.getName().endsWith("$Companion")) { //getting an instance of companion class
           try {
             instance = clazz.getEnclosingClass().getDeclaredField("Companion").get(null);
@@ -570,7 +580,7 @@ public class Invoker implements InvokerMBean {
       return result;
     }
     if (arg instanceof List<?> && !((List<?>)arg).isEmpty() && ContainerUtil.and(((List<?>)arg), item -> item instanceof Ref)) {
-      return ContainerUtil.map(((List<?>) arg), item -> getReference(call.getSessionId(), ((Ref)item).id()));
+      return ContainerUtil.map(((List<?>)arg), item -> getReference(call.getSessionId(), ((Ref)item).id()));
     }
     if (arg instanceof Ref) {
       return getReference(call.getSessionId(), ((Ref)arg).id());
