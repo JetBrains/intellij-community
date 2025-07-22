@@ -14,6 +14,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -23,7 +24,8 @@ private data class ComputedFilter(
   val listenersFired: Boolean,
 )
 
-internal class CompositeFilterWrapper(private val project: Project, coroutineScope: CoroutineScope) {
+@ApiStatus.Internal
+class CompositeFilterWrapper(private val project: Project, coroutineScope: CoroutineScope) {
   private val filtersUpdatedListeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
 
   private val customFilters: MutableList<Filter> = CopyOnWriteArrayList()
@@ -88,6 +90,14 @@ internal class CompositeFilterWrapper(private val project: Project, coroutineSco
     }
     ensureComputationInitialized()
     return null
+  }
+
+  /**
+   * Returns the flow of computed filters.
+   */
+  fun getFilterFlow(): Flow<CompositeFilter> {
+    ensureComputationInitialized()
+    return filterFlow.mapNotNull { it?.filter }.distinctUntilChanged()
   }
 
   private fun ensureComputationInitialized() {
