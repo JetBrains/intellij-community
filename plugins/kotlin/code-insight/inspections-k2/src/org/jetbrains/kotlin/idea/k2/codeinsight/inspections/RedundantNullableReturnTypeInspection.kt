@@ -111,7 +111,7 @@ private fun KaSession.actualReturnTypes(
         it.returnedExpression?.expressionType
     }
 
-    return if (this is KtBlockExpression) {
+    return if (expression is KtBlockExpression) {
         returnTypes
     } else {
         returnTypes + expression.expressionType

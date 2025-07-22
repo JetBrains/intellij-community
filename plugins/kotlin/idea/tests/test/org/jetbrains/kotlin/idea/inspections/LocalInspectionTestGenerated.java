@@ -10727,6 +10727,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/redundantNullableReturnType/function/blockBody.kt");
             }
 
+            @TestMetadata("blockBodyNoReturn.kt")
+            public void testBlockBodyNoReturn() throws Exception {
+                runTest("testData/inspectionsLocal/redundantNullableReturnType/function/blockBodyNoReturn.kt");
+            }
+
             @TestMetadata("blockBodyReturnsNullable.kt")
             public void testBlockBodyReturnsNullable() throws Exception {
                 runTest("testData/inspectionsLocal/redundantNullableReturnType/function/blockBodyReturnsNullable.kt");
