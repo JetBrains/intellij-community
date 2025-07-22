@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.fileEditor.impl.MergingUpdateChannel
 import com.intellij.openapi.progress.ProgressModel
 import com.intellij.openapi.progress.TaskInfo
@@ -1238,10 +1239,10 @@ private class ScalableCounterIconComponent : JComponent(), UISettingsListener {
     return Dimension(max(iconSize, icon.iconWidth), max(iconSize, icon.iconHeight))
   }
 
-  override fun paintComponent(g: Graphics?) {
+  override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
     setIconSize(width, height)
-    icon.paintIcon(this, g, 0, 0)
+    icon.paintIcon(this, InternalUICustomization.getInstance()?.preserveGraphics(g) ?: g, 0, 0)
   }
 
   private fun setIconSize(width: Int, height: Int) {
