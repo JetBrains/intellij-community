@@ -351,6 +351,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
   private inner class MyUndoDocumentListener : DocumentListener {
     override fun beforeDocumentChange(event: DocumentEvent) {
+      if (project.isDisposed) return
       if (hasUndoInCommand) return
       if (undoManager.isUndoOrRedoInProgress) return
       if (CommandProcessor.getInstance().currentCommand == null) return
