@@ -49,7 +49,7 @@ public class GitUntrackedFilesHolder implements Disposable {
 
   private final MergingUpdateQueue myQueue;
   private final Object LOCK = new Object();
-  private boolean myInUpdate = false;
+  private volatile boolean myInUpdate = false;
 
   private final CopyOnWriteFilePathSet myUntrackedFiles;
   private final MyGitRepositoryIgnoredFilesHolder myIgnoredFilesHolder;
@@ -145,9 +145,7 @@ public class GitUntrackedFilesHolder implements Disposable {
   }
 
   public boolean isInUpdateMode() {
-    synchronized (LOCK) {
-      return myInUpdate;
-    }
+    return myInUpdate;
   }
 
   public @NotNull Collection<FilePath> getUntrackedFilePaths() {
