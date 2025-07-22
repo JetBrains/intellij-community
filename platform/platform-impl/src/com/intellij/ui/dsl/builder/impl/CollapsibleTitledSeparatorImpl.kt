@@ -63,6 +63,14 @@ class CollapsibleTitledSeparatorImpl(@NlsContexts.Separator title: String) : Tit
     }
   }
 
+  override fun getAccessibleContext(): AccessibleContext? {
+    if (accessibleContext == null) {
+      // The label implements accessibility support for this component, don't need the context from TitledSeparator.
+      accessibleContext = object : AccessibleJPanel() {}
+    }
+    return accessibleContext
+  }
+
   private fun updateIcon() {
     val treeExpandedIcon = UIUtil.getTreeExpandedIcon()
     val treeCollapsedIcon = UIUtil.getTreeCollapsedIcon()
