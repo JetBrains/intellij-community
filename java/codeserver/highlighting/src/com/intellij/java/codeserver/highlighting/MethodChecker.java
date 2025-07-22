@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.java.codeserver.core.JavaPsiMethodUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
@@ -16,7 +15,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.MostlySingularMultiMap;
@@ -29,11 +27,6 @@ final class MethodChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
   private final @NotNull Map<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>> myDuplicateMethods = new HashMap<>();
   private static final TokenSet BRACKET_TOKENS = TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET);
-  private static final MethodSignature ourValuesEnumSyntheticMethod =
-    MethodSignatureUtil.createMethodSignature("values",
-                                              PsiType.EMPTY_ARRAY,
-                                              PsiTypeParameter.EMPTY_ARRAY,
-                                              PsiSubstitutor.EMPTY);
 
   MethodChecker(@NotNull JavaErrorVisitor visitor) { myVisitor = visitor; }
 
@@ -526,28 +519,12 @@ final class MethodChecker {
     return false;
   }
 
-  private static boolean isEnumSyntheticMethod(@NotNull MethodSignature methodSignature, @NotNull Project project) {
-    if (methodSignature.equals(ourValuesEnumSyntheticMethod)) return true;
-    PsiType javaLangString = PsiType.getJavaLangString(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
-    MethodSignature valueOfMethod = MethodSignatureUtil.createMethodSignature("valueOf", new PsiType[]{javaLangString},
-                                                                              PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
-    return MethodSignatureUtil.areSignaturesErasureEqual(valueOfMethod, methodSignature);
-  }
-
   void checkDuplicateMethod(@NotNull PsiClass aClass, @NotNull PsiMethod method) {
     if (method instanceof ExternallyDefinedPsiElement) return;
     MostlySingularMultiMap<MethodSignature, PsiMethod> duplicateMethods = getDuplicateMethods(aClass);
     MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
-    int methodCount = 1;
     List<PsiMethod> methods = (List<PsiMethod>)duplicateMethods.get(methodSignature);
     if (methods.size() > 1) {
-      methodCount++;
-    }
-
-    if (methodCount == 1 && aClass.isEnum() && isEnumSyntheticMethod(methodSignature, myVisitor.project())) {
-      methodCount++;
-    }
-    if (methodCount > 1) {
       myVisitor.report(JavaErrorKinds.METHOD_DUPLICATE.create(method));
     }
   }
