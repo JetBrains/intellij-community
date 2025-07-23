@@ -280,6 +280,8 @@
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile"
                     preload="notHeadless"/>
 
+    <projectService serviceImplementation="com.intellij.ide.util.TreeFileChooserSupport"/>
+
     <projectService serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
     <projectService serviceImplementation="com.intellij.find.replaceInProject.ReplaceInProjectManager"/>
     <projectService serviceInterface="com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar"
