@@ -100,7 +100,7 @@ class SePopupHeaderPane(
   fun setFilterActions(actions: List<AnAction>) {
     val actionGroup = DefaultActionGroup(actions)
     actionGroup.add(showInFindToolWindowAction)
-    val toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true)
+    toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true)
     toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY)
     toolbar.targetComponent = this
     val toolbarComponent = toolbar.getComponent()
@@ -108,6 +108,10 @@ class SePopupHeaderPane(
     toolbarComponent.setBorder(JBUI.Borders.empty(2, 18, 2, 9))
 
     setFilterComponent(toolbarComponent)
+  }
+
+  fun updateActionsAsync() {
+    toolbar.updateActionsAsync()
   }
 
   fun addTab(tab: Tab) {

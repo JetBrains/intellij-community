@@ -29,13 +29,18 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
     text(presentation.presentableText) {
       accessibleName = presentation.presentableText + (presentation.containerText?.let { " $it" } ?: "")
 
-      if (presentation.presentableTextErrorHighlight) {
+      if (presentation.presentableTextStrikethrough) {
+        attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, presentation.presentableTextFgColor)
+      }
+      else if (presentation.presentableTextErrorHighlight) {
         attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED,
                                           presentation.presentableTextFgColor,
                                           JBColor.RED)
-      } else {
+      }
+      else {
         presentation.presentableTextFgColor?.let { foreground = it }
       }
+
       if (selected) {
         speedSearch {
           ranges = presentation.presentableTextMatchedRanges?.map { it.textRange }

@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.searchEverywhere.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeItemPresentation
 import com.intellij.platform.searchEverywhere.SeOptionActionItemPresentation
@@ -82,16 +83,19 @@ object SeActionPresentationProvider {
       val decoratedText = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         ActionPresentationDecorator.decorateTextIfNeeded(anAction, actionPresentation.text)
       }
+      val displayText = if (decoratedText.startsWith("<html>")) StringUtil.removeHtmlTags(decoratedText) else decoratedText
 
       presentation = presentation.run {
-        copy(commonData = commonData.copy(text = decoratedText))
+        copy(commonData = commonData.copy(text = displayText))
       }
 
       return presentation
     }
     else if (value is OptionDescription) {
       val hit = GotoActionModel.GotoActionListCellRenderer.calcHit(value)
-      var presentation = SeOptionActionItemPresentation(commonData = SeActionItemPresentation.Common(text = hit, extendedDescription = extendedDescription),)
+      val displayText = if (hit.startsWith("<html>")) StringUtil.removeHtmlTags(hit) else hit
+
+      var presentation = SeOptionActionItemPresentation(commonData = SeActionItemPresentation.Common(text = displayText, extendedDescription = extendedDescription))
 
       (value as? BooleanOptionDescription)?.isOptionEnabled.let {
         presentation = presentation.run {
