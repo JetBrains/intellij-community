@@ -309,7 +309,7 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
       is LowLevelStepRequested -> {
         when (currentState) {
           is BothStopped -> {
-            highExtension.beforeLowLevelStep(currentState.high, lowExtension.getStoppedThreadId(event.mixedSuspendContext.lowLevelDebugSuspendContext))
+            lowExtension.beforeStep(event.mixedSuspendContext)
 
             when (event.stepType) {
               StepType.Over -> {
