@@ -254,7 +254,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private volatile EditorHighlighter myHighlighter; // updated in EDT, but can be accessed from other threads (under read action)
   private Disposable myHighlighterDisposable = Disposer.newDisposable();
-  private final TextDrawingCallback myTextDrawingCallback = new MyTextDrawingCallback();
 
   private boolean myKeepSelectionOnMousePress;
 
@@ -336,6 +335,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   final EditorView myView;
   final @Nullable EditorView myAdView;
+
+  private final TextDrawingCallback myTextDrawingCallback;
 
   private @Nullable CharacterGridImpl myCharacterGrid;
 
@@ -473,6 +474,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myView = new EditorView(this, myEditorModel);
     myAdView = myAdEditorModel == null ? null : new EditorView(this, myAdEditorModel);
+
+    myTextDrawingCallback = new EditorTextDrawingCallback(myView);
 
     myView.reinitSettings();
     if (myAdView != null) myAdView.reinitSettings();
@@ -5657,20 +5660,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myVerticalScrollBar.setValue(myVerticalScrollBar.getValue() - height);
       }
       myOldHeight = getHeight();
-    }
-  }
-
-  private final class MyTextDrawingCallback implements TextDrawingCallback {
-    @Override
-    public void drawChars(@NotNull Graphics g,
-                          char @NotNull [] data,
-                          int start,
-                          int end,
-                          int x,
-                          int y,
-                          @NotNull Color color,
-                          @NotNull FontInfo fontInfo) {
-      myView.drawChars(g, data, start, end, x, y, color, fontInfo);
     }
   }
 
