@@ -17,19 +17,23 @@ internal data class HunspellBundle(val dic: File, val aff: File, val trigrams: F
 
 class HunspellDictionary : Dictionary {
   companion object {
-    private fun loadHunspellBundle(path: String): HunspellBundle? {
-      if (FileUtilRt.getExtension(path) != "dic") return null
-
-      val pathWithoutExtension = FileUtilRt.getNameWithoutExtension(path)
-      val dic = File("$pathWithoutExtension.dic")
-      val aff = File("$pathWithoutExtension.aff")
-      val trigrams = File("$pathWithoutExtension.trigrams.txt")
-
+    private fun loadHunspellBundle(dicPath: String): HunspellBundle? {
+      if (FileUtilRt.getExtension(dicPath) != "dic") return null
+      val (dic, aff, trigrams) = getHunspellPaths(dicPath)
       return if (dic.exists() && aff.exists()) HunspellBundle(dic, aff, trigrams) else null
     }
 
     fun isHunspell(path: String): Boolean {
-      return loadHunspellBundle(path) !== null
+      return loadHunspellBundle(path) != null
+    }
+
+    fun getHunspellPaths(dicPath: String): Triple<File, File, File> {
+      val path = FileUtilRt.getNameWithoutExtension(dicPath)
+      return Triple(
+        File("$path.dic"),
+        File("$path.aff"),
+        File("$path.trigrams.txt")
+      )
     }
   }
 
