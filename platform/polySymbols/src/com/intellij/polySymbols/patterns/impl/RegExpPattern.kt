@@ -17,8 +17,14 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
     else
       Pattern.compile(regex, Pattern.CASE_INSENSITIVE)
   }
+  private val patternCompletablePrefix: String by lazy(LazyThreadSafetyMode.NONE) {
+    getPatternCompletablePrefix(regex)
+  }
 
-  override fun getStaticPrefixes(): Sequence<String> = sequenceOf(getPatternCompletablePrefix(regex))
+  override fun getStaticPrefixes(): Sequence<String> = if (caseSensitive)
+    sequenceOf(patternCompletablePrefix)
+  else
+    sequenceOf(patternCompletablePrefix.takeWhile { !it.isLetter() })
 
   override fun isStaticAndRequired(): Boolean = false
 
@@ -35,7 +41,7 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
       listOf(MatchResult(PolySymbolNameSegment.create(
         start, start + matcher.end(),
         owner?.let { listOf(it) } ?: emptyList(),
-        matchScore = getPatternCompletablePrefix(regex).length
+        matchScore = patternCompletablePrefix.length
       )))
     else emptyList()
   }
@@ -46,7 +52,10 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
     symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult> =
-    emptyList()
+    patternCompletablePrefix
+      .takeIf { it == regex }
+      ?.let { listOf(ListResult(it, PolySymbolNameSegment.create(0, it.length))) }
+    ?: emptyList()
 
   override fun complete(
     owner: PolySymbol?,
@@ -56,15 +65,18 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
     start: Int,
     end: Int,
   ): CompletionResults =
-    getPatternCompletablePrefix(regex)
+    patternCompletablePrefix
       .takeIf { it.isNotBlank() }
       ?.let {
-        CompletionResults(
-          PolySymbolCodeCompletionItem.builder(it, start, owner)
-            .completeAfterInsert(true)
-            .displayName("$it…")
-            .build()
-        )
+        if (it == regex)
+          CompletionResults(PolySymbolCodeCompletionItem.create(it, start))
+        else
+          CompletionResults(
+            PolySymbolCodeCompletionItem.builder(it, start, owner)
+              .completeAfterInsert(true)
+              .displayName("$it…")
+              .build()
+          )
       }
     ?: CompletionResults(
       PolySymbolCodeCompletionItem.builder("", start, owner)
