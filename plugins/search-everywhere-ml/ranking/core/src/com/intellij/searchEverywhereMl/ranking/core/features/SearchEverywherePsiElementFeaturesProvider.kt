@@ -140,12 +140,16 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
     } ?: emptyList()
   }
 
-  private fun getElementName(element: Any) = when (element) {
-      is PsiItemWithPresentation -> element.item as? PsiNamedElement
-      is PsiNamedElement -> element
-      else -> null
-    }?.let {
-      ReadAction.compute<String, Nothing> { it.name }
+  private fun getElementName(element: Any): String? {
+    if (element is ItemWithPresentation<*>) {
+      return element.presentation.presentableText
+    }
+
+    if (element is PsiNamedElement) {
+      return ReadAction.compute<String, Nothing> { element.name }
+    }
+
+    return null
   }
 
   /**
