@@ -205,7 +205,7 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     @ParameterizedTest
     @EnumSource(GradleDsl::class)
     fun testOtherKotlinModule(gradleDsl: GradleDsl): Unit = runBlocking {
-        val kotlinJvmPluginVersion = "1.8.0"
+        val kotlinJvmPluginVersion = "1.9.25"
         initProject(projectInfo("project", gradleDsl) {
             withJavaBuildFile()
             withKotlinSettingsFile {
@@ -240,7 +240,7 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     @ParameterizedTest
     @CsvCrossProductSource("KOTLIN,GROOVY", "true,false")
     fun testNewModuleWithVersionCatalog(gradleDsl: GradleDsl, addBuildSrcVersionCatalogDependency: Boolean): Unit = runBlocking {
-        val kotlinJvmPluginVersion = "2.0.21"
+        val kotlinJvmPluginVersion = "2.2.0"
         val versionTomlContent = """
             |[versions]
             |kotlin = "$kotlinJvmPluginVersion"
