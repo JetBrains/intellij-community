@@ -42,33 +42,18 @@ function __JetBrainsIntellijAskPSReadLineUpdating() {
 
   # The localized text is passed as env variables
   $Esc = [char]0x1b
-  $VersionColored = "$Esc[1m$Version$Esc[0m"
-  $RequiredVersionColored = "$Esc[1m$RequiredVersion$Esc[0m"
-  $Line1 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_1 -f $Env:__JETBRAINS_INTELLIJ_IDE_NAME, $RequiredVersionColored, $VersionColored
-  $Line2 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_2
-  $CommandText = "'Install-Module PSReadLine -MinimumVersion $RequiredVersion -Scope CurrentUser -Force'"
+  $Line1 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_1
+  $Line2 = "https://learn.microsoft.com/en-us/windows/terminal/troubleshooting#black-lines-in-powershell-51-6x-70"
+  $CommandText = "'Install-Module PSReadLine -MinimumVersion $RequiredVersion -Scope CurrentUser'"
   $CommandTextColored = "$Esc[32m$CommandText$Esc[0m"
-  $Line3 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_3 -f $CommandTextColored
-  $Line4 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_4
+  $Line3 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_2 -f $CommandTextColored
+  $Line4 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_3
 
   Write-Host $Line1
   Write-Host $Line2
   Write-Host $Line3
-  $Answer = Read-Host $Line4
-  if ($Answer -ieq 'n') {
-    Write-Host $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_REJECTED
-    Write-Host "$([char]0x1B)]1341;psreadline_update_rejected`a" -NoNewline
-    return
-  }
-  if ($Answer -ine 'y') {
-    Write-Host $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_SKIPPED
-    return
-  }
-
-  Install-Module PSReadLine -MinimumVersion $RequiredVersion -Scope CurrentUser -Force
-  if ($? -eq $true) {
-    Write-Host $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_COMPLETED
-  }
+  Write-Host $Line4
+  Write-Host  # to an empty line between the message and the prompt
 }
 
 if ($Env:__JETBRAINS_INTELLIJ_ASK_PSREADLINE_UPDATE -eq $true) {
