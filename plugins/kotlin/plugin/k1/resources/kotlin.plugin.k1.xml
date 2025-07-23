@@ -29,7 +29,6 @@
   <xi:include href="dep-spellchecker.xml"/>
   <xi:include href="kotlinx-serialization.xml"/>
   <xi:include href="native.xml"/>
-  <xi:include href="native-fe10.xml"/>
   <xi:include href="jvm-debugger.xml"/>
   <xi:include href="jvm-debugger-fe10.xml"/>
   <xi:include href="facets-base.xml"/>
