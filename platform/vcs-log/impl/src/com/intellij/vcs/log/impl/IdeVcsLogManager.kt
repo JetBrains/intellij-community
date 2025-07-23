@@ -25,12 +25,12 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 internal class IdeVcsLogManager(
   project: Project,
-  private val parentCs: CoroutineScope,
+  parentCs: CoroutineScope,
   private val mainUiHolderState: StateFlow<IdeVcsProjectLog.MainUiHolder?>,
   uiProperties: VcsLogProjectTabsProperties,
   logProviders: Map<VirtualFile, VcsLogProvider>,
   errorHandler: ((VcsLogErrorHandler.Source, Throwable) -> Unit)?,
-) : VcsLogManager(project, uiProperties, logProviders, getProjectLogName(logProviders),
+) : VcsLogManager(project, parentCs, uiProperties, logProviders, getProjectLogName(logProviders),
                   VcsLogSharedSettings.isIndexSwitchedOn(project), errorHandler) {
   private val tabsManager = VcsLogTabsManager(project, uiProperties, this)
 
@@ -41,7 +41,7 @@ internal class IdeVcsLogManager(
 
   @RequiresEdt
   fun createUi() {
-    mainUiCs = parentCs.childScope("UI scope of $name", Dispatchers.UiImmediate)
+    mainUiCs = cs.childScope("UI scope of $name", Dispatchers.UiImmediate)
 
     // need EDT because of immediate toolbar update
     mainUiCs.launch(Dispatchers.EdtImmediate) {

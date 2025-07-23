@@ -5,11 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.openapi.progress.checkCanceled
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -19,11 +18,11 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.*
-import com.intellij.vcs.log.data.SingleTaskController.SingleTask
-import com.intellij.vcs.log.data.SingleTaskController.SingleTaskImpl
 import com.intellij.vcs.log.data.index.*
 import com.intellij.vcs.log.data.util.trace
 import com.intellij.vcs.log.impl.VcsLogCachesInvalidator
@@ -33,26 +32,28 @@ import com.intellij.vcs.log.util.PersistentUtil
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil.VcsUserHashingStrategy
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 import java.util.function.Consumer
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 
 class VcsLogData @ApiStatus.Internal constructor(
   val project: Project,
+  parentCs: CoroutineScope,
   val logProviders: Map<VirtualFile, VcsLogProvider>,
   private val errorHandler: VcsLogErrorHandler,
   isIndexEnabled: Boolean,
-  parentDisposable: Disposable,
-) : Disposable, VcsLogDataProvider {
-  private val disposableFlag = Disposer.newCheckedDisposable()
-  val isDisposed: Boolean get() = disposableFlag.isDisposed
-  private val lock = Any()
+) : VcsLogDataProvider {
+  private val cs = parentCs.childScope("Vcs Log Data")
+  val isDisposed: Boolean get() = !cs.isActive
 
   @ApiStatus.Internal
-  val progress: VcsLogProgress = VcsLogProgress(this)
+  val progress: VcsLogProgress
 
   private val storageLocker: VcsLogStorageLocker = VcsLogStorageLocker.getInstance()
   private val storageId: String = PersistentUtil.calcLogId(project, logProviders)
@@ -77,10 +78,7 @@ class VcsLogData @ApiStatus.Internal constructor(
   val dataPack: DataPack get() = refresher.currentDataPack
   private val dataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList<DataPackChangeListener>()
 
-  val containingBranchesGetter: ContainingBranchesGetter = ContainingBranchesGetter(this, this)
-
-  @Suppress("unused") // need a hard reference for scope
-  private val indexDiagnosticRunner: IndexDiagnosticRunner
+  val containingBranchesGetter: ContainingBranchesGetter
 
   /**
    * Current username, as specified in the VCS settings.
@@ -89,23 +87,33 @@ class VcsLogData @ApiStatus.Internal constructor(
   @Volatile
   var currentUser: Map<VirtualFile, VcsUser> = emptyMap()
     private set
-
-  @Volatile
-  private var state = State.CREATED
-
-  @Volatile
-  private var initializationTask: SingleTask? = null
+  private val initRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val userRegistry: VcsUserRegistryImpl = project.service<VcsUserRegistry>() as VcsUserRegistryImpl
   val allUsers: Set<VcsUser> get() = userRegistry.users
-  val userNameResolver: VcsLogUserResolver = MyVcsLogUserResolver()
+  val userNameResolver: VcsLogUserResolver
 
   init {
-    Disposer.register(parentDisposable, this)
+    val dataDisposable = Disposer.newDisposable("Vcs Log Data Disposable for ${logProviders}")
+    val dataDisposableJob = cs.launch(start = CoroutineStart.UNDISPATCHED) {
+      try {
+        awaitCancellation()
+      }
+      finally {
+        // disposing storage triggers flushing on disk
+        withContext(NonCancellable + Dispatchers.IO) {
+          Disposer.dispose(dataDisposable)
+        }
+      }
+    }.apply {
+      cancelOnDispose(dataDisposable)
+    }
+
+    progress = VcsLogProgress(dataDisposable)
     // storage cannot be opened twice, so we have to wait for other clients (previously opened/closed project) to close it first
     storageLocker.acquireLock(storageId)
     val (storage, index) = try {
-      createStorageAndIndex(progress, isIndexEnabled)
+      createStorageAndIndex(progress, isIndexEnabled, dataDisposable)
     }
     catch (e: Throwable) {
       storageLocker.releaseLock(storageId)
@@ -115,27 +123,72 @@ class VcsLogData @ApiStatus.Internal constructor(
     this.index = index
 
     topCommitsCache = TopCommitsCache(storage)
-    miniDetailsGetter = MiniDetailsGetter(project, storage, logProviders, topCommitsCache, index, this)
-    commitDetailsGetter = CommitDetailsGetter(storage, logProviders, this)
-    indexDiagnosticRunner = IndexDiagnosticRunner(index, storage, logProviders.keys, { dataPack }, commitDetailsGetter, errorHandler, this)
+    miniDetailsGetter = MiniDetailsGetter(project, storage, logProviders, topCommitsCache, index, dataDisposable)
+    commitDetailsGetter = CommitDetailsGetter(storage, logProviders, dataDisposable)
 
     val commitDataConsumer = VcsLogCommitDataConsumerImpl(userRegistry, index, topCommitsCache)
     refresher = VcsLogRefresherImpl(project, storage, logProviders, progress, commitDataConsumer,
                                     Consumer { fireDataPackChangeEvent(it) },
                                     getRecentCommitsCount())
-    Disposer.register(this, refresher)
-    Disposer.register(this, Disposable {
-      synchronized(lock) {
-        initializationTask?.cancel()
+    Disposer.register(dataDisposable, refresher)
+
+    userNameResolver = MyVcsLogUserResolver()
+    Disposer.register(dataDisposable, userNameResolver)
+
+    containingBranchesGetter = ContainingBranchesGetter(this, dataDisposable)
+
+    val initJob = cs.launch(CoroutineName("Init")) {
+      initRequests.collect {
+        runCatching {
+          val usersByRoot = progress.runWithProgress(DATA_PACK_REFRESH) {
+            checkCanceled()
+            topCommitsCache.clear() // TODO: is it thread safe at all?
+            readCurrentUser()
+          }
+          currentUser = usersByRoot
+          currentCoroutineContext().cancel()
+        }.getOrLogException {
+          LOG.error(it)
+        }
       }
-    })
-    Disposer.register(this, disposableFlag)
+    }
+
+    val indexDiagnosticJob = cs.launch {
+      IndexDiagnosticRunner(this, index, storage, logProviders.keys, { dataPack }, commitDetailsGetter, errorHandler, this@VcsLogData)
+    }
+
+    cs.launch(CoroutineName("Disposer"), CoroutineStart.ATOMIC) {
+      try {
+        awaitCancellation()
+      }
+      finally {
+        try {
+          withContext(NonCancellable) {
+            initJob.joinWithTimeout(1.minutes) { LOG.warn("Init job shutdown timed out", it) }
+            topCommitsCache.clear()
+            indexDiagnosticJob.joinWithTimeout(10.milliseconds) { LOG.warn("Index diagnostic shutdown timed out", it) }
+
+            dataDisposableJob.join()
+            // disposing storage triggers flushing on disk
+            withContext(Dispatchers.IO) {
+              if (storage is VcsLogStorageImpl && !storage.isDisposed) {
+                LOG.error("Storage for $logProviders was not disposed")
+                Disposer.dispose(storage)
+              }
+            }
+          }
+        }
+        finally {
+          storageLocker.releaseLock(storageId)
+        }
+      }
+    }
   }
 
   @ApiStatus.Internal
   fun initialize() {
     refresher.initialize()
-    readCurrentUser()
+    initRequests.tryEmit(Unit)
   }
 
   /**
@@ -193,104 +246,22 @@ class VcsLogData @ApiStatus.Internal constructor(
     }, { isDisposed })
   }
 
-  override fun dispose() {
-    try {
-      val initialization: SingleTask?
-
-      synchronized(lock) {
-        initialization = initializationTask
-        initializationTask = null
-        state = State.DISPOSED
-      }
-
-      if (initialization != null) {
-        initialization.cancel()
-        try {
-          initialization.waitFor(1, TimeUnit.MINUTES)
-        }
-        catch (e: InterruptedException) {
-          LOG.warn(e)
-        }
-        catch (e: ExecutionException) {
-          LOG.warn(e)
-        }
-        catch (e: TimeoutException) {
-          LOG.warn(e)
-        }
-      }
-      topCommitsCache.clear()
-
-      if (storage is VcsLogStorageImpl && !storage.isDisposed) {
-        LOG.error("Storage for \$name was not disposed")
-        Disposer.dispose(storage)
-      }
-    }
-    finally {
-      storageLocker.releaseLock(storageId)
-    }
+  @ApiStatus.Internal
+  suspend fun awaitDispose() {
+    cs.coroutineContext.job.cancelAndJoin()
   }
 
-  private fun readCurrentUser() {
-    synchronized(lock) {
-      if (state != State.CREATED) {
-        return
-      }
-      state = State.INITIALIZED
-      val title = VcsLogBundle.message("vcs.log.initial.reading.current.user.process")
-      val backgroundable: Task.Backgroundable = object : Task.Backgroundable(project, title, false) {
-        override fun run(indicator: ProgressIndicator) {
-          indicator.setIndeterminate(true)
-          topCommitsCache.clear()
-          currentUser = doReadCurrentUser()
-        }
-
-        override fun onCancel() {
-          synchronized(lock) {
-            // Here be dragons:
-            // VcsLogProgressManager can cancel us when it's getting disposed,
-            // and we can also get canceled by invalid git executable.
-            // Since we do not know what's up, we just restore the state,
-            // and it is entirely possible to start another initialization after that.
-            // Eventually, everything gets canceled for good in VcsLogData.dispose.
-            // But still.
-            if (state == State.INITIALIZED) {
-              state = State.CREATED
-              initializationTask = null
-            }
-          }
-        }
-
-        override fun onThrowable(error: Throwable) {
-          synchronized(lock) {
-            LOG.error(error)
-            if (state == State.INITIALIZED) {
-              state = State.CREATED
-              initializationTask = null
-            }
-          }
-        }
-
-        override fun onSuccess() {
-          synchronized(lock) {
-            if (state == State.INITIALIZED) {
-              initializationTask = null
-            }
-          }
-        }
-      }
-      val manager = ProgressManager.getInstance() as CoreProgressManager
-      val indicator = progress.createProgressIndicator(DATA_PACK_REFRESH)
-      val future = manager.runProcessWithProgressAsynchronously(backgroundable, indicator, null)
-      initializationTask = SingleTaskImpl(future, indicator)
-    }
-  }
-
-  private fun doReadCurrentUser(): Map<VirtualFile, VcsUser> =
+  private suspend fun readCurrentUser(): Map<VirtualFile, VcsUser> =
     TelemetryManager.getInstance().getTracer(VcsScope).trace(VcsBackendTelemetrySpan.LogData.ReadingCurrentUser) {
       buildMap {
         for ((root, provider) in logProviders.entries) {
+          checkCanceled()
           try {
-            val user = provider.getCurrentUser(root)
+            val user = withContext(Dispatchers.IO) {
+              coroutineToIndicator {
+                provider.getCurrentUser(root)
+              }
+            }
             if (user == null) {
               LOG.info("Username not configured for root $root")
               continue
@@ -304,7 +275,11 @@ class VcsLogData @ApiStatus.Internal constructor(
       }
     }
 
-  private fun createStorageAndIndex(progress: VcsLogProgress, isIndexEnabled: Boolean): Pair<VcsLogStorage, VcsLogModifiableIndex> {
+  private fun createStorageAndIndex(
+    progress: VcsLogProgress,
+    isIndexEnabled: Boolean,
+    dataDisposable: Disposable,
+  ): Pair<VcsLogStorage, VcsLogModifiableIndex> {
     if (!VcsLogCachesInvalidator.getInstance().isValid()) {
       // this is not recoverable
       // restart won't help here
@@ -325,13 +300,13 @@ class VcsLogData @ApiStatus.Internal constructor(
     val indexBackend: VcsLogStorageBackend?
     try {
       if (`is`("vcs.log.index.sqlite.storage", false)) {
-        val sqliteBackend = SqliteVcsLogStorageBackend(project, storageId, logProviders, errorHandler, this)
+        val sqliteBackend = SqliteVcsLogStorageBackend(project, storageId, logProviders, errorHandler, dataDisposable)
         storage = sqliteBackend
         indexBackend = sqliteBackend
       }
       else {
         val indexingRoots = if (isIndexSwitchedOn) LinkedHashSet<VirtualFile>(indexers.keys) else emptySet()
-        val storageAndIndexBackend = VcsLogStorageImpl.createStorageAndIndexBackend(project, storageId, logProviders, indexingRoots, errorHandler, this)
+        val storageAndIndexBackend = VcsLogStorageImpl.createStorageAndIndexBackend(project, storageId, logProviders, indexingRoots, errorHandler, dataDisposable)
         storage = storageAndIndexBackend.first
         indexBackend = storageAndIndexBackend.second
       }
@@ -354,12 +329,8 @@ class VcsLogData @ApiStatus.Internal constructor(
       return storage to EmptyIndex()
     }
 
-    val index = VcsLogPersistentIndex(project, logProviders, indexers, storage, indexBackend, progress, errorHandler, this)
+    val index = VcsLogPersistentIndex(project, logProviders, indexers, storage, indexBackend, progress, errorHandler, dataDisposable)
     return storage to index
-  }
-
-  private enum class State {
-    CREATED, INITIALIZED, DISPOSED
   }
 
   private inner class MyVcsLogUserResolver : VcsLogUserResolverBase(), Disposable {
@@ -369,7 +340,6 @@ class VcsLogData @ApiStatus.Internal constructor(
 
     init {
       addDataPackChangeListener(listener)
-      Disposer.register(this@VcsLogData, this)
     }
 
     override val currentUsers: Map<VirtualFile, VcsUser>
@@ -405,4 +375,15 @@ val VcsLogData.roots: Collection<VirtualFile> get() = logProviders.keys
 
 fun VcsLogData.getLogProvider(root: VirtualFile): VcsLogProvider {
   return logProviders[root] ?: error("Unknown root $root")
+}
+
+private suspend fun Job.joinWithTimeout(timeout: Duration, onTimeout: (e: TimeoutCancellationException) -> Unit) {
+  try {
+    withTimeout(timeout) {
+      join()
+    }
+  }
+  catch (e: TimeoutCancellationException) {
+    onTimeout(e)
+  }
 }

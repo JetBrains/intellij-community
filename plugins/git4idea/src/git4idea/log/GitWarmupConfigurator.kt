@@ -13,6 +13,7 @@ import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.util.VcsLogUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.coroutineContext
 
@@ -37,17 +38,20 @@ class GitWarmupConfigurator : WarmupConfigurator {
       return false
     }
 
-    val manager = VcsLogManager(project, project.serviceAsync<VcsLogProjectTabsProperties>(), logProviders,
-                                "Warmup Vcs Log for ${VcsLogUtil.getProvidersMapText(logProviders)}", true) { _, throwable ->
-      logger?.reportMessage(1, throwable.stackTraceToString())
-    }
-    blockingContextScope {
-      manager.initialize()
-    }
+    supervisorScope {
+      val cs = this
+      val manager = VcsLogManager(project, cs, project.serviceAsync<VcsLogProjectTabsProperties>(), logProviders,
+                                  "Warmup Vcs Log for ${VcsLogUtil.getProvidersMapText(logProviders)}", true) { _, throwable ->
+        logger?.reportMessage(1, throwable.stackTraceToString())
+      }
+      blockingContextScope {
+        manager.initialize()
+      }
 
-    assertVcsIndexed(manager)
+      assertVcsIndexed(manager)
 
-    manager.dispose()
+      manager.dispose()
+    }
 
     logger?.reportMessage(1, "Git log indexing has finished")
     return false

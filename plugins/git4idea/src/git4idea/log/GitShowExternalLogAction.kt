@@ -180,7 +180,7 @@ private class GitExternalLogService(
         val vcs = GitVcs.getInstance(project)
         val logProviders = VcsLogManager.findLogProviders(roots.map { VcsRoot(vcs, it) }, project)
         val name = "Vcs Log for " + getProvidersMapText(logProviders)
-        VcsLogManager(project, properties, logProviders, name, false, null).apply {
+        VcsLogManager(project, cs, properties, logProviders, name, false, null).apply {
           initialize()
         }
       }

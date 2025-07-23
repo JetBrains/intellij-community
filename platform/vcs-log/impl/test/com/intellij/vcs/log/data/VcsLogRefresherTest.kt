@@ -11,6 +11,7 @@ import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.test.VcsPlatformTest
 import junit.framework.TestCase
+import kotlinx.coroutines.*
 import java.util.*
 import java.util.concurrent.*
 import java.util.function.Consumer
@@ -20,6 +21,7 @@ private const val RECENT_COMMITS_COUNT = 2
 
 class VcsLogRefresherTest : VcsPlatformTest() {
   private lateinit var logProvider: TestVcsLogProvider
+  private lateinit var testCs: CoroutineScope
   private lateinit var logData: VcsLogData
 
   private lateinit var refresherTestHelper: LogRefresherTestHelper
@@ -38,7 +40,9 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     commits = listOf("3|-a2|-a1", "2|-a1|-a", "1|-a|-")
     logProvider.appendHistory(TimedCommitParser.log(commits))
     logProvider.addRef(createBranchRef("master", "a2"))
-    logData = VcsLogData(project, logProviders, LoggingErrorHandler(LOG), VcsLogSharedSettings.isIndexSwitchedOn(project), project)
+    @Suppress("RAW_SCOPE_CREATION")
+    testCs = CoroutineScope(SupervisorJob())
+    logData = VcsLogData(project, testCs, logProviders, LoggingErrorHandler(LOG), VcsLogSharedSettings.isIndexSwitchedOn(project))
     refresherTestHelper = LogRefresherTestHelper(logData, RECENT_COMMITS_COUNT)
 
     dataWaiter = refresherTestHelper.dataWaiter
@@ -47,6 +51,9 @@ class VcsLogRefresherTest : VcsPlatformTest() {
 
   public override fun tearDown() {
     try {
+      runBlocking {
+        testCs.coroutineContext.job.cancelAndJoin()
+      }
       refresherTestHelper.tearDown()
     }
     catch (e: Throwable) {
@@ -156,7 +163,7 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     private val project = logData.project
 
     val dataWaiter = DataWaiter()
-    internal val loader = VcsLogRefresherImpl(project, logData.storage, logData.logProviders, VcsLogProgress(logData),
+    internal val loader = VcsLogRefresherImpl(project, logData.storage, logData.logProviders, VcsLogProgress(project),
                                               null, dataWaiter, recentCommitsCount
     ).apply {
       taskInterceptor = {
@@ -164,7 +171,7 @@ class VcsLogRefresherTest : VcsPlatformTest() {
         LOG.debug(startedTasks.size.toString() + " started tasks")
       }
     }.also {
-      Disposer.register(logData, it)
+      Disposer.register(project, it)
     }
 
     private val startedTasks = Collections.synchronizedList(ArrayList<Future<*>>())

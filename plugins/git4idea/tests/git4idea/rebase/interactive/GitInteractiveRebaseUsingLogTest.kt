@@ -7,20 +7,38 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.data.VcsLogData
 import git4idea.branch.GitRebaseParams
 import git4idea.i18n.GitBundle
-import git4idea.log.createLogData
+import git4idea.log.createLogDataIn
 import git4idea.log.refreshAndWait
 import git4idea.rebase.GitInteractiveRebaseEditorHandler
 import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseUtils
 import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog
 import git4idea.test.GitSingleRepoTest
+import kotlinx.coroutines.*
 
 class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
+  private lateinit var testCs: CoroutineScope
   private lateinit var logData: VcsLogData
 
   override fun setUp() {
     super.setUp()
-    logData = createLogData(repo, logProvider, testRootDisposable)
+    @Suppress("RAW_SCOPE_CREATION")
+    testCs = CoroutineScope(SupervisorJob())
+    logData = createLogDataIn(testCs, repo, logProvider)
+  }
+
+  override fun tearDown() {
+    try {
+      runBlocking {
+        testCs.coroutineContext.job.cancelAndJoin()
+      }
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun `test simple commits`() {

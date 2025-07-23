@@ -4,7 +4,6 @@
 package com.intellij.vcs.log.data.index
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
@@ -22,57 +21,50 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import org.jetbrains.annotations.ApiStatus.Internal
-import kotlin.time.Duration.Companion.milliseconds
-
 
 internal class IndexDiagnosticRunner(
+  parentCs: CoroutineScope,
   private val index: VcsLogModifiableIndex,
   private val storage: VcsLogStorage,
   private val roots: Collection<VirtualFile>,
   private val dataPackGetter: () -> DataPack,
   private val commitDetailsGetter: CommitDetailsGetter,
   private val errorHandler: VcsLogErrorHandler,
-  vcsLogData: VcsLogData
-) : Disposable {
-
-  @Suppress("SSBasedInspection")
-  private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO).also {
-    Disposer.register(this) {
-      it.cancel()
-    }
-  }
-
+  vcsLogData: VcsLogData,
+) {
   private val bigRepositoriesList = VcsLogBigRepositoriesList.getInstance()
-  private val rootsFlow = callbackFlow {
-    val indexListener = VcsLogIndex.IndexingFinishedListener { root ->
-      trySend(listOf(root))
-    }
-    val bigRepoListener = object : VcsLogBigRepositoriesList.Listener {
-      override fun onRepositoryAdded(root: VirtualFile) {
+
+  init {
+    val rootsFlow = callbackFlow {
+      val indexListener = VcsLogIndex.IndexingFinishedListener { root ->
         trySend(listOf(root))
       }
-    }
-    val dataPackListener = DataPackChangeListener {
-      trySend(roots.filter { root -> index.isIndexed(root) || bigRepositoriesList.isBig(root) })
+      val bigRepoListener = object : VcsLogBigRepositoriesList.Listener {
+        override fun onRepositoryAdded(root: VirtualFile) {
+          trySend(listOf(root))
+        }
+      }
+      val dataPackListener = DataPackChangeListener {
+        trySend(roots.filter { root -> index.isIndexed(root) || bigRepositoriesList.isBig(root) })
+      }
+
+      val listenerDisposable = Disposer.newDisposable()
+      bigRepositoriesList.addListener(bigRepoListener, listenerDisposable)
+      index.addListener(indexListener)
+
+      awaitClose {
+        index.removeListener(indexListener)
+        Disposer.dispose(listenerDisposable)
+        vcsLogData.removeDataPackChangeListener(dataPackListener)
+      }
     }
 
-    bigRepositoriesList.addListener(bigRepoListener, this@IndexDiagnosticRunner)
-    index.addListener(indexListener)
-
-    awaitClose {
-      index.removeListener(indexListener)
-      vcsLogData.removeDataPackChangeListener(dataPackListener)
+    parentCs.launch(Dispatchers.IO + CoroutineName("Index Diagnostic")) {
+      rootsFlow.collect(::runDiagnostic)
     }
   }
 
   private val checkedRoots = ConcurrentCollectionFactory.createConcurrentSet<VirtualFile>()
-
-  init {
-    Disposer.register(vcsLogData, this)
-    coroutineScope.launch {
-      rootsFlow.collect(::runDiagnostic)
-    }
-  }
 
   private suspend fun runDiagnostic(rootsToCheck: Collection<VirtualFile>) {
     try {
@@ -127,21 +119,6 @@ internal class IndexDiagnosticRunner(
     }
     finally {
       (dataGetter.indexStorageBackend as? PhmVcsLogStorageBackend)?.clearCaches()
-    }
-  }
-
-
-  @Suppress("SSBasedInspection")
-  override fun dispose() {
-    runBlocking {
-      try {
-        withTimeout(10.milliseconds) {
-          coroutineScope.coroutineContext.job.join()
-        }
-      }
-      catch (e: TimeoutCancellationException) {
-        thisLogger().warn("Index diagnostic shutdown for $roots is cancelled by timeout")
-      }
     }
   }
 

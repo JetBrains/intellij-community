@@ -17,8 +17,8 @@ class VcsLogProgress(parent: Disposable) : Disposable {
   private val disposableFlag = Disposer.newCheckedDisposable()
   private val lock = Any()
   private val listeners = ArrayList<ProgressListener>()
-  private val tasksWithVisibleProgress = HashSet<VcsLogProgressIndicator>()
-  private val tasksWithSilentProgress = HashSet<ProgressIndicator>()
+  private val tasksWithVisibleProgress = HashSet<RunningProgress>()
+  private val tasksWithSilentProgress = HashSet<RunningProgress>()
   private var isDisposed = false
 
   val isRunning: Boolean
@@ -47,6 +47,17 @@ class VcsLogProgress(parent: Disposable) : Disposable {
     return VcsLogProgressIndicator(visible, key)
   }
 
+  suspend fun <T> runWithProgress(key: ProgressKey, visible: Boolean = true, action: suspend () -> T): T {
+    val task = RunningCoroutine(key, visible)
+    started(task)
+    try {
+      return action()
+    }
+    finally {
+      stopped(task)
+    }
+  }
+
   fun addProgressIndicatorListener(listener: ProgressListener, parentDisposable: Disposable?) {
     synchronized(lock) {
       listeners.add(listener)
@@ -66,32 +77,32 @@ class VcsLogProgress(parent: Disposable) : Disposable {
     }
   }
 
-  private fun started(indicator: VcsLogProgressIndicator) {
+  private fun started(progress: RunningProgress) {
     synchronized(lock) {
-      if (isDisposed) {
-        indicator.cancel()
+      if (isDisposed && progress is ProgressIndicator) {
+        progress.cancel()
         return
       }
-      if (indicator.isVisible) {
+      if (progress.isVisible) {
         val oldKeys = runningKeys
-        tasksWithVisibleProgress.add(indicator)
+        tasksWithVisibleProgress.add(progress)
         keysUpdated(oldKeys)
       }
       else {
-        tasksWithSilentProgress.add(indicator)
+        tasksWithSilentProgress.add(progress)
       }
     }
   }
 
-  private fun stopped(indicator: VcsLogProgressIndicator) {
+  private fun stopped(progress: RunningProgress) {
     synchronized(lock) {
-      if (indicator.isVisible) {
+      if (progress.isVisible) {
         val oldKeys = runningKeys
-        tasksWithVisibleProgress.remove(indicator)
+        tasksWithVisibleProgress.remove(progress)
         keysUpdated(oldKeys)
       }
       else {
-        tasksWithSilentProgress.remove(indicator)
+        tasksWithSilentProgress.remove(progress)
       }
     }
   }
@@ -118,17 +129,29 @@ class VcsLogProgress(parent: Disposable) : Disposable {
   override fun dispose() {
     synchronized(lock) {
       isDisposed = true
-      for (indicator in tasksWithVisibleProgress) {
-        indicator.cancel()
+      for (task in tasksWithVisibleProgress) {
+        if (task is ProgressIndicator) {
+          task.cancel()
+        }
       }
-      for (indicator in tasksWithSilentProgress) {
-        indicator.cancel()
+      for (task in tasksWithSilentProgress) {
+        if (task is ProgressIndicator) {
+          task.cancel()
+        }
       }
     }
   }
 
-  private inner class VcsLogProgressIndicator(val isVisible: Boolean, key: ProgressKey) : ProgressIndicatorBase() {
-    var key: ProgressKey = key
+  private interface RunningProgress {
+    val key: ProgressKey
+    val isVisible: Boolean
+  }
+
+  private inner class VcsLogProgressIndicator(
+    override val isVisible: Boolean,
+    key: ProgressKey,
+  ) : ProgressIndicatorBase(), RunningProgress {
+    override var key: ProgressKey = key
       get() {
         synchronized(this@VcsLogProgress.lock) {
           return field
@@ -160,6 +183,11 @@ class VcsLogProgress(parent: Disposable) : Disposable {
       }
     }
   }
+
+  private class RunningCoroutine(
+    override val key: ProgressKey,
+    override val isVisible: Boolean,
+  ) : RunningProgress
 
   interface ProgressListener {
     fun progressChanged(keys: Collection<ProgressKey>)

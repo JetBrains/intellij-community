@@ -186,11 +186,9 @@ c:com.intellij.vcs.log.data.TopCommitsCache
 - storeDetails(java.util.List):V
 com.intellij.vcs.log.data.VcsCommitExternalStatus
 f:com.intellij.vcs.log.data.VcsLogData
-- com.intellij.openapi.Disposable
 - com.intellij.vcs.log.VcsLogDataProvider
 - sf:Companion:com.intellij.vcs.log.data.VcsLogData$Companion
 - f:addDataPackChangeListener(com.intellij.vcs.log.data.DataPackChangeListener):V
-- dispose():V
 - f:getAllUsers():java.util.Set
 - f:getCommitDetailsGetter():com.intellij.vcs.log.data.CommitDetailsGetter
 - getCommitId(I):com.intellij.vcs.log.CommitId
@@ -209,6 +207,7 @@ f:com.intellij.vcs.log.data.VcsLogData
 - f:getStorage():com.intellij.vcs.log.data.VcsLogStorage
 - f:getTopCommitsCache():com.intellij.vcs.log.data.TopCommitsCache
 - f:getUserNameResolver():com.intellij.vcs.log.data.VcsLogUserResolver
+- f:isDisposed():Z
 - sf:isIndexSwitchedOnInRegistry():Z
 - f:isSingleUser():Z
 - f:refresh(java.util.Collection):V

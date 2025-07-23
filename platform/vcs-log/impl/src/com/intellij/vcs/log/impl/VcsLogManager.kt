@@ -15,10 +15,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.BitUtil
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.RawSwingDispatcher
@@ -37,10 +37,7 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.collection
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.ints.IntSets
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.*
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
@@ -53,14 +50,16 @@ import java.util.concurrent.atomic.AtomicBoolean
 @NonExtendable
 open class VcsLogManager @Internal constructor(
   @Internal protected val project: Project,
+  parentCs: CoroutineScope,
   val uiProperties: VcsLogTabsProperties,
   logProviders: Map<VirtualFile, VcsLogProvider>,
   @Internal val name: String,
   isIndexEnabled: Boolean,
   private val errorHandler: ((VcsLogErrorHandler.Source, Throwable) -> Unit)?,
 ) {
-  private val dataDisposable = Disposer.newDisposable("Vcs Log Data Disposable for $name")
-  val dataManager: VcsLogData = VcsLogData(project, logProviders, MyErrorHandler(), isIndexEnabled, dataDisposable)
+  @Internal
+  protected val cs: CoroutineScope = parentCs.childScope("Vcs Log manager $name")
+  val dataManager: VcsLogData = VcsLogData(project, cs, logProviders, MyErrorHandler(), isIndexEnabled)
   private val postponableRefresher = PostponableLogRefresher(dataManager)
 
   private val managedUis = mutableMapOf<String, VcsLogUiEx>()
@@ -73,7 +72,17 @@ open class VcsLogManager @Internal constructor(
   val isDisposed: Boolean get() = disposed.get()
 
   init {
-    refreshLogOnVcsEvents(dataManager, logProviders, postponableRefresher)
+    cs.launch(start = CoroutineStart.UNDISPATCHED) {
+      val refresherDisposable = Disposer.newDisposable("Vcs Log Data Refresh for $name")
+      refreshLogOnVcsEvents(refresherDisposable, logProviders, postponableRefresher)
+
+      try {
+        awaitCancellation()
+      }
+      finally {
+        Disposer.dispose(refresherDisposable)
+      }
+    }
   }
 
   private val isLogVisible: Boolean
@@ -254,17 +263,6 @@ open class VcsLogManager @Internal constructor(
     Disposer.dispose(statusBarProgress)
   }
 
-  @Internal
-  @RequiresBackgroundThread
-  private fun disposeData() {
-    // since disposing log triggers flushing indexes on disk we do not want to do it in EDT
-    // disposing of VcsLogManager is done by manually executing dispose(@Nullable Runnable callback)
-    // the above method first disposes ui in EDT, then disposes everything else in a background
-    ThreadingAssertions.assertBackgroundThread()
-    Disposer.dispose(dataDisposable)
-    LOG.debug("Disposed $name")
-  }
-
   private fun startDisposing(): Boolean {
     val wasNotStartedBefore = disposed.compareAndSet(false, true)
     if (!wasNotStartedBefore) {
@@ -284,13 +282,14 @@ open class VcsLogManager @Internal constructor(
   suspend fun dispose(useRawSwingDispatcher: Boolean = false, clearStorage: Boolean = false) {
     if (!startDisposing()) return
     withContext(NonCancellable) {
+      cs.cancel()
       val uiDispatcher = if (useRawSwingDispatcher) RawSwingDispatcher else Dispatchers.EDT
       withContext(uiDispatcher) {
         disposeUi()
       }
       withContext(Dispatchers.Default) {
         val storageToClear = if (clearStorage) storageIds() else emptyList()
-        disposeData()
+        dataManager.awaitDispose()
 
         for (storageId in storageToClear) {
           try {
@@ -307,6 +306,7 @@ open class VcsLogManager @Internal constructor(
           }
         }
       }
+      LOG.debug("Disposed ${name}")
     }
   }
 
