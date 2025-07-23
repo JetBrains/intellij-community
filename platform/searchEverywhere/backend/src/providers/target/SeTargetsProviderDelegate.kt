@@ -65,7 +65,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
           val weight = t.weight
           val legacyItem = t.item as? ItemWithPresentation<*> ?: return true
           val matchers = (contributorWrapper.contributor as? PSIPresentationBgRendererWrapper)
-            ?.getNonComponentItemMatchers({ _ -> defaultMatchers }, t.item)
+            ?.getNonComponentItemMatchers({ _ -> defaultMatchers }, legacyItem.getItem())
 
           return collector.put(SeTargetItem(legacyItem, matchers, weight, contributorWrapper.contributor, getExtendedDescription(legacyItem)))
         }
