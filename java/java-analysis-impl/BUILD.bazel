@@ -47,6 +47,7 @@ jvm_library(
     "//java/codeserver/highlighting",
     "//java/codeserver/core",
     "//platform/refactoring",
+    "//xml/xml-analysis-api:analysis",
   ],
   exports = [
     "//platform/analysis-impl",

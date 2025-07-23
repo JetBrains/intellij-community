@@ -47,6 +47,7 @@ jvm_library(
     "@lib//:kotlin-test",
     "//plugins/devkit/devkit-core:core",
     "//xml/xml-psi-api:psi",
+    "//xml/xml-analysis-api:analysis",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/base/plugin",

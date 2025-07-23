@@ -18,7 +18,6 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//platform/projectModel-api:projectModel",
-    "//xml/openapi:xml",
     "//platform/lang-api:lang",
     "//platform/platform-api:ide",
     "//platform/extensions",
@@ -26,6 +25,7 @@ jvm_library(
     "//platform/util:util-ui",
     "//xml/xml-psi-api:psi",
     "//platform/core-ui",
+    "//xml/xml-analysis-api:analysis",
   ],
   runtime_deps = [
     ":dom_resources",

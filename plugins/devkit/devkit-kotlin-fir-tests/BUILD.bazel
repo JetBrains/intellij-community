@@ -27,6 +27,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//xml/dom-openapi:dom",
+    "//xml/xml-analysis-api:analysis",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/fir/tests:tests_test_lib",
     "@lib//:jetbrains-annotations",
