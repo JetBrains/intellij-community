@@ -78,7 +78,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     val collectedResults = searchResults.take(REPORTED_ITEMS_LIMIT)
       .map { result -> result.toObjectEventData() }
 
-    SEARCH_RESTARTED.log(project) {
+    STATE_CHANGED.log(project) {
       add(SESSION_ID.with(sessionId))
       add(SEARCH_INDEX_DATA_KEY.with(searchState.index))
       add(ORDER_BY_ML_GROUP.with(searchState.orderByMl))
@@ -225,14 +225,14 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                                                           IS_MIXED_LIST,
                                                                           *SearchEverywhereContextFeaturesProvider.getContextFields().toTypedArray())
 
-  internal val SEARCH_RESTARTED: VarargEventId = GROUP.registerVarargEvent("searchRestarted",
-                                                                           "An event denoting restart of search",
-                                                                           SESSION_ID, SEARCH_INDEX_DATA_KEY,
-                                                                           ORDER_BY_ML_GROUP,
-                                                                           TOTAL_NUMBER_OF_ITEMS_DATA_KEY, SE_TAB_ID_KEY,
-                                                                           TIME_TO_FIRST_RESULT_DATA_KEY, REBUILD_REASON_KEY,
-                                                                           SEARCH_STATE_FEATURES_DATA_KEY, COLLECTED_RESULTS_DATA_KEY,
-                                                                           CONTRIBUTOR_FEATURES_LIST)
+  internal val STATE_CHANGED: VarargEventId = GROUP.registerVarargEvent("stateChanged",
+                                                                        "An event denoting change of the search state",
+                                                                        SESSION_ID, SEARCH_INDEX_DATA_KEY,
+                                                                        ORDER_BY_ML_GROUP,
+                                                                        TOTAL_NUMBER_OF_ITEMS_DATA_KEY, SE_TAB_ID_KEY,
+                                                                        TIME_TO_FIRST_RESULT_DATA_KEY, REBUILD_REASON_KEY,
+                                                                        SEARCH_STATE_FEATURES_DATA_KEY, COLLECTED_RESULTS_DATA_KEY,
+                                                                        CONTRIBUTOR_FEATURES_LIST)
   internal val ITEM_SELECTED: VarargEventId = GROUP.registerVarargEvent("itemSelected",
                                                                         "An event denoting selection of an item from search results",
                                                                         SESSION_ID, SEARCH_INDEX_DATA_KEY,

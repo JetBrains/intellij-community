@@ -12,11 +12,11 @@ import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatistics
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.ELEMENT_CONTRIBUTOR
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.ITEM_SELECTED
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.REBUILD_REASON_KEY
-import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SEARCH_RESTARTED
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_DURATION
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_FINISHED
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_ID
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_STARTED
+import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.STATE_CHANGED
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -40,20 +40,20 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
   fun `SE open and instant close results in one session started and one session finished event`() {
     assertEquals(3, immediatelyCancelledSessionEvents.size)
     assertEquals(SESSION_STARTED.eventId, immediatelyCancelledSessionEvents.first().event.id)
-    assertEquals(SEARCH_RESTARTED.eventId, immediatelyCancelledSessionEvents[1].event.id)
+    assertEquals(STATE_CHANGED.eventId, immediatelyCancelledSessionEvents[1].event.id)
     assertEquals(SESSION_FINISHED.eventId, immediatelyCancelledSessionEvents.last().event.id)
   }
 
   @Test
   fun `first search restarted event has search started restart reason`() {
-    val searchRestartedEvent = immediatelyCancelledSessionEvents.first { it.event.id == SEARCH_RESTARTED.eventId }
+    val searchRestartedEvent = immediatelyCancelledSessionEvents.first { it.event.id == STATE_CHANGED.eventId }
 
-    assertTrue("${SEARCH_RESTARTED.eventId} event should contain ${REBUILD_REASON_KEY.name} in its data",
+    assertTrue("${STATE_CHANGED.eventId} event should contain ${REBUILD_REASON_KEY.name} in its data",
                REBUILD_REASON_KEY.name in searchRestartedEvent.event.data)
 
     val reportedRestartRestored = searchRestartedEvent.event.data[REBUILD_REASON_KEY.name]
 
-    assertTrue("First ${SEARCH_RESTARTED.eventId} event's ${REBUILD_REASON_KEY.name} should be ${SearchRestartReason.SEARCH_STARTED}",
+    assertTrue("First ${STATE_CHANGED.eventId} event's ${REBUILD_REASON_KEY.name} should be ${SearchRestartReason.SEARCH_STARTED}",
                reportedRestartRestored == SearchRestartReason.SEARCH_STARTED.toString())
   }
 
@@ -62,8 +62,8 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
     assertEquals("Expected 1 SESSION_STARTED event",
                  1, actionSelectionEvents.count { it.event.id == SESSION_STARTED.eventId })
 
-    assertEquals("Expected 3 SEARCH_RESTARTED events",
-                 4, actionSelectionEvents.count { it.event.id == SEARCH_RESTARTED.eventId })
+    assertEquals("Expected 3 STATE_CHANGED events",
+                 4, actionSelectionEvents.count { it.event.id == STATE_CHANGED.eventId })
 
     assertEquals("Expected 1 ITEM_SELECTED event",
                  1, actionSelectionEvents.count { it.event.id == ITEM_SELECTED.eventId })
@@ -82,7 +82,7 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
 
   @Test
   fun `item has a contributor info`() {
-    val lastEventData = actionSelectionEvents.last { it.event.id == SEARCH_RESTARTED.eventId }.event.data
+    val lastEventData = actionSelectionEvents.last { it.event.id == STATE_CHANGED.eventId }.event.data
     val collectedItems = assertInstanceOf(lastEventData[COLLECTED_RESULTS_DATA_KEY.name], List::class.java)
     val firstItem = assertInstanceOf(collectedItems.first(), Map::class.java)
     assertTrue(ELEMENT_CONTRIBUTOR.name in firstItem)
@@ -91,7 +91,7 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
 
   @Test
   fun `contributor features are in a separate list`() {
-    val lastEventData = actionSelectionEvents.last { it.event.id == SEARCH_RESTARTED.eventId }.event.data
+    val lastEventData = actionSelectionEvents.last { it.event.id == STATE_CHANGED.eventId }.event.data
 
     assertTrue(CONTRIBUTOR_FEATURES_LIST.name in lastEventData)
 
@@ -122,7 +122,7 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
       closePopup()
     }
 
-    val searchRestartedEvents = events.filter { it.event.id == SEARCH_RESTARTED.eventId }
+    val searchRestartedEvents = events.filter { it.event.id == STATE_CHANGED.eventId }
     assertNotEmpty(searchRestartedEvents)
 
     val lastSearchRestartedEvent = searchRestartedEvents.last()
@@ -147,12 +147,12 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
 
   @Test
   fun `search restarted events contain required fields`() {
-    actionSelectionEvents.filter { it.event.id == SEARCH_RESTARTED.eventId }
+    actionSelectionEvents.filter { it.event.id == STATE_CHANGED.eventId }
       .forEach { event ->
         val data = event.event.data
 
-        SEARCH_RESTARTED.getFields().forEach { field ->
-          assertTrue("${SEARCH_RESTARTED.eventId} event should contain ${field.name}", field.name in data)
+        STATE_CHANGED.getFields().forEach { field ->
+          assertTrue("${STATE_CHANGED.eventId} event should contain ${field.name}", field.name in data)
         }
       }
   }
@@ -176,7 +176,7 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
       closePopup()
     }
 
-    val searchRestartedEvents = events.filter { it.event.id == SEARCH_RESTARTED.eventId }
+    val searchRestartedEvents = events.filter { it.event.id == STATE_CHANGED.eventId }
     assertNotEmpty(searchRestartedEvents)
 
     // Check that search index is incremented for each search restart
