@@ -59,6 +59,13 @@
       <bundleName>messages.ShBundle</bundleName>
       <categoryKey>intention.shell.script</categoryKey>
     </intentionAction>
+    <intentionAction>
+      <language>Shell Script</language>
+      <className>com.intellij.sh.backend.rename.ShRenameAllOccurrencesIntention</className>
+      <bundleName>messages.ShBundle</bundleName>
+      <categoryKey>intention.shell.script</categoryKey>
+    </intentionAction>
+    <renameHandler implementation="com.intellij.sh.backend.rename.ShRenameHandler"/>
     <defaultLiveTemplates file="liveTemplates/ShellScript.xml"/>
     <defaultLiveTemplates file="liveTemplates/ShellScriptArray.xml"/>
     <defaultLiveTemplates file="liveTemplates/ShellScriptHidden.xml" hidden="true"/>
