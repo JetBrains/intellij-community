@@ -15,7 +15,6 @@
     <lang.commenter language="Shell Script" implementationClass="com.intellij.sh.editor.ShCommenter"/>
     <lang.foldingBuilder language="Shell Script" implementationClass="com.intellij.sh.editor.ShFoldingBuilder"/>
     <lang.quoteHandler language="Shell Script" implementationClass="com.intellij.sh.ShQuoteHandler"/>
-    <lang.elementManipulator forClass="com.intellij.sh.psi.ShLiteral" implementationClass="com.intellij.sh.psi.manipulator.ShLiteralManipulator" />
     <editor.backspaceModeOverride language="Shell Script" implementationClass="com.intellij.sh.ShBackspaceModeOverride"/>
 
     <annotator language="Shell Script" implementationClass="com.intellij.sh.ShAnnotator"/>
