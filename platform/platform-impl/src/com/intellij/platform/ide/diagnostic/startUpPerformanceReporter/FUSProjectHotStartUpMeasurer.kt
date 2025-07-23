@@ -161,6 +161,7 @@ object FUSProjectHotStartUpMeasurer {
     return MyMarker
   }
 
+  @JvmStatic
   fun getStartUpContextElementToPass(): CoroutineContext? {
     val threadContext = currentThreadContext()
     if (!threadContext.isProperContext()) return null
@@ -211,6 +212,20 @@ object FUSProjectHotStartUpMeasurer {
     val projectId = ProjectId()
     val hasSettings = ProjectUtil.isValidProjectPath(projectFile)
     channel.trySend(Event.ProjectPathReportEvent(projectId, hasSettings))
+    return withContext(MyProjectMarker(projectId)) {
+      block.invoke()
+    }
+  }
+
+  /**
+   * Invokes [block] in coroutine context with project marker used in later reporting;
+   * see [withProjectContextElement]
+   */
+  suspend fun <T> withLightEditProjectContextElement(block: suspend () -> T): T {
+    if (!currentThreadContext().isProperContext()) {
+      return block.invoke()
+    }
+    val projectId = ProjectId()
     return withContext(MyProjectMarker(projectId)) {
       block.invoke()
     }

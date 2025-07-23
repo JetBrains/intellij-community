@@ -388,7 +388,9 @@ object CommandLineProcessor {
               )
             }
             else if (command.lightEditMode) {
-              LightEditService.getInstance().showEditorWindow()
+              FUSProjectHotStartUpMeasurer.withLightEditProjectContextElement {
+                LightEditService.getInstance().showEditorWindow()
+              }
               CommandLineProcessorResult(project = LightEditService.getInstance().project, future = OK_FUTURE)
             }
             else {
