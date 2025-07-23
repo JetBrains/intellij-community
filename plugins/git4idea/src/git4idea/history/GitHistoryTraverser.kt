@@ -2,12 +2,14 @@
 package git4idea.history
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
+import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.GitCommit
 
-interface GitHistoryTraverser : Disposable {
+interface GitHistoryTraverser {
   /**
    * Start traversing down through the repository history started from [start].
    * Each commit will be handled by [commitHandler] which could return false to finish traversing
@@ -134,4 +136,12 @@ interface GitHistoryTraverser : Disposable {
     val id: VcsLogCommitStorageIndex,
     val parents: List<VcsLogCommitStorageIndex>
   )
+
+  companion object {
+    fun create(project: Project, parentDisposable: Disposable): GitHistoryTraverser? {
+      val logData = VcsProjectLog.getInstance(project).dataManager
+                      ?.takeIf { it.dataPack.isFull } ?: return null
+      return GitHistoryTraverserImpl(project, logData, parentDisposable)
+    }
+  }
 }

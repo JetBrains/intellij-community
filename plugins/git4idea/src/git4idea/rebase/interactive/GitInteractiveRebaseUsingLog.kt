@@ -5,6 +5,8 @@ import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.use
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsShortCommitDetails
@@ -29,36 +31,38 @@ internal fun getEntriesUsingLog(
   commit: VcsShortCommitDetails,
   logData: VcsLogData,
 ): List<GitRebaseEntryGeneratedUsingLog> {
-  val traverser: GitHistoryTraverser = GitHistoryTraverserImpl(repository.project, logData)
-  val details = mutableListOf<VcsCommitMetadata>()
-  try {
-    traverser.traverse(repository.root) { (commitId, parents) ->
-      // commit is not root or merge
-      if (parents.size == 1) {
-        loadMetadataLater(commitId) { metadata ->
-          details.add(metadata)
+  Disposer.newDisposable().use {
+    val traverser: GitHistoryTraverser = GitHistoryTraverserImpl(repository.project, logData, it)
+    val details = mutableListOf<VcsCommitMetadata>()
+    try {
+      traverser.traverse(repository.root) { (commitId, parents) ->
+        // commit is not root or merge
+        if (parents.size == 1) {
+          loadMetadataLater(commitId) { metadata ->
+            details.add(metadata)
+          }
+          val hash = traverser.toHash(commitId)
+          hash != commit.id
         }
-        val hash = traverser.toHash(commitId)
-        hash != commit.id
-      }
-      else {
-        throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.MERGE)
+        else {
+          throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.MERGE)
+        }
       }
     }
-  }
-  catch (e: VcsException) {
-    throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.UNRESOLVED_HASH)
-  }
+    catch (e: VcsException) {
+      throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.UNRESOLVED_HASH)
+    }
 
-  if (details.last().id != commit.id) {
-    throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.UNEXPECTED_HASH)
-  }
+    if (details.last().id != commit.id) {
+      throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.UNEXPECTED_HASH)
+    }
 
-  if (details.any { detail -> GitSquashedCommitsMessage.isAutosquashCommitMessage(detail.subject) }) {
-    throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.FIXUP_SQUASH)
-  }
+    if (details.any { detail -> GitSquashedCommitsMessage.isAutosquashCommitMessage(detail.subject) }) {
+      throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.FIXUP_SQUASH)
+    }
 
-  return details.map { GitRebaseEntryGeneratedUsingLog(it) }.reversed()
+    return details.map { GitRebaseEntryGeneratedUsingLog(it) }.reversed()
+  }
 }
 
 internal fun interactivelyRebaseUsingLog(repository: GitRepository, commit: VcsShortCommitDetails, logData: VcsLogData) {

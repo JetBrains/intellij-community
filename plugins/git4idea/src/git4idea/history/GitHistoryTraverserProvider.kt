@@ -2,10 +2,11 @@
 package git4idea.history
 
 import com.intellij.openapi.project.Project
-import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.openapi.util.Disposer
 
+@Deprecated("Causes memory leaks due to incorrect Disposable usage",
+            replaceWith = ReplaceWith("GitHistoryTraverser.create(project, parentDisposable)", "git4idea.history.GitHistoryTraverser"),
+            level = DeprecationLevel.ERROR)
 fun getTraverser(project: Project): GitHistoryTraverser? {
-  val logData = VcsProjectLog.getInstance(project).dataManager
-                  ?.takeIf { it.dataPack.isFull } ?: return null
-  return GitHistoryTraverserImpl(project, logData)
+  return GitHistoryTraverser.create(project, Disposer.newDisposable("Git History Traverser"))
 }

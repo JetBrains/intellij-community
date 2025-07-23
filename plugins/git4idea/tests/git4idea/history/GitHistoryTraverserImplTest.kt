@@ -24,7 +24,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
   private lateinit var logData: VcsLogData
 
   private val traverser: GitHistoryTraverser
-    get() = GitHistoryTraverserImpl(repo.project, logData)
+    get() = GitHistoryTraverserImpl(repo.project, logData, testRootDisposable)
 
   override fun setUp() {
     super.setUp()

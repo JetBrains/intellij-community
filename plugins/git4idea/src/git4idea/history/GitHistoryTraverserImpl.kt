@@ -30,7 +30,11 @@ import git4idea.history.GitHistoryTraverser.Traverse
 import git4idea.history.GitHistoryTraverser.TraverseCommitInfo
 import java.util.*
 
-internal class GitHistoryTraverserImpl(private val project: Project, private val logData: VcsLogData) : GitHistoryTraverser {
+internal class GitHistoryTraverserImpl(
+  private val project: Project,
+  private val logData: VcsLogData,
+  parentDisposable: Disposable,
+) : GitHistoryTraverser, Disposable {
   private val requestedRootsIndexingListeners = EventDispatcher.create(RequestedRootsIndexingListener::class.java)
 
   private val indexListener = VcsLogIndex.IndexingFinishedListener {
@@ -39,7 +43,7 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
 
   init {
     logData.index.addListener(indexListener)
-    Disposer.register(logData, this)
+    Disposer.register(parentDisposable, this)
   }
 
   override fun toHash(id: VcsLogCommitStorageIndex) = logData.getCommitId(id)!!.hash
