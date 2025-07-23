@@ -8,5 +8,5 @@ import org.jetbrains.jewel.markdown.InlineMarkdown
 /** An extension for the Jewel images rendering engine. */
 @ExperimentalJewelApi
 public interface ImageRendererExtension {
-    @Composable public fun renderImagesContent(image: InlineMarkdown.Image): InlineTextContent
+    @Composable public fun renderImageContent(image: InlineMarkdown.Image): InlineTextContent
 }

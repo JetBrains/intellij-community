@@ -123,7 +123,7 @@ public class Coil3ImageRendererExtensionImplTest {
 
     private fun setContent(extension: Coil3ImageRendererExtensionImpl, image: InlineMarkdown.Image) {
         composeTestRule.setContent {
-            val inlineContent = mapOf("inlineTextContent" to extension.renderImagesContent(image))
+            val inlineContent = mapOf("inlineTextContent" to extension.renderImageContent(image))
             val annotatedString = buildAnnotatedString {
                 append("Rendered inline text image: ")
                 appendInlineContent("inlineTextContent", "[rendered image]")
