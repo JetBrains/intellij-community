@@ -47,8 +47,8 @@ import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.*
-import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.psi.types.PyTypeVarType.Variance
+import com.jetbrains.python.sdk.PythonSdkUtil
 
 class PyTypeHintsInspection : PyInspection() {
 
@@ -914,31 +914,31 @@ class PyTypeHintsInspection : PyInspection() {
         return clazzType.elementTypes.filterIsInstance<PyTypeParameterType>()
       }
 
-      val names = getTypeParameters(cls).map { it.name }.toMutableSet()
-      if (names.isEmpty()) {
+      val typeParams = getTypeParameters(cls).map { it.name }.toMutableSet()
+      if (typeParams.isEmpty()) {
         return
       }
-      val namesUsedByOuterScopes = mutableListOf<String>()
-      var scopeOwner: ScopeOwner? = cls
+      val typeParamsUsedByOuterScopes = mutableListOf<String>()
+      var currentScope: ScopeOwner? = cls
       do {
-        scopeOwner = PsiTreeUtil.getParentOfType(scopeOwner, PyClass::class.java, PyFunction::class.java)
-        val typeParameters = when (scopeOwner) {
-          is PyClass -> getTypeParameters(scopeOwner)
-          is PyFunction -> PyTypingTypeProvider.collectTypeParameters(scopeOwner, myTypeEvalContext)
+        currentScope = PsiTreeUtil.getParentOfType(currentScope, PyClass::class.java, PyFunction::class.java)
+        val currentScopeTypeParams = when (currentScope) {
+          is PyClass -> getTypeParameters(currentScope)
+          is PyFunction -> PyTypingTypeProvider.collectTypeParameters(currentScope, myTypeEvalContext)
           else -> break
         }
-        for (typeParameter in typeParameters) {
-          val name = typeParameter.name
-          if (names.remove(name)) {
-            namesUsedByOuterScopes.add(name)
+        for (typeParam in currentScopeTypeParams) {
+          val typeParamName = typeParam.name
+          if (typeParams.remove(typeParamName)) {
+            typeParamsUsedByOuterScopes.add(typeParamName)
           }
         }
       }
       while (true)
 
-      if (namesUsedByOuterScopes.isNotEmpty()) {
+      if (typeParamsUsedByOuterScopes.isNotEmpty()) {
         registerProblem(cls.nameIdentifier, PyPsiBundle.message("INSP.type.hints.some.type.variables.are.used.by.an.outer.scope",
-                                                                namesUsedByOuterScopes.joinToString(", ")))
+                                                                typeParamsUsedByOuterScopes.joinToString(", ")))
       }
     }
 
