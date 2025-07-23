@@ -10,10 +10,7 @@ import org.jetbrains.plugins.textmate.language.syntax.TextMateCapture
 import org.jetbrains.plugins.textmate.language.syntax.lexer.SyntaxMatchUtils.replaceGroupsWithMatchDataInCaptures
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateLexerState.Companion.notMatched
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh
-import org.jetbrains.plugins.textmate.regex.MatchData
-import org.jetbrains.plugins.textmate.regex.TextMateRange
-import org.jetbrains.plugins.textmate.regex.TextMateString
-import org.jetbrains.plugins.textmate.regex.byteOffsetByCharOffset
+import org.jetbrains.plugins.textmate.regex.*
 import kotlin.math.min
 
 class TextMateLexerCore(
@@ -23,19 +20,27 @@ class TextMateLexerCore(
   private val myStripWhitespaces: Boolean,
 ) {
 
-  private var myCurrentOffset: Int = 0
+  private var myCurrentOffset: TextMateCharOffset = 0.charOffset()
   private var myText: CharSequence = ""
   private var myCurrentScope: TextMateScope = TextMateScope.EMPTY
   private var myNestedScope = ArrayDeque<Int>()
   private var myStates = persistentListOf<TextMateLexerState>()
 
   fun getCurrentOffset(): Int {
+    return myCurrentOffset.offset
+  }
+
+  fun getCurrentCharOffset(): TextMateCharOffset {
     return myCurrentOffset
   }
 
-  fun init(text: CharSequence, startOffset: Int) {
+  fun init(text: CharSequence, startCharOffset: Int) {
+    init(text, startCharOffset.charOffset())
+  }
+
+  fun init(text: CharSequence, startCharOffset: TextMateCharOffset) {
     myText = text
-    myCurrentOffset = startOffset
+    myCurrentOffset = startCharOffset
 
     myStates = persistentListOf(notMatched(languageDescriptor.rootSyntaxNode))
     myCurrentScope = TextMateScope(languageDescriptor.scopeName, null)
@@ -45,7 +50,7 @@ class TextMateLexerCore(
   fun advanceLine(checkCancelledCallback: Runnable?): MutableList<TextmateToken> {
     val startLineOffset = myCurrentOffset
     val endLineOffset = myText.indexOf('\n', startIndex = startLineOffset).let {
-      if (it == -1) myText.length else it + 1
+      if (it.offset == -1) myText.length.charOffset() else TextMateCharOffset(it.offset + 1)
     }
 
     val lineCharSequence = myText.subSequence(startLineOffset, endLineOffset)
@@ -55,8 +60,8 @@ class TextMateLexerCore(
                            output = output,
                            states = myStates,
                            lineStartOffset = startLineOffset,
-                           linePosition = 0,
-                           lineByteOffset = 0,
+                           linePosition = 0.charOffset(),
+                           lineByteOffset = 0.byteOffset(),
                            checkCancelledCallback = checkCancelledCallback)
       addToken(output, endLineOffset)
       output
@@ -67,8 +72,8 @@ class TextMateLexerCore(
                            output = output,
                            states = myStates,
                            lineStartOffset = startLineOffset,
-                           linePosition = 0,
-                           lineByteOffset = 0,
+                           linePosition = 0.charOffset(),
+                           lineByteOffset = 0.byteOffset(),
                            checkCancelledCallback = checkCancelledCallback)
       output
     }
@@ -78,9 +83,9 @@ class TextMateLexerCore(
     line: CharSequence,
     output: MutableList<TextmateToken>,
     states: PersistentList<TextMateLexerState>,
-    lineStartOffset: Int,
-    linePosition: Int,
-    lineByteOffset: Int,
+    lineStartOffset: TextMateCharOffset,
+    linePosition: TextMateCharOffset,
+    lineByteOffset: TextMateByteOffset,
     checkCancelledCallback: Runnable?,
   ): PersistentList<TextMateLexerState> {
     var states = states
@@ -90,8 +95,8 @@ class TextMateLexerCore(
     var lastSuccessStateOccursCount = 0
     var lastMovedOffset = lineStartOffset
 
-    val matchBeginString = lineStartOffset == 0 && linePosition == 0
-    var anchorByteOffset = -1 // makes sense only for a line, cannot be used across lines
+    val matchBeginString = lineStartOffset.offset == 0 && linePosition.offset == 0
+    var anchorByteOffset = (-1).byteOffset() // makes sense only for a line, cannot be used across lines
 
     return mySyntaxMatcher.matchingString(line) { string ->
       var whileStates = states
@@ -108,7 +113,7 @@ class TextMateLexerCore(
                                                             checkCancelledCallback = checkCancelledCallback)
           if (matchWhile.matched) {
             // todo: support whileCaptures
-            if (anchorByteOffset == -1) {
+            if (anchorByteOffset.offset == -1) {
               anchorByteOffset = matchWhile.byteRange().end
             }
           }
@@ -116,7 +121,7 @@ class TextMateLexerCore(
             closeScopeSelector(output, linePosition + lineStartOffset)
             closeScopeSelector(output, linePosition + lineStartOffset)
             states = whileStates
-            anchorByteOffset = -1
+            anchorByteOffset = (-1).byteOffset()
           }
         }
       }
@@ -137,7 +142,7 @@ class TextMateLexerCore(
         val currentRule = currentState.syntaxRule
         val currentMatch = currentState.matchData
 
-        var endPosition: Int
+        var endPosition: TextMateCharOffset
         val endMatch = mySyntaxMatcher.matchStringRegex(keyName = Constants.StringKey.END,
                                                         string = string,
                                                         byteOffset = lineByteOffset,
@@ -145,6 +150,7 @@ class TextMateLexerCore(
                                                         matchBeginString = matchBeginString,
                                                         lexerState = lastState,
                                                         checkCancelledCallback = checkCancelledCallback)
+        val lineLength = line.length.charOffset()
         if (endMatch.matched && (!currentMatch.matched || currentMatch.byteRange().start >= endMatch.byteRange().start || lastState == currentState)) {
           // todo: applyEndPatternLast
           val poppedState = states.last()
@@ -167,7 +173,7 @@ class TextMateLexerCore(
           closeScopeSelector(output, endPosition + lineStartOffset) // closing basic scope
 
           if (linePosition == endPosition && containsLexerState(localStates, poppedState) && poppedState.enterByteOffset == lineByteOffset) {
-            addToken(output, line.length + lineStartOffset)
+            addToken(output, lineLength + lineStartOffset)
             break
           }
           localStates.remove(poppedState)
@@ -202,13 +208,13 @@ class TextMateLexerCore(
           }
 
           if (linePosition == endPosition && containsLexerState(localStates, currentState)) {
-            addToken(output, line.length + lineStartOffset)
+            addToken(output, lineLength + lineStartOffset)
             break
           }
           localStates.add(currentState)
         }
         else {
-          addToken(output, line.length + lineStartOffset)
+          addToken(output, lineLength + lineStartOffset)
           break
         }
 
@@ -220,7 +226,7 @@ class TextMateLexerCore(
         }
         else if (lastSuccessState == states) {
           if (lastSuccessStateOccursCount > MAX_LOOPS_COUNT) {
-            addToken(output, line.length + lineStartOffset)
+            addToken(output, lineLength + lineStartOffset)
             break
           }
           lastSuccessStateOccursCount++
@@ -244,16 +250,13 @@ class TextMateLexerCore(
     matchData: MatchData,
     string: TextMateString,
     line: CharSequence,
-    startLineOffset: Int,
+    startLineOffset: TextMateCharOffset,
     states: PersistentList<TextMateLexerState>,
     checkCancelledCallback: Runnable?,
   ): Boolean {
-    val captures = rule.getCaptureRules(captureKey)
-    if (captures == null) {
-      return false
-    }
+    val captures = rule.getCaptureRules(captureKey) ?: return false
 
-    val activeCaptureRanges = ArrayDeque<TextMateRange>()
+    val activeCaptureRanges = ArrayDeque<TextMateCharRange>()
     for (group in 0..<matchData.count()) {
       val capture = if (group < captures.size) captures[group] else null
       if (capture == null) {
@@ -279,25 +282,25 @@ class TextMateLexerCore(
         else {
           captureName
         }
-        var selectorStartOffset = 0
-        var indexOfSpace = scopeName.indexOf(char = ' ', startIndex = selectorStartOffset, ignoreCase = false)
-        if (indexOfSpace == -1) {
+        var selectorStartOffset = 0.charOffset()
+        var indexOfSpace = scopeName.indexOf(char = ' ', startIndex = selectorStartOffset)
+        if (indexOfSpace.offset == -1) {
           openScopeSelector(output, scopeName, startLineOffset + captureRange.start)
           activeCaptureRanges.addLast(captureRange)
         }
         else {
-          while (indexOfSpace >= 0) {
+          while (indexOfSpace.offset >= 0) {
             openScopeSelector(output, scopeName.subSequence(selectorStartOffset, indexOfSpace), startLineOffset + captureRange.start)
-            selectorStartOffset = indexOfSpace + 1
-            indexOfSpace = scopeName.indexOf(char = ' ', startIndex = selectorStartOffset, ignoreCase = false)
+            selectorStartOffset = TextMateCharOffset(indexOfSpace.offset + 1)
+            indexOfSpace = scopeName.indexOf(char = ' ', startIndex = selectorStartOffset)
             activeCaptureRanges.addLast(captureRange)
           }
-          openScopeSelector(output, scopeName.subSequence(selectorStartOffset, scopeName.length), startLineOffset + captureRange.start)
+          openScopeSelector(output, scopeName.subSequence(selectorStartOffset, scopeName.length.charOffset()), startLineOffset + captureRange.start)
           activeCaptureRanges.addLast(captureRange)
         }
       }
       else if (capture is TextMateCapture.Rule) {
-        val capturedString = line.subSequence(0, captureRange.end)
+        val capturedString = line.subSequence(0.charOffset(), captureRange.end)
         mySyntaxMatcher.matchingString(capturedString) { capturedTextMateString ->
           val captureState = TextMateLexerState(syntaxRule = capture.node,
                                                 matchData = matchData,
@@ -323,7 +326,7 @@ class TextMateLexerCore(
     return true
   }
 
-  private fun openScopeSelector(output: MutableList<TextmateToken>, name: CharSequence?, position: Int) {
+  private fun openScopeSelector(output: MutableList<TextmateToken>, name: CharSequence?, position: TextMateCharOffset) {
     addToken(output, position)
     var count = 0
     var prevIndexOfSpace = 0
@@ -340,7 +343,7 @@ class TextMateLexerCore(
     myNestedScope.addLast(count + 1)
   }
 
-  private fun closeScopeSelector(output: MutableList<TextmateToken>, position: Int) {
+  private fun closeScopeSelector(output: MutableList<TextmateToken>, position: TextMateCharOffset) {
     val lastOpenedName = myCurrentScope.scopeName
     if (lastOpenedName != null && !lastOpenedName.isEmpty()) {
       addToken(output, position)
@@ -352,39 +355,40 @@ class TextMateLexerCore(
     }
   }
 
-  private fun addToken(output: MutableList<TextmateToken>, position: Int) {
-    val position = min(position, myText.length)
+  private fun addToken(output: MutableList<TextmateToken>, position: TextMateCharOffset) {
+    val position = min(position.offset, myText.length).charOffset()
     if (position > myCurrentOffset) {
       var restartable = myCurrentScope.parent == null
       val wsStart = myCurrentOffset
       while (myStripWhitespaces && position > myCurrentOffset && myText[myCurrentOffset].isWhitespace()) {
-        myCurrentOffset++
+        myCurrentOffset = TextMateCharOffset(myCurrentOffset.offset + 1)
+        restartable = false
       }
 
       if (wsStart < myCurrentOffset) {
         output.add(TextmateToken(scope = TextMateScope.WHITESPACE,
-                                 startOffset = wsStart,
-                                 endOffset = myCurrentOffset,
+                                 startCharOffset = wsStart,
+                                 endCharOffset = myCurrentOffset,
                                  restartable = restartable))
         restartable = false
       }
 
       var wsEnd = position
-      while (myStripWhitespaces && wsEnd > myCurrentOffset && myText[wsEnd - 1].isWhitespace()) {
-        wsEnd--
+      while (myStripWhitespaces && wsEnd > myCurrentOffset && myText[wsEnd.offset - 1].isWhitespace()) {
+        wsEnd = TextMateCharOffset(wsEnd.offset - 1)
       }
 
       if (myCurrentOffset < wsEnd) {
         output.add(TextmateToken(scope = myCurrentScope,
-                                 startOffset = myCurrentOffset,
-                                 endOffset = wsEnd,
+                                 startCharOffset = myCurrentOffset,
+                                 endCharOffset = wsEnd,
                                  restartable = restartable))
       }
 
       if (wsEnd < position) {
         output.add(TextmateToken(scope = TextMateScope.WHITESPACE,
-                                 startOffset = wsEnd,
-                                 endOffset = position,
+                                 startCharOffset = wsEnd,
+                                 endCharOffset = position,
                                  restartable = restartable))
       }
 

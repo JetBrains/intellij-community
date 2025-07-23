@@ -3,6 +3,7 @@ package com.intellij.textmate.joni
 import org.jetbrains.plugins.textmate.regex.MatchData
 import org.jetbrains.plugins.textmate.regex.MatchData.Companion.NOT_MATCHED
 import org.jetbrains.plugins.textmate.regex.RegexFacade
+import org.jetbrains.plugins.textmate.regex.TextMateByteOffset
 import org.jetbrains.plugins.textmate.regex.TextMateString
 import org.joni.Option
 import org.joni.Regex
@@ -14,24 +15,28 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class JoniRegexFacade(private val myRegex: Regex) : RegexFacade {
   override fun match(string: TextMateString, checkCancelledCallback: Runnable?): MatchData {
-    return match(string, 0, true, true, checkCancelledCallback)
+    return match(string = string,
+                 byteOffset = TextMateByteOffset(0),
+                 matchBeginPosition = true,
+                 matchBeginString = true,
+                 checkCancelledCallback = checkCancelledCallback)
   }
 
   override fun match(
     string: TextMateString,
-    byteOffset: Int,
+    byteOffset: TextMateByteOffset,
     matchBeginPosition: Boolean,
     matchBeginString: Boolean,
     checkCancelledCallback: Runnable?
   ): MatchData {
-    val gosOffset = if (matchBeginPosition) byteOffset else Int.MAX_VALUE
+    val gosOffset = if (matchBeginPosition) byteOffset.offset else Int.MAX_VALUE
     val options = if (matchBeginString) Option.NONE else Option.NOTBOS
 
     checkCancelledCallback?.run()
 
     val matcher = myRegex.matcher(string.bytes, 0, string.bytes.size, MATCHING_TIMEOUT)
     try {
-      val matchIndex = matcher.search(gosOffset, byteOffset, string.bytes.size, options)
+      val matchIndex = matcher.search(gosOffset, byteOffset.offset, string.bytes.size, options)
       return when (matchIndex) {
         org.joni.Matcher.FAILED -> {
           NOT_MATCHED
@@ -66,9 +71,8 @@ class JoniRegexFacade(private val myRegex: Regex) : RegexFacade {
     private val LOGGER: Logger = LoggerFactory.getLogger(JoniRegexFacade::class.java)
 
     private fun checkMatched(match: MatchData, string: TextMateString) {
-      check(!(match.matched && match.byteRange().end > string.bytes.size)) {
-        "Match data out of bounds: " + match.byteRange().start + " > " + string.bytes.size + "\n" + String(string.bytes,
-                                                                                                           Charsets.UTF_8)
+      check(!(match.matched && match.byteRange().end.offset > string.bytes.size)) {
+        "Match data out of bounds: " + match.byteRange().start + " > " + string.bytes.size + "\n" + String(string.bytes, Charsets.UTF_8)
       }
     }
 

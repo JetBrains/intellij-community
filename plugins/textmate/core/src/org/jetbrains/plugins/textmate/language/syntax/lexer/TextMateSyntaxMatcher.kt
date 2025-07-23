@@ -7,13 +7,14 @@ import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorW
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh
 import org.jetbrains.plugins.textmate.regex.MatchData
 import org.jetbrains.plugins.textmate.regex.RegexFactory
+import org.jetbrains.plugins.textmate.regex.TextMateByteOffset
 import org.jetbrains.plugins.textmate.regex.TextMateString
 
 interface TextMateSyntaxMatcher {
   fun matchRule(
     syntaxNodeDescriptor: SyntaxNodeDescriptor,
     string: TextMateString,
-    byteOffset: Int,
+    byteOffset: TextMateByteOffset,
     matchBeginPosition: Boolean,
     matchBeginString: Boolean,
     priority: TextMateWeigh.Priority,
@@ -24,7 +25,7 @@ interface TextMateSyntaxMatcher {
   fun matchStringRegex(
     keyName: Constants.StringKey,
     string: TextMateString,
-    byteOffset: Int,
+    byteOffset: TextMateByteOffset,
     matchBeginPosition: Boolean,
     matchBeginString: Boolean,
     lexerState: TextMateLexerState,
@@ -42,7 +43,7 @@ class TextMateSyntaxMatcherImpl(
   override fun matchRule(
     syntaxNodeDescriptor: SyntaxNodeDescriptor,
     string: TextMateString,
-    byteOffset: Int,
+    byteOffset: TextMateByteOffset,
     matchBeginPosition: Boolean,
     matchBeginString: Boolean,
     priority: TextMateWeigh.Priority,
@@ -77,7 +78,7 @@ class TextMateSyntaxMatcherImpl(
   override fun matchStringRegex(
     keyName: Constants.StringKey,
     string: TextMateString,
-    byteOffset: Int,
+    byteOffset: TextMateByteOffset,
     matchBeginPosition: Boolean,
     matchBeginString: Boolean,
     lexerState: TextMateLexerState,
@@ -107,7 +108,7 @@ class TextMateSyntaxMatcherImpl(
   private fun matchFirstChild(
     syntaxNodeDescriptor: SyntaxNodeDescriptor,
     string: TextMateString,
-    byteOffset: Int,
+    byteOffset: TextMateByteOffset,
     matchBeginPosition: Boolean,
     matchBeginString: Boolean,
     priority: TextMateWeigh.Priority,
@@ -169,7 +170,7 @@ class TextMateSyntaxMatcherImpl(
   private fun matchInjections(
     syntaxNodeDescriptor: SyntaxNodeDescriptor,
     string: TextMateString,
-    byteOffset: Int,
+    byteOffset: TextMateByteOffset,
     matchBeginPosition: Boolean,
     matchBeginString: Boolean,
     currentScope: TextMateScope,

@@ -3,7 +3,9 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer
 import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh
 import org.jetbrains.plugins.textmate.regex.MatchData
+import org.jetbrains.plugins.textmate.regex.TextMateByteOffset
 import org.jetbrains.plugins.textmate.regex.TextMateString
+import org.jetbrains.plugins.textmate.regex.byteOffset
 
 class TextMateLexerState(
   val syntaxRule: SyntaxNodeDescriptor,
@@ -12,7 +14,7 @@ class TextMateLexerState(
   /**
    * offset in the line where state was emitted. used for local loop protection only
    */
-  val enterByteOffset: Int,
+  val enterByteOffset: TextMateByteOffset,
   line: TextMateString?,
 ) {
 
@@ -25,7 +27,7 @@ class TextMateLexerState(
     result
   }
 
-  val matchedEOL: Boolean = matchData.matched && line != null && matchData.byteRange().end == line.bytes.size
+  val matchedEOL: Boolean = matchData.matched && line != null && matchData.byteRange().end.offset == line.bytes.size
 
   val string: TextMateString? = if (matchData.matched) line else null
 
@@ -36,12 +38,14 @@ class TextMateLexerState(
            '}'
   }
 
-  override fun equals(o: Any?): Boolean {
-    if (this === o) return true
-    if (o == null) return false
-    val state = o as TextMateLexerState
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other == null) return false
+    val state = other as TextMateLexerState
     return syntaxRule == state.syntaxRule &&
-           matchData == state.matchData && priorityMatch == state.priorityMatch && stringId() === state.stringId()
+           matchData == state.matchData &&
+           priorityMatch == state.priorityMatch &&
+           stringId() === state.stringId()
   }
 
   override fun hashCode(): Int {
@@ -54,7 +58,7 @@ class TextMateLexerState(
 
   companion object {
     fun notMatched(syntaxRule: SyntaxNodeDescriptor): TextMateLexerState {
-      return TextMateLexerState(syntaxRule, MatchData.NOT_MATCHED, TextMateWeigh.Priority.NORMAL, 0, null)
+      return TextMateLexerState(syntaxRule, MatchData.NOT_MATCHED, TextMateWeigh.Priority.NORMAL, 0.byteOffset(), null)
     }
   }
 }

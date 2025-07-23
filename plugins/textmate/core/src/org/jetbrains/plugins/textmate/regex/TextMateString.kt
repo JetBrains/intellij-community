@@ -4,8 +4,8 @@ package org.jetbrains.plugins.textmate.regex
 interface TextMateString: AutoCloseable {
   val id: Any
   val bytes: ByteArray
-  fun charRangeByByteRange(byteRange: TextMateRange): TextMateRange
-  fun charOffsetByByteOffset(startByteOffset: Int, targetByteOffset: Int): Int
+  fun charRangeByByteRange(byteRange: TextMateByteRange): TextMateCharRange
+  fun charOffsetByByteOffset(startByteOffset: TextMateByteOffset, targetByteOffset: TextMateByteOffset): TextMateCharOffset
 }
 
 class TextMateStringImpl private constructor(override val bytes: ByteArray): TextMateString {
@@ -17,18 +17,18 @@ class TextMateStringImpl private constructor(override val bytes: ByteArray): Tex
     }
   }
 
-  override fun charRangeByByteRange(byteRange: TextMateRange): TextMateRange {
-    val startOffset = charOffsetByByteOffset(0, byteRange.start)
+  override fun charRangeByByteRange(byteRange: TextMateByteRange): TextMateCharRange {
+    val startOffset = charOffsetByByteOffset(0.byteOffset(), byteRange.start)
     val endOffset = startOffset + charOffsetByByteOffset(byteRange.start, byteRange.end)
-    return TextMateRange(startOffset, endOffset)
+    return TextMateCharRange(startOffset, endOffset)
   }
 
-  override fun charOffsetByByteOffset(startByteOffset: Int, targetByteOffset: Int): Int {
-    return if (targetByteOffset <= 0) {
-      0
+  override fun charOffsetByByteOffset(startByteOffset: TextMateByteOffset, targetByteOffset: TextMateByteOffset): TextMateCharOffset {
+    return if (targetByteOffset.offset <= 0) {
+      0.charOffset()
     }
     else {
-      bytes.decodeToString(startByteOffset, targetByteOffset).length
+      bytes.decodeToString(startByteOffset.offset, targetByteOffset.offset).length.charOffset()
     }
   }
 

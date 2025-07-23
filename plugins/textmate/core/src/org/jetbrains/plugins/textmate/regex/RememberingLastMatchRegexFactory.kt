@@ -39,10 +39,10 @@ private class TextMateRegexFacadeRememberLastMatch(private val delegate: RegexFa
     return delegate.match(string, checkCancelledCallback)
   }
 
-  override fun match(string: TextMateString, byteOffset: Int, matchBeginPosition: Boolean, matchBeginString: Boolean, checkCancelledCallback: Runnable?): MatchData {
+  override fun match(string: TextMateString, byteOffset: TextMateByteOffset, matchBeginPosition: Boolean, matchBeginString: Boolean, checkCancelledCallback: Runnable?): MatchData {
     val lastResult = matchResult.get()
     val lastStringId = lastResult?.stringId
-    val lastOffset = lastResult?.offset ?: Int.MAX_VALUE
+    val lastOffset = lastResult?.offset ?: Int.MAX_VALUE.byteOffset()
     val lastMatchBeginPosition = lastResult?.matchBeginPosition ?: true
     val lastMatchBeginString = lastResult?.matchBeginString ?: true
     val lastMatch = lastResult?.matchData ?: NOT_MATCHED
@@ -67,7 +67,7 @@ private class TextMateRegexFacadeRememberLastMatch(private val delegate: RegexFa
 
   private class LastMatch(
     val stringId: Any?,
-    val offset: Int,
+    val offset: TextMateByteOffset,
     val matchBeginPosition: Boolean,
     val matchBeginString: Boolean,
     val matchData: MatchData,

@@ -12,7 +12,7 @@ abstract class RegexFacadeTest {
     regex("[0-9]+").use { regex ->
       string("12:00pm").use { string ->
         val match = regex.match(string, null)
-        assertEquals(TextMateRange(0, 2), match.charRange(string))
+        assertEquals(TextMateCharRange(0.charOffset(), 2.charOffset()), match.charRange(string))
       }
     }
   }
@@ -21,8 +21,8 @@ abstract class RegexFacadeTest {
   fun matchingFromPosition() {
     regex("[0-9]+").use { regex ->
       string("12:00pm").use { string ->
-        val match = regex.match(string, 2, true, true, null)
-        assertEquals(TextMateRange(3, 5), match.charRange(string))
+        val match = regex.match(string, 2.byteOffset(), matchBeginPosition = true, matchBeginString = true, checkCancelledCallback = null)
+        assertEquals(TextMateCharRange(3.charOffset(), 5.charOffset()), match.charRange(string))
       }
     }
   }
@@ -32,9 +32,9 @@ abstract class RegexFacadeTest {
     regex("([0-9]+):([0-9]+)").use { regex ->
       string("12:00pm").use { string ->
         val match = regex.match(string, null)
-        assertEquals(TextMateRange(0, 5), match.charRange(string))
-        assertEquals(TextMateRange(0, 2), match.charRange(string, 1))
-        assertEquals(TextMateRange(3, 5), match.charRange(string, 2))
+        assertEquals(TextMateCharRange(0.charOffset(), 5.charOffset()), match.charRange(string))
+        assertEquals(TextMateCharRange(0.charOffset(), 2.charOffset()), match.charRange(string, 1))
+        assertEquals(TextMateCharRange(3.charOffset(), 5.charOffset()), match.charRange(string, 2))
       }
     }
   }
@@ -44,8 +44,8 @@ abstract class RegexFacadeTest {
     regex("мир").use { regex ->
       val text = "привет, мир; привет, мир!"
       string(text).use { string ->
-        val match = regex.match(string, byteOffsetByCharOffset(text, 0, 9), true, true, null)
-        assertEquals(TextMateRange(21, 24), match.charRange(string))
+        val match = regex.match(string, byteOffsetByCharOffset(text, 0.charOffset(), 9.charOffset()), true, true, null)
+        assertEquals(TextMateCharRange(21.charOffset(), 24.charOffset()), match.charRange(string))
       }
     }
   }
@@ -55,7 +55,7 @@ abstract class RegexFacadeTest {
     regex("мир").use { regex ->
       string("привет, мир!").use { string ->
         val match = regex.match(string, null)
-        assertEquals(TextMateRange(8, 11), match.charRange(string))
+        assertEquals(TextMateCharRange(8.charOffset(), 11.charOffset()), match.charRange(string))
       }
     }
   }
@@ -67,7 +67,7 @@ abstract class RegexFacadeTest {
       string(string).use { textMateString ->
         val match = regex.match(textMateString, null)
         val range = match.charRange(textMateString)
-        assertEquals("мир", string.substring(range.start, range.end))
+        assertEquals("мир", string.subSequence(range.start, range.end))
       }
     }
   }
@@ -76,10 +76,10 @@ abstract class RegexFacadeTest {
   fun matchBeginPosition() {
     regex("\\Gbar").use { regex ->
       string("foo bar").use { string ->
-        val noBeginMatch = regex.match(string, 4, matchBeginPosition = false, matchBeginString = true, null)
+        val noBeginMatch = regex.match(string, 4.byteOffset(), matchBeginPosition = false, matchBeginString = true, null)
         assertFalse(noBeginMatch.matched)
 
-        val beginMatch = regex.match(string, 4, matchBeginPosition = true, matchBeginString = true, null)
+        val beginMatch = regex.match(string, 4.byteOffset(), matchBeginPosition = true, matchBeginString = true, null)
         assertTrue(beginMatch.matched)
       }
     }
@@ -90,10 +90,10 @@ abstract class RegexFacadeTest {
   fun matchBeginString() {
     regex("\\Afoo").use { regex ->
       string("foo bar").use { string ->
-        val noBeginMatch = regex.match(string, 0, matchBeginPosition = true, matchBeginString = false, null)
+        val noBeginMatch = regex.match(string, 0.byteOffset(), matchBeginPosition = true, matchBeginString = false, null)
         assertFalse(noBeginMatch.matched)
 
-        val beginMatch = regex.match(string, 0, matchBeginPosition = true, matchBeginString = true, null)
+        val beginMatch = regex.match(string, 0.byteOffset(), matchBeginPosition = true, matchBeginString = true, null)
         assertTrue(beginMatch.matched)
       }
     }

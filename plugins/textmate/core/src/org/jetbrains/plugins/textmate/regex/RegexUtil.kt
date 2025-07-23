@@ -5,26 +5,26 @@ import kotlin.Char.Companion.MIN_LOW_SURROGATE
 
 internal fun byteOffsetByCharOffset(
   charSequence: CharSequence,
-  startOffset: Int,
-  targetOffset: Int,
-): Int {
-  if (targetOffset <= 0) {
-    return 0
+  startOffset: TextMateCharOffset,
+  targetOffset: TextMateCharOffset,
+): TextMateByteOffset {
+  if (targetOffset.offset <= 0) {
+    return 0.byteOffset()
   }
   var result = 0
   var i = startOffset
   while (i < targetOffset) {
     val char = charSequence[i]
-    if (char.isHighSurrogate() && i + 1 < charSequence.length && charSequence[i + 1].isLowSurrogate()) {
-      result += utf8Size(codePoint(char, charSequence[i + 1]))
-      i++ // Skip the low surrogate
+    if (char.isHighSurrogate() && i.offset + 1 < charSequence.length && charSequence[i.offset + 1].isLowSurrogate()) {
+      result += utf8Size(codePoint(char, charSequence[i.offset + 1]))
+      i = TextMateCharOffset(i.offset + 1) // Skip the low surrogate
     }
     else {
       result += utf8Size(char.code)
     }
-    i++
+    i = TextMateCharOffset(i.offset + 1)
   }
-  return result
+  return result.byteOffset()
 }
 
 private fun utf8Size(codePoint: Int): Int {

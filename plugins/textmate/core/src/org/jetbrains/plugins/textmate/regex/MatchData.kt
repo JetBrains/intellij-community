@@ -1,16 +1,17 @@
 package org.jetbrains.plugins.textmate.regex
 
-data class MatchData(val matched: Boolean, private val offsets: IntArray) {
+data class MatchData(val matched: Boolean,
+                     private val byteOffsets: IntArray) {
   fun count(): Int {
-    return offsets.size / 2
+    return byteOffsets.size / 2
   }
 
-  fun byteRange(group: Int = 0): TextMateRange {
+  fun byteRange(group: Int = 0): TextMateByteRange {
     val endIndex = group * 2 + 1
-    return TextMateRange(offsets[endIndex - 1], offsets[endIndex])
+    return TextMateByteRange(byteOffsets[endIndex - 1].byteOffset(), byteOffsets[endIndex].byteOffset())
   }
 
-  fun charRange(textMateString: TextMateString, group: Int = 0): TextMateRange {
+  fun charRange(textMateString: TextMateString, group: Int = 0): TextMateCharRange {
     return textMateString.charRangeByByteRange(byteRange(group))
   }
 
@@ -21,17 +22,17 @@ data class MatchData(val matched: Boolean, private val offsets: IntArray) {
     val matchData = other as MatchData
 
     if (matched != matchData.matched) return false
-    if (!offsets.contentEquals(matchData.offsets)) return false
+    if (!byteOffsets.contentEquals(matchData.byteOffsets)) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    return 31 * (if (matched) 1 else 0) + offsets.contentHashCode()
+    return 31 * (if (matched) 1 else 0) + byteOffsets.contentHashCode()
   }
 
   override fun toString(): String {
-    return "{ matched=$matched, offsets=${offsets.contentToString()} }"
+    return "{ matched=$matched, offsets=${byteOffsets.contentToString()} }"
   }
 
   companion object {

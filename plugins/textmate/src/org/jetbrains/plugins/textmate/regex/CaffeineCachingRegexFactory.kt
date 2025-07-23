@@ -25,7 +25,7 @@ class CaffeineCachingRegexFactory(private val delegate: RegexFactory) : RegexFac
           return delegateRegex.match(string, checkCancelledCallback)
         }
 
-        override fun match(string: TextMateString, byteOffset: Int, matchBeginPosition: Boolean, matchBeginString: Boolean, checkCancelledCallback: Runnable?): MatchData {
+        override fun match(string: TextMateString, byteOffset: TextMateByteOffset, matchBeginPosition: Boolean, matchBeginString: Boolean, checkCancelledCallback: Runnable?): MatchData {
           return delegateRegex.match(string, byteOffset, matchBeginPosition, matchBeginString, checkCancelledCallback)
         }
 

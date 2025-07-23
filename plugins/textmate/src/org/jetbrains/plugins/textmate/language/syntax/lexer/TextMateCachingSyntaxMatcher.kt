@@ -7,6 +7,7 @@ import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh
 import org.jetbrains.plugins.textmate.regex.MatchData
+import org.jetbrains.plugins.textmate.regex.TextMateByteOffset
 import org.jetbrains.plugins.textmate.regex.TextMateString
 import java.util.concurrent.TimeUnit
 
@@ -22,7 +23,7 @@ class TextMateCachingSyntaxMatcher(private val delegate: TextMateSyntaxMatcher) 
   override fun matchRule(
     syntaxNodeDescriptor: SyntaxNodeDescriptor,
     string: TextMateString,
-    byteOffset: Int,
+    byteOffset: TextMateByteOffset,
     matchBeginPosition: Boolean,
     matchBeginString: Boolean,
     priority: TextMateWeigh.Priority,
@@ -46,7 +47,7 @@ class TextMateCachingSyntaxMatcher(private val delegate: TextMateSyntaxMatcher) 
   override fun matchStringRegex(
     keyName: Constants.StringKey,
     string: TextMateString,
-    byteOffset: Int,
+    byteOffset: TextMateByteOffset,
     matchBeginPosition: Boolean,
     matchBeginString: Boolean,
     lexerState: TextMateLexerState,
@@ -62,7 +63,7 @@ class TextMateCachingSyntaxMatcher(private val delegate: TextMateSyntaxMatcher) 
   private data class MatchKey(
     val syntaxNodeDescriptor: SyntaxNodeDescriptor,
     val string: TextMateString,
-    val byteOffset: Int,
+    val byteOffset: TextMateByteOffset,
     val matchBeginPosition: Boolean,
     val matchBeginString: Boolean,
     val priority: TextMateWeigh.Priority,
