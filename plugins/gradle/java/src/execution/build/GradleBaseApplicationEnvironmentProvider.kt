@@ -24,6 +24,7 @@ import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.JavaModuleGraphHelper
 import com.intellij.task.ExecuteRunConfigurationTask
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
@@ -57,6 +58,8 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
 
     val mainClass = runProfile.runClass ?: return null
     val module = runProfile.configurationModule.module ?: return null
+    val psiClass = runProfile.configurationModule.findClass(mainClass)
+    val javaModuleName = if (psiClass == null) null else JavaModuleGraphHelper.getInstance().findDescriptorByElement(psiClass)?.name
 
     val gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module) ?: return null
     val externalProjectPath = gradleModuleData.directoryToRunTask
@@ -98,6 +101,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
       .withGradleTaskPath(gradlePath)
       .withRunAppTaskName(runAppTaskName)
       .withMainClass(mainClass)
+      .withJavaModuleName(javaModuleName)
       .withSourceSetName(sourceSetName)
       .withJavaConfiguration(project, runProfile)
 
@@ -163,6 +167,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     private lateinit var mainClass: String
     private lateinit var javaExePath: String
     private lateinit var sourceSetName: String
+    private var javaModuleName: String? = null
 
     fun build(): GradleInitScriptParameters {
       return GradleInitScriptParametersImpl(configuration,
@@ -174,7 +179,8 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
                                             runAppTaskName,
                                             mainClass,
                                             javaExePath,
-                                            sourceSetName
+                                            sourceSetName,
+                                            javaModuleName
       )
     }
 
@@ -208,6 +214,11 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
       return this
     }
 
+    fun withJavaModuleName(javaModuleName: String?): GradleInitScriptParametersBuilder {
+      this.javaModuleName = javaModuleName
+      return this
+    }
+
     fun withJavaExePath(javaExePath: String): GradleInitScriptParametersBuilder {
       this.javaExePath = javaExePath
       return this
@@ -230,5 +241,6 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     override val mainClass: String,
     override val javaExePath: String,
     override val sourceSetName: String,
+    override val javaModuleName: String?,
   ) : GradleInitScriptParameters
 }

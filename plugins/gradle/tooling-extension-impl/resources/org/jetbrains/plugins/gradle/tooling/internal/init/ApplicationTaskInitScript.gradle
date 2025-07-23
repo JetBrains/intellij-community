@@ -24,6 +24,8 @@ interface Properties {
   public static final boolean useArgsFile = USE_ARGS_FILE
   //noinspection GrUnresolvedAccess
   public static final boolean useClasspathFile = USE_CLASSPATH_FILE
+  //noinspection GrUnresolvedAccess
+  public static final String javaModuleName = JAVA_MODULE_NAME
 }
 
 def javaExePath = JAVA_EXE_PATH
@@ -67,6 +69,10 @@ GradleLifecycleUtil.afterProject(gradle) { Project project ->
       }
       standardInput = System.in
       classpath = project.sourceSets[Properties.sourceSetName].runtimeClasspath
+      if (Properties.javaModuleName != null && !Properties.javaModuleName.isBlank()) {
+        jvmArgs '--module-path', classpath.asPath,
+                '--module', "${Properties.javaModuleName}/${Properties.mainClassToRun}"
+      }
     }
   }
 }

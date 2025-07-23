@@ -327,6 +327,7 @@ fun loadApplicationInitScript(
   useManifestJar: Boolean,
   useArgsFile: Boolean,
   useClasspathFile: Boolean,
+  javaModuleName: String?,
 ): String {
   return joinInitScripts(
     loadToolingExtensionProvidingInitScript(GRADLE_TOOLING_EXTENSION_CLASSES),
@@ -343,7 +344,8 @@ fun loadApplicationInitScript(
       "DEFS" to if (definitions.isNullOrEmpty()) "// NO DEFS" else definitions,
       "USE_MANIFEST_JAR" to useManifestJar.toString(),
       "USE_ARGS_FILE" to useArgsFile.toString(),
-      "USE_CLASSPATH_FILE" to useClasspathFile.toString()
+      "USE_CLASSPATH_FILE" to useClasspathFile.toString(),
+      "JAVA_MODULE_NAME" to if (javaModuleName.isNullOrEmpty()) "" else javaModuleName.toGroovyStringLiteral()
     ))
   )
 }
