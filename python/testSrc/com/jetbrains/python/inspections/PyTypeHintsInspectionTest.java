@@ -311,6 +311,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                 ...""");
   }
 
+  // PY-78878
   public void testGenericClassCannotUseTypeVariablesFromOuterScope() {
     doTestByText("""
                    from typing import TypeVar, Generic, Iterable
