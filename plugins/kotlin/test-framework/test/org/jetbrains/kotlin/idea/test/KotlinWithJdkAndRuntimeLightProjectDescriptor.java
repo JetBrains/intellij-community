@@ -6,13 +6,10 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactRepository;
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts;
 
 import java.io.File;
 import java.util.List;
-
-import static org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifactsKt.downloadArtifact;
 
 public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndLibraryProjectDescriptor {
 
@@ -76,12 +73,12 @@ public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndL
     }
 
     public static KotlinWithJdkAndRuntimeLightProjectDescriptor getInstance(@NotNull String version) {
+        if (!version.equals("1.7.0")) {
+            throw new RuntimeException("Only version 1.7.0 is supported for now");
+        }
         return new KotlinWithJdkAndRuntimeLightProjectDescriptor(
-                List.of(downloadArtifact("org.jetbrains.kotlin", "kotlin-stdlib", version, null, "jar", KotlinArtifactRepository.MAVEN_CENTRAL)),
-                List.of(
-                        downloadArtifact("org.jetbrains.kotlin", "kotlin-stdlib", version, "sources", "jar", KotlinArtifactRepository.MAVEN_CENTRAL),
-                        downloadArtifact("org.jetbrains.kotlin", "kotlin-stdlib-common", version, "sources", "jar", KotlinArtifactRepository.MAVEN_CENTRAL)
-                )
+                List.of(TestKotlinArtifacts.getKotlinStdlib170()),
+                List.of(TestKotlinArtifacts.getKotlinStdlib170Sources(), TestKotlinArtifacts.getKotlinStdlibCommon170Sources())
         );
     }
 
