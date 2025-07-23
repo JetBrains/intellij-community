@@ -41,6 +41,7 @@ import com.intellij.platform.util.progress.ProgressPipe
 import com.intellij.platform.util.progress.ProgressState
 import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.application
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.RawSwingDispatcher
 import fleet.kernel.rete.collect
@@ -357,17 +358,24 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     title: @ModalProgressTitle String,
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
-  ): T = prepareThreadContext { ctx ->
-    val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
-    val scope = CoroutineScope(ctx + ClientId.coroutineContext())
-    try {
-      scope.runWithModalProgressBlockingInternal(dispatcher = null, descriptor, action)
+  ): T {
+    if (application.holdsReadLock()) {
+      error("This thread holds a read lock while trying to invoke a modal progress." +
+            "Modal progresses are allowed only under write-intent lock because they need to prevent background write actions." +
+            "Consider moving this modal progress out of `readAction`")
     }
-    catch (pce: ProcessCanceledException) {
-      throw pce
-    }
-    catch (ce: CancellationException) {
-      throw CeProcessCanceledException(ce)
+    return prepareThreadContext { ctx ->
+      val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
+      val scope = CoroutineScope(ctx + ClientId.coroutineContext())
+      try {
+        scope.runWithModalProgressBlockingInternal(dispatcher = null, descriptor, action)
+      }
+      catch (pce: ProcessCanceledException) {
+        throw pce
+      }
+      catch (ce: CancellationException) {
+        throw CeProcessCanceledException(ce)
+      }
     }
   }
 
