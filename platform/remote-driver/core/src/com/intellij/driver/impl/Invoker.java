@@ -267,9 +267,6 @@ public class Invoker implements InvokerMBean {
         if (e.getCause() instanceof IllegalComponentStateException) {
           throw (IllegalComponentStateException)e.getCause();
         }
-        if (e.getCause() instanceof CeProcessCanceledException || e.getCause() instanceof ProcessCanceledException) {
-          call(call, supplier);
-        }
 
         throw new DriverIllegalStateException(e);
       }
