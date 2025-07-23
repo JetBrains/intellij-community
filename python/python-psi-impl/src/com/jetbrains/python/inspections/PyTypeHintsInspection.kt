@@ -915,12 +915,9 @@ class PyTypeHintsInspection : PyInspection() {
       }
 
       val typeParams = getTypeParameters(cls).map { it.name }.toMutableSet()
-      if (typeParams.isEmpty()) {
-        return
-      }
       val typeParamsUsedByOuterScopes = mutableListOf<String>()
       var currentScope: ScopeOwner? = cls
-      do {
+      while (typeParams.isNotEmpty()) {
         currentScope = PsiTreeUtil.getParentOfType(currentScope, PyClass::class.java, PyFunction::class.java)
         val currentScopeTypeParams = when (currentScope) {
           is PyClass -> getTypeParameters(currentScope)
@@ -934,7 +931,6 @@ class PyTypeHintsInspection : PyInspection() {
           }
         }
       }
-      while (true)
 
       if (typeParamsUsedByOuterScopes.isNotEmpty()) {
         registerProblem(cls.nameIdentifier, PyPsiBundle.message("INSP.type.hints.some.type.variables.are.used.by.an.outer.scope",
