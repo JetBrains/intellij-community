@@ -29,13 +29,14 @@ internal class McpClientDetectionSettings : SimplePersistentStateComponent<McpCl
 
 internal class McpClientDetectionActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
+    val detectedClients = McpClientDetector.detectMcpClients(project)
+    suggestToChangePortIfNeeded(detectedClients, project)
+
     if (Registry.`is`("mcp.server.detect.mcp.clients")) {
       val mcpClientDetectionSettings = application.service<McpClientDetectionSettings>()
 
-      val detectedClients = McpClientDetector.detectMcpClients(project)
       if (McpServerSettings.getInstance().state.enableMcpServer) {
         showUnconfiguredNotificationIfNeeded(detectedClients, project)
-        suggestToChangePortIfNeeded(detectedClients, project)
         return
       }
 
