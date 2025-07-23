@@ -195,7 +195,8 @@ public final class ShShellcheckUtil {
     return file.canExecute() && file.getName().contains(SHELLCHECK);
   }
 
-  static boolean isValidPath(@Nullable String path) {
+  @ApiStatus.Internal
+  public static boolean isValidPath(@Nullable String path) {
     if (path == null) return false;
     if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(path)) return true;
     File file = new File(path);

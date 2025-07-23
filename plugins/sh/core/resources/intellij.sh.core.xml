@@ -35,8 +35,6 @@
     <defaultLiveTemplates file="liveTemplates/ShellScriptHidden.xml" hidden="true"/>
     <liveTemplateContext contextId="SHELL_SCRIPT" implementation="com.intellij.sh.template.ShContextType"/>
 
-    <editorNotificationProvider implementation="com.intellij.sh.shellcheck.ShellcheckSetupNotificationProvider"/>
-
     <highlightErrorFilter implementation="com.intellij.sh.ShErrorFilter"/>
     <daemon.highlightInfoFilter implementation="com.intellij.sh.ShErrorFilter"/>
 

@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.sh.shellcheck;
+package com.intellij.sh.backend.shellcheck;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.ui.OptionAccessor;
@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.sh.ShBundle;
 import com.intellij.sh.settings.ShSettings;
+import com.intellij.sh.shellcheck.ShShellcheckUtil;
 import com.intellij.sh.utils.ProjectUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorNotifications;

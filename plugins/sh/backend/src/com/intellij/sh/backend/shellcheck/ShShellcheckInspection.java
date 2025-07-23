@@ -12,7 +12,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.sh.shellcheck.ShellcheckOptionsPanel;
 import com.intellij.sh.utils.ProjectUtil;
 import com.intellij.ui.EditorNotifications;
 import org.jdom.Element;

@@ -30,6 +30,7 @@
     <runConfigurationBeforeRunProviderDelegate implementation="com.intellij.sh.run.ShBeforeRunProviderDelegate"/>
     <runLineMarkerContributor language="" implementationClass="com.intellij.sh.backend.run.ShRunLineMarkerContributor"/>
     <spellchecker.support language="Shell Script" implementationClass="com.intellij.sh.backend.spellchecker.ShSpellcheckingStrategy"/>
+    <editorNotificationProvider implementation="com.intellij.sh.backend.shellcheck.ShellcheckSetupNotificationProvider"/>
     <formattingService implementation="com.intellij.sh.backend.formatter.ShExternalFormatter"/>
     <fileDocumentManagerListener implementation="com.intellij.sh.backend.formatter.ShLineEndingsAdapter"/>
     <externalAnnotator language="Shell Script" implementationClass="com.intellij.sh.backend.shellcheck.ShShellcheckExternalAnnotator"/>
