@@ -131,11 +131,11 @@ internal class IdeKotlinModulePackageNamesProvider(private val project: Project)
     private fun computePackageSetFromBinaryRoot(binaryRoot: VirtualFile): Set<String> =
         binaryRootsCache.getOrPut(binaryRoot.name) { binaryRootName ->
             buildSet {
-                FileBasedIndex.getInstance().processValues<String, String>(
+                FileBasedIndex.getInstance().processValues(
                     KotlinBinaryRootToPackageIndex.NAME,
                     binaryRootName,
                     null,
-                    ValueProcessor<String> { _, packageName ->
+                    ValueProcessor { _, packageName ->
                         ProgressManager.checkCanceled()
                         add(packageName)
                         true
