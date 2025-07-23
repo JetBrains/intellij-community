@@ -6646,6 +6646,76 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+
+  // PY-82833
+  public void testGenericClassDunderNewReturnsSelf() {
+    doTest("Box[str]", """
+      from typing import Self
+      
+      class Box[T]:
+          def __new__(cls, parm: T) -> Self:
+              ...
+      
+      expr = Box("foo")
+      """);
+  }
+
+  // PY-82833
+  public void testGenericClassClassMethodReturningSelfCalledOnRawClass() {
+    doTest("Box[str]", """
+      from typing import Self
+      
+      class Box[T]:
+          @classmethod
+          def create(cls, parm: T) -> Self:
+              ...
+      
+      expr = Box.create("foo")
+      """);
+  }
+
+  public void testGenericClassClassMethodReturningSelfCalledOnInstance() {
+    // Any because `str` doesn't match `int`, alternatively `Box[int]` can be retained
+    doTest("Any", """
+      from typing import Self
+      
+      class Box[T]:
+          @classmethod
+          def create(cls, parm: T) -> Self:
+              ...
+      
+      b: Box[int]
+      expr = b.create("foo")
+      """);
+  }
+
+  public void testGenericClassMethodReturningSelfCalledOnInstance() {
+    // Any because `str` doesn't match `int`, `Box[int]` can be retained
+    doTest("Any", """
+      from typing import Self
+      
+      class Box[T]:
+          def m(self, parm: T) -> Self:
+              ...
+      
+      b: Box[int]
+      expr = b.m("foo")
+      """);
+  }
+
+  public void testGenericClassGenericMethodReturningSelfCalledOnInstance() {
+    doTest("Box[int]", """
+      from typing import Self
+      
+      class Box[T]:
+          def m[S](self, parm: S) -> Self:
+              ...
+      
+      b: Box[int]
+      expr = b.m("foo")
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
