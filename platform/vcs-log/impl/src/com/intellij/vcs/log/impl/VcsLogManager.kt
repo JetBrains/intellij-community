@@ -38,6 +38,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.ints.IntSets
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.*
@@ -282,26 +283,28 @@ open class VcsLogManager @Internal constructor(
   @Internal
   suspend fun dispose(useRawSwingDispatcher: Boolean = false, clearStorage: Boolean = false) {
     if (!startDisposing()) return
-    val uiDispatcher = if (useRawSwingDispatcher) RawSwingDispatcher else Dispatchers.EDT
-    withContext(uiDispatcher) {
-      disposeUi()
-    }
-    withContext(Dispatchers.Default) {
-      val storageToClear = if (clearStorage) storageIds() else emptyList()
-      disposeData()
+    withContext(NonCancellable) {
+      val uiDispatcher = if (useRawSwingDispatcher) RawSwingDispatcher else Dispatchers.EDT
+      withContext(uiDispatcher) {
+        disposeUi()
+      }
+      withContext(Dispatchers.Default) {
+        val storageToClear = if (clearStorage) storageIds() else emptyList()
+        disposeData()
 
-      for (storageId in storageToClear) {
-        try {
-          val deleted = withContext(Dispatchers.IO) { storageId.cleanupAllStorageFiles() }
-          if (deleted) {
-            LOG.info("Deleted ${storageId.storagePath}")
+        for (storageId in storageToClear) {
+          try {
+            val deleted = withContext(Dispatchers.IO) { storageId.cleanupAllStorageFiles() }
+            if (deleted) {
+              LOG.info("Deleted ${storageId.storagePath}")
+            }
+            else {
+              LOG.error("Could not delete ${storageId.storagePath}")
+            }
           }
-          else {
-            LOG.error("Could not delete ${storageId.storagePath}")
+          catch (t: Throwable) {
+            LOG.error(t)
           }
-        }
-        catch (t: Throwable) {
-          LOG.error(t)
         }
       }
     }
