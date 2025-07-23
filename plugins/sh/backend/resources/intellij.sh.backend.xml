@@ -20,6 +20,7 @@
                         serviceImplementation="com.intellij.sh.backend.formatter.ShBackendFormatterDownloader" />
 
     <psi.referenceContributor language="Shell Script" implementation="com.intellij.sh.backend.ShUrlReferenceContributor"/>
+    <resolveScopeProvider implementation="com.intellij.sh.psi.impl.ShResolveScopeProvider"/>
     <lang.psiStructureViewFactory language="Shell Script" implementationClass="com.intellij.sh.backend.ShStructureViewFactory"/>
     <lang.findUsagesProvider language="Shell Script" implementationClass="com.intellij.sh.backend.codeInsight.ShFindUsagesProvider"/>
     <lang.documentationProvider language="Shell Script" implementationClass="com.intellij.sh.backend.ShDocumentationProvider"/>
