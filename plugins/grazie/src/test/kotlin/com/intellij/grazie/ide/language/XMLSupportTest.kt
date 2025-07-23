@@ -46,4 +46,8 @@ class XMLSupportTest : GrazieTestBase() {
   fun `test typo checks when comments are before root tag html file`() {
     runHighlightTestForFile("ide/language/xml/Comment.html")
   }
+
+  fun `test grazie spellchecking in html file`() {
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/xml/Spellcheck.html")
+  }
 }

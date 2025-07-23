@@ -2,6 +2,7 @@
 package com.intellij.grazie.jlanguage
 
 import ai.grazie.nlp.langs.LanguageISO
+import ai.grazie.nlp.langs.LanguageWithVariant
 import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.GrazieDynamic.getLangDynamicFolder
 import com.intellij.grazie.remote.GrazieRemote
@@ -12,12 +13,13 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
 import com.intellij.spellchecker.hunspell.HunspellDictionary
+import org.jetbrains.annotations.NonNls
 import org.languagetool.Language
 import org.languagetool.language.English
 import org.languagetool.noop.NoopChunker
 import java.io.File
 
-enum class Lang(val displayName: String, val className: String, val iso: LanguageISO, @NlsSafe val nativeName: String) {
+enum class Lang(val displayName: String, val className: String, val iso: LanguageISO, @NlsSafe val nativeName: String, @NonNls val variant: String? = null) {
   BRITISH_ENGLISH("English (GB)", "BritishEnglish", LanguageISO.EN, "English (Great Britain)"),
   AMERICAN_ENGLISH("English (US)", "AmericanEnglish", LanguageISO.EN, "English (USA)"),
   CANADIAN_ENGLISH("English (Canadian)", "CanadianEnglish", LanguageISO.EN, "English (Canada)"),
@@ -30,7 +32,7 @@ enum class Lang(val displayName: String, val className: String, val iso: Languag
   DANISH("Danish", "Danish", LanguageISO.DA, "Dansk"),
   GERMANY_GERMAN("German (Germany)", "GermanyGerman", LanguageISO.DE, "Deutsch (Deutschland)"),
   AUSTRIAN_GERMAN("German (Austria)", "AustrianGerman", LanguageISO.DE, "Deutsch (Österreich)"),
-  SWISS_GERMAN("German (Switzerland)", "SwissGerman", LanguageISO.DE, "Deutsch (Die Schweiz)"),
+  SWISS_GERMAN("German (Switzerland)", "SwissGerman", LanguageISO.DE, "Deutsch (Die Schweiz)", "CH"),
   GREEK("Greek", "Greek", LanguageISO.EL, "Ελληνικά"),
   ESPERANTO("Esperanto", "Esperanto", LanguageISO.EO, "Esperanto"),
   SPANISH("Spanish", "Spanish", LanguageISO.ES, "Español"),
@@ -78,6 +80,12 @@ enum class Lang(val displayName: String, val className: String, val iso: Languag
     val dicPath = getLangDynamicFolder(this).resolve(hunspellRemote!!.file).toString()
     if (this == SWISS_GERMAN) createSwissDictionary(dicPath) else HunspellDictionary(dicPath, language = iso)
   }
+
+  val withVariant: LanguageWithVariant?
+    get() {
+      val language = ai.grazie.nlp.langs.Language.entries.find { it.iso == this.iso } ?: return null
+      return LanguageWithVariant(language, this.variant)
+    }
 
   val remoteDescriptors: List<RemoteLangDescriptor>
     get() = listOfNotNull(ltRemote, hunspellRemote)

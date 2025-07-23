@@ -13,7 +13,6 @@ import com.intellij.spellchecker.SpellCheckerManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 
 @ApiStatus.Internal
 object GraziePlugin {
@@ -66,9 +65,6 @@ object GraziePlugin {
 
   val classLoader: ClassLoader
     get() = descriptor.classLoader
-
-  val libFolder: Path
-    get() = descriptor.pluginPath.resolve("lib")
 }
 
 private fun Collection<Lang>.filterHunspell(): Set<Lang> {

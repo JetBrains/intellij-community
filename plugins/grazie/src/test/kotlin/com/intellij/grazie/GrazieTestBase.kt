@@ -17,6 +17,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPlainText
 import com.intellij.spellchecker.SpellCheckerManager.Companion.getInstance
@@ -102,6 +103,11 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
   protected open fun runHighlightTestForFile(file: String) {
     myFixture.configureByFile(file)
     myFixture.checkHighlighting(true, false, false)
+  }
+
+  protected fun runHighlightTestForFileUsingGrazieSpellchecker(file: String) {
+    Registry.get("spellchecker.grazie.enabled").setValue(true, testRootDisposable)
+    runHighlightTestForFile(file)
   }
 
   fun plain(vararg texts: String) = plain(texts.toList())

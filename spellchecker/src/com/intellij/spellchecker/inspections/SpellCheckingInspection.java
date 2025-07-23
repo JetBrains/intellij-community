@@ -4,7 +4,6 @@ package com.intellij.spellchecker.inspections;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.NamesValidator;
@@ -23,6 +22,8 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.grazie.diacritic.Diacritics;
+import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellCheckingResult;
+import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellingTypo;
 import com.intellij.spellchecker.tokenizer.*;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.util.Consumer;
@@ -90,7 +91,6 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
     if (!Registry.is("spellchecker.inspection.enabled", true) || InspectionProfileManager.hasTooLowSeverity(session, this)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-    SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());
     var scope = buildAllowedScopes();
 
     return new PsiElementVisitor() {
@@ -98,12 +98,11 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
       public void visitElement(final @NotNull PsiElement element) {
         if (holder.getResultCount() > 1000) return;
 
-        final ASTNode node = element.getNode();
+        ASTNode node = element.getNode();
         if (node == null) {
           return;
         }
 
-        final Language language = element.getLanguage();
         var strategy = getSpellcheckingStrategy(element);
         if (strategy == null) {
           return;
@@ -118,9 +117,18 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
           return;
         }
 
-        tokenize(element, new MyTokenConsumer(manager, holder, LanguageNamesValidation.INSTANCE.forLanguage(language)), scope);
+        inspect(element, session, holder);
       }
     };
+  }
+
+  private void inspect(@NotNull PsiElement element, @NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder holder) {
+    SpellCheckingResult result = SpellcheckingExtension.Companion.spellcheck(element, session, typo -> registerProblem(typo, holder));
+    if (result == SpellCheckingResult.Checked) return;
+
+    SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());
+    Set<SpellCheckingScope> scopes = buildAllowedScopes();
+    tokenize(element, new MyTokenConsumer(manager, holder, LanguageNamesValidation.INSTANCE.forLanguage(element.getLanguage())), scopes);
   }
 
   private Set<SpellCheckingScope> buildAllowedScopes() {
@@ -307,6 +315,15 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
         .stream()
         .filter(suggestion -> RenameUtil.isValidName(project, myElement, suggestion))
         .noneMatch(suggestion -> Diacritics.equalsIgnoringDiacritics(word, suggestion));
+    }
+  }
+
+  private static void registerProblem(@NotNull SpellingTypo typo, @NotNull ProblemsHolder holder) {
+    if (holder.isOnTheFly()) {
+      addRegularDescriptor(typo.getElement(), typo.getRange(), holder, false, typo.getWord());
+    }
+    else {
+      addBatchDescriptor(typo.getElement(), typo.getRange(), typo.getWord(), holder);
     }
   }
 

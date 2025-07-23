@@ -110,7 +110,7 @@ class GrazieSpellCheckerEngine(
     }
   }
 
-  private val speller: GrazieSplittingSpeller?
+  val speller: GrazieSplittingSpeller?
     get() = if (deferredSpeller.isCompleted) deferredSpeller.getCompleted() else null
 
   override fun dispose() {

@@ -17,6 +17,11 @@ class MarkdownSupportTest : GrazieTestBase() {
     runHighlightTestForFile("ide/language/markdown/Example.md")
   }
 
+  fun `test grazie spellchecker in file`() {
+    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/markdown/Spellcheck.md")
+  }
+
   fun `test replacement with markup inside`() {
     myFixture.configureByText("a.md", "Please, <caret><GRAMMAR_ERROR descr=\"GATHER_UP\">gather </GRAMMAR_ERROR>[<GRAMMAR_ERROR descr=\"GATHER_UP\">up</GRAMMAR_ERROR> the](url) documentation.")
     myFixture.checkHighlighting()
