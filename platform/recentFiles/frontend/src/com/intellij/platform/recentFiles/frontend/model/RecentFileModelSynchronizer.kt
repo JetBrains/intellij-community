@@ -7,6 +7,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.RecentFilesCoroutineScopeProvider
 import com.intellij.platform.util.coroutines.childScope
+import fleet.rpc.client.durable
 import kotlinx.coroutines.launch
 
 private val LOG by lazy { fileLogger() }
@@ -18,28 +19,40 @@ internal class RecentFileModelSynchronizer : ProjectActivity {
     val frontendRecentFilesModel = FrontendRecentFilesModel.getInstanceAsync(project)
     synchronizationScope.launch {
       LOG.debug("Subscribe to backend recently opened files updates")
-      frontendRecentFilesModel.subscribeToBackendRecentFilesUpdates(RecentFileKind.RECENTLY_OPENED)
+      durable {
+        frontendRecentFilesModel.subscribeToBackendRecentFilesUpdates(RecentFileKind.RECENTLY_OPENED)
+      }
     }
     synchronizationScope.launch {
       LOG.debug("Subscribe to backend recently edited files updates")
-      frontendRecentFilesModel.subscribeToBackendRecentFilesUpdates(RecentFileKind.RECENTLY_EDITED)
+      durable {
+        frontendRecentFilesModel.subscribeToBackendRecentFilesUpdates(RecentFileKind.RECENTLY_EDITED)
+      }
     }
     synchronizationScope.launch {
       LOG.debug("Subscribe to backend recently opened unpinned files updates")
-      frontendRecentFilesModel.subscribeToBackendRecentFilesUpdates(RecentFileKind.RECENTLY_OPENED_UNPINNED)
+      durable {
+        frontendRecentFilesModel.subscribeToBackendRecentFilesUpdates(RecentFileKind.RECENTLY_OPENED_UNPINNED)
+      }
     }
 
     synchronizationScope.launch {
       LOG.debug("Fetch initial recently opened files data")
-      frontendRecentFilesModel.fetchInitialData(RecentFileKind.RECENTLY_OPENED, project)
+      durable {
+        frontendRecentFilesModel.fetchInitialData(RecentFileKind.RECENTLY_OPENED, project)
+      }
     }
     synchronizationScope.launch {
       LOG.debug("Fetch initial recently edited files data")
-      frontendRecentFilesModel.fetchInitialData(RecentFileKind.RECENTLY_EDITED, project)
+      durable {
+        frontendRecentFilesModel.fetchInitialData(RecentFileKind.RECENTLY_EDITED, project)
+      }
     }
     synchronizationScope.launch {
       LOG.debug("Fetch initial recently opened unpinned files data")
-      frontendRecentFilesModel.fetchInitialData(RecentFileKind.RECENTLY_OPENED_UNPINNED, project)
+      durable {
+        frontendRecentFilesModel.fetchInitialData(RecentFileKind.RECENTLY_OPENED_UNPINNED, project)
+      }
     }
   }
 }
