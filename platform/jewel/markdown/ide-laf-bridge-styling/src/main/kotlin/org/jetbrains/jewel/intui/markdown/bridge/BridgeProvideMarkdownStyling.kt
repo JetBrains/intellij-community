@@ -7,6 +7,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
@@ -22,6 +23,31 @@ import org.jetbrains.jewel.markdown.extensions.LocalMarkdownStyling
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
+
+/** @obsolete Only used to keep compatibility. **DON'T USE IT.** */
+@ExperimentalJewelApi
+@ApiStatus.Obsolete
+@Composable
+public fun ProvideMarkdownStyling(
+    themeName: String = JewelTheme.name,
+    markdownStyling: MarkdownStyling = remember(themeName) { MarkdownStyling.create() },
+    markdownMode: MarkdownMode = MarkdownMode.Standalone,
+    markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor(markdownMode = markdownMode) },
+    markdownBlockRenderer: MarkdownBlockRenderer =
+        remember(markdownStyling) { MarkdownBlockRenderer.create(markdownStyling) },
+    codeHighlighter: CodeHighlighter = remember { NoOpCodeHighlighter },
+    content: @Composable () -> Unit,
+) {
+    CompositionLocalProvider(
+        LocalMarkdownStyling provides markdownStyling,
+        LocalMarkdownMode provides markdownMode,
+        LocalMarkdownProcessor provides markdownProcessor,
+        LocalMarkdownBlockRenderer provides markdownBlockRenderer,
+        LocalCodeHighlighter provides codeHighlighter,
+    ) {
+        content()
+    }
+}
 
 /**
  * Provide Markdown styling, for scenarios where you do not have access to a [Project].

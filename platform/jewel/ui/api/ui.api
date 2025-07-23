@@ -1151,6 +1151,7 @@ public final class org/jetbrains/jewel/ui/component/TabState$Companion {
 
 public final class org/jetbrains/jewel/ui/component/TabStripKt {
 	public static final fun TabStrip (Ljava/util/List;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
+	public static final fun TabStrip (Ljava/util/List;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Landroidx/compose/ui/Modifier;ZLandroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/ui/component/TabStripState : org/jetbrains/jewel/foundation/state/FocusableComponentState {
@@ -3112,6 +3113,7 @@ public final class org/jetbrains/jewel/ui/component/styling/TooltipMetrics {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics$Companion;
 	public synthetic fun <init> (Landroidx/compose/foundation/layout/PaddingValues;JLandroidx/compose/foundation/shape/CornerSize;FFLandroidx/compose/foundation/TooltipPlacement;JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Landroidx/compose/foundation/layout/PaddingValues;JLandroidx/compose/foundation/shape/CornerSize;FFLandroidx/compose/foundation/TooltipPlacement;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBorderWidth-D9Ej5fM ()F
 	public final fun getContentPadding ()Landroidx/compose/foundation/layout/PaddingValues;

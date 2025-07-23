@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.CollectionInfo
 import androidx.compose.ui.semantics.collectionInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.util.fastRoundToInt
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask
 import org.jetbrains.jewel.foundation.state.FocusableComponentState
@@ -188,6 +189,13 @@ public fun TabStrip(
             HorizontalScrollbar(scrollState, style = style.scrollbarStyle, modifier = Modifier.fillMaxWidth())
         }
     }
+}
+
+/** Only used to keep compatibility. **DON'T USE IT.** */
+@ExperimentalJewelApi
+@Composable
+public fun TabStrip(tabs: List<TabData>, style: TabStyle, modifier: Modifier = Modifier, enabled: Boolean = true) {
+    TabStrip(tabs, style, modifier, enabled, remember { MutableInteractionSource() })
 }
 
 @Immutable
