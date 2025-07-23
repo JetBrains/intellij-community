@@ -937,7 +937,7 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
 
     importProjectAsync()
 
-    assertEquals("4.0", projectsTree.findProject(p)!!.findManagedDependency("junit", "junit")!!.version)
+    assertEquals("4.0", projectsTree.findProject(p)!!.findManagedDependencyVersion("junit", "junit")!!)
   }
 
   @Test
@@ -973,7 +973,7 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
 
     importProjectAsync()
 
-    assertEquals("4.0", projectsTree.findProject(m1)!!.findManagedDependency("junit", "junit")!!.version)
+    assertEquals("4.0", projectsTree.findProject(m1)!!.findManagedDependencyVersion("junit", "junit")!!)
   }
 
   @Test
@@ -1018,8 +1018,8 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
 
     importProjectAsync()
 
-    assertEquals("4.0", projectsTree.findProject(m1)!!.findManagedDependency("junit", "junit")!!.version)
-    assertEquals("1.0", projectsTree.findProject(m1)!!.findManagedDependency("another", "dep")!!.version)
+    assertEquals("4.0", projectsTree.findProject(m1)!!.findManagedDependencyVersion("junit", "junit")!!)
+    assertEquals("1.0", projectsTree.findProject(m1)!!.findManagedDependencyVersion("another", "dep")!!)
   }
 
   protected fun assertDependenciesNodes(nodes: List<MavenArtifactNode?>?, expected: String?) {

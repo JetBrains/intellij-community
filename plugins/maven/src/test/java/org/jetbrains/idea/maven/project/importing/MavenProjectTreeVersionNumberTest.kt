@@ -17,12 +17,12 @@ import kotlin.reflect.full.findAnnotation
 class MavenProjectTreeVersionNumberTest : UsefulTestCase() {
 
   fun `test do not forget updating STORAGE_VERSION_NUMBER when structure changed`() {
-    val hash = Hashing.komihash5_0().hashStream();
+    val hash = Hashing.komihash5_0().hashStream()
     val recursionKeeper = HashSet<String>()
     hashKType(MavenProjectState::class.createType(), recursionKeeper, hash)
 
     hash.putString(MavenProjectsTree.STORAGE_VERSION)
-    assertEquals("UPDATE STORAGE VERSION ALONG WITH THIS HASH!!!", 8386196208490699208, hash.asLong)
+    assertEquals("UPDATE STORAGE VERSION ALONG WITH THIS HASH!!!", 5736572056086370157, hash.asLong)
   }
 
   private fun hashKType(type: KType, recursionKeeper: MutableSet<String>, hash: HashSink) {

@@ -22,8 +22,8 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfiguratorUtil.getProcessorArtifactInfos
 import org.jetbrains.idea.maven.importing.MavenImportUtil.annotationProcessorOptions
-import org.jetbrains.idea.maven.importing.MavenImportUtil.declaredAnnotationProcessors
 import org.jetbrains.idea.maven.importing.MavenImportUtil.compilerConfigsForCompilePhase
+import org.jetbrains.idea.maven.importing.MavenImportUtil.declaredAnnotationProcessors
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getAnnotationProcessorDirectory
 import org.jetbrains.idea.maven.importing.MavenImportUtil.procMode
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.*
@@ -405,7 +405,7 @@ object MavenAnnotationProcessorConfiguratorUtil {
     val pluginVersion = project.findPlugin(PLUGIN_GROUP_ID, PLUGIN_ARTIFACT_ID)?.version ?: return null
 
     if (VersionComparatorUtil.compare(pluginVersion, "3.12.0") >= 0 && groupId != null && artifactId != null) {
-      return project.findManagedDependency(groupId, artifactId)?.version
+      return project.findManagedDependencyVersion(groupId, artifactId)
     }
     return null
   }

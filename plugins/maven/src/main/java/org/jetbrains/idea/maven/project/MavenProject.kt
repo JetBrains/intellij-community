@@ -54,14 +54,20 @@ class MavenProject(val file: VirtualFile) {
 
   @Throws(IOException::class)
   fun write(out: DataOutputStream) {
-    out.writeUTF(path)
+    try {
+      out.writeUTF(path)
 
-    BufferExposingByteArrayOutputStream().use { bs ->
-      ObjectOutputStream(bs).use { os ->
-        os.writeObject(myState)
-        out.writeInt(bs.size())
-        out.write(bs.internalBuffer, 0, bs.size())
+      BufferExposingByteArrayOutputStream().use { bs ->
+        ObjectOutputStream(bs).use { os ->
+          os.writeObject(myState)
+          out.writeInt(bs.size())
+          out.write(bs.internalBuffer, 0, bs.size())
+        }
       }
+    }
+    catch (e: IOException) {
+      MavenLog.LOG.error("Unable to write project " + file.path, e)
+      throw e
     }
   }
 
@@ -587,7 +593,7 @@ class MavenProject(val file: VirtualFile) {
     setState(newState)
   }
 
-  fun findManagedDependency(groupId: String, artifactId: String): MavenId? = myState.managedDependencies["$groupId:$artifactId"]
+  fun findManagedDependencyVersion(groupId: String, artifactId: String): String? = myState.managedDependencies[GroupAndArtifact(groupId, artifactId)]
 
   fun findDependencies(depProject: MavenProject): List<MavenArtifact> {
     return findDependencies(depProject.mavenId)
@@ -856,7 +862,7 @@ class MavenProject(val file: VirtualFile) {
       val newPluginInfos = LinkedHashSet<MavenPluginWithArtifact>()
       val newExtensions = LinkedHashSet<MavenArtifact>()
       val newAnnotationProcessors = LinkedHashSet<MavenArtifact>()
-      val newManagedDeps = LinkedHashMap<String, MavenId>()
+      val newManagedDeps = HashMap<GroupAndArtifact, String>(managedDependencies.size)
 
       if (keepPreviousArtifacts) {
         newUnresolvedArtifacts.addAll(state.unresolvedArtifactIds)
@@ -886,7 +892,10 @@ class MavenProject(val file: VirtualFile) {
       newDependencyTree.addAll(model.dependencyTree)
       newDependencies.addAll(model.dependencies)
       newExtensions.addAll(model.extensions)
-      managedDependencies.forEach { md -> newManagedDeps.put("${md.groupId}:${md.artifactId}", md) }
+
+      for (md in managedDependencies) {
+        newManagedDeps.put(GroupAndArtifact(md.groupId ?: "", md.artifactId ?: ""), md.version ?: "")
+      }
 
       val remoteRepositories = ArrayList(newRepositories)
       val remotePluginRepositories = ArrayList(newPluginRepositories)
