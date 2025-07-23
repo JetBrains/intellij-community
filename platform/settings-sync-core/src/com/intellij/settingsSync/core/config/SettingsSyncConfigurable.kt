@@ -351,6 +351,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         }
         if (checkServerState(syncPanelHolder, remoteCommunicator, provider.authService.crossSyncSupported())) {
           withContext(Dispatchers.EDT) {
+            syncConfigPanel.reset()
             triggerUpdateConfigurable()
           }
           cellDropDownLink.comment?.text = "<icon src='AllIcons.General.History'>&nbsp;" +
