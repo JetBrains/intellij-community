@@ -7487,8 +7487,8 @@ jvm_import(
 
 jvm_import(
   name = "noria-compiler-plugin",
-  jar = "@noria-compiler-plugin-2_2_0-0_1_http//file",
-  source_jar = "@noria-compiler-plugin-2_2_0-0_1-sources_http//file",
+  jar = "@noria-compiler-plugin-2_2_0-0_2_http//file",
+  source_jar = "@noria-compiler-plugin-2_2_0-0_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
