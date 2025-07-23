@@ -15,11 +15,12 @@ import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
-import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
-import com.jetbrains.python.packaging.toolwindow.model.ExpandResultNode
+import com.jetbrains.python.packaging.toolwindow.model.*
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PackageNameCellRenderer
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PackageVersionCellRenderer
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
+import java.awt.Point
 import java.awt.event.MouseEvent
 import javax.swing.JScrollPane
 import javax.swing.JTable
@@ -151,8 +152,33 @@ class PyPackagesTreeTable(
   private fun setupContextMenu() {
     val packageActionGroup = ActionManager.getInstance()
       .getAction(PACKAGE_ACTION_GROUP_ID) as ActionGroup
-    PopupHandler.installPopupMenu(tree, packageActionGroup, POPUP_MENU_PLACE)
-    PopupHandler.installPopupMenu(table, packageActionGroup, POPUP_MENU_PLACE)
+    val popupHandler = createPopupHandler(packageActionGroup)
+
+    tree.addMouseListener(popupHandler)
+    table.addMouseListener(popupHandler)
+  }
+
+  private fun createPopupHandler(actionGroup: ActionGroup) = object : PopupHandler() {
+    override fun invokePopup(comp: Component?, x: Int, y: Int) {
+      val row = table.rowAtPoint(Point(x, y))
+      val node = table.getValueAt(row, 0) as? DisplayablePackage ?: return
+
+      if (shouldShowPopupForNode(node)) {
+        createAndShowPopupMenu(comp, x, y, actionGroup)
+      }
+    }
+
+    private fun shouldShowPopupForNode(node: DisplayablePackage): Boolean = when (node) {
+      is InstallablePackage, is InstalledPackage -> true
+      is RequirementPackage, is ExpandResultNode -> false
+    }
+
+    private fun createAndShowPopupMenu(comp: Component?, x: Int, y: Int, actionGroup: ActionGroup) {
+      val popupMenu = ActionManager.getInstance()
+        .createActionPopupMenu(POPUP_MENU_PLACE, actionGroup)
+        .component
+      popupMenu.show(comp, x, y)
+    }
   }
 
   private fun loadMoreItems(node: ExpandResultNode) {
