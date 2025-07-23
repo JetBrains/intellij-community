@@ -15,7 +15,7 @@ public class ImageSourceResolverTest {
 
     @Test
     public fun `resolveImageSource returns raw destination for full URI`() {
-        val extension = Coil3ImagesRendererExtensionImpl(dummyImageLoader)
+        val extension = Coil3ImageRendererExtensionImpl(dummyImageLoader)
         val fullUri = "https://example.com/image.png"
 
         val result = extension.resolveImageSource(fullUri)
@@ -26,7 +26,7 @@ public class ImageSourceResolverTest {
     @Test
     public fun `resolveImageSource resolves existing classpath resource`() {
         // This test requires a file named `test-image.svg` to exist in `src/test/resources/`.
-        val extension = Coil3ImagesRendererExtensionImpl(dummyImageLoader)
+        val extension = Coil3ImageRendererExtensionImpl(dummyImageLoader)
         val resourceName = "test-image.svg"
 
         val result = extension.resolveImageSource(resourceName)
@@ -37,7 +37,7 @@ public class ImageSourceResolverTest {
 
     @Test
     public fun `resolveImageSource returns raw destination for non-existent resource`() {
-        val extension = Coil3ImagesRendererExtensionImpl(dummyImageLoader)
+        val extension = Coil3ImageRendererExtensionImpl(dummyImageLoader)
         val nonExistentResource = "this_file_does_not_exist.jpg"
 
         val result = extension.resolveImageSource(nonExistentResource)

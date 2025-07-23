@@ -29,7 +29,7 @@ import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoilApi::class)
-public class Coil3ImagesRendererExtensionImplTest {
+public class Coil3ImageRendererExtensionImplTest {
     @get:Rule public val composeTestRule: ComposeContentTestRule = createComposeRule()
 
     private val platformContext: PlatformContext = PlatformContext.INSTANCE
@@ -45,7 +45,7 @@ public class Coil3ImagesRendererExtensionImplTest {
 
         val imageLoaderWithFakeEngine = ImageLoader.Builder(platformContext).components { add(engine) }.build()
 
-        val extension = Coil3ImagesRendererExtensionImpl(imageLoaderWithFakeEngine)
+        val extension = Coil3ImageRendererExtensionImpl(imageLoaderWithFakeEngine)
         val imageMarkdown =
             InlineMarkdown.Image(source = imageUrl, alt = "Alt text", title = "Image loaded successfully")
 
@@ -70,7 +70,7 @@ public class Coil3ImagesRendererExtensionImplTest {
 
         val imageLoaderWithFakeEngine = ImageLoader.Builder(platformContext).components { add(engine) }.build()
 
-        val extension = Coil3ImagesRendererExtensionImpl(imageLoaderWithFakeEngine)
+        val extension = Coil3ImageRendererExtensionImpl(imageLoaderWithFakeEngine)
         val imageMarkdown = InlineMarkdown.Image(source = imageUrl, alt = "Alt text", title = "Failed to load image")
 
         setContent(extension, imageMarkdown)
@@ -103,7 +103,7 @@ public class Coil3ImagesRendererExtensionImplTest {
         val imageLoader =
             ImageLoader.Builder(platformContext).components { add(engine) }.coroutineContext(testDispatcher).build()
 
-        val extension = Coil3ImagesRendererExtensionImpl(imageLoader)
+        val extension = Coil3ImageRendererExtensionImpl(imageLoader)
         val imageMarkdown = InlineMarkdown.Image(source = imageUrl, alt = "Alt text", title = "A loading image")
 
         setContent(extension, imageMarkdown)
@@ -121,7 +121,7 @@ public class Coil3ImagesRendererExtensionImplTest {
         imageNode.assertHeightIsAtLeast(fakeImageHeight.dp)
     }
 
-    private fun setContent(extension: Coil3ImagesRendererExtensionImpl, image: InlineMarkdown.Image) {
+    private fun setContent(extension: Coil3ImageRendererExtensionImpl, image: InlineMarkdown.Image) {
         composeTestRule.setContent {
             val inlineContent = mapOf("inlineTextContent" to extension.renderImagesContent(image))
             val annotatedString = buildAnnotatedString {
