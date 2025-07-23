@@ -3,6 +3,7 @@ package org.jetbrains.jewel.markdown.extensions.images
 
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.appendInlineContent
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.test.assertHeightIsAtLeast
@@ -123,12 +124,14 @@ public class Coil3ImageRendererExtensionImplTest {
 
     private fun setContent(extension: Coil3ImageRendererExtensionImpl, image: InlineMarkdown.Image) {
         composeTestRule.setContent {
-            val inlineContent = mapOf("inlineTextContent" to extension.renderImageContent(image))
-            val annotatedString = buildAnnotatedString {
-                append("Rendered inline text image: ")
-                appendInlineContent("inlineTextContent", "[rendered image]")
+            CompositionLocalProvider(LocalMarkdownImageSourceResolver provides DefaultImageSourceResolver()) {
+                val inlineContent = mapOf("inlineTextContent" to extension.renderImageContent(image))
+                val annotatedString = buildAnnotatedString {
+                    append("Rendered inline text image: ")
+                    appendInlineContent("inlineTextContent", "[rendered image]")
+                }
+                BasicText(text = annotatedString, inlineContent = inlineContent)
             }
-            BasicText(text = annotatedString, inlineContent = inlineContent)
         }
     }
 }

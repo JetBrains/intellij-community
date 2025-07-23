@@ -19,8 +19,6 @@ import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.size.Size
-import coil3.toUri
-import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.extensions.ImageRendererExtension
@@ -47,7 +45,8 @@ internal class Coil3ImageRendererExtensionImpl(private val imageLoader: ImageLoa
      */
     @Composable
     public override fun renderImageContent(image: InlineMarkdown.Image): InlineTextContent {
-        val resolvedImageSource = remember(image.source) { resolveImageSource(image.source) }
+        val imageSourceResolver = LocalMarkdownImageSourceResolver.current
+        val resolvedImageSource = remember(image.source) { imageSourceResolver.resolve(image.source) }
         var imageResult by remember(resolvedImageSource) { mutableStateOf<SuccessResult?>(null) }
 
         val painter =
@@ -91,35 +90,5 @@ internal class Coil3ImageRendererExtensionImpl(private val imageLoader: ImageLoa
         return InlineTextContent(placeholder) {
             Image(painter = painter, contentDescription = image.title, modifier = Modifier.fillMaxSize())
         }
-    }
-
-    /**
-     * Resolves a raw image destination string into a full, loadable path.
-     *
-     * This function checks if the destination is already a full URI (e.g., `http://...`). If not, it assumes the
-     * destination is a local resource path and attempts to resolve it using the ClassLoader.
-     *
-     * @param rawDestination The raw image source string from the Markdown document.
-     * @return A string representing a full URI that Coil can load (e.g., jar:file//<path>). If the resource is not
-     *   found, it returns the original destination string, which will likely cause Coil to fail.
-     */
-    @VisibleForTesting
-    internal fun resolveImageSource(rawDestination: String): String {
-        val uri = rawDestination.toUri()
-
-        if (uri.scheme != null) return rawDestination
-
-        val resourceUrl = this@Coil3ImageRendererExtensionImpl::class.java.classLoader.getResource(rawDestination)
-
-        if (resourceUrl == null) {
-            JewelLogger.getInstance("Jewel")
-                .warn(
-                    "Markdown image '$rawDestination' expected at classpath '$rawDestination' but not found. " +
-                        "Please ensure it's in your 'src/main/resources/' folder."
-                )
-            return rawDestination // This will cause Coil to fail and not render anything.
-        }
-
-        return resourceUrl.toExternalForm()
     }
 }
