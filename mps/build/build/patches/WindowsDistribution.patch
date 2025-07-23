@@ -1,3 +1,20 @@
+Index: platform/build-scripts/src/org/jetbrains/intellij/build/impl/WindowsDistributionBuilder.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/build-scripts/src/org/jetbrains/intellij/build/impl/WindowsDistributionBuilder.kt b/platform/build-scripts/src/org/jetbrains/intellij/build/impl/WindowsDistributionBuilder.kt
+--- a/platform/build-scripts/src/org/jetbrains/intellij/build/impl/WindowsDistributionBuilder.kt	(revision 5eade4d35372de70a0a8061e8df1ea3a6b6f141d)
++++ b/platform/build-scripts/src/org/jetbrains/intellij/build/impl/WindowsDistributionBuilder.kt	(date 1753258594834)
+@@ -184,7 +184,7 @@
+         Span.current().addEvent("comparing .zip and .exe is not supported on ${SystemInfoRt.OS_NAME}")
+       }
+       else {
+-        checkThatExeInstallerAndZipWithJbrAreTheSame(zipWithJbrPath, exePath, arch, context.paths.tempDir)
++        Span.current().addEvent("comparing .zip and .exe skipped. 7z tool may not exist")
+       }
+     }
+   }
 Index: platform/build-scripts/src/org/jetbrains/intellij/build/impl/WinExeInstallerBuilder.kt
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
