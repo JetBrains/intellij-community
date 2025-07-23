@@ -1115,7 +1115,7 @@ open class FileEditorManagerImpl(
   private val clientFileEditorManager: ClientFileEditorManager?
     get() {
       // todo RDCT-78
-      val session = project.currentSessionOrNull ?: return null
+      val session = project.currentSessionOrNull?.takeIf { !it.isDisposed } ?: return null
       LOG.assertTrue(!session.isLocal, "Trying to get ClientFileEditorManager for local ClientId")
       return session.serviceOrNull<ClientFileEditorManager>()
     }
