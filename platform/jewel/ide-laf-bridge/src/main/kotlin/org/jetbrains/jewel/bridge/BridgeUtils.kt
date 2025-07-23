@@ -316,6 +316,8 @@ internal fun lafName(): String {
     return lafInfo.name
 }
 
+internal fun isDarculaTheme(): Boolean = lafName() == "Darcula"
+
 @Suppress("UnstableApiUsage") // We need to use @Internal APIs
 public fun retrieveEditorColorScheme(): EditorColorsScheme {
     val manager = EditorColorsManager.getInstance() as EditorColorsManagerImpl
