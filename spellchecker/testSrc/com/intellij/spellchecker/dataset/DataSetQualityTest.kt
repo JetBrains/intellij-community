@@ -4,8 +4,8 @@ package com.intellij.spellchecker.dataset
 import com.intellij.spellchecker.SpellCheckerManager
 import com.intellij.spellchecker.dataset.Datasets.WordWithMisspellings
 import com.intellij.spellchecker.inspection.SpellcheckerInspectionTestCase
-import org.junit.Assert.assertTrue
-import org.junit.jupiter.api.assertAll
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 private const val MAX_WORD_LENGTH = 32
 
@@ -21,19 +21,19 @@ class DataSetQualityTest : SpellcheckerInspectionTestCase() {
 
   private fun doSpellcheckingTest(dataset: List<WordWithMisspellings>) {
     val manager = SpellCheckerManager.getInstance(project)
-    assertAll(*dataset.flatMap { word ->
-      mutableListOf(
-        { assertFalse("${word.word} should not be misspelled, but it is", manager.hasProblem(word.word)) },
-        { assertLessThanOrEqualMaxWordLength("${word.word} exceeds max word length $MAX_WORD_LENGTH", word.word.length) }
-      ) +
-      word.misspellings.map { misspelling ->
-        { assertTrue("$misspelling should be misspelled, but it is", manager.hasProblem(misspelling)) }
-        { assertLessThanOrEqualMaxWordLength("$misspelling exceeds max word length $MAX_WORD_LENGTH", misspelling.length) }
+
+    dataset.forEach { word ->
+      assertFalse(manager.hasProblem(word.word), "${word.word} should not be misspelled, but it is")
+      assertLessThanOrEqualMaxWordLength("${word.word} exceeds max word length $MAX_WORD_LENGTH", word.word.length)
+
+      word.misspellings.forEach { misspelling ->
+        assertTrue(manager.hasProblem(misspelling), "$misspelling should be misspelled, but it is")
+        assertLessThanOrEqualMaxWordLength("$misspelling exceeds max word length $MAX_WORD_LENGTH", misspelling.length)
       }
-    }.toTypedArray())
+    }
   }
 }
 
 private fun assertLessThanOrEqualMaxWordLength(message: String, actual: Int) {
-  assertTrue(message, actual <= MAX_WORD_LENGTH)
+  assertTrue(actual <= MAX_WORD_LENGTH, message)
 }

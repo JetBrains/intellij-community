@@ -51,6 +51,9 @@
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
