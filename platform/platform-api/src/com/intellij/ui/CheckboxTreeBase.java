@@ -175,6 +175,13 @@ public class CheckboxTreeBase extends Tree {
           return State.DONT_CARE;
         }
       }
+      
+      // If all children have the same state but it differs from the parent's state,
+      // return DONT_CARE (partial) instead of the children's state
+      if (result != null && result != ownState) {
+        return State.DONT_CARE;
+      }
+      
       return result == null ? ownState : result;
     }
 
