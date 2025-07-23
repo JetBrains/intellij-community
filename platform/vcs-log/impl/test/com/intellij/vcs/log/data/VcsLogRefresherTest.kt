@@ -159,11 +159,11 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     refresherTestHelper.assertTimeout("Second refresh shouldn't cause the data pack update") // it may also fail in beforehand in set().
   }
 
-  class LogRefresherTestHelper(logData: VcsLogData, recentCommitsCount: Int) {
+  private class LogRefresherTestHelper(logData: VcsLogData, recentCommitsCount: Int) {
     private val project = logData.project
 
     val dataWaiter = DataWaiter()
-    internal val loader = VcsLogRefresherImpl(project, logData.storage, logData.logProviders, VcsLogProgress(project),
+    val loader = VcsLogRefresherImpl(project, logData.storage, logData.logProviders, VcsLogProgress(project),
                                               null, dataWaiter, recentCommitsCount
     ).apply {
       taskInterceptor = {
@@ -198,9 +198,6 @@ class VcsLogRefresherTest : VcsPlatformTest() {
       }
     }
 
-    val dataPack: DataPack
-      get() = loader.currentDataPack
-
     @Throws(InterruptedException::class)
     fun assertTimeout(message: String) {
       assertNull(message, dataWaiter.queue.poll(500, TimeUnit.MILLISECONDS))
@@ -234,7 +231,7 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     return VcsRefImpl(HashImpl.build(commit), name, TestVcsLogProvider.BRANCH_TYPE, projectRoot)
   }
 
-  class DataWaiter : Consumer<DataPack> {
+  private class DataWaiter : Consumer<DataPack> {
     @Volatile
     private var _queue: BlockingQueue<DataPack>? = ArrayBlockingQueue(10)
     val queue: BlockingQueue<DataPack>
