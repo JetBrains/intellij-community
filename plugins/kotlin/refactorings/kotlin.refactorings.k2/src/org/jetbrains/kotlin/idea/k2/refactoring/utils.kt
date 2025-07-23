@@ -9,6 +9,7 @@ import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import org.jetbrains.annotations.Nls
@@ -228,7 +229,9 @@ fun KaReceiverValue.getThisReceiverOwner(): KaSymbol? {
  * The parameter should belong to a file open in the editor.
  */
 fun renameParameterInPlace(ktParameter: KtParameter, editor: Editor) {
-    editor.caretModel.moveToOffset(ktParameter.startOffset)
+    val pointer = ktParameter.createSmartPointer()
     PsiDocumentManager.getInstance(ktParameter.project).doPostponedOperationsAndUnblockDocument(editor.document)
-    KotlinMemberInplaceRenameHandler().doRename(ktParameter, editor, null)
+    val param = pointer.element ?: return
+    editor.caretModel.moveToOffset(param.startOffset)
+    KotlinMemberInplaceRenameHandler().doRename(param, editor, null)
 }

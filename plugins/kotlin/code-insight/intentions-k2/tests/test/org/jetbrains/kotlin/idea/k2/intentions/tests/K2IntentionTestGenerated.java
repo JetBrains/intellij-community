@@ -14878,6 +14878,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/namedRootOfHierarchy.kt");
             }
 
+            @TestMetadata("withDefaultParameterUsage.kt")
+            public void testWithDefaultParameterUsage() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/withDefaultParameterUsage.kt");
+            }
+
             @TestMetadata("wrappedWithUnderscores.kt")
             public void testWrappedWithUnderscores() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/wrappedWithUnderscores.kt");
