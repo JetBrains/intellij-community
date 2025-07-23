@@ -28,14 +28,11 @@ import java.util.regex.Pattern
 
 private val patternToDetectMembers = Pattern.compile("(.+)(#)(.*)")
 
-open class ClassSearchEverywhereContributor(event: AnActionEvent)
-  : AbstractGotoSEContributor(event), EssentialContributor, SearchEverywherePreviewProvider {
+open class ClassSearchEverywhereContributor @Internal constructor(event: AnActionEvent, contributorModules: List<SearchEverywhereContributorModule>?)
+  : AbstractGotoSEContributor(event, contributorModules), EssentialContributor, SearchEverywherePreviewProvider {
   private val filter = createLanguageFilter(event.getRequiredData(CommonDataKeys.PROJECT))
 
-  @Internal
-  constructor(event: AnActionEvent, contributorModules: List<SearchEverywhereContributorModule>?) : this(event) {
-    this.contributorModules = contributorModules
-  }
+  constructor(event: AnActionEvent) : this(event, null)
 
   companion object {
     @JvmStatic
