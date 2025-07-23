@@ -28,7 +28,7 @@ internal fun createPromoPanel(): JPanel = panel {
       }
       row {
         button(PyBundle.message("pycharm.free.mode.upgrade.button")) {
-          BrowserLauncher.instance.open("https://www.jetbrains.com/pycharm/buy/?section=commercial&billing=yearly")
+          BrowserLauncher.instance.open("https://www.jetbrains.com/pycharm/buy/?utm_source=product&utm_medium=referral&utm_campaign=pycharm&utm_content=pro_upgrade&section=commercial&billing=yearly")
         }.applyToComponent {
           putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true)
         }
