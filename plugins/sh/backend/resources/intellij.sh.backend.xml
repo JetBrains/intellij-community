@@ -59,9 +59,19 @@
       <bundleName>messages.ShBundle</bundleName>
       <categoryKey>intention.shell.script</categoryKey>
     </intentionAction>
+    <defaultLiveTemplates file="liveTemplates/ShellScript.xml"/>
+    <defaultLiveTemplates file="liveTemplates/ShellScriptArray.xml"/>
+    <defaultLiveTemplates file="liveTemplates/ShellScriptHidden.xml" hidden="true"/>
+    <liveTemplateContext contextId="SHELL_SCRIPT" implementation="com.intellij.sh.backend.template.ShContextType"/>
   </extensions>
 
   <actions>
     <action id="runShellFileAction" class="com.intellij.sh.backend.run.ShRunFileAction" use-shortcut-of="RunClass"/>
+    <group id="ShGenerateGroup">
+      <action id="ShGenerateForLoop" class="com.intellij.sh.backend.actions.ShGenerateForLoop"/>
+      <action id="ShGenerateWhileLoop" class="com.intellij.sh.backend.actions.ShGenerateWhileLoop"/>
+      <action id="ShGenerateUntilLoop" class="com.intellij.sh.backend.actions.ShGenerateUntilLoop"/>
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </group>
   </actions>
 </idea-plugin>
