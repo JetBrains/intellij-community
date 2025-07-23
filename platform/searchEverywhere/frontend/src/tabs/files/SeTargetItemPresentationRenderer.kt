@@ -26,6 +26,11 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
 
     presentation.icon?.let { icon(it) }
 
+    val fontMetrics = resultList.getFontMetrics(resultList.font)
+    // Calculate the combined width of presentableText and shortenContainerText.
+    // If it is larger than the available space, hide the locationIcon to avoid text overlap (IJPL-188565).
+    var visibleTextWidth = fontMetrics.stringWidth(presentation.presentableText)
+
     text(presentation.presentableText) {
       accessibleName = presentation.presentableText + (presentation.containerText?.let { " $it" } ?: "")
 
@@ -49,11 +54,11 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
     }
 
     presentation.containerText?.let { containerText ->
-      val fontMetrics = resultList.getFontMetrics(resultList.font)
       val presentableTextWidth = fontMetrics.stringWidth(presentation.presentableText)
       val locationTextWidth = presentation.locationText?.let { fontMetrics.stringWidth(it) } ?: 0
       val width = resultList.width
       val shortenContainerText = SETextShortener.getShortenContainerText(containerText, width - presentableTextWidth - JBUI.scale(16) - locationTextWidth - JBUI.scale(20), { fontMetrics.stringWidth(it) })
+      visibleTextWidth += fontMetrics.stringWidth(shortenContainerText)
 
       text(shortenContainerText) {
         accessibleName = null
@@ -91,8 +96,10 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
           else NamedColorUtil.getInactiveTextColor()
       }
 
-      presentation.locationIcon?.let { locationIcon ->
-        icon(locationIcon)
+      if (visibleTextWidth < resultList.width) {
+        presentation.locationIcon?.let { locationIcon ->
+          icon(locationIcon)
+        }
       }
     }
   }
