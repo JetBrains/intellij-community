@@ -18,6 +18,7 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.VisiblePack
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.table.AbstractTableModel
+import kotlin.collections.orEmpty
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.properties.Delegates
