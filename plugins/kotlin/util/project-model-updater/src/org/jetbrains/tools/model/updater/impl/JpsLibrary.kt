@@ -10,8 +10,12 @@ data class JpsLibrary(
 ) {
     fun render(jpsResolverSettings: JpsResolverSettings): String {
         return xml("component", "name" to "libraryTable") {
-            xml("library", "name" to name, if (type is LibraryType.Repository) "type" to "repository" else null) {
-                if (type is LibraryType.Repository) {
+            xml(
+                "library",
+                "name" to name,
+                if (JpsResolverSettings.useMavenResolver && type is LibraryType.Repository) "type" to "repository" else null
+            ) {
+                if (JpsResolverSettings.useMavenResolver && type is LibraryType.Repository) {
                     val properties = arrayOf(
                         if (!type.includeTransitive) "include-transitive-deps" to "false" else null,
                         if (jpsResolverSettings.bindRepositoryEnabled) "jar-repository-id" to type.remoteRepository.id else null,

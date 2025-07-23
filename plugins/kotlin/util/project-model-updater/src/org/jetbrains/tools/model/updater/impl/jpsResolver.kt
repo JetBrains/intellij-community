@@ -13,13 +13,35 @@ data class JpsRemoteRepository(val id: String, val url: String) {
   }
 }
 
-data class JpsResolverSettings(val sha256ChecksumsEnabled: Boolean, val bindRepositoryEnabled: Boolean)
+data class JpsResolverSettings(val sha256ChecksumsEnabled: Boolean, val bindRepositoryEnabled: Boolean) {
+    companion object {
+        /**
+         * If true, then dependencies of [JpsLibrary.LibraryType.Repository] type should be registered 
+         * as Maven dependencies, and should be resolved via Maven coordinates.
+         * 
+         * Otherwise, dependencies should be registered as simple paths to the jars. 
+         * 
+         * This can be desirable to avoid issues with the Maven dependency resolver being flaky.
+         * 
+         * In this case, all the other settings should be ignored.
+         *
+         * See IJI-1238 and KTI-2331 for details.
+         */
+        val useMavenResolver: Boolean
+            get() = !System.getenv("MODEL_UPDATER_USE_KOTLIN_DEPENDENCIES_DIRECTLY_FROM_MAVEN_FOLDER").toBoolean()
+    }
+}
 
 fun readJpsResolverSettings(communityRoot: File, monorepoRoot: File?): JpsResolverSettings {
+    val isUnderTeamcity = System.getenv("TEAMCITY_VERSION") != null
+    
+    println("State of JpsResolverSettings.useMavenResolver == ${JpsResolverSettings.useMavenResolver}")
+
     // Checksums and bind repository must be set locally and committed by developer:
     // don't update them automatically on teamcity.
-    if (System.getenv("TEAMCITY_VERSION") != null
-        && !System.getenv("MODEL_UPDATER_ALLOW_UPDATING_SETTINGS_ON_TEAMCITY").toBoolean()
+    if (
+        isUnderTeamcity &&
+        !System.getenv("MODEL_UPDATER_ALLOW_UPDATING_SETTINGS_ON_TEAMCITY").toBoolean()
     ) {
         val settings = JpsResolverSettings(false, false)
         println("Under TeamCity, resetting settings to: $settings")
