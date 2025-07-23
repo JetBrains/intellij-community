@@ -62,7 +62,6 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
                              @NotNull Disposable parent) {
     super(project, settingsProvider, parent);
     myShellCommandHandlerHelper = new TerminalShellCommandHandlerHelper(this);
-    TerminalPSReadLineUpdateUtil.trackUpdateRejection(getTerminal());
 
     ClassicTerminalVfsRefresher refresher = new ClassicTerminalVfsRefresher(this);
     getTerminalPanel().addPreKeyEventHandler(e -> {
