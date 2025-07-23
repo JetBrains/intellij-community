@@ -56,7 +56,6 @@ import java.util.function.Predicate;
 public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataProvider {
   // when client property is put in a toolwindow component, hides toolwindow label
   public static final @NonNls String HIDE_ID_LABEL = "HideIdLabel";
-  public static final @NonNls Key<Boolean> ALLOW_DND_FOR_TABS = Key.create("AllowDragAndDropForTabs");
   // when client property is set to true in a toolwindow component, the toolbar is always visible in the tool window header
   public static final @NonNls Key<Boolean> DONT_HIDE_TOOLBAR_IN_HEADER = Key.create("DontHideToolbarInHeader");
   private static final @NonNls String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
@@ -591,7 +590,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     group.add(actionManager.getAction("TW.CloseAllTabs"));
     group.add(actionManager.getAction("TW.CloseOtherTabs"));
     group.addSeparator();
-    if (isToolWindowReorderAllowed(window)) {
+    if (isTabsReorderingAllowed(window)) {
       group.add(actionManager.getAction("TW.SplitRight"));
       group.add(actionManager.getAction("TW.SplitAndMoveRight"));
       group.add(actionManager.getAction("TW.SplitDown"));
@@ -794,8 +793,29 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     return UIUtil.isFocusAncestor(contentComponent);
   }
 
-  public static boolean isToolWindowReorderAllowed(@NotNull ToolWindow window) {
-    return ClientProperty.isTrue(window.getComponent(), ALLOW_DND_FOR_TABS) &&
+  /**
+   * @deprecated please use {@link ToolWindowContentUi#setAllowTabsReordering(ToolWindow, boolean)} instead.
+   */
+  @Deprecated
+  public static final @NonNls Key<Boolean> ALLOW_DND_FOR_TABS = Key.create("AllowDragAndDropForTabs");
+
+  @ApiStatus.Internal
+  public static final Key<Boolean> ALLOW_TABS_REORDERING = ALLOW_DND_FOR_TABS;
+
+  /**
+   * If {@code allow} parameter is specified as {@code true} then it will be possible to reorder and split
+   * tabs of the provided tool window using drag and drop and specific actions, such as
+   * {@link com.intellij.ide.actions.ToolWindowSplitRightAction}.
+   */
+  public static void setAllowTabsReordering(@NotNull ToolWindow toolWindow, boolean allow) {
+    toolWindow.getComponent().putClientProperty(ALLOW_TABS_REORDERING, allow);
+  }
+
+  /**
+   * @return whether reorder and split of tabs in the provided tool window is allowed.
+   */
+  public static boolean isTabsReorderingAllowed(@NotNull ToolWindow window) {
+    return ClientProperty.isTrue(window.getComponent(), ALLOW_TABS_REORDERING) &&
            Registry.is("ide.allow.split.and.reorder.in.tool.window", false);
   }
 

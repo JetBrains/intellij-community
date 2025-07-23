@@ -21,7 +21,7 @@ internal abstract class ToolWindowSplitAndMoveActionBase(
 
   override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
     val contentManager = content?.manager
-    e.presentation.isEnabledAndVisible = ToolWindowContentUi.isToolWindowReorderAllowed(toolWindow) &&
+    e.presentation.isEnabledAndVisible = ToolWindowContentUi.isTabsReorderingAllowed(toolWindow) &&
                                          contentManager != null && contentManager.contentCount > 1
   }
 

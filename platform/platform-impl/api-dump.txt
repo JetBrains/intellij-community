@@ -755,7 +755,8 @@ com.intellij.openapi.wm.impl.TitleInfoProvider
 - a:getValue(com.intellij.openapi.project.Project):java.lang.String
 - a:isActive(com.intellij.openapi.project.Project):Z
 f:com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-- s:isToolWindowReorderAllowed(com.intellij.openapi.wm.ToolWindow):Z
+- s:isTabsReorderingAllowed(com.intellij.openapi.wm.ToolWindow):Z
+- s:setAllowTabsReordering(com.intellij.openapi.wm.ToolWindow,Z):V
 com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider
 - sf:Companion:com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName

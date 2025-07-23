@@ -45,7 +45,6 @@ import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
 import com.intellij.ui.docking.DockManager
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.SmartList
-import com.intellij.util.application
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
@@ -162,7 +161,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     ))
     toolWindow.setToHideOnEmptyContent(true)
     if (DefaultRunExecutor.EXECUTOR_ID == executor.id || Registry.`is`("debugger.new.tool.window.layout.dnd", false)) {
-      toolWindow.component.putClientProperty(ToolWindowContentUi.ALLOW_DND_FOR_TABS, true)
+      ToolWindowContentUi.setAllowTabsReordering(toolWindow, true)
     }
     val contentManager = toolWindow.contentManager
     contentManager.addUiDataProvider { sink ->

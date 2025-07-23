@@ -24,7 +24,7 @@ internal abstract class ToolWindowSplitActionBase(
   }
 
   override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
-    e.presentation.isEnabledAndVisible = ToolWindowContentUi.isToolWindowReorderAllowed(toolWindow) &&
+    e.presentation.isEnabledAndVisible = ToolWindowContentUi.isTabsReorderingAllowed(toolWindow) &&
                                          ToolWindowSplitContentProviderBean.getForToolWindow(toolWindow.id) != null
   }
 

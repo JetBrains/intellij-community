@@ -28,7 +28,7 @@ internal abstract class ToolWindowMoveToSplitterAction(
     val topDecorator = InternalDecoratorImpl.findTopLevelDecorator(component)
     e.presentation.isEnabled = topDecorator?.mode?.isSplit == true
     e.presentation.isVisible = (e.presentation.isEnabled || !e.isFromContextMenu) &&
-                               ToolWindowContentUi.isToolWindowReorderAllowed(toolWindow)
+                               ToolWindowContentUi.isTabsReorderingAllowed(toolWindow)
 
   }
 

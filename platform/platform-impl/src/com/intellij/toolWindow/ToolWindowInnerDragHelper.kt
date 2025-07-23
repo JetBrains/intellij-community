@@ -49,7 +49,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
       val child = SwingUtilities.getDeepestComponentAt(pane, x, y)
       val decorator = InternalDecoratorImpl.findTopLevelDecorator(child)
       if (decorator != null &&
-          ToolWindowContentUi.isToolWindowReorderAllowed(decorator.toolWindow) &&
+          ToolWindowContentUi.isTabsReorderingAllowed(decorator.toolWindow) &&
           child is ContentTabLabel &&
           (child.parent is ToolWindowContentUi.TabPanel ||
            Registry.`is`("debugger.new.tool.window.layout.dnd", false) && child.parent is SingleContentLayout.TabAdapter) &&

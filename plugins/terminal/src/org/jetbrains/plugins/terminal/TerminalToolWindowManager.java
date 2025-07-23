@@ -157,7 +157,7 @@ public final class TerminalToolWindowManager implements Disposable {
     toolWindow.setTabActions(ActionManager.getInstance().getAction("TerminalToolwindowActionGroup"));
     toolWindow.setTabDoubleClickActions(Collections.singletonList(new RenameTerminalSessionAction()));
 
-    toolWindow.getComponent().putClientProperty(ToolWindowContentUi.ALLOW_DND_FOR_TABS, true);
+    ToolWindowContentUi.setAllowTabsReordering(toolWindow, true);
 
     myProject.getMessageBus().connect(toolWindow.getDisposable())
       .subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {

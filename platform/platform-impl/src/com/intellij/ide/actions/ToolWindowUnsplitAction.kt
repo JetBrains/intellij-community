@@ -21,7 +21,7 @@ internal class ToolWindowUnsplitAction : ToolWindowContextMenuActionBase(), Acti
     val decorator = findNearestDecorator(e)
     e.presentation.isEnabled = decorator != null && decorator.canUnsplit()
     e.presentation.isVisible = (e.presentation.isEnabled || !e.isFromContextMenu)
-                               && ToolWindowContentUi.isToolWindowReorderAllowed(toolWindow)
+                               && ToolWindowContentUi.isTabsReorderingAllowed(toolWindow)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

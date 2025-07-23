@@ -936,7 +936,7 @@ class InternalDecoratorImpl internal constructor(
     contentUi.update()
 
     if ((toolWindow.type == ToolWindowType.WINDOWED || toolWindow.type == ToolWindowType.FLOATING) &&
-        ToolWindowContentUi.isToolWindowReorderAllowed(toolWindow)) {
+        ToolWindowContentUi.isTabsReorderingAllowed(toolWindow)) {
       ToolWindowInnerDragHelper(disposable, this).start()
     }
   }
