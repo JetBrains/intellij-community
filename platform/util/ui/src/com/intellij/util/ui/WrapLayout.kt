@@ -26,8 +26,8 @@ open class WrapLayout : FlowLayout {
    * Constructs a new `FlowLayout` with the specified
    * alignment and a default 5-unit horizontal and vertical gap.
    * The value of the alignment argument must be one of
-   * `WrapLayout`, `WrapLayout`,
-   * or `WrapLayout`.
+   * `FlowLayout.LEFT`, `FlowLayout.RIGHT`,
+   * or `FlowLayout.CENTER`.
    * @param align the alignment value
    */
   constructor(align: Int) : super(align)
@@ -38,8 +38,8 @@ open class WrapLayout : FlowLayout {
    *
    *
    * The value of the alignment argument must be one of
-   * `WrapLayout`, `WrapLayout`,
-   * or `WrapLayout`.
+   * `FlowLayout.LEFT`, `FlowLayout.RIGHT`,
+   * or `FlowLayout.CENTER`.
    * @param align the alignment value
    * @param hgap the horizontal gap between components
    * @param vgap the vertical gap between components
