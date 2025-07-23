@@ -4,6 +4,7 @@ package com.intellij.ide.util;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.TreeStructureProvider;
+import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
@@ -119,6 +120,11 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   @Override
   protected JComponent createCenterPanel() {
     ProjectAbstractTreeStructureBase treeStructure = new AbstractProjectTreeStructure(myProject) {
+      @Override
+      protected AbstractTreeNode<?> createRoot(@NotNull Project project, @NotNull ViewSettings settings) {
+        return TreeFileChooserSupport.Companion.getInstance(project).createRoot(settings);
+      }
+
       @Override
       public boolean isHideEmptyMiddlePackages() {
         return true;
@@ -325,10 +331,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     else {
       final TreePath path = myTree.getSelectionPath();
       if (path == null) return null;
-      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      final Object userObject = node.getUserObject();
-      if (!(userObject instanceof ProjectViewNode pvNode)) return null;
-      VirtualFile vFile = pvNode.getVirtualFile();
+      VirtualFile vFile = TreeFileChooserSupport.Companion.getInstance(myProject).getVirtualFile(path);
       if (vFile != null && !vFile.isDirectory()) {
         return PsiManager.getInstance(myProject).findFile(vFile);
       }
