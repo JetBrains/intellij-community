@@ -5674,17 +5674,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private static final class NullEditorHighlighter extends EmptyEditorHighlighter {
-    private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
-
-    NullEditorHighlighter() {
-      super(NULL_ATTRIBUTES);
-    }
-
-    @Override
-    public void setColorScheme(@NotNull EditorColorsScheme scheme) { }
-  }
-
   private final class PanelWithFloatingToolbar extends JBLayeredPane {
     @Override
     public void doLayout() {
