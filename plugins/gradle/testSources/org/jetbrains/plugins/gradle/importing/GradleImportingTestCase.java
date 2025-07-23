@@ -522,7 +522,12 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
 
     myProjectSettings.setDistributionType(DistributionType.DEFAULT_WRAPPED);
 
-    GradleWrapperUtil.generateGradleWrapper(myProjectRoot, getCurrentGradleVersion());
+    // Cannot generate Gradle wrapper using virtual files system.
+    // Because the K2MppHighlightingIntegrationTest.testJvmMultifileClass test implicitly depends on the VFS cache.
+    // Calling the for VFS refresh after Gradle wrapper generation using Java NIO API also fails this KMP test
+    GradleWrapperUtil.generateGradleWrapper(myProjectRoot.toNioPath(), getCurrentGradleVersion());
+
+    // VfsUtil.markDirtyAndRefresh(false, true, true, myProjectRoot)
 
     WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(myProjectRoot.toNioPath());
     PathAssembler pathAssembler = new PathAssembler(StartParameter.DEFAULT_GRADLE_USER_HOME, new File(getProjectPath()));
