@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
-import com.intellij.ide.rpc.BackendDocumentId
 import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.rpc.bindToFrontend
 import com.intellij.ide.ui.colors.rpcId
@@ -11,11 +10,16 @@ import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.util.ThreeState
+import com.intellij.util.asDisposable
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.EvaluationMode
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
@@ -23,15 +27,19 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.frame.ColorState
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
-import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.XDebugSessionId
+import com.intellij.xdebugger.impl.rpc.XExecutionStackId
+import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
 import com.intellij.xdebugger.stepping.ForceSmartStepIntoSource
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
+import fleet.rpc.core.toRpc
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.coroutineScope
@@ -64,14 +72,11 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }
   }
 
-  override suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): BackendDocumentId? {
+  override suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): XExpressionDocumentDto? {
     val session = sessionId.findValue() ?: return null
     val project = session.project
     val editorsProvider = session.debugProcess.editorsProvider
-    return withContext(Dispatchers.EDT) {
-      val backendDocument = editorsProvider.createDocument(project, expression.xExpression(), sourcePosition?.sourcePosition(), evaluationMode)
-      backendDocument.bindToFrontend(frontendDocumentId, project)
-    }
+    return createBackendDocument(project, frontendDocumentId, editorsProvider, expression, sourcePosition, evaluationMode)
   }
 
   override suspend fun resume(sessionId: XDebugSessionId) {
@@ -255,6 +260,31 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     withContext(Dispatchers.EDT) {
       session.setBreakpointMuted(muted)
     }
+  }
+}
+
+internal suspend fun createBackendDocument(
+  project: Project,
+  frontendDocumentId: FrontendDocumentId,
+  editorsProvider: XDebuggerEditorsProvider,
+  expression: XExpressionDto,
+  sourcePosition: XSourcePositionDto?,
+  evaluationMode: EvaluationMode,
+): XExpressionDocumentDto {
+  return withContext(Dispatchers.EDT) {
+    val originalExpression = expression.xExpression()
+    val backendDocument = editorsProvider.createDocument(project, originalExpression, sourcePosition?.sourcePosition(), evaluationMode)
+    val backendDocumentId = backendDocument.bindToFrontend(frontendDocumentId, project)
+    val expressionFlow = channelFlow {
+      backendDocument.addDocumentListener(object : DocumentListener {
+        override fun documentChanged(event: DocumentEvent) {
+          val updatedExpression = editorsProvider.createExpression(project, backendDocument, originalExpression.language, evaluationMode)
+          trySend(updatedExpression.toRpc())
+        }
+      }, this.asDisposable())
+      awaitClose()
+    }.buffer(1, BufferOverflow.DROP_OLDEST)
+    XExpressionDocumentDto(backendDocumentId, expressionFlow.toRpc())
   }
 }
 

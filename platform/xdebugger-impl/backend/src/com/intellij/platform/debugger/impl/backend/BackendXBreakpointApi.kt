@@ -1,10 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
-import com.intellij.ide.rpc.BackendDocumentId
 import com.intellij.ide.rpc.FrontendDocumentId
-import com.intellij.ide.rpc.bindToFrontend
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.project.ProjectId
@@ -19,8 +16,6 @@ import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeId
 import com.intellij.xdebugger.impl.rpc.models.findValue
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 internal class BackendXBreakpointApi : XBreakpointApi {
   override suspend fun setEnabled(breakpointId: XBreakpointId, requestId: Long, enabled: Boolean) {
@@ -124,13 +119,10 @@ internal class BackendXBreakpointApi : XBreakpointApi {
     }
   }
 
-  override suspend fun createDocument(frontendDocumentId: FrontendDocumentId, breakpointId: XBreakpointId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): BackendDocumentId? {
+  override suspend fun createDocument(frontendDocumentId: FrontendDocumentId, breakpointId: XBreakpointId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): XExpressionDocumentDto? {
     val breakpoint = breakpointId.findValue() ?: return null
     val project = breakpoint.project
     val editorsProvider = getEditorsProvider(breakpoint.type, breakpoint, breakpoint.project) ?: return null
-    return withContext(Dispatchers.EDT) {
-      val backendDocument = editorsProvider.createDocument(project, expression.xExpression(), sourcePosition?.sourcePosition(), evaluationMode)
-      backendDocument.bindToFrontend(frontendDocumentId, project)
-    }
+    return createBackendDocument(project, frontendDocumentId, editorsProvider, expression, sourcePosition, evaluationMode)
   }
 }

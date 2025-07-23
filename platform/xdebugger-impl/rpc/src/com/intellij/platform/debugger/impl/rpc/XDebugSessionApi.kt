@@ -2,7 +2,6 @@
 package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.execution.rpc.ProcessHandlerDto
-import com.intellij.ide.rpc.BackendDocumentId
 import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
@@ -36,7 +35,7 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun currentSessionState(sessionId: XDebugSessionId): Flow<XDebugSessionState>
 
-  suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): BackendDocumentId?
+  suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): XExpressionDocumentDto?
 
   suspend fun resume(sessionId: XDebugSessionId)
 

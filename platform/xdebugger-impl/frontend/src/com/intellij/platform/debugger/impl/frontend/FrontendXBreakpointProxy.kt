@@ -62,7 +62,7 @@ internal open class FrontendXBreakpointProxy(
   private val _state: MutableStateFlow<XBreakpointDtoState> = MutableStateFlow(dto.initialState)
 
   private val editorsProvider = dto.editorsProviderDto?.let {
-    getEditorsProvider(it, documentIdProvider = { frontendDocumentId, expression, position, mode ->
+    getEditorsProvider(cs, it, documentIdProvider = { frontendDocumentId, expression, position, mode ->
       XBreakpointApi.getInstance().createDocument(frontendDocumentId, id, expression, position, mode)
     })
   }

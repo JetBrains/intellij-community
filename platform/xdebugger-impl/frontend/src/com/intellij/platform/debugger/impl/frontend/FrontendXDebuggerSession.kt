@@ -118,7 +118,7 @@ class FrontendXDebuggerSession private constructor(
     get() = sessionState.value.isSuspended
 
   override val editorsProvider: XDebuggerEditorsProvider = getEditorsProvider(
-    sessionDto.editorsProviderDto, documentIdProvider = { frontendDocumentId, expression, position, mode ->
+    cs, sessionDto.editorsProviderDto, documentIdProvider = { frontendDocumentId, expression, position, mode ->
     XDebugSessionApi.getInstance().createDocument(frontendDocumentId, sessionDto.id, expression, position, mode)
   })
 
