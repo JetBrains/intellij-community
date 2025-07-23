@@ -634,12 +634,6 @@
     <depends>com.intellij.modules.vcs</depends>
     <depends optional="true">-com-intellij-java-</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.vcs.changeReminder/META-INF/plugin.xml">
-    <id>-com-jetbrains-changeReminder-</id>
-    <name>ChangeReminder</name>
-    <depends>com.intellij.modules.vcs</depends>
-    <depends>-Git4Idea-</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.spring.osgi/META-INF/plugin.xml">
     <id>-com-intellij-spring-osgi-</id>
     <name>Spring OSGi</name>

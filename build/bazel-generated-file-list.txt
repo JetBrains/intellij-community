@@ -705,7 +705,6 @@ plugins/IntelliLang/xml-support/xpath
 plugins/ant
 plugins/ant/jps-plugin
 plugins/built-in-help
-plugins/changeReminder
 plugins/classic-ui
 plugins/color-schemes/all-hallows-eve-color-scheme
 plugins/color-schemes/blackboard-color-scheme

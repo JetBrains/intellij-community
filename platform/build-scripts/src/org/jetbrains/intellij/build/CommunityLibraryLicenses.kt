@@ -1343,7 +1343,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("ai.grazie.spell.gec.engine.local"),
     jetbrainsLibrary("ai.grazie.spell.hunspell.en"),
     jetbrainsLibrary("ai.grazie.utils.lucene.lt.compatibility"),
-    jetbrainsLibrary("change-reminder-prediction-model"),
     jetbrainsLibrary("cloud-config-client"),
     jetbrainsLibrary("com.jetbrains.fus.reporting.ap.validation"),
     jetbrainsLibrary("com.jetbrains.fus.reporting.configuration"),

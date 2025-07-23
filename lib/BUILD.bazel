@@ -9394,13 +9394,6 @@ jvm_import(
   source_jar = "@vavr-match-0_10_4-sources_http//file"
 )
 
-jvm_import(
-  name = "vcs-change_reminder-change-reminder-prediction-model",
-  jar = "@randomForestRegressor-0_0_11_http//file",
-  source_jar = "@randomForestRegressor-0_0_11-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
 java_library(
   name = "vcs-github-apollographql-apollo-ast-jvm",
   exports = [

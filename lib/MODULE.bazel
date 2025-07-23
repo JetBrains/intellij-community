@@ -13573,20 +13573,6 @@ http_file(
 )
 
 http_file(
-  name = "randomForestRegressor-0_0_11_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/changeReminder/prediction/randomForestRegressor/0.0.11/randomForestRegressor-0.0.11.jar",
-  sha256 = "a6908f14a17757a20a0d629c5d2f0986826021c679bfb224963ef6a06097aa21",
-  downloaded_file_path = "randomForestRegressor-0.0.11.jar"
-)
-
-http_file(
-  name = "randomForestRegressor-0_0_11-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/changeReminder/prediction/randomForestRegressor/0.0.11/randomForestRegressor-0.0.11-sources.jar",
-  sha256 = "3c82b5c7df45f78e859843ab4f956a7baf962bf4cde193a2f5e3eabb71d625b7",
-  downloaded_file_path = "randomForestRegressor-0.0.11-sources.jar"
-)
-
-http_file(
   name = "apollo-ast-jvm-4_0_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/apollographql/apollo/apollo-ast-jvm/4.0.0/apollo-ast-jvm-4.0.0.jar",
   sha256 = "1e83e448c104d946a6146c32409275a6ed4259999d469514be4f878a420f0b4f",
