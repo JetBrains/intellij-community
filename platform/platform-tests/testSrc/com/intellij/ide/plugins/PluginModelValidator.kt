@@ -5,6 +5,7 @@ package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
 import com.intellij.platform.plugins.parser.impl.elements.ContentElement
@@ -412,7 +413,8 @@ class PluginModelValidator(
           val dependency = pluginIdToInfo[id]
           if (dependency == null 
               && id !in validationOptions.referencedPluginIdsOfExternalPlugins
-              && id !in pluginAliases) {
+              && id !in pluginAliases
+              && IdeaPluginOsRequirement.fromModuleId(PluginId.getId(id)) == null) {
             registerError("Plugin not found: $id")
             continue
           }
