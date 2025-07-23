@@ -158,9 +158,6 @@
 
     <lang.floatingToolbar language="kotlin"/>
 
-    <lang.foldingBuilder
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.KotlinFoldingBuilder"/>
     <stacktrace.fold substring="at kotlinx.coroutines."/>
 
     <codeInsight.linkHandler

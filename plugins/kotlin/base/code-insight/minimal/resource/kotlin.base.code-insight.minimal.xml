@@ -19,5 +19,8 @@
             order="before ktExpression"
             implementation="org.jetbrains.kotlin.idea.codeInsight.upDownMover.KotlinDeclarationMover"/>
 
+    <lang.foldingBuilder
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.KotlinFoldingBuilder"/>
   </extensions>
 </idea-plugin>

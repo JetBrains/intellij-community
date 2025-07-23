@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings
@@ -11,13 +10,20 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.endLine
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.startLine
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtImportList
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.siblings
@@ -41,23 +47,23 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         )
 
     override fun buildLanguageFoldRegions(
-        descriptors: MutableList<FoldingDescriptor>,
-        root: PsiElement, document: Document, quick: Boolean
+      descriptors: MutableList<FoldingDescriptor>,
+      root: PsiElement, document: Document, quick: Boolean
     ) {
-        if (root !is KtFile) return
+        if (root !is PsiFile || root.fileType != KotlinFileType.INSTANCE) return
 
-        root.importList?.let { importList ->
-            val firstImport = importList.imports.firstOrNull()
-            if (firstImport != null && importList.imports.size > 1) {
-                val importKeyword = firstImport.firstChild
+        val importList = PsiTreeUtil.findChildOfType(root, KtImportList::class.java) ?: return
 
-                val startOffset = importKeyword.endOffset + 1
-                val endOffset = importList.endOffset
+        val firstImport = importList.imports.firstOrNull()
+        if (firstImport != null && importList.imports.size > 1) {
+            val importKeyword = firstImport.firstChild
 
-                descriptors.add(FoldingDescriptor(importList, TextRange(startOffset, endOffset)).apply {
-                    setCanBeRemovedWhenCollapsed(true)
-                })
-            }
+            val startOffset = importKeyword.endOffset + 1
+            val endOffset = importList.endOffset
+
+            descriptors.add(FoldingDescriptor(importList, TextRange(startOffset, endOffset)).apply {
+                setCanBeRemovedWhenCollapsed(true)
+            })
         }
 
         appendDescriptors(root.node, document, descriptors)
@@ -90,10 +96,10 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         }
 
         return type == KtNodeTypes.FUNCTION_LITERAL ||
-                (type == KtNodeTypes.BLOCK && parentType != KtNodeTypes.FUNCTION_LITERAL && parentType != KtNodeTypes.SCRIPT) ||
-                type == KtNodeTypes.CLASS_BODY || type == KtTokens.BLOCK_COMMENT || type == KDocTokens.KDOC ||
-                type == KtNodeTypes.STRING_TEMPLATE || type == KtNodeTypes.PRIMARY_CONSTRUCTOR || type == KtNodeTypes.WHEN ||
-                node.shouldFoldCall(document)
+               (type == KtNodeTypes.BLOCK && parentType != KtNodeTypes.FUNCTION_LITERAL && parentType != KtNodeTypes.SCRIPT) ||
+               type == KtNodeTypes.CLASS_BODY || type == KtTokens.BLOCK_COMMENT || type == KDocTokens.KDOC ||
+               type == KtNodeTypes.STRING_TEMPLATE || type == KtNodeTypes.PRIMARY_CONSTRUCTOR || type == KtNodeTypes.WHEN ||
+               node.shouldFoldCall(document)
     }
 
     private fun ASTNode.shouldFoldCall(document: Document): Boolean {
@@ -152,7 +158,7 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         node.elementType == KtTokens.BLOCK_COMMENT -> "/${getFirstLineOfComment(node)}.../"
         node.elementType == KDocTokens.KDOC -> "/**${getFirstLineOfComment(node)}...*/"
         node.elementType == KtNodeTypes.STRING_TEMPLATE -> "\"\"\"${getTrimmedFirstLineOfString(node).addSpaceIfNeeded()}...\"\"\""
-        node.elementType == KtNodeTypes.PRIMARY_CONSTRUCTOR || node.elementType == KtNodeTypes.CALL_EXPRESSION -> "(...)"
+      node.elementType == KtNodeTypes.PRIMARY_CONSTRUCTOR || node.elementType == KtNodeTypes.CALL_EXPRESSION -> "(...)"
         node.psi is KtImportList -> "..."
         else -> "{...}"
     }
@@ -205,7 +211,7 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
 
     private fun isFirstElementInFile(element: PsiElement): Boolean {
         val parent = element.parent
-        if (parent is KtFile) {
+        if (parent is PsiFile) {
             val firstNonWhiteSpace = parent.allChildren.firstOrNull {
                 it.textLength != 0 && it !is PsiWhiteSpace
             }
