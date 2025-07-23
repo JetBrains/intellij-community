@@ -170,9 +170,6 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
                                      WelcomeScreenProjectProvider.isWelcomeScreenProject(project)
       @Suppress("TestOnlyProblems")
       val openedProject = ProjectUtil.openExistingDir(file, project, forceReuseFrame = fromWelcomeScreenProject)
-      if (openedProject != null && Registry.`is`("ide.create.project.root.entity")) {
-        registerProjectRoot(openedProject, virtualFile.toNioPath())
-      }
       return
     }
 

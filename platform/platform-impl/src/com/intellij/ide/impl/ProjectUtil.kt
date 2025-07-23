@@ -35,6 +35,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ToolWindowId
@@ -724,13 +725,15 @@ object ProjectUtil {
 
     val project = if (canAttach) {
       val options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, currentProject).copy(
-        forceReuseFrame = forceReuseFrame
-      )
+        forceReuseFrame = forceReuseFrame,
+        projectRootDir = file,
+        )
       (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options)
     }
     else {
       val options = OpenProjectTask().withProjectToClose(currentProject).copy(
-        forceReuseFrame = forceReuseFrame
+        forceReuseFrame = forceReuseFrame,
+        projectRootDir = file,
       )
       openOrImportAsync(file, options)
     }

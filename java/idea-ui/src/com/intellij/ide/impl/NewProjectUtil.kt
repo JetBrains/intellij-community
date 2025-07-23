@@ -30,8 +30,8 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -41,7 +41,6 @@ import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.TimeoutUtil
-import com.intellij.workspaceModel.ide.registerProjectRoot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -257,6 +256,7 @@ suspend fun createProjectFromWizardImpl(wizard: AbstractProjectWizard, projectFi
       val options = OpenProjectTask {
         project = newProject
         projectName = projectFile.fileName.toString()
+        projectRootDir = projectFile.parent
         callback = ProjectOpenedCallback { openedProject, _ ->
           if (openedProject != newProject) { // project attached to workspace
             LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)?.let { dir ->
@@ -273,10 +273,6 @@ suspend fun createProjectFromWizardImpl(wizard: AbstractProjectWizard, projectFi
     }
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       serviceAsync<SaveAndSyncHandler>().scheduleProjectSave(newProject)
-    }
-
-    if (Registry.`is`("ide.create.project.root.entity")) {
-      registerProjectRoot(newProject, projectDir)
     }
     return newProject
   }

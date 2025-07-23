@@ -1,3 +1,5 @@
+f:com.intellij.ide.impl.OpenProjectTask
+- *f:getProjectRootDir():java.nio.file.Path
 *:com.intellij.openapi.actionSystem.DependentTransientComponent
 - a:getPermanentComponent():java.awt.Component
 com.intellij.openapi.fileEditor.impl.EditorTabColorProvider

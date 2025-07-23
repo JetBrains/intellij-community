@@ -72,6 +72,8 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PROJECT_NEWLY_OPENED
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.attachToProjectAsync
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.eel.provider.EelInitialization
@@ -91,6 +93,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
 import com.intellij.util.runSuppressing
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
+import com.intellij.workspaceModel.ide.registerProjectRoot
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -675,6 +678,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
               }
 
               configureWorkspace(project, projectStoreBaseDir, options)
+            }
+
+            if (options.projectRootDir != null && Registry.`is`("ide.create.project.root.entity")) {
+              val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
+              registerProjectRoot(project, options.projectRootDir!!.toVirtualFileUrl(virtualFileUrlManager))
             }
 
             if (!addToOpened(project)) {

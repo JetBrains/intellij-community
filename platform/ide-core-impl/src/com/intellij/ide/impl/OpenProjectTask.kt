@@ -4,8 +4,10 @@ package com.intellij.ide.impl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.projectImport.ProjectOpenedCallback
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
+import java.nio.file.Path
 import java.util.function.Predicate
 
 data class OpenProjectTask @Internal constructor(
@@ -45,6 +47,11 @@ data class OpenProjectTask @Internal constructor(
   val preventIprLookup: Boolean,
   val processorChooser: ((List<Any>) -> Any)?,
   val implOptions: Any?,
+  @ApiStatus.Experimental
+  /**
+   * Used to register [com.intellij.workspaceModel.ide.ProjectRootEntity] for this directory
+   */
+  val projectRootDir: Path?,
   @Internal
   val createModule: Boolean,
 ) {
@@ -85,6 +92,8 @@ data class OpenProjectTask @Internal constructor(
 
     implOptions = null,
     createModule = true,
+
+    projectRootDir = null,
   )
 
   companion object {
@@ -146,6 +155,8 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
     beforeOpen = { callback.test(it) }
   }
 
+  var projectRootDir: Path? = null
+
   @Internal
   var processorChooser: ((List<Any>) -> Any)? = null
 
@@ -188,6 +199,7 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
       column = column,
 
       project = project,
+      projectRootDir = projectRootDir,
     )
   }
 }
