@@ -54,7 +54,6 @@ import com.intellij.openapi.editor.state.ObservableStateListener;
 import com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbar;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -67,8 +66,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
@@ -5210,7 +5207,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     protected void setupCorners() {
       super.setupCorners();
-      setBorder(new TablessBorder());
+      setBorder(new EditorTablessBorder(myProject, myHeaderPanel));
     }
 
     void placeStatusOnTopOfStickyPanel() {
@@ -5266,53 +5263,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     EditorColorsManager.getInstance().getGlobalScheme().setEditorFontSize(size);
     myScheme.resetEditorFontSize();
     EditorColorsManagerImpl.fireGlobalSchemeChange(null);
-  }
-
-  private final class TablessBorder extends SideBorder {
-    private TablessBorder() {
-      super(JBColor.border(), ALL);
-    }
-
-    @Override
-    public void paintBorder(@NotNull Component c, @NotNull Graphics g, int x, int y, int width, int height) {
-      if (c instanceof JComponent) {
-        Insets insets = ((JComponent)c).getInsets();
-        if (insets.left > 0) {
-          super.paintBorder(c, g, x, y, width, height);
-        }
-        else {
-          g.setColor(UIUtil.getPanelBackground());
-          g.fillRect(x, y, width, 1);
-          g.setColor(Gray._50.withAlpha(90));
-          g.fillRect(x, y, width, 1);
-        }
-      }
-    }
-
-    @Override
-    public @NotNull Insets getBorderInsets(Component c) {
-      Container splitters = SwingUtilities.getAncestorOfClass(EditorsSplitters.class, c);
-      boolean thereIsSomethingAbove = !SystemInfo.isMac ||
-                                      UISettings.getInstance().getShowMainToolbar() ||
-                                      UISettings.getInstance().getShowNavigationBar() ||
-                                      toolWindowIsNotEmpty();
-      //noinspection ConstantConditions
-      Component header = myHeaderPanel == null ? null : ArrayUtil.getFirstElement(myHeaderPanel.getComponents());
-      boolean paintTop = thereIsSomethingAbove && header == null && UISettings.getInstance().getEditorTabPlacement() != SwingConstants.TOP;
-      return splitters == null ? super.getBorderInsets(c) : JBUI.insetsTop(paintTop ? 1 : 0);
-    }
-
-    private boolean toolWindowIsNotEmpty() {
-      if (myProject == null) {
-        return false;
-      }
-      return !ToolWindowManagerEx.getInstanceEx(myProject).getIdsOn(ToolWindowAnchor.TOP).isEmpty();
-    }
-
-    @Override
-    public boolean isBorderOpaque() {
-      return true;
-    }
   }
 
   private final class PanelWithFloatingToolbar extends JBLayeredPane {
