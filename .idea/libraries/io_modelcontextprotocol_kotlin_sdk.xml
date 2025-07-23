@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="io.modelcontextprotocol.kotlin.sdk" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.modelcontextprotocol:kotlin-sdk-jvm:0.5.0">
+    <properties include-transitive-deps="false" maven-id="io.modelcontextprotocol:kotlin-sdk-jvm:0.6.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.5.0/kotlin-sdk-jvm-0.5.0.jar">
-          <sha256sum>d3f56ac2562dc7883043fcbf6b7624196952cf17d41f864db5197d8e9f8b183c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.6.0/kotlin-sdk-jvm-0.6.0.jar">
+          <sha256sum>10b00c7af47c7a0fb510fb9d7519a9d2476f8e815a5005282734821082f9dc21</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.5.0/kotlin-sdk-jvm-0.5.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.6.0/kotlin-sdk-jvm-0.6.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.5.0/kotlin-sdk-jvm-0.5.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.6.0/kotlin-sdk-jvm-0.6.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

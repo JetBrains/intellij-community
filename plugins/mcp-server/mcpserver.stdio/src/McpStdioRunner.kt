@@ -30,7 +30,7 @@ suspend fun main() {
     install(SSE)
   }
 
-  val sseClientTransport = SseClientTransport(httpClient, "http://localhost:$port/")
+  val sseClientTransport = SseClientTransport(httpClient, "http://localhost:$port/sse")
 
   val projectPath = System.getenv(IJ_MCP_SERVER_PROJECT_PATH)
 
