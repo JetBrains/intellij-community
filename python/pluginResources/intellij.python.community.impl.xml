@@ -860,7 +860,6 @@
 
     <!-- Experimental packaging extensions-->
     <pySdkProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkProvider"/>
-    <packageManagerProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipenvPackageManagerProvider"/>
 
     <pySdkProvider implementation="com.jetbrains.python.sdk.poetry.PoetrySdkProvider"/>
     <packageManagerProvider implementation="com.jetbrains.python.sdk.poetry.PyPoetryPackageManagerProvider"/>
@@ -871,6 +870,7 @@
 
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.pip.PipPackageManagerProvider" order="last"/>
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.conda.CondaPackageManagerProvider"/>
+    <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.pipenv.PipEnvPackageManagerProvider"/>
 
     <PyProjectDependenciesExtractorProvider implementation="com.jetbrains.python.sdk.poetry.PoetryDependenciesExtractorProvider"/>
     <PyProjectDependenciesExtractorProvider implementation="com.jetbrains.python.sdk.uv.UvDependenciesExtractorProvider"/>
@@ -1097,6 +1097,15 @@
               icon="com.intellij.icons.AllIcons.General.GreenCheckmark"/>
       <action id="PipUpdateEnvAction"
               class="com.jetbrains.python.packaging.pip.actions.PipUpdateEnvAction"
+              icon="com.intellij.icons.AllIcons.Actions.Refresh"/>
+
+      <separator/>
+
+      <action id="PipEnvLockDependenciesAction"
+              class="com.jetbrains.python.packaging.pipenv.actions.PipEnvLockAction"
+              icon="com.intellij.icons.AllIcons.Diff.Lock"/>
+      <action id="PipEnvInstallDependenciesAction"
+              class="com.jetbrains.python.packaging.pipenv.actions.PipEnvInstallEnvAction"
               icon="com.intellij.icons.AllIcons.Actions.Refresh"/>
 
       <separator/>

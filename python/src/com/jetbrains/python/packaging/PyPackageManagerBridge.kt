@@ -13,7 +13,6 @@ import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.management.ui.installPyRequirementsBackground
-import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -70,7 +69,7 @@ internal open class PyPackageManagerBridge(sdk: Sdk) : PyTargetEnvironmentPackag
   }
 
   override fun getRequirements(module: Module): List<PyRequirement>? {
-    return packageManager.listDependencies().map { pyRequirement(it.name, PyRequirementRelation.EQ, it.version) }
+    return packageManager.getDependencyManager()?.getDependencies()
   }
 
   private fun guessProject() = getOpenedProjects().firstOrNull() ?: ProjectManager.getInstance().defaultProject

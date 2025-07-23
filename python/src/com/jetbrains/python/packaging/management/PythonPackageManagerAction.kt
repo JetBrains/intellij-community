@@ -16,8 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.onFailure
-import com.jetbrains.python.onSuccess
+import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.util.ShowingMessageErrorSync
@@ -82,12 +81,9 @@ abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwa
         FileDocumentManager.getInstance().saveAllDocuments()
       }
 
-      @Suppress("DialogTitleCapitalization")
-      manager.runSynchronized(e.presentation.text) {
-        execute(e, manager).onSuccess {
+      PythonPackageManagerUI.forPackageManager(manager).executeCommand(e.presentation.text) {
+        execute(e, manager).mapSuccess {
           DaemonCodeAnalyzer.getInstance(psiFile.project).restart(psiFile)
-        }.onFailure {
-          errorSink.emit(it)
         }
       }
     }

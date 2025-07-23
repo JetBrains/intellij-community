@@ -102,6 +102,13 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
     }
   }
 
+  suspend fun syncBackground() {
+    val progressTitle = PyBundle.message("python.packaging.sync.packages")
+    executeCommand(progressTitle) {
+      manager.sync()
+    }
+  }
+
   @ApiStatus.Internal
   suspend fun <T> executeCommand(
     progressTitle: @Nls String,

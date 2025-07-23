@@ -17,7 +17,7 @@ val PIPENV_ICON: Icon = PythonIcons.Python.PythonClosed
  */
 internal val Sdk.isPipEnv: Boolean
   get() {
-    if (PythonSdkUtil.isPythonSdk(this)) {
+    if (!PythonSdkUtil.isPythonSdk(this)) {
       return false
     }
 

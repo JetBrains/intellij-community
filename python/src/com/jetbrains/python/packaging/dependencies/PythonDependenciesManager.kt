@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface PythonDependenciesManager : Disposable.Default {
+  fun isAddDependencyPossible(): Boolean = true
   fun addDependency(packageName: String): Boolean
   fun getDependencies(): List<PyRequirement>?
   fun getDependenciesFile(): VirtualFile?

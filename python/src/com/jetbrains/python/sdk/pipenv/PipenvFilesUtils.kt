@@ -8,8 +8,8 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -31,8 +31,6 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.onFailure
-import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
@@ -52,17 +50,7 @@ const val PIPENV_PATH_SETTING: String = "PyCharm.Pipenv.Path"
  * The Pipfile found in the main content root of the module.
  */
 @Internal
-suspend fun pipFile(module: Module) = withContext(Dispatchers.IO) { findAmongRoots(module, PIP_FILE) }
-
-/**
- * Resolves and returns the list of Python requirements from the Pipfile.lock of the SDK's associated module.
- *
- * @return A list of [PyRequirement] parsed from the Pipfile.lock, or `null` if the file cannot be accessed or parsed.
- */
-@Internal
-suspend fun pipFileLockRequirements(sdk: Sdk): List<PyRequirement>? {
-  return sdk.pipFileLock()?.let { getPipFileLockRequirements(it, sdk.packageManager) }
-}
+suspend fun pipFile(module: Module): VirtualFile? = withContext(Dispatchers.IO) { findAmongRoots(module, PIP_FILE) }
 
 /**
  * Watches for edits in Pipfiles inside modules with a pipenv SDK set.
@@ -106,7 +94,7 @@ internal class PipEnvPipFileWatcher : EditorFactoryListener {
   private suspend fun notifyPipFileChanged(module: Module) {
     if (module.getUserData(notificationActive) == true) return
     val title = when {
-      pipFileLock(module) == null -> PyBundle.message("python.sdk.pipenv.pip.file.lock.not.found")
+      getPipFileLock(module) == null -> PyBundle.message("python.sdk.pipenv.pip.file.lock.not.found")
       else -> PyBundle.message("python.sdk.pipenv.pip.file.lock.out.of.date")
     }
     val content = PyBundle.message("python.sdk.pipenv.pip.file.notification.content")
@@ -163,10 +151,8 @@ private val LOCK_NOTIFICATION_GROUP = Cancellation.forceNonCancellableSectionInC
   NotificationGroupManager.getInstance().getNotificationGroup("Pipfile Watcher")
 }
 
-private val Sdk.packageManager: PyPackageManager
-  get() = PyPackageManagers.getInstance().forSdk(this)
-
-private suspend fun getPipFileLockRequirements(virtualFile: VirtualFile, packageManager: PyPackageManager): List<PyRequirement>? {
+@Internal
+fun getPipFileLockRequirements(virtualFile: VirtualFile): List<PyRequirement>? {
   @RequiresBackgroundThread
   fun toRequirements(packages: Map<String, PipFileLockPackage>): List<PyRequirement> =
     packages
@@ -178,31 +164,31 @@ private suspend fun getPipFileLockRequirements(virtualFile: VirtualFile, package
       .toList()
 
   val pipFileLock = parsePipFileLock(virtualFile).getOrNull() ?: return null
-  val packages = pipFileLock.packages?.let { withContext(Dispatchers.IO) { toRequirements(it) } } ?: emptyList()
-  val devPackages = pipFileLock.devPackages?.let { withContext(Dispatchers.IO) { toRequirements(it) } } ?: emptyList()
+  val packages = pipFileLock.packages?.let { toRequirements(it) } ?: emptyList()
+  val devPackages = pipFileLock.devPackages?.let { toRequirements(it) } ?: emptyList()
   return packages + devPackages
 }
 
 private val gson = Gson()
 
-private suspend fun parsePipFileLock(virtualFile: VirtualFile): Result<PipFileLock> =
-  withContext(Dispatchers.IO) {
-    val text = readAction {
-      FileDocumentManager.getInstance().getDocument(virtualFile)?.text
-    }
-    try {
-      Result.success(gson.fromJson(text, PipFileLock::class.java))
-    }
-    catch (e: JsonSyntaxException) {
-      Result.failure(e)
-    }
+private fun parsePipFileLock(virtualFile: VirtualFile): Result<PipFileLock> {
+  val text = runReadAction {
+    FileDocumentManager.getInstance().getDocument(virtualFile)?.text
   }
-
-private suspend fun Sdk.pipFileLock(): VirtualFile? = withContext(Dispatchers.IO) {
-  associatedModulePath?.let { StandardFileSystems.local().findFileByPath(it)?.findChild(PIP_FILE_LOCK) }
+  return try {
+    Result.success(gson.fromJson(text, PipFileLock::class.java))
+  }
+  catch (e: JsonSyntaxException) {
+    Result.failure(e)
+  }
 }
 
-private suspend fun pipFileLock(module: Module): VirtualFile? = withContext(Dispatchers.IO) { findAmongRoots(module, PIP_FILE_LOCK) }
+@Internal
+fun getPipFileLock(sdk: Sdk): VirtualFile? =
+  sdk.associatedModulePath?.let { StandardFileSystems.local().findFileByPath(it)?.findChild(PIP_FILE_LOCK) }
+
+
+private suspend fun getPipFileLock(module: Module): VirtualFile? = withContext(Dispatchers.IO) { findAmongRoots(module, PIP_FILE_LOCK) }
 
 private data class PipFileLock(
   @SerializedName("_meta") var meta: PipFileLockMeta?,

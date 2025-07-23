@@ -9,7 +9,6 @@ import com.jetbrains.python.packaging.management.PythonPackageManagerAction
 import com.jetbrains.python.packaging.management.getPythonPackageManager
 import com.jetbrains.python.packaging.pip.PipPythonPackageManager
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
-import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementsTxtManager
 import com.jetbrains.python.requirements.RequirementsFileType
 
 internal sealed class PipPackageManagerAction : PythonPackageManagerAction<PipPythonPackageManager, String>() {
@@ -27,9 +26,6 @@ internal class PipSetDefaultRequirementsAction() : PipPackageManagerAction() {
     val project = e.project ?: return PyResult.success(Unit)
 
     val newFilePath = envFile.toNioPath()
-    val requirementsTxtManager = PythonRequirementsTxtManager.getInstance(project, manager.sdk)
-    requirementsTxtManager.getDependenciesFile()
-
     PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(project, manager.sdk, newFilePath)
     return PyResult.success(Unit)
   }
