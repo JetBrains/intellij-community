@@ -4,6 +4,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.takeOrElse
+import org.jetbrains.jewel.bridge.isDarculaTheme
 import org.jetbrains.jewel.bridge.isNewUiTheme
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.bridge.retrieveIntAsNonNegativeDpOrUnspecified
@@ -27,7 +28,7 @@ internal fun readRadioButtonStyle(): RadioButtonStyle {
         )
 
     val newUiTheme = isNewUiTheme()
-    val metrics = if (newUiTheme) NewUiRadioButtonMetrics else ClassicUiRadioButtonMetrics
+    val metrics = if (newUiTheme && !isDarculaTheme()) NewUiRadioButtonMetrics else ClassicUiRadioButtonMetrics
 
     // This value is not normally defined in the themes, but Swing checks it anyway
     // The default hardcoded in
