@@ -419,7 +419,7 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
 
     private OrderedLocalQuickFixBackedByIntentionAction(@NotNull IntentionAction action) {
       super(action);
-      myPriority = action instanceof PriorityAction priorityAction ? priorityAction.getPriority() : Priority.HIGH;
+      myPriority = action instanceof PriorityAction priorityAction ? priorityAction.getPriority() : Priority.NORMAL;
     }
 
     @Override
