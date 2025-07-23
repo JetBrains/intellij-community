@@ -90,6 +90,7 @@ val localEel: LocalEelApi by lazy {
 @ApiStatus.Internal
 fun EelDescriptor.upgradeBlocking(): EelApi = toEelApiBlocking()
 
+@ApiStatus.Experimental
 fun EelMachine.toEelApiBlocking(descriptor: EelDescriptor): EelApi = runBlockingMaybeCancellable { toEelApi(descriptor) }
 
 @ApiStatus.Experimental
@@ -98,6 +99,7 @@ fun EelDescriptor.toEelApiBlocking(): EelApi {
   return runBlockingMaybeCancellable { toEelApi() }
 }
 
+@ApiStatus.Experimental
 data object LocalEelMachine : EelMachine {
   private val LOG = logger<LocalEelDescriptor>()
   override val name: @NonNls String = "Local: ${System.getProperty("os.name")}"

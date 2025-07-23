@@ -28,6 +28,8 @@ import java.nio.file.Path
  *
  * @throws IllegalArgumentException if the Eel API for [this] does not have a corresponding [java.nio.file.FileSystem]
  */
+@Throws(IllegalArgumentException::class)
+@ApiStatus.Internal
 fun EelPath.asNioPath(): @MultiRoutingFileSystemPath Path {
   return asNioPathOrNull()
          ?: throw IllegalArgumentException("Could not convert $this to NIO path, descriptor is $descriptor")
