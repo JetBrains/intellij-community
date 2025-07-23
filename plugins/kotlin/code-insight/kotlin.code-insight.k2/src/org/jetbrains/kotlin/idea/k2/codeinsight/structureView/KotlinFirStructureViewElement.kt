@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.idea.projectView.getStructureDeclarations
 import org.jetbrains.kotlin.idea.structureView.AbstractKotlinStructureViewElement
+import org.jetbrains.kotlin.idea.structureView.getStructureViewChildren
 import org.jetbrains.kotlin.psi.*
 import javax.swing.Icon
 import kotlin.properties.ReadWriteProperty
@@ -88,22 +89,7 @@ class KotlinFirStructureViewElement(
     }
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> {
-        val children = when (val element = element) {
-            is KtFile -> {
-                val declarations = element.declarations
-                if (element.isScript()) {
-                    (declarations.singleOrNull() as? KtScript) ?: element
-                } else {
-                    element
-                }.declarations
-            }
-            is KtClass -> element.getStructureDeclarations()
-            is KtClassOrObject -> element.declarations
-            is KtFunction, is KtClassInitializer, is KtProperty -> element.collectLocalDeclarations()
-            else -> emptyList()
-        }
-
-        return children.map {
+        return element.getStructureViewChildren {
             KotlinFirStructureViewElement(it, it, isInherited = false)
         }
     }
