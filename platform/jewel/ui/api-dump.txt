@@ -352,6 +352,8 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$General
 - <init>():V
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Ide
 - sf:Feedback:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Nodes
+- sf:FolderGithub:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Vcs
 - sf:Fetch_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Push_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey

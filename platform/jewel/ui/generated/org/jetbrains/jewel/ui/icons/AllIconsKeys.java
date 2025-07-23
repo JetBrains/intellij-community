@@ -950,6 +950,7 @@ public final class AllIconsKeys {
     /** 16x16 */ public static final @NotNull IntelliJIconKey FilePrivate = new IntelliJIconKey("nodes/filePrivate.svg", "nodes/filePrivate.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey FinalMark = new IntelliJIconKey("nodes/finalMark.svg", "expui/nodes/finalMark.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Folder = new IntelliJIconKey("nodes/folder.svg", "expui/nodes/folder.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey FolderGithub = new IntelliJIconKey("expui/nodes/folderGithub.svg", "expui/nodes/folderGithub.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Function = new IntelliJIconKey("nodes/function.svg", "expui/nodes/function.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Gvariable = new IntelliJIconKey("nodes/gvariable.svg", "expui/nodes/gvariable.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey HomeFolder = new IntelliJIconKey("nodes/homeFolder.svg", "expui/nodes/homeFolder.svg", AllIconsKeys.class);

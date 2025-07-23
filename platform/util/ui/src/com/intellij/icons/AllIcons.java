@@ -957,6 +957,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon FilePrivate = load("nodes/filePrivate.svg", 260959244, 0);
     /** 16x16 */ public static final @NotNull Icon FinalMark = load("expui/nodes/finalMark.svg", "nodes/finalMark.svg", -993330370, 0);
     /** 16x16 */ public static final @NotNull Icon Folder = load("expui/nodes/folder.svg", "nodes/folder.svg", -298158278, 0);
+    /** 16x16 */ public static final @NotNull Icon FolderGithub = load("expui/nodes/folderGithub.svg", 117108111, 2);
     /** 16x16 */ public static final @NotNull Icon Function = load("expui/nodes/function.svg", "nodes/function.svg", 1027695397, 0);
     /** 16x16 */ public static final @NotNull Icon Gvariable = load("expui/nodes/gvariable.svg", "nodes/gvariable.svg", 1184723774, 0);
     /** 16x16 */ public static final @NotNull Icon HomeFolder = load("expui/nodes/homeFolder.svg", "nodes/homeFolder.svg", 898285507, 2);

@@ -894,6 +894,7 @@ f:com.intellij.icons.AllIcons$Nodes
 - sf:FilePrivate:javax.swing.Icon
 - sf:FinalMark:javax.swing.Icon
 - sf:Folder:javax.swing.Icon
+- sf:FolderGithub:javax.swing.Icon
 - sf:Function:javax.swing.Icon
 - sf:Gvariable:javax.swing.Icon
 - sf:HomeFolder:javax.swing.Icon
