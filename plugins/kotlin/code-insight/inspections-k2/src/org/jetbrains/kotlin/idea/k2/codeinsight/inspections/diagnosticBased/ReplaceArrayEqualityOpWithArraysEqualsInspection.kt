@@ -7,6 +7,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinKtDiagnosticBasedInspectionBase
@@ -18,6 +19,8 @@ import kotlin.reflect.KClass
 
 internal class ReplaceArrayEqualityOpWithArraysEqualsInspection :
     KotlinKtDiagnosticBasedInspectionBase<KtExpression, KaFirDiagnostic.ArrayEqualityOperatorCanBeReplacedWithContentEquals, Context>() {
+
+    override val diagnosticFilter: KaDiagnosticCheckerFilter = KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
 
     override val diagnosticType: KClass<KaFirDiagnostic.ArrayEqualityOperatorCanBeReplacedWithContentEquals>
         get() = KaFirDiagnostic.ArrayEqualityOperatorCanBeReplacedWithContentEquals::class
