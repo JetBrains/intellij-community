@@ -2,7 +2,7 @@
 package com.intellij.vcs.log.data
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ExceptionUtil
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.TimedCommitParser
@@ -12,6 +12,7 @@ import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.test.VcsPlatformTest
 import junit.framework.TestCase
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import java.util.*
 import java.util.concurrent.*
 import java.util.function.Consumer
@@ -43,7 +44,7 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     @Suppress("RAW_SCOPE_CREATION")
     testCs = CoroutineScope(SupervisorJob())
     logData = VcsLogData(project, testCs, logProviders, LoggingErrorHandler(LOG), VcsLogSharedSettings.isIndexSwitchedOn(project))
-    refresherTestHelper = LogRefresherTestHelper(logData, RECENT_COMMITS_COUNT)
+    refresherTestHelper = LogRefresherTestHelper(testCs.childScope("Refresher"), logData, RECENT_COMMITS_COUNT)
 
     dataWaiter = refresherTestHelper.dataWaiter
     loader = refresherTestHelper.loader
@@ -51,10 +52,10 @@ class VcsLogRefresherTest : VcsPlatformTest() {
 
   public override fun tearDown() {
     try {
+      refresherTestHelper.tearDown()
       runBlocking {
         testCs.coroutineContext.job.cancelAndJoin()
       }
-      refresherTestHelper.tearDown()
     }
     catch (e: Throwable) {
       addSuppressedException(e)
@@ -159,19 +160,17 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     refresherTestHelper.assertTimeout("Second refresh shouldn't cause the data pack update") // it may also fail in beforehand in set().
   }
 
-  private class LogRefresherTestHelper(logData: VcsLogData, recentCommitsCount: Int) {
+  private class LogRefresherTestHelper(cs: CoroutineScope, logData: VcsLogData, recentCommitsCount: Int) {
     private val project = logData.project
 
     val dataWaiter = DataWaiter()
-    val loader = VcsLogRefresherImpl(project, logData.storage, logData.logProviders, VcsLogProgress(project),
+    val loader = VcsLogRefresherImpl(cs, logData.storage, logData.logProviders, VcsLogProgress(project),
                                               null, dataWaiter, recentCommitsCount
     ).apply {
-      taskInterceptor = {
-        startedTasks.add(it)
+      refreshBatchJobConsumer = {
+        startedTasks.add(it.asCompletableFuture())
         LOG.debug(startedTasks.size.toString() + " started tasks")
       }
-    }.also {
-      Disposer.register(project, it)
     }
 
     private val startedTasks = Collections.synchronizedList(ArrayList<Future<*>>())

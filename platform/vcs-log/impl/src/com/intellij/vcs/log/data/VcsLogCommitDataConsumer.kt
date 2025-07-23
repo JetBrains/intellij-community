@@ -6,6 +6,8 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
 import com.intellij.vcs.log.graph.GraphCommit
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Intercepts the data loaded by the [VcsLogRefresherImpl] to be used for side activities
@@ -15,7 +17,7 @@ internal interface VcsLogCommitDataConsumer {
 
   fun storeRecentDetails(details: List<VcsCommitMetadata>)
 
-  fun flushData(onFullReload: Boolean)
+  suspend fun flushData(onFullReload: Boolean)
 }
 
 internal class VcsLogCommitDataConsumerImpl(
@@ -34,8 +36,10 @@ internal class VcsLogCommitDataConsumerImpl(
     topCommitsDetailsCache.storeDetails(details)
   }
 
-  override fun flushData(onFullReload: Boolean) {
-    userRegistry.flush()
+  override suspend fun flushData(onFullReload: Boolean) {
+    withContext(Dispatchers.IO) {
+      userRegistry.flush()
+    }
     index.scheduleIndex(onFullReload)
   }
 }

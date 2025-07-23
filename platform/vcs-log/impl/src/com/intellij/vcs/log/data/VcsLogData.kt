@@ -127,10 +127,9 @@ class VcsLogData @ApiStatus.Internal constructor(
     commitDetailsGetter = CommitDetailsGetter(storage, logProviders, dataDisposable)
 
     val commitDataConsumer = VcsLogCommitDataConsumerImpl(userRegistry, index, topCommitsCache)
-    refresher = VcsLogRefresherImpl(project, storage, logProviders, progress, commitDataConsumer,
+    refresher = VcsLogRefresherImpl(cs, storage, logProviders, progress, commitDataConsumer,
                                     Consumer { fireDataPackChangeEvent(it) },
                                     getRecentCommitsCount())
-    Disposer.register(dataDisposable, refresher)
 
     userNameResolver = MyVcsLogUserResolver()
     Disposer.register(dataDisposable, userNameResolver)

@@ -46,4 +46,14 @@ public class RequirementsImpl implements VcsLogProviderRequirementsEx {
   public @NotNull Collection<VcsRef> getPreviousRefs() {
     return myPreviousRefs;
   }
+
+  @Override
+  public String toString() {
+    return "RequirementsImpl{" +
+           "myCommitCount=" + myCommitCount +
+           ", myRefresh=" + myRefresh +
+           ", myPreviousRefs.size=" + myPreviousRefs.size() +
+           ", myIsRefreshRefs=" + myIsRefreshRefs +
+           '}';
+  }
 }
