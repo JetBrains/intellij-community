@@ -39,13 +39,9 @@ class PreviewStaticServer : HttpRequestHandler() {
     resourceProviders.remove(resourceProvider.hashCode())
   }
 
-  private fun getProviderHash(path: String): Int? {
-    return path.split('/').getOrNull(2)?.toIntOrNull()
-  }
+  private fun getProviderHash(path: String): Int? = path.split('/').getOrNull(2)?.toIntOrNull()
 
-  private fun getStaticPath(path: String): String {
-    return path.split('/').drop(3).joinToString(separator = "/")
-  }
+  private fun getStaticPath(path: String): String = path.split('/').drop(3).joinToString(separator = "/")
 
   private fun obtainResourceProvider(path: String): ResourceProvider? {
     val providerHash = getProviderHash(path) ?: return null
@@ -61,17 +57,13 @@ class PreviewStaticServer : HttpRequestHandler() {
     val resourceProvider = obtainResourceProvider(path) ?: return false
     val resourceName = getStaticPath(path)
     if (resourceProvider.canProvide(resourceName)) {
-      sendResource(
-        request,
-        context.channel(),
-        resourceProvider.loadResource(resourceName),
-        resourceName
-      )
+      sendResource(request, context.channel(), resourceProvider.loadResource(resourceName), resourceName)
       return true
     }
     return false
   }
 
+  @Suppress("CompanionObjectInExtension")
   companion object {
     private const val ENDPOINT_PREFIX = "markdownPreview"
     private const val ENDPOINT_PREFIX_PATH = "/${ENDPOINT_PREFIX}"
@@ -114,17 +106,10 @@ class PreviewStaticServer : HttpRequestHandler() {
 
     private fun guessContentType(resourceName: String): String {
       val type = getContentType(resourceName)
-      return if (type in typesForExplicitUtfCharset) {
-        "$type; charset=utf-8"
-      } else type
+      return if (type in typesForExplicitUtfCharset) "${type}; charset=utf-8" else type
     }
 
-    private fun sendResource(
-      request: HttpRequest,
-      channel: Channel,
-      resource: ResourceProvider.Resource?,
-      resourceName: String
-    ) {
+    private fun sendResource(request: HttpRequest, channel: Channel, resource: ResourceProvider.Resource?, resourceName: String) {
       val lastModified = ApplicationInfo.getInstance().buildDate.timeInMillis
       if (checkCache(request, channel, lastModified)) {
         return
@@ -133,11 +118,7 @@ class PreviewStaticServer : HttpRequestHandler() {
         HttpResponseStatus.NOT_FOUND.send(channel, request)
         return
       }
-      val response = DefaultFullHttpResponse(
-        HttpVersion.HTTP_1_1,
-        HttpResponseStatus.OK,
-        Unpooled.wrappedBuffer(resource.content)
-      )
+      val response = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.wrappedBuffer(resource.content))
       with(response) {
         headers()[HttpHeaderNames.CONTENT_TYPE] = when (val type = resource.type) {
           null -> guessContentType(resourceName)

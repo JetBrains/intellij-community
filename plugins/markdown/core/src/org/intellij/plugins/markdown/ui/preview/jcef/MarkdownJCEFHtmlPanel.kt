@@ -53,10 +53,9 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.math.round
 
-class MarkdownJCEFHtmlPanel(
-  private val project: Project?,
-  private val virtualFile: VirtualFile?
-) : JCEFHtmlPanel(isOffScreenRendering(), null, null), MarkdownHtmlPanelEx, UserDataHolder by UserDataHolderBase() {
+class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFile: VirtualFile?)
+  : JCEFHtmlPanel(isOffScreenRendering(), null, null), MarkdownHtmlPanelEx, UserDataHolder by UserDataHolderBase()
+{
   constructor() : this(null, null)
 
   private val pageBaseName = "markdown-preview-index-${DigestUtil.randomToken()}.html"
@@ -66,8 +65,10 @@ class MarkdownJCEFHtmlPanel(
 
   private val scrollListeners = ArrayList<MarkdownHtmlPanel.ScrollListener>()
 
+  @Suppress("UsagesOfObsoleteApi")
   private var currentExtensions = emptyList<MarkdownBrowserPreviewExtension>()
 
+  @Suppress("UsagesOfObsoleteApi")
   private fun reloadExtensions() {
     currentExtensions.forEach(Disposer::dispose)
     currentExtensions = MarkdownBrowserPreviewExtension.Provider.all
@@ -118,9 +119,7 @@ class MarkdownJCEFHtmlPanel(
 
   internal fun showSearchBar() = searchSession?.showSearchBar()
 
-  override fun getComponent(): JComponent {
-    return panelComponent
-  }
+  override fun getComponent(): JComponent = panelComponent
 
   init {
     Disposer.register(browserPipe) { currentExtensions.forEach(Disposer::dispose) }
@@ -254,6 +253,7 @@ class MarkdownJCEFHtmlPanel(
     scrollListeners.remove(listener)
   }
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun scrollToMarkdownSrcOffset(offset: Int, smooth: Boolean) {
     executeJavaScript("window.scrollController?.scrollTo($offset, $smooth)")
   }
@@ -324,7 +324,7 @@ class MarkdownJCEFHtmlPanel(
     return panel
   }
 
-  fun getTemporaryFontSize() = getUserData(TEMPORARY_FONT_SIZE)
+  fun getTemporaryFontSize(): Int? = getUserData(TEMPORARY_FONT_SIZE)
 
   /**
    * @param size Unscaled font size.
@@ -360,18 +360,15 @@ class MarkdownJCEFHtmlPanel(
   private inner class MyAggregatingResourceProvider : ResourceProvider {
     private val internalResources = baseScripts + baseStyles
 
-    override fun canProvide(resourceName: String): Boolean {
-      return resourceName in internalResources ||
-             resourceName == pageBaseName ||
-             currentExtensions.any { it.resourceProvider.canProvide(resourceName) }
-    }
+    override fun canProvide(resourceName: String): Boolean =
+      resourceName in internalResources ||
+      resourceName == pageBaseName ||
+      currentExtensions.any { it.resourceProvider.canProvide(resourceName) }
 
-    override fun loadResource(resourceName: String): ResourceProvider.Resource? {
-      return when (resourceName) {
-        pageBaseName -> ResourceProvider.Resource(buildIndexContent().toByteArray(), "text/html")
-        in internalResources -> ResourceProvider.loadInternalResource<MarkdownJCEFHtmlPanel>(resourceName)
-        else -> currentExtensions.map { it.resourceProvider }.firstOrNull { it.canProvide(resourceName) }?.loadResource(resourceName)
-      }
+    override fun loadResource(resourceName: String): ResourceProvider.Resource? = when (resourceName) {
+      pageBaseName -> ResourceProvider.Resource(buildIndexContent().toByteArray(), "text/html")
+      in internalResources -> ResourceProvider.loadInternalResource<MarkdownJCEFHtmlPanel>(resourceName)
+      else -> currentExtensions.map { it.resourceProvider }.firstOrNull { it.canProvide(resourceName) }?.loadResource(resourceName)
     }
   }
 
@@ -433,9 +430,7 @@ class MarkdownJCEFHtmlPanel(
     private fun isOffScreenRendering(): Boolean = Registry.`is`("ide.browser.jcef.markdownView.osr.enabled")
 
     private object ProhibitingResourceRequestHandler : CefResourceRequestHandlerAdapter() {
-      override fun onBeforeResourceLoad(browser: CefBrowser?, frame: CefFrame?, request: CefRequest): Boolean {
-        return true
-      }
+      override fun onBeforeResourceLoad(browser: CefBrowser?, frame: CefFrame?, request: CefRequest): Boolean = true
     }
   }
 }
