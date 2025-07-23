@@ -44,7 +44,7 @@
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.CodeInsightToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.RefactoringToolset" />
 
-    <registryKey defaultValue="true"
+    <registryKey defaultValue="false"
                  description="Detect MCP clients to suggest enable MCP server on project startup"
                  key="mcp.server.detect.mcp.clients"/>
     <registryKey defaultValue="true"

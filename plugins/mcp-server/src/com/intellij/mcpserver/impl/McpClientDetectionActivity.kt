@@ -38,11 +38,12 @@ internal class McpClientDetectionActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (ConfigImportHelper.isNewUser()) return // not just yet, next time
 
+    val detectedClients = McpClientDetector.detectMcpClients(project)
+    suggestToChangePortIfNeeded(detectedClients, project)
+
     if (Registry.`is`("mcp.server.detect.mcp.clients")) {
-      val detectedClients = McpClientDetector.detectMcpClients(project)
       if (McpServerSettings.getInstance().state.enableMcpServer) {
         showUnconfiguredNotificationIfNeeded(detectedClients, project)
-        suggestToChangePortIfNeeded(detectedClients, project)
         return
       }
 
