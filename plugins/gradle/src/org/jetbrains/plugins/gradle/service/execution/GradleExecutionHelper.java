@@ -452,6 +452,7 @@ public final class GradleExecutionHelper {
   }
 
   @VisibleForTesting
+  @SuppressWarnings("ConstantValue") //Qodana false positive
   public static void setupLogging(
     @NotNull GradleExecutionSettings settings,
     @Nullable BuildEnvironment buildEnvironment
