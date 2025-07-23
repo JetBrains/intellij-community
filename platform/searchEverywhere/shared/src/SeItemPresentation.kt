@@ -144,7 +144,7 @@ class SeTargetItemPresentation(
       SeTargetItemPresentation(backgroundColorId = tp.backgroundColor?.rpcId(),
                                iconId = tp.icon?.rpcId(),
                                presentableText = tp.presentableText,
-                               presentableTextMatchedRanges = matchers?.calcMatchedRanges(tp.presentableText),
+                               presentableTextMatchedRanges = (matchers?.nameMatcher as? MinusculeMatcher)?.calcMatchedRanges(tp.presentableText),
                                presentableTextFgColorId = tp.presentableTextAttributes?.foregroundColor?.rpcId(),
                                presentableTextErrorHighlight = tp.presentableTextAttributes?.let { attrs ->
                                  val simpleAttrs = SimpleTextAttributes.fromTextAttributes(attrs)
@@ -155,14 +155,14 @@ class SeTargetItemPresentation(
                                  attrs.additionalEffects?.contains(EffectType.STRIKEOUT) == true
                                } == true,
                                containerText = tp.containerText,
-                               containerTextMatchedRanges = matchers?.calcMatchedRanges(tp.containerText),
+                               containerTextMatchedRanges = (matchers?.locationMatcher as? MinusculeMatcher)?.calcMatchedRanges(tp.containerText),
                                locationText = tp.locationText,
                                locationIconId = tp.locationIcon?.rpcId(),
                                extendedDescription = extendedDescription)
 
-    private fun ItemMatchers.calcMatchedRanges(text: String?): List<SerializableRange>? {
+    private fun MinusculeMatcher.calcMatchedRanges(text: String?): List<SerializableRange>? {
       text ?: return null
-      return (nameMatcher as? MinusculeMatcher)?.matchingFragments(text)?.map { SerializableRange(it) }
+      return matchingFragments(text)?.map { SerializableRange(it) }
     }
   }
 }
