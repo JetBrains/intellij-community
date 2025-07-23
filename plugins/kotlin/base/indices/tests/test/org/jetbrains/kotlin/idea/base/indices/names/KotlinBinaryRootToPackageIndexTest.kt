@@ -296,12 +296,24 @@ class KotlinBinaryRootToPackageIndexTest : AbstractMultiModuleTest() {
     ) {
         val module = createMainModule()
 
-        targetLibraryPaths.forEach { module.addLibraryFromPath(it) }
-        unrelatedLibraryPaths.forEach { module.addLibraryFromPath(it) }
+        val targetLibraryFiles = targetLibraryPaths.map { resolveLibraryFile(it) }
+        val unrelatedLibraryFiles = unrelatedLibraryPaths.map { resolveLibraryFile(it) }
+
+        targetLibraryFiles.forEach { module.addLibraryWithFileName(it) }
+        unrelatedLibraryFiles.forEach { module.addLibraryWithFileName(it) }
+
+        // Ensure that the index supports all target libraries.
+        targetLibraryFiles.forEach { file ->
+            val virtualFile = getVirtualFile(file)
+            assertTrue(
+                "The target library file '${file.name}' must be a supported library file.",
+                virtualFile.isSupportedByBinaryRootToPackageIndex,
+            )
+        }
 
         val values = buildSet {
-            targetLibraryPaths.forEach { jarPath ->
-                addAll(accessIndex(jarPath.name))
+            targetLibraryPaths.forEach { libraryPath ->
+                addAll(accessIndex(libraryPath.name))
             }
         }
 
@@ -312,11 +324,19 @@ class KotlinBinaryRootToPackageIndexTest : AbstractMultiModuleTest() {
         }
     }
 
-    private fun Module.addLibraryFromPath(libraryPath: Path) {
+    private fun resolveLibraryFile(libraryPath: Path): File {
         val libraryFile = getTestDataDirectory().resolve(libraryPath.toString())
-        require(libraryFile.exists()) { "The library file `$libraryPath` does not exist." }
 
-        addLibrary(libraryFile, libraryPath.toString())
+        require(libraryFile.exists()) { "The library file '${libraryPath.name}' does not exist." }
+        return libraryFile
+    }
+
+    private fun Module.addLibraryWithFileName(libraryFile: File) {
+        addLibrary(libraryFile, libraryFile.nameWithoutExtension)
+    }
+
+    private fun Module.addLibraryFromPath(path: Path) {
+        addLibraryWithFileName(resolveLibraryFile(path))
     }
 
     private fun accessIndex(rootName: String): Set<String> =
