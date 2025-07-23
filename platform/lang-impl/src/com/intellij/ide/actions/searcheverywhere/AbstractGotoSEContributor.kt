@@ -33,6 +33,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.DumbService.Companion.isDumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.backend.navigation.NavigationRequest
@@ -85,7 +86,10 @@ internal val patternToDetectAnonymousClasses: Pattern = Pattern.compile("([.\\w]
 // See IJPL-188436
 private val semaphore: OverflowSemaphore = OverflowSemaphore(permits = 1, overflow = BufferOverflow.SUSPEND)
 
-abstract class AbstractGotoSEContributor protected constructor(event: AnActionEvent)
+abstract class AbstractGotoSEContributor @ApiStatus.Internal protected constructor(
+  event: AnActionEvent,
+  @ApiStatus.Internal val contributorModules: List<SearchEverywhereContributorModule>?
+)
   : WeightedSearchEverywhereContributor<Any>, ScopeSupporting, SearchEverywhereExtendedInfoProvider {
   @JvmField
   protected val myProject: Project = event.getRequiredData(CommonDataKeys.PROJECT)
@@ -100,14 +104,16 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
   @JvmField
   protected val myPsiContext: SmartPsiElementPointer<PsiElement?>?
 
-  @ApiStatus.Internal var contributorModules: List<SearchEverywhereContributorModule>? = null
 
-  @ApiStatus.Internal
-  protected constructor(event: AnActionEvent, contributorModules: List<SearchEverywhereContributorModule>?) : this(event) {
-    this.contributorModules = contributorModules
-  }
+  protected constructor(event: AnActionEvent) : this(event, null)
 
   init {
+    contributorModules?.let { modules ->
+      modules.forEach { module ->
+        Disposer.register(this, module)
+      }
+    }
+
     val context = GotoActionBase.getPsiContext(event)
     myPsiContext = if (context == null) null else SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(context)
 

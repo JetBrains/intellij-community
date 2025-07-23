@@ -12,7 +12,7 @@ import javax.swing.ListCellRenderer
 // (a) Rider essentially having its own Global Navigation implementation on its backend with its own rules.
 // (b) Rider needing to -compositionally- integrate both with the "vanilla" and the "semantic" search.
 @ApiStatus.Internal
-interface SearchEverywhereContributorModule {
+interface SearchEverywhereContributorModule : Disposable {
 
   // Extended info should be handled differently. Prefer composition over tag interfaces and inheritance of ExtendedInfoProvider
   fun mixinExtendedInfo(baseExtendedInfo: ExtendedInfo): ExtendedInfo
