@@ -48,6 +48,7 @@ class VcsLogData @ApiStatus.Internal constructor(
   parentDisposable: Disposable,
 ) : Disposable, VcsLogDataProvider {
   private val disposableFlag = Disposer.newCheckedDisposable()
+  val isDisposed: Boolean get() = disposableFlag.isDisposed
   private val lock = Any()
 
   @ApiStatus.Internal
@@ -189,7 +190,7 @@ class VcsLogData @ApiStatus.Internal constructor(
           LOG.debug("Finished data pack change listener $listener")
         }
       }
-    }, { disposableFlag.isDisposed() })
+    }, { isDisposed })
   }
 
   override fun dispose() {

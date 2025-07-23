@@ -68,7 +68,7 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
     val logData = commitEditingData.logData
     val repository = commitEditingData.repository
     val commits = commitEditingData.selection.commits
-    if (repository.info.currentRevision != originalHEAD || Disposer.isDisposed(logData)) {
+    if (repository.info.currentRevision != originalHEAD || logData.isDisposed) {
       return ValidationInfo(
         GitBundle.message("rebase.log.reword.dialog.failed.repository.changed.message", commits.size)
       )
