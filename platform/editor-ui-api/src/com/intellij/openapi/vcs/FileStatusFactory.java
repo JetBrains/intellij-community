@@ -4,10 +4,14 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.*;
 import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Collection;
 import java.util.function.Supplier;
 
 public final class FileStatusFactory {
@@ -79,6 +83,11 @@ public final class FileStatusFactory {
   @Internal
   public @NotNull FileStatus @NotNull [] getAllFileStatuses() {
     return myStatuses.values().toArray(new FileStatus[0]);
+  }
+
+  @Internal
+  public @NotNull Collection<FileStatus> getGlobalFileStatuses() {
+    return myStatuses.get(null);
   }
 
   synchronized void onPluginUnload(@NotNull PluginId pluginId) {

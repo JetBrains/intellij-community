@@ -2,8 +2,10 @@
 package com.intellij.vcs
 
 import com.intellij.platform.rpc.backend.RemoteApiProvider
+import com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi
 import com.intellij.platform.vcs.impl.shared.rpc.RemoteShelfActionsApi
 import com.intellij.platform.vcs.impl.shared.rpc.RemoteShelfApi
+import com.intellij.vcs.changes.ChangeListsApiImpl
 import com.intellij.vcs.shelf.BackendShelfActionsApi
 import com.intellij.vcs.shelf.BackendShelfApi
 import fleet.rpc.remoteApiDescriptor
@@ -16,6 +18,10 @@ internal class VcsRemoteApiProvider : RemoteApiProvider {
 
     remoteApi(remoteApiDescriptor<RemoteShelfActionsApi>()) {
       BackendShelfActionsApi()
+    }
+
+    remoteApi(remoteApiDescriptor<ChangeListsApi>()) {
+      ChangeListsApiImpl()
     }
   }
 }

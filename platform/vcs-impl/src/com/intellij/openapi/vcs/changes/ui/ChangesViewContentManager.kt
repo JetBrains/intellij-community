@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.platform.vcs.impl.shared.changes.ChangesViewDataKeys
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
@@ -32,7 +33,6 @@ import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcs.commit.CommitMode
 import com.intellij.vcs.commit.CommitModeManager
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.function.Predicate
 
@@ -219,13 +219,13 @@ class ChangesViewContentManager private constructor(private val project: Project
     override fun stateChanged(toolWindowManager: ToolWindowManager) {
       if (toolWindow.isVisible) {
         val content = toolWindow.contentManager.selectedContent ?: return
-        initLazyContent(content)
+        ChangesViewDataKeys.initLazyContent(content)
       }
     }
 
     override fun selectionChanged(event: ContentManagerEvent) {
       if (toolWindow.isVisible) {
-        initLazyContent(event.content)
+        ChangesViewDataKeys.initLazyContent(event.content)
       }
     }
   }
@@ -263,9 +263,6 @@ class ChangesViewContentManager private constructor(private val project: Project
   companion object {
     const val TOOLWINDOW_ID: String = ToolWindowId.VCS
     internal const val COMMIT_TOOLWINDOW_ID = ToolWindowId.COMMIT
-
-    @JvmField
-    internal val CONTENT_PROVIDER_SUPPLIER_KEY = Key.create<() -> ChangesViewContentProvider?>("CONTENT_PROVIDER_SUPPLIER")
 
     /**
      * Whether the commit window is in the windowed or floating mode.
@@ -330,14 +327,6 @@ class ChangesViewContentManager private constructor(private val project: Project
     @JvmStatic
     fun shouldHaveSplitterDiffPreview(project: Project, isContentVertical: Boolean): Boolean {
       return !isContentVertical || !isCommitToolWindowShown(project)
-    }
-
-    @ApiStatus.Internal
-    fun initLazyContent(content: Content) {
-      val provider = content.getUserData(CONTENT_PROVIDER_SUPPLIER_KEY)?.invoke() ?: return
-      content.putUserData(CONTENT_PROVIDER_SUPPLIER_KEY, null)
-      provider.initTabContent(content)
-      IJSwingUtilities.updateComponentTreeUI(content.component)
     }
 
     /**
