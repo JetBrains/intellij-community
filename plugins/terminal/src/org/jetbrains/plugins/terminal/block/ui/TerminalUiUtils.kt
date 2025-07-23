@@ -237,7 +237,8 @@ object TerminalUiUtils {
 
   fun toFloatAndScale(value: Int): Float = JBUIScale.scale(value.toFloat())
 
-  internal fun TextStyle.toTextAttributes(palette: TerminalColorPalette): TextAttributes {
+  @ApiStatus.Internal
+  fun TextStyle.toTextAttributes(palette: TerminalColorPalette): TextAttributes {
     return TextAttributes().also { attr ->
       // [TerminalColorPalette.getDefaultBackground] is not applied to [TextAttributes].
       // It's passed to [EditorEx.setBackgroundColor] / [JComponent.setBackground] to

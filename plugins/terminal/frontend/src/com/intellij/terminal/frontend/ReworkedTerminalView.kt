@@ -26,13 +26,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalFontSizeProvider
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
+import com.intellij.terminal.frontend.hyperlinks.FrontendTerminalHyperlinkFacade
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.asDisposable
@@ -125,6 +125,18 @@ internal class ReworkedTerminalView(
       fusFirstOutputListener,
       withTopAndBottomInsets = false,
     )
+    val alternateBufferHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
+      FrontendTerminalHyperlinkFacade(
+        isInAlternateBuffer = true,
+        editor = alternateBufferEditor,
+        outputModel = alternateBufferModel,
+        terminalInput = terminalInput,
+        coroutineScope = coroutineScope,
+      )
+    }
+    else {
+      null
+    }
 
     outputEditor = createOutputEditor(settings, parentDisposable = this)
     outputEditor.putUserData(TerminalInput.KEY, terminalInput)
@@ -157,6 +169,18 @@ internal class ReworkedTerminalView(
     outputEditor.putUserData(TerminalTypeAhead.KEY, typeAhead)
     TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
     outputEditor.putUserData(TerminalBlocksModel.KEY, blocksModel)
+    val outputHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
+      FrontendTerminalHyperlinkFacade(
+        isInAlternateBuffer = false,
+        editor = outputEditor,
+        outputModel = outputModel,
+        terminalInput = terminalInput,
+        coroutineScope = coroutineScope,
+      )
+    }
+    else {
+      null
+    }
 
     outputEditor.putUserData(CompletionPhase.CUSTOM_CODE_COMPLETION_ACTION_ID, "Terminal.CommandCompletion")
 
@@ -171,7 +195,9 @@ internal class ReworkedTerminalView(
       project,
       sessionModel,
       outputModel,
+      outputHyperlinkFacade,
       alternateBufferModel,
+      alternateBufferHyperlinkFacade,
       blocksModel,
       settings,
       coroutineScope.childScope("TerminalSessionController"),

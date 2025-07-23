@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.block.reworked
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.impl.FrozenDocument
 import com.intellij.terminal.session.StyleRange
 import com.intellij.terminal.session.TerminalOutputModelState
 import kotlinx.coroutines.flow.StateFlow
@@ -23,9 +24,13 @@ interface TerminalOutputModel {
    */
   val cursorOffsetState: StateFlow<Int>
 
+  fun freeze(): FrozenTerminalOutputModel
+
   fun getAbsoluteLineIndex(documentOffset: Int): Long
   
   fun relativeOffset(offset: Int): TerminalOffset
+
+  fun absoluteOffset(offset: Long): TerminalOffset
 
   /**
    * Returns document ranges with corresponding text attributes.
@@ -69,4 +74,17 @@ interface TerminalOutputModel {
 }
 
 @ApiStatus.Internal
-sealed interface TerminalOffset
+interface FrozenTerminalOutputModel {
+  val document: FrozenDocument
+
+  val cursorOffset: Int
+
+  fun relativeOffset(offset: Int): TerminalOffset
+  fun absoluteOffset(offset: Long): TerminalOffset
+}
+
+@ApiStatus.Internal
+sealed interface TerminalOffset : Comparable<TerminalOffset> {
+  fun toAbsolute(): Long
+  fun toRelative(): Int
+}

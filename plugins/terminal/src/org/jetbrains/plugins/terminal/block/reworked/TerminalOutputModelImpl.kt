@@ -3,6 +3,8 @@ package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.editor.impl.FrozenDocument
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.terminal.session.StyleRange
 import com.intellij.terminal.session.TerminalOutputModelState
@@ -46,9 +48,12 @@ class TerminalOutputModelImpl(
 
   private var isTypeAhead: Boolean = false
 
-  override fun relativeOffset(offset: Int): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount + offset)
-  
-  private fun TerminalOffset.toRelative(): Int = ((this as TerminalOffsetImpl).absolute - trimmedCharsCount).toInt()
+  override fun freeze(): FrozenTerminalOutputModel =
+    FrozenTerminalOutputModelImpl((document as DocumentImpl).freeze(), trimmedCharsCount, cursorOffsetState.value)
+
+  override fun relativeOffset(offset: Int): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount, offset)
+
+  override fun absoluteOffset(offset: Long): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount, (offset - trimmedCharsCount).toInt())
 
   override fun getAbsoluteLineIndex(documentOffset: Int): Long {
     val documentLineIndex = document.getLineNumber(documentOffset)
@@ -438,4 +443,22 @@ class TerminalOutputModelImpl(
   }
 }
 
-private data class TerminalOffsetImpl(val absolute: Long) : TerminalOffset
+@ApiStatus.Internal
+class FrozenTerminalOutputModelImpl(
+  override val document: FrozenDocument,
+  private val trimmedCharsCount: Long,
+  override val cursorOffset: Int,
+) : FrozenTerminalOutputModel {
+  override fun relativeOffset(offset: Int): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount, offset)
+  override fun absoluteOffset(offset: Long): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount, (offset - trimmedCharsCount).toInt())
+}
+
+private data class TerminalOffsetImpl(
+  val trimmedCharsCount: Long,
+  val relative: Int,
+) : TerminalOffset {
+  override fun compareTo(other: TerminalOffset): Int = toAbsolute().compareTo(other.toAbsolute())
+  override fun toAbsolute(): Long = trimmedCharsCount + relative
+  override fun toRelative(): Int = relative
+  override fun toString(): String = "${toAbsolute()}(${toRelative()})"
+}

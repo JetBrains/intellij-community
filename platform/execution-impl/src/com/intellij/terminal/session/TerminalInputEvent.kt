@@ -68,4 +68,11 @@ class TerminalCloseEvent : TerminalInputEventBase()
 @Serializable
 class TerminalClearBufferEvent : TerminalInputEventBase()
 
+@ApiStatus.Internal
+@Serializable
+data class TerminalHyperlinkClickedEvent(
+  val isInAlternateBuffer: Boolean,
+  val hyperlinkId: TerminalHyperlinkId,
+) : TerminalInputEventBase()
+
 private val inputEventIdCounter = AtomicInteger(0)

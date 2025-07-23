@@ -29,6 +29,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/statistics",
     "//platform/core-ui",
+    "//platform/lang-api:lang",
   ],
   runtime_deps = [":backend_resources"]
 )
@@ -63,6 +64,7 @@ jvm_library(
     "@lib//:assert_j",
     "@lib//:guava",
     "//platform/core-ui",
+    "//platform/lang-api:lang",
   ],
   runtime_deps = [":backend_resources"]
 )

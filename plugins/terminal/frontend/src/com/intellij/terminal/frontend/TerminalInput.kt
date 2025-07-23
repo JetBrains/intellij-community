@@ -136,6 +136,10 @@ class TerminalInput(
     val event = TerminalResizeEvent(newSize.toDto())
     sendEvent(InputEventSubmission(event))
   }
+  
+  fun sendLinkClicked(isInAlternateBuffer: Boolean, hyperlinkId: TerminalHyperlinkId) {
+    sendEvent(InputEventSubmission(TerminalHyperlinkClickedEvent(isInAlternateBuffer, hyperlinkId)))
+  }
 
   private fun sendEvent(event: InputEventSubmission) {
     LOG.trace { "Input event received: ${event.event}" }

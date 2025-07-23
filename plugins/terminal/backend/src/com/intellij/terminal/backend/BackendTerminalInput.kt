@@ -103,6 +103,7 @@ private fun handleInputEvent(event: TerminalInputEvent, services: JediTermServic
         }
       }
     }
+    is TerminalHyperlinkClickedEvent -> { } // handled by BackendTerminalHyperlinkFacade
   }
 }
 

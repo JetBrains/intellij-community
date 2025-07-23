@@ -2,16 +2,22 @@ package com.intellij.terminal.backend
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.flow.IncrementalUpdateFlowProducer
 import com.intellij.platform.util.coroutines.flow.MutableStateWithIncrementalUpdates
+import com.intellij.terminal.backend.hyperlinks.BackendTerminalHyperlinkFacade
 import com.intellij.terminal.session.*
+import com.intellij.terminal.session.dto.TerminalHyperlinksModelStateDto
 import com.intellij.terminal.session.dto.toDto
 import com.intellij.terminal.session.dto.toStyleRange
 import com.intellij.terminal.session.dto.toTerminalState
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.merge
 import org.jetbrains.plugins.terminal.block.reworked.*
+import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.isSplitHyperlinksSupportEnabled
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.fus.*
 import kotlin.coroutines.cancellation.CancellationException
@@ -29,6 +35,7 @@ import kotlin.time.TimeSource
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class StateAwareTerminalSession(
+  project: Project,
   private val delegate: BackendTerminalSession,
   override val coroutineScope: CoroutineScope,
 ) : BackendTerminalSession {
@@ -36,7 +43,9 @@ internal class StateAwareTerminalSession(
 
   private val sessionModel: TerminalSessionModel = TerminalSessionModelImpl()
   private val outputModel: TerminalOutputModel
+  private val outputHyperlinkFacade: BackendTerminalHyperlinkFacade?
   private val alternateBufferModel: TerminalOutputModel
+  private val alternateBufferHyperlinkFacade: BackendTerminalHyperlinkFacade?
   private val blocksModel: TerminalBlocksModel
 
   private val outputLatencyReporter = BatchLatencyReporter(batchSize = 100) { samples ->
@@ -61,17 +70,34 @@ internal class StateAwareTerminalSession(
     // It is OK here to handle synchronization manually, because this document will be used only in our services.
     val outputDocument = DocumentImpl("", true)
     outputModel = TerminalOutputModelImpl(outputDocument, TerminalUiUtils.getDefaultMaxOutputLength())
+    outputHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
+      BackendTerminalHyperlinkFacade(project, coroutineScope, outputModel, isInAlternateBuffer = false)
+    }
+    else {
+      null
+    }
 
     val alternateBufferDocument = DocumentImpl("", true)
     alternateBufferModel = TerminalOutputModelImpl(alternateBufferDocument, maxOutputLength = 0)
+    alternateBufferHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
+      BackendTerminalHyperlinkFacade(project, coroutineScope, alternateBufferModel, isInAlternateBuffer = true)
+    }
+    else {
+      null
+    }
 
     blocksModel = TerminalBlocksModelImpl(outputDocument)
 
     coroutineScope.launch(CoroutineName("StateAwareTerminalSession: models updating")) {
-      val originalOutputFlow = delegate.getOutputFlow()
+      val originalOutputFlow = if (outputHyperlinkFacade != null && alternateBufferHyperlinkFacade != null) {
+        merge(delegate.getOutputFlow(), outputHyperlinkFacade.resultFlow, alternateBufferHyperlinkFacade.resultFlow)
+      }
+      else {
+        delegate.getOutputFlow()
+      }
       originalOutputFlow.collect { events ->
         try {
-          outputFlowProducer.handleUpdate(events)
+          outputFlowProducer.handleUpdate(events.filter { !isObsolete(it) })
         }
         finally {
           if (events.any { it is TerminalSessionTerminatedEvent }) {
@@ -82,9 +108,44 @@ internal class StateAwareTerminalSession(
     }
   }
 
-  override suspend fun getInputChannel(): SendChannel<TerminalInputEvent> {
-    return delegate.getInputChannel()
+  private fun isObsolete(event: TerminalOutputEvent): Boolean {
+    return event is TerminalHyperlinksChangedEvent && event.documentModificationStamp < getOutputModel(event).document.modificationStamp
   }
+
+  private fun getOutputModel(event: TerminalHyperlinksChangedEvent): TerminalOutputModel =
+    if (event.isInAlternateBuffer) alternateBufferModel else outputModel
+
+  override suspend fun getInputChannel(): SendChannel<TerminalInputEvent> {
+    val original = delegate.getInputChannel()
+    val channel = Channel<TerminalInputEvent>(capacity = Channel.UNLIMITED)
+    coroutineScope.launch(CoroutineName("StateAwareTerminalSession: input channel")) {
+      try {
+        for (event in channel) {
+          original.send(event)
+          handleInputEvent(event)
+        }
+      }
+      finally {
+        channel.close()
+        original.close()
+      }
+    }
+    return channel
+  }
+
+  private fun handleInputEvent(event: TerminalInputEvent) {
+    if (event is TerminalHyperlinkClickedEvent) {
+      coroutineScope.launch(CoroutineName("StateAwareTerminalSession: hyperlink click")) {
+        getHyperlinkFacade(event)?.hyperlinkClicked(event.hyperlinkId)
+      }
+    }
+  }
+
+  private fun getHyperlinkFacade(event: TerminalHyperlinkClickedEvent): BackendTerminalHyperlinkFacade? =
+    if (event.isInAlternateBuffer) alternateBufferHyperlinkFacade else outputHyperlinkFacade
+
+  private fun getHyperlinkFacade(event: TerminalHyperlinksChangedEvent): BackendTerminalHyperlinkFacade? =
+    if (event.isInAlternateBuffer) alternateBufferHyperlinkFacade else outputHyperlinkFacade
 
   override suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>> = outputFlowProducer.getIncrementalUpdateFlow()
 
@@ -92,7 +153,7 @@ internal class StateAwareTerminalSession(
     get() = delegate.isClosed
 
   override suspend fun hasRunningCommands(): Boolean = delegate.hasRunningCommands()
-  
+
   private inner class State : MutableStateWithIncrementalUpdates<List<TerminalOutputEvent>> {
     override suspend fun applyUpdate(update: List<TerminalOutputEvent>) {
       for (event in update) {
@@ -139,6 +200,9 @@ internal class StateAwareTerminalSession(
         is TerminalCommandFinishedEvent -> {
           blocksModel.commandFinished(event.exitCode)
         }
+        is TerminalHyperlinksChangedEvent -> {
+          getHyperlinkFacade(event)?.updateModelState(event)
+        }
         else -> {
           // Do nothing: other events are not related to the models we update
         }
@@ -151,6 +215,15 @@ internal class StateAwareTerminalSession(
         outputModelState = outputModel.dumpState().toDto(),
         alternateBufferState = alternateBufferModel.dumpState().toDto(),
         blocksModelState = blocksModel.dumpState().toDto(),
+        hyperlinksModelState = if (outputHyperlinkFacade != null && alternateBufferHyperlinkFacade != null) {
+          TerminalHyperlinksModelStateDto(
+            outputHyperlinkFacade.dumpState().toDto(),
+            alternateBufferHyperlinkFacade.dumpState().toDto(),
+          )
+        }
+        else {
+          null
+        }
       )
       return listOf(listOf(event))
     }

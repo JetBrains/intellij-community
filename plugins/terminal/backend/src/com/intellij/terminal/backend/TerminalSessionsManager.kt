@@ -47,7 +47,7 @@ internal class TerminalSessionsManager {
     // and cancel the main scope.
     val jediTermScope = scope.childScope("JediTerm session")
     val jediTermSession = createTerminalSession(project, observableTtyConnector, configuredOptions, JBTerminalSystemSettingsProvider(), jediTermScope)
-    val stateAwareSession = StateAwareTerminalSession(jediTermSession, scope)
+    val stateAwareSession = StateAwareTerminalSession(project, jediTermSession, scope)
 
     val sessionId = storeSession(stateAwareSession, scope)
 
