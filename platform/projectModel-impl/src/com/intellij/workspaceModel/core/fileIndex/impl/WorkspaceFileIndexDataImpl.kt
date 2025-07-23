@@ -340,6 +340,10 @@ internal class WorkspaceFileIndexDataImpl(
                                                                              addedEntities,
                                                                              entitiesInStorage,
                                                                              entitiesNotInStorage)
+        is DependencyDescription.OnReference<*, *> -> processOnReference(dependency,
+                                                                         event,
+                                                                         removedEntities as MutableSet<WorkspaceEntity>,
+                                                                         addedEntities as MutableSet<WorkspaceEntity>)
       }
     }
 
@@ -359,6 +363,31 @@ internal class WorkspaceFileIndexDataImpl(
         contributor.registerFileSets(entityNotInStorage, removeRegistrar, event.storageBefore)
       }
     }
+  }
+
+  private fun <R : WorkspaceEntityWithSymbolicId, E : WorkspaceEntityWithSymbolicId> processOnReference(
+    dependencyDescription: DependencyDescription.OnReference<R, E>,
+    event: VersionedStorageChange,
+    removedEntities: MutableSet<WorkspaceEntity>,
+    addedEntities: MutableSet<WorkspaceEntity>,
+  ) {
+    val previousDependencies = mutableSetOf<SymbolicEntityId<R>>()
+    val actualDependencies = mutableSetOf<SymbolicEntityId<R>>()
+
+    event.getChanges(dependencyDescription.referenceClass).asSequence().forEach { change ->
+      change.oldEntity?.let {
+        dependencyDescription.referencedEntitiesGetter(it).toCollection(previousDependencies)
+      }
+      change.newEntity?.let {
+        dependencyDescription.referencedEntitiesGetter(it).toCollection(actualDependencies)
+      }
+    }
+
+    // everything in actual dependencies but not in previous is considered new
+    // everything in previous but not in actual dependencies is considered removed
+
+    (actualDependencies - previousDependencies).mapNotNullTo(addedEntities) { it.resolve(event.storageAfter) }
+    (previousDependencies - actualDependencies).mapNotNullTo(removedEntities) { it.resolve(event.storageBefore) }
   }
 
   /**
@@ -453,8 +482,8 @@ internal class WorkspaceFileIndexDataImpl(
     resetFileCache()
     if (storeRegistrar.storedFileSets.isNotEmpty() || removeRegistrar.removedFileSets.isNotEmpty()) {
       val changeLog = WorkspaceFileIndexChangedEventImpl(project,
-                                                         removedFileSets = removeRegistrar.removedFileSets,
-                                                         storedFileSets = storeRegistrar.storedFileSets,)
+                                                         removedFileSets = removeRegistrar.removedFileSets.values,
+                                                         storedFileSets = storeRegistrar.storedFileSets.values,)
       project.messageBus.syncPublisher(WorkspaceFileIndexListener.TOPIC).workspaceFileIndexChanged(changeLog)
     }
   }
@@ -626,7 +655,7 @@ private class RemoveFileSetsRegistrarImpl(
   private val fileSetsByPackagePrefix: PackagePrefixStorage,
 ) : WorkspaceFileSetRegistrar {
 
-  val removedFileSets = ArrayList<WorkspaceFileSet>()
+  val removedFileSets = mutableMapOf<VirtualFile, WorkspaceFileSet>()
 
   override fun registerFileSet(root: VirtualFileUrl, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
     val rootFile = root.virtualFile
@@ -639,10 +668,15 @@ private class RemoveFileSetsRegistrarImpl(
   }
 
   override fun registerFileSet(root: VirtualFile, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
-    val removedFileSet = fileSets.removeValueIf(root) { it is WorkspaceFileSetImpl && isOriginatedFrom(it, entity) }
-    if (removedFileSet is WorkspaceFileSetImpl) {
-      removedFileSets.add(removedFileSet)
+    val fileSetToRemove = fileSets[root]
+    if (fileSetToRemove != null) {
+      when (fileSetToRemove) {
+        is MultipleStoredWorkspaceFileSets -> removedFileSets.putIfAbsent(root, fileSetToRemove.fileSets.first())
+        is WorkspaceFileSetImpl -> removedFileSets.putIfAbsent(root, fileSetToRemove)
+        else -> {}
+      }
     }
+    fileSets.removeValueIf(root) { it is WorkspaceFileSetImpl && isOriginatedFrom(it, entity) }
     if (customData is JvmPackageRootDataInternal) {
       fileSetsByPackagePrefix.removeByPrefixAndPointer(customData.packagePrefix, entity.createPointer())
     }
@@ -721,7 +755,7 @@ private class StoreFileSetsRegistrarImpl(
   private val fileSetsByPackagePrefix: PackagePrefixStorage,
 ) : WorkspaceFileSetRegistrar {
 
-  val storedFileSets = ArrayList<WorkspaceFileSet>()
+  val storedFileSets = mutableMapOf<VirtualFile, WorkspaceFileSet>()
 
   override fun registerFileSet(
     root: VirtualFileUrl,
@@ -772,10 +806,8 @@ private class StoreFileSetsRegistrarImpl(
       data = customData ?: DummyWorkspaceFileSetData,
       recursive = recursive,
     )
-    val registeredFileSet = fileSets.putValue(root, fileSet)
-    if (registeredFileSet is WorkspaceFileSetImpl) {
-      storedFileSets.add(registeredFileSet)
-    }
+    fileSets.putValue(root, fileSet)
+    storedFileSets.putIfAbsent(root, fileSet)
     if (customData is JvmPackageRootDataInternal) {
       fileSetsByPackagePrefix.addFileSet(customData.packagePrefix, fileSet)
     }

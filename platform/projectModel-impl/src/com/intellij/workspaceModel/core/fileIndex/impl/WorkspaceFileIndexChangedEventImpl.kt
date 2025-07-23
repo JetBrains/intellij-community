@@ -9,8 +9,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 internal class WorkspaceFileIndexChangedEventImpl(
   project: Project,
-  private val removedFileSets: List<WorkspaceFileSet>,
-  private val storedFileSets: List<WorkspaceFileSet>,
+  private val removedFileSets: Collection<WorkspaceFileSet>,
+  private val storedFileSets: Collection<WorkspaceFileSet>,
 ) : WorkspaceFileIndexChangedEvent(project) {
   override fun getRemovedFileSets(): Collection<WorkspaceFileSet> {
     return removedFileSets
