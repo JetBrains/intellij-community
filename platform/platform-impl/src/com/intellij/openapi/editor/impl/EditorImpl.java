@@ -454,7 +454,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     });
     myPanel.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
 
-    myHeaderPanel = new MyHeaderPanel();
+    myHeaderPanel = new EditorHeaderPanel(this);
     myGutterComponent = new EditorGutterComponentImpl(this);
     myGutterComponent.putClientProperty(ColorKey.FUNCTION_KEY, (Function<ColorKey, Color>)key -> getColorsScheme().getColor(key));
     initComponent();
@@ -5634,32 +5634,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public boolean isBorderOpaque() {
       return true;
-    }
-  }
-
-  private final class MyHeaderPanel extends JPanel {
-    private int myOldHeight;
-
-    private MyHeaderPanel() {
-      super(new BorderLayout());
-    }
-
-    @Override
-    public void revalidate() {
-      myOldHeight = getHeight();
-      super.revalidate();
-    }
-
-    @Override
-    protected void validateTree() {
-      int height = myOldHeight;
-      super.validateTree();
-      height -= getHeight();
-
-      if (height != 0 && !(myOldHeight == 0 && getComponentCount() > 0 && getPermanentHeaderComponent() == getComponent(0))) {
-        myVerticalScrollBar.setValue(myVerticalScrollBar.getValue() - height);
-      }
-      myOldHeight = getHeight();
     }
   }
 
