@@ -1342,7 +1342,6 @@ xml/dom-impl
 xml/dom-openapi
 xml/dom-tests
 xml/impl
-xml/openapi
 xml/relaxng
 xml/testFramework
 xml/tests

@@ -32,7 +32,6 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/indexing-impl",
     "//xml/xml-parser:parser",
-    "//xml/openapi:xml",
     "//platform/refactoring",
     "//platform/usageView",
     "@lib//:fastutil-min",

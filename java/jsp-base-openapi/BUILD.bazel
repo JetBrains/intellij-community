@@ -9,10 +9,8 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/platform-api:ide",
-    "//xml/openapi:xml",
     "//xml/xml-psi-api:psi",
     "//platform/lang-api:lang",
-  ],
-  exports = ["//xml/openapi:xml"]
+  ]
 )
 ### auto-generated section `build intellij.jsp.base` end

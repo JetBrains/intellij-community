@@ -36,7 +36,6 @@ jvm_library(
     "//platform/extensions",
     "//platform/icons",
     "//platform/workspace/storage",
-    "//xml/openapi:xml",
     "//platform/platform-api:ide",
     "//platform/lang-api:lang",
     "//platform/vcs-api:vcs",
@@ -56,7 +55,6 @@ jvm_library(
   ],
   exports = [
     "//platform/util",
-    "//xml/openapi:xml",
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
     "//java/java-analysis-api:analysis",

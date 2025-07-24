@@ -267,7 +267,6 @@ jvm_library(
     "//xml/xml-psi-impl:psi-impl",
     "@lib//:kotlin-reflect",
     "@lib//:gson",
-    "//xml/openapi:xml",
     "//platform/vcs-api:vcs",
     "@lib//:x_stream",
     "@lib//:libthrift",

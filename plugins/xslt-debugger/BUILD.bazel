@@ -29,7 +29,6 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//platform/indexing-impl",
     "//platform/xdebugger-impl:debugger-impl",
-    "//xml/openapi:xml",
     "//xml/impl",
     "//platform/platform-impl:ide-impl",
     "//platform/util/nanoxml",

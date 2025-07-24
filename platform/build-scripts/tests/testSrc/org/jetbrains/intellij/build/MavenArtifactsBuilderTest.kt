@@ -24,7 +24,6 @@ class MavenArtifactsBuilderTest {
 
   @Test
   fun `maven coordinates`() {
-    checkCoordinates("intellij.xml", "com.jetbrains.intellij.xml", "xml")
     checkCoordinates("intellij.xml.impl", "com.jetbrains.intellij.xml", "xml-impl")
     checkCoordinates("intellij.java.debugger", "com.jetbrains.intellij.java", "java-debugger")
     checkCoordinates("intellij.platform.util", "com.jetbrains.intellij.platform", "util")

@@ -52,7 +52,6 @@
     <orderEntry type="module" module-name="intellij.relaxng" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.xml" />
     <orderEntry type="library" scope="TEST" name="http-client" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="gson" level="project" />

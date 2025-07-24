@@ -21,7 +21,6 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
-    "//xml/openapi:xml",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "//platform/execution-impl",
@@ -56,7 +55,6 @@ jvm_library(
     "//libraries/xerces",
   ],
   exports = [
-    "//xml/openapi:xml",
     "//xml/xml-psi-impl:psi-impl",
     "//xml/xml-ui-common:ui-common",
     "//xml/xml-analysis-impl:analysis-impl",
