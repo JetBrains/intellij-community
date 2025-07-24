@@ -47,7 +47,7 @@ interface TokenProperties {
 }
 
 
-class LineProperties(val completableRanges: List<TextRange>, val psiElementTypes: List<String>) : TokenProperties {
+class LineProperties(val completableRanges: List<TextRange>) : TokenProperties {
   override val tokenType: TypeProperty = TypeProperty.LINE
   override val location: SymbolLocation = SymbolLocation.UNKNOWN
   override fun additionalProperty(name: String): String? = null

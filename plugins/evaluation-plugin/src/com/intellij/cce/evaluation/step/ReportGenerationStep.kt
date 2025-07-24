@@ -2,6 +2,7 @@
 package com.intellij.cce.evaluation.step
 
 
+import com.intellij.cce.core.Language
 import com.intellij.cce.evaluable.EvaluableFeature
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluation.FilteredSessionsStorage
@@ -43,6 +44,7 @@ class ReportGenerationStep<T : EvaluationStrategy>(
     val workspaces = inputWorkspaces ?: listOf(workspace)
     val configs = workspaces.map { it.readConfig(feature.getStrategySerializer()) }
     val evaluationTitles = configs.map { it.reports.evaluationTitle }
+    val language = Language.resolve((configs.firstOrNull())?.actions?.language ?: "Another")
     val iterationsCount = sessionsFilters.size * comparisonStorages.size
     val defaultMetrics = configs.firstOrNull()?.reports?.defaultMetrics
     var iteration = 0
@@ -85,7 +87,8 @@ class ReportGenerationStep<T : EvaluationStrategy>(
           sessionStorages,
           evaluationTitles,
           comparisonStorage,
-          workspaces
+          workspaces,
+          language
         )
         for (report in reports) {
           workspace.addReport(report.type, filter.name, comparisonStorage.reportName, report.path)
@@ -118,7 +121,8 @@ class ReportGenerationStep<T : EvaluationStrategy>(
     sessionStorages: List<SessionsStorage>,
     evaluationTitles: List<String>,
     comparisonStorage: CompareSessionsStorage,
-    workspaces: List<EvaluationWorkspace>
+    workspaces: List<EvaluationWorkspace>,
+    language: Language
   ): List<ReportInfo> {
     val filteredSessionFiles = sessionFiles.filter { it.value.size == sessionStorages.size }
 
@@ -130,7 +134,7 @@ class ReportGenerationStep<T : EvaluationStrategy>(
     val numberOfSessions = sessions.sumOf { it.lookups.size }
 
     val title2evaluator = evaluationTitles.mapIndexed { index, title ->
-      title to MetricsEvaluator.withMetrics(title, feature.getMetrics(sessions))
+      title to MetricsEvaluator.withMetrics(title, feature.getMetrics(sessions, language))
     }.toMap()
 
     for (sessionFile in filteredSessionFiles) {

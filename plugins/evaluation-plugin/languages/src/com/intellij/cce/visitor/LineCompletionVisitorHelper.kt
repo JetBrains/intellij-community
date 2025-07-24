@@ -8,7 +8,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 
 
-class LineCompletionVisitorHelper {
+class LineCompletionVisitorHelper(val maxPrefixLength: Int = 4) {
   private var codeFragment: CodeFragment? = null
   private val lines = mutableListOf<CodeLine>()
 
@@ -31,21 +31,22 @@ class LineCompletionVisitorHelper {
     }
   }
 
-  private fun addElement(element: ASTNode, codeTokenGenerator: (String, Int) -> CodeToken) {
-    val text = element.text.take(MAX_PREFIX_LENGTH)
+  fun addElement(element: ASTNode) {
+    val text = element.text.take(maxPrefixLength)
     if (text.isValuableString()) {
       lines.find { it.offset <= element.startOffset && it.offset + it.text.length > element.startOffset }
         ?.takeIf { it.getChildren().all { it.offset != element.startOffset } }
-        ?.addChild(codeTokenGenerator(text, element.startOffset))
+        ?.addChild(CodeToken(text, element.startOffset))
     }
   }
 
-  fun addElement(element: ASTNode) {
-    addElement(element) { text, offset -> CodeToken(text, offset) }
-  }
-
   fun addElement(element: ASTNode, psiElement: PsiElement) {
-    addElement(element) { text, offset -> CodeTokenWithPsi(text, offset, TokenProperties.UNKNOWN, psiElement) }
+    val text = element.text.take(maxPrefixLength)
+    if (text.isValuableString()) {
+      lines.find { it.offset <= element.startOffset && it.offset + it.text.length > element.startOffset }
+        ?.takeIf { it.getChildren().all { it.offset != element.startOffset } }
+        ?.addChild(CodeTokenWithPsi(text, element.startOffset, TokenProperties.UNKNOWN, psiElement))
+    }
   }
 
   private fun CodeFragment.validateCorrectness() {
@@ -60,5 +61,3 @@ class LineCompletionVisitorHelper {
     }
   }
 }
-
-private const val MAX_PREFIX_LENGTH: Int = 4

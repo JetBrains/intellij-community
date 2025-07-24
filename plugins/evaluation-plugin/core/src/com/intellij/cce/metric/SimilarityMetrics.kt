@@ -5,6 +5,7 @@ import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.evaluable.AIA_RESPONSE
 import com.intellij.cce.evaluable.REFERENCE_PROPERTY
+import com.intellij.cce.metric.ProposalSemanticSimilarityScore.Companion.NAME
 import com.intellij.cce.metric.util.CloudSemanticSimilarityCalculator
 import com.intellij.cce.metric.util.computeBleuScore
 import com.intellij.cce.workspace.info.SessionIndividualScore
@@ -18,7 +19,7 @@ import org.apache.commons.text.similarity.LevenshteinDistance
 import kotlin.math.max
 import kotlin.math.min
 
-abstract class SimilarityMetric(override val showByDefault: Boolean) : ConfidenceIntervalMetric<Pair<Double, Double>>() {
+abstract class SimilarityMetric(override val showByDefault: Boolean, val compatibleElementTypes: List<String> = emptyList()) : ConfidenceIntervalMetric<Pair<Double, Double>>() {
   override val supportsIndividualScores: Boolean = true
   private var totalMatched: Double = 0.0
   private var totalExpected: Double = 0.0
@@ -40,8 +41,8 @@ abstract class SimilarityMetric(override val showByDefault: Boolean) : Confidenc
     for (session in sessions) {
       val metricScores = mutableMapOf<String, MutableList<Double>>()
       val additionalInfo = mutableMapOf<String, MutableList<Any>>()
-
-      for (lookup in session.lookups) {
+      val compatibleLookups = session.lookups.filter { it.checkElementTypeCompatibility(compatibleElementTypes) }
+      for (lookup in compatibleLookups) {
         val expectedText = computeExpectedText(session, lookup)
         val currentExpected = computeExpected(lookup, expectedText)
         expected += currentExpected
@@ -70,7 +71,8 @@ abstract class SimilarityMetric(override val showByDefault: Boolean) : Confidenc
     var matched = 0.0
     var expected = 0.0
     for (session in sessions) {
-      for (lookup in session.lookups) {
+      val compatibleLookups = session.lookups.filter { it.checkElementTypeCompatibility(compatibleElementTypes) }
+      for (lookup in compatibleLookups) {
         val expectedText = computeExpectedText(session, lookup)
         val currentExpected = computeExpected(lookup, expectedText)
         expected += currentExpected
@@ -93,8 +95,8 @@ abstract class SimilarityMetric(override val showByDefault: Boolean) : Confidenc
   protected open fun postCompute(lookup: Lookup, similarity: Double, additionalInfo: MutableMap<String, MutableList<Any>>) {}
 }
 
-class MatchedRatio(showByDefault: Boolean = false) : SimilarityMetric(showByDefault) {
-  override val name = "Matched Ratio"
+class MatchedRatio(showByDefault: Boolean = false, compatibleElementTypes: List<String> = emptyList()) : SimilarityMetric(showByDefault, compatibleElementTypes) {
+  override val name: String = "Matched Ratio"
   override val description: String = "Length of selected proposal normalized by expected text (avg by invocations)"
 
   override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? {
@@ -172,7 +174,7 @@ class BleuScore(showByDefault: Boolean = true) : SimilarityMetric(showByDefault)
   override fun computeExpected(lookup: Lookup, expectedText: String): Double = 1.0
 }
 
-class ProposalSemanticSimilarityScore(showByDefault: Boolean = true, val cloudSemanticSimilarityCalculator: CloudSemanticSimilarityCalculator) : SimilarityMetric(showByDefault) {
+class ProposalSemanticSimilarityScore(showByDefault: Boolean = true, val cloudSemanticSimilarityCalculator: CloudSemanticSimilarityCalculator, compatibleElementTypes: List<String> = emptyList()) : SimilarityMetric(showByDefault, compatibleElementTypes) {
   override val name: String
     get() = NAME
   private val project: Project
