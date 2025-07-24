@@ -1404,6 +1404,10 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(
     if (epName.startsWith("org.jetbrains.kotlin") && descriptor.pluginId.idString == "org.jetbrains.kotlin") {
       continue
     }
+    // Workaround until SID-207 fixed
+    if (epName.startsWith("Pythonid.template") && descriptor.pluginId.idString in listOf("com.intellij.python.django", "org.jetbrains.dbt")) {
+      continue
+    }
 
     return "Plugin ${descriptor.pluginId} is not unload-safe because of unresolved extension $epName"
   }
