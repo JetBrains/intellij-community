@@ -797,6 +797,7 @@
           <action id="TW.CloseOtherTabs" class="com.intellij.ide.actions.ToolWindowCloseOtherTabsAction"
                   use-shortcut-of="CloseAllEditorsButActive"/>
           <action id="TW.CloseAllTabs" class="com.intellij.ide.actions.ToolWindowCloseAllTabsAction" use-shortcut-of="CloseAllEditors"/>
+          <separator/>
           <action id="TW.SplitRight" class="com.intellij.ide.actions.ToolWindowSplitRightAction" use-shortcut-of="SplitVertically"
                   icon="AllIcons.Actions.SplitVertically">
             <synonym key="action.SplitVertically.synonym"/>
