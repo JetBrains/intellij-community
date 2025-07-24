@@ -269,6 +269,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   public final void unregisterCustomSettings(@NotNull Collection<? extends CodeStyleSettings> allSettings,
                                              @NotNull CustomCodeStyleSettingsFactory provider) {
     allSettings.forEach(settings -> settings.removeCustomSettings(provider));
+    CodeStyleSettings.getDefaults().removeCustomSettings(provider);
     notifyCodeStyleSettingsChanged();
   }
 
