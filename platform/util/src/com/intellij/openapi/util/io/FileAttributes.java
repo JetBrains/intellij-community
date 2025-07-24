@@ -201,13 +201,20 @@ public final class FileAttributes {
   }
 
   public static @NotNull FileAttributes fromNio(@NotNull Path path, @NotNull BasicFileAttributes attrs) {
-    boolean isSymbolicLink =
-      attrs.isSymbolicLink() ||
-      SystemInfo.isWindows && attrs.isOther() && attrs.isDirectory() && path.getParent() != null;  // marking reparse points as symlinks (except roots)
+    boolean isDirectory = attrs.isDirectory();
+    boolean isOther = attrs.isOther();
+    Path parent = path.getParent();
+
+    // reparse points are directories (not special files):
+    boolean isSpecial = isOther && !(SystemInfo.isWindows && isDirectory);
+    boolean isSymbolicLink = attrs.isSymbolicLink()
+                             // marking reparse points as symlinks (except roots):
+                             || (SystemInfo.isWindows && isOther && isDirectory && parent != null);
 
     if (isSymbolicLink) {
       try {
         attrs = Files.readAttributes(path, BasicFileAttributes.class);
+        isDirectory = attrs.isDirectory();
       }
       catch (IOException e) {
         return BROKEN_SYMLINK;
@@ -218,20 +225,21 @@ public final class FileAttributes {
     boolean isWritable = false;
     // TODO KN: We should look at the OS of a Path, not at the OS of the IDE.
     if (SystemInfo.isWindows) {
-      isHidden = path.getParent() != null && ((DosFileAttributes)attrs).isHidden();
-      isWritable = attrs.isDirectory() || !((DosFileAttributes)attrs).isReadOnly();
+      isHidden = parent != null && ((DosFileAttributes)attrs).isHidden();
+      isWritable = isDirectory || !((DosFileAttributes)attrs).isReadOnly();
     }
     else {
-      try { isWritable = attrs.isDirectory() || Files.isWritable(path); }
-      catch (SecurityException ignored) { }
+      try {
+        isWritable = isDirectory || Files.isWritable(path);
+      } catch (SecurityException ignored) { }
     }
 
     long lastModified = attrs.lastModifiedTime().toMillis();
 
-    boolean isSpecial = attrs.isOther() && !(SystemInfo.isWindows && attrs.isDirectory());  // reparse points are directories (not special files)
-    CaseSensitivity caseSensitivity = attrs.isDirectory() && attrs instanceof CaseSensitivityAttribute
-                                      ? ((CaseSensitivityAttribute)attrs).getCaseSensitivity()
-                                      : CaseSensitivity.UNKNOWN;
-    return new FileAttributes(attrs.isDirectory(), isSpecial, isSymbolicLink, isHidden, attrs.size(), lastModified, isWritable, caseSensitivity);
+    CaseSensitivity caseSensitivity = (isDirectory && attrs instanceof CaseSensitivityAttribute) ?
+                                      ((CaseSensitivityAttribute)attrs).getCaseSensitivity() :
+                                      CaseSensitivity.UNKNOWN;
+
+    return new FileAttributes(isDirectory, isSpecial, isSymbolicLink, isHidden, attrs.size(), lastModified, isWritable, caseSensitivity);
   }
 }

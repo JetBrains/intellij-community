@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -228,8 +229,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @ApiStatus.Internal
-  public void setCaseSensitivityFlag(@NotNull FileAttributes.CaseSensitivity sensitivity) {
-    if (sensitivity == FileAttributes.CaseSensitivity.UNKNOWN) {
+  public void setCaseSensitivityFlag(@NotNull CaseSensitivity sensitivity) {
+    if (sensitivity == CaseSensitivity.UNKNOWN) {
       throw new IllegalArgumentException("invalid argument for " + this + ": " + sensitivity);
     }
     VfsData vfsData = getVfsData();
@@ -300,14 +301,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     VirtualFileSystemEntry child = vfsData.getFileById(id, this, true);
     assert child != null;
-    FileAttributes.CaseSensitivity sensitivity =
-      isDirectory ? PersistentFS.areChildrenCaseSensitive(attributes) : FileAttributes.CaseSensitivity.UNKNOWN;
+    CaseSensitivity sensitivity =
+      isDirectory ? PersistentFS.areChildrenCaseSensitive(attributes) : CaseSensitivity.UNKNOWN;
     int newFlags = (PersistentFS.isSymLink(attributes) ? VfsDataFlags.IS_SYMLINK_FLAG : 0) |
                    (PersistentFS.isSpecialFile(attributes) ? VfsDataFlags.IS_SPECIAL_FLAG : 0) |
                    (PersistentFS.isWritable(attributes) ? VfsDataFlags.IS_WRITABLE_FLAG : 0) |
                    (PersistentFS.isHidden(attributes) ? VfsDataFlags.IS_HIDDEN_FLAG : 0) |
-                   (sensitivity != FileAttributes.CaseSensitivity.UNKNOWN ? VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED : 0) |
-                   (sensitivity == FileAttributes.CaseSensitivity.SENSITIVE ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0) |
+                   (sensitivity != CaseSensitivity.UNKNOWN ? VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED : 0) |
+                   (sensitivity == CaseSensitivity.SENSITIVE ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0) |
                    (PersistentFS.isOfflineByDefault(attributes) ? VfsDataFlags.IS_OFFLINE : 0);
     int relevantFlagsMask = VfsDataFlags.IS_SYMLINK_FLAG |
                             VfsDataFlags.IS_SPECIAL_FLAG |
@@ -353,18 +354,17 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (caseSensitivityEvent != null) {
       //TODO RC: inside generateCaseSensitivityChangedEventForUnknownCase() we update case-sensitivity if it is == FS.default,
       //         and here we update case-sensitivity if it is !=FS.default -- why such a separation?
-      pFS.executeChangeCaseSensitivity(this, (FileAttributes.CaseSensitivity)caseSensitivityEvent.getNewValue());
+      pFS.executeChangeCaseSensitivity(this, (CaseSensitivity)caseSensitivityEvent.getNewValue());
       // fire event asynchronously to avoid deadlocks with possibly currently held VFP/Refresh queue locks
       RefreshQueue.getInstance().processEvents(/*async: */ true, List.of(caseSensitivityEvent));
       // when the case-sensitivity changes, the "children must be sorted by name" invariant must be restored
       resortChildren();
     }
-    else if (getChildrenCaseSensitivity() == FileAttributes.CaseSensitivity.UNKNOWN) {
-      // cache case sensitivity anyway even when we failed to read it from the disk, to avoid freezes trying to re-read it constantly
-      setCaseSensitivityFlag(
-        getFileSystem().isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE);
+    else if (getChildrenCaseSensitivity() == CaseSensitivity.UNKNOWN) {
       // Fallback: cache 'default' case sensitivity when we failed to read it from the disk, to avoid freezes on
       // constant attempts to re-read -- but do not save the new value in persistence:
+      CaseSensitivity defaultCaseSensitivity = CaseSensitivity.fromBoolean(getFileSystem().isCaseSensitive());
+      setCaseSensitivityFlag(defaultCaseSensitivity);
     }
   }
 
@@ -927,10 +927,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
    * @return the value of CHILDREN_CASE_SENSITIVE bit, if CHILDREN_CASE_SENSITIVITY_CACHED bit is set, or UNKNOWN otherwise
    */
   @ApiStatus.Internal
-  public @NotNull FileAttributes.CaseSensitivity getChildrenCaseSensitivity() {
+  public @NotNull CaseSensitivity getChildrenCaseSensitivity() {
     return isChildrenCaseSensitivityKnown() ?
-           isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE
-                                            : FileAttributes.CaseSensitivity.UNKNOWN;
+           CaseSensitivity.fromBoolean(isCaseSensitive()) : CaseSensitivity.UNKNOWN;
   }
 
   static <T, E extends Throwable> T runUnderAllLocksAcquired(@NotNull ThrowableComputable<T, E> lambda,
