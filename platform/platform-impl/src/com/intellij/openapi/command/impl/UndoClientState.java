@@ -115,7 +115,7 @@ final class UndoClientState implements Disposable {
 
   void undoOrRedo(
     @Nullable FileEditor editor,
-    @Nullable @Command String commandName,
+    @NotNull @Command String commandName,
     @NotNull Runnable beforeUndoRedoStarted,
     boolean undo
   ) {

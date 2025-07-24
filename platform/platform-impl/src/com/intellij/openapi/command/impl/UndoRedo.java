@@ -2,6 +2,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -81,7 +82,11 @@ abstract class UndoRedo {
 
   boolean execute(boolean drop, boolean disableConfirmation) {
     if (!undoableGroup.isUndoable()) {
-      undoProblemReport.reportNonUndoable(undoableGroup.getAffectedDocuments());
+      String operationName = Objects.requireNonNull(
+        CommandProcessor.getInstance().getCurrentCommandName(),
+        "performing undo/redo operation outside command context"
+      );
+      undoProblemReport.reportNonUndoable(operationName, undoableGroup.getAffectedDocuments());
       return false;
     }
 
