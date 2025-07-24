@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.CatchingConsumer;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -72,6 +73,7 @@ public abstract class PackageManagementService {
    *
    * @return the list of all packages in all repositories
    */
+  @RequiresBackgroundThread
   public abstract List<RepoPackage> getAllPackages() throws IOException;
 
   /**
@@ -80,6 +82,7 @@ public abstract class PackageManagementService {
    *
    * @return the list of all packages in all repositories
    */
+  @RequiresBackgroundThread
   public abstract List<RepoPackage> reloadAllPackages() throws IOException;
 
   /**
