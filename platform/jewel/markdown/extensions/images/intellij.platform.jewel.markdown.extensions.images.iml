@@ -209,6 +209,7 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" exported="" name="io.coil.kt.coil3.test" level="project" />
     <orderEntry type="library" name="ktor-client-java" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop.junit" scope="TEST" />
   </component>

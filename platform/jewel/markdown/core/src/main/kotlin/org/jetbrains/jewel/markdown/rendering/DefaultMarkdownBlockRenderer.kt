@@ -539,7 +539,7 @@ public open class DefaultMarkdownBlockRenderer(
             .firstNotNullOfOrNull { it.imageRendererExtension }
             ?.let { imagesRenderer ->
                 getImages(blockInlineContent).associate { image ->
-                    image.source to imagesRenderer.renderImagesContent(image)
+                    image.source to imagesRenderer.renderImageContent(image)
                 }
             }
             .orEmpty()

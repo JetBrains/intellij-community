@@ -14,6 +14,8 @@ dependencies {
     implementation(projects.markdown.core)
     runtimeOnly(libs.ktor.client.java)
     testImplementation(compose.desktop.uiTestJUnit4)
+    testImplementation(libs.coil.test)
+    testImplementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
 }
 
 publishing.publications.named<MavenPublication>("main") {

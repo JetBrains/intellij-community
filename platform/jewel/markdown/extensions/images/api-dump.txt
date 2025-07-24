@@ -7,3 +7,4 @@ f:org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension
 f:org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension$Companion
 - f:withDefaultLoader(androidx.compose.runtime.Composer,I):org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension
 - f:withDefaultLoader(coil3.PlatformContext):org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension
+f:org.jetbrains.jewel.markdown.extensions.images.ImageSourceResolverKt
