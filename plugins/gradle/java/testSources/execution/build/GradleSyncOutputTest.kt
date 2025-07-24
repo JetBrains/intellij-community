@@ -9,12 +9,14 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase.Companion.assertNodeWithDeprecatedGradleWarning
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleTestApplication
 import org.jetbrains.plugins.gradle.testFramework.fixtures.buildViewFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleJvmFixture
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.createGradleWrapper
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.junit.jupiter.api.BeforeEach
@@ -48,41 +50,48 @@ class GradleSyncOutputTest {
     gradleJvmFixture(gradleVersion, JavaVersionRestriction.NO, asDisposable())
       .installProjectSettingsConfigurator(asDisposable())
 
+    projectRoot.createGradleWrapper(gradleVersion)
     projectRoot.createSettingsFile(gradleVersion) {
       setProjectName(project.name)
     }
     gradleFixture.reloadProject(project, projectRoot)
     buildViewFixture.assertSyncViewTree {
-      assertNode("finished")
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning(gradleVersion)
+      }
     }
 
     projectRoot.createBuildFile(gradleVersion) {
       withJavaPlugin()
       withPostfix {
-        call("tasks.register<Jar>", string("my-jar-task")) {
+        registerTask("my-jar-task", "Jar") {
           call("project.configurations.create", "my-jar-configuration")
         }
       }
     }
     gradleFixture.reloadProject(project, projectRoot)
     buildViewFixture.assertSyncViewTree {
-      assertNode("finished")
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning(gradleVersion)
+      }
     }
 
     projectRoot.createBuildFile(gradleVersion) {
       withJavaPlugin()
       withPostfix {
-        call("tasks.register", string("my-task")) {
+        registerTask("my-task") {
           call("project.configurations.create", "my-configuration")
         }
-        call("tasks.register<Jar>", string("my-jar-task")) {
+        registerTask("my-jar-task", "Jar") {
           call("project.configurations.create", "my-jar-configuration")
         }
       }
     }
     gradleFixture.reloadProject(project, projectRoot)
     buildViewFixture.assertSyncViewTree {
-      assertNode("finished")
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning(gradleVersion)
+      }
     }
   }
 }
