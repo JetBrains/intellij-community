@@ -1,6 +1,7 @@
 <html>
 <body>
-<p>Reports incorrect or ambiguous use of structural pattern matching in Python class patterns and __match_args__ definitions.</p>
+<p>Reports incorrect or ambiguous use of structural pattern matching in Python class patterns and <code>__match_args__</code> definitions.
+</p>
 
 <p>This inspection helps you catch issues such as:</p>
 <ul>
@@ -8,7 +9,6 @@
   <li>Providing more positional patterns than the class exposes via <code>__match_args__</code>.</li>
   <li>Specifying the same attribute both positionally and by keyword in a single class pattern.</li>
   <li>Defining <code>__match_args__</code> with invalid type (must be <code>tuple[str, ...]</code>).</li>
-  <li>Listing names in <code>__match_args__</code> that do not correspond to existing instance attributes.</li>
 </ul>
 
 <p>For certain simple <code>as</code>-patterns with built-in classes, it also suggests a quick fix to simplify the pattern.</p>
@@ -35,16 +35,11 @@ match obj:
 
 # Invalid __match_args__ declaration
 class D:
-    __match_args__ = ["a", 42]  # must be list[str] or tuple[str, ...]
-
-# Unknown attribute name in __match_args__
-class E:
-    def __init__(self):
-        self.x = 0
-    __match_args__ = ("x", "y")  # "y" is not an instance attribute
+    __match_args__ = ["a", 42]  # must be tuple[str, ...]
 </code></pre>
 <!-- tooltip end -->
 
-<p>The inspection provides quick fixes where possible, for example to add <code>__match_args__</code>, remove redundant patterns, or create missing attributes.</p>
+<p>The inspection provides quick fixes where possible, for example to add <code>__match_args__</code>, remove redundant patterns, or
+  simplify certain <code>as</code>-patterns involving built-in classes.</p>
 </body>
 </html>

@@ -9,16 +9,13 @@ import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.containers.nullize
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyTokenTypes
-import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyClassPatternImpl
 import com.jetbrains.python.psi.impl.PyPsiUtils
-import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyTypeChecker
@@ -94,42 +91,17 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
   }
 
   override fun visitPyClass(node: PyClass) {
-    val classType = node.getType(myTypeEvalContext) ?: return
     val matchArgs = node
       .findClassAttribute(PyNames.MATCH_ARGS, false, myTypeEvalContext)
       ?.findAssignedValue()
       ?.let { PyPsiUtils.flattenParens(it) } ?: return
     
-    if (matchArgs is PySequenceExpression) {
-      for (element in matchArgs.elements) {
-        val stringValue = when (element) {
-          is PyStringLiteralExpression -> element.stringValue
-          else -> continue
-        }
-
-        if (classType.resolveMember(stringValue, null, AccessDirection.READ, PyResolveContext.defaultContext(myTypeEvalContext)).nullize() == null) {
-          holder.problem(element, "String '$stringValue' does not refer to any instance attribute")
-            .fix(RemoveListMemberFix(element))
-            .fix(AddFieldQuickFix(stringValue, "None", node.name, true))
-            .register()
-        }
-      }
-    }
-    else {
-      val matchArgsType = myTypeEvalContext.getType(matchArgs)
-      val strType = PyBuiltinCache.getInstance(matchArgs).strType
-      if (matchArgsType is PyTupleType) {
-        val goodTuple = PyTupleType.createHomogeneous(matchArgs, strType)
-        if (PyTypeChecker.match(goodTuple, matchArgsType, myTypeEvalContext)) return
-      }
-      else {
-        val listType = PyBuiltinCache.getInstance(matchArgs).listType?.pyClass ?: return
-        val goodList = PyCollectionTypeImpl(listType, false, listOf(strType))
-        if (PyTypeChecker.match(goodList, matchArgsType, myTypeEvalContext)) return
-      }
-      // __match_args__ did not match neither to tuple[str, ...] nor list[str]
-      holder.problem(matchArgs, "__match_args__ must be tuple[str, ...] or list[str]").register()
-    }
+    val matchArgsType = myTypeEvalContext.getType(matchArgs)
+    val strType = PyBuiltinCache.getInstance(matchArgs).strType
+    val goodTuple = PyTupleType.createHomogeneous(matchArgs, strType)
+    if (PyTypeChecker.match(goodTuple, matchArgsType, myTypeEvalContext)) return
+    // __match_args__ must be a tuple[str, ...]
+    holder.problem(matchArgs, "__match_args__ must be a tuple[str, ...]").register()
   }
 }
 
