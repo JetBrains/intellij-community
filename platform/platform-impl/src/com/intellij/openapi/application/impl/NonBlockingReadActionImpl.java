@@ -525,53 +525,57 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
     T executeSynchronously() {
       try {
-        while (true) {
-          // here we override the context job in case when this code is running under non-cancellable section
-          CoroutineContext context;
-          if (myChildContext.getJob() != null) {
-            context = myChildContext.getContext();
-          }
-          else if (Cancellation.isInNonCancelableSection()) {
-            context = ThreadContext.currentThreadContext().minusKey(Job.Key);
-          }
-          else {
-            context = ThreadContext.currentThreadContext();
-          }
-          ThreadContext.installThreadContext(context, true, () -> {
-            attemptComputation();
-            return Unit.INSTANCE;
-          });
-
-          if (isDone()) {
-            if (isCancelled()) {
-              throw new ProcessCanceledException();
+        // with the presence of background write action, it is possible that synchronous execution of NBRA will cause
+        // thread starvation of the Default dispatcher. We need to use compensation to avoid this problem
+        return NbraUtilKt.runSynchronousNonBlockingReadActionWithCompensation(() -> {
+          while (true) {
+            // here we override the context job in case when this code is running under non-cancellable section
+            CoroutineContext context;
+            if (myChildContext.getJob() != null) {
+              context = myChildContext.getContext();
             }
-            try {
-              return blockingGet(0, TimeUnit.MILLISECONDS);
+            else if (Cancellation.isInNonCancelableSection()) {
+              context = ThreadContext.currentThreadContext().minusKey(Job.Key);
             }
-            catch (TimeoutException e) {
-              throw new RuntimeException(e);
+            else {
+              context = ThreadContext.currentThreadContext();
             }
-          }
-
-          ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(myProgressIndicator);
-          ContextConstraint[] constraints = builder.myConstraints;
-          if (shouldFinishOnEdt() || constraints.length != 0) {
-            Semaphore semaphore = new Semaphore(1);
-            invokeLater((ContextAwareRunnable) () -> {
-              if (checkObsolete()) {
-                semaphore.up();
-              }
-              else {
-                BaseConstrainedExecution.scheduleWithinConstraints(semaphore::up, null, constraints);
-              }
+            ThreadContext.installThreadContext(context, true, () -> {
+              attemptComputation();
+              return Unit.INSTANCE;
             });
-            ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, myProgressIndicator);
-            if (isCancelled()) {
-              throw new ProcessCanceledException();
+
+            if (isDone()) {
+              if (isCancelled()) {
+                throw new ProcessCanceledException();
+              }
+              try {
+                return blockingGet(0, TimeUnit.MILLISECONDS);
+              }
+              catch (TimeoutException e) {
+                throw new RuntimeException(e);
+              }
+            }
+
+            ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(myProgressIndicator);
+            ContextConstraint[] constraints = builder.myConstraints;
+            if (shouldFinishOnEdt() || constraints.length != 0) {
+              Semaphore semaphore = new Semaphore(1);
+              invokeLater((ContextAwareRunnable) () -> {
+                if (checkObsolete()) {
+                  semaphore.up();
+                }
+                else {
+                  BaseConstrainedExecution.scheduleWithinConstraints(semaphore::up, null, constraints);
+                }
+              });
+              ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, myProgressIndicator);
+              if (isCancelled()) {
+                throw new ProcessCanceledException();
+              }
             }
           }
-        }
+        });
       } catch (ProcessCanceledException e) {
         cancelJob(e);
         throw e;
