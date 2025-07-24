@@ -3,6 +3,7 @@ package com.intellij.platform.scopes.backend
 
 import com.intellij.ide.scratch.ScratchesSearchScope
 import com.intellij.ide.util.scopeChooser.*
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -78,7 +79,7 @@ internal class ScopesModelApiImpl : ScopeModelApi {
           val scopesStateMap = mutableMapOf<String, ScopeDescriptor>()
           val scopesData = scopes.scopeDescriptors.mapNotNull { descriptor ->
             // TODO should be removed after support scopes with frontend activity IJPL-194098
-            if (descriptor.needsUserInputForScope() || descriptor.scope is ScratchesSearchScope) return@mapNotNull null
+            if (AppMode.isRemoteDevHost() && (descriptor.needsUserInputForScope() || descriptor.scope is ScratchesSearchScope)) return@mapNotNull null
             val scopeId = scopesState.addScope(descriptor)
             val scopeData = SearchScopeData.from(descriptor, scopeId) ?: return@mapNotNull null
             scopesStateMap[scopeData.scopeId] = descriptor
