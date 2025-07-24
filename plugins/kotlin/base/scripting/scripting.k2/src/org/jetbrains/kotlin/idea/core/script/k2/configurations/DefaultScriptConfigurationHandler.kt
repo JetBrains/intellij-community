@@ -73,8 +73,8 @@ open class DefaultScriptConfigurationHandler(
     override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {
         val workspaceModel = project.serviceAsync<WorkspaceModel>()
 
-        val entityStorage = getUpdatedStorage(configurationPerFile, workspaceModel)
         workspaceModel.update("updating .kts modules") {
+            val entityStorage = getUpdatedStorage(configurationPerFile, workspaceModel)
             it.applyChangesFrom(entityStorage)
         }
     }
