@@ -182,7 +182,7 @@ internal class ReworkedTerminalView(
       null
     }
 
-    outputEditor.putUserData(CompletionPhase.CUSTOM_CODE_COMPLETION_ACTION_ID, "Terminal.CommandCompletion")
+    outputEditor.putUserData(CompletionPhase.CUSTOM_CODE_COMPLETION_ACTION_ID, "Terminal.CommandCompletion.Gen2")
 
     val fusActivity = FrontendLatencyService.getInstance().startFrontendOutputActivity(
       outputEditor = outputEditor as EditorImpl,

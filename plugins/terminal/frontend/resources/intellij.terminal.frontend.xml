@@ -73,6 +73,9 @@
     <action id="Terminal.CommandCompletion" class="com.intellij.terminal.frontend.action.TerminalCommandCompletionAction">
       <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
     </action>
+    <action id="Terminal.CommandCompletion.Gen2" class="com.intellij.terminal.frontend.action.TerminalCommandCompletionActionGen2"
+            use-shortcut-of="CodeCompletion">
+    </action>
     <action id="Terminal.EnterCommandCompletion" class="com.intellij.terminal.frontend.action.TerminalCompletionEnterAction">
       <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
     </action>
