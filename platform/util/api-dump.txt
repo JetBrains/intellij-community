@@ -142,6 +142,8 @@ com.intellij.openapi.util.io.ByteSequence
 - a:length():I
 - a:subSequence(I,I):com.intellij.openapi.util.io.ByteSequence
 - a:toBytes():B[]
+e:com.intellij.openapi.util.io.FileAttributes$CaseSensitivity
+- s:fromBoolean(Z):com.intellij.openapi.util.io.FileAttributes$CaseSensitivity
 Fc:com.intellij.openapi.util.io.FileUtil
 - s:findFirstPathThatExist(java.lang.String[]):java.nio.file.Path
 - s:findPathsByMask(java.util.regex.Pattern,java.nio.file.Path):java.util.List

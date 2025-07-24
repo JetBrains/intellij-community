@@ -25,7 +25,11 @@ public final class FileAttributes {
     /** Files in this directory are case-insensitive */
     INSENSITIVE,
     /** Case sensitivity is not specified - either because not yet known or not applicable (to non-directories) */
-    UNKNOWN
+    UNKNOWN;
+
+    public static CaseSensitivity fromBoolean(boolean isCaseSensitive) {
+      return isCaseSensitive ? SENSITIVE : INSENSITIVE;
+    }
   }
 
   private static final byte SYM_LINK = 0b001;
