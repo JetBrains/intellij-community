@@ -16,7 +16,9 @@ import org.junit.Test;
 import java.io.File;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
@@ -135,8 +137,41 @@ public class UrlUtilTest {
     assertThat(URLUtil.getBytesFromDataUri("data:text/plain;charset=utf-8,Hello%20world!")).isEqualTo(test);
   }
 
-  private static void doUrlTest(@NotNull final String line, @Nullable final String expectedUrl) {
-    final Matcher matcher = URLUtil.URL_PATTERN.matcher(line);
+  private record UrlTestCase(@NotNull String line, @Nullable String expectedUrl) {
+  }
+
+  private static @NotNull List<UrlTestCase> getUrlTestCases() {
+    return List.of(
+      new UrlTestCase("not detecting jetbrains.com", null),
+      new UrlTestCase("mailto:admin@jetbrains.com;", "mailto:admin@jetbrains.com"),
+      new UrlTestCase("news://jetbrains.com is good", "news://jetbrains.com"),
+      new UrlTestCase("see http://www.jetbrains.com", "http://www.jetbrains.com"),
+      new UrlTestCase("https://www.jetbrains.com;", "https://www.jetbrains.com"),
+      new UrlTestCase("(ftp://jetbrains.com)", "ftp://jetbrains.com"),
+      new UrlTestCase("[ftps://jetbrains.com]", "ftps://jetbrains.com"),
+      new UrlTestCase("Is it good site:http://jetbrains.com?", "http://jetbrains.com"),
+      new UrlTestCase("And http://jetbrains.com?a=@#/%?=~_|!:,.;&b=20,", "http://jetbrains.com?a=@#/%?=~_|!:,.;&b=20"),
+      new UrlTestCase("site:www.jetbrains.com.", "www.jetbrains.com"),
+      new UrlTestCase("site (www.jetbrains.com)", "www.jetbrains.com"),
+      new UrlTestCase("site [www.jetbrains.com]", "www.jetbrains.com"),
+      new UrlTestCase("site <www.jetbrains.com>", "www.jetbrains.com"),
+      new UrlTestCase("site {www.jetbrains.com}", "www.jetbrains.com"),
+      new UrlTestCase("site 'www.jetbrains.com'", "www.jetbrains.com"),
+      new UrlTestCase("site \"www.jetbrains.com\"", "www.jetbrains.com"),
+      new UrlTestCase("site=www.jetbrains.com!", "www.jetbrains.com"),
+      new UrlTestCase("site *www.jetbrains.com*", "www.jetbrains.com"),
+      new UrlTestCase("site `www.jetbrains.com`", "www.jetbrains.com"),
+      new UrlTestCase("not a site _www.jetbrains.com", null),
+      new UrlTestCase("not a site 1www.jetbrains.com", null),
+      new UrlTestCase("not a site wwww.jetbrains.com", null),
+      new UrlTestCase("not a site xxx.www.jetbrains.com", null),
+      new UrlTestCase("site https://code.angularjs.org/1.4.3/docs/api/ng/service/$http#usage",
+                      "https://code.angularjs.org/1.4.3/docs/api/ng/service/$http#usage")
+    );
+  }
+
+  private static void doUrlTest(@NotNull final Pattern pattern, @NotNull final String line, @Nullable final String expectedUrl) {
+    final Matcher matcher = pattern.matcher(line);
     boolean found = matcher.find();
     if (expectedUrl == null) {
       if (found) {
@@ -155,31 +190,18 @@ public class UrlUtilTest {
 
   @Test
   public void testUrlParsing() {
-    doUrlTest("not detecting jetbrains.com", null);
-    doUrlTest("mailto:admin@jetbrains.com;", "mailto:admin@jetbrains.com");
-    doUrlTest("news://jetbrains.com is good", "news://jetbrains.com");
-    doUrlTest("see http://www.jetbrains.com", "http://www.jetbrains.com");
-    doUrlTest("https://www.jetbrains.com;", "https://www.jetbrains.com");
-    doUrlTest("(ftp://jetbrains.com)", "ftp://jetbrains.com");
-    doUrlTest("[ftps://jetbrains.com]", "ftps://jetbrains.com");
-    doUrlTest("Is it good site:http://jetbrains.com?", "http://jetbrains.com");
-    doUrlTest("And http://jetbrains.com?a=@#/%?=~_|!:,.;&b=20,", "http://jetbrains.com?a=@#/%?=~_|!:,.;&b=20");
-    doUrlTest("site:www.jetbrains.com.", "www.jetbrains.com");
-    doUrlTest("site (www.jetbrains.com)", "www.jetbrains.com");
-    doUrlTest("site [www.jetbrains.com]", "www.jetbrains.com");
-    doUrlTest("site <www.jetbrains.com>", "www.jetbrains.com");
-    doUrlTest("site {www.jetbrains.com}", "www.jetbrains.com");
-    doUrlTest("site 'www.jetbrains.com'", "www.jetbrains.com");
-    doUrlTest("site \"www.jetbrains.com\"", "www.jetbrains.com");
-    doUrlTest("site=www.jetbrains.com!", "www.jetbrains.com");
-    doUrlTest("site *www.jetbrains.com*", "www.jetbrains.com");
-    doUrlTest("site `www.jetbrains.com`", "www.jetbrains.com");
-    doUrlTest("not a site _www.jetbrains.com", null);
-    doUrlTest("not a site 1www.jetbrains.com", null);
-    doUrlTest("not a site wwww.jetbrains.com", null);
-    doUrlTest("not a site xxx.www.jetbrains.com", null);
-    doUrlTest("site https://code.angularjs.org/1.4.3/docs/api/ng/service/$http#usage",
-              "https://code.angularjs.org/1.4.3/docs/api/ng/service/$http#usage");
+    List<UrlTestCase> cases = getUrlTestCases();
+    for (UrlTestCase testCase : cases) {
+      doUrlTest(URLUtil.URL_PATTERN, testCase.line, testCase.expectedUrl);
+    }
+  }
+
+  @Test
+  public void testUrlParsingOptimized() {
+    List<UrlTestCase> cases = getUrlTestCases();
+    for (UrlTestCase testCase : cases) {
+      doUrlTest(URLUtil.URL_PATTERN_OPTIMIZED, testCase.line, testCase.expectedUrl);
+    }
   }
 
   @Test
