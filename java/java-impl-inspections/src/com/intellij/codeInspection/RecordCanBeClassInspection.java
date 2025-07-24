@@ -30,13 +30,15 @@ public final class RecordCanBeClassInspection extends AbstractBaseJavaLocalInspe
                 .fix(new ConvertRecordToClassFix(aClass)).register();
             }
             else {
-              holder.problem(aClass, JavaBundle.message("inspection.message.record.can.be.converted.to.class")).fix(new ConvertRecordToClassFix(aClass)).register();
+              holder.problem(aClass, JavaBundle.message("inspection.message.record.can.be.converted.to.class"))
+                .fix(new ConvertRecordToClassFix(aClass)).register();
             }
           }
           else {
             PsiIdentifier identifier = aClass.getNameIdentifier();
             if (identifier != null) {
-              holder.problem(identifier, JavaBundle.message("inspection.message.record.can.be.converted.to.class")).fix(new ConvertRecordToClassFix(aClass)).register();
+              holder.problem(identifier, JavaBundle.message("inspection.message.record.can.be.converted.to.class"))
+                .fix(new ConvertRecordToClassFix(aClass)).register();
             }
           }
         }

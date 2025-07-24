@@ -85,21 +85,24 @@ public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElemen
       if (method == null) return;
       recordClass = tryMakeRecord(method);
       toReplace = method;
-    } else {
+    }
+    else {
       recordClass = ObjectUtils.tryCast(startElement, PsiClass.class);
     }
     if (recordClass == null || !recordClass.isRecord()) return;
 
     String recordClassText = generateText(recordClass);
     JavaDummyElement dummyElement = new JavaDummyElement(
-      recordClassText, (builder, languageLevel) -> new JavaParser(languageLevel).getDeclarationParser().parse(builder, DeclarationParser.Context.CLASS),
+      recordClassText,
+      (builder, languageLevel) -> new JavaParser(languageLevel).getDeclarationParser().parse(builder, DeclarationParser.Context.CLASS),
       LanguageLevel.JDK_16);
-    Project project = context.project();
     PsiFile file = startElement.getContainingFile();
     DummyHolder holder = DummyHolderFactory.createHolder(file.getManager(), dummyElement, recordClass);
     PsiClass converted = (PsiClass)Objects.requireNonNull(SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode()));
     postProcessAnnotations(recordClass, converted);
     PsiClass result = (PsiClass)toReplace.replace(converted);
+
+    Project project = context.project();
     CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
   }
 
