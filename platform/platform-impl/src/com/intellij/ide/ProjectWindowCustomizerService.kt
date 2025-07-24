@@ -10,7 +10,7 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.UiDispatcherKind
+import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.ui
 import com.intellij.openapi.components.Service

@@ -268,7 +268,7 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
   private suspend fun executeOnIdle() {
     val fileDocumentManager = serviceAsync<FileDocumentManager>() as FileDocumentManagerImpl
     @Suppress("UsagesOfObsoleteApi")
-    withContext(Dispatchers.ui(UiDispatcherKind.LEGACY)) {
+    withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.LEGACY)) {
       fileDocumentManager.saveAllDocuments(false)
     }
   }

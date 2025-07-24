@@ -6,7 +6,6 @@ package com.intellij.ui.components
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CoroutineSupport
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UiDispatcherKind
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.util.ui.RawSwingDispatcher
@@ -75,7 +74,8 @@ internal class MacScrollBarAnimationBehavior(
   init {
     // can be called early in the lifecycle when there is no application yet
     val app = ApplicationManager.getApplication()
-    var context = app?.serviceOrNull<CoroutineSupport>()?.uiDispatcher(UiDispatcherKind.LEGACY, false) ?: RawSwingDispatcher
+    var context = app?.serviceOrNull<CoroutineSupport>()?.uiDispatcher(CoroutineSupport.UiDispatcherKind.LEGACY, false)
+                  ?: RawSwingDispatcher
     if (app != null) {
       context += ModalityState.defaultModalityState().asContextElement()
     }

@@ -7,9 +7,7 @@ import com.intellij.ide.SystemDock
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.application.UiDispatcherKind
 import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.application.ui
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger

@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.impl
 
-import com.intellij.openapi.application.UiDispatcherKind
+import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

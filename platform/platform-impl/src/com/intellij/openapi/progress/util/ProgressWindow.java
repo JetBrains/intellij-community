@@ -5,7 +5,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.InstantShutdown;
-import com.intellij.openapi.application.UiDispatcherKind;
+import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;

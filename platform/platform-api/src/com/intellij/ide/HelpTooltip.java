@@ -2,7 +2,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.UiDispatcherKind;
+import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;

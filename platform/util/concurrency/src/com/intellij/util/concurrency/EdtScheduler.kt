@@ -2,6 +2,7 @@
 package com.intellij.util.concurrency
 
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.CoroutineSupport.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import kotlinx.coroutines.*

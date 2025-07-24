@@ -235,7 +235,7 @@ class SingleAlarm internal constructor(
       )
     }
 
-    internal fun getEdtDispatcher(kind: UiDispatcherKind): CoroutineContext {
+    internal fun getEdtDispatcher(kind: CoroutineSupport.UiDispatcherKind): CoroutineContext {
       val edtDispatcher = ApplicationManager.getApplication()?.serviceOrNull<CoroutineSupport>()?.uiDispatcher(kind, false)
       if (edtDispatcher == null) {
         // cannot be as error - not clear what to do in case of `RangeTimeScrollBarTest`
@@ -471,7 +471,7 @@ private fun createContext(
   if (threadToUse == ThreadToUse.SWING_THREAD) {
     // maybe not defined in tests
     @Suppress("UsagesOfObsoleteApi")
-    context += SingleAlarm.getEdtDispatcher(UiDispatcherKind.LEGACY)
+    context += SingleAlarm.getEdtDispatcher(CoroutineSupport.UiDispatcherKind.LEGACY)
     if (modalityState != null) {
       context += modalityState.asContextElement()
     }

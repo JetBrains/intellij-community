@@ -25,7 +25,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.UiDispatcherKind
+import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.ui
 import com.intellij.openapi.application.writeIntentReadAction

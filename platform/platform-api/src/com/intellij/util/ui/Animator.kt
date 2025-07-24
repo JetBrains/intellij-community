@@ -162,7 +162,7 @@ abstract class Animator @JvmOverloads constructor(
   }
 
   @ApiStatus.Internal
-  protected open fun uiKind(): UiDispatcherKind = UiDispatcherKind.RELAX
+  protected open fun uiKind(): CoroutineSupport.UiDispatcherKind = CoroutineSupport.UiDispatcherKind.RELAX
 
   abstract fun paintNow(frame: Int, totalFrames: Int, cycle: Int)
 

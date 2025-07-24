@@ -111,7 +111,7 @@ internal class IdeProjectFrameAllocator(
 
         launch {
           val windowManager = serviceAsync<WindowManager>() as WindowManagerImpl
-          withContext(Dispatchers.ui(UiDispatcherKind.STRICT)) {
+          withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT)) {
             windowManager.assignFrame(frameHelper, project)
             frameHelper.setRawProject(project)
           }
@@ -198,7 +198,7 @@ internal class IdeProjectFrameAllocator(
     val frame = getFrame()
     val frameInfo = getFrameInfo()
 
-    withContext(Dispatchers.ui(UiDispatcherKind.STRICT)) {
+    withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT)) {
       if (frame != null) {
         if (!frame.isVisible) {
           throw CancellationException("Pre-allocated frame was already closed")
@@ -246,7 +246,7 @@ internal class IdeProjectFrameAllocator(
     }
 
     // make sure that in case of some error we close the frame for a not loaded project
-    withContext(Dispatchers.ui(UiDispatcherKind.STRICT) + NonCancellable) {
+    withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT) + NonCancellable) {
       (serviceAsync<WindowManager>() as WindowManagerImpl).releaseFrame(frameHelper)
     }
   }
@@ -482,7 +482,7 @@ private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob:
 
   // todo should we use `runOnceForProject(project, "OpenProjectViewOnStart")` or not?
   val toolWindowManager = project.serviceAsync<ToolWindowManager>()
-  withContext(Dispatchers.ui(UiDispatcherKind.STRICT)) {
+  withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT)) {
     if (toolWindowManager.activeToolWindowId == null) {
       val toolWindow = toolWindowManager.getToolWindow("Project")
       if (toolWindow != null) {

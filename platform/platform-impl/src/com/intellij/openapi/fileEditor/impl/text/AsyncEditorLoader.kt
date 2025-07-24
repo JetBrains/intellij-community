@@ -81,7 +81,7 @@ class  AsyncEditorLoader internal constructor(
     @Suppress("UsagesOfObsoleteApi")
     internal suspend fun waitForCompleted(editor: Editor) {
       val asyncLoader = editor.getUserData(ASYNC_LOADER)?.takeIf { !it.isLoaded() } ?: return
-      withContext(Dispatchers.ui(UiDispatcherKind.LEGACY) + ModalityState.any().asContextElement()) {
+      withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.LEGACY) + ModalityState.any().asContextElement()) {
         suspendCancellableCoroutine { continuation ->
           // resume on editor close
           val handle = asyncLoader.coroutineScope.coroutineContext.job.invokeOnCompletion {
@@ -240,7 +240,7 @@ private fun CoroutineScope.showLoadingIndicator(
     val processIconRef = AtomicReference<AnimatedIcon>()
 
     awaitCancellationAndInvoke {
-      withContext(Dispatchers.ui(UiDispatcherKind.STRICT)) {
+      withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT)) {
         val processIcon = processIconRef.getAndSet(null)
         if (processIcon != null) {
           processIcon.suspend()
@@ -250,7 +250,7 @@ private fun CoroutineScope.showLoadingIndicator(
       }
     }
 
-    withContext(Dispatchers.ui(UiDispatcherKind.STRICT)) {
+    withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT)) {
       val processIcon = AsyncProcessIcon.createBig(/* coroutineScope = */ this@launch)
       processIconRef.set(processIcon)
       addUi(processIcon)
