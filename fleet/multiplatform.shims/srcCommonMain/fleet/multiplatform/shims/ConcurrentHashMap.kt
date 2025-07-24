@@ -11,6 +11,8 @@ interface ConcurrentHashMap<K, V>: MutableMap<K, V> {
 
   fun computeIfAbsent(key: K, f: (K) -> V): V
 
+  fun computeIfPresent(key: K, f: (K, V) -> V): V?
+
   fun compute(key: K, f: (K, V?) -> V?): V?
 
   fun remove(key: K, value: V): Boolean
