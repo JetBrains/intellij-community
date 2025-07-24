@@ -2,6 +2,8 @@
   <actions>
     <action id="ComposeShowcaseAction" internal="true" class="com.intellij.platform.compose.showcase.ComposeShowcaseAction"
             text="Compose Components Showcase"/>
+    <action id="ComposePerformanceDemoAction" internal="true" class="com.intellij.platform.compose.showcase.ComposePerformanceDemoAction"
+            text="Compose Rendering Performance Demo"/>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="true"
