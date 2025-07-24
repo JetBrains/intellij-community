@@ -12,8 +12,11 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.XFullValueEvaluator.XFullValueEvaluationCallback
 import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.rpc.XValueGroupId
 import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
+import com.intellij.xdebugger.impl.rpc.models.findValue
+import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
@@ -32,6 +35,11 @@ internal class BackendXValueApi : XValueApi {
   override suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent> {
     val xValueModel = BackendXValueModel.findById(xValueId) ?: return emptyFlow()
     return computeContainerChildren(xValueModel.cs, xValueModel.xValue, xValueModel.session)
+  }
+
+  override suspend fun computeXValueGroupChildren(xValueGroupId: XValueGroupId): Flow<XValueComputeChildrenEvent> {
+    val xValueModel = xValueGroupId.findValue() ?: return emptyFlow()
+    return computeContainerChildren(xValueModel.cs, xValueModel.xValueGroup, xValueModel.session)
   }
 
   override suspend fun disposeXValue(xValueId: XValueId) {
@@ -243,7 +251,15 @@ private sealed interface RawComputeChildrenEvent {
           }
         }
       }.awaitAll()
-      return XValueComputeChildrenEvent.AddChildren(names, childrenXValueDtos, last)
+
+      fun List<XValueGroup>.toDto() = map {
+        it.getOrStoreGlobally(parentCoroutineScope, session).toXValueGroupDto()
+      }
+
+      val topGroups = children.topGroups.toDto()
+      val bottomGroups = children.bottomGroups.toDto()
+
+      return XValueComputeChildrenEvent.AddChildren(names, childrenXValueDtos, last, topGroups, bottomGroups)
     }
   }
 

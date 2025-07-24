@@ -3,6 +3,7 @@ package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.util.ThreeState
+import com.intellij.xdebugger.impl.rpc.XValueGroupId
 import com.intellij.xdebugger.impl.rpc.XValueId
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -18,6 +19,7 @@ interface XValueApi : RemoteApi<Unit> {
   suspend fun computeTooltipPresentation(xValueId: XValueId): Flow<XValueSerializedPresentation>
 
   suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>
+  suspend fun computeXValueGroupChildren(xValueGroupId: XValueGroupId): Flow<XValueComputeChildrenEvent>
 
   suspend fun disposeXValue(xValueId: XValueId)
 

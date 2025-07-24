@@ -12,6 +12,7 @@ import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.frame.XValueDescriptor
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
+import com.intellij.xdebugger.impl.rpc.XValueGroupId
 import com.intellij.xdebugger.impl.rpc.XValueId
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -48,9 +49,14 @@ interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
 @ApiStatus.Internal
 @Serializable
 sealed interface XValueComputeChildrenEvent {
-  // TODO[IJPL-160146]: support [XValueGroup]
   @Serializable
-  data class AddChildren(val names: List<String>, val children: List<XValueDto>, val isLast: Boolean) : XValueComputeChildrenEvent
+  data class AddChildren(
+    val names: List<String>,
+    val children: List<XValueDto>,
+    val isLast: Boolean,
+    val topGroups: List<XValueGroupDto>,
+    val bottomGroups: List<XValueGroupDto>,
+  ) : XValueComputeChildrenEvent
 
   @Serializable
   data class SetAlreadySorted(val value: Boolean) : XValueComputeChildrenEvent
@@ -100,6 +106,18 @@ data class XValueDto(
   val valueMark: RpcFlow<XValueMarkerDto?>,
   val presentation: RpcFlow<XValueSerializedPresentation>,
   val fullValueEvaluator: RpcFlow<XFullValueEvaluatorDto?>,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XValueGroupDto(
+  val id: XValueGroupId,
+  val groupName: String,
+  val icon: IconId?,
+  val isAutoExpand: Boolean,
+  val isRestoreExpansion: Boolean,
+  val separator: String,
+  val comment: String?,
 )
 
 @ApiStatus.Internal

@@ -4,18 +4,14 @@ package com.intellij.platform.debugger.impl.frontend.evaluate.quick
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.rpc.XValueComputeChildrenEvent
+import com.intellij.platform.debugger.impl.rpc.XValueGroupDto
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueContainer
-import com.intellij.platform.debugger.impl.rpc.XValueComputeChildrenEvent
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
 
 internal class FrontendXValueContainer(
   private val project: Project,
@@ -39,6 +35,19 @@ internal class FrontendXValueContainer(
             for (i in computeChildrenEvent.children.indices) {
               childrenList.add(computeChildrenEvent.names[i], childrenXValues[i])
             }
+
+            fun List<XValueGroupDto>.toFrontendXValueGroups() = map {
+              FrontendXValueGroup(project, cs, it, hasParentValue)
+            }
+
+            for (group in computeChildrenEvent.topGroups.toFrontendXValueGroups()) {
+              childrenList.addTopGroup(group)
+            }
+
+            for (group in computeChildrenEvent.bottomGroups.toFrontendXValueGroups()) {
+              childrenList.addBottomGroup(group)
+            }
+
             node.addChildren(childrenList, computeChildrenEvent.isLast)
           }
           is XValueComputeChildrenEvent.SetAlreadySorted -> {
