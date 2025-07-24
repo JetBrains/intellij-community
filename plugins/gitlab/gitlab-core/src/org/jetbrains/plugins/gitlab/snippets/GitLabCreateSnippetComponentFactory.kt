@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.gitlab.snippets
 
 import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.snippets.PathHandlingMode
 import com.intellij.collaboration.ui.util.bindIn
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -124,20 +126,20 @@ internal object GitLabCreateSnippetComponentFactory {
               }
           }.layout(RowLayout.LABEL_ALIGNED).resizableRow()
 
-          row(message("snippet.create.path-mode")) {
+          row(CollaborationToolsBundle.message("snippet.create.path-mode")) {
             comboBox(PathHandlingMode.entries,
                      ListCellRenderer { _, value, _, _, _ ->
                        val selectable = value in createSnippetVm.availablePathModes
                        object : JLabel(value?.displayName), ComboBox.SelectableItem {
                          init {
-                           toolTipText = if (selectable) value?.tooltip else message("snippet.create.path-mode.unavailable.tooltip")
+                           toolTipText = if (selectable) value?.tooltip else CollaborationToolsBundle.message("snippet.create.path-mode.unavailable.tooltip")
                            isEnabled = selectable
                          }
 
                          override fun isSelectable(): Boolean = selectable
                        }
                      }).applyToComponent {
-              toolTipText = message("snippet.create.path-mode.tooltip")
+              toolTipText = CollaborationToolsBundle.message("snippet.create.path-mode.tooltip")
               isSwingPopup = false
             }
               .align(Align.FILL)

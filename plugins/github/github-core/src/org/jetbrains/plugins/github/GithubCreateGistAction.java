@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github;
 
+import com.intellij.collaboration.snippets.PathHandlingMode;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -16,6 +17,10 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.coroutines.Continuation;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlin.jvm.functions.Function2;
+import kotlinx.coroutines.BuildersKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -32,6 +37,7 @@ import org.jetbrains.plugins.github.util.*;
 
 import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -65,8 +71,10 @@ public class GithubCreateGistAction extends DumbAwareAction {
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     boolean hasFilesWithContent = FILE_WITH_CONTENT.value(file) || (files != null && ContainerUtil.exists(files, FILE_WITH_CONTENT));
+    boolean isTerminal = editor != null && editor.isViewer();
+    boolean isDirectory = (file != null && file.isDirectory());
 
-    if (!hasFilesWithContent || editor != null && editor.getDocument().getTextLength() == 0) {
+    if (!isTerminal && !isDirectory && (!hasFilesWithContent || editor != null && editor.getDocument().getTextLength() == 0)) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
@@ -87,8 +95,30 @@ public class GithubCreateGistAction extends DumbAwareAction {
     if (editor == null && file == null && files == null) {
       return;
     }
+    List<VirtualFile> allFiles = new ArrayList<>();
 
-    createGistAction(project, editor, FILE_WITH_CONTENT.value(file) ? file : null, filterFilesWithContent(files));
+    if (files != null) {
+      for (VirtualFile f : files) {
+        collectFilesRecursively(f, allFiles);
+      }
+    }
+
+    createGistAction(project, editor, FILE_WITH_CONTENT.value(file) ? file : null,
+                     filterFilesWithContent(allFiles.toArray(VirtualFile.EMPTY_ARRAY)));
+  }
+
+  private static void collectFilesRecursively(VirtualFile file, List<VirtualFile> collection) {
+    if (file.isDirectory()) {
+      VirtualFile[] children = file.getChildren();
+      for (VirtualFile child : children) {
+        collectFilesRecursively(child, collection);
+      }
+    }
+    else {
+      if (FILE_WITH_CONTENT.value(file)) {
+        collection.add(file);
+      }
+    }
   }
 
   private static VirtualFile @Nullable [] filterFilesWithContent(@Nullable VirtualFile @Nullable [] files) {
@@ -127,7 +157,11 @@ public class GithubCreateGistAction extends DumbAwareAction {
         GithubApiRequestExecutor requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(account.getServer(), token);
 
         List<FileContent> contents = GithubGistContentsCollector.Companion.collectContents(project, editor, file, files);
-        if (contents.isEmpty()) return;
+
+        Function2<VirtualFile, Continuation<? super String>, Object> fileNameExtractor =
+          PathHandlingMode.Companion.getFileNameExtractor(project, List.of(files), dialog.getPathMode());
+
+        contents = renameContents(contents, files, fileNameExtractor);
 
         String gistUrl = createGist(project, requestExecutor, indicator, account.getServer(),
                                     contents, dialog.isSecret(), dialog.getDescription(), dialog.getFileName());
@@ -187,5 +221,31 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                     e);
       return null;
     }
+  }
+
+  private static List<FileContent> renameContents(List<FileContent> contents,
+                                                  VirtualFile[] files,
+                                                  Function2<VirtualFile, Continuation<? super String>, Object> fileNameExtractor) {
+    List<FileContent> renamedContents = new ArrayList<>();
+
+    if (files.length != 0) {
+      for (int i = 0; i < contents.size(); i++) {
+        FileContent originalContent = contents.get(i);
+        try {
+          int id = i;
+          String newFileName = BuildersKt.runBlocking(EmptyCoroutineContext.INSTANCE,
+                                                      (scope, continuation) -> fileNameExtractor.invoke(files[id], continuation));
+          renamedContents.add(new FileContent(newFileName.replace("/", "\\"), originalContent.getContent()));
+        }
+        catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          break;
+        }
+      }
+    }
+    if (renamedContents.isEmpty()) { // case of terminal
+      return contents;
+    }
+    return renamedContents;
   }
 }

@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.snippets.PathHandlingMode
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
@@ -14,13 +17,15 @@ import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.ListCellRenderer
 
 class GithubCreateGistDialog(
   private val project: Project,
   @NlsSafe fileName: String?,
   secret: Boolean,
   openInBrowser: Boolean,
-  copyLink: Boolean
+  copyLink: Boolean,
 ) : DialogWrapper(project, true) {
 
   private val fileNameField = if (fileName != null) JBTextField(fileName) else null
@@ -42,6 +47,7 @@ class GithubCreateGistDialog(
   val isOpenInBrowser: Boolean get() = browserCheckBox.isSelected
   val isCopyURL: Boolean get() = copyLinkCheckBox.isSelected
   val account: GithubAccount? get() = accountsModel.selected
+  var pathMode: PathHandlingMode? = PathHandlingMode.RelativePaths
 
   init {
     title = message("create.gist.dialog.title")
@@ -61,6 +67,25 @@ class GithubCreateGistDialog(
       scrollCell(descriptionField)
         .align(Align.FILL)
     }.layout(RowLayout.LABEL_ALIGNED).resizableRow()
+
+    row(CollaborationToolsBundle.message("snippet.create.path-mode")) {
+      comboBox(PathHandlingMode.entries,
+               ListCellRenderer { _, value, _, _, _ ->
+                 val selectable = value in PathHandlingMode.entries
+                 object : JLabel(value?.displayName), ComboBox.SelectableItem {
+                   init {
+                     toolTipText = if (selectable) value?.tooltip else CollaborationToolsBundle.message("snippet.create.path-mode.unavailable.tooltip")
+                     isEnabled = selectable
+                   }
+                   override fun isSelectable(): Boolean = selectable
+                 }
+               }).applyToComponent {
+        toolTipText = CollaborationToolsBundle.message("snippet.create.path-mode.tooltip")
+        isSwingPopup = false
+      }
+        .align(Align.FILL)
+        .bindItem(::pathMode)
+    }
 
     row("") {
       cell(secretCheckBox)

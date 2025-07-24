@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.snippets
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.collaboration.snippets
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -8,7 +9,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.gitlab.util.GitLabBundle
+
 
 /**
  * Ways to deal with paths for file names before creating a snippet.
@@ -22,19 +23,19 @@ import org.jetbrains.plugins.gitlab.util.GitLabBundle
  */
 enum class PathHandlingMode(@Nls val displayName: String, @Nls val tooltip: String? = null) {
   /** Uses file paths relative to the nearest common parent directory. */
-  RelativePaths(GitLabBundle.message("snippet.create.path-mode.relative"),
-                GitLabBundle.message("snippet.create.path-mode.relative.tooltip")),
+  RelativePaths(CollaborationToolsBundle.message("snippet.create.path-mode.relative"),
+                CollaborationToolsBundle.message("snippet.create.path-mode.relative.tooltip")),
 
   /** Does not use file paths at all, only file names are used. */
-  FlattenedPaths(GitLabBundle.message("snippet.create.path-mode.none"), GitLabBundle.message("snippet.create.path-mode.none.tooltip")),
+  FlattenedPaths(CollaborationToolsBundle.message("snippet.create.path-mode.none"), CollaborationToolsBundle.message("snippet.create.path-mode.none.tooltip")),
 
   /** Uses file paths relative to the project root. */
-  ContentRootRelativePaths(GitLabBundle.message("snippet.create.path-mode.content-root-relative"),
-                           GitLabBundle.message("snippet.create.path-mode.content-root-relative.tooltip")),
+  ContentRootRelativePaths(CollaborationToolsBundle.message("snippet.create.path-mode.content-root-relative"),
+                           CollaborationToolsBundle.message("snippet.create.path-mode.content-root-relative.tooltip")),
 
   /** Uses file paths relative to the project root. */
-  ProjectRelativePaths(GitLabBundle.message("snippet.create.path-mode.project-relative"),
-                       GitLabBundle.message("snippet.create.path-mode.project-relative.tooltip"));
+  ProjectRelativePaths(CollaborationToolsBundle.message("snippet.create.path-mode.project-relative"),
+                       CollaborationToolsBundle.message("snippet.create.path-mode.project-relative.tooltip"));
 
   companion object {
     /**
