@@ -6716,6 +6716,16 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-82869
+  public void testEscapedMultilineTypeHint() {
+    doTest("int | str", """
+      expr: '''
+        int |
+        str
+      '''
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

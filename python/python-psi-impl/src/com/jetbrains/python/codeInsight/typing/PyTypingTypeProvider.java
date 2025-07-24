@@ -1309,9 +1309,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   }
 
   private static @Nullable PyType getStringLiteralType(@NotNull PsiElement element, @NotNull Context context) {
-    if (element instanceof PyStringLiteralExpression) {
-      final String contents = ((PyStringLiteralExpression)element).getStringValue();
-      return Ref.deref(getStringBasedType(contents, element, context));
+    if (element instanceof PyStringLiteralExpression stringLiteral) {
+      final String contents = stringLiteral.getStringValue();
+      // A multiline string literal can contain a type expression unparsable without parentheses
+      return Ref.deref(getStringBasedType(contents.contains("\n") ? "(" + contents + ")" : contents, element, context));
     }
     return null;
   }
