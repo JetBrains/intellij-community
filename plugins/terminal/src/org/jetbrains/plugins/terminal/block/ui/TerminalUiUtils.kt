@@ -15,10 +15,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.undo.UndoUtil
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
@@ -105,6 +102,8 @@ object TerminalUiUtils {
     val editor = EditorFactory.getInstance().createEditor(document, project, EditorKind.CONSOLE) as EditorImpl
     editor.isScrollToCaret = false
     editor.isRendererMode = true
+    EditorModificationUtil.setShowReadOnlyHint(editor, false)
+
     editor.scrollPane.border = JBUI.Borders.empty()
     editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
     editor.gutterComponentEx.isPaintBackground = false

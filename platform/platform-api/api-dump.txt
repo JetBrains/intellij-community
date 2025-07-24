@@ -232,6 +232,8 @@ com.intellij.openapi.actionSystem.ex.TooltipLinkProvider
 - a:getTooltipLink(javax.swing.JComponent):com.intellij.openapi.actionSystem.ex.TooltipLinkProvider$TooltipLink
 com.intellij.openapi.components.SettingsSavingComponent
 - a:save():V
+f:com.intellij.openapi.editor.EditorModificationUtil
+- s:setShowReadOnlyHint(com.intellij.openapi.editor.Editor,Z):V
 com.intellij.openapi.editor.actionSystem.ActionPlan
 - a:getCaretOffset():I
 - a:getText():com.intellij.util.text.ImmutableCharSequence
