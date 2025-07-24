@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.intention;
 
 import com.intellij.application.options.CodeStyle;
@@ -1433,5 +1433,31 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
           }
           """);
     });
+  }
+
+  public void testActionRemainsAvailable() {
+    myFixture.addClass("package foo; public class List1 {}");
+    myFixture.addClass("package foo2; public class List1 {}");
+
+    myFixture.configureByText("Foo.java", """
+      package foo3;
+      
+      public class Foo {
+          void test() {
+            <caret>
+          }
+      }
+      """);
+
+    myFixture.type("List1<String> list");
+    myFixture.doHighlighting();
+
+    //the import fix should be preserved, because only PsiWhitespace is changed
+    myFixture.type("\n");
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
+    getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("List1"));
+
+    assertEquals(1, myFixture.filterAvailableIntentions("Import class").size());
   }
 }
