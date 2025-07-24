@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJavaConventionsBlockSupported
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 
@@ -32,7 +33,7 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
     return createBuildFile(relativePath) {
       withJavaPlugin()
       withPrefix {
-        if (isGradleAtLeast("9.0")) {
+        if (isJavaConventionsBlockSupported(gradleVersion)) {
           callIfNotEmpty("java") {
             assignIfNotNull("sourceCompatibility", projectSourceCompatibility)
             assignIfNotNull("targetCompatibility", projectTargetCompatibility)
