@@ -104,11 +104,9 @@ class HunspellDictionary : Dictionary {
 
   override fun getWords(): MutableSet<String> = throw UnsupportedOperationException()
 
-  private fun isAlien(inputWord: String): Boolean {
-    //todo use grazie-platform's updated (282+) dictionaries in newer versions
-    val word = if (inputWord.endsWith('-')) inputWord.substring(0, inputWord.length - 1) else inputWord
+  private fun isAlien(word: String): Boolean {
     // Mark a word as alien if it contains non-alphabetical characters
-    if (this.alphabet != null) return !this.alphabet.matchEntire(word)
+    if (this.alphabet != null) return !this.alphabet.matchAny(word)
     return word.lowercase().chars().anyMatch { it !in this.letters }
   }
 }

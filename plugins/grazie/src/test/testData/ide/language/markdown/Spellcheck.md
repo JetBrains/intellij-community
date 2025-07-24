@@ -43,3 +43,6 @@ Random words:
 - CAPM3
 - iDRAC
 
+dafür // u + Unicode Combining Diaeresis Mark
+dafür // Umlaut
+
