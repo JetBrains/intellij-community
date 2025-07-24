@@ -8,6 +8,8 @@ import com.intellij.ide.structureView.StructureViewFactoryEx
 import com.intellij.ide.structureView.impl.StructureViewComposite
 import com.intellij.ide.structureView.logical.ExternalElementsProvider
 import com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
+import com.intellij.ide.structureView.logical.impl.LogicalStructureViewTreeElement
+import com.intellij.ide.structureView.logical.model.ExtendedLogicalObject
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiTarget
@@ -26,7 +28,7 @@ internal class StructureViewExpander(val project: Project): TreeExpander {
 
   override fun collapseAll() {
     val tree = getActualTree() ?: return
-    TreeUtil.collapseAll(tree, true, 1)
+    TreeUtil.collapseAll(tree, false, 1)
     afterExpandOrCollapse()
   }
 
@@ -34,6 +36,11 @@ internal class StructureViewExpander(val project: Project): TreeExpander {
     val tree = getActualTree() ?: return
     val rootFile = (StructureViewComponent.unwrapValue(tree.model.root) as? PsiElement)?.containingFile?.virtualFile
     TreeUtil.promiseExpand(tree, Int.Companion.MAX_VALUE) { path ->
+      val structureElement = StructureViewComponent.unwrapWrapper(path.lastPathComponent)
+      if (structureElement is LogicalStructureViewTreeElement<*>) {
+        val logicalModel = structureElement.getLogicalAssembledModel().model
+        if (logicalModel is ExtendedLogicalObject) return@promiseExpand false
+      }
       val pathObject = StructureViewComponent.unwrapValue(path.lastPathComponent)
       when (pathObject) {
         is LogicalStructureElementsProvider<*, *> -> pathObject !is ExternalElementsProvider<*, *>
