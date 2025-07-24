@@ -728,6 +728,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/credential-store/intellij.platform.credentialStore.iml" filepath="$PROJECT_DIR$/platform/credential-store/intellij.platform.credentialStore.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/credential-store-impl/intellij.platform.credentialStore.impl.iml" filepath="$PROJECT_DIR$/platform/credential-store-impl/intellij.platform.credentialStore.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/credential-store-ui/intellij.platform.credentialStore.ui.iml" filepath="$PROJECT_DIR$/platform/credential-store-ui/intellij.platform.credentialStore.ui.iml" />
+      <module fileurl="file://$PROJECT_DIR$/idea/customization/min/intellij.platform.customization.min.iml" filepath="$PROJECT_DIR$/idea/customization/min/intellij.platform.customization.min.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-api/intellij.platform.debugger.iml" filepath="$PROJECT_DIR$/platform/xdebugger-api/intellij.platform.debugger.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-impl/intellij.platform.debugger.impl.iml" filepath="$PROJECT_DIR$/platform/xdebugger-impl/intellij.platform.debugger.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-impl/backend/intellij.platform.debugger.impl.backend.iml" filepath="$PROJECT_DIR$/platform/xdebugger-impl/backend/intellij.platform.debugger.impl.backend.iml" />

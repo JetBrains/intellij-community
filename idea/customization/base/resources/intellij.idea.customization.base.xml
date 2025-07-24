@@ -7,55 +7,5 @@
     <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
     <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
     <postStartupActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler$MyStartupActivity"/>
-
-    <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
-
-    <gotoRelatedProvider implementation="com.intellij.testIntegration.GotoTestRelatedProvider"/>
-
-    <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl"/>
-
-    <projectConfigurable groupId="language" instance="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable"
-                         id="Template Data Languages" key="template.data.language.configurable" bundle="messages.LangBundle"
-                         nonDefaultProject="true"/>
-
-    <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider"/>
-
-    <projectTemplatesFactory implementation="com.intellij.platform.templates.ArchivedTemplatesFactory"/>
-    <applicationService serviceImplementation="com.intellij.platform.templates.ProjectTemplateExportable"/>
-    <projectTemplateFileProcessor implementation="com.intellij.platform.templates.SystemFileProcessor"/>
-
-    <moduleRendererFactory implementation="com.intellij.ide.util.DefaultModuleRendererFactory" order="last,before platform"/>
-
-    <moduleConfigurationEditorProvider implementation="com.intellij.openapi.module.WebModuleConfigurationEditorProvider"/>
   </extensions>
-
-  <actions resource-bundle="messages.ActionsBundle">
-    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
-      <add-to-group group-id="ProjectViewToolbar" anchor="first"/>
-    </action>
-
-    <group id="OpenProjectGroup">
-      <group id="NewElementInMenuGroup" class="com.intellij.ide.actions.NewActionGroup" popup="true" searchable="false"/>
-      <add-to-group group-id="FileOpenGroup" anchor="first"/>
-    </group>
-
-    <group id="WelcomeScreen.DefaultNewProjectActionGroup" class="com.intellij.ide.actions.DefaultNewProjectActionGroup">
-      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
-    </group>
-
-    <action id="WelcomeScreen.DefaultNewProjectAction" class="com.intellij.ide.actions.DefaultNewProjectAction">
-      <add-to-group group-id="NewProjectOrModuleGroup"/>
-    </action>
-
-    <action id="WelcomeScreen.OpenProject" class="com.intellij.ide.actions.OpenFileAction$OnWelcomeScreen">
-      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="before" relative-to-action="Vcs.VcsClone"/>
-    </action>
-
-    <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"
-            icon="AllIcons.RunConfigurations.RerunFailedTests"/>
-
-    <action id="ConsoleView.FoldLinesLikeThis" class="com.intellij.execution.console.FoldLinesLikeThis">
-      <add-to-group group-id="ConsoleEditorPopupMenu" anchor="after" relative-to-action="$SearchWeb"/>
-    </action>
-  </actions>
 </idea-plugin>

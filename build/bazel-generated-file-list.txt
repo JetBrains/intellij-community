@@ -243,6 +243,7 @@ grid/json
 grid/types
 idea/customization/backend
 idea/customization/base
+idea/customization/min
 images
 images/intellij.platform.images.copyright
 java/codeserver/core

@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.platform.customization.min` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "min_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "min",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":min_resources"]
+)
+### auto-generated section `build intellij.platform.customization.min` end
