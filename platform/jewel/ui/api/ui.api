@@ -1151,6 +1151,7 @@ public final class org/jetbrains/jewel/ui/component/TabState$Companion {
 
 public final class org/jetbrains/jewel/ui/component/TabStripKt {
 	public static final fun TabStrip (Ljava/util/List;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
+	public static final fun TabStrip (Ljava/util/List;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Landroidx/compose/ui/Modifier;ZLandroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/ui/component/TabStripState : org/jetbrains/jewel/foundation/state/FocusableComponentState {

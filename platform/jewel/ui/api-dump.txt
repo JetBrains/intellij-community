@@ -137,6 +137,7 @@ org.jetbrains.jewel.ui.component.TabContentScope
 - tabContentAlpha-A_ZS63w(androidx.compose.ui.Modifier,J,androidx.compose.runtime.Composer,I):androidx.compose.ui.Modifier
 f:org.jetbrains.jewel.ui.component.TabStripKt
 - sf:TabStrip(java.util.List,org.jetbrains.jewel.ui.component.styling.TabStyle,androidx.compose.ui.Modifier,Z,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.runtime.Composer,I,I):V
+- sf:TabStrip(java.util.List,org.jetbrains.jewel.ui.component.styling.TabStyle,androidx.compose.ui.Modifier,Z,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.TextContextMenu
 - androidx.compose.foundation.text.TextContextMenu
 - sf:$stable:I
