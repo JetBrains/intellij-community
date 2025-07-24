@@ -115,6 +115,7 @@ tasks.register("hello-module") {
 
   // Checks the workaround for IDEA-316566 IDEA-317008
   @Test
+  @TargetVersions("<9.0") // --settings-file was removed in Gradle 9.0
   fun `run task from misconfigured subproject with explicit script parameter`() {
     val properSettingsFilePaths = createProjectSubFile("settings.gradle", """
       rootProject.name = "rootProject"
