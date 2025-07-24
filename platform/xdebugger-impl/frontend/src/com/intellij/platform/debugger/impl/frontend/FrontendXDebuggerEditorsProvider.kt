@@ -11,11 +11,13 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -23,11 +25,12 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
 private class BoundedDocumentState(
-  cs: CoroutineScope,
+  parentScope: CoroutineScope,
   initial: XExpressionDto,
   flow: Flow<XExpressionDto>,
 ) {
   private val xExpressionFlow = MutableStateFlow(initial)
+  private val cs = parentScope.childScope(this.toString())
 
   init {
     cs.launch {
@@ -38,6 +41,10 @@ private class BoundedDocumentState(
   }
 
   val xExpression: XExpression get() = xExpressionFlow.value.xExpression()
+
+  fun dispose() {
+    cs.cancel()
+  }
 }
 
 private class FrontendXDebuggerEditorsProvider(
@@ -49,9 +56,11 @@ private class FrontendXDebuggerEditorsProvider(
   private val documentState = ConcurrentHashMap<Document, BoundedDocumentState>()
 
   override fun createDocument(project: Project, expression: XExpression, sourcePosition: XSourcePosition?, mode: EvaluationMode): Document {
-    return EditorFactory.getInstance().createDocument(expression.expression).apply {
-      val document = this
-      bindToBackend {
+    return EditorFactory.getInstance().createDocument(expression.expression).also { document ->
+      document.bindToBackend {
+        onBindingDispose = {
+          documentState.remove(document)?.dispose()
+        }
         backendDocumentIdProvider = { frontendDocumentId ->
           val expressionDto = expression.toRpc()
           val documentDto = documentIdProvider(frontendDocumentId, expressionDto, sourcePosition?.toRpc(), mode)
