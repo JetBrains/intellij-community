@@ -47,9 +47,13 @@ internal class VcsUpdateStep : SmartUpdateStep {
   }
 
   private fun showOptionsDialog(project: Project) {
-    val map = CommonUpdateProjectAction().getConfigurableToEnvMap(project)
-    ActionInfo.UPDATE.createOptionsDialog(project, map, ScopeInfo.PROJECT.getScopeName(DataContext.EMPTY_CONTEXT, ActionInfo.UPDATE)).show()
-    showOptionsListener.invoke(ActionInfo.UPDATE.showOptions(project))
+    val showOptions = ActionInfo.UPDATE.showOptions(project)
+    showOptionsListener.invoke(showOptions)
+    if (showOptions) {
+      val map = CommonUpdateProjectAction().getConfigurableToEnvMap(project)
+      val scopeName = ScopeInfo.PROJECT.getScopeName(DataContext.EMPTY_CONTEXT, ActionInfo.UPDATE)
+      ActionInfo.UPDATE.createOptionsDialog(project, map, scopeName).show()
+    }
   }
 
   override fun detailsVisible(project: Project): ComponentPredicate {
