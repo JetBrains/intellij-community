@@ -10,14 +10,19 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.REVEAL_TYPE
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.REVEAL_TYPE_EXT
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyClassPattern
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyKeywordPattern
+import com.jetbrains.python.psi.impl.PyClassPatternImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyTypeInlayHintsProvider : InlayHintsProvider {
   companion object {
     const val REVEAL_TYPE_OPTION_ID: String = "python.type.inlays.reveal_type"
     const val FUNCTION_RETURN_TYPE_OPTION_ID: String = "python.type.inlays.function.return"
+    const val PSEUDO_KEYWORD_PATTERN_OPTION_ID: String = "python.type.inlays.pseudo.keyword.pattern"
   }
 
   override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? = Collector()
@@ -37,6 +42,10 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
 
       sink.whenOptionEnabled(FUNCTION_RETURN_TYPE_OPTION_ID) {
         getInlaysForReturnType(element, sink, resolveContext)
+      }
+      
+      sink.whenOptionEnabled(PSEUDO_KEYWORD_PATTERN_OPTION_ID) {
+        getPositionalPatternNames(element, sink, resolveContext)
       }
     }
 
@@ -77,6 +86,21 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
           else {
             text(typeHint)
           }
+        }
+      }
+    }
+    
+    private fun getPositionalPatternNames(element: PsiElement, sink: InlayTreeSink, resolveContext: PyResolveContext) {
+      val typeEvalContext = resolveContext.typeEvalContext
+      val classPattern = element as? PyClassPattern ?: return
+      val classType = typeEvalContext.getType(classPattern) as? PyClassType ?: return
+      val matchArgs = PyClassPatternImpl.getMatchArgs(classType, typeEvalContext) ?: return
+      classPattern.argumentList.patterns.mapIndexed { idx, pattern ->
+        if (pattern is PyKeywordPattern) return
+        val name = matchArgs.getOrNull(idx) ?: return@mapIndexed
+        sink.addPresentation(position = InlineInlayPosition(pattern.textRange.startOffset, false), hintFormat = hintFormat) {
+          text(name)
+          text("=")
         }
       }
     }

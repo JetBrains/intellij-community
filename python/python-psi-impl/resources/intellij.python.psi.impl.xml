@@ -271,7 +271,7 @@
     <localInspection language="Python" shortName="PyEnumInspection" suppressId="PyEnum" bundle="messages.PyPsiBundle" key="INSP.NAME.enum" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyEnumInspection"/>
     <localInspection language="Python" shortName="PyNewTypeInspection" suppressId="PyNewType" bundle="messages.PyPsiBundle" key="INSP.NAME.new.type" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyNewTypeInspection"/>
     <localInspection language="Python" shortName="PyInvalidEscapeSequenceInspection" suppressId="PyInvalidEscapeSequence" bundle="messages.PyPsiBundle" key="INSP.NAME.invalid.escape.sequence" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyInvalidEscapeSequenceInspection"/>
-    <localInspection language="Python" shortName="PyPatternInspection" suppressId="PyPattern" bundle="messages.PyPsiBundle" key="INSP.NAME.new.type" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyPatternInspection"/>
+    <localInspection language="Python" shortName="PyPatternInspection" suppressId="PyPattern" bundle="messages.PyPsiBundle" key="INSP.NAME.patterns" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyPatternInspection"/>
 
     <intentionAction>
       <language>Python</language>
