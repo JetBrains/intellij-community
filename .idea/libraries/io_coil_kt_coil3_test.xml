@@ -1,0 +1,56 @@
+<component name="libraryTable">
+  <library name="io.coil.kt.coil3.test" type="repository">
+    <properties maven-id="io.coil-kt.coil3:coil-test:3.2.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-test/3.2.0/coil-test-3.2.0.jar">
+          <sha256sum>85ff45e6d48b3de8e042478807fca504ec9900820c0d2f472d89ada6cb4b83ec</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core/3.2.0/coil-core-3.2.0.jar">
+          <sha256sum>966e2e2c0f0a845f2210a2f759c0213d8e5ac39f23c9d2cbbcb74bc039d25ea5</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.10.2/kotlinx-coroutines-core-1.10.2.jar">
+          <sha256sum>319b653009d49c70982f98df29cc84fc7025b092cb0571c8e7532e3ad4366dae</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.10.2/kotlinx-coroutines-core-jvm-1.10.2.jar">
+          <sha256sum>5ca175b38df331fd64155b35cd8cae1251fa9ee369709b36d42e0a288ccce3fd</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okio/okio/3.11.0/okio-3.11.0.jar">
+          <sha256sum>5959880229d8a422652949d7c6b4dc35a4d539db0853b1d5cfaf286b66bb72db</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0.jar">
+          <sha256sum>2d22541a192f901a45c95274567d6957ac1ed613d49e41db4e5e5d86139cf022</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko/0.9.4/skiko-0.9.4.jar">
+          <sha256sum>79b0d3d9ca561a8ab32d527dcb943cf8654f79b657b2b34cbb8390970c9d4923</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu/0.23.2/atomicfu-0.23.2.jar">
+          <sha256sum>5e92aedc028a7072aaae44374e31165f23fe22b11e79b99600b90d2e0275c194</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0.23.2/atomicfu-jvm-0.23.2.jar">
+          <sha256sum>101ff43ff563fca167af5ade98c3b69bf569010eab745013b84d8955034d3b3c</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.1.20/kotlin-stdlib-2.1.20.jar">
+          <sha256sum>1bcc74e8ce84e2c25eaafde10f1248349cce3062b6e36978cbeec610db1e930a</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar">
+          <sha256sum>ace2a10dc8e2d5fd34925ecac03e4988b2c0f851650c94b8cef49ba1bd111478</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-test/3.2.0/coil-test-3.2.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core/3.2.0/coil-core-3.2.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.10.2/kotlinx-coroutines-core-1.10.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.10.2/kotlinx-coroutines-core-jvm-1.10.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio/3.11.0/okio-3.11.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko/0.9.4/skiko-0.9.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu/0.23.2/atomicfu-0.23.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0.23.2/atomicfu-jvm-0.23.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.1.20/kotlin-stdlib-2.1.20.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

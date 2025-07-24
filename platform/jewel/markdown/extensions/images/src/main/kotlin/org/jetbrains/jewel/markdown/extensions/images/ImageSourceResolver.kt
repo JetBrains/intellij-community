@@ -4,10 +4,12 @@ package org.jetbrains.jewel.markdown.extensions.images
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
 import coil3.toUri
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.util.JewelLogger
 
 /** Defines a contract for resolving a raw image source string from Markdown into a fully-qualified, loadable path. */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public interface ImageSourceResolver {
     public fun resolve(rawDestination: String): String
@@ -18,6 +20,7 @@ public interface ImageSourceResolver {
  *
  * Resolves full URIs as-is and attempts to find relative paths in the application's classpath resources.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public class DefaultImageSourceResolver : ImageSourceResolver {
     /**
@@ -50,6 +53,7 @@ public class DefaultImageSourceResolver : ImageSourceResolver {
     }
 }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public val LocalMarkdownImageSourceResolver: ProvidableCompositionLocal<ImageSourceResolver> =
     staticCompositionLocalOf {
