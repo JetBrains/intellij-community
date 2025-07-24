@@ -1021,7 +1021,8 @@ object DynamicPlugins {
       processImplementationDetailDependenciesOnPlugin(pluginDescriptor, pluginSet) { dependentDescriptor ->
         val dependencies = dependentDescriptor.dependencies
         if (dependencies.all { it.isOptional || PluginManagerCore.getPlugin(it.pluginId) != null }) {
-          if (!loadPluginWithoutProgress(dependentDescriptor, checkImplementationDetailDependencies = false)) {
+          if (dependentDescriptor is PluginMainDescriptor &&
+              !loadPluginWithoutProgress(dependentDescriptor, checkImplementationDetailDependencies = false)) {
             implementationDetailsLoadedWithoutRestart = false
           }
         }
@@ -1260,6 +1261,9 @@ private fun processDependenciesOnPlugin(
     }
 
     for (module in plugin.contentModules) {
+      if (!pluginSet.isModuleEnabled(module.moduleName)) {
+        continue
+      }
       if (loadStateFilter != LoadStateFilter.ANY) {
         val isModuleLoaded = module.pluginClassLoader != null
         if (isModuleLoaded != (loadStateFilter == LoadStateFilter.LOADED)) {
