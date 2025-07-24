@@ -24,6 +24,7 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.scripting.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-reference-index.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.coverage.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.k1.new.tests" scope="RUNTIME" />

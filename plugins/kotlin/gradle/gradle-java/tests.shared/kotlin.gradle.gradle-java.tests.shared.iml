@@ -68,8 +68,6 @@
     <orderEntry type="module" module-name="intellij.gradle.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.run-configurations.jvm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-common" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.project-wizard.core" scope="TEST" />
@@ -77,8 +75,5 @@
     <orderEntry type="module" module-name="kotlin.base.external-build-system" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.scripting.k1" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.scripting.shared" scope="TEST" />
   </component>
 </module>

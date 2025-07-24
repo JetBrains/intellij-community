@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.core.script.shared.definition.defaultDefinition
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.DefaultScriptConfigurationHandler
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
 import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
-import org.jetbrains.kotlin.idea.core.script.shared.alwaysVirtualFile
+import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition

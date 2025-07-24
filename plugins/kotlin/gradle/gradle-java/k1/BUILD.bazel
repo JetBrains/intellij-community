@@ -17,7 +17,6 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-jps-common",
-    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:guava",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/project-model",
@@ -80,7 +79,6 @@ jvm_library(
     "//platform/testRunner:testRunner_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:guava",
     "@lib//:junit4",
@@ -140,11 +138,6 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
-    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
-    "//plugins/kotlin/base/scripting/scripting.k1",
-    "//plugins/kotlin/base/scripting/scripting.k1:scripting.k1_test_lib",
-    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1",
-    "//plugins/kotlin/base/scripting/scripting.shared",
   ],
   runtime_deps = [":k1_resources"]
 )

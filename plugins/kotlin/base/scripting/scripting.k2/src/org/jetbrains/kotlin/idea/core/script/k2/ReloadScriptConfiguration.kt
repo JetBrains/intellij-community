@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProv
 import org.jetbrains.kotlin.idea.core.script.k2.highlighting.DefaultScriptResolutionStrategy
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptModuleManager.Companion.removeScriptModules
 import org.jetbrains.kotlin.idea.core.script.shared.scriptDiagnostics
-import org.jetbrains.kotlin.idea.core.script.shared.alwaysVirtualFile
+import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.isNonScript

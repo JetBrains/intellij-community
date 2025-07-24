@@ -6,8 +6,8 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.shared.definition.BundledScriptDefinition
 import org.jetbrains.kotlin.idea.core.script.shared.definition.javaHomePath
 import org.jetbrains.kotlin.idea.core.script.shared.definition.scriptClassPath
-import org.jetbrains.kotlin.idea.core.script.shared.NewScriptFileInfo
-import org.jetbrains.kotlin.idea.core.script.shared.kotlinScriptTemplateInfo
+import org.jetbrains.kotlin.idea.core.script.v1.NewScriptFileInfo
+import org.jetbrains.kotlin.idea.core.script.v1.kotlinScriptTemplateInfo
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import kotlin.script.experimental.api.*

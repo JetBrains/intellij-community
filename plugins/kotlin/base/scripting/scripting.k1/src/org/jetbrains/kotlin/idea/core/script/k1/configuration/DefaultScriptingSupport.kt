@@ -12,9 +12,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.idea.core.script.shared.CachedConfigurationInputs
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.k1.addScriptDependenciesNotificationPanel
+import org.jetbrains.kotlin.idea.core.script.k1.areSimilar
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.cache.*
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.loader.DefaultScriptConfigurationLoader
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.loader.ScriptConfigurationLoader
@@ -24,9 +24,9 @@ import org.jetbrains.kotlin.idea.core.script.k1.configuration.utils.*
 import org.jetbrains.kotlin.idea.core.script.k1.removeScriptDependenciesNotificationPanel
 import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.ScriptClassRootsBuilder
-import org.jetbrains.kotlin.idea.core.script.shared.areSimilar
-import org.jetbrains.kotlin.idea.core.script.shared.getKtFile
+import org.jetbrains.kotlin.idea.core.script.shared.CachedConfigurationInputs
 import org.jetbrains.kotlin.idea.core.script.shared.getScriptReports
+import org.jetbrains.kotlin.idea.core.script.v1.getKtFile
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile

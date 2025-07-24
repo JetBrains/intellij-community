@@ -1,6 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.codeInsight.gradle;
+package org.jetbrains.kotlin.gradle.scripting.k1;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
@@ -15,7 +15,7 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("gradle/gradle-java/k1")
+@TestRoot("gradle/scripting/kotlin.gradle.scripting.k1")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 public abstract class K1GradleBuildFileHighlightingTestGenerated extends AbstractK1GradleBuildFileHighlightingTest {

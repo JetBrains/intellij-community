@@ -45,5 +45,6 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.gradle.scripting.k1" scope="TEST" />
   </component>
 </module>

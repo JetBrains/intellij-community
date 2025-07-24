@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.core.script.k1.configuration.loader.ScriptConfi
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.testingBackgroundExecutor
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.utils.testScriptConfigurationNotification
 import org.jetbrains.kotlin.idea.core.script.k1.hasSuggestedScriptConfiguration
-import org.jetbrains.kotlin.idea.core.script.shared.isScriptChangesNotifierDisabled
+import org.jetbrains.kotlin.idea.core.script.v1.isScriptChangesNotifierDisabled
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtFile

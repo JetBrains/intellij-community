@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.idea.core.script.k1.configuration.ScriptingSupport
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.listener.ScriptChangesNotifier
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.ScriptClassRootsBuilder
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.ScriptClassRootsCache
-import org.jetbrains.kotlin.idea.core.script.shared.alwaysVirtualFile
+import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.shared.LightScriptInfo
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware

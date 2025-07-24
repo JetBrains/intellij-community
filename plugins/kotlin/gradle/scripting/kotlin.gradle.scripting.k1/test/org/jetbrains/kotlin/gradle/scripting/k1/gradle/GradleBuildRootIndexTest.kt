@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.scripting.gradle
+package org.jetbrains.kotlin.gradle.scripting.k1.gradle
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.psi.PsiFile
@@ -31,7 +31,6 @@ class GradleBuildRootIndexTest : AbstractScriptConfigurationLoadingTest() {
         val buildGradleKts = rootDir.walkTopDown().find { it.name == GradleConstants.KOTLIN_DSL_SCRIPT_NAME }
             ?: error("Couldn't find main script")
         configureScriptFile(rootDir, buildGradleKts)
-        val build = (myFile as? KtFile) ?: error("")
 
         val newProjectSettings = GradleProjectSettings()
         newProjectSettings.gradleHome = gradleCoreJar.parentFile.parent

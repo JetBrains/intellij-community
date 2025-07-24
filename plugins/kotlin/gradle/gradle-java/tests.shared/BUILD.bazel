@@ -81,8 +81,6 @@ jvm_library(
     "//plugins/kotlin/run-configurations/jvm",
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",
-    "@lib//:kotlinc-kotlin-scripting-common",
-    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/base/code-insight:code-insight_test_lib",
     "//plugins/kotlin/base/fe10/analysis",
@@ -93,10 +91,6 @@ jvm_library(
     "//plugins/kotlin/base/external-build-system",
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/openapi:java",
-    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
-    "//plugins/kotlin/base/scripting/scripting.k1",
-    "//plugins/kotlin/base/scripting/scripting.k1:scripting.k1_test_lib",
-    "//plugins/kotlin/base/scripting/scripting.shared",
   ]
 )
 ### auto-generated section `build kotlin.gradle.gradle-java.tests.shared` end

@@ -53,6 +53,8 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/parcelize/tests/k1:k1_test_lib",
     "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.util.test-generator-fe10` end

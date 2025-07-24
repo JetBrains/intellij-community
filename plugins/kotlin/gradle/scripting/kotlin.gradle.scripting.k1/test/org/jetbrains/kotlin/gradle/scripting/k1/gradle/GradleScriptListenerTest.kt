@@ -1,14 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.scripting.gradle
+package org.jetbrains.kotlin.gradle.scripting.k1.gradle
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.ui.EDT.dispatchAllInvocationEvents
 import com.intellij.util.ui.UIUtil
+import junit.framework.TestCase
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleStandaloneScriptActionsManager
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode

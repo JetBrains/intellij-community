@@ -164,8 +164,8 @@
     <orderEntry type="module" module-name="kotlin.formatter.minimal" />
     <orderEntry type="module" module-name="kotlin.ide" />
     <orderEntry type="module" module-name="kotlin.jsr223" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" />
-    <orderEntry type="module" module-name="kotlin.gradle.scripting.k1" />
+    <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.scripting.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.serialization" />
   </component>
 </module>

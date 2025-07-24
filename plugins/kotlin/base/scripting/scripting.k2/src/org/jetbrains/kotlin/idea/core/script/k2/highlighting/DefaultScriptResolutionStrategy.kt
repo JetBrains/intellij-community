@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalScri
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationsProviderImpl
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getWorkspaceModelManager
-import org.jetbrains.kotlin.idea.core.script.shared.alwaysVirtualFile
+import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.psi.KtFile

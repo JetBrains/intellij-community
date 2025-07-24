@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
-import org.jetbrains.kotlin.idea.core.script.shared.alwaysVirtualFile
+import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.Replacement
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.containsNonReplaceableOperation
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getReplacementForOldKotlinOptionIfNeeded

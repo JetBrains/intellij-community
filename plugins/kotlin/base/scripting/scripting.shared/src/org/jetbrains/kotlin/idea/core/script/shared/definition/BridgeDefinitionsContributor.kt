@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.core.script.shared.definition
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.core.script.shared.loggingReporter
+import org.jetbrains.kotlin.idea.core.script.v1.loggingReporter
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingInfoLog
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsFromClasspathDiscoverySource

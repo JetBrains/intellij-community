@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurati
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.toVirtualFileUrl
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptRefinedConfigurationResolver
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptWorkspaceModelManager
-import org.jetbrains.kotlin.idea.core.script.shared.indexSourceRootsEagerly
+import org.jetbrains.kotlin.idea.core.script.v1.indexSourceRootsEagerly
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingWarnLog
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition

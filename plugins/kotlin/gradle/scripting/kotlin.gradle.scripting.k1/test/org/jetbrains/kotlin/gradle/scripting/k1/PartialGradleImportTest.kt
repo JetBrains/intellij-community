@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.gradle.scripting.k1
 
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRoot
@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.New
 import org.jetbrains.kotlin.gradle.scripting.shared.runPartialGradleImport
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
-import org.jetbrains.kotlin.idea.completion.test.assertInstanceOf
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 import kotlin.test.assertFails
@@ -110,7 +109,7 @@ abstract class PartialGradleImportTest : MultiplePluginVersionGradleImportingTes
     }
 
     protected fun assertSingleGradleBuildRoot(): GradleBuildRoot {
-        val gradleBuildRoots = GradleBuildRootsLocator.getInstance(myProject)?.getAllRoots() ?: error("Failed to get GradleBuildRoots")
+        val gradleBuildRoots = GradleBuildRootsLocator.getInstance(myProject).getAllRoots()
         assertEquals("Expected exactly one GradleBuildRoot. Found $gradleBuildRoots",1, gradleBuildRoots.size)
         return gradleBuildRoots.single()
     }
@@ -129,4 +128,6 @@ abstract class PartialGradleImportTest : MultiplePluginVersionGradleImportingTes
             """.trimIndent()
         )
     }
+
+    inline fun <reified T : Any> Any?.assertInstanceOf() = assertInstanceOf(this, T::class.java)
 }

@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
-import org.jetbrains.kotlin.idea.core.script.shared.getKtFile
+import org.jetbrains.kotlin.idea.core.script.v1.getKtFile
 import org.jetbrains.kotlin.idea.core.script.shared.LightScriptInfo
 import org.jetbrains.kotlin.scripting.definitions.KotlinScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition

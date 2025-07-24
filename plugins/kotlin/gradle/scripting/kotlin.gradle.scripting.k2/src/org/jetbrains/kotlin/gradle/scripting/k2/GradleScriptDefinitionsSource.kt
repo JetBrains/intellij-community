@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.gradle.scripting.shared.loadGradleDefinitions
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.configurationResolverDelegate
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.scriptWorkspaceModelManagerDelegate
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl
-import org.jetbrains.kotlin.idea.core.script.shared.NewScriptFileInfo
-import org.jetbrains.kotlin.idea.core.script.shared.kotlinScriptTemplateInfo
+import org.jetbrains.kotlin.idea.core.script.v1.NewScriptFileInfo
+import org.jetbrains.kotlin.idea.core.script.v1.kotlinScriptTemplateInfo
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import java.util.concurrent.atomic.AtomicReference

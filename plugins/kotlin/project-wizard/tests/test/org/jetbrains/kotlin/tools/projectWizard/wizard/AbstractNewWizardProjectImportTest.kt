@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.gradle.scripting.shared.getGradleProjectSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceUntilWithRangeUntilInspection
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.script.shared.getKtFile
+import org.jetbrains.kotlin.idea.core.script.v1.getKtFile
 import org.jetbrains.kotlin.idea.test.KotlinSdkCreationChecker
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.test.runAll

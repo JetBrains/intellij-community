@@ -6,9 +6,9 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsScriptConfigurationProvider
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.configurationResolverDelegate
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.scriptWorkspaceModelManagerDelegate
-import org.jetbrains.kotlin.idea.core.script.shared.NewScriptFileInfo
-import org.jetbrains.kotlin.idea.core.script.shared.kotlinScriptTemplateInfo
-import org.jetbrains.kotlin.idea.core.script.shared.loggingReporter
+import org.jetbrains.kotlin.idea.core.script.v1.NewScriptFileInfo
+import org.jetbrains.kotlin.idea.core.script.v1.kotlinScriptTemplateInfo
+import org.jetbrains.kotlin.idea.core.script.v1.loggingReporter
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsFromClasspathDiscoverySource
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource

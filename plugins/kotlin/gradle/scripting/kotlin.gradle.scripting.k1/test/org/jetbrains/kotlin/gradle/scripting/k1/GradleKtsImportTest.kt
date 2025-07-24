@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.codeInsight.gradle
+package org.jetbrains.kotlin.gradle.scripting.k1
 
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
@@ -11,15 +11,16 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.testFramework.replaceService
 import junit.framework.AssertionFailedError
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.k1.applySuggestedScriptConfiguration
+import org.jetbrains.kotlin.idea.core.script.k1.areSimilar
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.loader.DefaultScriptConfigurationLoader
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.loader.ScriptConfigurationLoadingContext
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryRootTypeId
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.listDependencies
-import org.jetbrains.kotlin.idea.core.script.shared.areSimilar
-import org.jetbrains.kotlin.idea.core.script.shared.getKtFile
+import org.jetbrains.kotlin.idea.core.script.v1.getKtFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
@@ -119,8 +120,8 @@ abstract class GradleKtsImportTest : KotlinGradleImportingTestCase() {
             val errors = events.filterIsInstance<MessageEventImpl>().filter { it.kind == MessageEvent.Kind.ERROR }
             val buildScriptErrors = errors.filter { it.message == expectedErrorMessage }
             assertTrue(
-                "$expectedErrorMessage error has not been reported among other errors: $errors",
-                buildScriptErrors.isNotEmpty()
+              "$expectedErrorMessage error has not been reported among other errors: $errors",
+              buildScriptErrors.isNotEmpty()
             )
         }
     }
@@ -149,7 +150,8 @@ abstract class GradleKtsImportTest : KotlinGradleImportingTestCase() {
     protected fun checkConfiguration(vararg files: String) {
         val scripts = files.map {
             KtsFixture(it).also { kts ->
-                assertTrue("Configuration for ${kts.file.path} is missing", scriptConfigurationManager.hasConfiguration(kts.psiFile))
+                assertTrue("Configuration for ${kts.file.path} is missing",
+                                    scriptConfigurationManager.hasConfiguration(kts.psiFile))
                 kts.imported = scriptConfigurationManager.getConfiguration(kts.psiFile)!!
             }
         }

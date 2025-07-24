@@ -26,7 +26,6 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
@@ -79,9 +78,5 @@
     <orderEntry type="module" module-name="kotlin.highlighting.shared" />
     <orderEntry type="module" module-name="kotlin.base.psi" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.shared" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.scripting.k1" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.gradle.scripting.k1" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.scripting.shared" scope="TEST" />
   </component>
 </module>

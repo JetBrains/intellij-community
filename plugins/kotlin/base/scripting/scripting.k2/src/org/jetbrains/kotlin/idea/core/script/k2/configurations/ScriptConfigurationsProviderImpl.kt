@@ -16,7 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptRefinedConfigurationResolver
 import org.jetbrains.kotlin.idea.core.script.shared.ScriptClassPathUtil
 import org.jetbrains.kotlin.idea.core.script.shared.ScriptVirtualFileCache
-import org.jetbrains.kotlin.idea.core.script.shared.alwaysVirtualFile
+import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider

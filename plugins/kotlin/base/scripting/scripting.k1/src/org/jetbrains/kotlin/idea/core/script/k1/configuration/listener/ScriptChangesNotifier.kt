@@ -16,7 +16,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.listener.ScriptChangeListener.Companion.LISTENER
-import org.jetbrains.kotlin.idea.core.script.shared.isScriptChangesNotifierDisabled
+import org.jetbrains.kotlin.idea.core.script.v1.isScriptChangesNotifierDisabled
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 internal class ScriptChangesNotifier(private val project: Project) {

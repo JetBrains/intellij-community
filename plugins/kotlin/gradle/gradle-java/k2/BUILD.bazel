@@ -15,7 +15,6 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-jps-common",
-    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "//plugins/kotlin/base/plugin",
     "//plugins/gradle/java",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
@@ -37,7 +36,6 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
     "@lib//:kotlinc-kotlin-jps-common",
-    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "@lib//:junit4",
