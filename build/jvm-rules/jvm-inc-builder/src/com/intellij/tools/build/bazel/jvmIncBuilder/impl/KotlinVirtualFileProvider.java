@@ -5,37 +5,44 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputSink;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.Objects;
 import java.util.function.Consumer;
 
 public class KotlinVirtualFileProvider {
-  private final OutputSink outputSink;
+  private final Reference<OutputSink> mySinkRef;
 
   public KotlinVirtualFileProvider(@NotNull OutputSink outputSink) {
-    this.outputSink = outputSink;
+    mySinkRef = new WeakReference<>(outputSink);
   }
 
   public void findVfsChildren(@NotNull String parentName, @NotNull Consumer<String> dirConsumer, @NotNull Consumer<String> consumer) {
-    for (String path : outputSink.list(parentName, false)) {
-      if (ZipOutputBuilder.isDirectoryName(path)) {
-        // dirConsumer expects directory name
-        int begin = parentName.isEmpty()? 0 : parentName.length() + 1;
-        int end = path.length() - 1;
-        dirConsumer.accept(path.substring(begin, end));
-      }
-      else {
-        // file consumer expects file path
-        consumer.accept(path);
+    OutputSink outputSink = mySinkRef.get();
+    if (outputSink != null) {
+      for (String path : outputSink.list(parentName, false)) {
+        if (ZipOutputBuilder.isDirectoryName(path)) {
+          // dirConsumer expects directory name
+          int begin = parentName.isEmpty()? 0 : parentName.length() + 1;
+          int end = path.length() - 1;
+          dirConsumer.accept(path.substring(begin, end));
+        }
+        else {
+          // file consumer expects file path
+          consumer.accept(path);
+        }
       }
     }
   }
 
   public int getSize(@NotNull String relativePath) {
-    return Objects.requireNonNull(outputSink.getFileContent(relativePath)).length;
+    OutputSink outputSink = mySinkRef.get();
+    return outputSink == null? 0 :Objects.requireNonNull(outputSink.getFileContent(relativePath)).length;
   }
 
   @Nullable
   public byte[] getData(@NotNull String path) {
-    return outputSink.getFileContent(path);
+    OutputSink outputSink = mySinkRef.get();
+    return outputSink == null? null : outputSink.getFileContent(path);
   }
 }

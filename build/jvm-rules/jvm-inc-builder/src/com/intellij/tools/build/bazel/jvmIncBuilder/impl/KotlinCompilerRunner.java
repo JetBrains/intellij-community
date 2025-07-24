@@ -43,6 +43,8 @@ import org.jetbrains.kotlin.progress.CompilationCanceledStatus;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -277,14 +279,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
       new KotlinIncrementalCompilationComponents(moduleName, cacheImpl, outputRoot)
     );
 
-    builder.register(CompilationCanceledStatus.class, new CompilationCanceledStatus() {
-      @Override
-      public void checkCanceled() {
-        if (myContext.isCanceled()) {
-          throw new CompilationCanceledException();
-        }
-      }
-    });
+    builder.register(CompilationCanceledStatus.class, new CancelStatusImpl(myContext));
 
     return builder.build();
   }
@@ -403,6 +398,22 @@ public class KotlinCompilerRunner implements CompilerRunner {
       throw new IllegalStateException(
         "Following trackers are not initialized: " + String.join(", ", nullTrackers) +
         ". Make sure buildServices() is called before accessing trackers");
+    }
+  }
+
+  private static class CancelStatusImpl implements CompilationCanceledStatus {
+    private final Reference<BuildContext> myContextRef;
+
+    CancelStatusImpl(BuildContext context) {
+      myContextRef = new WeakReference<>(context);
+    }
+
+    @Override
+    public void checkCanceled() {
+      BuildContext ctx = myContextRef.get();
+      if (ctx != null && ctx.isCanceled()) {
+        throw new CompilationCanceledException();
+      }
     }
   }
 }

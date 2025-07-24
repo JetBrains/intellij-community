@@ -211,11 +211,11 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
 
   private static OutputStream openOutputStream(Path outputPath) throws IOException {
     try {
-      return Files.newOutputStream(outputPath);
+      return new BufferedOutputStream(Files.newOutputStream(outputPath));
     }
     catch (NoSuchFileException e) {
       Files.createDirectories(outputPath.getParent());
-      return Files.newOutputStream(outputPath);
+      return new BufferedOutputStream(Files.newOutputStream(outputPath));
     }
   }
 
