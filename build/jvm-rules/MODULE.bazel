@@ -96,10 +96,10 @@ http_file(
 )
 
 http_file(
-  name = "noria-compiler-plugin-2_2_0-0_1_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/noria-compiler-plugin/2.2.0-0.1/noria-compiler-plugin-2.2.0-0.1.jar",
-  sha256 = "0bcd2386ce0abcae9e98c5f550e80da8111c4fe4e7f0869fc71e876cf123c701",
-  downloaded_file_path = "noria-compiler-plugin-2.2.0-0.1.jar"
+  name = "noria-compiler-plugin-2_2_0-0_2_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/noria-compiler-plugin/2.2.0-0.2/noria-compiler-plugin-2.2.0-0.2.jar",
+  sha256 = "9368e1ed77e1bd061fecf511ce281532d9db8194a50a39a39c64f2e67630982a",
+  downloaded_file_path = "noria-compiler-plugin-2.2.0-0.2.jar"
 )
 
 http_file(
