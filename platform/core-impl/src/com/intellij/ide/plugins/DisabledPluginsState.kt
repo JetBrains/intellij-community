@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.PluginUtils.joinedPluginIds
@@ -141,9 +141,10 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
       if (changed) {
         disabledPlugins = Collections.unmodifiableSet(disabled)
       }
-      logger.info(pluginIds.joinedPluginIds(if (enabled) "enable" else "disable"))
-
-      return changed && saveDisabledPluginsAndInvalidate(disabled)
+      val actuallyChanged = changed && saveDisabledPluginsAndInvalidate(disabled)
+      val operation = if (enabled) "enable" else "disable"
+      logger.info("${pluginIds.joinedPluginIds(operation)}, ${if (actuallyChanged) "applied" else " was already ${operation}d, nothing changed"}")
+      return actuallyChanged
     }
 
     fun saveDisabledPluginsAndInvalidate(pluginIds: Set<PluginId>): Boolean {
