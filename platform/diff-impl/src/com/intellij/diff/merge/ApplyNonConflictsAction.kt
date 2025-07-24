@@ -5,38 +5,35 @@ import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.ex.ActionUtil.copyFrom
 import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-internal class ApplyNonConflictsAction(viewer: MergeThreesideViewer, side: ThreeSide, @Nls text: @Nls String) : DumbAwareAction() {
-    private val mySide: ThreeSide
-    private val myViewer: MergeThreesideViewer
+@ApiStatus.Internal
+internal class ApplyNonConflictsAction(
+  private val viewer: MergeThreesideViewer,
+  private val side: ThreeSide,
+  text: @Nls String,
+) : DumbAwareAction() {
+  init {
+    val id = side.select("Diff.ApplyNonConflicts.Left", "Diff.ApplyNonConflicts", "Diff.ApplyNonConflicts.Right")
+    copyFrom(this, id)
 
-    init {
-        val id = side.select<String?>("Diff.ApplyNonConflicts.Left", "Diff.ApplyNonConflicts", "Diff.ApplyNonConflicts.Right")
-        ActionUtil.copyFrom(this, id!!)
-        mySide = side
-        getTemplatePresentation().setText(text)
-        this.myViewer = viewer
+    templatePresentation.apply {
+      putClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR, true)
+      putClientProperty(ActionUtil.USE_SMALL_FONT_IN_TOOLBAR, true)
+      this.text = text
     }
+  }
 
-    override fun getActionUpdateThread(): ActionUpdateThread {
-        return ActionUpdateThread.EDT
-    }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-    override fun update(e: AnActionEvent) {
-        e.getPresentation().setEnabled(myViewer.hasNonConflictedChanges(mySide) && !myViewer.isExternalOperationInProgress())
-    }
+  override fun update(e: AnActionEvent) {
+    e.presentation.setEnabled(viewer.hasNonConflictedChanges(side) && !viewer.isExternalOperationInProgress)
+  }
 
-    override fun actionPerformed(e: AnActionEvent) {
-        myViewer.applyNonConflictedChanges(mySide)
-    }
-
-    override fun displayTextInToolbar(): Boolean {
-        return true
-    }
-
-    override fun useSmallerFontForTextInToolbar(): Boolean {
-        return true
-    }
+  override fun actionPerformed(e: AnActionEvent) {
+    viewer.applyNonConflictedChanges(side)
+  }
 }

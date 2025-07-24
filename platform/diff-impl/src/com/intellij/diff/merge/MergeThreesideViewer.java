@@ -248,15 +248,15 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   protected @NotNull List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<>();
 
-    group.add(new MergeThreesideViewerActions.ApplySelectedChangesAction(this, Side.LEFT));
-    group.add(new MergeThreesideViewerActions.ApplySelectedChangesAction(this, Side.RIGHT));
-    group.add(new MergeThreesideViewerActions.ResolveSelectedChangesAction(this, Side.LEFT));
-    group.add(new MergeThreesideViewerActions.ResolveSelectedChangesAction(this, Side.RIGHT));
-    group.add(new MergeThreesideViewerActions.IgnoreSelectedChangesSideAction(this, Side.LEFT));
-    group.add(new MergeThreesideViewerActions.IgnoreSelectedChangesSideAction(this, Side.RIGHT));
-    group.add(new MergeThreesideViewerActions.ResolveSelectedConflictsAction(this));
-    group.add(new MergeThreesideViewerActions.IgnoreSelectedChangesAction(this));
-    group.add(new MergeThreesideViewerActions.ResetResolvedChangeAction(this));
+    group.add(new ApplySelectedChangesAction(this, Side.LEFT));
+    group.add(new ApplySelectedChangesAction(this, Side.RIGHT));
+    group.add(new ResolveSelectedChangesAction(this, Side.LEFT));
+    group.add(new ResolveSelectedChangesAction(this, Side.RIGHT));
+    group.add(new IgnoreSelectedChangesSideAction(this, Side.LEFT));
+    group.add(new IgnoreSelectedChangesSideAction(this, Side.RIGHT));
+    group.add(new ResolveSelectedConflictsAction(this));
+    group.add(new IgnoreSelectedChangesAction(this));
+    group.add(new ResetResolvedChangeAction(this));
 
     group.add(Separator.getInstance());
     group.add(ActionManager.getInstance().getAction("Diff.Conflicts.Additional.Actions"));

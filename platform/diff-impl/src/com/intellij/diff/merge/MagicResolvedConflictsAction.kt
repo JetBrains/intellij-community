@@ -5,24 +5,21 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil.copyFrom
 import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.annotations.ApiStatus
 
-class MagicResolvedConflictsAction(viewer: MergeThreesideViewer) : DumbAwareAction() {
-    private val myViewer: MergeThreesideViewer
+@ApiStatus.Internal
+internal class MagicResolvedConflictsAction(private val viewer: MergeThreesideViewer) : DumbAwareAction() {
+  init {
+    copyFrom(this, "Diff.MagicResolveConflicts")
+  }
 
-    init {
-        copyFrom(this, "Diff.MagicResolveConflicts")
-        this.myViewer = viewer
-    }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-    override fun getActionUpdateThread(): ActionUpdateThread {
-        return ActionUpdateThread.EDT
-    }
+  override fun update(e: AnActionEvent) {
+    e.presentation.setEnabled(viewer.hasResolvableConflictedChanges() && !viewer.isExternalOperationInProgress)
+  }
 
-    override fun update(e: AnActionEvent) {
-        e.getPresentation().setEnabled(myViewer.hasResolvableConflictedChanges() && !myViewer.isExternalOperationInProgress())
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-        myViewer.applyResolvableConflictedChanges()
-    }
+  override fun actionPerformed(e: AnActionEvent) {
+    viewer.applyResolvableConflictedChanges()
+  }
 }
