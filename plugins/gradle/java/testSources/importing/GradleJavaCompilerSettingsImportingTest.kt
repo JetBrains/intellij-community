@@ -126,7 +126,7 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
       mainSourceCompatibilityEnablePreview = false,
       testSourceCompatibilityEnablePreview = false
     )
-    createGradleSettingsFile("module", "module1", "module2", "module3", "module4")
+    createGradleSettingsFile("module", "module1", "module2", "module3")
     importProject()
     assertProjectLanguageLevel(nonPreviewLevel)
     assertModuleLanguageLevel("project", preview)
