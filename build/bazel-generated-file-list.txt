@@ -316,6 +316,7 @@ jps/model-test-framework
 jps/standalone-builder
 json
 json/backend
+json/backend/regexp
 json/backend/tests
 jupyter
 jvm/jvm-analysis-api

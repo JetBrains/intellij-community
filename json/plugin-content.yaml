@@ -4,6 +4,9 @@
 - name: lib/modules/intellij.json.backend.jar
   contentModules:
   - name: intellij.json.backend
+- name: lib/modules/intellij.json.backend.regexp.jar
+  contentModules:
+  - name: intellij.json.backend.regexp
 - name: lib/modules/intellij.json.frontend.split.jar
   contentModules:
   - name: intellij.json.frontend.split

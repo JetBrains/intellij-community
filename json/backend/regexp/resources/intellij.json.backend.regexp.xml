@@ -1,0 +1,10 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.json.backend"/>
+    <module name="intellij.regexp"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <multiHostInjector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaRegexInjector"/>
+  </extensions>
+</idea-plugin>

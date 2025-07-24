@@ -29,6 +29,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//json/backend",
+    "//json/backend/regexp",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//platform/lang-impl",
