@@ -9,9 +9,16 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.*
 import com.intellij.refactoring.rename.RenameProcessor
+import com.intellij.refactoring.rename.RenamePsiElementProcessor
+import com.intellij.refactoring.rename.RenameUtil
+import com.intellij.refactoring.rename.naming.AutomaticRenamer
+import com.intellij.usageView.UsageInfo
+import com.intellij.util.containers.MultiMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
@@ -67,7 +74,7 @@ class RefactoringToolset : McpToolset {
       mcpFail("Element is not renamable: $symbolName")
     }
 
-    val renameProcessor = readAction { RenameProcessor(project, targetElement, newName, true, true) }
+    val renameProcessor = readAction { McpRenameProcessor(project, targetElement, newName, true, true) }
 
     val usages = readAction { renameProcessor.findUsages() }
 
@@ -76,9 +83,47 @@ class RefactoringToolset : McpToolset {
         renameProcessor.run()
       }
     }
-
     return "Successfully renamed '$symbolName' to '$newName' in $pathInProject with ${usages.size} usages."
   }
+}
+
+/**
+ * https://youtrack.jetbrains.com/issue/IJPL-196163
+ */
+private class McpRenameProcessor(
+  project: Project,
+  val element: PsiElement,
+  val newName: String,
+  isSearchInComments: Boolean,
+  isSearchTextOccurrences: Boolean,
+) : RenameProcessor(project,
+                    element,
+                    newName,
+                    isSearchInComments,
+                    isSearchTextOccurrences) {
+  override fun isPreviewUsages(usages: Array<out UsageInfo?>): Boolean {
+    return false
+  }
+
+  override fun showAutomaticRenamingDialog(automaticVariableRenamer: AutomaticRenamer?) = false
+
+  override fun preprocessUsages(refUsages: Ref<Array<UsageInfo?>?>): Boolean {
+    val usagesIn: Array<UsageInfo?> = refUsages.get() ?: return false
+    val conflicts = MultiMap<PsiElement?, String?>()
+
+    RenameUtil.addConflictDescriptions(usagesIn, conflicts)
+    RenamePsiElementProcessor.forElement(element).findExistingNameConflicts(
+      element, newName, conflicts, myAllRenames
+    )
+    if (!conflicts.isEmpty) {
+      throw ConflictsFoundException()
+    }
+    return true
+  }
+}
+
+private class ConflictsFoundException() : Exception() {
+  override val message: String = "Conflicts were found during renaming"
 }
 
 private fun findSymbolInFile(psiFile: PsiFile, symbolName: String): PsiElement? {
