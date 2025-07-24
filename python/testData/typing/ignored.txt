@@ -30,7 +30,6 @@ generics_self_attributes.py
 generics_self_basic.py
 generics_self_usage.py
 generics_syntax_infer_variance.py
-generics_syntax_scoping.py
 generics_typevartuple_basic.py
 generics_typevartuple_overloads.py
 generics_typevartuple_specialization.py
