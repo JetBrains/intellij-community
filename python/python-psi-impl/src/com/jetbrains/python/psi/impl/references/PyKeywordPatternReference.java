@@ -41,9 +41,12 @@ public final class PyKeywordPatternReference extends PsiReferenceBase.Poly<PyKey
     PyKeywordPattern keywordPattern = getElement();
     TypeEvalContext typeContext = TypeEvalContext.codeInsightFallback(keywordPattern.getProject());
     PyResolveContext resolveContext = PyResolveContext.defaultContext(typeContext);
+    return resolveKeyword(classPattern, keywordPattern.getKeyword(), resolveContext);
+  }
+
+  public static ResolveResult[] resolveKeyword(PyClassPattern classPattern, String keyword, PyResolveContext resolveContext) {
     return StreamEx.of(resolveToClassTypes(classPattern, resolveContext))
-      .flatMap(t -> StreamEx.of(ContainerUtil.notNullize(t.resolveMember(keywordPattern.getKeyword(),
-                                                                         null, AccessDirection.READ, resolveContext))))
+      .flatMap(t -> StreamEx.of(ContainerUtil.notNullize(t.resolveMember(keyword, null, AccessDirection.READ, resolveContext))))
       .toArray(ResolveResult.EMPTY_ARRAY);
   }
 

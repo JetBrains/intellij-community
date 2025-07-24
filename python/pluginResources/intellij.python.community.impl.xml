@@ -70,6 +70,9 @@
               optionId="python.type.inlays.function.return"/>
     </codeInsight.declarativeInlayProvider>
 
+    <codeInsight.inlayActionHandler implementationClass="com.jetbrains.python.inlayHints.PyPseudoKeywordPatternInlayActionHandler"
+                                    handlerId="py.pseudo.keyword.pattern"/>
+
 
     <!-- Requirements.txt support. Can't extract module due to circular dependency between it and community.impl (RequirementsFile inspection)-->
     <completion.contributor language="Requirements"
