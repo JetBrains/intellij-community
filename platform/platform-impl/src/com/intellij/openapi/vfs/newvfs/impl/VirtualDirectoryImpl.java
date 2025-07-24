@@ -357,9 +357,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   private void updateCaseSensitivityIfUnknown(@NotNull String childName) {
     PersistentFSImpl pFS = owningPersistentFS();
-    VFilePropertyChangeEvent caseSensitivityEvent = pFS.generateCaseSensitivityChangedEventForUnknownCase(this, childName);
+    VFilePropertyChangeEvent caseSensitivityEvent = pFS.generateCaseSensitivityChangedEventIfUnknown(this, childName);
     if (caseSensitivityEvent != null) {
-      //TODO RC: inside generateCaseSensitivityChangedEventForUnknownCase() we update case-sensitivity if it is == FS.default,
+      //TODO RC: inside generateCaseSensitivityChangedEventIfUnknown() we update case-sensitivity if it is == FS.default,
       //         and here we update case-sensitivity if it is !=FS.default -- why such a separation?
       pFS.executeChangeCaseSensitivity(this, (CaseSensitivity)caseSensitivityEvent.getNewValue());
       // fire event asynchronously to avoid deadlocks with possibly currently held VFP/Refresh queue locks
@@ -921,7 +921,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   /**
-   * @return the value of CHILDREN_CASE_SENSITIVITY_CACHED bit
+   * For NTFS, APFS (MacOS) there is a default case-sensitivity for a file-system (they are case-insensitive), but that
+   * default could be overridden per-directory (NTFS) or per partition (APFS).
+   * Hence, even while we do know default CS for the file-system, we don't really know a case-sensitivity of a current
+   * folder, until we explicitly query it. This method provides info about do we already query and cache the actual
+   * case-sensitivity of this folder, or not.
+   * @return is this folder actual case-sensitivity was determined and cached?
    */
   @ApiStatus.Internal
   private boolean isChildrenCaseSensitivityKnown() {

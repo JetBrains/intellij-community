@@ -798,7 +798,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertNotNull(dir);
     assertEquals(CaseSensitivity.UNKNOWN, dir.getChildrenCaseSensitivity());
 
-    ((PersistentFSImpl)PersistentFS.getInstance()).generateCaseSensitivityChangedEventForUnknownCase(dir, file.getName());
+    ((PersistentFSImpl)PersistentFS.getInstance()).generateCaseSensitivityChangedEventIfUnknown(dir, file.getName());
     CaseSensitivity expected = SystemInfo.isFileSystemCaseSensitive ? CaseSensitivity.SENSITIVE : CaseSensitivity.INSENSITIVE;
     assertEquals(expected, dir.getChildrenCaseSensitivity());
     assertEquals(expected == CaseSensitivity.SENSITIVE, dir.isCaseSensitive());

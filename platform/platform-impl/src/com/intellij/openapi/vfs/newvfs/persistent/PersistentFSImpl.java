@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.Utf8BomOptionProvider;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
@@ -51,7 +52,10 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.*;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -777,7 +781,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     getFileSystem(parent).createChildDirectory(requestor, parent, dir);
 
     processEvent(new VFileCreateEvent(requestor, parent, dir, true, null, null, ChildInfo.EMPTY_ARRAY));
-    VFileEvent caseSensitivityEvent = generateCaseSensitivityChangedEventForUnknownCase(parent, dir);
+    VFileEvent caseSensitivityEvent = generateCaseSensitivityChangedEventIfUnknown(parent, dir);
     if (caseSensitivityEvent != null) {
       processEvent(caseSensitivityEvent);
     }
@@ -797,7 +801,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     getFileSystem(parent).createChildFile(requestor, parent, name);
     processEvent(new VFileCreateEvent(requestor, parent, name, false, null, null, null));
-    VFileEvent caseSensitivityEvent = generateCaseSensitivityChangedEventForUnknownCase(parent, name);
+    VFileEvent caseSensitivityEvent = generateCaseSensitivityChangedEventIfUnknown(parent, name);
     if (caseSensitivityEvent != null) {
       processEvent(caseSensitivityEvent);
     }
@@ -2230,23 +2234,30 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
 
   /**
-   * If the {@code parent} case-sensitivity flag is still not known, try to determine it via {@link FileSystemUtil#readParentCaseSensitivity(File)}.
-   * If this flag read successfully, prepares to fire the {@link VirtualFile#PROP_CHILDREN_CASE_SENSITIVITY} event
-   * (but only if this flag is different from the FS-default case-sensitivity to avoid too many unnecessary events:
+   * If the {@code parent} case-sensitivity flag is still not known, try to determine it via {@link LocalFileSystemBase#fetchCaseSensitivity(VirtualFile, String)}.
+   * If case-sensitivity read successfully, prepares and returns the {@link VirtualFile#PROP_CHILDREN_CASE_SENSITIVITY} event
+   * (but only if case-sensitivity read is different from the FS-default case-sensitivity to avoid too many unnecessary events:
    * see {@link VirtualFileSystem#isCaseSensitive()}).
    * Otherwise, return null.
    */
   @ApiStatus.Internal
-  public VFilePropertyChangeEvent generateCaseSensitivityChangedEventForUnknownCase(@NotNull VirtualFile parent,
-                                                                                    @NotNull String childName) {
+  public VFilePropertyChangeEvent generateCaseSensitivityChangedEventIfUnknown(@NotNull VirtualFile parent,
+                                                                               @NotNull String childName) {
     if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() != FileAttributes.CaseSensitivity.UNKNOWN) {
       //do not update case-sensitivity once determined: assume folder case-sensitivity is constant through the run
       // time of an app -- which is, strictly speaking, is incorrect, but we don't want to process those cases so far
       return null;
     }
+
+    VirtualFileSystem fileSystem = parent.getFileSystem();
+    if (!(fileSystem instanceof LocalFileSystemBase)) {//MAYBE RC: introduce CaseSensitivityProvidingFileSystem?
+      return null;
+    }
+
+    LocalFileSystemBase localFS = (LocalFileSystemBase)fileSystem;
+    FileAttributes.CaseSensitivity sensitivity = localFS.fetchCaseSensitivity(parent, childName);
+    //MAYBE RC: also measure and record execution _time_?
     caseSensitivityReads.incrementAndGet();
-    //MAYBE RC: measure and record execution _time_ also?
-    FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
     return generateCaseSensitivityChangedEvent(parent, sensitivity);
   }
 

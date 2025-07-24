@@ -584,7 +584,7 @@ final class RefreshWorker {
 
     events.add(new VFileCreateEvent(myRequestor, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, children));
 
-    VFileEvent event = ((PersistentFSImpl)myPersistence).generateCaseSensitivityChangedEventForUnknownCase(parent, childName);
+    VFileEvent event = ((PersistentFSImpl)myPersistence).generateCaseSensitivityChangedEventIfUnknown(parent, childName);
     if (event != null) {
       events.add(event);
     }

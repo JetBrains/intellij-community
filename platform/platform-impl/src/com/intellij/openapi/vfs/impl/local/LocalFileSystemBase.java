@@ -304,7 +304,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       if (existing != null) {
         // Wow, I/O created the file successfully even though it already existed in VFS. Maybe we got dir case sensitivity wrong?
         var knownCS = parent.isCaseSensitive();
-        var actualCS = FileSystemUtil.readParentCaseSensitivity(new File(existing.getPath()));
+        var actualCS = fetchCaseSensitivity(parent, name);
         if ((actualCS == FileAttributes.CaseSensitivity.SENSITIVE) != knownCS) {
           // we need to update case sensitivity
           var event = ((PersistentFSImpl)PersistentFS.getInstance()).generateCaseSensitivityChangedEvent(parent, actualCS);
@@ -318,6 +318,14 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     auxNotifyCompleted(handler -> handler.createFile(parent, name));
 
     return new FakeVirtualFile(parent, name);
+  }
+
+  //TODO RC: this method is better to be in LocalFileSystemImpl -- but it is _used_ from this class, createChildFile() method
+  //         I'm not really sure it _should_ be used where, because I'm not sure LocalFileSystemBase subclasses other than
+  //         LocalFileSystemImpl are really could/should deal with per-directory case-sensitivity though...
+  @ApiStatus.Internal
+  public FileAttributes.CaseSensitivity fetchCaseSensitivity(@NotNull VirtualFile parent, @NotNull String childName) {
+    return FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
   }
 
   @Override
