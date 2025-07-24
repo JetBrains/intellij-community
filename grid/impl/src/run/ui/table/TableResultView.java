@@ -180,7 +180,7 @@ public final class TableResultView extends JBTableWithResizableCells
       getScrollPane().repaint();
     });
     new UnparsedValueHoverListener(CENTER, this).addTo(this);
-    MessageBusConnection connection = resultPanel.getProject().getMessageBus().connect(this);
+
     setShowHorizontalLines(false);
 
     var moveColumnListener = new MoveColumnListener(myResultPanel, this);

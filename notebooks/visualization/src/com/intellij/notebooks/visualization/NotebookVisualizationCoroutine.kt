@@ -12,7 +12,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
- * Recapitulates com.intellij.jupyter.core.jupyter.editor.outputs.webOutputs.appBasedApi.scriptLoader.utils.JupyterCoroutine
+ * Recapitulates [com.intellij.jupyter.core.jupyter.editor.outputs.webOutputs.appBasedApi.scriptLoader.utils.JupyterCoroutine]
  *
  * Needed because the abovementioned class is unavailable in this module.
  */

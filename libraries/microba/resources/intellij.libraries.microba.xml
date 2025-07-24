@@ -1,2 +1,2 @@
-<idea-plugin>
+<idea-plugin package="com.michaelbaranov.microba">
 </idea-plugin>

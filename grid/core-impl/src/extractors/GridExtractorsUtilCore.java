@@ -14,8 +14,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -176,25 +174,6 @@ public class GridExtractorsUtilCore {
         };
       }
     };
-  }
-
-  static @NotNull File createFileToWrite(@NotNull File file, @Nullable String name, @NotNull DataExtractor extractor) {
-    if (file.isFile()) return file;
-    return findFile(file, name, extractor);
-  }
-
-  private static @NotNull File findFile(@NotNull File file, @Nullable String name, @NotNull DataExtractor extractor) {
-    name = name != null ? name : "out";
-    File result = createFile(file, name, extractor, null);
-    int index = 1;
-    while (result.exists()) {
-      result = createFile(file, name, extractor, index++);
-    }
-    return result;
-  }
-
-  private static @NotNull File createFile(@NotNull File file, @NotNull String name, @NotNull DataExtractor extractor, @Nullable Integer index) {
-    return new File(file, prepareFileName(name) + (index == null ? "" : "_" + index) + "." + extractor.getFileExtension());
   }
 
   public static String prepareFileName(@NotNull String name) {

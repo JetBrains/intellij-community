@@ -16,7 +16,7 @@ import javax.swing.table.TableColumn
 import kotlin.math.max
 
 abstract class StatisticsTableHeader(statisticsPanelMode: StatisticsPanelMode = StatisticsPanelMode.OFF): AdditionalTableHeader() {
-  var statisticsPanelMode = statisticsPanelMode
+  var statisticsPanelMode: StatisticsPanelMode = statisticsPanelMode
     set(value) {
       field = value
       (columnsController as StatisticsColumnsControllerPanel).setMode(value)
@@ -71,10 +71,9 @@ abstract class StatisticsTableHeader(statisticsPanelMode: StatisticsPanelMode = 
 
     abstract inner class StatisticsPanel(tc: TableColumn) : AdditionalPanel(tc) {
       var panel: Component? = null
-      protected var offStatisticsPanel = panel {  }
+      protected var offStatisticsPanel: DialogPanel = panel {  }
       protected var compactStatisticsPanel: @Nls String? = null
       protected var detailedStatisticsPanel: @Nls String? = null
-
 
       override fun detach() {}
 

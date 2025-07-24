@@ -17,7 +17,7 @@ interface NestedTablesAware<T> {
    * @param nestedTable The nested table to enter
    * @return The object of type T returned by the method.
    */
-  fun enterNestedTable(coordinate: NestedTableCellCoordinate, nestedTable: NestedTable): T
+  suspend fun enterNestedTable(coordinate: NestedTableCellCoordinate, nestedTable: NestedTable): T
 
   /**
    * Exits the current nested table and returns to the parent table.
@@ -25,7 +25,7 @@ interface NestedTablesAware<T> {
    * @param steps The number of nested tables to exit. Must be a non-negative integer.
    * @return The object of type T returned by the method.
    */
-  fun exitNestedTable(steps: Int): T
+  suspend fun exitNestedTable(steps: Int): T
 
   /**
    * Represents a non-empty stack data structure.
