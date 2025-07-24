@@ -120,7 +120,7 @@ internal class IdeProjectFrameAllocator(
         launch {
           val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl
           fileEditorManager.initJob.join()
-          withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+          withContext(Dispatchers.UiWithModelAccess) {
             frameHelper.toolWindowPane.setDocumentComponent(fileEditorManager.mainSplitters)
           }
         }
@@ -217,7 +217,7 @@ internal class IdeProjectFrameAllocator(
       else {
         val frameHelper = IdeProjectFrameHelper(createIdeFrame(frameInfo), loadingState = loadingState)
         // must be after preInit (frame decorator is required to set a full-screen mode)
-        withContext(Dispatchers.ui(kind = UiDispatcherKind.RELAX)) {
+        withContext(Dispatchers.UiWithModelAccess) {
           frameHelper.frame.isVisible = true
         }
         completeFrameAndCloseOnCancel(frameHelper) {
@@ -487,7 +487,7 @@ private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob:
       val toolWindow = toolWindowManager.getToolWindow("Project")
       if (toolWindow != null) {
         // maybe readAction
-        withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+        withContext(Dispatchers.UiWithModelAccess) {
           toolWindow.activate(null, !AppMode.isRemoteDevHost())
         }
       }

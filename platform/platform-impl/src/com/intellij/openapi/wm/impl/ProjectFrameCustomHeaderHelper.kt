@@ -304,7 +304,7 @@ private class ToolbarCreator(
 
   private fun startNewJob(): Deferred<JComponent> {
     val newJob = cs.async(
-      Dispatchers.ui(UiDispatcherKind.RELAX) +
+      Dispatchers.UiWithModelAccess +
       ModalityState.any().asContextElement() +
       CoroutineName("Lazy MainToolbar computation")
     ) {

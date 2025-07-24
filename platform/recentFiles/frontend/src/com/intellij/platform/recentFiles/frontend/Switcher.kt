@@ -14,9 +14,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UiDispatcherKind
-import com.intellij.openapi.application.WriteIntentReadAction
-import com.intellij.openapi.application.ui
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
@@ -344,7 +342,7 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
       }
       uiUpdateScope.launch(CoroutineName("Switcher hint popup updater")) {
         selectedValueFlow.collectLatest { selectedValue ->
-          withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) { // can't use STRICT because updatePopup needs a WIRA
+          withContext(Dispatchers.UiWithModelAccess) { // can't use STRICT because updatePopup needs a WIRA
             val hint = hint
             val popupUpdater = if (hint == null || !hint.isVisible) null else hint.getUserData(PopupUpdateProcessorBase::class.java)
             if (selectedValue != null && popupUpdater != null) {

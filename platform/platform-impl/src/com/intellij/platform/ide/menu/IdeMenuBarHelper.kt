@@ -87,7 +87,7 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
       presentationFactory.reset()
       updateMenuActions(forceRebuild = true)
     })
-    var context = Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.any().asContextElement()
+    var context = Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()
     if (StartUpMeasurer.isEnabled()) {
       context += rootTask() + CoroutineName("ide menu bar actions init")
     }
@@ -111,7 +111,7 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
     coroutineScope.launch {
       initJob.join()
 
-      withContext(Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.any().asContextElement()) {
+      withContext(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
         updateRequests.throttle(500).collectLatest { forceRebuild ->
           runCatching {
             if (canUpdate()) {

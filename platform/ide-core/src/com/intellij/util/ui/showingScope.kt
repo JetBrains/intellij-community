@@ -4,9 +4,8 @@ package com.intellij.util.ui
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UiDispatcherKind
+import com.intellij.openapi.application.UiWithModelAccessImmediate
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.ui
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.BitUtil
@@ -102,7 +101,7 @@ fun <T : Any, C : Component> C.showingScope(
   }
 
   // To avoid paying for dispatch and to clean up resources (e.g., remove the listener) faster:
-  val immediateDispatcher = Dispatchers.ui(kind = UiDispatcherKind.RELAX, immediate = true) + ModalityState.any().asContextElement()
+  val immediateDispatcher = Dispatchers.UiWithModelAccessImmediate + ModalityState.any().asContextElement()
 
   @OptIn(DelicateCoroutinesApi::class)
   return GlobalScope.launch(immediateDispatcher + CoroutineName(debugName), start = CoroutineStart.UNDISPATCHED) {

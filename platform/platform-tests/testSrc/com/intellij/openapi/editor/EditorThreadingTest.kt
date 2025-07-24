@@ -1,9 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor
 
-import com.intellij.openapi.application.UiDispatcherKind
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.ui
 import com.intellij.openapi.editor.impl.EditorThreading
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -69,7 +68,7 @@ class EditorThreadingTest {
   @TestFactory
   fun `access to editor is not allowed on raw EDT`() = runTest { action ->
     withRawAccess(true) {
-      timeoutRunBlocking(context = Dispatchers.ui(UiDispatcherKind.RELAX)) {
+      timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
         assertThrows<Exception> {
           action()
         }
@@ -80,7 +79,7 @@ class EditorThreadingTest {
   @TestFactory
   fun `access to editor is allowed under read lock`() = runTest { action ->
     withRawAccess(false) {
-      timeoutRunBlocking(context = Dispatchers.ui(UiDispatcherKind.RELAX)) {
+      timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
         readAction {
           action()
         }
@@ -91,7 +90,7 @@ class EditorThreadingTest {
   @TestFactory
   fun `access to editor is allowed on raw EDT with flag`() = runTest { action ->
     withRawAccess(true) {
-      timeoutRunBlocking(context = Dispatchers.ui(UiDispatcherKind.RELAX)) {
+      timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
         action()
       }
     }

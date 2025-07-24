@@ -68,7 +68,7 @@ object ApplicationActivationStateManager {
           if (ideFrame != null) {
             // getIdeFrameFromWindow returns something from a UI tree, so, if not null, it must be Window
             val publisher = app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC)
-            withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+            withContext(Dispatchers.UiWithModelAccess) {
               publisher.delayedApplicationDeactivated(ideFrame as Window)
             }
           }

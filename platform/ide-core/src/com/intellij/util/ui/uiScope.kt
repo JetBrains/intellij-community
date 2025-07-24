@@ -229,7 +229,7 @@ private fun launchUsingIsShowingFlow(
 ): Job {
   @OptIn(DelicateCoroutinesApi::class)
   return GlobalScope.launch(
-    context = Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.any().asContextElement() + CoroutineName(debugName),
+    context = Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement() + CoroutineName(debugName),
   ) {
     val parentScope = this
     val isShowingFlow = MutableStateFlow(isShowing(component))

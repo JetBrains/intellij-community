@@ -195,7 +195,7 @@ open class EditorComposite internal constructor(
 
     // TODO comment this and log a warning or log something
     if (fileEditorWithProviders.isEmpty()) {
-      withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+      withContext(Dispatchers.UiWithModelAccess) {
         compositePanel.removeAll()
         setFileEditors(fileEditors = emptyList(), selectedEditor = null)
       }
@@ -223,7 +223,7 @@ open class EditorComposite internal constructor(
       beforeFileOpen(this, model)
       // cannot be before use as fileOpenedSync by contract should be called in the same EDT event
       val (goodPublisher, deprecatedPublisher) = deferredPublishers.await()
-      span("file opening in EDT and repaint", Dispatchers.ui(UiDispatcherKind.RELAX)) {
+      span("file opening in EDT and repaint", Dispatchers.UiWithModelAccess) {
         span("beforeFileOpened event executing") {
           computeOrLogException(
             lambda = { beforePublisher!!.beforeFileOpened(fileEditorManager, file) },
@@ -262,7 +262,7 @@ open class EditorComposite internal constructor(
         coroutineScope = coroutineScope,
       )
 
-      span("fileOpened event executing", Dispatchers.ui(UiDispatcherKind.RELAX)) {
+      span("fileOpened event executing", Dispatchers.UiWithModelAccess) {
         writeIntentReadAction {
           deprecatedPublisher.fileOpened(fileEditorManager, file)
         }
@@ -876,7 +876,7 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
   init {
     addFocusListener(object : FocusAdapter() {
       override fun focusGained(e: FocusEvent) {
-        composite.coroutineScope.launch(Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.any().asContextElement()) {
+        composite.coroutineScope.launch(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
           if (!hasFocus()) {
             return@launch
           }

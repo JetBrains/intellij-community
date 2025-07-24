@@ -1,11 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UiDispatcherKind
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.ui
 import com.intellij.util.ui.Animator
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -59,7 +57,7 @@ abstract class TwoWayAnimator(
 
   fun start(forward: Boolean) {
     if (job == null) {
-      val context = Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.defaultModalityState().asContextElement()
+      val context = Dispatchers.UiWithModelAccess + ModalityState.defaultModalityState().asContextElement()
       job = coroutineScope.launch {
         animateRequests.collectLatest { animator ->
           if (animator == null) return@collectLatest

@@ -26,6 +26,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.UiDispatcherKind
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.ui
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
@@ -306,7 +307,7 @@ object Switcher : BaseSwitcherAction(null) {
           // otherwise there's a chance that the hint popup may be hidden in between.
           // So we can't just switch to Dispatchers.EDT, as that will dispatch on a separate event.
           // Therefore, we use RELAX and take the lock only when necessary.
-          withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+          withContext(Dispatchers.UiWithModelAccess) {
             val hint = hint
             val popupUpdater = if (hint == null || !hint.isVisible) null else hint.getUserData(PopupUpdateProcessorBase::class.java)
             if (selectedValue != null && popupUpdater != null) {

@@ -340,7 +340,7 @@ abstract class ProjectFrameHelper internal constructor(
 
   suspend fun updateTitle(title: String, project: Project) {
     val titleInfoProviders = getTitleInfoProviders()
-    withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+    withContext(Dispatchers.UiWithModelAccess) {
       this@ProjectFrameHelper.title = title
       updateTitle(project = project, titleInfoProviders = titleInfoProviders)
     }
@@ -426,7 +426,7 @@ abstract class ProjectFrameHelper internal constructor(
 
     this.project = project
 
-    withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+    withContext(Dispatchers.UiWithModelAccess) {
       applyInitBounds()
 
       if (statusBar == null) {

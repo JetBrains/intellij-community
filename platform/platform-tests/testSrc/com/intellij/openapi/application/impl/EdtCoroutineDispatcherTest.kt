@@ -427,7 +427,7 @@ class EdtCoroutineDispatcherTest {
 
   @UiThreadDispatcherTest
   fun `main and relaxed dispatcher allows locking actions`(dispatcher: CoroutineContext): Unit = timeoutRunBlocking(context = dispatcher) {
-    Assumptions.assumeTrue(dispatcher == Dispatchers.Main || dispatcher == Dispatchers.ui(UiDispatcherKind.RELAX))
+    Assumptions.assumeTrue(dispatcher == Dispatchers.Main || dispatcher == Dispatchers.UiWithModelAccess)
     val counter = AtomicInteger()
     assertThat(application.isReadAccessAllowed).isFalse
     assertThat(application.isWriteAccessAllowed).isFalse
@@ -529,5 +529,5 @@ internal fun uiThreadDispatchers(): List<Arguments> = listOf(
   Dispatchers.EDT,
   Dispatchers.UI,
   Dispatchers.Main,
-  Dispatchers.ui(UiDispatcherKind.RELAX)
+  Dispatchers.UiWithModelAccess
 ).map { Arguments.of(it) }

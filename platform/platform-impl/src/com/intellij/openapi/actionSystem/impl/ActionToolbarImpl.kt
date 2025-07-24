@@ -297,7 +297,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       }
 
       launchOnceOnShow("ActionToolbarImpl.updateActionsOnAdd") {
-        withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+        withContext(Dispatchers.UiWithModelAccess) {
           // a first update really
           if (myForcedUpdateRequested && myLastUpdate == null) {
             @Suppress("DEPRECATION")

@@ -289,7 +289,7 @@ object Utils {
     val fastTrackTime = getFastTrackMaxTime(fastTrack, place, uiKind is ActionUiKind.Toolbar, true)
     val edtDispatcher =
       if (fastTrackTime > 0) AltEdtDispatcher.apply { switchToQueue() }
-      else Dispatchers.ui(UiDispatcherKind.RELAX)[CoroutineDispatcher]!!
+      else Dispatchers.UiWithModelAccess[CoroutineDispatcher]!!
     val updater = ActionUpdater(presentationFactory, asyncDataContext, place, uiKind, edtDispatcher)
     val deferred = async(edtDispatcher, CoroutineStart.UNDISPATCHED) {
       updater.runUpdateSession(updaterContext(place, fastTrackTime, uiKind)) {
@@ -910,7 +910,7 @@ object Utils {
   @JvmStatic
   fun initUpdateSession(e: AnActionEvent) {
     if (e.updateSession !== UpdateSession.EMPTY) return
-    val edtDispatcher = Dispatchers.ui(UiDispatcherKind.RELAX)[CoroutineDispatcher]!!
+    val edtDispatcher = Dispatchers.UiWithModelAccess[CoroutineDispatcher]!!
     val actionUpdater = ActionUpdater(PresentationFactory(), e.dataContext, e.place, e.uiKind, edtDispatcher)
     e.updateSession = actionUpdater.asUpdateSession()
   }
@@ -918,7 +918,7 @@ object Utils {
   suspend fun <R> withSuspendingUpdateSession(e: AnActionEvent, factory: PresentationFactory,
                                               actionFilter: (AnAction) -> Boolean,
                                               block: suspend CoroutineScope.(SuspendingUpdateSession) -> R): R = coroutineScope {
-    val edtDispatcher = Dispatchers.ui(UiDispatcherKind.RELAX)[CoroutineDispatcher]!!
+    val edtDispatcher = Dispatchers.UiWithModelAccess[CoroutineDispatcher]!!
     val dataContext = createAsyncDataContext(e.dataContext)
     checkAsyncDataContext(dataContext, "withSuspendingUpdateSession")
     val updater = ActionUpdater(factory, dataContext, e.place, e.uiKind, edtDispatcher, actionFilter)

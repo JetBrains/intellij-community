@@ -963,7 +963,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
       )
     }
     else {
-      val splitter = withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+      val splitter = withContext(Dispatchers.UiWithModelAccess) {
         val splitter = createSplitter(
           isVertical = splitState.isVertical,
           proportion = splitState.proportion,

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
-import com.intellij.openapi.application.UiDispatcherKind.RELAX
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
@@ -375,15 +374,6 @@ enum class UiDispatcherKind {
   LEGACY;
 }
 
-
-@Suppress("UnusedReceiverParameter")
-@get:Experimental
-val Dispatchers.EdtImmediate: CoroutineContext get() = coroutineSupport().uiDispatcher(kind = UiDispatcherKind.LEGACY, immediate = true)
-
-@Suppress("UnusedReceiverParameter")
-@get:Experimental
-val Dispatchers.UiImmediate: CoroutineContext get() = coroutineSupport().uiDispatcher(kind = UiDispatcherKind.STRICT, immediate = true)
-
 /**
  * UI dispatcher which dispatches onto Swing event dispatching thread within the [context modality state][asContextElement].
  * The computations scheduled by this dispatcher are **not** protected by any lock, and it is forbidden to initiate Read or Write actions.
@@ -396,5 +386,27 @@ val Dispatchers.UiImmediate: CoroutineContext get() = coroutineSupport().uiDispa
 @get:Experimental
 @Suppress("UnusedReceiverParameter")
 val Dispatchers.UI: CoroutineContext get() = coroutineSupport().uiDispatcher(kind = UiDispatcherKind.STRICT, immediate = false)
+
+/**
+ * UI dispatcher which dispatches onto Swing event dispatching thread within the [context modality state][asContextElement].
+ * The computations scheduled by this dispatcher are **not** protected by any lock, but it is **allowed** to initiate Read or Write actions inside.
+ *
+ * If no context modality state is specified, then the coroutine is dispatched within [ModalityState.nonModal] modality state.
+ */
+@get:Experimental
+@Suppress("UnusedReceiverParameter")
+val Dispatchers.UiWithModelAccess: CoroutineContext get() = coroutineSupport().uiDispatcher(kind = UiDispatcherKind.RELAX, immediate = false)
+
+@Suppress("UnusedReceiverParameter")
+@get:Experimental
+val Dispatchers.EdtImmediate: CoroutineContext get() = coroutineSupport().uiDispatcher(kind = UiDispatcherKind.LEGACY, immediate = true)
+
+@Suppress("UnusedReceiverParameter")
+@get:Experimental
+val Dispatchers.UiImmediate: CoroutineContext get() = coroutineSupport().uiDispatcher(kind = UiDispatcherKind.STRICT, immediate = true)
+
+@Suppress("UnusedReceiverParameter")
+@get:Experimental
+val Dispatchers.UiWithModelAccessImmediate: CoroutineContext get() = coroutineSupport().uiDispatcher(kind = UiDispatcherKind.RELAX, immediate = true)
 
 private fun coroutineSupport() = ApplicationManager.getApplication().getService(CoroutineSupport::class.java)

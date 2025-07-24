@@ -34,7 +34,7 @@ class PlatformUtilitiesTest {
 
   @Test
   fun `relaxing preventive actions leads to absence of lock`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
-    withContext(Dispatchers.ui(kind = UiDispatcherKind.RELAX)) {
+    withContext(Dispatchers.UiWithModelAccess) {
       assertThat(application.isWriteIntentLockAcquired).isFalse
       getGlobalThreadingSupport().runPreventiveWriteIntentReadAction {
         assertThat(application.isWriteIntentLockAcquired).isTrue
@@ -248,7 +248,7 @@ class PlatformUtilitiesTest {
   }
 
   @Test
-  fun `transferredWriteAction is not available on EDT`(): Unit = timeoutRunBlocking(context = Dispatchers.ui(UiDispatcherKind.RELAX)) {
+  fun `transferredWriteAction is not available on EDT`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     assertThrows<AssertionError> {
       InternalThreading.invokeAndWaitWithTransferredWriteAction {
         fail<Nothing>()

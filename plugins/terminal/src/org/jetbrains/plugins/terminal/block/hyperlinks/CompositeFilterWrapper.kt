@@ -46,9 +46,9 @@ class CompositeFilterWrapper(private val project: Project, coroutineScope: Corou
         filterFlow.value = null // tell the clients the value is being computed
         val newValue = ComputedFilter(computeFilter(), false)
         filterFlow.value = newValue
-        // Using UiDispatcherKind.RELAX because the listeners interact with the editor and its document,
+        // Using UiWithModelAccess because the listeners interact with the editor and its document,
         // so they need to take locks, and therefore the strict dispatcher won't do.
-        withContext(Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.any().asContextElement()) {
+        withContext(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
           fireFiltersUpdated()
           filterFlow.value = newValue.copy(listenersFired = true)
         }
