@@ -231,6 +231,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     if (element == null) return null;
     PsiMethod method = MethodUtils.getJavaMethodFromHeader(element);
     if (method != null) {
+      if (method.getBody() == null) return null;
       if (!method.isConstructor()) return null;
       var containingClass = method.getContainingClass();
       if (!isSuitableClass(containingClass)) return null;

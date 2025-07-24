@@ -83,9 +83,9 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
   public void testConstructorTypeParameters() { runTest("08", null); }
 
   public void testInnerClass2() { runTest("InnerClass2", "SimpleClass"); }
-  
-  public void testIncompleteClass() { 
-    assertNotAvailable("IncompleteClass"); 
+
+  public void testIncompleteClass() {
+    assertNotAvailable("IncompleteClass");
   }
 
   public void testInjection() {
@@ -121,6 +121,10 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
 
   public void testRedCode() {
     assertNotAvailable("RedCode");
+  }
+
+  public void testRedCodeFromIDEA376351() {
+    assertNotAvailable("RedCodeFromIDEA376351");
   }
 
   private void assertNotAvailable(String name) {
