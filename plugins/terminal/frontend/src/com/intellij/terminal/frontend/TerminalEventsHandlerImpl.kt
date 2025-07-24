@@ -82,6 +82,12 @@ internal open class TerminalEventsHandlerImpl(
         LOG.error("Error sending typed key to emulator", ex)
       }
     }
+    val lookup = LookupManager.getActiveLookup(editor)
+    // Added to guarantee that the carets are synchronized after type-ahead.
+    // Essential for correct lookup behavior.
+    if (editor.caretModel.offset != outputModel.cursorOffsetState.value) {
+      lookup?.performGuardedChange({ editor.caretModel.moveToOffset(outputModel.cursorOffsetState.value) })
+    }
   }
 
   override fun keyPressed(e: TimedKeyEvent) {
