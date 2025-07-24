@@ -61,8 +61,6 @@ public abstract class PyPackageManager implements Disposable {
 
   public abstract void install(@Nullable List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException;
 
-  public abstract void uninstall(@NotNull List<PyPackage> packages) throws ExecutionException;
-
   public abstract void refresh();
 
   public abstract @NotNull String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException;

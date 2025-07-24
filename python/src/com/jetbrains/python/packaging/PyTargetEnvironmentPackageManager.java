@@ -40,9 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -128,42 +126,6 @@ public abstract class PyTargetEnvironmentPackageManager extends PyPackageManager
     }
     else {
       execution.setWorkingDir(TargetEnvironmentFunctions.constant(workingDir));
-    }
-  }
-
-  @Override
-  public void uninstall(@NotNull List<PyPackage> packages) throws ExecutionException {
-    List<String> args = new ArrayList<>();
-    HelpersAwareTargetEnvironmentRequest helpersAwareRequest = getPythonTargetInterpreter();
-    TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareRequest.getTargetEnvironmentRequest();
-    PythonScriptExecution pythonExecution =
-      PythonScripts.prepareHelperScriptExecution(PythonHelper.PACKAGING_TOOL, helpersAwareRequest);
-    try {
-      pythonExecution.addParameter(UNINSTALL);
-      // TODO [targets] Remove temporary usage of String arguments
-      args.add(UNINSTALL);
-      boolean canModify = true;
-      for (PyPackage pkg : packages) {
-        if (canModify) {
-          final String location = pkg.getLocation();
-          if (location != null) {
-            // TODO [targets] Introspection is required here
-            canModify = Files.isWritable(Paths.get(location));
-          }
-        }
-        pythonExecution.addParameter(pkg.getName());
-        // TODO [targets] Remove temporary usage of String arguments
-        args.add(pkg.getName());
-      }
-      // TODO [targets] Pass `parentDir = null`
-      getPythonProcessResult(pythonExecution, !canModify, true, targetEnvironmentRequest);
-    }
-    catch (PyExecutionException e) {
-      throw PyExecutionExceptionExtKt.copyWith(e, "pip", args);
-    }
-    finally {
-      LOG.debug("Packages cache is about to be refreshed because these packages were uninstalled: " + packages);
-      refreshPackagesSynchronously();
     }
   }
 

@@ -29,13 +29,6 @@ internal open class PyPackageManagerBridge(sdk: Sdk) : PyTargetEnvironmentPackag
     }
   }
 
-  @Throws(ExecutionException::class)
-  override fun uninstall(packages: MutableList<PyPackage>) {
-    runBlockingMaybeCancellable {
-      packageManagerUI.uninstallPackagesBackground(packages.map { it.name })
-    }
-  }
-
   override fun refreshAndGetPackages(alwaysRefresh: Boolean): List<PyPackage?> {
     val pythonPackages = if (alwaysRefresh) {
       runBlockingMaybeCancellable {

@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -105,32 +104,6 @@ public abstract class PyPackageManagerImpl extends PyPackageManagerImplBase {
     }
     finally {
       LOG.debug("Packages cache is about to be refreshed because these requirements were installed: " + requirements);
-      refreshPackagesSynchronously();
-    }
-  }
-
-  @Override
-  public void uninstall(@NotNull List<PyPackage> packages) throws ExecutionException {
-    final List<String> args = new ArrayList<>();
-    try {
-      args.add(UNINSTALL);
-      boolean canModify = true;
-      for (PyPackage pkg : packages) {
-        if (canModify) {
-          final String location = pkg.getLocation();
-          if (location != null) {
-            canModify = Files.isWritable(Paths.get(location));
-          }
-        }
-        args.add(pkg.getName());
-      }
-      getHelperResult(args, !canModify, true);
-    }
-    catch (PyExecutionException e) {
-      throw PyExecutionExceptionExtKt.copyWith(e, "pip", args);
-    }
-    finally {
-      LOG.debug("Packages cache is about to be refreshed because these packages were uninstalled: " + packages);
       refreshPackagesSynchronously();
     }
   }
