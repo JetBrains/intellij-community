@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.*
@@ -16,6 +17,10 @@ import kotlin.math.min
 internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConfig: DialogPanelConfig,
                             private val spacingConfiguration: SpacingConfiguration,
                             val panel: DialogPanel, val grid: Grid) {
+
+  companion object {
+    val log = thisLogger()
+  }
 
   fun build() {
     if (rows.isEmpty()) {
@@ -192,10 +197,30 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
     when (cell) {
       is CellImpl<*> -> {
         val gaps = cell.customGaps ?: getComponentGaps(leftGap, rightGap, cell.component, spacingConfiguration)
-        builder.cell(cell.viewComponent, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
-                     resizableColumn = cell.resizableColumn,
-                     gaps = gaps, visualPaddings = prepareVisualPaddings(cell.viewComponent),
-                     widthGroup = cell.widthGroup)
+        val commentRight = cell.commentRight
+
+        if (commentRight == null) {
+          builder.cell(cell.viewComponent, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
+                       resizableColumn = cell.resizableColumn,
+                       gaps = gaps, visualPaddings = prepareVisualPaddings(cell.viewComponent),
+                       widthGroup = cell.widthGroup)
+        } else {
+          if (cell.verticalAlign == VerticalAlign.FILL) {
+            log.error("Vertical align FILL is not supported for cells with right comment, commentRight = ${commentRight.userText}")
+          }
+
+          val subGridBuilder = builder.subGridBuilder(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
+                                                      resizableColumn = cell.resizableColumn,
+                                                      gaps = gaps)
+          val isHorizontalFill = cell.horizontalAlign == HorizontalAlign.FILL
+          subGridBuilder.cell(cell.viewComponent,
+                              horizontalAlign = if (isHorizontalFill) HorizontalAlign.FILL else HorizontalAlign.LEFT,
+                              verticalAlign = if (cell.verticalAlign == VerticalAlign.FILL) VerticalAlign.FILL else VerticalAlign.CENTER,
+                              resizableColumn = isHorizontalFill,
+                              visualPaddings = prepareVisualPaddings(cell.viewComponent),
+                              widthGroup = cell.widthGroup)
+          subGridBuilder.cell(commentRight, gaps = UnscaledGaps(left = spacingConfiguration.horizontalCommentGap))
+        }
       }
       is PanelImpl -> {
         // todo visualPaddings

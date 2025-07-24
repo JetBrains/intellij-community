@@ -14,7 +14,7 @@ import java.awt.LayoutManager2
 import javax.swing.JComponent
 
 /**
- * Layout manager represented as a table, where some cells can be merged in one cell (resulting cell occupies several columns and rows)
+ * Layout manager represented as a table, where some cells can be merged in one cell (the resulting cell occupies several columns and rows)
  * and every cell (or merged cells) can contain a sub-table inside. [Constraints] specifies all possible settings for every cell.
  * Root grid [rootGrid] and all sub-grids have own columns and rows settings placed in [Grid]
  */

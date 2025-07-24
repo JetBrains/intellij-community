@@ -9,30 +9,33 @@ class CommentTest {
 
   @Test
   fun testAccessibleDescription() {
-    val nullComment = createTextField(null)
-    assertEquals(nullComment.accessibleContext.accessibleDescription, null)
-
-    val emptyComment = createTextField("")
-    assertEquals(emptyComment.accessibleContext.accessibleDescription, "")
-
-    val blankComment = createTextField("    \n    \t")
-    assertEquals(blankComment.accessibleContext.accessibleDescription, "")
-
-    val textComment = createTextField("    Some text  ")
-    assertEquals(textComment.accessibleContext.accessibleDescription, "Some text")
-
-    val htmlComment = createTextField("    <a>Some link</a> and text ")
-    assertEquals(htmlComment.accessibleContext.accessibleDescription, "Some link and text")
+    assertEquals(createTextField().accessibleContext.accessibleDescription, null)
+    assertEquals(createTextField(commentRight = "").accessibleContext.accessibleDescription, null)
+    assertEquals(createTextField(comment = "").accessibleContext.accessibleDescription, null)
+    assertEquals(createTextField(commentRight = "    \n    \t").accessibleContext.accessibleDescription, null)
+    assertEquals(createTextField(comment = "    \n    \t").accessibleContext.accessibleDescription, null)
+    assertEquals(createTextField("    Some right text  ", "    Some text  ").accessibleContext.accessibleDescription, "Some right text\nSome text")
+    assertEquals(createTextField("    <a>Some link</a> and text ", "<a>Some link</a>").accessibleContext.accessibleDescription, "Some link and text\nSome link")
   }
 
   @Test
   fun testCustomAccessibleDescription() {
+    val contextBeforeCommentRight = createTextField {
+      accessibleDescription("Custom description")
+      commentRight("Some comment")
+    }.component
+    assertEquals(contextBeforeCommentRight.accessibleContext.accessibleDescription, "Custom description")
     val contextBeforeComment = createTextField {
       accessibleDescription("Custom description")
       comment("Some comment")
     }.component
     assertEquals(contextBeforeComment.accessibleContext.accessibleDescription, "Custom description")
 
+    val contextAfterCommentRight = createTextField {
+      commentRight("Some comment")
+      accessibleDescription("Custom description")
+    }.component
+    assertEquals(contextAfterCommentRight.accessibleContext.accessibleDescription, "Custom description")
     val contextAfterComment = createTextField {
       comment("Some comment")
       accessibleDescription("Custom description")
@@ -43,20 +46,26 @@ class CommentTest {
   @Test
   fun testUpdatingCommentAccessibleDescription() {
     val cell = createTextField {
-      comment("1")
+      commentRight("1")
+      comment("2")
     }
-    assertEquals(cell.component.accessibleContext.accessibleDescription, "1")
+    assertEquals(cell.component.accessibleContext.accessibleDescription, "1\n2")
 
-    cell.comment!!.text = "2"
-    assertEquals(cell.component.accessibleContext.accessibleDescription, "2")
+    cell.comment!!.text = "3"
+    assertEquals(cell.component.accessibleContext.accessibleDescription, "1\n3")
 
-    cell.accessibleDescription("3")
-    cell.comment!!.text = "4"
+    cell.commentRight!!.text = ""
     assertEquals(cell.component.accessibleContext.accessibleDescription, "3")
+
+    cell.accessibleDescription("4")
+    assertEquals(cell.component.accessibleContext.accessibleDescription, "4")
+    cell.comment!!.text = "5"
+    assertEquals(cell.component.accessibleContext.accessibleDescription, "4")
   }
 
-  private fun createTextField(comment: String?): JTextField {
+  private fun createTextField(commentRight: String? = null, comment: String? = null): JTextField {
     return createTextField {
+      commentRight(commentRight)
       comment(comment)
     }.component
   }

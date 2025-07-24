@@ -26,6 +26,11 @@ interface SpacingConfiguration {
   val horizontalColumnsGap: Int
 
   /**
+   * Horizontal gap between component and related comment
+   */
+  val horizontalCommentGap: Int
+
+  /**
    * The horizontal left indent of one level
    */
   val horizontalIndent: Int
@@ -75,6 +80,7 @@ open class EmptySpacingConfiguration : SpacingConfiguration {
   override val horizontalSmallGap: Int = 0
   override val horizontalDefaultGap: Int = 0
   override val horizontalColumnsGap: Int = 0
+  override val horizontalCommentGap: Int = 0
   override val horizontalIndent: Int = 0
   override val horizontalToggleButtonIndent: Int = 0
   override val verticalComponentGap: Int = 0
@@ -90,6 +96,7 @@ open class IntelliJSpacingConfiguration : SpacingConfiguration {
   override val horizontalSmallGap: Int = 6
   override val horizontalDefaultGap: Int = 16
   override val horizontalColumnsGap: Int = 60
+  override val horizontalCommentGap: Int = 12
   override val horizontalIndent: Int = calculateHorizontalIndent()
   override val horizontalToggleButtonIndent: Int = calculateHorizontalIndent()
 

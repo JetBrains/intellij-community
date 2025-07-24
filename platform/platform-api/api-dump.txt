@@ -900,12 +900,16 @@ com.intellij.ui.dsl.builder.ButtonsGroup
 - a:enabledIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.ButtonsGroup
 - a:visible(Z):com.intellij.ui.dsl.builder.ButtonsGroup
 - a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.ButtonsGroup
+c:com.intellij.ui.dsl.builder.EmptySpacingConfiguration
+- getHorizontalCommentGap():I
 com.intellij.ui.dsl.builder.HyperlinkEventAction
 - sf:Companion:com.intellij.ui.dsl.builder.HyperlinkEventAction$Companion
 - sf:HTML_HYPERLINK_INSTANCE:com.intellij.ui.dsl.builder.HyperlinkEventAction
 - a:hyperlinkActivated(javax.swing.event.HyperlinkEvent):V
 - hyperlinkEntered(javax.swing.event.HyperlinkEvent):V
 - hyperlinkExited(javax.swing.event.HyperlinkEvent):V
+c:com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
+- getHorizontalCommentGap():I
 com.intellij.ui.dsl.builder.MutableProperty
 - a:get():java.lang.Object
 - a:set(java.lang.Object):V
@@ -920,6 +924,7 @@ com.intellij.ui.dsl.builder.SpacingConfiguration
 - a:getButtonGroupHeaderBottomGap():I
 - getDialogUnscaledGaps():com.intellij.ui.dsl.gridLayout.UnscaledGaps
 - a:getHorizontalColumnsGap():I
+- a:getHorizontalCommentGap():I
 - a:getHorizontalDefaultGap():I
 - a:getHorizontalIndent():I
 - a:getHorizontalSmallGap():I

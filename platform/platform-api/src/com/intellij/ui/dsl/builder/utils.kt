@@ -90,7 +90,7 @@ const val DEFAULT_COMMENT_WIDTH: Int = 70
 const val MAX_LINE_LENGTH_WORD_WRAP: Int = -1
 
 /**
- * Text is not wrapped and uses only html markup like <br>
+ * Text is not wrapped and uses only html markup like `<br>`
  */
 const val MAX_LINE_LENGTH_NO_WRAP: Int = Int.MAX_VALUE
 

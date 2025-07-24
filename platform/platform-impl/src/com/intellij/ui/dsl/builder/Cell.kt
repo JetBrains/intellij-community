@@ -8,9 +8,13 @@ import com.intellij.openapi.ui.validation.DialogValidation
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.UiDslException
-import com.intellij.ui.dsl.gridLayout.*
+import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.validation.CellValidation
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.ValidationInfoBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComboBox
@@ -54,9 +58,14 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   val component: T
 
   /**
-   * Comment assigned to the cell.
+   * Comment assigned to the cell by [comment(comment, maxLineLength, action)][comment] method.
    */
   val comment: JEditorPane?
+
+  /**
+   * Comment assigned to the cell by [commentRight(comment, action)][commentRight] method.
+   */
+  val commentRight: JEditorPane?
 
   fun focused(): Cell<T>
 
@@ -80,14 +89,15 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun bold(): Cell<T>
 
   /**
-   * Adds comment under the cell aligned by left edge with the appropriate color and font size.
+   * Adds a component-related comment below the cell, aligned by the left edge, with the appropriate color and font size.
    * * [comment] can contain HTML tags except `<html>`, which is added automatically
    * * `\n` does not work as new line in html, use `<br>` instead
    * * Links with href to http/https are automatically marked with additional arrow icon
    * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
+   * * The related component uses the comment as the accessible description (if not specified directly)
    *
    * The comment occupies the available width before the next comment (if present) or
-   * whole remaining width. Visibility and enabled state of the cell affects comment as well.
+   * the whole remaining width. Visibility and enabled state of the cell affect the comment as well.
    *
    * For layout [RowLayout.LABEL_ALIGNED] comment after second columns is placed in second column (there are technical problems,
    * can be implemented later)
@@ -95,9 +105,27 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * @see MAX_LINE_LENGTH_WORD_WRAP
    * @see MAX_LINE_LENGTH_NO_WRAP
    */
-  fun comment(@NlsContexts.DetailedDescription comment: String?,
-              maxLineLength: Int = DEFAULT_COMMENT_WIDTH,
-              action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<T>
+  fun comment(
+    @NlsContexts.DetailedDescription comment: String?,
+    maxLineLength: Int = DEFAULT_COMMENT_WIDTH,
+    action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE,
+  ): Cell<T>
+
+  /**
+   * Adds a component-related comment on the right side, with the appropriate color and font size.
+   * * [comment] can contain HTML tags except `<html>`, which is added automatically
+   * * `\n` does not work as new line in html, use `<br>` instead
+   * * Links with href to http/https are automatically marked with additional arrow icon
+   * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
+   * * The related component uses the comment as the accessible description (if not specified directly)
+   * * Text is not wrapped and uses only html markup like `<br>`, similar to [MAX_LINE_LENGTH_NO_WRAP]
+   *
+   * Visibility and enabled state of the cell affect the comment as well.
+   */
+  fun commentRight(
+    @NlsContexts.DetailedDescription comment: String?,
+    action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE,
+  ): Cell<T>
 
   /**
    * Adds the label with optional mnemonic related to the cell component.
@@ -108,7 +136,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   /**
    * Adds the label related to the cell component at specified [position].
    * [LabelPosition.TOP] labels occupy available width before the next top label (if present) or
-   * whole remaining width. Visibility and enabled state of the cell affects the label as well.
+   * whole remaining width. Visibility and enabled state of the cell affect the label as well.
    *
    * For layout [RowLayout.LABEL_ALIGNED] labels for two first columns are supported only (there are technical problems,
    * can be implemented later).

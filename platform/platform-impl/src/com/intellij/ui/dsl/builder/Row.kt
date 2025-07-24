@@ -109,8 +109,8 @@ interface Row {
 
   /**
    * Adds comment after the row with the appropriate color and font size.
-   * * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically
-   * * \n does not work as new line in HTML, use &lt;br&gt; instead
+   * * [comment] can contain HTML tags except `<html>`, which is added automatically
+   * * \n does not work as new line in HTML, use `<br>` instead
    * * Links with href to http/https are automatically marked with additional arrow icon
    * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
    *
@@ -234,8 +234,8 @@ interface Row {
 
   /**
    * Adds text
-   * * [text] can contain HTML tags except &lt;html&gt;, which is added automatically
-   * * \n does not work as new line in html, use &lt;br&gt; instead
+   * * [text] can contain HTML tags except `<html>`, which is added automatically
+   * * \n does not work as new line in html, use `<br>` instead
    * * Links with href to http/https are automatically marked with additional arrow icon
    * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
    * * MAX_LINE_LENGTH_WORD_WRAP sets AlignX.FILL, with other horizontal aligns word wrap is not supported
@@ -249,8 +249,8 @@ interface Row {
 
   /**
    * Adds comment with the appropriate color and font size.
-   * * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically
-   * * \n does not work as new line in html, use &lt;br&gt; instead
+   * * [comment] can contain HTML tags except `<html>`, which is added automatically
+   * * \n does not work as new line in html, use `<br>` instead
    * * Links with href to http/https are automatically marked with additional arrow icon
    * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
    * * MAX_LINE_LENGTH_WORD_WRAP sets AlignX.FILL, with other horizontal aligns word wrap is not supported

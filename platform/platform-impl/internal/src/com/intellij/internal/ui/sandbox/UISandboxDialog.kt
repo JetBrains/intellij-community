@@ -17,6 +17,8 @@ import com.intellij.internal.ui.sandbox.dsl.validation.CrossValidationPanel
 import com.intellij.internal.ui.sandbox.dsl.validation.ValidationPanel
 import com.intellij.internal.ui.sandbox.dsl.validation.ValidationRefactoringPanel
 import com.intellij.internal.ui.sandbox.tests.accessibility.AccessibilityFailedInspectionsPanel
+import com.intellij.internal.ui.sandbox.tests.components.JBTextAreaTestPanel
+import com.intellij.internal.ui.sandbox.tests.dsl.CommentRightTestPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -106,10 +108,15 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
 
     Group("Tests", children = listOf(
       Group("Accessibility", children = listOf(
-        AccessibilityFailedInspectionsPanel())
-      )
-    )
-    )
+        AccessibilityFailedInspectionsPanel()
+      )),
+      Group("Components", children = listOf(
+        JBTextAreaTestPanel()
+      )),
+      Group("Kotlin UI DSL", children = listOf(
+        CommentRightTestPanel()
+      )),
+    ))
   )
 
   private val filter = ElementFilter<SandboxTreeNodeBase> {
@@ -149,7 +156,8 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
 
         KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false),
         KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0, false),
-        KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0, false) -> {
+        KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0, false),
+          -> {
           if (textEditor.isFocusOwner) {
             tree.processKeyEvent(e)
             return true
