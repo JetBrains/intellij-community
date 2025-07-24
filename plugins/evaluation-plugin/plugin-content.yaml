@@ -22,6 +22,7 @@
   - name: intellij.evaluationPlugin.languages.python
   - name: intellij.evaluationPlugin.languages.kotlin
   - name: intellij.evaluationPlugin.languages.cpp
+  - name: intellij.evaluationPlugin.languages.cppRd
   - name: intellij.evaluationPlugin.languages.csharp
   - name: intellij.evaluationPlugin.languages.go
   - name: intellij.evaluationPlugin.languages.js

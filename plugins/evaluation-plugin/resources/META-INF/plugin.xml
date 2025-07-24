@@ -16,6 +16,7 @@
     <module name="intellij.evaluationPlugin.languages.kotlin"/>
 
     <module name="intellij.evaluationPlugin.languages.cpp"/>
+    <module name="intellij.evaluationPlugin.languages.cppRd"/>
     <module name="intellij.evaluationPlugin.languages.csharp"/>
     <module name="intellij.evaluationPlugin.languages.go"/>
     <module name="intellij.evaluationPlugin.languages.js"/>

@@ -31,6 +31,15 @@ class LineCompletionVisitorHelper(val maxPrefixLength: Int = 4) {
     }
   }
 
+  fun addElement(element: CodeToken) {
+    val text = element.text.take(maxPrefixLength)
+    if (text.isValuableString()) {
+      lines.find { it.offset <= element.offset && it.offset + it.text.length > element.offset }
+        ?.takeIf { it.getChildren().all { it.offset != element.offset } }
+        ?.addChild(element)
+    }
+  }
+
   fun addElement(element: ASTNode) {
     val text = element.text.take(maxPrefixLength)
     if (text.isValuableString()) {
