@@ -14594,9 +14594,19 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/classHierarchy6.kt");
             }
 
+            @TestMetadata("contextFunctionCallableReferenceUsage.kt")
+            public void testContextFunctionCallableReferenceUsage() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/contextFunctionCallableReferenceUsage.kt");
+            }
+
             @TestMetadata("contextProperty.kt")
             public void testContextProperty() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/contextProperty.kt");
+            }
+
+            @TestMetadata("contextPropertyCallableReferenceUsage.kt")
+            public void testContextPropertyCallableReferenceUsage() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/contextPropertyCallableReferenceUsage.kt");
             }
 
             @TestMetadata("contextPropertyUsedInIf.kt")

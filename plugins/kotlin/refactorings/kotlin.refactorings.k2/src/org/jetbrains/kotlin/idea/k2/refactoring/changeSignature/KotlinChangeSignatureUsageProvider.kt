@@ -92,12 +92,12 @@ class KotlinChangeSignatureUsageProvider : ChangeSignatureUsageProvider {
                     }
                     parent is KtConstructorDelegationCall ->
                         return KotlinConstructorDelegationCallUsage(parent, method)
+                    parent is KtCallableReferenceExpression ->
+                        return KotlinCallableReferenceUsage(parent)
                     element is KtSimpleNameExpression && (method is KtProperty || method is KtParameter) ->
                         return KotlinPropertyCallUsage(element, changeInfo as KotlinChangeInfoBase)
                     element is KtSuperTypeCallEntry ->
                         return KotlinFunctionCallUsage(element, method)
-                    parent is KtCallableReferenceExpression ->
-                        return KotlinCallableReferenceUsage(parent)
                     else -> {
                         //skip imports for now, they are removed by optimize imports
                         if (PsiTreeUtil.getParentOfType(element, KtImportDirective::class.java, true, KtDeclaration::class.java) != null) {
