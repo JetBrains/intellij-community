@@ -54,7 +54,6 @@ import com.intellij.ui.content.ContentManagerEvent.ContentOperation
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.PlatformUtils
-import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBUI
@@ -554,6 +553,11 @@ class StructureViewWrapperImpl(
     if (myStructureView is StructureViewComposite) {
       ((myStructureView as StructureViewComposite).selectedStructureView as? StructureViewComponent)?.queueUpdate()
     }
+  }
+
+  @ApiStatus.Internal
+  fun getStructureView(): StructureView? {
+    return myStructureView
   }
 
   private suspend fun updateHeaderActions(structureView: StructureView?) {

@@ -421,8 +421,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   public final @NotNull List<AnAction> addExpandCollapseActions() {
     List<AnAction> result = new ArrayList<>();
     CommonActionsManager commonActionManager = CommonActionsManager.getInstance();
-    result.add(commonActionManager.createExpandAllHeaderAction(getTree()));
-    result.add(commonActionManager.createCollapseAllHeaderAction(getTree()));
+    var expander = new StructureViewExpander(myProject);
+    result.add(commonActionManager.createExpandAllHeaderAction(expander, getTree()));
+    result.add(commonActionManager.createCollapseAllHeaderAction(expander, getTree()));
     return result;
   }
 
