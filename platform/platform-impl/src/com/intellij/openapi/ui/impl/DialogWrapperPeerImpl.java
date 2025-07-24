@@ -432,22 +432,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @SuppressWarnings("deprecation") boolean changeModalityState = appStarted && myDialog.isModal() && !isProgressDialog();
     Project project = myProject;
 
-    AccessToken lockContextCleanup;
-    Function0<Unit> lockCleanup;
+
 
     if (changeModalityState) {
       commandProcessor.enterModal();
       LaterInvocator.enterModal(myDialog);
-
-      var pair = ApplicationManager.getApplication().isWriteAccessAllowed()
-                 ? new Pair<>(EmptyCoroutineContext.INSTANCE, emptyFunction)
-                 : IntelliJLockingUtil.getGlobalThreadingSupport().getPermitAsContextElement(ThreadContext.currentThreadContext(), true);
-      lockContextCleanup = ThreadContext.installThreadContext(pair.getFirst(), true);
-      lockCleanup = pair.getSecond();
-    }
-    else {
-      lockContextCleanup = ThreadContext.resetThreadContext();
-      lockCleanup = emptyFunction;
     }
 
     if (appStarted) {
@@ -470,6 +459,21 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     CompletableFuture<Void> result = new CompletableFuture<>();
     SplashManagerKt.hideSplash();
+
+    AccessToken lockContextCleanup;
+    Function0<Unit> lockCleanup;
+    if (changeModalityState) {
+      var pair = ApplicationManager.getApplication().isWriteAccessAllowed()
+                 ? new Pair<>(EmptyCoroutineContext.INSTANCE, emptyFunction)
+                 : IntelliJLockingUtil.getGlobalThreadingSupport().getPermitAsContextElement(ThreadContext.currentThreadContext(), true);
+
+      lockContextCleanup = ThreadContext.installThreadContext(pair.getFirst(), true);
+      lockCleanup = pair.getSecond();
+    }
+    else {
+      lockContextCleanup = ThreadContext.resetThreadContext();
+      lockCleanup = emptyFunction;
+    }
     try (
       AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET);
       AccessToken ignore3 = lockContextCleanup
