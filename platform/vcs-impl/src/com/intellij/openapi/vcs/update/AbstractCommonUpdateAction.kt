@@ -4,7 +4,6 @@
 package com.intellij.openapi.vcs.update
 
 import com.intellij.configurationStore.StoreReloadManager
-import com.intellij.configurationStore.forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod
 import com.intellij.history.Label
 import com.intellij.history.LocalHistory
 import com.intellij.history.LocalHistoryAction
@@ -13,14 +12,10 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -28,7 +23,6 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.*
-import com.intellij.openapi.vcs.actions.DescindingFilesFilter
 import com.intellij.openapi.vcs.changes.RemoteRevisionsCache
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
@@ -38,178 +32,40 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.OptionsDialog
 import com.intellij.vcs.VcsActivity
 import com.intellij.vcs.ViewUpdateInfoNotification
-import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
 private val LOG = Logger.getInstance(AbstractCommonUpdateAction::class.java)
 
+@ApiStatus.Internal
 abstract class AbstractCommonUpdateAction protected constructor(
   private val actionInfo: ActionInfo,
   private val scopeInfo: ScopeInfo,
-  private val alwaysVisible: Boolean
+  private val alwaysVisible: Boolean,
 ) : DumbAwareAction() {
   companion object {
+    @Deprecated("Use VcsUpdateProcess.checkUpdateHasCustomNotification",
+                ReplaceWith("VcsUpdateProcess.checkUpdateHasCustomNotification(vcss)", "com.intellij.openapi.vcs.update.VcsUpdateProcess"))
     @JvmStatic
-    fun showsCustomNotification(vcss: Collection<AbstractVcs>): Boolean {
-      return vcss.all { vcs ->
-        val environment = vcs.updateEnvironment
-        environment != null && environment.hasCustomNotification()
-      }
-    }
+    fun showsCustomNotification(vcss: Collection<AbstractVcs>): Boolean = VcsUpdateProcess.checkUpdateHasCustomNotification(vcss)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  @Suppress("IncorrectCancellationExceptionHandling")
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project
-    val showUpdateOptions = isShowOptions(project)
-
-    LOG.debug { "project: $project, show update options: $showUpdateOptions" }
-
-    if (project == null) {
-      return
-    }
-
-    try {
-      val roots = getRoots(project, e.dataContext)
-      if (roots.isEmpty()) {
-        LOG.debug("No roots found.")
-        return
-      }
-
-      val vcsToVirtualFiles = createVcsToFilesMap(roots, project)
-      for (vcs in vcsToVirtualFiles.keys) {
-        val updateEnvironment = actionInfo.getEnvironment(vcs)
-        if (updateEnvironment != null && !updateEnvironment.validateOptions(vcsToVirtualFiles.get(vcs))) {
-          // messages already shown
-          LOG.debug { "Options not valid for files: $vcsToVirtualFiles" }
-          return
-        }
-      }
-
-      if (showUpdateOptions || OptionsDialog.shiftIsPressed(e.modifiers)) {
-        val scopeName = scopeInfo.getScopeName(e.dataContext, actionInfo)
-        showOptionsDialog(vcsToVirtualFiles, project, scopeName)
-      }
-
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        // Not only documents, but also project settings should be saved,
-        // to ensure that if as a result of Update some project settings will be changed,
-        // all local changes are saved in prior and do not overwrite remote changes.
-        // Also, there is a chance that save during update can break it -
-        // we do disable auto saving during update, but still, there is a chance that save will occur.
-        FileDocumentManager.getInstance().saveAllDocuments()
-        forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project, false)
-      }
-
-      val task = object : Updater(project, roots, vcsToVirtualFiles, actionInfo, getTemplatePresentation().text) {
-        override fun onSuccess() {
-          super.onSuccess()
-          this@AbstractCommonUpdateAction.onSuccess()
-        }
-      }
-
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        task.run(EmptyProgressIndicator())
-      }
-      else {
-        ProgressManager.getInstance().run(task)
-      }
-    }
-    catch (_: ProcessCanceledException) {
-    }
-  }
-
-  protected open fun isShowOptions(project: Project?): Boolean = actionInfo.showOptions(project)
-
-  protected open fun onSuccess() {
-  }
-
-  private fun showOptionsDialog(
-    updateEnvToVirtualFiles: Map<AbstractVcs, Collection<FilePath>>, project: Project?,
-    scopeName: String?
-  ) {
-    val envToConfMap = createConfigurableToEnvMap(updateEnvToVirtualFiles)
-    LOG.debug { "configurables map: $envToConfMap" }
-    if (!envToConfMap.isEmpty()) {
-      val dialogOrStatus = actionInfo.createOptionsDialog(project, envToConfMap, scopeName)
-      if (!dialogOrStatus.showAndGet()) {
-        throw ProcessCanceledException()
-      }
-    }
-  }
-
-  private fun getRoots(project: Project, context: DataContext): Array<FilePath> {
-    val filePaths = scopeInfo.getRoots(context, actionInfo)
-    return DescindingFilesFilter.filterDescindingFiles(filterRoots(project, filePaths), project)
-  }
-
-  private fun createConfigurableToEnvMap(updateEnvToVirtualFiles: Map<AbstractVcs, Collection<FilePath>>): LinkedHashMap<Configurable, AbstractVcs> {
-    val envToConfMap = LinkedHashMap<Configurable, AbstractVcs>()
-    for (vcs in updateEnvToVirtualFiles.keys) {
-      val configurable = actionInfo.getEnvironment(vcs).createConfigurable(updateEnvToVirtualFiles.get(vcs))
-      if (configurable != null) {
-        envToConfMap.put(configurable, vcs)
-      }
-    }
-    return envToConfMap
-  }
-
-  fun getConfigurableToEnvMap(project: Project): LinkedHashMap<Configurable, AbstractVcs> {
-    val roots = getRoots(project, SimpleDataContext.getProjectContext(project))
-    val vcsToFilesMap = createVcsToFilesMap(roots, project)
-    return createConfigurableToEnvMap(vcsToFilesMap)
-  }
-
-  private fun createVcsToFilesMap(roots: Array<FilePath>, project: Project): Map<AbstractVcs, Collection<FilePath>> {
-    val resultPrep = MultiMap.createSet<AbstractVcs, FilePath>()
-    for (file in roots) {
-      val vcs = VcsUtil.getVcsFor(project, file) ?: continue
-      val updateEnvironment = actionInfo.getEnvironment(vcs)
-      if (updateEnvironment != null) {
-        resultPrep.putValue(vcs, file)
-      }
-    }
-
-    val result = HashMap<AbstractVcs, MutableCollection<FilePath>>()
-    for (entry in resultPrep.entrySet()) {
-      val vcs = entry.key
-      @Suppress("DEPRECATION")
-      result.put(vcs, vcs.filterUniqueRoots(ArrayList(entry.value)) { it.getVirtualFile() })
-    }
-    return result
-  }
-
-  private fun filterRoots(project: Project, roots: MutableList<FilePath>): Array<FilePath> {
-    val result = ArrayList<FilePath>()
-    for (file in roots) {
-      val vcs = VcsUtil.getVcsFor(project, file) ?: continue
-      if (!scopeInfo.filterExistsInVcs() || AbstractVcs.fileInVcsByFileStatus(project, file)) {
-        val updateEnvironment = actionInfo.getEnvironment(vcs)
-        if (updateEnvironment != null) {
-          result.add(file)
-        }
-      }
-      else {
-        val virtualFile = file.getVirtualFile()
-        if (virtualFile != null && virtualFile.isDirectory()) {
-          val vcsRoots = ProjectLevelVcsManager.getInstance(project).getAllVersionedRoots()
-          for (vcsRoot in vcsRoots) {
-            if (VfsUtilCore.isAncestor(virtualFile, vcsRoot, false)) {
-              result.add(file)
-            }
-          }
-        }
-      }
-    }
-    return result.toTypedArray()
+    val project = e.project ?: return
+    VcsUpdateProcess.launchUpdate(
+      project,
+      actionInfo,
+      scopeInfo,
+      e.dataContext,
+      actionName = getTemplatePresentation().text,
+      forceShowOptions = OptionsDialog.shiftIsPressed(e.modifiers),
+    )
   }
 
   protected abstract fun filterRootsBeforeAction(): Boolean
@@ -243,8 +99,7 @@ abstract class AbstractCommonUpdateAction protected constructor(
     }
 
     if (filterRootsBeforeAction()) {
-      val filePaths = scopeInfo.getRoots(e.dataContext, actionInfo)
-      val roots = filterRoots(project, filePaths)
+      val roots = VcsUpdateProcess.getRoots(project, actionInfo, scopeInfo, e.dataContext, false)
       if (roots.isEmpty()) {
         presentation.setVisible(alwaysVisible)
         presentation.setEnabled(false)
@@ -257,13 +112,12 @@ abstract class AbstractCommonUpdateAction protected constructor(
     presentation.setEnabled(!vcsManager.isBackgroundVcsOperationRunning() && (singleVcs == null || !singleVcs.isUpdateActionDisabled))
   }
 
-  @ApiStatus.Internal
-  open class Updater(
-    project: Project,
+  internal open class Updater(
+    private val project: Project,
     private val roots: Array<FilePath>,
-    private val vcsToVirtualFiles: Map<AbstractVcs, Collection<FilePath>>,
+    private val spec: List<VcsUpdateSpecification>,
     private val actionInfo: ActionInfo,
-    private val actionName: @Nls @NlsContexts.ProgressTitle String
+    private val actionName: @Nls @NlsContexts.ProgressTitle String,
   ) : Task.Backgroundable(project, actionName, true) {
     private val projectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project)
     protected var updatedFiles: UpdatedFiles = UpdatedFiles.create()
@@ -292,31 +146,25 @@ abstract class AbstractCommonUpdateAction protected constructor(
     }
 
     private fun runImpl() {
-      val project = myProject
-      if (project != null) {
-        StoreReloadManager.getInstance(project).blockReloadingProjectOnExternalChanges()
-      }
+      StoreReloadManager.getInstance(project).blockReloadingProjectOnExternalChanges()
       projectLevelVcsManager.startBackgroundVcsOperation()
 
       val progressIndicator = ProgressManager.getInstance().getProgressIndicator()
 
-      before = LocalHistory.getInstance().putSystemLabel(project!!, VcsBundle.message("update.label.before.update"))
+      before = LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("update.label.before.update"))
       localHistoryAction = LocalHistory.getInstance().startAction(VcsBundle.message("activity.name.update"), VcsActivity.Update)
       progressIndicator?.setIndeterminate(false)
       val activity = VcsStatisticsCollector.UPDATE_ACTIVITY.started(project)
       try {
-        val toBeProcessed = vcsToVirtualFiles.size
+        val toBeProcessed = spec.size
         var processed = 0
-        for (vcs in vcsToVirtualFiles.keys) {
-          val updateEnvironment = actionInfo.getEnvironment(vcs)
+        for ((vcs, updateEnvironment, files) in spec) {
           updateEnvironment.fillGroups(updatedFiles)
-          val files = vcsToVirtualFiles.get(vcs)!!
 
           val context = contextInfo.get(vcs)
           val refContext = Ref<SequentialUpdatesContext>(context)
 
-          // actual update
-          val updateSession = performUpdate(progressIndicator, updateEnvironment, files, refContext)
+          val updateSession = updateEnvironment.updateDirectories(files.toTypedArray(), updatedFiles, progressIndicator, refContext)
 
           contextInfo.put(vcs, refContext.get())
           processed++
@@ -341,15 +189,6 @@ abstract class AbstractCommonUpdateAction protected constructor(
           activity.finished()
         }
       }
-    }
-
-    protected open fun performUpdate(
-      progressIndicator: ProgressIndicator?,
-      updateEnvironment: UpdateEnvironment,
-      files: Collection<FilePath>,
-      refContext: Ref<SequentialUpdatesContext>
-    ): UpdateSession {
-      return updateEnvironment.updateDirectories(files.toTypedArray(), updatedFiles, progressIndicator, refContext)
     }
 
     private fun gatherExceptions(vcs: AbstractVcs, exceptionList: MutableList<VcsException>) {
@@ -389,7 +228,7 @@ abstract class AbstractCommonUpdateAction protected constructor(
     private fun prepareNotification(
       tree: UpdateInfoTree,
       someSessionWasCancelled: Boolean,
-      updateSessions: List<UpdateSession>
+      updateSessions: List<UpdateSession>,
     ): Notification {
       val allFilesCount = updatedFiles.topLevelGroups.sumOf { getFilesCount(it) }
 
@@ -507,7 +346,7 @@ abstract class AbstractCommonUpdateAction protected constructor(
             .setDisplayId(VcsNotificationIdsHolder.PROJECT_UPDATE_FINISHED))
       }
       else if (!updatedFiles.isEmpty) {
-        if (updateSessions.size == 1 && showsCustomNotification(vcsToVirtualFiles.keys)) {
+        if (updateSessions.size == 1 && VcsUpdateProcess.checkUpdateHasCustomNotification(spec.map { it.vcs })) {
           // multi-vcs projects behave as before: only a compound notification & file tree is shown for them, for the sake of simplicity
           updateSessions.get(0).showNotification()
         }
@@ -563,13 +402,13 @@ abstract class AbstractCommonUpdateAction protected constructor(
       val updateInfoTree = projectLevelVcsManager.showUpdateProjectInfo(updatedFiles, text, actionInfo, wasCanceled)!!
       updateInfoTree.setBefore(before)
       updateInfoTree.setAfter(after)
-      updateInfoTree.setCanGroupByChangeList(canGroupByChangelist(vcsToVirtualFiles.keys))
+      updateInfoTree.setCanGroupByChangeList(canGroupByChangelist(spec.map { it.vcs }))
       return updateInfoTree
     }
 
-    private fun canGroupByChangelist(abstractVcses: Set<AbstractVcs>): Boolean {
+    private fun canGroupByChangelist(vcses: Collection<AbstractVcs>): Boolean {
       if (actionInfo.canGroupByChangelist()) {
-        for (vcs in abstractVcses) {
+        for (vcs in vcses) {
           if (vcs.getCachingCommittedChangesProvider() != null) {
             return true
           }
@@ -598,7 +437,7 @@ private fun prepareScopeUpdatedText(tree: UpdateInfoTree): @Nls HtmlChunk {
   }
 }
 
-private fun someSessionWasCanceled(updateSessions: List<UpdateSession>): Boolean = updateSessions.any { it.isCanceled()  }
+private fun someSessionWasCanceled(updateSessions: List<UpdateSession>): Boolean = updateSessions.any { it.isCanceled() }
 
 private fun getAllFilesAreUpToDateMessage(roots: Array<FilePath>): @NlsContexts.NotificationContent String {
   if (roots.size == 1 && !roots[0].isDirectory()) {

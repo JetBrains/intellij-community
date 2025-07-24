@@ -1,18 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.update.*
-import com.intellij.util.containers.toArray
-import com.intellij.vcsUtil.VcsUtil
+import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.GitNotificationIdsHolder.Companion.BRANCH_SET_UPSTREAM_ERROR
 import git4idea.GitNotificationIdsHolder.Companion.UPDATE_NOTHING_TO_UPDATE
+import git4idea.GitVcs
 import git4idea.branch.GitBranchPair
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
@@ -20,7 +19,6 @@ import git4idea.commands.GitLineHandler
 import git4idea.config.UpdateMethod
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.update.GitUpdateEnvironment.performUpdate
 
 internal class GitUpdateExecutionProcess(
   private val project: Project,
@@ -37,47 +35,26 @@ internal class GitUpdateExecutionProcess(
       return
     }
 
-    val vcsToRoots = getVcsRoots(repositories)
-    val roots = vcsToRoots.values.flatten().toArray(emptyArray())
+    val roots = repositories.map { getFilePath(it.root) }
+    val gitUpdateEnvironment = project.service<GitUpdateEnvironment>()
+    val updateEnvironment = object : UpdateEnvironment by gitUpdateEnvironment {
+      override fun updateDirectories(contentRoots: Array<out FilePath>, updatedFiles: UpdatedFiles, progressIndicator: ProgressIndicator, context: Ref<SequentialUpdatesContext?>): UpdateSession {
+        if (shouldSetAsUpstream) {
+          updateConfig.forEach { (repository, branchPair) -> setBranchUpstream(repository, branchPair) }
+        }
 
-    ProgressManager.getInstance()
-      .run(UpdateExecution(
-        project = project,
-        vcsToRoots = vcsToRoots,
-        roots = roots,
-        updateConfig = updateConfig,
-        updateMethod = updateMethod,
-        shouldSetAsUpstream = shouldSetAsUpstream,
-      ))
-  }
+        return GitUpdateEnvironment.performUpdate(project, contentRoots, updatedFiles, progressIndicator, updateMethod, updateConfig)
+      }
 
-  private fun getVcsRoots(repositories: Collection<GitRepository>): Map<AbstractVcs, Collection<FilePath>> {
-    return repositories.associate { repo ->
-      repo.vcs to listOf(VcsUtil.getFilePath(repo.root))
+      override fun hasCustomNotification(): Boolean = gitUpdateEnvironment.hasCustomNotification()
     }
-  }
-}
+    val spec = VcsUpdateSpecification(GitVcs.getInstance(project), updateEnvironment, roots)
 
-private class UpdateExecution(
-  project: Project,
-  vcsToRoots: Map<AbstractVcs, Collection<FilePath>>,
-  private val roots: Array<FilePath>,
-  private val updateConfig: Map<GitRepository, GitBranchPair>,
-  private val updateMethod: UpdateMethod,
-  private val shouldSetAsUpstream: Boolean = false,
-)
-  : AbstractCommonUpdateAction.Updater(project, roots, vcsToRoots, ActionInfo.UPDATE, GitBundle.message("progress.title.update")) {
-  override fun performUpdate(
-    progressIndicator: ProgressIndicator?,
-    updateEnvironment: UpdateEnvironment,
-    files: Collection<FilePath>,
-    refContext: Ref<SequentialUpdatesContext>,
-  ): UpdateSession {
-    if (shouldSetAsUpstream) {
-      updateConfig.forEach { (repository, branchPair) -> setBranchUpstream(repository, branchPair) }
-    }
-
-    return performUpdate(project, roots, updatedFiles, progressIndicator, updateMethod, updateConfig)
+    VcsUpdateProcess.launchUpdate(project,
+                                  roots.toTypedArray(),
+                                  listOf(spec),
+                                  ActionInfo.UPDATE,
+                                  GitBundle.message("progress.title.update"))
   }
 
   private fun setBranchUpstream(repository: GitRepository, branchConfig: GitBranchPair) {
