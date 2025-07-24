@@ -29,10 +29,18 @@ public final class URLUtil {
   public static final String JRT_PROTOCOL = "jrt";
   public static final String JAR_SEPARATOR = "!/";
 
-  public static final Pattern DATA_URI_PATTERN = Pattern.compile("data:(?:[^,;]+/[^,;]+)(?:;charset[=:][^,;]+)?(;base64)?,(.+)");
-  public static final Pattern URL_PATTERN = Pattern.compile("\\b(?:mailto:|(?:news|(?:ht|f)tp(?:s?))://|(?:(?<![\\p{L}0-9_.])(?:www\\.)))[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
-  public static final Pattern URL_WITH_PARENS_PATTERN = Pattern.compile("\\b(?:mailto:|(?:news|(?:ht|f)tp(?:s?))://|(?:(?<![\\p{L}0-9_.])(?:www\\.)))[-A-Za-z0-9+$&@#/%?=~_|!:,.;()]*[-A-Za-z0-9+$&@#/%=~_|()]");
-  public static final Pattern FILE_URL_PATTERN = Pattern.compile("\\b(?:file:///)[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
+  public static final Pattern DATA_URI_PATTERN = Pattern.compile("data:([^,;]+/[^,;]+)(;charset[=:][^,;]+)?(;base64)?,(.+)");
+  public static final Pattern URL_PATTERN = Pattern.compile("\\b(mailto:|(news|(ht|f)tp(s?))://|((?<![\\p{L}0-9_.])(www\\.)))[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
+  public static final Pattern URL_WITH_PARENS_PATTERN = Pattern.compile("\\b(mailto:|(news|(ht|f)tp(s?))://|((?<![\\p{L}0-9_.])(www\\.)))[-A-Za-z0-9+$&@#/%?=~_|!:,.;()]*[-A-Za-z0-9+$&@#/%=~_|()]");
+  public static final Pattern FILE_URL_PATTERN = Pattern.compile("\\b(file:///)[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
+
+  // These patterns contain fewer capturing groups than the patterns above.
+  // So, they are more performant.
+  // Use these patterns if you don't need to access specific groups.
+  public static final Pattern DATA_URI_PATTERN_OPTIMIZED = Pattern.compile("data:(?:[^,;]+/[^,;]+)(?:;charset[=:][^,;]+)?(;base64)?,(.+)");
+  public static final Pattern URL_PATTERN_OPTIMIZED = Pattern.compile("\\b(?:mailto:|(?:news|(?:ht|f)tp(?:s?))://|(?:(?<![\\p{L}0-9_.])(?:www\\.)))[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
+  public static final Pattern URL_WITH_PARENS_PATTERN_OPTIMIZED = Pattern.compile("\\b(?:mailto:|(?:news|(?:ht|f)tp(?:s?))://|(?:(?<![\\p{L}0-9_.])(?:www\\.)))[-A-Za-z0-9+$&@#/%?=~_|!:,.;()]*[-A-Za-z0-9+$&@#/%=~_|()]");
+  public static final Pattern FILE_URL_PATTERN_OPTIMIZED = Pattern.compile("\\b(?:file:///)[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
 
   public static final Pattern HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>");
 
@@ -200,7 +208,7 @@ public final class URLUtil {
    * @return extracted byte array or {@code null} if it cannot be extracted.
    */
   public static byte @Nullable [] getBytesFromDataUri(@NotNull String dataUrl) {
-    Matcher matcher = DATA_URI_PATTERN.matcher(StringUtilRt.unquoteString(dataUrl));
+    Matcher matcher = DATA_URI_PATTERN_OPTIMIZED.matcher(StringUtilRt.unquoteString(dataUrl));
     if (matcher.matches()) {
       try {
         String content = matcher.group(2);
