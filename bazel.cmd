@@ -59,7 +59,7 @@ exec "$binary_path" "$@"
 
 setlocal
 
-set /p BAZELISK_VERSION=<%~dp0.bazeliskversion
+set /p BAZELISK_VERSION=<"%~dp0.bazeliskversion"
 set BAZELISK_TARGET_DIR=%LOCALAPPDATA%\JetBrains\monorepo-bazelisk
 set BAZELISK_TARGET_FILE=%BAZELISK_TARGET_DIR%\bazelisk-%BAZELISK_VERSION%-windows-%PROCESSOR_ARCHITECTURE%.exe
 set POWERSHELL=%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe
@@ -82,5 +82,5 @@ Set-StrictMode -Version 3.0; ^
 
 IF NOT EXIST "%BAZELISK_TARGET_FILE%" "%POWERSHELL%" -nologo -noprofile -Command %POWERSHELL_COMMAND% >&2
 
-%BAZELISK_TARGET_FILE% %*
+"%BAZELISK_TARGET_FILE%" %*
 exit /B %ERRORLEVEL%
