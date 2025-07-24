@@ -322,7 +322,9 @@ class MacDistributionBuilder(
 
   private suspend fun buildForArch(arch: JvmArchitecture, macZip: Path, macZipWithoutRuntime: Path?) {
     spanBuilder("build macOS artifacts for specific arch").setAttribute("arch", arch.name).use(Dispatchers.IO) {
-      val notarize = System.getProperty("intellij.build.mac.notarize")?.toBoolean() ?: !context.isStepSkipped(BuildOptions.MAC_NOTARIZE_STEP)
+      val notarize = System.getProperty("intellij.build.mac.notarize")?.toBoolean()
+                     ?: !context.isStepSkipped(BuildOptions.MAC_NOTARIZE_STEP)
+                     && !context.isStepSkipped(BuildOptions.MAC_SIGN_STEP)
       buildForArch(arch, macZip, macZipWithoutRuntime, notarize)
       Files.deleteIfExists(macZip)
     }
