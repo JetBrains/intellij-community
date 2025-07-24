@@ -17,7 +17,7 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateHighlighting
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateSyntaxMatcherImpl
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
-import org.jetbrains.plugins.textmate.language.syntax.selector.withCachingSelectorWeigher
+import org.jetbrains.plugins.textmate.language.syntax.selector.caching
 import org.jetbrains.plugins.textmate.regex.CaffeineCachingRegexProvider
 import org.jetbrains.plugins.textmate.regex.RememberingLastMatchRegexFactory
 import java.io.File
@@ -45,7 +45,7 @@ abstract class TextMateLexerTestCase {
     val text = sourceData.replace("$(\\n+)".toRegex(), "")
     val regexProvider = CaffeineCachingRegexProvider(RememberingLastMatchRegexFactory(JoniRegexFactory()))
 
-    withCachingSelectorWeigher(TextMateSelectorWeigherImpl()) { weigher ->
+    TextMateSelectorWeigherImpl().caching().use { weigher ->
       val syntaxMatcher = TextMateSyntaxMatcherImpl(regexProvider, weigher)
       val lexer: Lexer = TextMateHighlightingLexer(TextMateLanguageDescriptor(rootScope, syntaxTable.getSyntax(rootScope)),
                                                    syntaxMatcher,

@@ -12,12 +12,14 @@ import org.jetbrains.plugins.textmate.update
 import org.junit.jupiter.api.Test
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
 import kotlin.random.Random
 import kotlin.test.*
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTime
 
+@OptIn(ExperimentalAtomicApi::class)
 class SLRUTextMateCacheTest {
   companion object {
     private val TIMEOUT = 10.seconds

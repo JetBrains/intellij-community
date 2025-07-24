@@ -4,7 +4,6 @@ import com.intellij.textmate.joni.JoniRegexFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
-import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateCachingSelectorWeigher;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateCachingSelectorWeigherKt;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
@@ -28,9 +27,8 @@ public class TextMateLexer {
   public TextMateLexer(@NotNull TextMateLanguageDescriptor languageDescriptor,
                        int lineLimit) {
     RegexProvider regexProvider = new CaffeineCachingRegexProvider(new RememberingLastMatchRegexFactory(new JoniRegexFactory()));
-    TextMateSelectorWeigher weigher = new TextMateCachingSelectorWeigher(
-      TextMateCachingSelectorWeigherKt.createSelectorWeigherCache(new TextMateSelectorWeigherImpl()));
-    TextMateSyntaxMatcher syntaxMatcher = TextMateCachingSyntaxMatcherCoreKt.createCachingSyntaxMatcher(new TextMateSyntaxMatcherImpl(regexProvider, weigher));
+    TextMateSelectorWeigher weigher = TextMateCachingSelectorWeigherKt.caching(new TextMateSelectorWeigherImpl());
+    TextMateSyntaxMatcher syntaxMatcher = TextMateCachingSyntaxMatcherCoreKt.caching(new TextMateSyntaxMatcherImpl(regexProvider, weigher));
     myLexerCore = new TextMateLexerCore(languageDescriptor, syntaxMatcher, lineLimit, false);
   }
 

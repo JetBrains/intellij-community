@@ -4,29 +4,29 @@ import org.jetbrains.plugins.textmate.cache.SLRUTextMateCache
 import org.jetbrains.plugins.textmate.cache.TextMateCache
 import org.jetbrains.plugins.textmate.cache.use
 
-fun <T> withCachingRegexFactory(
-  regexFactory: RegexFactory,
-  body: (RegexProvider) -> T,
-): T {
-  SLRUTextMateCache<CharSequence, RegexFacade>(
+fun RegexFactory.cachingRegexProvider(): TextMateCachingRegexProvider {
+  val regexFactory = this
+  return TextMateCachingRegexProvider(SLRUTextMateCache(
     computeFn = { pattern -> regexFactory.regex(pattern) },
     disposeFn = { regex -> regex.close() },
     capacity = 1000,
     protectedRatio = 0.5,
-  ).use { cache ->
-    return body(TextMateCachingRegexProvider(cache, regexFactory))
-  }
+  ), regexFactory)
 }
 
 class TextMateCachingRegexProvider(
-  private val cache: TextMateCache<CharSequence, RegexFacade>,
-  private val regexFactory: RegexFactory,
-) : RegexProvider {
+  val cache: TextMateCache<CharSequence, RegexFacade>,
+  val regexFactory: RegexFactory,
+) : RegexProvider, AutoCloseable {
   override fun <T> withRegex(pattern: CharSequence, body: (RegexFacade) -> T): T {
     return cache.use(pattern, body)
   }
 
   override fun <T> withString(string: CharSequence, body: (TextMateString) -> T): T {
     return regexFactory.string(string).use(body)
+  }
+
+  override fun close() {
+    cache.close()
   }
 }

@@ -11,39 +11,34 @@ import org.jetbrains.plugins.textmate.TestUtil.findScopeByFileName
 import org.jetbrains.plugins.textmate.TestUtil.loadBundle
 import org.jetbrains.plugins.textmate.language.TextMateConcurrentMapInterner
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
-import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateCachingSyntaxMatcher
-import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateHighlightingLexer
-import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateSyntaxMatcher
-import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateSyntaxMatcherImpl
-import org.jetbrains.plugins.textmate.language.syntax.lexer.withCachingSyntaxMatcher
+import org.jetbrains.plugins.textmate.language.syntax.lexer.*
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
-import org.jetbrains.plugins.textmate.language.syntax.selector.withCachingSelectorWeigher
+import org.jetbrains.plugins.textmate.language.syntax.selector.caching
 import org.jetbrains.plugins.textmate.regex.CaffeineCachingRegexProvider
 import org.jetbrains.plugins.textmate.regex.DefaultRegexProvider
 import org.jetbrains.plugins.textmate.regex.RememberingLastMatchRegexFactory
-import org.jetbrains.plugins.textmate.regex.withCachingRegexFactory
+import org.jetbrains.plugins.textmate.regex.cachingRegexProvider
 import java.io.File
 import java.nio.charset.StandardCharsets
 
 class TextMateLexerPerformanceTest : UsefulTestCase() {
   fun testPerformance() {
     val regexProvider = CaffeineCachingRegexProvider(RememberingLastMatchRegexFactory(JoniRegexFactory()))
-    withCachingSelectorWeigher(TextMateSelectorWeigherImpl()) { weigher ->
-      doPerformanceTest(TextMateCachingSyntaxMatcher(TextMateSyntaxMatcherImpl(regexProvider, weigher)))
-    }
+    val weigher = TextMateSelectorCachingWeigher(TextMateSelectorWeigherImpl())
+    doPerformanceTest(TextMateCachingSyntaxMatcher(TextMateSyntaxMatcherImpl(regexProvider, weigher)))
   }
 
   fun testPerformanceCaffeineRegexFactoryCache() {
     val regexProvider = CaffeineCachingRegexProvider(RememberingLastMatchRegexFactory(JoniRegexFactory()))
-    withCachingSelectorWeigher(TextMateSelectorWeigherImpl()) { weigher ->
-      doPerformanceTest(TextMateSyntaxMatcherImpl(regexProvider, weigher))
-    }
+    val weigher = TextMateSelectorCachingWeigher(TextMateSelectorWeigherImpl())
+    doPerformanceTest(TextMateSyntaxMatcherImpl(regexProvider, weigher))
   }
 
   fun testPerformanceSlruCache() {
-    withCachingRegexFactory(RememberingLastMatchRegexFactory(JoniRegexFactory())) { regexProvider ->
-      withCachingSelectorWeigher(TextMateSelectorWeigherImpl()) { weigher ->
-        withCachingSyntaxMatcher(TextMateSyntaxMatcherImpl(regexProvider, weigher)) { syntaxMatcher ->
+    RememberingLastMatchRegexFactory(JoniRegexFactory()).cachingRegexProvider().use { regexProvider ->
+      TextMateSelectorWeigherImpl().caching().use { weigher ->
+        TextMateSyntaxMatcherImpl(regexProvider, weigher).caching().use { syntaxMatcher ->
           doPerformanceTest(syntaxMatcher)
         }
       }
@@ -51,8 +46,8 @@ class TextMateLexerPerformanceTest : UsefulTestCase() {
   }
 
   fun testPerformanceRegexFactorySlruCache() {
-    withCachingRegexFactory(RememberingLastMatchRegexFactory(RememberingLastMatchRegexFactory(JoniRegexFactory()))) { regexProvider ->
-      withCachingSelectorWeigher(TextMateSelectorWeigherImpl()) { weigher ->
+    RememberingLastMatchRegexFactory(JoniRegexFactory()).cachingRegexProvider().use { regexProvider ->
+      TextMateSelectorWeigherImpl().caching().use { weigher ->
         doPerformanceTest(TextMateSyntaxMatcherImpl(regexProvider, weigher))
       }
     }
@@ -60,7 +55,7 @@ class TextMateLexerPerformanceTest : UsefulTestCase() {
 
   fun testPerformanceNoCache() {
     val regexProvider = DefaultRegexProvider(RememberingLastMatchRegexFactory(JoniRegexFactory()))
-    withCachingSelectorWeigher(TextMateSelectorWeigherImpl()) { weigher ->
+    TextMateSelectorWeigherImpl().caching().use { weigher ->
       doPerformanceTest(TextMateSyntaxMatcherImpl(regexProvider, weigher))
     }
   }

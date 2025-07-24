@@ -13,7 +13,6 @@ import org.jetbrains.plugins.textmate.TextMateService;
 import org.jetbrains.plugins.textmate.language.TextMateScopeComparatorCore;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateElementType;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
-import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateCachingSelectorWeigher;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateCachingSelectorWeigherKt;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
@@ -27,8 +26,8 @@ public class TextMateHighlighter extends SyntaxHighlighterBase {
   private static final PlainSyntaxHighlighter PLAIN_SYNTAX_HIGHLIGHTER = new PlainSyntaxHighlighter();
 
   private final @Nullable Lexer myLexer;
-  private final @NotNull TextMateSelectorWeigher mySelectorWeigher = new TextMateCachingSelectorWeigher(
-    TextMateCachingSelectorWeigherKt.createSelectorWeigherCache(new TextMateSelectorWeigherImpl()));
+  private final @NotNull TextMateSelectorWeigher mySelectorWeigher =
+    TextMateCachingSelectorWeigherKt.caching(new TextMateSelectorWeigherImpl());
 
   public TextMateHighlighter(@Nullable Lexer lexer) {
     myLexer = lexer;

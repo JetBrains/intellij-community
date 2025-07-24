@@ -15,7 +15,6 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateCachingSynta
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateHighlightingLexer;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateSyntaxMatcher;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateSyntaxMatcherImpl;
-import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateCachingSelectorWeigher;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateCachingSelectorWeigherKt;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
@@ -39,8 +38,8 @@ public class TextMateSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
       if (languageDescriptor != null) {
         LOG.debug("Textmate highlighting: " + virtualFile.getPath());
         RegexProvider regexProvider = new CaffeineCachingRegexProvider(new RememberingLastMatchRegexFactory(new JoniRegexFactory()));
-        TextMateSelectorWeigher weigher = new TextMateCachingSelectorWeigher(TextMateCachingSelectorWeigherKt.createSelectorWeigherCache(new TextMateSelectorWeigherImpl()));
-        TextMateSyntaxMatcher syntaxMatcher = TextMateCachingSyntaxMatcherCoreKt.createCachingSyntaxMatcher(new TextMateSyntaxMatcherImpl(regexProvider, weigher));
+        TextMateSelectorWeigher weigher = TextMateCachingSelectorWeigherKt.caching(new TextMateSelectorWeigherImpl());
+        TextMateSyntaxMatcher syntaxMatcher = TextMateCachingSyntaxMatcherCoreKt.caching(new TextMateSyntaxMatcherImpl(regexProvider, weigher));
         return new TextMateHighlighter(new TextMateHighlightingLexer(languageDescriptor,
                                                                      syntaxMatcher,
                                                                      Registry.get("textmate.line.highlighting.limit").asInteger()));

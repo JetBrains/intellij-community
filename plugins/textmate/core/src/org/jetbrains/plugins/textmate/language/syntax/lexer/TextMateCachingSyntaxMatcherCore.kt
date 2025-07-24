@@ -11,45 +11,51 @@ import org.jetbrains.plugins.textmate.regex.MatchData
 import org.jetbrains.plugins.textmate.regex.TextMateByteOffset
 import org.jetbrains.plugins.textmate.regex.TextMateString
 
-fun <T> withCachingSyntaxMatcher(delegate: TextMateSyntaxMatcher, body: (TextMateSyntaxMatcher) -> T): T {
-  return createSyntaxMatcherCache(delegate).use { cache ->
-    body(TextMateCachingSyntaxMatcherCore(delegate, cache))
-  }
-}
-
-fun createCachingSyntaxMatcher(delegate: TextMateSyntaxMatcher): TextMateSyntaxMatcher {
-  return TextMateCachingSyntaxMatcherCore(delegate, createSyntaxMatcherCache(delegate))
-}
-
-private fun createSyntaxMatcherCache(delegate: TextMateSyntaxMatcher): SLRUTextMateCache<TextMateCachingSyntaxMatcherCacheKey, TextMateLexerState> {
-  return SLRUTextMateCache(
+fun TextMateSyntaxMatcher.caching(): TextMateCachingSyntaxMatcherCore {
+  val delegate = this
+  return TextMateCachingSyntaxMatcherCore(delegate, SLRUTextMateCache(
     computeFn = { key ->
       delegate.matchRule(key.syntaxNodeDescriptor, key.string, key.byteOffset, key.matchBeginString, key.matchBeginString, key.priority, key.currentScope, key.checkCancelledCallback)
     },
     disposeFn = { },
     capacity = 1000,
     protectedRatio = 0.5,
-  )
+  ))
 }
 
-private class TextMateCachingSyntaxMatcherCore(
-  private val delegate: TextMateSyntaxMatcher,
-  private val cache: TextMateCache<TextMateCachingSyntaxMatcherCacheKey, TextMateLexerState>,
-) : TextMateSyntaxMatcher {
+class TextMateCachingSyntaxMatcherCore(private val delegate: TextMateSyntaxMatcher,
+                                       private val cache: TextMateCache<TextMateMatchRuleCacheKey, TextMateLexerState>) : TextMateSyntaxMatcher, AutoCloseable {
   override fun matchRule(syntaxNodeDescriptor: SyntaxNodeDescriptor, string: TextMateString, byteOffset: TextMateByteOffset, matchBeginPosition: Boolean, matchBeginString: Boolean, priority: TextMateWeigh.Priority, currentScope: TextMateScope, checkCancelledCallback: Runnable?): TextMateLexerState {
-    return cache.use(TextMateCachingSyntaxMatcherCacheKey(syntaxNodeDescriptor, string, byteOffset, matchBeginPosition, matchBeginString, priority, currentScope)) { it }
+    return cache.use(TextMateMatchRuleCacheKey(syntaxNodeDescriptor = syntaxNodeDescriptor,
+                                               string = string,
+                                               byteOffset = byteOffset,
+                                               matchBeginPosition = matchBeginPosition,
+                                               matchBeginString = matchBeginString,
+                                               priority = priority,
+                                               currentScope = currentScope,
+                                               checkCancelledCallback = checkCancelledCallback)) { it }
   }
 
   override fun matchStringRegex(keyName: Constants.StringKey, string: TextMateString, byteOffset: TextMateByteOffset, matchBeginPosition: Boolean, matchBeginString: Boolean, lexerState: TextMateLexerState, checkCancelledCallback: Runnable?): MatchData {
-    return delegate.matchStringRegex(keyName, string, byteOffset, matchBeginPosition, matchBeginString, lexerState, checkCancelledCallback)
+    return delegate.matchStringRegex(keyName = keyName,
+                                     string = string,
+                                     byteOffset = byteOffset,
+                                     matchBeginPosition = matchBeginPosition,
+                                     matchBeginString = matchBeginString,
+                                     lexerState = lexerState,
+                                     checkCancelledCallback = checkCancelledCallback)
   }
 
   override fun <T> matchingString(s: CharSequence, body: (TextMateString) -> T): T {
     return delegate.matchingString(s, body)
   }
+
+  override fun close() {
+    cache.close()
+  }
 }
 
-private data class TextMateCachingSyntaxMatcherCacheKey(
+class TextMateMatchRuleCacheKey(
   val syntaxNodeDescriptor: SyntaxNodeDescriptor,
   val string: TextMateString,
   val byteOffset: TextMateByteOffset,
