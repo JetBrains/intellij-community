@@ -8,12 +8,13 @@ internal class CleanBuffer {
   private companion object {
     val NEW_LINES_EMPTY_CHARS = Regex("(\r?\n| |\t|\\s)")
     val OS_COMMAND_SET_TITLE = Regex("\\x1b]0;[^\\x1b\\x07]+(:?\\x9C|\\x07|\\x1b\\x5c)")
+    val CLEAR_SCREEN = Regex("\\x1b\\[HJ")
   }
 
   private val lexer = AnsiStreamingLexer()
   private val buffer = StringBuilder()
   fun add(line: String) {
-    lexer.append(line)
+    lexer.append(line.replace(CLEAR_SCREEN, ""))
     while (true) {
       val s = lexer.nextText
       if (s == null) {
@@ -38,4 +39,14 @@ internal class CleanBuffer {
     buffer.clear()
     buffer.append(newValue)
   }
+}
+
+fun main() {
+  val a = CleanBuffer()
+  val c = 27.toChar()
+  a.add("$c[?25h $c[HJ $c[8;1H $c[?25lhe   $c[?25h $c[?25lll   $c[?25h $c[HJ $c[8;5H $c[?25lo   $c[?25h $c[?25l $c[HJ $c[9;1H $c[?25h")
+  a.add("$c[?25h $c[HJ $c[8;1H $c[?25lhe   $c[?25h $c[?25lll   $c[?25h $c[HJ $c[8;5H $c[?25lo   $c[?25h $c[?25l $c[HJ $c[9;1H $c[?25h")
+  a.add("$c[?25h $c[HJ $c[8;1H $c[?25lhe   $c[?25h $c[?25lll   $c[?25h $c[HJ $c[8;5H $c[?25lo   $c[?25h $c[?25l $c[HJ $c[9;1H $c[?25h")
+  a.add("$c[?25h $c[HJ $c[8;1H $c[?25lhe   $c[?25h $c[?25lll   $c[?25h $c[?25lo   $c[?25h $c[HJ $c[8;6H $c[?25l $c[HJ $c[9;1H $c[?25h")
+  println(a.getString())
 }
