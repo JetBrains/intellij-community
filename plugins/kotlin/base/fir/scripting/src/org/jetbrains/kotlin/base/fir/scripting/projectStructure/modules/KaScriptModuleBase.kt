@@ -73,8 +73,8 @@ abstract class KaScriptModuleBase(
         return "${this::class.simpleName}($virtualFile), platform=$targetPlatform, moduleDescription=`$moduleDescription`, scriptDefinition=`$scriptDefinition`"
     }
 
-    protected val sdkDependencies: List<KaLibraryModule>
-        get() = listOfNotNull(ScriptDependencyAware.getInstance(project).getScriptSdk(virtualFile)?.toKaLibraryModule(project))
+    protected val sdkDependency: KaLibraryModule?
+        get() = ScriptDependencyAware.getInstance(project).getScriptSdk(virtualFile)?.toKaLibraryModule(project)
 
     override val directFriendDependencies: List<KaModule> get() = emptyList()
 }
