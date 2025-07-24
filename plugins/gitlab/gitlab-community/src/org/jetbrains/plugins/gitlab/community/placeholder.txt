@@ -1,2 +1,0 @@
-This file is added as a workaround to have fake root package in intellij.vsc.gitlab.community module.
-It can be removed if any other files are added inside the current package.

@@ -206,7 +206,7 @@ object CommunityRepositoryModules {
     pluginAuto(listOf("intellij.performanceTesting")),
     pluginAuto(listOf("intellij.performanceTesting.ui")),
     pluginAuto(listOf("intellij.vcs.github")),
-    gitlabPlugin("intellij.vcs.gitlab.community", productCode = "IC"),
+    pluginAuto(listOf("intellij.vcs.gitlab")),
     pluginAuto(listOf("intellij.compilation.charts")) { spec ->
       spec.withModule("intellij.compilation.charts.jps")
     },
@@ -626,17 +626,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.javaFX.jps")
       spec.withModule("intellij.javaFX.common", "javaFX-common.jar")
       spec.withModule("intellij.javaFX.sceneBuilder", "rt/sceneBuilderBridge.jar")
-    }
-  }
-
-  // inspired by CommunityRepositoryModules.githubPlugin
-  fun gitlabPlugin(mainModuleName: String, productCode: String): PluginLayout {
-    return plugin(mainModuleName) { spec ->
-      spec.directoryName = "vcs-gitlab-$productCode"
-      spec.mainJarName = "vcs-gitlab.jar"
-      spec.withCustomVersion { _, version, _ ->
-        PluginVersionEvaluatorResult(pluginVersion = "$version-$productCode")
-      }
     }
   }
 

@@ -807,7 +807,6 @@ plugins/github/github-git
 plugins/github/github-json
 plugins/github/github-tracker
 plugins/github/ultimate-promo
-plugins/gitlab/gitlab-community
 plugins/gitlab/gitlab-core
 plugins/gitlab/gitlab-git
 plugins/gitlab/gitlab-yaml
