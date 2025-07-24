@@ -465,7 +465,9 @@ public class PyTypeCheckerInspection extends PyInspection {
           if (argumentRightBound < allArguments.size()) {
             final var paramSpec = concatenateType.getParamSpec();
             final var restArguments = allArguments.subList(argumentRightBound, allArguments.size());
-            analyzeParamSpec(paramSpec, restArguments, substitutions, result, unexpectedArgumentForParamSpecs, unfilledParameterFromParamSpecs);
+            if (paramSpec != null) {
+              analyzeParamSpec(paramSpec, restArguments, substitutions, result, unexpectedArgumentForParamSpecs, unfilledParameterFromParamSpecs);
+            }
           }
 
           break;

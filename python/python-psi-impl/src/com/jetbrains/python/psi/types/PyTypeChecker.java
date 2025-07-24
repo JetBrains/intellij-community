@@ -411,6 +411,7 @@ public final class PyTypeChecker {
     if (actual == null) return true;
     List<PyType> expectedFirstTypes = expected.getFirstTypes();
     int expectedPrefixSize = expectedFirstTypes.size();
+    PyParamSpecType expectedParamSpec = expected.getParamSpec();
     if (actual instanceof PyConcatenateType actualConcatenateType) {
       if (expectedPrefixSize > actualConcatenateType.getFirstTypes().size()) {
         return false;
@@ -419,13 +420,16 @@ public final class PyTypeChecker {
       if (!match(expectedFirstTypes, actualFirstTypes, context)) {
         return false;
       }
+      if (expectedParamSpec == null) {
+        return true;
+      }
       if (actualFirstTypes.size() > expectedPrefixSize) {
-        return match(expected.getParamSpec(),
+        return match(expectedParamSpec,
                      new PyConcatenateType(ContainerUtil.subList(expectedFirstTypes, actualFirstTypes.size()),
                                            actualConcatenateType.getParamSpec()), context);
       }
       else {
-        return match(expected.getParamSpec(), actualConcatenateType.getParamSpec(), context);
+        return match(expectedParamSpec, actualConcatenateType.getParamSpec(), context);
       }
     }
     else if (actual instanceof PyCallableParameterListType actualParameters) {
@@ -437,7 +441,10 @@ public final class PyTypeChecker {
       if (!match(expectedFirstTypes, actualFirstParamTypes, context)) {
         return false;
       }
-      return match(expected.getParamSpec(),
+      if (expectedParamSpec == null) {
+        return true;
+      }
+      return match(expectedParamSpec,
                    new PyCallableParameterListTypeImpl(ContainerUtil.subList(actualParameters.getParameters(), expectedPrefixSize)),
                    context);
     }

@@ -3032,4 +3032,35 @@ def foo(param: str | int) -> TypeGuard[str]:
   public void testMatchGenericProtocolWithModule() {
     doMultiFileTest();
   }
+
+  // PY-82871
+  public void testConcatenateWithEllipsis() {
+    doTestByText("""
+                   from typing import Callable, Concatenate
+                   
+                   call: Callable[Concatenate[int, ...], str]
+                   
+                   call(42)
+                   call(42, True)
+                   call(<warning descr="Expected type 'int', got 'str' instead">"foo"</warning>)
+                   call()
+                   
+                   def single_int(x: int) -> str:
+                       pass
+                   
+                   def int_bool(x: int, y: bool) -> str:
+                       pass
+
+                   def single_str(x: str) -> str:
+                       pass
+
+                   def empty() -> str:
+                       pass
+                   
+                   call = single_int
+                   call = int_bool
+                   call = <warning descr="Expected type '(Concatenate(int, ...)) -> str', got '(x: str) -> str' instead">single_str</warning>
+                   call = <warning descr="Expected type '(Concatenate(int, ...)) -> str', got '() -> str' instead">empty</warning>
+                   """);
+  }
 }

@@ -1491,25 +1491,27 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
   private static @Nullable PyType getConcatenateType(@NotNull PsiElement element, @NotNull Context context) {
     if (!(element instanceof PySubscriptionExpression subscriptionExpr)) return null;
-
     if (!resolvesToQualifiedNames(subscriptionExpr.getOperand(), context.myContext, CONCATENATE, CONCATENATE_EXT)) return null;
+    if (!(subscriptionExpr.getIndexExpression() instanceof PyTupleExpression tupleExpression)) return null;
 
-    final var parameters = getConcatenateParametersTypes(subscriptionExpr, context.myContext);
-    if (parameters == null) return null;
+    List<PyExpression> arguments = Arrays.asList(tupleExpression.getElements());
+    if (arguments.size() < 2) return null;
 
-    return new PyConcatenateType(parameters.first, parameters.second);
-  }
+    List<PyExpression> prefixTypeExprs = arguments.subList(0, arguments.size() - 1);
+    List<PyType> prefixTypes = ContainerUtil.map(prefixTypeExprs, it -> Ref.deref(getType(it, context.myContext)));
 
-  private static @Nullable Pair<List<PyType>, PyParamSpecType> getConcatenateParametersTypes(@NotNull PySubscriptionExpression subscriptionExpression,
-                                                                                             @NotNull TypeEvalContext context) {
-    final var tuple = subscriptionExpression.getIndexExpression();
-    if (!(tuple instanceof PyTupleExpression tupleExpression)) return null;
-    final var result = ContainerUtil.map(tupleExpression.getElements(),
-                                         it -> Ref.deref(getType(it, context)));
-    if (result.size() < 2) return null;
-    PyType lastParameter = result.get(result.size() - 1);
-    if (!(lastParameter instanceof PyParamSpecType paramSpecType)) return null;
-    return new Pair<>(result.subList(0, result.size() - 1), paramSpecType);
+    PyExpression lastTypeExpr = arguments.get(arguments.size() - 1);
+    PyParamSpecType paramSpecType;
+    if (lastTypeExpr instanceof PyEllipsisLiteralExpression) {
+      paramSpecType = null;
+    }
+    else if (Ref.deref(getType(lastTypeExpr, context.myContext)) instanceof PyParamSpecType ps) {
+      paramSpecType = ps;
+    }
+    else {
+      return null;
+    }
+    return new PyConcatenateType(prefixTypes, paramSpecType);
   }
 
   private static @Nullable PyTypeParameterType getTypeParameterTypeFromDeclaration(@NotNull PsiElement element, @NotNull Context context) {
