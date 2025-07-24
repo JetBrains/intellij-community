@@ -52,6 +52,9 @@ enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>)
     ENABLED_PMCS_GC(KotlinBuildToolBooleanFusMetric("ENABLED_PMCS_GC")),
     ENABLED_CMS_GC(KotlinBuildToolBooleanFusMetric("ENABLED_CMS_GC")),
 
+    // Swift export
+    ENABLED_SWIFT_EXPORT(KotlinBuildToolBooleanFusMetric("ENABLED_SWIFT_EXPORT")),
+
     //Build reports
     FILE_BUILD_REPORT(KotlinBuildToolBooleanFusMetric("FILE_BUILD_REPORT")),
     BUILD_SCAN_BUILD_REPORT(KotlinBuildToolBooleanFusMetric("BUILD_SCAN_BUILD_REPORT")),
