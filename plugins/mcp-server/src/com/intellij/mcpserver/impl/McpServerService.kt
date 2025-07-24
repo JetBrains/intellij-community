@@ -180,13 +180,7 @@ class McpServerService(val cs: CoroutineScope) {
   }.map { it.mcpToolToRegisteredTool() }
 
 private fun McpTool.mcpToolToRegisteredTool(): RegisteredTool {
-  val tool = Tool(name = descriptor.name,
-                  description = descriptor.description,
-                  inputSchema = Tool.Input(
-                    properties = descriptor.inputSchema.properties,
-                    required = descriptor.inputSchema.requiredParameters.toList()),
-                  outputSchema = null,
-                  annotations = null)
+  val tool = toSdkTool()
   return RegisteredTool(tool) { request ->
     val projectPath = (request._meta[IJ_MCP_SERVER_PROJECT_PATH] as? JsonPrimitive)?.content
     val project = if (!projectPath.isNullOrBlank()) {
@@ -310,3 +304,21 @@ private fun McpTool.mcpToolToRegisteredTool(): RegisteredTool {
   }
 }
 
+fun McpTool.toSdkTool(): Tool {
+  val outputSchema = if (structuredToolOutputEnabled) {
+    descriptor.outputSchema?.let {
+      Tool.Output(
+        it.propertiesSchema,
+        it.requiredProperties.toList())
+    }
+  }
+  else null
+  val tool = Tool(name = descriptor.name,
+                  description = descriptor.description,
+                  inputSchema = Tool.Input(
+                    properties = descriptor.inputSchema.propertiesSchema,
+                    required = descriptor.inputSchema.requiredProperties.toList()),
+                  outputSchema = outputSchema,
+                  annotations = null)
+  return tool
+}
