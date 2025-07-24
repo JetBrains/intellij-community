@@ -37,10 +37,10 @@ public final class URLUtil {
   // These patterns contain fewer capturing groups than the patterns above.
   // So, they are more performant.
   // Use these patterns if you don't need to access specific groups.
-  public static final Pattern DATA_URI_PATTERN_OPTIMIZED = Pattern.compile("data:(?:[^,;]+/[^,;]+)(?:;charset[=:][^,;]+)?(;base64)?,(.+)");
-  public static final Pattern URL_PATTERN_OPTIMIZED = Pattern.compile("\\b(?:mailto:|(?:news|(?:ht|f)tp(?:s?))://|(?:(?<![\\p{L}0-9_.])(?:www\\.)))[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
-  public static final Pattern URL_WITH_PARENS_PATTERN_OPTIMIZED = Pattern.compile("\\b(?:mailto:|(?:news|(?:ht|f)tp(?:s?))://|(?:(?<![\\p{L}0-9_.])(?:www\\.)))[-A-Za-z0-9+$&@#/%?=~_|!:,.;()]*[-A-Za-z0-9+$&@#/%=~_|()]");
-  public static final Pattern FILE_URL_PATTERN_OPTIMIZED = Pattern.compile("\\b(?:file:///)[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
+  public static final Pattern DATA_URI_PATTERN_OPTIMIZED = Pattern.compile("data:[^,;]+/[^,;]+(?:;charset[=:][^,;]+)?(;base64)?,(.+)");
+  public static final Pattern URL_PATTERN_OPTIMIZED = Pattern.compile("\\b(?:mailto:|(?:news|(?:ht|f)tps?)://|(?<![\\p{L}0-9_.])www\\.)[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
+  public static final Pattern URL_WITH_PARENS_PATTERN_OPTIMIZED = Pattern.compile("\\b(?:mailto:|(?:news|(?:ht|f)tps?)://|(?<![\\p{L}0-9_.])www\\.)[-A-Za-z0-9+$&@#/%?=~_|!:,.;()]*[-A-Za-z0-9+$&@#/%=~_|()]");
+  public static final Pattern FILE_URL_PATTERN_OPTIMIZED = Pattern.compile("\\bfile:///[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
 
   public static final Pattern HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>");
 
