@@ -307,7 +307,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         var actualCS = fetchCaseSensitivity(parent, name);
         if ((actualCS == FileAttributes.CaseSensitivity.SENSITIVE) != knownCS) {
           // we need to update case sensitivity
-          var event = ((PersistentFSImpl)PersistentFS.getInstance()).generateCaseSensitivityChangedEvent(parent, actualCS);
+          var event = ((PersistentFSImpl)PersistentFS.getInstance()).prepareCaseSensitivityUpdateIfNeeded(parent, actualCS);
           if (event != null) {
             RefreshQueue.getInstance().processEvents(false, List.of(event));
           }

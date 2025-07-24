@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.*;
@@ -781,7 +782,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     getFileSystem(parent).createChildDirectory(requestor, parent, dir);
 
     processEvent(new VFileCreateEvent(requestor, parent, dir, true, null, null, ChildInfo.EMPTY_ARRAY));
-    VFileEvent caseSensitivityEvent = generateCaseSensitivityChangedEventIfUnknown(parent, dir);
+    VFileEvent caseSensitivityEvent = determineCaseSensitivityAndPrepareUpdate(parent, dir);
     if (caseSensitivityEvent != null) {
       processEvent(caseSensitivityEvent);
     }
@@ -801,7 +802,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     getFileSystem(parent).createChildFile(requestor, parent, name);
     processEvent(new VFileCreateEvent(requestor, parent, name, false, null, null, null));
-    VFileEvent caseSensitivityEvent = generateCaseSensitivityChangedEventIfUnknown(parent, name);
+    VFileEvent caseSensitivityEvent = determineCaseSensitivityAndPrepareUpdate(parent, name);
     if (caseSensitivityEvent != null) {
       processEvent(caseSensitivityEvent);
     }
@@ -1723,7 +1724,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
     // assume roots have the FS default case sensitivity
     attributes = attributes.withCaseSensitivity(
-      FileAttributes.CaseSensitivity.fromBoolean(fs.isCaseSensitive())
+      CaseSensitivity.fromBoolean(fs.isCaseSensitive())
     );
     // avoid creating gazillions of roots which are not actual roots
     String parentPath;
@@ -2202,7 +2203,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           case VirtualFile.PROP_HIDDEN -> executeSetHidden(file, ((Boolean)newValue).booleanValue());
           case VirtualFile.PROP_SYMLINK_TARGET -> executeSetTarget(file, (String)newValue);
           case VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY ->
-            executeChangeCaseSensitivity((VirtualDirectoryImpl)file, (FileAttributes.CaseSensitivity)newValue);
+            executeChangeCaseSensitivity((VirtualDirectoryImpl)file, (CaseSensitivity)newValue);
         }
       }
     }
@@ -2220,10 +2221,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    */
   @ApiStatus.Internal
   public void executeChangeCaseSensitivity(@NotNull VirtualDirectoryImpl directory,
-                                           @NotNull FileAttributes.CaseSensitivity newCaseSensitivity) {
+                                           @NotNull CaseSensitivity newCaseSensitivity) {
     int fileId = fileId(directory);
     vfsPeer.updateRecordFields(fileId, record -> {
-      boolean sensitivityChanged = (newCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE)
+      boolean sensitivityChanged = (newCaseSensitivity == CaseSensitivity.SENSITIVE)
                                    ? record.addFlags(Flags.CHILDREN_CASE_SENSITIVE)
                                    : record.removeFlags(Flags.CHILDREN_CASE_SENSITIVE);
       return record.addFlags(Flags.CHILDREN_CASE_SENSITIVITY_CACHED)
@@ -2234,18 +2235,18 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
 
   /**
-   * If the {@code parent} case-sensitivity flag is still not known, try to determine it via {@link LocalFileSystemBase#fetchCaseSensitivity(VirtualFile, String)}.
-   * If case-sensitivity read successfully, prepares and returns the {@link VirtualFile#PROP_CHILDREN_CASE_SENSITIVITY} event
-   * (but only if case-sensitivity read is different from the FS-default case-sensitivity to avoid too many unnecessary events:
-   * see {@link VirtualFileSystem#isCaseSensitive()}).
+   * If the {@code parent} case-sensitivity flag is still not known, try to determine it (via {@link LocalFileSystemBase#fetchCaseSensitivity(VirtualFile, String)}),
+   * and if the actual case-sensitivity value determined happens to be different from current -- prepares and returns the
+   * appropriate {@link VirtualFile#PROP_CHILDREN_CASE_SENSITIVITY} event for the change.
+   *
    * Otherwise, return null.
    */
   @ApiStatus.Internal
-  public VFilePropertyChangeEvent generateCaseSensitivityChangedEventIfUnknown(@NotNull VirtualFile parent,
-                                                                               @NotNull String childName) {
-    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() != FileAttributes.CaseSensitivity.UNKNOWN) {
+  public VFilePropertyChangeEvent determineCaseSensitivityAndPrepareUpdate(@NotNull VirtualFile parent,
+                                                                           @NotNull String childName) {
+    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() != CaseSensitivity.UNKNOWN) {
       //do not update case-sensitivity once determined: assume folder case-sensitivity is constant through the run
-      // time of an app -- which is, strictly speaking, is incorrect, but we don't want to process those cases so far
+      // time of an app -- which is, strictly speaking, incorrect, but we don't want to process those cases so far
       return null;
     }
 
@@ -2255,30 +2256,42 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     LocalFileSystemBase localFS = (LocalFileSystemBase)fileSystem;
-    FileAttributes.CaseSensitivity sensitivity = localFS.fetchCaseSensitivity(parent, childName);
+    CaseSensitivity actualDirCaseSensitivity = localFS.fetchCaseSensitivity(parent, childName);
     //MAYBE RC: also measure and record execution _time_?
     caseSensitivityReads.incrementAndGet();
-    return generateCaseSensitivityChangedEvent(parent, sensitivity);
+
+    return prepareCaseSensitivityUpdateIfNeeded(parent, actualDirCaseSensitivity);
   }
 
+  /**
+   * Applies case-sensitivity value for the directory, if needed -- either synchronously, or produces a case-sensitivity-changing
+   * event, to apply the change later on:
+   * If actualCaseSensitivity is UNKNOWN -- does nothing
+   * If actualCaseSensitivity is the same, as default file-system case-sensitivity -- updates the value synchronously, and does
+   * not produce cs-changing event, since publicly available dir properties do not change.
+   * If actualCaseSensitivity != default file-system case-sensitivity -- updates nothing, but returns a case-sensitivity-changing
+   * event to be applied later
+   */
   @ApiStatus.Internal
-  public VFilePropertyChangeEvent generateCaseSensitivityChangedEvent(@NotNull VirtualFile dir,
-                                                                      @NotNull FileAttributes.CaseSensitivity actualCaseSensitivity) {
-    if (actualCaseSensitivity == FileAttributes.CaseSensitivity.UNKNOWN) {
+  public VFilePropertyChangeEvent prepareCaseSensitivityUpdateIfNeeded(@NotNull VirtualFile dir,
+                                                                       @NotNull CaseSensitivity actualCaseSensitivity) {
+    if (actualCaseSensitivity == CaseSensitivity.UNKNOWN) {
       return null;
     }
 
-    // fire only when the new case sensitivity is different from the default FS sensitivity,
-    // because only in that case the file.isCaseSensitive() value could change
-    if (dir.getFileSystem().isCaseSensitive() != (actualCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE)) {
-      return new VFilePropertyChangeEvent(REFRESH_REQUESTOR, dir, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY,
-                                          FileAttributes.CaseSensitivity.UNKNOWN, actualCaseSensitivity);
+    boolean defaultCaseSensitivity = dir.getFileSystem().isCaseSensitive();
+    if (defaultCaseSensitivity == (actualCaseSensitivity == CaseSensitivity.SENSITIVE)) {
+      //If (new case-sensitivity) == (file-system default) => externally-visible dir.isCaseSensitive() does NOT change.
+      // We still need to update values in appropriate fields to avoid repeating case-sensitivity lookup later on:
+      executeChangeCaseSensitivity((VirtualDirectoryImpl)dir, actualCaseSensitivity);
+      // ... but we may update the fields silently, without issuing the PROP_CHILDREN_CASE_SENSITIVITY event about the
+      // change -- this helps us avoid issuing A LOT of useless events:
+      return null;
     }
 
-    //TODO RC: why we update the case-sensitivity only if it is == FS.default?
-    //TODO RC: why we update case-sensitivity in method that should be just generating an event?
-    executeChangeCaseSensitivity((VirtualDirectoryImpl)dir, actualCaseSensitivity);
-    return null;
+    //dir case-sensitivity is actually changed, and to non-default value: return appropriate event to be applied later:
+    return new VFilePropertyChangeEvent(REFRESH_REQUESTOR, dir, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY,
+                                        CaseSensitivity.UNKNOWN, actualCaseSensitivity);
   }
 
   @Override
@@ -2592,10 +2605,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   static @Attributes int fileAttributesToFlags(@NotNull FileAttributes attributes) {
-    FileAttributes.CaseSensitivity sensitivity = attributes.areChildrenCaseSensitive();
-    boolean isCaseSensitive = sensitivity == FileAttributes.CaseSensitivity.SENSITIVE;
+    CaseSensitivity sensitivity = attributes.areChildrenCaseSensitive();
+    boolean isCaseSensitive = sensitivity == CaseSensitivity.SENSITIVE;
     return fileAttributesToFlags(attributes.isDirectory(), attributes.isWritable(), attributes.isSymLink(), attributes.isSpecial(),
-                                 attributes.isHidden(), sensitivity != FileAttributes.CaseSensitivity.UNKNOWN, isCaseSensitive);
+                                 attributes.isHidden(), sensitivity != CaseSensitivity.UNKNOWN, isCaseSensitive);
   }
 
   public static @Attributes int fileAttributesToFlags(boolean isDirectory,

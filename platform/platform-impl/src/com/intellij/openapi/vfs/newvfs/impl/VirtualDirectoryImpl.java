@@ -228,18 +228,25 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     throw new InvalidVirtualFileAccessException(this);
   }
 
+  /**
+   * Updates this directory case-sensitivity to newSensitivity (must NOT be UNKNOWN), and set case-sensitivity-cached flag
+   * to true.
+   * Updates only in-memory values, does NOT update VFS persistent structures (see {@link PersistentFSImpl#executeChangeCaseSensitivity(VirtualDirectoryImpl, CaseSensitivity)}
+   * for that).
+   * If case-sensitivity value is actually changed -- re-order the children accordingly
+   */
   @ApiStatus.Internal
-  public void setCaseSensitivityFlag(@NotNull CaseSensitivity sensitivity) {
-    if (sensitivity == CaseSensitivity.UNKNOWN) {
-      throw new IllegalArgumentException("invalid argument for " + this + ": " + sensitivity);
+  public void setCaseSensitivityFlag(@NotNull CaseSensitivity newSensitivity) {
+    if (newSensitivity == CaseSensitivity.UNKNOWN) {
+      throw new IllegalArgumentException("invalid argument for " + this + ": " + newSensitivity);
     }
 
     CaseSensitivity oldCaseSensitivity = getChildrenCaseSensitivity();
-    if (oldCaseSensitivity != sensitivity) {
+    if (oldCaseSensitivity != newSensitivity) {
       VfsData vfsData = getVfsData();
       VfsData.Segment segment = vfsData.getSegment(getId(), false);
       int newFlags = VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED |
-                     (sensitivity == CaseSensitivity.SENSITIVE ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0);
+                     (newSensitivity == CaseSensitivity.SENSITIVE ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0);
       segment.setFlags(getId(), VfsDataFlags.CHILDREN_CASE_SENSITIVE | VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, newFlags);
 
       //children are sorted by name => case-sensitivity change requires re-sorting:
@@ -357,10 +364,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   private void updateCaseSensitivityIfUnknown(@NotNull String childName) {
     PersistentFSImpl pFS = owningPersistentFS();
-    VFilePropertyChangeEvent caseSensitivityEvent = pFS.generateCaseSensitivityChangedEventIfUnknown(this, childName);
+    VFilePropertyChangeEvent caseSensitivityEvent = pFS.determineCaseSensitivityAndPrepareUpdate(this, childName);
     if (caseSensitivityEvent != null) {
-      //TODO RC: inside generateCaseSensitivityChangedEventIfUnknown() we update case-sensitivity if it is == FS.default,
-      //         and here we update case-sensitivity if it is !=FS.default -- why such a separation?
+      //TODO RC: here we immediately apply the new case-sensitivity to the this-dir.
+      //         And inside determineCaseSensitivityAndPrepareUpdate() we also immediately apply the new value, if it does not
+      //         lead to externally-visible change (ie. if it is == default).
+      //         But in other uses of determineCaseSensitivityAndPrepareUpdate() we do NOT do that -- we do not immediately apply
+      //         new cs-value, but just post the cs-changing event. Why we difference?
+      //         Could some changes be lost because of this?
       pFS.executeChangeCaseSensitivity(this, (CaseSensitivity)caseSensitivityEvent.getNewValue());
       // fire event asynchronously to avoid deadlocks with possibly currently held VFP/Refresh queue locks
       RefreshQueue.getInstance().processEvents(/*async: */ true, List.of(caseSensitivityEvent));
