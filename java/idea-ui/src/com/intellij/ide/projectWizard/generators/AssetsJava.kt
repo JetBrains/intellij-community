@@ -3,10 +3,10 @@
 
 package com.intellij.ide.projectWizard.generators
 
+import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
 import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.icon
 import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.shortcut
 import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.shouldRenderOnboardingTips
-import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.javaData
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -31,8 +31,7 @@ object AssetsJava {
     getJavaSampleTemplateName()
 
   @ApiStatus.Internal
-  fun getJavaSampleTemplateName(projectWizardStep: AssetsNewProjectWizardStep?): String {
-    val intent = projectWizardStep?.javaData?.jdkIntent
+  fun getJavaSampleTemplateName(intent: ProjectWizardJdkIntent?): String {
     val minimumLevel = JavaFeature.JAVA_LANG_IO.minimumLevel
     if (intent != null && intent.isAtLeast(minimumLevel.feature(), true)) {
       //use compact source file
@@ -88,11 +87,13 @@ fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
   sourceRootPath: String,
   packageName: String? = null,
   fileName: String = DEFAULT_FILE_NAME,
-  templateName: String = AssetsJava.getJavaSampleTemplateName(this),
+  templateName: String? = null,
+  jdkIntent: ProjectWizardJdkIntent? = null,
 ) {
+  val currentTemplate = templateName ?: AssetsJava.getJavaSampleTemplateName(jdkIntent)
   val sourcePath = AssetsJava.getJavaSampleSourcePath(sourceRootPath, packageName, fileName)
   AssetsJava.prepareJavaSampleOnboardingTips(project, fileName)
-  withJavaSampleCodeAsset(sourcePath, packageName, templateName)
+  withJavaSampleCodeAsset(sourcePath, packageName, currentTemplate)
 }
 
 private fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(

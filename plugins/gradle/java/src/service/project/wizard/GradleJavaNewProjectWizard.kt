@@ -4,7 +4,10 @@ package org.jetbrains.plugins.gradle.service.project.wizard
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
-import com.intellij.ide.projectWizard.generators.*
+import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
+import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData
+import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
+import com.intellij.ide.projectWizard.generators.withJavaSampleCodeAsset
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
@@ -79,7 +82,7 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       addEmptyDirectoryAsset("src/test/resources")
 
       if (parent.addSampleCode) {
-        withJavaSampleCodeAsset(project, "src/main/java", parent.groupId)
+        withJavaSampleCodeAsset(project, "src/main/java", parent.groupId, jdkIntent = parent.jdkIntent)
       }
 
       addOrConfigureSettingsScript {
