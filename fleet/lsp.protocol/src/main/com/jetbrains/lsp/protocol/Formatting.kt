@@ -10,7 +10,7 @@ data class DocumentRangeFormattingParams(
     /**
      * The document to format.
      */
-    val textDocument: TextDocumentIdentifier?,
+    val textDocument: TextDocumentIdentifier,
 
     /**
      * The range to format
