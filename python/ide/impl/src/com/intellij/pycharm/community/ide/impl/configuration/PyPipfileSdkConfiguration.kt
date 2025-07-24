@@ -22,14 +22,10 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrLogException
-import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
-import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.pipenv.*
 import com.jetbrains.python.sdk.pipenv.ui.PyAddNewPipEnvFromFilePanel
-import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -46,7 +42,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override suspend fun createAndAddSdkForConfigurator(module: Module): PyResult<Sdk?> = createAndAddSDk(module, Source.CONFIGURATOR)
 
-  override suspend fun getIntention(module: Module): @IntentionName String? = findAmongRoots(module, PIP_FILE)?.let { PyCharmCommunityCustomizationBundle.message("sdk.create.pipenv.suggestion", it.name) }
+  override suspend fun getIntention(module: Module): @IntentionName String? = findAmongRoots(module, PipEnvFileHelper.PIP_FILE)?.let { PyCharmCommunityCustomizationBundle.message("sdk.create.pipenv.suggestion", it.name) }
 
   override suspend fun createAndAddSdkForInspection(module: Module): PyResult<Sdk?> = createAndAddSDk(module, Source.INSPECTION)
 

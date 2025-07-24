@@ -12,8 +12,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.dependencies.cache.PythonDependenciesManagerCached
-import com.jetbrains.python.sdk.pipenv.getPipFileLock
-import com.jetbrains.python.sdk.pipenv.getPipFileLockRequirements
+import com.jetbrains.python.sdk.pipenv.PipEnvFileHelper
+import com.jetbrains.python.sdk.pipenv.PipEnvParser
 
 internal class PipEnvDependenciesManager private constructor(project: Project, val sdk: Sdk) : PythonDependenciesManagerCached(project) {
   override fun getModificationTracker(): FilesModificationTrackerBase {
@@ -21,7 +21,7 @@ internal class PipEnvDependenciesManager private constructor(project: Project, v
   }
 
   override fun parseRequirements(requirementsFile: VirtualFile): List<PyRequirement>? {
-    return getPipFileLockRequirements(requirementsFile)
+    return PipEnvParser.getPipFileLockRequirements(requirementsFile)
   }
 
   override fun isAddDependencyPossible(): Boolean {
@@ -33,7 +33,7 @@ internal class PipEnvDependenciesManager private constructor(project: Project, v
   }
 
   override fun getDependenciesFile(): VirtualFile? {
-    return getPipFileLock(sdk)
+    return PipEnvFileHelper.getPipFileLock(sdk)
   }
 
   companion object {

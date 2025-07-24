@@ -164,7 +164,7 @@ class PyAddPipEnvPanel(
   private fun update() {
     PyPackageCoroutine.launch(project) {
       selectedModule?.let {
-        installPackagesCheckBox.isEnabled = pipFile(it) != null
+        installPackagesCheckBox.isEnabled = PipEnvFileHelper.pipFile(it) != null
       }
     }
   }

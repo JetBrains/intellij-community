@@ -34,9 +34,9 @@ suspend fun runPipEnv(dirPath: Path?, vararg args: String): PyResult<String> {
  * The user-set persisted a path to the pipenv executable.
  */
 var PropertiesComponent.pipEnvPath: @SystemDependent String?
-  get() = getValue(PIPENV_PATH_SETTING)
+  get() = getValue(PipEnvFileHelper.PIPENV_PATH_SETTING)
   set(value) {
-    setValue(PIPENV_PATH_SETTING, value)
+    setValue(PipEnvFileHelper.PIPENV_PATH_SETTING, value)
   }
 
 /**

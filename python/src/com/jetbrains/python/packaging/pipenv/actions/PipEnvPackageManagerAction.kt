@@ -6,12 +6,11 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.management.PythonPackageManagerAction
 import com.jetbrains.python.packaging.management.getPythonPackageManager
 import com.jetbrains.python.packaging.pipenv.PipEnvPackageManager
-import com.jetbrains.python.sdk.pipenv.PIP_FILE
-import com.jetbrains.python.sdk.pipenv.PIP_FILE_LOCK
+import com.jetbrains.python.sdk.pipenv.PipEnvFileHelper
 import kotlin.text.Regex.Companion.escape
 
 internal sealed class PipEnvPackageManagerAction : PythonPackageManagerAction<PipEnvPackageManager, String>() {
-  override val fileNamesPattern: Regex = """^(${escape(PIP_FILE)}|${escape(PIP_FILE_LOCK)})$""".toRegex()
+  override val fileNamesPattern: Regex = """^(${escape(PipEnvFileHelper.PIP_FILE)}|${escape(PipEnvFileHelper.PIP_FILE_LOCK)})$""".toRegex()
 
   override fun getManager(e: AnActionEvent): PipEnvPackageManager? = e.getPythonPackageManager()
 }
