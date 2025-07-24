@@ -80,6 +80,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                                      @NotNull NewVirtualFileSystem fs) {
     owningPersistentFS().incrementFindChildByNameCount();
 
+    //MAYBE RC: call it only if doRefresh?
     updateCaseSensitivityIfUnknown(name);
     VirtualFileSystemEntry result = doFindChild(name, ensureCanonicalName, fs, isCaseSensitive());
 
@@ -362,6 +363,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       // cache case sensitivity anyway even when we failed to read it from the disk, to avoid freezes trying to re-read it constantly
       setCaseSensitivityFlag(
         getFileSystem().isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE);
+      // Fallback: cache 'default' case sensitivity when we failed to read it from the disk, to avoid freezes on
+      // constant attempts to re-read -- but do not save the new value in persistence:
     }
   }
 
@@ -578,10 +581,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     VirtualFileSystemEntry existingChild = findCachedChildById(id);
     if (existingChild != null) return existingChild;
 
-    //We come here only from PersistentFSImpl.findFileById(), on a descend phase, there we resolve fileIds to
-    // VFiles. Hence, it must be a child with childId -- because 'this' was collected as .parent during an
+    //We come here only from PersistentFSImpl.findFileById(), on a descend phase, where we resolve fileIds to
+    // VFiles. Hence, it _must_ be a child with childId -- because 'this' was collected as .parent during an
     // ascend phase. If that is not the case -- either something was changed in between (e.g., children were
-    // refreshed), or there is an inconsistency in VFS (e.g., children and .parent fall out of sync):
+    // refreshed), or there is an inconsistency in VFS (e.g., children and .parent fell out of sync somehow):
 
     //So the branch below is almost surely 'child just not loaded yet'
 

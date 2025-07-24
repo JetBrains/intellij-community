@@ -2231,7 +2231,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   /**
    * If the {@code parent} case-sensitivity flag is still not known, try to determine it via {@link FileSystemUtil#readParentCaseSensitivity(File)}.
-   * If this flag read successfully, prepare to fire the {@link VirtualFile#PROP_CHILDREN_CASE_SENSITIVITY} event
+   * If this flag read successfully, prepares to fire the {@link VirtualFile#PROP_CHILDREN_CASE_SENSITIVITY} event
    * (but only if this flag is different from the FS-default case-sensitivity to avoid too many unnecessary events:
    * see {@link VirtualFileSystem#isCaseSensitive()}).
    * Otherwise, return null.
@@ -2240,10 +2240,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   public VFilePropertyChangeEvent generateCaseSensitivityChangedEventForUnknownCase(@NotNull VirtualFile parent,
                                                                                     @NotNull String childName) {
     if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() != FileAttributes.CaseSensitivity.UNKNOWN) {
+      //do not update case-sensitivity once determined: assume folder case-sensitivity is constant through the run
+      // time of an app -- which is, strictly speaking, is incorrect, but we don't want to process those cases so far
       return null;
     }
     caseSensitivityReads.incrementAndGet();
-    //MAYBE RC: measure and record execution time also?
+    //MAYBE RC: measure and record execution _time_ also?
     FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
     return generateCaseSensitivityChangedEvent(parent, sensitivity);
   }

@@ -333,7 +333,6 @@ final class RefreshWorker {
     List<String> wanted = snapshot.second;
 
     boolean dirIsCaseSensitive = dir.isCaseSensitive();
-    //MAYBE RC: use OptimizedCaseInsensitiveStringHashing?
     Set<String> names = createFilePathSet(wanted, dirIsCaseSensitive);
     for (VirtualFile file : cached) names.add(file.getName());
 
@@ -352,13 +351,11 @@ final class RefreshWorker {
       actualNames = null;
     }
     else if (childrenWithAttributes != null) {
-      //MAYBE RC: use OptimizedCaseInsensitiveStringHashing?
       actualNames = (ObjectOpenCustomHashSet<String>)createFilePathSet(childrenWithAttributes.keySet(), /*caseSensitive: */ false);
     }
     else {
       t = System.nanoTime();
       String[] childrenNames = fs.list(dir);
-      //MAYBE RC: use OptimizedCaseInsensitiveStringHashing?
       actualNames = (ObjectOpenCustomHashSet<String>)createFilePathSet(childrenNames, /*caseSensitive: */ false);
       myIoTime.addAndGet(System.nanoTime() - t);
     }
@@ -410,7 +407,6 @@ final class RefreshWorker {
       return rawDirList;
     }
     else {
-      //MAYBE RC: use OptimizedCaseInsensitiveStringHashing?
       Map<String, FileAttributes> filtered = createFilePathMap(rawDirList.size(), /*caseSensitive: */ false);
       filtered.putAll(rawDirList);
       return filtered;
