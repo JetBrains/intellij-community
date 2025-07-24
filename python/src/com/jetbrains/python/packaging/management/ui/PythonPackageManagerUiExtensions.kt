@@ -68,8 +68,23 @@ suspend fun PythonPackageManagerUI.installPyRequirementsBackground(
   val specifications = packages.mapNotNull {
     manager.findPackageSpecificationWithVersionSpec(it.name, it.versionSpecs.firstOrNull())
   }
-  return installPackagesBackground(PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specifications),
-                                   options = options)
+  return installPackagesRequestBackground(PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specifications),
+                                          options = options)
+}
+
+
+@ApiStatus.Internal
+suspend fun PythonPackageManagerUI.installPackagesBackground(
+  packages: List<String>,
+  options: List<String> = emptyList(),
+): List<PythonPackage>? {
+  //Wait here to load spec
+  manager.waitForInit()
+  val specifications = packages.mapNotNull {
+    manager.findPackageSpecificationWithVersionSpec(it, null)
+  }
+  return installPackagesRequestBackground(PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specifications),
+                                          options = options)
 }
 
 /**

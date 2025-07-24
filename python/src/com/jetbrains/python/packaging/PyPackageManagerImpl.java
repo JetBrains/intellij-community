@@ -41,7 +41,7 @@ import static com.jetbrains.python.sdk.PySdkExtKt.showSdkExecutionException;
  * @deprecated This class and all its inheritors are deprecated. Everything should work via {@link PyTargetEnvironmentPackageManager}
  */
 @Deprecated(forRemoval = true)
-public class PyPackageManagerImpl extends PyPackageManagerImplBase {
+public abstract class PyPackageManagerImpl extends PyPackageManagerImplBase {
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
 
   @Override
@@ -59,11 +59,6 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
 
   protected PyPackageManagerImpl(final @NotNull Sdk sdk) {
     super(sdk);
-  }
-
-  @Override
-  public void install(@NotNull String requirementString) throws ExecutionException {
-    install(Collections.singletonList(PyRequirementParser.fromLine(requirementString)), Collections.emptyList());
   }
 
   @Override

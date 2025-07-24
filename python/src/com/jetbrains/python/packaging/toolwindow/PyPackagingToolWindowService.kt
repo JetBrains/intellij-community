@@ -51,7 +51,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   internal var currentSdk: Sdk? = null
   private lateinit var managerUI: PythonPackageManagerUI
 
-  private val manager: PythonPackageManager?
+  private val manager: PythonPackageManager
     get() = managerUI.manager
 
 
@@ -128,7 +128,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   suspend fun installPackage(installRequest: PythonPackageInstallRequest, options: List<String> = emptyList()) {
     PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
-    managerUI.installPackagesBackground(installRequest, options)?.let {
+    managerUI.installPackagesRequestBackground(installRequest, options)?.let {
       handleActionCompleted(message("python.packaging.notification.installed", installRequest.title))
     }
   }
@@ -136,7 +136,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   suspend fun installPackage(pkg: PythonPackage, options: List<String> = emptyList()) {
     val installRequest = manager?.findPackageSpecification(pkg.name, pkg.version)?.toInstallRequest() ?: return
     PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
-    managerUI.installPackagesBackground(installRequest, options)?.let {
+    managerUI.installPackagesRequestBackground(installRequest, options)?.let {
       handleActionCompleted(message("python.packaging.notification.installed", installRequest.title))
     }
   }

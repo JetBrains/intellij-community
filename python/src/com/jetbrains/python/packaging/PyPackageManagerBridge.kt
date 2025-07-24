@@ -3,7 +3,6 @@ package com.jetbrains.python.packaging
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.getOpenedProjects
@@ -66,10 +65,6 @@ internal open class PyPackageManagerBridge(sdk: Sdk) : PyTargetEnvironmentPackag
 
   override fun getPackages(): List<PyPackage> {
     return packageManagerUI.manager.listInstalledPackagesSnapshot().map { PyPackage(it.name, it.version) }
-  }
-
-  override fun getRequirements(module: Module): List<PyRequirement>? {
-    return packageManager.getDependencyManager()?.getDependencies()
   }
 
   private fun guessProject() = getOpenedProjects().firstOrNull() ?: ProjectManager.getInstance().defaultProject

@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,7 +30,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
@@ -164,13 +166,6 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
     }
     // Use the cached version for an already configured SDK
     return PythonSdkType.getLanguageLevelForSdk(sdk);
-  }
-
-  @Override
-  public @Nullable List<PyRequirement> getRequirements(@NotNull Module module) {
-    return Optional
-      .ofNullable(PyPackageUtil.getRequirementsFromTxt(module))
-      .orElseGet(() -> PyPackageUtil.findSetupPyRequires(module));
   }
 
   @Override
