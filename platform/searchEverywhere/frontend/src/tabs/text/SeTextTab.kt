@@ -24,8 +24,9 @@ class SeTextTab(private val delegate: SeTabDelegate) : SeTab {
   override val name: String get() = FindBundle.message("search.everywhere.group.name")
   override val shortName: String get() = name
   override val id: String get() = ID
+  private val filterEditorDisposable = Disposer.newDisposable()
   private val filterEditor: SuspendLazyProperty<SeTextFilterEditor> = initAsync(delegate.scope) {
-    SeTextFilterEditor(delegate.project, delegate.getSearchScopesInfos().firstOrNull())
+    SeTextFilterEditor(delegate.project, delegate.getSearchScopesInfos().firstOrNull(), filterEditorDisposable)
   }
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> = delegate.getItems(params)
@@ -49,6 +50,7 @@ class SeTextTab(private val delegate: SeTabDelegate) : SeTab {
   }
 
   override fun dispose() {
+    Disposer.dispose(filterEditorDisposable)
     Disposer.dispose(delegate)
   }
 

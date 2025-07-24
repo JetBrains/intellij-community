@@ -4,7 +4,9 @@ package com.intellij.platform.searchEverywhere.frontend.tabs.text
 import com.intellij.find.FindManager
 import com.intellij.find.FindSettings
 import com.intellij.find.impl.JComboboxAction
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.frontend.tabs.target.SeScopeChooserActionProvider
@@ -16,6 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 class SeTextFilterEditor(
   private val project: Project?,
   private val scopesInfo: SearchScopesInfo?,
+  private val disposable: Disposable
 ) : SeFilterEditorBase<SeTextFilter>(
   SeTextFilter(scopesInfo?.selectedScopeId, null)
 ) {
@@ -26,7 +29,9 @@ class SeTextFilterEditor(
   }
 
   private val typesFilterAction: JComboboxAction? = project?.let {
-    JComboboxAction(project) { changeType(it) }
+    JComboboxAction(project) { filterValue = filterValue.cloneWithType(it) }.also {
+      disposable.whenDisposed { it.saveMask() }
+    }
   }
 
   fun changeType(type: String?) {
