@@ -51,6 +51,7 @@ import com.intellij.ui.layout.selected
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.Consumer
+import com.intellij.util.asDisposable
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
@@ -343,7 +344,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           enableCheckbox.isSelected = false
           return@runWithModalProgressBlocking
         }
-        val remoteCommunicator = RemoteCommunicatorHolder.createRemoteCommunicator(provider, userId) ?: run {
+        val remoteCommunicator = RemoteCommunicatorHolder.createRemoteCommunicator(provider, userId, this@runWithModalProgressBlocking.asDisposable()) ?: run {
           LOG.warn("Cannot create remote communicator of type '$providerName' ($providerCode)")
           showErrorOnEDT(message("enable.dialog.error.cant.check", providerName))
           enableCheckbox.isSelected = false
