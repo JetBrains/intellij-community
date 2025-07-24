@@ -16,7 +16,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.actions.validate.ValidateXmlHandler;
 import com.thaiopensource.util.PropertyMapBuilder;
@@ -108,7 +107,7 @@ public class RngValidateHandler implements ValidateXmlHandler {
                 () -> {
                   helper.close();
                   WindowManager.getInstance().getStatusBar(project).setInfo(
-                    XmlBundle.message("xml.validate.no.errors.detected.status.message"));
+                    RelaxngBundle.message("xml.validate.no.errors.detected.status.message"));
                 }
               );
             }

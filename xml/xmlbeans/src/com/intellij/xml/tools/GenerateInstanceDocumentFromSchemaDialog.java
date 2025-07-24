@@ -15,7 +15,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +53,7 @@ public final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrappe
     super(project, true);
     myProject = project;
 
-    UIUtils.configureBrowseButton(project, generateFromUrl, "xsd", XmlBundle.message("select.xsd.schema.dialog.title"), false);
+    UIUtils.configureBrowseButton(project, generateFromUrl, "xsd", XmlBeansBundle.message("select.xsd.schema.dialog.title"), false);
 
     doInitFor(rootElementChooserText, rootElementChooser);
     doInitFor(generateFromUrlText, generateFromUrl.getTextField());
@@ -62,7 +61,7 @@ public final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrappe
     generateFromUrl.setText(file.getPresentableUrl());
     updateFile();
 
-    setTitle(XmlBundle.message("generate.instance.document.from.schema.dialog.title"));
+    setTitle(XmlBeansBundle.message("generate.instance.document.from.schema.dialog.title"));
 
     init();
 
@@ -209,7 +208,7 @@ public final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrappe
   private @Nullable @InspectionMessage String doValidateWithData() {
     String rootElementName = getElementName();
     if (rootElementName == null || rootElementName.isEmpty()) {
-      return XmlBundle.message("schema2.instance.no.valid.root.element.name.validation.error");
+      return XmlBeansBundle.message("schema2.instance.no.valid.root.element.name.validation.error");
     }
 
     final PsiFile psiFile = findFile(getUrl().getText());
@@ -219,14 +218,14 @@ public final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrappe
         final XmlElementDescriptor descriptor = Xsd2InstanceUtils.getDescriptor(tag, rootElementName);
 
         if (descriptor == null) {
-          return XmlBundle.message("schema2.instance.no.valid.root.element.name.validation.error");
+          return XmlBeansBundle.message("schema2.instance.no.valid.root.element.name.validation.error");
         }
       }
     }
 
     final String fileName = getOutputFileName();
     if (fileName == null || fileName.isEmpty()) {
-      return XmlBundle.message("schema2.instance.output.file.name.is.empty.validation.problem");
+      return XmlBeansBundle.message("schema2.instance.output.file.name.is.empty.validation.problem");
     }
     return null;
 
