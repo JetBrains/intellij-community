@@ -311,6 +311,12 @@ class KotlinFirChangeSignatureTest :
         newParameters[0].isContextParameter = false
     }
 
+    fun testFromPropertyContextParameterToReceiver() = doTest {
+        val parameterInfo = newParameters[0]
+        parameterInfo.isContextParameter = false
+        receiverParameterInfo = parameterInfo
+    }
+
     fun testContextParameterAndNewParameter() = doTest {
         addParameter(createKotlinIntParameter())
     }

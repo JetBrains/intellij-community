@@ -2,13 +2,22 @@
 
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages
 
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
+import org.jetbrains.kotlin.idea.k2.refactoring.util.createContextArgumentReplacementMapForVariableAccess
+import org.jetbrains.kotlin.idea.k2.refactoring.util.createReplacementReceiverArgumentExpression
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 
 internal class KotlinPropertyCallUsage(element: KtSimpleNameExpression, private val changeInfo: KotlinChangeInfoBase) : UsageInfo(element), KotlinBaseChangeSignatureUsage {
+    private val contextParameters: Map<Int, SmartPsiElementPointer<KtExpression>>? =
+        allowAnalysisFromWriteActionInEdt(element) {
+            createContextArgumentReplacementMapForVariableAccess(element)
+        }
+
     override fun processUsage(
       changeInfo: KotlinChangeInfoBase,
       element: KtElement,
@@ -34,7 +43,12 @@ internal class KotlinPropertyCallUsage(element: KtSimpleNameExpression, private 
 
         val replacingElement = newReceiver?.let {
             val psiFactory = KtPsiFactory(project)
-            val receiver = it.defaultValueForCall ?: psiFactory.createExpression("_")
+            val receiver = createReplacementReceiverArgumentExpression(
+                psiFactory = psiFactory,
+                newReceiverInfo = newReceiver,
+                argumentMapping = emptyMap(),
+                contextParameters = contextParameters,
+            )
             psiFactory.createExpressionByPattern("$0.$1", receiver, element)
         } ?: element
 

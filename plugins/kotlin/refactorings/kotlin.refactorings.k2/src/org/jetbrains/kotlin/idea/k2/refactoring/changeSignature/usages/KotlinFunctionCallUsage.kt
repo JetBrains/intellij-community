@@ -18,12 +18,13 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.*
-import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
@@ -32,7 +33,8 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.K2IntroduceVariableHandler
-import org.jetbrains.kotlin.idea.k2.refactoring.util.createReplacementForContextArgument
+import org.jetbrains.kotlin.idea.k2.refactoring.util.createContextArgumentReplacementMapForFunctionCall
+import org.jetbrains.kotlin.idea.k2.refactoring.util.createReplacementReceiverArgumentExpression
 import org.jetbrains.kotlin.idea.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.isInsideOfCallerBody
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
@@ -109,16 +111,7 @@ internal class KotlinFunctionCallUsage(
     private val contextParameters: Map<Int, SmartPsiElementPointer<KtExpression>>? = allowAnalysisFromWriteAction {
         allowAnalysisOnEdt {
             analyze(element) {
-                val ktCall = element.resolveToCall()
-                val functionCall = ktCall?.singleFunctionCallOrNull()
-                    ?: return@allowAnalysisOnEdt null
-                val psiFactory = KtPsiFactory.contextual(element)
-                val map = mutableMapOf<Int, SmartPsiElementPointer<KtExpression>>()
-                functionCall.partiallyAppliedSymbol.contextArguments.forEachIndexed { idx, receiverValue ->
-                    val replacement = createReplacementForContextArgument(receiverValue) ?: return@forEachIndexed
-                    map[idx] = psiFactory.createExpression(replacement).createSmartPointer()
-                }
-                map
+                createContextArgumentReplacementMapForFunctionCall(element)
             }
         }
     }
@@ -369,17 +362,11 @@ internal class KotlinFunctionCallUsage(
                 }
             }
         }
-        val receiver: PsiElement?  =
-            if (newReceiverInfo?.oldIndex != originalReceiverInfo?.oldIndex && newReceiverInfo != null) {
-                val receiverArgument = if (!newReceiverInfo.wasContextParameter) argumentMapping[newReceiverInfo.oldIndex]?.element else contextParameters?.get(newReceiverInfo.oldIndex)?.element
-                val defaultValueForCall = newReceiverInfo.defaultValueForCall
-                receiverArgument?.let { psiFactory.createExpression(it.text) }
-                    ?: defaultValueForCall
-                    ?: psiFactory.createExpression("contextOf<${newReceiverInfo.currentType.text}>()").takeIf { newReceiverInfo.wasContextParameter && newReceiverInfo.currentType.text != null }
-                    ?: psiFactory.createExpression("_")
-            } else {
-                null
-            }
+        val receiver: PsiElement? = if (newReceiverInfo?.oldIndex != originalReceiverInfo?.oldIndex && newReceiverInfo != null) {
+            createReplacementReceiverArgumentExpression(psiFactory, newReceiverInfo, argumentMapping, contextParameters)
+        } else {
+            null
+        }
 
         newArgumentList.arguments.singleOrNull()?.let {
             if (it.getArgumentExpression() == null) {
