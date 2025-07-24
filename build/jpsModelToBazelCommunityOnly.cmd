@@ -8,11 +8,15 @@ set -eu
 export RUN_WITHOUT_ULTIMATE_ROOT=true
 
 script_dir="$(cd "$(dirname "$0")"; pwd)"
-exec /bin/bash "$script_dir/../platform/build-scripts/bazel/jps-to-bazel.cmd" "$@"
+cd "$script_dir/../platform/build-scripts/bazel"
+exec /bin/bash "../../../bazel.cmd" run "$@" //:jps-to-bazel
 
 :CMDSCRIPT
 
 set RUN_WITHOUT_ULTIMATE_ROOT=true
 
-call "%~dp0..\platform\build-scripts\bazel\jps-to-bazel.cmd" %*
-EXIT /B %ERRORLEVEL%
+pushd "%~dp0..\platform\build-scripts\bazel"
+call "..\..\..\bazel.cmd" run //:jps-to-bazel <nul
+set _exit_code=%ERRORLEVEL%
+popd
+EXIT /B %_exit_code%

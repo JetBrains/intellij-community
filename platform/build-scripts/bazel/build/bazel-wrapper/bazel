@@ -5,6 +5,10 @@ set -e -u -o pipefail
 root="$(cd "$(dirname "$0")/../../../../../.."; pwd)"
 
 # Provide packages.jetbrains.team credentials for Bazel in .netrc
-"$root/build/private-packages-auth/authorizer.sh"
+# The script will be missing if run from community repository
+authorizer="$root/build/private-packages-auth/authorizer.sh"
+if [ -f "$authorizer" ]; then
+  "$authorizer"
+fi
 
 exec "$BAZEL_REAL" "$@"
