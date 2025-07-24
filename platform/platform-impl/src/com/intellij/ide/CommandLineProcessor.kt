@@ -352,7 +352,10 @@ object CommandLineProcessor {
       FUSProjectHotStartUpMeasurer.noProjectFound()
     }
     else if (commands.size > 1) {
-      FUSProjectHotStartUpMeasurer.openingMultipleProjects(false)
+      val numberOfProjects = commands.count { command -> command is OpenProjectResult }
+      val hasLightEditProject = commands.any { command -> (command is OpenProjectResult && command.lightEditMode) ||
+                                                          (command is NoProjectResult && !command.shouldWait && command.lightEditMode) }
+      FUSProjectHotStartUpMeasurer.openingMultipleProjects(false, numberOfProjects, hasLightEditProject)
     }
     else {
       when (val command = commands[0]) {
@@ -371,7 +374,7 @@ object CommandLineProcessor {
     for (command in commands) {
         result = when (command) {
           is OpenProjectResult -> {
-            FUSProjectHotStartUpMeasurer.withProjectContextElement(command.file) {//todo[lene] pass light mode to filter out
+            FUSProjectHotStartUpMeasurer.withProjectContextElement(command.file) {
               openFileOrProject(file = command.file,
                                 line = command.line,
                                 column = command.column,

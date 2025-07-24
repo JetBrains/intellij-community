@@ -557,7 +557,7 @@ object ProjectUtil {
               result = opened
             }
             else {
-              FUSProjectHotStartUpMeasurer.openingMultipleProjects(false)
+              FUSProjectHotStartUpMeasurer.openingMultipleProjects(false, list.size, false)
             }
           }
         }
