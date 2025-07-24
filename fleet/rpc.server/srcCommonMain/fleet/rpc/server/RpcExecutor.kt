@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.rpc.server
 
 import fleet.rpc.RemoteApi
@@ -6,17 +6,12 @@ import fleet.rpc.RemoteApiDescriptor
 import fleet.rpc.RemoteKind
 import fleet.rpc.core.*
 import fleet.rpc.serializer
-import fleet.tracing.asContextElement
-import fleet.tracing.tracer
 import fleet.util.UID
 import fleet.util.async.Resource
 import fleet.util.async.coroutineNameAppended
 import fleet.util.async.useOn
 import fleet.util.channels.isFull
 import fleet.util.logging.KLoggers
-import io.opentelemetry.api.trace.Span
-import io.opentelemetry.api.trace.SpanKind
-import io.opentelemetry.api.trace.StatusCode
 import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -105,7 +100,6 @@ class RpcExecutor private constructor(
   private val routeRequests = ConcurrentHashMap<UID/*route*/, MutableSet<UID/*requestId*/>>()
   private val channels = ConcurrentHashMap<UID, InternalStreamDescriptor>()
   private val routeChannels = ConcurrentHashMap<UID/*route*/, MutableSet<UID/*channelId*/>>()
-  private val spans = ConcurrentHashMap<UID/*reqId*/, Span>()
 
   private suspend fun send(message: TransportMessage) {
     sendSuspend(::sendAsync, message)
@@ -157,14 +151,8 @@ class RpcExecutor private constructor(
           return
         }
 
-        val span = tracer.spanBuilder("RPC Call")
-          .setAttribute("service", message.service.id)
-          .setAttribute("method", message.method)
-          .setSpanKind(SpanKind.SERVER)
-          .startSpan()
-        registerRequest(message.requestId, span, requestJob, clientId)
+        registerRequest(message.requestId, requestJob, clientId)
         val requestContext = requestJob +
-                             span.asContextElement() +
                              serviceScope.coroutineContext.coroutineNameAppended(message.displayName) +
                              (rpcCallDispatcher ?: EmptyCoroutineContext)
         serviceScope.launch(requestContext) {
@@ -245,7 +233,6 @@ class RpcExecutor private constructor(
             send(RpcMessage.CallFailure(requestId = message.requestId,
                                         error = e.toFailureInfo())
                    .seal(destination = clientId, origin = route))
-            spans[message.requestId]?.setStatus(StatusCode.ERROR, e.message)?.recordException(e)
             // todo removeREquest ... completeExceptionally()
           }
 
@@ -256,7 +243,7 @@ class RpcExecutor private constructor(
       is RpcMessage.CancelCall -> {
         logger.trace { "Cancelling call: requestId=${message.requestId}" }
         //TODO probably should cancel all streams as well, we can't know if they are handled by someone
-        removeRequest(message.requestId, clientId, { addEvent("cancel") }) { cancel("Cancelled by Message.Cancel") }
+        removeRequest(message.requestId, clientId) { cancel("Cancelled by Message.Cancel") }
       }
 
       is RpcMessage.StreamData -> {
@@ -303,7 +290,7 @@ class RpcExecutor private constructor(
 
   private fun cancelAllOngoingWork(clientId: UID) {
     routeRequests[clientId]?.onEach { requestId ->
-      removeRequest(requestId, clientId, { addEvent("routeClosed") }) {
+      removeRequest(requestId, clientId) {
         cancel("Cancelled by Message.RouteClosed")
       }
     }
@@ -343,21 +330,15 @@ class RpcExecutor private constructor(
 
   private fun registerRequest(
     requestId: UID,
-    span: Span,
     requestJob: CompletableJob,
     route: UID?,
   ) {
     requestJobs[requestId] = requestJob
-    spans[requestId] = span
     if (route != null) routeRequests.computeIfAbsent(route) { ConcurrentHashSet() }.add(requestId)
   }
 
-  private fun removeRequest(requestId: UID, route: UID?, spanAction: Span.() -> Unit = {}, jobAction: CompletableJob.() -> Unit) {
+  private fun removeRequest(requestId: UID, route: UID?, jobAction: CompletableJob.() -> Unit) {
     requestJobs.remove(requestId)?.jobAction()
-    spans.remove(requestId)?.let { span ->
-      span.spanAction()
-      span.end()
-    }
     if (route != null) routeRequests[route]?.remove(requestId)
   }
 
