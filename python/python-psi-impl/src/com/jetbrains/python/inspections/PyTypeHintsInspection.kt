@@ -909,25 +909,14 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     private fun checkGenericClassTypeParametersNotUsedByOuterScope(cls: PyClass) {
-      fun getTypeParameters(clazz: PyClass): Iterable<PyTypeParameterType> {
-        val clazzType = PyTypeChecker.findGenericDefinitionType(clazz, myTypeEvalContext) ?: return emptyList()
-        return clazzType.elementTypes.filterIsInstance<PyTypeParameterType>()
-      }
-
-      val typeParams = getTypeParameters(cls).map { it.name }.toMutableSet()
+      val typeParams = getTypeParameters(cls).toMutableSet()
       val typeParamsUsedByOuterScopes = mutableListOf<String>()
-      var currentScope: ScopeOwner? = cls
+      var currentScope: PyTypeParameterListOwner? = cls
       while (typeParams.isNotEmpty()) {
-        currentScope = PsiTreeUtil.getParentOfType(currentScope, PyClass::class.java, PyFunction::class.java)
-        val currentScopeTypeParams = when (currentScope) {
-          is PyClass -> getTypeParameters(currentScope)
-          is PyFunction -> PyTypingTypeProvider.collectTypeParameters(currentScope, myTypeEvalContext)
-          else -> break
-        }
-        for (typeParam in currentScopeTypeParams) {
-          val typeParamName = typeParam.name
-          if (typeParams.remove(typeParamName)) {
-            typeParamsUsedByOuterScopes.add(typeParamName)
+        currentScope = PsiTreeUtil.getParentOfType(currentScope, PyTypeParameterListOwner::class.java) ?: break
+        for (typeParam in getTypeParameters(currentScope)) {
+          if (typeParams.remove(typeParam)) {
+            typeParamsUsedByOuterScopes.add(typeParam)
           }
         }
       }
@@ -936,6 +925,23 @@ class PyTypeHintsInspection : PyInspection() {
         registerProblem(cls.nameIdentifier, PyPsiBundle.message("INSP.type.hints.some.type.variables.are.used.by.an.outer.scope",
                                                                 typeParamsUsedByOuterScopes.joinToString(", ")))
       }
+    }
+
+    private fun getTypeParameters(scope: PyTypeParameterListOwner): List<String> {
+      val typeParameterList = scope.typeParameterList
+      if (typeParameterList != null) {
+        return typeParameterList.typeParameters.mapNotNull { it.name }
+      }
+      if (scope is PyClass) {
+        val genericType = PyTypeChecker.findGenericDefinitionType(scope, myTypeEvalContext)
+        if (genericType != null) {
+          return genericType.elementTypes.filterIsInstance<PyTypeParameterType>().map { it.name }
+        }
+      }
+      if (scope is PyFunction) {
+        return PyTypingTypeProvider.collectTypeParameters(scope, myTypeEvalContext).map { it.name }
+      }
+      return emptyList()
     }
 
     private fun checkParameters(node: PySubscriptionExpression) {

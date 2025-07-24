@@ -325,6 +325,14 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                        class <warning descr="Some type variables (T) are used by an outer scope">MyGeneric</warning>(Generic[T]):
                            ...
                    
+                   def a_fun_new_syntax1[U]() -> None:
+                       class <warning descr="Some type variables (U) are used by an outer scope">MyGeneric</warning>(Generic[U]):
+                           ...
+                   
+                   def a_fun_new_syntax2[U](u: U) -> None:
+                       class <warning descr="Some type variables (U) are used by an outer scope">MyGeneric</warning>(Generic[U]):
+                           ...
+                   
                    class Outer(Generic[T]):
                        class <warning descr="Some type variables (T) are used by an outer scope">Bad</warning>(Iterable[T]):
                            ...
@@ -333,7 +341,11 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    
                        class Inner(Iterable[S]):
                            ...
-                       attr: Inner[T]""");
+                       attr: Inner[T]
+                   
+                   class OuterNewSyntax[U]:
+                       class <warning descr="Some type variables (U) are used by an outer scope">Bad</warning>(Generic[U]):
+                           ...""");
   }
 
   // PY-28249
