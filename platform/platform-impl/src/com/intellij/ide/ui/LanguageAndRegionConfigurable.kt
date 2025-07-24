@@ -59,8 +59,9 @@ object LanguageAndRegionUi {
       val initSelectionLocale = LocalizationUtil.getLocale(true)
       val localizationService = LocalizationStateService.getInstance()!!
       val model = CollectionComboBoxModel(locales.first.toMutableList(), initSelectionLocale)
-      val languageBox = comboBox(model).accessibleName(IdeBundle.message("combobox.language")).widthGroup(comboGroup)
-      comment(IdeBundle.message("ide.restart.required.comment"))
+      val languageBox = comboBox(model).accessibleName(IdeBundle.message("combobox.language"))
+        .widthGroup(comboGroup)
+        .commentRight(IdeBundle.message("ide.restart.required.comment"))
 
       if (propertyGraph != null && connection != null) {
         val property = propertyGraph.lazyProperty { LocalizationUtil.getLocale(true) }

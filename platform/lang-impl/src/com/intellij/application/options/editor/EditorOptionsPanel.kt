@@ -196,7 +196,7 @@ internal class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurab
         }.bind({ editorSettings.isWheelFontChangePersistent }, { editorSettings.isWheelFontChangePersistent = it })
         row {
           checkBox(enableDnD)
-          comment(message("checkbox.enable.drag.n.drop.functionality.in.editor.comment", UIUtil.getControlKeyName()))
+            .commentRight(message("checkbox.enable.drag.n.drop.functionality.in.editor.comment", UIUtil.getControlKeyName()))
         }
       }
       group(message("group.soft.wraps")) {
@@ -267,7 +267,7 @@ internal class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurab
           val copyShortcutText = copyShortcut?.let { " (" + KeymapUtil.getShortcutText(it) + ")" } ?: ""
           checkBox(message("checkbox.enable.richcopy.label", copyShortcutText))
             .bindSelected(richCopySettings::isEnabled, richCopySettings::setEnabled)
-          comment(message("checkbox.enable.richcopy.comment"))
+            .commentRight(message("checkbox.enable.richcopy.comment"))
         }
         row(message("combobox.richcopy.color.scheme")) {
           val editorColorsManager = EditorColorsManager.getInstance()

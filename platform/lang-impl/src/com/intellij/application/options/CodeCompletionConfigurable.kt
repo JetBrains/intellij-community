@@ -129,7 +129,7 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
               checkBox(ApplicationBundle.message("checkbox.autocomplete.basic"))
                 .bindSelected(settings::AUTOCOMPLETE_ON_CODE_COMPLETION)
                 .gap(RightGap.SMALL)
-              comment(KeymapUtil.getFirstKeyboardShortcutText(actionManager.getAction(IdeActions.ACTION_CODE_COMPLETION)))
+                .commentRight(KeymapUtil.getFirstKeyboardShortcutText(actionManager.getAction(IdeActions.ACTION_CODE_COMPLETION)))
             }
           }
 
@@ -138,7 +138,7 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
               checkBox(ApplicationBundle.message("checkbox.autocomplete.smart.type"))
                 .bindSelected(settings::AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION)
                 .gap(RightGap.SMALL)
-              comment(KeymapUtil.getFirstKeyboardShortcutText(actionManager.getAction(IdeActions.ACTION_SMART_TYPE_COMPLETION)))
+                .commentRight(KeymapUtil.getFirstKeyboardShortcutText(actionManager.getAction(IdeActions.ACTION_SMART_TYPE_COMPLETION)))
             }
           }
         }

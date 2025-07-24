@@ -252,18 +252,11 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             .applyToComponent {
               isEditable = true
             }
+            .commentRight(getScaleComment())
             .validationOnInput {
               IdeScaleTransformer.Settings.validatePercentScaleInput(this, it, false)
             }
             .gap(RightGap.SMALL)
-
-          val zoomInString = KeymapUtil.getShortcutTextOrNull("ZoomInIdeAction")
-          val zoomOutString = KeymapUtil.getShortcutTextOrNull("ZoomOutIdeAction")
-          val resetScaleString = KeymapUtil.getShortcutTextOrNull("ResetIdeScaleAction")
-
-          if (zoomInString != null && zoomOutString != null && resetScaleString != null) {
-            comment(message("combobox.ide.scale.comment.format", zoomInString, zoomOutString, resetScaleString))
-          }
 
           resetZoom = link(message("ide.scale.reset.link")) {
             model.selectedItem = defaultScale.percentStringValue
@@ -321,10 +314,9 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           checkBox(message("checkbox.support.screen.readers"))
             .bindSelected(generalSettings::isSupportScreenReaders) { generalSettings.isSupportScreenReaders = it }
             .comment(message("support.screen.readers.tab", ctrlTab, ctrlShiftTab))
+            .commentRight(if (isOverridden) message("overridden.by.jvm.property", GeneralSettings.SUPPORT_SCREEN_READERS)
+                          else message("ide.restart.required.comment"))
             .enabled(!isOverridden)
-
-          comment(if (isOverridden) message("overridden.by.jvm.property", GeneralSettings.SUPPORT_SCREEN_READERS)
-                  else message("ide.restart.required.comment"))
         }
 
         row {
@@ -654,6 +646,18 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       RestartDialogImpl.showRestartRequired()
     }
   }
+}
+
+private fun getScaleComment(): @Nls String? {
+  val zoomInString = KeymapUtil.getShortcutTextOrNull("ZoomInIdeAction")
+  val zoomOutString = KeymapUtil.getShortcutTextOrNull("ZoomOutIdeAction")
+  val resetScaleString = KeymapUtil.getShortcutTextOrNull("ResetIdeScaleAction")
+
+  if (zoomInString != null && zoomOutString != null && resetScaleString != null) {
+    return message("combobox.ide.scale.comment.format", zoomInString, zoomOutString, resetScaleString)
+  }
+
+  return null
 }
 
 private fun getFontFamily(fontFace: String?): String {
