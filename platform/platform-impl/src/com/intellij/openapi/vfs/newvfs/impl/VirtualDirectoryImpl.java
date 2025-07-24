@@ -233,11 +233,18 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (sensitivity == CaseSensitivity.UNKNOWN) {
       throw new IllegalArgumentException("invalid argument for " + this + ": " + sensitivity);
     }
-    VfsData vfsData = getVfsData();
-    VfsData.Segment segment = vfsData.getSegment(getId(), false);
-    int newFlags = VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED |
-                   (sensitivity == FileAttributes.CaseSensitivity.SENSITIVE ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0);
-    segment.setFlags(getId(), VfsDataFlags.CHILDREN_CASE_SENSITIVE | VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, newFlags);
+
+    CaseSensitivity oldCaseSensitivity = getChildrenCaseSensitivity();
+    if (oldCaseSensitivity != sensitivity) {
+      VfsData vfsData = getVfsData();
+      VfsData.Segment segment = vfsData.getSegment(getId(), false);
+      int newFlags = VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED |
+                     (sensitivity == CaseSensitivity.SENSITIVE ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0);
+      segment.setFlags(getId(), VfsDataFlags.CHILDREN_CASE_SENSITIVE | VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, newFlags);
+
+      //children are sorted by name => case-sensitivity change requires re-sorting:
+      resortChildren();
+    }
   }
 
   // removes forward/backslashes from start/end and return trimmed name or null if there are slashes in the middle, or it's empty
@@ -357,8 +364,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       pFS.executeChangeCaseSensitivity(this, (CaseSensitivity)caseSensitivityEvent.getNewValue());
       // fire event asynchronously to avoid deadlocks with possibly currently held VFP/Refresh queue locks
       RefreshQueue.getInstance().processEvents(/*async: */ true, List.of(caseSensitivityEvent));
-      // when the case-sensitivity changes, the "children must be sorted by name" invariant must be restored
-      resortChildren();
     }
     else if (getChildrenCaseSensitivity() == CaseSensitivity.UNKNOWN) {
       // Fallback: cache 'default' case sensitivity when we failed to read it from the disk, to avoid freezes on
