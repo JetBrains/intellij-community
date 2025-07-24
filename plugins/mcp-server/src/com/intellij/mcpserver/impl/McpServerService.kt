@@ -183,21 +183,7 @@ class McpServerService(val cs: CoroutineScope) {
   }
 
 private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromInitialRequest: String?): RegisteredTool {
-  val outputSchema = if (structuredToolOutputEnabled)  {
-    descriptor.outputSchema?.let {
-      Tool.Output(
-        it.propertiesSchema,
-        it.requiredProperties.toList())
-    }
-  }
-  else null
-  val tool = Tool(name = descriptor.name,
-                  description = descriptor.description,
-                  inputSchema = Tool.Input(
-                    properties = descriptor.inputSchema.propertiesSchema,
-                    required = descriptor.inputSchema.requiredProperties.toList()),
-                  outputSchema = outputSchema,
-                  annotations = null)
+  val tool = toSdkTool()
   return RegisteredTool(tool) { request ->
     val httpRequest = currentCoroutineContext().httpRequestOrNull
     val projectPath = httpRequest?.headers?.get(IJ_MCP_SERVER_PROJECT_PATH) ?: (request._meta[IJ_MCP_SERVER_PROJECT_PATH] as? JsonPrimitive)?.content ?: projectPathFromInitialRequest
@@ -345,4 +331,23 @@ private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromIniti
     val structuredContent = if (structuredToolOutputEnabled) callResult.structuredContent else null
     return@RegisteredTool CallToolResult(content = contents, structuredContent = structuredContent, callResult.isError)}
   }
+}
+
+fun McpTool.toSdkTool(): Tool {
+  val outputSchema = if (structuredToolOutputEnabled) {
+    descriptor.outputSchema?.let {
+      Tool.Output(
+        it.propertiesSchema,
+        it.requiredProperties.toList())
+    }
+  }
+  else null
+  val tool = Tool(name = descriptor.name,
+                  description = descriptor.description,
+                  inputSchema = Tool.Input(
+                    properties = descriptor.inputSchema.propertiesSchema,
+                    required = descriptor.inputSchema.requiredProperties.toList()),
+                  outputSchema = outputSchema,
+                  annotations = null)
+  return tool
 }
