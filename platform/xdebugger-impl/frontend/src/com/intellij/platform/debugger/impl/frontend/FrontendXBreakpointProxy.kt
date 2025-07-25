@@ -271,8 +271,22 @@ internal open class FrontendXBreakpointProxy(
       return false
     }
 
-    // TODO: support timestamp
-    return currentState == other.currentState
+    val dependentBreakpointManager = FrontendXDebuggerManager.getInstance(project).breakpointsManager.dependentBreakpointManager
+    val otherState = other.currentState
+
+    // A lot of fields in [XBreakpointDtoState] should not be compared
+    return currentState.logMessage == otherState.logMessage &&
+           currentState.logStack == otherState.logStack &&
+           currentState.isLogExpressionEnabled == otherState.isLogExpressionEnabled &&
+           currentState.logExpression == otherState.logExpression &&
+           currentState.isConditionEnabled == otherState.isConditionEnabled &&
+           currentState.conditionExpression == otherState.conditionExpression &&
+           currentState.enabled == otherState.enabled &&
+           currentState.suspendPolicy == otherState.suspendPolicy &&
+           currentState.group == otherState.group &&
+           currentState.lineBreakpointInfo == otherState.lineBreakpointInfo &&
+           dependentBreakpointManager.getMasterBreakpoint(this) == dependentBreakpointManager.getMasterBreakpoint(other) &&
+           dependentBreakpointManager.isLeaveEnabled(this) == dependentBreakpointManager.isLeaveEnabled(other)
   }
 
   override fun getEditorsProvider(): XDebuggerEditorsProvider? {
