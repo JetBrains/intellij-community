@@ -5,7 +5,9 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBValue
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
@@ -37,7 +39,7 @@ internal class PyPackagingTreeGroup(
   private var itemsCount: Int? = null
 
   val scrollPane = JBScrollPane(tree).apply {
-    border = JBUI.Borders.empty()
+    border = JBEmptyBorder(JBUI.insetsLeft(gapValue.get()))
     verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER
     horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
   }
@@ -138,5 +140,9 @@ internal class PyPackagingTreeGroup(
   fun repaint() {
     container.revalidate()
     container.repaint()
+  }
+
+  companion object {
+    private val gapValue = JBValue.UIInteger("TreeTable.gap", 16)
   }
 }
