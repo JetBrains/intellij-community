@@ -878,7 +878,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
     }
 
     override fun createImportSpec(): ImportSpec =
-        ImportSpecBuilder(super.createImportSpec()).createDirectoriesForEmptyContentRoots().build()
+        ImportSpecBuilder(super.createImportSpec()).withCreateDirectoriesForEmptyContentRoots().build()
 
     override fun testDataDirName(): String = "gradleFacetImportTest"
 }

@@ -214,7 +214,7 @@ public final class ExternalSystemUtil {
                                     final boolean isPreviewMode,
                                     final @NotNull ProgressExecutionMode progressExecutionMode) {
     var builder = new ImportSpecBuilder(project, externalSystemId)
-      .use(progressExecutionMode)
+      .withProgressExecutionMode(progressExecutionMode)
       .withPreviewMode(isPreviewMode);
     refreshProject(externalProjectPath, builder);
   }
@@ -231,7 +231,7 @@ public final class ExternalSystemUtil {
                                     final @NotNull ProgressExecutionMode progressExecutionMode) {
     var builder = new ImportSpecBuilder(project, externalSystemId)
       .callback(callback)
-      .use(progressExecutionMode)
+      .withProgressExecutionMode(progressExecutionMode)
       .withPreviewMode(isPreviewMode);
     refreshProject(externalProjectPath, builder);
   }
@@ -249,7 +249,7 @@ public final class ExternalSystemUtil {
                                     final boolean reportRefreshError) {
     var builder = new ImportSpecBuilder(project, externalSystemId)
       .callback(callback)
-      .use(progressExecutionMode)
+      .withProgressExecutionMode(progressExecutionMode)
       .withPreviewMode(isPreviewMode)
       .withActivateToolWindowOnFailure(reportRefreshError);
     refreshProject(externalProjectPath, builder);
@@ -993,7 +993,7 @@ public final class ExternalSystemUtil {
     final @NotNull ProgressExecutionMode progressExecutionMode
   ) {
     ImportSpecBuilder builder = new ImportSpecBuilder(project, externalSystemId)
-      .use(progressExecutionMode)
+      .withProgressExecutionMode(progressExecutionMode)
       .withPreviewMode(isPreviewMode)
       .withCallback(it -> {
         if (importResultCallback != null) {
