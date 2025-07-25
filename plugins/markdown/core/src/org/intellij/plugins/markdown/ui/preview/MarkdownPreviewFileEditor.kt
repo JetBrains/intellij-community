@@ -6,11 +6,14 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -36,8 +39,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.editor.findFirstOpenEditorForFile
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview.suppressNextScrollSyncForEditor
 import org.intellij.plugins.markdown.ui.preview.jcef.MarkdownJCEFHtmlPanel
 import org.intellij.plugins.markdown.util.MarkdownPluginScope
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -79,7 +84,9 @@ class MarkdownPreviewFileEditor(
 
     val messageBusConnection = project.messageBus.connect(this)
     val settingsChangedListener = UpdatePanelOnSettingsChangedListener()
+
     messageBusConnection.subscribe(MarkdownSettings.ChangeListener.TOPIC, settingsChangedListener)
+
     messageBusConnection.subscribe(
       MarkdownExtensionsSettings.ChangeListener.TOPIC,
       MarkdownExtensionsSettings.ChangeListener { fromSettingsDialog: Boolean ->
@@ -91,6 +98,28 @@ class MarkdownPreviewFileEditor(
           }
         }
       })
+
+    messageBusConnection.subscribe(MarkdownJCEFHtmlPanel.PreviewClickListener.TOPIC,
+                                   object : MarkdownJCEFHtmlPanel.PreviewClickListener {
+      override fun receivedPosition(charOffset: Int, lineOffset: Int, file: VirtualFile) {
+        if (file == this@MarkdownPreviewFileEditor.file) {
+          var editor = findFirstOpenEditorForFile(project, file)
+
+          if (editor != null) {
+            val document = editor.document
+            val line = document.getLineNumber(charOffset) + lineOffset
+
+            suppressNextScrollSyncForEditor(editor)
+
+            ApplicationManager.getApplication().invokeLater {
+              editor.caretModel.moveToLogicalPosition(LogicalPosition(line, 0))
+              editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
+              editor.contentComponent.requestFocusInWindow()
+            }
+          }
+        }
+      }
+    })
 
     StartupUiUtil.addAwtListener(AWTEvent.MOUSE_EVENT_MASK, this) { event ->
       if (event is MouseEvent && event.id == MouseEvent.MOUSE_CLICKED && event.button == MouseEvent.BUTTON3
@@ -138,9 +167,9 @@ class MarkdownPreviewFileEditor(
     }
   }
 
-  fun scrollToLine(editor: Editor, line: Int) {
+  fun ensureMarkdownSrcOffsetIsVisible(offset: Int) {
     coroutineScope.launch(Dispatchers.EDT) {
-      panel?.scrollTo(editor, line)
+      panel?.ensureMarkdownSrcOffsetIsVisible(offset)
     }
   }
 

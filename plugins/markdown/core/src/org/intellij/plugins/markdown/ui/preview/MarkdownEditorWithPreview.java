@@ -3,6 +3,9 @@ package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -14,6 +17,8 @@ import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * @author Konstantin Bulenkov
@@ -54,7 +59,9 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
         }
       }
     });
+
     editor.getEditor().getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener(), this);
+    editor.getEditor().getCaretModel().addCaretListener(new MyCaretListener(), this);
   }
 
   @Override
@@ -84,24 +91,71 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
     this.autoScrollPreview = autoScrollPreview;
   }
 
+  private final class MyCaretListener implements CaretListener {
+    @Override
+    public void caretPositionChanged(@NotNull CaretEvent event) {
+      if (isAutoScrollPreview()) {
+        suppressNextScrollSyncForEditor(event.getEditor());
+        ((MarkdownPreviewFileEditor) myPreview).ensureMarkdownSrcOffsetIsVisible(event.getEditor().getCaretModel().getOffset());
+      }
+    }
+  }
+
+  private static final Map<Editor, Long> scrollSuppressions = new WeakHashMap<>();
+
+  public static void suppressNextScrollSyncForEditor(Editor editor) {
+    scrollSuppressions.put(editor, System.currentTimeMillis());
+  }
+
+  private static void clearOldScrollSuppressions() {
+    long now = System.currentTimeMillis();
+    var iterator = scrollSuppressions.entrySet().iterator();
+
+    while (iterator.hasNext()) {
+      var entry = iterator.next();
+
+      if (entry.getValue() < now - 3000) {
+        iterator.remove();
+      }
+    }
+  }
+
   private final class MyVisibleAreaListener implements VisibleAreaListener {
     private int previousLine = 0;
 
+    private static int pixelOffsetToLine(Editor editor, int y) {
+      return editor instanceof EditorImpl ? editor.xyToLogicalPosition(new Point(0, y)).line : y / editor.getLineHeight();
+    }
+
     @Override
     public void visibleAreaChanged(@NotNull VisibleAreaEvent event) {
-      if (!isAutoScrollPreview()) {
+      // If the user double-clicks the preview, causing the editor to scroll to a new location,
+      //   we want to avoid having the editor scrolling turn around and cause the preview to scroll.
+      final Editor editor = event.getEditor();
+
+      clearOldScrollSuppressions();
+
+      if (scrollSuppressions.get(editor) != null || !isAutoScrollPreview()) {
         return;
       }
 
-      final Editor editor = event.getEditor();
       int y = editor.getScrollingModel().getVerticalScrollOffset();
-      int currentLine = editor instanceof EditorImpl ? editor.xyToLogicalPosition(new Point(0, y)).getLine() : y / editor.getLineHeight();
+      int currentLine = pixelOffsetToLine(editor, y);
+
       if (currentLine == previousLine) {
         return;
       }
 
+      int scrollLine = currentLine;
+
+      if (currentLine > previousLine) {
+        scrollLine = pixelOffsetToLine(editor, y + editor.getScrollingModel().getVisibleArea().height);
+      }
+
+      ((MarkdownPreviewFileEditor) myPreview)
+        .ensureMarkdownSrcOffsetIsVisible(editor.logicalPositionToOffset(new LogicalPosition(scrollLine, 0)));
+
       previousLine = currentLine;
-      ((MarkdownPreviewFileEditor)myPreview).scrollToLine(editor, currentLine);
     }
   }
 }

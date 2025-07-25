@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.settings
 
 import com.intellij.openapi.components.*
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.project.Project
 import com.intellij.ui.jcef.JBCefApp
@@ -27,6 +28,14 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
   var previewPanelProviderInfo
     get() = state.previewPanelProviderInfo
     set(value) { state.previewPanelProviderInfo = value }
+
+  var style
+    get() = state.style
+    set(value) { state.style = value }
+
+  var useGitHubSyntaxColors
+    get() = state.useGitHubSyntaxColors
+    set(value) { state.useGitHubSyntaxColors = value }
 
   var isVerticalSplit
     get() = state.isVerticalSplit
@@ -56,6 +65,9 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
     get() = state.isFileGroupingEnabled
     set(value) { state.isFileGroupingEnabled = value }
 
+  var useAlternativeHighlighting = false
+    get() = style != MarkdownStyle.JETBRAINS && useGitHubSyntaxColors
+
   override fun noStateLoaded() {
     super.noStateLoaded()
     loadState(MarkdownSettingsState())
@@ -67,6 +79,10 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
     publisher.beforeSettingsChanged(this)
     block(this)
     publisher.settingsChanged(this)
+  }
+
+  fun isDark(): Boolean {
+    return style.isAlwaysDark() || (style.isVariable() && EditorColorsManager.getInstance().isDarkEditor)
   }
 
   interface ChangeListener {
@@ -89,6 +105,9 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
 
     internal val defaultFontFamily
       get() = checkNotNull(AppEditorFontOptions.getInstance().state).FONT_FAMILY
+
+    internal val defaultStyle
+      get() = MarkdownStyle.JETBRAINS
 
     @JvmStatic
     val defaultProviderInfo: MarkdownHtmlPanelProvider.ProviderInfo
