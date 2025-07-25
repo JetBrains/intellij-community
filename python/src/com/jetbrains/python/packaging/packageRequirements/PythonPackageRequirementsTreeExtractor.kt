@@ -2,7 +2,6 @@
 package com.jetbrains.python.packaging.packageRequirements
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -10,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface PythonPackageRequirementsTreeExtractor {
-  suspend fun extract(pkg: PythonPackage, module: Module): PackageNode
+  suspend fun extract(pkg: PythonPackage): PackageNode
 
   companion object {
     private val treeParser = TreeParser()

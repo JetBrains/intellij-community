@@ -232,7 +232,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     descriptionController.setPackage(selectedPackage)
   }
 
-  fun showSearchResult(installed: List<InstalledPackage>, repoData: List<PyPackagesViewData>) {
+  fun showSearchResult(installed: List<DisplayablePackage>, repoData: List<PyPackagesViewData>) {
     packageListController.showSearchResult(installed, repoData)
   }
 
