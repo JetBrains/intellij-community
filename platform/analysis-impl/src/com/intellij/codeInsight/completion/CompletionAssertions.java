@@ -60,7 +60,13 @@ public final class CompletionAssertions {
     message += "\nlanguage=" + psiFile.getLanguage();
     message += "\ndoc.length=" + docLength;
     message += "\npsiFile.length=" + psiLength;
-    String fileText = psiFile.getText();
+    String fileText;
+    try {
+      fileText = psiFile.getText();
+    } catch (Throwable e) {
+      // getText() method may fail the length consistency check. Work around it.
+      fileText = psiFile.getViewProvider().getContents().toString();
+    }
     if (fileText != null) {
       message += "\npsiFile.text.length=" + fileText.length();
     }
