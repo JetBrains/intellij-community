@@ -137,7 +137,7 @@ class EelLocalExecApiTest {
     val decoder = Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT) // Not to ignore malformed input
       .onUnmappableCharacter(CodingErrorAction.REPORT)
     val dirtyBuffer = ByteBuffer.allocate(8192)
-    val cleanBuffer = CleanBuffer()
+    val cleanBuffer = CleanBuffer('J')
     withContext(Dispatchers.Default) {
       withTimeoutOrNull(10.seconds) {
         val helloStream = if (ptyManagement == PTYManagement.NO_PTY) {
