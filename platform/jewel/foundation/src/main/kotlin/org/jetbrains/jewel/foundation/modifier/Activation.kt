@@ -28,6 +28,7 @@ import java.awt.event.FocusListener
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 
+@Suppress("ModifierComposed") // To fix in JEWEL-921
 public fun Modifier.trackWindowActivation(window: Window): Modifier =
     composed(
         debugInspectorInfo {
@@ -54,6 +55,7 @@ public fun Modifier.trackWindowActivation(window: Window): Modifier =
         Modifier.modifierLocalProvider(ModifierLocalActivated) { parentActivated }
     }
 
+@Suppress("ModifierComposed") // To fix in JEWEL-921
 public fun Modifier.trackComponentActivation(awtParent: Component): Modifier =
     composed(
         debugInspectorInfo {
@@ -81,6 +83,7 @@ public fun Modifier.trackComponentActivation(awtParent: Component): Modifier =
         Modifier.modifierLocalProvider(ModifierLocalActivated) { parentActivated }
     }
 
+@Suppress("ModifierComposed") // To fix in JEWEL-921
 @Stable
 public fun Modifier.trackActivation(): Modifier =
     composed(debugInspectorInfo { name = "trackActivation" }) {
