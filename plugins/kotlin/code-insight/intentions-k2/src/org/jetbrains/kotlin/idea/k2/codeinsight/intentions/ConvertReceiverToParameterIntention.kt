@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
-import org.jetbrains.kotlin.idea.k2.refactoring.renameParameterInPlace
+import org.jetbrains.kotlin.idea.k2.refactoring.renameParameter
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTypeReference
 
@@ -45,7 +45,7 @@ internal class ConvertReceiverToParameterIntention : SelfTargetingOffsetIndepend
                     if (function.isValid && editor != null && !editor.isDisposed) {
                         val firstParameter = function.valueParameterList?.parameters?.get(0)
                         if (firstParameter != null) {
-                            renameParameterInPlace(firstParameter, editor)
+                            renameParameter(firstParameter, editor)
                         }
                     }
                 }

@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParam
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParameterUtils.getContextParameters
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
-import org.jetbrains.kotlin.idea.k2.refactoring.renameParameterInPlace
+import org.jetbrains.kotlin.idea.k2.refactoring.renameParameter
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTypeReference
@@ -57,6 +57,6 @@ class ConvertReceiverParameterToContextParameterIntention : SelfTargetingIntenti
     private fun renameLastContextParameter(ktCallable: KtCallableDeclaration, editor: Editor?) {
         if (!ktCallable.isValid || editor == null || editor.isDisposed) return
         val lastContextParameter = ktCallable.getContextParameters()?.lastOrNull() ?: return
-        renameParameterInPlace(lastContextParameter, editor)
+        renameParameter(lastContextParameter, editor)
     }
 }

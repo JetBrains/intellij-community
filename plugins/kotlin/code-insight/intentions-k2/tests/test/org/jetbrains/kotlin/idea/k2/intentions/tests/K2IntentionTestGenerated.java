@@ -14471,6 +14471,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         public void testVarargs() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/varargs.kt");
         }
+
+        @TestMetadata("withRename.kt")
+        public void testWithRename() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/withRename.kt");
+        }
     }
 
 
@@ -14915,6 +14920,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/anonymousSingleWithParameterAndReceiver.kt");
             }
 
+            @TestMetadata("anonymousSingleWithRename.kt")
+            public void testAnonymousSingleWithRename() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/anonymousSingleWithRename.kt");
+            }
+
             @TestMetadata("classHierarchy1.kt")
             public void testClassHierarchy1() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/classHierarchy1.kt");
@@ -15107,6 +15117,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("contextFunCallInBody.kt")
             public void testContextFunCallInBody() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/receiverToContextParameter/contextFunCallInBody.kt");
+            }
+
+            @TestMetadata("contextFunCallInBodyWithRename.kt")
+            public void testContextFunCallInBodyWithRename() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/receiverToContextParameter/contextFunCallInBodyWithRename.kt");
             }
 
             @TestMetadata("contextMemberExtensionFunCallInBody.kt")

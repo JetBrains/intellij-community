@@ -1,0 +1,11 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// NEW_NAME: ctx
+
+context(ctx: String)
+fun foo() {
+    bar()
+}
+
+context(c: String)
+fun bar() {
+}

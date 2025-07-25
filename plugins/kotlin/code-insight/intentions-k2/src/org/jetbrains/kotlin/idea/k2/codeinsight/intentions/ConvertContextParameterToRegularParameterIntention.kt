@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParam
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParameterUtils.isConvertibleContextParameter
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParameterUtils.runChangeSignatureForParameter
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
-import org.jetbrains.kotlin.idea.k2.refactoring.renameParameterInPlace
+import org.jetbrains.kotlin.idea.k2.refactoring.renameParameter
 import org.jetbrains.kotlin.lexer.KtTokens.OVERRIDE_KEYWORD
 import org.jetbrains.kotlin.psi.KtContextReceiverList
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -138,6 +138,6 @@ class ConvertContextParameterToRegularParameterIntention : SelfTargetingIntentio
         val firstValueParameter = ownerFunction.valueParameters.firstOrNull() ?: return
         if (!ownerFunction.isValid || editor == null || editor.isDisposed) return
 
-        renameParameterInPlace(firstValueParameter, editor)
+        renameParameter(firstValueParameter, editor)
     }
 }

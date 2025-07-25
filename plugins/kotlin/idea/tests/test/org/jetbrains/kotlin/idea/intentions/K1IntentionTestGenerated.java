@@ -7814,6 +7814,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         public void testVarargs() throws Exception {
             runTest("testData/intentions/convertReceiverToParameter/varargs.kt");
         }
+
+        @TestMetadata("withRename.kt")
+        public void testWithRename() throws Exception {
+            runTest("testData/intentions/convertReceiverToParameter/withRename.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
