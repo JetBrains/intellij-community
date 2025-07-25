@@ -343,7 +343,9 @@ internal class WorkspaceFileIndexDataImpl(
         is DependencyDescription.OnReference<*, *> -> processOnReference(dependency,
                                                                          event,
                                                                          removedEntities as MutableSet<WorkspaceEntity>,
-                                                                         addedEntities as MutableSet<WorkspaceEntity>)
+                                                                         addedEntities as MutableSet<WorkspaceEntity>,
+                                                                         entitiesInStorage as MutableSet<WorkspaceEntity>,
+                                                                         entitiesNotInStorage as MutableSet<WorkspaceEntity>,)
       }
     }
 
@@ -370,15 +372,20 @@ internal class WorkspaceFileIndexDataImpl(
     event: VersionedStorageChange,
     removedEntities: MutableSet<WorkspaceEntity>,
     addedEntities: MutableSet<WorkspaceEntity>,
+    entitiesToKeep: MutableSet<WorkspaceEntity>,
+    entitiesToRemove: MutableSet<WorkspaceEntity>,
   ) {
     val previousDependencies = mutableSetOf<SymbolicEntityId<R>>()
     val actualDependencies = mutableSetOf<SymbolicEntityId<R>>()
 
+    var dependencyApplied = false
     event.getChanges(dependencyDescription.referenceClass).asSequence().forEach { change ->
       change.oldEntity?.let {
+        dependencyApplied = true
         dependencyDescription.referencedEntitiesGetter(it).toCollection(previousDependencies)
       }
       change.newEntity?.let {
+        dependencyApplied = true
         dependencyDescription.referencedEntitiesGetter(it).toCollection(actualDependencies)
       }
     }
@@ -388,6 +395,17 @@ internal class WorkspaceFileIndexDataImpl(
 
     (actualDependencies - previousDependencies).mapNotNullTo(addedEntities) { it.resolve(event.storageAfter) }
     (previousDependencies - actualDependencies).mapNotNullTo(removedEntities) { it.resolve(event.storageBefore) }
+
+    if (dependencyApplied) {
+      val entitiesInCurrentStorage = event.storageAfter.entities(dependencyDescription.resultClass).toSet()
+
+      if (removedEntities.isNotEmpty()) {
+        entitiesToKeep.addAll(removedEntities.intersect(entitiesInCurrentStorage))
+      }
+      if (addedEntities.isNotEmpty()) {
+        entitiesToRemove.addAll(addedEntities - entitiesInCurrentStorage)
+      }
+    }
   }
 
   /**

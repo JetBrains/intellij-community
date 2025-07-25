@@ -111,14 +111,14 @@ sealed interface DependencyDescription<E : WorkspaceEntity> {
   /**
    * Indicates that the contributor must be called for the entities [R] when any entity of type [E] adds the first
    * or remove the last reference to [R].
-   *
-   * [com.intellij.platform.workspace.storage.EntityStorage.referrers] used to determine a reference.
    */
   @ApiStatus.Experimental
   data class OnReference<R: WorkspaceEntityWithSymbolicId, E: WorkspaceEntityWithSymbolicId>(
     /** Type that could contain references to [R] */
     val referenceClass: Class<E>,
     /** Type for which a contributor should be called */
+    val resultClass: Class<R>,
+    /** Computes references */
     val referencedEntitiesGetter: (E) -> Sequence<SymbolicEntityId<R>>
   ): DependencyDescription<R>
 }
