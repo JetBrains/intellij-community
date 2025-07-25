@@ -52,7 +52,7 @@ internal class PyPackagingTreeView(
     }
   }
 
-  fun showSearchResult(installed: List<InstalledPackage>, repoData: List<PyPackagesViewData>) {
+  fun showSearchResult(installed: List<DisplayablePackage>, repoData: List<PyPackagesViewData>) {
     updatePackages(installed, repoData)
 
     installedPackages.expand()
@@ -94,7 +94,7 @@ internal class PyPackagingTreeView(
     container.scrollRectToVisible(Rectangle(0, 0))
   }
 
-  private fun updatePackages(installed: List<InstalledPackage>, repoData: List<PyPackagesViewData>) {
+  private fun updatePackages(installed: List<DisplayablePackage>, repoData: List<PyPackagesViewData>) {
     val sortedInstalled = installed.sortedBy { it.name }
     installedPackages.tree.items = sortedInstalled
     updateExistingRepository(installedPackages, sortedInstalled)

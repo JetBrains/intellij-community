@@ -50,7 +50,7 @@ internal class PyPackagesListController(val project: Project, val controller: Py
 
   override fun dispose() {}
 
-  fun showSearchResult(installed: List<InstalledPackage>, repoData: List<PyPackagesViewData>) {
+  fun showSearchResult(installed: List<DisplayablePackage>, repoData: List<PyPackagesViewData>) {
     tablesView.showSearchResult(installed, repoData)
     setLoadingState(false)
   }
