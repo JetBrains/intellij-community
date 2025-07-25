@@ -101,13 +101,13 @@ class NiceOverlayUi(
    * We cannot ask Swing to repaint the region, as we cannot exit the EDT event we are currently in.
    * We cannot repaint the region manually, as the underlying painting logic might try to access the read/write lock, and we would get a deadlock.
    *
-   * But we know that the UI is fronzen, hence we do a trick: we take a screenshot of the region where the freeze popup is located,
+   * But we know that the UI is frozen, hence we do a trick: we take a screenshot of the region where the freeze popup is located,
    * and draw it back when the user decides to close the popup.
    */
   private val screenshot: MultiResolutionImage?
 
   /**
-   * The location of popup including its shadow; we need it to replace it with the screehshot later
+   * The location of popup including its shadow; we need it to replace it with the screenshot later
    */
   private val popupWithShadowLocation: Rectangle = Rectangle(popupOffsetX - shadowSize, popupOffsetY - shadowSize, popupWidth + shadowSize * 2, popupHeight + shadowSize * 2)
 
