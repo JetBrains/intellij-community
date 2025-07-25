@@ -21,7 +21,6 @@ a:com.intellij.psi.stubs.StubIndex
 - com.intellij.openapi.project.RootsChangeRescanningInfo
 - a:addInheritedSdk():com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 - a:addLibrary(com.intellij.openapi.roots.libraries.Library):com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
-- a:addModule(com.intellij.openapi.module.Module):com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 - a:addSdk(com.intellij.openapi.projectRoots.Sdk):com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 - a:buildInfo():com.intellij.openapi.project.RootsChangeRescanningInfo
 - s:newInstance():com.intellij.util.indexing.BuildableRootsChangeRescanningInfo

@@ -460,9 +460,6 @@ class ProjectEntityIndexingService(
     ): MutableCollection<out IndexableIteratorBuilder> {
       val builders = SmartList<IndexableIteratorBuilder>()
       val instance = IndexableIteratorBuilders
-      for (moduleId in info.modules) {
-        builders.addAll(instance.forModuleContent(moduleId))
-      }
       if (info.hasInheritedSdk) {
         builders.addAll(instance.forInheritedSdk())
       }
