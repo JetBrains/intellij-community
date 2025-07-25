@@ -5,6 +5,7 @@ package org.jetbrains.uast.kotlin.internal
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTypesUtil
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.classes.lazyPub
+import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_GETTER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_SETTER
@@ -394,7 +396,10 @@ internal fun toPsiType(
         }
         if (psiType != null) return psiType
     }
-    val psiTypeParent: PsiElement = containingLightDeclaration ?: context
+    val psiTypeParent: PsiElement =
+        containingLightDeclaration.takeIf { !ktType.isLocal || it is KtLightElement<*, *> }
+            ?: context.parentOfType<KtDeclaration>()
+            ?: context
     return ktType.asPsiType(
         psiTypeParent,
         allowErrorTypes = false,
@@ -434,6 +439,13 @@ internal val KaType.typeForValueClass: Boolean
     get() {
         val symbol = expandedSymbol as? KaNamedClassSymbol ?: return false
         return symbol.isInline
+    }
+
+context(KaSession)
+private val KaType.isLocal: Boolean
+    get() {
+        val symbol = expandedSymbol as? KaNamedClassSymbol ?: return false
+        return symbol.isLocal
     }
 
 context(KaSession)

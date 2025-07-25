@@ -2766,6 +2766,61 @@ interface UastResolveApiFixtureTestBase {
         }
     }
 
+    fun checkResolveTopLevelInlineReifiedFromLibrary_recursiveTypeParameter(myFixture: JavaCodeInsightTestFixture, isK2: Boolean) {
+        val mockLibraryFacility = myFixture.configureLibraryByText(
+            "Mocking.kt", """
+                package test
+
+                inline fun <reified T : Any> mock(): T = TODO()
+            """.trimIndent()
+        )
+        myFixture.addClass(
+            """
+                package my.logger;
+
+                public interface LoggingApi<API extends LoggingApi<API>> {
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                import my.logger.LoggingApi
+                import test.mock
+
+                fun test() {
+                  abstract class CustomLoggingApi : LoggingApi<CustomLoggingApi>
+                  val logger: CustomLoggingApi = mock()
+                }
+            """.trimIndent()
+        )
+
+        try {
+            val uFile = myFixture.file.toUElementOfType<UFile>()!!
+            uFile.accept(object : AbstractUastVisitor() {
+                override fun visitCallExpression(node: UCallExpression): Boolean {
+                    val resolved = node.resolve()
+                    TestCase.assertNotNull(resolved)
+                    TestCase.assertEquals("mock", resolved!!.name)
+                    TestCase.assertNotNull(resolved.returnType)
+                    val expected =
+                        if (isK2)
+                            "CustomLoggingApi"
+                        else
+                            "<ErrorType>"
+                    TestCase.assertEquals(expected, resolved.returnType!!.canonicalText)
+
+                    TestCase.assertEquals(1, resolved.typeParameters.size)
+                    val typeParam = resolved.typeParameters.single()
+                    TestCase.assertEquals("T", typeParam.name)
+
+                    return super.visitCallExpression(node)
+                }
+            })
+        } finally {
+            mockLibraryFacility.tearDown(myFixture.module)
+        }
+    }
+
     fun checkResolveTopLevelInlineInFacadeFromLibrary(myFixture: JavaCodeInsightTestFixture, isK2: Boolean) {
         val mockLibraryFacility = myFixture.configureLibraryByText(
             "MyStringJVM.kt", """
