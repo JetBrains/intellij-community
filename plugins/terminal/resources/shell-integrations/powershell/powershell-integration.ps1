@@ -44,7 +44,7 @@ function __JetBrainsIntellijAskPSReadLineUpdating() {
   $Esc = [char]0x1b
   $Line1 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_1
   $Line2 = "https://learn.microsoft.com/windows/terminal/troubleshooting#black-lines-in-powershell-51-6x-70"
-  $CommandText = "'Install-Module PSReadLine -MinimumVersion $RequiredVersion -Scope CurrentUser'"
+  $CommandText = "'Install-Module PSReadLine -MinimumVersion $RequiredVersion -Scope CurrentUser -Force'"
   $CommandTextColored = "$Esc[32m$CommandText$Esc[0m"
   $Line3 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_2 -f $CommandTextColored
   $Line4 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_3
