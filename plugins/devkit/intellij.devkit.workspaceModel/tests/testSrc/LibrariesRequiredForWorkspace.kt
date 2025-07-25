@@ -138,7 +138,11 @@ private fun addDependencyFromCompilationOutput(model: ModifiableRootModel, libra
     val sharedClassesRootVirtualFile = classesRootVirtualFile?.parent
     assertNotNull("Cannot find $sharedClassesRootVirtualFile. Possibly, project was not compiled", sharedClassesRootVirtualFile)
     VfsUtil.markDirtyAndRefresh(false, true, true, sharedClassesRootVirtualFile)
-    classpathRootVirtualFile = sharedClassesRootVirtualFile?.children?.find { it.name == classpathFolder }
+    // mark dirty and refresh above is not enough, it does not add "new" files to the VFS
+    VfsUtil.iterateChildrenRecursively(sharedClassesRootVirtualFile!!, null) {
+      true
+    }
+    classpathRootVirtualFile = sharedClassesRootVirtualFile.children?.find { it.name == classpathFolder }
     assertNotNull("Cannot find $classpathFolder in $sharedClassesRootVirtualFile. Possibly, project was partially compiled", classpathRootVirtualFile)
   }
   VfsUtil.markDirtyAndRefresh(false, true, true, classpathRootVirtualFile)

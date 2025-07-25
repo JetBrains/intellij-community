@@ -95,7 +95,8 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
     val modulesToCheck = findModulesWhichRequireWorkspace(storage)
 
     var storageChanged = false
-    modulesToCheck.forEach { (moduleEntity, sourceRoot) ->
+    modulesToCheck.forEachIndexed { index, (moduleEntity, sourceRoot) ->
+      println("[${index + 1}/${modulesToCheck.size}] Generating workspace code for module ${moduleEntity.name}")
       val isTestModule = sourceRoot.rootTypeId == JAVA_TEST_ROOT_ENTITY_TYPE_ID
       val libraries = LibrariesRequiredForWorkspace.getRelatedLibraries(moduleEntity.name)
       val gen = generateWorkspaceCode(moduleEntity, sourceRoot, isTestModule, libraries)
@@ -157,7 +158,6 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
     generated: Pair<VirtualFile, VirtualFile>,
   ): Boolean {
     val (srcRoot, genRoot) = generated
-    val moduleEntity = sourceRoot.contentRoot.module
 
     val result = runWriteActionAndWait {
       var storageChanged = false
