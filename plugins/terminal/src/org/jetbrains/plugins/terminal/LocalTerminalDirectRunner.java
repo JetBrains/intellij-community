@@ -21,6 +21,7 @@ import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 import org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer;
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector;
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder;
+import org.jetbrains.plugins.terminal.shell_integration.TerminalPSReadLineUpdateUtil;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;

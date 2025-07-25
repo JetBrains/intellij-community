@@ -1,8 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal
+package org.jetbrains.plugins.terminal.shell_integration
 
 import com.intellij.util.PathUtil
 import com.intellij.util.system.OS
+import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.TerminalBundle
+import org.jetbrains.plugins.terminal.createEnvVariablesMap
 import org.jetbrains.plugins.terminal.util.ShellNameUtil
 
 internal object TerminalPSReadLineUpdateUtil {
