@@ -22,10 +22,8 @@ import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleUtil
-import java.awt.geom.IllegalPathStateException
 import java.io.File
 import java.io.IOException
-import java.nio.file.Path
 import java.util.function.Supplier
 
 object GradleWrapperHelper {
@@ -78,10 +76,11 @@ object GradleWrapperHelper {
 
         executeWrapperTask(connection, context)
 
-        val wrapperPropertiesFile = propertiesFile.get()
-        if (wrapperPropertiesFile != null) {
-          return wrapperPropertiesFile
-        }
+        // if autoimport is active, it should be notified of new files creation as early as possible,
+        // to avoid triggering unnecessary re-imports (caused by creation of wrapper)
+        VfsUtil.markDirtyAndRefresh(false, true, true, File(context.projectPath, "gradle"))
+
+        return propertiesFile.get()
       }
     }
     catch (e: ProcessCanceledException) {
@@ -103,13 +102,6 @@ object GradleWrapperHelper {
     }
     finally {
       span.end()
-      try {
-        // if autoimport is active, it should be notified of new files creation as early as possible,
-        // to avoid triggering unnecessary re-imports (caused by creation of wrapper)
-        VfsUtil.markDirtyAndRefresh(false, true, true, Path.of(context.projectPath, "gradle").toFile())
-      }
-      catch (_: IllegalPathStateException) {
-      }
     }
     return null
   }
