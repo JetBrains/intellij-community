@@ -19,10 +19,12 @@ import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
+import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.nio.file.Path
 import java.util.IdentityHashMap
 import java.util.TreeMap
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeTo
 
@@ -464,7 +466,7 @@ internal class BazelBuildFileGenerator(
     val module = moduleDescriptor.module
     val jvmTarget = getLanguageLevel(module)
     val kotlincOptionsLabel = computeKotlincOptions(buildFile = this, module = moduleDescriptor, jvmTarget = jvmTarget)
-                              ?: (if (jvmTarget == 17) null else "@community//:k$jvmTarget")
+                              ?: (if (jvmTarget == "17") null else "@community//:k$jvmTarget")
     val javacOptionsLabel = computeJavacOptions(module, jvmTarget)
 
     val resourceTargets = mutableListOf<String>()
@@ -724,7 +726,7 @@ internal class BazelBuildFileGenerator(
     return GenerateResourcesResult(resourceTargets = resourceTargets)
   }
 
-  private fun BuildFile.computeJavacOptions(module: JpsModule, jvmTarget: Int): String? {
+  private fun BuildFile.computeJavacOptions(module: JpsModule, jvmTarget: String): String? {
     val extraJavacOptions = projectJavacSettings.currentCompilerOptions.ADDITIONAL_OPTIONS_OVERRIDE.get(module.name) ?: return null
     val exports = addExportsRegex.findAll(extraJavacOptions).map { it.groupValues[1] + "=ALL-UNNAMED" }.toList()
     if (exports.isEmpty()) {
@@ -736,7 +738,7 @@ internal class BazelBuildFileGenerator(
     target("kt_javac_options") {
       option("name", customJavacOptionsName)
       // release is not compatible with --add-exports (*** java)
-      require(jvmTarget == 17)
+      require(jvmTarget == "17")
       option("x_ep_disable_all_checks", true)
       option("warn", "off")
       option("add_exports", exports)
@@ -744,14 +746,14 @@ internal class BazelBuildFileGenerator(
     return ":$customJavacOptionsName"
   }
 
-  private fun getLanguageLevel(module: JpsModule): Int {
+  private fun getLanguageLevel(module: JpsModule): String {
     val languageLevel = javaExtensionService.getLanguageLevel(module)
     return when {
-      languageLevel == LanguageLevel.JDK_1_7 || languageLevel == LanguageLevel.JDK_1_8 -> 8
-      languageLevel == LanguageLevel.JDK_1_9 || languageLevel == LanguageLevel.JDK_11 -> 11
-      languageLevel == LanguageLevel.JDK_17 -> 17
+      languageLevel == LanguageLevel.JDK_1_7 || languageLevel == LanguageLevel.JDK_1_8 -> "8"
+      languageLevel == LanguageLevel.JDK_1_9 || languageLevel == LanguageLevel.JDK_11 -> "11"
+      languageLevel == LanguageLevel.JDK_17 -> "17"
       languageLevel != null -> error("Unsupported language level: $languageLevel")
-      else -> 17
+      else -> "17"
     }
   }
 }
@@ -906,27 +908,97 @@ private fun resolveRelativeToBazelBuildFileDirectory(childDir: Path, contentRoot
   return bazelBuildDir.relativize(childDir)
 }
 
-private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor, jvmTarget: Int): String? {
+private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor, jvmTarget: String): String? {
   val kotlinFacetModuleExtension = module.module.container.getChild(JpsKotlinFacetModuleExtension.KIND) ?: return null
-  val mergedCompilerArguments = kotlinFacetModuleExtension.settings.mergedCompilerArguments ?: return null
+  val mergedCompilerArguments = kotlinFacetModuleExtension.settings.mergedCompilerArguments as? K2JVMCompilerArguments ?: return null
+  val options = HashMap<String, Any>()
   // see create_kotlinc_options
   val effectiveOptIn = mergedCompilerArguments.optIn?.filter { it != "com.intellij.openapi.util.IntellijInternalApi" } ?: emptyList()
-
-  val options = HashMap<String, Any>()
-  if (mergedCompilerArguments.allowKotlinPackage) {
-    options.put("allow_kotlin_package", true)
-  }
-  if (mergedCompilerArguments.contextReceivers) {
-    options.put("context_receivers", true)
-  }
-  if (mergedCompilerArguments.contextParameters) {
-    options.put("context_parameters", true)
-  }
-  if (mergedCompilerArguments.whenGuards) {
-    options.put("when_guards", true)
-  }
+  //optin
   if (effectiveOptIn.isNotEmpty()) {
     options.put("opt_in", effectiveOptIn)
+  }
+  //plugin_options
+  val pluginOptions = mergedCompilerArguments.pluginOptions
+  if (pluginOptions?.isNotEmpty() == true) {
+    options.put("plugin_options", pluginOptions.map {
+      it.replace("${module.bazelBuildFileDir.absolutePathString()}/", "")
+    })
+  }
+  //x_allow_kotlin_package
+  if (mergedCompilerArguments.allowKotlinPackage) {
+    options.put("x_allow_kotlin_package", true)
+  }
+  //x_allow_result_return_type
+  if (mergedCompilerArguments.errors?.unknownExtraFlags?.contains("-Xallow-result-return-type") == true) {
+    options.put("x_allow_result_return_type", true)
+  }
+  //x_allow_unstable_dependencies
+  if (mergedCompilerArguments.allowUnstableDependencies) {
+    options.put("x_allow_unstable_dependencies", true)
+  }
+  //x_consistent_data_class_copy_visibility
+  if (mergedCompilerArguments.consistentDataClassCopyVisibility) {
+    options.put("x_consistent_data_class_copy_visibility", true)
+  }
+  //x_context_parameters
+  if (mergedCompilerArguments.contextParameters) {
+    options.put("x_context_parameters", true)
+  }
+  //x_context_receivers
+  if (mergedCompilerArguments.contextReceivers) {
+    options.put("x_context_receivers", true)
+  }
+  //x_explicit_api_mode
+  if (mergedCompilerArguments.explicitApi != "disable") {
+    options.put("x_explicit_api_mode", mergedCompilerArguments.explicitApi)
+  }
+  //x_inline_classes
+  if (mergedCompilerArguments.inlineClasses) {
+    options.put("x_inline_classes", true)
+  }
+  //x_jvm_default
+  if (mergedCompilerArguments.jvmDefault != "all") {
+    options.put("x_jvm_default", mergedCompilerArguments.jvmDefault)
+  }
+  //x_lambdas
+  val lambdas = mergedCompilerArguments.lambdas
+  if (lambdas != null && lambdas != "indy") {
+    options.put("x_lambdas", lambdas)
+  }
+  //x_no_call_assertions
+  if (mergedCompilerArguments.noCallAssertions) {
+    options.put("x_no_call_assertions", true)
+  }
+  //x_no_param_assertions
+  if (mergedCompilerArguments.noParamAssertions) {
+    options.put("x_no_param_assertions", true)
+  }
+  //x_sam_conversions
+  val samConversions = mergedCompilerArguments.samConversions
+  if (samConversions != null) {
+    options.put("x_sam_conversions", samConversions)
+  }
+  //x_skip_prerelease_check
+  if (mergedCompilerArguments.skipPrereleaseCheck) {
+    options.put("x_skip_prerelease_check", true)
+  }
+  //x_strict_java_nullability_assertions
+  if (mergedCompilerArguments.errors?.unknownExtraFlags?.contains("-Xstrict-java-nullability-assertions") == true) {
+    options.put("x_strict_java_nullability_assertions", true)
+  }
+  //x_wasm_attach_js_exception
+  if (mergedCompilerArguments.errors?.unknownExtraFlags?.contains("-Xwasm-attach-js-exception") == true) {
+    options.put("x_wasm_attach_js_exception", true)
+  }
+  //x_when_guards
+  if (mergedCompilerArguments.whenGuards) {
+    options.put("x_when_guards", true)
+  }
+  //x_x_language
+  val xXLanguageInlineClass = mergedCompilerArguments.internalArguments.any { it.stringRepresentation == "-XXLanguage:+InlineClasses"}
+  if (xXLanguageInlineClass) {
+    options.put("x_x_language", "+InlineClasses")
   }
 
   if (options.isEmpty()) {
@@ -938,7 +1010,7 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
   val kotlincOptionsName = "custom_" + module.targetName
   buildFile.target("create_kotlinc_options") {
     option("name", kotlincOptionsName)
-    if (jvmTarget != 17) {
+    if (jvmTarget != "17") {
       option("jvm_target", jvmTarget)
     }
     for ((name, value) in options.entries.sortedBy { it.key }) {
