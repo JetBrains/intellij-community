@@ -5,6 +5,14 @@ import com.intellij.openapi.util.NlsContexts.TabTitle
 import com.intellij.openapi.wm.ToolWindow
 import org.jetbrains.jewel.foundation.enableNewSwingCompositing
 
+/**
+ * Adds a new tab to the tool window with Compose content.
+ *
+ * @param tabDisplayName The title of the tab.
+ * @param isLockable Whether the tab can be locked.
+ * @param isCloseable Whether the tab can be closed.
+ * @param content The Composable content of the tab.
+ */
 public fun ToolWindow.addComposeTab(
     @TabTitle tabDisplayName: String? = null,
     isLockable: Boolean = true,
@@ -17,7 +25,7 @@ public fun ToolWindow.addComposeTab(
 
     val tabContent =
         contentManager.factory.createContent(
-            JewelToolWindowComposePanel {
+            JewelComposePanel {
                 val scope =
                     object : ToolWindowScope {
                         override val toolWindow: ToolWindow
@@ -32,6 +40,8 @@ public fun ToolWindow.addComposeTab(
     contentManager.addContent(tabContent)
 }
 
+/** A scope for the content of a tool window tab. */
 public interface ToolWindowScope {
+    /** The tool window in which the tab is displayed. */
     public val toolWindow: ToolWindow
 }

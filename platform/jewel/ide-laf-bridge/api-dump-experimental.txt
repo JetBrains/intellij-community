@@ -6,10 +6,6 @@ f:org.jetbrains.jewel.bridge.BridgeUtilsKt
 f:org.jetbrains.jewel.bridge.JewelComposePanelWrapperKt
 - *sf:JewelComposeNoThemePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - *bs:JewelComposeNoThemePanel$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
-- *sf:JewelToolWindowNoThemeComposePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
-- *bs:JewelToolWindowNoThemeComposePanel$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
-- *sf:composeForToolWindowWithoutTheme(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
-- *bs:composeForToolWindowWithoutTheme$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
 - *sf:composeWithoutTheme(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - *bs:composeWithoutTheme$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
 - *sf:getLocalComponent():androidx.compose.runtime.ProvidableCompositionLocal

@@ -169,8 +169,6 @@ f:org.jetbrains.jewel.samples.showcase.components.TextFieldsKt
 f:org.jetbrains.jewel.samples.showcase.components.TooltipsKt
 - sf:Tooltips(androidx.compose.runtime.Composer,I):V
 f:org.jetbrains.jewel.samples.showcase.views.ComponentsViewKt
-- sf:ComponentsToolBar(org.jetbrains.jewel.samples.showcase.views.ComponentsViewModel,org.jetbrains.jewel.ui.component.styling.IconButtonMetrics,androidx.compose.runtime.Composer,I):V
-- sf:ComponentsView(org.jetbrains.jewel.samples.showcase.views.ComponentsViewModel,org.jetbrains.jewel.ui.component.styling.IconButtonMetrics,androidx.compose.runtime.Composer,I):V
 f:org.jetbrains.jewel.samples.showcase.views.ComponentsViewModel
 - sf:$stable:I
 - <init>(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible,org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenScrolling):V
