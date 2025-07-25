@@ -3,7 +3,6 @@ package com.intellij.pycharm.community.ide.impl.configuration
 
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -24,27 +23,15 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Path
 
 class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
-  companion object {
-    private val LOGGER = Logger.getInstance(PyUvSdkConfiguration::class.java)
-  }
-
   override suspend fun getIntention(module: Module): @IntentionName String? {
     return PyProjectToml.findFile(module)?.let { toml ->
       getUvExecutable()?.let { PyCharmCommunityCustomizationBundle.message("sdk.set.up.uv.environment", toml.name) }
     }
   }
 
-  override suspend fun createAndAddSdkForConfigurator(module: Module): Sdk? = createUv(module).getOr {
-    LOGGER.warn(it.error.message)
-    return null
-  }
+  override suspend fun createAndAddSdkForConfigurator(module: Module): PyResult<Sdk> = createUv(module)
 
-  override suspend fun createAndAddSdkForInspection(module: Module): Sdk? {
-    return createUv(module).getOr {
-      LOGGER.warn(it.error.message)
-      return null
-    }
-  }
+  override suspend fun createAndAddSdkForInspection(module: Module): PyResult<Sdk> = createUv(module)
 
   override fun supportsHeadlessModel(): Boolean = true
 
@@ -62,13 +49,13 @@ class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
       return PyResult.failure(MessageError("Can't determine working dir for the module"))
     }
 
-    val sdk = setupNewUvSdkAndEnv(workingDir, PythonSdkUtil.getAllSdks(), null)
-    sdk.onSuccess {
+    val sdkSetupResult = setupNewUvSdkAndEnv(workingDir, PythonSdkUtil.getAllSdks(), null)
+    sdkSetupResult.onSuccess {
       withContext(Dispatchers.EDT) {
         SdkConfigurationUtil.addSdk(it)
         it.setAssociationToModule(sdkAssociatedModule)
       }
     }
-    return sdk
+    return sdkSetupResult
   }
 }

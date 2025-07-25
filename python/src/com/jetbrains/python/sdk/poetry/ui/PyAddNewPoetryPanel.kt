@@ -27,6 +27,7 @@ import com.jetbrains.python.getOrNull
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import com.jetbrains.python.poetry.getPyProjectTomlForPoetry
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox

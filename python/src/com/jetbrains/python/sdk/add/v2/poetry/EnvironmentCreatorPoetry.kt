@@ -29,9 +29,9 @@ import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState.Error
 import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState.Invisible
 import com.jetbrains.python.sdk.add.v2.getBasePath
 import com.jetbrains.python.sdk.basePath
-import com.jetbrains.python.sdk.poetry.PoetryPyProjectTomlPythonVersionsService
+import com.jetbrains.python.poetry.PoetryPyProjectTomlPythonVersionsService
 import com.jetbrains.python.sdk.poetry.configurePoetryEnvironment
-import com.jetbrains.python.sdk.poetry.poetryToml
+import com.jetbrains.python.poetry.findPoetryToml
 import com.jetbrains.python.sdk.poetry.setupPoetrySdk
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
@@ -151,7 +151,7 @@ private class PoetryConfigService : SerializablePersistentStateComponent<PoetryC
   }
 
   suspend fun setInProjectEnv(module: Module) {
-    val hasPoetryToml = poetryToml(module) != null
+    val hasPoetryToml = findPoetryToml(module) != null
     if (state.isInProjectEnv || hasPoetryToml) {
       val modulePath = withContext(Dispatchers.IO) {
         PyProjectToml.findFile(module)?.parent?.toNioPath() ?: module.basePath?.let { Path.of(it) }

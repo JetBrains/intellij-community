@@ -19,6 +19,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonPluginDisposable
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.projectModel.uv.UvProjectModelService
 import com.jetbrains.python.sdk.PySdkPopupFactory
@@ -27,6 +28,7 @@ import com.jetbrains.python.sdk.configuration.suppressors.PyPackageRequirementsI
 import com.jetbrains.python.sdk.configuration.suppressors.TipOfTheDaySuppressor
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.uv.isUv
+import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -49,10 +51,14 @@ object PyProjectSdkConfiguration {
     }
   }
 
-  suspend fun setSdkUsingExtension(module: Module, extension: PyProjectSdkConfigurationExtension, supplier: suspend () -> Sdk?): Boolean {
+  suspend fun setSdkUsingExtension(module: Module, extension: PyProjectSdkConfigurationExtension, supplier: suspend () -> PyResult<Sdk?>): Boolean {
     thisLogger().debug("Configuring sdk with ${extension.javaClass.canonicalName} extension")
 
-    val sdk = supplier() ?: return false
+    val sdk = supplier().getOr {
+      ShowingMessageErrorSync.emit(it.error)
+      return true
+    } ?: return false
+
     // TODO Move this to PyUvSdkConfiguration, show better notification
     if (sdk.isUv && Registry.`is`("python.project.model.uv", false)) {
       val ws = UvProjectModelService.findWorkspace(module)

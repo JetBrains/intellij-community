@@ -14,6 +14,7 @@ import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
+import com.jetbrains.python.poetry.getPyProjectTomlForPoetry
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.createSdk

@@ -16,7 +16,9 @@ import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationC
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
 import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewCondaEnvFromFilePanel
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
+import com.jetbrains.python.onSuccess
 import com.jetbrains.python.packaging.conda.environmentYml.CondaEnvironmentYmlSdkUtils
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
@@ -43,29 +45,34 @@ import java.nio.file.Path
  * TODO: Support remote target (ie \\wsl)
  */
 internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
-  override suspend fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSdk(module, Source.CONFIGURATOR)
+  override suspend fun createAndAddSdkForConfigurator(module: Module): PyResult<Sdk?> = createAndAddSdk(module, Source.CONFIGURATOR)
 
-  override suspend fun getIntention(module: Module): @IntentionName String? = getEnvironmentYml(module)?.let {
-    PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.suggestion")
+  override suspend fun getIntention(module: Module): @IntentionName String? {
+    val isReadyToSetup = withContext(Dispatchers.IO) {
+      getEnvironmentYml(module) != null &&
+      suggestCondaPath()?.let { LocalFileSystem.getInstance().findFileByPath(it) } != null
+    }
+
+    return if (isReadyToSetup) PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.suggestion") else null
   }
 
-  override suspend fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSdk(module, Source.INSPECTION)
+  override suspend fun createAndAddSdkForInspection(module: Module): PyResult<Sdk?> = createAndAddSdk(module, Source.INSPECTION)
 
   private fun getEnvironmentYml(module: Module) = listOf(
     CondaEnvironmentYmlSdkUtils.ENV_YAML_FILE_NAME,
     CondaEnvironmentYmlSdkUtils.ENV_YML_FILE_NAME,
   ).firstNotNullOfOrNull { findAmongRoots(module, it) }
 
-  private suspend fun createAndAddSdk(module: Module, source: Source): Sdk? {
+  private suspend fun createAndAddSdk(module: Module, source: Source): PyResult<Sdk?> {
     val targetConfig = PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(module)
     if (targetConfig != null) {
       // Remote targets aren't supported yet
-      return null
+      return PyResult.success(null)
     }
 
-    val (condaExecutable, environmentYml) = askForEnvData(module, source) ?: return null
-    return createAndAddCondaEnv(module, condaExecutable, environmentYml)?.also {
-      PythonSdkUpdater.scheduleUpdate(it, module.project)
+    val (condaExecutable, environmentYml) = askForEnvData(module, source) ?: return PyResult.success(null)
+    return createAndAddCondaEnv(module, condaExecutable, environmentYml).onSuccess { sdk ->
+      sdk?.let { PythonSdkUpdater.scheduleUpdate(it, module.project) }
     }
   }
 
@@ -95,10 +102,10 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     if (permitted) envData else null
   }
 
-  private suspend fun createAndAddCondaEnv(module: Module, condaExecutable: String, environmentYml: String): Sdk? {
+  private suspend fun createAndAddCondaEnv(module: Module, condaExecutable: String, environmentYml: String): PyResult<Sdk?> {
     thisLogger().debug("Creating conda environment")
 
-    val sdk = createCondaEnv(module.project, condaExecutable, environmentYml) ?: return null
+    val sdk = createCondaEnv(module.project, condaExecutable, environmentYml) ?: return PyResult.success(null)
     PySdkConfigurationCollector.logCondaEnv(module.project, CondaEnvResult.CREATED)
 
     val shared = PyCondaSdkCustomizer.instance.sharedEnvironmentsByDefault
@@ -113,7 +120,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
       SdkConfigurationUtil.addSdk(sdk)
     }
 
-    return sdk
+    return PyResult.success(sdk)
   }
 
   private fun executableToEventField(condaExecutable: String?): InputData {

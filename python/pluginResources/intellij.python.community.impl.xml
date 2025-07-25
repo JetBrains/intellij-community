@@ -52,7 +52,7 @@
                      implementationClass="com.jetbrains.python.requirements.inspections.tools.OutdatedRequirementInspection"/>
 
     <pluginSuggestionProvider order="first" implementation="com.jetbrains.python.suggestions.PycharmProSuggestionProvider"/>
-    <postStartupActivity implementation="com.jetbrains.python.sdk.poetry.PoetryPyProjectTomlPostStartupActivity"/>
+    <postStartupActivity implementation="com.jetbrains.python.poetry.PoetryPyProjectTomlPostStartupActivity"/>
 
     <!--Poetry project model-->
     <projectOpenProcessor implementation="com.jetbrains.python.projectModel.poetry.PoetryProjectOpenProcessor"/>

@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.DialogWrapper
@@ -30,6 +29,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -41,8 +41,6 @@ import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.createVirtualEnvAndSdkSynchronously
 import com.jetbrains.python.sdk.isTargetBased
-import com.jetbrains.python.sdk.showSdkExecutionException
-import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
@@ -54,17 +52,17 @@ import kotlin.io.path.Path
 private val LOGGER = fileLogger()
 
 class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExtension {
-  override suspend fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSdk(module, Source.CONFIGURATOR)
+  override suspend fun createAndAddSdkForConfigurator(module: Module): PyResult<Sdk?> = createAndAddSdk(module, Source.CONFIGURATOR)
 
   override suspend fun getIntention(module: Module): @IntentionName String? =
     getRequirementsTxtOrSetupPy(module)?.let { PyCharmCommunityCustomizationBundle.message("sdk.create.venv.suggestion", it.name) }
 
-  override suspend fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSdk(module, Source.INSPECTION)
+  override suspend fun createAndAddSdkForInspection(module: Module): PyResult<Sdk?> = createAndAddSdk(module, Source.INSPECTION)
 
-  private suspend fun createAndAddSdk(module: Module, source: Source): Sdk? {
+  private suspend fun createAndAddSdk(module: Module, source: Source): PyResult<Sdk?> {
     val existingSdks = PythonSdkUtil.getAllSdks()
 
-    val data = askForEnvData(module, existingSdks, source) ?: return null
+    val data = askForEnvData(module, existingSdks, source) ?: return PyResult.success(null)
 
     val (location, chosenBaseSdk, requirementsTxtOrSetupPy) = data
     val systemIndependentLocation = Path(location)
@@ -87,7 +85,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
       if (requirementsTxtOrSetupPyFile == null) {
         PySdkConfigurationCollector.logVirtualEnv(module.project, VirtualEnvResult.DEPS_NOT_FOUND)
         thisLogger().warn("File with dependencies is not found: $requirementsTxtOrSetupPy")
-        return sdk
+        return PyResult.success(sdk)
       }
 
       val isRequirements = requirementsTxtOrSetupPyFile.name != SetupPyManager.SETUP_PY
@@ -100,8 +98,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
         val pythonPackageManager = PythonPackageManager.forSdk(module.project, sdk)
         pythonPackageManager.sync().getOr {
           PySdkConfigurationCollector.logVirtualEnv(module.project, VirtualEnvResult.INSTALLATION_FAILURE)
-          ShowingMessageErrorSync.emit(it.error)
-          return null
+          return it
         }
       }
       else {
@@ -110,13 +107,12 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
         }
       }
 
-      return sdk
+      return PyResult.success(sdk)
     }
     catch (e: ExecutionException) {
       PySdkConfigurationCollector.logVirtualEnv(module.project, VirtualEnvResult.INSTALLATION_FAILURE)
-      showSdkExecutionException(chosenBaseSdk, e, PyBundle.message("python.packaging.failed.to.install.packages.title"))
       LOGGER.warn("Exception during creating virtual environment", e)
-      return null
+      return PyResult.localizedError(e.localizedMessage)
     }
   }
 

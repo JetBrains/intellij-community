@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.errorProcessing.PyResult
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -36,7 +37,7 @@ interface PyProjectSdkConfigurationExtension {
    *
    * Rule of thumb is to explicitly ask a user if sdk creation is desired and allowed.
    */
-  suspend fun createAndAddSdkForConfigurator(module: Module): Sdk?
+  suspend fun createAndAddSdkForConfigurator(module: Module): PyResult<Sdk?>
 
   /**
    * An implementation is responsible for interpreter setup and registration in IDE.
@@ -44,7 +45,7 @@ interface PyProjectSdkConfigurationExtension {
    *
    * You're free here to create sdk immediately, without any user permission since quick fix is explicitly clicked.
    */
-  suspend fun createAndAddSdkForInspection(module: Module): Sdk?
+  suspend fun createAndAddSdkForInspection(module: Module): PyResult<Sdk?>
 
   /**
    * Called by sdk configurator and interpreter inspection
