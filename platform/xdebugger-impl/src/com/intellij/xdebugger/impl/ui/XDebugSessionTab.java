@@ -54,6 +54,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.useFeProxy;
+
 /**
  * Note: could be stored in frontend, but it kept in shared due to compatibility issues.
  */
@@ -214,12 +216,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   protected final void createDefaultTabs(XDebugSessionProxy session) {
     myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
-
-    if (Registry.is("debugger.new.threads.view")) {
+    if (Registry.is("debugger.new.threads.view") || useFeProxy()) {
       Content threadsContent = createThreadsContent(session);
-      if (threadsContent != null) {
-        myUi.addContent(threadsContent, 0, PlaceInGrid.right, true);
-      }
+      myUi.addContent(threadsContent, 0, PlaceInGrid.right, true);
     }
 
     addVariablesAndWatches(session);
@@ -363,19 +362,14 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return framesContent;
   }
 
-  private @Nullable Content createThreadsContent(XDebugSessionProxy proxy) {
-    if (!(proxy instanceof XDebugSessionProxy.Monolith monolith)) {
-      LOG.error("Threads view is not supported in split mode");
-      return null;
-    }
-    XDebugSessionImpl session = (XDebugSessionImpl)monolith.getSession();
-    XThreadsView stacksView = new XThreadsView(myProject, session);
-    registerView(DebuggerContentInfo.THREADS_CONTENT, stacksView);
-    Content framesContent = myUi.createContent(DebuggerContentInfo.THREADS_CONTENT, stacksView.getPanel(),
+  private @NotNull Content createThreadsContent(XDebugSessionProxy proxy) {
+    XThreadsView threadsView = new XThreadsView(myProject, proxy);
+    registerView(DebuggerContentInfo.THREADS_CONTENT, threadsView);
+    Content threadsContent = myUi.createContent(DebuggerContentInfo.THREADS_CONTENT, threadsView.getPanel(),
                                                XDebuggerBundle.message("debugger.session.tab.threads.title"), null,
-                                               stacksView.getDefaultFocusedComponent());
-    framesContent.setCloseable(false);
-    return framesContent;
+                                               threadsView.getDefaultFocusedComponent());
+    threadsContent.setCloseable(false);
+    return threadsContent;
   }
 
   public void rebuildViews() {

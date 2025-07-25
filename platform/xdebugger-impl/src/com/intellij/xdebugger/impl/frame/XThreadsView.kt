@@ -2,11 +2,10 @@
 package com.intellij.xdebugger.impl.frame
 
 import com.intellij.openapi.project.Project
-import com.intellij.ui.SimpleColoredComponent
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation
-import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.actions.XDebuggerActions.THREADS_VIEW_POPUP_GROUP
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel
@@ -15,15 +14,19 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.JPanel
 
 @ApiStatus.Internal
-class XThreadsView(project: Project, session: XDebugSessionImpl) : XDebugView() {
-  private val treePanel = XDebuggerTreePanel(project, session.debugProcess.editorsProvider, this, null, "", null)
+class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView() {
 
-  fun getTree() = treePanel.tree
+  @ApiStatus.Obsolete
+  constructor(project: Project, session: XDebugSession) : this(project, session.asProxy())
+
+  private val treePanel = XDebuggerTreePanel(project, session.editorsProvider, this, null, THREADS_VIEW_POPUP_GROUP, null)
+
+  fun getTree(): XDebuggerTree = treePanel.tree
   fun getPanel(): JPanel = treePanel.mainPanel
 
-  override fun getMainComponent() = getPanel()
+  override fun getMainComponent(): JPanel = getPanel()
 
-  fun getDefaultFocusedComponent(): XDebuggerTree =  treePanel.tree
+  fun getDefaultFocusedComponent(): XDebuggerTree = treePanel.tree
 
   override fun clear() {
     DebuggerUIUtil.invokeLater {
@@ -31,13 +34,8 @@ class XThreadsView(project: Project, session: XDebugSessionImpl) : XDebugView() 
     }
   }
 
-  override fun processSessionEvent(event: SessionEvent, session: XDebugSession) {
+  override fun processSessionEvent(event: SessionEvent, session: XDebugSessionProxy) {
     if (event == SessionEvent.BEFORE_RESUME) {
-      return
-    }
-    val suspendContext = session.suspendContext
-    if (suspendContext == null) {
-      requestClear()
       return
     }
     if (event == SessionEvent.PAUSED) {
@@ -46,30 +44,32 @@ class XThreadsView(project: Project, session: XDebugSessionImpl) : XDebugView() 
       clear()
     }
     DebuggerUIUtil.invokeLater {
-      getTree().setRoot(XThreadsRootNode(getTree(), suspendContext), false)
+      getTree().setRoot(XThreadsRootNode(getTree(), session), false)
     }
   }
 
   override fun dispose() {
   }
 
-  class ThreadsContainer(val suspendContext: XSuspendContext) : XValueContainer() {
+  class ThreadsContainer(val session: XDebugSessionProxy) : XValueContainer() {
     override fun computeChildren(node: XCompositeNode) {
-      suspendContext.computeExecutionStacks(object : XSuspendContext.XExecutionStackContainer {
-        override fun errorOccurred(errorMessage: String) {
+      session.computeExecutionStacks {
+        object : XSuspendContext.XExecutionStackContainer {
+          override fun errorOccurred(errorMessage: String) {
 
-        }
+          }
 
-        override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
-          val children = XValueChildrenList()
-          executionStacks.map { FramesContainer(it) }.forEach { children.add("", it) }
-          node.addChildren(children, last)
+          override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
+            val children = XValueChildrenList()
+            executionStacks.map { FramesContainer(it) }.forEach { children.add("", it) }
+            node.addChildren(children, last)
+          }
         }
-      })
+      }
     }
   }
 
-  class FramesContainer(private val executionStack: XExecutionStack) : XValue() {
+  class FramesContainer(val executionStack: XExecutionStack) : XValue() {
     override fun computeChildren(node: XCompositeNode) {
       executionStack.computeStackFrames(0, object : XExecutionStack.XStackFrameContainer {
         override fun errorOccurred(errorMessage: String) {
@@ -90,12 +90,12 @@ class XThreadsView(project: Project, session: XDebugSessionImpl) : XDebugView() 
 
   class FrameValue(val frame : XStackFrame) : XValue() {
     override fun computePresentation(node: XValueNode, place: XValuePlace) {
-      val component = SimpleColoredComponent()
-      frame.customizePresentation(component)
-      node.setPresentation(component.icon, XRegularValuePresentation(component.getCharSequence(false).toString(), null, ""), false)
+      frame.customizeTextPresentation { text, attrs -> // todo use TextAttributes in node repr
+        node.setPresentation(null, XRegularValuePresentation(text, null, ""), false)
+      }
     }
   }
 
-  class XThreadsRootNode(tree: XDebuggerTree, suspendContext: XSuspendContext) :
-    XValueContainerNode<ThreadsContainer>(tree, null, false, ThreadsContainer(suspendContext))
+  class XThreadsRootNode(tree: XDebuggerTree, session: XDebugSessionProxy) :
+    XValueContainerNode<ThreadsContainer>(tree, null, false, ThreadsContainer(session))
 }

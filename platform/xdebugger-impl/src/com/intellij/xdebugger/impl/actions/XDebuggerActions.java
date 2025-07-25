@@ -42,6 +42,7 @@ public interface XDebuggerActions {
   @NonNls String WATCHES_TREE_TOOLBAR_GROUP = "XDebugger.Watches.Tree.Toolbar";
   @NonNls String FRAMES_TREE_POPUP_GROUP = "XDebugger.Frames.Tree.Popup";
   @NonNls String FRAMES_TREE_POPUP_GROUP_FRONTEND = "XDebugger.Frames.Tree.Popup.Frontend";
+  @NonNls String THREADS_VIEW_POPUP_GROUP = "XDebugger.Threads.View.Popup";
   @NonNls String THREADS_TREE_POPUP_GROUP = "XDebugger.Threads.Tree.Popup";
   @NonNls String FRAMES_TOP_TOOLBAR_GROUP = "XDebugger.Frames.TopToolbar";
 
