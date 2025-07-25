@@ -58,8 +58,8 @@ internal fun ContextMenu(
     style: MenuStyle = JewelTheme.menuStyle,
     content: MenuScope.() -> Unit,
 ) {
-    var focusManager: FocusManager? by mutableStateOf(null)
-    var inputModeManager: InputModeManager? by mutableStateOf(null)
+    var focusManager: FocusManager? by remember { mutableStateOf(null) }
+    var inputModeManager: InputModeManager? by remember { mutableStateOf(null) }
     val menuController = remember(onDismissRequest) { DefaultMenuController(onDismissRequest = onDismissRequest) }
 
     Popup(
@@ -76,7 +76,9 @@ internal fun ContextMenu(
                 ?: handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuController)
         },
     ) {
+        @Suppress("AssignedValueIsNeverRead")
         focusManager = LocalFocusManager.current
+        @Suppress("AssignedValueIsNeverRead")
         inputModeManager = LocalInputModeManager.current
 
         CompositionLocalProvider(LocalMenuController provides menuController) {
