@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileGroupFeatureProvider.Fields.FILE_GROUP
 import com.intellij.util.asSafely
 
-internal class SearchEverywhereFileGroupFeatureProvider : SearchEverywhereElementFeaturesProvider(
+class SearchEverywhereFileGroupFeatureProvider : SearchEverywhereElementFeaturesProvider(
   FileSearchEverywhereContributor::class.java,
   RecentFilesSEContributor::class.java) {
 

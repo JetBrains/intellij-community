@@ -33,7 +33,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.Time.DAY
 import com.intellij.util.Time.WEEK
 
-internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElementFeaturesProvider(
+class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElementFeaturesProvider(
   FileSearchEverywhereContributor::class.java,
   RecentFilesSEContributor::class.java,
   ClassSearchEverywhereContributor::class.java,

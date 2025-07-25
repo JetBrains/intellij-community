@@ -64,6 +64,12 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
       "exactly_matched_words" to EventFields.Int("${WholeTextMatchUtil.baseName}ExactlyMatchedWords")
     )
 
+    fun getDefaultFields(): List<EventField<*>> {
+      return listOf(NAME_LENGTH, ML_SCORE_KEY, SIMILARITY_SCORE, IS_SEMANTIC_ONLY, BUFFERED_TIMESTAMP) +
+             prefixMatchingNameFeatureToField.values + wholeMatchingNameFeatureToField.values
+    }
+
+
 
     internal fun roundDouble(value: Double): Double {
       if (!value.isFinite()) return -1.0

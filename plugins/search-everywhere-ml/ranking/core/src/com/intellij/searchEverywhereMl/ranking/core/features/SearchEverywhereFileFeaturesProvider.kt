@@ -13,7 +13,6 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFileSystemItem
@@ -31,7 +30,6 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 @ApiStatus.Internal
-@IntellijInternalApi
 class SearchEverywhereFileFeaturesProvider
   : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java, RecentFilesSEContributor::class.java) {
 
@@ -39,13 +37,13 @@ class SearchEverywhereFileFeaturesProvider
     val FILETYPE_DATA_KEY = EventFields.StringValidatedByCustomRule("fileType", FileTypeUsagesCollector.ValidationRule::class.java)
     val IS_BOOKMARK_DATA_KEY = EventFields.Boolean("isBookmark")
 
-    internal val IS_DIRECTORY_DATA_KEY = EventFields.Boolean("isDirectory")
-    internal val IS_EXACT_MATCH_DATA_KEY = EventFields.Boolean("isExactMatch")
-    internal val FILETYPE_MATCHES_QUERY_DATA_KEY = EventFields.Boolean("fileTypeMatchesQuery")
-    internal val IS_TOP_LEVEL_DATA_KEY = EventFields.Boolean("isTopLevel")
-    internal val IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY = EventFields.Boolean("isExactRelativePath")
+    val IS_DIRECTORY_DATA_KEY = EventFields.Boolean("isDirectory")
+    val IS_EXACT_MATCH_DATA_KEY = EventFields.Boolean("isExactMatch")
+    val FILETYPE_MATCHES_QUERY_DATA_KEY = EventFields.Boolean("fileTypeMatchesQuery")
+    val IS_TOP_LEVEL_DATA_KEY = EventFields.Boolean("isTopLevel")
+    val IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY = EventFields.Boolean("isExactRelativePath")
 
-    internal val REL_PATH_NAME_FEATURE_TO_FIELD = hashMapOf<String, EventField<*>>(
+    val REL_PATH_NAME_FEATURE_TO_FIELD = hashMapOf<String, EventField<*>>(
       "prefix_same_start_count" to EventFields.Int("relPathPrefixSameStartCount"),
       "prefix_greedy_score" to EventFields.Double("relPathPrefixGreedyScore"),
       "prefix_matched_words_score" to EventFields.Double("relPathPrefixMatchedWordsScore"),
