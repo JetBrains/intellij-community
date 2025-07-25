@@ -9835,7 +9835,6 @@ c:com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl
 - getInputStream():java.io.InputStream
 - getOutputStream(java.lang.Object,J,J):java.io.OutputStream
 - getSuspiciousNames():java.util.List
-- p:getUserMap():com.intellij.util.keyFMap.KeyFMap
 - isCaseSensitive():Z
 - isDirectory():Z
 - iterInDbChildren():java.lang.Iterable

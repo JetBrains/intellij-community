@@ -72,7 +72,8 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
     }
   }
 
-  protected @NotNull KeyFMap getUserMap() {
+  @ApiStatus.Internal
+  public @NotNull KeyFMap getUserMap() {
     ExternalUserDataStorage external = externalStorage();
     if (external != null) {
       return external.getUserMap(this);

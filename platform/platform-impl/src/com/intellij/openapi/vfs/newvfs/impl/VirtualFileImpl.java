@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.keyFMap.KeyFMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -185,8 +186,9 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
     getSegment().setUserMap(myId, map);
   }
 
+  @ApiStatus.Internal
   @Override
-  protected @NotNull KeyFMap getUserMap() {
+  public @NotNull KeyFMap getUserMap() {
     return getSegment().getUserMap(this, myId);
   }
 

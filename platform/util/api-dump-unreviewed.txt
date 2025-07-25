@@ -891,7 +891,6 @@ c:com.intellij.openapi.util.UserDataHolderBase
 - getCopyableUserData(com.intellij.openapi.util.Key):java.lang.Object
 - getUserData(com.intellij.openapi.util.Key):java.lang.Object
 - getUserDataString():java.lang.String
-- p:getUserMap():com.intellij.util.keyFMap.KeyFMap
 - isUserDataEmpty():Z
 - putCopyableUserData(com.intellij.openapi.util.Key,java.lang.Object):V
 - putUserData(com.intellij.openapi.util.Key,java.lang.Object):V

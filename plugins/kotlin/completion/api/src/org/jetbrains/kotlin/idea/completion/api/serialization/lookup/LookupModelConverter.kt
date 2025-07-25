@@ -117,7 +117,7 @@ object LookupModelConverter {
     }
 
     private fun serializeUserData(data: UserDataHolderBase, config: Config): Map<String, UserDataValueModel> {
-        val map = data.get()
+        val map = data.getUserMap()
         if (map.isEmpty()) return emptyMap()
         return buildMap {
             for (key in map.keys) {

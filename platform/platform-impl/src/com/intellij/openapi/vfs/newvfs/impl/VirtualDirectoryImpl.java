@@ -887,8 +887,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     myData.userMap = map;
   }
 
+  @ApiStatus.Internal
   @Override
-  protected @NotNull KeyFMap getUserMap() {
+  public @NotNull KeyFMap getUserMap() {
     return myData.userMap;
   }
 
