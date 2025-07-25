@@ -1,3 +1,9 @@
+filegroup(
+    name = "test_testData",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `build kotlin.jvm-debugger.test` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
