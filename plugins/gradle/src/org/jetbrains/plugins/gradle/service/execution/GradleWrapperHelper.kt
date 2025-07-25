@@ -13,7 +13,6 @@ import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.ExceptionUtil
-import io.opentelemetry.api.trace.StatusCode
 import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.ProjectConnection
 import org.gradle.util.GradleVersion
@@ -29,6 +28,8 @@ import java.util.function.Supplier
 object GradleWrapperHelper {
 
   private val log = logger<GradleWrapperHelper>()
+
+  private val TELEMETRY = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
 
   @JvmStatic
   fun ensureInstalledWrapper(id: ExternalSystemTaskId,
@@ -67,11 +68,8 @@ object GradleWrapperHelper {
     gradleVersion: GradleVersion?,
     context: GradleExecutionContext,
   ): String? {
-    val span = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
-      .spanBuilder("EnsureInstalledWrapper")
-      .startSpan()
     try {
-      span.makeCurrent().use {
+      TELEMETRY.spanBuilder("EnsureInstalledWrapper").use {
         val propertiesFile = setupWrapperTaskInInitScript(context, gradleVersion)
 
         executeWrapperTask(connection, context)
@@ -84,24 +82,17 @@ object GradleWrapperHelper {
       }
     }
     catch (e: ProcessCanceledException) {
-      span.recordException(e)
       throw e
     }
     catch (e: IOException) {
       log.warn("Can't update wrapper", e)
-      span.recordException(e)
     }
     catch (e: Throwable) {
-      span.recordException(e)
-      span.setStatus(StatusCode.ERROR)
       log.warn("Can't update wrapper", e)
       val rootCause = ExceptionUtil.getRootCause(e)
       val externalSystemException = ExternalSystemException(ExceptionUtil.getMessage(rootCause))
       externalSystemException.initCause(e)
       throw externalSystemException
-    }
-    finally {
-      span.end()
     }
     return null
   }
@@ -114,9 +105,9 @@ object GradleWrapperHelper {
 
     val launcher = connection.newBuild()
     GradleExecutionHelper.prepareForExecution(launcher, context)
-    ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
-      .spanBuilder("ExecuteWrapperTask")
-      .use { launcher.run() }
+    TELEMETRY.spanBuilder("ExecuteWrapperTask").use {
+      launcher.run()
+    }
   }
 
   @Throws(IOException::class)
