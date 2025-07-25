@@ -13,7 +13,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -274,12 +273,6 @@ internal open class VcsUpdateTask(
       }
       AbstractVcsHelper.getInstance(project).showErrors(groupedExceptions,
                                                         VcsBundle.message("message.title.vcs.update.errors", actionName))
-    }
-    else if (someSessionWasCancelled) {
-      ProgressManager.progress(VcsBundle.message("progress.text.updating.canceled"))
-    }
-    else {
-      ProgressManager.progress(VcsBundle.message("progress.text.updating.done"))
     }
 
     val noMerged = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID)!!.isEmpty()
