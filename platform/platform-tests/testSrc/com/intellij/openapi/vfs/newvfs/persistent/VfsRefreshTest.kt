@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,10 +21,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.application
 import com.intellij.util.io.delete
 import com.intellij.util.io.write
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.util.concurrent.ConcurrentHashMap
@@ -76,6 +82,26 @@ class VfsRefreshTest {
     RefreshQueue.getInstance().refresh(false, false, null, listOf(virtualFile))
   }
 
+  @Test
+  @RegistryKey("vfs.refresh.use.background.write.action", "true")
+  fun `suspending vfs refresh is cancellable`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    val job = Job(coroutineContext.job)
+    VirtualFileManager.getInstance().addAsyncFileListener(AsyncFileListener {
+      job.complete()
+      while (true) {
+        ProgressManager.checkCanceled()
+      }
+      null
+    }, disposable)
+    val refreshJob = launch(Dispatchers.Default) {
+      runRefreshOnADirtyFile {
+        RefreshQueue.getInstance().refresh(false, listOf(it))
+      }
+    }
+    job.join()
+    delay(1000)
+    refreshJob.cancelAndJoin()
+  }
 
   fun refreshTestStub(createListeners: (Disposable, AtomicInteger) -> Unit, refreshFunction: suspend (VirtualFile) -> Unit, check: (AtomicInteger) -> Unit): Unit = timeoutRunBlocking {
     val disposable = Disposer.newDisposable()
@@ -83,20 +109,24 @@ class VfsRefreshTest {
       val counter = AtomicInteger(0)
       createListeners(disposable, counter)
 
-      val file = createTempFile()
-      try {
-        val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file)!!
-        file.write("42")
-        refreshFunction(virtualFile)
-      }
-      finally {
-        file.delete()
-      }
+     runRefreshOnADirtyFile(refreshFunction)
 
       check(counter)
     }
     finally {
       Disposer.dispose(disposable)
+    }
+  }
+
+  private suspend fun runRefreshOnADirtyFile(refresh: suspend (VirtualFile) -> Unit) {
+    val file = createTempFile()
+    try {
+      val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(file)!!
+      file.write("42")
+      refresh(virtualFile)
+    }
+    finally {
+      file.delete()
     }
   }
 
