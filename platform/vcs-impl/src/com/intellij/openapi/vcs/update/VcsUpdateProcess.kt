@@ -97,7 +97,7 @@ object VcsUpdateProcess {
         super.onSuccess()
         onSuccess()
       }
-    }.queue()
+    }.launch()
   }
 
   @ApiStatus.Obsolete

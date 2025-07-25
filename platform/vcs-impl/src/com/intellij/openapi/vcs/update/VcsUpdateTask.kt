@@ -8,10 +8,13 @@ import com.intellij.history.LocalHistoryAction
 import com.intellij.ide.errorTreeView.HotfixData
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
@@ -27,11 +30,19 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.VcsActivity
 import com.intellij.vcs.ViewUpdateInfoNotification
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.io.File
+import kotlin.coroutines.cancellation.CancellationException
 
 private val LOG = logger<VcsUpdateTask>()
 
@@ -41,7 +52,7 @@ internal open class VcsUpdateTask(
   private val spec: List<VcsUpdateSpecification>,
   private val actionInfo: ActionInfo,
   private val actionName: @Nls @NlsContexts.ProgressTitle String,
-) : Task.Backgroundable(project, actionName, true) {
+) {
   private val projectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project)
   protected var updatedFiles: UpdatedFiles = UpdatedFiles.create()
   private val groupedExceptions = HashMap<HotfixData?, MutableList<VcsException>>()
@@ -51,7 +62,7 @@ internal open class VcsUpdateTask(
   // vcs name, context object
   // create from outside without any context; context is created by vcses
   private val contextInfo = HashMap<AbstractVcs, SequentialUpdatesContext?>()
-  private val dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject!!)
+  private val dirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
 
   private var before: Label? = null
   private var after: Label? = null
@@ -64,19 +75,38 @@ internal open class VcsUpdateTask(
     ++updateNumber
   }
 
-  override fun run(indicator: ProgressIndicator) {
-    runImpl()
+  fun launch() {
+    project.service<ProjectVcsUpdateTaskExecutor>().cs.launch(Dispatchers.Default) {
+      try {
+        withBackgroundProgress(project, actionName) {
+          coroutineToIndicator {
+            run(it)
+          }
+        }
+        withContext(Dispatchers.UiWithModelAccess) {
+          onSuccess()
+        }
+      }
+      catch (ce: CancellationException) {
+        withContext(Dispatchers.UiWithModelAccess) {
+          onSuccessImpl(true)
+        }
+        throw ce
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
+    }
   }
 
-  private fun runImpl() {
+  @RequiresBackgroundThread
+  fun run(progressIndicator: ProgressIndicator) {
     StoreReloadManager.getInstance(project).blockReloadingProjectOnExternalChanges()
     projectLevelVcsManager.startBackgroundVcsOperation()
 
-    val progressIndicator = ProgressManager.getInstance().getProgressIndicator()
-
     before = LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("update.label.before.update"))
     localHistoryAction = LocalHistory.getInstance().startAction(VcsBundle.message("activity.name.update"), VcsActivity.Update)
-    progressIndicator?.setIndeterminate(false)
+    progressIndicator.setIndeterminate(false)
     val activity = VcsStatisticsCollector.UPDATE_ACTIVITY.started(project)
     try {
       val toBeProcessed = spec.size
@@ -84,17 +114,15 @@ internal open class VcsUpdateTask(
       for ((vcs, updateEnvironment, files) in spec) {
         updateEnvironment.fillGroups(updatedFiles)
 
-        val context = contextInfo.get(vcs)
+        val context = contextInfo[vcs]
         val refContext = Ref<SequentialUpdatesContext>(context)
 
         val updateSession = updateEnvironment.updateDirectories(files.toTypedArray<FilePath>(), updatedFiles, progressIndicator, refContext)
 
-        contextInfo.put(vcs, refContext.get())
+        contextInfo[vcs] = refContext.get()
         processed++
-        if (progressIndicator != null) {
-          progressIndicator.setFraction(processed.toDouble() / toBeProcessed.toDouble())
-          progressIndicator.setText2("")
-        }
+        progressIndicator.setFraction(processed.toDouble() / toBeProcessed.toDouble())
+        progressIndicator.setText2("")
         val exceptionList = updateSession.getExceptions()
         gatherExceptions(vcs, exceptionList)
         updateSessions.add(updateSession)
@@ -102,7 +130,9 @@ internal open class VcsUpdateTask(
     }
     finally {
       try {
-        ProgressManager.progress(VcsBundle.message("progress.text.synchronizing.files"))
+        progressIndicator.checkCanceled()
+        progressIndicator.setText(VcsBundle.message("progress.text.synchronizing.files"))
+        progressIndicator.setText2("")
         doVfsRefresh()
       }
       finally {
@@ -144,7 +174,7 @@ internal open class VcsUpdateTask(
   }
 
   private fun notifyAnnotations() {
-    val refresher = myProject!!.getMessageBus().syncPublisher<VcsAnnotationRefresher>(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED)
+    val refresher = project.getMessageBus().syncPublisher<VcsAnnotationRefresher>(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED)
     UpdateFilesHelper.iterateFileGroupFilesDeletedOnServerFirst(updatedFiles) { filePath, _ -> refresher.dirty(filePath) }
   }
 
@@ -191,7 +221,8 @@ internal open class VcsUpdateTask(
       .createNotification(title, content.toString(), type).setDisplayId(VcsNotificationIdsHolder.PROJECT_PARTIALLY_UPDATED)
   }
 
-  override fun onSuccess() {
+  @RequiresEdt
+  protected open fun onSuccess() {
     onSuccessImpl(false)
   }
 
@@ -292,7 +323,7 @@ internal open class VcsUpdateTask(
       if (noMerged) {
         // trigger the next update; for CVS when updating from several branches simultaneously
         reset()
-        ProgressManager.getInstance().run(this)
+        launch()
       }
       else {
         showContextInterruptedError()
@@ -302,8 +333,8 @@ internal open class VcsUpdateTask(
 
   private fun showContextInterruptedError() {
     gatherContextInterruptedMessages()
-    AbstractVcsHelper.getInstance(myProject).showErrors(groupedExceptions,
-                                                        VcsBundle.message("message.title.vcs.update.errors", actionName))
+    AbstractVcsHelper.getInstance(project).showErrors(groupedExceptions,
+                                                      VcsBundle.message("message.title.vcs.update.errors", actionName))
   }
 
   private fun gatherContextInterruptedMessages() {
@@ -318,7 +349,7 @@ internal open class VcsUpdateTask(
   }
 
   private fun showUpdateTree(willBeContinued: Boolean, wasCanceled: Boolean): UpdateInfoTree {
-    val restoreUpdateTree = RestoreUpdateTree.getInstance(myProject!!)
+    val restoreUpdateTree = RestoreUpdateTree.getInstance(project)
     restoreUpdateTree.registerUpdateInformation(updatedFiles, actionInfo)
     val text = actionName + (if (willBeContinued || (updateNumber > 1)) ("#$updateNumber") else "")
     val updateInfoTree = projectLevelVcsManager.showUpdateProjectInfo(updatedFiles, text, actionInfo, wasCanceled)!!
@@ -337,10 +368,6 @@ internal open class VcsUpdateTask(
       }
     }
     return false
-  }
-
-  override fun onCancel() {
-    onSuccessImpl(true)
   }
 }
 
@@ -368,3 +395,6 @@ private fun getAllFilesAreUpToDateMessage(roots: Array<FilePath>): @NlsContexts.
     return VcsBundle.message("message.text.all.files.are.up.to.date")
   }
 }
+
+@Service(Service.Level.PROJECT)
+private class ProjectVcsUpdateTaskExecutor(val cs: CoroutineScope)
