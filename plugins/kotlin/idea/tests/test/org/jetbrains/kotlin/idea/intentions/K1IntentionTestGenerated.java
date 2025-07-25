@@ -11825,6 +11825,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/introduceImportAlias/notApplicableAlias.kt");
         }
 
+        @TestMetadata("notApplicableInstanceMember.kt")
+        public void testNotApplicableInstanceMember() throws Exception {
+            runTest("testData/intentions/introduceImportAlias/notApplicableInstanceMember.kt");
+        }
+
         @TestMetadata("notApplicableLocalClass.kt")
         public void testNotApplicableLocalClass() throws Exception {
             runTest("testData/intentions/introduceImportAlias/notApplicableLocalClass.kt");

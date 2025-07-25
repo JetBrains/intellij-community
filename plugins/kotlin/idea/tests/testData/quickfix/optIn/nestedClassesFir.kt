@@ -1,6 +1,7 @@
 // "Propagate 'MyExperimentalAPI' opt-in requirement to containing class 'Outer'" "false"
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
+// ACTION: Introduce import alias
 // ACTION: Opt in for 'MyExperimentalAPI' in containing file 'nestedClassesFir.kt'
 // ACTION: Opt in for 'MyExperimentalAPI' in module 'light_idea_test_case'
 // ACTION: Opt in for 'MyExperimentalAPI' on 'bar'
