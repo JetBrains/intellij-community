@@ -255,6 +255,11 @@ final class RefreshWorker {
       for (String name : childrenNames) {
         childrenWithAttributes.put(name, null);
       }
+      if(childrenWithAttributes.size()!=childrenNames.length){
+        //TODO RC: seems like dir.isCaseSensitive() is wrong/outdated (i.e. actual dir case-sensitivity is different from
+        //         FS-default, and it wasn't yet determined).
+        //         We should re-query dir.case-sensitivity
+      }
     }
     myIoTime.addAndGet(System.nanoTime() - t);
 
@@ -401,15 +406,23 @@ final class RefreshWorker {
   }
 
   /** Converts a case-sensitive rawDirList map into case-insensitive, if toCaseSensitive=false, leaves the map as-is otherwise */
-  private static @NotNull Map<String, FileAttributes> adjustCaseSensitivity(@NotNull Map<String, FileAttributes> rawDirList,
+  private static @NotNull Map<String, FileAttributes> adjustCaseSensitivity(@NotNull Map<String, FileAttributes> childrenWithAttributes,
                                                                             boolean toCaseSensitive) {
     if (toCaseSensitive) {
-      return rawDirList;
+      return childrenWithAttributes;
     }
     else {
-      Map<String, FileAttributes> filtered = createFilePathMap(rawDirList.size(), /*caseSensitive: */ false);
-      filtered.putAll(rawDirList);
-      return filtered;
+      Map<String, FileAttributes> childrenWithAttributesCaseInsensitive = createFilePathMap(
+        childrenWithAttributes.size(),
+        /*caseSensitive: */ false
+      );
+      childrenWithAttributesCaseInsensitive.putAll(childrenWithAttributes);
+      if (childrenWithAttributesCaseInsensitive.size() != childrenWithAttributes.size()) {
+        //TODO RC: seems like a conflict if dir.isCaseSensitive() is wrong/outdated (i.e. actual dir case-sensitivity
+        //         is different from FS-default, and it wasn't yet determined).
+        //         We should re-query dir.case-sensitivity
+      }
+      return childrenWithAttributesCaseInsensitive;
     }
   }
 

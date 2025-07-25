@@ -18,12 +18,20 @@ import java.util.Set;
 @ApiStatus.Internal
 public interface BatchingFileSystem {
   /**
-   * Returns a list of files in a directory along with their attributes.
-   * When the {@code childrenNames} set is {@code null}, all files should be returned.
-   * TODO RC: specify, should returned map be case-(in)sensitive, according to dir.isCaseSensitive(), or it should be a plain
-   *          case-sensitive map, and it is up to client code to transform it, if needed?
+   * @return directory's children, in form of Map[childName-> FileAttributes]
+   * When the {@code childrenNames} is not-null, only those children's data should be returned (if exists!),
+   * when {@code childrenNames} is null -> all directory's children should be returned.
+   * Returned map should be a 'normal' (i.e., case-sensitive) map -- it is up to calling code to covert it to case-insensitive, if
+   * needed.
    */
-  @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributes(@NotNull VirtualFile dir, @Nullable Set<String> childrenNames);
+  //Why contract defines returned map to be case-sensitive? Because dir.isCaseSensitive() is tricky, and sometimes it's value could
+  // be unreliable/outdated -- in which case this method would provide incorrect info, be it defined to return map with case-sensitivity
+  // =dir.isCaseSensitive().
+  // But the responsibility of (Batching)FileSystem is _only_ to be golden-source of info about actual file system state -- it is
+  // the responsibility of the caller (=VFS) to deal with (possible) inconsistencies between VFS state and actual FS state.
+  //MAYBE RC: return List<Pair<String,FileAttributes>>? this way question of case-sensitivity is not even on the table
+  @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributes(@NotNull VirtualFile dir,
+                                                                            @Nullable Set<String> childrenNames);
 
   default @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributes(@NotNull VirtualFile dir) {
     return listWithAttributes(dir, null);

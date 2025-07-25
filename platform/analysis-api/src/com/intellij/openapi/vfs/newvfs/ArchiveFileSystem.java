@@ -165,10 +165,11 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem implements 
 
     ArchiveHandler handler = getHandler(dir);
     if (childNames == null) {
-      childNames = createFilePathSet(handler.list(directoryRelativePath), isCaseSensitive());
+      childNames = createFilePathSet(handler.list(directoryRelativePath), /*isCaseSensitive: */ true);
     }
 
-    Map<String, FileAttributes> childrenWithAttributes = createFilePathMap(childNames.size(), isCaseSensitive());
+    //We must return 'normal' (case-sensitive) map from this method, see BatchingFileSystem.listWithAttributes() contract:
+    Map<String, FileAttributes> childrenWithAttributes = createFilePathMap(childNames.size(), /*isCaseSensitive: */ true);
 
     for (String childName : childNames) {
       String childRelativePath = normalizedDirectoryPath + childName;

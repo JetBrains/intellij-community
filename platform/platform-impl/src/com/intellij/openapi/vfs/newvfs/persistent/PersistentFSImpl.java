@@ -456,6 +456,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
       //TODO RC: we use a map here to prevent duplicates -- but we still add those duplicates to childrenToAdd
       //         -- what's the point?
+      //MAYBE RC: duplicates may indicate wrongly-detected dir.caseSensitivity -- so we should consider re-detect it?
       ChildInfo newChild = justCreated.computeIfAbsent(
         newChildName,
         _newChildName -> makeChildRecord(dir, dirId, _newChildName, childData, fs, null)

@@ -372,7 +372,8 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
       return Collections.emptyMap();
     }
     try {
-      Map<String, FileAttributes> childrenWithAttributes = createFilePathMap(10, dir.isCaseSensitive());
+      //We must return 'normal' (case-sensitive) map from this method, see BatchingFileSystem.listWithAttributes() contract:
+      Map<String, FileAttributes> childrenWithAttributes = createFilePathMap(10, /*caseSensitive: */true);
 
       PlatformNioHelper.visitDirectory(Path.of(toIoPath(dir)), filter, (file, ioAttributesHolder) -> {
         try {
