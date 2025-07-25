@@ -9,7 +9,6 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
 import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepositories
 import com.jetbrains.python.packaging.repository.PyPackageRepository
@@ -37,8 +36,8 @@ internal class PipRepositoryManager(override val project: Project) : PythonRepos
   }
 
 
-  override suspend fun getPackageDetails(spec: PythonRepositoryPackageSpecification): PyResult<PythonPackageDetails> {
-    return packageDetailsCache.get(spec.name to spec.repository)
+  override suspend fun getPackageDetails(packageName: String, repository: PyPackageRepository?): PyResult<PythonPackageDetails> {
+    return packageDetailsCache.get(packageName to repository)
   }
 
   @Throws(IOException::class)

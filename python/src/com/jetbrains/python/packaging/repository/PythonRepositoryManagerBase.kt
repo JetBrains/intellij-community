@@ -6,11 +6,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.cancelOnDispose
 import com.jetbrains.python.packaging.PyPackageVersion
 import com.jetbrains.python.packaging.PyPackageVersionNormalizer
+import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
-import com.jetbrains.python.packaging.pyRequirement
-import com.jetbrains.python.packaging.pyRequirementVersionSpec
-import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -45,20 +43,13 @@ abstract class PythonRepositoryManagerBase() : PythonRepositoryManager, Disposab
     return PyPackageVersionNormalizer.normalize(version)
   }
 
-  override suspend fun findPackageSpecification(
-    name: String,
-    version: String?,
-    relation: PyRequirementRelation,
-    repository: PyPackageRepository?,
-  ): PythonRepositoryPackageSpecification? {
-    val pyRequirement = pyRequirement(name, version?.let { pyRequirementVersionSpec(relation, it) })
+  override suspend fun findPackageSpecification(requirement: PyRequirement, repository: PyPackageRepository?): PythonRepositoryPackageSpecification? {
     if (repository != null) {
-      return repository.findPackageSpecification(pyRequirement)
+      return repository.findPackageSpecification(requirement)
     }
     waitForInit()
-    return repositories.firstNotNullOfOrNull { it.findPackageSpecification(pyRequirement) }
+    return repositories.firstNotNullOfOrNull { it.findPackageSpecification(requirement) }
   }
-
 
   //Some test on EDT so need to be inited on first create
   protected fun shouldBeInitInstantly(): Boolean = ApplicationManager.getApplication().isUnitTestMode

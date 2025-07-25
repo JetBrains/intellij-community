@@ -16,9 +16,7 @@ import com.intellij.webcore.packaging.RepoPackage
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.isCondaVirtualEnv
-import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.packagesByRepository
@@ -110,14 +108,14 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
 
   override fun fetchPackageVersions(packageName: String, consumer: CatchingConsumer<in List<String>, in Exception>) {
     scope.launch {
-      val details = repositoryManager.getPackageDetails(specForPackage(packageName)).getOrThrow()
+      val details = repositoryManager.getPackageDetails(packageName, null).getOrThrow()
       consumer.consume(details.availableVersions.sortedWith(PackageVersionComparator.VERSION_COMPARATOR.reversed()))
     }
   }
 
   override fun fetchPackageDetails(packageName: String, consumer: CatchingConsumer<in String, in Exception>) {
     scope.launch {
-      val details = repositoryManager.getPackageDetails(specForPackage(packageName)).getOrThrow()
+      val details = repositoryManager.getPackageDetails(packageName, null).getOrThrow()
       consumer.consume(buildDescription(details))
     }
   }
@@ -128,8 +126,8 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
 
   override fun fetchLatestVersion(pkg: InstalledPackage, consumer: CatchingConsumer<in String, in Exception>) {
     scope.launch {
-      val details = repositoryManager.getPackageDetails(specForPackage(pkg.name, pkg.version)).getOrThrow()
-      consumer.consume(PyPackagingSettings.getInstance(project).selectLatestVersion(details.availableVersions))
+      val latestVersion = repositoryManager.getLatestVersion(pkg.name, null)?.presentableText
+      consumer.consume(latestVersion)
     }
   }
 
@@ -161,11 +159,6 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
       }
       append("</body></html>")
     }
-  }
-
-  private suspend fun specForPackage(packageName: String, version: String? = null, repository: PyPackageRepository? = null): PythonRepositoryPackageSpecification {
-    return repositoryManager.findPackageSpecification(packageName, version = version, repository = repository)
-           ?: throw IllegalArgumentException(PyBundle.message("python.packaging.error.package.is.not.listed.in.repositories", packageName))
   }
 
   override fun shouldFetchLatestVersionsForOnlyInstalledPackages(): Boolean = !(isConda && useConda)

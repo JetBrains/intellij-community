@@ -4,13 +4,11 @@ package com.jetbrains.python.packaging.management
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageVersion
+import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.pyRequirement
-import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import org.jetbrains.annotations.TestOnly
 
 @TestOnly
@@ -21,10 +19,10 @@ internal class TestPythonRepositoryManager(
   private var packageNames: Set<String> = emptySet()
   private var packageDetails: PythonPackageDetails? = null
 
-  override suspend fun findPackageSpecification(name: String, version: String?, relation: PyRequirementRelation, repository: PyPackageRepository?): PythonRepositoryPackageSpecification {
-    val requirement = pyRequirement(name, version?.let { pyRequirementVersionSpec(relation, it) })
+  override suspend fun findPackageSpecification(requirement: PyRequirement, repository: PyPackageRepository?): PythonRepositoryPackageSpecification {
     return PythonRepositoryPackageSpecification(repository ?: PyPIPackageRepository, requirement)
   }
+
 
   fun withPackageNames(packageNames: List<String>): TestPythonRepositoryManager {
     this.packageNames = packageNames.toSet()
@@ -44,7 +42,7 @@ internal class TestPythonRepositoryManager(
     return packageNames
   }
 
-  override suspend fun getPackageDetails(spec: PythonRepositoryPackageSpecification): PyResult<PythonPackageDetails> {
+  override suspend fun getPackageDetails(packageName: String, repository: PyPackageRepository?): PyResult<PythonPackageDetails> {
     return PyResult.success(checkNotNull(packageDetails))
   }
 

@@ -5,12 +5,15 @@ package com.jetbrains.python.packaging.management
 
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.normalizePackageName
+import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
+import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -37,19 +40,21 @@ fun PythonPackageManager.hasInstalledPackageSnapshot(packageName: String, versio
 
 
 @ApiStatus.Internal
-suspend fun PythonPackageManager.hasInstalledPackage(pyPackage: PythonPackage): Boolean =
-  getInstalledPackage(pyPackage.name, pyPackage.version) != null
-
-@ApiStatus.Internal
-suspend fun PythonPackageManager.hasInstalledPackage(packageName: String, version: String? = null): Boolean =
-  getInstalledPackage(packageName, version) != null
-
-
-@ApiStatus.Internal
-suspend fun PythonPackageManager.getInstalledPackage(packageName: String, version: String? = null): PythonPackage? {
-  waitForInit()
-  return getInstalledPackageSnapshot(packageName, version)
+suspend fun PythonPackageManager.findPackageSpecification(
+  packageName: String,
+  versionSpec: PyRequirementVersionSpec? = null,
+): PythonRepositoryPackageSpecification? {
+  return repositoryManager.findPackageSpecification(pyRequirement(packageName, versionSpec))
 }
+
+@ApiStatus.Internal
+suspend fun PythonPackageManager.findPackageSpecification(
+  requirement: PyRequirement,
+  repository: PyPackageRepository? = null,
+): PythonRepositoryPackageSpecification? {
+  return repositoryManager.findPackageSpecification(requirement, repository)
+}
+
 
 @ApiStatus.Internal
 suspend fun PythonPackageManager.findPackageSpecification(
@@ -58,7 +63,22 @@ suspend fun PythonPackageManager.findPackageSpecification(
   relation: PyRequirementRelation = PyRequirementRelation.EQ,
 ): PythonRepositoryPackageSpecification? {
   val versionSpec = version?.let { pyRequirementVersionSpec(relation, version) }
-  return findPackageSpecificationWithVersionSpec(packageName, versionSpec)
+  return findPackageSpecification(pyRequirement(packageName, versionSpec))
+}
+
+@ApiStatus.Internal
+suspend fun PythonPackageManager.hasInstalledPackage(pyPackage: PythonPackage): Boolean =
+  getInstalledPackage(pyPackage.name, pyPackage.version) != null
+
+
+@ApiStatus.Internal
+suspend fun PythonPackageManager.hasInstalledPackage(packageName: String, version: String? = null): Boolean =
+  getInstalledPackage(packageName, version) != null
+
+@ApiStatus.Internal
+suspend fun PythonPackageManager.getInstalledPackage(packageName: String, version: String? = null): PythonPackage? {
+  waitForInit()
+  return getInstalledPackageSnapshot(packageName, version)
 }
 
 @ApiStatus.Internal

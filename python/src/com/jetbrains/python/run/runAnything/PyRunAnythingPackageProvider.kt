@@ -60,7 +60,7 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
       val packageSpec = getPackageRepository(dataContext)?.findPackageSpecification(pyRequirement(packageName)) ?: return emptySequence()
       return runBlockingCancellable {
         withContext(Dispatchers.Default) {
-          val packageInfo = packageManager.repositoryManager.getPackageDetails(packageSpec).getOrThrow()
+          val packageInfo = packageManager.repositoryManager.getPackageDetails(packageSpec.name, packageSpec.repository).getOrThrow()
           val versionPrefix = last.substring(ind + operator.length)
           packageInfo.availableVersions.distinct().asSequence().filter { it.startsWith(versionPrefix) }.map { packageName + operator + it }
         }

@@ -122,6 +122,13 @@ data class PythonRepositoryPackageSpecification(
   val nameWithVersionSpec: String
     get() = "$name${versionSpec?.presentableText ?: ""}"
 
+  val nameWithVersionsSpec: String
+    get() {
+      val versionSpecsString = requirement.versionSpecs.joinToString(",") { it.presentableText }
+      return "$name${versionSpecsString}"
+    }
+
+
   constructor(
     repository: PyPackageRepository,
     packageName: String,

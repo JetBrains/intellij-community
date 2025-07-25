@@ -25,8 +25,6 @@ import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.dependencies.PythonDependenciesManager
 import com.jetbrains.python.packaging.normalizePackageName
-import com.jetbrains.python.packaging.requirement.PyRequirementRelation
-import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PythonSdkType
 import kotlinx.coroutines.CoroutineStart
@@ -74,13 +72,6 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
     return null
   }
 
-  @ApiStatus.Internal
-  suspend fun findPackageSpecificationWithVersionSpec(
-    packageName: String,
-    versionSpec: PyRequirementVersionSpec? = null,
-  ): PythonRepositoryPackageSpecification? {
-    return repositoryManager.findPackageSpecification(packageName, versionSpec?.version, versionSpec?.relation ?: PyRequirementRelation.EQ)
-  }
 
   @ApiStatus.Internal
   suspend fun sync(): PyResult<List<PythonPackage>> {

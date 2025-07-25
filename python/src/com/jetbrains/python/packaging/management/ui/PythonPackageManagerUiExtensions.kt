@@ -7,6 +7,7 @@ import com.jetbrains.python.packaging.PyPackageInstallUtils.confirmAndInstall
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
+import com.jetbrains.python.packaging.management.findPackageSpecification
 import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
@@ -30,7 +31,7 @@ suspend fun PythonPackageManagerUI.updatePackagesByNamesBackground(
   packages: List<String>,
 ): List<PythonPackage>? {
   val specifications = packages.mapNotNull {
-    manager.findPackageSpecificationWithVersionSpec(it)
+    manager.findPackageSpecification(it)
   }
   return updatePackagesBackground(specifications)
 }
@@ -66,7 +67,7 @@ suspend fun PythonPackageManagerUI.installPyRequirementsBackground(
   //Wait here to load spec
   manager.waitForInit()
   val specifications = packages.mapNotNull {
-    manager.findPackageSpecificationWithVersionSpec(it.name, it.versionSpecs.firstOrNull())
+    manager.repositoryManager.findPackageSpecification(it)
   }
   return installPackagesRequestBackground(PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specifications),
                                           options = options)
@@ -81,7 +82,7 @@ suspend fun PythonPackageManagerUI.installPackagesBackground(
   //Wait here to load spec
   manager.waitForInit()
   val specifications = packages.mapNotNull {
-    manager.findPackageSpecificationWithVersionSpec(it, null)
+    manager.findPackageSpecification(it)
   }
   return installPackagesRequestBackground(PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specifications),
                                           options = options)

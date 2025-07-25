@@ -76,7 +76,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
         PythonRepositoryPackageSpecification(repository, pyRequirement)
       else
         packageManager.findPackageSpecification(pkgName) ?: return@withContext null
-      packageManager.repositoryManager.getPackageDetails(spec).getOrNull()
+      packageManager.repositoryManager.getPackageDetails(spec.name, spec.repository).getOrNull()
     }
   }
 

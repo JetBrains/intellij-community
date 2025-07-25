@@ -27,7 +27,6 @@ import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerEngine
 import com.jetbrains.python.packaging.management.PythonPackageManagerRunner
-import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.ensureProjectSdkAndModuleDirsAreOnTarget
@@ -225,7 +224,7 @@ class PipPackageManagerEngine(
 
     val pypi = mutableListOf<List<String>>()
     if (pypiSpecs.isNotEmpty()) {
-      pypi.add(pypiSpecs.map { it.nameWithVersionSpec })
+      pypi.add(pypiSpecs.map { it.nameWithVersionsSpec })
     }
 
     return pypi + byRepository

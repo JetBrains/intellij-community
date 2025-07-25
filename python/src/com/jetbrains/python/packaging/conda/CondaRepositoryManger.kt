@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.repository.PythonRepositoryManagerBase
@@ -30,9 +29,9 @@ internal class CondaRepositoryManger(override val project: Project, val sdk: Sdk
     return CondaPackageRepository.getPackages() + pipRepositoryManger.allPackages()
   }
 
-  override suspend fun getPackageDetails(spec: PythonRepositoryPackageSpecification): PyResult<PythonPackageDetails> {
+  override suspend fun getPackageDetails(packageName: String, repository: PyPackageRepository?): PyResult<PythonPackageDetails> {
     waitForInit()
-    val packageDetails = pipRepositoryManger.getPackageDetails(spec)
+    val packageDetails = pipRepositoryManger.getPackageDetails(packageName, repository)
     return packageDetails
   }
 

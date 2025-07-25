@@ -5,11 +5,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageVersion
+import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
@@ -20,7 +20,7 @@ interface PythonRepositoryManager {
 
   fun allPackages(): Set<String>
 
-  suspend fun getPackageDetails(spec: PythonRepositoryPackageSpecification): PyResult<PythonPackageDetails>
+  suspend fun getPackageDetails(packageName: String, repository: PyPackageRepository?): PyResult<PythonPackageDetails>
   suspend fun getLatestVersion(packageName: String, repository: PyPackageRepository?): PyPackageVersion?
   suspend fun getVersions(packageName: String, repository: PyPackageRepository?): List<String>?
 
@@ -36,11 +36,10 @@ interface PythonRepositoryManager {
   }
 
   suspend fun findPackageSpecification(
-    name: String,
-    version: String? = null,
-    relation: PyRequirementRelation = PyRequirementRelation.EQ,
+    requirement: PyRequirement,
     repository: PyPackageRepository? = null,
   ): PythonRepositoryPackageSpecification?
+
 
   fun searchPackages(query: String): Map<PyPackageRepository, List<String>> {
     return repositories.associateWith { searchPackages(query, it) }

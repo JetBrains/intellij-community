@@ -227,7 +227,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
   }
 
   fun PythonPackageInstallRequest.formatPackageName(): Array<String> = when (this) {
-    is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> specifications.map { it.nameWithVersionSpec }.toTypedArray()
+    is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> specifications.map { it.nameWithVersionsSpec }.toTypedArray()
     is PythonPackageInstallRequest.ByLocation -> error("UV does not support installing from location uri")
   }
 
