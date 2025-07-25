@@ -235,8 +235,7 @@ internal class StateAwareTerminalSession(
     private fun updateOutputModelContent(model: TerminalOutputModel, event: TerminalContentUpdatedEvent) {
       val startTime = TimeSource.Monotonic.markNow()
 
-      val styles = event.styles.map { it.toStyleRange() }
-      model.updateContent(event.startLineLogicalIndex, event.text, styles)
+      model.updateContent(event)
 
       val latencyData = DurationAndTextLength(duration = startTime.elapsedNow(), textLength = event.text.length)
       documentUpdateLatencyReporter.update(latencyData)

@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.FrozenDocument
 import com.intellij.terminal.session.StyleRange
+import com.intellij.terminal.session.TerminalContentUpdatedEvent
 import com.intellij.terminal.session.TerminalOutputModelState
+import com.intellij.terminal.session.dto.toStyleRange
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
@@ -87,4 +89,10 @@ interface FrozenTerminalOutputModel {
 sealed interface TerminalOffset : Comparable<TerminalOffset> {
   fun toAbsolute(): Long
   fun toRelative(): Int
+}
+
+@ApiStatus.Internal
+fun TerminalOutputModel.updateContent(event: TerminalContentUpdatedEvent) {
+  val styles = event.styles.map { it.toStyleRange() }
+  updateContent(event.startLineLogicalIndex, event.text, styles)
 }
