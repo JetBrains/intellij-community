@@ -2,7 +2,6 @@
 package com.jetbrains.python.poetry.packaging
 
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -18,7 +17,7 @@ import com.jetbrains.python.sdk.poetry.runPoetryWithSdk
  */
 internal class PoetryPackageRequirementsTreeExtractor(private val sdk: Sdk) : PythonPackageRequirementsTreeExtractor {
 
-  override suspend fun extract(pkg: PythonPackage, module: Module): PackageNode {
+  override suspend fun extract(pkg: PythonPackage): PackageNode {
     val data = runPoetryWithSdk(sdk, "show", "--tree", pkg.name).getOr {
       thisLogger().info("extracting requirements for package ${pkg.name}: error. Output: \n${it.error}")
       return PackageNode(NormalizedPythonPackageName.from(pkg.name))
