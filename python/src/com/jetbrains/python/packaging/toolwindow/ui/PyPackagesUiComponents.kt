@@ -17,6 +17,8 @@ import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.management.toInstallRequest
+import com.jetbrains.python.packaging.pyRequirement
+import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
@@ -42,7 +44,9 @@ object PyPackagesUiComponents {
       override fun onChosen(selectedValue: String?, finalChoice: Boolean): PopupStep<*>? {
         return doFinalStep {
           val repository = checkNotNull(selectedPackage.repository)
-          val specification = repository.findPackageSpecification(NormalizedPythonPackageName.from(selectedPackage.name).name, selectedValue)
+          val packageName = NormalizedPythonPackageName.from(selectedPackage.name).name
+          val version = selectedValue?.let { pyRequirementVersionSpec(it) }
+          val specification = repository.findPackageSpecification(pyRequirement(packageName, version))
           PyPackageCoroutine.launch(project, Dispatchers.IO) {
             project.service<PyPackagingToolWindowService>().installPackage(specification!!.toInstallRequest())
           }

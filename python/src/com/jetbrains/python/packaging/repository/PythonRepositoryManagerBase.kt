@@ -8,6 +8,8 @@ import com.jetbrains.python.packaging.PyPackageVersion
 import com.jetbrains.python.packaging.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
+import com.jetbrains.python.packaging.pyRequirement
+import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.CoroutineStart
@@ -49,11 +51,12 @@ abstract class PythonRepositoryManagerBase() : PythonRepositoryManager, Disposab
     relation: PyRequirementRelation,
     repository: PyPackageRepository?,
   ): PythonRepositoryPackageSpecification? {
+    val pyRequirement = pyRequirement(name, version?.let { pyRequirementVersionSpec(relation, it) })
     if (repository != null) {
-      return repository.findPackageSpecification(name, version, relation)
+      return repository.findPackageSpecification(pyRequirement)
     }
     waitForInit()
-    return repositories.firstNotNullOfOrNull { it.findPackageSpecification(name, version, relation) }
+    return repositories.firstNotNullOfOrNull { it.findPackageSpecification(pyRequirement) }
   }
 
 

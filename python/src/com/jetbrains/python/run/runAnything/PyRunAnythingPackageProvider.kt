@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.repository.PythonRepositoryManagerBase
 import com.jetbrains.python.sdk.isTargetBased
@@ -27,8 +28,10 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
   private var cacheInitialized = AtomicBoolean(false)
 
   @RequiresBackgroundThread
-  override fun suggestCompletionVariants(dataContext: DataContext,
-                                         commandLine: CommandLine): Sequence<String> {
+  override fun suggestCompletionVariants(
+    dataContext: DataContext,
+    commandLine: CommandLine,
+  ): Sequence<String> {
     if (getSdk(dataContext)?.isTargetBased() == true) return emptySequence()
     if (commandLine.parameters.isEmpty() || (commandLine.parameters.size == 1 && !commandLine.toComplete.isEmpty())) {
       return getDefaultCommands()
@@ -54,7 +57,7 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
       val packageName = last.substring(0, ind)
       val packageManager = getPackageManager(dataContext) ?: return emptySequence()
       initCaches(packageManager)
-      val packageSpec = getPackageRepository(dataContext)?.findPackageSpecification(packageName) ?: return emptySequence()
+      val packageSpec = getPackageRepository(dataContext)?.findPackageSpecification(pyRequirement(packageName)) ?: return emptySequence()
       return runBlockingCancellable {
         withContext(Dispatchers.Default) {
           val packageInfo = packageManager.repositoryManager.getPackageDetails(packageSpec).getOrThrow()

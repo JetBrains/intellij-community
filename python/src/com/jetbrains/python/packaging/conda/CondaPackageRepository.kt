@@ -5,11 +5,11 @@ import com.intellij.openapi.components.service
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
+import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.repository.buildPackageDetailsBySimpleDetailsProtocol
-import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 
 object CondaPackageRepository : PyPackageRepository("Conda", null, null) {
   override fun getPackages(): Set<String> {
@@ -26,17 +26,14 @@ object CondaPackageRepository : PyPackageRepository("Conda", null, null) {
     return PyResult.success(condaDetails)
   }
 
-  override fun hasPackage(
-    packageName: String,
-    versionSpecs: PyRequirementVersionSpec?,
-  ): Boolean {
-    val availableVersions = getVersionForPackage(packageName) ?: return false
+  override fun hasPackage(pyPackage: PyRequirement): Boolean {
+    val availableVersions = getVersionForPackage(pyPackage.name) ?: return false
 
-    if (versionSpecs == null)
+    if (pyPackage.versionSpecs.isEmpty())
       return true
 
-    return availableVersions.any {
-      versionSpecs.matches(it)
+    return availableVersions.any { version ->
+      pyPackage.versionSpecs.all { it.matches(version) }
     }
   }
 

@@ -7,6 +7,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
+import com.jetbrains.python.packaging.pyRequirement
+import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackages
@@ -24,7 +26,9 @@ internal class UpdatePackageToLatestAction : DumbAwareAction() {
 
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
       val pyPackages = packages.mapNotNull { pkg ->
-        pkg.repository?.findPackageSpecification(pkg.name, pkg.nextVersion?.presentableText)
+        val versionString = pkg.nextVersion?.presentableText
+        val requirement = pyRequirement(pkg.name, versionString?.let { pyRequirementVersionSpec(it) })
+        pkg.repository?.findPackageSpecification(requirement)
       }
       val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(pyPackages)
       project.service<PyPackagingToolWindowService>().installPackage(installRequest)

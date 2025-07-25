@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.awt.RelativePoint
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
+import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
@@ -24,7 +25,7 @@ internal class InstallPackageAction : DumbAwareAction() {
     if (selectedPackages.size > 1) {
       PyPackageCoroutine.launch(project, Dispatchers.Default) {
         val pyPackages = selectedPackages.mapNotNull { pkg ->
-          pkg.repository.findPackageSpecification(pkg.name, null)
+          pkg.repository.findPackageSpecification(pyRequirement(pkg.name))
         }
         val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(pyPackages)
         project.service<PyPackagingToolWindowService>().installPackage(installRequest)

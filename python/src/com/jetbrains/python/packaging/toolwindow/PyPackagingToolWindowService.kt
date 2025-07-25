@@ -20,13 +20,10 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.getOrThrow
+import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
-import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
-import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.common.PythonPackageManagementListener
+import com.jetbrains.python.packaging.common.*
 import com.jetbrains.python.packaging.conda.CondaPackage
 import com.jetbrains.python.packaging.management.*
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
@@ -68,22 +65,18 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   }
 
   suspend fun detailsForPackage(selectedPackage: DisplayablePackage): PythonPackageDetails? {
-    val packageManager = manager ?: return null
+    val packageManager = manager
     return withContext(Dispatchers.IO) {
       PythonPackagesToolwindowStatisticsCollector.requestDetailsEvent.log(project)
       val pkgName = NormalizedPythonPackageName.from(selectedPackage.name).name
-      val spec = when (selectedPackage) {
-        is InstalledPackage -> packageManager.findPackageSpecification(pkgName)
-        is InstallablePackage -> selectedPackage.repository.findPackageSpecification(pkgName)
-        is ExpandResultNode -> selectedPackage.repository.findPackageSpecification(pkgName)
-        is RequirementPackage -> selectedPackage.repository.findPackageSpecification(pkgName)
-      }
+      val pyRequirement = pyRequirement(pkgName)
+      val repository = selectedPackage.repository
 
-      if (spec == null) {
-        return@withContext null
-      }
-
-      spec.let { packageManager.repositoryManager.getPackageDetails(it).getOrThrow() }
+      val spec = if (repository != null)
+        PythonRepositoryPackageSpecification(repository, pyRequirement)
+      else
+        packageManager.findPackageSpecification(pkgName) ?: return@withContext null
+      packageManager.repositoryManager.getPackageDetails(spec).getOrNull()
     }
   }
 
@@ -150,7 +143,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   }
 
   fun handleSearch(query: String) {
-    val manager = manager ?: return
+    val manager = manager
     val prevSelected = toolWindowPanel?.getSelectedPackage()
 
     currentQuery = query

@@ -81,7 +81,8 @@ interface PythonPackageDetails {
   val description: String?
   val descriptionContentType: String?
   val documentationUrl: String?
-  fun toPackageSpecification(version: String? = null): PythonRepositoryPackageSpecification? = repository.findPackageSpecification(name, version)
+  fun toPackageSpecification(version: String? = null): PythonRepositoryPackageSpecification? =
+    repository.findPackageSpecification(pyRequirement(name, version?.let { pyRequirementVersionSpec(it) }))
 }
 
 data class PythonSimplePackageDetails(
@@ -110,6 +111,7 @@ data class PythonSimplePackageDetails(
  *   - PyPI (https://pypi.org):  [com.jetbrains.python.packaging.repository.PyPIPackageRepository.findPackageSpecification]
  *   - Conda: [com.jetbrains.python.packaging.conda.CondaPackageRepository.findPackageSpecification]
  */
+@ApiStatus.Internal
 data class PythonRepositoryPackageSpecification(
   val repository: PyPackageRepository,
   val requirement: PyRequirement,
