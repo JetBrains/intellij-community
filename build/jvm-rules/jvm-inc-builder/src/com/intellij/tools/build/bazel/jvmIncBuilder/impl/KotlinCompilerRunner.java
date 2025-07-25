@@ -353,8 +353,9 @@ public class KotlinCompilerRunner implements CompilerRunner {
     // additional setup directly from flags
     // todo: find corresponding cli option for every setting if possible
     Map<CLFlags, List<String>> flags = context.getFlags();
-    arguments.setSkipPrereleaseCheck(true);
-    arguments.setAllowUnstableDependencies(true);
+    arguments.setSkipPrereleaseCheck(CLFlags.X_SKIP_PRERELEASE_CHECK.isFlagSet(flags));
+    arguments.setSkipMetadataVersionCheck(CLFlags.SKIP_METADATA_VERSION_CHECK.isFlagSet(flags));
+    arguments.setAllowUnstableDependencies(CLFlags.X_ALLOW_UNSTABLE_DEPENDENCIES.isFlagSet(flags));
     arguments.setDisableStandardScript(true);
     if (arguments.getLanguageVersion() == null && arguments.getApiVersion() == null) {
       // defaults
@@ -367,13 +368,21 @@ public class KotlinCompilerRunner implements CompilerRunner {
     else if (arguments.getApiVersion() == null) {
       arguments.setApiVersion(arguments.getLanguageVersion());
     }
-    arguments.setAllowKotlinPackage(CLFlags.ALLOW_KOTLIN_PACKAGE.isFlagSet(flags));
-    arguments.setWhenGuards(CLFlags.WHEN_GUARDS.isFlagSet(flags));
-    arguments.setLambdas(CLFlags.LAMBDAS.getOptionalScalarValue(flags));
-    arguments.setJvmDefault(CLFlags.JVM_DEFAULT.getOptionalScalarValue(flags));
-    arguments.setInlineClasses(CLFlags.INLINE_CLASSES.isFlagSet(flags));
-    arguments.setContextReceivers(CLFlags.CONTEXT_RECEIVERS.isFlagSet(flags));
-    arguments.setContextParameters(CLFlags.CONTEXT_PARAMETERS.isFlagSet(flags));
+    String explicitApiMode = CLFlags.X_EXPLICIT_API_MODE.getOptionalScalarValue(flags);
+    if (explicitApiMode != null) {
+      arguments.setExplicitApi(explicitApiMode);
+    }
+    arguments.setAllowKotlinPackage(CLFlags.X_ALLOW_KOTLIN_PACKAGE.isFlagSet(flags));
+    arguments.setWhenGuards(CLFlags.X_WHEN_GUARDS.isFlagSet(flags));
+    arguments.setLambdas(CLFlags.X_LAMBDAS.getOptionalScalarValue(flags));
+    arguments.setJvmDefault(CLFlags.X_JVM_DEFAULT.getOptionalScalarValue(flags));
+    arguments.setInlineClasses(CLFlags.X_INLINE_CLASSES.isFlagSet(flags));
+    arguments.setContextReceivers(CLFlags.X_CONTEXT_RECEIVERS.isFlagSet(flags));
+    arguments.setContextParameters(CLFlags.X_CONTEXT_PARAMETERS.isFlagSet(flags));
+    arguments.setNoCallAssertions(CLFlags.X_NO_CALL_ASSERTIONS.isFlagSet(flags));
+    arguments.setNoParamAssertions(CLFlags.X_NO_PARAM_ASSERTIONS.isFlagSet(flags));
+    arguments.setSamConversions(CLFlags.X_SAM_CONVERSIONS.getOptionalScalarValue(flags));
+    arguments.setConsistentDataClassCopyVisibility(CLFlags.X_CONSISTENT_DATA_CLASS_COPY_VISIBILITY.isFlagSet(flags));
     Iterable<String> friends = CLFlags.FRIENDS.getValue(flags);
     if (!isEmpty(friends)) {
       arguments.setFriendPaths(ensureCollection(map(friends, p -> context.getBaseDir().resolve(p).normalize().toString())).toArray(String[]::new));

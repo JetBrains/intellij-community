@@ -140,6 +140,19 @@ public class BuildContextImpl implements BuildContext {
       throw new IllegalArgumentException("unsupported kotlinc warning option: " + warn);
     }
 
+    if (CLFlags.X_ALLOW_RESULT_RETURN_TYPE.isFlagSet(flags)) {
+      options.add("-Xallow-result-return-type");
+    }
+    if (CLFlags.X_STRICT_JAVA_NULLABILITY_ASSERTIONS.isFlagSet(flags)) {
+      options.add("-Xstrict-java-nullability-assertions");
+    }
+    if (CLFlags.X_WASM_ATTACH_JS_EXCEPTION.isFlagSet(flags)) {
+      options.add("-Xwasm-attach-js-exception");
+    }
+    if ("+InlineClasses".equals(CLFlags.X_X_LANGUAGE.getOptionalScalarValue(flags))) {
+      options.add("-XXLanguage:+InlineClasses");
+    }
+
     StringBuilder cp = new StringBuilder();
     for (Path element : classpath) {
       if (!cp.isEmpty()) {
