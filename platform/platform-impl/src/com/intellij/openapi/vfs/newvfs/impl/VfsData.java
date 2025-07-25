@@ -11,10 +11,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.BitUtil;
-import com.intellij.util.Functions;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.*;
 import com.intellij.util.keyFMap.KeyFMap;
@@ -26,6 +23,7 @@ import org.jetbrains.annotations.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.function.IntFunction;
 
 /**
  * The place where all the data is stored for VFS parts loaded into a memory: name-ids, flags, user data, children.
@@ -399,37 +397,18 @@ public final class VfsData {
       AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
     volatile @NotNull KeyFMap userMap = KeyFMap.EMPTY_MAP;
     /**
-     * sorted by {@link VfsData#getNameByFileId(int)}
-     * assigned under lock(this) only; never modified in-place
+     * assigned under lock(this) only; never modified in-place (=uses copy-on-write)
      *
-     * @see VirtualDirectoryImpl#findIndex(int[], CharSequence, boolean)
+     * @see VirtualDirectoryImpl#findIndexByName(ChildrenIds, CharSequence, boolean)
      */
-    volatile int @NotNull [] childrenIds = ArrayUtilRt.EMPTY_INT_ARRAY; // guarded by this
-    volatile boolean allChildrenLoaded;
+    volatile @NotNull ChildrenIds children = ChildrenIds.EMPTY;
 
-    // assigned under lock(this) only; accessed/modified map contents under lock(myAdoptedNames)
+    /** assigned under lock(this) only; accessed/modified map contents under lock(adoptedNames) */
     private volatile Set<CharSequence> adoptedNames;
 
     VirtualFileSystemEntry @NotNull [] getFileChildren(@NotNull VirtualDirectoryImpl parent, boolean putToMemoryCache) {
-      int[] ids = childrenIds;
-      VirtualFileSystemEntry[] children = new VirtualFileSystemEntry[ids.length];
-      for (int i = 0; i < ids.length; i++) {
-        int childId = ids[i];
-        VirtualFileSystemEntry child = parent.getVfsData().getFileById(childId, parent, putToMemoryCache);
-        if (child == null) {
-          throw new AssertionError("No file for id " + childId + ", parentId = " + parent.myId);
-        }
-        children[i] = child;
-      }
-      return children;
-    }
-
-    boolean allChildrenLoaded() {
-      return allChildrenLoaded;
-    }
-
-    void setAllChildrenLoaded() {
-      allChildrenLoaded = true;
+      VfsData vfsData = parent.getVfsData();
+      return children.asFiles(fileId -> vfsData.getFileById(fileId, parent, putToMemoryCache));
     }
 
     boolean changeUserMap(@NotNull KeyFMap oldMap, @NotNull KeyFMap newMap) {
@@ -518,9 +497,9 @@ public final class VfsData {
     @Override
     public @NonNls String toString() {
       return "DirectoryData{" +
-             "myUserMap=" + userMap +
-             ", myChildrenIds=" + Arrays.toString(childrenIds) +
-             ", myAdoptedNames=" + adoptedNames +
+             "userMap=" + userMap +
+             ", children=" + children +
+             ", adoptedNames=" + adoptedNames +
              '}';
     }
   }
@@ -528,6 +507,154 @@ public final class VfsData {
   public static final class FileAlreadyCreatedException extends RuntimeException {
     private FileAlreadyCreatedException(@NotNull String message) {
       super(message);
+    }
+  }
+
+  @ApiStatus.Internal
+  public static final class ChildrenIds {
+    public static final ChildrenIds EMPTY = new ChildrenIds(ArrayUtilRt.EMPTY_INT_ARRAY, /*sorted:*/ true, /*allLoaded: */ false);
+
+    private static final byte SORTED_BY_NAME_MASK = 0b01;
+    private static final byte ALL_CHILDREN_LOADED_MASK = 0b10;
+
+    private final int[] ids;
+    /** bitmask: SORTED_BY_NAME_MASK | ALL_CHILDREN_LOADED_MASK */
+    private final int flags;
+
+
+    public ChildrenIds(int[] ids,
+                       boolean sortedByName,
+                       boolean allChildrenLoaded) {
+      this(ids, (sortedByName ? SORTED_BY_NAME_MASK : 0) | (allChildrenLoaded ? ALL_CHILDREN_LOADED_MASK : 0));
+    }
+
+    private ChildrenIds(int[] ids,
+                        int flags) {
+      this.ids = ids;
+      this.flags = flags;
+    }
+
+    public int size() {
+      return ids.length;
+    }
+
+    public int id(int index) {
+      return ids[index];
+    }
+
+    public boolean isSorted() {
+      return (flags & SORTED_BY_NAME_MASK) != 0;
+    }
+
+    public boolean areAllChildrenLoaded() {
+      return (flags & ALL_CHILDREN_LOADED_MASK) != 0;
+    }
+
+    public IntOpenHashSet toIntSet() {
+      return new IntOpenHashSet(ids);
+    }
+
+    public VirtualFileSystemEntry @NotNull [] asFiles(@NotNull IntFunction<? extends VirtualFileSystemEntry> fileLoader) {
+      VirtualFileSystemEntry[] children = new VirtualFileSystemEntry[ids.length];
+      for (int i = 0; i < ids.length; i++) {
+        int id = ids[i];
+        VirtualFileSystemEntry child = fileLoader.apply(id);
+        if (child == null) {
+          throw new AssertionError("Bug: can't load file by id " + id);
+        }
+        children[i] = child;
+      }
+      return children;
+    }
+
+
+    public @NotNull ChildrenIds withAllChildrenLoaded(boolean allChildrenLoaded) {
+      if (areAllChildrenLoaded() == allChildrenLoaded) {
+        return this;
+      }
+      return new ChildrenIds(ids, isSorted(), allChildrenLoaded);
+    }
+
+    public @NotNull ChildrenIds withIds(int[] updatedIds) {
+      return new ChildrenIds(updatedIds, flags);
+    }
+
+    /** @return children sorted with the supplied comparator and fileLoader, regardless of current .sortedByName value */
+    public ChildrenIds sorted(@NotNull IntFunction<? extends VirtualFileSystemEntry> fileLoader,
+                              @NotNull Comparator<? super VirtualFileSystemEntry> comparator) {
+      //Since fileLoader/comparator is supplied externally, we can't rely on .sortedByName  -- it should be checked
+      // by this method's caller, and it's up to the caller to decide to trust it or not
+      if (ids.length <= 1) {
+        return new ChildrenIds(ids, /*sorted: */ true, areAllChildrenLoaded());
+      }
+
+      VirtualFileSystemEntry[] files = asFiles(fileLoader);
+      ContainerUtil.sort(files, comparator);
+
+      int[] sortedIds = new int[ids.length];
+      for (int i = 0; i < files.length; i++) {
+        sortedIds[i] = files[i].getId();
+      }
+      return new ChildrenIds(sortedIds, /*sorted: */ true, areAllChildrenLoaded());
+    }
+
+
+    /** linear O(N) search, -1 if not found */
+    public int indexOfId(int id) {
+      return ArrayUtil.indexOf(ids, id);
+    }
+
+    /**
+     * @return index of child with given name, with given namesComparator and namesLoader(fileId->fileName).
+     * If child with given name is not found, returns standard for binary search (-insertionIndex-1)
+     */
+    public int findIndexByName(@NotNull CharSequence name,
+                               @NotNull Comparator<? super CharSequence> namesComparator,
+                               @NotNull IntFunction<? extends CharSequence> nameLoader) {
+      if (!isSorted()) {
+        throw new IllegalStateException("Children must be sorted for binary search");
+      }
+      return ObjectUtils.binarySearch(
+        0, ids.length,
+        mid -> namesComparator.compare(nameLoader.apply(ids[mid]), name)
+      );
+    }
+
+
+    public @NotNull ChildrenIds insertAt(int index, int id) {
+      int[] updatedIds = ArrayUtil.insert(ids, index, id);
+      return withIds(updatedIds);
+    }
+
+    public @NotNull ChildrenIds appendId(int id) {
+      int[] updatedIds = ArrayUtil.append(ids, id);
+      return withIds(updatedIds);
+    }
+
+    public @NotNull ChildrenIds removeAt(int index) {
+      int[] updatedIds = ArrayUtil.remove(ids, index);
+      return withIds(updatedIds);
+    }
+
+    public @NotNull ChildrenIds removeIds(@NotNull IntSet idsToRemove) {
+      int[] newIds = new int[ids.length];
+      int newIdsCount = 0;
+      for (int id : ids) {
+        if (!idsToRemove.contains(id)) {
+          newIds[newIdsCount++] = id;
+        }
+      }
+      if (newIdsCount == newIds.length) {//no ids were skipped:
+        return this;
+      }
+
+      newIds = (newIdsCount == 0) ? ArrayUtil.EMPTY_INT_ARRAY : Arrays.copyOf(newIds, newIdsCount);
+      return withIds(newIds);
+    }
+
+    @Override
+    public String toString() {
+      return "Children[ids: " + Arrays.toString(ids) + ", sortedByName: " + isSorted() + ", allLoaded: " + areAllChildrenLoaded() + "]";
     }
   }
 }

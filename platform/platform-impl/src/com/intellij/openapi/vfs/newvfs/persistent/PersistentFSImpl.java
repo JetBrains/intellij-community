@@ -657,7 +657,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         }
 
         if (!childName.equals(canonicalName)) {
-          child = findExistingChildInfo(children.children, canonicalName, /*caseSensitive: */ false );
+          child = findExistingChildInfo(children.children, canonicalName, /*caseSensitive: */ false);
         }
       }
 
@@ -1815,7 +1815,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return null;
     }
     VirtualFileSystemEntry cached = dirByIdCache.getCachedDir(fileId);
-    if (cached != null) {
+    if (cached != null && cached.isValid()) {
       fileByIdCacheHits.incrementAndGet();
       return cached;
     }
@@ -1964,13 +1964,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     private VirtualFileSystemEntry foundParent;
 
     ParentFinder() {
-
     }
 
     private void ascendUntilCachedParent(int fileId) {
       int currentId = fileId;
 
       while (true) {
+        if (vfsPeer.isDeleted(currentId)) {
+          foundParent = null;
+          return;
+        }
 
         int parentId = vfsPeer.getParent(currentId);
 
@@ -2125,6 +2128,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
       catch (Exception e) {
         throw vfsPeer.handleError(e);
+      }
+      if (foundParent == null) {
+        return null;//most likely: file (or one of it's parent) is deleted
       }
       return findDescendantByIdPath(fileId);
     }
