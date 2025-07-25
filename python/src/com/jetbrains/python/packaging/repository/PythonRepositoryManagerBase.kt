@@ -35,7 +35,16 @@ abstract class PythonRepositoryManagerBase() : PythonRepositoryManager, Disposab
   }
 
 
-  override fun allPackages(): Set<String> = repositories.flatMap { it.getPackages() }.toSet()
+  override fun allPackages(): Set<String> {
+    if (repositories.size == 1)
+      return repositories.first().getPackages()
+
+    val result = mutableSetOf<String>()
+    for (repository in repositories) {
+      result.addAll(repository.getPackages())
+    }
+    return result
+  }
 
   override suspend fun getLatestVersion(packageName: String, repository: PyPackageRepository?): PyPackageVersion? {
     waitForInit()

@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.SafeFileOutputStream
 import com.jetbrains.python.Result
@@ -56,6 +57,8 @@ class PypiPackageCache : PythonPackageCache<String> {
 
   @CheckReturnValue
   suspend fun reloadCache(force: Boolean = false): Result<Unit, IOException> {
+    ThreadingAssertions.assertBackgroundThread()
+
     lock.withLock {
       if ((cache.isNotEmpty() && !force) || loadInProgress) {
         return Result.success(Unit)
