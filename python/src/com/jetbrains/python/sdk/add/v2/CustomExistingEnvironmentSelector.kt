@@ -66,7 +66,13 @@ internal abstract class CustomExistingEnvironmentSelector(
       }
     }
 
-    comboBox.initialize(scope, existingEnvironments.map { sortForExistingEnvironment(it, module) })
+    comboBox.initialize(
+      scope = scope,
+      flow = existingEnvironments.map { existing ->
+        val withUniquePath = existing.distinctBy { interpreter ->  interpreter.homePath }
+        sortForExistingEnvironment(withUniquePath, module)
+      }
+    )
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
@@ -81,9 +87,10 @@ internal abstract class CustomExistingEnvironmentSelector(
     )
   }
 
-  private fun addEnvByPath(python: VanillaPythonWithLanguageLevel) {
+  private fun addEnvByPath(python: VanillaPythonWithLanguageLevel): PythonSelectableInterpreter {
     val interpreter = ManuallyAddedSelectableInterpreter(python)
     existingEnvironments.value += interpreter
+    return interpreter
   }
 
   internal abstract val executable: ObservableMutableProperty<String>

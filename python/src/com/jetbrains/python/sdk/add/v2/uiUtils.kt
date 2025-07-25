@@ -59,7 +59,6 @@ import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.JTextField
 import javax.swing.plaf.basic.BasicComboBoxEditor
-import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
@@ -252,7 +251,7 @@ internal fun Panel.pythonInterpreterComboBox(
   selectedSdkProperty: ObservableMutableProperty<PythonSelectableInterpreter?>, // todo not sdk
   model: PythonAddInterpreterModel,
   validationRequestor: DialogValidationRequestor,
-  onPathSelected: (VanillaPythonWithLanguageLevel) -> Unit,
+  onPathSelected: (VanillaPythonWithLanguageLevel) -> PythonSelectableInterpreter,
   customizer: RowsRange.() -> Unit = {},
 ): PythonInterpreterComboBox {
   val comboBox = PythonInterpreterComboBox(model, onPathSelected, ShowingMessageErrorSync)
@@ -292,7 +291,7 @@ internal fun Panel.pythonInterpreterComboBox(
 
 internal class PythonInterpreterComboBox(
   val controller: PythonAddInterpreterModel,
-  val onPathSelected: (VanillaPythonWithLanguageLevel) -> Unit,
+  val onPathSelected: (VanillaPythonWithLanguageLevel) -> PythonSelectableInterpreter,
   private val errorSink: ErrorSink,
 ) : ComboBox<PythonSelectableInterpreter?>() {
 
@@ -301,7 +300,12 @@ internal class PythonInterpreterComboBox(
     val newOnPathSelected: (String) -> Unit = {
       runWithModalProgressBlocking(ModalTaskOwner.guess(), message("python.sdk.validating.environment")) {
         controller.getSystemPythonFromSelection(it, errorSink)?.let { python ->
-          onPathSelected(python)
+          onPathSelected(python).also { interpreter ->
+            require(isEditable) {
+              "works only with editable combobox because it doesn't reject non-listed items (the list will be updated later via coroutine)"
+            }
+            selectedItem = interpreter
+          }
         }
       }
     }
@@ -315,8 +319,10 @@ internal class PythonInterpreterComboBox(
 
 
     flow.onEach { interpreters ->
+      val selectedItemReminder = selectedItem
       removeAllItems()
       interpreters.forEach(this::addItem)
+      selectedItemReminder?.let { selectedItem = it }
     }.launchIn(scope + Dispatchers.EDT)
   }
 

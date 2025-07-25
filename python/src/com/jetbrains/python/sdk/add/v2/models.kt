@@ -117,7 +117,7 @@ abstract class PythonAddInterpreterModel(
       manuallyAddedInterpreters,
     ) { known, detected, added ->
       added + known + detected
-    }.map { it.sorted() }.stateIn(scope, started = SharingStarted.Eagerly, initialValue = emptyList())
+    }.map { it.distinctBy { int -> int.homePath }.sorted() }.stateIn(scope, started = SharingStarted.Eagerly, initialValue = emptyList())
 
     this.baseInterpreters = allInterpreters.map { all ->
       all.filter { it.isBasePython() }
