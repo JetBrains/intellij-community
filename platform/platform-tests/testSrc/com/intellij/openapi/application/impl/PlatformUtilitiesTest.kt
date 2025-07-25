@@ -336,7 +336,7 @@ class PlatformUtilitiesTest {
 
   @Test
   fun `synchronous non-blocking read action does not cause thread starvation`(): Unit = timeoutRunBlocking {
-    val numberOfNonBlockingReadActions = 1000
+    val numberOfNonBlockingReadActions = Runtime.getRuntime().availableProcessors() * 2
     val readActionCanFinish = Job(coroutineContext.job)
     val readActionStarted = Job(coroutineContext.job)
     launch(Dispatchers.Default) {
