@@ -78,6 +78,7 @@ public fun TabContentScope.SimpleTabContent(
     )
 }
 
+@Suppress("ComposableParamOrder") // It dislikes the vararg
 @Composable
 public fun TabContentScope.SimpleTabContent(
     label: String,

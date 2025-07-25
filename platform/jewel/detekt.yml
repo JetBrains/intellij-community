@@ -190,7 +190,9 @@ naming:
       - Composable
 jewel:
   EqualityMembersRule:
-    active: true
     annotated:
       - GenerateDataFunctions
 
+Compose:
+  CompositionLocalAllowlist:
+    active: false

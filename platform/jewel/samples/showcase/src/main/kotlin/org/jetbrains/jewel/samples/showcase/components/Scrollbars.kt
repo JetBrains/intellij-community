@@ -56,8 +56,9 @@ import org.jetbrains.skiko.hostOs
 public fun Scrollbars(
     alwaysVisibleScrollbarVisibility: ScrollbarVisibility,
     whenScrollingScrollbarVisibility: ScrollbarVisibility,
+    modifier: Modifier = Modifier,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         val baseStyle = JewelTheme.scrollbarStyle
         var alwaysVisible by remember { mutableStateOf(hostOs != OS.MacOS) }
         var clickBehavior by remember { mutableStateOf(baseStyle.trackClickBehavior) }
@@ -136,7 +137,7 @@ private fun SettingsRow(
 }
 
 @Composable
-private fun LazyColumnWithScrollbar(style: ScrollbarStyle, modifier: Modifier) {
+private fun LazyColumnWithScrollbar(style: ScrollbarStyle, modifier: Modifier = Modifier) {
     Column(modifier) {
         Text("LazyColumn", style = JewelTheme.typography.h2TextStyle)
 
@@ -179,7 +180,7 @@ private fun LazyColumnWithScrollbar(style: ScrollbarStyle, modifier: Modifier) {
 }
 
 @Composable
-private fun ColumnWithScrollbar(style: ScrollbarStyle, modifier: Modifier) {
+private fun ColumnWithScrollbar(style: ScrollbarStyle, modifier: Modifier = Modifier) {
     Column(modifier) {
         Text("Column", fontSize = 18.sp)
         Spacer(Modifier.height(8.dp))
@@ -209,7 +210,7 @@ private fun ColumnWithScrollbar(style: ScrollbarStyle, modifier: Modifier) {
 }
 
 @Composable
-private fun HorizontalScrollbarContent(scrollbarStyle: ScrollbarStyle, modifier: Modifier) {
+private fun HorizontalScrollbarContent(scrollbarStyle: ScrollbarStyle, modifier: Modifier = Modifier) {
     Column(modifier) {
         Text("Column", fontSize = 18.sp)
         Spacer(Modifier.height(8.dp))
@@ -235,7 +236,7 @@ private fun HorizontalScrollbarContent(scrollbarStyle: ScrollbarStyle, modifier:
 }
 
 @Composable
-private fun AlignedContentExample(scrollbarStyle: ScrollbarStyle, modifier: Modifier) {
+private fun AlignedContentExample(scrollbarStyle: ScrollbarStyle, modifier: Modifier = Modifier) {
     Column(modifier) {
         Text("Column", fontSize = 18.sp)
         Spacer(Modifier.height(8.dp))
