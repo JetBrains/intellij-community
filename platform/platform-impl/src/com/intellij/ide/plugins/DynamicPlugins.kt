@@ -565,9 +565,11 @@ object DynamicPlugins {
 
     if (options.checkImplementationDetailDependencies) {
       processImplementationDetailDependenciesOnPlugin(pluginDescriptor, pluginSet) { dependentDescriptor ->
-        dependentDescriptor.isMarkedForLoading = false
-        unloadPluginWithoutProgress(dependentDescriptor, UnloadPluginOptions(waitForClassloaderUnload = false,
-                                                                             checkImplementationDetailDependencies = false))
+        if (dependentDescriptor is PluginMainDescriptor) {
+          dependentDescriptor.isMarkedForLoading = false
+          unloadPluginWithoutProgress(dependentDescriptor, UnloadPluginOptions(waitForClassloaderUnload = false,
+                                                                               checkImplementationDetailDependencies = false))
+        }
         true
       }
     }
