@@ -2224,14 +2224,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   public void executeChangeCaseSensitivity(@NotNull VirtualDirectoryImpl directory,
                                            @NotNull CaseSensitivity newCaseSensitivity) {
     int fileId = fileId(directory);
+    boolean newIsCaseSensitive = newCaseSensitivity.toBooleanOrFail();
     vfsPeer.updateRecordFields(fileId, record -> {
-      boolean sensitivityChanged = (newCaseSensitivity == CaseSensitivity.SENSITIVE)
+      boolean sensitivityChanged = newIsCaseSensitive
                                    ? record.addFlags(Flags.CHILDREN_CASE_SENSITIVE)
                                    : record.removeFlags(Flags.CHILDREN_CASE_SENSITIVE);
       return record.addFlags(Flags.CHILDREN_CASE_SENSITIVITY_CACHED)
              || sensitivityChanged;
     });
-    directory.setCaseSensitivityFlag(newCaseSensitivity);
+    directory.setCaseSensitivityFlag(newIsCaseSensitive);
   }
 
 

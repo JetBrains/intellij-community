@@ -229,25 +229,21 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   /**
-   * Updates this directory case-sensitivity to newSensitivity (must NOT be UNKNOWN), and set case-sensitivity-cached flag
+   * Updates this directory case-sensitivity to new sensitivity, and set case-sensitivity-cached flag
    * to true.
    * Updates only in-memory values, does NOT update VFS persistent structures (see {@link PersistentFSImpl#executeChangeCaseSensitivity(VirtualDirectoryImpl, CaseSensitivity)}
    * for that).
    * If case-sensitivity value is actually changed -- re-order the children accordingly
    */
   @ApiStatus.Internal
-  public void setCaseSensitivityFlag(@NotNull CaseSensitivity newSensitivity) {
-    //TODO RC: use newSensitivity: boolean, instead of CaseSensitivity -- this way the absence of UNKNOWN is definitive
-    if (newSensitivity.isUnknown()) {
-      throw new IllegalArgumentException("invalid argument for " + this + ": " + newSensitivity);
-    }
-
+  public void setCaseSensitivityFlag(boolean newIsCaseSensitive) {
     CaseSensitivity oldCaseSensitivity = getChildrenCaseSensitivity();
-    if (oldCaseSensitivity != newSensitivity) {
+    if (oldCaseSensitivity.isUnknown()
+        || oldCaseSensitivity.isSensitive() != newIsCaseSensitive) {
       VfsData vfsData = getVfsData();
       VfsData.Segment segment = vfsData.getSegment(getId(), false);
       int newFlags = VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED |
-                     (newSensitivity.isSensitive() ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0);
+                     (newIsCaseSensitive ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0);
       segment.setFlags(getId(), VfsDataFlags.CHILDREN_CASE_SENSITIVE | VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, newFlags);
 
       //children are sorted by name => case-sensitivity change requires re-sorting:
@@ -380,7 +376,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     else if (getChildrenCaseSensitivity().isUnknown()) {
       // Fallback: cache 'default' case sensitivity when we failed to read it from the disk, to avoid freezes on
       // constant attempts to re-read -- but do not save the new value in persistence:
-      CaseSensitivity defaultCaseSensitivity = CaseSensitivity.fromBoolean(getFileSystem().isCaseSensitive());
+      boolean defaultCaseSensitivity = getFileSystem().isCaseSensitive();
       setCaseSensitivityFlag(defaultCaseSensitivity);
     }
   }
