@@ -19,13 +19,10 @@ import com.jetbrains.python.psi.types.PyInstantiableType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-
-import static com.jetbrains.python.psi.PyUtil.as;
 
 public final class PyKeywordPatternReference extends PsiReferenceBase.Poly<PyKeywordPattern> {
   public PyKeywordPatternReference(@NotNull PyKeywordPattern keywordPattern) {
@@ -34,7 +31,7 @@ public final class PyKeywordPatternReference extends PsiReferenceBase.Poly<PyKey
 
   @Override
   public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
-    PyClassPattern classPattern = getContainingClassPattern();
+    PyClassPattern classPattern = getElement().getContainingClassPattern();
     if (classPattern == null) {
       return ResolveResult.EMPTY_ARRAY;
     }
@@ -52,17 +49,13 @@ public final class PyKeywordPatternReference extends PsiReferenceBase.Poly<PyKey
 
   @Override
   public Object @NotNull [] getVariants() {
-    PyClassPattern classPattern = getContainingClassPattern();
+    PyClassPattern classPattern = getElement().getContainingClassPattern();
     if (classPattern == null) {
       return LookupElement.EMPTY_ARRAY;
     }
     PyKeywordPattern keywordPattern = getElement();
     TypeEvalContext typeContext = TypeEvalContext.codeCompletion(keywordPattern.getProject(), keywordPattern.getContainingFile());
     return collectClassAttributeVariants(getElement(), classPattern, typeContext);
-  }
-
-  private @Nullable PyClassPattern getContainingClassPattern() {
-    return as(getElement().getParent().getParent(), PyClassPattern.class);
   }
 
   static LookupElement @NotNull [] collectClassAttributeVariants(@NotNull PsiElement location,
