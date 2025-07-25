@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="JUnit5Suites" type="repository">
-    <properties maven-id="org.junit.platform:junit-platform-suite:1.13.3">
+    <properties maven-id="org.junit.platform:junit-platform-suite:1.13.4">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite/1.13.3/junit-platform-suite-1.13.3.jar">
-          <sha256sum>f1a0f02eb6ccb02c491acdc90a3e1eb24fa6525001f703aac5275c0e1d42bca9</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite/1.13.4/junit-platform-suite-1.13.4.jar">
+          <sha256sum>8088a80b47f5a7e73fa107f466dfa6a86776ca496fc2e7724aba65202d467913</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-api/1.13.3/junit-platform-suite-api-1.13.3.jar">
-          <sha256sum>cc77ed82ba23ca380bc08398677db5026cc11a0f64a99db5e4b1886bb26b86a3</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-api/1.13.4/junit-platform-suite-api-1.13.4.jar">
+          <sha256sum>9a05bf77e128371f5b3e25ffc89f7af467a9f68dd365fdfced469ebcf533abc9</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-engine/1.13.3/junit-platform-suite-engine-1.13.3.jar">
-          <sha256sum>0ec7ce7c0919470ef2fc1f7d3a00ee18f0cc37c647421788afdabd9d0515272c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-engine/1.13.4/junit-platform-suite-engine-1.13.4.jar">
+          <sha256sum>3b34fd8172d70d0d7c59155e487bd8e77d43bdbfdcfe1d78c2b4eea55e9acb92</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-commons/1.13.3/junit-platform-suite-commons-1.13.3.jar">
-          <sha256sum>fcb2cbfcc143b97a96f27385a8209763d526103d5547e3abd09b504f48a2e2e1</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-commons/1.13.4/junit-platform-suite-commons-1.13.4.jar">
+          <sha256sum>e7dacfcfa3bc692c0a7a413cefd5f51ae420415a14d39091bdf88aebfdba70b6</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -23,17 +23,17 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite/1.13.3/junit-platform-suite-1.13.3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-api/1.13.3/junit-platform-suite-api-1.13.3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-engine/1.13.3/junit-platform-suite-engine-1.13.3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-commons/1.13.3/junit-platform-suite-commons-1.13.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite/1.13.4/junit-platform-suite-1.13.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-api/1.13.4/junit-platform-suite-api-1.13.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-engine/1.13.4/junit-platform-suite-engine-1.13.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-commons/1.13.4/junit-platform-suite-commons-1.13.4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite/1.13.3/junit-platform-suite-1.13.3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-api/1.13.3/junit-platform-suite-api-1.13.3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-engine/1.13.3/junit-platform-suite-engine-1.13.3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-commons/1.13.3/junit-platform-suite-commons-1.13.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite/1.13.4/junit-platform-suite-1.13.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-api/1.13.4/junit-platform-suite-api-1.13.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-engine/1.13.4/junit-platform-suite-engine-1.13.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-commons/1.13.4/junit-platform-suite-commons-1.13.4-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

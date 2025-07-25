@@ -1,15 +1,15 @@
 <component name="libraryTable">
   <library name="JUnit5" type="repository">
-    <properties maven-id="org.junit.jupiter:junit-jupiter-api:5.13.3">
+    <properties maven-id="org.junit.jupiter:junit-jupiter-api:5.13.4">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.13.3/junit-jupiter-api-5.13.3.jar">
-          <sha256sum>1a15a52253a972c82c0dbf77759a983f5afed0583585cdc5b2a3beaa1f4ae0ac</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.13.4/junit-jupiter-api-5.13.4.jar">
+          <sha256sum>d1bb81abfd9e03418306b4e6a3390c8db52c58372e749c2980ac29f0c08278f1</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar">
           <sha256sum>48e2df636cab6563ced64dcdff8abb2355627cb236ef0bf37598682ddf742f1b</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.13.3/junit-platform-commons-1.13.3.jar">
-          <sha256sum>02cd66a55df750a123d8f761e6503e455ac108ff1b365d446e874ba3bc56ca89</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.13.4/junit-platform-commons-1.13.4.jar">
+          <sha256sum>1c25ca641ebaae44ff3ad21ca1b2ef68d0dd84bfeb07c4805ba7840899b77408</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar">
           <sha256sum>b509448ac506d607319f182537f0b35d71007582ec741832a1f111e5b5b70b38</sha256sum>
@@ -17,16 +17,16 @@
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.13.3/junit-jupiter-api-5.13.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.13.4/junit-jupiter-api-5.13.4.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.13.3/junit-platform-commons-1.13.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.13.4/junit-platform-commons-1.13.4.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.13.3/junit-jupiter-api-5.13.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.13.4/junit-jupiter-api-5.13.4-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.13.3/junit-platform-commons-1.13.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.13.4/junit-platform-commons-1.13.4-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2-sources.jar!/" />
     </SOURCES>
   </library>

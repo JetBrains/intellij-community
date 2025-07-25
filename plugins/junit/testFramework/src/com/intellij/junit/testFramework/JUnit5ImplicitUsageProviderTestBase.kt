@@ -9,7 +9,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
 abstract class JUnit5ImplicitUsageProviderTestBase : JvmImplicitUsageProviderTestBase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnit5ProjectDescriptor("5.13.3")
+  override fun getProjectDescriptor(): LightProjectDescriptor = JUnit5ProjectDescriptor("5.13.4")
 
   protected open class JUnit5ProjectDescriptor(private val version: String) : ProjectDescriptor(LanguageLevel.HIGHEST) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {

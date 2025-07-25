@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="JUnit5Vintage" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.junit.vintage:junit-vintage-engine:5.13.3">
+    <properties include-transitive-deps="false" maven-id="org.junit.vintage:junit-vintage-engine:5.13.4">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/vintage/junit-vintage-engine/5.13.3/junit-vintage-engine-5.13.3.jar">
-          <sha256sum>d9bf872919131f217932fe308161cbd9912877a347b0d81b4d78143eadfb8695</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/vintage/junit-vintage-engine/5.13.4/junit-vintage-engine-5.13.4.jar">
+          <sha256sum>066b702d850ebcde36f2a8181b46a2f0f1416129d1dc63c3a1e1531006e74739</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/vintage/junit-vintage-engine/5.13.3/junit-vintage-engine-5.13.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/vintage/junit-vintage-engine/5.13.4/junit-vintage-engine-5.13.4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/vintage/junit-vintage-engine/5.13.3/junit-vintage-engine-5.13.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/vintage/junit-vintage-engine/5.13.4/junit-vintage-engine-5.13.4-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
