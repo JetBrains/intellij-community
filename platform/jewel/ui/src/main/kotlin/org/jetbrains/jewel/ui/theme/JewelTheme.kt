@@ -1,5 +1,7 @@
 package org.jetbrains.jewel.ui.theme
 
+import androidx.compose.foundation.Indication
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
@@ -194,8 +196,14 @@ public fun BaseJewelTheme(
     content: @Composable () -> Unit,
 ) {
     JewelTheme(theme, swingCompatMode) {
-        CompositionLocalProvider(LocalColorPalette provides theme.colorPalette, LocalIconData provides theme.iconData) {
+        CompositionLocalProvider(
+            LocalColorPalette provides theme.colorPalette,
+            LocalIconData provides theme.iconData,
+            LocalIndication provides NoIndication,
+        ) {
             CompositionLocalProvider(values = styling.styles(), content = content)
         }
     }
 }
+
+private object NoIndication : Indication

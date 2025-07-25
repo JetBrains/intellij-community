@@ -43,7 +43,7 @@ internal fun MarkdownEditor(state: TextFieldState, modifier: Modifier = Modifier
 }
 
 @Composable
-private fun ControlsRow(modifier: Modifier = Modifier, onLoadMarkdown: (String) -> Unit) {
+private fun ControlsRow(onLoadMarkdown: (String) -> Unit, modifier: Modifier = Modifier) {
     Row(modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
         var showFilePicker by remember { mutableStateOf(false) }
         OutlinedButton(onClick = { showFilePicker = true }, modifier = Modifier.padding(start = 2.dp)) {

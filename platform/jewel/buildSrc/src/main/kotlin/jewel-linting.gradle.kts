@@ -15,6 +15,7 @@ detekt {
 dependencies {
     // Use the Jewel custom rules
     detektPlugins(project(":detekt-plugin"))
+    detektPlugins("io.nlopez.compose.rules:detekt:0.4.27")
 }
 
 ktfmt {

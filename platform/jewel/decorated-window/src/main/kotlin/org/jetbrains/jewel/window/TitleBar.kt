@@ -73,6 +73,7 @@ public fun DecoratedWindowScope.TitleBar(
     }
 }
 
+@Suppress("ComposableParamOrder")
 @Composable
 internal fun DecoratedWindowScope.TitleBarImpl(
     modifier: Modifier = Modifier,
@@ -129,7 +130,7 @@ internal fun DecoratedWindowScope.TitleBarImpl(
                     }
                 }
             },
-            modifier = modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             measurePolicy = rememberTitleBarMeasurePolicy(window, state, applyTitleBar),
         )
     }

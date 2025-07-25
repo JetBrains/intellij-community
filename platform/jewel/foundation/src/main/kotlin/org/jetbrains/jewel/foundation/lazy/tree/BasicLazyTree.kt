@@ -74,7 +74,7 @@ import org.jetbrains.jewel.foundation.state.SelectableComponentState
  *
  * @composable
  */
-@Suppress("UNCHECKED_CAST")
+@Suppress("UNCHECKED_CAST", "ComposableParamOrder")
 @Composable
 public fun <T> BasicLazyTree(
     tree: Tree<T>,
@@ -134,19 +134,22 @@ public fun <T> BasicLazyTree(
                     expanded = (element as? Tree.Element.Node)?.let { it.id in treeState.openNodes } ?: false,
                 )
 
-            val backgroundShape by derivedStateOf {
-                val hasRoundedTopCorners =
-                    flattenedTree.getOrNull(index - 1)?.id?.let { it !in treeState.delegate.selectedKeys } ?: true
-                val hasRoundedBottomCorners =
-                    flattenedTree.getOrNull(index + 1)?.id?.let { it !in treeState.delegate.selectedKeys } ?: true
-                val topCornerSize = computerCornerSize(hasRoundedTopCorners, elementBackgroundCornerSize)
-                val bottomCornerSize = computerCornerSize(hasRoundedBottomCorners, elementBackgroundCornerSize)
-                RoundedCornerShape(
-                    topStart = topCornerSize,
-                    topEnd = topCornerSize,
-                    bottomEnd = bottomCornerSize,
-                    bottomStart = bottomCornerSize,
-                )
+            val backgroundShape by remember {
+                derivedStateOf {
+                    val hasRoundedTopCorners =
+                        flattenedTree.getOrNull(index - 1)?.id?.let { it !in treeState.delegate.selectedKeys } ?: true
+                    val hasRoundedBottomCorners =
+                        flattenedTree.getOrNull(index + 1)?.id?.let { it !in treeState.delegate.selectedKeys } ?: true
+                    val topCornerSize = computerCornerSize(hasRoundedTopCorners, elementBackgroundCornerSize)
+                    val bottomCornerSize = computerCornerSize(hasRoundedBottomCorners, elementBackgroundCornerSize)
+
+                    RoundedCornerShape(
+                        topStart = topCornerSize,
+                        topEnd = topCornerSize,
+                        bottomEnd = bottomCornerSize,
+                        bottomStart = bottomCornerSize,
+                    )
+                }
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,

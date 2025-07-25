@@ -4830,6 +4830,85 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+java_library(
+  name = "libraries-detekt-compose-rules-io-nlopez-compose-rules-detekt",
+  exports = [
+    ":detekt-0_4_27_http_import",
+    ":detekt-core-1_23_8_http_import",
+    ":detekt-api-1_23_8_http_import",
+    ":poko-annotations-jvm-0_17_1_http_import",
+    ":detekt-parser-1_23_8_http_import",
+    ":contester-breakpoint-0_2_0_http_import",
+    ":detekt-tooling-1_23_8_http_import",
+    ":snakeyaml-engine-2_7_http_import",
+    ":detekt-metrics-1_23_8_http_import",
+    ":detekt-psi-utils-1_23_8_http_import",
+    ":detekt-utils-1_23_8_http_import",
+    ":common-detekt-0_4_27_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "detekt-0_4_27_http_import",
+  jar = "@detekt-0_4_27_http//file"
+)
+
+jvm_import(
+  name = "detekt-core-1_23_8_http_import",
+  jar = "@detekt-core-1_23_8_http//file"
+)
+
+jvm_import(
+  name = "detekt-api-1_23_8_http_import",
+  jar = "@detekt-api-1_23_8_http//file"
+)
+
+jvm_import(
+  name = "poko-annotations-jvm-0_17_1_http_import",
+  jar = "@poko-annotations-jvm-0_17_1_http//file"
+)
+
+jvm_import(
+  name = "detekt-parser-1_23_8_http_import",
+  jar = "@detekt-parser-1_23_8_http//file"
+)
+
+jvm_import(
+  name = "contester-breakpoint-0_2_0_http_import",
+  jar = "@contester-breakpoint-0_2_0_http//file"
+)
+
+jvm_import(
+  name = "detekt-tooling-1_23_8_http_import",
+  jar = "@detekt-tooling-1_23_8_http//file"
+)
+
+jvm_import(
+  name = "snakeyaml-engine-2_7_http_import",
+  jar = "@snakeyaml-engine-2_7_http//file"
+)
+
+jvm_import(
+  name = "detekt-metrics-1_23_8_http_import",
+  jar = "@detekt-metrics-1_23_8_http//file"
+)
+
+jvm_import(
+  name = "detekt-psi-utils-1_23_8_http_import",
+  jar = "@detekt-psi-utils-1_23_8_http//file"
+)
+
+jvm_import(
+  name = "detekt-utils-1_23_8_http_import",
+  jar = "@detekt-utils-1_23_8_http//file"
+)
+
+jvm_import(
+  name = "common-detekt-0_4_27_http_import",
+  jar = "@common-detekt-0_4_27_http//file"
+)
+
 jvm_import(
   name = "libraries-dokka-jetbrains-dokka-analysis-kotlin-descriptors",
   jar = "@analysis-kotlin-descriptors-2_0_0_http//file",
@@ -8123,12 +8202,6 @@ java_library(
 )
 
 jvm_import(
-  name = "detekt-api-1_23_8_http_import",
-  jar = "@detekt-api-1_23_8_http//file",
-  source_jar = "@detekt-api-1_23_8-sources_http//file"
-)
-
-jvm_import(
   name = "kotlin-compiler-embeddable-2_0_21_http_import",
   jar = "@kotlin-compiler-embeddable-2_0_21_http//file",
   source_jar = "@kotlin-compiler-embeddable-2_0_21-sources_http//file"
@@ -8162,24 +8235,6 @@ jvm_import(
   name = "kotlinx-coroutines-core-jvm-1_6_4_http_import",
   jar = "@kotlinx-coroutines-core-jvm-1_6_4_http//file",
   source_jar = "@kotlinx-coroutines-core-jvm-1_6_4-sources_http//file"
-)
-
-jvm_import(
-  name = "detekt-psi-utils-1_23_8_http_import",
-  jar = "@detekt-psi-utils-1_23_8_http//file",
-  source_jar = "@detekt-psi-utils-1_23_8-sources_http//file"
-)
-
-jvm_import(
-  name = "detekt-utils-1_23_8_http_import",
-  jar = "@detekt-utils-1_23_8_http//file",
-  source_jar = "@detekt-utils-1_23_8-sources_http//file"
-)
-
-jvm_import(
-  name = "poko-annotations-jvm-0_17_1_http_import",
-  jar = "@poko-annotations-jvm-0_17_1_http//file",
-  source_jar = "@poko-annotations-jvm-0_17_1-sources_http//file"
 )
 
 java_library(
@@ -8220,30 +8275,6 @@ java_library(
 )
 
 jvm_import(
-  name = "detekt-core-1_23_8_http_import",
-  jar = "@detekt-core-1_23_8_http//file",
-  source_jar = "@detekt-core-1_23_8-sources_http//file"
-)
-
-jvm_import(
-  name = "detekt-parser-1_23_8_http_import",
-  jar = "@detekt-parser-1_23_8_http//file",
-  source_jar = "@detekt-parser-1_23_8-sources_http//file"
-)
-
-jvm_import(
-  name = "contester-breakpoint-0_2_0_http_import",
-  jar = "@contester-breakpoint-0_2_0_http//file",
-  source_jar = "@contester-breakpoint-0_2_0-sources_http//file"
-)
-
-jvm_import(
-  name = "detekt-tooling-1_23_8_http_import",
-  jar = "@detekt-tooling-1_23_8_http//file",
-  source_jar = "@detekt-tooling-1_23_8-sources_http//file"
-)
-
-jvm_import(
   name = "kotlin-stdlib-2_0_21_http_import",
   jar = "@kotlin-stdlib-2_0_21_http//file",
   source_jar = "@kotlin-stdlib-2_0_21-sources_http//file"
@@ -8256,21 +8287,9 @@ jvm_import(
 )
 
 jvm_import(
-  name = "snakeyaml-engine-2_7_http_import",
-  jar = "@snakeyaml-engine-2_7_http//file",
-  source_jar = "@snakeyaml-engine-2_7-sources_http//file"
-)
-
-jvm_import(
   name = "kotlin-reflect-2_0_21_http_import",
   jar = "@kotlin-reflect-2_0_21_http//file",
   source_jar = "@kotlin-reflect-2_0_21-sources_http//file"
-)
-
-jvm_import(
-  name = "detekt-metrics-1_23_8_http_import",
-  jar = "@detekt-metrics-1_23_8_http//file",
-  source_jar = "@detekt-metrics-1_23_8-sources_http//file"
 )
 
 jvm_import(

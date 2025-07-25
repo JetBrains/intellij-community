@@ -333,6 +333,7 @@ libraries/ai.grazie.spell.gec.engine.local
 libraries/assertj-core
 libraries/compose-foundation-desktop
 libraries/compose-foundation-desktop-junit
+libraries/detekt-compose-rules
 libraries/dokka
 libraries/grpc
 libraries/grpc-netty-shaded

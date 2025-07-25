@@ -104,18 +104,19 @@ public fun VerticallyScrollableContainer(
         verticalScrollbarVisible = scrollState.canScroll,
         horizontalScrollbar = null,
         horizontalScrollbarVisible = false,
-        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
         scrollbarStyle = style,
+        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
     ) {
         Box(Modifier.layoutId(ID_CONTENT).verticalScroll(scrollState, reverseScrolling = reverseLayout)) { content() }
     }
 }
 
+@Suppress("ModifierNaming")
 @Composable
 internal fun TextAreaScrollableContainer(
     scrollState: ScrollState,
     style: ScrollbarStyle,
-    contentModifier: Modifier,
+    contentModifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
@@ -133,8 +134,8 @@ internal fun TextAreaScrollableContainer(
         verticalScrollbarVisible = scrollState.canScroll,
         horizontalScrollbar = null,
         horizontalScrollbarVisible = false,
-        modifier = Modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
         scrollbarStyle = style,
+        modifier = Modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
     ) {
         Box(contentModifier.layoutId(ID_CONTENT)) { content() }
     }
@@ -195,8 +196,8 @@ public fun VerticallyScrollableContainer(
         verticalScrollbarVisible = scrollState.canScroll,
         horizontalScrollbar = null,
         horizontalScrollbarVisible = false,
-        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
         scrollbarStyle = style,
+        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
     ) {
         Box(Modifier.layoutId(ID_CONTENT)) { content() }
     }
@@ -257,8 +258,8 @@ public fun VerticallyScrollableContainer(
         verticalScrollbarVisible = scrollState.canScroll,
         horizontalScrollbar = null,
         horizontalScrollbarVisible = false,
-        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
         scrollbarStyle = style,
+        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
     ) {
         Box(Modifier.layoutId(ID_CONTENT)) { content() }
     }
@@ -318,8 +319,8 @@ public fun HorizontallyScrollableContainer(
             )
         },
         horizontalScrollbarVisible = scrollState.canScroll,
-        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
         scrollbarStyle = style,
+        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
     ) {
         Box(Modifier.layoutId(ID_CONTENT).horizontalScroll(scrollState, reverseScrolling = reverseLayout)) { content() }
     }
@@ -380,8 +381,8 @@ public fun HorizontallyScrollableContainer(
             )
         },
         horizontalScrollbarVisible = scrollState.canScroll,
-        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
         scrollbarStyle = style,
+        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
     ) {
         Box(Modifier.layoutId(ID_CONTENT)) { content() }
     }
@@ -442,8 +443,8 @@ public fun HorizontallyScrollableContainer(
             )
         },
         horizontalScrollbarVisible = scrollState.canScroll,
-        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
         scrollbarStyle = style,
+        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
     ) {
         Box(Modifier.layoutId(ID_CONTENT)) { content() }
     }
@@ -478,8 +479,8 @@ private fun ScrollableContainerImpl(
     verticalScrollbarVisible: Boolean,
     horizontalScrollbar: (@Composable () -> Unit)?,
     horizontalScrollbarVisible: Boolean,
-    modifier: Modifier,
     scrollbarStyle: ScrollbarStyle,
+    modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     Layout(

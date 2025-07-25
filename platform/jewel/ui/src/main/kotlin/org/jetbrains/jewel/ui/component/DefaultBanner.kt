@@ -805,10 +805,10 @@ private fun DefaultBannerImpl(
 private fun DefaultBannerImpl(
     style: DefaultBannerStyle,
     icon: (@Composable () -> Unit)?,
-    content: @Composable () -> Unit,
     linkActions: (BannerLinkActionScope.() -> Unit)?,
     iconActions: (BannerIconActionScope.() -> Unit)?,
     modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
 ) {
     DefaultBannerImpl(
         style = style,
@@ -828,17 +828,21 @@ private fun DefaultBannerImpl(
     actions: (@Composable RowScope.() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    DefaultBannerImpl(style, modifier, icon, actions) {
-        Text(text = text, style = textStyle, maxLines = 1, overflow = TextOverflow.Ellipsis)
-    }
+    DefaultBannerImpl(
+        style,
+        icon,
+        actions,
+        modifier,
+        { Text(text = text, style = textStyle, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+    )
 }
 
 @Composable
 private fun DefaultBannerImpl(
     style: DefaultBannerStyle,
-    modifier: Modifier = Modifier,
     icon: (@Composable () -> Unit)?,
     actions: (@Composable RowScope.() -> Unit)?,
+    modifier: Modifier = Modifier,
     content: @Composable (() -> Unit),
 ) {
     Column(modifier = modifier) {
