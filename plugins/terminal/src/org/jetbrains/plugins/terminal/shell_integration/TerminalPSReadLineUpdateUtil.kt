@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.shell_integration
 
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.util.PathUtil
 import com.intellij.util.system.OS
 import org.jetbrains.plugins.terminal.ShellStartupOptions
@@ -22,6 +23,7 @@ internal object TerminalPSReadLineUpdateUtil {
   private const val TEXT_LINE_1_ENV = "__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_1"
   private const val TEXT_LINE_2_ENV = "__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_2"
   private const val TEXT_LINE_3_ENV = "__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_3"
+  private const val IDE_NAME_ENV = "__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_IDE_NAME"
 
   @JvmStatic
   fun configureOptions(options: ShellStartupOptions): ShellStartupOptions {
@@ -52,6 +54,7 @@ internal object TerminalPSReadLineUpdateUtil {
     map[TEXT_LINE_1_ENV] = TerminalBundle.message("psreadline.update.line.1")
     map[TEXT_LINE_2_ENV] = TerminalBundle.message("psreadline.update.line.2")
     map[TEXT_LINE_3_ENV] = TerminalBundle.message("psreadline.update.line.3")
+    map[IDE_NAME_ENV] = ApplicationNamesInfo.getInstance().fullProductName
   }
 
   private fun isPowerShell(options: ShellStartupOptions): Boolean {
