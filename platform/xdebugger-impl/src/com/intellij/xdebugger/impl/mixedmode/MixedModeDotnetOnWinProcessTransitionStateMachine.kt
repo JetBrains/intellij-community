@@ -271,6 +271,7 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
                 high.startStepOver(currentState.high)
               }
               StepType.Into -> {
+                lowExtension.beforeManagedStepInto()
                 high.startStepInto(currentState.high)
               }
               StepType.Out -> {
