@@ -23,7 +23,4 @@ abstract class RefreshSession {
   abstract fun addEvents(events: List<VFileEvent>)
 
   abstract fun cancel()
-
-  @ApiStatus.Internal
-  abstract fun metric(key: String): Any?
 }

@@ -327,7 +327,7 @@ class RefreshSessionImpl internal constructor(
     mySemaphore.waitForMaybeCancellable()
   }
 
-  override fun metric(key: String): Any {
+  fun metric(key: String): Any {
     if (key == "events") return myEventCount
     throw IllegalArgumentException()
   }
