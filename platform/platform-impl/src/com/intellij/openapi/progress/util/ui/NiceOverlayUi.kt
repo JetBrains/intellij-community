@@ -237,6 +237,13 @@ class NiceOverlayUi(
     }
   }
 
+  /**
+   * Closes the overlay and marks the region for repainting
+   */
+  fun close() {
+    rootPane.repaint(popupWithShadowLocation)
+  }
+
   private fun restoreScreenshot() {
     check(showCloseButton) {
       "Screenshot can be used only when the close button is enabled"

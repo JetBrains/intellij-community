@@ -164,6 +164,7 @@ object SuvorovProgress {
       }
     }
     finally {
+      niceOverlay.close()
       Disposer.dispose(disposable)
     }
   }
