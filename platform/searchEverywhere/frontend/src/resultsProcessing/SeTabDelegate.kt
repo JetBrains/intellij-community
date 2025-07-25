@@ -143,6 +143,10 @@ class SeTabDelegate(
                                                           isAllTab)
   }
 
+  suspend fun performRightAction(item: SeItemData) {
+    providers.getValue().performRightAction(item)
+  }
+
   override fun dispose() {}
 
   private class Providers(
@@ -234,6 +238,12 @@ class SeTabDelegate(
       }
       else {
         frontendProvidersFacade?.getUpdatedPresentation(item)
+      }
+    }
+
+    suspend fun performRightAction(item: SeItemData) {
+      localProviders[item.providerId]?.performRightAction(item) ?: run {
+        frontendProvidersFacade?.performRightAction(item)
       }
     }
   }

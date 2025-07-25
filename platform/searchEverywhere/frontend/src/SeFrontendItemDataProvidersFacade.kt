@@ -88,6 +88,10 @@ class SeFrontendItemDataProvidersFacade(private val projectId: ProjectId,
     )
   }
 
+  suspend fun performRightAction(itemData: SeItemData) {
+    return SeRemoteApi.getInstance().performRightAction(projectId, sessionRef, itemData, isAllTab)
+  }
+
   companion object {
     private const val DEFAULT_CHUNK_SIZE: Int = 50
   }

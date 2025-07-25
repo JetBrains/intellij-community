@@ -22,4 +22,6 @@ interface SeItemsProvider: Disposable {
    * Defines if results can be shown in <i>Find</i> toolwindow.
    */
   suspend fun canBeShownInFindResults(): Boolean
+
+  suspend fun performRightAction(item: SeItem) {}
 }

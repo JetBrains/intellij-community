@@ -15,6 +15,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
 import com.intellij.platform.searchEverywhere.SeActionItemPresentation
+import com.intellij.platform.searchEverywhere.SeExtendedInfo
 import com.intellij.platform.searchEverywhere.SeItemPresentation
 import com.intellij.platform.searchEverywhere.SeOptionActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeSimpleItemPresentation
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.ApiStatus
 object SeTopHitItemPresentationProvider {
   private val iconSize get() = JBUIScale.scale(16)
 
-  suspend fun getPresentation(item: Any, project: Project, extendedDescription: String?, isMultiSelectionSupported: Boolean): SeItemPresentation =
+  suspend fun getPresentation(item: Any, project: Project, extendedInfo: SeExtendedInfo?, isMultiSelectionSupported: Boolean): SeItemPresentation =
     readAction {
       when (item) {
         is AnAction -> {
@@ -47,11 +48,11 @@ object SeTopHitItemPresentationProvider {
             icon = toSize(icon, iconSize, iconSize)
           }
 
-          SeSimpleItemPresentation(iconId = (icon ?: EmptyIcon.ICON_16).rpcId(),
-                                   text = text,
-                                   extendedDescription = extendedDescription,
-                                   isMultiSelectionSupported = isMultiSelectionSupported)
-        }
+           SeSimpleItemPresentation(iconId = (icon ?: EmptyIcon.ICON_16).rpcId(),
+                                    text = text,
+                                    extendedInfo = extendedInfo,
+                                    isMultiSelectionSupported = isMultiSelectionSupported)
+         }
         is OptionDescription -> {
           val text = TopHitSEContributor.getSettingText(item)
           val isChangedChangeable = item is Changeable && (item as Changeable).hasChanged()
@@ -74,7 +75,7 @@ object SeTopHitItemPresentationProvider {
           else SeSimpleItemPresentation(iconId = EmptyIcon.ICON_16.rpcId(),
                                         textChunk = textChunk,
                                         selectedTextChunk = selectedTextChunk,
-                                        extendedDescription = extendedDescription,
+                                        extendedInfo = extendedInfo,
                                         isMultiSelectionSupported = isMultiSelectionSupported)
         }
         else -> {
@@ -82,7 +83,7 @@ object SeTopHitItemPresentationProvider {
 
           SeSimpleItemPresentation(iconId = (presentation?.getIcon(false) ?: EmptyIcon.ICON_16).rpcId(),
                                    text = presentation?.presentableText ?: item.toString(),
-                                   extendedDescription = extendedDescription,
+                                   extendedInfo = extendedInfo,
                                    isMultiSelectionSupported = isMultiSelectionSupported)
         }
       }

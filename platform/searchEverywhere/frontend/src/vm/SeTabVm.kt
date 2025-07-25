@@ -199,6 +199,10 @@ class SeTabVm(
   suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
     return tab.getUpdatedPresentation(item)
   }
+
+  suspend fun performRightAction(item: SeItemData) {
+    tab.performRightAction(item)
+  }
 }
 
 private const val ESSENTIALS_THROTTLE_DELAY: Long = 100

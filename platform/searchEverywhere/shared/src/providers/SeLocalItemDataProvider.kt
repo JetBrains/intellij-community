@@ -90,6 +90,11 @@ class SeLocalItemDataProvider(
     return provider.canBeShownInFindResults()
   }
 
+  suspend fun performRightAction(itemData: SeItemData) {
+    val item = itemData.fetchItemIfExists() ?: return
+    provider.performRightAction(item)
+  }
+
   override fun dispose() {
     SeLog.log(SeLog.LIFE_CYCLE, "$logLabel provider ${id.value} disposed")
     Disposer.dispose(provider)

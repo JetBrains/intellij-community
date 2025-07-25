@@ -33,6 +33,10 @@ class SeRecentFilesProvider(private val contributorWrapper: SeAsyncWeightedContr
     return targetsProviderDelegate.canBeShownInFindResults()
   }
 
+  override suspend fun performRightAction(item: SeItem) {
+    return targetsProviderDelegate.performRightAction(item)
+  }
+
   override fun dispose() {
     Disposer.dispose(contributorWrapper)
   }

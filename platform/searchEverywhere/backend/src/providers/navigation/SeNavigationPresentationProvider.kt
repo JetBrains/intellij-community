@@ -3,24 +3,25 @@ package com.intellij.platform.searchEverywhere.backend.providers.navigation
 
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.navigation.NavigationItem
+import com.intellij.platform.searchEverywhere.SeExtendedInfo
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemPresentation
 import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SeNavigationItem(val item: NavigationItem, private val weight: Int, val extendedDescription: String?, val isMultiSelectionSupported: Boolean) : SeItem {
+class SeNavigationItem(val item: NavigationItem, private val weight: Int, val extendedInfo: SeExtendedInfo?, val isMultiSelectionSupported: Boolean) : SeItem {
   override fun weight(): Int = weight
-  override suspend fun presentation(): SeItemPresentation = SeNavigationPresentationProvider().getPresentation(item, extendedDescription, isMultiSelectionSupported)
+  override suspend fun presentation(): SeItemPresentation = SeNavigationPresentationProvider().getPresentation(item, extendedInfo, isMultiSelectionSupported)
 }
 
 @Internal
 class SeNavigationPresentationProvider {
-  fun getPresentation(item: NavigationItem, extendedDescription: String?, isMultiSelectionSupported: Boolean): SeItemPresentation {
+  fun getPresentation(item: NavigationItem, extendedInfo: SeExtendedInfo?, isMultiSelectionSupported: Boolean): SeItemPresentation {
     return SeTargetItemPresentation(iconId = item.presentation?.getIcon(false)?.rpcId(),
                                     presentableText = item.presentation?.presentableText ?: "",
                                     containerText = item.presentation?.locationString,
-                                    extendedDescription = extendedDescription,
+                                    extendedInfo = extendedInfo,
                                     isMultiSelectionSupported = isMultiSelectionSupported)
   }
 }

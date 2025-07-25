@@ -498,7 +498,6 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       private fun indexChanged(index: Int) {
         if (index != currentDescriptionIndex) {
           currentDescriptionIndex = index
-          showDescriptionForIndex()
         }
       }
     }
@@ -612,10 +611,6 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     })
   }
 
-  private fun showDescriptionForIndex() {
-    // TODO: Implement description footer
-  }
-
   private fun onFocusLost(e: FocusEvent) {
     if (isWaylandToolkit()) {
       // In Wayland focus is always lost when the window is being moved.
@@ -684,11 +679,27 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   private fun createExtendedInfoComponent(): ExtendedInfoComponent? {
     if (isExtendedInfoEnabled()) {
       val leftText = fun(element: Any): String? {
-        val leftText = (element as? SeResultListItemRow)?.item?.presentation?.extendedDescription
+        val leftText = (element as? SeResultListItemRow)?.item?.presentation?.extendedInfo?.leftText
         extendedInfoContainer.isVisible = !leftText.isNullOrEmpty()
         return leftText
       }
-      return ExtendedInfoComponent(project, ExtendedInfo(leftText) { null })
+
+      val rightAction = fun(element: Any?): AnAction? {
+        val extendedInfo = (element as? SeResultListItemRow)?.item?.presentation?.extendedInfo
+        val actionText = extendedInfo?.actionText
+        val actionDescription = extendedInfo?.actionDescription
+        val item = (element as? SeResultListItemRow)?.item ?: return null
+
+        return object : DumbAwareAction({ actionText }, { actionDescription }) {
+          override fun actionPerformed(e: AnActionEvent) {
+            vm.coroutineScope.launch {
+              vm.currentTab.performRightAction(item)
+            }
+          }
+        }
+      }
+
+      return ExtendedInfoComponent(project, ExtendedInfo(leftText, rightAction))
     }
     return null
   }

@@ -62,6 +62,10 @@ class SeTextTab(private val delegate: SeTabDelegate, registerShortcut: (AnAction
     return SeTextSearchOptions(findModel.isCaseSensitive, findModel.isWholeWordsOnly, findModel.isRegularExpressions)
   }
 
+  override suspend fun performRightAction(item: SeItemData) {
+    return delegate.performRightAction(item)
+  }
+
   override fun dispose() {
     Disposer.dispose(filterEditorDisposable)
     Disposer.dispose(delegate)

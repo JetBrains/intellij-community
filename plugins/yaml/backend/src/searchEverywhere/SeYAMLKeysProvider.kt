@@ -10,7 +10,7 @@ import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.backend.providers.navigation.SeNavigationItem
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
-import com.intellij.platform.searchEverywhere.providers.getExtendedDescription
+import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -31,7 +31,7 @@ class SeYAMLKeysProvider(private val contributorWrapper: SeAsyncContributorWrapp
         override suspend fun process(t: Any): Boolean {
           if (t !is YAMLKeyNavigationItem) return true
           val weight = contributorWrapper.contributor.getElementPriority(t, inputQuery)
-          return collector.put(SeNavigationItem(t, weight, getExtendedDescription(t), contributorWrapper.contributor.isMultiSelectionSupported))
+          return collector.put(SeNavigationItem(t, weight, contributorWrapper.contributor.getExtendedInfo(t), contributorWrapper.contributor.isMultiSelectionSupported))
         }
       })
     }
@@ -46,10 +46,6 @@ class SeYAMLKeysProvider(private val contributorWrapper: SeAsyncContributorWrapp
 
   override suspend fun canBeShownInFindResults(): Boolean {
     return contributorWrapper.contributor.showInFindResults()
-  }
-
-  fun getExtendedDescription(item: Any): String? {
-    return contributorWrapper.contributor.getExtendedDescription(item)
   }
 
   override fun dispose() {
