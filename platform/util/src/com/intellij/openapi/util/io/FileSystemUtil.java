@@ -129,7 +129,7 @@ public final class FileSystemUtil {
   @ApiStatus.Internal
   public static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivity(@NotNull java.io.File anyChild) {
     FileAttributes.CaseSensitivity detected = readCaseSensitivityByNativeAPI(anyChild);
-    if (detected != com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.UNKNOWN) return detected;
+    if (detected.isKnown()) return detected;
     // native queries failed, fallback to the Java I/O:
     return readParentCaseSensitivityByJavaIO(anyChild);
   }

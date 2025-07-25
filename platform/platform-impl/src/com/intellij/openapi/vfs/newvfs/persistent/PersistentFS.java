@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -80,17 +80,15 @@ public abstract class PersistentFS extends ManagingFS {
   public static boolean isHidden(@Attributes int attributes) { return isSet(attributes, Flags.IS_HIDDEN); }
   public static boolean isOfflineByDefault(@Attributes int attributes) { return isSet(attributes, Flags.OFFLINE_BY_DEFAULT); }
 
-  public static @NotNull FileAttributes.CaseSensitivity areChildrenCaseSensitive(@Attributes int attributes) {
+  public static @NotNull CaseSensitivity areChildrenCaseSensitive(@Attributes int attributes) {
     if (!isDirectory(attributes)) {
       throw new IllegalArgumentException(
         "CHILDREN_CASE_SENSITIVE flag defined for directories only but got file: 0b" + Integer.toBinaryString(attributes));
     }
     if (!isSet(attributes, Flags.CHILDREN_CASE_SENSITIVITY_CACHED)) {
-      return FileAttributes.CaseSensitivity.UNKNOWN;
+      return CaseSensitivity.UNKNOWN;
     }
-    return isSet(attributes, Flags.CHILDREN_CASE_SENSITIVE)
-           ? FileAttributes.CaseSensitivity.SENSITIVE
-           : FileAttributes.CaseSensitivity.INSENSITIVE;
+    return CaseSensitivity.fromBoolean(isSet(attributes, Flags.CHILDREN_CASE_SENSITIVE));
   }
 
   public abstract int storeUnlinkedContent(byte @NotNull [] bytes);

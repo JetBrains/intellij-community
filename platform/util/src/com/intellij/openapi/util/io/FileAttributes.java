@@ -2,6 +2,7 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,50 @@ public final class FileAttributes {
     /** Case sensitivity is not specified - either because not yet known or not applicable (to non-directories) */
     UNKNOWN;
 
+    @ApiStatus.Experimental
+    public boolean isSensitive() {
+      return this == SENSITIVE;
+    }
+
+    @ApiStatus.Experimental
+    public boolean isInsensitive() {
+      return this == INSENSITIVE;
+    }
+
+    @ApiStatus.Experimental
+    public boolean isUnknown() {
+      return this == UNKNOWN;
+    }
+
+    @ApiStatus.Experimental
+    public boolean isKnown() {
+      return this != UNKNOWN;
+    }
+
+    @ApiStatus.Experimental
+    public boolean toBooleanWithDefault(boolean defaultIfUnknown) {
+      //@formatter:off
+      switch (this){
+        case SENSITIVE:   return true;
+        case INSENSITIVE: return false;
+        case UNKNOWN:     return defaultIfUnknown;
+      }
+      //@formatter:on
+      throw new AssertionError(this + " is unrecognized");
+    }
+
+    @ApiStatus.Experimental
+    public boolean toBooleanOrFail() {
+      //@formatter:off
+      switch (this){
+        case SENSITIVE:   return true;
+        case INSENSITIVE: return false;
+        case UNKNOWN:     throw new IllegalStateException("case sensitivity is UNKNOWN");
+      }
+      //@formatter:on
+      throw new AssertionError(this + " is unrecognized");
+    }
+
     public static CaseSensitivity fromBoolean(boolean isCaseSensitive) {
       return isCaseSensitive ? SENSITIVE : INSENSITIVE;
     }
@@ -44,7 +89,7 @@ public final class FileAttributes {
    * <p>Bits 0-2: modifiers ({@link #SYM_LINK}, {@link #HIDDEN}, {@link #READ_ONLY})</p>
    * <p>Bits 3-4: {@link Type Type} (00=unknown, 01={@link Type#FILE FILE}, 10={@link Type#DIRECTORY DIRECTORY}, 11={@link Type#SPECIAL SPECIAL})</p>
    * <p>Bits 5-7: {@link CaseSensitivity CaseSensitivity} (00={@link CaseSensitivity#UNKNOWN UNKNOWN},
-   *   01={@link CaseSensitivity#SENSITIVE SENSITIVE}, 10={@link CaseSensitivity#INSENSITIVE INSENSITIVE})</p>
+   * 01={@link CaseSensitivity#SENSITIVE SENSITIVE}, 10={@link CaseSensitivity#INSENSITIVE INSENSITIVE})</p>
    */
   private final byte flags;
 
@@ -60,7 +105,13 @@ public final class FileAttributes {
    */
   public final long lastModified;
 
-  public FileAttributes(boolean isDirectory, boolean isSpecial, boolean isSymlink, boolean isHidden, long length, long lastModified, boolean isWritable) {
+  public FileAttributes(boolean isDirectory,
+                        boolean isSpecial,
+                        boolean isSymlink,
+                        boolean isHidden,
+                        long length,
+                        long lastModified,
+                        boolean isWritable) {
     this(isDirectory, isSpecial, isSymlink, isHidden, length, lastModified, isWritable, CaseSensitivity.UNKNOWN);
   }
 
@@ -72,7 +123,13 @@ public final class FileAttributes {
    *                        When {@code isDirectory == false}, the caseSensitivity argument is ignored
    *                        (set to {@link CaseSensitivity#UNKNOWN}), because case sensitivity is configured on a directory level.
    */
-  public FileAttributes(boolean isDirectory, boolean isSpecial, boolean isSymlink, boolean isHidden, long length, long lastModified, boolean isWritable,
+  public FileAttributes(boolean isDirectory,
+                        boolean isSpecial,
+                        boolean isSymlink,
+                        boolean isHidden,
+                        long length,
+                        long lastModified,
+                        boolean isWritable,
                         @NotNull CaseSensitivity caseSensitivity) {
     this(flags(isDirectory, isSpecial, isSymlink, isHidden, isWritable, caseSensitivity), length, lastModified);
   }
@@ -90,7 +147,12 @@ public final class FileAttributes {
     this.lastModified = lastModified;
   }
 
-  private static byte flags(boolean isDirectory, boolean isSpecial, boolean isSymlink, boolean isHidden, boolean isWritable, CaseSensitivity sensitivity) {
+  private static byte flags(boolean isDirectory,
+                            boolean isSpecial,
+                            boolean isSymlink,
+                            boolean isHidden,
+                            boolean isWritable,
+                            CaseSensitivity sensitivity) {
     byte flags = 0;
     if (isSymlink) flags |= SYM_LINK;
     if (isHidden) flags |= HIDDEN;
@@ -102,7 +164,7 @@ public final class FileAttributes {
   }
 
   private static byte packSensitivityIntoFlags(CaseSensitivity sensitivity, byte flags) {
-    int sensitivity_flags = sensitivity == CaseSensitivity.UNKNOWN ? 0 : sensitivity == CaseSensitivity.SENSITIVE ? 1 : 2;
+    int sensitivity_flags = sensitivity.isUnknown() ? 0 : sensitivity.isSensitive() ? 1 : 2;
     flags |= sensitivity_flags << CASE_SENSITIVITY_SHIFT;
     return flags;
   }
@@ -134,10 +196,14 @@ public final class FileAttributes {
   public @Nullable("`null` means an unknown type, typically a broken symlink") Type getType() {
     int type = (flags >> TYPE_SHIFT) & 0b11;
     switch (type) {
-      case 0b00: return null;
-      case 0b01: return Type.FILE;
-      case 0b10: return Type.DIRECTORY;
-      case 0b11: return Type.SPECIAL;
+      case 0b00:
+        return null;
+      case 0b01:
+        return Type.FILE;
+      case 0b10:
+        return Type.DIRECTORY;
+      case 0b11:
+        return Type.SPECIAL;
     }
     throw new IllegalStateException("Invalid type flags: " + Integer.toBinaryString(flags));
   }
@@ -148,9 +214,12 @@ public final class FileAttributes {
     }
     int sensitivity_flags = (flags >> CASE_SENSITIVITY_SHIFT) & 0b11;
     switch (sensitivity_flags) {
-      case 0b00: return CaseSensitivity.UNKNOWN;
-      case 0b01: return CaseSensitivity.SENSITIVE;
-      case 0b10: return CaseSensitivity.INSENSITIVE;
+      case 0b00:
+        return CaseSensitivity.UNKNOWN;
+      case 0b01:
+        return CaseSensitivity.SENSITIVE;
+      case 0b10:
+        return CaseSensitivity.INSENSITIVE;
     }
     throw new IllegalStateException("Invalid sensitivity flags: " + Integer.toBinaryString(sensitivity_flags));
   }
@@ -231,11 +300,14 @@ public final class FileAttributes {
     else {
       try {
         isWritable = isDirectory || Files.isWritable(path);
-      } catch (SecurityException ignored) { }
+      }
+      catch (SecurityException ignored) {
+      }
     }
 
     long lastModified = attrs.lastModifiedTime().toMillis();
 
+    //MAYBE RC: request case-sensitivity from FileSystemUtil.readParentCaseSensitivity() if it is unknown?
     CaseSensitivity caseSensitivity = (isDirectory && attrs instanceof CaseSensitivityAttribute) ?
                                       ((CaseSensitivityAttribute)attrs).getCaseSensitivity() :
                                       CaseSensitivity.UNKNOWN;

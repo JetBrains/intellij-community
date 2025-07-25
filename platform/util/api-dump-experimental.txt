@@ -27,6 +27,14 @@ c:com.intellij.openapi.util.UserDataHolderBase
 - java.util.concurrent.atomic.AtomicReference
 - com.intellij.openapi.util.UserDataHolderEx
 - *:isCopyableDataEqual(com.intellij.openapi.util.UserDataHolderBase):Z
+e:com.intellij.openapi.util.io.FileAttributes$CaseSensitivity
+- java.lang.Enum
+- *:isInsensitive():Z
+- *:isKnown():Z
+- *:isSensitive():Z
+- *:isUnknown():Z
+- *:toBooleanOrFail():Z
+- *:toBooleanWithDefault(Z):Z
 f:com.intellij.openapi.util.io.NioFiles
 - *s:copyRecursively(java.nio.file.Path,java.nio.file.Path):V
 - *s:copyRecursively(java.nio.file.Path,java.nio.file.Path,java.util.function.Consumer):V

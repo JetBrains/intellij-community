@@ -237,7 +237,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
    */
   @ApiStatus.Internal
   public void setCaseSensitivityFlag(@NotNull CaseSensitivity newSensitivity) {
-    if (newSensitivity == CaseSensitivity.UNKNOWN) {
+    //TODO RC: use newSensitivity: boolean, instead of CaseSensitivity -- this way the absence of UNKNOWN is definitive
+    if (newSensitivity.isUnknown()) {
       throw new IllegalArgumentException("invalid argument for " + this + ": " + newSensitivity);
     }
 
@@ -246,7 +247,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       VfsData vfsData = getVfsData();
       VfsData.Segment segment = vfsData.getSegment(getId(), false);
       int newFlags = VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED |
-                     (newSensitivity == CaseSensitivity.SENSITIVE ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0);
+                     (newSensitivity.isSensitive() ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0);
       segment.setFlags(getId(), VfsDataFlags.CHILDREN_CASE_SENSITIVE | VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, newFlags);
 
       //children are sorted by name => case-sensitivity change requires re-sorting:
@@ -321,8 +322,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                    (PersistentFS.isSpecialFile(attributes) ? VfsDataFlags.IS_SPECIAL_FLAG : 0) |
                    (PersistentFS.isWritable(attributes) ? VfsDataFlags.IS_WRITABLE_FLAG : 0) |
                    (PersistentFS.isHidden(attributes) ? VfsDataFlags.IS_HIDDEN_FLAG : 0) |
-                   (sensitivity != CaseSensitivity.UNKNOWN ? VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED : 0) |
-                   (sensitivity == CaseSensitivity.SENSITIVE ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0) |
+                   (sensitivity.isKnown() ? VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED : 0) |
+                   (sensitivity.isSensitive() ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0) |
                    (PersistentFS.isOfflineByDefault(attributes) ? VfsDataFlags.IS_OFFLINE : 0);
     int relevantFlagsMask = VfsDataFlags.IS_SYMLINK_FLAG |
                             VfsDataFlags.IS_SPECIAL_FLAG |
@@ -376,7 +377,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       // fire event asynchronously to avoid deadlocks with possibly currently held VFP/Refresh queue locks
       RefreshQueue.getInstance().processEvents(/*async: */ true, List.of(caseSensitivityEvent));
     }
-    else if (getChildrenCaseSensitivity() == CaseSensitivity.UNKNOWN) {
+    else if (getChildrenCaseSensitivity().isUnknown()) {
       // Fallback: cache 'default' case sensitivity when we failed to read it from the disk, to avoid freezes on
       // constant attempts to re-read -- but do not save the new value in persistence:
       CaseSensitivity defaultCaseSensitivity = CaseSensitivity.fromBoolean(getFileSystem().isCaseSensitive());

@@ -2245,7 +2245,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @ApiStatus.Internal
   public VFilePropertyChangeEvent determineCaseSensitivityAndPrepareUpdate(@NotNull VirtualFile parent,
                                                                            @NotNull String childName) {
-    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() != CaseSensitivity.UNKNOWN) {
+    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity().isKnown()) {
       //do not update case-sensitivity once determined: assume folder case-sensitivity is constant through the run
       // time of an app -- which is, strictly speaking, incorrect, but we don't want to process those cases so far
       return null;
@@ -2276,7 +2276,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @ApiStatus.Internal
   public VFilePropertyChangeEvent prepareCaseSensitivityUpdateIfNeeded(@NotNull VirtualFile dir,
                                                                        @NotNull CaseSensitivity actualCaseSensitivity) {
-    if (actualCaseSensitivity == CaseSensitivity.UNKNOWN) {
+    if (actualCaseSensitivity.isUnknown()) {
       return null;
     }
 
@@ -2607,9 +2607,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   static @Attributes int fileAttributesToFlags(@NotNull FileAttributes attributes) {
     CaseSensitivity sensitivity = attributes.areChildrenCaseSensitive();
-    boolean isCaseSensitive = sensitivity == CaseSensitivity.SENSITIVE;
-    return fileAttributesToFlags(attributes.isDirectory(), attributes.isWritable(), attributes.isSymLink(), attributes.isSpecial(),
-                                 attributes.isHidden(), sensitivity != CaseSensitivity.UNKNOWN, isCaseSensitive);
+    return fileAttributesToFlags(
+      attributes.isDirectory(), attributes.isWritable(), attributes.isSymLink(), attributes.isSpecial(), attributes.isHidden(),
+      sensitivity.isKnown(), sensitivity.isSensitive()
+    );
   }
 
   public static @Attributes int fileAttributesToFlags(boolean isDirectory,
