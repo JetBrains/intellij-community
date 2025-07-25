@@ -689,7 +689,14 @@ private class RemoveFileSetsRegistrarImpl(
     val fileSetToRemove = fileSets[root]
     if (fileSetToRemove != null) {
       when (fileSetToRemove) {
-        is MultipleStoredWorkspaceFileSets -> removedFileSets.putIfAbsent(root, fileSetToRemove.fileSets.first())
+        is MultipleWorkspaceFileSets -> {
+          fileSetToRemove.forEach { fileSet ->
+            if (fileSet is WorkspaceFileSetImpl) {
+              removedFileSets.putIfAbsent(root, fileSet)
+              return@forEach
+            }
+          }
+        }
         is WorkspaceFileSetImpl -> removedFileSets.putIfAbsent(root, fileSetToRemove)
         else -> {}
       }
