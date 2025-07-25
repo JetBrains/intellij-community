@@ -1,18 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution
 
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.externalSystem.model.ExternalSystemException
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.hasTargetEnvironmentConfiguration
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.util.ExceptionUtil
 import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.ProjectConnection
 import org.gradle.util.GradleVersion
@@ -22,12 +18,9 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.io.File
-import java.io.IOException
 import java.util.function.Supplier
 
 object GradleWrapperHelper {
-
-  private val log = logger<GradleWrapperHelper>()
 
   private val TELEMETRY = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
 
@@ -68,33 +61,17 @@ object GradleWrapperHelper {
     gradleVersion: GradleVersion?,
     context: GradleExecutionContext,
   ): String? {
-    try {
-      TELEMETRY.spanBuilder("EnsureInstalledWrapper").use {
-        val propertiesFile = setupWrapperTaskInInitScript(context, gradleVersion)
+    TELEMETRY.spanBuilder("EnsureInstalledWrapper").use {
+      val propertiesFile = setupWrapperTaskInInitScript(context, gradleVersion)
 
-        executeWrapperTask(connection, context)
+      executeWrapperTask(connection, context)
 
-        // if autoimport is active, it should be notified of new files creation as early as possible,
-        // to avoid triggering unnecessary re-imports (caused by creation of wrapper)
-        VfsUtil.markDirtyAndRefresh(false, true, true, File(context.projectPath, "gradle"))
+      // if autoimport is active, it should be notified of new files creation as early as possible,
+      // to avoid triggering unnecessary re-imports (caused by creation of wrapper)
+      VfsUtil.markDirtyAndRefresh(false, true, true, File(context.projectPath, "gradle"))
 
-        return propertiesFile.get()
-      }
+      return propertiesFile.get()
     }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: IOException) {
-      log.warn("Can't update wrapper", e)
-    }
-    catch (e: Throwable) {
-      log.warn("Can't update wrapper", e)
-      val rootCause = ExceptionUtil.getRootCause(e)
-      val externalSystemException = ExternalSystemException(ExceptionUtil.getMessage(rootCause))
-      externalSystemException.initCause(e)
-      throw externalSystemException
-    }
-    return null
   }
 
   private fun executeWrapperTask(
@@ -110,7 +87,6 @@ object GradleWrapperHelper {
     }
   }
 
-  @Throws(IOException::class)
   private fun setupWrapperTaskInInitScript(context: GradleExecutionContext, gradleVersion: GradleVersion?): Supplier<String?> {
     if (context.settings.hasTargetEnvironmentConfiguration()) {
       // todo add the support for org.jetbrains.plugins.gradle.settings.DistributionType.WRAPPED
