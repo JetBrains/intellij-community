@@ -17,7 +17,7 @@ class InstalledPackage(val instance: PythonPackage, repository: PyPackageReposit
   val currentVersion: PyPackageVersion? = PyPackageVersionNormalizer.normalize(instance.version)
 
   val isEditMode: Boolean = instance.isEditableMode
-  val sourceRepoIcon: Icon = instance.sourceRepoIcon
+  val sourceRepoIcon: Icon? = instance.sourceRepoIcon
 
   val canBeUpdated: Boolean
     get() {
@@ -29,7 +29,7 @@ class InstalledPackage(val instance: PythonPackage, repository: PyPackageReposit
 }
 
 class RequirementPackage(val instance: PythonPackage, override val repository: PyPackageRepository, private val requirements: List<RequirementPackage> = emptyList()) : DisplayablePackage(instance.name, repository) {
-  val sourceRepoIcon: Icon = instance.sourceRepoIcon
+  val sourceRepoIcon: Icon? = instance.sourceRepoIcon
 
   override fun getRequirements(): List<RequirementPackage> = requirements
 }

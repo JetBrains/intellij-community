@@ -6,7 +6,6 @@ import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -29,7 +28,7 @@ open class PythonPackage(name: String, val version: String, val isEditableMode: 
   val presentableName: String = name
 
   @ApiStatus.Internal
-  open val sourceRepoIcon: Icon = PythonPsiApiIcons.Python
+  open val sourceRepoIcon: Icon? = null
 
   override fun toString(): String {
     return "PythonPackage(name='$name', version='$version')"
