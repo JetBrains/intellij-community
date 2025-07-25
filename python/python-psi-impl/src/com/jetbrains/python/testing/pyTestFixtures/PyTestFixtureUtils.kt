@@ -13,6 +13,7 @@ const val USE_FIXTURES = "usefixtures"
 const val PARAMETRIZE = "parametrize"
 
 val reservedFixturesSet = setOf(
+  REQUEST_FIXTURE,
   "capfd",
   "capfdbinary",
   "caplog",
