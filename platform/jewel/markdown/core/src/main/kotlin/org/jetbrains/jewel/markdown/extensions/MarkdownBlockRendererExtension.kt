@@ -33,6 +33,7 @@ public interface MarkdownBlockRendererExtension {
      * @param onUrlClick The callback to invoke when an URL is clicked.
      * @param onTextClick The callback to invoke when a text part is clicked.
      */
+    @Suppress("ComposableNaming")
     @Composable
     public fun render(
         block: CustomBlock,

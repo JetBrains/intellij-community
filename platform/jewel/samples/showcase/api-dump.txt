@@ -38,44 +38,44 @@ f:org.jetbrains.jewel.samples.showcase.ShowcaseIcons$ProgrammingLanguages
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.ShowcaseIcons$ProgrammingLanguages
 - f:getKotlin():org.jetbrains.jewel.ui.icon.PathIconKey
 f:org.jetbrains.jewel.samples.showcase.components.BannersKt
-- sf:Banners(androidx.compose.runtime.Composer,I):V
+- sf:Banners(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.BordersKt
-- sf:Borders(androidx.compose.runtime.Composer,I):V
+- sf:Borders(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.ButtonsKt
-- sf:Buttons(androidx.compose.runtime.Composer,I):V
+- sf:Buttons(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.CheckboxesKt
-- sf:Checkboxes(androidx.compose.runtime.Composer,I):V
+- sf:Checkboxes(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.ChipsAndTreeKt
-- sf:ChipsAndTrees(androidx.compose.runtime.Composer,I):V
+- sf:ChipsAndTrees(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 - sf:ChipsSample(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
-- sf:SelectableLazyColumnSample(androidx.compose.runtime.Composer,I):V
+- sf:SelectableLazyColumnSample(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 - sf:TreeSample(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.ComboBoxesKt
-- sf:ComboBoxes(androidx.compose.runtime.Composer,I):V
+- sf:ComboBoxes(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.IconsKt
-- sf:Icons(androidx.compose.runtime.Composer,I):V
+- sf:Icons(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.LinksKt
-- sf:Links(androidx.compose.runtime.Composer,I):V
+- sf:Links(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.ProgressBarKt
-- sf:ProgressBar(androidx.compose.runtime.Composer,I):V
+- sf:ProgressBar(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.RadioButtonsKt
-- sf:RadioButtons(androidx.compose.runtime.Composer,I):V
+- sf:RadioButtons(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.ScrollbarsKt
 - sf:Scrollbars(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility,org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.SegmentedControlsKt
-- sf:SegmentedControls(androidx.compose.runtime.Composer,I):V
+- sf:SegmentedControls(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.SliderKt
-- sf:Sliders(androidx.compose.runtime.Composer,I):V
+- sf:Sliders(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.SplitLayoutsKt
-- sf:SplitLayouts(org.jetbrains.jewel.ui.component.SplitLayoutState,org.jetbrains.jewel.ui.component.SplitLayoutState,org.jetbrains.jewel.ui.component.SplitLayoutState,kotlin.jvm.functions.Function0,androidx.compose.runtime.Composer,I):V
+- sf:SplitLayouts(org.jetbrains.jewel.ui.component.SplitLayoutState,org.jetbrains.jewel.ui.component.SplitLayoutState,org.jetbrains.jewel.ui.component.SplitLayoutState,kotlin.jvm.functions.Function0,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.TabsKt
-- sf:Tabs(androidx.compose.runtime.Composer,I):V
+- sf:Tabs(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.TextAreasKt
-- sf:TextAreas(androidx.compose.runtime.Composer,I):V
+- sf:TextAreas(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.TextFieldsKt
-- sf:TextFields(androidx.compose.runtime.Composer,I):V
+- sf:TextFields(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.TooltipsKt
-- sf:Tooltips(androidx.compose.runtime.Composer,I):V
+- sf:Tooltips(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.TypographyKt
 - sf:TypographyShowcase(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.views.ComponentsViewKt

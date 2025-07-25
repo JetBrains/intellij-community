@@ -91,7 +91,7 @@ public fun <T : Any> ListComboBox(
     listState: SelectableLazyListState = rememberSelectableLazyListState(),
     itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
-    LaunchedEffect(Unit) { listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex])) }
+    LaunchedEffect(itemKeys) { listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex])) }
 
     var previewSelectedIndex by remember { mutableIntStateOf(selectedIndex) }
     val scope = rememberCoroutineScope()
@@ -173,23 +173,24 @@ public fun <T : Any> ListComboBox(
             // We draw label items as not selected and not active
             itemContent(items[selectedIndex], false, false)
         },
-    ) {
-        PopupContent(
-            items = items,
-            previewSelectedItemIndex = previewSelectedIndex,
-            listState = listState,
-            popupMaxHeight = popupMaxHeight,
-            contentPadding = contentPadding,
-            onPreviewSelectedItemChange = {
-                if (it >= 0 && previewSelectedIndex != it) {
-                    previewSelectedIndex = it
-                }
-            },
-            onSelectedItemChange = { index: Int -> setSelectedItem(index) },
-            itemKeys = itemKeys,
-            itemContent = itemContent,
-        )
-    }
+        popupContent = {
+            PopupContent(
+                items = items,
+                previewSelectedItemIndex = previewSelectedIndex,
+                listState = listState,
+                popupMaxHeight = popupMaxHeight,
+                contentPadding = contentPadding,
+                onPreviewSelectedItemChange = {
+                    if (it >= 0 && previewSelectedIndex != it) {
+                        previewSelectedIndex = it
+                    }
+                },
+                onSelectedItemChange = { index: Int -> setSelectedItem(index) },
+                itemKeys = itemKeys,
+                itemContent = itemContent,
+            )
+        },
+    )
 }
 
 /**
@@ -242,7 +243,7 @@ public fun ListComboBox(
     var previewSelectedIndex by remember { mutableIntStateOf(-1) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(itemKeys) {
         // Select the first item in the list when creating
         listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex]))
     }
@@ -397,7 +398,7 @@ public fun EditableListComboBox(
     var previewSelectedIndex by remember { mutableIntStateOf(-1) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(itemKeys) {
         // Select the first item in the list when creating
         listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex]))
     }
@@ -441,6 +442,7 @@ public fun EditableListComboBox(
             // selected value to the one underneath it (unless it's the last one)
             if (previewSelectedIndex >= 0 && previewSelectedIndex < items.lastIndex) {
                 currentSelectedIndex = previewSelectedIndex
+                @Suppress("AssignedValueIsNeverRead")
                 previewSelectedIndex = -1
             }
 
@@ -453,6 +455,7 @@ public fun EditableListComboBox(
             // selected value to the one above it (unless it's the first one)
             if (previewSelectedIndex > 0) {
                 currentSelectedIndex = previewSelectedIndex
+                @Suppress("AssignedValueIsNeverRead")
                 previewSelectedIndex = -1
             }
 
@@ -483,18 +486,14 @@ public fun EditableListComboBox(
                 contentPadding = contentPadding,
                 onPreviewSelectedItemChange = {
                     if (it >= 0 && previewSelectedIndex != it) {
+                        @Suppress("AssignedValueIsNeverRead")
                         previewSelectedIndex = it
                     }
                 },
                 onSelectedItemChange = ::setSelectedItem,
                 itemKeys = itemKeys,
                 itemContent = { item, isSelected, isActive ->
-                    SimpleListItem(
-                        text = item,
-                        isSelected = isSelected,
-                        isActive = isActive,
-                        iconContentDescription = item,
-                    )
+                    SimpleListItem(text = item, iconContentDescription = item, selected = isSelected, active = isActive)
                 },
             )
         },
@@ -565,7 +564,7 @@ private fun <T : Any> PopupContent(
                 val selectedIndex = selectedItemsIndexes.firstOrNull()
                 if (selectedIndex != null) onSelectedItemChange(selectedIndex)
             },
-        ) { ->
+        ) {
             itemsIndexed(
                 items = items,
                 key = { itemIndex, item -> itemKeys(itemIndex, item) },

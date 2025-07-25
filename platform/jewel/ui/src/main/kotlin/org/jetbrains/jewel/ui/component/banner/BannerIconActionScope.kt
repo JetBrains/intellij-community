@@ -1,6 +1,5 @@
 package org.jetbrains.jewel.ui.component.banner
 
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -25,7 +24,7 @@ public interface BannerIconActionScope {
 }
 
 @Composable
-internal fun RowScope.BannerIconActionsRow(block: (BannerIconActionScope.() -> Unit)?) {
+internal fun BannerIconActionsRow(block: (BannerIconActionScope.() -> Unit)?) {
     val allActions by remember { derivedStateOf { block?.toList().orEmpty() } }
     for (iconAction in allActions) {
         if (!iconAction.tooltipText.isNullOrBlank()) {

@@ -30,6 +30,7 @@ public class GitHubTableBlockRenderer(
 ) : MarkdownBlockRendererExtension {
     override fun canRender(block: CustomBlock): Boolean = block is TableBlock
 
+    @Suppress("LambdaParameterEventTrailing")
     @Composable
     override fun render(
         block: CustomBlock,

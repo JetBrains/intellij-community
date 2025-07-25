@@ -101,14 +101,14 @@ public fun Link(
 ) {
     LinkImpl(
         text = text,
+        style = style,
         onClick = onClick,
-        modifier = modifier,
         enabled = enabled,
+        textStyle = textStyle,
         overflow = overflow,
         interactionSource = interactionSource,
-        style = style,
-        textStyle = textStyle,
         icon = null,
+        modifier = modifier,
     )
 }
 
@@ -150,14 +150,14 @@ public fun ExternalLink(
 ) {
     ExternalLinkImpl(
         text = text,
-        uri = "",
         onClick = onClick,
-        modifier = modifier,
+        uri = "",
         enabled = enabled,
         overflow = overflow,
         interactionSource = interactionSource,
         style = style,
         textStyle = textStyle,
+        modifier = modifier,
     )
 }
 
@@ -206,12 +206,12 @@ public fun ExternalLink(
         text = text,
         onClick = { openUri(uriHandler, uri) },
         uri = uri,
-        modifier = modifier,
         enabled = enabled,
         overflow = overflow,
         interactionSource = interactionSource,
         style = style,
         textStyle = textStyle,
+        modifier = modifier,
     )
 }
 
@@ -220,12 +220,12 @@ private fun ExternalLinkImpl(
     text: String,
     onClick: () -> Unit,
     uri: String,
-    modifier: Modifier,
     enabled: Boolean,
     overflow: TextOverflow,
     interactionSource: MutableInteractionSource,
     style: LinkStyle,
     textStyle: TextStyle,
+    modifier: Modifier = Modifier,
 ) {
     val clipboard = LocalClipboard.current
     val stringProvider = LocalMessageResourceResolverProvider.current
@@ -250,14 +250,14 @@ private fun ExternalLinkImpl(
         content = {
             LinkImpl(
                 text = text,
+                style = style,
                 onClick = onClick,
-                modifier = modifier,
                 enabled = enabled,
+                textStyle = textStyle,
                 overflow = overflow,
                 interactionSource = interactionSource,
-                style = style,
-                textStyle = textStyle,
                 icon = style.icons.externalLink,
+                modifier = modifier,
             )
         },
     )
@@ -300,6 +300,7 @@ private fun openUri(uriHandler: UriHandler, link: String) {
  * @param menuContent The content to be displayed in the popup menu when the link is clicked
  * @see com.intellij.ui.components.DropDownLink
  */
+@Suppress("ComposableParamOrder") // To fix in JEWEL-928
 @Composable
 public fun DropdownLink(
     text: String,
@@ -318,21 +319,22 @@ public fun DropdownLink(
     var skipNextClick by remember { mutableStateOf(false) }
 
     Box(Modifier.onHover { hovered = it }) {
+        @Suppress("ModifierNotUsedAtRoot") // This is intentional
         LinkImpl(
             text = text,
+            style = style,
             onClick = {
                 if (!skipNextClick) {
                     expanded = !expanded
                 }
                 skipNextClick = false
             },
-            modifier = modifier,
             enabled = enabled,
+            textStyle = textStyle,
             overflow = overflow,
             interactionSource = interactionSource,
-            style = style,
-            textStyle = textStyle,
             icon = style.icons.dropdownChevron,
+            modifier = modifier,
         )
 
         if (expanded) {
@@ -358,17 +360,17 @@ private fun LinkImpl(
     text: String,
     style: LinkStyle,
     onClick: () -> Unit,
-    modifier: Modifier,
     enabled: Boolean,
     textStyle: TextStyle,
     overflow: TextOverflow,
     interactionSource: MutableInteractionSource,
     icon: IconKey?,
+    modifier: Modifier = Modifier,
 ) {
     var linkState by remember(interactionSource, enabled) { mutableStateOf(LinkState.of(enabled = enabled)) }
 
     val inputModeManager = LocalInputModeManager.current
-    LaunchedEffect(interactionSource, enabled) {
+    LaunchedEffect(interactionSource, enabled, inputModeManager) {
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
                 is PressInteraction.Press -> linkState = linkState.copy(pressed = true)

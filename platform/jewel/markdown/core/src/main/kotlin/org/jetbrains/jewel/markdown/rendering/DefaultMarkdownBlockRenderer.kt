@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -209,7 +210,7 @@ public open class DefaultMarkdownBlockRenderer(
         underlineWidth: Dp,
         underlineColor: Color,
         underlineGap: Dp,
-        modifier: Modifier,
+        modifier: Modifier = Modifier,
     ) {
         Column(modifier = modifier.padding(paddingValues)) {
             val textColor = textStyle.color.takeOrElse { LocalContentColor.current.takeOrElse { textStyle.color } }
@@ -455,7 +456,7 @@ public open class DefaultMarkdownBlockRenderer(
                     )
                 }
 
-                renderCodeWithMimeType(block, mimeType, styling, enabled)
+                CodeBlockWithMimeType(block, mimeType, styling, enabled)
 
                 if (styling.infoPosition.verticalAlignment == Alignment.Bottom) {
                     FencedBlockInfo(
@@ -471,7 +472,7 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    internal open fun renderCodeWithMimeType(
+    internal open fun CodeBlockWithMimeType(
         block: FencedCodeBlock,
         mimeType: MimeType,
         styling: MarkdownStyling.Code.Fenced,
@@ -552,10 +553,12 @@ public open class DefaultMarkdownBlockRenderer(
         modifier: Modifier = Modifier,
         content: @Composable () -> Unit,
     ) {
+        // We use movableContent so changing the flag doesn't reset the content
+        val movableContent = remember { movableContentOf { content() } }
         if (isScrollable) {
-            HorizontallyScrollableContainer(modifier) { content() }
+            HorizontallyScrollableContainer(modifier) { movableContent() }
         } else {
-            content()
+            movableContent()
         }
     }
 

@@ -53,11 +53,11 @@ public class GitHubAlertBlockRenderer(private val styling: AlertStyling, private
         val alert = block as? GitHubAlert
 
         when (alert) {
-            is Caution -> Alert(alert, modifier, styling.caution, enabled, blockRenderer, onUrlClick, onTextClick)
-            is Important -> Alert(alert, modifier, styling.important, enabled, blockRenderer, onUrlClick, onTextClick)
-            is Note -> Alert(alert, modifier, styling.note, enabled, blockRenderer, onUrlClick, onTextClick)
-            is Tip -> Alert(alert, modifier, styling.tip, enabled, blockRenderer, onUrlClick, onTextClick)
-            is Warning -> Alert(alert, modifier, styling.warning, enabled, blockRenderer, onUrlClick, onTextClick)
+            is Caution -> Alert(alert, styling.caution, enabled, blockRenderer, onUrlClick, onTextClick, modifier)
+            is Important -> Alert(alert, styling.important, enabled, blockRenderer, onUrlClick, onTextClick, modifier)
+            is Note -> Alert(alert, styling.note, enabled, blockRenderer, onUrlClick, onTextClick, modifier)
+            is Tip -> Alert(alert, styling.tip, enabled, blockRenderer, onUrlClick, onTextClick, modifier)
+            is Warning -> Alert(alert, styling.warning, enabled, blockRenderer, onUrlClick, onTextClick, modifier)
             else -> error("Unsupported block of type ${block.javaClass.name} cannot be rendered")
         }
     }
@@ -65,12 +65,12 @@ public class GitHubAlertBlockRenderer(private val styling: AlertStyling, private
     @Composable
     private fun Alert(
         block: GitHubAlert,
-        modifier: Modifier,
         styling: BaseAlertStyling,
         enabled: Boolean,
         blockRenderer: MarkdownBlockRenderer,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier = Modifier,
     ) {
         Column(
             modifier

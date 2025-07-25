@@ -81,6 +81,7 @@ public fun Markdown(
 ) {
     if (selectable) {
         SelectionContainer(Modifier.semantics { rawMarkdown = markdown }) {
+            @Suppress("ModifierNotUsedAtRoot") // Intentional
             Column(modifier, verticalArrangement = Arrangement.spacedBy(markdownStyling.blockVerticalSpacing)) {
                 for (block in markdownBlocks) {
                     blockRenderer.render(block, enabled, onUrlClick, onTextClick, Modifier)

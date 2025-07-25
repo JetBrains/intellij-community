@@ -83,6 +83,7 @@ f:org.jetbrains.jewel.ui.OutlineKt
 - sf:focusOutline-AGcomas(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.state.FocusableComponentState,androidx.compose.ui.graphics.Shape,org.jetbrains.jewel.foundation.Stroke$Alignment,F,F,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.Modifier
 - sf:focusOutline-AGcomas(androidx.compose.ui.Modifier,Z,androidx.compose.ui.graphics.Shape,org.jetbrains.jewel.foundation.Stroke$Alignment,F,F,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.Modifier
 - sf:outline-HYR8e34(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.state.FocusableComponentState,org.jetbrains.jewel.ui.Outline,androidx.compose.ui.graphics.Shape,org.jetbrains.jewel.foundation.Stroke$Alignment,F,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.Modifier
+- sf:outline-HYR8e34(androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.Outline,Z,androidx.compose.ui.graphics.Shape,org.jetbrains.jewel.foundation.Stroke$Alignment,F,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.Modifier
 org.jetbrains.jewel.ui.Typography
 - a:getConsoleTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
 - a:getEditorTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
@@ -562,19 +563,6 @@ org.jetbrains.jewel.ui.component.MenuScope
 - bs:selectableItemWithActionType$default(org.jetbrains.jewel.ui.component.MenuScope,Z,org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction,kotlin.jvm.functions.Function0,Z,kotlin.jvm.functions.Function2,I,java.lang.Object):V
 - a:submenu(Z,org.jetbrains.jewel.ui.icon.IconKey,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):V
 - bs:submenu$default(org.jetbrains.jewel.ui.component.MenuScope,Z,org.jetbrains.jewel.ui.icon.IconKey,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):V
-f:org.jetbrains.jewel.ui.component.MenuSelectableItem
-- sf:$stable:I
-- <init>(Z,Z,org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction,java.util.Set,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function2):V
-- b:<init>(Z,Z,org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction,java.util.Set,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function2,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- equals(java.lang.Object):Z
-- getContent():kotlin.jvm.functions.Function2
-- f:getIconKey():org.jetbrains.jewel.ui.icon.IconKey
-- f:getItemOptionAction():org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction
-- f:getKeybinding():java.util.Set
-- f:getOnClick():kotlin.jvm.functions.Function0
-- hashCode():I
-- f:isEnabled():Z
-- f:isSelected():Z
 f:org.jetbrains.jewel.ui.component.PopupContainerKt
 - sf:PopupContainer(kotlin.jvm.functions.Function0,androidx.compose.ui.Alignment$Horizontal,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,androidx.compose.ui.window.PopupProperties,androidx.compose.ui.window.PopupPositionProvider,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.PopupKt

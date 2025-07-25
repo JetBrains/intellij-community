@@ -257,7 +257,7 @@ private fun ChipImpl(
     enabled: Boolean,
     selected: Boolean,
     style: ChipStyle,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     var chipState by

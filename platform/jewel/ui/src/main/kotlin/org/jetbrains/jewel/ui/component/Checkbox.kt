@@ -100,17 +100,16 @@ public fun Checkbox(
     CheckboxImpl(
         state = state,
         onClick = { onCheckedChange.invoke(!checked) },
-        modifier = modifier,
-        contentModifier = Modifier,
-        enabled = enabled,
-        outline = outline,
-        interactionSource = interactionSource,
         colors = colors,
         metrics = metrics,
         icons = icons,
+        enabled = enabled,
+        outline = outline,
+        interactionSource = interactionSource,
         textStyle = textStyle,
         verticalAlignment = verticalAlignment,
         content = null,
+        modifier = modifier,
     )
 }
 
@@ -159,17 +158,16 @@ public fun TriStateCheckbox(
     CheckboxImpl(
         state = state,
         onClick = onClick,
-        modifier = modifier,
-        contentModifier = Modifier,
-        enabled = enabled,
-        outline = outline,
-        interactionSource = interactionSource,
         colors = colors,
         metrics = metrics,
         icons = icons,
+        enabled = enabled,
+        outline = outline,
+        interactionSource = interactionSource,
         textStyle = textStyle,
         verticalAlignment = verticalAlignment,
         content = null,
+        modifier = modifier,
     )
 }
 
@@ -223,19 +221,18 @@ public fun TriStateCheckboxRow(
     CheckboxImpl(
         state = state,
         onClick = onClick,
-        modifier = modifier,
-        contentModifier = textModifier,
-        enabled = enabled,
-        outline = outline,
-        interactionSource = interactionSource,
         colors = colors,
         metrics = metrics,
         icons = icons,
+        enabled = enabled,
+        outline = outline,
+        interactionSource = interactionSource,
         textStyle = textStyle,
         verticalAlignment = verticalAlignment,
-    ) {
-        Text(text)
-    }
+        { Text(text) },
+        modifier = modifier,
+        contentModifier = textModifier,
+    )
 }
 
 /**
@@ -288,19 +285,18 @@ public fun CheckboxRow(
     CheckboxImpl(
         state = state,
         onClick = { onCheckedChange(!checked) },
-        modifier = modifier,
-        contentModifier = textModifier,
-        enabled = enabled,
-        outline = outline,
-        interactionSource = interactionSource,
         colors = colors,
         metrics = metrics,
         icons = icons,
+        enabled = enabled,
+        outline = outline,
+        interactionSource = interactionSource,
         textStyle = textStyle,
         verticalAlignment = verticalAlignment,
-    ) {
-        Text(text)
-    }
+        { Text(text) },
+        modifier = modifier,
+        contentModifier = textModifier,
+    )
 }
 
 /**
@@ -349,17 +345,16 @@ public fun CheckboxRow(
     CheckboxImpl(
         state = ToggleableState(checked),
         onClick = { onCheckedChange(!checked) },
-        modifier = modifier,
-        contentModifier = Modifier,
-        enabled = enabled,
-        outline = outline,
-        interactionSource = interactionSource,
         colors = colors,
         metrics = metrics,
         icons = icons,
+        enabled = enabled,
+        outline = outline,
+        interactionSource = interactionSource,
         textStyle = textStyle,
         verticalAlignment = verticalAlignment,
         content = content,
+        modifier = modifier,
     )
 }
 
@@ -411,17 +406,16 @@ public fun TriStateCheckboxRow(
     CheckboxImpl(
         state = state,
         onClick = onClick,
-        modifier = modifier,
-        contentModifier = Modifier,
-        enabled = enabled,
-        outline = outline,
-        interactionSource = interactionSource,
         colors = colors,
         metrics = metrics,
         icons = icons,
+        enabled = enabled,
+        outline = outline,
+        interactionSource = interactionSource,
         textStyle = textStyle,
         verticalAlignment = verticalAlignment,
         content = content,
+        modifier = modifier,
     )
 }
 
@@ -432,14 +426,14 @@ private fun CheckboxImpl(
     colors: CheckboxColors,
     metrics: CheckboxMetrics,
     icons: CheckboxIcons,
-    modifier: Modifier,
-    contentModifier: Modifier,
     enabled: Boolean,
     outline: Outline,
     interactionSource: MutableInteractionSource,
     textStyle: TextStyle,
     verticalAlignment: Alignment.Vertical,
     content: (@Composable RowScope.() -> Unit)?,
+    modifier: Modifier = Modifier,
+    contentModifier: Modifier = Modifier,
 ) {
     var checkboxState by remember { mutableStateOf(CheckboxState.of(toggleableState = state, enabled = enabled)) }
 

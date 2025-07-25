@@ -46,7 +46,6 @@ import org.jetbrains.jewel.ui.outline
 @Composable
 internal fun InputField(
     state: TextFieldState,
-    modifier: Modifier,
     enabled: Boolean,
     readOnly: Boolean,
     inputTransformation: InputTransformation?,
@@ -62,6 +61,7 @@ internal fun InputField(
     decorator: TextFieldDecorator?,
     undecorated: Boolean,
     scrollState: ScrollState,
+    modifier: Modifier = Modifier,
 ) {
     var inputFieldState by remember(interactionSource) { mutableStateOf(InputFieldState.of(enabled = enabled)) }
     remember(enabled) { inputFieldState = inputFieldState.copy(enabled = enabled) }
@@ -128,7 +128,6 @@ internal fun InputField(
 internal fun InputField(
     value: TextFieldValue,
     onValueChange: (TextFieldValue) -> Unit,
-    modifier: Modifier,
     enabled: Boolean,
     readOnly: Boolean,
     outline: Outline,
@@ -143,6 +142,7 @@ internal fun InputField(
     style: InputFieldStyle,
     textStyle: TextStyle,
     decorationBox: @Composable (innerTextField: @Composable () -> Unit, state: InputFieldState) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var inputState by remember(interactionSource) { mutableStateOf(InputFieldState.of(enabled = enabled)) }
     remember(enabled) { inputState = inputState.copy(enabled = enabled) }

@@ -1,0 +1,14 @@
+### auto-generated section `build intellij.libraries.detekt-compose-rules` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "detekt-compose-rules",
+  module_name = "intellij.libraries.detekt-compose-rules",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:libraries-detekt-compose-rules-io-nlopez-compose-rules-detekt",
+    "@lib//:kotlin-reflect",
+  ]
+)
+### auto-generated section `build intellij.libraries.detekt-compose-rules` end
