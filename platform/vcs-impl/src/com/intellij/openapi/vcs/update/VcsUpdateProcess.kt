@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter
-import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction.Updater
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.SmartHashSet
@@ -93,7 +92,7 @@ object VcsUpdateProcess {
     @Nls actionName: String,
     @RequiresEdt onSuccess: () -> Unit = {},
   ) {
-    object : Updater(project, roots, updateSpec, actionInfo, actionName) {
+    object : VcsUpdateTask(project, roots, updateSpec, actionInfo, actionName) {
       override fun onSuccess() {
         super.onSuccess()
         onSuccess()
@@ -111,7 +110,7 @@ object VcsUpdateProcess {
     actionInfo: ActionInfo,
     @Nls actionName: String,
   ) {
-    Updater(project, roots, updateSpec, actionInfo, actionName).run(EmptyProgressIndicator())
+    VcsUpdateTask(project, roots, updateSpec, actionInfo, actionName).run(EmptyProgressIndicator())
   }
 
   @ApiStatus.Internal
