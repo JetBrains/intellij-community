@@ -2,6 +2,9 @@
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.AsyncFileListener
@@ -33,6 +36,7 @@ import kotlinx.coroutines.job
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReferenceArray
 import kotlin.io.path.createTempFile
@@ -102,6 +106,27 @@ class VfsRefreshTest {
     delay(1000)
     refreshJob.cancelAndJoin()
   }
+
+  @Test
+  @RegistryKey("vfs.refresh.use.background.write.action", "true")
+  fun `suspending vfs refresh uses modality of its context`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
+      val currentModality = coroutineContext.contextModality()
+      assertThat(currentModality).isNotEqualTo(ModalityState.nonModal())
+      val refreshStarted = AtomicBoolean(false)
+      VirtualFileManager.getInstance().addAsyncFileListener(AsyncFileListener {
+        assertThat(ModalityState.defaultModalityState()).isEqualTo(currentModality)
+        refreshStarted.set(true)
+        null
+      }, disposable)
+
+      runRefreshOnADirtyFile {
+        RefreshQueue.getInstance().refresh(true, listOf(it))
+      }
+      assertThat(refreshStarted.get()).isTrue()
+    }
+  }
+
 
   fun refreshTestStub(createListeners: (Disposable, AtomicInteger) -> Unit, refreshFunction: suspend (VirtualFile) -> Unit, check: (AtomicInteger) -> Unit): Unit = timeoutRunBlocking {
     val disposable = Disposer.newDisposable()
