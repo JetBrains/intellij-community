@@ -18,7 +18,7 @@ import com.jetbrains.python.packaging.PyPIPackageUtil.INSTANCE
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.hasInstalledPackageSnapshot
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
-import com.jetbrains.python.packaging.management.ui.installPackageBackground
+import com.jetbrains.python.packaging.management.ui.installPyRequirementsBackground
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
@@ -70,14 +70,18 @@ object PyPackageInstallUtils {
     return packageManager.hasInstalledPackageSnapshot(packageName)
   }
 
-
-  suspend fun confirmAndInstall(project: Project, sdk: Sdk, packageName: String, versionSpec: PyRequirementVersionSpec? = null) {
+  suspend fun confirmAndInstall(project: Project, sdk: Sdk, requirement: PyRequirement) {
     val isConfirmed = withContext(Dispatchers.EDT) {
-      confirmInstall(project, packageName)
+      confirmInstall(project, requirement.name)
     }
     if (!isConfirmed)
       return
-    PythonPackageManagerUI.forSdk(project, sdk).installPackageBackground(packageName, versionSpec = versionSpec)
+    PythonPackageManagerUI.forSdk(project, sdk).installPyRequirementsBackground(listOf(requirement))
+  }
+
+
+  suspend fun confirmAndInstall(project: Project, sdk: Sdk, packageName: String, versionSpec: PyRequirementVersionSpec? = null) {
+    confirmAndInstall(project, sdk, pyRequirement(packageName, versionSpec))
   }
 
   fun confirmInstall(project: Project, packageName: String): Boolean {

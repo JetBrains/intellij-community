@@ -13,6 +13,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
+import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import java.nio.file.Path
@@ -31,7 +32,7 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
   }
 
   override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
-    val specsWithoutVersion = specifications.map { it.copy(versionSpec = null) }
+    val specsWithoutVersion = specifications.map { it.copy(requirement = pyRequirement(it.name, null)) }
     val request = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specsWithoutVersion)
     val result = installPackageCommand(request, emptyList())
 

@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.common
 
+import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.management.findPackageSpecification
 import com.jetbrains.python.packaging.normalizePackageName
+import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
@@ -110,20 +112,21 @@ data class PythonSimplePackageDetails(
  */
 data class PythonRepositoryPackageSpecification(
   val repository: PyPackageRepository,
-  val name: String,
-  val versionSpec: PyRequirementVersionSpec? = null,
+  val requirement: PyRequirement,
 ) {
+  val name: String = requirement.name
+  val versionSpec: PyRequirementVersionSpec? = requirement.versionSpecs.firstOrNull()
+
   val nameWithVersionSpec: String
     get() = "$name${versionSpec?.presentableText ?: ""}"
 
   constructor(
     repository: PyPackageRepository,
     packageName: String,
-    version: String,
+    version: String? = null,
   ) : this(
     repository = repository,
-    name = packageName,
-    versionSpec = pyRequirementVersionSpec(version)
+    requirement = pyRequirement(packageName, version?.let { pyRequirementVersionSpec(it) }),
   )
 }
 

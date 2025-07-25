@@ -18,6 +18,7 @@ import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
+import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
@@ -111,7 +112,7 @@ open class PyPackageRepository() {
   @ApiStatus.Internal
   fun findPackageSpecificationWithSpec(packageName: String, versionSpecs: PyRequirementVersionSpec? = null): PythonRepositoryPackageSpecification? =
     if (hasPackage(packageName, versionSpecs))
-      PythonRepositoryPackageSpecification(this, packageName, versionSpecs)
+      PythonRepositoryPackageSpecification(this, pyRequirement(packageName, versionSpecs))
     else
       null
 

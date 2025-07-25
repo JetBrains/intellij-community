@@ -20,8 +20,7 @@ internal class InstallRequirementQuickFix(val requirement: PyRequirement) : Loca
     val pythonSdk = getPythonSdk(descriptor.psiElement.containingFile) ?: return
 
     PyPackageCoroutine.launch(project) {
-      PyPackageInstallUtils.confirmAndInstall(project, pythonSdk, requirement.name,
-                                              requirement.versionSpecs.firstOrNull())
+      PyPackageInstallUtils.confirmAndInstall(project, pythonSdk, requirement)
     }
   }
 

@@ -6,6 +6,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageVersion
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
@@ -21,8 +22,8 @@ internal class TestPythonRepositoryManager(
   private var packageDetails: PythonPackageDetails? = null
 
   override suspend fun findPackageSpecification(name: String, version: String?, relation: PyRequirementRelation, repository: PyPackageRepository?): PythonRepositoryPackageSpecification {
-    return PythonRepositoryPackageSpecification(repository
-                                                ?: PyPIPackageRepository, name, version?.let { pyRequirementVersionSpec(relation, it) })
+    val requirement = pyRequirement(name, version?.let { pyRequirementVersionSpec(relation, it) })
+    return PythonRepositoryPackageSpecification(repository ?: PyPIPackageRepository, requirement)
   }
 
   fun withPackageNames(packageNames: List<String>): TestPythonRepositoryManager {

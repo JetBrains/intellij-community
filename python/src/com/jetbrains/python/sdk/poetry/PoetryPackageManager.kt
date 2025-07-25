@@ -13,6 +13,7 @@ import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
+import com.jetbrains.python.packaging.pyRequirement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -42,7 +43,7 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
   }
 
   override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
-    return addPackages(specifications.map { it.copy(versionSpec = null) }, emptyList())
+    return addPackages(specifications.map { it.copy(requirement = pyRequirement(it.name, null)) }, emptyList())
   }
 
   override suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit> {

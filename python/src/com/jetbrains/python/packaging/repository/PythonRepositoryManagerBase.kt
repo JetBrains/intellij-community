@@ -49,10 +49,10 @@ abstract class PythonRepositoryManagerBase() : PythonRepositoryManager, Disposab
     relation: PyRequirementRelation,
     repository: PyPackageRepository?,
   ): PythonRepositoryPackageSpecification? {
-    waitForInit()
     if (repository != null) {
       return repository.findPackageSpecification(name, version, relation)
     }
+    waitForInit()
     return repositories.firstNotNullOfOrNull { it.findPackageSpecification(name, version, relation) }
   }
 
