@@ -140,8 +140,7 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
     final List<PyRequirement> requirements = PipEnvParser.getPipFileLockRequirements(pipFileLock);
     final List<String> names = ContainerUtil.map(requirements, PyRequirement::getName);
     assertNotEmpty(names);
-    assertContainsElements(names, "atomicwrites", "attrs", "more-itertools", "pluggy", "py", "pytest", "six");
-    assertDoesntContain(names, "pathlib2");
+    assertContainsElements(names, "atomicwrites", "attrs", "more-itertools", "pathlib2", "pluggy", "py", "pytest", "six");
   }
 
   // PY-41106
