@@ -8,6 +8,14 @@ import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.createEnvVariablesMap
 import org.jetbrains.plugins.terminal.util.ShellNameUtil
 
+/**
+ * Windows 10 only.
+ *
+ * Allows configuring the [ShellStartupOptions] to show the message on PowerShell startup
+ * with a proposal to update the PSReadLine version to 2.0.3+.
+ * To fix the problem with text background rendering:
+ * https://learn.microsoft.com/windows/terminal/troubleshooting#black-lines-in-powershell-51-6x-70
+ */
 internal object TerminalPSReadLineUpdateUtil {
   private const val ASK_UPDATE_ENV = "__JETBRAINS_INTELLIJ_ASK_PSREADLINE_UPDATE"
 
