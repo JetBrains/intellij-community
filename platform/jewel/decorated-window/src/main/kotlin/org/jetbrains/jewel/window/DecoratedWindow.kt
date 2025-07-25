@@ -43,6 +43,7 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.window.styling.DecoratedWindowStyle
 import org.jetbrains.jewel.window.utils.DesktopPlatform
 
+@Suppress("ModifierMissing")
 @Composable
 public fun DecoratedWindow(
     onCloseRequest: () -> Unit,

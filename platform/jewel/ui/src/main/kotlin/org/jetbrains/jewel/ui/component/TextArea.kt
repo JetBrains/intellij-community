@@ -19,6 +19,7 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,6 +84,7 @@ import org.jetbrains.jewel.ui.theme.textAreaStyle
  * @param scrollbarStyle The visual styling configuration for the scrollbar
  * @see com.intellij.ui.components.JBTextArea
  */
+@Suppress("ComposableParamOrder") // To fix in JEWEL-931
 @Composable
 public fun TextArea(
     state: TextFieldState,
@@ -108,7 +110,6 @@ public fun TextArea(
     val minSize = style.metrics.minSize
     InputField(
         state = state,
-        modifier = modifier,
         enabled = enabled,
         readOnly = readOnly,
         inputTransformation = inputTransformation,
@@ -130,14 +131,15 @@ public fun TextArea(
                     state,
                     placeholder,
                     textStyle,
-                    decorationBoxModifier,
                     minSize,
                     scrollbarStyle,
                     scrollState,
+                    decorationBoxModifier,
                 )
             },
         undecorated = undecorated,
         scrollState = scrollState,
+        modifier = modifier,
     )
 }
 
@@ -164,7 +166,7 @@ private fun NoTextAreaDecorator(
             }
         }
 
-        TextAreaContentWrapper(style, scrollbarStyle, scrollState, innerTextField, contentPadding, innerEndPadding)
+        TextAreaContentWrapper(style, scrollbarStyle, scrollState, contentPadding, innerEndPadding, innerTextField)
     }
 }
 
@@ -174,22 +176,22 @@ private fun TextAreaDecorator(
     state: TextFieldState,
     placeholder: @Composable (() -> Unit)?,
     textStyle: TextStyle,
-    decorationBoxModifier: Modifier,
     minSize: DpSize,
     scrollbarStyle: ScrollbarStyle?,
     scrollState: ScrollState,
+    modifier: Modifier = Modifier,
 ) = TextFieldDecorator { innerTextField ->
     val (contentPadding, innerEndPadding) =
         calculatePaddings(scrollbarStyle, style, scrollState, LocalLayoutDirection.current)
 
     TextAreaDecorationBox(
         innerTextField = {
-            TextAreaContentWrapper(style, scrollbarStyle, scrollState, innerTextField, contentPadding, innerEndPadding)
+            TextAreaContentWrapper(style, scrollbarStyle, scrollState, contentPadding, innerEndPadding, innerTextField)
         },
         textStyle = textStyle,
-        modifier = decorationBoxModifier.defaultMinSize(minWidth = minSize.width, minHeight = minSize.height),
         placeholder = if (state.text.isEmpty()) placeholder else null,
         placeholderTextColor = style.colors.placeholder,
+        modifier = modifier.defaultMinSize(minWidth = minSize.width, minHeight = minSize.height),
         placeholderModifier = Modifier.padding(contentPadding).padding(style.metrics.borderWidth),
     )
 }
@@ -199,19 +201,20 @@ private fun TextAreaContentWrapper(
     style: TextAreaStyle,
     scrollbarStyle: ScrollbarStyle?,
     scrollState: ScrollState,
-    content: @Composable () -> Unit,
     contentPadding: PaddingValues,
     innerEndPadding: Dp,
+    content: @Composable () -> Unit,
 ) {
+    val wrappedContent = remember { movableContentOf { content() } }
     if (scrollbarStyle != null) {
         TextAreaScrollableContainer(
             scrollState,
             style = scrollbarStyle,
             contentModifier = Modifier.padding(style.metrics.borderWidth).padding(end = innerEndPadding),
-            content = { Box(Modifier.padding(contentPadding)) { content() } },
+            content = { Box(Modifier.padding(contentPadding)) { wrappedContent() } },
         )
     } else {
-        Box(Modifier.padding(contentPadding)) { content() }
+        Box(Modifier.padding(contentPadding)) { wrappedContent() }
     }
 }
 
@@ -278,6 +281,7 @@ private fun calculatePaddings(
  * @param decorationBoxModifier Modifier to be applied to the decoration box
  * @see com.intellij.ui.components.JBTextArea
  */
+@Suppress("ComposableParamOrder") // To fix in JEWEL-931
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
@@ -307,7 +311,6 @@ public fun TextArea(
     InputField(
         value = value,
         onValueChange = onValueChange,
-        modifier = modifier.defaultMinSize(minWidth = minSize.width, minHeight = minSize.height),
         enabled = enabled,
         readOnly = readOnly,
         outline = outline,
@@ -318,29 +321,31 @@ public fun TextArea(
         singleLine = false,
         maxLines = maxLines,
         onTextLayout = onTextLayout,
+        interactionSource = interactionSource,
         style = style,
         textStyle = textStyle,
-        interactionSource = interactionSource,
-    ) { innerTextField, _ ->
-        TextAreaDecorationBox(
-            innerTextField = innerTextField,
-            textStyle = textStyle,
-            modifier = decorationBoxModifier,
-            placeholder = if (value.text.isEmpty()) placeholder else null,
-            placeholderTextColor = style.colors.placeholder,
-            placeholderModifier = Modifier.padding(contentPadding).padding(style.metrics.borderWidth),
-        )
-    }
+        { innerTextField, _ ->
+            TextAreaDecorationBox(
+                innerTextField = innerTextField,
+                textStyle = textStyle,
+                placeholder = if (value.text.isEmpty()) placeholder else null,
+                placeholderTextColor = style.colors.placeholder,
+                modifier = decorationBoxModifier,
+                placeholderModifier = Modifier.padding(contentPadding).padding(style.metrics.borderWidth),
+            )
+        },
+        modifier = modifier.defaultMinSize(minWidth = minSize.width, minHeight = minSize.height),
+    )
 }
 
 @Composable
 private fun TextAreaDecorationBox(
     innerTextField: @Composable () -> Unit,
     textStyle: TextStyle,
-    modifier: Modifier,
     placeholder: @Composable (() -> Unit)?,
     placeholderTextColor: Color,
-    placeholderModifier: Modifier,
+    modifier: Modifier = Modifier,
+    placeholderModifier: Modifier = Modifier,
 ) {
     Layout(
         content = {
