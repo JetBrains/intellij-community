@@ -15,7 +15,6 @@ jvm_library(
     ":sh_resources",
     "//plugins/sh/core",
     "//plugins/sh/backend",
-    "//plugins/sh/frontend",
     "//plugins/sh/terminal",
     "//plugins/sh/copyright",
     "//plugins/sh/markdown",

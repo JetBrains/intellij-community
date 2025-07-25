@@ -7,7 +7,6 @@
   <content>
     <module name="intellij.sh.core" loading="embedded"/>
     <module name="intellij.sh.backend"/>
-    <module name="intellij.sh.frontend"/>
     <module name="intellij.sh.frontend.split"/>
     <module name="intellij.sh.terminal"/>
     <module name="intellij.sh.copyright"/>

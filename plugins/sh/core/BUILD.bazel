@@ -52,7 +52,6 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//plugins/sh/core",
     "//plugins/sh/backend",
-    "//plugins/sh/frontend",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//platform/testFramework",
