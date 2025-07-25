@@ -57,7 +57,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DISPATCH_ADDR_SYS_PROP;
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DISPATCH_PORT_SYS_PROP;
 import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.*;
-import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
 
 public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecutionSettings> {
 
@@ -107,13 +106,12 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     CancellationToken cancellationToken = cancellationTokenSource.token();
     myCancellationMap.put(id, cancellationTokenSource);
     try {
-      if (settings.getDistributionType() == DistributionType.WRAPPED) {
-        String rootProjectPath = determineRootProject(projectPath);
-        GradleWrapperHelper.ensureInstalledWrapper(id, rootProjectPath, settings, listener, cancellationToken);
-      }
       GradleExecutionContextImpl context = new GradleExecutionContextImpl(
         projectPath, id, settings, listener, cancellationToken
       );
+      if (settings.getDistributionType() == DistributionType.WRAPPED) {
+        GradleWrapperHelper.ensureInstalledWrapper(context);
+      }
       GradleExecutionHelper.execute(context, connection -> {
         prepareSettingsForExecution(settings, context);
         executeTasks(connection, context);

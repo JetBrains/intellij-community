@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import org.gradle.tooling.CancellationToken
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -18,26 +19,43 @@ import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.io.File
 import java.util.function.Supplier
 
+@ApiStatus.Internal
 object GradleWrapperHelper {
 
   private val TELEMETRY = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
 
   @JvmStatic
-  fun ensureInstalledWrapper(id: ExternalSystemTaskId,
-                             projectPath: String,
-                             settings: GradleExecutionSettings,
-                             listener: ExternalSystemTaskNotificationListener,
-                             cancellationToken: CancellationToken) {
+  @Deprecated("Use [ensureInstalledWrapper] function with [GradleExecutionContext]")
+  fun ensureInstalledWrapper(
+    id: ExternalSystemTaskId,
+    projectPath: String,
+    settings: GradleExecutionSettings,
+    listener: ExternalSystemTaskNotificationListener,
+    cancellationToken: CancellationToken,
+  ) {
     ensureInstalledWrapper(id, projectPath, settings, null, listener, cancellationToken)
   }
 
   @JvmStatic
-  fun ensureInstalledWrapper(id: ExternalSystemTaskId,
-                             projectPath: String,
-                             settings: GradleExecutionSettings,
-                             gradleVersion: GradleVersion?,
-                             listener: ExternalSystemTaskNotificationListener,
-                             cancellationToken: CancellationToken) {
+  @Deprecated("Use [ensureInstalledWrapper] function with [GradleExecutionContext]")
+  fun ensureInstalledWrapper(
+    id: ExternalSystemTaskId,
+    projectPath: String,
+    settings: GradleExecutionSettings,
+    gradleVersion: GradleVersion?,
+    listener: ExternalSystemTaskNotificationListener,
+    cancellationToken: CancellationToken,
+  ) {
+    ensureInstalledWrapper(GradleExecutionContextImpl(projectPath, id, settings, listener, cancellationToken), gradleVersion)
+  }
+
+  @JvmStatic
+  @JvmOverloads
+  fun ensureInstalledWrapper(context: GradleExecutionContext, gradleVersion: GradleVersion? = null) {
+
+    val settings = context.settings
+    val projectPath = GradleUtil.determineRootProject(context.projectPath)
+
     if (!settings.distributionType.isWrapped) {
       return
     }
@@ -46,13 +64,14 @@ object GradleWrapperHelper {
       return
     }
 
-    val wrapperSettings = GradleExecutionSettings(settings).also {
-      it.tasks = listOf("wrapper")
-      it.remoteProcessIdleTtlInMs = 100
-      it.putUserData(GradleExecutionHelper.AUTO_JAVA_HOME, true)
-    }
-
-    val wrapperContext = GradleExecutionContextImpl(projectPath, id, wrapperSettings, listener, cancellationToken)
+    val wrapperContext = GradleExecutionContextImpl(
+      context, projectPath,
+      GradleExecutionSettings(settings).also {
+        it.tasks = listOf("wrapper")
+        it.remoteProcessIdleTtlInMs = 100
+        it.putUserData(GradleExecutionHelper.AUTO_JAVA_HOME, true)
+      }
+    )
 
     GradleExecutionHelper.execute(wrapperContext) { connection ->
       TELEMETRY.spanBuilder("EnsureInstalledWrapper").use {

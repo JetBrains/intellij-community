@@ -156,11 +156,8 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
   private @Nullable DataNode<ProjectData> resolveProjectInfo(
     @NotNull DefaultProjectResolverContext resolverContext
   ) {
-    var projectPath = resolverContext.getProjectPath();
     var id = resolverContext.getExternalSystemTaskId();
     var settings = resolverContext.getSettings();
-    var listener = resolverContext.getListener();
-    var cancellationToken = resolverContext.getCancellationToken();
 
     ExternalSystemSyncActionsCollector.logSyncStarted(id.findProject(), id.getId(), settings.isParallelModelFetch());
 
@@ -169,7 +166,7 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
       .startSpan();
     try (Scope ignore = gradleExecutionSpan.makeCurrent()) {
 
-      GradleWrapperHelper.ensureInstalledWrapper(id, projectPath, settings, listener, cancellationToken);
+      GradleWrapperHelper.ensureInstalledWrapper(resolverContext);
 
       var projectResolverChain = createProjectResolverChain(resolverContext);
 

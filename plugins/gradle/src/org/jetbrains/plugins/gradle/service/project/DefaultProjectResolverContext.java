@@ -75,7 +75,7 @@ public class DefaultProjectResolverContext extends GradleExecutionContextImpl im
     @NotNull GradleExecutionSettings settings,
     boolean isBuildSrcProject
   ) {
-    super(projectPath, settings, resolverContext);
+    super(resolverContext, projectPath, settings);
     myPolicy = resolverContext.myPolicy;
     myProjectResolverIndicator = resolverContext.myProjectResolverIndicator;
     myBuildSrcProject = isBuildSrcProject;
