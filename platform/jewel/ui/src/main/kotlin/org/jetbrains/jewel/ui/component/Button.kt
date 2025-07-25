@@ -1,3 +1,5 @@
+@file:Suppress("KDocUnresolvedReference")
+
 package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.background
@@ -5,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.HoverInteraction
+import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
@@ -187,6 +190,7 @@ public fun OutlinedButton(
  * @param menuContent The content builder for defining menu items in the dropdown
  * @see com.intellij.ui.components.JBOptionButton
  */
+@Suppress("ComposableParamOrder", "ContentTrailingLambda") // To fix in JEWEL-925
 @Composable
 public fun OutlinedSplitButton(
     onClick: () -> Unit,
@@ -203,15 +207,15 @@ public fun OutlinedSplitButton(
     SplitButtonImpl(
         onClick = onClick,
         secondaryOnClick = secondaryOnClick,
-        modifier = modifier,
         enabled = enabled,
         interactionSource = interactionSource,
         style = style,
         textStyle = textStyle,
         menuStyle = menuStyle,
         isDefault = false,
-        content = content,
+        modifier = modifier,
         secondaryContentMenu = menuContent,
+        content = content,
     )
 }
 
@@ -242,6 +246,7 @@ public fun OutlinedSplitButton(
  * @param popupContainer A generic container for the popup content
  * @see com.intellij.ui.components.JBOptionButton
  */
+@Suppress("ComposableParamOrder", "ContentTrailingLambda") // To fix in JEWEL-925
 @Composable
 public fun OutlinedSplitButton(
     onClick: () -> Unit,
@@ -258,15 +263,15 @@ public fun OutlinedSplitButton(
     SplitButtonImpl(
         onClick = onClick,
         secondaryOnClick = secondaryOnClick,
-        modifier = modifier,
         enabled = enabled,
         interactionSource = interactionSource,
         style = style,
         textStyle = textStyle,
         menuStyle = menuStyle,
         isDefault = false,
-        content = content,
+        modifier = modifier,
         secondaryContent = popupContainer,
+        content = content,
     )
 }
 
@@ -297,6 +302,7 @@ public fun OutlinedSplitButton(
  * @param menuContent The content builder for defining menu items in the dropdown
  * @see com.intellij.ui.components.JBOptionButton
  */
+@Suppress("ComposableParamOrder", "ContentTrailingLambda") // To fix in JEWEL-925
 @Composable
 public fun DefaultSplitButton(
     onClick: () -> Unit,
@@ -313,15 +319,15 @@ public fun DefaultSplitButton(
     SplitButtonImpl(
         onClick = onClick,
         secondaryOnClick = secondaryOnClick,
-        modifier = modifier,
         enabled = enabled,
         interactionSource = interactionSource,
         style = style,
         textStyle = textStyle,
         menuStyle = menuStyle,
         isDefault = true,
-        content = content,
+        modifier = modifier,
         secondaryContentMenu = menuContent,
+        content = content,
     )
 }
 
@@ -352,6 +358,7 @@ public fun DefaultSplitButton(
  * @param popupContainer A generic container for the popup content
  * @see com.intellij.ui.components.JBOptionButton
  */
+@Suppress("ComposableParamOrder", "ContentTrailingLambda") // To fix in JEWEL-925
 @Composable
 public fun DefaultSplitButton(
     onClick: () -> Unit,
@@ -368,15 +375,15 @@ public fun DefaultSplitButton(
     SplitButtonImpl(
         onClick = onClick,
         secondaryOnClick = secondaryOnClick,
-        modifier = modifier,
         enabled = enabled,
         interactionSource = interactionSource,
         style = style,
         textStyle = textStyle,
         menuStyle = menuStyle,
         isDefault = true,
-        content = content,
+        modifier = modifier,
         secondaryContent = popupContainer,
+        content = content,
     )
 }
 
@@ -384,16 +391,16 @@ public fun DefaultSplitButton(
 private fun SplitButtonImpl(
     onClick: () -> Unit,
     secondaryOnClick: () -> Unit,
-    modifier: Modifier,
     enabled: Boolean,
     interactionSource: MutableInteractionSource,
     style: SplitButtonStyle,
     textStyle: TextStyle,
     menuStyle: MenuStyle,
     isDefault: Boolean,
-    content: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
     secondaryContent: @Composable (() -> Unit)? = null,
     secondaryContentMenu: (MenuScope.() -> Unit)? = null,
+    content: @Composable () -> Unit,
 ) {
     val density = LocalDensity.current
     var popupVisible by remember { mutableStateOf(false) }
@@ -439,7 +446,7 @@ private fun SplitButtonImpl(
                     style = style,
                     enabled = enabled,
                     isDefault = isDefault,
-                    onChevronClicked = {
+                    onChevronClick = {
                         secondaryOnClick()
                         popupVisible = !popupVisible
                         if (!buttonState.isFocused) focusRequester.requestFocus()
@@ -478,7 +485,7 @@ private fun SplitButtonChevron(
     style: SplitButtonStyle,
     enabled: Boolean,
     isDefault: Boolean,
-    onChevronClicked: () -> Unit,
+    onChevronClick: () -> Unit,
 ) {
     Box(
         Modifier.size(style.button.metrics.minSize.height)
@@ -486,7 +493,7 @@ private fun SplitButtonChevron(
             .focusProperties { canFocus = false }
             .clickable(
                 enabled = enabled,
-                onClick = onChevronClicked,
+                onClick = onChevronClick,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
             )
@@ -515,15 +522,15 @@ private fun SplitButtonChevron(
 @Composable
 private fun ButtonImpl(
     onClick: () -> Unit,
-    modifier: Modifier,
     enabled: Boolean,
     forceFocused: Boolean,
     onStateChange: (ButtonState) -> Unit,
     interactionSource: MutableInteractionSource,
     style: ButtonStyle,
     textStyle: TextStyle,
-    content: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
     secondaryContent: @Composable (() -> Unit)? = null,
+    content: @Composable () -> Unit,
 ) {
     var buttonState by
         remember(interactionSource) { mutableStateOf(ButtonState.of(enabled = enabled, focused = forceFocused)) }
@@ -536,7 +543,7 @@ private fun ButtonImpl(
     var actuallyFocused by remember { mutableStateOf(false) }
     remember(forceFocused) { buttonState = buttonState.copy(focused = if (forceFocused) true else actuallyFocused) }
 
-    LaunchedEffect(interactionSource) {
+    LaunchedEffect(interactionSource, onStateChange) {
         interactionSource.interactions.collect { interaction ->
             buttonState =
                 when (interaction) {

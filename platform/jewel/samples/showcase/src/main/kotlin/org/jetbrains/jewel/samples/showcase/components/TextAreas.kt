@@ -34,8 +34,8 @@ private const val LOREM_IPSUM =
         "Sed nec sapien nec dui rhoncus bibendum. Sed blandit bibendum libero."
 
 @Composable
-public fun TextAreas() {
-    VerticallyScrollableContainer(Modifier.fillMaxSize()) {
+public fun TextAreas(modifier: Modifier = Modifier) {
+    VerticallyScrollableContainer(modifier.fillMaxSize()) {
         Column(Modifier.padding(vertical = 4.dp)) {
             Row(
                 Modifier.padding(horizontal = 16.dp).height(200.dp),

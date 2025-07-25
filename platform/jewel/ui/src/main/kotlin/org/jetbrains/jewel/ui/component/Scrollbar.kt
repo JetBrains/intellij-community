@@ -102,13 +102,13 @@ public fun VerticalScrollbar(
 ) {
     BaseScrollbar(
         scrollState = scrollState,
-        modifier = modifier,
         reverseLayout = reverseLayout,
         enabled = enabled,
         interactionSource = interactionSource,
         isVertical = true,
         style = style,
         keepVisible = keepVisible,
+        modifier = modifier,
     )
 }
 
@@ -135,26 +135,26 @@ public fun HorizontalScrollbar(
 ) {
     BaseScrollbar(
         scrollState = scrollState,
-        modifier = modifier,
         reverseLayout = reverseLayout,
         enabled = enabled,
         interactionSource = interactionSource,
         isVertical = false,
         style = style,
         keepVisible = keepVisible,
+        modifier = modifier,
     )
 }
 
 @Composable
 private fun BaseScrollbar(
     scrollState: ScrollableState,
-    modifier: Modifier,
     reverseLayout: Boolean,
     enabled: Boolean,
     interactionSource: MutableInteractionSource,
     isVertical: Boolean,
     style: ScrollbarStyle,
     keepVisible: Boolean,
+    modifier: Modifier = Modifier,
 ) {
     val dragInteraction = remember { mutableStateOf<DragInteraction.Start?>(null) }
     DisposableEffect(interactionSource) {
@@ -354,6 +354,7 @@ private fun getThumbBorderColor(
 
 private fun areTheSameColor(first: Color, second: Color) = first.toArgb() == second.toArgb()
 
+@Suppress("MutableStateParam") // To fix in JEWEL-923
 @Composable
 private fun Thumb(
     showScrollbar: Boolean,
@@ -476,6 +477,7 @@ private fun horizontalMeasurePolicy(
     layout(constraints.maxWidth, placeable.height) { placeable.place(pixelRange.first, 0) }
 }
 
+@Suppress("ModifierComposed") // To fix in JEWEL-921
 private fun Modifier.scrollbarDrag(
     interactionSource: MutableInteractionSource,
     draggedInteraction: MutableState<DragInteraction.Start?>,
@@ -509,6 +511,7 @@ private fun Modifier.scrollbarDrag(
     }
 }
 
+@Suppress("ModifierComposed") // To fix in JEWEL-921
 private fun Modifier.scrollOnPressTrack(
     clickBehavior: TrackClickBehavior,
     isVertical: Boolean,

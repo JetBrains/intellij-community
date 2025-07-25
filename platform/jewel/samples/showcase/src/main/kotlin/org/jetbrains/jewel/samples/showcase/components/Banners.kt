@@ -44,8 +44,8 @@ private const val LONG_IPSUM =
         "qui officia deserunt mollit anim id est laborum."
 
 @Composable
-public fun Banners() {
-    Column {
+public fun Banners(modifier: Modifier = Modifier) {
+    Column(modifier) {
         var clickLabel by remember { mutableStateOf("") }
         Text(text = "Clicked action: $clickLabel")
         Spacer(Modifier.height(8.dp))

@@ -1,11 +1,11 @@
 package org.jetbrains.jewel.ui.component.banner
 
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
@@ -35,12 +35,8 @@ public interface BannerLinkActionScope {
 }
 
 @Composable
-internal fun RowScope.BannerActionsRow(
-    spaceBetweenItems: Dp,
-    maxVisibleItems: Int = BANNER_MAX_LINK_ACTIONS,
-    block: (BannerLinkActionScope.() -> Unit)?,
-) {
-    val visibleItems = remember { mutableStateOf(maxVisibleItems) }
+internal fun BannerActionsRow(spaceBetweenItems: Dp, block: (BannerLinkActionScope.() -> Unit)?) {
+    var visibleItems by remember { mutableIntStateOf(BANNER_MAX_LINK_ACTIONS) }
     val allActions by remember { derivedStateOf { block?.toList().orEmpty() } }
 
     val messageProvider = LocalMessageResourceResolverProvider.current
@@ -48,17 +44,18 @@ internal fun RowScope.BannerActionsRow(
     Layout(
         content = {
             // Only taking the first few items to display directly
-            for ((index, action) in allActions.take(maxVisibleItems + 1).withIndex()) {
+            for (action in allActions.take(BANNER_MAX_LINK_ACTIONS + 1)) {
                 Link(action.text, action.onClick)
             }
 
             DropdownLink(messageProvider.resolveIdeBundleMessage("action.text.more")) {
-                items(allActions.drop(visibleItems.value), isSelected = { false }, onItemClick = { it.onClick() }) {
+                items(allActions.drop(visibleItems), isSelected = { false }, onItemClick = { it.onClick() }) {
                     Text(text = it.text)
                 }
             }
         },
-        measurePolicy = BannerActionLayoutMeasurePolicy(spaceBetweenItems, maxVisibleItems) { visibleItems.value = it },
+        measurePolicy =
+            BannerActionLayoutMeasurePolicy(spaceBetweenItems, BANNER_MAX_LINK_ACTIONS) { visibleItems = it },
         modifier = Modifier.semantics { isTraversalGroup = true },
     )
 }

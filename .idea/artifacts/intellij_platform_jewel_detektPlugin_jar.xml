@@ -1,0 +1,14 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="intellij.platform.jewel.detektPlugin:jar">
+    <output-path>$PROJECT_DIR$/platform/jewel/detekt-libs</output-path>
+    <root id="archive" name="intellij.platform.jewel.detektPlugin.jar">
+      <element id="module-output" name="intellij.platform.jewel.detektPlugin" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-api/1.23.8/detekt-api-1.23.8.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-psi-utils/1.23.8/detekt-psi-utils-1.23.8.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-utils/1.23.8/detekt-utils-1.23.8.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-annotations-jvm/0.17.1/poko-annotations-jvm-0.17.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/annotations/26.0.2/annotations-26.0.2.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

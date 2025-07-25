@@ -38,6 +38,7 @@ import org.jetbrains.jewel.ui.icon.newUiChecker
 import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 
+@Suppress("ComposableParamOrder") // It doesn't like the vararg
 @Composable
 public fun Icon(
     key: IconKey,
@@ -55,6 +56,7 @@ public fun Icon(
     Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, tint = tint)
 }
 
+@Suppress("ComposableParamOrder") // To fix in JEWEL-929
 @Composable
 public fun Icon(
     key: IconKey,
@@ -73,6 +75,7 @@ public fun Icon(
     Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, tint = tint)
 }
 
+@Suppress("ComposableParamOrder") // To fix in JEWEL-929
 @Composable
 public fun Icon(
     key: IconKey,
@@ -90,6 +93,7 @@ public fun Icon(
     Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, colorFilter = colorFilter)
 }
 
+@Suppress("ComposableParamOrder") // To fix in JEWEL-929
 @Composable
 public fun Icon(
     key: IconKey,
