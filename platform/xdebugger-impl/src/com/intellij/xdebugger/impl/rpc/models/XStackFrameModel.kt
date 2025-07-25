@@ -6,16 +6,11 @@ import com.intellij.openapi.components.service
 import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.kernel.ids.storeValueGlobally
-import com.intellij.util.AwaitCancellationAndInvoke
-import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
-import com.intellij.xdebugger.impl.util.identityConcurrentHashMap
-import com.intellij.xdebugger.impl.util.identityWrapper
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.ConcurrentHashMap
 
 @ConsistentCopyVisibility
 @ApiStatus.Internal
@@ -23,7 +18,9 @@ data class XStackFrameModel internal constructor(
   val coroutineScope: CoroutineScope,
   val stackFrame: XStackFrame,
   val session: XDebugSessionImpl,
-)
+) {
+  val id: XStackFrameId = storeValueGlobally(coroutineScope, this, type = XStackFrameValueIdType)
+}
 
 @ApiStatus.Internal
 fun XStackFrameId.findValue(): XStackFrameModel? {
@@ -32,45 +29,16 @@ fun XStackFrameId.findValue(): XStackFrameModel? {
 
 @ApiStatus.Internal
 fun XStackFrame.getOrStoreGlobally(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XStackFrameId {
-  return with(XStackFrameDeduplicator.getInstance()) {
-    getOrStoreGlobally(coroutineScope, session)
-  }
+  return XStackFrameDeduplicator.getInstance().getOrCreateModel(coroutineScope, this) {
+    XStackFrameModel(coroutineScope, this, session)
+  }.id
 }
 
 @Service(Service.Level.APP)
-private class XStackFrameDeduplicator {
-  private val storage = ConcurrentHashMap<CoroutineScope, ScopeBoundStorage>()
-
-  fun XStackFrame.getOrStoreGlobally(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XStackFrameId {
-    return getOrCreateStorage(coroutineScope).getOrStore(this) {
-      storeValueGlobally(coroutineScope, XStackFrameModel(coroutineScope, this, session), type = XStackFrameValueIdType)
-    }
-  }
-
-  @OptIn(AwaitCancellationAndInvoke::class)
-  private fun getOrCreateStorage(coroutineScope: CoroutineScope) = storage.computeIfAbsent(coroutineScope) {
-    ScopeBoundStorage().apply {
-      coroutineScope.awaitCancellationAndInvoke {
-        // Note that it's still up to BackendGlobalIdsManager to remove global IDs once their relevant coroutine scopes are cancelled
-        storage.remove(coroutineScope)
-        clear()
-      }
-    }
-  }
-
-  private class ScopeBoundStorage() {
-    private val storage = identityConcurrentHashMap<XStackFrame, XStackFrameId>()
-
-    fun getOrStore(stack: XStackFrame, createId: () -> XStackFrameId): XStackFrameId {
-      return storage.computeIfAbsent(stack.identityWrapper()) { createId() }
-    }
-
-    fun clear() {
-      storage.clear()
-    }
-  }
+private class XStackFrameDeduplicator : ModelDeduplicator<XStackFrame, XStackFrameModel>() {
 
   companion object {
+    @JvmStatic
     fun getInstance(): XStackFrameDeduplicator = service()
   }
 }
