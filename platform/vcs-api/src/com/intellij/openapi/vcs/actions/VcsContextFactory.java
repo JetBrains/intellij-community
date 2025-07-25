@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
@@ -15,11 +14,6 @@ import java.io.File;
 import java.nio.file.Path;
 
 public interface VcsContextFactory {
-  @NotNull
-  VcsContext createCachedContextOn(@NotNull AnActionEvent event);
-
-  @NotNull
-  VcsContext createContextOn(@NotNull AnActionEvent event);
 
   /**
    * Creates a FilePath corresponding to the specified virtual file.

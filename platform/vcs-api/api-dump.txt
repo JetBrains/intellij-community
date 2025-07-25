@@ -697,8 +697,6 @@ com.intellij.openapi.vcs.actions.VcsContext
 - a:getSelectedIOFiles():java.io.File[]
 - getSelectedUnversionedFilePaths():java.util.List
 com.intellij.openapi.vcs.actions.VcsContextFactory
-- a:createCachedContextOn(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.vcs.actions.VcsContext
-- a:createContextOn(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.vcs.actions.VcsContext
 - a:createFilePath(com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z):com.intellij.openapi.vcs.FilePath
 - a:createFilePath(java.lang.String,Z):com.intellij.openapi.vcs.FilePath
 - a:createFilePath(java.nio.file.Path,Z):com.intellij.openapi.vcs.FilePath
