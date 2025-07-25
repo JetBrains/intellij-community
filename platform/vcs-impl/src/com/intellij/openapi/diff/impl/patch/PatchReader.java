@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.openapi.diff.impl.patch.PatchLine.UNKNOWN_PATCH_FILE_LINE_NUMBER;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.findAll;
 
@@ -465,12 +466,12 @@ public final class PatchReader {
       PatchLine lastAfterPatchLine = null;
       if (beforeLines.isEmpty()) {
         for (String line : afterLines) {
-          hunk.addLine(parsePatchLine(line, 2, -1));
+          hunk.addLine(parsePatchLine(line, 2, UNKNOWN_PATCH_FILE_LINE_NUMBER));
         }
       }
       else if (afterLines.isEmpty()) {
         for (String line : beforeLines) {
-          hunk.addLine(parsePatchLine(line, 2, -1));
+          hunk.addLine(parsePatchLine(line, 2, UNKNOWN_PATCH_FILE_LINE_NUMBER));
         }
       }
       else {
@@ -487,26 +488,26 @@ public final class PatchReader {
           }
           else if (startsWith(beforeLine, " ") &&
                    (startsWith(afterLine, " ") || afterLine == null /* handle some weird cases with line breaks truncated at EOF */)) {
-            addContextDiffLine(hunk, beforeLine, PatchLine.Type.CONTEXT, -1);
+            addContextDiffLine(hunk, beforeLine, PatchLine.Type.CONTEXT, UNKNOWN_PATCH_FILE_LINE_NUMBER);
             beforeLineIndex++;
             afterLineIndex++;
           }
           else if (startsWith(beforeLine, "-")) {
-            lastBeforePatchLine = addContextDiffLine(hunk, beforeLine, PatchLine.Type.REMOVE, -1);
+            lastBeforePatchLine = addContextDiffLine(hunk, beforeLine, PatchLine.Type.REMOVE, UNKNOWN_PATCH_FILE_LINE_NUMBER);
             beforeLineIndex++;
           }
           else if (startsWith(afterLine, "+")) {
-            lastAfterPatchLine = addContextDiffLine(hunk, afterLine, PatchLine.Type.ADD, -1);
+            lastAfterPatchLine = addContextDiffLine(hunk, afterLine, PatchLine.Type.ADD, UNKNOWN_PATCH_FILE_LINE_NUMBER);
             afterLineIndex++;
           }
           else if (startsWith(beforeLine, "!") && startsWith(afterLine, "!")) {
             while (beforeLineIndex < beforeLines.size() && beforeLines.get(beforeLineIndex).startsWith("! ")) {
-              lastBeforePatchLine = addContextDiffLine(hunk, beforeLines.get(beforeLineIndex), PatchLine.Type.REMOVE, -1);
+              lastBeforePatchLine = addContextDiffLine(hunk, beforeLines.get(beforeLineIndex), PatchLine.Type.REMOVE, UNKNOWN_PATCH_FILE_LINE_NUMBER);
               beforeLineIndex++;
             }
 
             while (afterLineIndex < afterLines.size() && afterLines.get(afterLineIndex).startsWith("! ")) {
-              lastAfterPatchLine = addContextDiffLine(hunk, afterLines.get(afterLineIndex), PatchLine.Type.ADD, -1);
+              lastAfterPatchLine = addContextDiffLine(hunk, afterLines.get(afterLineIndex), PatchLine.Type.ADD, UNKNOWN_PATCH_FILE_LINE_NUMBER);
               afterLineIndex++;
             }
           }

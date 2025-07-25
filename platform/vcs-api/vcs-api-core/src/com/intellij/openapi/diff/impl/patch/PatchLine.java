@@ -6,20 +6,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class PatchLine {
   public enum Type {CONTEXT, ADD, REMOVE}
+  public static final int UNKNOWN_PATCH_FILE_LINE_NUMBER = -1;
 
   private final @NotNull Type myType;
   private final @NotNull String myText;
   private boolean mySuppressNewLine;
-  private final int myOriginalLineNumber;
+  private final int myPatchFileLineNumber;
 
   public PatchLine(@NotNull Type type, @NotNull String text) {
-    this(type, text, -1);
+    this(type, text, UNKNOWN_PATCH_FILE_LINE_NUMBER);
   }
 
-  public PatchLine(@NotNull Type type, @NotNull String text, int originalLineNumber) {
+  public PatchLine(@NotNull Type type, @NotNull String text, int patchFileLineNumber) {
     myType = type;
     myText = text;
-    myOriginalLineNumber = originalLineNumber;
+    myPatchFileLineNumber = patchFileLineNumber;
   }
 
   public @NotNull Type getType() {
@@ -38,8 +39,8 @@ public class PatchLine {
     mySuppressNewLine = suppressNewLine;
   }
 
-  public int getOriginalLineNumber() {
-    return myOriginalLineNumber;
+  public int getPatchFileLineNumber() {
+    return myPatchFileLineNumber;
   }
 
   @Override
@@ -48,7 +49,7 @@ public class PatchLine {
            "myType=" + myType +
            ", myText='" + myText + '\'' +
            ", mySuppressNewLine=" + mySuppressNewLine +
-           ", myOriginalLineNumber=" + myOriginalLineNumber +
+           ", myPatchFileLineNumber=" + myPatchFileLineNumber +
            '}';
   }
 }

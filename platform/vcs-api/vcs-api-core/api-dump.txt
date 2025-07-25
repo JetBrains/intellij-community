@@ -63,9 +63,10 @@ f:com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 f:com.intellij.openapi.diff.impl.patch.PatchHunkUtilKt
 - sf:withoutContext(java.util.Collection):kotlin.sequences.Sequence
 c:com.intellij.openapi.diff.impl.patch.PatchLine
+- sf:UNKNOWN_PATCH_FILE_LINE_NUMBER:I
 - <init>(com.intellij.openapi.diff.impl.patch.PatchLine$Type,java.lang.String):V
 - <init>(com.intellij.openapi.diff.impl.patch.PatchLine$Type,java.lang.String,I):V
-- getOriginalLineNumber():I
+- getPatchFileLineNumber():I
 - getText():java.lang.String
 - getType():com.intellij.openapi.diff.impl.patch.PatchLine$Type
 - isSuppressNewLine():Z
