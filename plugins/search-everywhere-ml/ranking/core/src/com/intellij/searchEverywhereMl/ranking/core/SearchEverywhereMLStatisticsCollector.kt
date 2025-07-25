@@ -148,7 +148,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     }
   }
 
-  private val GROUP = EventLogGroup("mlse.log", 126, MLSE_RECORDER_ID)
+  internal val GROUP = EventLogGroup("mlse.log", 126, MLSE_RECORDER_ID)
 
   internal val IS_INTERNAL = EventFields.Boolean("isInternal")
   private val ORDER_BY_ML_GROUP = EventFields.Boolean("orderByMl")
@@ -203,7 +203,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
    * within the context of a Search Everywhere action.
    */
   internal val ELEMENT_CONTRIBUTOR = EventFields.String("contributor",
-                                                        SE_CONTRIBUTORS,
+                                                        SearchEverywhereContributorFeaturesProvider.SE_CONTRIBUTORS,
                                                         "Contributor name that provided the element")
 
   val COLLECTED_RESULTS_DATA_KEY: ObjectListEventField = ObjectListEventField(

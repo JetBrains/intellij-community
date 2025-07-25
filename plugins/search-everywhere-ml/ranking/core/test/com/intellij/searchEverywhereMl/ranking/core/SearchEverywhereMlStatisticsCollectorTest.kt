@@ -5,11 +5,13 @@ package com.intellij.searchEverywhereMl.ranking.core
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.searchEverywhereMl.features.SearchEverywhereStateFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.COLLECTED_RESULTS_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.CONTRIBUTOR_FEATURES_LIST
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.ELEMENT_CONTRIBUTOR
+import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.GROUP
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.ITEM_SELECTED
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.REBUILD_REASON_KEY
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_DURATION
@@ -112,7 +114,7 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
   fun `search with no results is properly reported`() {
     val provider = MockSearchEverywhereProvider { project ->
       SearchEverywhereUI(project, listOf(
-        MockSearchEverywhereContributor(ActionSearchEverywhereContributor::class.java.simpleName, true) { pattern, _, _ ->
+        MockSearchEverywhereContributor(ActionSearchEverywhereContributor::class.java.simpleName, true) { _, _, _ ->
         }
       ))
     }
@@ -185,6 +187,40 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
       val currentIndex = event.event.data["searchIndex"] as Int
       assertTrue("Search index should be incremented", currentIndex > previousIndex)
       previousIndex = currentIndex
+    }
+  }
+
+  @Test
+  fun `no duplicate field names under different object-fields`() {
+    // This test is here to ensure that no field names are duplicated across different object fields
+    // Otherwise, this will lead to processing issues on the pipeline side
+    val errors = mutableListOf<String>()
+
+    GROUP.events.forEach { event ->
+      event.getFields()
+        .getFieldsRecursively()
+        .groupingBy { it.name }
+        .eachCount()
+        .filter { it.value > 1 }
+        .map { it.key }
+        .forEach { duplicatedFieldName ->
+          errors.add("Event ${event.eventId} has duplicate field name $duplicatedFieldName")
+        }
+    }
+
+    if (errors.isNotEmpty()) {
+      fail(errors.joinToString("\n"))
+    }
+  }
+
+  private fun List<EventField<*>>.getFieldsRecursively(): List<EventField<*>> {
+    return fold(emptyList()) { acc, field ->
+      when (field) {
+        is PrimitiveEventField<*> -> acc + field
+        is ListEventField<*> -> acc + field
+        is ObjectEventField -> acc + field.fields.toList().getFieldsRecursively()
+        is ObjectListEventField -> acc + field.fields.toList().getFieldsRecursively()
+      }
     }
   }
 }
