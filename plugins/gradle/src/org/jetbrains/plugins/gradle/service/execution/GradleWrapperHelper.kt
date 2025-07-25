@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecu
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.ExceptionUtil
@@ -73,24 +74,13 @@ object GradleWrapperHelper {
       .startSpan()
     try {
       span.makeCurrent().use {
-        if (context.settings.hasTargetEnvironmentConfiguration()) {
-          // todo add the support for org.jetbrains.plugins.gradle.settings.DistributionType.WRAPPED
-          executeWrapperTask(connection, context)
+        val propertiesFile = setupWrapperTaskInInitScript(context, gradleVersion)
 
-          val wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(context.projectPath)
-          if (wrapperPropertiesFile != null) {
-            return wrapperPropertiesFile.toString()
-          }
-        }
-        else {
-          val propertiesFile = setupWrapperTaskInInitScript(gradleVersion, context.settings)
+        executeWrapperTask(connection, context)
 
-          executeWrapperTask(connection, context)
-
-          val wrapperPropertiesFile = propertiesFile.get()
-          if (wrapperPropertiesFile != null) {
-            return wrapperPropertiesFile
-          }
+        val wrapperPropertiesFile = propertiesFile.get()
+        if (wrapperPropertiesFile != null) {
+          return wrapperPropertiesFile
         }
       }
     }
@@ -138,18 +128,24 @@ object GradleWrapperHelper {
   }
 
   @Throws(IOException::class)
-  private fun setupWrapperTaskInInitScript(
-    gradleVersion: GradleVersion?,
-    settings: GradleExecutionSettings
-  ): Supplier<String?> {
+  private fun setupWrapperTaskInInitScript(context: GradleExecutionContext, gradleVersion: GradleVersion?): Supplier<String?> {
+    if (context.settings.hasTargetEnvironmentConfiguration()) {
+      // todo add the support for org.jetbrains.plugins.gradle.settings.DistributionType.WRAPPED
+      return Supplier {
+        GradleUtil.findDefaultWrapperPropertiesFile(context.projectPath)?.toCanonicalPath()
+      }
+    }
+
     val wrapperFilesLocation = FileUtil.createTempDirectory("wrap", "loc")
     val jarFile = File(wrapperFilesLocation, "gradle-wrapper.jar")
     val scriptFile = File(wrapperFilesLocation, "gradlew")
     val fileWithPathToProperties = File(wrapperFilesLocation, "path.tmp")
 
     val initScriptFile = createWrapperInitScript(gradleVersion, jarFile, scriptFile, fileWithPathToProperties)
-    settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.toString())
+    context.settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.toString())
 
-    return Supplier { FileUtil.loadFileOrNull(fileWithPathToProperties) }
+    return Supplier {
+      FileUtil.loadFileOrNull(fileWithPathToProperties)
+    }
   }
 }
