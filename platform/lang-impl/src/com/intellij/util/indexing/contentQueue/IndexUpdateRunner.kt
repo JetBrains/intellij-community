@@ -201,14 +201,7 @@ class IndexUpdateRunner(
 
                 i++
                 if (i % 10 == 0) {
-                  try {
-                    if (IJPL198137){
-                      LOG.info("IJPL198137: Before yield")
-                    }
-                    yield()
-                  } finally {
-                    LOG.info("IJPL198137: After yield")
-                  }
+                  yield()
                 }
               }
             }
@@ -447,8 +440,6 @@ class IndexUpdateRunner(
 
     /** Number indexing tasks to run in parallel */
     val INDEXING_PARALLELIZATION: Int = UnindexedFilesUpdater.getMaxNumberOfIndexingThreads()
-
-    private val IJPL198137 = getBooleanProperty("IJPL198137", false)
 
     /**
      * Soft cap of memory we are using for loading files content during indexing process.
