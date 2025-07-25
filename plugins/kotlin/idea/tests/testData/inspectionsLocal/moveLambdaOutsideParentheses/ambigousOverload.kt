@@ -1,5 +1,5 @@
 // IS_AVAILABLE: true
-// K2_ERROR: None of the following candidates is applicable:<br>fun bar(a: Int = ..., f: (Int) -> Int): Unit<br>fun bar(a: Int, b: Int, f: (Int) -> Int): Unit
+// K2_ERROR: None of the following candidates is applicable:<br><br>fun bar(a: Int = ..., f: (Int) -> Int): Unit:<br>  No value passed for parameter 'f'.<br>  Argument type mismatch: actual type is 'Function0<ERROR CLASS: Unknown return lambda parameter type>', but 'Int' was expected.<br><br>fun bar(a: Int, b: Int, f: (Int) -> Int): Unit:<br>  No value passed for parameter 'b'.<br>  No value passed for parameter 'f'.<br>  Argument type mismatch: actual type is 'Function0<ERROR CLASS: Unknown return lambda parameter type>', but 'Int' was expected.<br><br>
 // K2_ERROR: Unresolved reference 'it'.
 // ERROR: None of the following functions can be called with the arguments supplied: <br>public fun bar(a: Int = ..., f: (Int) -> Int): Unit defined in root package in file ambigousOverload.kt<br>public fun bar(a: Int, b: Int, f: (Int) -> Int): Unit defined in root package in file ambigousOverload.kt
 // ERROR: Unresolved reference: it
