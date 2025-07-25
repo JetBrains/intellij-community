@@ -70,6 +70,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.assertNull
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
@@ -1076,6 +1077,64 @@ class DynamicPluginsTest {
         assertThat(PluginManagerCore.getPluginSet()).hasEnabledPlugins("foo", "bar")
         assertNoLoadingErrors(barPluginId)
         assertNoLoadingErrors(fooPluginId)
+      }
+    }
+  }
+
+  @Test
+  fun `enabling a plugin will not load actions form a module with an unsatisfied dependency`() {
+    val fooPluginPath = pluginsDir.resolve("foo")
+    val barPluginPath = pluginsDir.resolve("bar")
+
+    plugin("bar") {}.buildDir(barPluginPath)
+    plugin("foo") {
+      content {
+        module("foo.a") {
+          dependencies {
+            plugin("bar")
+          }
+        }
+        module("foo.b") {
+          dependencies {
+            plugin("bar")
+            plugin("baz")
+          }
+          actions = """
+            <action id="foo.b.action" class="${MyAction::class.java.name}"/>
+          """
+        }
+      }
+    }.buildDir(fooPluginPath)
+
+    PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").build()
+    loadPluginInTest(fooPluginPath) {
+      loadPluginInTest(barPluginPath) {
+        assertThat(ActionManager.getInstance().getAction("foo.b.action")).isNull()
+      }
+    }
+  }
+
+  @Test
+  fun `we do not try to load an implementation-details plugin when it wants to enable an implementation-details module `() {
+    val fooPluginPath = pluginsDir.resolve("foo")
+    val barPluginPath = pluginsDir.resolve("bar")
+
+    plugin("bar") {}.buildDir(barPluginPath)
+    plugin("foo") {
+      implementationDetail = true
+      content {
+        module("foo.a") {
+          dependencies {
+            plugin("bar")
+          }
+        }
+      }
+    }.buildDir(fooPluginPath)
+
+    PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").build()
+    loadPluginInTest(fooPluginPath) {
+      loadPluginInTest(barPluginPath) {
+        assertThat(PluginManagerCore.getPluginSet().buildContentModuleIdMap().contains("foo.a")).isTrue
       }
     }
   }
