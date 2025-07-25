@@ -29,6 +29,7 @@ public class JavaPlatformModuleSystemScope extends DelegatingGlobalSearchScope {
 
   @Override
   public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
+    if (!myModule.isValid()) return getDelegate().compare(file1, file2);
     PsiJavaModule module1 = JavaPsiModuleUtil.findDescriptorByFile(file1, myModule.getProject());
     PsiJavaModule module2 = JavaPsiModuleUtil.findDescriptorByFile(file2, myModule.getProject());
     if (module1 == null || module2 == null || // not a module source root
@@ -45,5 +46,25 @@ public class JavaPlatformModuleSystemScope extends DelegatingGlobalSearchScope {
   private static boolean isModuleFile(@NotNull PsiJavaModule module, @NotNull VirtualFile file) {
     if (module instanceof LightJavaModule) return false;
     return module.getContainingFile().getVirtualFile().equals(file);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    JavaPlatformModuleSystemScope scope = (JavaPlatformModuleSystemScope)o;
+    return myModule.equals(scope.myModule);
+  }
+
+  @Override
+  public int hashCode() {
+    return myModule.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return "Java module: " + myModule.getName() + " @ " + myBaseScope;
   }
 }
