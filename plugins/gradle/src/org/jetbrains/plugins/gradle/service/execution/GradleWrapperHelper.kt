@@ -10,9 +10,7 @@ import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import org.gradle.tooling.CancellationToken
-import org.gradle.tooling.ProjectConnection
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.AUTO_JAVA_HOME
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -43,47 +41,35 @@ object GradleWrapperHelper {
     if (!settings.distributionType.isWrapped) {
       return
     }
-    if (settings.distributionType == DistributionType.DEFAULT_WRAPPED && GradleUtil.findDefaultWrapperPropertiesFile(projectPath) != null) {
+    val hasWrapperProperties = GradleUtil.findDefaultWrapperPropertiesFile(projectPath) != null
+    if (settings.distributionType == DistributionType.DEFAULT_WRAPPED && hasWrapperProperties) {
       return
     }
-    val context = GradleExecutionContextImpl(projectPath, id, GradleExecutionSettings(settings), listener, cancellationToken)
 
-    context.settings.remoteProcessIdleTtlInMs = 100
-    context.settings.putUserData(AUTO_JAVA_HOME, true)
-
-    GradleExecutionHelper.execute(context) { connection ->
-      settings.wrapperPropertyFile = ensureInstalledWrapper(connection, gradleVersion, context)
+    val wrapperSettings = GradleExecutionSettings(settings).also {
+      it.tasks = listOf("wrapper")
+      it.remoteProcessIdleTtlInMs = 100
+      it.putUserData(GradleExecutionHelper.AUTO_JAVA_HOME, true)
     }
-  }
 
-  private fun ensureInstalledWrapper(
-    connection: ProjectConnection,
-    gradleVersion: GradleVersion?,
-    context: GradleExecutionContext,
-  ): String? {
-    TELEMETRY.spanBuilder("EnsureInstalledWrapper").use {
-      val propertiesFile = setupWrapperTaskInInitScript(context, gradleVersion)
+    val wrapperContext = GradleExecutionContextImpl(projectPath, id, wrapperSettings, listener, cancellationToken)
 
-      executeWrapperTask(connection, context)
+    GradleExecutionHelper.execute(wrapperContext) { connection ->
+      TELEMETRY.spanBuilder("EnsureInstalledWrapper").use {
+        val propertiesFile = setupWrapperTaskInInitScript(wrapperContext, gradleVersion)
 
-      // if autoimport is active, it should be notified of new files creation as early as possible,
-      // to avoid triggering unnecessary re-imports (caused by creation of wrapper)
-      VfsUtil.markDirtyAndRefresh(false, true, true, File(context.projectPath, "gradle"))
+        val launcher = connection.newBuild()
+        GradleExecutionHelper.prepareForExecution(launcher, wrapperContext)
+        TELEMETRY.spanBuilder("ExecuteWrapperTask").use {
+          launcher.run()
+        }
 
-      return propertiesFile.get()
-    }
-  }
+        // if autoimport is active, it should be notified of new files creation as early as possible,
+        // to avoid triggering unnecessary re-imports (caused by creation of wrapper)
+        VfsUtil.markDirtyAndRefresh(false, true, true, File(projectPath, "gradle"))
 
-  private fun executeWrapperTask(
-    connection: ProjectConnection,
-    context: GradleExecutionContext,
-  ) {
-    context.settings.tasks = listOf("wrapper")
-
-    val launcher = connection.newBuild()
-    GradleExecutionHelper.prepareForExecution(launcher, context)
-    TELEMETRY.spanBuilder("ExecuteWrapperTask").use {
-      launcher.run()
+        settings.wrapperPropertyFile = propertiesFile.get()
+      }
     }
   }
 
