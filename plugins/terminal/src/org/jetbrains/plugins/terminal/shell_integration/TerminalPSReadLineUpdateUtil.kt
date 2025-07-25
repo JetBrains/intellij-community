@@ -49,10 +49,10 @@ internal object TerminalPSReadLineUpdateUtil {
   }
 
   // Pass the localized text of update proposal in env variables.
-  @Suppress("InvalidBundleOrProperty") // Parameter values will be specified in PowerShell code
   private fun addLocalizationEnvVars(map: MutableMap<String, String>) {
-    map[TEXT_LINE_1_ENV] = TerminalBundle.message("psreadline.update.line.1")
-    map[TEXT_LINE_2_ENV] = TerminalBundle.message("psreadline.update.line.2")
+    // The exact parameter values will be substituted in the PowerShell scripts.
+    map[TEXT_LINE_1_ENV] = TerminalBundle.message("psreadline.update.line.1", "{0}", "{1}")
+    map[TEXT_LINE_2_ENV] = TerminalBundle.message("psreadline.update.line.2", "{0}")
     map[TEXT_LINE_3_ENV] = TerminalBundle.message("psreadline.update.line.3")
     map[IDE_NAME_ENV] = ApplicationNamesInfo.getInstance().fullProductName
   }
