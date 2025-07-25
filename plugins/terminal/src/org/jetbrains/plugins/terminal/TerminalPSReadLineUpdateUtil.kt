@@ -20,10 +20,9 @@ internal object TerminalPSReadLineUpdateUtil {
 
     val os = OS.CURRENT
     val isWin10 = os == OS.Windows && os.isAtLeast(10, 0) && !os.isAtLeast(11, 0)
-    val alreadyEnabled = options.envVariables[ASK_UPDATE_ENV].equals("true", ignoreCase = true)
     val alreadyDisabled = options.envVariables[ASK_UPDATE_ENV].equals("false", ignoreCase = true)
-    // Perform configuration again if the value is already configured to add localization-related envs.
-    return if (isWin10 && !alreadyDisabled || alreadyEnabled) {
+    // Show the message only if it is Win10 and the user didn't specify skipping it in the terminal settings (via env vars).
+    return if (isWin10 && !alreadyDisabled) {
       configureAskingForUpdate(options)
     }
     else options
