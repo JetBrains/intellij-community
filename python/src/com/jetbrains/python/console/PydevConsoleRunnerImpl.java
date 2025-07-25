@@ -1103,6 +1103,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     myConsoleListeners.add(consoleListener);
   }
 
+  @Override
+  @ApiStatus.Internal
+  public void removeConsoleListener(ConsoleListener consoleListener) {
+    myConsoleListeners.remove(consoleListener);
+  }
+
   private void fireConsoleInitializedEvent(@NotNull LanguageConsoleView consoleView) {
     for (ConsoleListener listener : myConsoleListeners) {
       listener.handleConsoleInitialized(consoleView);
