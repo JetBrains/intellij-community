@@ -25,6 +25,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.block.reworked.*
 import java.util.concurrent.atomic.AtomicLong
@@ -100,6 +101,11 @@ internal class BackendTerminalHyperlinkHighlighter(
       outputModel,
       startOffset,
     )
+
+  @TestOnly
+  internal suspend fun awaitTaskCompletion() {
+    highlightTask.first { it == null }
+  }
 
   private data class HighlightTask(
     private val hyperlinkId: AtomicLong,
