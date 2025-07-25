@@ -19,7 +19,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 @Rpc
-//TODO provide custom scope (it's not serializable in FindModel)
 interface FindRemoteApi : RemoteApi<Unit> {
   /**
    * Searches for matches based on the specified find model within a given project and initial set of files.
