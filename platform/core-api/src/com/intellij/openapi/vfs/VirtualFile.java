@@ -323,6 +323,15 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public abstract VirtualFile[] getChildren();
 
   /**
+   * {@link #getChildren()} is not formally requires the sorting, but many methods rely on stable sorting provided by it
+   * But sorting is not cheap, hence this method exists for scenarios there order of children doesn't matter.
+   */
+  @ApiStatus.Internal
+  public VirtualFile @NotNull [] getChildren(boolean requireSorting){
+    return getChildren();
+  }
+
+  /**
    * Finds child of this file with the given name. The returned file is guaranteed to be valid, if the method is called in a read action.
    *
    * @param name the file name to search by

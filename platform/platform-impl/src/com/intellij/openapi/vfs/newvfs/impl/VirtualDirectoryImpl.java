@@ -471,61 +471,76 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Override
   public VirtualFile @NotNull [] getChildren() {
+    return getChildren(/*requireSorting */ true);
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public VirtualFile @NotNull [] getChildren(boolean requireSorting) {
     if (!isValid()) {
       return handleInvalidDirectory(EMPTY_ARRAY);
     }
     if (allChildrenLoaded()) {
-      return getArraySafely(true);
+      if (requireSorting && !myData.children.isSorted()) {
+        ensureChildrenSorted();
+      }
+      return getArraySafely( /*putToMemoryCache: */ true);
     }
-    return loadAllChildren();
+    return loadAllChildren(requireSorting);
   }
 
-  private VirtualFile @NotNull [] loadAllChildren() {
+  private VirtualFile @NotNull [] loadAllChildren(boolean sortChildrenOnLoading) {
     boolean isCaseSensitive = isCaseSensitive();
     synchronized (myData) {
       VfsData vfsData = getVfsData();
       PersistentFSImpl pFS = vfsData.owningPersistentFS();
 
       boolean wasChildrenLoaded = pFS.areChildrenLoaded(this);
-      List<? extends ChildInfo> children = pFS.listAll(this);
-      int[] newChildrenIds = ArrayUtil.newIntArray(children.size());
+      List<? extends ChildInfo> childrenInfo = pFS.listAll(this);
+      int[] newChildrenIds = ArrayUtil.newIntArray(childrenInfo.size());
       VirtualFile[] files;
-      if (children.isEmpty()) {
+      if (childrenInfo.isEmpty()) {
         files = VirtualFile.EMPTY_ARRAY;
       }
       else {
-        files = new VirtualFile[children.size()];
-        IntRef errorCount = new IntRef(0);
-        List<? extends ChildInfo> childInfoSorted = ContainerUtil.sorted(children, (info1, info2) -> {
-          CharSequence name1 = info1.getName();
-          CharSequence name2 = info2.getName();
-          int cmp = compareNames(name1, name2, isCaseSensitive);
-          if (cmp == 0 && name1 != name2) {
-            if (errorCount.get() == 0) {
-              THROTTLED_LOG.error(owningPersistentFS() + " returned duplicate file names('" + name1 + "', '" + name2 + "')" +
-                                  " caseSensitive: " + isCaseSensitive +
-                                  " SystemInfo.isFileSystemCaseSensitive: " + SystemInfo.isFileSystemCaseSensitive +
-                                  " SystemInfo.OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
-                                  " wasChildrenLoaded: " + wasChildrenLoaded +
-                                  " in the dir: " + this + "; " + children.size() +
-                                  " children: " + StringUtil.first(children.toString(), 300, true));
-            }
-            errorCount.inc();
-            if (!isCaseSensitive) {
-              // Sometimes file system rules for case-insensitive comparison differ from Java rules.
-              // E.g., on NTFS files named 'ẛ' (small long S with dot) and 'Ṡ' (capital S with dot) can coexist
-              // despite the uppercase for 'ẛ' being 'Ṡ' - probably because the lower case of 'Ṡ' is 'ṡ' (small S with dot), not 'ẛ'.
-              // When encountering such a case, we fall back to case-sensitive comparison to establish some order between these names.
-              cmp = compareNames(name1, name2, true);
-            }
-          }
-          return cmp;
-        });
+        files = new VirtualFile[childrenInfo.size()];
         IntSet prevChildren = myData.children.toIntSet();
-        for (int i = 0; i < childInfoSorted.size(); i++) {
-          ChildInfo child = childInfoSorted.get(i);
+        //Seems like we could load children unsorted, and delay the sorting until someone really asks for it.
+        // It's a bit risky, because someone may rely on .getChildren() returning stable array, but we could
+        // do that under feature-flag:
+        if (sortChildrenOnLoading) {
+          IntRef errorCount = new IntRef(0);
+          List<? extends ChildInfo> _childrenInfo = childrenInfo;//effectively-final, for capturing in lambda
+          childrenInfo = ContainerUtil.sorted(childrenInfo, (info1, info2) -> {
+            CharSequence name1 = info1.getName();
+            CharSequence name2 = info2.getName();
+            int cmp = compareNames(name1, name2, isCaseSensitive);
+            if (cmp == 0 && name1 != name2) {
+              if (errorCount.get() == 0) {
+                THROTTLED_LOG.error(owningPersistentFS() + " returned duplicate file names('" + name1 + "', '" + name2 + "')" +
+                                    " caseSensitive: " + isCaseSensitive +
+                                    " SystemInfo.isFileSystemCaseSensitive: " + SystemInfo.isFileSystemCaseSensitive +
+                                    " SystemInfo.OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
+                                    " wasChildrenLoaded: " + wasChildrenLoaded +
+                                    " in the dir: " + this + "; " + _childrenInfo.size() +
+                                    " children: " + StringUtil.first(_childrenInfo.toString(), 300, true));
+              }
+              errorCount.inc();
+              if (!isCaseSensitive) {
+                // Sometimes file system rules for case-insensitive comparison differ from Java rules.
+                // E.g., on NTFS files named 'ẛ' (small long S with dot) and 'Ṡ' (capital S with dot) can coexist
+                // despite the uppercase for 'ẛ' being 'Ṡ' - probably because the lower case of 'Ṡ' is 'ṡ' (small S with dot), not 'ẛ'.
+                // When encountering such a case, we fall back to case-sensitive comparison to establish some order between these names.
+                cmp = compareNames(name1, name2, /*caseSensitive: */ true);
+              }
+            }
+            return cmp;
+          });
+        }
+
+        for (int i = 0; i < files.length; i++) {
+          ChildInfo child = childrenInfo.get(i);
           int id = child.getId();
-          assert id > 0 : child;
           newChildrenIds[i] = id;
           prevChildren.remove(id);
           VirtualFileSystemEntry file = vfsData.getFileById(id, this, /*putIntoMemory: */true);
@@ -543,9 +558,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
 
       myData.clearAdoptedNames();
-      myData.children = new VfsData.ChildrenIds(newChildrenIds, /*sorted: */ true, /*allChildren: */ true);
+      myData.children = new VfsData.ChildrenIds(newChildrenIds, sortChildrenOnLoading, /*allChildren: */ true);
       if (CHECK) {
-        assertConsistency(isCaseSensitive, children);
+        assertConsistency(isCaseSensitive, childrenInfo);
       }
 
       return files;
@@ -554,25 +569,31 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   private void assertConsistency(boolean isCaseSensitive, Object @NotNull ... details) {
     if (!CHECK || ApplicationManagerEx.isInStressTest()) return;
+
     VfsData.ChildrenIds children = myData.children;
-    if (children.size() == 0) return;
+    if (children.size() == 0) {
+      return;
+    }
+    boolean sorted = children.isSorted();
     VfsData vfsData = getVfsData();
     CharSequence prevName = vfsData.getNameByFileId(children.id(0));
     for (int i = 1; i < children.size(); i++) {
       int id = children.id(i);
-      int prev = children.id(i - 1);
       CharSequence name = vfsData.getNameByFileId(id);
-      int cmp = compareNames(name, prevName, isCaseSensitive);
-      prevName = name;
-      if (cmp <= 0) {
-        VirtualFileSystemEntry prevFile = vfsData.getFileById(prev, this, true);
-        VirtualFileSystemEntry child = vfsData.getFileById(id, this, true);
-        String info = "prevFile.isCaseSensitive()=" + (prevFile == null ? "?" : prevFile.isCaseSensitive()) + ';' +
-                      "child.isCaseSensitive()=" + (child == null ? "?" : child.isCaseSensitive()) + ';' +
-                      "this.isCaseSensitive()=" + this.isCaseSensitive();
-        String message =
-          info + " but in " + this + " the " + verboseToString(prevFile) + "\n is wrongly placed before " + verboseToString(child) + '\n';
-        error(message, details);
+      if (sorted) {
+        int prev = children.id(i - 1);
+        int cmp = compareNames(name, prevName, isCaseSensitive);
+        prevName = name;
+        if (cmp <= 0) {
+          VirtualFileSystemEntry prevFile = vfsData.getFileById(prev, this, true);
+          VirtualFileSystemEntry child = vfsData.getFileById(id, this, true);
+          String info = "prevFile.isCaseSensitive()=" + (prevFile == null ? "?" : prevFile.isCaseSensitive()) + ';' +
+                        "child.isCaseSensitive()=" + (child == null ? "?" : child.isCaseSensitive()) + ';' +
+                        "this.isCaseSensitive()=" + this.isCaseSensitive();
+          String message =
+            info + " but in " + this + " the " + verboseToString(prevFile) + "\n is wrongly placed before " + verboseToString(child) + '\n';
+          error(message, details);
+        }
       }
       synchronized (myData) {
         if (myData.isAdoptedName(name)) {
@@ -944,7 +965,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Override
   public @NotNull @Unmodifiable List<VirtualFile> getCachedChildren() {
-    return Arrays.asList(getArraySafely(false));
+    return Arrays.asList(getArraySafely(/*putToCache: */false));
   }
 
   @Override
