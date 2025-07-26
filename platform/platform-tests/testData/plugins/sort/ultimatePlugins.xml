@@ -145,7 +145,7 @@
     <depends optional="true">com.intellij.modules.remoteServers</depends>
     <depends optional="true">com.intellij.modules.clion.cmake</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.css.impl/META-INF/plugin.xml">
+  <idea-plugin url="file://out/intellij.css.plugin/META-INF/plugin.xml">
     <id>-com-intellij-css-</id>
     <name>CSS</name>
     <depends>com.intellij.modules.xml</depends>

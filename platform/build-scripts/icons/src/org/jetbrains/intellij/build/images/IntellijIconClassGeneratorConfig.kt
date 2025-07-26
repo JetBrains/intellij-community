@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images
 
 import org.jetbrains.jps.model.module.JpsModule
@@ -42,9 +42,9 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         className = "KubernetesIcons",
         packageName = "com.intellij.kubernetes"
       )
-      "intellij.css" -> IntellijIconClassGeneratorModuleConfig(
+      "intellij.css.common" -> IntellijIconClassGeneratorModuleConfig(
         className = "CssIcons",
-        packageName = "com.intellij.lang.css",
+        packageName = "com.intellij.css.common",
         iconDirectory = "icons/css",
       )
       "intellij.platform.split" -> IntellijIconClassGeneratorModuleConfig(

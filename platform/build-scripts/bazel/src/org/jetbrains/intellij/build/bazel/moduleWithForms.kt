@@ -61,7 +61,7 @@ internal val moduleWithForm: Set<String> = setOf(
   "intellij.diagram.impl",
   "intellij.platform.graph.impl",
   "intellij.javascript.impl",
-  "intellij.css.impl",
+  "intellij.css.plugin",
   "intellij.vcs.git",
   "intellij.editorconfig.backend",
   "intellij.database.plugin",

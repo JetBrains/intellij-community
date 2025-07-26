@@ -3828,11 +3828,11 @@
   "group": "nodes",
   "data": {
     "id": "Pn",
-    "name": "intellij.css.impl",
+    "name": "intellij.css.plugin",
     "n": "i.css.impl",
     "package": null,
-    "sourceModule": "intellij.css.impl",
-    "descriptor": "CSS/src/META-INF/plugin.xml",
+    "sourceModule": "intellij.css.plugin",
+    "descriptor": "plugins/css/plugin/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.css",
     "type": 1
   }
