@@ -56,5 +56,5 @@ intellijPlatform {
 tasks {
     runIde { jvmArgs = listOf("-Xmx3g") }
 
-    withType<Detekt>() { exclude("**/AndroidStudioReleases.kt") }
+    withType<Detekt> { exclude("**/AndroidStudioReleases.kt") }
 }

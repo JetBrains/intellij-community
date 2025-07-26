@@ -3,7 +3,6 @@ import org.jmailen.gradle.kotlinter.tasks.LintTask
 
 plugins {
     jewel
-    `jewel-publish`
     `jewel-check-public-api`
     `icon-keys-generator`
     alias(libs.plugins.composeDesktop)
