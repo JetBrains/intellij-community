@@ -1961,7 +1961,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    * <ol>
    * <li>{@link #lookupCachedAncestor(int)}: climbs up from fileId, collecting {@link #ancestorsIds} (=path), until finds an ancestor
    *     which is already cached in {@link #dirByIdCache}.</li>
-   * <li>{@link #resolveDescendingAlongIdPath(VirtualFileSystemEntry, int)}: from that cached ancestor climbs down back to fileId,
+   * <li>{@link #resolveDescending(VirtualFileSystemEntry, IntList, int)}: from that cached ancestor climbs down back to fileId,
    *     resolving {@link #ancestorsIds} along the way via {@link #findChild(VirtualFileSystemEntry, int)}</li>
    * </ol>
    */
@@ -2287,8 +2287,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return null;
     }
 
-    LocalFileSystemBase localFS = (LocalFileSystemBase)fileSystem;
-    CaseSensitivity actualDirCaseSensitivity = localFS.fetchCaseSensitivity(parent, childName);
+    LocalFileSystemBase localFileSystem = (LocalFileSystemBase)fileSystem;
+    CaseSensitivity actualDirCaseSensitivity = localFileSystem.fetchCaseSensitivity(parent, childName);
     //MAYBE RC: also measure and record execution _time_?
     caseSensitivityReads.incrementAndGet();
 
