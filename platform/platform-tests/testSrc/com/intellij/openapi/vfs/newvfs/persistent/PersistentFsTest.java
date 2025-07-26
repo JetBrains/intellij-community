@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.CacheSwitcher;
@@ -94,8 +94,9 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     );
 
     VfsTestUtil.deleteFile(vFile);
-    assertNull("Deleted file can't be found by its fileId anymore",
-               PersistentFS.getInstance().findFileById(id));
+    VirtualFile deletedVFile = PersistentFS.getInstance().findFileById(id);
+    assertNull("Deleted file shouldn't be found by its fileId anymore, but: "+deletedVFile,
+               deletedVFile);
   }
 
   @Test
@@ -266,7 +267,9 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       }
       local.refresh(false, false);
       assertTrue(jarRoot.isValid());
-      assertEquals(1, jarRoot.getChildren().length);
+      VirtualFile[] children = jarRoot.getChildren();
+      assertEquals("Must be 1 child, but: " + Arrays.toString(children),
+                   1, children.length);
       assertNotNull(VirtualFileManager.getInstance().findFileByUrl(entryUrl));
     });
 
@@ -652,7 +655,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     VfsTestUtil.deleteFile(vSubDir1);
 
     for (VirtualFileSystemEntry f : hardReferenceHolder) {
-      assertFalse("file is valid but deleted " + f.getName(), f.isValid());
+      assertFalse("file is invalid (=deleted): " + f.getName(), f.isValid());
     }
 
     for (VirtualFileSystemEntry f : hardReferenceHolder) {

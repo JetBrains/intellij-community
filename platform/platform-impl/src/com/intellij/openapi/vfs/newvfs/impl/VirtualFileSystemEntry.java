@@ -115,8 +115,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     myId = -42;
   }
 
-  @NotNull
-  VfsData getVfsData() {
+  @NotNull VfsData getVfsData() {
     VfsData data = mySegment.owningVfsData;
     PersistentFSImpl owningPersistentFS = data.owningPersistentFS();
     if (!owningPersistentFS.isOwnData(data)) {
@@ -132,8 +131,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return getVfsData().owningPersistentFS();
   }
 
-  @NotNull
-  VfsData.Segment getSegment() {
+  @NotNull VfsData.Segment getSegment() {
     VfsData.Segment segment = mySegment;
     if (segment.replacement != null) {
       segment = updateSegmentAndParent(segment);

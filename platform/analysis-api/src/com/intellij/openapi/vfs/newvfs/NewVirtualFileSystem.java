@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -102,6 +102,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
     return false;
   }
 
+  //MAYBE RC: change signature (file) -> (parent, fileName)? no need to create a FakeVirtualFile
   public @NotNull String getCanonicallyCasedName(@NotNull VirtualFile file) {
     return file.getName();
   }

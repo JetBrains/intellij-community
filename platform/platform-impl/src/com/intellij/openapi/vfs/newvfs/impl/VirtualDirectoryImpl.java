@@ -414,11 +414,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Override
   public @NotNull @Unmodifiable Iterable<VirtualFile> iterInDbChildren() {
-    if (!owningPersistentFS().wereChildrenAccessed(this)) {
+    PersistentFSImpl pFS = owningPersistentFS();
+    if (!pFS.wereChildrenAccessed(this)) {
       return Collections.emptyList();
     }
 
-    if (owningPersistentFS().areChildrenLoaded(this)) {
+    if (pFS.areChildrenLoaded(this)) {
       return Arrays.asList(getChildren()); // may load VFS from other projects
     }
 
