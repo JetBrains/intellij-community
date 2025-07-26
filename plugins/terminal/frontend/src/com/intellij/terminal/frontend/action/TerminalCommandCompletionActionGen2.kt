@@ -3,6 +3,8 @@ package com.intellij.terminal.frontend.action
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.actions.BaseCodeCompletionAction
+import com.intellij.codeInsight.inline.completion.InlineCompletion
+import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.frontend.TerminalCommandCompletion
@@ -16,8 +18,13 @@ internal class TerminalCommandCompletionActionGen2 : BaseCodeCompletionAction(),
   override fun actionPerformed(e: AnActionEvent) {
     val editor = e.editor!!
     if (!editor.isSuppressCompletion) {
-        val terminalCodeCompletion = TerminalCommandCompletion(CompletionType.BASIC, true, false, true)
-        terminalCodeCompletion.invokeCompletion(e, 1)
+      val inlineCompletionHandler = InlineCompletion.getHandlerOrNull(editor)
+      val inlineCompletionContext = InlineCompletionContext.getOrNull(editor)
+      if (inlineCompletionHandler != null && inlineCompletionContext != null) {
+        inlineCompletionHandler.hide(inlineCompletionContext)
+      }
+      val terminalCodeCompletion = TerminalCommandCompletion(CompletionType.BASIC, true, false, true)
+      terminalCodeCompletion.invokeCompletion(e, 1)
     }
   }
 

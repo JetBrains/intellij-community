@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
@@ -21,6 +22,7 @@ class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler(
 
     override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext): Boolean {
       return InlineCompletionContext.getOrNull(editor)?.startOffset() == caret.offset
+             && InlineCompletionEditorType.get(editor) != InlineCompletionEditorType.TERMINAL
     }
   }
 }
