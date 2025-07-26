@@ -3,6 +3,11 @@
     <module name="kotlin.base.scripting.shared"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
+    <configurationType implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.script.KotlinStandaloneScriptRunConfigurationType"/>
+
+    <runConfigurationProducer
+            implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.script.KotlinStandaloneScriptRunConfigurationProducer"/>
+
     <javaMainMethodProvider implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.KotlinMainMethodProvider"/> 
   </extensions>
 </idea-plugin>

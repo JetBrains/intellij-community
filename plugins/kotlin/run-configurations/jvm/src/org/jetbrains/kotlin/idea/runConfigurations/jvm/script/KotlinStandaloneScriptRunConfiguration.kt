@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.run.script.standalone
+package org.jetbrains.kotlin.idea.runConfigurations.jvm.script
 
 import com.intellij.execution.*
-import com.intellij.execution.application.BaseJavaApplicationCommandLineState
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.util.JavaParametersUtil
@@ -27,14 +26,14 @@ import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle
-import org.jetbrains.kotlin.idea.core.script.shared.ScriptAfterRunCallbackProvider
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.core.script.shared.ScriptAfterRunCallbackProvider
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
-import org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer.Companion.pathFromPsiElement
+import org.jetbrains.kotlin.idea.runConfigurations.jvm.script.KotlinStandaloneScriptRunConfigurationProducer.Companion.pathFromPsiElement
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
@@ -156,7 +155,7 @@ class KotlinStandaloneScriptRunConfiguration(
 private class ScriptCommandLineState(
     environment: ExecutionEnvironment,
     configuration: KotlinStandaloneScriptRunConfiguration
-) : BaseJavaApplicationCommandLineState<KotlinStandaloneScriptRunConfiguration>(environment, configuration) {
+) : com.intellij.execution.application.BaseJavaApplicationCommandLineState<KotlinStandaloneScriptRunConfiguration>(environment, configuration) {
 
     override fun createJavaParameters(): JavaParameters {
         val params = commonParameters()
