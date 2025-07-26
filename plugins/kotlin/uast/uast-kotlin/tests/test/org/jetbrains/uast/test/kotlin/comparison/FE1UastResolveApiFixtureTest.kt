@@ -298,6 +298,10 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveTopLevelInlineReifiedFromLibrary(myFixture, withJvmName = true)
     }
 
+    fun testResolveTopLevelInlineReifiedFromLibraryRecursiveTypeParameter() {
+        checkResolveTopLevelInlineReifiedFromLibrary_recursiveTypeParameter(myFixture, isK2 = false)
+    }
+
     fun testResolveTopLevelInlineInFacadeFromLibrary() {
         checkResolveTopLevelInlineInFacadeFromLibrary(myFixture, isK2 = false)
     }
