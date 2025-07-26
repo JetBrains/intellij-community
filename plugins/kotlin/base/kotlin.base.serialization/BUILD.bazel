@@ -4,11 +4,11 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_kotlin-base-serialization",
-  context_receivers = True,
   opt_in = [
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
-  ]
+  ],
+  x_context_receivers = True
 )
 
 jvm_library(

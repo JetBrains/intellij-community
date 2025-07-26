@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom_ide-plugin-k2",
-  context_receivers = True
+  x_context_receivers = True
 )
 
 jvm_resources(
@@ -43,7 +43,7 @@ jvm_library(
 ### auto-generated section `build intellij.compose.ide.plugin.k2.tests` start
 create_kotlinc_options(
   name = "custom_ide-plugin-k2-tests",
-  context_receivers = True
+  x_context_receivers = True
 )
 
 jvm_library(

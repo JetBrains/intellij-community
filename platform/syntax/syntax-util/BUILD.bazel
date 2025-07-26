@@ -1,5 +1,13 @@
 ### auto-generated section `build intellij.platform.syntax.util` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom_util",
+  jvm_target = "8",
+  x_no_call_assertions = True,
+  x_no_param_assertions = True
+)
 
 jvm_resources(
   name = "util_resources",
@@ -12,7 +20,7 @@ jvm_library(
   module_name = "intellij.platform.syntax.util",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
+  kotlinc_opts = ":custom_util",
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/syntax/syntax-api:syntax",

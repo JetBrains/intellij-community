@@ -1,5 +1,12 @@
 ### auto-generated section `build intellij.compose.ide.plugin.gradleTooling.rt` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom_ide-plugin-gradleTooling-rt",
+  jvm_target = "8",
+  x_sam_conversions = "class"
+)
 
 jvm_resources(
   name = "ide-plugin-gradleTooling-rt_resources",
@@ -12,7 +19,7 @@ jvm_library(
   module_name = "intellij.compose.ide.plugin.gradleTooling.rt",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
+  kotlinc_opts = ":custom_ide-plugin-gradleTooling-rt",
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/gradle/tooling-extension-api:toolingExtension",

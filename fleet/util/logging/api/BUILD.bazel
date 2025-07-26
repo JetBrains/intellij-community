@@ -1,5 +1,13 @@
 ### auto-generated section `build fleet.util.logging.api` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+create_kotlinc_options(
+  name = "custom_api",
+  x_consistent_data_class_copy_visibility = True,
+  x_jvm_default = "disable",
+  x_lambdas = "class"
+)
 
 jvm_provided_library(
   name = "multiplatform_provided",
@@ -11,6 +19,7 @@ jvm_library(
   module_name = "fleet.util.logging.api",
   visibility = ["//visibility:public"],
   srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_api",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",

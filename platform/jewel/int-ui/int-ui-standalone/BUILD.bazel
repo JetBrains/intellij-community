@@ -4,13 +4,14 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom_jewel-intUi-standalone",
-  context_receivers = True,
   opt_in = [
     "androidx.compose.ui.ExperimentalComposeUiApi",
     "androidx.compose.foundation.ExperimentalFoundationApi",
     "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
     "org.jetbrains.jewel.foundation.InternalJewelApi",
-  ]
+  ],
+  x_context_receivers = True,
+  x_explicit_api_mode = "strict"
 )
 
 jvm_resources(

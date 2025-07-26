@@ -1,11 +1,20 @@
 ### auto-generated section `build fleet.rpc.server` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_rpc.server",
+  x_consistent_data_class_copy_visibility = True,
+  x_jvm_default = "disable",
+  x_lambdas = "class"
+)
 
 jvm_library(
   name = "rpc.server",
   module_name = "fleet.rpc.server",
   visibility = ["//visibility:public"],
   srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_rpc.server",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",

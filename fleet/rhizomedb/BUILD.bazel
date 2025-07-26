@@ -4,11 +4,14 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_rhizomedb",
-  allow_kotlin_package = True,
   opt_in = [
     "kotlin.ExperimentalStdlibApi",
     "kotlin.concurrent.atomics.ExperimentalAtomicApi",
-  ]
+  ],
+  x_allow_kotlin_package = True,
+  x_consistent_data_class_copy_visibility = True,
+  x_jvm_default = "disable",
+  x_lambdas = "class"
 )
 
 jvm_library(

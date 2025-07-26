@@ -4,11 +4,11 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_fir",
-  context_receivers = True,
   opt_in = [
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
-  ]
+  ],
+  x_context_receivers = True
 )
 
 jvm_library(

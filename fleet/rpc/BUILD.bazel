@@ -8,7 +8,10 @@ create_kotlinc_options(
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
     "kotlin.ExperimentalStdlibApi",
     "kotlin.concurrent.atomics.ExperimentalAtomicApi",
-  ]
+  ],
+  x_consistent_data_class_copy_visibility = True,
+  x_jvm_default = "disable",
+  x_lambdas = "class"
 )
 
 jvm_library(

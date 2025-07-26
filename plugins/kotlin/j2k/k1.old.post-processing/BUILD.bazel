@@ -4,12 +4,12 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom_k1.old.post-processing",
-  context_receivers = True,
   opt_in = [
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
     "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
-  ]
+  ],
+  x_context_receivers = True
 )
 
 jvm_resources(

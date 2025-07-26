@@ -1,5 +1,13 @@
 ### auto-generated section `build fleet.util.logging.slf4j` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom_slf4j",
+  x_consistent_data_class_copy_visibility = True,
+  x_jvm_default = "disable",
+  x_lambdas = "class"
+)
 
 jvm_resources(
   name = "slf4j_resources",
@@ -18,6 +26,7 @@ jvm_library(
   module_name = "fleet.util.logging.slf4j",
   visibility = ["//visibility:public"],
   srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_slf4j",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:slf4j-api",

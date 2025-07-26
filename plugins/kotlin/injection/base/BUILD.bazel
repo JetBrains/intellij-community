@@ -4,8 +4,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resourc
 
 create_kotlinc_options(
   name = "custom_kotlin-base-injection",
-  context_receivers = True,
-  opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"]
+  opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
+  x_context_receivers = True
 )
 
 jvm_resources(

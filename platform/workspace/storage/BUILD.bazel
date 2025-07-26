@@ -4,11 +4,12 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom_storage",
-  jvm_target = 11,
+  jvm_target = "11",
   opt_in = [
     "com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi",
     "com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi",
-  ]
+  ],
+  x_explicit_api_mode = "strict"
 )
 
 jvm_resources(

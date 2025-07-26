@@ -4,11 +4,11 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom_kotlin-gradle-scripting-k2",
-  context_receivers = True,
   opt_in = [
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
-  ]
+  ],
+  x_context_receivers = True
 )
 
 jvm_resources(

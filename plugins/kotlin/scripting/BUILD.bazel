@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_scripting",
-  allow_kotlin_package = True
+  x_allow_kotlin_package = True
 )
 
 jvm_library(

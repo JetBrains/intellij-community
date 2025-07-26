@@ -7,7 +7,10 @@ create_kotlinc_options(
   opt_in = [
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
     "kotlin.ExperimentalStdlibApi",
-  ]
+  ],
+  x_consistent_data_class_copy_visibility = True,
+  x_jvm_default = "disable",
+  x_lambdas = "class"
 )
 
 jvm_library(

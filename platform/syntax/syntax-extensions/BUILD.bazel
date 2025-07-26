@@ -1,5 +1,13 @@
 ### auto-generated section `build intellij.platform.syntax.extensions` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+create_kotlinc_options(
+  name = "custom_extensions",
+  jvm_target = "8",
+  x_no_call_assertions = True,
+  x_no_param_assertions = True
+)
 
 jvm_provided_library(
   name = "multiplatformSupport_provided",
@@ -11,7 +19,7 @@ jvm_library(
   module_name = "intellij.platform.syntax.extensions",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
+  kotlinc_opts = ":custom_extensions",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
@@ -24,7 +32,7 @@ jvm_library(
   name = "extensions_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testJvm/**/*.kt", "testJvm/**/*.java"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
+  kotlinc_opts = ":custom_extensions",
   associates = [":extensions"],
   deps = [
     "@lib//:kotlin-stdlib",

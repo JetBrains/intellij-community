@@ -4,7 +4,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_workspace",
-  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"],
+  x_explicit_api_mode = "strict"
 )
 
 jvm_library(
