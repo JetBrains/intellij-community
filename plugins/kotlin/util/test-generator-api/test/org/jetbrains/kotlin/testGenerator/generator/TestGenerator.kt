@@ -30,12 +30,35 @@ object TestGenerator {
     fun writeLibrariesVersion(isUpToDateCheck: Boolean = false) {
         val kotlincKotlinCompilerCliVersion = KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_compiler_cli.xml")
         val kotlincKotlinJpsPluginTests = KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_jps_plugin_tests.xml")
-        write(File(PathManager.getCommunityHomePath())
-                  .resolve("plugins/kotlin/base/plugin/testResources/kotlincKotlinCompilerCliVersion.txt"),
-              kotlincKotlinCompilerCliVersion, isUpToDateCheck)
-        write(File(PathManager.getCommunityHomePath())
-                  .resolve("plugins/kotlin/base/plugin/testResources/kotlincKotlinJpsPluginTests.txt"),
-              kotlincKotlinJpsPluginTests, isUpToDateCheck)
+
+        val kotlincKotlinCompilerCliVersionFile = File(PathManager.getCommunityHomePath())
+            .resolve("plugins/kotlin/base/plugin/testResources/kotlincKotlinCompilerCliVersion.txt")
+        val kotlincKotlinCompilerCliOldVersion = kotlincKotlinCompilerCliVersionFile.readText()
+        write(
+            kotlincKotlinCompilerCliVersionFile,
+            kotlincKotlinCompilerCliVersion, isUpToDateCheck)
+
+
+
+        val kotlincKotlinJpsPluginTestsFile = File(PathManager.getCommunityHomePath())
+            .resolve("plugins/kotlin/base/plugin/testResources/kotlincKotlinJpsPluginTests.txt")
+        val kotlincKotlinJpsPluginTestsOldVersion = kotlincKotlinJpsPluginTestsFile.readText()
+        write(
+            kotlincKotlinJpsPluginTestsFile,
+            kotlincKotlinJpsPluginTests, isUpToDateCheck)
+
+        val kotlinDependenciesBazelFile = File(PathManager.getCommunityHomePath()).resolve("plugins/kotlin/kotlin_test_dependencies.bzl")
+        val newContent = kotlinDependenciesBazelFile.readText()
+            .replace(
+                "$kotlincKotlinJpsPluginTestsOldVersion/js-ir-runtime-for-ide-$kotlincKotlinJpsPluginTestsOldVersion.klib",
+                "$kotlincKotlinJpsPluginTests/js-ir-runtime-for-ide-$kotlincKotlinJpsPluginTests.klib")
+            .replace("$kotlincKotlinJpsPluginTestsOldVersion/kotlin-jps-plugin-classpath-$kotlincKotlinJpsPluginTestsOldVersion.jar",
+                     "$kotlincKotlinJpsPluginTests/kotlin-jps-plugin-classpath-$kotlincKotlinJpsPluginTests.jar")
+            .replace("$kotlincKotlinJpsPluginTestsOldVersion/kotlin-dist-for-ide-$kotlincKotlinJpsPluginTestsOldVersion.jar",
+                     "$kotlincKotlinJpsPluginTests/kotlin-dist-for-ide-$kotlincKotlinJpsPluginTests.jar")
+            .replace(kotlincKotlinCompilerCliOldVersion, kotlincKotlinCompilerCliVersion)
+
+        write(kotlinDependenciesBazelFile,newContent, isUpToDateCheck)
     }
 
     fun write(workspace: TWorkspace, isUpToDateCheck: Boolean = false) {
