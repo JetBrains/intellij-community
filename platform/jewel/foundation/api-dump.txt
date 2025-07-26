@@ -13,6 +13,9 @@ f:org.jetbrains.jewel.foundation.DisabledAppearanceValuesKt
 f:org.jetbrains.jewel.foundation.JewelFlags
 - sf:$stable:I
 - sf:INSTANCE:org.jetbrains.jewel.foundation.JewelFlags
+f:org.jetbrains.jewel.foundation.TextColors
+- f:getDisabledSelected-0d7_KjU():J
+- f:getWarning-0d7_KjU():J
 org.jetbrains.jewel.foundation.actionSystem.DataProviderContext
 - a:lazy(java.lang.String,kotlin.jvm.functions.Function0):V
 - a:set(java.lang.String,java.lang.Object):V
