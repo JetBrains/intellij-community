@@ -9,7 +9,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.icons.IconWrapperWithToolTip
-import com.intellij.util.IconUtil
+import org.jetbrains.idea.devkit.DevKitIcons
 import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.SwingConstants
@@ -49,7 +49,7 @@ private val moduleDirectoryIcon = LayeredIcon(2)
 private val legacyPluginWithModuleIcon = LayeredIcon(2)
   .apply {
     setIcon(AllIcons.Nodes.Plugin, 0)
-    setIcon(IconUtil.scale(AllIcons.Actions.ModuleDirectory, ancestor = null, 0.7f), 1, SwingConstants.SOUTH_EAST)
+    setIcon(DevKitIcons.LegacyPlugin, 1, SwingConstants.SOUTH_EAST)
   }
   .withTooltip(messagePointer("plugin.and.module.directory.tooltip"))
 
