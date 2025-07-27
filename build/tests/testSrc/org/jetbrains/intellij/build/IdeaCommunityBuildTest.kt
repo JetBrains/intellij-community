@@ -31,6 +31,8 @@ class IdeaCommunityBuildTest {
       it.buildStepsToSkip = OpenSourceCommunityInstallersBuildTarget.OPTIONS.buildStepsToSkip +
                             // no need to publish TeamCity artifacts from a test
                             BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION_STEP
+      // this step is disabled for all other build tests
+      it.buildStepsToSkip -= BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP
     }
   }
 
