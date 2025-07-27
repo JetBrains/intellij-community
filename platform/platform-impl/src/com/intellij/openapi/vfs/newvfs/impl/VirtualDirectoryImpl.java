@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.impl.PsiCachedValue;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
@@ -495,66 +494,65 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       VfsData vfsData = getVfsData();
       PersistentFSImpl pFS = vfsData.owningPersistentFS();
 
-      boolean wasChildrenLoaded = pFS.areChildrenLoaded(this);
       List<? extends ChildInfo> childrenInfo = pFS.listAll(this);
-      int[] newChildrenIds = ArrayUtil.newIntArray(childrenInfo.size());
-      VirtualFile[] files;
-      if (childrenInfo.isEmpty()) {
-        files = VirtualFile.EMPTY_ARRAY;
-      }
-      else {
-        files = new VirtualFile[childrenInfo.size()];
-        IntSet prevChildren = myData.children.toIntSet();
-        //Seems like we could load children unsorted, and delay the sorting until someone really asks for it.
-        // It's a bit risky, because someone may rely on .getChildren() returning stable array, but we could
-        // do that under feature-flag:
-        if (sortChildrenOnLoading) {
-          IntRef errorCount = new IntRef(0);
-          List<? extends ChildInfo> _childrenInfo = childrenInfo;//effectively-final, for capturing in lambda
-          childrenInfo = ContainerUtil.sorted(childrenInfo, (info1, info2) -> {
-            CharSequence name1 = info1.getName();
-            CharSequence name2 = info2.getName();
-            int cmp = compareNames(name1, name2, isCaseSensitive);
-            if (cmp == 0 && name1 != name2) {
-              if (errorCount.get() == 0) {
-                THROTTLED_LOG.error(owningPersistentFS() + " returned duplicate file names('" + name1 + "', '" + name2 + "')" +
-                                    " caseSensitive: " + isCaseSensitive +
-                                    " SystemInfo.isFileSystemCaseSensitive: " + SystemInfo.isFileSystemCaseSensitive +
-                                    " SystemInfo.OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
-                                    " wasChildrenLoaded: " + wasChildrenLoaded +
-                                    " in the dir: " + this + "; " + _childrenInfo.size() +
-                                    " children: " + StringUtil.first(_childrenInfo.toString(), 300, true));
-              }
-              errorCount.inc();
-              if (!isCaseSensitive) {
-                // Sometimes file system rules for case-insensitive comparison differ from Java rules.
-                // E.g., on NTFS files named 'ẛ' (small long S with dot) and 'Ṡ' (capital S with dot) can coexist
-                // despite the uppercase for 'ẛ' being 'Ṡ' - probably because the lower case of 'Ṡ' is 'ṡ' (small S with dot), not 'ẛ'.
-                // When encountering such a case, we fall back to case-sensitive comparison to establish some order between these names.
-                cmp = compareNames(name1, name2, /*caseSensitive: */ true);
-              }
-            }
-            return cmp;
-          });
-        }
 
-        for (int i = 0; i < files.length; i++) {
-          ChildInfo child = childrenInfo.get(i);
-          int id = child.getId();
-          newChildrenIds[i] = id;
-          prevChildren.remove(id);
-          VirtualFileSystemEntry file = vfsData.getFileById(id, this, /*putIntoMemory: */true);
-          if (file == null) {
-            int attributes = pFS.getFileAttributes(id);
-            boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !pFS.mayHaveChildren(id);
-            file = createChildImpl(id, child.getNameId(), attributes, isEmptyDirectory);
+      if (childrenInfo.isEmpty()) {
+        myData.clearAdoptedNames();
+        myData.children = VfsData.ChildrenIds.EMPTY.withAllChildrenLoaded(true);
+        return VirtualFile.EMPTY_ARRAY;
+      }
+
+      IntSet prevChildren = myData.children.toIntSet();
+      //We could load children unsorted, and delay the sorting until someone really asks for it:
+      if (sortChildrenOnLoading) {
+        IntRef errorCount = new IntRef(0);
+        List<? extends ChildInfo> _childrenInfo = childrenInfo;//effectively-final, for capturing in lambda
+        childrenInfo = ContainerUtil.sorted(childrenInfo, (info1, info2) -> {
+          CharSequence name1 = info1.getName();
+          CharSequence name2 = info2.getName();
+          int cmp = compareNames(name1, name2, isCaseSensitive);
+          if (cmp == 0 && name1 != name2) {
+            if (errorCount.get() == 0) {
+              boolean wasChildrenLoaded = pFS.areChildrenLoaded(this);
+              THROTTLED_LOG.error(owningPersistentFS() + " returned duplicate file names('" + name1 + "', '" + name2 + "')" +
+                                  " caseSensitive: " + isCaseSensitive +
+                                  " SystemInfo.isFileSystemCaseSensitive: " + SystemInfo.isFileSystemCaseSensitive +
+                                  " SystemInfo.OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
+                                  " wasChildrenLoaded: " + wasChildrenLoaded +
+                                  " in the dir: " + this + "; " + _childrenInfo.size() +
+                                  " children: " + StringUtil.first(_childrenInfo.toString(), 300, true));
+            }
+            errorCount.inc();
+            if (!isCaseSensitive) {
+              // Sometimes file system rules for case-insensitive comparison differ from Java rules.
+              // E.g., on NTFS files named 'ẛ' (small long S with dot) and 'Ṡ' (capital S with dot) can coexist
+              // despite the uppercase for 'ẛ' being 'Ṡ' - probably because the lower case of 'Ṡ' is 'ṡ' (small S with dot), not 'ẛ'.
+              // When encountering such a case, we fall back to case-sensitive comparison to establish some order between these names.
+              cmp = compareNames(name1, name2, /*caseSensitive: */ true);
+            }
           }
-          files[i] = file;
+          return cmp;
+        });
+      }
+
+      VirtualFile[] files = new VirtualFile[childrenInfo.size()];
+      int[] newChildrenIds = new int[files.length];
+      for (int i = 0; i < files.length; i++) {
+        ChildInfo child = childrenInfo.get(i);
+        int childId = child.getId();
+        newChildrenIds[i] = childId;
+        prevChildren.remove(childId);
+        VirtualFileSystemEntry file = vfsData.getFileById(childId, this, /*putIntoMemory: */true);
+        if (file == null) {
+          int attributes = pFS.getFileAttributes(childId);
+          boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !pFS.mayHaveChildren(childId);
+          file = createChildImpl(childId, child.getNameId(), attributes, isEmptyDirectory);
         }
-        if (!prevChildren.isEmpty()) {
-          var missing = vfsData.getFileById(prevChildren.iterator().nextInt(), this, true);
-          LOG.error("Loaded child disappeared: parent=" + verboseToString(this) + "; child=" + verboseToString(missing));
-        }
+        files[i] = file;
+      }
+      if (!prevChildren.isEmpty()) {
+        var missing = vfsData.getFileById(prevChildren.iterator().nextInt(), this, /*putInCache: */false);
+        LOG.error("Loaded child disappeared: parent=" + verboseToString(this) + "; child=" + verboseToString(missing));
       }
 
       myData.clearAdoptedNames();
