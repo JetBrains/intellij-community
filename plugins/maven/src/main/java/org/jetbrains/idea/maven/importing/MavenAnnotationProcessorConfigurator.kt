@@ -73,7 +73,7 @@ class MavenAnnotationProcessorConfigurator : MavenApplicableConfigurator(PLUGIN_
 
     val map = HashMap<MavenProject, MutableList<String>>()
     collectProcessorModuleNames(changedOnlyProjects.asIterable(),
-                                Function { moduleName: MavenId -> mavenProjectToModuleNamesCache[moduleName] },
+                                { moduleName: MavenId -> mavenProjectToModuleNamesCache[moduleName] },
                                 map)
     ANNOTATION_PROCESSOR_MODULE_NAMES[context] = map
   }
@@ -264,10 +264,8 @@ class MavenAnnotationProcessorConfigurator : MavenApplicableConfigurator(PLUGIN_
 
     moduleProfile.clearProcessors()
     val processors = mavenProject.declaredAnnotationProcessors
-    if (processors != null) {
-      for (processor in processors) {
-        moduleProfile.addProcessor(processor)
-      }
+    for (processor in processors) {
+      moduleProfile.addProcessor(processor)
     }
 
     moduleProfile.addModuleName(module.name)
@@ -381,7 +379,7 @@ class MavenAnnotationProcessorConfigurator : MavenApplicableConfigurator(PLUGIN_
     return try {
       Path.of(relativeTo).relativize(path).toString()
     }
-    catch (e: IllegalArgumentException) {
+    catch (_: IllegalArgumentException) {
       if (isTest) DEFAULT_TEST_ANNOTATION_OUTPUT else DEFAULT_ANNOTATION_PATH_OUTPUT
     }
   }
@@ -400,11 +398,11 @@ object MavenAnnotationProcessorConfiguratorUtil {
     return PROFILE_PREFIX + moduleName
   }
 
-  private fun getProcessorVersion(groupId: String?, artifactId: String?, version: String?, project: MavenProject): String? {
+  private fun getProcessorVersion(groupId: String, artifactId: String, version: String?, project: MavenProject): String? {
     if (version != null) return version
     val pluginVersion = project.findPlugin(PLUGIN_GROUP_ID, PLUGIN_ARTIFACT_ID)?.version ?: return null
 
-    if (VersionComparatorUtil.compare(pluginVersion, "3.12.0") >= 0 && groupId != null && artifactId != null) {
+    if (VersionComparatorUtil.compare(pluginVersion, "3.12.0") >= 0) {
       return project.findManagedDependencyVersion(groupId, artifactId)
     }
     return null
