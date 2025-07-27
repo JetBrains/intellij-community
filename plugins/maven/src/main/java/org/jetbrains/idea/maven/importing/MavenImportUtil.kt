@@ -36,17 +36,15 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.config.MavenConfigSettings
 import org.jetbrains.idea.maven.model.MavenArtifact
+import org.jetbrains.idea.maven.model.MavenArtifactInfo
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.project.MavenProject.ProcMode
 import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenServerSettings
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
-import org.jetbrains.idea.maven.utils.MavenEelUtil
+import org.jetbrains.idea.maven.utils.*
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildValueByPath
-import org.jetbrains.idea.maven.utils.MavenLog
-import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.PrefixStringEncoder
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -371,15 +369,73 @@ object MavenImportUtil {
     })
   }
 
-  internal fun MavenProject.compilerConfigsForCompilePhase(): List<Element> {
-    val result = ArrayList<Element>(1)
-    this.getPluginConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)?.let(result::add)
+  internal fun MavenProject.getAnnotationProcessorArtifactInfos(): List<MavenArtifactInfo> {
+    val compilerPlugin = findCompilerPlugin() ?: return emptyList()
 
-    this.findCompilerPlugin()
-      ?.executions?.filter { it.isCompilePhase() }
+    return compilerPlugin.getAnnotationProcessorArtifactInfos().map {
+      MavenArtifactInfo(
+        it.groupId,
+        it.artifactId,
+        this.getResolvedProcessorVersion(it.groupId, it.artifactId, it.version, compilerPlugin),
+        it.packaging,
+        it.classifier,
+      )
+    }
+  }
+
+  private fun MavenPlugin.getAnnotationProcessorArtifactInfos(): List<MavenArtifactInfo> {
+    return this.compilerConfigsForCompilePhase()
+      .mapNotNull { MavenJDOMUtil.findChildByPath(it, "annotationProcessorPaths") }
+      .flatMap { getProcessorArtifactInfos(it) }
+  }
+
+  private fun MavenPlugin.compilerConfigsForCompilePhase(): List<Element> {
+    val result = ArrayList<Element>(1)
+    this.configurationElement?.let(result::add)
+
+    this
+      .executions?.filter { it.isCompilePhase() }
       ?.mapNotNull { it.configurationElement }
       ?.forEach(result::add)
     return result
+  }
+
+  private fun getProcessorArtifactInfos(config: Element): List<MavenArtifactInfo> {
+    val artifacts: MutableList<MavenArtifactInfo> = ArrayList()
+
+    for (path in config.getChildren("path")) {
+      artifacts.add(path.toArtifactInfo())
+    }
+
+    for (dependency in config.getChildren("dependency")) {
+      artifacts.add(dependency.toArtifactInfo())
+    }
+
+    for (annotationProcessorPath in config.getChildren("annotationProcessorPath")) {
+      artifacts.add(annotationProcessorPath.toArtifactInfo())
+    }
+    return artifacts
+  }
+
+  private fun Element.toArtifactInfo(): MavenArtifactInfo {
+    val groupId = this.getChildTextTrim("groupId")
+    val artifactId = this.getChildTextTrim("artifactId")
+    val version = this.getChildTextTrim("version")
+
+    val classifier = this.getChildTextTrim("classifier")
+
+    //String type = this.getChildTextTrim("type");
+    return MavenArtifactInfo(groupId, artifactId, version, "jar", classifier)
+  }
+
+  private fun MavenProject.getResolvedProcessorVersion(groupId: String, artifactId: String, version: String?, compilerPlugin: MavenPlugin): String? {
+    if (version != null) return version
+    val pluginVersion = compilerPlugin.version ?: return null
+
+    if (VersionComparatorUtil.compare(pluginVersion, "3.12.0") >= 0) {
+      return this.findAnnotationProcessorManagedDependencyVersion(groupId, artifactId)
+    }
+    return null
   }
 
   internal val MavenProject.declaredAnnotationProcessors: List<String>

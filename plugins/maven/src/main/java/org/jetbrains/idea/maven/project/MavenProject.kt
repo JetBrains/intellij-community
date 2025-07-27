@@ -83,7 +83,6 @@ class MavenProject(val file: VirtualFile) {
       myState,
       true,
       readerResult.mavenModel,
-      emptyList(),
       readerResult.readingProblems,
       readerResult.activatedProfiles,
       setOf(),
@@ -103,7 +102,6 @@ class MavenProject(val file: VirtualFile) {
   @Internal
   fun updateState(
     model: MavenModel,
-    managedDependencies: List<MavenId>,
     dependencyHash: String?,
     readingProblems: Collection<MavenProjectProblem>,
     activatedProfiles: MavenExplicitProfiles,
@@ -116,7 +114,6 @@ class MavenProject(val file: VirtualFile) {
       myState,
       false,
       model,
-      managedDependencies,
       readingProblems,
       activatedProfiles,
       unresolvedArtifactIds,
@@ -153,6 +150,11 @@ class MavenProject(val file: VirtualFile) {
   fun updatePluginArtifacts(pluginIdsToArtifacts: Map<MavenId, MavenArtifact?>) {
     val newPluginInfos = myState.pluginInfos.map { MavenPluginWithArtifact(it.plugin, pluginIdsToArtifacts[it.plugin.mavenId]) }
     val newState = myState.copy(pluginInfos = newPluginInfos)
+    setState(newState)
+  }
+
+  internal fun updateAnnotationProcessorManagedDependencies(deps: Map<GroupAndArtifact, String>) {
+    val newState = myState.copy(annotationProcessorManagedDependencies = deps)
     setState(newState)
   }
 
@@ -593,7 +595,7 @@ class MavenProject(val file: VirtualFile) {
     setState(newState)
   }
 
-  fun findManagedDependencyVersion(groupId: String, artifactId: String): String? = myState.managedDependencies[GroupAndArtifact(groupId, artifactId)]
+  internal fun findAnnotationProcessorManagedDependencyVersion(groupId: String, artifactId: String): String? = myState.annotationProcessorManagedDependencies[GroupAndArtifact(groupId, artifactId)]
 
   fun findDependencies(depProject: MavenProject): List<MavenArtifact> {
     return findDependencies(depProject.mavenId)
@@ -839,7 +841,6 @@ class MavenProject(val file: VirtualFile) {
       state: MavenProjectState,
       incLastReadStamp: Boolean,
       model: MavenModel,
-      managedDependencies: List<MavenId>,
       readingProblems: Collection<MavenProjectProblem>,
       activatedProfiles: MavenExplicitProfiles,
       unresolvedArtifactIds: Set<MavenId>,
@@ -862,7 +863,6 @@ class MavenProject(val file: VirtualFile) {
       val newPluginInfos = LinkedHashSet<MavenPluginWithArtifact>()
       val newExtensions = LinkedHashSet<MavenArtifact>()
       val newAnnotationProcessors = LinkedHashSet<MavenArtifact>()
-      val newManagedDeps = HashMap<GroupAndArtifact, String>(managedDependencies.size)
 
       if (keepPreviousArtifacts) {
         newUnresolvedArtifacts.addAll(state.unresolvedArtifactIds)
@@ -872,7 +872,6 @@ class MavenProject(val file: VirtualFile) {
         newDependencyTree.addAll(state.dependencyTree)
         newExtensions.addAll(state.extensions)
         newAnnotationProcessors.addAll(state.annotationProcessors)
-        newManagedDeps.putAll(state.managedDependencies)
       }
 
       // either keep all previous plugins or only those that are present in the new list
@@ -893,10 +892,6 @@ class MavenProject(val file: VirtualFile) {
       newDependencies.addAll(model.dependencies)
       newExtensions.addAll(model.extensions)
 
-      for (md in managedDependencies) {
-        newManagedDeps.put(GroupAndArtifact(md.groupId ?: "", md.artifactId ?: ""), md.version ?: "")
-      }
-
       val remoteRepositories = ArrayList(newRepositories)
       val remotePluginRepositories = ArrayList(newPluginRepositories)
       val dependencies = ArrayList(newDependencies)
@@ -904,7 +899,6 @@ class MavenProject(val file: VirtualFile) {
       val pluginInfos = ArrayList(newPluginInfos)
       val extensions = ArrayList(newExtensions)
       val annotationProcessors = ArrayList(newAnnotationProcessors)
-      val managedDependenciesMap = LinkedHashMap(newManagedDeps)
 
       val newDependencyHash = dependencyHash ?: state.dependencyHash
       val lastReadStamp = state.lastReadStamp + if (incLastReadStamp) 1 else 0
@@ -942,7 +936,6 @@ class MavenProject(val file: VirtualFile) {
         pluginInfos = pluginInfos,
         extensions = extensions,
         annotationProcessors = annotationProcessors,
-        managedDependencies = managedDependenciesMap,
         dependencyHash = newDependencyHash,
       )
     }
