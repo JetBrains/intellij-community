@@ -39,7 +39,6 @@ fun createBuildOptionsForTest(
   productProperties: ProductProperties,
   homeDir: Path,
   skipDependencySetup: Boolean = false,
-  buildCrossPlatformDistribution: Boolean = false,
   testInfo: TestInfo? = null,
 ): BuildOptions {
   
@@ -52,7 +51,7 @@ fun createBuildOptionsForTest(
     jarCacheDir = homeDir.resolve("out/dev-run/jar-cache"),
     buildDateInSeconds = getDevModeOrTestBuildDateInSeconds(),
   )
-  customizeBuildOptionsForTest(options = options, outDir = outDir, skipDependencySetup = skipDependencySetup, buildCrossPlatformDistribution = buildCrossPlatformDistribution, testInfo = testInfo)
+  customizeBuildOptionsForTest(options = options, outDir = outDir, skipDependencySetup = skipDependencySetup, testInfo = testInfo)
   return options
 }
 
@@ -60,35 +59,25 @@ fun createTestBuildOutDir(productProperties: ProductProperties): Path {
   return Files.createTempDirectory("test-build-${productProperties.baseFileName}")
 }
 
-private inline fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, testInfo: TestInfo, buildCrossPlatformDistribution: Boolean, customizer: (BuildOptions) -> Unit): BuildOptions {
-  val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo = testInfo, buildCrossPlatformDistribution = buildCrossPlatformDistribution)
+private inline fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, testInfo: TestInfo, customizer: (BuildOptions) -> Unit): BuildOptions {
+  val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo = testInfo)
   customizer(options)
   return options
 }
 
-fun customizeBuildOptionsForTest(options: BuildOptions, outDir: Path, skipDependencySetup: Boolean = false, buildCrossPlatformDistribution: Boolean = false, testInfo: TestInfo?) {
+fun customizeBuildOptionsForTest(options: BuildOptions, outDir: Path, skipDependencySetup: Boolean = false, testInfo: TestInfo?) {
   options.skipDependencySetup = skipDependencySetup
   options.isTestBuild = true
   options.buildStepsToSkip += listOf(
     BuildOptions.LIBRARY_URL_CHECK_STEP,
     BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION_STEP,
+    BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP,
     BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP,
     BuildOptions.WIN_SIGN_STEP,
     BuildOptions.MAC_SIGN_STEP,
     BuildOptions.MAC_NOTARIZE_STEP,
     BuildOptions.MAC_DMG_STEP,
   )
-  if (buildCrossPlatformDistribution) {
-    //to build cross-platform distribution, we need to copy OS-specific files, but there is no need to build actual OS-specific archives
-    options.buildStepsToSkip += listOf(
-      BuildOptions.LINUX_ARTIFACTS_STEP,
-      BuildOptions.MAC_ARTIFACTS_STEP,
-      BuildOptions.WINDOWS_ARTIFACTS_STEP,
-    )
-  }
-  else {
-    options.buildStepsToSkip += listOf(BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP)
-  }
   options.buildUnixSnaps = false
   options.outRootDir = outDir
   options.useCompiledClassesFromProjectOutput = true
@@ -133,7 +122,6 @@ fun runTestBuild(
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   isReproducibilityTestAllowed: Boolean = true,
   checkIntegrityOfEmbeddedFrontend: Boolean = true,
-  buildCrossPlatformDistribution: Boolean = false,
   build: suspend (BuildContext) -> Unit = { buildDistributions(context = it) },
   onSuccess: suspend (BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
@@ -149,7 +137,7 @@ fun runTestBuild(
             setupTracer = false,
             buildTools,
             createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo = testInfo, 
-                                      buildCrossPlatformDistribution = buildCrossPlatformDistribution, customizer = buildOptionsCustomizer).also {
+                                               customizer = buildOptionsCustomizer).also {
               reproducibilityTest.configure(it)
             }
           ),
@@ -174,7 +162,7 @@ fun runTestBuild(
         setupTracer = false,
         proprietaryBuildTools = buildTools,
         options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo = testInfo, 
-                                            buildCrossPlatformDistribution = buildCrossPlatformDistribution, customizer = buildOptionsCustomizer),
+                                            customizer = buildOptionsCustomizer),
       ),
       writeTelemetry = true,
       checkIntegrityOfEmbeddedFrontend = checkIntegrityOfEmbeddedFrontend,
