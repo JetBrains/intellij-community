@@ -8,12 +8,14 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.LocalTimeCounter;
 import org.intellij.lang.annotations.MagicConstant;
@@ -73,9 +75,25 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     /** This directory contains case-sensitive files. I.e. files "readme.txt" and "README.TXT" it can contain would be treated as different. */
     static final int CHILDREN_CASE_SENSITIVE = 0x8000_0000;     // applicable only to directories
     static final int IS_SPECIAL_FLAG = CHILDREN_CASE_SENSITIVE; // applicable only to non-directory files
+
+    static @Flags int toFlags(@PersistentFS.Attributes int attributes,
+                              boolean isDirectory) {
+      FileAttributes.CaseSensitivity sensitivity = isDirectory ?
+                                                   PersistentFS.areChildrenCaseSensitive(attributes) :
+                                                   FileAttributes.CaseSensitivity.UNKNOWN;
+      return (PersistentFS.isWritable(attributes) ? VfsDataFlags.IS_WRITABLE_FLAG : 0) |
+             (PersistentFS.isHidden(attributes) ? VfsDataFlags.IS_HIDDEN_FLAG : 0) |
+             (PersistentFS.isOfflineByDefault(attributes) ? VfsDataFlags.IS_OFFLINE : 0) |
+
+             (sensitivity.isKnown() ? VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED : 0) |
+
+             (PersistentFS.isSymLink(attributes) ? VfsDataFlags.IS_SYMLINK_FLAG : 0) |
+             (sensitivity.isSensitive() ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0) |
+             (PersistentFS.isSpecialFile(attributes) ? VfsDataFlags.IS_SPECIAL_FLAG : 0);
+    }
   }
 
-  static final int ALL_FLAGS_MASK =
+  static final @Flags int ALL_FLAGS_MASK =
     VfsDataFlags.IS_WRITABLE_FLAG |
     VfsDataFlags.IS_HIDDEN_FLAG |
     VfsDataFlags.IS_OFFLINE |
@@ -89,10 +107,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @interface Flags {
   }
 
-  final int id;
 
+
+  private final int id;
   private volatile VirtualDirectoryImpl parent;
-  /** Actual file data is stored here */
+  /** Actual file data is stored here, see {@link VfsData} doc for details */
   private volatile @NotNull("except `NULL_VIRTUAL_FILE`") VfsData.Segment segment;
 
   private volatile CachedFileType cachedFileType;

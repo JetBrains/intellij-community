@@ -331,25 +331,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     VirtualFileSystemEntry child = vfsData.getFileById(id, this, true);
     assert child != null;
-    CaseSensitivity sensitivity = isDirectory ?
-                                  PersistentFS.areChildrenCaseSensitive(attributes) :
-                                  CaseSensitivity.UNKNOWN;
-    int newFlags = (PersistentFS.isSymLink(attributes) ? VfsDataFlags.IS_SYMLINK_FLAG : 0) |
-                   (PersistentFS.isSpecialFile(attributes) ? VfsDataFlags.IS_SPECIAL_FLAG : 0) |
-                   (PersistentFS.isWritable(attributes) ? VfsDataFlags.IS_WRITABLE_FLAG : 0) |
-                   (PersistentFS.isHidden(attributes) ? VfsDataFlags.IS_HIDDEN_FLAG : 0) |
-                   (sensitivity.isKnown() ? VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED : 0) |
-                   (sensitivity.isSensitive() ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0) |
-                   (PersistentFS.isOfflineByDefault(attributes) ? VfsDataFlags.IS_OFFLINE : 0);
-    int relevantFlagsMask = VfsDataFlags.IS_SYMLINK_FLAG |
-                            VfsDataFlags.IS_SPECIAL_FLAG |
-                            VfsDataFlags.STRICT_PARENT_HAS_SYMLINK_FLAG |
-                            VfsDataFlags.IS_WRITABLE_FLAG |
-                            VfsDataFlags.IS_HIDDEN_FLAG |
-                            VfsDataFlags.CHILDREN_CASE_SENSITIVE |
-                            VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED |
-                            VfsDataFlags.IS_OFFLINE;
-    segment.setFlags(id, relevantFlagsMask, newFlags);
+
+    segment.setFlags(id, ALL_FLAGS_MASK, VfsDataFlags.toFlags(attributes, isDirectory));
     child.updateLinkStatus(this);
 
     if (getFileSystem().markNewFilesAsDirty()) {
@@ -641,9 +624,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @ApiStatus.Internal
   public VirtualFileSystemEntry doFindChildById(int childId) {
-    if (childId == this.id) {
+    if (childId == this.getId()) {
       //we could just return null (='no such child'), but such a call 99% is a bug:
-      throw new IllegalArgumentException("Trying to find childId(=" + childId + ") in parent(=" + id + ")");
+      throw new IllegalArgumentException("Trying to find childId(=" + childId + ") in parent(=" + getId() + ")");
     }
     VirtualFileSystemEntry existingChild = findCachedChildById(childId);
     if (existingChild != null) return existingChild;
@@ -739,7 +722,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private @Nullable VirtualFileSystemEntry findCachedChildById(int childId) {
     int indexOfChild = directoryData.children.indexOfId(childId);
     if (indexOfChild >= 0) {
-      VirtualFileSystemEntry fileById = getVfsData().getFileById(childId, this, true);
+      VirtualFileSystemEntry fileById = getVfsData().getFileById(childId, this, /*putToCache: */true);
       if (fileById != null) {
         if (fileById.getId() != childId) {
           LOG.error("getFileById(" + childId + ") returns " + fileById + " with different id(=" + fileById.getId() + ")");
@@ -842,7 +825,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   /** does nothing if child.id is already in directoryData.children list */
   public void addChild(@NotNull VirtualFileSystemEntry child) {
-    if (child.getId() == this.id) {
+    if (child.getId() == this.getId()) {
       throw new IllegalArgumentException("Trying to add child(=" + child + ") to itself (parent=" + this + ")");
     }
     CharSequence childName = child.getNameSequence();

@@ -106,8 +106,7 @@ public final class VfsData {
     }, app);
   }
 
-  @NotNull
-  PersistentFSImpl owningPersistentFS() {
+  @NotNull PersistentFSImpl owningPersistentFS() {
     return owningPersistentFS;
   }
 
@@ -126,29 +125,38 @@ public final class VfsData {
     }
   }
 
-  @Nullable
-  VirtualFileSystemEntry getFileById(int id, @NotNull VirtualDirectoryImpl parent, boolean putToMemoryCache) {
+  /**
+   * @return a VirtualFileSystemEntry wrapper for the file data in the cache ({@link #segments}).
+   * If there is no data in {@link #segments} cache for given id yet -- returns null.
+   * If the file with given id was deleted -- throws {@link InvalidVirtualFileAccessException}.
+   * <p/>
+   * If putToMemoryCache=true, and the wrapper created is a directory -- it is also put into {@link PersistentFSImpl#dirByIdCache}.
+   * If the given id corresponds to a file, not a directory -- this param has no effect.
+   */
+  @Nullable VirtualFileSystemEntry getFileById(int id, @NotNull VirtualDirectoryImpl parent, boolean putToMemoryCache) {
     VirtualFileSystemEntry dir = owningPersistentFS.getCachedDir(id);
     if (dir != null) return dir;
 
-    Segment segment = getSegment(id, false);
+    Segment segment = getSegment(id, /*create: */ false);
     if (segment == null) return null;
 
     int offset = objectOffsetInSegment(id);
-    Object o = segment.objectFieldsArray.get(offset);
-    if (o == null) return null;
+    Object entryData = segment.objectFieldsArray.get(offset);
+    if (entryData == null) return null;
 
-    if (o == deadMarker) {
+    if (entryData == deadMarker) {
       throw reportDeadFileAccess(new VirtualFileImpl(id, segment, parent));
     }
 
-    if (o instanceof DirectoryData) {
+    if (entryData instanceof DirectoryData directoryData) {
       if (putToMemoryCache) {
-        return owningPersistentFS.getOrCacheDir(new VirtualDirectoryImpl(id, segment, (DirectoryData)o, parent, parent.getFileSystem()));
+        return owningPersistentFS.getOrCacheDir(new VirtualDirectoryImpl(id, segment, directoryData, parent, parent.getFileSystem()));
       }
-      VirtualFileSystemEntry entry = owningPersistentFS.getCachedDir(id);
-      if (entry != null) return entry;
-      return new VirtualDirectoryImpl(id, segment, (DirectoryData)o, parent, parent.getFileSystem());
+      else {
+        VirtualFileSystemEntry entry = owningPersistentFS.getCachedDir(id);
+        if (entry != null) return entry;
+        return new VirtualDirectoryImpl(id, segment, directoryData, parent, parent.getFileSystem());
+      }
     }
     return new VirtualFileImpl(id, segment, parent);
   }
@@ -180,8 +188,7 @@ public final class VfsData {
     return !invalidatedFileIds.get(id);
   }
 
-  @Nullable
-  VirtualDirectoryImpl getChangedParent(int id) {
+  @Nullable VirtualDirectoryImpl getChangedParent(int id) {
     return changedParents.get(id);
   }
 
@@ -256,8 +263,7 @@ public final class VfsData {
       }
     }
 
-    @NotNull
-    KeyFMap getUserMap(@NotNull VirtualFileSystemEntry file, int id) {
+    @NotNull KeyFMap getUserMap(@NotNull VirtualFileSystemEntry file, int id) {
       Object o = objectFieldsArray.get(objectOffsetInSegment(id));
       if (!(o instanceof KeyFMap)) {
         throw reportDeadFileAccess(file);
@@ -405,6 +411,13 @@ public final class VfsData {
      *
      * @see VirtualDirectoryImpl#findIndexByName(ChildrenIds, CharSequence, boolean)
      */
+    //MAYBE RC:we don't really need to always _load and keep_ the children in memory. We could always load them from
+    //          FSRecordsImpl, and we could even iterate/search through FSRecordsImpl-stored children directly, unpacking
+    //          diff-compressed data on the way. This shouldn't be much slower than linear-search in in-memory int[],
+    //          but it allows to not waste memory on children lists that are not needed, which may be substantial
+    //          given: 1) we _never unload_ VfsData cache 2) most of VirtualDirectory we load we load _not_ to iterate
+    //          through it's children, but just to build a hierarchy, to access some leaf-file, e.g. during indexing
+    //          or during indexes lookups -- so we'll rarely/never actually use this VirtualDirectory.children.
     volatile @NotNull ChildrenIds children = ChildrenIds.EMPTY;
 
     /** assigned under lock(this) only; accessed/modified map contents under lock(adoptedNames) */
@@ -476,9 +489,7 @@ public final class VfsData {
       return adopted;
     }
 
-    @NotNull
-    @Unmodifiable
-    List<String> getAdoptedNames() {
+    @NotNull @Unmodifiable List<String> getAdoptedNames() {
       Set<CharSequence> adopted = adoptedNames;
       if (adopted == null) return Collections.emptyList();
       synchronized (adopted) {

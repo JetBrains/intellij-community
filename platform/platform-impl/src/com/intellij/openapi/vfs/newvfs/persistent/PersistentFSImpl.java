@@ -2348,7 +2348,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     class ChildInserter implements Function<ListResult, ListResult> {
-      ChildInfo childInfo = null;
+      ChildInfo insertedChildInfo = null;
 
       @Override
       public @NotNull ListResult apply(@NotNull ListResult children) {
@@ -2356,8 +2356,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         ChildInfo duplicate = findExistingChildInfo(children.children, name, parent.isCaseSensitive());
         if (duplicate != null) return children;
 
-        childInfo = makeChildRecord(parent, parentId, name, childData, fs, null);
-        return children.insert(childInfo);
+        insertedChildInfo = makeChildRecord(parent, parentId, name, childData, fs, null);
+        return children.insert(insertedChildInfo);
       }
     }
     ChildInserter inserter = new ChildInserter();
@@ -2366,14 +2366,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     // event, for `VirtualFilePointerManager` to get those events to update its pointers properly (because currently
     // it ignores empty directory creation events for performance reasons):
     vfsPeer.update(parent, parentId, inserter, /*setAllChildrenCached: */ isEmptyDirectory);
-    if (inserter.childInfo == null) {
-      return; //nothing has been inserted
+    if (inserter.insertedChildInfo == null) {
+      return; //nothing has been inserted: child{name} is already exist
     }
 
-    int childId = inserter.childInfo.getId();
+    int childId = inserter.insertedChildInfo.getId();
+    int nameId = inserter.insertedChildInfo.getNameId();//vfsPeer.getNameId(name);
     assert parent instanceof VirtualDirectoryImpl : parent;
     VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
-    int nameId = vfsPeer.getNameId(name);
     VirtualFileSystemEntry child = dir.createChild(childId, nameId, fileAttributesToFlags(childData.first), isEmptyDirectory);
     dir.addChild(child);
     incStructuralModificationCount();
