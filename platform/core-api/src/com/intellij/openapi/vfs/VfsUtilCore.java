@@ -304,15 +304,15 @@ public class VfsUtilCore {
         if (result.skipChildren) return result;
       }
 
-      Iterable<VirtualFile> childrenIterable = null;
-      VirtualFile[] children = null;
-
+      Iterable<VirtualFile> children = null;
       try {
         if (file.isValid() && visitor.allowVisitChildren(file) && !visitor.depthLimitReached()) {
-          childrenIterable = visitor.getChildrenIterable(file);
-          if (childrenIterable == null) {
-            //TODO RC: why not just wrap in Arrays.asList(), and replace 2 duplicated loops below with one?
-            children = file.getChildren(!visitor.childrenMayBeUnsorted());
+          children = visitor.getChildrenIterable(file);
+          if (children == null) {
+            VirtualFile[] childrenArray = file.getChildren(/* requireSorted: */ !visitor.childrenMayBeUnsorted());
+            if (childrenArray.length > 0) {
+              children = Arrays.asList(childrenArray);
+            }
           }
         }
       }
@@ -321,15 +321,7 @@ public class VfsUtilCore {
         return VirtualFileVisitor.CONTINUE;
       }
 
-      if (childrenIterable != null) {
-        visitor.saveValue();
-        pushed = true;
-        for (VirtualFile child : childrenIterable) {
-          VirtualFileVisitor.Result result = visitChildrenRecursively(child, visitor);
-          if (result.skipToParent != null && !Comparing.equal(result.skipToParent, child)) return result;
-        }
-      }
-      else if (children != null && children.length != 0) {
+      if (children != null) {
         visitor.saveValue();
         pushed = true;
         for (VirtualFile child : children) {
