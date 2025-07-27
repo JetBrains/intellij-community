@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -59,6 +59,7 @@ public abstract class ManagingFS implements FileSystemInterface {
 
   public abstract long getCreationTimestamp();
 
+  /** @return true if VFS already has fetched (and cached) dir's children from apt {@link com.intellij.openapi.vfs.VirtualFileSystem} */
   public abstract boolean areChildrenLoaded(@NotNull VirtualFile dir);
 
   public abstract boolean wereChildrenAccessed(@NotNull VirtualFile dir);
