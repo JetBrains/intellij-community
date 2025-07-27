@@ -16,6 +16,8 @@ object OpenSourceCommunityInstallersBuildTarget {
     useCompiledClassesFromProjectOutput = false
     buildStepsToSkip += BuildOptions.MAC_SIGN_STEP
     buildStepsToSkip += BuildOptions.WIN_SIGN_STEP
+    // never published from .github/workflows/IntelliJ_IDEA.yml
+    buildStepsToSkip += BuildOptions.WINDOWS_ZIP_STEP
     if (OsFamily.currentOs == OsFamily.MACOS) {
       // generally not needed; doesn't work well on build agents
       buildStepsToSkip += BuildOptions.WINDOWS_EXE_INSTALLER_STEP
