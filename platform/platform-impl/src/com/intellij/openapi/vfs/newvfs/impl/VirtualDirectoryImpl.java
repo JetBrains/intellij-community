@@ -294,8 +294,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return c == '/' || c == File.separatorChar;
   }
 
-  private VirtualFileSystemEntry @NotNull [] getArraySafely(boolean putToMemoryCache) {
-    return myData.getFileChildren(this, putToMemoryCache);
+  private VirtualFileSystemEntry @NotNull [] cachedChildrenArray(boolean putToMemoryCache) {
+    VfsData vfsData = getVfsData();
+    return myData.children.asFiles(fileId -> vfsData.getFileById(fileId, this, putToMemoryCache));
   }
 
   @ApiStatus.Internal
@@ -483,7 +484,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (requireSorting && !myData.children.isSorted()) {
         ensureChildrenSorted();
       }
-      return getArraySafely( /*putToMemoryCache: */ true);
+      return cachedChildrenArray( /*putToMemoryCache: */ true);
     }
     return loadAllChildren(requireSorting);
   }
@@ -511,6 +512,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           CharSequence name1 = info1.getName();
           CharSequence name2 = info2.getName();
           int cmp = compareNames(name1, name2, isCaseSensitive);
+          //TODO RC: the branch below is different from all other places there we sort files by name: here is the only place
+          //         there we switch to case-sensitive sorting to make exact ordering -- in all other places we stop on the
+          //         first step above. Why the difference? Could it bring us any issues?
           if (cmp == 0 && name1 != name2) {
             if (errorCount.get() == 0) {
               boolean wasChildrenLoaded = pFS.areChildrenLoaded(this);
@@ -619,7 +623,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   private void error(String message, Object... details) {
     var builder = new StringBuilder().append(message).append("\n--- children ---");
-    for (var child : getArraySafely(true)) builder.append('\n').append(verboseToString(child));
+    for (var child : cachedChildrenArray(true)) builder.append('\n').append(verboseToString(child));
     builder.append("--- details ---");
     for (var o : details) builder.append('\n').append(o instanceof Object[] ? Arrays.toString((Object[])o) : o.toString());
     throw new AssertionError(builder.toString());
@@ -973,7 +977,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Override
   public @NotNull @Unmodifiable List<VirtualFile> getCachedChildren() {
-    return Arrays.asList(getArraySafely(/*putToCache: */false));
+    return Arrays.asList(cachedChildrenArray(/*putToCache: */false));
   }
 
   @Override
@@ -994,7 +998,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   // optimization: do not travel up unnecessary
   private void markDirtyRecursivelyInternal() {
-    for (VirtualFileSystemEntry child : getArraySafely(true)) {
+    for (VirtualFileSystemEntry child : cachedChildrenArray(/*putToCache: */true)) {
       child.markDirtyInternal();
       if (child instanceof VirtualDirectoryImpl) {
         ((VirtualDirectoryImpl)child).markDirtyRecursivelyInternal();

@@ -390,7 +390,11 @@ public final class VfsData {
     }
   }
 
-  // non-final field accesses are synchronized on this instance, but this happens in VirtualDirectoryImpl
+  /**
+   * This class is mostly a data-holder: most operations are in {@link VirtualDirectoryImpl}.
+   *
+   * Non-final field modifications are synchronized on 'this' instance (but this is done in {@link VirtualDirectoryImpl})
+   */
   @ApiStatus.Internal
   public static final class DirectoryData {
     private static final AtomicFieldUpdater<DirectoryData, KeyFMap> USER_MAP_UPDATER =
@@ -405,11 +409,6 @@ public final class VfsData {
 
     /** assigned under lock(this) only; accessed/modified map contents under lock(adoptedNames) */
     private volatile Set<CharSequence> adoptedNames;
-
-    VirtualFileSystemEntry @NotNull [] getFileChildren(@NotNull VirtualDirectoryImpl parent, boolean putToMemoryCache) {
-      VfsData vfsData = parent.getVfsData();
-      return children.asFiles(fileId -> vfsData.getFileById(fileId, parent, putToMemoryCache));
-    }
 
     boolean changeUserMap(@NotNull KeyFMap oldMap, @NotNull KeyFMap newMap) {
       return USER_MAP_UPDATER.compareAndSet(this, oldMap, newMap);
