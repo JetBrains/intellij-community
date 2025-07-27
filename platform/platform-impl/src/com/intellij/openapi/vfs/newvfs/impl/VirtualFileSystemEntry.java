@@ -89,39 +89,42 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @interface Flags {
   }
 
-  private volatile @NotNull("except `NULL_VIRTUAL_FILE`") VfsData.Segment mySegment;
-  private volatile VirtualDirectoryImpl myParent;
-  final int myId;
-  private volatile CachedFileType myFileType;
+  final int id;
+
+  private volatile VirtualDirectoryImpl parent;
+  /** Actual file data is stored here */
+  private volatile @NotNull("except `NULL_VIRTUAL_FILE`") VfsData.Segment segment;
+
+  private volatile CachedFileType cachedFileType;
 
   static {
     assert ~ALL_FLAGS_MASK == LocalTimeCounter.TIME_MASK : "ALL_FLAGS_MASK and MOD_COUNTER_MASK must combined into full int32";
   }
 
   VirtualFileSystemEntry(int id, @NotNull VfsData.Segment segment, @Nullable VirtualDirectoryImpl parent) {
-    mySegment = segment;
-    myId = id;
-    myParent = parent;
     if (id <= 0) {
-      throw new IllegalArgumentException("id must be positive but got: " + id);
+      throw new IllegalArgumentException("file id(=" + id + ") must be positive");
     }
+    this.id = id;
+    this.segment = segment;
+    this.parent = parent;
   }
 
   private VirtualFileSystemEntry() {
     // an exception to instantiate the special singleton `NULL_VIRTUAL_FILE`
     //noinspection ConstantConditions
-    mySegment = null;
-    myParent = null;
-    myId = -42;
+    segment = null;
+    parent = null;
+    id = -42;
   }
 
   @NotNull VfsData getVfsData() {
-    VfsData data = mySegment.owningVfsData;
+    VfsData data = segment.owningVfsData;
     PersistentFSImpl owningPersistentFS = data.owningPersistentFS();
     if (!owningPersistentFS.isOwnData(data)) {
       //PersistentFSImpl re-creates VfsData on (re-)connect
       throw new AssertionError("'Alien' file object: was created before PersistentFS (re-)connected " +
-                               "(id=" + myId + ", parent=" + myParent + "), " +
+                               "(id=" + id + ", parent=" + parent + "), " +
                                "owningData: " + data + ", pFS: " + owningPersistentFS);
     }
     return data;
@@ -132,7 +135,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @NotNull VfsData.Segment getSegment() {
-    VfsData.Segment segment = mySegment;
+    VfsData.Segment segment = this.segment;
     if (segment.replacement != null) {
       segment = updateSegmentAndParent(segment);
     }
@@ -143,17 +146,17 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     while (segment.replacement != null) {
       segment = segment.replacement;
     }
-    VirtualDirectoryImpl changedParent = segment.owningVfsData.getChangedParent(myId);
+    VirtualDirectoryImpl changedParent = segment.owningVfsData.getChangedParent(id);
     if (changedParent != null) {
-      myParent = changedParent;
+      parent = changedParent;
     }
-    mySegment = segment;
+    this.segment = segment;
     return segment;
   }
 
   void registerLink(@NotNull VirtualFileSystem fs) {
     if (fs instanceof LocalFileSystemImpl && isSymlink() && isValid()) {
-      ((LocalFileSystemImpl)fs).symlinkUpdated(myId, myParent, getNameSequence(), getPath(), getCanonicalPath());
+      ((LocalFileSystemImpl)fs).symlinkUpdated(id, parent, getNameSequence(), getPath(), getCanonicalPath());
     }
   }
 
@@ -168,7 +171,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     if (pfs == null) {
       return "<FS-is-disposed>";//shutdown-safe
     }
-    return pfs.getName(myId);
+    return pfs.getName(id);
   }
 
   @Override
@@ -177,16 +180,16 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public final int getNameId() {
-    return owningPersistentFS().peer().getNameIdByFileId(myId);
+    return owningPersistentFS().peer().getNameIdByFileId(id);
   }
 
   @Override
   public VirtualDirectoryImpl getParent() {
-    VfsData.Segment segment = mySegment;
+    VfsData.Segment segment = this.segment;
     if (segment.replacement != null) {
       updateSegmentAndParent(segment);
     }
-    return myParent;
+    return parent;
   }
 
   @Override
@@ -215,19 +218,19 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public long getModificationStamp() {
-    return isValid() ? getSegment().getModificationStamp(myId) : -1;
+    return isValid() ? getSegment().getModificationStamp(id) : -1;
   }
 
   public void setModificationStamp(long modificationStamp) {
-    getSegment().setModificationStamp(myId, modificationStamp);
+    getSegment().setModificationStamp(id, modificationStamp);
   }
 
   boolean getFlagInt(@Flags int mask) {
-    return getSegment().getFlag(myId, mask);
+    return getSegment().getFlag(id, mask);
   }
 
   void setFlagInt(@Flags int mask, boolean value) {
-    getSegment().setFlag(myId, mask, value);
+    getSegment().setFlag(id, mask, value);
   }
 
   @Override
@@ -492,17 +495,17 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public int getId() {
-    return myId;
+    return id;
   }
 
   @Override
   public boolean equals(Object o) {
-    return this == o || o instanceof VirtualFileSystemEntry && myId == ((VirtualFileSystemEntry)o).myId;
+    return this == o || o instanceof VirtualFileSystemEntry && id == ((VirtualFileSystemEntry)o).id;
   }
 
   @Override
   public int hashCode() {
-    return myId;
+    return id;
   }
 
   @Override
@@ -519,7 +522,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public final boolean exists() {
-    return getVfsData().isFileValid(myId);
+    return getVfsData().isFileValid(id);
   }
 
   @Override
@@ -541,15 +544,15 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       //    is the only method that _doesn't_ throw the AssertionError for alien files, but returns false instead.
       //    In other words: we now consider an 'alien' file as 'invalid' file, instead of a primordial sin.
 
-      VfsData data = mySegment.owningVfsData;
+      VfsData data = segment.owningVfsData;
       PersistentFSImpl owningPersistentFS = data.owningPersistentFS();
       if (!owningPersistentFS.isOwnData(data)) {
         Logger.getInstance(VirtualFileSystemEntry.class).warn(
-          "'Alien' file object: was created before PersistentFS (re-)connected (id=" + myId + ", parent=" + myParent + ")"
+          "'Alien' file object: was created before PersistentFS (re-)connected (id=" + id + ", parent=" + parent + ")"
         );
         return false;
       }
-      return data.isFileValid(myId);
+      return data.isFileValid(id);
     }
   }
 
@@ -562,7 +565,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     if (!persistentFs.isOwnData(owningVfsData)) {
       //PersistentFSImpl re-creates VfsData on (re-)connect
       return "'Alien' file object: was created before PersistentFS (re-)connected " +
-             "(id=" + myId + ", parent=" + myParent + ")";
+             "(id=" + id + ", parent=" + parent + ")";
     }
 
     if (exists()) {
@@ -583,7 +586,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VirtualDirectoryImpl parent = getParent();
     //children are sorted by name: child position must change after its name has changed
     parent.removeChild(this);
-    pfs.peer().setName(myId, newName);
+    pfs.peer().setName(id, newName);
     parent.addChild(this);
 
     pfs.incStructuralModificationCount();
@@ -602,7 +605,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       () -> {
         oldParent.removeChild(this);
 
-        getSegment().changeParent(myId, newParent);
+        getSegment().changeParent(id, newParent);
         newParent.addChild(this);
         return (Void)null;
       },
@@ -625,7 +628,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @ApiStatus.Internal
   public void invalidate(@NotNull Object source, @NotNull Object reason) {
-    getVfsData().invalidateFile(myId);
+    getVfsData().invalidateFile(id);
     appendInvalidationReason(source, reason);
   }
 
@@ -769,11 +772,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public final @NotNull FileType getFileType() {
-    CachedFileType cache = myFileType;
+    CachedFileType cache = cachedFileType;
     FileType type = cache == null ? null : cache.getUpToDateOrNull();
     if (type == null) {
       type = super.getFileType();
-      myFileType = CachedFileType.forType(type);
+      cachedFileType = CachedFileType.forType(type);
     }
     return type;
   }

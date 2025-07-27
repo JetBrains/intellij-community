@@ -331,7 +331,7 @@ public final class VfsData {
       owningVfsData.changeParent(fileId, directory);
     }
 
-    //@GuardedBy("parent.DirectoryData")
+    //@GuardedBy("parent.directoryData")
     void initFileData(int fileId, @NotNull Object fileData, @NotNull VirtualDirectoryImpl parent) throws FileAlreadyCreatedException {
       int offset = objectOffsetInSegment(fileId);
 
@@ -355,7 +355,7 @@ public final class VfsData {
           describeAlreadyCreatedFile(fileId)
           + " data: " + fileData
           + ", alreadyExistingData: " + existingData
-          + ", parentData: " + parentData + ", parent.data: " + parent.myData + " equals: " + (parentData == parent.myData)
+          + ", parentData: " + parentData + ", parent.data: " + parent.directoryData + " equals: " + (parentData == parent.directoryData)
           + ", synchronized(parentData): " + (parentData != null ? Thread.holdsLock(parentData) : "...")
         );
       }

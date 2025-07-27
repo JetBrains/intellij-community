@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class FsRoot extends VirtualDirectoryImpl {
-  private final String myPathWithOneSlash;
+  private final String pathWithOneTrailingSlash;
 
   @ApiStatus.Internal
   public FsRoot(int id,
@@ -29,9 +29,9 @@ public final class FsRoot extends VirtualDirectoryImpl {
         "original path: '" + originalDebugPath + "'; " + OS.CURRENT
       );
     }
-    myPathWithOneSlash = pathBeforeSlash + '/';
+    pathWithOneTrailingSlash = pathBeforeSlash + '/';
     VfsData.Segment segment = getSegment();
-    segment.initFileData(id, myData, this);
+    segment.initFileData(id, directoryData, this);
     // assume root has FS-default case-sensitivity
     segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVE, attributes.areChildrenCaseSensitive() == FileAttributes.CaseSensitivity.SENSITIVE);
     segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, true);
@@ -50,7 +50,7 @@ public final class FsRoot extends VirtualDirectoryImpl {
 
   @Override
   public @NotNull String getPath() {
-    return myPathWithOneSlash;
+    return pathWithOneTrailingSlash;
   }
 
   @Override

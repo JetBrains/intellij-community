@@ -2429,7 +2429,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
       FakeVirtualFile virtualFile = new FakeVirtualFile(parent, name);
       attributes = fs.getAttributes(virtualFile);
-      symlinkTarget = attributes != null && attributes.isSymLink() ? fs.resolveSymLink(virtualFile) : null;
+      symlinkTarget = (attributes != null && attributes.isSymLink()) ?
+                      fs.resolveSymLink(virtualFile) :
+                      null;
     }
     return attributes == null ? null : new Pair<>(attributes, symlinkTarget);
   }
