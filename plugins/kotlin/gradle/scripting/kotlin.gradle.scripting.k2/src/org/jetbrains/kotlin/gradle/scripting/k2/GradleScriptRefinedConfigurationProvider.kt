@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -13,6 +14,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptModelData
 import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptEntitySource
@@ -106,6 +108,20 @@ class GradleScriptRefinedConfigurationProvider(
         }
     }
 
+    fun updateWorkspaceModel(callback: ActionCallback? = null) {
+        val updatedStorage = project.workspaceModel.currentSnapshot.toBuilder().apply {
+            enrichStorage(data.get())
+        }
+
+        coroutineScope.launch {
+            project.workspaceModel.update("updating .gradle.kts scripts") { storage ->
+                storage.replaceBySource({ it is KotlinGradleScriptEntitySource }, updatedStorage)
+            }
+            callback?.setDone()
+        }
+    }
+
+
     private fun MutableEntityStorage.enrichStorage(
         configurations: Map<VirtualFile, ScriptConfigurationWithSdk>,
     ) {
@@ -117,7 +133,7 @@ class GradleScriptRefinedConfigurationProvider(
             val scriptUrl = scriptFile.toVirtualFileUrl(fileUrlManager)
 
             val classes = configuration.dependenciesClassPath.sorted().map { it.path.toVirtualFileUrl(fileUrlManager) }.toMutableSet()
-            val sources = configuration.dependenciesSources.sorted().map {it.path.toVirtualFileUrl(fileUrlManager) }.toMutableSet()
+            val sources = configuration.dependenciesSources.sorted().map { it.path.toVirtualFileUrl(fileUrlManager) }.toMutableSet()
 
             val dependencies = buildList {
                 add(
@@ -126,27 +142,46 @@ class GradleScriptRefinedConfigurationProvider(
                     }
                 )
 
-                if (indexSourceRootsEagerly()) {
-                    addAll(createDependenciesWithSources(classes, sources))
-
-                    add(extractRootsByPredicate(classes, sources) {
+                add(
+                    extractRootsByPredicate(classes, sources) {
                         it.url.contains("accessors")
-                    })
-
-                    add(extractRootsByPredicate(classes, sources) {
-                        it.url.contains("groovy")
-                    })
-                }
-
-                addAll(
-                    classes.map {
-                        getOrCreateScriptLibrary(it)
                     }
                 )
+
+                if (indexSourceRootsEagerly() || GradleScriptIndexSourcesStorage.getInstance(project).sourcesShouldBeIndexed()) {
+                    addAll(
+                        classes.map {
+                            getOrCreateScriptLibrary(it, sources)
+                        }
+                    )
+                } else {
+                    addAll(
+                        classes.map {
+                            getOrCreateScriptLibrary(it)
+                        }
+                    )
+                }
             }
 
             this addEntity KotlinScriptEntity(scriptUrl, dependencies, KotlinGradleScriptEntitySource)
         }
+    }
+
+    private fun MutableEntityStorage.getOrCreateScriptLibrary(
+        jar: VirtualFileUrl,
+        sources: Collection<VirtualFileUrl>
+    ): KotlinScriptLibraryEntityId {
+        val id = KotlinScriptLibraryEntityId(listOf(jar), sources.toList())
+
+        if (!contains(id)) {
+            this addEntity KotlinScriptLibraryEntity(
+                id.classes,
+                id.sources,
+                KotlinGradleScriptEntitySource
+            )
+        }
+
+        return id
     }
 
     private fun MutableEntityStorage.getOrCreateScriptLibrary(
@@ -156,8 +191,8 @@ class GradleScriptRefinedConfigurationProvider(
 
         if (!contains(id)) {
             this addEntity KotlinScriptLibraryEntity(
-                listOf(url),
-                emptyList(),
+                id.classes,
+                id.sources,
                 KotlinGradleScriptEntitySource
             )
         }
@@ -192,36 +227,6 @@ class GradleScriptRefinedConfigurationProvider(
             }
         }
         return removed
-    }
-
-    private fun MutableEntityStorage.createDependenciesWithSources(
-        classes: MutableSet<VirtualFileUrl>, sources: MutableSet<VirtualFileUrl>
-    ): List<KotlinScriptLibraryEntityId> {
-        val result: MutableList<KotlinScriptLibraryEntityId> = mutableListOf()
-        val sourcesNames = sources.associateBy { it.fileName }
-
-        val jar = ".jar"
-        val pairs = classes.filter { it.fileName.contains(jar) }.associateWith {
-            sourcesNames[it.fileName] ?: sourcesNames[it.fileName.replace(jar, "-sources.jar")]
-        }.filterValues { it != null }
-
-        for ((left, right) in pairs) {
-            if (right != null) {
-                val classesUrl = listOf(left)
-                val sourcesUrl = listOf(right)
-
-                val id = KotlinScriptLibraryEntityId(classesUrl, sourcesUrl)
-                if (!this.contains(id)) {
-                    this addEntity KotlinScriptLibraryEntity(classesUrl, sourcesUrl, KotlinGradleScriptEntitySource)
-                }
-
-                classes.remove(left)
-                sources.remove(right)
-                result.add(id)
-            }
-        }
-
-        return result
     }
 
     companion object {

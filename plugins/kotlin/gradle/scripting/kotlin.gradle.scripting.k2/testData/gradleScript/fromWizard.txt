@@ -2,10 +2,7 @@ KaScriptModule:
   description: Script build.gradle.kts
   targetPlatform: JVM (1.8)
   regularDependencies:
-    KaLibraryModule(GRADLE_REPOSITORY/caches/8.11/dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/classes, scriptDependency)
     KaLibraryModule(GRADLE_REPOSITORY/caches/8.11/generated-gradle-jars/gradle-api-8.11.jar, scriptDependency)
-    KaLibraryModule(GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/classes, scriptDependency)
-    KaLibraryModule(GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/classes, scriptDependency)
     KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/com.google.code.gson/gson/2.8.9/8a432c1d6825781e21a02db2e2c33c5fde2833b9/gson-2.8.9.jar, scriptDependency)
     KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.gradle.kotlin/gradle-kotlin-dsl-plugins/5.1.1/3df489c5ed7c79591eaef488ac4462a685a2c3de/gradle-kotlin-dsl-plugins-5.1.1.jar, scriptDependency)
     KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.intellij.deps/trove4j/1.0.20200330/3afb14d5f9ceb459d724e907a21145e8ff394f02/trove4j-1.0.20200330.jar, scriptDependency)
@@ -56,6 +53,7 @@ KaScriptModule:
     KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/javaparser-core-3.17.0.jar, scriptDependency)
     KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-reflect-2.0.20.jar, scriptDependency)
     KaLibraryModule(SDK)
+    KaLibraryModule(classes=[file://GRADLE_REPOSITORY/caches/8.11/dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/classes, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/classes, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/classes], sources=[file://GRADLE_REPOSITORY/caches/8.11/dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/sources, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/sources, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/sources], scriptDependency)
     KaLibraryModule(classes=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.0.20/7388d355f7cceb002cd387ccb7ab3850e4e0a07f/kotlin-stdlib-2.0.20.jar!/, jar://GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-stdlib-2.0.20.jar!/], sources=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.0.20/a6abf4122d686e67c307f45a1d056cd2d6ae57b5/kotlin-stdlib-2.0.20-sources.jar!/], scriptDependency)
     KaSourceModule(GradleKotlinFixture, production)
     KaSourceModule(GradleKotlinFixture, test)
@@ -116,9 +114,9 @@ KaLibraryModule:
     <empty>
 
 KaLibraryModule:
-  description: Library GRADLE_REPOSITORY/caches/8.11/dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/classes
+  description: Library classes=[file://GRADLE_REPOSITORY/caches/8.11/dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/classes, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/classes, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/classes], sources=[file://GRADLE_REPOSITORY/caches/8.11/dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/sources, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/sources, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/sources]
   targetPlatform: JVM (1.8)
-  libraryName: GRADLE_REPOSITORY/caches/8.11/dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/classes
+  libraryName: classes=[file://GRADLE_REPOSITORY/caches/8.11/dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/classes, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/classes, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/classes], sources=[file://GRADLE_REPOSITORY/caches/8.11/dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/sources, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/sources, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/sources]
   isSdk: false
   regularDependencies:
     <empty>
@@ -131,30 +129,6 @@ KaLibraryModule:
   description: Library GRADLE_REPOSITORY/caches/8.11/generated-gradle-jars/gradle-api-8.11.jar
   targetPlatform: JVM (1.8)
   libraryName: GRADLE_REPOSITORY/caches/8.11/generated-gradle-jars/gradle-api-8.11.jar
-  isSdk: false
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/classes
-  targetPlatform: JVM (1.8)
-  libraryName: GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/classes
-  isSdk: false
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/classes
-  targetPlatform: JVM (1.8)
-  libraryName: GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/classes
   isSdk: false
   regularDependencies:
     <empty>

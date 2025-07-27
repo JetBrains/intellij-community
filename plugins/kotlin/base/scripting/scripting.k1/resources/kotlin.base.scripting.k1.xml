@@ -52,12 +52,6 @@
             defaultValue="false"
             restartRequired="true"/>
 
-    <registryKey
-            key="kotlin.scripting.index.dependencies.sources"
-            description="Index script dependencies sources eagerly (not deferred)"
-            defaultValue="false"
-            restartRequired="true"/>
-
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.resolve.ScriptReportSink"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.k1.IdeScriptReportSink"/>
 

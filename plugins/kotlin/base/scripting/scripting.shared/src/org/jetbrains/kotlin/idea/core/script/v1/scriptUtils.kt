@@ -14,18 +14,9 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
-import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import javax.swing.Icon
 import kotlin.script.experimental.api.IdeScriptCompilationConfigurationKeys
-import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptDiagnostic
-import kotlin.script.experimental.api.defaultImports
-import kotlin.script.experimental.api.dependencies
-import kotlin.script.experimental.api.dependenciesSources
-import kotlin.script.experimental.api.ide
-import kotlin.script.experimental.jvm.impl.toClassPathOrEmpty
-import kotlin.script.experimental.jvm.jdkHome
-import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.util.PropertiesCollection
 
 fun indexSourceRootsEagerly(): Boolean = Registry.`is`("kotlin.scripting.index.dependencies.sources", false)

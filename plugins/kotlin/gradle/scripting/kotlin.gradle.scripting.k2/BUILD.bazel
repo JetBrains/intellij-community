@@ -64,6 +64,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin",
     "//platform/core-api:core",
     "//plugins/kotlin/base/scripting/scripting.shared",
+    "//java/openapi:java",
   ],
   runtime_deps = [
     ":kotlin-gradle-scripting-k2_resources",
@@ -139,6 +140,7 @@ jvm_library(
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "//platform/projectModel-impl",
     "//plugins/kotlin/base/scripting/scripting.shared",
+    "//java/openapi:java",
   ],
   runtime_deps = [
     ":kotlin-gradle-scripting-k2_resources",
