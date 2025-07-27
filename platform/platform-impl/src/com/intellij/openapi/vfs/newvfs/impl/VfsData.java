@@ -345,6 +345,8 @@ public final class VfsData {
       if (existingData != null) {
         //RC: it seems like concurrency issue, but I can't find a specific location
         //MAYBE RC: don't throw the exception -- if an entry was already created, so be it, log warn and go on?
+        //TODO RC: why it is even an error? This could happen if the cached file entry was dropped by GC (it is a soft-ref),
+        //         or sometimes just by concurrency
 
         FSRecordsImpl vfsPeer = owningVfsData.owningPersistentFS.peer();
         int parentId = vfsPeer.getParent(fileId);

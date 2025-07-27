@@ -305,18 +305,24 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @ApiStatus.Internal
-  public @NotNull VirtualFileSystemEntry createChild(int fileId,
-                                                     int nameId,
-                                                     @PersistentFS.Attributes int attributes,
-                                                     boolean isEmptyDirectory) {
+  public @NotNull VirtualFileSystemEntry createChildIfNotExist(int fileId,
+                                                               int nameId,
+                                                               @PersistentFS.Attributes int attributes,
+                                                               boolean isEmptyDirectory) {
     synchronized (directoryData) {
+      //check is it already initialized:
+      //MAYBE RC: getVfsData().hasLoadedFile() is probably a better way to check this?
+      VirtualFileSystemEntry entry = getVfsData().getFileById(fileId, this, /*putInCache: */ true);
+      if (entry != null) {
+        return entry;
+      }
       return createChildImpl(fileId, nameId, attributes, isEmptyDirectory);
     }
   }
 
   /**
-   * 'create' is a bit misleading: method loads child data from persistence into {@link VfsData} in-memory cache
-   * Note that loaded entry is _not_ added to a parent's children list.
+   * 'create' is a bit misleading: method instantiates a slot for child data in {@link VfsData} in-memory cache
+   * Note: the id is _not_ added to a parent's children list -- this should be done separately.
    */
   //@GuardedBy("directoryData")
   private VirtualFileSystemEntry createChildImpl(int id, int nameId, @PersistentFS.Attributes int attributes, boolean isEmptyDirectory) {

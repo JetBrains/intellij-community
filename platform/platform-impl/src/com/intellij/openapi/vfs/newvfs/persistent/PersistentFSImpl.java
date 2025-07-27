@@ -2374,7 +2374,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     int nameId = inserter.insertedChildInfo.getNameId();//vfsPeer.getNameId(name);
     assert parent instanceof VirtualDirectoryImpl : parent;
     VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
-    VirtualFileSystemEntry child = dir.createChild(childId, nameId, fileAttributesToFlags(childData.first), isEmptyDirectory);
+    VirtualFileSystemEntry child = dir.createChildIfNotExist(childId, nameId, fileAttributesToFlags(childData.first), isEmptyDirectory);
     dir.addChild(child);
     incStructuralModificationCount();
   }
