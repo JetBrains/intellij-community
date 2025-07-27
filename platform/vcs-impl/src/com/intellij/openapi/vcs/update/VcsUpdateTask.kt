@@ -262,11 +262,6 @@ internal open class VcsUpdateTask(
 
     val updateSuccess = !someSessionWasCancelled && groupedExceptions.isEmpty()
 
-    if (project.isDisposed()) {
-      StoreReloadManager.getInstance(project).unblockReloadingProjectOnExternalChanges()
-      return
-    }
-
     if (!groupedExceptions.isEmpty()) {
       if (continueChainFinal) {
         gatherContextInterruptedMessages()
