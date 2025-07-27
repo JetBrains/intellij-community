@@ -175,6 +175,9 @@ data class BuildOptions(
     /** Build Windows artifacts: .zip archive and .exe installer. */
     const val WINDOWS_ARTIFACTS_STEP: String = "windows_artifacts"
 
+    /** Build Windows .zip archive */
+    const val WINDOWS_ZIP_STEP: String = "windows_zip_archive"
+
     /** Build *.exe installer for Windows distribution. If skipped, only the .zip archive will be produced. */
     const val WINDOWS_EXE_INSTALLER_STEP: String = "windows_exe_installer"
 
