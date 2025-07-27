@@ -27,8 +27,8 @@ import org.jetbrains.plugins.terminal.util.ShellIntegration;
 import org.jetbrains.plugins.terminal.util.ShellNameUtil;
 import org.jetbrains.plugins.terminal.util.ShellType;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -164,16 +164,17 @@ public final class LocalShellIntegrationInjector {
   @VisibleForTesting
   public static @NotNull String findAbsolutePath(@NotNull String relativePath) throws IOException {
     String jarPath = PathUtil.getJarPathForClass(LocalTerminalDirectRunner.class);
-    final File result;
+    final Path result;
     if (PluginManagerCore.isRunningFromSources()) {
-      result = Path.of(PathManager.getCommunityHomePath()).resolve("plugins/terminal/resources/").resolve(relativePath).toFile();
+      result = Path.of(PathManager.getCommunityHomePath()).resolve("plugins/terminal/resources/").resolve(relativePath);
     } else if (jarPath.endsWith(".jar")) {
-      File jarFile = new File(jarPath);
-      if (!jarFile.isFile()) {
+      Path jarFile = Path.of(jarPath);
+      if (!Files.isRegularFile(jarFile)) {
         throw new IOException("Broken installation: " + jarPath + " is not a file");
       }
-      File pluginBaseDir = jarFile.getParentFile().getParentFile();
-      result = new File(pluginBaseDir, relativePath);
+      // Find "plugins/terminal" by "plugins/terminal/lib/terminal.jar"
+      Path pluginBaseDir = jarFile.getParent().getParent();
+      result = pluginBaseDir.resolve(relativePath);
     }
     else {
       Application application = ApplicationManager.getApplication();
@@ -181,16 +182,16 @@ public final class LocalShellIntegrationInjector {
         jarPath = StringUtil.trimEnd(jarPath.replace('\\', '/'), '/') + '/';
         String srcDir = jarPath.replace("/out/classes/production/intellij.terminal/",
                                         "/community/plugins/terminal/resources/");
-        if (new File(srcDir).isDirectory()) {
+        if (Files.isDirectory(Path.of(srcDir))) {
           jarPath = srcDir;
         }
       }
-      result = new File(jarPath, relativePath);
+      result = Path.of(jarPath).resolve(relativePath);
     }
-    if (!result.isFile()) {
-      throw new IOException("Cannot find " + relativePath + ": " + result.getAbsolutePath() + " is not a file");
+    if (!Files.isRegularFile(result)) {
+      throw new IOException("Cannot find " + relativePath + ": " + result + " is not a file");
     }
-    return result.getAbsolutePath();
+    return result.toString();
   }
 
   private static void setLoginShellEnv(@NotNull Map<String, String> envs, boolean loginShell) {
