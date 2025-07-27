@@ -45,7 +45,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 private val LOG = logger<VcsUpdateTask>()
 
-internal open class VcsUpdateTask(
+internal class VcsUpdateTask(
   private val project: Project,
   private val roots: Array<FilePath>,
   private val spec: List<VcsUpdateSpecification>,
@@ -53,7 +53,7 @@ internal open class VcsUpdateTask(
   private val actionName: @Nls @NlsContexts.ProgressTitle String,
 ) {
   private val projectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project)
-  protected var updatedFiles: UpdatedFiles = UpdatedFiles.create()
+  private var updatedFiles: UpdatedFiles = UpdatedFiles.create()
   private val groupedExceptions = HashMap<HotfixData?, MutableList<VcsException>>()
   private val updateSessions = ArrayList<UpdateSession>()
   private var updateNumber = 1
@@ -74,7 +74,7 @@ internal open class VcsUpdateTask(
     ++updateNumber
   }
 
-  fun launch() {
+  fun launch(@RequiresEdt onSuccess: () -> Unit = {}) {
     project.service<ProjectVcsUpdateTaskExecutor>().cs.launch(Dispatchers.Default) {
       try {
         withBackgroundProgress(project, actionName) {
@@ -83,6 +83,7 @@ internal open class VcsUpdateTask(
           }
         }
         withContext(Dispatchers.UiWithModelAccess) {
+          onSuccessImpl(false)
           onSuccess()
         }
       }
@@ -218,11 +219,6 @@ internal open class VcsUpdateTask(
     val type = if (someSessionWasCancelled) NotificationType.WARNING else NotificationType.INFORMATION
     return VcsNotifier.standardNotification()
       .createNotification(title, content.toString(), type).setDisplayId(VcsNotificationIdsHolder.PROJECT_PARTIALLY_UPDATED)
-  }
-
-  @RequiresEdt
-  protected open fun onSuccess() {
-    onSuccessImpl(false)
   }
 
   private fun onSuccessImpl(wasCanceled: Boolean) {

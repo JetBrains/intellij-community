@@ -92,12 +92,7 @@ object VcsUpdateProcess {
     @Nls actionName: String,
     @RequiresEdt onSuccess: () -> Unit = {},
   ) {
-    object : VcsUpdateTask(project, roots, updateSpec, actionInfo, actionName) {
-      override fun onSuccess() {
-        super.onSuccess()
-        onSuccess()
-      }
-    }.launch()
+    VcsUpdateTask(project, roots, updateSpec, actionInfo, actionName).launch(onSuccess)
   }
 
   @ApiStatus.Obsolete
