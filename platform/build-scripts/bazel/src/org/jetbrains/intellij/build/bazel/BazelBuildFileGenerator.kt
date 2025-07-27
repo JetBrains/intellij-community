@@ -318,12 +318,14 @@ internal class BazelBuildFileGenerator(
         "Unknown module name: ${customModule.moduleName} in `customModules`"
       }
     }
-
     val targetsPerModule = mutableListOf<ModuleTargets>()
     val fileToUpdater = LinkedHashMap<Path, BazelFileUpdater>()
     // bazel build file -> (bzlFile (for import) -> already imported symbols)
     val existingLoads = mutableMapOf<Path, MutableMap<String, MutableSet<String>>>()
     for (module in (if (isCommunity) list.community else list.ultimate)) {
+      if (module.module.name == "intellij.javascript.impl") {
+        println("STOP")
+      }
       if (generated.putIfAbsent(module, true) == null) {
         val fileUpdater = fileToUpdater.computeIfAbsent(module.bazelBuildFileDir) {
           val fileUpdater = BazelFileUpdater(module.bazelBuildFileDir.resolve("BUILD.bazel"))
@@ -1079,55 +1081,12 @@ private fun renderDeps(
 }
 
 private fun getUniqueSegmentName(labels: List<String>): Map<String, String> {
-  // first try with just last segments
-  val lastSegments = labels.associateWith { path ->
-    path.splitToSequence('/').last().substringAfter(':').replace('.', '-')
-  }
-
-  // find which names have collisions
-  val nameCount = lastSegments.values.groupingBy { it }.eachCount()
-  if (nameCount.none { it.value > 1 }) {
-    return lastSegments
-  }
-
-  // for paths with colliding names, try using more segments
-  val result = LinkedHashMap<String, String>()
-  var segmentDepth = 2
-
-  while (true) {
-    result.clear()
-    for (label in labels) {
-      val segments = label.splitToSequence('/')
-        .map { it.substringAfter(':').replace('.', '-') }
-        .filter { it.isNotEmpty() }
-        .toList()
-      if (segments.isEmpty()) {
-        continue
-      }
-
-      val lastSegment = segments.last()
-
-      // if this last segment has collisions, use more segments
-      if ((nameCount[lastSegment] ?: 0) > 1) {
-        val relevantSegments = segments.takeLast(minOf(segmentDepth, segments.size))
-        result.put(label, relevantSegments.joinToString("-"))
-      }
-      else {
-        // no collision - use just the last segment
-        result.put(label, lastSegment.replace('.', '-'))
-      }
-    }
-
-    // check if we resolved all collisions
-    val newNameCount = result.values.groupingBy { it }.eachCount()
-    if (newNameCount.none { it.value > 1 }) {
-      return result
-    }
-
-    segmentDepth++
-    // safety check to prevent infinite loop
-    if (segmentDepth > 5) {
-      throw IllegalStateException("Unable to resolve unique names after trying 5 segment levels")
-    }
+  return labels.associateWith { path ->
+    path.splitToSequence('/').map {
+      it.substringAfter(':')
+        .replace('.', '-')
+        .replace("/", "")
+        .replace("@", "")
+    }.filter { it.isNotEmpty() }.joinToString("_")
   }
 }
