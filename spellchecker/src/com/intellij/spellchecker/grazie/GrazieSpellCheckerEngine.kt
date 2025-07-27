@@ -3,6 +3,7 @@
 
 package com.intellij.spellchecker.grazie
 
+import ai.grazie.annotation.TestOnly
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.LanguageISO
 import ai.grazie.nlp.langs.alphabet.Alphabet
@@ -199,6 +200,11 @@ class GrazieSpellCheckerEngine(
     for (name in toRemove) {
       adapter.removeSource(name)
     }
+  }
+
+  @TestOnly
+  fun dropSuggestionCache() {
+    suggestionCache.invalidateAll()
   }
 }
 
