@@ -8,12 +8,12 @@ jvm_resources(
 )
 
 jvm_provided_library(
-  name = "ant_provided",
+  name = "plugins_ant_provided",
   lib = "//plugins/ant"
 )
 
 jvm_provided_library(
-  name = "java-byteCodeViewer_provided",
+  name = "plugins_java-byteCodeViewer_provided",
   lib = "//plugins/ByteCodeViewer:java-byteCodeViewer"
 )
 
@@ -83,8 +83,8 @@ jvm_library(
     "//platform/backend/workspace",
     "//xml/xml-psi-api:psi",
     "//java/unscramble",
-    ":ant_provided",
-    ":java-byteCodeViewer_provided",
+    ":plugins_ant_provided",
+    ":plugins_java-byteCodeViewer_provided",
   ],
   exports = ["//plugins/groovy/groovy-psi:psi"],
   runtime_deps = [":groovy_resources"]

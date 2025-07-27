@@ -8,7 +8,7 @@ jvm_resources(
 )
 
 jvm_provided_library(
-  name = "junit4_provided",
+  name = "libraries_junit4_provided",
   lib = "//libraries/junit4"
 )
 
@@ -33,7 +33,7 @@ jvm_library(
     "@lib//:http-client",
     "@lib//:kotlinx-collections-immutable",
     "//platform/testFramework/teamCity",
-    ":junit4_provided",
+    ":libraries_junit4_provided",
   ],
   runtime_deps = [":core_resources"]
 )

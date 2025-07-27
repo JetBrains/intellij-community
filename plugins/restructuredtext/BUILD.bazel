@@ -14,17 +14,17 @@ jvm_resources(
 )
 
 jvm_provided_library(
-  name = "lang-impl_provided",
+  name = "platform_lang-impl_provided",
   lib = "//platform/lang-impl"
 )
 
 jvm_provided_library(
-  name = "execution-impl_provided",
+  name = "platform_execution-impl_provided",
   lib = "//platform/execution-impl"
 )
 
 jvm_provided_library(
-  name = "core-ui_provided",
+  name = "platform_core-ui_provided",
   lib = "//platform/core-ui"
 )
 
@@ -53,9 +53,9 @@ jvm_library(
     "//platform/util/jdom",
     "@lib//:jcef",
     "//platform/indexing-api:indexing",
-    ":lang-impl_provided",
-    ":execution-impl_provided",
-    ":core-ui_provided",
+    ":platform_lang-impl_provided",
+    ":platform_execution-impl_provided",
+    ":platform_core-ui_provided",
     ":spellchecker_provided",
   ],
   runtime_deps = [":restructuredtext_resources"]

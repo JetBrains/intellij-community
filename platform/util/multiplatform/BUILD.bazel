@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 jvm_provided_library(
-  name = "multiplatformSupport_provided",
+  name = "platform_syntax_multiplatformSupport_provided",
   lib = "//platform/syntax/syntax-multiplatformSupport:multiplatformSupport"
 )
 
@@ -15,7 +15,7 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
-    ":multiplatformSupport_provided",
+    ":platform_syntax_multiplatformSupport_provided",
   ]
 )
 ### auto-generated section `build intellij.platform.util.multiplatform` end

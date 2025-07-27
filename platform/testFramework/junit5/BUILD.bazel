@@ -14,12 +14,12 @@ jvm_resources(
 )
 
 jvm_provided_library(
-  name = "junit5_provided",
+  name = "libraries_junit5_provided",
   lib = "//libraries/junit5"
 )
 
 jvm_provided_library(
-  name = "junit5-launcher_provided",
+  name = "libraries_junit5-launcher_provided",
   lib = "//libraries/junit5-launcher"
 )
 
@@ -53,8 +53,8 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/util-ex",
     "//platform/util/jdom",
-    ":junit5_provided",
-    ":junit5-launcher_provided",
+    ":libraries_junit5_provided",
+    ":libraries_junit5-launcher_provided",
   ],
   runtime_deps = [":junit5_resources"]
 )

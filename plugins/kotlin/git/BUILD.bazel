@@ -8,7 +8,7 @@ jvm_resources(
 )
 
 jvm_provided_library(
-  name = "vcs-git_provided",
+  name = "plugins_vcs-git_provided",
   lib = "//plugins/git4idea:vcs-git"
 )
 
@@ -24,7 +24,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/vcs-api/vcs-api-core:vcs-core",
     "//platform/platform-api:ide",
-    ":vcs-git_provided",
+    ":plugins_vcs-git_provided",
   ],
   runtime_deps = [":git_resources"]
 )

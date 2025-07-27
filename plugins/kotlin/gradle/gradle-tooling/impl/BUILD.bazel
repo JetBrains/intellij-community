@@ -8,7 +8,7 @@ jvm_resources(
 )
 
 jvm_provided_library(
-  name = "extensions_provided",
+  name = "platform_extensions_provided",
   lib = "//platform/extensions"
 )
 
@@ -29,7 +29,7 @@ jvm_library(
     "//plugins/kotlin/base/project-model",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-    ":extensions_provided",
+    ":platform_extensions_provided",
   ],
   runtime_deps = [":impl_resources"]
 )

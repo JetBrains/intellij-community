@@ -10,7 +10,7 @@ create_kotlinc_options(
 )
 
 jvm_provided_library(
-  name = "multiplatform_provided",
+  name = "fleet_util_multiplatform_provided",
   lib = "//fleet/util/multiplatform"
 )
 
@@ -23,7 +23,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
-    ":multiplatform_provided",
+    ":fleet_util_multiplatform_provided",
   ]
 )
 ### auto-generated section `build fleet.multiplatform.shims` end

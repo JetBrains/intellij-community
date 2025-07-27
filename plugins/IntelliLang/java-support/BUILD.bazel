@@ -8,7 +8,7 @@ jvm_resources(
 )
 
 jvm_provided_library(
-  name = "backend_provided",
+  name = "plugins_IntelliLang_backend_provided",
   lib = "//plugins/IntelliLang/backend"
 )
 
@@ -34,7 +34,7 @@ jvm_library(
     "//plugins/IntelliLang:langInjection",
     "//platform/core-ui",
     "//platform/util/jdom",
-    ":backend_provided",
+    ":plugins_IntelliLang_backend_provided",
   ],
   runtime_deps = [
     ":java-langInjection_resources",

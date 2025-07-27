@@ -8,7 +8,7 @@ jvm_resources(
 )
 
 jvm_provided_library(
-  name = "xpath_provided",
+  name = "plugins_xpath_provided",
   lib = "//plugins/xpath"
 )
 
@@ -33,7 +33,7 @@ jvm_library(
     "//xml/xml-parser:parser",
     "//platform/core-ui",
     "//platform/util/jdom",
-    ":xpath_provided",
+    ":plugins_xpath_provided",
   ],
   runtime_deps = [":xml-langInjection_resources"]
 )

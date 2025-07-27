@@ -10,7 +10,7 @@ create_kotlinc_options(
 )
 
 jvm_provided_library(
-  name = "multiplatformSupport_provided",
+  name = "platform_syntax_multiplatformSupport_provided",
   lib = "//platform/syntax/syntax-multiplatformSupport:multiplatformSupport"
 )
 
@@ -24,7 +24,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
     "//platform/util/multiplatform",
-    ":multiplatformSupport_provided",
+    ":platform_syntax_multiplatformSupport_provided",
   ]
 )
 

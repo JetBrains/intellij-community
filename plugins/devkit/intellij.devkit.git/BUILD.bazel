@@ -8,22 +8,22 @@ jvm_resources(
 )
 
 jvm_provided_library(
-  name = "vcs-core_provided",
+  name = "platform_vcs-api_vcs-core_provided",
   lib = "//platform/vcs-api/vcs-api-core:vcs-core"
 )
 
 jvm_provided_library(
-  name = "vcs-log_provided",
+  name = "platform_vcs-log_vcs-log_provided",
   lib = "//platform/vcs-log/api:vcs-log"
 )
 
 jvm_provided_library(
-  name = "vcs-dvcs-impl_provided",
+  name = "platform_vcs-dvcs-impl_provided",
   lib = "//platform/dvcs-impl:vcs-dvcs-impl"
 )
 
 jvm_provided_library(
-  name = "vcs-git_provided",
+  name = "plugins_vcs-git_provided",
   lib = "//plugins/git4idea:vcs-git"
 )
 
@@ -40,10 +40,10 @@ jvm_library(
     "//platform/util",
     "//platform/ide-core",
     "//plugins/devkit/devkit-core:core",
-    ":vcs-core_provided",
-    ":vcs-log_provided",
-    ":vcs-dvcs-impl_provided",
-    ":vcs-git_provided",
+    ":platform_vcs-api_vcs-core_provided",
+    ":platform_vcs-log_vcs-log_provided",
+    ":platform_vcs-dvcs-impl_provided",
+    ":plugins_vcs-git_provided",
   ],
   runtime_deps = [":git_resources"]
 )

@@ -8,7 +8,7 @@ jvm_resources(
 )
 
 jvm_provided_library(
-  name = "kotlin-completion-impl-k1_provided",
+  name = "plugins_kotlin_completion_kotlin-completion-impl-k1_provided",
   lib = "//plugins/kotlin/completion/impl-k1:kotlin-completion-impl-k1"
 )
 
@@ -25,7 +25,7 @@ jvm_library(
     "//plugins/turboComplete",
     "//platform/platform-impl/internal",
     "//platform/platform-impl:ide-impl",
-    ":kotlin-completion-impl-k1_provided",
+    ":plugins_kotlin_completion_kotlin-completion-impl-k1_provided",
   ],
   runtime_deps = [":k1_resources"]
 )

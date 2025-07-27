@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 jvm_provided_library(
-  name = "multiplatformSupport_provided",
+  name = "platform_syntax_multiplatformSupport_provided",
   lib = "//platform/syntax/syntax-multiplatformSupport:multiplatformSupport"
 )
 
@@ -17,7 +17,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-coroutines-debug",
-    ":multiplatformSupport_provided",
+    ":platform_syntax_multiplatformSupport_provided",
   ]
 )
 ### auto-generated section `build intellij.platform.util.base.multiplatform` end

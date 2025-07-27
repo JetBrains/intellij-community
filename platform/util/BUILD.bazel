@@ -8,7 +8,7 @@ jvm_resources(
 )
 
 jvm_provided_library(
-  name = "troveCompileOnly_provided",
+  name = "platform_util_troveCompileOnly_provided",
   lib = "//platform/util/troveCompileOnly"
 )
 
@@ -38,7 +38,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "//platform/util/coroutines",
     "//platform/util/multiplatform",
-    ":troveCompileOnly_provided",
+    ":platform_util_troveCompileOnly_provided",
   ],
   exports = [
     "@lib//:jetbrains-annotations",

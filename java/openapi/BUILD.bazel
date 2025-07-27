@@ -14,7 +14,7 @@ jvm_resources(
 )
 
 jvm_provided_library(
-  name = "java-guiForms-rt_provided",
+  name = "platform_java-guiForms-rt_provided",
   lib = "//platform/forms_rt:java-guiForms-rt"
 )
 
@@ -51,7 +51,7 @@ jvm_library(
     "//platform/backend/workspace",
     "//xml/xml-psi-api:psi",
     "@lib//:kotlin-stdlib",
-    ":java-guiForms-rt_provided",
+    ":platform_java-guiForms-rt_provided",
   ],
   exports = [
     "//platform/util",

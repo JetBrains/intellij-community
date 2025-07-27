@@ -16,7 +16,7 @@ jvm_resources(
 )
 
 jvm_provided_library(
-  name = "multiplatform_provided",
+  name = "fleet_util_multiplatform_provided",
   lib = "//fleet/util/multiplatform"
 )
 
@@ -39,7 +39,7 @@ jvm_library(
     "//fleet/fastutil",
     "@lib//:kotlinx-datetime-jvm",
     "@lib//:de-cketti-unicode-kotlin-codepoints-jvm",
-    ":multiplatform_provided",
+    ":fleet_util_multiplatform_provided",
   ],
   exports = [
     "//fleet/util/logging/api",

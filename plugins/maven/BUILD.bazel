@@ -8,12 +8,12 @@ jvm_resources(
 )
 
 jvm_provided_library(
-  name = "java-guiForms-rt_provided",
+  name = "platform_java-guiForms-rt_provided",
   lib = "//platform/forms_rt:java-guiForms-rt"
 )
 
 jvm_provided_library(
-  name = "artifactResolver-m31_provided",
+  name = "plugins_maven_artifactResolver-m31_provided",
   lib = "//plugins/maven/artifact-resolver-m31:artifactResolver-m31"
 )
 
@@ -109,8 +109,8 @@ jvm_library(
     "//java/debugger/shared",
     "//xml/xml-psi-api:psi",
     "//platform/xdebugger-impl:debugger-impl",
-    ":java-guiForms-rt_provided",
-    ":artifactResolver-m31_provided",
+    ":platform_java-guiForms-rt_provided",
+    ":plugins_maven_artifactResolver-m31_provided",
   ],
   exports = [
     "//java/openapi:java",

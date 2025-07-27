@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 jvm_provided_library(
-  name = "xmlDom_provided",
+  name = "platform_util_xmlDom_provided",
   lib = "//platform/util/xmlDom"
 )
 
@@ -33,7 +33,7 @@ jvm_library(
     "//platform/util/zip",
     "@lib//:platform-images-build-pngencoder",
     "@lib//:hash4j",
-    ":xmlDom_provided",
+    ":platform_util_xmlDom_provided",
   ],
   runtime_deps = ["@lib//:commons-imaging"]
 )
