@@ -5,7 +5,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 create_kotlinc_options(
   name = "custom_api",
   x_consistent_data_class_copy_visibility = True,
-  x_jvm_default = "disable",
+  x_jvm_default = "all-compatibility",
   x_lambdas = "class"
 )
 

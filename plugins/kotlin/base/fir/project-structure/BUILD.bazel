@@ -5,6 +5,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 create_kotlinc_options(
   name = "custom_project-structure",
   opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
     "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
     "org.jetbrains.kotlin.analysis.api.KaImplementationDetail",

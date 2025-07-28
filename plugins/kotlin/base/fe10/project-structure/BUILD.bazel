@@ -4,7 +4,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom_project-structure",
-  opt_in = ["org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi"],
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+  ],
   x_context_receivers = True
 )
 

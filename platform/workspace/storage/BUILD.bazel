@@ -6,6 +6,7 @@ create_kotlinc_options(
   name = "custom_storage",
   jvm_target = "11",
   opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
     "com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi",
     "com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi",
   ],

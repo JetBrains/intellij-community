@@ -9,7 +9,7 @@ create_kotlinc_options(
     "kotlin.ExperimentalStdlibApi",
   ],
   x_consistent_data_class_copy_visibility = True,
-  x_jvm_default = "disable",
+  x_jvm_default = "all-compatibility",
   x_lambdas = "class"
 )
 

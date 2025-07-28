@@ -6,6 +6,7 @@ create_kotlinc_options(
   name = "custom_kotlin-uast-uast-kotlin-k2",
   jvm_target = "11",
   opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
     "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",

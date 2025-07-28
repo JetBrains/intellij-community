@@ -5,6 +5,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 create_kotlinc_options(
   name = "custom_tests",
   opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
     "com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi",
     "com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi",
   ]

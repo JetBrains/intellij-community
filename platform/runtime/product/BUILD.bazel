@@ -5,7 +5,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 create_kotlinc_options(
   name = "custom_product",
   jvm_target = "11",
-  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+  ]
 )
 
 jvm_library(

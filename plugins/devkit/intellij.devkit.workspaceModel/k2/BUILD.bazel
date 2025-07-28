@@ -5,6 +5,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 create_kotlinc_options(
   name = "custom_k2",
   opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
     "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",

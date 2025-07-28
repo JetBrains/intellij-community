@@ -6,6 +6,7 @@ create_kotlinc_options(
   name = "custom_gradle-java",
   opt_in = [
     "org.jetbrains.kotlin.gradle.ExperimentalGradleToolingApi",
+    "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
   ]
 )

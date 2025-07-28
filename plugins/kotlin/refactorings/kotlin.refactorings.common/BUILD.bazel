@@ -5,6 +5,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 create_kotlinc_options(
   name = "custom_kotlin-refactorings-common",
   opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",

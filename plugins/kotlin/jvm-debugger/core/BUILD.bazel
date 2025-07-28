@@ -4,7 +4,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom_core",
-  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"],
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+  ],
   x_context_receivers = True
 )
 

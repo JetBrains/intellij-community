@@ -6,6 +6,7 @@ create_kotlinc_options(
   name = "custom_syntax",
   jvm_target = "8",
   opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
   ],

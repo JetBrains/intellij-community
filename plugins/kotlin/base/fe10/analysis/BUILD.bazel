@@ -7,6 +7,7 @@ create_kotlinc_options(
   opt_in = [
     "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "com.intellij.openapi.util.IntellijInternalApi",
   ]
 )
 
