@@ -128,6 +128,7 @@ internal class BackendTerminalHyperlinkHighlighter(
         "startOffset=$startOffset, " +
         "trimmed=${outputModel.relativeOffset(0).toAbsolute()}"
       }
+
       fun logEvent(event: TerminalHyperlinksChangedEvent) {
         if (!LOG.isDebugEnabled) return
         count += event.hyperlinks.size
@@ -142,6 +143,7 @@ internal class BackendTerminalHyperlinkHighlighter(
           "${first?.absoluteStartOffset?.addRelative()}-${last?.absoluteEndOffset?.addRelative()} (IDs ${last?.id}-${first?.id})"
         )
       }
+
       suspend fun send(results: List<TerminalFilterResultInfoDto>, firstBatch: Boolean, lastBatch: Boolean) {
         require(!(firstBatch && lastBatch))
         if (results.isNotEmpty() || firstBatch || lastBatch) {
@@ -150,12 +152,14 @@ internal class BackendTerminalHyperlinkHighlighter(
           logEvent(event)
         }
       }
+
       val lineCount = document.lineCount
       if (lineCount == 0) {
         send(emptyList(), firstBatch = true, lastBatch = false)
         send(emptyList(), firstBatch = false, lastBatch = true)
         return
       }
+
       val startLineInclusive = document.getLineNumber(startOffset.toRelative())
       val endLineInclusive = lineCount - 1
       // Process in the reverse direction to highlight the visible part first.
@@ -168,6 +172,7 @@ internal class BackendTerminalHyperlinkHighlighter(
         send(batch, firstBatch = endBatchInclusive == endLineInclusive, lastBatch = false)
         endBatchInclusive = startBatchInclusive - 1
       }
+
       send(emptyList(), firstBatch = false, lastBatch = true)
       val lastID = hyperlinkId.get()
       LOG.debug {
