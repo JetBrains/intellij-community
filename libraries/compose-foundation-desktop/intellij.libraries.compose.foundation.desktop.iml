@@ -42,9 +42,6 @@
             <artifact url="file://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-annotation-jvm/1.9.0-beta02/runtime-annotation-jvm-1.9.0-beta02.jar">
               <sha256sum>989b2da28bf5ba7966c08ca2db3f48a607e684e4ab4ff0de80e9cd5ec663c076</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/2.0.21/kotlin-stdlib-common-2.0.21.jar">
-              <sha256sum>28f09115977ff98c991fcf28538b7874287ae43670ec5f9c60d17c2b8305624b</sha256sum>
-            </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1.9.0-beta01/ui-desktop-1.9.0-beta01.jar">
               <sha256sum>275ce0b97c83effd513d29581bc26a2fe03ffd3d4cb0f67376695583a1a0242e</sha256sum>
             </artifact>
@@ -78,9 +75,6 @@
             <artifact url="file://$MAVEN_REPOSITORY$/androidx/savedstate/savedstate-desktop/1.3.0/savedstate-desktop-1.3.0.jar">
               <sha256sum>e78db47f2d82e0f9df90dc9a823a3763684a4b8769b30d7c5365adcf5c37e88f</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.7.3/kotlinx-serialization-core-jvm-1.7.3.jar">
-              <sha256sum>f0adde45864144475385cf4aa7e0b7feb27f61fcf9472665ed98cc971b06b1eb</sha256sum>
-            </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/androidx/lifecycle/lifecycle-runtime-compose-desktop/2.9.1/lifecycle-runtime-compose-desktop-2.9.1.jar">
               <sha256sum>2f0491d280b37651c0c43782336973a3631791f779b010a139475f8949d3bee2</sha256sum>
             </artifact>
@@ -111,9 +105,10 @@
           </verification>
           <exclude>
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
-            <dependency maven-id="org.jetbrains.compose.annotation-internal:annotation" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
             <dependency maven-id="org.jetbrains.skiko:skiko-awt" />
           </exclude>
@@ -129,7 +124,6 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/runtime/runtime-desktop/1.9.0-beta01/runtime-desktop-1.9.0-beta01.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-desktop/1.9.0-beta02/runtime-desktop-1.9.0-beta02.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-annotation-jvm/1.9.0-beta02/runtime-annotation-jvm-1.9.0-beta02.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/2.0.21/kotlin-stdlib-common-2.0.21.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1.9.0-beta01/ui-desktop-1.9.0-beta01.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-common-jvm/2.9.1/lifecycle-common-jvm-2.9.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar!/" />
@@ -141,7 +135,6 @@
           <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-viewmodel-desktop/2.9.1/lifecycle-viewmodel-desktop-2.9.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-viewmodel-savedstate-desktop/2.9.1/lifecycle-viewmodel-savedstate-desktop-2.9.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/savedstate/savedstate-desktop/1.3.0/savedstate-desktop-1.3.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.7.3/kotlinx-serialization-core-jvm-1.7.3.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/androidx/lifecycle/lifecycle-runtime-compose-desktop/2.9.1/lifecycle-runtime-compose-desktop-2.9.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/runtime/runtime-saveable-desktop/1.9.0-beta01/runtime-saveable-desktop-1.9.0-beta01.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/androidx/savedstate/savedstate-compose-desktop/1.3.0/savedstate-compose-desktop-1.3.0.jar!/" />
@@ -159,10 +152,8 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-geometry-desktop/1.9.0-beta01/ui-geometry-desktop-1.9.0-beta01-javadoc.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-layout-desktop/1.9.0-beta01/foundation-layout-desktop-1.9.0-beta01-javadoc.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/runtime/runtime-desktop/1.9.0-beta01/runtime-desktop-1.9.0-beta01-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/2.0.21/kotlin-stdlib-common-2.0.21-javadoc.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1.9.0-beta01/ui-desktop-1.9.0-beta01-javadoc.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.7.3/kotlinx-serialization-core-jvm-1.7.3-javadoc.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/androidx/lifecycle/lifecycle-runtime-compose-desktop/2.9.1/lifecycle-runtime-compose-desktop-2.9.1-javadoc.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/runtime/runtime-saveable-desktop/1.9.0-beta01/runtime-saveable-desktop-1.9.0-beta01-javadoc.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/androidx/savedstate/savedstate-compose-desktop/1.3.0/savedstate-compose-desktop-1.3.0-javadoc.jar!/" />
@@ -184,7 +175,6 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/runtime/runtime-desktop/1.9.0-beta01/runtime-desktop-1.9.0-beta01-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-desktop/1.9.0-beta02/runtime-desktop-1.9.0-beta02-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-annotation-jvm/1.9.0-beta02/runtime-annotation-jvm-1.9.0-beta02-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/2.0.21/kotlin-stdlib-common-2.0.21-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1.9.0-beta01/ui-desktop-1.9.0-beta01-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-common-jvm/2.9.1/lifecycle-common-jvm-2.9.1-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0-sources.jar!/" />
@@ -196,7 +186,6 @@
           <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-viewmodel-desktop/2.9.1/lifecycle-viewmodel-desktop-2.9.1-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-viewmodel-savedstate-desktop/2.9.1/lifecycle-viewmodel-savedstate-desktop-2.9.1-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/savedstate/savedstate-desktop/1.3.0/savedstate-desktop-1.3.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.7.3/kotlinx-serialization-core-jvm-1.7.3-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/androidx/lifecycle/lifecycle-runtime-compose-desktop/2.9.1/lifecycle-runtime-compose-desktop-2.9.1-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/runtime/runtime-saveable-desktop/1.9.0-beta01/runtime-saveable-desktop-1.9.0-beta01-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/androidx/savedstate/savedstate-compose-desktop/1.3.0/savedstate-compose-desktop-1.3.0-sources.jar!/" />
