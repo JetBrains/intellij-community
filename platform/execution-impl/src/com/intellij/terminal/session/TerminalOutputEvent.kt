@@ -48,7 +48,8 @@ data class TerminalInitialStateEvent(
   val outputModelState: TerminalOutputModelStateDto,
   val alternateBufferState: TerminalOutputModelStateDto,
   val blocksModelState: TerminalBlocksModelStateDto,
-  val hyperlinksModelState: TerminalHyperlinksModelStateDto?,
+  val outputHyperlinksState: TerminalHyperlinksModelStateDto?,
+  val alternateBufferHyperlinksState: TerminalHyperlinksModelStateDto?,
 ) : TerminalOutputEvent
 
 // Shell Integration Events

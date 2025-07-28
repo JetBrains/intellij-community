@@ -7,7 +7,6 @@ import com.intellij.platform.util.coroutines.flow.IncrementalUpdateFlowProducer
 import com.intellij.platform.util.coroutines.flow.MutableStateWithIncrementalUpdates
 import com.intellij.terminal.backend.hyperlinks.BackendTerminalHyperlinkFacade
 import com.intellij.terminal.session.*
-import com.intellij.terminal.session.dto.TerminalHyperlinksModelStateDto
 import com.intellij.terminal.session.dto.toDto
 import com.intellij.terminal.session.dto.toTerminalState
 import kotlinx.coroutines.*
@@ -212,15 +211,8 @@ internal class StateAwareTerminalSession(
         outputModelState = outputModel.dumpState().toDto(),
         alternateBufferState = alternateBufferModel.dumpState().toDto(),
         blocksModelState = blocksModel.dumpState().toDto(),
-        hyperlinksModelState = if (outputHyperlinkFacade != null && alternateBufferHyperlinkFacade != null) {
-          TerminalHyperlinksModelStateDto(
-            outputHyperlinkFacade.dumpState().toDto(),
-            alternateBufferHyperlinkFacade.dumpState().toDto(),
-          )
-        }
-        else {
-          null
-        }
+        outputHyperlinksState = outputHyperlinkFacade?.dumpState()?.toDto(),
+        alternateBufferHyperlinksState = alternateBufferHyperlinkFacade?.dumpState()?.toDto(),
       )
       return listOf(listOf(event))
     }

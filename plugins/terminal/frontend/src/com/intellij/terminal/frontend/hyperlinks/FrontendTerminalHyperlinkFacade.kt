@@ -8,7 +8,6 @@ import com.intellij.terminal.session.TerminalFilterResultInfo
 import com.intellij.terminal.session.TerminalHighlightingInfo
 import com.intellij.terminal.session.TerminalHyperlinkInfo
 import com.intellij.terminal.session.TerminalHyperlinksChangedEvent
-import com.intellij.terminal.session.dto.TerminalFilterResultInfoDto
 import com.intellij.terminal.session.dto.TerminalHyperlinksModelStateDto
 import com.intellij.terminal.session.dto.toFilterResultInfo
 import com.intellij.util.asDisposable
@@ -36,12 +35,8 @@ internal class FrontendTerminalHyperlinkFacade(
 
   fun restoreFromState(hyperlinksModelState: TerminalHyperlinksModelStateDto?) {
     if (hyperlinksModelState == null) return
-    restoreFromState(if (isInAlternateBuffer) hyperlinksModelState.alternateBufferHyperlinks else hyperlinksModelState.outputHyperlinks)
-  }
-
-  private fun restoreFromState(hyperlinks: List<TerminalFilterResultInfoDto>) {
     removeHyperlinks(0L)
-    addHyperlinks(hyperlinks.map { it.toFilterResultInfo() })
+    addHyperlinks(hyperlinksModelState.hyperlinks.map { it.toFilterResultInfo() })
   }
 
   private fun removeHyperlinks(absoluteStartOffset: Long) {

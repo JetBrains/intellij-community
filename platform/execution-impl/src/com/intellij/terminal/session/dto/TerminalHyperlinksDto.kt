@@ -133,12 +133,13 @@ fun TerminalFilterResultInfoDto.toFilterResultInfo(): TerminalFilterResultInfo =
 @ApiStatus.Internal
 @Serializable
 data class TerminalHyperlinksModelStateDto(
-  val outputHyperlinks: List<TerminalFilterResultInfoDto>,
-  val alternateBufferHyperlinks: List<TerminalFilterResultInfoDto>,
+  val hyperlinks: List<TerminalFilterResultInfoDto>,
 )
 
 @ApiStatus.Internal
-fun TerminalHyperlinksModelState.toDto(): List<TerminalFilterResultInfoDto> =
-  hyperlinks.map {
-    it.toDto()
-  }
+fun TerminalHyperlinksModelState.toDto(): TerminalHyperlinksModelStateDto =
+  TerminalHyperlinksModelStateDto(
+    hyperlinks.map {
+      it.toDto()
+    }
+  )

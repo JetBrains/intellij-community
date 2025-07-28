@@ -12,7 +12,6 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.frontend.hyperlinks.FrontendTerminalHyperlinkFacade
 import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.toState
-import com.intellij.terminal.session.dto.toStyleRange
 import com.intellij.terminal.session.dto.toTerminalState
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -85,8 +84,8 @@ internal class TerminalSessionController(
           outputModel.restoreFromState(event.outputModelState.toState())
           alternateBufferModel.restoreFromState(event.alternateBufferState.toState())
           blocksModel.restoreFromState(event.blocksModelState.toState())
-          outputHyperlinkFacade?.restoreFromState(event.hyperlinksModelState)
-          alternateBufferHyperlinkFacade?.restoreFromState(event.hyperlinksModelState)
+          outputHyperlinkFacade?.restoreFromState(event.outputHyperlinksState)
+          alternateBufferHyperlinkFacade?.restoreFromState(event.alternateBufferHyperlinksState)
         }
       }
       is TerminalContentUpdatedEvent -> {
