@@ -96,7 +96,7 @@ internal class StateAwareTerminalSession(
       }
       originalOutputFlow.collect { events ->
         try {
-          outputFlowProducer.handleUpdate(events.filter { !isObsolete(it) })
+          outputFlowProducer.handleUpdate(events)
         }
         finally {
           if (events.any { it is TerminalSessionTerminatedEvent }) {
@@ -106,13 +106,6 @@ internal class StateAwareTerminalSession(
       }
     }
   }
-
-  private fun isObsolete(event: TerminalOutputEvent): Boolean {
-    return event is TerminalHyperlinksChangedEvent && event.documentModificationStamp < getOutputModel(event).document.modificationStamp
-  }
-
-  private fun getOutputModel(event: TerminalHyperlinksChangedEvent): TerminalOutputModel =
-    if (event.isInAlternateBuffer) alternateBufferModel else outputModel
 
   override suspend fun getInputChannel(): SendChannel<TerminalInputEvent> {
     val original = delegate.getInputChannel()
@@ -154,10 +147,11 @@ internal class StateAwareTerminalSession(
   override suspend fun hasRunningCommands(): Boolean = delegate.hasRunningCommands()
 
   private inner class State : MutableStateWithIncrementalUpdates<List<TerminalOutputEvent>> {
-    override suspend fun applyUpdate(update: List<TerminalOutputEvent>): List<TerminalOutputEvent> {
+    override suspend fun applyUpdate(update: List<TerminalOutputEvent>): List<TerminalOutputEvent>? {
+      var anyHandled = false
       for (event in update) {
         try {
-          handleEvent(event)
+          anyHandled = handleEvent(event)
         }
         catch (e: CancellationException) {
           throw e
@@ -166,10 +160,10 @@ internal class StateAwareTerminalSession(
           thisLogger().error(t)
         }
       }
-      return update
+      return if (anyHandled) update else null
     }
 
-    private fun handleEvent(event: TerminalOutputEvent) {
+    private fun handleEvent(event: TerminalOutputEvent): Boolean {
       when (event) {
         is TerminalContentUpdatedEvent -> {
           val model = getCurrentOutputModel()
@@ -201,12 +195,15 @@ internal class StateAwareTerminalSession(
           blocksModel.commandFinished(event.exitCode)
         }
         is TerminalHyperlinksChangedEvent -> {
-          getHyperlinkFacade(event)?.updateModelState(event)
+          val facade = getHyperlinkFacade(event)
+          checkNotNull(facade) { "The hyperlink facade is null, so who sent the TerminalHyperlinksChangedEvent event then? It's a bug" }
+          return facade.updateModelState(event)
         }
         else -> {
           // Do nothing: other events are not related to the models we update
         }
       }
+      return true
     }
 
     override suspend fun takeSnapshot(): List<List<TerminalOutputEvent>> {

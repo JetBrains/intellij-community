@@ -27,19 +27,19 @@ internal class BackendTerminalHyperlinkFacade(
 
   val resultFlow: Flow<List<TerminalHyperlinksChangedEvent>> get() = highlighter.resultFlow
 
-  fun updateModelState(event: TerminalHyperlinksChangedEvent) {
-    if (event.documentModificationStamp == outputModel.document.modificationStamp) {
-      val removedFrom = event.absoluteStartOffset
-      if (removedFrom != null) {
-        model.removeHyperlinks(removedFrom)
-      }
-      model.addHyperlinks(event.hyperlinks.map { it.toFilterResultInfo() })
-      // If we have applied all hyperlinks corresponding to the current modification stamp,
-      // we should mark the task as complete so that the new tasks will only affect newly modified regions.
-      if (event.isLastEventInTheBatch) {
-        highlighter.finishCurrentTask()
-      }
+  fun updateModelState(event: TerminalHyperlinksChangedEvent): Boolean {
+    if (event.documentModificationStamp < outputModel.document.modificationStamp) return false
+    val removedFrom = event.absoluteStartOffset
+    if (removedFrom != null) {
+      model.removeHyperlinks(removedFrom)
     }
+    model.addHyperlinks(event.hyperlinks.map { it.toFilterResultInfo() })
+    // If we have applied all hyperlinks corresponding to the current modification stamp,
+    // we should mark the task as complete so that the new tasks will only affect newly modified regions.
+    if (event.isLastEventInTheBatch) {
+      highlighter.finishCurrentTask()
+    }
+    return true
   }
 
   suspend fun hyperlinkClicked(hyperlinkId: TerminalHyperlinkId) {
