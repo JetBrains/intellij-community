@@ -38,6 +38,9 @@ public abstract class LanguageFileType implements FileType {
     // 2. FileType is created only on demand (if deprecated FileTypeFactory is not used).
     myLanguage = language;
     mySecondary = secondary;
+    if (getClass().isAnonymousClass()) {
+      throw new IllegalStateException("Must not create a Language from an anonymous implementation. Use a separate class and register it in the plugin.xml to create a singleton instead. Class: "+getClass());
+    }
   }
 
   /**
