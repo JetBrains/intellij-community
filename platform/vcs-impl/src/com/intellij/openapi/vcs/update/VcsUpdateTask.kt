@@ -56,7 +56,7 @@ internal class VcsUpdateTask(
   private var updatedFiles: UpdatedFiles = UpdatedFiles.create()
   private val groupedExceptions = HashMap<HotfixData?, MutableList<VcsException>>()
   private val updateSessions = ArrayList<UpdateSession>()
-  private var updateNumber = 1
+  private var executionCount = 0
 
   // vcs name, context object
   // create from outside without any context; context is created by vcses
@@ -70,7 +70,6 @@ internal class VcsUpdateTask(
     updatedFiles = UpdatedFiles.create()
     groupedExceptions.clear()
     updateSessions.clear()
-    ++updateNumber
   }
 
   fun launch(@RequiresEdt onSuccess: () -> Unit = {}) {
@@ -114,12 +113,10 @@ internal class VcsUpdateTask(
       for ((vcs, updateEnvironment, files) in spec) {
         updateEnvironment.fillGroups(updatedFiles)
 
-        val context = contextInfo[vcs]
-        val refContext = Ref<SequentialUpdatesContext>(context)
-
-        val updateSession = updateEnvironment.updateDirectories(files.toTypedArray<FilePath>(), updatedFiles, progressIndicator, refContext)
-
+        val refContext = Ref(contextInfo[vcs])
+        val updateSession = updateEnvironment.updateDirectories(files.toTypedArray(), updatedFiles, progressIndicator, refContext)
         contextInfo[vcs] = refContext.get()
+
         processed++
         progressIndicator.setFraction(processed.toDouble() / toBeProcessed.toDouble())
         progressIndicator.setText2("")
@@ -161,13 +158,14 @@ internal class VcsUpdateTask(
     if (continueChain) {
       // trigger the next update; for CVS when updating from several branches simultaneously
       reset()
+      executionCount += 1
       launch()
     }
   }
 
   private fun handleResult(wasCanceled: Boolean): Boolean {
     val contextInfo = contextInfo.fold()
-    val someSessionWasCancelled = wasCanceled || someSessionWasCanceled(updateSessions)
+    val someSessionWasCancelled = wasCanceled || updateSessions.any(UpdateSession::isCanceled)
     // here text conflicts might be interactively resolved
     for (updateSession in updateSessions) {
       updateSession.onRefreshFilesCompleted()
@@ -181,21 +179,19 @@ internal class VcsUpdateTask(
     }
 
     val updateSuccess = !someSessionWasCancelled && groupedExceptions.isEmpty()
-    val noMerged = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID)!!.isEmpty()
+    val couldContinue = updateSuccess && contextInfo.continueChain
+    val noMerged = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID)?.isEmpty() ?: true
+    val willBeContinued = couldContinue && noMerged
+
     if (updatedFiles.isEmpty && groupedExceptions.isEmpty()) {
-      val type: NotificationType?
-      val content: String?
-      if (someSessionWasCancelled) {
-        content = VcsBundle.message("progress.text.updating.canceled")
-        type = NotificationType.WARNING
-      }
-      else {
-        content = getAllFilesAreUpToDateMessage(roots)
-        type = NotificationType.INFORMATION
-      }
-      VcsNotifier.getInstance(project).notify(
-        VcsNotifier.standardNotification().createNotification(content, type)
-          .setDisplayId(VcsNotificationIdsHolder.PROJECT_UPDATE_FINISHED))
+      VcsNotifier.standardNotification().run {
+        if (someSessionWasCancelled) {
+          createNotification(VcsBundle.message("progress.text.updating.canceled"), NotificationType.WARNING)
+        }
+        else {
+          createNotification(getAllFilesAreUpToDateMessage(roots), NotificationType.INFORMATION)
+        }
+      }.setDisplayId(VcsNotificationIdsHolder.PROJECT_UPDATE_FINISHED).notify(project)
     }
     else if (!updatedFiles.isEmpty) {
       val singleUpdateSession = updateSessions.singleOrNull()
@@ -204,8 +200,7 @@ internal class VcsUpdateTask(
         singleUpdateSession.showNotification()
       }
       else {
-        val willBeContinued = contextInfo.continueChain && updateSuccess && noMerged
-        val updateNumber = if (willBeContinued || updateNumber > 1) updateNumber else 0
+        val updateNumber = if (willBeContinued || executionCount > 0) executionCount + 1 else 0
         val tree = showUpdateTree(someSessionWasCancelled, updateNumber)
 
         if (tree != null) {
@@ -219,21 +214,13 @@ internal class VcsUpdateTask(
       }
     }
 
-    if (groupedExceptions.isNotEmpty()) {
-      val exceptions = groupedExceptions.toMutableMap().apply {
-        putAllNonEmpty(contextInfo.interruptedExceptions)
-      }
-      showExceptions(exceptions)
+    val exceptions = groupedExceptions.toMutableMap()
+    if (couldContinue && !noMerged) {
+      exceptions.putAllNonEmpty(contextInfo.interruptedExceptions)
     }
-    else if (contextInfo.continueChain && !someSessionWasCancelled) {
-      if (noMerged) {
-        return true
-      }
-      else {
-        showExceptions(contextInfo.interruptedExceptions)
-      }
-    }
-    return false
+    showExceptions(exceptions)
+
+    return willBeContinued
   }
 
   private fun showExceptions(exceptions: Map<HotfixData?, List<VcsException>>) {
@@ -261,14 +248,8 @@ internal class VcsUpdateTask(
   }
 
   private fun canGroupByChangelist(vcses: Collection<AbstractVcs>): Boolean {
-    if (actionInfo.canGroupByChangelist()) {
-      for (vcs in vcses) {
-        if (vcs.getCachingCommittedChangesProvider() != null) {
-          return true
-        }
-      }
-    }
-    return false
+    if (!actionInfo.canGroupByChangelist()) return false
+    return vcses.any { it.getCachingCommittedChangesProvider() != null }
   }
 }
 
@@ -350,8 +331,6 @@ private fun prepareScopeUpdatedText(tree: UpdateInfoTree): @Nls HtmlChunk {
     return HtmlChunk.text(VcsBundle.message("update.filtered.files.count.in.filter.name", filteredFiles, filterName))
   }
 }
-
-private fun someSessionWasCanceled(updateSessions: List<UpdateSession>): Boolean = updateSessions.any { it.isCanceled() }
 
 private fun getAllFilesAreUpToDateMessage(roots: Array<FilePath>): @NlsContexts.NotificationContent String {
   if (roots.size == 1 && !roots[0].isDirectory()) {
