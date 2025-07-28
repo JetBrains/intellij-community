@@ -129,7 +129,7 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
                                 pluginNames.joinToString(separator = "<br>")
 
       NotificationGroupManager.getInstance()
-        .getNotificationGroup("Required Plugins") // TODO(IJPL-182235): a separate group?
+        .getNotificationGroup("Paid Plugins")
         .createNotification(notificationTitle, notificationContent, NotificationType.INFORMATION)
         .addAction(object : NotificationAction(IdeBundle.message("notification.action.load.paid.plugins.and.restart")) {
           override fun actionPerformed(e: AnActionEvent, notification: Notification) {
