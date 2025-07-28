@@ -29,7 +29,7 @@ internal class BackendTerminalHyperlinkFacade(
 
   fun updateModelState(event: TerminalHyperlinksChangedEvent): Boolean {
     if (event.documentModificationStamp < outputModel.document.modificationStamp) return false
-    val removedFrom = event.absoluteStartOffset
+    val removedFrom = event.removeFromOffset
     if (removedFrom != null) {
       model.removeHyperlinks(removedFrom)
     }

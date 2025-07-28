@@ -26,7 +26,7 @@ internal class FrontendTerminalHyperlinkFacade(
   private val applier = EditorHyperlinkApplier(editor, coroutineScope.asDisposable())
 
   fun updateHyperlinks(event: TerminalHyperlinksChangedEvent) {
-    val removedFrom = event.absoluteStartOffset
+    val removedFrom = event.removeFromOffset
     if (removedFrom != null) {
       removeHyperlinks(removedFrom)
     }
