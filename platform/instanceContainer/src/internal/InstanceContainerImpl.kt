@@ -4,6 +4,7 @@ package com.intellij.platform.instanceContainer.internal
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.instanceContainer.InstanceContainer
 import com.intellij.platform.instanceContainer.InstanceNotRegisteredException
+import com.intellij.util.ArrayUtil
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineName
@@ -39,7 +40,7 @@ class InstanceContainerImpl(
     return state(stateHandle.getVolatile(this))
   }
 
-  private inline fun updateState(update: (state: InstanceContainerState) -> InstanceContainerState) {
+  private inline fun updateState(update: (InstanceContainerState) -> InstanceContainerState) {
     var state = state()
     while (true) {
       val updatedState = update(state)
@@ -99,10 +100,7 @@ class InstanceContainerImpl(
       state.getByClass(keyClass)?.let {
         return it
       }
-      val dynamicInstanceInitializer = dynamicInstanceSupport.dynamicInstanceInitializer(instanceClass = keyClass)
-      if (dynamicInstanceInitializer == null) {
-        return null
-      }
+      val dynamicInstanceInitializer = dynamicInstanceSupport.dynamicInstanceInitializer(instanceClass = keyClass) ?: return null
       val parentScope = scopeHolder.intersectScope(dynamicInstanceInitializer.registrationScope)
       val initializer = dynamicInstanceInitializer.initializer
       holder = DynamicInstanceHolder(parentScope, initializer)
@@ -142,6 +140,27 @@ class InstanceContainerImpl(
     }
   }
 
+  inner class UnregisterHandleImpl(
+    restorationMap: Map<String, InstanceHolder?>,
+    returnMap: Map<String, InstanceHolder>,
+    keysToRemove: Set<String>,
+    hasPreviousHolders: Boolean,
+  ) : UnregisterHandle {
+    // if restorationMap has null values only, it has no sense to store it because the keys can be obtained from keysToRemove
+    val keysToUnregister: Array<String>? = if (hasPreviousHolders) ArrayUtil.toStringArray(restorationMap.keys) else null
+    // store map as a pair of arrays (keysToUnregister/holdersToUnregister) with keys and values to conserve memory
+    val holdersToUnregister: Array<InstanceHolder?>? = if (hasPreviousHolders) restorationMap.values.toTypedArray() else null
+    // typically, returnMap keys are the same as restorationMap, no need to store them
+    val keysToReturn: Array<String> = ArrayUtil.toStringArray(returnMap.keys).let { if (keysToUnregister != null && it.contentEquals(keysToUnregister)) keysToUnregister else it }
+    val holdersToReturn: Array<InstanceHolder> = returnMap.values.toTypedArray()
+    // no need to store keysToRemove if we store restorationMap, the keys can be restored from there
+    val keysToRemove: Array<String>? = if (hasPreviousHolders) null else ArrayUtil.toStringArray(keysToRemove)
+    override fun unregister(): Map<String, InstanceHolder> {
+      unregister(keysToUnregister ?: keysToReturn, holdersToUnregister ?: arrayOfNulls<InstanceHolder?>(keysToReturn.size), keysToRemove)
+      return keysToReturn.zip(holdersToReturn).toMap()
+    }
+  }
+
   private fun register(parentScope: CoroutineScope, actions: Map<String, RegistrationAction>): UnregisterHandle {
     val preparedHolders = prepareHolders(parentScope, actions)
     val (holders, _, keysToRemove) = preparedHolders
@@ -150,26 +169,26 @@ class InstanceContainerImpl(
       // key -> holder to add/replace; key -> null to remove
       val restorationMap = LinkedHashMap<String, InstanceHolder?>()
       val builder = state.holders.builder()
+      var hasPreviousHolders = false
       for (key in keysToRemove) {
         val previous = builder.remove(key)
         checkExistingRegistration(state.holders, preparedHolders, keyClassName = key, existing = previous, new = null)
         restorationMap[key] = previous
+        hasPreviousHolders = hasPreviousHolders || (previous != null)
       }
       for ((key, value) in holders) {
         val previous = builder.put(key, value)
         checkExistingRegistration(state.holders, preparedHolders, keyClassName = key, existing = previous, new = value)
         restorationMap[key] = previous
+        hasPreviousHolders = hasPreviousHolders || (previous != null)
       }
-      handle = UnregisterHandle {
-        unregister(restorationMap)
-        return@UnregisterHandle holders
-      }
+      handle = UnregisterHandleImpl(restorationMap, holders, keysToRemove, hasPreviousHolders)
       InstanceContainerState(builder.build())
     }
     return handle
   }
 
-  private fun unregister(restoration: Map<String, InstanceHolder?>) {
+  private fun unregister(keys: Array<String>, instanceHolders: Array<InstanceHolder?>, keysToRemove: Array<String>?) {
     // TODO consider asserting that registered instances were not replaced in the middle to avoid situations like this:
     //  ```
     //  val restorationOne = register(one)
@@ -181,7 +200,9 @@ class InstanceContainerImpl(
     //  or, in other words, two should be fully nested into one
     updateState { state: InstanceContainerState ->
       val builder = state.holders.builder()
-      for ((key, value) in restoration) {
+      for(i in 0 until keys.size) {
+        val key = keys[i]
+        val value = instanceHolders[i]
         if (value == null) {
           builder.remove(key)
         }
@@ -189,6 +210,7 @@ class InstanceContainerImpl(
           builder[key] = value
         }
       }
+      keysToRemove?.forEach { builder.remove(it) }
       InstanceContainerState(builder.build())
     }
   }
