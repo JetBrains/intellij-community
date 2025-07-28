@@ -237,6 +237,20 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       }""".trimIndent())
   }
 
+  fun testOptimizeImport2() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      import java.util.List;.<caret>
+      
+      class A {
+          void foo() {
+              String y = "1";
+          }
+      }""".trimIndent())
+    val elements = myFixture.completeBasic()
+    assertTrue(elements.any { element -> element.lookupString.contains("Optimize im", ignoreCase = true) })
+  }
+
   fun testGenerateGetter() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
