@@ -11,7 +11,7 @@ import com.intellij.ui.content.Content
 import javax.swing.SwingConstants
 
 internal abstract class ToolWindowSplitActionBase(
-  private val isVertical: Boolean,
+  private val isRight: Boolean,
 ) : ToolWindowContextMenuActionBase(), ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
     val splitProvider = ToolWindowSplitContentProviderBean.getForToolWindow(toolWindow.id) ?: return
@@ -19,7 +19,7 @@ internal abstract class ToolWindowSplitActionBase(
     if (content == null) return
 
     val newContent = splitProvider.createContentCopy(toolWindow.project, content)
-    decorator.splitWithContent(newContent, if (isVertical) SwingConstants.RIGHT else SwingConstants.BOTTOM, -1)
+    decorator.splitWithContent(newContent, if (isRight) SwingConstants.RIGHT else SwingConstants.BOTTOM, -1)
   }
 
   override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
@@ -28,6 +28,6 @@ internal abstract class ToolWindowSplitActionBase(
   }
 }
 
-internal class ToolWindowSplitRightAction : ToolWindowSplitActionBase(isVertical = true)
+internal class ToolWindowSplitRightAction : ToolWindowSplitActionBase(isRight = true)
 
-internal class ToolWindowSplitDownAction : ToolWindowSplitActionBase(isVertical = false)
+internal class ToolWindowSplitDownAction : ToolWindowSplitActionBase(isRight = false)

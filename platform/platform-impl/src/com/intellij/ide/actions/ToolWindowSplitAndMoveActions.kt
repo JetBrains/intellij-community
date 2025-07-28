@@ -10,12 +10,12 @@ import com.intellij.ui.content.Content
 import javax.swing.SwingConstants
 
 internal abstract class ToolWindowSplitAndMoveActionBase(
-  private val isVertical: Boolean,
+  private val isRight: Boolean,
 ) : ToolWindowContextMenuActionBase(), ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
     if (content == null) return
     val decorator = findNearestDecorator(e) ?: return
-    decorator.splitWithContent(content, if (isVertical) SwingConstants.RIGHT else SwingConstants.BOTTOM, -1)
+    decorator.splitWithContent(content, if (isRight) SwingConstants.RIGHT else SwingConstants.BOTTOM, -1)
   }
 
   override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
@@ -25,6 +25,6 @@ internal abstract class ToolWindowSplitAndMoveActionBase(
   }
 }
 
-internal class ToolWindowSplitAndMoveRightAction : ToolWindowSplitAndMoveActionBase(isVertical = true)
+internal class ToolWindowSplitAndMoveRightAction : ToolWindowSplitAndMoveActionBase(isRight = true)
 
-internal class ToolWindowSplitAndMoveDownAction : ToolWindowSplitAndMoveActionBase(isVertical = false)
+internal class ToolWindowSplitAndMoveDownAction : ToolWindowSplitAndMoveActionBase(isRight = false)
