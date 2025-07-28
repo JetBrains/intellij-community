@@ -333,7 +333,7 @@ private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromIniti
   }
 }
 
-fun McpTool.toSdkTool(): Tool {
+private fun McpTool.toSdkTool(): Tool {
   val outputSchema = if (structuredToolOutputEnabled) {
     descriptor.outputSchema?.let {
       Tool.Output(
