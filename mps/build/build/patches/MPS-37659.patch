@@ -1,0 +1,32 @@
+Index: platform/platform-impl/src/com/intellij/platform/ide/bootstrap/appServicePreloading.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/platform-impl/src/com/intellij/platform/ide/bootstrap/appServicePreloading.kt b/platform/platform-impl/src/com/intellij/platform/ide/bootstrap/appServicePreloading.kt
+--- a/platform/platform-impl/src/com/intellij/platform/ide/bootstrap/appServicePreloading.kt	(revision eb46a7a65a4b74be43d142afc4648bdc36244f9d)
++++ b/platform/platform-impl/src/com/intellij/platform/ide/bootstrap/appServicePreloading.kt	(date 1752660092651)
+@@ -83,6 +83,12 @@
+                                              registryManagerJob: Job,
+                                              initAwtToolkitAndEventQueueJob: Job?) {
+   asyncScope.launch {
++    if (initAwtToolkitAndEventQueueJob != null) {
++      span("waiting for rw lock for app instantiation (asyncScope)") {
++        initAwtToolkitAndEventQueueJob.join()
++      }
++    }
++
+     val fileTypeManagerJob = launch(CoroutineName("FileTypeManager preloading")) {
+       app.serviceAsync<FileTypeManager>()
+     }
+@@ -134,9 +140,7 @@
+                           syncScope = this,
+                           asyncScope = app.getCoroutineScope().childScope(supervisor = false))
+     }
+-  }
+ 
+-  launch {
+     val loadComponentInEdtTask = span("old component init task creating") {
+       app.createInitOldComponentsTask()
+     }
+ 
