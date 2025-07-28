@@ -5,7 +5,6 @@ import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.Logger
@@ -272,7 +271,7 @@ class InternalDecoratorImpl internal constructor(
           if (toSelect != null) {
             // Focus the content later, because we are in the middle of removing the content.
             // Current content remove logic will focus the editor, but then we will focus the chosen content.
-            invokeLater(ModalityState.any()) {
+            invokeLater {
               toSelect.manager?.setSelectedContent(toSelect, true)
             }
           }
