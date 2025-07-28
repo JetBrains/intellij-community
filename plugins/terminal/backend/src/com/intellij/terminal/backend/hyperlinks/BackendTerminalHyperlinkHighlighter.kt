@@ -24,7 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.block.reworked.*
@@ -46,7 +46,7 @@ internal class BackendTerminalHyperlinkHighlighter(
     get() = channelFlow {
       val channel = this
       // asynchronous because we don't want to block the main event processing coroutine
-      launch(CoroutineName("BackendTerminalHyperlinkHighlighter task processing")) {
+      withContext(CoroutineName("BackendTerminalHyperlinkHighlighter task processing")) {
         combine(highlightTask, filterWrapper.getFilterFlow(), transform = { task, filter -> Pair(task, filter) })
           .debounce(20.milliseconds)
           .collectLatest { (task, filter) ->
