@@ -588,7 +588,7 @@ public abstract class DebuggerUtils {
   public static boolean isBreakpointAware(@NotNull PsiFile file) {
     FileType fileType = file.getFileType();
     //noinspection deprecation
-    if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).isJVMDebuggingSupported()) {
+    if (fileType instanceof LanguageFileType lft && lft.isJVMDebuggingSupported()) {
       return true;
     }
 
