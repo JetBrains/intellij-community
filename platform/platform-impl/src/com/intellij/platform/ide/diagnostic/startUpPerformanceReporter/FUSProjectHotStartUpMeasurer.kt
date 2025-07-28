@@ -177,6 +177,20 @@ object FUSProjectHotStartUpMeasurer {
     return MyMarker + projectMarker
   }
 
+  /**
+   * Provides [CoroutineContext] with empty project marker used in later reporting;
+   * used as a workaround when a scenario is known to be already violated (light edit),
+   * or a way to provide a context element associated with the project is not yet implemented (rem dev).
+   *
+   * Allows proper reporting of FUS events for single non-light edit projects,
+   * while attributing events to a single project in multiple project events.
+   */
+  // This code is necessary for reporting metrics from the frontend because frontend metrics are sent outside the project initialization process.
+  @Internal
+  fun getContextElementWithEmptyProjectElementToPass(): CoroutineContext {
+    return MyMarker + EmptyProjectMarker
+  }
+
   private fun reportViolation(violation: Violation) {
     if (violation == Violation.MultipleProjects) {
       thisLogger().error("Use `openingMultipleProjects()` instead")
@@ -223,20 +237,6 @@ object FUSProjectHotStartUpMeasurer {
     }
   }
 
-  /**
-   * Invokes [block] in coroutine context with project marker used in later reporting;
-   * see [withProjectContextElement]
-   */
-  suspend fun <T> withLightEditProjectContextElement(block: suspend () -> T): T { //todo[lene] remove this workaround
-    if (!currentThreadContext().isProperContext()) {
-      return block.invoke()
-    }
-    val projectId = ProjectId()
-    return withContext(MyProjectMarker(projectId)) {
-      block.invoke()
-    }
-  }
-
   private fun withRequiredProjectMarker(block: (ProjectId) -> Unit) {
     if (!currentThreadContext().isProperContext()) {
       return
@@ -277,13 +277,13 @@ object FUSProjectHotStartUpMeasurer {
 
   fun frameBecameVisible() {
     withRequiredProjectMarker { projectId ->
-      channel.trySend(Event.FrameBecameVisibleEvent(projectId)) //todo[lene] handle multiple frames case
+      channel.trySend(Event.FrameBecameVisibleEvent(projectId))
     }
   }
 
   fun reportFrameBecameInteractive() {
     withRequiredProjectMarker { projectId ->
-      channel.trySend(Event.FrameBecameInteractiveEvent(projectId)) //todo[lene] handle multiple frames case
+      channel.trySend(Event.FrameBecameInteractiveEvent(projectId))
     }
   }
 
@@ -626,6 +626,8 @@ object FUSProjectHotStartUpMeasurer {
     override val key: CoroutineContext.Key<*>
       get() = this
   }
+
+  private val EmptyProjectMarker = MyProjectMarker(ProjectId(-1))
 
   private data class MyProjectMarker(val id: ProjectId) : CoroutineContext.Element, IntelliJContextElement {
     object Key : CoroutineContext.Key<MyProjectMarker>

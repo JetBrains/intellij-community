@@ -392,7 +392,7 @@ object CommandLineProcessor {
               )
             }
             else if (command.lightEditMode) {
-              FUSProjectHotStartUpMeasurer.withLightEditProjectContextElement {
+              withContext(FUSProjectHotStartUpMeasurer.getContextElementWithEmptyProjectElementToPass()) {
                 LightEditService.getInstance().showEditorWindow()
               }
               CommandLineProcessorResult(project = LightEditService.getInstance().project, future = OK_FUTURE)
