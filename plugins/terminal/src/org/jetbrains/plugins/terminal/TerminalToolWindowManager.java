@@ -868,7 +868,11 @@ public final class TerminalToolWindowManager implements Disposable {
         }
       }
     };
-    DnDSupport.createBuilder(toolWindowEx.getDecorator()).setDropHandler(handler).install();
+    DnDSupport.createBuilder(toolWindowEx.getDecorator())
+      .setDropHandler(handler)
+      .setDisposableParent(this)
+      .disableAsSource()
+      .install();
   }
 
   private static @Nullable ContentManager findNearestContentManager(@NotNull DnDEvent event) {
