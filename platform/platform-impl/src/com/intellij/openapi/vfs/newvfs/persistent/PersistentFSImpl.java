@@ -2464,7 +2464,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
       VirtualDirectoryImpl directory = (VirtualDirectoryImpl)file.getParent();
       assert directory != null : file;
-      directory.removeChild(file);
+      directory.removeChild((VirtualFileSystemEntry)file);
     }
 
     vfsPeer.deleteRecordRecursively(fileIdToDelete);

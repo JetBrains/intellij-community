@@ -9820,7 +9820,6 @@ c:com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl
 - iterInDbChildrenWithoutLoadingVfsFromOtherProjects():java.lang.Iterable
 - markDirtyRecursively():V
 - refreshAndFindChild(java.lang.String):com.intellij.openapi.vfs.newvfs.NewVirtualFile
-- removeChild(com.intellij.openapi.vfs.VirtualFile):V
 - removeChildren(it.unimi.dsi.fastutil.ints.IntSet,java.util.List):V
 - p:setUserMap(com.intellij.util.keyFMap.KeyFMap):V
 f:com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl

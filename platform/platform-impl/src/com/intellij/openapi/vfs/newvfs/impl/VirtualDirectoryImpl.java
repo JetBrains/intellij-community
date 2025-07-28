@@ -831,42 +831,64 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   /** does nothing if child.id is already in directoryData.children list */
   public void addChild(@NotNull VirtualFileSystemEntry child) {
-    if (child.getId() == this.getId()) {
+    int childId = child.getId();
+    if (childId == this.getId()) {
       throw new IllegalArgumentException("Trying to add child(=" + child + ") to itself (parent=" + this + ")");
     }
     CharSequence childName = child.getNameSequence();
     boolean isCaseSensitive = isCaseSensitive();
     synchronized (directoryData) {
       directoryData.removeAdoptedName(childName);
-      VfsData.ChildrenIds sortedChildren = ensureChildrenSorted();
-      int indexInReal = findIndexByName(sortedChildren, childName, isCaseSensitive);
-      if (indexInReal < 0) {
-        int i = -indexInReal - 1;
-        int childId = child.getId();
-        assert childId > 0 : child + ": " + childId;
-        directoryData.children = sortedChildren.insertAt(i, childId);
-      }// else: child already presents in children
 
-      assertConsistency(isCaseSensitive, child, "indexInReal", indexInReal, isCaseSensitive);
+      VfsData.ChildrenIds children = directoryData.children;
+      if (children.isSorted()) {
+        int childIndex = findIndexByName(children, childName, isCaseSensitive);
+        if (childIndex < 0) {
+          int insertionIndex = -childIndex - 1;
+          directoryData.children = children.insertAt(insertionIndex, childId);
+          assertConsistency(isCaseSensitive, child, "insertionIndex", insertionIndex, isCaseSensitive);
+        }// else: child already presents in children
+      }
+      else {
+        int childIndex = children.indexOfId(childId);
+        if (childIndex < 0) {
+          directoryData.children = children.appendId(childId);
+          assertConsistency(isCaseSensitive, child, isCaseSensitive);
+        }//else: child is already present in children
+      }
     }
   }
 
-  public void removeChild(@NotNull VirtualFile file) {
+  public void removeChild(@NotNull VirtualFileSystemEntry child) {
     boolean isCaseSensitive = isCaseSensitive();
-    String name = file.getName();
+    String name = child.getName();
+    int childId = child.getId();
     synchronized (directoryData) {
-      VfsData.ChildrenIds sortedChildren = ensureChildrenSorted();
-      int childIndex = findIndexByName(sortedChildren, name, isCaseSensitive);
+      VfsData.ChildrenIds children = directoryData.children;
+
+      //Use binary search if children is already sorted, and long enough: linear search in int[] for short arrays is still
+      // faster than binary search with String-comparison. (threshold=64 is chosen arbitrary, by my intuition)
+      int childIndex;
+      if (children.isSorted() && children.size() > 64) {
+        childIndex = findIndexByName(children, name, isCaseSensitive);
+      }
+      else {// otherwise: linear search
+        childIndex = children.indexOfId(childId);
+      }
+
       if (childIndex >= 0) {
         // it can be that we ask to add a name to the adopted list whereas it is already contained in the real part -
         // in this case, we should remove it from the latter
-        directoryData.children = sortedChildren.removeAt(childIndex);
+        directoryData.children = children.removeAt(childIndex);
       }
-      if (!allChildrenLoaded()) {
+
+      // it can be that we ask to add a name to the adopted list whereas it is already contained in the real part -
+      // in this case, we should remove it from the latter
+      if (!allChildrenLoaded()) {//RC: I don't get why we add just-removed name to adoptedNames?
         directoryData.addAdoptedName(name, isCaseSensitive);
       }
 
-      assertConsistency(isCaseSensitive, file);
+      assertConsistency(isCaseSensitive, child);
     }
   }
 
