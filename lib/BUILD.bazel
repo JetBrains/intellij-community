@@ -2443,6 +2443,13 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+java_library(
+  name = "jackson-jr-objects-provided",
+  exports = [":jackson-jr-objects"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
 jvm_import(
   name = "jackson-module-kotlin",
   jar = "@jackson-module-kotlin-2_19_0_http//file",
