@@ -16083,6 +16083,26 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("inNonSuspendLambda.kt")
+        public void testInNonSuspendLambda() throws Exception {
+            runTest("testData/quickfix/runBlockingInSuspendFunction/inNonSuspendLambda.kt");
+        }
+
+        @TestMetadata("inNonSuspendLambda_inlineWrapper.kt")
+        public void testInNonSuspendLambda_inlineWrapper() throws Exception {
+            runTest("testData/quickfix/runBlockingInSuspendFunction/inNonSuspendLambda_inlineWrapper.kt");
+        }
+
+        @TestMetadata("inSuspendLambda.kt")
+        public void testInSuspendLambda() throws Exception {
+            runTest("testData/quickfix/runBlockingInSuspendFunction/inSuspendLambda.kt");
+        }
+
+        @TestMetadata("inSuspendLambda_inlineWrapper.kt")
+        public void testInSuspendLambda_inlineWrapper() throws Exception {
+            runTest("testData/quickfix/runBlockingInSuspendFunction/inSuspendLambda_inlineWrapper.kt");
+        }
+
         @TestMetadata("noContextNoReturnsMultipleStatements.kt")
         public void testNoContextNoReturnsMultipleStatements() throws Exception {
             runTest("testData/quickfix/runBlockingInSuspendFunction/noContextNoReturnsMultipleStatements.kt");

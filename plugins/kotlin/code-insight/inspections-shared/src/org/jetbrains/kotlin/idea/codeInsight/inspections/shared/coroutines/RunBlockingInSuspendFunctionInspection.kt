@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.descendantsOfType
+import com.intellij.psi.util.parents
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -20,18 +21,19 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.equalsOrEqualsByPsi
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.resources.BUNDLE
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.RunBlockingInSuspendFunctionInspection.Context
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.getCallExpressionSymbol
+import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.RunBlockingInSuspendFunctionInspection.Context
 import org.jetbrains.kotlin.idea.refactoring.singleLambdaArgumentExpression
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.hasSuspendModifier
 
 private val COROUTINE_CONTEXT_FQ_NAME = FqName("kotlin.coroutines.CoroutineContext")
 private val COROUTINE_SCOPE_FQ_NAME = FqName("kotlinx.coroutines.CoroutineScope")
@@ -66,12 +68,13 @@ internal class RunBlockingInSuspendFunctionInspection : KotlinApplicableInspecti
         KotlinBundle.message("inspection.run.blocking.in.suspend.function.description")
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean {
-        if (element.getCallNameExpression()?.text != RUN_BLOCKING_FUNCTION_NAME) return false
-        val parentFunction = element.getStrictParentOfType<KtNamedFunction>()
-        return parentFunction?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true
+        return element.getCallNameExpression()?.text == RUN_BLOCKING_FUNCTION_NAME
     }
 
     override fun KaSession.prepareContext(element: KtCallExpression): Context? {
+        // Check if we're in a suspend context (either suspend function or suspend lambda)
+        if (!isInSuspendContext(element)) return null
+        
         val fixType = when (element.valueArguments.size) {
             1 -> {
                 val lambdaArgumentExpression = element.singleLambdaArgumentExpression() ?: return null
@@ -178,3 +181,32 @@ private fun KaSession.isRunBlocking(function: KaNamedFunctionSymbol): Boolean {
 private fun KtCallExpression.resolveToFunctionSymbol(analysisSession: KaSession): KaNamedFunctionSymbol? = with(analysisSession) {
     calleeExpression?.mainReference?.resolveToSymbol() as? KaNamedFunctionSymbol
 }
+
+/**
+ * Checks if the given element is in a suspend context (either in a suspend function or in a suspend lambda).
+ */
+private fun KaSession.isInSuspendContext(element: KtExpression): Boolean {
+    for (parent in element.parents(withSelf = false)) {
+        when (parent) {
+            is KtFunctionLiteral -> {
+                // Skip lambdas which happen to be fully locally inlined
+                if (isInlinedArgument(parent, allowCrossinline = false)) {
+                    continue
+                }
+
+                // Check if the matching parameter's return type is a suspend type
+                val (_, argumentSymbol) = getCallExpressionSymbol(parent) ?: return false
+                val parameterType = argumentSymbol.returnType
+
+                return parameterType.isSuspendFunctionType
+            }
+
+            is KtFunction -> {
+                return parent.modifierList?.hasSuspendModifier() == true
+            }
+        }
+    }
+
+    return false
+}
+

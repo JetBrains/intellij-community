@@ -12471,6 +12471,26 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("inNonSuspendLambda.kt")
+        public void testInNonSuspendLambda() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction/inNonSuspendLambda.kt");
+        }
+
+        @TestMetadata("inNonSuspendLambda_inlineWrapper.kt")
+        public void testInNonSuspendLambda_inlineWrapper() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction/inNonSuspendLambda_inlineWrapper.kt");
+        }
+
+        @TestMetadata("inSuspendLambda.kt")
+        public void testInSuspendLambda() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction/inSuspendLambda.kt");
+        }
+
+        @TestMetadata("inSuspendLambda_inlineWrapper.kt")
+        public void testInSuspendLambda_inlineWrapper() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction/inSuspendLambda_inlineWrapper.kt");
+        }
+
         @TestMetadata("noContextNoReturnsMultipleStatements.kt")
         public void testNoContextNoReturnsMultipleStatements() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction/noContextNoReturnsMultipleStatements.kt");
