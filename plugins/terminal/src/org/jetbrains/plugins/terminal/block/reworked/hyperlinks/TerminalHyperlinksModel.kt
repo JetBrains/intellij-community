@@ -20,7 +20,7 @@ class TerminalHyperlinksModel(private val debugName: String, private val outputM
   fun addHyperlinks(hyperlinks: List<TerminalFilterResultInfo>) {
     val newHyperlinks = hyperlinks.sortedBy { it.absoluteEndOffset }
     val oldHyperlinks = this.hyperlinks
-    val allHyperlinks = mutableListOf<TerminalFilterResultInfo>()
+    val allHyperlinks = ArrayList<TerminalFilterResultInfo>(oldHyperlinks.size + newHyperlinks.size)
     var i = 0
     var j = 0
     while (i < oldHyperlinks.size || j < newHyperlinks.size) {
