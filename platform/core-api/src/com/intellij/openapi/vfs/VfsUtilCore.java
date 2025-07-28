@@ -311,7 +311,8 @@ public class VfsUtilCore {
         if (file.isValid() && visitor.allowVisitChildren(file) && !visitor.depthLimitReached()) {
           childrenIterable = visitor.getChildrenIterable(file);
           if (childrenIterable == null) {
-            children = file.getChildren();
+            //TODO RC: why not just wrap in Arrays.asList(), and replace 2 duplicated loops below with one?
+            children = file.getChildren(!visitor.childrenMayBeUnsorted());
           }
         }
       }

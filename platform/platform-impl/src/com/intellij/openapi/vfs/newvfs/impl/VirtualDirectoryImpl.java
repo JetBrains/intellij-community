@@ -681,14 +681,24 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
     }
 
-    //Slow path: let's go via findChild() so it could itself determine case-sensitivity
-    //TODO RC: probably, this path also could be simplified quite a lot: it seems, in many cases we could rely on default (FS)
+    //Slow path: let's go via findChild() so it could itself determine case-sensitivity:
+
+    //TODO RC: probably, findChild() here could be simplified quite a lot: it seems, in many cases we could rely on default (FS)
     //         case-sensitivity, and re-sort children later, if needed.
     String name = pFS.getName(childId);
     VirtualFileSystemEntry fileByName = findChild(name, /*refresh: */ false, /*ensureCanonicalName: */ false, getFileSystem());
     if (fileByName != null && fileByName.getId() != childId) {
       // a child with the same name and different ID was recreated after a refresh session -
       // it doesn't make sense to check it earlier because it is executed outside the VFS' read/write lock
+      //TODO RC: It seems that apart from race-condition with refresh session, this branch may also deal with 'orphan' files.
+      //         Due to some bugs in VFS we sometimes have duplicated file records -- i.e. fileId1 and fileId2 are both
+      //         corresponds to the same 'file.ext', and both fileId1 & fileId2 have same .parent field, but only fileId1
+      //         is in .parent.children list, while fileId2 is orphan. On call .findFileById(fileId2) we successfully
+      //         climb up .parent chain to the root, but on downclimb from root we'll come to the conflict since there is
+      //         no fileId2 in .children. This branch may serve as workaround: failed to find child by fileId2, we fallback
+      //         to find it by name, which succeed but fileByName.id == fileId1 != fileId2 -- this is what this branch is about
+      //         And since nowadays we have less orphans -- maybe at some point we'll not need this branch anymore?
+
       boolean deleted = pFS.peer().isDeleted(childId);
       if (!deleted) {
         THROTTLED_LOG.info(() -> {
