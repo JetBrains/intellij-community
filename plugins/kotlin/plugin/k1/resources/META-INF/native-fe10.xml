@@ -1,5 +1,0 @@
-<idea-plugin>
-    <extensions defaultExtensionNs="com.intellij">
-        <psi.classFileDecompiler implementation="org.jetbrains.kotlin.analysis.decompiler.konan.KotlinNativeMetadataDecompiler"/>
-    </extensions>
-</idea-plugin>

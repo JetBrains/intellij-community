@@ -40,6 +40,8 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
 }
 
 fun main(args: Array<String>) {
+    copyBootstrapArtifactsToMavenRepositoryIfRequired()
+    
     val preferences = GeneratorPreferences.parse(args)
 
     val communityRoot = generateSequence(File(".").canonicalFile) { it.parentFile }.first {
