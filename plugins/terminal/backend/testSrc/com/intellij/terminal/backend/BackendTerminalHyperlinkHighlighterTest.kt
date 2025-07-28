@@ -42,6 +42,8 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       0: line1
       1: line2
     """.trimIndent())
+    assertLinks()
+    assertHighlightings()
   }
 
   @Test
@@ -58,6 +60,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       link(at(0, "link1")),
       link(at(1, "link2")),
     )
+    assertHighlightings()
   }
 
   @Test
@@ -71,6 +74,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     assertLinks(
       link(at(0, "link1")),
     )
+    assertHighlightings()
   }
 
   @Test
@@ -88,6 +92,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     assertLinks(
       link(at(0, "link1")),
     )
+    assertHighlightings()
   }
 
   @Test
@@ -128,10 +133,11 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       link(at(0, "link12")),
       link(at(1, "link2")),
     )
+    assertHighlightings()
   }
 
   @Test
-  fun `some links with highlighting`() = withHelper {
+  fun `some highlighted links`() = withHelper {
     filter.highlight = HIGHLIGHT1
     filter.followedHighlight = HIGHLIGHT2
     filter.hoveredHighlight = HIGHLIGHT3
@@ -155,6 +161,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       link(at(0, "link1"), highlight = HIGHLIGHT1, followedHighlight = HIGHLIGHT2, hoveredHighlight = HIGHLIGHT3),
       link(at(1, "link2"), highlight = HIGHLIGHT2, followedHighlight = HIGHLIGHT3, hoveredHighlight = HIGHLIGHT4),
     )
+    assertHighlightings()
   }
 
   @Test
@@ -174,9 +181,36 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       0: line1 highlight1
       1: line2 highlight2
     """.trimIndent())
+    assertLinks()
     assertHighlightings(
       highlight(at(0, "highlight1"), highlight = HIGHLIGHT1),
       highlight(at(1, "highlight2"), highlight = HIGHLIGHT2),
+    )
+  }
+
+  @Test
+  fun `some links and some highlightings`() = withHelper {
+    filter.highlight = HIGHLIGHT1
+    updateModel(0L, """
+      0: line1 highlight1
+    """.trimIndent())
+    assertLinks()
+    assertHighlightings(
+      highlight(at(0, "highlight1")),
+    )
+    filter.highlight = HIGHLIGHT2
+    updateModel(1L, """
+      1: line2 link2
+    """.trimIndent())
+    assertText("""
+      0: line1 highlight1
+      1: line2 link2
+    """.trimIndent())
+    assertLinks(
+      link(at(1, "link2"), highlight = HIGHLIGHT2)
+    )
+    assertHighlightings(
+      highlight(at(0, "highlight1"), highlight = HIGHLIGHT1),
     )
   }
 
@@ -190,6 +224,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       link(at(0, "link1")),
       link(at(1, "link2")),
     )
+    assertHighlightings()
     updateModel(1L, """
       1: line3 link3
     """.trimIndent())
@@ -201,6 +236,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       link(at(0, "link1")),
       link(at(1, "link3")),
     )
+    assertHighlightings()
   }
 
   @Test
@@ -226,6 +262,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     assertLinks(
       *(0..499).map { link(at(it, "link${it + 1}")) }.toTypedArray(),
     )
+    assertHighlightings()
   }
 
   @Test
@@ -236,6 +273,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       link(at(100, "link101")),
       link(at(400, "link401")),
     )
+    assertHighlightings()
   }
 
   @Test
@@ -246,6 +284,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       assertLinks(
         *(0 until 667).map { link(at(it, "link${it + 3334}")) }.toTypedArray(),
       )
+      assertHighlightings()
     }
   }
 
@@ -260,6 +299,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       assertLinks(
         *(0 until 667).map { link(at(it, "link${it + 3334}")) }.toTypedArray(),
       )
+      assertHighlightings()
     }
   }
 
@@ -274,6 +314,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       assertLinks(
         *(0 until 667).map { link(at(it, "link${it + 3334}")) }.toTypedArray(),
       )
+      assertHighlightings()
     }
   }
 
