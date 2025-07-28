@@ -107,7 +107,9 @@ internal class GHPRDiffViewModelImpl(
     }
   }.shareIn(cs, SharingStarted.Lazily, 1)
 
-  private val changesSorter = GithubPullRequestsProjectUISettings.getInstance(project).changesGroupingState
+  private val settings = GithubPullRequestsProjectUISettings.getInstance(project)
+
+  private val changesSorter = settings.changesGroupingState
     .mapState { groupings ->
       { changes: List<RefComparisonChange> -> RefComparisonChangesSorter.Grouping(project, groupings).sort(changes) }
     }
@@ -121,7 +123,7 @@ internal class GHPRDiffViewModelImpl(
   private val threads: StateFlow<ComputedResult<List<GHPullRequestReviewThread>>> =
     reviewDataProvider.threadsComputationFlow.stateInNow(cs, ComputedResult.loading())
 
-  private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY)
+  private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(settings.editorReviewViewOption)
   override val discussionsViewOption: StateFlow<DiscussionsViewOption> = _discussionsViewOption.asStateFlow()
 
   override val isLoadingReviewData: StateFlow<Boolean> = reviewVm.pendingReview.combineState(threads) { reviewResult, threadsResult ->
@@ -173,6 +175,7 @@ internal class GHPRDiffViewModelImpl(
 
   override fun setDiscussionsViewOption(viewOption: DiscussionsViewOption) {
     _discussionsViewOption.value = viewOption
+    settings.editorReviewViewOption = viewOption
   }
 
   private fun CoroutineScope.createChangeVm(change: RefComparisonChange, diffData: GitTextFilePatchWithHistory) =
