@@ -4,16 +4,13 @@ package com.intellij.openapi.vcs.update
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.history.Label
 import com.intellij.history.LocalHistory
-import com.intellij.history.LocalHistoryAction
 import com.intellij.ide.errorTreeView.HotfixData
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -32,13 +29,10 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.vcs.VcsActivity
 import com.intellij.vcs.ViewUpdateInfoNotification
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.io.File
@@ -53,130 +47,124 @@ internal class VcsUpdateTask(
   private val actionInfo: ActionInfo,
   private val actionName: @Nls @NlsContexts.ProgressTitle String,
 ) {
-  private var updatedFiles: UpdatedFiles = UpdatedFiles.create()
-  private val groupedExceptions = HashMap<HotfixData?, MutableList<VcsException>>()
-  private val updateSessions = ArrayList<UpdateSession>()
-  private var executionCount = 0
-
-  // vcs name, context object
-  // create from outside without any context; context is created by vcses
-  private val contextInfo = HashMap<AbstractVcs, SequentialUpdatesContext?>()
-
-  private var before: Label? = null
-  private var after: Label? = null
-  private var localHistoryAction: LocalHistoryAction? = null
-
-  private fun reset() {
-    updatedFiles = UpdatedFiles.create()
-    groupedExceptions.clear()
-    updateSessions.clear()
-  }
-
-  fun launch(@RequiresEdt onSuccess: () -> Unit = {}) {
-    project.service<ProjectVcsUpdateTaskExecutor>().cs.launch(Dispatchers.Default) {
-      try {
-        withBackgroundProgress(project, actionName) {
-          coroutineToIndicator {
-            run(it)
-          }
-        }
-        withContext(Dispatchers.UiWithModelAccess) {
-          finishExecution(false)
-          onSuccess()
-        }
-      }
-      catch (ce: CancellationException) {
-        withContext(Dispatchers.UiWithModelAccess) {
-          finishExecution(true)
-        }
-        throw ce
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
-    }
-  }
-
-  @RequiresBackgroundThread
-  fun run(progressIndicator: ProgressIndicator) {
+  suspend fun execute() {
     StoreReloadManager.getInstance(project).blockReloadingProjectOnExternalChanges()
-    val vcsManager = ProjectLevelVcsManager.getInstance(project)
-    vcsManager.startBackgroundVcsOperation()
-
-    before = LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("update.label.before.update"))
-    localHistoryAction = LocalHistory.getInstance().startAction(VcsBundle.message("activity.name.update"), VcsActivity.Update)
-    progressIndicator.setIndeterminate(false)
-    val activity = VcsStatisticsCollector.UPDATE_ACTIVITY.started(project)
     try {
-      val toBeProcessed = spec.size
-      var processed = 0
-      for ((vcs, updateEnvironment, files) in spec) {
-        updateEnvironment.fillGroups(updatedFiles)
-
-        val refContext = Ref(contextInfo[vcs])
-        val updateSession = updateEnvironment.updateDirectories(files.toTypedArray(), updatedFiles, progressIndicator, refContext)
-        contextInfo[vcs] = refContext.get()
-
-        processed++
-        progressIndicator.setFraction(processed.toDouble() / toBeProcessed.toDouble())
-        progressIndicator.setText2("")
-        val exceptionList = collectExceptions(vcs, updateSession.getExceptions())
-        groupedExceptions.putAllNonEmpty(exceptionList)
-        updateSessions.add(updateSession)
+      val context = mutableMapOf<AbstractVcs, SequentialUpdatesContext?>()
+      var executionIndex = 0
+      var continueChain = false
+      withContext(Dispatchers.Default) {
+        do {
+          checkCanceled()
+          continueChain = executeUpdate(context, executionIndex)
+          executionIndex += 1
+        }
+        while (continueChain)
       }
-    }
-    finally {
-      try {
-        progressIndicator.checkCanceled()
-        progressIndicator.setText(VcsBundle.message("progress.text.synchronizing.files"))
-        progressIndicator.setText2("")
-        LOG.info("Calling refresh files after update for roots: ${roots.contentToString()}")
-        RefreshVFsSynchronously.updateAllChanged(updatedFiles)
-        notifyAnnotations(project, updatedFiles)
-      }
-      finally {
-        vcsManager.stopBackgroundVcsOperation()
-        notifyFiles(project, updatedFiles)
-        activity.finished()
-      }
-    }
-  }
-
-  private fun finishExecution(wasCanceled: Boolean) {
-    val continueChain = try {
-      if (!project.isOpen() || project.isDisposed()) {
-        LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("activity.name.update")) // TODO check why this label is needed
-        return
-      }
-
-      handleResult(wasCanceled)
     }
     finally {
       StoreReloadManager.getInstance(project).unblockReloadingProjectOnExternalChanges()
     }
-
-    if (continueChain) {
-      // trigger the next update; for CVS when updating from several branches simultaneously
-      reset()
-      executionCount += 1
-      launch()
-    }
   }
 
-  private fun handleResult(wasCanceled: Boolean): Boolean {
-    val contextInfo = contextInfo.fold()
-    val someSessionWasCancelled = wasCanceled || updateSessions.any(UpdateSession::isCanceled)
-    // here text conflicts might be interactively resolved
-    for (updateSession in updateSessions) {
-      updateSession.onRefreshFilesCompleted()
+  private suspend fun executeUpdate(context: MutableMap<AbstractVcs, SequentialUpdatesContext?>, executionCount: Int): Boolean {
+    val beforeLabel = LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("update.label.before.update"))
+    val localHistoryAction = LocalHistory.getInstance().startAction(VcsBundle.message("activity.name.update"), VcsActivity.Update)
+
+    val updatedFiles = UpdatedFiles.create()
+    val exceptions = mutableMapOf<HotfixData?, MutableList<VcsException>>()
+    val updateSessions = mutableListOf<UpdateSession>()
+
+    // intentionally ignore cancellation of the bg job to do the post-processing
+    val updateResult = runCatching {
+      executeUpdate(context, updatedFiles, exceptions, updateSessions)
     }
+    checkCanceled()
+
+    LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("activity.name.update")) // TODO check why this label is needed
+
+    withContext(Dispatchers.UiWithModelAccess) {
+      // here text conflicts might be interactively resolved
+      for (updateSession in updateSessions) {
+        checkCanceled()
+        updateSession.onRefreshFilesCompleted()
+      }
+    }
+
     // only after conflicts are resolved, put a label
-    localHistoryAction?.finish()
-    after = LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("update.label.after.update"))
+    localHistoryAction.finish()
+    val afterLabel = LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("update.label.after.update"))
+    checkCanceled()
 
     if (actionInfo.canChangeFileStatus()) {
       refreshFilesStatus(project, updatedFiles)
     }
+
+    val contextInfo = context.fold()
+    val runResult = UpdateRunResult(updatedFiles, exceptions, updateSessions, updateResult.exceptionOrNull() is CancellationException)
+    val continueChain = withContext(Dispatchers.UiWithModelAccess) {
+      handleResult(contextInfo, runResult, executionCount, beforeLabel, afterLabel)
+    }
+    updateResult.getOrThrow() // rethrow actual exceptions
+    return continueChain
+  }
+
+  suspend fun executeUpdate(
+    contextInfo: MutableMap<AbstractVcs, SequentialUpdatesContext?>,
+    updatedFiles: UpdatedFiles,
+    groupedExceptions: MutableMap<HotfixData?, MutableList<VcsException>>,
+    updateSessions: MutableList<UpdateSession>,
+  ) {
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
+    vcsManager.startBackgroundVcsOperation()
+    val activity = VcsStatisticsCollector.UPDATE_ACTIVITY.started(project)
+    try {
+      withBackgroundProgress(project, actionName) {
+        reportSequentialProgress(spec.size) { progress ->
+          try {
+            for ((vcs, updateEnvironment, files) in spec) {
+              progress.itemStep {
+                updateEnvironment.fillGroups(updatedFiles)
+
+                val refContext = Ref(contextInfo[vcs])
+                val updateSession = coroutineToIndicator {
+                  updateEnvironment.updateDirectories(files.toTypedArray(), updatedFiles, it, refContext)
+                }
+                contextInfo[vcs] = refContext.get()
+
+                val exceptionList = collectExceptions(vcs, updateSession.getExceptions())
+                groupedExceptions.putAllNonEmpty(exceptionList)
+                updateSessions.add(updateSession)
+              }
+            }
+          }
+          finally {
+            checkCanceled()
+            progress.indeterminateStep(VcsBundle.message("progress.text.synchronizing.files")) {
+              LOG.info("Calling refresh files after update for roots: ${roots.contentToString()}")
+              RefreshVFsSynchronously.updateAllChanged(updatedFiles)
+            }
+            notifyAnnotations(project, updatedFiles)
+          }
+        }
+      }
+    }
+    finally {
+      vcsManager.stopBackgroundVcsOperation()
+      notifyFiles(project, updatedFiles)
+      activity.finished()
+    }
+  }
+
+  private fun handleResult(
+    contextInfo: ContextInfo,
+    runData: UpdateRunResult,
+    executionIndex: Int,
+    beforeLabel: Label?,
+    afterLabel: Label?,
+  ): Boolean {
+    val (updatedFiles, groupedExceptions, updateSessions, cancelled) = runData
+    val someSessionWasCancelled = cancelled || updateSessions.any(UpdateSession::isCanceled)
 
     val updateSuccess = !someSessionWasCancelled && groupedExceptions.isEmpty()
     val couldContinue = updateSuccess && contextInfo.continueChain
@@ -200,8 +188,8 @@ internal class VcsUpdateTask(
         singleUpdateSession.showNotification()
       }
       else {
-        val updateNumber = if (willBeContinued || executionCount > 0) executionCount + 1 else 0
-        val tree = showUpdateTree(someSessionWasCancelled, updateNumber)
+        val updateNumber = if (willBeContinued || executionIndex > 0) executionIndex + 1 else 0
+        val tree = showUpdateTree(updatedFiles, someSessionWasCancelled, updateNumber, beforeLabel, afterLabel)
 
         if (tree != null) {
           val additionalContent = updateSessions.mapNotNull { it.additionalNotificationContent }
@@ -229,15 +217,20 @@ internal class VcsUpdateTask(
     }
   }
 
-  private fun showUpdateTree(wasCancelled: Boolean, updateNumber: Int): UpdateInfoTree? {
+  private fun showUpdateTree(
+    updatedFiles: UpdatedFiles,
+    wasCancelled: Boolean, updateNumber: Int,
+    beforeLabel: Label?,
+    afterLabel: Label?,
+  ): UpdateInfoTree? {
     val title = actionName + if (updateNumber > 1) "#$updateNumber" else ""
     val tree = ProjectLevelVcsManagerEx.getInstanceEx(project).showUpdateProjectInfo(updatedFiles, title, actionInfo, wasCancelled)
                ?: return null
     RestoreUpdateTree.getInstance(project).registerUpdateInformation(updatedFiles, actionInfo)
 
     with(tree) {
-      setBefore(before)
-      setAfter(after)
+      setBefore(beforeLabel)
+      setAfter(afterLabel)
       setCanGroupByChangeList(canGroupByChangelist(spec.map { it.vcs }))
     }
 
@@ -357,6 +350,13 @@ private data class ContextInfo(
   val interruptedExceptions: Map<HotfixData?, List<VcsException>>,
 )
 
+private data class UpdateRunResult(
+  val updatedFiles: UpdatedFiles,
+  val groupedExceptions: Map<HotfixData?, MutableList<VcsException>>,
+  val updateSessions: List<UpdateSession>,
+  val cancelled: Boolean,
+)
+
 private fun Map<AbstractVcs, SequentialUpdatesContext?>.fold(): ContextInfo {
   var continueChain = false
   val exceptions = mutableMapOf<HotfixData?, MutableList<VcsException>>()
@@ -382,6 +382,3 @@ private fun <K, V> MutableMap<K, MutableList<V>>.putAllNonEmpty(map: Map<K, List
     computeIfAbsent(key) { mutableListOf() }.addAll(values)
   }
 }
-
-@Service(Service.Level.PROJECT)
-private class ProjectVcsUpdateTaskExecutor(val cs: CoroutineScope)

@@ -4,11 +4,14 @@ package com.intellij.openapi.vcs.update
 import com.intellij.configurationStore.forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
@@ -18,8 +21,15 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.vcsUtil.VcsUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import kotlin.coroutines.cancellation.CancellationException
+
+private val LOG = logger<VcsUpdateProcess>()
 
 @ApiStatus.Experimental
 object VcsUpdateProcess {
@@ -70,8 +80,7 @@ object VcsUpdateProcess {
 
     // could be called by external plugin via com.intellij.openapi.vcs.update.AbstractCommonUpdateAction.actionPerformed
     // and we have no guarantees about threading there
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      // Not only documents, but also project settings should be saved,
+    if (ApplicationManager.getApplication().isDispatchThread()) { // Not only documents, but also project settings should be saved,
       // to ensure that if as a result of Update some project settings will be changed,
       // all local changes are saved in prior and do not overwrite remote changes.
       // Also, there is a chance that save during update can break it -
@@ -92,7 +101,20 @@ object VcsUpdateProcess {
     @Nls actionName: String,
     @RequiresEdt onSuccess: () -> Unit = {},
   ) {
-    VcsUpdateTask(project, roots, updateSpec, actionInfo, actionName).launch(onSuccess)
+    project.service<ProjectVcsUpdateTaskExecutor>().launchUpdate(roots, updateSpec, actionInfo, actionName, onSuccess)
+  }
+
+  @ApiStatus.Internal
+  suspend fun update(
+    project: Project,
+    roots: Array<FilePath>,
+    updateSpec: List<VcsUpdateSpecification>,
+    actionInfo: ActionInfo,
+    actionName: @Nls String,
+  ) {
+    withContext(Dispatchers.Default) {
+      VcsUpdateTask(project, roots, updateSpec, actionInfo, actionName).execute()
+    }
   }
 
   @ApiStatus.Obsolete
@@ -105,7 +127,10 @@ object VcsUpdateProcess {
     actionInfo: ActionInfo,
     @Nls actionName: String,
   ) {
-    VcsUpdateTask(project, roots, updateSpec, actionInfo, actionName).run(EmptyProgressIndicator())
+    runBlockingMaybeCancellable {
+      VcsUpdateTask(project, roots, updateSpec, actionInfo, actionName)
+        .executeUpdate(mutableMapOf(), UpdatedFiles.create(), mutableMapOf(), mutableListOf())
+    }
   }
 
   @ApiStatus.Internal
@@ -174,8 +199,7 @@ object VcsUpdateProcess {
       for ((vcs, roots) in resultPrep.entries) {
         val environment = actionInfo.getEnvironment(vcs) ?: continue
 
-        @Suppress("DEPRECATION")
-        val uniqueRoots = vcs.filterUniqueRoots(roots.toList(), FilePath::getVirtualFile)
+        @Suppress("DEPRECATION") val uniqueRoots = vcs.filterUniqueRoots(roots.toList(), FilePath::getVirtualFile)
         add(VcsUpdateSpecification(vcs, environment, uniqueRoots))
       }
     }
@@ -183,8 +207,7 @@ object VcsUpdateProcess {
 
   private fun isUpdateSpecValid(spec: List<VcsUpdateSpecification>): Boolean {
     for ((_, updateEnvironment, roots) in spec) {
-      if (!updateEnvironment.validateOptions(roots)) {
-        // messages already shown
+      if (!updateEnvironment.validateOptions(roots)) { // messages already shown
         return false
       }
     }
@@ -226,8 +249,6 @@ object VcsUpdateProcess {
       environment != null && environment.hasCustomNotification()
     }
   }
-
-  private val LOG = logger<VcsUpdateProcess>()
 }
 
 @ApiStatus.Internal
@@ -236,3 +257,29 @@ data class VcsUpdateSpecification(
   val environment: UpdateEnvironment,
   val roots: Collection<FilePath>,
 )
+
+@Service(Service.Level.PROJECT)
+private class ProjectVcsUpdateTaskExecutor(private val project: Project, private val cs: CoroutineScope) {
+  fun launchUpdate(
+    roots: Array<FilePath>,
+    updateSpec: List<VcsUpdateSpecification>,
+    actionInfo: ActionInfo,
+    @Nls actionName: String,
+    @RequiresEdt onSuccess: () -> Unit = {},
+  ) {
+    cs.launch {
+      try {
+        VcsUpdateProcess.update(project, roots, updateSpec, actionInfo, actionName)
+        withContext(Dispatchers.UI) {
+          onSuccess()
+        }
+      }
+      catch (ce: CancellationException) {
+        throw ce
+      }
+      catch (e: Exception) {
+        LOG.error(e)
+      }
+    }
+  }
+}
