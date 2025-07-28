@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicLong
  * so they should not call [IncrementalUpdateFlowProducer.handleUpdate]
  * to avoid deadlocks.
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 interface MutableStateWithIncrementalUpdates<U : Any> {
   /**
    * Applies the given update to the state.
@@ -72,7 +72,7 @@ interface MutableStateWithIncrementalUpdates<U : Any> {
  * and the frontend can connect at any moment and needs to receive the full state first
  * and then incremental updates to that state.
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 class IncrementalUpdateFlowProducer<U : Any>(private val state: MutableStateWithIncrementalUpdates<U>) {
   private val updateVersion = AtomicLong()
   private val lock = Mutex()
