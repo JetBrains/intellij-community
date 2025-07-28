@@ -88,6 +88,7 @@
 f:com.intellij.platform.eel.EelExecApiHelpersKt
 - *sf:spawnProcess(com.intellij.platform.eel.EelExecApi,java.lang.String):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
 f:com.intellij.platform.eel.EelExecApiKt
+- *sf:spawnProcess(com.intellij.platform.eel.EelExecApi,com.intellij.platform.eel.path.EelPath,java.lang.String[]):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
 - *sf:spawnProcess(com.intellij.platform.eel.EelExecApi,java.lang.String,java.lang.String[]):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
 - *sf:spawnProcess(com.intellij.platform.eel.EelExecPosixApi,java.lang.String,java.lang.String[]):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
 - *sf:spawnProcess(com.intellij.platform.eel.EelExecWindowsApi,java.lang.String,java.lang.String[]):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
