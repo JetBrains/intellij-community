@@ -13,11 +13,17 @@ import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author Mikhail Golubev
  */
 public class JsonSpellcheckerStrategy extends SpellcheckingStrategy implements DumbAware {
+
+  // JSON is often deserialized to classes,
+  // so we consider literals that look like typical programming language identifier to be code contexts
+  private static final Pattern CODE_LIKE_PATTERN = Pattern.compile("\"([a-zA-Z][a-zA-Z0-9_]*)\"");
+
   private final Tokenizer<JsonStringLiteral> ourStringLiteralTokenizer = new Tokenizer<>() {
     @Override
     public void tokenize(@NotNull JsonStringLiteral element, @NotNull TokenConsumer consumer) {
@@ -38,6 +44,11 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy implements D
       }
     }
   };
+
+  @Override
+  protected boolean isLiteral(@NotNull PsiElement element) {
+    return super.isLiteral(element) || !super.isComment(element) && !CODE_LIKE_PATTERN.matcher(element.getText()).matches();
+  }
 
   @Override
   public @NotNull Tokenizer<?> getTokenizer(PsiElement element) {

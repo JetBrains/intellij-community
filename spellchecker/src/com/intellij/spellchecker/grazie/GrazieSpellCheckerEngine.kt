@@ -3,6 +3,7 @@
 
 package com.intellij.spellchecker.grazie
 
+import ai.grazie.annotation.TestOnly
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.alphabet.Alphabet
 import ai.grazie.nlp.phonetics.metaphone.DoubleMetaphone
@@ -46,7 +47,7 @@ import kotlinx.coroutines.*
 private const val MAX_WORD_LENGTH = 32
 
 @Service(Service.Level.PROJECT)
-internal class GrazieSpellCheckerEngine(
+class GrazieSpellCheckerEngine(
   project: Project,
   private val coroutineScope: CoroutineScope
 ): SpellCheckerEngine, Disposable {
@@ -192,6 +193,11 @@ internal class GrazieSpellCheckerEngine(
     for (name in toRemove) {
       adapter.removeSource(name)
     }
+  }
+
+  @TestOnly
+  fun dropSuggestionCache() {
+    suggestionCache.invalidateAll()
   }
 }
 

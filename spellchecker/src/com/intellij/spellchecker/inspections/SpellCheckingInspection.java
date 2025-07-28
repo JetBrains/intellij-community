@@ -23,7 +23,10 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.grazie.diacritic.Diacritics;
-import com.intellij.spellchecker.tokenizer.*;
+import com.intellij.spellchecker.tokenizer.LanguageSpellchecking;
+import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
+import com.intellij.spellchecker.tokenizer.SuppressibleSpellcheckingStrategy;
+import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.CollectionFactory;
@@ -36,6 +39,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
@@ -92,7 +96,6 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
     }
     SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());
     var scope = buildAllowedScopes();
-
     return new PsiElementVisitor() {
       @Override
       public void visitElement(final @NotNull PsiElement element) {
@@ -103,7 +106,6 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
           return;
         }
 
-        final Language language = element.getLanguage();
         var strategy = getSpellcheckingStrategy(element);
         if (strategy == null) {
           return;
@@ -118,9 +120,18 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
           return;
         }
 
-        tokenize(element, new MyTokenConsumer(manager, holder, LanguageNamesValidation.INSTANCE.forLanguage(language)), scope);
+        inspect(element, strategy, holder);
       }
     };
+  }
+
+  private void inspect(@NotNull PsiElement element,
+                       @NotNull SpellcheckingStrategy strategy,
+                       @NotNull ProblemsHolder holder) {
+    SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());
+    Set<SpellCheckingScope> scopes = buildAllowedScopes();
+    tokenize(element, new MyTokenConsumer(manager, strategy, holder, LanguageNamesValidation.INSTANCE.forLanguage(element.getLanguage())),
+             scopes);
   }
 
   private Set<SpellCheckingScope> buildAllowedScopes() {
@@ -205,17 +216,22 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
   }
 
   private static final class MyTokenConsumer extends TokenConsumer implements Consumer<TextRange> {
+    private static final Pattern NON_ENGLISH_LETTERS = Pattern.compile(".*[^a-zA-Z].*");
+
     private final Set<String> myAlreadyChecked = CollectionFactory.createSmallMemoryFootprintSet();
     private final SpellCheckerManager myManager;
     private final ProblemsHolder myHolder;
     private final NamesValidator myNamesValidator;
+    private final SpellcheckingStrategy myStrategy;
+    private boolean myCodeLike;
     private PsiElement myElement;
     private String myText;
     private boolean myUseRename;
     private int myOffset;
 
-    MyTokenConsumer(SpellCheckerManager manager, ProblemsHolder holder, NamesValidator namesValidator) {
+    MyTokenConsumer(SpellCheckerManager manager, SpellcheckingStrategy strategy, ProblemsHolder holder, NamesValidator namesValidator) {
       myManager = manager;
+      myStrategy = strategy;
       myHolder = holder;
       myNamesValidator = namesValidator;
     }
@@ -231,6 +247,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
       myText = text;
       myUseRename = useRename;
       myOffset = offset;
+      myCodeLike = myStrategy.elementFitsScope(myElement, Set.of(SpellCheckingScope.Code));
       splitter.split(text, rangeToCheck, this);
     }
 
@@ -248,27 +265,18 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
         return;
       }
 
-      //Use tokenizer to generate accurate range in element (e.g. in case of escape sequences in element)
-      SpellcheckingStrategy strategy = getSpellcheckingStrategy(myElement);
-
-      Tokenizer<?> tokenizer = strategy != null ? strategy.getTokenizer(myElement) : null;
-      if (tokenizer != null) {
-        range = tokenizer.getHighlightingRange(myElement, myOffset, range);
-      }
+      range = myStrategy.getTokenizer(myElement)
+        .getHighlightingRange(myElement, myOffset, range);
       assert range.getStartOffset() >= 0;
 
-      if (myHolder.isOnTheFly()) {
-        addRegularDescriptor(myElement, range, myHolder, myUseRename, word);
-      }
-      else {
+      if (!myHolder.isOnTheFly()) {
         myAlreadyChecked.add(word);
-        addBatchDescriptor(myElement, range, word, myHolder);
       }
+      registerProblem(myHolder, myElement, range, myUseRename, word);
     }
 
     private boolean hasSameNamedReferenceInFile(String word) {
-      SpellcheckingStrategy strategy = getSpellcheckingStrategy(myElement);
-      if (strategy == null || !strategy.elementFitsScope(myElement, Set.of(SpellCheckingScope.Comments))) {
+      if (!myStrategy.elementFitsScope(myElement, Set.of(SpellCheckingScope.Comments))) {
         return false;
       }
 
@@ -297,8 +305,10 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
       if (!myManager.hasProblem(word)) {
         return false;
       }
-      SpellcheckingStrategy strategy = getSpellcheckingStrategy(myElement);
-      if (strategy == null || !strategy.elementFitsScope(myElement, Set.of(SpellCheckingScope.Code))) {
+
+      // If the word isn't "code" or contains letters outside the English alphabet,
+      // then diacritic check should be skipped
+      if (!myCodeLike || NON_ENGLISH_LETTERS.matcher(word).matches()) {
         return true;
       }
 
@@ -307,6 +317,19 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
         .stream()
         .filter(suggestion -> RenameUtil.isValidName(project, myElement, suggestion))
         .noneMatch(suggestion -> Diacritics.equalsIgnoringDiacritics(word, suggestion));
+    }
+  }
+
+  private static void registerProblem(@NotNull ProblemsHolder holder,
+                                      @NotNull PsiElement element,
+                                      @NotNull TextRange range,
+                                      boolean useRename,
+                                      String word) {
+    if (holder.isOnTheFly()) {
+      addRegularDescriptor(element, range, holder, useRename, word);
+    }
+    else {
+      addBatchDescriptor(element, range, word, holder);
     }
   }
 

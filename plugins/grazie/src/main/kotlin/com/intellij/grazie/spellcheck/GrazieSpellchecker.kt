@@ -19,6 +19,8 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassLoaderUtil
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.spellchecker.dictionary.Dictionary
+import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.*
 import com.intellij.spellchecker.grazie.SpellcheckerLifecycle
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -115,19 +117,19 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
     }
   }
 
-  fun isCorrect(word: String): Boolean? {
+  fun lookup(word: String): Dictionary.LookupStatus {
     val myCheckers = filterCheckers(word)
 
     var isAlien = true
     for (speller in myCheckers) {
       when (speller.check(word)) {
-        true -> return true
+        true -> return Present
         false -> isAlien = false
         else -> {}
       }
     }
 
-    return if (isAlien) null else false
+    return if (isAlien) Alien else Absent
   }
 
   fun getSuggestions(word: String): Collection<String> {

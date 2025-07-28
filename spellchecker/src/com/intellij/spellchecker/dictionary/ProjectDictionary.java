@@ -11,6 +11,8 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.*;
+
 public final class ProjectDictionary implements EditableDictionary {
   public static final @NonNls String DEFAULT_CURRENT_DICT_NAME = "project";
   private static final String DEFAULT_PROJECT_DICTIONARY_NAME = "project";
@@ -42,11 +44,11 @@ public final class ProjectDictionary implements EditableDictionary {
 
     int errors = 0;
     for (Dictionary dictionary : dictionaries) {
-      Boolean contains = dictionary.contains(word);
-      if (contains == null) {
+      Dictionary.LookupStatus status = dictionary.lookup(word);
+      if (status == Alien) {
         errors++;
       }
-      else if (contains) {
+      else if (status == Present) {
         return true;
       }
     }
