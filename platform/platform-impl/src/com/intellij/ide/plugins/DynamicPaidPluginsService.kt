@@ -70,7 +70,7 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
 
   private fun doLoadPaidPlugins(project: Project?) {
     if (PluginEnabler.getInstance().isDisabled(ULTIMATE_PLUGIN_ID)) {
-      logger.debug("Ultimate plugin is disabled. Paid plugins will not be enabled.")
+      logger.info("Ultimate plugin is disabled. Paid plugins will not be enabled.")
       return
     }
 
