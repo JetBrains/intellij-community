@@ -41,7 +41,7 @@ class KotlinMppRunConfigurationsTest : AbstractKotlinMppGradleImportingTest() {
         }
     }
 
-    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
+    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+", gradleVersion = "8.4+")
     @Test
     fun testKmmTests() {
         /*
