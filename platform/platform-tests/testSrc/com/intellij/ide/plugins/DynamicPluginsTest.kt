@@ -1109,6 +1109,7 @@ class DynamicPluginsTest {
     PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").build()
     loadPluginInTest(fooPluginPath) {
       loadPluginInTest(barPluginPath) {
+        assertThat(PluginManagerCore.getPluginSet().findEnabledModule("foo.b")).isNull()
         assertThat(ActionManager.getInstance().getAction("foo.b.action")).isNull()
       }
     }
