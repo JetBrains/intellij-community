@@ -1486,9 +1486,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     try (AccessToken ignored = ClientId.withExplicitClientId(ClientFileEditorManager.getClientId(fileEditor))) {
       Document document = editor == null ? FileDocumentManager.getInstance().getCachedDocument(virtualFile) : editor.getDocument();
       EditorColorsScheme scheme = editor == null ? null : editor.getColorsScheme();
-      CodeInsightContext context = editor != null
-                                   ? EditorContextManager.getEditorContext(editor, myProject)
-                                   : CodeInsightContexts.anyContext();
+      CodeInsightContext cachedContext = editor != null ? EditorContextManager.getCachedEditorContext(editor, myProject) : null;
+      CodeInsightContext context = cachedContext != null ? cachedContext : CodeInsightContexts.anyContext();
       PsiFile psiFileToSubmit = TextEditorBackgroundHighlighter.getCachedFileToHighlight(myProject, virtualFile, context);
       if (psiFileToSubmit == null || document == null) {
         String reason = document == null ? "queuePassesCreation: couldn't submit" +  virtualFile + " because document is null: fileEditor="+ fileEditor+" ("+ fileEditor.getClass()+")"
