@@ -45,7 +45,7 @@ internal class BackendTerminalHyperlinkHighlighter(
   private val highlightTask = MutableStateFlow<HighlightTask?>(highlightAllTask())
   private val filterWrapper = CompositeFilterWrapper(project, coroutineScope)
 
-  val resultFlow: Flow<List<TerminalHyperlinksChangedEvent>>
+  val resultFlow: Flow<TerminalHyperlinksChangedEvent>
     get() = channelFlow {
       val channel = this
       // asynchronous because we don't want to block the main event processing coroutine
@@ -116,7 +116,7 @@ internal class BackendTerminalHyperlinkHighlighter(
     private val outputModel: FrozenTerminalOutputModel,
     val startOffset: TerminalOffset,
   ) {
-    suspend fun run(filter: CompositeFilter, channel: SendChannel<List<TerminalHyperlinksChangedEvent>>) {
+    suspend fun run(filter: CompositeFilter, channel: SendChannel<TerminalHyperlinksChangedEvent>) {
       val document = outputModel.document
       val firstID = hyperlinkId.get() + 1
       var firstOffset: TerminalOffset? = null
@@ -148,7 +148,7 @@ internal class BackendTerminalHyperlinkHighlighter(
         require(!(firstBatch && lastBatch))
         if (results.isNotEmpty() || firstBatch || lastBatch) {
           val event = createEvent(results, firstBatch)
-          channel.send(listOf(event))
+          channel.send(event)
           logEvent(event)
         }
       }

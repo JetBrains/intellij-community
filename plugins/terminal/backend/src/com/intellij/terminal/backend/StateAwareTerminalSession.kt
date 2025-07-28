@@ -14,6 +14,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.isSplitHyperlinksSupportEnabled
@@ -92,7 +93,11 @@ internal class StateAwareTerminalSession(
 
     coroutineScope.launch(CoroutineName("StateAwareTerminalSession: models updating")) {
       val originalOutputFlow = if (outputHyperlinkFacade != null && alternateBufferHyperlinkFacade != null) {
-        merge(delegate.getOutputFlow(), outputHyperlinkFacade.resultFlow, alternateBufferHyperlinkFacade.resultFlow)
+        merge(
+          delegate.getOutputFlow(),
+          outputHyperlinkFacade.resultFlow.map { listOf(it) },
+          alternateBufferHyperlinkFacade.resultFlow.map { listOf(it) },
+        )
       }
       else {
         delegate.getOutputFlow()

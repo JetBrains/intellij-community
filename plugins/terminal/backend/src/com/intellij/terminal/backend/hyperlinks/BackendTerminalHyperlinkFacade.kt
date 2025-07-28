@@ -25,7 +25,7 @@ internal class BackendTerminalHyperlinkFacade(
   private val highlighter = BackendTerminalHyperlinkHighlighter(project, coroutineScope, outputModel, isInAlternateBuffer)
   private val model = TerminalHyperlinksModel(if (isInAlternateBuffer) "Backend AltBuf" else "Backend Output", outputModel)
 
-  val resultFlow: Flow<List<TerminalHyperlinksChangedEvent>> get() = highlighter.resultFlow
+  val resultFlow: Flow<TerminalHyperlinksChangedEvent> get() = highlighter.resultFlow
 
   fun updateModelState(event: TerminalHyperlinksChangedEvent): Boolean {
     if (event.documentModificationStamp < outputModel.document.modificationStamp) return false
