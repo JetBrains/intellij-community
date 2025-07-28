@@ -68,25 +68,22 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        name: Check out repository
         with:
-          # Assume we don't have more than 10 commits in the branch —
-          # if we do, it'll fail on the single-commit check anyway.
-          fetch-depth: 10
+          ref: ${{ github.event.pull_request.head.sha }}
+        name: Check out repository
+
+      - name: Grant execute permission for validation scripts
+        run: chmod +x ./scripts/validate-commit-message.sh && chmod +x ./scripts/validate-pr-commits.sh
 
       - name: Validate PR has single commit
-        run: |
-          commit_count=$(git rev-list --count ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
-          if [ "$commit_count" -ne 1 ]; then
-            echo "ERROR: This pull request must contain exactly one commit."
-            echo "Please squash your commits into a single commit."
-            exit 1
-          fi
-
-      - name: Grant execute permission for validation script
-        run: chmod +x validate-commit-message.sh
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./scripts/validate-pr-commits.sh
 
       - name: Validate commit message
         env:
           JEWEL_YT_TOKEN: ${{ secrets.JEWEL_YT_TOKEN }}
-        run: ./validate-commit-message.sh "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./scripts/validate-commit-message.sh
