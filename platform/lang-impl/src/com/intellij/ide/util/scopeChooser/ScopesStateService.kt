@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.concurrency.ThreadingAssertions
+import fleet.multiplatform.shims.ConcurrentHashMap
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -48,7 +49,7 @@ class ScopesStateService(val project: Project) {
 
 @ApiStatus.Internal
 class ScopesState internal constructor(val project: Project) {
-  val scopeIdToDescriptor: MutableMap<String, ScopeDescriptor> = mutableMapOf()
+  val scopeIdToDescriptor: MutableMap<String, ScopeDescriptor> = ConcurrentHashMap()
 
   fun addScope(scopeDescriptor: ScopeDescriptor): String {
     val existingIdToDescriptor = scopeIdToDescriptor.entries.find { it.value.displayName == scopeDescriptor.displayName }
