@@ -29,7 +29,6 @@ import com.intellij.platform.project.findProjectOrNull
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewPresentation
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
@@ -42,7 +41,6 @@ internal class FindRemoteApiImpl : FindRemoteApi {
 
   override suspend fun findByModel(findModel: FindModel, projectId: ProjectId, filesToScanInitially: List<VirtualFileId>): Flow<FindInFilesResult> {
     return channelFlow {
-      coroutineScope {
         //TODO rewrite find function without using progress indicator and presentation
         val progressIndicator = EmptyProgressIndicator()
         val presentation = FindUsagesProcessPresentation(UsageViewPresentation())
@@ -55,7 +53,7 @@ internal class FindRemoteApiImpl : FindRemoteApi {
         val project = projectId.findProjectOrNull()
         if (project == null) {
           LOG.warn("Project not found for id ${projectId}")
-          return@coroutineScope
+          return@channelFlow
         }
         val filesToScanInitially = filesToScanInitially.mapNotNull { it.virtualFile() }.toSet()
         // SearchScope is not serializable, so we will get it by id from the client
@@ -72,7 +70,7 @@ internal class FindRemoteApiImpl : FindRemoteApi {
             return@findUsages false
           }
 
-          val adapter = UsageInfo2UsageAdapter(usageInfo).also { it.updateCachedPresentation() }
+          val adapter = UsageInfo2UsageAdapter(usageInfo)
           val previousItem: UsageInfo2UsageAdapter? = previousResult.get()
           val originalLength = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset
           if (!isReplaceState && previousItem != null) adapter.merge(previousItem)
@@ -90,7 +88,7 @@ internal class FindRemoteApiImpl : FindRemoteApi {
             navigationOffset = adapter.navigationOffset,
             mergedOffsets = adapter.mergedInfos.map { it.navigationOffset },
             length = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
-            originalLength = originalLength,
+            originalLength = originalLength, //could differ from the length in the case of the merged items
             fileId = virtualFile.rpcId(),
             presentablePath = if (virtualFile.parent == null) FindPopupPanel.getPresentablePath(project, virtualFile) ?: virtualFile.presentableUrl
             else FindPopupPanel.getPresentablePath(project, virtualFile.parent) + File.separator + virtualFile.name,
@@ -101,10 +99,9 @@ internal class FindRemoteApiImpl : FindRemoteApi {
           )
           launch {
             send(result)
-          }
+          }.start()
           usagesCount.get() <= maxUsages
         }
-      }
     }
   }
 
