@@ -288,6 +288,10 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     if (runnerSettings.isSkipTests) {
       args.addProperty("skipTests", "true")
     }
+    
+    if (generalSettings.isWorkOffline) {
+      args.add("--offline")
+    }
 
     if (generalSettings.outputLevel == MavenExecutionOptions.LoggingLevel.DEBUG) {
       args.add("--debug")
