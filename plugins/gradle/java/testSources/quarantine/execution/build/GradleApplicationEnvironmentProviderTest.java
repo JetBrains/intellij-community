@@ -84,7 +84,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
   }
 
   @Test
-  public void testJavaModuleRunConfiguration() throws Exception {
+  public void testJavaModuleRunConfigurationWithResources() throws Exception {
     PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
     @Language("Java")
     String appClass = """
@@ -144,6 +144,64 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
 
     RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(myProject).findConfigurationByName("MyApp");
     assertAppRunOutput(configurationSettings, "File Content: content");
+  }
+
+  @Test
+  public void testJavaModuleRunConfigurationWithProvider() throws Exception {
+    PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
+    @Language("Java") String appClass = """
+      package serviceloader;
+      
+      import java.util.ServiceLoader;
+      
+      public class App {
+          public static void main(String[] args) {
+              var greeter = ServiceLoader.load(GreeterService.class).findFirst().orElseThrow();
+              greeter.greet();
+          }
+      
+          public static class DefaultGreeterService implements GreeterService {
+              @Override
+              public void greet() { System.err.println("I'm from the provider!"); }
+          }
+      
+          public interface GreeterService {
+              void greet();
+          }
+      }
+      """;
+    createProjectSubFile("src/main/java/my/App.java", appClass);
+    @Language("Java") final String module = """
+      module my.test {
+      	uses serviceloader.App.GreeterService;
+      	provides serviceloader.App.GreeterService with serviceloader.App.DefaultGreeterService;
+      }
+      """;
+    createProjectSubFile("src/main/java/module-info.java", module);
+
+    createSettingsFile("rootProject.name = 'moduleName'");
+    importProject(
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .withIdeaPlugin()
+        .withGradleIdeaExtPlugin()
+        .addImport("org.jetbrains.gradle.ext.*")
+        .addPostfix(
+          "idea {",
+          "  project.settings {",
+          "    runConfigurations {",
+          "       MyApp(Application) {",
+          "           mainClass = 'serviceloader.App'",
+          "           moduleName = 'moduleName.main'",
+          "       }",
+          "    }",
+          "  }",
+          "}")
+        .generate()
+    );
+
+    RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(myProject).findConfigurationByName("MyApp");
+    assertAppRunOutput(configurationSettings, "I'm from the provider!");
   }
 
   @Test
