@@ -84,7 +84,8 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
       !disabledPlugins.contains(it.pluginId) &&
       !loadedPlugins.contains(it) &&
       pluginRequiresUltimatePlugin(it.pluginId, pluginIdMap, contentModuleIdMap) &&
-      !pluginRequiresDisabledPlugin(it.pluginId, pluginIdMap, contentModuleIdMap, disabledPlugins)
+      !pluginRequiresDisabledPlugin(it.pluginId, pluginIdMap, contentModuleIdMap, disabledPlugins) &&
+      PluginManagerCore.isCompatible(it)
     }
 
     if (pluginsToEnable.isEmpty()) {
