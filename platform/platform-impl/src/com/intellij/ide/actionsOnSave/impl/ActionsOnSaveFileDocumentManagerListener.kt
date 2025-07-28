@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
@@ -378,9 +379,9 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
   }
 
   @TestOnly
+  @RequiresBackgroundThread(generateAssertion = true)
   fun waitForTasks() {
-    @Suppress("DEPRECATION")
-    runUnderModalProgressIfIsEdt {
+    runBlockingMaybeCancellable {
       awaitPendingActions()
     }
   }
