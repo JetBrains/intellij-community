@@ -124,6 +124,7 @@ object CommandLineProcessor {
       if (LightEditUtil.isLightEditEnabled()) {
         val lightEditProject = LightEditUtil.openFile(ioFile, true)
         if (lightEditProject != null) {
+          FUSProjectHotStartUpMeasurer.lightEditProjectFound()
           val future = if (shouldWait) CommandLineWaitingManager.getInstance().addHookForPath(ioFile).asDeferred() else OK_FUTURE
           return CommandLineProcessorResult(project = lightEditProject, future = future)
         }
