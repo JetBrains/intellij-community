@@ -217,7 +217,8 @@ class InternalDecoratorImpl internal constructor(
       get() = this == VERTICAL_SPLIT || this == HORIZONTAL_SPLIT
   }
 
-  var mode: Mode? = null
+  var mode: Mode = Mode.SINGLE
+    private set
   private var isSplitUnsplitInProgress = false
   private var isWindowHovered = false
   private var divider: JPanel? = null
@@ -235,7 +236,7 @@ class InternalDecoratorImpl internal constructor(
   init {
     isFocusable = false
     focusTraversalPolicy = LayoutFocusTraversalPolicy()
-    updateMode(Mode.SINGLE)
+    doUpdateMode(Mode.SINGLE)
     header = object : ToolWindowHeader(toolWindow, contentUi, gearProducer = { toolWindow.createPopupGroup(true) }) {
       override val isActive: Boolean
         get() {
@@ -280,11 +281,13 @@ class InternalDecoratorImpl internal constructor(
     })
   }
 
-  fun updateMode(mode: Mode) {
-    if (mode == this.mode) {
-      return
+  private fun updateMode(mode: Mode) {
+    if (mode != this.mode) {
+      doUpdateMode(mode)
     }
+  }
 
+  private fun doUpdateMode(mode: Mode) {
     this.mode = mode
     removeAll()
     border = null
@@ -378,7 +381,7 @@ class InternalDecoratorImpl internal constructor(
     try {
       firstDecorator = first
       secondDecorator = second
-      this.mode = mode //Previous mode is split too
+      this.mode = mode // Previous mode is split too
       splitter!!.orientation = mode == Mode.VERTICAL_SPLIT
       splitter!!.firstComponent = firstDecorator
       splitter!!.secondComponent = secondDecorator
@@ -424,7 +427,7 @@ class InternalDecoratorImpl internal constructor(
   }
 
   fun unsplit(toSelect: Content?) {
-    if (!mode!!.isSplit) {
+    if (!mode.isSplit) {
       findNearestDecorator(this)?.unsplit(toSelect)
       return
     }
@@ -437,11 +440,11 @@ class InternalDecoratorImpl internal constructor(
         firstDecorator == null || secondDecorator == null -> {
           return
         }
-        firstDecorator!!.mode!!.isSplit -> {
+        firstDecorator!!.mode.isSplit -> {
           raise(true)
           return
         }
-        secondDecorator!!.mode!!.isSplit -> {
+        secondDecorator!!.mode.isSplit -> {
           raise(false)
           return
         }
@@ -480,7 +483,7 @@ class InternalDecoratorImpl internal constructor(
   }
 
   private fun getNextPrevCellImpl(current: InternalDecoratorImpl, isNext: Boolean): InternalDecoratorImpl? {
-    if (mode?.isSplit != true) return null
+    if (!mode.isSplit) return null
 
     val cells = getOrderedCells()
     val curCellIndex = cells.indexOf(current)
@@ -495,7 +498,7 @@ class InternalDecoratorImpl internal constructor(
     val cells = mutableListOf<InternalDecoratorImpl>()
 
     fun collectCell(decorator: InternalDecoratorImpl) {
-      if (decorator.mode!!.isSplit) {
+      if (decorator.mode.isSplit) {
         collectCell(decorator.firstDecorator!!)
         collectCell(decorator.secondDecorator!!)
       }
