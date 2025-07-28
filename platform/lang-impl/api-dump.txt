@@ -310,6 +310,7 @@ com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getDefaultLiveTemplateFiles():java.lang.String[]
 - a:getHiddenLiveTemplateFiles():java.lang.String[]
+f:com.intellij.codeInsight.template.impl.TemplateManagerImpl
 com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector
 - a:getExpressions(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Document,I):java.util.List
 - a:getRenderer():com.intellij.util.Function

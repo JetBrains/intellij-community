@@ -28,13 +28,12 @@ import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+
+import static com.intellij.codeInsight.template.impl.ListTemplatesHandler.filterTemplatesByPrefix;
 
 public final class TemplateManagerImpl extends TemplateManager implements Disposable {
   private final @NotNull Project myProject;
@@ -556,6 +555,31 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
       }
     }
     return result;
+  }
+
+  /**
+   * Checks if there is an applicable fully typed template or custom template in the editor
+   *
+   * @param file current file
+   * @param editor current editor
+   * @return {@code true} if a template is typed in the editor
+   */
+  @ApiStatus.Internal
+  public static boolean isApplicableTemplatePresent(@NotNull PsiFile file, @NotNull Editor editor) {
+    TemplateActionContext context = TemplateActionContext.expanding(file, editor);
+    int offset = editor.getCaretModel().getOffset();
+    Map<TemplateImpl, String> templates = filterTemplatesByPrefix(listApplicableTemplates(context), editor, offset, true, false);
+    if (!templates.isEmpty()) {
+      return true;
+    }
+
+    CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
+    for (CustomLiveTemplate template : listApplicableCustomTemplates(context)) {
+      if (template.computeTemplateKey(callback) != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
