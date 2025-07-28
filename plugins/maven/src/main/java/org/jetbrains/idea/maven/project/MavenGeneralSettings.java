@@ -19,7 +19,6 @@ import org.jetbrains.idea.maven.config.MavenConfigParser;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
@@ -47,7 +46,6 @@ public class MavenGeneralSettings implements Cloneable {
   MavenExecutionOptions.ChecksumPolicy checksumPolicy = MavenExecutionOptions.ChecksumPolicy.NOT_SET;
   private MavenExecutionOptions.FailureMode failureBehavior = MavenExecutionOptions.FailureMode.NOT_SET;
 
-  private transient Path myEffectiveLocalRepositoryCache;
   private transient MavenConfig mavenConfigCache;
 
   private int myBulkUpdateLevel = 0;
@@ -81,7 +79,6 @@ public class MavenGeneralSettings implements Cloneable {
   public void changed(boolean fireUpdate) {
     if (myBulkUpdateLevel > 0) return;
 
-    myEffectiveLocalRepositoryCache = null;
     mavenConfigCache = null;
     if (fireUpdate) {
       fireChanged();
@@ -143,7 +140,7 @@ public class MavenGeneralSettings implements Cloneable {
   public void setWorkOffline(boolean value) {
     if (!Comparing.equal(this.workOffline, value)) {
       this.workOffline = value;
-      changed();
+      changed(false);
     }
   }
 
