@@ -89,11 +89,9 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
         return
       }
     }
-    val commandCompletionService = project.getService(CommandCompletionService::class.java)
-    if (commandCompletionService == null) return
+    val commandCompletionService = project.getService(CommandCompletionService::class.java) ?: return
     val dumbService = DumbService.getInstance(project)
-    val commandCompletionFactory = commandCompletionService.getFactory(originalFile.language)
-    if (commandCompletionFactory == null) return
+    val commandCompletionFactory = commandCompletionService.getFactory(originalFile.language) ?: return
     if (!dumbService.isUsableInCurrentContext(commandCompletionFactory)) return
 
     if (editor.document.textLength != offset &&
@@ -224,8 +222,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     isReadOnly: Boolean,
     processor: Processor<in Collection<CompletionCommand>>,
   ) {
-    val element = copyFile.findElementAt(offset - 1)
-    if (element == null) return
+    val element = copyFile.findElementAt(offset - 1) ?: return
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
     for (provider in commandCompletionFactory.commandProviders(project, element.language)) {
       try {
