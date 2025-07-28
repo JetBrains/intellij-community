@@ -248,7 +248,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
               .onIsModified {
                 enableCheckbox.isSelected != SettingsSyncSettings.getInstance().syncEnabled
                 || syncConfigPanel.isModified()
-                || userDropDownLink.selectedItem?.userId != SettingsSyncLocalSettings.getInstance().userId
+                || (SettingsSyncLocalSettings.getInstance().userId != null && userDropDownLink.selectedItem?.userId != SettingsSyncLocalSettings.getInstance().userId)
               }
               .onApply {
                 with(SettingsSyncLocalSettings.getInstance()) {
