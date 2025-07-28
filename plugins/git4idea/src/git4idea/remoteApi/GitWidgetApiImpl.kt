@@ -15,7 +15,9 @@ import com.intellij.openapi.vcs.ex.VcsActivationListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.vcs.git.rpc.GitWidgetApi
 import com.intellij.vcs.git.rpc.GitWidgetState
 import git4idea.GitDisposable
@@ -31,11 +33,11 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryIdCache
 import git4idea.repo.GitRepositoryStateChangeListener
 import git4idea.ui.branch.GitCurrentBranchPresenter
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 internal class GitWidgetApiImpl : GitWidgetApi {
@@ -45,45 +47,52 @@ internal class GitWidgetApiImpl : GitWidgetApi {
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
     val file = selectedFile?.virtualFile()
 
+    val notifier = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     return callbackFlow {
-      val messageBusConnection = readAction {
+      val scope = readAction {
         if (project.isDisposed) {
           close()
           return@readAction null
         }
-        val coroutineScope = GitDisposable.getInstance(project).coroutineScope
-        coroutineScope.launch { trySendNewState(project, file) }
-        project.messageBus.connect(coroutineScope).also {
-          it.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
-            LOG.debug("VCS mapping changed. Sending new value")
+        GitDisposable.getInstance(project).coroutineScope.childScope("GitWidgetApiImpl#getWidgetState").also { scope ->
+          scope.launch {
             trySendNewState(project, file)
-          })
-          it.subscribe(ProjectLevelVcsManagerEx.VCS_ACTIVATED, VcsActivationListener {
-            LOG.debug("VCS activated. Sending new value")
-            trySendNewState(project, file)
-          })
-          it.subscribe(GitRepository.GIT_REPO_STATE_CHANGE, object : GitRepositoryStateChangeListener {
-            override fun repositoryChanged(repository: GitRepository, previousInfo: GitRepoInfo, info: GitRepoInfo) {
-              LOG.debug("Git repository state changed: $repository. Sending new value")
-              trySendNewState(project, file)
-            }
-          })
-          it.subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener {
-            LOG.debug("Git incoming outgoing state changed. Sending new value")
-            trySendNewState(project, file)
-          })
-          it.subscribe(GitCurrentBranchPresenter.PRESENTATION_UPDATED, GitCurrentBranchPresenter.PresentationUpdatedListener {
-            LOG.debug("Branch presentation for the widget updated. Sending new value")
-            trySendNewState(project, file)
-          })
+            notifier.collectLatest { trySendNewState(project, file) }
+          }
+          subscribeOnUpdates(project.messageBus.connect(scope), notifier)
         }
       }
 
       awaitClose {
         LOG.debug("Connection closed")
-        messageBusConnection?.disconnect()
+        scope?.cancel()
       }
     }
+  }
+
+  private fun subscribeOnUpdates(connection: SimpleMessageBusConnection, notifier: MutableSharedFlow<Unit>) {
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
+      LOG.debug("VCS mapping changed. Sending new value")
+      notifier.tryEmit(Unit)
+    })
+    connection.subscribe(ProjectLevelVcsManagerEx.VCS_ACTIVATED, VcsActivationListener {
+      LOG.debug("VCS activated. Sending new value")
+      notifier.tryEmit(Unit)
+    })
+    connection.subscribe(GitRepository.GIT_REPO_STATE_CHANGE, object : GitRepositoryStateChangeListener {
+      override fun repositoryChanged(repository: GitRepository, previousInfo: GitRepoInfo, info: GitRepoInfo) {
+        LOG.debug("Git repository state changed: $repository. Sending new value")
+        notifier.tryEmit(Unit)
+      }
+    })
+    connection.subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener {
+      LOG.debug("Git incoming outgoing state changed. Sending new value")
+      notifier.tryEmit(Unit)
+    })
+    connection.subscribe(GitCurrentBranchPresenter.PRESENTATION_UPDATED, GitCurrentBranchPresenter.PresentationUpdatedListener {
+      LOG.debug("Branch presentation for the widget updated. Sending new value")
+      notifier.tryEmit(Unit)
+    })
   }
 
   fun ProducerScope<GitWidgetState>.trySendNewState(project: Project, file: VirtualFile?) {
