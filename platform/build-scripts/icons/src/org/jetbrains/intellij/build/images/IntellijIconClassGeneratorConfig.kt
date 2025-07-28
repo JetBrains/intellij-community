@@ -42,7 +42,7 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         className = "KubernetesIcons",
         packageName = "com.intellij.kubernetes"
       )
-      "intellij.css.common" -> IntellijIconClassGeneratorModuleConfig(
+      "intellij.css" -> IntellijIconClassGeneratorModuleConfig(
         className = "CssIcons",
         packageName = "com.intellij.css.common",
         iconDirectory = "icons/css",
