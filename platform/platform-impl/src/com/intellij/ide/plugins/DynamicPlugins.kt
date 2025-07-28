@@ -997,7 +997,13 @@ object DynamicPlugins {
         loadModules(
           modules = optionalDependenciesOnPlugin(dependencyPlugin = pluginDescriptor,
                                                  classLoaderConfigurator = classLoaderConfigurator,
-                                                 pluginSet = pluginSet).toList(),
+                                                 pluginSet = pluginSet).filter { descriptorImpl ->
+            when (descriptorImpl) {
+              is ContentModuleDescriptor if !pluginSet.isModuleEnabled(descriptorImpl.moduleName) -> false
+              is PluginMainDescriptor if !pluginSet.isPluginEnabled(descriptorImpl.pluginId) -> false
+              else -> true
+            }
+          }.toList(),
           app = app,
           listenerCallbacks = listenerCallbacks,
         )
@@ -1263,9 +1269,6 @@ private fun processDependenciesOnPlugin(
     }
 
     for (module in plugin.contentModules) {
-      if (!pluginSet.isModuleEnabled(module.moduleName)) {
-        continue
-      }
       if (loadStateFilter != LoadStateFilter.ANY) {
         val isModuleLoaded = module.pluginClassLoader != null
         if (isModuleLoaded != (loadStateFilter == LoadStateFilter.LOADED)) {
