@@ -82,13 +82,13 @@ internal class VcsUpdateTask(
           }
         }
         withContext(Dispatchers.UiWithModelAccess) {
-          onSuccessImpl(false)
+          finishExecution(false)
           onSuccess()
         }
       }
       catch (ce: CancellationException) {
         withContext(Dispatchers.UiWithModelAccess) {
-          onSuccessImpl(true)
+          finishExecution(true)
         }
         throw ce
       }
@@ -145,12 +145,27 @@ internal class VcsUpdateTask(
     }
   }
 
-  private fun onSuccessImpl(wasCanceled: Boolean) {
-    if (!project.isOpen() || project.isDisposed()) {
-      LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("activity.name.update")) // TODO check why this label is needed
-      return
+  private fun finishExecution(wasCanceled: Boolean) {
+    val continueChain = try {
+      if (!project.isOpen() || project.isDisposed()) {
+        LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("activity.name.update")) // TODO check why this label is needed
+        return
+      }
+
+      handleResult(wasCanceled)
+    }
+    finally {
+      StoreReloadManager.getInstance(project).unblockReloadingProjectOnExternalChanges()
     }
 
+    if (continueChain) {
+      // trigger the next update; for CVS when updating from several branches simultaneously
+      reset()
+      launch()
+    }
+  }
+
+  private fun handleResult(wasCanceled: Boolean): Boolean {
     val contextInfo = contextInfo.fold()
     val someSessionWasCancelled = wasCanceled || someSessionWasCanceled(updateSessions)
     // here text conflicts might be interactively resolved
@@ -204,8 +219,6 @@ internal class VcsUpdateTask(
       }
     }
 
-    StoreReloadManager.getInstance(project).unblockReloadingProjectOnExternalChanges()
-
     if (groupedExceptions.isNotEmpty()) {
       val exceptions = groupedExceptions.toMutableMap().apply {
         putAllNonEmpty(contextInfo.interruptedExceptions)
@@ -214,14 +227,13 @@ internal class VcsUpdateTask(
     }
     else if (contextInfo.continueChain && !someSessionWasCancelled) {
       if (noMerged) {
-        // trigger the next update; for CVS when updating from several branches simultaneously
-        reset()
-        launch()
+        return true
       }
       else {
         showExceptions(contextInfo.interruptedExceptions)
       }
     }
+    return false
   }
 
   private fun showExceptions(exceptions: Map<HotfixData?, List<VcsException>>) {
