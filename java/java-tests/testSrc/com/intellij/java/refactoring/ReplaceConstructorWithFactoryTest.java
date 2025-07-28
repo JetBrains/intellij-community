@@ -123,6 +123,10 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
     assertNotAvailable("RedCode");
   }
 
+  public void testImplicitClassNotAvailable() {
+    assertNotAvailable("ImplicitClassAfterName");
+  }
+
   public void testRedCodeFromIDEA376351() {
     assertNotAvailable("RedCodeFromIDEA376351");
   }
