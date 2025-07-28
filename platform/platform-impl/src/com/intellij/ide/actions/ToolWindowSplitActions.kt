@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.wm.ToolWindow
@@ -27,8 +26,6 @@ internal abstract class ToolWindowSplitActionBase(
     e.presentation.isEnabledAndVisible = ToolWindowContentUi.isTabsReorderingAllowed(toolWindow) &&
                                          ToolWindowSplitContentProviderBean.getForToolWindow(toolWindow.id) != null
   }
-
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 }
 
 internal class ToolWindowSplitRightAction : ToolWindowSplitActionBase(isVertical = true)
