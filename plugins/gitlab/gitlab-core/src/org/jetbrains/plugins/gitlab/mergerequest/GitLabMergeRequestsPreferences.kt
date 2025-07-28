@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest
 
 import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.util.CollectableSerializablePersistentStateComponent
 import com.intellij.openapi.components.*
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
@@ -20,7 +21,8 @@ internal class GitLabMergeRequestsPreferences
     val highlightDiffLinesInEditor: Boolean = true,
     val usedAsDraftSubmitActionLast: Boolean = true,
     val editorReviewEnabled: Boolean = true,
-    val changesGrouping: Set<String> = setOf(ChangesGroupingSupport.DIRECTORY_GROUPING, ChangesGroupingSupport.MODULE_GROUPING)
+    val changesGrouping: Set<String> = setOf(ChangesGroupingSupport.DIRECTORY_GROUPING, ChangesGroupingSupport.MODULE_GROUPING),
+    val editorReviewViewOption: DiscussionsViewOption = DiscussionsViewOption.UNRESOLVED_ONLY
   )
 
   var selectedUrlAndAccountId: Pair<String, String>?
@@ -64,6 +66,14 @@ internal class GitLabMergeRequestsPreferences
         it.copy(editorReviewEnabled = value)
       }
     }
+
+  var diffReviewViewOption : DiscussionsViewOption
+    get () = state.editorReviewViewOption
+    set (value) {
+        updateStateAndEmit {
+          it.copy(editorReviewViewOption = value)
+        }
+      }
 
   var changesGrouping: Set<String>
     get() = state.changesGrouping
