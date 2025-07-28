@@ -53,7 +53,6 @@ internal class VcsUpdateTask(
   private val actionInfo: ActionInfo,
   private val actionName: @Nls @NlsContexts.ProgressTitle String,
 ) {
-  private val projectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project)
   private var updatedFiles: UpdatedFiles = UpdatedFiles.create()
   private val groupedExceptions = HashMap<HotfixData?, MutableList<VcsException>>()
   private val updateSessions = ArrayList<UpdateSession>()
@@ -102,7 +101,8 @@ internal class VcsUpdateTask(
   @RequiresBackgroundThread
   fun run(progressIndicator: ProgressIndicator) {
     StoreReloadManager.getInstance(project).blockReloadingProjectOnExternalChanges()
-    projectLevelVcsManager.startBackgroundVcsOperation()
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
+    vcsManager.startBackgroundVcsOperation()
 
     before = LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("update.label.before.update"))
     localHistoryAction = LocalHistory.getInstance().startAction(VcsBundle.message("activity.name.update"), VcsActivity.Update)
@@ -138,7 +138,7 @@ internal class VcsUpdateTask(
         notifyAnnotations(project, updatedFiles)
       }
       finally {
-        projectLevelVcsManager.stopBackgroundVcsOperation()
+        vcsManager.stopBackgroundVcsOperation()
         notifyFiles(project, updatedFiles)
         activity.finished()
       }
