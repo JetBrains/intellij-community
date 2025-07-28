@@ -974,6 +974,16 @@ com.intellij.refactoring.copy.CopyHandlerDelegate
 - a:doClone(com.intellij.psi.PsiElement):V
 - a:doCopy(com.intellij.psi.PsiElement[],com.intellij.psi.PsiDirectory):V
 - getActionName(com.intellij.psi.PsiElement[]):java.lang.String
+c:com.intellij.refactoring.extractMethod.AbstractExtractMethodDialog
+- pf:myDecorator:com.intellij.refactoring.extractMethod.ExtractMethodDecorator
+- pf:myFragment:com.intellij.codeInsight.codeFragment.CodeFragment
+- pf:myProject:com.intellij.openapi.project.Project
+- p:mySignaturePreviewTextArea:com.intellij.refactoring.ui.MethodSignatureComponent
+- pf:myValidator:com.intellij.refactoring.extractMethod.ExtractMethodValidator
+- p:myVariableData:com.intellij.refactoring.util.AbstractVariableData[]
+- p:getParameterColumns():com.intellij.util.ui.ColumnInfo[]
+- p:innerCreateVariableDataByNames(java.util.List):com.intellij.refactoring.util.AbstractVariableData[]
+- p:updateSignature():V
 com.intellij.refactoring.introduce.IntroduceTarget
 - a:getPlace():com.intellij.psi.PsiElement
 - a:getTextRange():com.intellij.openapi.util.TextRange

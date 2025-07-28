@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring;
 
-import com.intellij.codeInsight.codeFragment.CodeFragment;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -10,13 +9,13 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.IntroduceTargetChooser;
-import com.intellij.refactoring.extractMethod.AbstractExtractMethodDialog;
 import com.intellij.refactoring.extractMethod.ExtractMethodDecorator;
-import com.intellij.refactoring.extractMethod.ExtractMethodSettings;
 import com.intellij.refactoring.extractMethod.ExtractMethodValidator;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
+import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodSettings;
 import com.jetbrains.python.refactoring.inline.PyInlineFunctionDialog;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
@@ -66,16 +65,16 @@ public final class PyRefactoringUiServiceImpl extends PyRefactoringUiService {
   }
 
   @Override
-  public @Nullable <T> ExtractMethodSettings<T> showExtractMethodDialog(Project project,
-                                                                        String defaultName,
-                                                                        CodeFragment fragment,
-                                                                        T[] visibilityVariants,
-                                                                        ExtractMethodValidator validator,
-                                                                        ExtractMethodDecorator<T> decorator,
-                                                                        FileType type,
-                                                                        String helpId) {
-    final AbstractExtractMethodDialog<T> dialog =
-      new AbstractExtractMethodDialog<>(project, defaultName, fragment, visibilityVariants, validator, decorator, type) {
+  public @Nullable PyExtractMethodSettings showExtractMethodDialog(Project project,
+                                                                   String defaultName,
+                                                                   PyCodeFragment fragment,
+                                                                   Object[] visibilityVariants,
+                                                                   ExtractMethodValidator validator,
+                                                                   ExtractMethodDecorator<Object> decorator,
+                                                                   FileType type,
+                                                                   String helpId) {
+    final PyExtractMethodDialog dialog =
+      new PyExtractMethodDialog(project, defaultName, fragment, visibilityVariants, validator, decorator, type) {
         @Override
         protected String getHelpId() {
           return helpId;
@@ -88,7 +87,7 @@ public final class PyRefactoringUiServiceImpl extends PyRefactoringUiService {
       return null;
     }
     else {
-      return dialog;
+      return dialog.getExtractMethodSettings();
     }
   }
 

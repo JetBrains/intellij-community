@@ -17,9 +17,12 @@ package com.jetbrains.python.codeInsight.codeFragment;
 
 import com.intellij.codeInsight.codeFragment.CodeFragment;
 
+import java.util.Map;
 import java.util.Set;
 
 public class PyCodeFragment extends CodeFragment {
+  private final Map<String, String> myInputTypes;
+  private final String myOutputType;
   private final Set<String> myGlobalWrites;
   private final Set<String> myNonlocalWrites;
   private final boolean myYieldInside;
@@ -27,16 +30,28 @@ public class PyCodeFragment extends CodeFragment {
 
   public PyCodeFragment(final Set<String> input,
                         final Set<String> output,
+                        final Map<String, String> inputTypes,
+                        final String outputType,
                         final Set<String> globalWrites,
                         final Set<String> nonlocalWrites,
                         final boolean returnInside,
                         final boolean yieldInside,
                         final boolean isAsync) {
     super(input, output, returnInside);
+    myInputTypes = inputTypes;
+    myOutputType = outputType;
     myGlobalWrites = globalWrites;
     myNonlocalWrites = nonlocalWrites;
     myYieldInside = yieldInside;
     myAsync = isAsync;
+  }
+
+  public Map<String, String> getInputTypes() {
+    return myInputTypes;
+  }
+
+  public String getOutputType() {
+    return myOutputType;
   }
 
   public Set<String> getGlobalWrites() {

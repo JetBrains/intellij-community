@@ -565,6 +565,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       // null means empty set of possible types, Ref(null) means Any
       final @Nullable Ref<PyType> combinedType = StreamEx.of(defs)
         .map(instr -> {
+          if (instr.getElement() == anchor) {
+            // exclude recursive definition (example: type of 'i++' inside a loop)
+            return null;
+          }
           if (instr instanceof ReadWriteInstruction readWriteInstruction) {
             return readWriteInstruction.getType(context, anchor);
           }
