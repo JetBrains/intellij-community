@@ -542,7 +542,7 @@
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.RunBlockingInSuspendFunctionInspection"
                      groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.coroutine"
                      enabledByDefault="true"
                      level="WARNING"
                      language="kotlin"
