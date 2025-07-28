@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="IDEA Community With Compose (dev build)" type="Application" factoryName="Application">
+    <option name="ALTERNATIVE_JRE_PATH" value="BUNDLED" />
+    <envs>
+      <env name="CLASSES_DIR" value="$PROJECT_DIR$/out/production" />
+    </envs>
+    <log_file alias="idea.log" path="$PROJECT_DIR$/out/dev-data/idea/system/log/idea.log" />
+    <option name="MAIN_CLASS_NAME" value="org.jetbrains.intellij.build.devServer.DevMainKt" />
+    <module name="intellij.platform.bootstrap.dev" />
+    <shortenClasspath name="ARGS_FILE" />
+    <option name="VM_PARAMETERS" value="-Didea.platform.prefix=community -Didea.kotlin.plugin.use.k2=true -Dadditional.modules=&quot;intellij.platform.jewel.samples.idePlugin&quot;" />
+    <method v="2">
+      <option name="MakeProject" enabled="true" />
+    </method>
+  </configuration>
+</component>
