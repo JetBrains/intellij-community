@@ -151,12 +151,7 @@ internal class VcsUpdateTask(
       return
     }
 
-    var continueChain = false
-    for (context in contextInfo.values) {
-      continueChain = continueChain or (context != null && (context.shouldFail()))
-    }
-    val continueChainFinal = continueChain
-
+    val contextInfo = contextInfo.fold()
     val someSessionWasCancelled = wasCanceled || someSessionWasCanceled(updateSessions)
     // here text conflicts might be interactively resolved
     for (updateSession in updateSessions) {
@@ -171,15 +166,6 @@ internal class VcsUpdateTask(
     }
 
     val updateSuccess = !someSessionWasCancelled && groupedExceptions.isEmpty()
-
-    if (!groupedExceptions.isEmpty()) {
-      if (continueChainFinal) {
-        gatherContextInterruptedMessages()
-      }
-      AbstractVcsHelper.getInstance(project).showErrors(groupedExceptions,
-                                                        VcsBundle.message("message.title.vcs.update.errors", actionName))
-    }
-
     val noMerged = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID)!!.isEmpty()
     if (updatedFiles.isEmpty && groupedExceptions.isEmpty()) {
       val type: NotificationType?
@@ -203,7 +189,7 @@ internal class VcsUpdateTask(
         singleUpdateSession.showNotification()
       }
       else {
-        val willBeContinued = continueChainFinal && updateSuccess && noMerged
+        val willBeContinued = contextInfo.continueChain && updateSuccess && noMerged
         val updateNumber = if (willBeContinued || updateNumber > 1) updateNumber else 0
         val tree = showUpdateTree(someSessionWasCancelled, updateNumber)
 
@@ -220,32 +206,27 @@ internal class VcsUpdateTask(
 
     StoreReloadManager.getInstance(project).unblockReloadingProjectOnExternalChanges()
 
-    if (continueChainFinal && updateSuccess) {
+    if (groupedExceptions.isNotEmpty()) {
+      val exceptions = groupedExceptions.toMutableMap().apply {
+        putAllNonEmpty(contextInfo.interruptedExceptions)
+      }
+      showExceptions(exceptions)
+    }
+    else if (contextInfo.continueChain && !someSessionWasCancelled) {
       if (noMerged) {
         // trigger the next update; for CVS when updating from several branches simultaneously
         reset()
         launch()
       }
       else {
-        showContextInterruptedError()
+        showExceptions(contextInfo.interruptedExceptions)
       }
     }
   }
 
-  private fun showContextInterruptedError() {
-    gatherContextInterruptedMessages()
-    AbstractVcsHelper.getInstance(project).showErrors(groupedExceptions,
-                                                      VcsBundle.message("message.title.vcs.update.errors", actionName))
-  }
-
-  private fun gatherContextInterruptedMessages() {
-    for ((vcs, context) in contextInfo.entries) {
-      if (context == null || !context.shouldFail()) {
-        continue
-      }
-      val exception = VcsException(context.getMessageWhenInterruptedBeforeStart())
-      val exceptionList = collectExceptions(vcs, listOf(exception))
-      groupedExceptions.putAllNonEmpty(exceptionList)
+  private fun showExceptions(exceptions: Map<HotfixData?, List<VcsException>>) {
+    if (exceptions.values.any { it.isNotEmpty() }) {
+      AbstractVcsHelper.getInstance(project).showErrors(exceptions, VcsBundle.message("message.title.vcs.update.errors", actionName))
     }
   }
 
@@ -378,6 +359,30 @@ private fun collectExceptions(vcs: AbstractVcs, exceptionList: List<VcsException
   else {
     return fixer.groupExceptions(ActionType.update, exceptionList)
   }
+}
+
+private data class ContextInfo(
+  val continueChain: Boolean,
+  val interruptedExceptions: Map<HotfixData?, List<VcsException>>,
+)
+
+private fun Map<AbstractVcs, SequentialUpdatesContext?>.fold(): ContextInfo {
+  var continueChain = false
+  val exceptions = mutableMapOf<HotfixData?, MutableList<VcsException>>()
+  for ((vcs, context) in entries) {
+    if (context == null) {
+      continue
+    }
+    continueChain = continueChain || context.shouldFail() // WAT? Why shouldFail? Will only be true for CVS. Do we even want to support it?
+
+    if (!context.shouldFail()) {
+      continue
+    }
+    val exception = VcsException(context.getMessageWhenInterruptedBeforeStart())
+    val newExceptions = collectExceptions(vcs, listOf(exception))
+    exceptions.putAllNonEmpty(newExceptions)
+  }
+  return ContextInfo(continueChain, exceptions)
 }
 
 private fun <K, V> MutableMap<K, MutableList<V>>.putAllNonEmpty(map: Map<K, List<V>>) {
