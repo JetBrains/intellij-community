@@ -53,6 +53,8 @@ public class StringUtil {
   // "(?>" removes backtraces; this is not just important for matching speed, but also to stop stack overflows
   private static final Pattern HTML_PATTERN = Pattern.compile("(?><[^>]*>)", Pattern.MULTILINE);
 
+  private static final Pattern BREAKS_PATTERN = Pattern.compile("(?><[bB][rR](?>\\s*)/?\\s*>)");
+
   private static final class Splitters {
     private static final Pattern EOL_SPLIT_KEEP_SEPARATORS = Pattern.compile("(?<=(\r\n|\n))|(?<=\r)(?=[^\n])");
     private static final Pattern EOL_SPLIT_PATTERN = Pattern.compile(" *(\r|\n|\r\n)+ *");
@@ -258,7 +260,7 @@ public class StringUtil {
   @Contract(pure = true)
   public static @NotNull String stripHtml(@NotNull String html, @Nullable String breaks) {
     if (breaks != null) {
-      html = html.replaceAll("(?><[bB][rR](?>\\s*)/?\\s*>)", breaks);
+      html = BREAKS_PATTERN.matcher(html).replaceAll(breaks);
     }
 
     return HTML_PATTERN.matcher(html).replaceAll("");
