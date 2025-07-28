@@ -73,7 +73,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     }
     fun testJavaMethods() = doTest()
     fun testJavaConstant() = doTest()
-    fun testJavaType() = doTest()
+    fun testJavaTypeK2() = doTest()
     fun testLambda() = doTest()
     fun testLanguageConstructs() = doTest()
     fun testLastIndex() = doTest()
