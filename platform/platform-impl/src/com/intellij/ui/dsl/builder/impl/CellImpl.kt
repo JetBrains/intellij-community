@@ -18,7 +18,9 @@ import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.containers.map2Array
 import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -385,15 +387,15 @@ internal class CellImpl<T : JComponent>(
       return
     }
 
-    val comments = listOfNotNull(commentRight?.getPlainText(), comment?.getPlainText())
-    lastAccessibleDescriptionFromComment = if (comments.isEmpty()) null else comments.joinToString("\n")
+    lastAccessibleDescriptionFromComment = AccessibleContextUtil.combineAccessibleStrings(commentRight?.getPlainText(), "\n", comment?.getPlainText())
     component.accessibleContext.accessibleDescription = lastAccessibleDescriptionFromComment
   }
 
   /**
    * Extract text without html tags
    */
-  private fun DslLabel.getPlainText(): String? {
+  @Suppress("HardCodedStringLiteral")
+  private fun DslLabel.getPlainText(): @Nls String? {
     val document = document ?: return null
     try {
       val result = document.getText(0, document.length) ?: return null
