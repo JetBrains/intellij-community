@@ -50,9 +50,9 @@ interface GHPRReviewFileEditorViewModel {
 
   val linesWithComments: StateFlow<Set<Int>>
 
-  fun lookupNextComment(focusedThreadId: String): String?
+  fun lookupNextComment(threadId: String): String?
   fun lookupNextComment(line: Int): String?
-  fun lookupPreviousComment(focusedThreadId: String): String?
+  fun lookupPreviousComment(threadId: String): String?
   fun lookupPreviousComment(line: Int): String?
 
   fun getThreadPosition(threadId: String): Pair<RefComparisonChange, Int>?
@@ -135,14 +135,14 @@ internal class GHPRReviewFileEditorViewModelImpl(
     }
   }
 
-  override fun lookupNextComment(focusedThreadId: String): String? =
-    threadsVm.lookupNextComment(focusedThreadId, this::threadIsVisible)
+  override fun lookupNextComment(threadId: String): String? =
+    threadsVm.lookupNextComment(threadId, this::threadIsVisible)
 
   override fun lookupNextComment(line: Int): String? =
     threadsVm.lookupNextComment(lineToUnified(line), this::threadIsVisible)
 
-  override fun lookupPreviousComment(focusedThreadId: String): String? =
-    threadsVm.lookupPreviousComment(focusedThreadId, this::threadIsVisible)
+  override fun lookupPreviousComment(threadId: String): String? =
+    threadsVm.lookupPreviousComment(threadId, this::threadIsVisible)
 
   override fun lookupPreviousComment(line: Int): String? =
     threadsVm.lookupPreviousComment(lineToUnified(line), this::threadIsVisible)

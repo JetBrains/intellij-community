@@ -8,22 +8,22 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface CodeReviewNavigableEditorViewModel {
   @RequiresEdt
-  fun canGotoNextComment(focusedThreadId: String): Boolean
+  fun canGotoNextComment(threadId: String): Boolean
   @RequiresEdt
   fun canGotoNextComment(line: Int): Boolean
 
   @RequiresEdt
-  fun canGotoPreviousComment(focusedThreadId: String): Boolean
+  fun canGotoPreviousComment(threadId: String): Boolean
   @RequiresEdt
   fun canGotoPreviousComment(line: Int): Boolean
 
   @RequiresEdt
-  fun gotoNextComment(focusedThreadId: String)
+  fun gotoNextComment(threadId: String)
   @RequiresEdt
   fun gotoNextComment(line: Int)
 
   @RequiresEdt
-  fun gotoPreviousComment(focusedThreadId: String)
+  fun gotoPreviousComment(threadId: String)
   @RequiresEdt
   fun gotoPreviousComment(line: Int)
 
