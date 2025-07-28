@@ -32,26 +32,26 @@ object SeTopHitItemPresentationProvider {
   suspend fun getPresentation(item: Any, project: Project, extendedDescription: String?, isMultiSelectionSupported: Boolean): SeItemPresentation =
     readAction {
       when (item) {
-         is AnAction -> {
-           val templatePresentation: Presentation = item.getTemplatePresentation()
-           var icon = templatePresentation.getIcon()
-           if (item is ActivateToolWindowAction) {
-             val id = item.toolWindowId
-             val toolWindow = getInstance(project).getToolWindow(id)
-             if (toolWindow != null) {
-               icon = toolWindow.getIcon()
-             }
-           }
-           val text = templatePresentation.text
-           if (icon != null && icon.iconWidth <= iconSize && icon.iconHeight <= iconSize) {
-             icon = toSize(icon, iconSize, iconSize)
-           }
+        is AnAction -> {
+          val templatePresentation: Presentation = item.getTemplatePresentation()
+          var icon = templatePresentation.getIcon()
+          if (item is ActivateToolWindowAction) {
+            val id = item.toolWindowId
+            val toolWindow = getInstance(project).getToolWindow(id)
+            if (toolWindow != null) {
+              icon = toolWindow.getIcon()
+            }
+          }
+          val text = templatePresentation.text
+          if (icon != null && icon.iconWidth <= iconSize && icon.iconHeight <= iconSize) {
+            icon = toSize(icon, iconSize, iconSize)
+          }
 
-           SeSimpleItemPresentation(iconId = (icon ?: EmptyIcon.ICON_16).rpcId(),
-                                    text = text,
-                                    extendedDescription = extendedDescription,
-                                    isMultiSelectionSupported = isMultiSelectionSupported)
-         }
+          SeSimpleItemPresentation(iconId = (icon ?: EmptyIcon.ICON_16).rpcId(),
+                                   text = text,
+                                   extendedDescription = extendedDescription,
+                                   isMultiSelectionSupported = isMultiSelectionSupported)
+        }
         is OptionDescription -> {
           val text = TopHitSEContributor.getSettingText(item)
           val isChangedChangeable = item is Changeable && (item as Changeable).hasChanged()

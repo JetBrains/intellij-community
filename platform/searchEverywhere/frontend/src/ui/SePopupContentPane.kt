@@ -299,9 +299,9 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
 
     WindowMoveListener(this).installTo(headerPane)
 
-    DumbAwareAction.create { vm.getHistoryItem(true)?.let { textField.text = it; textField.selectAll() } }
+    DumbAwareAction.create { vm.getHistoryItem(true).let { textField.text = it; textField.selectAll() } }
       .registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, this)
-    DumbAwareAction.create { vm.getHistoryItem(false)?.let { textField.text = it; textField.selectAll() } }
+    DumbAwareAction.create { vm.getHistoryItem(false).let { textField.text = it; textField.selectAll() } }
       .registerCustomShortcutSet(SearchTextField.ALT_SHOW_HISTORY_SHORTCUT, this)
   }
 
@@ -383,7 +383,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   @Internal
   fun selectFirstItem() {
     vm.coroutineScope.launch(Dispatchers.EDT) {
-     elementsSelected(intArrayOf(0), 0)
+      elementsSelected(intArrayOf(0), 0)
     }
   }
 

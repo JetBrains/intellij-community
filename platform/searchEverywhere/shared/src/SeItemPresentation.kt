@@ -109,7 +109,7 @@ data class SeOptionActionItemPresentation(
   override val commonData: SeActionItemPresentation.Common,
   val value: @NlsSafe String? = null,
   val isBooleanOption: Boolean = false,
-  override val isMultiSelectionSupported: Boolean
+  override val isMultiSelectionSupported: Boolean,
 ) : SeActionItemPresentation {
   override val text: String get() = commonData.text
   override val extendedDescription: String? get() = commonData.extendedDescription
