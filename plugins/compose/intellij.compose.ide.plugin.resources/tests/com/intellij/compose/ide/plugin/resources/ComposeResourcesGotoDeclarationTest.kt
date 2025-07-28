@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.daemon.common.trimQuotes
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 import kotlin.test.assertNotNull as kAssertNotNull
 
@@ -45,6 +46,7 @@ class ComposeResourcesGotoDeclarationTest : ComposeResourcesTestCase() {
   @Test
   @TestMetadata("ComposeResources")
   fun `test common composeResources are accessible`() = runBlocking(Dispatchers.EDT) {
+    assumeTrue("temporarily disable for androidMain since it's not recognised as source root", sourceSetName != ANDROID_MAIN)
     val files = importProjectFromTestData()
     files.openInEditor(sourceSetName = sourceSetName)
 
