@@ -4,7 +4,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_k1",
-  opt_in = ["org.jetbrains.kotlin.analysis.api.KaNonPublicApi"]
+  opt_in = [
+    "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ]
 )
 
 jvm_library(

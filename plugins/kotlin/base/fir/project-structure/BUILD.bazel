@@ -8,6 +8,7 @@ create_kotlinc_options(
     "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
     "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
     "org.jetbrains.kotlin.analysis.api.KaImplementationDetail",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
   ],
   x_context_receivers = True
 )

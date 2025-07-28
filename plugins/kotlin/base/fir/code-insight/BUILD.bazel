@@ -9,6 +9,7 @@ create_kotlinc_options(
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
     "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
   ],
   x_context_receivers = True
 )

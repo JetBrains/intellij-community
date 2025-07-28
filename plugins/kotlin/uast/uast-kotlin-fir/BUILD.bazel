@@ -7,6 +7,7 @@ create_kotlinc_options(
   jvm_target = "11",
   opt_in = [
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
   ],
   x_context_receivers = True

@@ -4,6 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom_k2",
+  opt_in = ["org.jetbrains.kotlin.analysis.api.KaContextParameterApi"],
   x_context_receivers = True
 )
 

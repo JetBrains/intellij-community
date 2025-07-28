@@ -7,6 +7,7 @@ create_kotlinc_options(
   opt_in = [
     "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
     "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
   ]
 )
