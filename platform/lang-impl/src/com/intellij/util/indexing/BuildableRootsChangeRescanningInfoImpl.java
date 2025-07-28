@@ -66,10 +66,20 @@ public final class BuildableRootsChangeRescanningInfoImpl extends BuildableRoots
     return new BuiltRescanningInfo(hasInheritedSdk, List.copyOf(sdks), List.copyOf(libraries), List.copyOf(entities));
   }
 
-  record BuiltRescanningInfo(boolean hasInheritedSdk,
-                             @NotNull List<Pair<String, String>> sdks,
-                             @NotNull List<LibraryId> libraries,
-                             @NotNull List<WorkspaceEntity> entities)
-    implements RootsChangeRescanningInfo {
+  static class BuiltRescanningInfo implements RootsChangeRescanningInfo {
+    public final boolean hasInheritedSdk;
+    public final @NotNull List<Pair<String, String>> sdks;
+    public final @NotNull List<LibraryId> libraries;
+    public final @NotNull List<WorkspaceEntity> entities;
+
+    BuiltRescanningInfo(boolean sdk,
+                        @NotNull List<Pair<String, String>> sdks,
+                        @NotNull List<LibraryId> libraries,
+                        @NotNull List<WorkspaceEntity> entities) {
+      hasInheritedSdk = sdk;
+      this.sdks = sdks;
+      this.libraries = libraries;
+      this.entities = entities;
+    }
   }
 }
