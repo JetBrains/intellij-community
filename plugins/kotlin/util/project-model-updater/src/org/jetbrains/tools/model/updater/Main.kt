@@ -40,7 +40,7 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
 }
 
 fun main(args: Array<String>) {
-    copyBootstrapArtifactsToMavenRepositoryIfRequired()
+    copyBootstrapArtifactsToMavenRepositoryIfExists()
     
     val preferences = GeneratorPreferences.parse(args)
 

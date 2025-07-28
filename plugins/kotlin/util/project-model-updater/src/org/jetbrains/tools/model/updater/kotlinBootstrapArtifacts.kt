@@ -12,7 +12,7 @@ import java.io.File
  * 
  * For the details, see KTI-2331.
  */
-internal fun copyBootstrapArtifactsToMavenRepositoryIfRequired() {
+internal fun copyBootstrapArtifactsToMavenRepositoryIfExists() {
     val bootstrapLocation = System.getenv("MODEL_UPDATER_KOTLIN_BOOTSTRAP_LOCATION")
     
     if (bootstrapLocation == null) {
@@ -25,7 +25,8 @@ internal fun copyBootstrapArtifactsToMavenRepositoryIfRequired() {
     val bootstrapDir = File(bootstrapLocation).absoluteFile
 
     if (!bootstrapDir.isDirectory) {
-        error("Bootstrap location does not exist or is not a directory: ${bootstrapDir}")
+        println("WARN: Bootstrap location does not exist or is not a directory, skipping copy: ${bootstrapDir}")
+        return
     }
     
     val mavenRepository = File(System.getProperty("user.home")).resolve(".m2").resolve("repository").absoluteFile
