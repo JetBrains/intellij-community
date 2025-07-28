@@ -17,6 +17,7 @@ import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecke
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
+import com.intellij.platform.searchEverywhere.utils.SeResultsCountBalancer
 import com.jetbrains.rhizomedb.EID
 import fleet.kernel.DurableRef
 import fleet.kernel.onDispose
