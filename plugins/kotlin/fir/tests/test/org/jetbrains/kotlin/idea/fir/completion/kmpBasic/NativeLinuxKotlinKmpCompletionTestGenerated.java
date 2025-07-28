@@ -64,6 +64,11 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
             runTest("../../completion/testData/basic/common/annotations/ArrayOf2.kt");
         }
 
+        @TestMetadata("BeforeLambda.kt")
+        public void testBeforeLambda() throws Exception {
+            runTest("../../completion/testData/basic/common/annotations/BeforeLambda.kt");
+        }
+
         @TestMetadata("ClassReference.kt")
         public void testClassReference() throws Exception {
             runTest("../../completion/testData/basic/common/annotations/ClassReference.kt");

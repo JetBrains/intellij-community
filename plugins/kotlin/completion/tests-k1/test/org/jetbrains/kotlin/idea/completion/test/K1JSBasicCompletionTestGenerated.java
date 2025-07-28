@@ -60,6 +60,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/annotations/ArrayOf2.kt");
             }
 
+            @TestMetadata("BeforeLambda.kt")
+            public void testBeforeLambda() throws Exception {
+                runTest("../testData/basic/common/annotations/BeforeLambda.kt");
+            }
+
             @TestMetadata("ClassReference.kt")
             public void testClassReference() throws Exception {
                 runTest("../testData/basic/common/annotations/ClassReference.kt");
