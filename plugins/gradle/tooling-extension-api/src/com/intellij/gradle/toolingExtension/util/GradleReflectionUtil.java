@@ -31,7 +31,7 @@ public final class GradleReflectionUtil {
       return receiverParameterType.getMethod(methodName, parameterTypes);
     }
     catch (NoSuchMethodException | SecurityException e) {
-      throw new RuntimeException(e);
+      throw new IllegalStateException(e);
     }
   }
 
@@ -44,7 +44,7 @@ public final class GradleReflectionUtil {
       return method.invoke(receiverArgument, arguments);
     }
     catch (IllegalAccessException | InvocationTargetException e) {
-      throw new RuntimeException(e);
+      throw new IllegalStateException(e);
     }
   }
 
@@ -55,7 +55,12 @@ public final class GradleReflectionUtil {
   ) {
     Method method = getMethod(receiver.getClass(), getterName);
     Object value = invokeMethod(method, receiver);
-    return valueClass.cast(value);
+    try {
+      return valueClass.cast(value);
+    }
+    catch (ClassCastException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   public static <T> void setValue(
@@ -91,7 +96,7 @@ public final class GradleReflectionUtil {
       return aClass.cast(value);
     }
     catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new IllegalStateException(e);
     }
   }
 
