@@ -3,6 +3,7 @@ package com.intellij.terminal.backend
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.IncrementalUpdateFlowProducer
 import com.intellij.platform.util.coroutines.flow.MutableStateWithIncrementalUpdates
 import com.intellij.terminal.backend.hyperlinks.BackendTerminalHyperlinkFacade
@@ -64,12 +65,13 @@ internal class StateAwareTerminalSession(
   }
 
   init {
+    val hyperlinkScope = coroutineScope.childScope("StateAwareTerminalSession hyperlink facades")
     // Create a Non-AWT thread document to be able to update it without switching to EDT and Write Action.
     // It is OK here to handle synchronization manually, because this document will be used only in our services.
     val outputDocument = DocumentImpl("", true)
     outputModel = TerminalOutputModelImpl(outputDocument, TerminalUiUtils.getDefaultMaxOutputLength())
     outputHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
-      BackendTerminalHyperlinkFacade(project, coroutineScope, outputModel, isInAlternateBuffer = false)
+      BackendTerminalHyperlinkFacade(project, hyperlinkScope, outputModel, isInAlternateBuffer = false)
     }
     else {
       null
@@ -78,7 +80,7 @@ internal class StateAwareTerminalSession(
     val alternateBufferDocument = DocumentImpl("", true)
     alternateBufferModel = TerminalOutputModelImpl(alternateBufferDocument, maxOutputLength = 0)
     alternateBufferHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
-      BackendTerminalHyperlinkFacade(project, coroutineScope, alternateBufferModel, isInAlternateBuffer = true)
+      BackendTerminalHyperlinkFacade(project, hyperlinkScope, alternateBufferModel, isInAlternateBuffer = true)
     }
     else {
       null

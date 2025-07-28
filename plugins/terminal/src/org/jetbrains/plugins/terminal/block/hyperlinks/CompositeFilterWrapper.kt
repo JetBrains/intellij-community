@@ -8,6 +8,7 @@ import com.intellij.execution.impl.ConsoleViewUtil
 import com.intellij.openapi.application.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
@@ -41,7 +42,7 @@ class CompositeFilterWrapper(private val project: Project, coroutineScope: Corou
 
   init {
     ConsoleFilterProvider.FILTER_PROVIDERS.addChangeListener(coroutineScope, ::rescheduleFilterComputation)
-    coroutineScope.launch { 
+    coroutineScope.launch(CoroutineName("CompositeFilterWrapper computing filters")) {
       filterComputationRequests.collectLatest { 
         filterFlow.value = null // tell the clients the value is being computed
         val newValue = ComputedFilter(computeFilter(), false)

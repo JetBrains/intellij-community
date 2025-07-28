@@ -96,6 +96,7 @@ internal class ReworkedTerminalView(
     Disposer.register(this) {
       coroutineScope.cancel()
     }
+    val hyperlinkScope = coroutineScope.childScope("ReworkedTerminalView hyperlink facades")
 
     sessionModel = TerminalSessionModelImpl()
     encodingManager = TerminalKeyEncodingManager(sessionModel, coroutineScope.childScope("TerminalKeyEncodingManager"))
@@ -131,7 +132,7 @@ internal class ReworkedTerminalView(
         editor = alternateBufferEditor,
         outputModel = alternateBufferModel,
         terminalInput = terminalInput,
-        coroutineScope = coroutineScope,
+        coroutineScope = hyperlinkScope,
       )
     }
     else {
@@ -175,7 +176,7 @@ internal class ReworkedTerminalView(
         editor = outputEditor,
         outputModel = outputModel,
         terminalInput = terminalInput,
-        coroutineScope = coroutineScope,
+        coroutineScope = hyperlinkScope,
       )
     }
     else {
