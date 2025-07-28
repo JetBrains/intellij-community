@@ -28,7 +28,7 @@ maven.install(
         "com.jetbrains.intellij.platform:jps-model-impl:" + intellij_version,
         "com.jetbrains.intellij.platform:build-scripts-downloader:" + intellij_version,
         "com.jetbrains.intellij.platform:jps-model-serialization:" + intellij_version,
-        "org.jetbrains.kotlin:kotlin-jps-plugin:2.1.20",
+        "org.jetbrains.kotlin:kotlin-jps-plugin:2.2.0",
         "org.jetbrains.teamcity:serviceMessages:2024.07",
     ],
     fail_if_repin_required = True,

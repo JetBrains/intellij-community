@@ -961,9 +961,15 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
     options.put("x_inline_classes", true)
   }
   //x_jvm_default
-  val jvmDefault = mergedCompilerArguments.jvmDefault
-  if (jvmDefault != "disable" /*compiler default value */ && jvmDefault != "all" /* IJ monorepo default value */) {
-    options.put("x_jvm_default", jvmDefault)
+  val xJvmDefault = mergedCompilerArguments.jvmDefault
+  if (xJvmDefault != null) {
+    if (xJvmDefault != "all") {
+      options.put("x_jvm_default", xJvmDefault)
+    }
+  } else {
+    if (mergedCompilerArguments.jvmDefaultStable == null) {
+      options.put("x_jvm_default", "all-compatibility")
+    }
   }
   //x_lambdas
   val lambdas = mergedCompilerArguments.lambdas

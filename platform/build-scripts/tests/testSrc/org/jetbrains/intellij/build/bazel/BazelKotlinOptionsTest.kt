@@ -74,13 +74,13 @@ class BazelKotlinOptionsTest {
         l++
       }
     }
-    val parsedOptionsToCheck = if (!parsedOptions.any { it.startsWith("-Xjvm-default=")}) {
+    val parsedOptionsToCheck = (if (!parsedOptions.any { it.startsWith("-Xjvm-default=")}) {
       parsedOptions.plus("-Xjvm-default=all")
     } else {
       parsedOptions
-    }
+    }).minus("-opt-in=com.intellij.openapi.util.IntellijInternalApi")
     val optionsToCheck = (if (!options.any { it.startsWith("-Xjvm-default=") }) {
-      options.plus("-Xjvm-default=disable")
+      options.plus("-Xjvm-default=all-compatibility")
     } else {
       options
     }).minus("-Xlambdas=indy")
