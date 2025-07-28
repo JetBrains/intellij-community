@@ -70,8 +70,9 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
     }, this)
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(object : PsiTreeChangeAdapter() {
       override fun beforeChildrenChange(event: PsiTreeChangeEvent) {
-        val psiFile = event.file
-        val document = psiFile?.getViewProvider()?.getDocument()
+        val virtualFile = event.file?.getViewProvider()?.virtualFile
+        // clear cache only when the document is already loaded, otherwise getting document maybe expensive, e.g. in case of decompiling large file
+        val document = virtualFile?.let { FileDocumentManager.getInstance().getCachedDocument(virtualFile) }
         if (document != null) {
           clearCache(document)
         }
