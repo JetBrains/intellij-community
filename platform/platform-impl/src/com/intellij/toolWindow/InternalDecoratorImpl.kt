@@ -58,8 +58,8 @@ import javax.swing.text.JTextComponent
 @ApiStatus.Internal
 class InternalDecoratorImpl internal constructor(
   @JvmField internal val toolWindow: ToolWindowImpl,
-  val contentUi: ToolWindowContentUi,
-  private val myDecoratorChild: JComponent
+  private val contentUi: ToolWindowContentUi,
+  private val myDecoratorChild: JComponent,
 ) : InternalDecorator(), Queryable, UiDataProvider, ComponentWithMnemonics {
   companion object {
     val SHARED_ACCESS_KEY: Key<Boolean> = Key.create("sharedAccess")
@@ -600,6 +600,7 @@ class InternalDecoratorImpl internal constructor(
       sink[PlatformDataKeys.NONEMPTY_CONTENT_MANAGER] = contentManager
     }
     sink[ToolWindowContentUi.CONTENT_MANAGER_DATA_KEY] = contentManager
+    sink[ToolWindowContentUi.DATA_KEY] = contentUi
   }
 
   fun setTitleActions(actions: List<AnAction>) {

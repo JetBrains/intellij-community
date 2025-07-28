@@ -73,6 +73,9 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
   @ApiStatus.Experimental
   public static final DataKey<ContentManager> CONTENT_MANAGER_DATA_KEY = DataKey.create("ToolWindow.ContentManager");
 
+  @ApiStatus.Internal
+  public static final DataKey<ToolWindowContentUi> DATA_KEY = DataKey.create("ToolWindowContentUi");
+
   @ApiStatus.Experimental
   public static final Key<Boolean> NOT_SELECTED_TAB_ICON_TRANSPARENT = Key.create("NotSelectedIconTransparent");
 
