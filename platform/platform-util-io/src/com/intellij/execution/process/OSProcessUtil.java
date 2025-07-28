@@ -2,7 +2,6 @@
 package com.intellij.execution.process;
 
 import com.intellij.execution.process.impl.ProcessListUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -26,8 +25,7 @@ public final class OSProcessUtil {
   public static boolean killProcessTree(@NotNull Process process) {
     if (SystemInfo.isWindows) {
       try {
-        LocalProcessService service = ApplicationManager.getApplication().getServiceIfCreated(LocalProcessService.class);
-        Integer pid = service == null ? null : service.winPtyChildProcessId(process);
+        Integer pid = LocalProcessService.getInstance().winPtyChildProcessId(process);
         if (pid != null) {
           if (pid == -1) return true;
           boolean res = WinProcessManager.kill(pid, true);
@@ -42,9 +40,7 @@ public final class OSProcessUtil {
             logSkippedActionWithTerminatedProcess(process, "killProcessTree", null);
             return true;
           }
-          if (service != null) {
-            service.killWinProcessRecursively(process);
-          }
+          LocalProcessService.getInstance().killWinProcessRecursively(process);
           return true;
         }
       }
