@@ -39,37 +39,37 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
     <orderEntry type="module-library" exported="">
       <library name="org.jetbrains.compose.components.components.resources" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources:1.8.0-alpha04">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources:1.9.0-beta01">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.8.0-alpha04/components-resources-1.8.0-alpha04.jar">
-              <sha256sum>7bc14c3ea620289907b3bc666999005ceda75c4da407bc8596d0965cf06990fe</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.9.0-beta01/components-resources-1.9.0-beta01.jar">
+              <sha256sum>558894a789d6a1c66b8845e471a03f01bc08ddcfe20fef8ffee925a36881ece4</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.8.0-alpha04/components-resources-1.8.0-alpha04.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.9.0-beta01/components-resources-1.9.0-beta01.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.8.0-alpha04/components-resources-1.8.0-alpha04-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.9.0-beta01/components-resources-1.9.0-beta01-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="org.jetbrains.compose.components.components.resources.desktop" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources-desktop:1.8.0-alpha04">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources-desktop:1.9.0-beta01">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.8.0-alpha04/components-resources-desktop-1.8.0-alpha04.jar">
-              <sha256sum>1b58df32c67ffb4f0f3dbc15fda9b959e2ec3f43e0bc56ddb088be351237b9a0</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.9.0-beta01/components-resources-desktop-1.9.0-beta01.jar">
+              <sha256sum>f3b8f331b6bb4312a74ed16d7bb3654427cfa73728a5817addbff64c6e77dfec</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.8.0-alpha04/components-resources-desktop-1.8.0-alpha04.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.9.0-beta01/components-resources-desktop-1.9.0-beta01.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.8.0-alpha04/components-resources-desktop-1.8.0-alpha04-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.9.0-beta01/components-resources-desktop-1.9.0-beta01-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

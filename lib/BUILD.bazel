@@ -4517,40 +4517,44 @@ jvm_import(
 java_library(
   name = "libraries-compose-foundation-desktop-compose-foundation-desktop",
   exports = [
-    ":foundation-desktop-1_8_0-alpha04_http_import",
+    ":foundation-desktop-1_9_0-beta01_http_import",
     ":annotation-jvm-1_9_1_http_import",
-    ":collection-jvm-1_5_0-beta01_http_import",
-    ":performance-annotation-jvm-1_0_0-alpha01_http_import",
-    ":animation-desktop-1_8_0-alpha04_http_import",
-    ":animation-core-desktop-1_8_0-alpha04_http_import",
-    ":ui-geometry-desktop-1_8_0-alpha04_http_import",
-    ":foundation-layout-desktop-1_8_0-alpha04_http_import",
-    ":runtime-desktop-1_8_0-alpha04_http_import",
-    ":ui-desktop-1_8_0-alpha04_http_import",
-    ":lifecycle-common-jvm-2_9_0-alpha08_http_import",
+    ":collection-jvm-1_5_0_http_import",
+    ":animation-desktop-1_9_0-beta01_http_import",
+    ":animation-core-desktop-1_9_0-beta01_http_import",
+    ":ui-geometry-desktop-1_9_0-beta01_http_import",
+    ":foundation-layout-desktop-1_9_0-beta01_http_import",
+    ":runtime-desktop-1_9_0-beta01_http_import",
+    ":runtime-desktop-1_9_0-beta02_http_import",
+    ":runtime-annotation-jvm-1_9_0-beta02_http_import",
+    ":ui-desktop-1_9_0-beta01_http_import",
+    ":lifecycle-common-jvm-2_9_1_http_import",
     ":jspecify-1_0_0_http_import",
-    ":lifecycle-runtime-desktop-2_9_0-alpha08_http_import",
-    ":lifecycle-common-2_9_0-alpha08_http_import",
+    ":lifecycle-runtime-desktop-2_9_1_http_import",
+    ":lifecycle-common-2_9_1_http_import",
     ":annotation-1_8_1_http_import",
     ":atomicfu-0_17_0_http_import",
     ":core-common-2_2_0_http_import",
-    ":lifecycle-viewmodel-desktop-2_9_0-alpha08_http_import",
-    ":lifecycle-runtime-compose-desktop-2_9_0-alpha04_http_import",
-    ":runtime-saveable-desktop-1_8_0-alpha04_http_import",
-    ":ui-backhandler-desktop-1_8_0-alpha04_http_import",
-    ":ui-graphics-desktop-1_8_0-alpha04_http_import",
-    ":ui-unit-desktop-1_8_0-alpha04_http_import",
-    ":ui-text-desktop-1_8_0-alpha04_http_import",
-    ":ui-util-desktop-1_8_0-alpha04_http_import",
+    ":lifecycle-viewmodel-desktop-2_9_1_http_import",
+    ":lifecycle-viewmodel-savedstate-desktop-2_9_1_http_import",
+    ":savedstate-desktop-1_3_0_http_import",
+    ":lifecycle-runtime-compose-desktop-2_9_1_http_import",
+    ":runtime-saveable-desktop-1_9_0-beta01_http_import",
+    ":savedstate-compose-desktop-1_3_0_http_import",
+    ":ui-backhandler-desktop-1_9_0-beta01_http_import",
+    ":ui-graphics-desktop-1_9_0-beta01_http_import",
+    ":ui-unit-desktop-1_9_0-beta01_http_import",
+    ":ui-text-desktop-1_9_0-beta01_http_import",
+    ":ui-util-desktop-1_9_0-beta01_http_import",
     ":atomicfu-jvm-0_23_2_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "foundation-desktop-1_8_0-alpha04_http_import",
-  jar = "@foundation-desktop-1_8_0-alpha04_http//file",
-  source_jar = "@foundation-desktop-1_8_0-alpha04-sources_http//file"
+  name = "foundation-desktop-1_9_0-beta01_http_import",
+  jar = "@foundation-desktop-1_9_0-beta01_http//file",
+  source_jar = "@foundation-desktop-1_9_0-beta01-sources_http//file"
 )
 
 jvm_import(
@@ -4560,57 +4564,63 @@ jvm_import(
 )
 
 jvm_import(
-  name = "collection-jvm-1_5_0-beta01_http_import",
-  jar = "@collection-jvm-1_5_0-beta01_http//file",
-  source_jar = "@collection-jvm-1_5_0-beta01-sources_http//file"
+  name = "collection-jvm-1_5_0_http_import",
+  jar = "@collection-jvm-1_5_0_http//file",
+  source_jar = "@collection-jvm-1_5_0-sources_http//file"
 )
 
 jvm_import(
-  name = "performance-annotation-jvm-1_0_0-alpha01_http_import",
-  jar = "@performance-annotation-jvm-1_0_0-alpha01_http//file",
-  source_jar = "@performance-annotation-jvm-1_0_0-alpha01-sources_http//file"
+  name = "animation-desktop-1_9_0-beta01_http_import",
+  jar = "@animation-desktop-1_9_0-beta01_http//file",
+  source_jar = "@animation-desktop-1_9_0-beta01-sources_http//file"
 )
 
 jvm_import(
-  name = "animation-desktop-1_8_0-alpha04_http_import",
-  jar = "@animation-desktop-1_8_0-alpha04_http//file",
-  source_jar = "@animation-desktop-1_8_0-alpha04-sources_http//file"
+  name = "animation-core-desktop-1_9_0-beta01_http_import",
+  jar = "@animation-core-desktop-1_9_0-beta01_http//file",
+  source_jar = "@animation-core-desktop-1_9_0-beta01-sources_http//file"
 )
 
 jvm_import(
-  name = "animation-core-desktop-1_8_0-alpha04_http_import",
-  jar = "@animation-core-desktop-1_8_0-alpha04_http//file",
-  source_jar = "@animation-core-desktop-1_8_0-alpha04-sources_http//file"
+  name = "ui-geometry-desktop-1_9_0-beta01_http_import",
+  jar = "@ui-geometry-desktop-1_9_0-beta01_http//file",
+  source_jar = "@ui-geometry-desktop-1_9_0-beta01-sources_http//file"
 )
 
 jvm_import(
-  name = "ui-geometry-desktop-1_8_0-alpha04_http_import",
-  jar = "@ui-geometry-desktop-1_8_0-alpha04_http//file",
-  source_jar = "@ui-geometry-desktop-1_8_0-alpha04-sources_http//file"
+  name = "foundation-layout-desktop-1_9_0-beta01_http_import",
+  jar = "@foundation-layout-desktop-1_9_0-beta01_http//file",
+  source_jar = "@foundation-layout-desktop-1_9_0-beta01-sources_http//file"
 )
 
 jvm_import(
-  name = "foundation-layout-desktop-1_8_0-alpha04_http_import",
-  jar = "@foundation-layout-desktop-1_8_0-alpha04_http//file",
-  source_jar = "@foundation-layout-desktop-1_8_0-alpha04-sources_http//file"
+  name = "runtime-desktop-1_9_0-beta01_http_import",
+  jar = "@runtime-desktop-1_9_0-beta01_http//file",
+  source_jar = "@runtime-desktop-1_9_0-beta01-sources_http//file"
 )
 
 jvm_import(
-  name = "runtime-desktop-1_8_0-alpha04_http_import",
-  jar = "@runtime-desktop-1_8_0-alpha04_http//file",
-  source_jar = "@runtime-desktop-1_8_0-alpha04-sources_http//file"
+  name = "runtime-desktop-1_9_0-beta02_http_import",
+  jar = "@runtime-desktop-1_9_0-beta02_http//file",
+  source_jar = "@runtime-desktop-1_9_0-beta02-sources_http//file"
 )
 
 jvm_import(
-  name = "ui-desktop-1_8_0-alpha04_http_import",
-  jar = "@ui-desktop-1_8_0-alpha04_http//file",
-  source_jar = "@ui-desktop-1_8_0-alpha04-sources_http//file"
+  name = "runtime-annotation-jvm-1_9_0-beta02_http_import",
+  jar = "@runtime-annotation-jvm-1_9_0-beta02_http//file",
+  source_jar = "@runtime-annotation-jvm-1_9_0-beta02-sources_http//file"
 )
 
 jvm_import(
-  name = "lifecycle-common-jvm-2_9_0-alpha08_http_import",
-  jar = "@lifecycle-common-jvm-2_9_0-alpha08_http//file",
-  source_jar = "@lifecycle-common-jvm-2_9_0-alpha08-sources_http//file"
+  name = "ui-desktop-1_9_0-beta01_http_import",
+  jar = "@ui-desktop-1_9_0-beta01_http//file",
+  source_jar = "@ui-desktop-1_9_0-beta01-sources_http//file"
+)
+
+jvm_import(
+  name = "lifecycle-common-jvm-2_9_1_http_import",
+  jar = "@lifecycle-common-jvm-2_9_1_http//file",
+  source_jar = "@lifecycle-common-jvm-2_9_1-sources_http//file"
 )
 
 jvm_import(
@@ -4620,15 +4630,15 @@ jvm_import(
 )
 
 jvm_import(
-  name = "lifecycle-runtime-desktop-2_9_0-alpha08_http_import",
-  jar = "@lifecycle-runtime-desktop-2_9_0-alpha08_http//file",
-  source_jar = "@lifecycle-runtime-desktop-2_9_0-alpha08-sources_http//file"
+  name = "lifecycle-runtime-desktop-2_9_1_http_import",
+  jar = "@lifecycle-runtime-desktop-2_9_1_http//file",
+  source_jar = "@lifecycle-runtime-desktop-2_9_1-sources_http//file"
 )
 
 jvm_import(
-  name = "lifecycle-common-2_9_0-alpha08_http_import",
-  jar = "@lifecycle-common-2_9_0-alpha08_http//file",
-  source_jar = "@lifecycle-common-2_9_0-alpha08-sources_http//file"
+  name = "lifecycle-common-2_9_1_http_import",
+  jar = "@lifecycle-common-2_9_1_http//file",
+  source_jar = "@lifecycle-common-2_9_1-sources_http//file"
 )
 
 jvm_import(
@@ -4644,51 +4654,69 @@ jvm_import(
 )
 
 jvm_import(
-  name = "lifecycle-viewmodel-desktop-2_9_0-alpha08_http_import",
-  jar = "@lifecycle-viewmodel-desktop-2_9_0-alpha08_http//file",
-  source_jar = "@lifecycle-viewmodel-desktop-2_9_0-alpha08-sources_http//file"
+  name = "lifecycle-viewmodel-desktop-2_9_1_http_import",
+  jar = "@lifecycle-viewmodel-desktop-2_9_1_http//file",
+  source_jar = "@lifecycle-viewmodel-desktop-2_9_1-sources_http//file"
 )
 
 jvm_import(
-  name = "lifecycle-runtime-compose-desktop-2_9_0-alpha04_http_import",
-  jar = "@lifecycle-runtime-compose-desktop-2_9_0-alpha04_http//file",
-  source_jar = "@lifecycle-runtime-compose-desktop-2_9_0-alpha04-sources_http//file"
+  name = "lifecycle-viewmodel-savedstate-desktop-2_9_1_http_import",
+  jar = "@lifecycle-viewmodel-savedstate-desktop-2_9_1_http//file",
+  source_jar = "@lifecycle-viewmodel-savedstate-desktop-2_9_1-sources_http//file"
 )
 
 jvm_import(
-  name = "runtime-saveable-desktop-1_8_0-alpha04_http_import",
-  jar = "@runtime-saveable-desktop-1_8_0-alpha04_http//file",
-  source_jar = "@runtime-saveable-desktop-1_8_0-alpha04-sources_http//file"
+  name = "savedstate-desktop-1_3_0_http_import",
+  jar = "@savedstate-desktop-1_3_0_http//file",
+  source_jar = "@savedstate-desktop-1_3_0-sources_http//file"
 )
 
 jvm_import(
-  name = "ui-backhandler-desktop-1_8_0-alpha04_http_import",
-  jar = "@ui-backhandler-desktop-1_8_0-alpha04_http//file",
-  source_jar = "@ui-backhandler-desktop-1_8_0-alpha04-sources_http//file"
+  name = "lifecycle-runtime-compose-desktop-2_9_1_http_import",
+  jar = "@lifecycle-runtime-compose-desktop-2_9_1_http//file",
+  source_jar = "@lifecycle-runtime-compose-desktop-2_9_1-sources_http//file"
 )
 
 jvm_import(
-  name = "ui-graphics-desktop-1_8_0-alpha04_http_import",
-  jar = "@ui-graphics-desktop-1_8_0-alpha04_http//file",
-  source_jar = "@ui-graphics-desktop-1_8_0-alpha04-sources_http//file"
+  name = "runtime-saveable-desktop-1_9_0-beta01_http_import",
+  jar = "@runtime-saveable-desktop-1_9_0-beta01_http//file",
+  source_jar = "@runtime-saveable-desktop-1_9_0-beta01-sources_http//file"
 )
 
 jvm_import(
-  name = "ui-unit-desktop-1_8_0-alpha04_http_import",
-  jar = "@ui-unit-desktop-1_8_0-alpha04_http//file",
-  source_jar = "@ui-unit-desktop-1_8_0-alpha04-sources_http//file"
+  name = "savedstate-compose-desktop-1_3_0_http_import",
+  jar = "@savedstate-compose-desktop-1_3_0_http//file",
+  source_jar = "@savedstate-compose-desktop-1_3_0-sources_http//file"
 )
 
 jvm_import(
-  name = "ui-text-desktop-1_8_0-alpha04_http_import",
-  jar = "@ui-text-desktop-1_8_0-alpha04_http//file",
-  source_jar = "@ui-text-desktop-1_8_0-alpha04-sources_http//file"
+  name = "ui-backhandler-desktop-1_9_0-beta01_http_import",
+  jar = "@ui-backhandler-desktop-1_9_0-beta01_http//file",
+  source_jar = "@ui-backhandler-desktop-1_9_0-beta01-sources_http//file"
 )
 
 jvm_import(
-  name = "ui-util-desktop-1_8_0-alpha04_http_import",
-  jar = "@ui-util-desktop-1_8_0-alpha04_http//file",
-  source_jar = "@ui-util-desktop-1_8_0-alpha04-sources_http//file"
+  name = "ui-graphics-desktop-1_9_0-beta01_http_import",
+  jar = "@ui-graphics-desktop-1_9_0-beta01_http//file",
+  source_jar = "@ui-graphics-desktop-1_9_0-beta01-sources_http//file"
+)
+
+jvm_import(
+  name = "ui-unit-desktop-1_9_0-beta01_http_import",
+  jar = "@ui-unit-desktop-1_9_0-beta01_http//file",
+  source_jar = "@ui-unit-desktop-1_9_0-beta01-sources_http//file"
+)
+
+jvm_import(
+  name = "ui-text-desktop-1_9_0-beta01_http_import",
+  jar = "@ui-text-desktop-1_9_0-beta01_http//file",
+  source_jar = "@ui-text-desktop-1_9_0-beta01-sources_http//file"
+)
+
+jvm_import(
+  name = "ui-util-desktop-1_9_0-beta01_http_import",
+  jar = "@ui-util-desktop-1_9_0-beta01_http//file",
+  source_jar = "@ui-util-desktop-1_9_0-beta01-sources_http//file"
 )
 
 jvm_import(
@@ -4906,15 +4934,15 @@ java_library(
 
 jvm_import(
   name = "libraries-skiko-jetbrains-skiko-awt-compose",
-  jar = "@skiko-awt-0_9_2_http//file",
-  source_jar = "@skiko-awt-0_9_2-sources_http//file",
+  jar = "@skiko-awt-0_9_18_http//file",
+  source_jar = "@skiko-awt-0_9_18-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-skiko-jetbrains-skiko-awt-runtime-all",
-  jar = "@skiko-awt-runtime-all-0_9_2_http//file",
-  source_jar = "@skiko-awt-runtime-all-0_9_2-sources_http//file",
+  jar = "@skiko-awt-runtime-all-0_9_18_http//file",
+  source_jar = "@skiko-awt-runtime-all-0_9_18-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8573,15 +8601,15 @@ jvm_import(
 
 jvm_import(
   name = "platform-jewel-ui-org-jetbrains-compose-components-components-resources",
-  jar = "@components-resources-1_8_0-alpha04_http//file",
-  source_jar = "@components-resources-1_8_0-alpha04-sources_http//file",
+  jar = "@components-resources-1_9_0-beta01_http//file",
+  source_jar = "@components-resources-1_9_0-beta01-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
-  jar = "@components-resources-desktop-1_8_0-alpha04_http//file",
-  source_jar = "@components-resources-desktop-1_8_0-alpha04-sources_http//file",
+  jar = "@components-resources-desktop-1_9_0-beta01_http//file",
+  source_jar = "@components-resources-desktop-1_9_0-beta01-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
