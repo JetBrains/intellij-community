@@ -39,7 +39,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
 import java.io.File
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -61,7 +60,6 @@ internal class VcsUpdateTask(
   // vcs name, context object
   // create from outside without any context; context is created by vcses
   private val contextInfo = HashMap<AbstractVcs, SequentialUpdatesContext?>()
-  private val dirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
 
   private var before: Label? = null
   private var after: Label? = null
@@ -123,8 +121,8 @@ internal class VcsUpdateTask(
         processed++
         progressIndicator.setFraction(processed.toDouble() / toBeProcessed.toDouble())
         progressIndicator.setText2("")
-        val exceptionList = updateSession.getExceptions()
-        gatherExceptions(vcs, exceptionList)
+        val exceptionList = collectExceptions(vcs, updateSession.getExceptions())
+        groupedExceptions.putAllNonEmpty(exceptionList)
         updateSessions.add(updateSession)
       }
     }
@@ -133,49 +131,16 @@ internal class VcsUpdateTask(
         progressIndicator.checkCanceled()
         progressIndicator.setText(VcsBundle.message("progress.text.synchronizing.files"))
         progressIndicator.setText2("")
-        doVfsRefresh()
+        LOG.info("Calling refresh files after update for roots: ${roots.contentToString()}")
+        RefreshVFsSynchronously.updateAllChanged(updatedFiles)
+        notifyAnnotations(project, updatedFiles)
       }
       finally {
         projectLevelVcsManager.stopBackgroundVcsOperation()
-        project.getMessageBus().syncPublisher<UpdatedFilesListener>(UpdatedFilesListener.UPDATED_FILES)
-          .consume(UpdatedFilesReverseSide.getPathsFromUpdatedFiles(updatedFiles))
+        notifyFiles(project, updatedFiles)
         activity.finished()
       }
     }
-  }
-
-  private fun gatherExceptions(vcs: AbstractVcs, exceptionList: MutableList<VcsException>) {
-    val fixer = vcs.vcsExceptionsHotFixer
-    if (fixer == null) {
-      putExceptions(null, exceptionList)
-    }
-    else {
-      putExceptions(fixer.groupExceptions(ActionType.update, exceptionList))
-    }
-  }
-
-  private fun putExceptions(map: Map<HotfixData, List<VcsException>>) {
-    for (entry in map.entries) {
-      putExceptions(entry.key, entry.value)
-    }
-  }
-
-  private fun putExceptions(key: HotfixData?, list: List<VcsException>) {
-    if (list.isEmpty()) {
-      return
-    }
-    groupedExceptions.computeIfAbsent(key) { ArrayList() }.addAll(list)
-  }
-
-  private fun doVfsRefresh() {
-    LOG.info("Calling refresh files after update for roots: ${roots.contentToString()}")
-    RefreshVFsSynchronously.updateAllChanged(updatedFiles)
-    notifyAnnotations()
-  }
-
-  private fun notifyAnnotations() {
-    val refresher = project.getMessageBus().syncPublisher<VcsAnnotationRefresher>(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED)
-    UpdateFilesHelper.iterateFileGroupFilesDeletedOnServerFirst(updatedFiles) { filePath, _ -> refresher.dirty(filePath) }
   }
 
   private fun prepareNotification(
@@ -243,17 +208,7 @@ internal class VcsUpdateTask(
     after = LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("update.label.after.update"))
 
     if (actionInfo.canChangeFileStatus()) {
-      val files = ArrayList<VirtualFile>()
-      val revisionsCache = RemoteRevisionsCache.getInstance(project)
-      revisionsCache.invalidate(updatedFiles)
-      UpdateFilesHelper.iterateFileGroupFiles(updatedFiles, object : UpdateFilesHelper.Callback {
-        override fun onFile(filePath: String, groupId: String?) {
-          val path: @NonNls String = VfsUtilCore.pathToUrl(filePath.replace(File.separatorChar, '/'))
-          val file = VirtualFileManager.getInstance().findFileByUrl(path) ?: return
-          files.add(file)
-        }
-      })
-      dirtyScopeManager.filesDirty(files, null)
+      refreshFilesStatus(project, updatedFiles)
     }
 
     val updateSuccess = !someSessionWasCancelled && groupedExceptions.isEmpty()
@@ -322,13 +277,13 @@ internal class VcsUpdateTask(
   }
 
   private fun gatherContextInterruptedMessages() {
-    for (entry in contextInfo.entries) {
-      val context = entry.value
+    for ((vcs, context) in contextInfo.entries) {
       if (context == null || !context.shouldFail()) {
         continue
       }
       val exception = VcsException(context.getMessageWhenInterruptedBeforeStart())
-      gatherExceptions(entry.key, mutableListOf(exception))
+      val exceptionList = collectExceptions(vcs, listOf(exception))
+      groupedExceptions.putAllNonEmpty(exceptionList)
     }
   }
 
@@ -355,6 +310,30 @@ internal class VcsUpdateTask(
   }
 }
 
+private fun refreshFilesStatus(project: Project, updatedFiles: UpdatedFiles) {
+  RemoteRevisionsCache.getInstance(project).invalidate(updatedFiles)
+
+  val files = ArrayList<VirtualFile>()
+  UpdateFilesHelper.iterateFileGroupFiles(updatedFiles) { filePath, _ ->
+    val path = VfsUtilCore.pathToUrl(filePath.replace(File.separatorChar, '/'))
+    val file = VirtualFileManager.getInstance().findFileByUrl(path)
+    if (file != null) {
+      files.add(file)
+    }
+  }
+  VcsDirtyScopeManager.getInstance(project).filesDirty(files, null)
+}
+
+private fun notifyAnnotations(project: Project, updatedFiles: UpdatedFiles) {
+  val refresher = project.getMessageBus().syncPublisher<VcsAnnotationRefresher>(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED)
+  UpdateFilesHelper.iterateFileGroupFilesDeletedOnServerFirst(updatedFiles) { filePath, _ -> refresher.dirty(filePath) }
+}
+
+private fun notifyFiles(project: Project, updatedFiles: UpdatedFiles) {
+  val updatedPaths = UpdatedFilesReverseSide.getPathsFromUpdatedFiles(updatedFiles)
+  project.getMessageBus().syncPublisher<UpdatedFilesListener>(UpdatedFilesListener.UPDATED_FILES).consume(updatedPaths)
+}
+
 private fun getFilesCount(group: FileGroup): Int = group.getFiles().size + group.children.sumOf { getFilesCount(it) }
 
 private fun prepareScopeUpdatedText(tree: UpdateInfoTree): @Nls HtmlChunk {
@@ -377,6 +356,24 @@ private fun getAllFilesAreUpToDateMessage(roots: Array<FilePath>): @NlsContexts.
   }
   else {
     return VcsBundle.message("message.text.all.files.are.up.to.date")
+  }
+}
+
+private fun collectExceptions(vcs: AbstractVcs, exceptionList: List<VcsException>): Map<HotfixData?, List<VcsException>> {
+  val fixer = vcs.vcsExceptionsHotFixer
+  if (exceptionList.isEmpty()) return emptyMap()
+  if (fixer == null) {
+    return mapOf(null to exceptionList)
+  }
+  else {
+    return fixer.groupExceptions(ActionType.update, exceptionList)
+  }
+}
+
+private fun <K, V> MutableMap<K, MutableList<V>>.putAllNonEmpty(map: Map<K, List<V>>) {
+  for ((key, values) in map) {
+    if (values.isEmpty()) continue
+    computeIfAbsent(key) { mutableListOf() }.addAll(values)
   }
 }
 
