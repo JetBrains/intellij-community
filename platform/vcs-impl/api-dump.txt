@@ -4500,7 +4500,7 @@ f:com.intellij.vcs.VcsShowToolWindowTabAction$Companion
 - f:activateVcsTab(com.intellij.openapi.project.Project,java.lang.String,Z):V
 f:com.intellij.vcs.ViewUpdateInfoNotification
 - com.intellij.notification.NotificationAction
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.update.UpdateInfoTree,java.lang.String,com.intellij.notification.Notification):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.update.UpdateInfoTree,java.lang.String):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.notification.Notification):V
 - s:focusUpdateInfoTree(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.update.UpdateInfoTree):V
 f:com.intellij.vcs.branch.BranchDataImpl

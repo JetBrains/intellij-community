@@ -8,6 +8,7 @@ import com.intellij.history.LocalHistoryAction
 import com.intellij.ide.errorTreeView.HotfixData
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -15,6 +16,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -143,49 +145,6 @@ internal class VcsUpdateTask(
     }
   }
 
-  private fun prepareNotification(
-    tree: UpdateInfoTree,
-    someSessionWasCancelled: Boolean,
-    updateSessions: List<UpdateSession>,
-  ): Notification {
-    val allFilesCount = updatedFiles.topLevelGroups.sumOf { getFilesCount(it) }
-
-    @Suppress("DialogTitleCapitalization")
-    val title = if (someSessionWasCancelled) {
-      VcsBundle.message("update.notification.title.project.partially.updated")
-    }
-    else {
-      VcsBundle.message("update.notification.title.count.files.updated", allFilesCount)
-    }
-
-    val content = HtmlBuilder()
-    content.append(if (someSessionWasCancelled) {
-      HtmlChunk.text(VcsBundle.message("update.notification.content.files.updated", allFilesCount))
-    }
-                   else {
-      prepareScopeUpdatedText(tree)
-    })
-
-    val additionalContent = updateSessions.asSequence()
-      .map { it.additionalNotificationContent }
-      .filterNotNull()
-      .map {
-        @Suppress("HardCodedStringLiteral")
-        HtmlChunk.raw(it)
-      }
-      .toList()
-    if (!additionalContent.isEmpty()) {
-      if (!content.isEmpty) {
-        content.append(HtmlChunk.br())
-      }
-      content.appendWithSeparators(HtmlChunk.text(", "), additionalContent)
-    }
-
-    val type = if (someSessionWasCancelled) NotificationType.WARNING else NotificationType.INFORMATION
-    return VcsNotifier.standardNotification()
-      .createNotification(title, content.toString(), type).setDisplayId(VcsNotificationIdsHolder.PROJECT_PARTIALLY_UPDATED)
-  }
-
   private fun onSuccessImpl(wasCanceled: Boolean) {
     if (!project.isOpen() || project.isDisposed()) {
       LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("activity.name.update")) // TODO check why this label is needed
@@ -238,21 +197,24 @@ internal class VcsUpdateTask(
           .setDisplayId(VcsNotificationIdsHolder.PROJECT_UPDATE_FINISHED))
     }
     else if (!updatedFiles.isEmpty) {
-      if (updateSessions.size == 1 && VcsUpdateProcess.checkUpdateHasCustomNotification(spec.map { it.vcs })) {
+      val singleUpdateSession = updateSessions.singleOrNull()
+      if (singleUpdateSession != null && VcsUpdateProcess.checkUpdateHasCustomNotification(spec.map { it.vcs })) {
         // multi-vcs projects behave as before: only a compound notification & file tree is shown for them, for the sake of simplicity
-        updateSessions.get(0).showNotification()
+        singleUpdateSession.showNotification()
       }
       else {
-        val tree = showUpdateTree(continueChainFinal && updateSuccess && noMerged, someSessionWasCancelled)
-        val cache = CommittedChangesCache.getInstance(project)
-        cache.processUpdatedFiles(updatedFiles) {
-          tree.setChangeLists(it)
-        }
+        val willBeContinued = continueChainFinal && updateSuccess && noMerged
+        val updateNumber = if (willBeContinued || updateNumber > 1) updateNumber else 0
+        val tree = showUpdateTree(someSessionWasCancelled, updateNumber)
 
-        val notification = prepareNotification(tree, someSessionWasCancelled, updateSessions)
-        notification.addAction(
-          ViewUpdateInfoNotification(project, tree, VcsBundle.message("update.notification.content.view"), notification))
-        VcsNotifier.getInstance(project).notify(notification)
+        if (tree != null) {
+          val additionalContent = updateSessions.mapNotNull { it.additionalNotificationContent }
+          prepareUpdatedFilesNotification(someSessionWasCancelled, updatedFiles, additionalContent, tree).apply {
+            addAction(ViewUpdateInfoNotification(project, tree, VcsBundle.message("update.notification.content.view")))
+          }.also {
+            Disposer.register(tree, Disposable { it.expire() })
+          }.notify(project)
+        }
       }
     }
 
@@ -287,15 +249,22 @@ internal class VcsUpdateTask(
     }
   }
 
-  private fun showUpdateTree(willBeContinued: Boolean, wasCanceled: Boolean): UpdateInfoTree {
-    val restoreUpdateTree = RestoreUpdateTree.getInstance(project)
-    restoreUpdateTree.registerUpdateInformation(updatedFiles, actionInfo)
-    val text = actionName + (if (willBeContinued || (updateNumber > 1)) ("#$updateNumber") else "")
-    val updateInfoTree = projectLevelVcsManager.showUpdateProjectInfo(updatedFiles, text, actionInfo, wasCanceled)!!
-    updateInfoTree.setBefore(before)
-    updateInfoTree.setAfter(after)
-    updateInfoTree.setCanGroupByChangeList(canGroupByChangelist(spec.map { it.vcs }))
-    return updateInfoTree
+  private fun showUpdateTree(wasCancelled: Boolean, updateNumber: Int): UpdateInfoTree? {
+    val title = actionName + if (updateNumber > 1) "#$updateNumber" else ""
+    val tree = ProjectLevelVcsManagerEx.getInstanceEx(project).showUpdateProjectInfo(updatedFiles, title, actionInfo, wasCancelled)
+               ?: return null
+    RestoreUpdateTree.getInstance(project).registerUpdateInformation(updatedFiles, actionInfo)
+
+    with(tree) {
+      setBefore(before)
+      setAfter(after)
+      setCanGroupByChangeList(canGroupByChangelist(spec.map { it.vcs }))
+    }
+
+    CommittedChangesCache.getInstance(project).processUpdatedFiles(updatedFiles) {
+      tree.setChangeLists(it)
+    }
+    return tree
   }
 
   private fun canGroupByChangelist(vcses: Collection<AbstractVcs>): Boolean {
@@ -335,6 +304,47 @@ private fun notifyFiles(project: Project, updatedFiles: UpdatedFiles) {
 }
 
 private fun getFilesCount(group: FileGroup): Int = group.getFiles().size + group.children.sumOf { getFilesCount(it) }
+
+private fun prepareUpdatedFilesNotification(
+  someSessionWasCancelled: Boolean,
+  updatedFiles: UpdatedFiles,
+  additionalContent: List<String>,
+  tree: UpdateInfoTree,
+): Notification {
+  val allFilesCount = updatedFiles.topLevelGroups.sumOf { getFilesCount(it) }
+
+  @Suppress("DialogTitleCapitalization")
+  val title = if (someSessionWasCancelled) {
+    VcsBundle.message("update.notification.title.project.partially.updated")
+  }
+  else {
+    VcsBundle.message("update.notification.title.count.files.updated", allFilesCount)
+  }
+
+  val content = HtmlBuilder()
+  val text = if (someSessionWasCancelled) {
+    HtmlChunk.text(VcsBundle.message("update.notification.content.files.updated", allFilesCount))
+  }
+  else {
+    prepareScopeUpdatedText(tree)
+  }
+  content.append(text)
+
+  val additionalContent = additionalContent.map {
+    @Suppress("HardCodedStringLiteral")
+    HtmlChunk.raw(it)
+  }
+  if (!additionalContent.isEmpty()) {
+    if (!content.isEmpty) {
+      content.append(HtmlChunk.br())
+    }
+    content.appendWithSeparators(HtmlChunk.text(", "), additionalContent)
+  }
+
+  val type = if (someSessionWasCancelled) NotificationType.WARNING else NotificationType.INFORMATION
+  return VcsNotifier.standardNotification().createNotification(title, content.toString(), type)
+    .setDisplayId(VcsNotificationIdsHolder.PROJECT_PARTIALLY_UPDATED)
+}
 
 private fun prepareScopeUpdatedText(tree: UpdateInfoTree): @Nls HtmlChunk {
   val scopeFilter = tree.getFilterScope() ?: return HtmlChunk.empty()
