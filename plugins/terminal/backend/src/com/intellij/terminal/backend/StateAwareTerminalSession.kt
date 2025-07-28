@@ -47,6 +47,8 @@ internal class StateAwareTerminalSession(
   private val alternateBufferHyperlinkFacade: BackendTerminalHyperlinkFacade?
   private val blocksModel: TerminalBlocksModel
 
+  private val inputChannel: SendChannel<TerminalInputEvent>
+
   private val outputLatencyReporter = BatchLatencyReporter(batchSize = 100) { samples ->
     ReworkedTerminalUsageCollector.logBackendOutputLatency(
       totalDuration = samples.totalDuration(),
@@ -106,24 +108,25 @@ internal class StateAwareTerminalSession(
         }
       }
     }
-  }
 
-  override suspend fun getInputChannel(): SendChannel<TerminalInputEvent> {
-    val original = delegate.getInputChannel()
-    val channel = Channel<TerminalInputEvent>(capacity = Channel.UNLIMITED)
+    inputChannel = Channel<TerminalInputEvent>(capacity = Channel.UNLIMITED)
     coroutineScope.launch(CoroutineName("StateAwareTerminalSession: input channel")) {
+      val original = delegate.getInputChannel()
       try {
-        for (event in channel) {
+        for (event in inputChannel) {
           original.send(event)
           handleInputEvent(event)
         }
       }
       finally {
-        channel.close()
+        inputChannel.close()
         original.close()
       }
     }
-    return channel
+  }
+
+  override suspend fun getInputChannel(): SendChannel<TerminalInputEvent> {
+    return inputChannel
   }
 
   private fun handleInputEvent(event: TerminalInputEvent) {
