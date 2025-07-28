@@ -42,7 +42,7 @@ public final class ShowContentAction extends AnAction implements DumbAware {
                                 ? ActionsBundle.message("action.ShowContent.text")
                                 : ActionsBundle.message("action.ShowContent.views.text"));
 
-    ContentManager contentManager = e.getData(ToolWindowContentUi.CONTENT_MANAGER_DATA_KEY);
+    ContentManager contentManager = e.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER);
     e.getPresentation().setEnabledAndVisible(contentManager != null && contentManager.getContentCount() > 1);
   }
 

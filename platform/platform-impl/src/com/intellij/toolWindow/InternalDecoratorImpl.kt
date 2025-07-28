@@ -599,7 +599,7 @@ class InternalDecoratorImpl internal constructor(
     if (contentManager.contentCount > 1) {
       sink[PlatformDataKeys.NONEMPTY_CONTENT_MANAGER] = contentManager
     }
-    sink[ToolWindowContentUi.CONTENT_MANAGER_DATA_KEY] = contentManager
+    sink[PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER] = contentManager
     sink[ToolWindowContentUi.DATA_KEY] = contentUi
   }
 

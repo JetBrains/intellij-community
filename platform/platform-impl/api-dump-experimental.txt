@@ -259,7 +259,6 @@ f:com.intellij.openapi.wm.impl.IdeBackgroundUtil
 f:com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 - com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.ui.content.ContentUI
-- *sf:CONTENT_MANAGER_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - *sf:NOT_SELECTED_TAB_ICON_TRANSPARENT:com.intellij.openapi.util.Key
 c:com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 - javax.swing.JComponent

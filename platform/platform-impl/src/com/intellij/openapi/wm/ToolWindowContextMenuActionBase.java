@@ -3,7 +3,6 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.wm.impl.content.BaseLabel;
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -55,7 +54,7 @@ public abstract class ToolWindowContextMenuActionBase extends AnAction {
     BaseLabel baseLabel = ObjectUtils.tryCast(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT), BaseLabel.class);
     Content selectedContent = baseLabel != null ? baseLabel.getContent() : null;
     if (selectedContent == null) {
-      ContentManager contentManager = e.getData(ToolWindowContentUi.CONTENT_MANAGER_DATA_KEY);
+      ContentManager contentManager = e.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER);
       if (contentManager != null) {
         selectedContent = contentManager.getSelectedContent();
       }
