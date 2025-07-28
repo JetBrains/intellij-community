@@ -721,6 +721,16 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/functionPreferNotDeprecated.test");
             }
 
+            @TestMetadata("hasNextOperator.test")
+            public void testHasNextOperator() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/hasNextOperator.test");
+            }
+
+            @TestMetadata("hasNextOperator_NoneApplicable.test")
+            public void testHasNextOperator_NoneApplicable() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/hasNextOperator_NoneApplicable.test");
+            }
+
             @TestMetadata("importAliasClassAlreadyExists.before.Main.kt")
             public void testImportAliasClassAlreadyExists() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/importAliasClassAlreadyExists.before.Main.kt");
@@ -1054,6 +1064,16 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             @TestMetadata("nestedClass.before.Main.kt")
             public void testNestedClass() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/nestedClass.before.Main.kt");
+            }
+
+            @TestMetadata("nextOperator.test")
+            public void testNextOperator() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/nextOperator.test");
+            }
+
+            @TestMetadata("nextOperator_NoneApplicable.test")
+            public void testNextOperator_NoneApplicable() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/nextOperator_NoneApplicable.test");
             }
 
             @TestMetadata("noFunctionImportOnSimpleName.test")

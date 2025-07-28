@@ -65,6 +65,18 @@ object ImportQuickFixFactories {
     val iteratorAmbiguityFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.IteratorAmbiguity> =
         ImportQuickFixProvider.upcast()
 
+    val hasNextMissingFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.HasNextMissing> =
+        ImportQuickFixProvider.upcast()
+
+    val hasNextFunctionNoneApplicableFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.HasNextFunctionNoneApplicable> =
+        ImportQuickFixProvider.upcast()
+
+    val nextMissingFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NextMissing> =
+        ImportQuickFixProvider.upcast()
+
+    val nextNoneApplicableFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NextNoneApplicable> =
+        ImportQuickFixProvider.upcast()
+
     val functionExpectedFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.FunctionExpected> =
         ImportQuickFixProvider.upcast()
 }

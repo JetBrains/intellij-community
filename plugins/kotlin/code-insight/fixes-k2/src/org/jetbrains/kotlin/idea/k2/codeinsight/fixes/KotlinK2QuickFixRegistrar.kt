@@ -305,6 +305,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
 
         registerFactory(ImportQuickFixFactories.iteratorMissingFactory)
         registerFactory(ImportQuickFixFactories.iteratorAmbiguityFactory)
+        registerFactory(ImportQuickFixFactories.hasNextMissingFactory)
+        registerFactory(ImportQuickFixFactories.hasNextFunctionNoneApplicableFactory)
+        registerFactory(ImportQuickFixFactories.nextMissingFactory)
+        registerFactory(ImportQuickFixFactories.nextNoneApplicableFactory)
 
         registerFactory(ImportQuickFixFactories.delegateSpecialFunctionMissingFactory)
         registerFactory(ImportQuickFixFactories.delegateSpecialFunctionNoneApplicableFactory)
