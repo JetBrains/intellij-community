@@ -32,12 +32,8 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forLibraryEntity
-import com.intellij.workspaceModel.core.fileIndex.DependencyDescription
+import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription.OnParent
-import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexChangedEvent
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexListener
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl.Companion.EP_NAME
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -145,7 +141,7 @@ class ProjectEntityIndexingService(
           builders.addAll(getBuildersOnWorkspaceEntitiesRootsChange(project, entities, entityStorage))
         }
         else if (change is BuiltRescanningInfo) {
-          builders.addAll(getBuildersOnBuildableChangeInfo(change, project, entityStorage))
+          builders.addAll(getBuildersOnBuildableChangeInfo(change))
         }
         else {
           LOG.warn("Unexpected change " + change.javaClass + " " + change + ", full reindex requested")
@@ -455,8 +451,6 @@ class ProjectEntityIndexingService(
 
     private fun getBuildersOnBuildableChangeInfo(
       info: BuiltRescanningInfo,
-      project: Project,
-      entityStorage: EntityStorage,
     ): MutableCollection<out IndexableIteratorBuilder> {
       val builders = SmartList<IndexableIteratorBuilder>()
       val instance = IndexableIteratorBuilders
@@ -469,7 +463,6 @@ class ProjectEntityIndexingService(
       for (library in info.libraries) {
         builders.addAll(instance.forLibraryEntity(library, true))
       }
-      builders.addAll(getBuildersOnWorkspaceEntitiesRootsChange(project, info.entities, entityStorage))
       return builders
     }
   }
