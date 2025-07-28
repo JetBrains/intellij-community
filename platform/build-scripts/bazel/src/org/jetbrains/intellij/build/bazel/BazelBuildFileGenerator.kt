@@ -913,7 +913,10 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
   val mergedCompilerArguments = kotlinFacetModuleExtension.settings.mergedCompilerArguments as? K2JVMCompilerArguments ?: return null
   val options = HashMap<String, Any>()
   // see create_kotlinc_options
-  val effectiveOptIn = mergedCompilerArguments.optIn?.filter { it != "com.intellij.openapi.util.IntellijInternalApi" } ?: emptyList()
+  var effectiveOptIn = mergedCompilerArguments.optIn?.asList() ?: emptyList()
+  if (effectiveOptIn.size == 1 && effectiveOptIn[0] == "com.intellij.openapi.util.IntellijInternalApi") {
+    effectiveOptIn = emptyList()
+  }
   //optin
   if (effectiveOptIn.isNotEmpty()) {
     options.put("opt_in", effectiveOptIn)
@@ -958,8 +961,9 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
     options.put("x_inline_classes", true)
   }
   //x_jvm_default
-  if (mergedCompilerArguments.jvmDefault != "all") {
-    options.put("x_jvm_default", mergedCompilerArguments.jvmDefault)
+  val jvmDefault = mergedCompilerArguments.jvmDefault
+  if (jvmDefault != "disable" /*compiler default value */ && jvmDefault != "all" /* IJ monorepo default value */) {
+    options.put("x_jvm_default", jvmDefault)
   }
   //x_lambdas
   val lambdas = mergedCompilerArguments.lambdas

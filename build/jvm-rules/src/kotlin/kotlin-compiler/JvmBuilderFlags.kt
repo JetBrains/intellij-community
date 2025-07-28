@@ -43,6 +43,7 @@ enum class JvmBuilderFlags {
   API_VERSION,
   LANGUAGE_VERSION,
   JVM_TARGET,
+  JVM_DEFAULT,
 
   OPT_IN,
   X_ALLOW_KOTLIN_PACKAGE,

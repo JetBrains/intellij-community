@@ -34,7 +34,8 @@ public enum CLFlags {
   X_ALLOW_RESULT_RETURN_TYPE,
   X_WHEN_GUARDS,
   X_LAMBDAS,
-  X_JVM_DEFAULT,
+  JVM_DEFAULT,   // stable option
+  X_JVM_DEFAULT, // deprecated option
   X_INLINE_CLASSES,
   X_CONTEXT_RECEIVERS,
   X_CONTEXT_PARAMETERS,

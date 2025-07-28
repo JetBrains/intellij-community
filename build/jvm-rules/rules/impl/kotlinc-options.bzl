@@ -39,6 +39,20 @@ def _map_plugins_optins_to_flag(values):
     return result
 
 _KOPTS = {
+#     "jvm_default": struct(
+#         flag = "-jvm-default",
+#         args = dict(
+#             default = "enable",
+#             doc = "Emit JVM default methods for interface declarations with bodies.",
+#             values = ["enable", "no-compatibility", "disable"],
+#         ),
+#         type = attr.string,
+#         value_to_flag = {
+#             "enable": ["-jvm-default=enable"],
+#             "no-compatibility": ["-jvm-default=no-compatibility"],
+#             "disable": ["-jvm-default=enable"],
+#         },
+#     ),
     "jvm_target": struct(
         args = dict(
             default = "",
@@ -173,7 +187,7 @@ _KOPTS = {
         flag = "-Xjvm-default",
         args = dict(
             default = "off",
-            doc = "Specifies that a JVM default method should be generated for non-abstract Kotlin interface member.",
+            doc = "Specifies that a JVM default method should be generated for non-abstract Kotlin interface member. Deprecated since compiler version 2.2",
             values = ["off", "enable", "disable", "compatibility", "all-compatibility", "all"],
         ),
         type = attr.string,
