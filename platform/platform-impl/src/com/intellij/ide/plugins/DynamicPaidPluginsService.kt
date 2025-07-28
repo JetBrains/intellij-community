@@ -29,6 +29,7 @@ import java.nio.file.FileVisitResult
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.measureTimedValue
 
+@ApiStatus.Internal
 @Service(Service.Level.APP)
 class DynamicPaidPluginsService(private val cs: CoroutineScope) {
   internal class LoadPaidPluginsProjectActivity : ProjectActivity {
