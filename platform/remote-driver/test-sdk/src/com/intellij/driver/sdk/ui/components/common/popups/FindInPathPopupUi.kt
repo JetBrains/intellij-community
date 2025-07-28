@@ -11,7 +11,6 @@ import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.elements.*
 import com.intellij.driver.sdk.waitFor
-import com.intellij.openapi.util.SystemInfoRt
 import java.awt.Window
 import java.awt.event.KeyEvent
 import javax.swing.JButton
@@ -52,7 +51,7 @@ open class FindInPathPopupUi(data: ComponentData): DialogUiComponent(data) {
   val scopeActionButton = actionButton { and(byType("com.intellij.openapi.actionSystem.impl.ActionButton"), byAccessibleName("Scope")) }
 
   val directoryChooser = x { byType("com.intellij.find.impl.FindPopupDirectoryChooser") }.textField()
-  val browseButton = x { byTooltip(if (SystemInfoRt.isMac) "⇧⏎" else "Shift+Enter") }
+  val browseButton = x { byVisibleText("...") }
   val searchRecursivelyActionButton = actionButton { byAccessibleName("Search recursively in subdirectories") }
 
   val scopeChooserComboBox = x { byAccessibleName( "Scope selection") }.accessibleComboBox()
