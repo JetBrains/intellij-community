@@ -699,8 +699,6 @@ com.intellij.openapi.vfs.impl.http.RemoteContentProvider$DownloadingCallback
 - a:isCancelled():Z
 - a:setProgressFraction(D):V
 - a:setProgressText(java.lang.String,Z):V
-c:com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl
-- removeChild(com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry):V
 com.intellij.openapi.wm.ex.StatusBarEx
 - com.intellij.openapi.wm.StatusBar
 - a:addProgress(com.intellij.openapi.wm.ex.ProgressIndicatorEx,com.intellij.openapi.progress.TaskInfo):V

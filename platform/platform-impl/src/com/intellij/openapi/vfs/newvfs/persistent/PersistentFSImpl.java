@@ -74,6 +74,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @SuppressWarnings("NonDefaultConstructor")
+@ApiStatus.Internal
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private static final Logger LOG = Logger.getInstance(PersistentFSImpl.class);

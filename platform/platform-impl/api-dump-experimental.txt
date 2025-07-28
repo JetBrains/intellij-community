@@ -247,11 +247,6 @@ f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesC
 - com.intellij.openapi.components.PersistentStateComponent
 - *:getUnknownFeaturesOfType(java.lang.String):java.util.Set
 - *:unregisterUnknownFeature(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature):Z
-f:com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
-- com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
-- com.intellij.openapi.Disposable
-- *:offlineByDefault(com.intellij.openapi.vfs.VirtualFile,Z):V
-- *s:setOfflineByDefault(com.intellij.openapi.vfs.VirtualFile,Z):V
 a:com.intellij.openapi.wm.impl.FrameTitleBuilder
 - *:getFileTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.wm.impl.IdeBackgroundUtil

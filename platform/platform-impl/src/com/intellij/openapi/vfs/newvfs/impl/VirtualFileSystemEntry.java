@@ -32,6 +32,7 @@ import java.util.List;
 import static com.intellij.openapi.vfs.InvalidVirtualFileAccessException.getInvalidationReason;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 
+@ApiStatus.Internal
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = {};
 

@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class VirtualFileImpl extends VirtualFileSystemEntry {
   VirtualFileImpl(int id, @NotNull VfsData.Segment segment, VirtualDirectoryImpl parent) {
     super(id, segment, parent);

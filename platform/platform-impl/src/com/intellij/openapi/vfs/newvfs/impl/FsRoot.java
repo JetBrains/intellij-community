@@ -11,6 +11,7 @@ import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class FsRoot extends VirtualDirectoryImpl {
   private final String pathWithOneTrailingSlash;
 

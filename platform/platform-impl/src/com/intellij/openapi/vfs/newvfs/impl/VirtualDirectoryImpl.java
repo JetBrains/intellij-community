@@ -41,6 +41,7 @@ import java.util.function.BiConsumer;
 import static com.intellij.openapi.vfs.newvfs.events.VFileEvent.REFRESH_REQUESTOR;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+@ApiStatus.Internal
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final Logger LOG = Logger.getInstance(VirtualDirectoryImpl.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(30));
