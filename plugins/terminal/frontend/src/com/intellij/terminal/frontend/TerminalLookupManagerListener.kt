@@ -37,5 +37,32 @@ class TerminalLookupListener : LookupListener {
     // if one of the listeners returns false - the item is not inserted
     return false
   }
+
+  /**
+   * Duplicated logic from the gen1 terminal (TerminalCompletionLookupListener).
+   * Checks for a full match of the user input text with the inserted completion item.
+   * If there is a full match (a user typed exactly the same string that was selected in a lookup)
+   * and then pressed Enter - we interpret it as an intention to run the command.
+   */
+  override fun itemSelected(event: LookupEvent) {
+    val lookup = event.lookup
+    val chosenItem = event.item
+    if (lookup == null
+        || event.completionChar != '\n'
+        || chosenItem == null) {
+      return
+    }
+    val typedString = lookup.itemPattern(chosenItem)
+    if (typedString == chosenItem.lookupString
+        // if typed string differs only by the absence of the trailing slash, execute the command as well
+        || "$typedString/" == chosenItem.lookupString) {
+      executeCommand(lookup)
+    }
+  }
+
+  private fun executeCommand(lookup: Lookup) {
+    val terminalInput = lookup.editor.getUserData(TerminalInput.KEY) ?: return
+    terminalInput.sendEnter()
+  }
 }
 

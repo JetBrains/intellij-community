@@ -15,6 +15,7 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.fus.*
+import java.awt.event.KeyEvent
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
 import kotlin.time.TimeMark
@@ -25,6 +26,7 @@ class TerminalInput(
   private val sessionModel: TerminalSessionModel,
   startupFusInfo: TerminalStartupFusInfo?,
   coroutineScope: CoroutineScope,
+  private val encodingManager: TerminalKeyEncodingManager,
 ) {
   companion object {
     val DATA_KEY: DataKey<TerminalInput> = DataKey.Companion.create("TerminalInput")
@@ -117,6 +119,11 @@ class TerminalInput(
 
   fun sendBytes(data: ByteArray) {
     doSendBytes(data, eventTime = null)
+  }
+
+  fun sendEnter() {
+    val enterBytes = encodingManager.getCode(KeyEvent.VK_ENTER, 0)!!
+    sendBytes(enterBytes)
   }
 
   private fun doSendBytes(data: ByteArray, eventTime: TimeMark?) {

@@ -101,7 +101,7 @@ internal class ReworkedTerminalView(
     sessionModel = TerminalSessionModelImpl()
     encodingManager = TerminalKeyEncodingManager(sessionModel, coroutineScope.childScope("TerminalKeyEncodingManager"))
 
-    terminalInput = TerminalInput(sessionFuture, sessionModel, startupFusInfo, coroutineScope.childScope("TerminalInput"))
+    terminalInput = TerminalInput(sessionFuture, sessionModel, startupFusInfo, coroutineScope.childScope("TerminalInput"), encodingManager)
 
     // Use the same instance of the listeners for both editors to report the metrics only once.
     // Usually, the cursor is painted or output received first in the output editor

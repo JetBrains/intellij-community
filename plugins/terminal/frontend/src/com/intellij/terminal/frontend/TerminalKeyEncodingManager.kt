@@ -10,13 +10,15 @@ import com.jediterm.terminal.TerminalKeyEncoder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 
 /**
  * Actually a wrapper around [com.jediterm.terminal.TerminalKeyEncoder].
  * Listens for terminal state changes and updates keys encoding.
  */
-internal class TerminalKeyEncodingManager(
+@ApiStatus.Internal
+class TerminalKeyEncodingManager(
   private val sessionModel: TerminalSessionModel,
   coroutineScope: CoroutineScope,
 ) {
