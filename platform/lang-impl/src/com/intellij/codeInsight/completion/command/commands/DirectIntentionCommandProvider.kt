@@ -440,7 +440,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
             if (intention.action is EmptyIntentionAction ||
                 intentionCommandSkipper != null && intentionCommandSkipper.skip(intention.action, psiFile, currentOffset)) continue
             val intentionCommand =
-              IntentionCompletionCommand(intention, 50, intention.icon ?: AllIcons.Actions.IntentionBulbGrey, calculateIntentionHighlighting(intention, editor, psiFile, offset), currentOffset) {
+              IntentionCompletionCommand(intention, 50, AllIcons.Actions.IntentionBulbGrey, calculateIntentionHighlighting(intention, editor, psiFile, offset), currentOffset) {
                 editor.caretModel.moveToOffset(currentOffset)
                 computePreview(psiFile, intention.action, editor, currentOffset)
               }
