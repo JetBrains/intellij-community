@@ -256,7 +256,6 @@ class CodeInsightContextManagerImpl(
     val result = MULTIVERSE_ENABLER_EP_NAME.extensionList.any { enabler ->
       runSafely { enabler.enableMultiverse(project) } == true
     }
-    project.putUserData(multiverse_enabler_key, result)
     return result
   }
 }
