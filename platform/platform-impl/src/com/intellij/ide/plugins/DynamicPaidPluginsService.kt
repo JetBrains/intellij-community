@@ -29,6 +29,7 @@ import java.nio.file.FileVisitResult
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.measureTimedValue
 
+@ApiStatus.Internal
 @Service(Service.Level.APP)
 class DynamicPaidPluginsService(private val cs: CoroutineScope) {
   internal class LoadPaidPluginsProjectActivity : ProjectActivity {
@@ -69,7 +70,7 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
 
   private fun doLoadPaidPlugins(project: Project?) {
     if (PluginEnabler.getInstance().isDisabled(ULTIMATE_PLUGIN_ID)) {
-      logger.debug("Ultimate plugin is disabled. Paid plugins will not be enabled.")
+      logger.info("Ultimate plugin is disabled. Paid plugins will not be enabled.")
       return
     }
 
@@ -83,7 +84,8 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
       !disabledPlugins.contains(it.pluginId) &&
       !loadedPlugins.contains(it) &&
       pluginRequiresUltimatePlugin(it.pluginId, pluginIdMap, contentModuleIdMap) &&
-      !pluginRequiresDisabledPlugin(it.pluginId, pluginIdMap, contentModuleIdMap, disabledPlugins)
+      !pluginRequiresDisabledPlugin(it.pluginId, pluginIdMap, contentModuleIdMap, disabledPlugins) &&
+      PluginManagerCore.isCompatible(it)
     }
 
     if (pluginsToEnable.isEmpty()) {
@@ -128,7 +130,7 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
                                 pluginNames.joinToString(separator = "<br>")
 
       NotificationGroupManager.getInstance()
-        .getNotificationGroup("Required Plugins") // TODO(IJPL-182235): a separate group?
+        .getNotificationGroup("Paid Plugins")
         .createNotification(notificationTitle, notificationContent, NotificationType.INFORMATION)
         .addAction(object : NotificationAction(IdeBundle.message("notification.action.load.paid.plugins.and.restart")) {
           override fun actionPerformed(e: AnActionEvent, notification: Notification) {

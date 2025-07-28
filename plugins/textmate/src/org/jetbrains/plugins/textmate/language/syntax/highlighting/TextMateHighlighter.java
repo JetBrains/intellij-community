@@ -10,20 +10,24 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TextMateService;
-import org.jetbrains.plugins.textmate.language.TextMateScopeComparator;
+import org.jetbrains.plugins.textmate.language.TextMateScopeComparatorCore;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateElementType;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateCachingSelectorWeigherKt;
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher;
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 public class TextMateHighlighter extends SyntaxHighlighterBase {
   private static final PlainSyntaxHighlighter PLAIN_SYNTAX_HIGHLIGHTER = new PlainSyntaxHighlighter();
 
   private final @Nullable Lexer myLexer;
+  private final @NotNull TextMateSelectorWeigher mySelectorWeigher =
+    TextMateCachingSelectorWeigherKt.caching(new TextMateSelectorWeigherImpl());
 
   public TextMateHighlighter(@Nullable Lexer lexer) {
     myLexer = lexer;
@@ -43,7 +47,8 @@ public class TextMateHighlighter extends SyntaxHighlighterBase {
     Set<CharSequence> highlightingRules = ContainerUtil.union(customHighlightingColors.keySet(), TextMateTheme.INSTANCE.getRules());
 
     TextMateScope textMateScope = trimEmbeddedScope((TextMateElementType)tokenType);
-    List<CharSequence> selectors = ContainerUtil.reverse(new TextMateScopeComparator<>(textMateScope, Function.identity())
+    List<CharSequence> selectors =
+      ContainerUtil.reverse(new TextMateScopeComparatorCore<>(mySelectorWeigher, textMateScope, TextMateHighlighter::identity)
                                                            .sortAndFilter(highlightingRules));
     return ContainerUtil.map2Array(selectors, TextAttributesKey.class, rule -> {
       TextMateTextAttributesAdapter customTextAttributes = customHighlightingColors.get(rule);
@@ -68,5 +73,9 @@ public class TextMateHighlighter extends SyntaxHighlighterBase {
       current = current.getParent();
     }
     return tokenType.getScope();
+  }
+
+  private static CharSequence identity(CharSequence scope) {
+    return scope;
   }
 }

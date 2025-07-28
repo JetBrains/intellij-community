@@ -6,7 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 abstract class TextMateSelectorWeigherTestCase {
-  protected abstract fun createWeigher(): TextMateSelectorWeigher
+  protected abstract fun <T> withWeigher(body: (TextMateSelectorWeigher) -> T): T
 
   @Test
   fun testPositiveWeigh() {
@@ -216,7 +216,9 @@ abstract class TextMateSelectorWeigherTestCase {
   }
 
   private fun getWeigh(selector: String, scopeString: String): Int {
-    return createWeigher().weigh(selector, TestUtil.scopeFromString(scopeString)).weigh
+    return withWeigher {
+      it.weigh(selector, TestUtil.scopeFromString(scopeString)).weigh
+    }
   }
 
   private fun assertGreaterThan(firstValue: Int, secondValue: Int) {

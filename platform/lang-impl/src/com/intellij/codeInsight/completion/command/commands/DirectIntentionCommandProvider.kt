@@ -234,7 +234,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
               //necessary to be compatible with call site
               editor.caretModel.moveToOffset(offset)
               topLevelEditor.caretModel.moveToOffset(offset)
-              for (i in 0..fixes.size - 1) {
+              for (i in 0..<fixes.size) {
                 val action = QuickFixWrapper.wrap(descriptor, i)
                 if (action is EmptyIntentionAction) continue
                 if (intentionCommandSkipper != null && intentionCommandSkipper.skip(action, psiFile, currentOffset)) continue
@@ -265,6 +265,17 @@ internal class DirectIntentionCommandProvider : CommandProvider {
         thisLogger().error("Can't collect inspections", e)
       }
 
+      var strictRange = false
+      for (command in result.values) {
+        if (command.icon == AllIcons.Actions.IntentionBulb && command.highlightInfo?.range?.endOffset == offset) {
+          strictRange = true
+          break
+        }
+      }
+
+      if (strictRange) {
+        return@readAction result.values.filter { it.highlightInfo?.range?.contains(offset - 1) == true }.toList()
+      }
 
       return@readAction result.values.toList()
     }
@@ -440,7 +451,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
             if (intention.action is EmptyIntentionAction ||
                 intentionCommandSkipper != null && intentionCommandSkipper.skip(intention.action, psiFile, currentOffset)) continue
             val intentionCommand =
-              IntentionCompletionCommand(intention, 50, intention.icon ?: AllIcons.Actions.IntentionBulbGrey, calculateIntentionHighlighting(intention, editor, psiFile, offset), currentOffset) {
+              IntentionCompletionCommand(intention, 50, AllIcons.Actions.IntentionBulbGrey, calculateIntentionHighlighting(intention, editor, psiFile, offset), currentOffset) {
                 editor.caretModel.moveToOffset(currentOffset)
                 computePreview(psiFile, intention.action, editor, currentOffset)
               }

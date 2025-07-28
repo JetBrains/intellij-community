@@ -62,16 +62,8 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
   public static final DataKey<BaseLabel> SELECTED_CONTENT_TAB_LABEL = DataKey.create("SELECTED_CONTENT_TAB_LABEL");
   @ApiStatus.Internal public static final String HEADER_ICON = "HeaderIcon";
 
-  /**
-   * Tool-window-level actions should rely on the content manager provided by this data key
-   * instead of {@link PlatformDataKeys#CONTENT_MANAGER}.
-   * Otherwise, if the separate content manager is provided by the content of the tool window (like Run/Debug),
-   * the tool window level actions will be confused.
-   * Points to the content manager of the top {@link InternalDecoratorImpl} if there are no splits,
-   * or to the content manager of the nearest {@link InternalDecoratorImpl} if there are splits.
-   */
-  @ApiStatus.Experimental
-  public static final DataKey<ContentManager> CONTENT_MANAGER_DATA_KEY = DataKey.create("ToolWindow.ContentManager");
+  @ApiStatus.Internal
+  public static final DataKey<ToolWindowContentUi> DATA_KEY = DataKey.create("ToolWindowContentUi");
 
   @ApiStatus.Experimental
   public static final Key<Boolean> NOT_SELECTED_TAB_ICON_TRANSPARENT = Key.create("NotSelectedIconTransparent");

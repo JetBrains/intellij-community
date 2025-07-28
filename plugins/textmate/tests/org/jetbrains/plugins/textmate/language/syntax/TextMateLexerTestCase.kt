@@ -16,10 +16,9 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateElementType
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateHighlightingLexer
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateSyntaxMatcherImpl
-import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
-import org.jetbrains.plugins.textmate.regex.CaffeineCachingRegexFactory
-import org.jetbrains.plugins.textmate.regex.RegexFactory
+import org.jetbrains.plugins.textmate.language.syntax.selector.caching
+import org.jetbrains.plugins.textmate.regex.CaffeineCachingRegexProvider
 import org.jetbrains.plugins.textmate.regex.RememberingLastMatchRegexFactory
 import java.io.File
 import java.nio.charset.StandardCharsets
@@ -43,26 +42,27 @@ abstract class TextMateLexerTestCase {
 
     val sourceData = StringUtil.convertLineSeparators(FileUtil.loadFile(beforeFile, StandardCharsets.UTF_8))
 
-      val text = sourceData.replace("$(\\n+)".toRegex(), "")
-      val regexFactory: RegexFactory = CaffeineCachingRegexFactory(RememberingLastMatchRegexFactory(JoniRegexFactory()))
+    val text = sourceData.replace("$(\\n+)".toRegex(), "")
+    val regexProvider = CaffeineCachingRegexProvider(RememberingLastMatchRegexFactory(JoniRegexFactory()))
 
-      val weigher = TextMateSelectorCachingWeigher(TextMateSelectorWeigherImpl())
-      val syntaxMatcher = TextMateSyntaxMatcherImpl(regexFactory, weigher)
+    TextMateSelectorWeigherImpl().caching().use { weigher ->
+      val syntaxMatcher = TextMateSyntaxMatcherImpl(regexProvider, weigher)
       val lexer: Lexer = TextMateHighlightingLexer(TextMateLanguageDescriptor(rootScope, syntaxTable.getSyntax(rootScope)),
                                                    syntaxMatcher,
                                                    -1)
-    val output = buildString {
-      lexer.start(text)
-      while (lexer.getTokenType() != null) {
-        val startIndex = lexer.getTokenStart()
-        val endIndex = lexer.getTokenEnd()
-        val tokenType: IElementType = lexer.getTokenType()!!
-        val str = "${getTokenTypePresentation(tokenType)}: [$startIndex, $endIndex], {${text.substring(startIndex, endIndex)}}\n"
-        append(str)
-        lexer.advance()
-      }
-    }.trim { it <= ' ' }
-    UsefulTestCase.assertSameLinesWithFile(afterFile.path, output)
+      val output = buildString {
+        lexer.start(text)
+        while (lexer.getTokenType() != null) {
+          val startIndex = lexer.getTokenStart()
+          val endIndex = lexer.getTokenEnd()
+          val tokenType: IElementType = lexer.getTokenType()!!
+          val str = "${getTokenTypePresentation(tokenType)}: [$startIndex, $endIndex], {${text.substring(startIndex, endIndex)}}\n"
+          append(str)
+          lexer.advance()
+        }
+      }.trim { it <= ' ' }
+      UsefulTestCase.assertSameLinesWithFile(afterFile.path, output)
+    }
   }
 
   private fun getTokenTypePresentation(tokenType: IElementType): String? {

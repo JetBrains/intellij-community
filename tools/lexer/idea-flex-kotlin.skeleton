@@ -3,7 +3,7 @@ companion object {
   private const val YYEOF = -1 
 
   /** initial size of the lookahead buffer */
---- private static final int ZZ_BUFFERSIZE = ...; L1
+--- private const val ZZ_BUFFERSIZE = ... L1
 
   /** lexical states */
 ---  lexical states, charmap L2
@@ -294,7 +294,6 @@ companion object {
         }
       }
     }
-    return null
   }
 
 --- main L20

@@ -89,11 +89,12 @@ class JavaCommandCompletionFactory implements CommandCompletionFactory, DumbAwar
           if (open != null && curParent.getTextRange().getEndOffset() == element.getTextRange().getEndOffset()) {
             while (curParent.getTextRange().getEndOffset() == element.getTextRange().getEndOffset()) {
               int nextOffset = curParent.getTextRange().getStartOffset();
-              if (results.add(nextOffset)) {
+              curParent = curParent.getParent();
+              boolean stopParent = curParent == null || curParent instanceof PsiClass || curParent instanceof PsiFile;
+              if (results.add(nextOffset) && !stopParent) {
                 queue.add(nextOffset);
               }
-              curParent = curParent.getParent();
-              if (curParent == null) {
+              if (stopParent) {
                 break;
               }
             }

@@ -22,11 +22,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.JavaModuleGraphHelper
 import com.intellij.task.ExecuteRunConfigurationTask
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetup
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
@@ -58,8 +59,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
 
     val mainClass = runProfile.runClass ?: return null
     val module = runProfile.configurationModule.module ?: return null
-    val psiClass = runProfile.configurationModule.findClass(mainClass)
-    val javaModuleName = if (psiClass == null) null else JavaModuleGraphHelper.getInstance().findDescriptorByElement(psiClass)?.name
+    val javaModuleName = runProfile.findJavaModuleName(isTestModule(module))
 
     val gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module) ?: return null
     val externalProjectPath = gradleModuleData.directoryToRunTask
@@ -115,6 +115,9 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
       .filter { it.providerId !== CompileStepBeforeRun.ID }
     return environment
   }
+
+  private fun isTestModule(module: Module): Boolean = ModuleRootManager.getInstance(module)
+    .getSourceRoots(JavaSourceRootType.SOURCE).isEmpty()
 
   private fun GradleInitScriptParametersBuilder.withJavaConfiguration(project: Project, runProfile: JavaRunConfigurationBase) = apply {
     if (getEffectiveConfiguration(runProfile, project) != null) {

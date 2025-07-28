@@ -276,6 +276,10 @@ suspend fun EelExecApi.where(exe: String): EelPath? {
 }
 
 @ApiStatus.Experimental
+fun EelExecApi.spawnProcess(exe: EelPath, vararg args: String): EelExecApiHelpers.SpawnProcess =
+  spawnProcess(exe.toString()).args(*args)
+
+@ApiStatus.Experimental
 fun EelExecApi.spawnProcess(exe: String, vararg args: String): EelExecApiHelpers.SpawnProcess =
   spawnProcess(exe).args(*args)
 

@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.textmate.language.syntax.selector
 
 class TextMateSelectorWeigherImplTest : TextMateSelectorWeigherTestCase() {
-  override fun createWeigher(): TextMateSelectorWeigher {
-    return TextMateSelectorWeigherImpl()
+  override fun <T> withWeigher(body: (TextMateSelectorWeigher) -> T): T {
+    return body(TextMateSelectorWeigherImpl())
   }
 }

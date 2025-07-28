@@ -5,7 +5,7 @@ import com.intellij.completion.ml.sorting.RankingSupport
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 
-class MLRankingConfigurableProvider : ConfigurableProvider() {
+internal class MLRankingConfigurableProvider : ConfigurableProvider() {
   override fun createConfigurable(): Configurable? {
     val availableRankers = RankingSupport.availableRankers()
     if (availableRankers.isEmpty()) return null

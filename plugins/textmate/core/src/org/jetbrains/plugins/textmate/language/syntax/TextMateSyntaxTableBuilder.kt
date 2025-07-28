@@ -66,39 +66,37 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
     val ruleId = currentRuleId.fetchAndIncrement()
     val result = SyntaxRawNodeImpl(ruleId, parentBuilder, scopeName)
     for (entry in plist.entries()) {
-      val pListValue: PListValue? = entry.value
-      if (pListValue != null) {
-        val key: String = entry.key
-        val stringKey = Constants.StringKey.fromName(key)
-        if (stringKey != null) {
-          pListValue.string?.let { stringValue ->
-            result.setStringAttribute(stringKey, interner.intern(stringValue))
-          }
-          continue
+      val pListValue: PListValue = entry.value
+      val key: String = entry.key
+      val stringKey = Constants.StringKey.fromName(key)
+      if (stringKey != null) {
+        pListValue.string?.let { stringValue ->
+          result.setStringAttribute(stringKey, interner.intern(stringValue))
         }
-        val captureKey = Constants.CaptureKey.fromName(key)
-        if (captureKey != null) {
-          loadCaptures(pListValue.plist, result)?.let { captures ->
-            result.setCaptures(captureKey, captures)
-          }
-          continue
+        continue
+      }
+      val captureKey = Constants.CaptureKey.fromName(key)
+      if (captureKey != null) {
+        loadCaptures(pListValue.plist, result)?.let { captures ->
+          result.setCaptures(captureKey, captures)
         }
+        continue
+      }
 
-        when {
-          Constants.REPOSITORY_KEY.equals(key, ignoreCase = true) -> {
-            pListValue.plist.entries().forEach { (key, value) ->
-              result.appendRepository(key, loadNestedSyntax(value.plist, result))
-            }
+      when {
+        Constants.REPOSITORY_KEY.equals(key, ignoreCase = true) -> {
+          pListValue.plist.entries().forEach { (key, value) ->
+            result.appendRepository(key, loadNestedSyntax(value.plist, result))
           }
-          Constants.PATTERNS_KEY.equals(key, ignoreCase = true) -> {
-            pListValue.array.forEach { value ->
-              result.addChild(loadNestedSyntax(value.plist, result))
-            }
+        }
+        Constants.PATTERNS_KEY.equals(key, ignoreCase = true) -> {
+          pListValue.array.forEach { value ->
+            result.addChild(loadNestedSyntax(value.plist, result))
           }
-          Constants.INJECTIONS_KEY.equals(key, ignoreCase = true) -> {
-            pListValue.plist.entries().forEach { (key, value) ->
-              result.addInjection(key, loadRealNode(value.plist, result))
-            }
+        }
+        Constants.INJECTIONS_KEY.equals(key, ignoreCase = true) -> {
+          pListValue.plist.entries().forEach { (key, value) ->
+            result.addInjection(key, loadRealNode(value.plist, result))
           }
         }
       }
@@ -259,7 +257,7 @@ private class SyntaxRawNodeImpl(
     compiledNodes: MutableMap<RuleId, SyntaxNodeDescriptor>,
     ruleIdToReferenceRuleId: MutableMap<RuleId, ReferenceRuleId>,
     syntaxTable: TextMateSyntaxTableCore,
-  ): SyntaxNodeDescriptor? {
+  ): SyntaxNodeDescriptor {
     repository.values.forEach { repositoryNode ->
       repositoryNode.compile(topLevelNodes, compiledNodes, ruleIdToReferenceRuleId, syntaxTable)?.let {
         compiledNodes[repositoryNode.ruleId] = it

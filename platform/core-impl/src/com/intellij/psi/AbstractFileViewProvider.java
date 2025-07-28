@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
+import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.*;
@@ -351,8 +353,18 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
         Attachment astContent = new Attachment(myVirtualFile.getNameWithoutExtension() + ".tree.txt", fileElement.getText());
         Attachment[] attachments = document == null ? new Attachment[]{vfContent, astContent} :
           new Attachment[]{vfContent, astContent, new Attachment(myVirtualFile.getNameWithoutExtension() + ".document.txt", document.getText())};
-        // exceptions here should be assigned to peter
-        LOG.error("Inconsistent " + fileElement.getElementType() + " tree in " + this + "; nodeLength=" + nodeLength + "; fileLength=" + fileLength, attachments);
+
+        String message =
+          "Inconsistent " + fileElement.getElementType() + " tree in " + this + "; nodeLength=" + nodeLength + "; fileLength=" + fileLength;
+
+        if (ApplicationManager.getApplication().isUnitTestMode()
+            && !ApplicationManagerEx.isInStressTest() &&
+            CodeInsightContexts.isSharedSourceSupportEnabled(getManager().getProject())
+        ) {
+          message += "; context: " + FileViewProviderUtil.getCodeInsightContext(this);
+        }
+
+        LOG.error(message, attachments);
       }
     }
   }

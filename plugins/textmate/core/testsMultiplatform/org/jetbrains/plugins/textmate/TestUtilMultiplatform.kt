@@ -30,4 +30,6 @@ object TestUtilMultiplatform {
     val bundleDirectory = getBundleDirectoryPath(bundleName)
     return TextMateNioResourceReader(Path(bundleDirectory))
   }
+
+  fun threadSleep(millis: Long) = Thread.sleep(millis)
 }

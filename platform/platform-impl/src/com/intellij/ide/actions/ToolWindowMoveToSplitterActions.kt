@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
@@ -31,8 +30,6 @@ internal abstract class ToolWindowMoveToSplitterAction(
                                ToolWindowContentUi.isTabsReorderingAllowed(toolWindow)
 
   }
-
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 }
 
 internal class ToolWindowMoveToNextSplitterAction : ToolWindowMoveToSplitterAction(isNext = true)

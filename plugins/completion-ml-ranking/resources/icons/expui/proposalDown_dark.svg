@@ -1,0 +1,4 @@
+<!-- Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <path d="m3.68 8.64c0.195-0.195 0.512-0.195 0.707 0l3.15 3.15v-9.79c0-0.276 0.224-0.5 0.5-0.5s0.5 0.224 0.5 0.5v9.79l3.15-3.15c0.195-0.195 0.512-0.195 0.707 0s0.195 0.512 0 0.707l-4 4c-0.0938 0.0938-0.221 0.146-0.354 0.146s-0.26-0.0527-0.354-0.146l-4-4c-0.195-0.195-0.195-0.512 0-0.707z" fill="#DB5C5C"/>
+</svg>

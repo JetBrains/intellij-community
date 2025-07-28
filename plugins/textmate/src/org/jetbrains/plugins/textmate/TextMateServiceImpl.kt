@@ -32,9 +32,8 @@ import org.jetbrains.plugins.textmate.language.preferences.*
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableBuilder
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableCore
 import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTextAttributesAdapter
-import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher
-import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
+import org.jetbrains.plugins.textmate.language.syntax.selector.caching
 import org.jetbrains.plugins.textmate.plist.JsonOrXmlPlistReader
 import org.jetbrains.plugins.textmate.plist.JsonPlistReader
 import org.jetbrains.plugins.textmate.plist.XmlPlistReader
@@ -54,7 +53,8 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
   private var isInitialized = false
   private val registrationLock = ReentrantLock()
 
-  private val globalCachingSelectorWeigher: TextMateSelectorWeigher = TextMateSelectorCachingWeigher(TextMateSelectorWeigherImpl())
+  private val globalCachingSelectorWeigher = TextMateSelectorWeigherImpl().caching()
+
   private val customHighlightingColors = HashMap<CharSequence, TextMateTextAttributesAdapter>()
   private var extensionMapping: Map<TextMateFileNameMatcher, CharSequence> = java.util.Map.of()
   private val syntaxTable = AtomicReference(TextMateSyntaxTableCore(emptyMap()))
@@ -161,6 +161,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
     extensionMapping = java.util.Map.of()
     customHighlightingColors.clear()
     syntaxTable.set(TextMateSyntaxTableCore(emptyMap()))
+    globalCachingSelectorWeigher.clearCache()
     preferenceRegistry.set(PreferencesRegistryImpl(globalCachingSelectorWeigher))
     snippetRegistry.set(SnippetsRegistryImpl(globalCachingSelectorWeigher, emptyMap()))
     shellVariablesRegistry.set(ShellVariablesRegistryImpl(globalCachingSelectorWeigher, emptyMap()))

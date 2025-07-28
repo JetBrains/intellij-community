@@ -275,6 +275,7 @@ class FrontendXDebuggerSession private constructor(
           }
           descriptorScope?.awaitCancellationAndInvoke {
             tabInfo.tabClosedCallback.send(Unit)
+            tabInfo.tabClosedCallback.close()
           }
           pausedFlow.toFlow().collectLatest { paused ->
             if (paused == null) return@collectLatest

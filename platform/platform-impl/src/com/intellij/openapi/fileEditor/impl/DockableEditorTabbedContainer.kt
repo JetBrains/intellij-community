@@ -43,6 +43,7 @@ import java.awt.Shape
 import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
 import java.util.concurrent.CopyOnWriteArraySet
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JSplitPane
@@ -63,6 +64,7 @@ class DockableEditorTabbedContainer internal constructor(
   private var glassPaneListenerDisposable: DisposableHandle? = null
   private var wasEverShown = false
   internal var focusOnShowing = true
+  private val fileOpeningCompleted = AtomicBoolean(false)
 
   override fun dispose() {
     coroutineScope.cancel()
@@ -320,14 +322,14 @@ class DockableEditorTabbedContainer internal constructor(
     Disposer.register(parent) { listeners.remove(listener) }
   }
 
-  override fun isEmpty(): Boolean = splitters.isEmptyVisible
+  override fun isEmpty(): Boolean = fileOpeningCompleted.get() && splitters.isEmptyVisible
 
   override fun isDisposeWhenEmpty(): Boolean = disposeWhenEmpty
 
   override fun showNotify() {
     if (!wasEverShown) {
       wasEverShown = true
-      splitters.openFilesAsync(focusOnShowing)
+      splitters.openFilesAsync(focusOnShowing).invokeOnCompletion { fileOpeningCompleted.set(true) }
     }
   }
 

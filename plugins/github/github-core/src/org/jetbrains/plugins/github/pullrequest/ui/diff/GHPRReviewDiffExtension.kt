@@ -188,18 +188,18 @@ private class DiffEditorModel(
   }
 
   @RequiresEdt
-  override fun canGotoNextComment(focusedThreadId: String): Boolean = reviewVm.nextComment(focusedThreadId) != null
+  override fun canGotoNextComment(threadId: String): Boolean = reviewVm.nextComment(threadId) != null
   @RequiresEdt
   override fun canGotoNextComment(line: Int): Boolean = reviewVm.nextComment(lineToUnified(line)) != null
 
   @RequiresEdt
-  override fun canGotoPreviousComment(focusedThreadId: String): Boolean = reviewVm.previousComment(focusedThreadId) != null
+  override fun canGotoPreviousComment(threadId: String): Boolean = reviewVm.previousComment(threadId) != null
   @RequiresEdt
   override fun canGotoPreviousComment(line: Int): Boolean = reviewVm.previousComment(lineToUnified(line)) != null
 
   @RequiresEdt
-  override fun gotoNextComment(focusedThreadId: String) {
-    val commentId = reviewVm.nextComment(focusedThreadId) ?: return
+  override fun gotoNextComment(threadId: String) {
+    val commentId = reviewVm.nextComment(threadId) ?: return
     reviewVm.showDiffAtComment(commentId)
   }
 
@@ -210,8 +210,8 @@ private class DiffEditorModel(
   }
 
   @RequiresEdt
-  override fun gotoPreviousComment(focusedThreadId: String) {
-    val commentId = reviewVm.previousComment(focusedThreadId) ?: return
+  override fun gotoPreviousComment(threadId: String) {
+    val commentId = reviewVm.previousComment(threadId) ?: return
     reviewVm.showDiffAtComment(commentId)
   }
 

@@ -24,6 +24,12 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey
+            key="kotlin.scripting.index.dependencies.sources"
+            description="Index script dependencies sources eagerly (not deferred)"
+            defaultValue="false"
+            restartRequired="false"/>
+
     <psi.clsCustomNavigationPolicy
             implementation="org.jetbrains.kotlin.idea.core.script.shared.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
 

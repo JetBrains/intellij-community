@@ -41,7 +41,8 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 private const val MAX_LEAKY_PROJECTS = 5
-private val LEAK_CHECK_INTERVAL = TimeUnit.MINUTES.toMillis(30)
+private val LEAK_CHECK_INTERVAL = System.getProperty("idea.tests.leaked.projects.check.interval.ms")?.toLongOrNull()
+                                  ?: TimeUnit.MINUTES.toMillis(30)
 private var CHECK_START = System.currentTimeMillis()
 private val LOG_PROJECT_LEAKAGE = System.getProperty("idea.log.leaked.projects.in.tests", "true")!!.toBoolean()
 var totalCreatedProjectsCount = 0

@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.SafeFileOutputStream
 import com.jetbrains.python.Result
@@ -33,6 +34,7 @@ import java.util.*
 import kotlin.io.path.exists
 
 private val LOG = logger<PypiPackageCache>()
+private val ALPHABET_REGEX = Regex("[-a-z0-9]+")
 
 @ApiStatus.Internal
 @Service
@@ -41,6 +43,12 @@ class PypiPackageCache : PythonPackageCache<String> {
     get() = cache
 
   override operator fun contains(key: String): Boolean = key in cache
+
+  fun lookup(word: String): LookupStatus {
+    if (word in cache) return LookupStatus.Present
+    if (!ALPHABET_REGEX.matches(word.lowercase())) return LookupStatus.Alien
+    return LookupStatus.Absent
+  }
 
   override fun isEmpty(): Boolean = cache.isEmpty()
 

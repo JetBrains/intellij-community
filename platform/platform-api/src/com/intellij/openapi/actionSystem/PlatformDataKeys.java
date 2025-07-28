@@ -32,6 +32,17 @@ public class PlatformDataKeys extends PlatformCoreDataKeys {
   public static final DataKey<ContentManager> NONEMPTY_CONTENT_MANAGER = DataKey.create("nonemptyContentManager");
 
   /**
+   * Tool-window-level actions should rely on the content manager provided by this data key
+   * instead of {@link PlatformDataKeys#CONTENT_MANAGER}.
+   * Otherwise, if the separate content manager is provided by the content of the tool window (like Run/Debug),
+   * the tool window level actions will be confused.
+   * Points to the same content manager returned by {@link ToolWindow#getContentManager()} if the tool window is not split,
+   * or to the nearest content manager if there are splits.
+   */
+  @ApiStatus.Experimental
+  public static final DataKey<ContentManager> TOOL_WINDOW_CONTENT_MANAGER = DataKey.create("toolWindowContentManager");
+
+  /**
    * @see #LAST_ACTIVE_TOOL_WINDOWS
    */
   public static final DataKey<ToolWindow> TOOL_WINDOW = DataKey.create("TOOL_WINDOW");

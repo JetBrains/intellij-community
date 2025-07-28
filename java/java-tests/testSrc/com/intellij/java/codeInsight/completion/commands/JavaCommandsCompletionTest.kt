@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.command.CommandCompletionLookupElemen
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
@@ -235,6 +236,20 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
               String y = "1";
           }
       }""".trimIndent())
+  }
+
+  fun testOptimizeImport2() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      import java.util.List;.<caret>
+      
+      class A {
+          void foo() {
+              String y = "1";
+          }
+      }""".trimIndent())
+    val elements = myFixture.completeBasic()
+    assertTrue(elements.any { element -> element.lookupString.contains("Optimize im", ignoreCase = true) })
   }
 
   fun testGenerateGetter() {
@@ -1008,6 +1023,20 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
     val elements = myFixture.completeBasic()
     assertTrue(elements.none { element -> element.lookupString.contains("Inline", ignoreCase = true) })
+  }
+
+  fun testShowOnlyStrictWarning() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+        public class B {
+          public void someMethod(String s, String string..<caret>) {
+          }
+        }
+      """.trimIndent())
+    myFixture.enableInspections(UnusedDeclarationInspection())
+    myFixture.doHighlighting()
+    val elements = myFixture.completeBasic()
+    assertTrue(elements.none { element -> element.lookupString.contains("Rename 's'", ignoreCase = true) })
   }
 
   fun testDoNotCloseAfterPreview() {

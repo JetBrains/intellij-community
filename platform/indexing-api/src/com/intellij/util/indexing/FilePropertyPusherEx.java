@@ -11,12 +11,16 @@ import org.jetbrains.annotations.Nullable;
 /**
  * As of 25.2 {@link FilePropertyPusher} allows pushing properties outside module content only
  * through {@link FilePropertyPusher#initExtra(Project)} and {@link FilePropertyPusher#afterRootsChanged(Project)}.
- * Such API enforced pushing values to all related files in project, ignoring information about the scope of the current scanning.
- * It's inefficient, and may result in a performance issue (see IJPL-2963).
+ * Such API enforced pushing values to all related files in a project, ignoring information about the scope of the current scanning.
+ * It's inefficient and may result in a performance issue (see IJPL-2963).
  * <p>
  * {@link FilePropertyPusherEx} allows selecting applicable {@link IndexableSetOrigin}s of current scanning, and push new values only there,
  * making pusher's work incremental instead of a push to all related files
  * on every {@link com.intellij.openapi.roots.ModuleRootEvent} (which includes every scanning) and on opening a project.
+ * <p>
+ * Unlike {@link FilePropertyPusher} with multiple methods to provide the value to push, 
+ * {@link FilePropertyPusherEx} determines the value to push
+ * based on a single @{link {@link #getImmediateValueEx(IndexableSetOrigin)}} method.
  */
 @Internal
 public interface FilePropertyPusherEx<T> extends FilePropertyPusher<T> {

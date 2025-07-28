@@ -45,6 +45,7 @@ jvm_library(
     "//platform/util",
     "@lib//:junit5",
     "//platform/util/xmlDom",
+    "@lib//:kotlinx-coroutines-test",
   ]
 )
 ### auto-generated section `build intellij.textmate.core` end

@@ -10,6 +10,7 @@ create_kotlinc_options(
   ],
   x_allow_kotlin_package = True,
   x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
   x_jvm_default = "disable",
   x_lambdas = "class"
 )

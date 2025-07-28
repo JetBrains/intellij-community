@@ -657,7 +657,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         }
 
         if (!childName.equals(canonicalName)) {
-          child = findExistingChildInfo(children.children, canonicalName, /*caseSensitive: */ false );
+          child = findExistingChildInfo(children.children, canonicalName, /*caseSensitive: */ false);
         }
       }
 
@@ -1817,12 +1817,17 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     VirtualFileSystemEntry cached = dirByIdCache.getCachedDir(fileId);
     if (cached != null) {
       fileByIdCacheHits.incrementAndGet();
-      return cached;
+      if (cached.isValid()) {
+        return cached;
+      }
+      else {
+        return null;//return null if the file is deleted
+      }
     }
 
     fileByIdCacheMisses.incrementAndGet();
-    ParentFinder finder = new ParentFinder();
-    return finder.find(fileId);
+    FileByIdResolver resolver = new FileByIdResolver();
+    return resolver.resolve(fileId);
   }
 
   /**
@@ -1950,54 +1955,78 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   /**
-   * We climb up from fileId, collecting parentIds (=path), until find a parent which is already cached
-   * (in idToDirCache). From that (grand)parent we climb down (findDescendantByIdPath) back to fileId,
-   * resolving every child on the way via idToDirCache:
+   * Encapsulates resolution fileId -> {@link VirtualFile} (={@link VirtualFileSystemEntry}).
+   * <p/>
+   * Namely:
+   * <ol>
+   * <li>{@link #lookupCachedAncestor(int)}: climbs up from fileId, collecting {@link #ancestorsIds} (=path), until finds an ancestor
+   *     which is already cached in {@link #dirByIdCache}.</li>
+   * <li>{@link #resolveDescending(VirtualFileSystemEntry, IntList, int)}: from that cached ancestor climbs down back to fileId,
+   *     resolving {@link #ancestorsIds} along the way via {@link #findChild(VirtualFileSystemEntry, int)}</li>
+   * </ol>
    */
-  final class ParentFinder {
+  final class FileByIdResolver {
 
     /**
-     * List of parentIds towards the root (or first cached directory).
-     * null, if the first parent is already cached
+     * List of ancestors' ids towards the root (or a first cached directory), or null(=empty) if the first parent is already cached.
+     * <pre>{cachedAncestor} / { ancestorsIds[N] / ... / ancestorsIds[0] } / fileId</pre>
      */
-    private @Nullable IntList parentIds;
-    private VirtualFileSystemEntry foundParent;
+    private @Nullable IntList ancestorsIds;
 
-    ParentFinder() {
-
+    public NewVirtualFile resolve(int fileId) {
+      assert fileId != FSRecords.NULL_FILE_ID : "fileId=NULL_ID(0) must not be passed into find()";
+      VirtualFileSystemEntry cachedAncestor;
+      try {
+        cachedAncestor = lookupCachedAncestor(fileId);
+        if (cachedAncestor == null) {
+          //fileId is deleted or orphan (=one of its ancestors is deleted, or it's root is missed)
+          return null;
+        }
+      }
+      catch (Exception e) {
+        throw vfsPeer.handleError(e);
+      }
+      // {cachedAncestor} / { ancestorsIds[N] / ... / ancestorsIds[0] } / fileId
+      return resolveDescending(cachedAncestor, ancestorsIds, fileId);
     }
 
-    private void ascendUntilCachedParent(int fileId) {
+    /**
+     * Climbs up hierarchy, from fileId, until _cached_ ancestor is found, and return this cached ancestor.
+     * Collects all the ancestors along the way into {@link #ancestorsIds}
+     */
+    private @Nullable VirtualFileSystemEntry lookupCachedAncestor(int fileId) {
       int currentId = fileId;
-
       while (true) {
+        if (vfsPeer.isDeleted(currentId)) {
+          return null;
+        }
 
         int parentId = vfsPeer.getParent(currentId);
 
         if (parentId != FSRecords.NULL_FILE_ID) {
-          foundParent = dirByIdCache.getCachedDir(parentId);
-          if (foundParent != null) {
-            return;
+          VirtualFileSystemEntry cachedParent = dirByIdCache.getCachedDir(parentId);
+          if (cachedParent != null) {
+            return cachedParent;
           }
         }
         else {
           //RC: currentId is root, but not cached -- it is OK, root _could_ be not (yet) cached, since
-          //    idToDirCache caches a root only during PersistentFSImpl.findRoot() call -- it could be
+          //    dirByIdCache caches a root only during PersistentFSImpl.findRoot() call -- it could be
           //    that not all the roots known to FSRecords were requested at a given moment.
-          //    => we need to force idToDirCache to cache the root it misses:
+          //    => we need to force dirByIdCache to cache the root it misses:
           cacheMissedRootFromPersistence(currentId);
 
-          foundParent = dirByIdCache.getCachedDir(currentId);
-          if (foundParent != null) {
+          VirtualFileSystemEntry cachedParent = dirByIdCache.getCachedDir(currentId);
+          if (cachedParent != null) {
             //currentId is in the list, but shouldn't be, if it is == foundParent
             // => remove it
-            if (parentIds != null && !parentIds.isEmpty()) {
-              parentIds.removeInt(parentIds.size() - 1);
+            if (ancestorsIds != null && !ancestorsIds.isEmpty()) {
+              ancestorsIds.removeInt(ancestorsIds.size() - 1);
             }
             else {
-              parentIds = null;
+              ancestorsIds = null;
             }
-            return;
+            return cachedParent;
           }
 
 
@@ -2007,34 +2036,44 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           // fileId is passed in? -- so I keep that legacy behaviour (just log warning with diagnostic) until I'll
           // be sure all 'legal' cases are covered:
           logVeryDetailedErrorMessageAboutParentNotFound(currentId, fileId);
-          return;
+          return cachedParent; // =null
         }
 
 
-        if (parentIds != null && (parentIds.size() % 128 == 0 && parentIds.contains(parentId))) {
+        if (ancestorsIds != null && (ancestorsIds.size() % 128 == 0 && ancestorsIds.contains(parentId))) {
           //circularity check is expensive: do it only once-in-a-while, as path became deep enough
-          //  to start to suspect something may be wrong.
-          throw new AssertionError("Cyclic parent-child relations: fileId: " + fileId + ", parentId: " + parentId + ", path: " + parentIds);
+          //  to start suspecting something may be wrong.
+          throw new AssertionError(
+            "Cyclic parent-child relations: fileId: " + fileId + ", current parentId: " + parentId + ", path: " + ancestorsIds
+          );
         }
 
-        if (parentIds == null) {
-          parentIds = new IntArrayList(IntArrayList.DEFAULT_INITIAL_CAPACITY);
+        if (ancestorsIds == null) {
+          ancestorsIds = new IntArrayList(IntArrayList.DEFAULT_INITIAL_CAPACITY);
         }
-        parentIds.add(parentId);
+        ancestorsIds.add(parentId);
 
         currentId = parentId;
       }
     }
 
-    private @Nullable VirtualFileSystemEntry findDescendantByIdPath(int fileId) {
-      VirtualFileSystemEntry parent = foundParent;
-      if (parentIds != null) {
-        for (int i = parentIds.size() - 1; i >= 0; i--) {
-          parent = findChild(parent, parentIds.getInt(i));
+    /**
+     * Starting from cachedRoot, descends along {@link #ancestorsIds}, resolves (=instantiates and caches)
+     * {@link VirtualFileSystemEntry} along the way, at the end resolves fileId, and returns it:
+     *
+     * <pre>{cachedAncestor} -> { ancestorsIds[N] -> ... -> ancestorsIds[0] } -> fileId</pre>
+     */
+    private @Nullable VirtualFileSystemEntry resolveDescending(@NotNull VirtualFileSystemEntry cachedRoot,
+                                                               @Nullable IntList ancestorsIds,
+                                                               int fileId) {
+      VirtualFileSystemEntry currentDir = cachedRoot;
+      if (ancestorsIds != null) {
+        for (int i = ancestorsIds.size() - 1; i >= 0; i--) {
+          currentDir = findChild(currentDir, ancestorsIds.getInt(i));
         }
       }
 
-      return findChild(parent, fileId);
+      return findChild(currentDir, fileId);
     }
 
     private @Nullable VirtualFileSystemEntry findChild(VirtualFileSystemEntry parent,
@@ -2095,9 +2134,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           }
 
           StringBuilder relativePath = new StringBuilder();
-          if (parentIds != null) {
-            for (int i = parentIds.size() - 1; i >= 0; i--) {
-              int fileId = parentIds.getInt(i);
+          if (ancestorsIds != null) {
+            for (int i = ancestorsIds.size() - 1; i >= 0; i--) {
+              int fileId = ancestorsIds.getInt(i);
               String fileName = vfsPeer.getName(fileId);
               relativePath.append('/').append(fileName);
             }
@@ -2108,7 +2147,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             "file[" + startingFileId + ", flags: " + startingFileFlags + "]: " +
             "top parent (id: " + currentId + ", name: '" + preRootFileName + "', flags: " + preRootIdFlags + " parent: 0), " +
             "is still not in the idToDirCache. " +
-            "path: " + parentIds + " [" + relativePath + "], " +
+            "path: " + ancestorsIds + " [" + relativePath + "], " +
             "cachedRoots.size(=" + cachedRootsIds.size() + "), roots.size(=" + rootIds.size() + "), " +
             "pfs.roots.contains(" + currentId + ")=" + rootIds.contains(currentId) + ", " +
             "fs.roots.contains(" + currentId + ")=" + fsRootsHasCurrentId + ", " +
@@ -2116,17 +2155,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             "FS roots not PFS roots: " + fsRootsNonPFSRoots.length + ": \n" + nonCachedRootsPerLine;
         }
       );
-    }
-
-    public NewVirtualFile find(int fileId) {
-      assert fileId != FSRecords.NULL_FILE_ID : "fileId=NULL_ID(0) must not be passed into find()";
-      try {
-        ascendUntilCachedParent(fileId);
-      }
-      catch (Exception e) {
-        throw vfsPeer.handleError(e);
-      }
-      return findDescendantByIdPath(fileId);
     }
   }
 
@@ -2242,7 +2270,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    * If the {@code parent} case-sensitivity flag is still not known, try to determine it (via {@link LocalFileSystemBase#fetchCaseSensitivity(VirtualFile, String)}),
    * and if the actual case-sensitivity value determined happens to be different from current -- prepares and returns the
    * appropriate {@link VirtualFile#PROP_CHILDREN_CASE_SENSITIVITY} event for the change.
-   *
+   * <p>
    * Otherwise, return null.
    */
   @ApiStatus.Internal
@@ -2259,8 +2287,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return null;
     }
 
-    LocalFileSystemBase localFS = (LocalFileSystemBase)fileSystem;
-    CaseSensitivity actualDirCaseSensitivity = localFS.fetchCaseSensitivity(parent, childName);
+    LocalFileSystemBase localFileSystem = (LocalFileSystemBase)fileSystem;
+    CaseSensitivity actualDirCaseSensitivity = localFileSystem.fetchCaseSensitivity(parent, childName);
     //MAYBE RC: also measure and record execution _time_?
     caseSensitivityReads.incrementAndGet();
 

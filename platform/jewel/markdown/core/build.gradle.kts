@@ -1,6 +1,5 @@
 plugins {
     jewel
-    `jewel-publish`
     `jewel-check-public-api`
     alias(libs.plugins.composeDesktop)
     alias(libs.plugins.compose.compiler)
@@ -16,8 +15,3 @@ dependencies {
 }
 
 publicApiValidation { excludedClassRegexes = setOf("org.jetbrains.jewel.markdown.MarkdownBlock.*") }
-
-publishing.publications.named<MavenPublication>("main") {
-    val ijpTarget = project.property("ijp.target") as String
-    artifactId = "jewel-markdown-${project.name}-$ijpTarget"
-}

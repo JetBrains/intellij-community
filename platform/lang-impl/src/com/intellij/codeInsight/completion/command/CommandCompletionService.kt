@@ -325,10 +325,9 @@ private class CommandCompletionHighlightingListener(
                                            lookup.lookupOriginalStart)
     val highlightInfo = element.highlighting ?: return
     val rangeHighlighters = mutableListOf<RangeHighlighter>()
-    val endOffset = min(highlightInfo.range.endOffset, startOffset)
     if (highlightInfo.range.startOffset <= min(highlightInfo.range.endOffset, startOffset)) {
-      highlightManager.addRangeHighlight(editor, highlightInfo.range.startOffset, endOffset, EditorColors.SEARCH_RESULT_ATTRIBUTES, false, rangeHighlighters)
-      highlightManager.addRangeHighlight(editor, highlightInfo.range.startOffset, endOffset, highlightInfo.attributesKey, false, rangeHighlighters)
+      highlightManager.addRangeHighlight(editor, highlightInfo.range.startOffset, highlightInfo.range.endOffset, EditorColors.SEARCH_RESULT_ATTRIBUTES, false, rangeHighlighters)
+      highlightManager.addRangeHighlight(editor, highlightInfo.range.startOffset, highlightInfo.range.endOffset, highlightInfo.attributesKey, false, rangeHighlighters)
     }
     if (rangeHighlighters.isNotEmpty()) {
       lookup.putUserData(LOOKUP_HIGHLIGHTING, rangeHighlighters)

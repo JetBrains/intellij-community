@@ -5,7 +5,6 @@ import com.intellij.completion.ml.experiments.ExperimentInfo;
 import com.intellij.completion.ml.experiments.ExperimentStatus;
 import com.intellij.completion.ml.ranker.ExperimentModelProvider;
 import com.intellij.completion.ml.sorting.RankingSupport;
-import com.intellij.internal.ml.completion.DecoratingItemsPolicy;
 import com.intellij.internal.ml.completion.RankingModelProvider;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -99,6 +98,7 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
   public void loadState(@NotNull State state) {
     myState.rankingEnabled = state.rankingEnabled && state.language2state.containsValue(true);
     myState.showDiff = state.showDiff;
+    myState.decorateRelevant = state.decorateRelevant;
     myState.language2state.putAll(state.language2state);
   }
 
@@ -135,8 +135,9 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
 
   public static final class State {
     public boolean rankingEnabled = true;
-    public boolean showDiff = true;
-    public boolean decorateRelevant = true;
+    public boolean showDiff = false;
+    public boolean decorateRelevant = false;
+
     public final Map<String, Boolean> language2state = new HashMap<>();
 
     public State() {
@@ -149,13 +150,13 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
           if (!experimentStatus.isDisabled() && experimentInfo.getInExperiment()) {
             boolean useMLRanking = experimentInfo.getShouldRank();
             language2state.put(ranker.getId(), useMLRanking);
-            if (useMLRanking)
-              LOG.info("ML Completion enabled, experiment group=" + experimentInfo.getVersion() + " for: " + language.getDisplayName());
-          } else {
-            language2state.put(ranker.getId(), true);
-            if (isEAP) {
-              decorateRelevant |= ranker.getDecoratingPolicy() != DecoratingItemsPolicy.Companion.getDISABLED();
+            if (useMLRanking) {
+              LOG.info("ML Completion enabled, experiment group=" + experimentInfo.getVersion()
+                       + " for: " + language.getDisplayName());
             }
+          }
+          else {
+            language2state.put(ranker.getId(), true);
           }
         }
       }

@@ -38,7 +38,8 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
     if (!BaseIntentionAction.canModify(context.file())) return null;
-    return getConstructorOrClass(context.findLeaf()) != null
+    PsiMember member = getConstructorOrClass(context.findLeaf());
+    return member != null && !getTargets(member).isEmpty()
            ? Presentation.of(getFamilyName()).withIcon(NewUiValue.isEnabled() ? null : AllIcons.Actions.RefactoringBulb)
            : null;
   }
@@ -48,12 +49,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     PsiElement element = context.findLeaf();
     PsiMember constructorOrClass = getConstructorOrClass(element);
     if (constructorOrClass == null) return ModCommand.nop();
-
-    List<PsiClass> targets = StreamEx.iterate(constructorOrClass, Objects::nonNull, PsiMember::getContainingClass)
-      .select(PsiClass.class)
-      .filter(cls -> !(cls instanceof PsiImplicitClass))
-      .filter(cls -> cls.hasModifierProperty(PsiModifier.STATIC) || cls.getContainingClass() == null)
-      .toList();
+    List<PsiClass> targets = getTargets(constructorOrClass);
     SmartPsiElementPointer<PsiMember> constructorOrClassPtr = SmartPointerManager.createPointer(constructorOrClass);
     List<ModCommandAction> options =
       ContainerUtil.map(targets, target -> ModCommand.psiUpdateStep(
@@ -64,6 +60,14 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
           return identifier == null ? cls.getTextRange() : identifier.getTextRange();
         }));
     return ModCommand.chooseAction(JavaBundle.message("popup.title.choose.target.class"), options);
+  }
+
+  private @NotNull List<PsiClass> getTargets(PsiMember constructorOrClass) {
+    return StreamEx.iterate(constructorOrClass, Objects::nonNull, PsiMember::getContainingClass)
+      .select(PsiClass.class)
+      .filter(cls -> !(cls instanceof PsiImplicitClass))
+      .filter(cls -> cls.hasModifierProperty(PsiModifier.STATIC) || cls.getContainingClass() == null)
+      .toList();
   }
 
   private static void invoke(@NotNull PsiClass cls,

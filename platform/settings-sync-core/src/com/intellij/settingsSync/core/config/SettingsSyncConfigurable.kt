@@ -51,6 +51,7 @@ import com.intellij.ui.layout.selected
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.Consumer
+import com.intellij.util.asDisposable
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
@@ -85,6 +86,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   private val remoteSettingsExist = AtomicBooleanProperty(false)
   private val wasUsedBefore = AtomicBooleanProperty(currentUser() != null)
   private val userAccountsList = arrayListOf<UserProviderHolder>()
+  private val userAccountListIsNotEmpty = AtomicBooleanProperty(false)
   private val syncPanelHolder = SettingsSyncPanelHolder()
   private val hasMultipleProviders = AtomicBooleanProperty(RemoteCommunicatorHolder.getExternalProviders().isNotEmpty())
 
@@ -121,8 +123,10 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
                                                                       SettingsSyncLocalSettings.getInstance())
 
     configPanel = panel {
-      var userProviderHolder: UserProviderHolder? = currentUser()
       updateUserAccountsList()
+      val userProviderHolder: UserProviderHolder? = currentUser() ?: userAccountsList.firstOrNull { it != UserProviderHolder.addAccount }
+      val authService = userProviderHolder?.let { RemoteCommunicatorHolder.getProvider(userProviderHolder.providerCode) } ?.authService
+      syncPanelHolder.crossSyncSupported.set(authService?.crossSyncSupported() ?: true)
       val infoRow = row {
         text(message("settings.sync.info.message"))
         SettingsSyncCommunicatorProvider.PROVIDER_EP.extensionList.firstOrNull { it.isAvailable() && it.learnMoreLinkPair != null }?.also {
@@ -156,7 +160,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
             login(defaultProvider, syncConfigPanel)
           }
         }.visibleIf(hasMultipleProviders.not())
-      }.visibleIf(wasUsedBefore.not())
+      }.visibleIf(userAccountListIsNotEmpty.not())
 
       row {
         val enableCheckboxCell = checkBox(message("config.button.enable")).applyToComponent {
@@ -184,7 +188,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
             component.text = component.selectedItem.toString()
           }
         }.comment("")
-      }.visibleIf(wasUsedBefore)
+      }.visibleIf(userAccountListIsNotEmpty)
 
       // settings to sync
       rowsRange {
@@ -230,6 +234,8 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
                 enableCheckbox.isSelected = SettingsSyncSettings.getInstance().syncEnabled
                 if (currentUser() != null) {
                   userDropDownLink.selectedItem = userAccountsList.firstOrNull { it.userId == SettingsSyncLocalSettings.getInstance().userId}
+                } else if (userAccountListIsNotEmpty.get()) {
+                   userDropDownLink.selectedItem = userAccountsList.firstOrNull { it != UserProviderHolder.addAccount }
                 } else {
                   userDropDownLink.selectedItem = null
                 }
@@ -238,7 +244,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
               .onIsModified {
                 enableCheckbox.isSelected != SettingsSyncSettings.getInstance().syncEnabled
                 || syncConfigPanel.isModified()
-                || userDropDownLink.selectedItem?.userId != SettingsSyncLocalSettings.getInstance().userId
+                || (SettingsSyncLocalSettings.getInstance().userId != null && userDropDownLink.selectedItem?.userId != SettingsSyncLocalSettings.getInstance().userId)
               }
               .onApply {
                 with(SettingsSyncLocalSettings.getInstance()) {
@@ -290,7 +296,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           }
         }.visibleIf(actionRequired)
 
-      }.visibleIf(wasUsedBefore)
+      }.visibleIf(userAccountListIsNotEmpty)
 
       // apply necessary changes
     }
@@ -338,7 +344,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           enableCheckbox.isSelected = false
           return@runWithModalProgressBlocking
         }
-        val remoteCommunicator = RemoteCommunicatorHolder.createRemoteCommunicator(provider, userId) ?: run {
+        val remoteCommunicator = RemoteCommunicatorHolder.createRemoteCommunicator(provider, userId, this@runWithModalProgressBlocking.asDisposable()) ?: run {
           LOG.warn("Cannot create remote communicator of type '$providerName' ($providerCode)")
           showErrorOnEDT(message("enable.dialog.error.cant.check", providerName))
           enableCheckbox.isSelected = false
@@ -346,6 +352,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         }
         if (checkServerState(syncPanelHolder, remoteCommunicator, provider.authService.crossSyncSupported())) {
           withContext(Dispatchers.EDT) {
+            syncConfigPanel.reset()
             triggerUpdateConfigurable()
           }
           cellDropDownLink.comment?.text = "<icon src='AllIcons.General.History'>&nbsp;" +
@@ -532,7 +539,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
 
   private fun tryChangeAccount(selectedValue: UserProviderHolder) {
     if (selectedValue == UserProviderHolder.addAccount) {
-      if (!disableCurrentSyncDialog()) {
+      if (SettingsSyncSettings.getInstance().syncEnabled && !disableCurrentSyncDialog()) {
         return
       }
       val syncTypeDialog = AddAccountDialog(configPanel)
@@ -543,26 +550,30 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       }
     }
     else {
-      val wasEnabled = enableCheckbox.isSelected
-      if (wasEnabled) {
-        if (!disableCurrentSyncDialog()){
-          return
+      val wasEnabled = SettingsSyncSettings.getInstance().syncEnabled
+      if (enableCheckbox.isSelected) {
+        if (wasEnabled) {
+          if (!disableCurrentSyncDialog()) {
+            return
+          }
+          userDropDownLink.selectedItem = selectedValue
+          enableCheckbox.doClick()
+          enableButtonAction()
+        } else {
+          userDropDownLink.selectedItem = selectedValue
+          enableButtonAction()
         }
-      }
-      userDropDownLink.selectedItem = selectedValue
-      refreshActionRequired()
-      if (wasEnabled && !enableCheckbox.isSelected) {
-        enableCheckbox.doClick()
+      } else {
+        userDropDownLink.selectedItem = selectedValue
       }
     }
-
   }
 
 
   private fun updateUserAccountsList() {
     userAccountsList.clear()
-    val providersMap = RemoteCommunicatorHolder.getAvailableProviders().associateBy { it.providerCode }
-    providersMap.forEach { (_, communicator) ->
+    val providersMap = RemoteCommunicatorHolder.getAvailableProviders().sortedBy { it.providerCode }
+    providersMap.forEach { communicator ->
       val authService = communicator.authService
       val providerName = authService.providerName
       authService.getAvailableUserAccounts().forEachIndexed { idx, account ->
@@ -576,6 +587,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     if (hasMultipleProviders.get()) {
       userAccountsList.add(UserProviderHolder.addAccount)
     }
+    userAccountListIsNotEmpty.set(userAccountsList.any {  it != UserProviderHolder.addAccount })
   }
 
   private fun login(

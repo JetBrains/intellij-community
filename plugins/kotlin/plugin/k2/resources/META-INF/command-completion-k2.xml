@@ -11,7 +11,7 @@
     <codeInsight.completion.command.provider language="kotlin"
                                                implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinRenameActionCommandProvider"/>
     <codeInsight.completion.command.provider language="kotlin"
-                                               implementationClass="com.intellij.codeInsight.completion.command.commands.OptimizeImportCompletionCommandProvider"/>
+                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinOptimizeImportCompletionCommandProvider"/>
 <!--    <codeInsight.completion.command.provider language="kotlin"-->
 <!--                                               implementationClass="com.intellij.codeInsight.completion.command.commands.LineCommentCompletionCommandProvider"/>-->
     <codeInsight.completion.command.provider language="kotlin"

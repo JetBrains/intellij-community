@@ -1,6 +1,8 @@
 <#
    The script adds paths, given as parameters, to the Microsoft Defender folder exclusion list,
    unless they are already excluded.
+
+   See https://learn.microsoft.com/en-us/defender-endpoint/configure-extension-file-exclusions-microsoft-defender-antivirus
 #>
 
 #Requires -RunAsAdministrator
@@ -61,14 +63,12 @@ try {
 
   foreach ($path in $args) {
     if (-not (Test-Excluded $path $exclusions)) {
-      $exclusions += $path
+      Add-MpPreference -ExclusionPath $path
       Write-Host "added: $path"
     } else {
       Write-Host "skipped: $path"
     }
   }
-
-  Set-MpPreference -ExclusionPath $exclusions
 } catch {
   Write-Host "$($_.Exception.GetType()): $($_.Exception.Message)"
   Write-Host $_.ScriptStackTrace

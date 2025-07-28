@@ -5,6 +5,7 @@ import org.jetbrains.plugins.textmate.regex.MatchData.Companion.NOT_MATCHED
 import org.jetbrains.plugins.textmate.regex.RegexFacade
 import org.jetbrains.plugins.textmate.regex.TextMateByteOffset
 import org.jetbrains.plugins.textmate.regex.TextMateString
+import org.jetbrains.plugins.textmate.regex.TextMateStringImpl
 import org.joni.Option
 import org.joni.Regex
 import org.joni.Region
@@ -13,7 +14,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.milliseconds
 
-class JoniRegexFacade(private val myRegex: Regex) : RegexFacade {
+internal class JoniRegexFacade(private val myRegex: Regex) : RegexFacade {
   override fun match(string: TextMateString, checkCancelledCallback: Runnable?): MatchData {
     return match(string = string,
                  byteOffset = TextMateByteOffset(0),
@@ -29,6 +30,8 @@ class JoniRegexFacade(private val myRegex: Regex) : RegexFacade {
     matchBeginString: Boolean,
     checkCancelledCallback: Runnable?
   ): MatchData {
+    require(string is TextMateStringImpl)
+
     val gosOffset = if (matchBeginPosition) byteOffset.offset else Int.MAX_VALUE
     val options = if (matchBeginString) Option.NONE else Option.NOTBOS
 
@@ -70,7 +73,7 @@ class JoniRegexFacade(private val myRegex: Regex) : RegexFacade {
     private val MATCHING_TIMEOUT = 300.milliseconds.inWholeNanoseconds
     private val LOGGER: Logger = LoggerFactory.getLogger(JoniRegexFacade::class.java)
 
-    private fun checkMatched(match: MatchData, string: TextMateString) {
+    private fun checkMatched(match: MatchData, string: TextMateStringImpl) {
       check(!(match.matched && match.byteRange().end.offset > string.bytes.size)) {
         "Match data out of bounds: " + match.byteRange().start + " > " + string.bytes.size + "\n" + String(string.bytes, Charsets.UTF_8)
       }

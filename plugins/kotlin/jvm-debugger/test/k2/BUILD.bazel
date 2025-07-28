@@ -1,3 +1,34 @@
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "k2_test",
+  runtime_deps = [
+    ":k2_test_lib",
+    "//:main_test_lib",
+  ],
+  data = [
+    "@kotlin_test_deps_annotations//file:annotations.jar",
+    "@kotlin_test_deps_junit//file:junit.jar",
+    "@kotlin_test_deps_kotlin-dist-for-ide//file:kotlin-dist-for-ide.jar",
+    "@kotlin_test_deps_kotlin-jps-plugin-classpath//file:kotlin-jps-plugin-classpath.jar",
+    "@kotlin_test_deps_kotlin-reflect-sources//file:kotlin-reflect-sources.jar",
+    "@kotlin_test_deps_kotlin-reflect//file:kotlin-reflect.jar",
+    "@kotlin_test_deps_kotlin-script-runtime//file:kotlin-script-runtime.jar",
+    "@kotlin_test_deps_kotlin-stdlib-common-sources//file:kotlin-stdlib-common-sources.jar",
+    "@kotlin_test_deps_kotlin-stdlib-jdk8-sources//file:kotlin-stdlib-jdk8-sources.jar",
+    "@kotlin_test_deps_kotlin-stdlib-jdk8//file:kotlin-stdlib-jdk8.jar",
+    "@kotlin_test_deps_kotlin-stdlib-sources//file:kotlin-stdlib-sources.jar",
+    "@kotlin_test_deps_kotlin-stdlib//file:kotlin-stdlib.jar",
+    "@kotlin_test_deps_kotlin-test-junit//file:kotlin-test-junit.jar",
+    "@kotlin_test_deps_kotlin-test//file:kotlin-test.jar",
+  ],
+  tags = [
+    "block-network",
+  ],
+)
+
+### skip generation section `test kotlin.jvm-debugger.test.k2`
+
 ### auto-generated section `build kotlin.jvm-debugger.test.k2` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -76,15 +107,3 @@ jvm_library(
   ]
 )
 ### auto-generated section `build kotlin.jvm-debugger.test.k2` end
-
-### auto-generated section `test kotlin.jvm-debugger.test.k2` start
-load("@community//build:tests-options.bzl", "jps_test")
-
-jps_test(
-  name = "k2_test",
-  runtime_deps = [
-    ":k2_test_lib",
-    "//:main_test_lib",
-  ]
-)
-### auto-generated section `test kotlin.jvm-debugger.test.k2` end

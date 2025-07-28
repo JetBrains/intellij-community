@@ -10,13 +10,11 @@ import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
-import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
 public final class ShowContentAction extends AnAction implements DumbAware {
   public static final @NonNls String ACTION_ID = "ShowContent";
@@ -44,7 +42,7 @@ public final class ShowContentAction extends AnAction implements DumbAware {
                                 ? ActionsBundle.message("action.ShowContent.text")
                                 : ActionsBundle.message("action.ShowContent.views.text"));
 
-    ContentManager contentManager = e.getData(ToolWindowContentUi.CONTENT_MANAGER_DATA_KEY);
+    ContentManager contentManager = e.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER);
     e.getPresentation().setEnabledAndVisible(contentManager != null && contentManager.getContentCount() > 1);
   }
 
@@ -55,11 +53,9 @@ public final class ShowContentAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Component context = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-    InternalDecoratorImpl nearestDecorator = InternalDecoratorImpl.findNearestDecorator(context);
-    if (nearestDecorator == null) return;
-
-    ToolWindowContentUi contentUi = nearestDecorator.getContentUi();
-    ToolWindowContentUi.toggleContentPopup(contentUi, contentUi.getContentManager());
+    ToolWindowContentUi contentUi = e.getData(ToolWindowContentUi.DATA_KEY);
+    if (contentUi != null) {
+      ToolWindowContentUi.toggleContentPopup(contentUi, contentUi.getContentManager());
+    }
   }
 }

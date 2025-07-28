@@ -1,11 +1,7 @@
 package com.intellij.textmate.joni
 
 import org.jcodings.specific.UTF8Encoding
-import org.jetbrains.plugins.textmate.regex.NotMatchingRegexFacade
-import org.jetbrains.plugins.textmate.regex.RegexFacade
-import org.jetbrains.plugins.textmate.regex.RegexFactory
-import org.jetbrains.plugins.textmate.regex.TextMateString
-import org.jetbrains.plugins.textmate.regex.TextMateStringImpl
+import org.jetbrains.plugins.textmate.regex.*
 import org.joni.Option
 import org.joni.Regex
 import org.joni.WarnCallback

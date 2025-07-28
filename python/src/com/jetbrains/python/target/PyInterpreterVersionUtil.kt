@@ -4,9 +4,8 @@
 package com.jetbrains.python.target
 
 import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.target.TargetProgressIndicatorAdapter
-import com.intellij.execution.target.TargetedCommandLineBuilder
-import com.intellij.execution.target.getTargetEnvironmentRequest
+import com.intellij.execution.process.ProcessOutput
+import com.intellij.execution.target.*
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -25,50 +24,62 @@ fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?, nullFor
 }
 
 @Throws(RemoteSdkException::class)
-fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?,
-                                                      interpreterPath: String,
-                                                      nullForUnparsableVersion: Boolean = true): String? {
+fun PyTargetAwareAdditionalData.getInterpreterVersion(
+  project: Project?,
+  interpreterPath: String,
+  nullForUnparsableVersion: Boolean = true,
+): String? {
   val targetEnvironmentRequest = getTargetEnvironmentRequest(project ?: ProjectManager.getInstance().defaultProject)
                                  ?: throw IllegalStateException("Unable to get target configuration from Python SDK data")
   val result = Ref.create<String>()
   val exception = Ref.create<RemoteSdkException>()
   val task: Task.Modal = object : Task.Modal(project, PyBundle.message("python.sdk.getting.remote.interpreter.version"), true) {
     override fun run(indicator: ProgressIndicator) {
-      val flavor = flavor
-      if (flavor != null) {
-        try {
-          try {
-            val targetedCommandLineBuilder = TargetedCommandLineBuilder(targetEnvironmentRequest)
-            targetedCommandLineBuilder.setExePath(interpreterPath)
-            targetedCommandLineBuilder.addParameter(PYTHON_VERSION_ARG)
-            val targetEnvironment = targetEnvironmentRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
-            val targetedCommandLine = targetedCommandLineBuilder.build()
-            val process = targetEnvironment.createProcess(targetedCommandLine, indicator)
-            val commandLineString = targetedCommandLine.collectCommandsSynchronously().joinToString(separator = " ")
-            val capturingProcessHandler = CapturingProcessHandler(process, Charsets.UTF_8, commandLineString)
-            val processOutput = capturingProcessHandler.runProcess()
-            if (processOutput.exitCode == 0) {
-              val version = PythonSdkFlavor.getVersionStringFromOutput(processOutput)
-              if (version != null || nullForUnparsableVersion) {
-                result.set(version)
-                return
-              }
-              else {
-                throw RemoteSdkException(PyBundle.message("python.sdk.empty.version.string"), processOutput.stdout, processOutput.stderr)
-              }
-            }
-            else {
-              throw RemoteSdkException(
-                PyBundle.message("python.sdk.non.zero.exit.code", processOutput.exitCode), processOutput.stdout, processOutput.stderr)
-            }
+      try {
+        val targetedCommandLineBuilder = TargetedCommandLineBuilder(targetEnvironmentRequest)
+        targetedCommandLineBuilder.setExePath(interpreterPath)
+        targetedCommandLineBuilder.addParameter(PYTHON_VERSION_ARG)
+        val targetEnvironment = targetEnvironmentRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
+        val targetedCommandLine = targetedCommandLineBuilder.build()
+
+        val processOutput = getProcessOutput(targetEnvironment, targetedCommandLine, indicator)
+
+        if (processOutput.exitCode == 0) {
+          val version = PythonSdkFlavor.getVersionStringFromOutput(processOutput)
+          if (version != null || nullForUnparsableVersion) {
+            result.set(version)
+            return
           }
-          catch (e: Exception) {
-            throw RemoteSdkException.cantObtainRemoteCredentials(e)
+          else {
+            throw RemoteSdkException(PyBundle.message("python.sdk.empty.version.string"), processOutput.stdout, processOutput.stderr)
           }
         }
-        catch (e: RemoteSdkException) {
-          exception.set(e)
+        else {
+          throw RemoteSdkException(
+            PyBundle.message("python.sdk.non.zero.exit.code", processOutput.exitCode), processOutput.stdout, processOutput.stderr)
         }
+      }
+      catch (e: RemoteSdkException) {
+        exception.set(e)
+      }
+    }
+
+    // Some targets (i.e. Docker: https://github.com/docker/cli/discussions/5319) might return `-1` for mistakenly. We retry it several times.
+    private fun getProcessOutput(
+      targetEnvironment: TargetEnvironment,
+      targetedCommandLine: TargetedCommandLine,
+      indicator: ProgressIndicator,
+    ): ProcessOutput {
+      var counter = 10
+      while (true) {
+        val process = targetEnvironment.createProcess(targetedCommandLine, indicator)
+        val commandLineString = targetedCommandLine.collectCommandsSynchronously().joinToString(separator = " ")
+        val capturingProcessHandler = CapturingProcessHandler(process, Charsets.UTF_8, commandLineString)
+        val processOutput = capturingProcessHandler.runProcess()
+        if (processOutput.exitCode == 0 || counter == 0) {
+          return processOutput
+        }
+        counter -= 1
       }
     }
   }

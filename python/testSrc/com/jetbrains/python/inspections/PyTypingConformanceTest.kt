@@ -42,6 +42,7 @@ private val inspections
     PyTypeCheckerInspection(),
     PyTypeHintsInspection(),
     PyUnresolvedReferencesInspection(),
+    PyTypeAliasRedeclarationInspection(),
   )
 
 @RunWith(Parameterized::class)

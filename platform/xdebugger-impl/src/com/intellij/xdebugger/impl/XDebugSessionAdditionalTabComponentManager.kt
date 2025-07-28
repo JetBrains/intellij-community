@@ -4,7 +4,10 @@ package com.intellij.xdebugger.impl
 import com.intellij.diagnostic.logging.AdditionalTabComponent
 import com.intellij.execution.configurations.AdditionalTabComponentManagerEx
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabDto
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabEvent
 import com.intellij.platform.debugger.impl.shared.XDebugSessionAdditionalTabComponentConverter
@@ -13,6 +16,7 @@ import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.ui.content.Content
+import com.intellij.util.asDisposable
 import com.intellij.xdebugger.impl.rpc.XDebugSessionAdditionalTabComponentManagerId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -25,7 +29,11 @@ import javax.swing.Icon
 class XDebugSessionAdditionalTabComponentManager(
   private val project: Project,
   private val debugTabScope: CoroutineScope,
-) : AdditionalTabComponentManagerEx {
+) : AdditionalTabComponentManagerEx, Disposable {
+  init {
+    Disposer.register(debugTabScope.asDisposable(), this)
+  }
+
   val id: XDebugSessionAdditionalTabComponentManagerId = storeValueGlobally(debugTabScope, this, XDebugSessionAdditionalTabComponentManagerValueIdType)
   private val tabToId = mutableMapOf<AdditionalTabComponent, XDebuggerSessionAdditionalTabId>()
 
@@ -47,8 +55,18 @@ class XDebugSessionAdditionalTabComponentManager(
   }
 
   override fun removeAdditionalTabComponent(component: AdditionalTabComponent) {
+    runInEdt {
+      Disposer.dispose(component)
+    }
     val tabId = tabToId.remove(component) ?: return
     _tabComponentEvents.tryEmit(XDebuggerSessionAdditionalTabEvent.TabRemoved(tabId))
+  }
+
+  override fun dispose() {
+    val tabs = tabToId.keys.toList()
+    for (tab in tabs) {
+      removeAdditionalTabComponent(tab)
+    }
   }
 }
 

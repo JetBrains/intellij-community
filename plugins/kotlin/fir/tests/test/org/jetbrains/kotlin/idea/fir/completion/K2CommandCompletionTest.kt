@@ -588,6 +588,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         val elements = myFixture.complete(CompletionType.BASIC, 0)
         assertTrue(elements[0].`as`(CommandCompletionLookupElement::class.java) != null)
     }
+
     fun testNotFirstCompletion() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(
@@ -603,6 +604,19 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         )
         val elements = myFixture.complete(CompletionType.BASIC, 0)
         assertFalse(elements[0].`as`(CommandCompletionLookupElement::class.java) != null)
+    }
+
+    fun testOptimizeImport() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """"
+          import java.util.List.<caret>
+          
+          class A {
+          }""".trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        assertTrue(elements.any { element -> element.lookupString.contains("Optimize im", ignoreCase = true) })
     }
 
     private fun selectItem(item: LookupElement, completionChar: Char = 0.toChar()) {

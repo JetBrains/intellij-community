@@ -9,9 +9,12 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.PathUtil;
@@ -29,11 +32,13 @@ import org.jetbrains.plugins.terminal.util.ShellType;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
 import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote;
@@ -51,6 +56,7 @@ public final class LocalShellIntegrationInjector {
   private static final String ZDOTDIR = "ZDOTDIR";
   private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
   private static final String BASH_RCFILE_OPTION = "--rcfile";
+  private static final String SHELL_INTEGRATIONS_DIR_NAME = "shell-integrations";
 
   // todo: it would be great to extract block terminal configuration from here
   public static @NotNull ShellStartupOptions injectShellIntegration(@NotNull ShellStartupOptions options,
@@ -69,15 +75,11 @@ public final class LocalShellIntegrationInjector {
 
     String shellName = PathUtil.getFileName(shellExe);
     Path rcFile = findRCFile(shellName);
-    if (rcFile != null) {
+    String remoteRcFilePath = rcFile != null ? transferAndGetRemotePath(rcFile, options.getWorkingDirectory()) : null;
+    if (remoteRcFilePath != null) {
       boolean isBlockTerminal = isBlockTerminalSupported(shellName);
       if (ShellNameUtil.isBash(shellName) || (SystemInfo.isMac && shellName.equals(ShellNameUtil.SH_NAME))) {
-        final var useEel = TerminalStartupKt.shouldUseEelApi();
-        final var eelDescriptor = useEel ? Optional.ofNullable(options.getWorkingDirectory())
-          .map(e -> EelProviderUtil.getEelDescriptor(Path.of(e)))
-          .orElse(null) : null;
-
-        addBashRcFileArgument(envs, arguments, resultCommand, rcFile.toString(), eelDescriptor);
+        addBashRcFileArgument(envs, arguments, resultCommand, remoteRcFilePath);
         // remove --login to enable --rcfile sourcing
         boolean loginShell = arguments.removeAll(LOGIN_CLI_OPTIONS);
         setLoginShellEnv(envs, loginShell);
@@ -89,7 +91,7 @@ public final class LocalShellIntegrationInjector {
         if (StringUtil.isNotEmpty(originalZDotDir)) {
           envs.put("JETBRAINS_INTELLIJ_ORIGINAL_ZDOTDIR", originalZDotDir);
         }
-        String intellijZDotDir = rcFile.getParent().toString();
+        String intellijZDotDir = PathUtil.getParentPath(remoteRcFilePath);
         envs.put(ZDOTDIR, intellijZDotDir);
         envs.put(IJ_ZSH_DIR, PathUtil.getParentPath(intellijZDotDir));
         integration = new ShellIntegration(ShellType.ZSH, isBlockTerminal ? new CommandBlockIntegration() : null);
@@ -97,13 +99,13 @@ public final class LocalShellIntegrationInjector {
       else if (shellName.equals(ShellNameUtil.FISH_NAME)) {
         // `--init-command=COMMANDS` is available since Fish 2.7.0 (released November 23, 2017)
         // Multiple `--init-command=COMMANDS` are supported.
-        resultCommand.add("--init-command=source " + CommandLineUtil.posixQuote(rcFile.toString()));
+        resultCommand.add("--init-command=source " + CommandLineUtil.posixQuote(remoteRcFilePath));
         integration = new ShellIntegration(ShellType.FISH, isBlockTerminal ? new CommandBlockIntegration() : null);
       }
       else if (ShellNameUtil.isPowerShell(shellName)) {
         resultCommand.addAll(arguments);
         arguments.clear();
-        resultCommand.addAll(List.of("-NoExit", "-ExecutionPolicy", "Bypass", "-File", rcFile.toString()));
+        resultCommand.addAll(List.of("-NoExit", "-ExecutionPolicy", "Bypass", "-File", remoteRcFilePath));
         integration = new ShellIntegration(ShellType.POWERSHELL, isBlockTerminal ? new CommandBlockIntegration(true) : null);
       }
     }
@@ -201,21 +203,83 @@ public final class LocalShellIntegrationInjector {
     }
   }
 
-  private static void addBashRcFileArgument(@NotNull Map<String, String> envs,
-                                            @NotNull List<String> arguments,
-                                            @NotNull List<String> result,
-                                            @NotNull String rcFilePath,
-                                            @Nullable EelDescriptor eelDescriptor) {
+  /**
+   * Transfers the specified local file or directory to the remote environment (if necessary)
+   * and returns the corresponding remote path.
+   * Since the file depends on other shell integration files, all related shell integration files
+   * are transferred together, preserving their relative paths.
+   *
+   * @param localFileOrDir the path to the local file or directory to be transferred
+   * @param workingDir the working directory pointing to the remote environment
+   * @return the remote path corresponding to the transferred file or directory if the transfer was successful,
+   *         or the original path if no transfer was needed; null if an error occurs.
+   */
+  private static @Nullable String transferAndGetRemotePath(@NotNull Path localFileOrDir, @Nullable String workingDir) {
+    EelDescriptor eelDescriptor = findEelDescriptor(workingDir);
+    if (eelDescriptor == LocalEelDescriptor.INSTANCE) return localFileOrDir.toString();
+    if (eelDescriptor == null) return localFileOrDir.toString();
+    Path baseDirectory = findUpShellIntegrationBaseDirectory(localFileOrDir);
+    if (baseDirectory == null) return null;
+    try {
+      String relativePath = baseDirectory.relativize(localFileOrDir).toString();
+      Instant started = Instant.now();
+      Path remoteBaseDirectory = transferLocalContentToRemote(baseDirectory, new EelPathUtils.TransferTarget.Temporary(eelDescriptor));
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Transferred shell integration files to remote (" + eelDescriptor.getMachine().getName() + ") in "
+                  + Duration.between(started, Instant.now()).toMillis() + "ms: "
+                  + baseDirectory + " -> " + remoteBaseDirectory
+         );
+      }
+      return asEelPath(remoteBaseDirectory.resolve(relativePath)).toString();
+    }
+    catch (Exception e) {
+      LOG.info("Unable to transfer shell integration (" + baseDirectory + ") to remote (" + eelDescriptor + ")", e);
+      return null;
+    }
+  }
+
+  private static @Nullable EelDescriptor findEelDescriptor(@Nullable String workingDir) {
+    if (!TerminalStartupKt.shouldUseEelApi()) return null;
+    if (Strings.isEmptyOrSpaces(workingDir)) {
+      LOG.warn("Empty working directory: " + workingDir);
+      return null;
+    }
+    Path workingDirectoryNioPath;
+    try {
+      workingDirectoryNioPath = Path.of(workingDir);
+    }
+    catch (InvalidPathException e) {
+      LOG.warn("Invalid working directory: " + workingDir, e);
+      return null;
+    }
+    return EelProviderUtil.getEelDescriptor(workingDirectoryNioPath);
+  }
+
+  /**
+   * Returns the highest-level directory containing all shell integration files related to the given <code>shellIntegrationFile</code>.
+   * For example, given "/path/to/shell-integrations/zsh/zdotdir/.zshenv", it will return "/path/to/shell-integrations/zsh/".
+   */
+  private static @Nullable Path findUpShellIntegrationBaseDirectory(@NotNull Path shellIntegrationFile) {
+    Path f = shellIntegrationFile;
+    Path parent = f.getParent();
+    while (parent != null && !NioFiles.getFileName(parent).equals(SHELL_INTEGRATIONS_DIR_NAME)) {
+      f = parent;
+      parent = parent.getParent();
+    }
+    if (parent == null) {
+      LOG.warn("Unable to find shell integration directory for " + shellIntegrationFile);
+      return null;
+    }
+    return f;
+  }
+
+  private static void addBashRcFileArgument(Map<String, String> envs,
+                                            List<String> arguments,
+                                            List<String> result,
+                                            @NotNull String rcFilePath) {
 
     result.add(BASH_RCFILE_OPTION);
-    if (eelDescriptor != null) {
-      final var rcFile = Path.of(rcFilePath);
-      final var bashSupportDir = transferLocalContentToRemote(rcFile.getParent(), new EelPathUtils.TransferTarget.Temporary(eelDescriptor));
-      result.add(asEelPath(bashSupportDir.resolve(rcFile.getFileName().toString())).toString());
-    }
-    else {
-      result.add(rcFilePath);
-    }
+    result.add(rcFilePath);
     int idx = arguments.indexOf(BASH_RCFILE_OPTION);
     if (idx >= 0) {
       arguments.remove(idx);

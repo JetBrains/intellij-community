@@ -4,10 +4,11 @@ import com.intellij.textmate.joni.JoniRegexFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
-import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher;
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateCachingSelectorWeigherKt;
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
-import org.jetbrains.plugins.textmate.regex.CaffeineCachingRegexFactory;
-import org.jetbrains.plugins.textmate.regex.RegexFactory;
+import org.jetbrains.plugins.textmate.regex.CaffeineCachingRegexProvider;
+import org.jetbrains.plugins.textmate.regex.RegexProvider;
 import org.jetbrains.plugins.textmate.regex.RememberingLastMatchRegexFactory;
 
 import java.util.Queue;
@@ -25,18 +26,10 @@ public class TextMateLexer {
   @Deprecated
   public TextMateLexer(@NotNull TextMateLanguageDescriptor languageDescriptor,
                        int lineLimit) {
-    this(languageDescriptor, lineLimit, false);
-  }
-
-  /**
-   * @deprecated use {@link TextMateLexerCore}
-   */
-  @Deprecated
-  public TextMateLexer(@NotNull TextMateLanguageDescriptor languageDescriptor, int lineLimit, boolean stripWhitespaces) {
-    RegexFactory regexFactory = new CaffeineCachingRegexFactory(new RememberingLastMatchRegexFactory(new JoniRegexFactory()));
-    TextMateSelectorCachingWeigher weigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
-    TextMateCachingSyntaxMatcher syntaxMatcher = new TextMateCachingSyntaxMatcher(new TextMateSyntaxMatcherImpl(regexFactory, weigher));
-    myLexerCore = new TextMateLexerCore(languageDescriptor, syntaxMatcher, lineLimit, stripWhitespaces);
+    RegexProvider regexProvider = new CaffeineCachingRegexProvider(new RememberingLastMatchRegexFactory(new JoniRegexFactory()));
+    TextMateSelectorWeigher weigher = TextMateCachingSelectorWeigherKt.caching(new TextMateSelectorWeigherImpl());
+    TextMateSyntaxMatcher syntaxMatcher = TextMateCachingSyntaxMatcherCoreKt.caching(new TextMateSyntaxMatcherImpl(regexProvider, weigher));
+    myLexerCore = new TextMateLexerCore(languageDescriptor, syntaxMatcher, lineLimit, false);
   }
 
   public void init(CharSequence text, int startOffset) {

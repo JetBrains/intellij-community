@@ -2,8 +2,8 @@
 //file:noinspection GrPackage
 
 import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleLifecycleUtil
-import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil
+import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 
 import java.util.jar.JarOutputStream
@@ -30,7 +30,7 @@ interface Properties {
 
 def javaExePath = JAVA_EXE_PATH
 def workingDirectory = WORKING_DIRECTORY
-def intelliJRtPath  = INTELLIJ_RT_PATH
+def intelliJRtPath = INTELLIJ_RT_PATH
 DEFS
 
 def isOlderThan64 = GradleVersionUtil.isCurrentGradleOlderThan("6.4")
@@ -57,22 +57,24 @@ GradleLifecycleUtil.afterProject(gradle) { Project project ->
     def overwrite = project.tasks.findByName(Properties.runAppTaskName) != null
     project.tasks.create(name: Properties.runAppTaskName, overwrite: overwrite, type: JavaExec) {
       if (javaExePath) executable = javaExePath
+
+      classpath = project.sourceSets[Properties.sourceSetName].runtimeClasspath
       if (isOlderThan64) {
         main = Properties.mainClassToRun
       }
       else {
         mainClass = Properties.mainClassToRun
+        if (Properties.javaModuleName != null) {
+          mainModule = Properties.javaModuleName
+          jvmArgs '--module-path', classpath.asPath,
+                  '--patch-module', Properties.javaModuleName + '=' + project.sourceSets[Properties.sourceSetName].output.resourcesDir
+        }
       }
       PARAMS
       if (workingDirectory) {
         workingDir = workingDirectory
       }
       standardInput = System.in
-      classpath = project.sourceSets[Properties.sourceSetName].runtimeClasspath
-      if (Properties.javaModuleName != null && !Properties.javaModuleName.isBlank()) {
-        jvmArgs '--module-path', classpath.asPath,
-                '--module', "${Properties.javaModuleName}/${Properties.mainClassToRun}"
-      }
     }
   }
 }

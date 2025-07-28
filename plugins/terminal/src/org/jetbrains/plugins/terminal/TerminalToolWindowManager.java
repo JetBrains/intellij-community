@@ -868,7 +868,11 @@ public final class TerminalToolWindowManager implements Disposable {
         }
       }
     };
-    DnDSupport.createBuilder(toolWindowEx.getDecorator()).setDropHandler(handler).install();
+    DnDSupport.createBuilder(toolWindowEx.getDecorator())
+      .setDropHandler(handler)
+      .setDisposableParent(this)
+      .disableAsSource()
+      .install();
   }
 
   private static @Nullable ContentManager findNearestContentManager(@NotNull DnDEvent event) {
@@ -883,7 +887,7 @@ public final class TerminalToolWindowManager implements Disposable {
   private static @Nullable ContentManager findNearestContentManager(@Nullable Component component) {
     if (component == null) return null;
     var dataContext = DataManager.getInstance().getDataContext(component);
-    return dataContext.getData(ToolWindowContentUi.CONTENT_MANAGER_DATA_KEY);
+    return dataContext.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER);
   }
 
   private static @Nullable PsiDirectory getDirectory(@Nullable PsiElement item) {

@@ -11,6 +11,7 @@ import org.jetbrains.plugins.textmate.regex.TextMateByteOffset
 import org.jetbrains.plugins.textmate.regex.TextMateString
 import java.util.concurrent.TimeUnit
 
+@Deprecated("Use TextMateCachingSyntaxMatcherCore instead")
 class TextMateCachingSyntaxMatcher(private val delegate: TextMateSyntaxMatcher) : TextMateSyntaxMatcher {
   companion object {
     private val CACHE = Caffeine.newBuilder()
@@ -32,7 +33,6 @@ class TextMateCachingSyntaxMatcher(private val delegate: TextMateSyntaxMatcher) 
   ): TextMateLexerState {
     return CACHE.get(
       MatchKey(syntaxNodeDescriptor, string, byteOffset, matchBeginPosition, matchBeginString, priority, currentScope)) {
-      requireNotNull(it)
       delegate.matchRule(syntaxNodeDescriptor = it.syntaxNodeDescriptor,
                          string = it.string,
                          byteOffset = it.byteOffset,

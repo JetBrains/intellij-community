@@ -12,3 +12,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Serializable
 data class XValueId(override val uid: UID) : Id
+
+/** @see com.intellij.xdebugger.impl.rpc.models.BackendXValueGroupModel */
+@ApiStatus.Internal
+@Serializable
+data class XValueGroupId(override val uid: UID) : Id

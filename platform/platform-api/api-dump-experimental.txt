@@ -139,6 +139,7 @@ a:com.intellij.ide.ui.LafManager
 c:com.intellij.openapi.actionSystem.PlatformDataKeys
 - com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 - *sf:CONTEXT_MENU_LOCATOR:com.intellij.openapi.actionSystem.DataKey
+- *sf:TOOL_WINDOW_CONTENT_MANAGER:com.intellij.openapi.actionSystem.DataKey
 f:com.intellij.openapi.actionSystem.ex.ActionUtil
 - *sf:createToolbarComponent(javax.swing.JComponent,java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,Z):javax.swing.JComponent
 - *sf:getAction(java.lang.String):com.intellij.openapi.actionSystem.AnAction

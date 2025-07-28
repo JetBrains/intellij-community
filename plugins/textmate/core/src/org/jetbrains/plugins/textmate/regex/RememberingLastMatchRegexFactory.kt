@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.textmate.regex
 
 import kotlinx.coroutines.Runnable
+import org.jetbrains.plugins.textmate.concurrent.TextMateThreadLocal
 import org.jetbrains.plugins.textmate.createTextMateThreadLocal
 import org.jetbrains.plugins.textmate.regex.MatchData.Companion.NOT_MATCHED
 

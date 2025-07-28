@@ -1,24 +1,24 @@
 module(name = "community")
 
+bazel_dep(name = "bazel_features", version = "1.32.0")
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "rules_kotlin", version = "2.1.3")
 bazel_dep(name = "rules_java", version = "8.11.0")
 bazel_dep(name = "rules_jvm", version = "0.0.1")
-
 bazel_dep(name = "lib")
+local_path_override(
+    module_name = "lib",
+    path = "lib",
+)
 
 local_path_override(
-  module_name = "lib",
-  path = "lib",
-)
-local_path_override(
-  module_name = "rules_jvm",
-  path = "build/jvm-rules",
+    module_name = "rules_jvm",
+    path = "build/jvm-rules",
 )
 
 bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
 
 toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
-
 use_repo(toolchains, "zig_sdk")
 
 register_toolchains(
@@ -31,8 +31,58 @@ register_toolchains(
 bazel_dep(name = "rules_python", version = "1.4.1")
 git_override(
     module_name = "rules_python",
+    commit = "92bf73a6867f143c5af49274f02140d118b84bb0",
     remote = "https://github.com/JetBrains/rules_python.git",
-    commit = "92bf73a6867f143c5af49274f02140d118b84bb0"
+)
+
+kotlin_test_dependencies = use_extension("//plugins/kotlin:kotlin_test_dependencies.bzl", "kotlin_test_deps")
+
+# call `bazel mod tidy` in community directory to automatically update dependencies list
+use_repo(
+    kotlin_test_dependencies,
+    "kotlin_test_deps_annotations",
+    "kotlin_test_deps_compose-compiler-plugin-for-ide",
+    "kotlin_test_deps_js-ir-runtime-for-ide",
+    "kotlin_test_deps_jsr305",
+    "kotlin_test_deps_junit",
+    "kotlin_test_deps_kotlin-annotations-jvm",
+    "kotlin_test_deps_kotlin-compiler",
+    "kotlin_test_deps_kotlin-compiler-testdata-for-ide",
+    "kotlin_test_deps_kotlin-daemon",
+    "kotlin_test_deps_kotlin-dist-for-ide",
+    "kotlin_test_deps_kotlin-dist-for-ide-increment-compilation",
+    "kotlin_test_deps_kotlin-dom-api-compat",
+    "kotlin_test_deps_kotlin-jps-plugin-classpath",
+    "kotlin_test_deps_kotlin-jps-plugin-testdata-for-ide",
+    "kotlin_test_deps_kotlin-reflect",
+    "kotlin_test_deps_kotlin-reflect-sources",
+    "kotlin_test_deps_kotlin-script-runtime",
+    "kotlin_test_deps_kotlin-scripting-common",
+    "kotlin_test_deps_kotlin-scripting-compiler",
+    "kotlin_test_deps_kotlin-scripting-compiler-impl",
+    "kotlin_test_deps_kotlin-scripting-jvm",
+    "kotlin_test_deps_kotlin-stdlib",
+    "kotlin_test_deps_kotlin-stdlib-170",
+    "kotlin_test_deps_kotlin-stdlib-170-sources",
+    "kotlin_test_deps_kotlin-stdlib-all",
+    "kotlin_test_deps_kotlin-stdlib-common",
+    "kotlin_test_deps_kotlin-stdlib-common-170-sources",
+    "kotlin_test_deps_kotlin-stdlib-common-sources",
+    "kotlin_test_deps_kotlin-stdlib-jdk7",
+    "kotlin_test_deps_kotlin-stdlib-jdk7-sources",
+    "kotlin_test_deps_kotlin-stdlib-jdk8",
+    "kotlin_test_deps_kotlin-stdlib-jdk8-sources",
+    "kotlin_test_deps_kotlin-stdlib-js",
+    "kotlin_test_deps_kotlin-stdlib-js-legacy",
+    "kotlin_test_deps_kotlin-stdlib-legacy",
+    "kotlin_test_deps_kotlin-stdlib-project-wizard-default",
+    "kotlin_test_deps_kotlin-stdlib-sources",
+    "kotlin_test_deps_kotlin-stdlib-wasm-js",
+    "kotlin_test_deps_kotlin-stdlib-wasm-wasi",
+    "kotlin_test_deps_kotlin-test",
+    "kotlin_test_deps_kotlin-test-js",
+    "kotlin_test_deps_kotlin-test-junit",
+    "kotlin_test_deps_parcelize-compiler-plugin-for-ide",
 )
 
 # GraalVM

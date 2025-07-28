@@ -91,11 +91,13 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
     val language: Language = object : Language(PlainTextLanguage.INSTANCE, "PlainTextDialect" + getTestName(false)) {
       override fun getDisplayName(): String = "unique blah-blah" + System.identityHashCode(this)
     }
-    val plainTextDialectFileType = object: MockLanguageFileType(language, "x_x_x_x") {
-      override fun getDescription(): String = "blah-blah" + System.identityHashCode(this)
-    }
+    val plainTextDialectFileType = MyMockLanguageFileType(language)
     (FileTypeManager.getInstance() as FileTypeManagerImpl).registerFileType(plainTextDialectFileType, listOf(), parentDisposable, descriptor)
     return plainTextDialectFileType.language
+  }
+
+  class MyMockLanguageFileType(language: Language) : MockLanguageFileType(language, "x_x_x_x") {
+    override fun getDescription(): String = "blah-blah" + System.identityHashCode(this)
   }
 
   fun `test CompletionExtension extensions are cleared when explicit extension is added`() {

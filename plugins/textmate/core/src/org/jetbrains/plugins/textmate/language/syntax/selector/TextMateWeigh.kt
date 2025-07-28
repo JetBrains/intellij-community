@@ -7,12 +7,12 @@ data class TextMateWeigh(val weigh: Int, val priority: Priority) : Comparable<Te
     HIGH,
   }
 
-  override fun compareTo(o: TextMateWeigh): Int {
-    val priorityCompare = priority.compareTo(o.priority)
+  override fun compareTo(other: TextMateWeigh): Int {
+    val priorityCompare = priority.compareTo(other.priority)
     if (priorityCompare != 0) {
       return priorityCompare
     }
-    return weigh.compareTo(o.weigh)
+    return weigh.compareTo(other.weigh)
   }
 
   companion object {

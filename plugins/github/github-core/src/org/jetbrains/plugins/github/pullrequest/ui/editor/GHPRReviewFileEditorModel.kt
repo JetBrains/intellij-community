@@ -100,14 +100,14 @@ internal class GHPRReviewFileEditorModel internal constructor(
     changesModel.setChanges(ExcludingApproximateChangedRangesShifter.shift(fileVm.changedRanges, changedRanges).map(Range::asLst))
   }
 
-  override fun canGotoNextComment(focusedThreadId: String): Boolean = fileVm.lookupNextComment(focusedThreadId) != null
+  override fun canGotoNextComment(threadId: String): Boolean = fileVm.lookupNextComment(threadId) != null
   override fun canGotoNextComment(line: Int): Boolean = fileVm.lookupNextComment(line.shiftLineToBefore()) != null
-  override fun canGotoPreviousComment(focusedThreadId: String): Boolean = fileVm.lookupPreviousComment(focusedThreadId) != null
+  override fun canGotoPreviousComment(threadId: String): Boolean = fileVm.lookupPreviousComment(threadId) != null
   override fun canGotoPreviousComment(line: Int): Boolean = fileVm.lookupPreviousComment(line.shiftLineToBefore()) != null
 
   @RequiresEdt
-  override fun gotoNextComment(focusedThreadId: String) {
-    val commentId = fileVm.lookupNextComment(focusedThreadId) ?: return
+  override fun gotoNextComment(threadId: String) {
+    val commentId = fileVm.lookupNextComment(threadId) ?: return
     gotoComment(commentId)
   }
 
@@ -118,8 +118,8 @@ internal class GHPRReviewFileEditorModel internal constructor(
   }
 
   @RequiresEdt
-  override fun gotoPreviousComment(focusedThreadId: String) {
-    val commentId = fileVm.lookupPreviousComment(focusedThreadId) ?: return
+  override fun gotoPreviousComment(threadId: String) {
+    val commentId = fileVm.lookupPreviousComment(threadId) ?: return
     gotoComment(commentId)
   }
 

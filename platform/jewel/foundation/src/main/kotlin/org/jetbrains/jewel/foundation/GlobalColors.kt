@@ -53,9 +53,20 @@ public class TextColors(
     public val normal: Color,
     public val selected: Color,
     public val disabled: Color,
+    public val disabledSelected: Color,
     public val info: Color,
     public val error: Color,
+    public val warning: Color,
 ) {
+    @Deprecated("Use the primary constructors with disabledSelected and warning, instead.")
+    public constructor(
+        normal: Color,
+        selected: Color,
+        disabled: Color,
+        info: Color,
+        error: Color,
+    ) : this(normal, selected, disabled, disabled, info, error, normal)
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -65,8 +76,10 @@ public class TextColors(
         if (normal != other.normal) return false
         if (selected != other.selected) return false
         if (disabled != other.disabled) return false
+        if (disabledSelected != other.disabledSelected) return false
         if (info != other.info) return false
         if (error != other.error) return false
+        if (warning != other.warning) return false
 
         return true
     }
@@ -75,20 +88,16 @@ public class TextColors(
         var result = normal.hashCode()
         result = 31 * result + selected.hashCode()
         result = 31 * result + disabled.hashCode()
+        result = 31 * result + disabledSelected.hashCode()
         result = 31 * result + info.hashCode()
         result = 31 * result + error.hashCode()
+        result = 31 * result + warning.hashCode()
         return result
     }
 
-    override fun toString(): String {
-        return "TextColors(" +
-            "normal=$normal, " +
-            "selected=$selected, " +
-            "disabled=$disabled, " +
-            "info=$info, " +
-            "error=$error" +
-            ")"
-    }
+    override fun toString(): String =
+        "TextColors(normal=$normal, selected=$selected, disabled=$disabled, disabledSelected=$disabledSelected, " +
+            "info=$info, error=$error, warning=$warning)"
 
     public companion object
 }

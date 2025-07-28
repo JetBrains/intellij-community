@@ -621,6 +621,7 @@ internal class PsiWsmListener(listenerProject: Project) : WorkspaceModelChangeLi
 
 internal class PsiVFSModuleRootListener(listenerProject: Project) : ModuleRootListener {
   private val service = listenerProject.service<PsiVFSModuleRootListenerImpl>()
+
   override fun beforeRootsChange(event: ModuleRootEvent) {
     service.beforeRootsChange(event.isCausedByFileTypesChange)
   }
@@ -636,7 +637,7 @@ private class PsiVFSModuleRootListenerImpl(private val listenerProject: Project)
   private var depthCounter = 0
 
   fun beforeRootsChange(isCausedByFileTypesChange: Boolean) {
-    LOG.trace  { "beforeRootsChanged call" }
+    LOG.trace { "beforeRootsChanged call" }
     if (isCausedByFileTypesChange) {
       return
     }
@@ -790,7 +791,7 @@ private class PsiVfsAdditionalLibraryRootListener(project: Project) : Additional
     presentableLibraryName: @Nls String?,
     oldRoots: Collection<VirtualFile>,
     newRoots: Collection<VirtualFile>,
-    libraryNameForDebug: String
+    libraryNameForDebug: String,
   ) {
     ApplicationManager.getApplication().runWriteAction(
       ExternalChangeActionUtil.externalChangeAction {
