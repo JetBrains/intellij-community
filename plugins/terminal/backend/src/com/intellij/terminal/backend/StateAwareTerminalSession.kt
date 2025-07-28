@@ -9,7 +9,6 @@ import com.intellij.terminal.backend.hyperlinks.BackendTerminalHyperlinkFacade
 import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.TerminalHyperlinksModelStateDto
 import com.intellij.terminal.session.dto.toDto
-import com.intellij.terminal.session.dto.toStyleRange
 import com.intellij.terminal.session.dto.toTerminalState
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -155,7 +154,7 @@ internal class StateAwareTerminalSession(
   override suspend fun hasRunningCommands(): Boolean = delegate.hasRunningCommands()
 
   private inner class State : MutableStateWithIncrementalUpdates<List<TerminalOutputEvent>> {
-    override suspend fun applyUpdate(update: List<TerminalOutputEvent>) {
+    override suspend fun applyUpdate(update: List<TerminalOutputEvent>): List<TerminalOutputEvent> {
       for (event in update) {
         try {
           handleEvent(event)
@@ -167,6 +166,7 @@ internal class StateAwareTerminalSession(
           thisLogger().error(t)
         }
       }
+      return update
     }
 
     private fun handleEvent(event: TerminalOutputEvent) {
