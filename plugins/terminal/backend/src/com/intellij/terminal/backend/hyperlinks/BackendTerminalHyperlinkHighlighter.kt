@@ -27,14 +27,17 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
-import org.jetbrains.plugins.terminal.block.reworked.*
+import org.jetbrains.plugins.terminal.block.reworked.FrozenTerminalOutputModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration.Companion.milliseconds
 
 internal class BackendTerminalHyperlinkHighlighter(
   project: Project,
   coroutineScope: CoroutineScope,
-  private val outputModel: TerminalOutputModelImpl,
+  private val outputModel: TerminalOutputModel,
   private val isInAlternateBuffer: Boolean,
 ) {
 

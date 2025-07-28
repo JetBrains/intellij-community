@@ -11,14 +11,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 
 internal class BackendTerminalHyperlinkFacade(
   private val project: Project,
   coroutineScope: CoroutineScope,
-  private val outputModel: TerminalOutputModelImpl,
+  private val outputModel: TerminalOutputModel,
   isInAlternateBuffer: Boolean,
 ) {
 

@@ -4,9 +4,9 @@ package com.intellij.terminal.backend
 import com.intellij.execution.filters.ConsoleFilterProvider
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
@@ -21,8 +21,8 @@ import kotlinx.coroutines.CoroutineStart.UNDISPATCHED
 import kotlinx.coroutines.flow.*
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
 import org.jetbrains.plugins.terminal.block.reworked.updateContent
+import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -284,22 +284,22 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     }
   }
 
-  private fun withHelper(test: suspend Helper.() -> Unit) = timeoutRunBlocking(coroutineName = "BackendTerminalHyperlinkHighlighterTest") {
-    val helper = Helper(project)
+  private fun withHelper(test: suspend Fixture.() -> Unit) = timeoutRunBlocking(coroutineName = "BackendTerminalHyperlinkHighlighterTest") {
+    val fixture = Fixture(project)
     ExtensionTestUtil.maskExtensions<ConsoleFilterProvider>(
       ConsoleFilterProvider.FILTER_PROVIDERS,
-      listOf(ConsoleFilterProvider { arrayOf(helper.filter as Filter) }),
+      listOf(ConsoleFilterProvider { arrayOf(fixture.filter as Filter) }),
       testRootDisposable
     )
     withContext(Dispatchers.Default) {
-      helper.run(test)
+      fixture.run(test)
     }
   }
 
-  private class Helper(private val project: Project) {
+  private class Fixture(private val project: Project) {
 
-    private val document = DocumentImpl("", true)
-    private val outputModel = TerminalOutputModelImpl(document, MAX_LENGTH)
+    private val outputModel = TerminalTestUtil.createOutputModel(MAX_LENGTH)
+    private val document: Document get() = outputModel.document
     private lateinit var backendFacade: BackendTerminalHyperlinkFacade
     private val updateEvents = MutableSharedFlow<List<TerminalOutputEvent>>(replay = 100)
     private val pendingUpdateEventCount = MutableStateFlow(0)
@@ -308,7 +308,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
 
     private val clickedLinks = mutableListOf<String>()
 
-    suspend fun run(test: suspend Helper.() -> Unit) {
+    suspend fun run(test: suspend Fixture.() -> Unit) {
       coroutineScope {
         val hyperlinkScope = childScope("BackendTerminalHyperlinkHighlighterTest hyperlink scope")
         backendFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, outputModel, false)
@@ -436,7 +436,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     data class LinkLocator(val line: Int, val substring: String) {
       val length: Int get() = substring.length
 
-      fun locateOffset(document: DocumentImpl): Int {
+      fun locateOffset(document: Document): Int {
         val lineStart = document.getLineStartOffset(line)
         val lineEnd = document.getLineEndOffset(line)
         val lineText = document.immutableCharSequence.substring(lineStart, lineEnd)
@@ -445,7 +445,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       }
 
       fun locateLink(outputModel: TerminalOutputModel, backendFacade: BackendTerminalHyperlinkFacade): TerminalFilterResultInfo {
-        val offset = outputModel.relativeOffset(locateOffset(outputModel.document as DocumentImpl))
+        val offset = outputModel.relativeOffset(locateOffset(outputModel.document))
         val links = backendFacade.dumpState().hyperlinks
         return links.single { offset.toAbsolute() in it.absoluteStartOffset until it.absoluteEndOffset }
       }
