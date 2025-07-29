@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.update
 
 import com.intellij.configurationStore.StoreReloadManager
+import com.intellij.configurationStore.saveSettings
 import com.intellij.history.Label
 import com.intellij.history.LocalHistory
 import com.intellij.ide.errorTreeView.HotfixData
@@ -9,7 +10,9 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
@@ -48,8 +51,17 @@ internal class VcsUpdateTask(
   private val actionName: @Nls @NlsContexts.ProgressTitle String,
 ) {
   suspend fun execute() {
+    // to ensure that if as a result of Update some project settings will be changed,
+    // all local changes are saved in prior and do not overwrite remote changes.
+    // Also, there is a chance that save during update can break it -
+    // we do disable auto saving during update, but still, there is a chance that save will occur.
+    edtWriteAction {
+      FileDocumentManager.getInstance().saveAllDocuments()
+    }
     StoreReloadManager.getInstance(project).blockReloadingProjectOnExternalChanges()
     try {
+      saveSettings(project)
+
       val context = mutableMapOf<AbstractVcs, SequentialUpdatesContext?>()
       var executionIndex = 0
       var continueChain = false

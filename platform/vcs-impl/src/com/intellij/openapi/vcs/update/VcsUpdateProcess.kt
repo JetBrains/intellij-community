@@ -1,15 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update
 
-import com.intellij.configurationStore.forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
@@ -76,17 +73,6 @@ object VcsUpdateProcess {
       if (!dialogOk) {
         return
       }
-    }
-
-    // could be called by external plugin via com.intellij.openapi.vcs.update.AbstractCommonUpdateAction.actionPerformed
-    // and we have no guarantees about threading there
-    if (ApplicationManager.getApplication().isDispatchThread()) { // Not only documents, but also project settings should be saved,
-      // to ensure that if as a result of Update some project settings will be changed,
-      // all local changes are saved in prior and do not overwrite remote changes.
-      // Also, there is a chance that save during update can break it -
-      // we do disable auto saving during update, but still, there is a chance that save will occur.
-      FileDocumentManager.getInstance().saveAllDocuments()
-      forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project, false)
     }
 
     launchUpdate(project, roots, updateSpec, actionInfo, actionName, onSuccess)
