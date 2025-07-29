@@ -38,7 +38,7 @@ data class MavenProjectState(
   val remoteRepositories: List<MavenRemoteRepository> = emptyList(),
   val remotePluginRepositories: List<MavenRemoteRepository> = emptyList(),
   val annotationProcessors: List<MavenArtifact> = emptyList(),
-  val annotationProcessorManagedDependencies: Map<GroupAndArtifact, String> = emptyMap(),
+  val managedDependencies: Map<GroupAndArtifact, String> = emptyMap(),
   val modulesPathsAndNames: Map<String, String> = emptyMap(),
   val modelMap: Map<String, String> = emptyMap(),
   val profilesIds: Collection<String> = emptySet(),

@@ -22,7 +22,7 @@ class MavenProjectTreeVersionNumberTest : UsefulTestCase() {
     hashKType(MavenProjectState::class.createType(), recursionKeeper, hash)
 
     hash.putString(MavenProjectsTree.STORAGE_VERSION)
-    assertEquals("UPDATE STORAGE VERSION ALONG WITH THIS HASH!!!", -1510438168905604055, hash.asLong)
+    assertEquals("UPDATE STORAGE VERSION ALONG WITH THIS HASH!!!", 5736572056086370157, hash.asLong)
   }
 
   private fun hashKType(type: KType, recursionKeeper: MutableSet<String>, hash: HashSink) {

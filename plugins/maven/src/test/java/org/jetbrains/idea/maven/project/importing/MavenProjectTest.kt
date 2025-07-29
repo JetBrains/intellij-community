@@ -918,6 +918,110 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
                nodes[1]!!.dependencies[0].relatedArtifact)
   }
 
+  @Test
+  fun testManagedDependencies()  = runBlocking{
+    val p = createProjectPom("""
+      <groupId>test</groupId>
+      <artifactId>test</artifactId>
+      <version>1</version>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.0</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+""")
+
+    importProjectAsync()
+
+    assertEquals("4.0", projectsTree.findProject(p)!!.findManagedDependencyVersion("junit", "junit")!!)
+  }
+
+  @Test
+  fun testManagedDependenciesFromParent()  = runBlocking{
+    val p = createProjectPom("""
+      <groupId>test</groupId>
+      <artifactId>test</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>
+      <modules>
+        <module>m1</module>
+      </modules>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.0</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+""")
+
+    val m1 = createModulePom("m1",
+                             """
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>test</artifactId>
+        <version>1</version>
+      </parent>                         
+      <artifactId>m1</artifactId>
+""")
+
+    importProjectAsync()
+
+    assertEquals("4.0", projectsTree.findProject(m1)!!.findManagedDependencyVersion("junit", "junit")!!)
+  }
+
+  @Test
+  fun testManagedDependenciesFromParentAndModule()  = runBlocking{
+    val p = createProjectPom("""
+      <groupId>test</groupId>
+      <artifactId>test</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>
+      <modules>
+        <module>m1</module>
+      </modules>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.0</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+""")
+
+    val m1 = createModulePom("m1",
+                             """
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>test</artifactId>
+        <version>1</version>
+      </parent>                         
+      <artifactId>m1</artifactId>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>another</groupId>
+            <artifactId>dep</artifactId>
+            <version>1.0</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+""")
+
+    importProjectAsync()
+
+    assertEquals("4.0", projectsTree.findProject(m1)!!.findManagedDependencyVersion("junit", "junit")!!)
+    assertEquals("1.0", projectsTree.findProject(m1)!!.findManagedDependencyVersion("another", "dep")!!)
+  }
+
   protected fun assertDependenciesNodes(nodes: List<MavenArtifactNode?>?, expected: String?) {
     assertEquals(expected, StringUtil.join(nodes!!, ","))
   }

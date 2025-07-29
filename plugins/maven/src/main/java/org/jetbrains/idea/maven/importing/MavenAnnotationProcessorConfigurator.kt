@@ -17,16 +17,21 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.Consumer
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.text.VersionComparatorUtil
+import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfiguratorUtil.getProcessorArtifactInfos
 import org.jetbrains.idea.maven.importing.MavenImportUtil.annotationProcessorOptions
+import org.jetbrains.idea.maven.importing.MavenImportUtil.compilerConfigsForCompilePhase
 import org.jetbrains.idea.maven.importing.MavenImportUtil.declaredAnnotationProcessors
-import org.jetbrains.idea.maven.importing.MavenImportUtil.getAnnotationProcessorArtifactInfos
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getAnnotationProcessorDirectory
 import org.jetbrains.idea.maven.importing.MavenImportUtil.procMode
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.*
+import org.jetbrains.idea.maven.model.MavenArtifactInfo
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl
 import org.jetbrains.jps.util.JpsPathUtil
@@ -81,7 +86,12 @@ class MavenAnnotationProcessorConfigurator : MavenApplicableConfigurator(PLUGIN_
     for (mavenProject in projects) {
       if (!shouldEnableAnnotationProcessors(mavenProject)) continue
 
-      val infos = mavenProject.getAnnotationProcessorArtifactInfos()
+      val infos = ArrayList<MavenArtifactInfo>()
+
+      mavenProject.compilerConfigsForCompilePhase()
+        .mapNotNull { MavenJDOMUtil.findChildByPath(it, "annotationProcessorPaths") }
+        .forEach { infos.addAll(getProcessorArtifactInfos(it, mavenProject)) }
+
 
       for (info in infos) {
         val mavenId = MavenId(info.groupId, info.artifactId, info.version)
@@ -386,5 +396,43 @@ class MavenAnnotationProcessorConfigurator : MavenApplicableConfigurator(PLUGIN_
 object MavenAnnotationProcessorConfiguratorUtil {
   fun getModuleProfileName(moduleName: @NlsSafe String): String {
     return PROFILE_PREFIX + moduleName
+  }
+
+  private fun getProcessorVersion(groupId: String, artifactId: String, version: String?, project: MavenProject): String? {
+    if (version != null) return version
+    val pluginVersion = project.findPlugin(PLUGIN_GROUP_ID, PLUGIN_ARTIFACT_ID)?.version ?: return null
+
+    if (VersionComparatorUtil.compare(pluginVersion, "3.12.0") >= 0) {
+      return project.findManagedDependencyVersion(groupId, artifactId)
+    }
+    return null
+  }
+
+  fun getProcessorArtifactInfos(config: Element, mavenProject: MavenProject): List<MavenArtifactInfo> {
+    val artifacts: MutableList<MavenArtifactInfo> = ArrayList()
+    val addToArtifacts = Consumer { path: Element ->
+      val groupId = path.getChildTextTrim("groupId")
+      val artifactId = path.getChildTextTrim("artifactId")
+      val version = path.getChildTextTrim("version")
+      val resolvedVersion = getProcessorVersion(groupId, artifactId, version, mavenProject)
+
+      val classifier = path.getChildTextTrim("classifier")
+
+      //String type = path.getChildTextTrim("type");
+      artifacts.add(MavenArtifactInfo(groupId, artifactId, resolvedVersion, "jar", classifier))
+    }
+
+    for (path in config.getChildren("path")) {
+      addToArtifacts.consume(path)
+    }
+
+    for (dependency in config.getChildren("dependency")) {
+      addToArtifacts.consume(dependency)
+    }
+
+    for (annotationProcessorPath in config.getChildren("annotationProcessorPath")) {
+      addToArtifacts.consume(annotationProcessorPath)
+    }
+    return artifacts
   }
 }

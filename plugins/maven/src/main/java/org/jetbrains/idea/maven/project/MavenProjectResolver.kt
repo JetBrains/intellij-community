@@ -21,7 +21,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.RepositoryBlockedSyncIssue.getIssue
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenConfigBuildIssue.getIssue
-import org.jetbrains.idea.maven.importing.MavenImportUtil.getAnnotationProcessorArtifactInfos
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenProjectResolutionContributor.Companion.EP_NAME
 import org.jetbrains.idea.maven.project.MavenResolveResultProblemProcessor.BLOCKED_MIRROR_FOR_REPOSITORIES
@@ -466,6 +465,7 @@ class MavenProjectResolver(private val myProject: Project) {
 
       mavenProject.updateState(
         mavenModel,
+        result.managedDependencies,
         result.dependencyHash,
         result.readingProblems,
         result.activatedProfiles,
@@ -473,17 +473,6 @@ class MavenProjectResolver(private val myProject: Project) {
         result.nativeModelMap,
         effectiveRepositoryPath,
         keepPreviousArtifacts)
-
-      val annotationProcessors = mavenProject.getAnnotationProcessorArtifactInfos().map { GroupAndArtifact(it.groupId, it.artifactId) }.toSet()
-      val managedDependencies = HashMap<GroupAndArtifact, String>()
-      for (md in result.managedDependencies) {
-        val groupAndArtifact = GroupAndArtifact(md.groupId ?: "", md.artifactId ?: "")
-        if (annotationProcessors.contains(groupAndArtifact)) {
-          managedDependencies.put(groupAndArtifact, md.version ?: "")
-        }
-      }
-      mavenProject.updateAnnotationProcessorManagedDependencies(managedDependencies)
-
     }
     else {
       mavenProject.updateState(result.readingProblems)
