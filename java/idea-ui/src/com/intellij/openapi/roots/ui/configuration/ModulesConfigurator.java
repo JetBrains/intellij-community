@@ -32,7 +32,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigur
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -225,54 +224,111 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
   }
 
   public void apply() throws ConfigurationException {
-    // validate content and source roots
+    validateContentAndSourceRoots();
+    validateModuleEditors();
+    
+    final Map<Sdk, Sdk> modifiedToOriginalMap = createSdkMapping();
+
+    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, ConfigurationException>)() -> {
+      final List<ModifiableRootModel> models = applyModuleEditors(modifiedToOriginalMap);
+      commitChanges(models);
+      return null;
+    });
+
+    myModified = false;
+  }
+  
+  /**
+   * Validates content and source roots across all modules.
+   * Checks for duplicate source roots within the same module,
+   * duplicate content roots across modules, and ensures source roots
+   * belong to the correct module.
+   */
+  private void validateContentAndSourceRoots() throws ConfigurationException {
     final Map<VirtualFile, String> contentRootToModuleNameMap = new HashMap<>();
     final Map<VirtualFile, VirtualFile> srcRootsToContentRootMap = new HashMap<>();
+    
+    // First pass: validate within each module
     for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
-      final ModuleRootModel rootModel = moduleEditor.getRootModel();
-      final ContentEntry[] contents = rootModel.getContentEntries();
-      final String moduleName = moduleEditor.getName();
-      Set<VirtualFile> sourceRoots = new HashSet<>();
-      for (ContentEntry content : contents) {
-        for (VirtualFile root : content.getSourceFolderFiles()) {
-          if (!sourceRoots.add(root)) {
-            throw new ConfigurationException(JavaUiBundle.message("module.paths.validation.duplicate.source.root.in.same.module.error", root.getPresentableUrl(), moduleName));
-          }
-        }
-      }
-
-      for (ContentEntry contentEntry : contents) {
-        final VirtualFile contentRoot = contentEntry.getFile();
-        if (contentRoot == null) {
-          continue;
-        }
-        final String previousName = contentRootToModuleNameMap.put(contentRoot, moduleName);
-        if (previousName != null && !previousName.equals(moduleName)) {
-          throw new ConfigurationException(
-            JavaUiBundle.message("module.paths.validation.duplicate.content.error", contentRoot.getPresentableUrl(), previousName, moduleName)
-          );
-        }
-        for (VirtualFile srcRoot : contentEntry.getSourceFolderFiles()) {
-          final VirtualFile anotherContentRoot = srcRootsToContentRootMap.put(srcRoot, contentRoot);
-          if (anotherContentRoot != null) {
-            final String problematicModule;
-            final String correctModule;
-            if (VfsUtilCore.isAncestor(anotherContentRoot, contentRoot, true)) {
-              problematicModule = contentRootToModuleNameMap.get(anotherContentRoot);
-              correctModule = contentRootToModuleNameMap.get(contentRoot);
-            }
-            else {
-              problematicModule = contentRootToModuleNameMap.get(contentRoot);
-              correctModule = contentRootToModuleNameMap.get(anotherContentRoot);
-            }
-            throw new ConfigurationException(
-              JavaUiBundle.message("module.paths.validation.duplicate.source.root.error", problematicModule, srcRoot.getPresentableUrl(), correctModule)
-            );
-          }
+      validateModuleRoots(moduleEditor, contentRootToModuleNameMap, srcRootsToContentRootMap);
+    }
+    
+    // Second pass: validate source roots across modules
+    validateSourceRootsAcrossModules(srcRootsToContentRootMap, contentRootToModuleNameMap);
+  }
+  
+  /**
+   * Validates roots within a single module.
+   */
+  private static void validateModuleRoots(@NotNull ModuleEditor moduleEditor,
+                                          @NotNull Map<VirtualFile, String> contentRootToModuleNameMap,
+                                          @NotNull Map<VirtualFile, VirtualFile> srcRootsToContentRootMap) throws ConfigurationException {
+    final ModuleRootModel rootModel = moduleEditor.getRootModel();
+    final ContentEntry[] contents = rootModel.getContentEntries();
+    final String moduleName = moduleEditor.getName();
+    
+    // Check for duplicate source roots within the same module
+    Set<VirtualFile> sourceRoots = new HashSet<>();
+    for (ContentEntry content : contents) {
+      for (VirtualFile root : content.getSourceFolderFiles()) {
+        if (!sourceRoots.add(root)) {
+          throw new ConfigurationException(JavaUiBundle.message("module.paths.validation.duplicate.source.root.in.same.module.error", root.getPresentableUrl(), moduleName));
         }
       }
     }
-    // additional validation: directories marked as src roots must belong to the same module as their corresponding content root
+
+    // Check for duplicate content roots across modules and map source roots to content roots
+    for (ContentEntry contentEntry : contents) {
+      final VirtualFile contentRoot = contentEntry.getFile();
+      if (contentRoot == null) {
+        continue;
+      }
+      
+      // Check for duplicate content roots
+      final String previousName = contentRootToModuleNameMap.put(contentRoot, moduleName);
+      if (previousName != null && !previousName.equals(moduleName)) {
+        throw new ConfigurationException(
+          JavaUiBundle.message("module.paths.validation.duplicate.content.error", contentRoot.getPresentableUrl(), previousName, moduleName)
+        );
+      }
+      
+      // Map source roots to content roots and check for duplicates
+      for (VirtualFile srcRoot : contentEntry.getSourceFolderFiles()) {
+        final VirtualFile anotherContentRoot = srcRootsToContentRootMap.put(srcRoot, contentRoot);
+        if (anotherContentRoot != null) {
+          throwDuplicateSourceRootError(srcRoot, contentRoot, anotherContentRoot, contentRootToModuleNameMap);
+        }
+      }
+    }
+  }
+  
+  /**
+   * Throws an appropriate error for duplicate source roots.
+   */
+  private static void throwDuplicateSourceRootError(@NotNull VirtualFile srcRoot,
+                                                    @NotNull VirtualFile contentRoot,
+                                                    @NotNull VirtualFile anotherContentRoot,
+                                                    @NotNull Map<VirtualFile, String> contentRootToModuleNameMap) throws ConfigurationException {
+    final String problematicModule;
+    final String correctModule;
+    if (VfsUtilCore.isAncestor(anotherContentRoot, contentRoot, true)) {
+      problematicModule = contentRootToModuleNameMap.get(anotherContentRoot);
+      correctModule = contentRootToModuleNameMap.get(contentRoot);
+    }
+    else {
+      problematicModule = contentRootToModuleNameMap.get(contentRoot);
+      correctModule = contentRootToModuleNameMap.get(anotherContentRoot);
+    }
+    throw new ConfigurationException(
+      JavaUiBundle.message("module.paths.validation.duplicate.source.root.error", problematicModule, srcRoot.getPresentableUrl(), correctModule)
+    );
+  }
+  
+  /**
+   * Validates that source roots belong to the same module as their corresponding content root.
+   */
+  private static void validateSourceRootsAcrossModules(@NotNull Map<VirtualFile, VirtualFile> srcRootsToContentRootMap,
+                                                       @NotNull Map<VirtualFile, String> contentRootToModuleNameMap) throws ConfigurationException {
     for (Map.Entry<VirtualFile, VirtualFile> entry : srcRootsToContentRootMap.entrySet()) {
       final VirtualFile srcRoot = entry.getKey();
       final VirtualFile correspondingContent = entry.getValue();
@@ -287,67 +343,89 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
         }
       }
     }
-
+  }
+  
+  /**
+   * Validates that all module editors can be applied.
+   */
+  private void validateModuleEditors() throws ConfigurationException {
     for (ModuleEditor moduleEditor : myModuleEditors.values()) {
       moduleEditor.canApply();
     }
-
+  }
+  
+  /**
+   * Creates a mapping from modified SDKs to original SDKs.
+   */
+  private @NotNull Map<Sdk, Sdk> createSdkMapping() {
     final Map<Sdk, Sdk> modifiedToOriginalMap = new HashMap<>();
     final ProjectSdksModel projectJdksModel = myProjectStructureConfigurable.getProjectJdksModel();
     for (Map.Entry<Sdk, Sdk> entry : projectJdksModel.getProjectSdks().entrySet()) {
       modifiedToOriginalMap.put(entry.getValue(), entry.getKey());
     }
-
-    final Ref<ConfigurationException> exceptionRef = Ref.create();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      final List<ModifiableRootModel> models = new ArrayList<>(myModuleEditors.size());
-      try {
-        for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
-          final ModifiableRootModel model = moduleEditor.apply();
-          if (model != null) {
-            if (!model.isSdkInherited()) {
-              // make sure the sdk is set to original SDK stored in the JDK Table
-              final Sdk modelSdk = model.getSdk();
-              if (modelSdk != null) {
-                final Sdk original = modifiedToOriginalMap.get(modelSdk);
-                if (original != null) {
-                  model.setSdk(original);
-                }
-              }
-            }
-            models.add(model);
-          }
-        }
-        myFacetsConfigurator.applyEditors();
+    return modifiedToOriginalMap;
+  }
+  
+  /**
+   * Applies changes from module editors and collects modifiable root models.
+   * Returns the list of models to commit or an empty list if an exception occurred.
+   */
+  private @NotNull List<ModifiableRootModel> applyModuleEditors(@NotNull Map<Sdk, Sdk> modifiedToOriginalMap) throws ConfigurationException {
+    final List<ModifiableRootModel> models = new ArrayList<>(myModuleEditors.size());
+    for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
+      final ModifiableRootModel model = moduleEditor.apply();
+      if (model != null) {
+        updateModelSdk(model, modifiedToOriginalMap);
+        models.add(model);
       }
-      catch (ConfigurationException e) {
-        exceptionRef.set(e);
-        return;
-      }
-
-      try {
-        for (ModuleEditor editor : myModuleEditors.values()) {
-          editor.resetModifiableModel();
-        }
-        ModifiableModelCommitter.multiCommit(models, myModuleModel);
-        myModuleModelCommitted = true;
-        myFacetsConfigurator.commitFacets();
-
-      }
-      finally {
-        myProjectStructureConfigurable.getModulesConfig().getFacetEditorFacade().clearMaps(false);
-
-        myFacetsConfigurator = createFacetsConfigurator();
-        initModuleModel();
-        myModuleModelCommitted = false;
-      }
-    });
-
-    if (!exceptionRef.isNull()) {
-      throw exceptionRef.get();
     }
+    myFacetsConfigurator.applyEditors();
 
-    myModified = false;
+    return models;
+  }
+  
+  /**
+   * Updates the SDK in the model to use the original SDK from the JDK Table.
+   */
+  private static void updateModelSdk(@NotNull ModifiableRootModel model,
+                                     @NotNull Map<Sdk, Sdk> modifiedToOriginalMap) {
+    if (!model.isSdkInherited()) {
+      // make sure the sdk is set to original SDK stored in the JDK Table
+      final Sdk modelSdk = model.getSdk();
+      if (modelSdk != null) {
+        final Sdk original = modifiedToOriginalMap.get(modelSdk);
+        if (original != null) {
+          model.setSdk(original);
+        }
+      }
+    }
+  }
+  
+  /**
+   * Commits changes to the module model and facets, then resets the state.
+   */
+  private void commitChanges(@NotNull List<ModifiableRootModel> models) {
+    try {
+      for (ModuleEditor editor : myModuleEditors.values()) {
+        editor.resetModifiableModel();
+      }
+      ModifiableModelCommitter.multiCommit(models, myModuleModel);
+      myModuleModelCommitted = true;
+      myFacetsConfigurator.commitFacets();
+    }
+    finally {
+      cleanupAfterCommit();
+    }
+  }
+  
+  /**
+   * Cleans up after committing changes.
+   */
+  private void cleanupAfterCommit() {
+    myProjectStructureConfigurable.getModulesConfig().getFacetEditorFacade().clearMaps(false);
+    myFacetsConfigurator = createFacetsConfigurator();
+    initModuleModel();
+    myModuleModelCommitted = false;
   }
 
   private ProjectFacetsConfigurator createFacetsConfigurator() {
