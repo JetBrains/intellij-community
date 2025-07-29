@@ -16,6 +16,7 @@ import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginManagerSessionService
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.project.ProjectId
@@ -87,6 +88,10 @@ class BackendPluginManagerApi : PluginManagerApi {
 
   override suspend fun getPluginInstallationStates(): Map<PluginId, PluginInstallationState> {
     return DefaultUiPluginManagerController.getPluginInstallationStates()
+  }
+
+  override suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginDto> {
+    return DefaultUiPluginManagerController.findInstalledPlugins(plugins).mapValues { PluginDto.fromModel(it.value) }
   }
 
   override suspend fun getCustomRepoPlugins(): List<PluginDto> {

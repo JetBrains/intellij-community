@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -480,8 +479,15 @@ public final class PluginManagerConfigurable
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
                                                                      @NotNull PluginsGroup group,
-                                                                     @NotNull List<HtmlChunk> errors) {
-            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, myCoroutineScope, true);
+                                                                     @NotNull List<HtmlChunk> errors,
+                                                                     @Nullable PluginUiModel installedDescriptorDorMarketplace) {
+            return new ListPluginComponent(myPluginModelFacade,
+                                           model,
+                                           installedDescriptorDorMarketplace, group,
+                                           searchListener,
+                                           errors,
+                                           myCoroutineScope,
+                                           true);
           }
         };
 
@@ -516,7 +522,7 @@ public final class PluginManagerConfigurable
             Map<String, List<PluginUiModel>> customRepositoriesMap = UiPluginManager.getInstance().getCustomRepositoryPluginMap();
             try {
               if (project != null) {
-                addSuggestedGroup(groups, project, customRepositoriesMap, model.getErrors(), model.getSuggestedPlugins());
+                addSuggestedGroup(groups, model.getErrors(), model.getSuggestedPlugins(), model.getInstalledPlugins());
               }
 
               PluginsViewCustomizer.PluginsGroupDescriptor internalPluginsGroupDescriptor =
@@ -531,7 +537,8 @@ public final class PluginManagerConfigurable
                   SearchWords.INTERNAL.getValue(),
                   customPlugins,
                   group -> customPlugins.size() >= ITEMS_PER_GROUP,
-                  model.getErrors()
+                  model.getErrors(),
+                  model.getInstalledPlugins()
                 );
               }
 
@@ -543,7 +550,8 @@ public final class PluginManagerConfigurable
                 "is_featured_search=true",
                 SearchWords.STAFF_PICKS.getValue(),
                 marketplaceData,
-                model.getErrors()
+                model.getErrors(),
+                model.getInstalledPlugins()
               );
               addGroupViaLightDescriptor(
                 groups,
@@ -552,8 +560,8 @@ public final class PluginManagerConfigurable
                 "orderBy=update+date",
                 "/sortBy:updated",
                 marketplaceData,
-                model.getErrors()
-              );
+                model.getErrors(),
+                model.getInstalledPlugins());
               addGroupViaLightDescriptor(
                 groups,
                 IdeBundle.message("plugins.configurable.top.downloads"),
@@ -561,8 +569,8 @@ public final class PluginManagerConfigurable
                 "orderBy=downloads",
                 "/sortBy:downloads",
                 marketplaceData,
-                model.getErrors()
-              );
+                model.getErrors(),
+                model.getInstalledPlugins());
               addGroupViaLightDescriptor(
                 groups,
                 IdeBundle.message("plugins.configurable.top.rated"),
@@ -570,8 +578,8 @@ public final class PluginManagerConfigurable
                 "orderBy=rating",
                 "/sortBy:rating",
                 marketplaceData,
-                model.getErrors()
-              );
+                model.getErrors(),
+                model.getInstalledPlugins());
             }
             catch (IOException e) {
               LOG.info("Main plugin repository is not available ('" + e.getMessage() + "'). Please check your network settings.");
@@ -591,7 +599,8 @@ public final class PluginManagerConfigurable
                            PluginsGroup.sortByName(group.getModels());
                            return allDescriptors.size() > ITEMS_PER_GROUP;
                          },
-                         model.getErrors());
+                         model.getErrors(),
+                         model.getInstalledPlugins());
               }
             }
             if (myPluginManagerCustomizer != null) {
@@ -866,8 +875,15 @@ public final class PluginManagerConfigurable
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
                                                                      @NotNull PluginsGroup group,
-                                                                     @NotNull List<HtmlChunk> errors) {
-            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, myCoroutineScope, true);
+                                                                     @NotNull List<HtmlChunk> errors,
+                                                                     @Nullable PluginUiModel installedDescriptorDorMarketplace) {
+            return new ListPluginComponent(myPluginModelFacade,
+                                           model,
+                                           installedDescriptorDorMarketplace, group,
+                                           searchListener,
+                                           errors,
+                                           myCoroutineScope,
+                                           true);
           }
         };
 
@@ -1037,12 +1053,12 @@ public final class PluginManagerConfigurable
       @Override
       protected @NotNull JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
-        UiPluginManager uiPluginManager = UiPluginManager.getInstance();
         myInstalledPanel = new PluginsGroupComponentWithProgress(eventHandler) {
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
                                                                      @NotNull PluginsGroup group,
-                                                                     @NotNull List<HtmlChunk> errors) {
+                                                                     @NotNull List<HtmlChunk> errors,
+                                                                     @Nullable PluginUiModel installedDescriptorDorMarketplace) {
             return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, myCoroutineScope, false);
           }
         };
@@ -1217,7 +1233,8 @@ public final class PluginManagerConfigurable
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
                                                                      @NotNull PluginsGroup group,
-                                                                     @NotNull List<HtmlChunk> errors) {
+                                                                     @NotNull List<HtmlChunk> errors,
+                                                                     @Nullable PluginUiModel installedDescriptorDorMarketplace) {
             return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, myCoroutineScope, false);
           }
         };
@@ -1427,11 +1444,10 @@ public final class PluginManagerConfigurable
   }
 
   private void addSuggestedGroup(@NotNull List<? super PluginsGroup> groups,
-                                 @NotNull Project project,
-                                 Map<String, @NotNull List<PluginUiModel>> customMap,
                                  @NotNull Map<@NotNull PluginId,
                                  @NotNull List<@NotNull HtmlChunk>> errors,
-                                 @NotNull List<@NotNull PluginUiModel> plugins) {
+                                 @NotNull List<@NotNull PluginUiModel> plugins,
+                                 @NotNull Map<@NotNull PluginId, @NotNull PluginUiModel> installedPlugins) {
     String groupName = IdeBundle.message("plugins.configurable.suggested");
     LOG.info("Marketplace tab: '" + groupName + "' group load started");
 
@@ -1442,7 +1458,7 @@ public final class PluginManagerConfigurable
 
       FUSEventSource.PLUGINS_SUGGESTED_GROUP.logPluginSuggested(plugin.getPluginId());
     }
-    addGroup(groups, groupName, PluginsGroupType.SUGGESTED, "", plugins, group -> false, errors);
+    addGroup(groups, groupName, PluginsGroupType.SUGGESTED, "", plugins, group -> false, errors, installedPlugins);
   }
 
 
@@ -1921,9 +1937,11 @@ public final class PluginManagerConfigurable
                         @NotNull String showAllQuery,
                         @NotNull List<PluginUiModel> customPlugins,
                         @NotNull Predicate<? super PluginsGroup> showAllPredicate,
-                        @NotNull Map<PluginId, List<HtmlChunk>> errors) {
+                        @NotNull Map<PluginId, List<HtmlChunk>> errors,
+                        @NotNull Map<PluginId, PluginUiModel> installedPlugins) {
     PluginsGroup group = new PluginsGroup(name, type);
     group.setErrors(errors);
+    group.setInstalledPlugins(installedPlugins);
     int i = 0;
     for (Iterator<PluginUiModel> iterator = customPlugins.iterator(); iterator.hasNext() && i < ITEMS_PER_GROUP; i++) {
       group.addModel(iterator.next());
@@ -1949,7 +1967,9 @@ public final class PluginManagerConfigurable
                                           @NotNull @NonNls String query,
                                           @NotNull @NonNls String showAllQuery,
                                           @NotNull Map<String, PluginSearchResult> marketplaceData,
-                                          @NotNull Map<PluginId, List<HtmlChunk>> errors) throws IOException {
+                                          @NotNull Map<PluginId, List<HtmlChunk>> errors,
+                                          @NotNull Map<PluginId, PluginUiModel> installedPluginIds)
+    throws IOException {
     LOG.info("Marketplace tab: '" + name + "' group load started");
     PluginSearchResult searchResult = marketplaceData.get(query);
     if (searchResult.getError() != null) {
@@ -1968,7 +1988,8 @@ public final class PluginManagerConfigurable
              showAllQuery,
              plugins,
              __ -> plugins.size() >= ITEMS_PER_GROUP,
-             errors);
+             errors,
+             installedPluginIds);
   }
 
   @Override

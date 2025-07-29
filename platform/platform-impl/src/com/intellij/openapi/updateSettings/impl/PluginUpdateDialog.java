@@ -121,7 +121,8 @@ public final class PluginUpdateDialog extends DialogWrapper {
       @Override
       protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
                                                                  @NotNull PluginsGroup group,
-                                                                 @NotNull List<HtmlChunk> errors) {
+                                                                 @NotNull List<HtmlChunk> errors,
+                                                                 @Nullable PluginUiModel installedDescriptorDorMarketplace) {
         if (!(model.isFromMarketplace())) {
           PluginNode node = new PluginNode(model.getPluginId(), model.getName(), "0");
           node.setDescription(model.getDescription());

@@ -75,7 +75,8 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
 
   protected abstract @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
                                                                       @NotNull PluginsGroup group,
-                                                                      @NotNull List<HtmlChunk> errors);
+                                                                      @NotNull List<HtmlChunk> errors,
+                                                                      @Nullable PluginUiModel installedDescriptorDorMarketplace);
 
   public final @NotNull List<UIPluginGroup> getGroups() {
     return Collections.unmodifiableList(myGroups);
@@ -249,7 +250,8 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
                           int index,
                           int eventIndex) {
     for (PluginUiModel pluginUiModel : models) {
-      ListPluginComponent pluginComponent = createListComponent(pluginUiModel, group, group.getErrors(pluginUiModel));
+      PluginUiModel installedDescriptor = group.getInstalledDescriptor(pluginUiModel.getPluginId());
+      ListPluginComponent pluginComponent = createListComponent(pluginUiModel, group, group.getErrors(pluginUiModel), installedDescriptor);
       group.ui.plugins.add(pluginComponent);
       add(pluginComponent, index);
       myEventHandler.addCell(pluginComponent, eventIndex);
@@ -281,7 +283,8 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
       uiIndex = getComponentIndex(anchor);
     }
 
-    ListPluginComponent pluginComponent = createListComponent(model, group, group.getErrors(model));
+    ListPluginComponent pluginComponent =
+      createListComponent(model, group, group.getErrors(model), group.getInstalledDescriptor(model.getPluginId()));
     group.ui.plugins.add(index, pluginComponent);
     add(pluginComponent, uiIndex);
     myEventHandler.addCell(pluginComponent, anchor);

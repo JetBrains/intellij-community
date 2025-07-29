@@ -113,6 +113,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().isDisabledInDiff(sessionId, pluginId)
   }
 
+  override suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginUiModel> {
+    return PluginManagerApi.getInstance().findInstalledPlugins(plugins)
+  }
+
   override suspend fun isPluginEnabled(pluginId: PluginId): Boolean {
     return PluginManagerApi.getInstance().isPluginEnabled(pluginId)
   }

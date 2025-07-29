@@ -28,6 +28,7 @@ public class PluginsGroup {
   public PluginsGroupType type;
   private final List<PluginUiModel> models = new ArrayList<>();
   private Map<PluginId, List<HtmlChunk>> errors = new HashMap<>();
+  private Map<PluginId, PluginUiModel> installedPlugins = new HashMap<>();
 
   public PluginsGroup(@NotNull @Nls String title, @NotNull PluginsGroupType type) {
     myTitlePrefix = title;
@@ -92,6 +93,14 @@ public class PluginsGroup {
 
   public void setErrors(PluginUiModel model, List<HtmlChunk> errors) {
     this.errors.put(model.getPluginId(), errors);
+  }
+
+  public void setInstalledPlugins(Map<PluginId, PluginUiModel> installedDescriptors) {
+    this.installedPlugins = installedDescriptors;
+  }
+
+  public PluginUiModel getInstalledDescriptor(@NotNull PluginId pluginId) {
+    return installedPlugins.get(pluginId);
   }
 
   public List<HtmlChunk> getErrors(PluginUiModel model) {

@@ -111,6 +111,27 @@ object PluginModelAsyncOperationsExecutor {
     }
   }
 
+  fun createButtons(
+    cs: CoroutineScope,
+    component: JComponent,
+    pluginId: PluginId,
+    isMarketplace: Boolean,
+    callback: (PluginInstallationState, PluginUiModel?) -> Unit,
+  ) {
+    cs.launch(Dispatchers.IO) {
+      val installationState = UiPluginManager.getInstance().getPluginInstallationState(pluginId)
+      val installedDescriptor = if (isMarketplace && installationState.status != PluginStatus.INSTALLED_AND_REQUIRED_RESTART) {
+        UiPluginManager.getInstance().getPlugin(pluginId)
+      }
+      else null
+      println("scheduling swithc to edt for ${pluginId.idString}")
+      withContext(Dispatchers.EDT + ModalityState.stateForComponent(component).asContextElement()) {
+        println("switched to edt for ${pluginId.idString}")
+        callback(installationState, installedDescriptor)
+      }
+    }
+  }
+
   fun switchPlugins(coroutineScope: CoroutineScope, pluginModelFacade: PluginModelFacade, enable: Boolean, callback: (List<PluginUiModel>) -> Unit) {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       val models = mutableListOf<PluginUiModel>()

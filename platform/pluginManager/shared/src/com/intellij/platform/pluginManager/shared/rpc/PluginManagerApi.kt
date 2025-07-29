@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginInstallationState
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
@@ -64,6 +65,8 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult>
   suspend fun initSession(sessionId: String): InitSessionResult
   suspend fun isPluginEnabled(pluginId: PluginId): Boolean
+  suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginDto>
+
 
   companion object {
     suspend fun getInstance(): PluginManagerApi {

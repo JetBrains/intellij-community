@@ -118,6 +118,10 @@ class UiPluginManager {
     return getController().isModified(sessionId)
   }
 
+  suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginUiModel> {
+    return getController().findInstalledPlugins(plugins)
+  }
+
   fun enablePlugins(sessionId: String, descriptorIds: List<PluginId>, enable: Boolean, project: Project?): SetEnabledStateResult {
     return getController().enablePlugins(sessionId, descriptorIds, enable, project)
   }

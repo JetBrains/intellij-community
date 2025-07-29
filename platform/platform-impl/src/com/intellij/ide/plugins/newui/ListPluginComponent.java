@@ -107,6 +107,16 @@ public final class ListPluginComponent extends JPanel {
                              @NotNull LinkListener<Object> searchListener,
                              @NotNull List<HtmlChunk> errors,
                              @NotNull CoroutineScope coroutineScope,
+                             boolean marketplace){
+    this(pluginModelFacade, pluginUiModel, null, group, searchListener, errors, coroutineScope, marketplace);
+  }
+
+  public ListPluginComponent(@NotNull PluginModelFacade pluginModelFacade,
+                             @NotNull PluginUiModel pluginUiModel,
+                             @Nullable PluginUiModel installedDescriptorForMarketplace, @NotNull PluginsGroup group,
+                             @NotNull LinkListener<Object> searchListener,
+                             @NotNull List<HtmlChunk> errors,
+                             @NotNull CoroutineScope coroutineScope,
                              boolean marketplace) {
     myPlugin = pluginUiModel;
     myGroup = group;
@@ -114,11 +124,13 @@ public final class ListPluginComponent extends JPanel {
     mySearchListener = searchListener;
     myMarketplace = marketplace;
     myCoroutineScope = coroutineScope;
+    myInstalledDescriptorForMarketplace = installedDescriptorForMarketplace;
     PluginId pluginId = myPlugin.getPluginId();
     boolean compatible = !myPlugin.isIncompatibleWithCurrentOs();
     myIsAvailable = (compatible || isInstalledAndEnabled()) && pluginUiModel.getCanBeEnabled();
     myIsEssential = ApplicationInfo.getInstance().isEssentialPlugin(pluginId);
-    myIsNotFreeInFreeMode = UiPluginManager.getInstance()
+    UiPluginManager pluginManager = UiPluginManager.getInstance();
+    myIsNotFreeInFreeMode = pluginManager
       .isPluginRequiresUltimateButItIsDisabled(pluginModelFacade.getModel().getSessionId(), pluginUiModel.getPluginId());
     pluginModelFacade.addComponent(this);
     myCustomizer = Registry.is("reworked.plugin.manager.enabled", false) ? PluginManagerCustomizer.getInstance() : null;
@@ -136,7 +148,7 @@ public final class ListPluginComponent extends JPanel {
     createTag();
 
     if (myIsAvailable) {
-      createButtons();
+      doCreateButtons(pluginManager.getPluginInstallationState(pluginId), installedDescriptorForMarketplace);
       createMetricsPanel();
       createLicensePanel();
     }
@@ -247,16 +259,21 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private void createButtons() {
-    PluginId pluginId = myPlugin.getPluginId();
-    PluginInstallationState installationState = UiPluginManager.getInstance().getPluginInstallationState(myPlugin.getPluginId());
+    PluginModelAsyncOperationsExecutor.INSTANCE.createButtons(myCoroutineScope, this, myPlugin.getPluginId(), myMarketplace,
+                                                              (state, model) -> {
+                                                                doCreateButtons(state, model);
+                                                                fullRepaint();
+                                                                return null;
+                                                              });
+  }
+
+  private void doCreateButtons(PluginInstallationState installationState, PluginUiModel installedModel) {
     if (myMarketplace) {
       if (installationState.getStatus() == PluginStatus.INSTALLED_AND_REQUIRED_RESTART) {
         myLayout.addButtonComponent(myRestartButton = new RestartButton(myModelFacade));
       }
       else {
-        PluginUiModel installedDescriptorForMarketplace = UiPluginManager.getInstance().getPlugin(pluginId);
-
-        boolean showInstall = installedDescriptorForMarketplace == null;
+        boolean showInstall = installedModel == null;
 
         myLayout.addButtonComponent(myInstallButton = createInstallButton());
 
@@ -266,7 +283,7 @@ public final class ListPluginComponent extends JPanel {
 
         ColorButton.setWidth72(myInstallButton);
 
-        myInstalledDescriptorForMarketplace = installedDescriptorForMarketplace;
+        myInstalledDescriptorForMarketplace = installedModel;
         myInstallButton.setVisible(showInstall);
 
         if (myInstalledDescriptorForMarketplace != null && myInstalledDescriptorForMarketplace.isDeleted()) {

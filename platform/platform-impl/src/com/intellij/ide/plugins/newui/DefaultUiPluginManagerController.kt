@@ -33,6 +33,8 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
+import fleet.util.associateNotNull
+import fleet.util.associateWithNotNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.io.File
@@ -238,6 +240,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   override suspend fun isPluginEnabled(pluginId: PluginId): Boolean {
     return !PluginManagerCore.isDisabled(pluginId)
+  }
+
+  override suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginUiModel> {
+    return plugins.mapNotNull { getPlugin(it) }.associateBy { it.pluginId }
   }
 
   override fun connectToUpdateServiceWithCounter(sessionId: String, callback: (Int?) -> Unit): PluginUpdatesService {
