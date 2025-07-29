@@ -5,7 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
+import org.jetbrains.jewel.IntUiTestTheme
 import org.jetbrains.jewel.ui.component.InlineInformationBanner
 import org.jetbrains.jewel.ui.component.banner.BannerIconActionScope
 import org.jetbrains.jewel.ui.component.banner.BannerLinkActionScope
@@ -21,7 +21,7 @@ class InlineBannerTest : SharedBannerTest() {
         block: ComposeContentTestRule.() -> Unit,
     ) {
         rule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 InlineInformationBanner(
                     text = text,
                     linkActions = linkActions,

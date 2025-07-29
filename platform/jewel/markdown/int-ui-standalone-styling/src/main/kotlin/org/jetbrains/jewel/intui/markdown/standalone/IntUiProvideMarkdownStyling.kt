@@ -33,7 +33,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 public fun ProvideMarkdownStyling(
     isDark: Boolean = JewelTheme.isDark,
     markdownStyling: MarkdownStyling =
-        remember(isDark, JewelTheme.instanceUuid) {
+        remember(JewelTheme.instanceUuid) {
             if (isDark) {
                 MarkdownStyling.dark()
             } else {

@@ -49,8 +49,9 @@ import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
 @Composable
 internal fun MarkdownPreview(rawMarkdown: CharSequence, modifier: Modifier = Modifier) {
     val isDark = JewelTheme.isDark
+    val instanceUuid = JewelTheme.instanceUuid
 
-    val markdownStyling = remember(isDark) { if (isDark) MarkdownStyling.dark() else MarkdownStyling.light() }
+    val markdownStyling = remember(instanceUuid) { if (isDark) MarkdownStyling.dark() else MarkdownStyling.light() }
 
     var markdownBlocks by remember { mutableStateOf(emptyList<MarkdownBlock>()) }
 
@@ -108,7 +109,7 @@ internal fun MarkdownPreview(rawMarkdown: CharSequence, modifier: Modifier = Mod
         }
 
     // Using the values from the GitHub rendering to ensure contrast
-    val background = remember(isDark) { if (isDark) Color(0xff0d1117) else Color.White }
+    val background = remember(instanceUuid) { if (isDark) Color(0xff0d1117) else Color.White }
 
     ProvideMarkdownStyling(markdownStyling, blockRenderer, NoOpCodeHighlighter) {
         val lazyListState = rememberLazyListState()

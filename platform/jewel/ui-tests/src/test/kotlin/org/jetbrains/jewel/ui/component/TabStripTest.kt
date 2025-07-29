@@ -21,8 +21,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import kotlin.math.max
+import org.jetbrains.jewel.IntUiTestTheme
 import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.ui.component.interactions.performKeyPress
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.hints.Stateful
@@ -156,7 +156,7 @@ class TabStripTest {
                     }
                 }
 
-            IntUiTheme {
+            IntUiTestTheme {
                 TabStrip(
                     tabs = tabs,
                     style = JewelTheme.defaultTabStyle,
