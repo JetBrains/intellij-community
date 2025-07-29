@@ -85,15 +85,12 @@ interface ActionRemoteBehaviorSpecification {
 
 
   companion object {
-    fun AnAction.getActionBehavior(useDeclaredBehaviour: Boolean = false): ActionRemoteBehavior? {
-      val behavior = (this as? ActionRemoteBehaviorSpecification)?.getBehavior()
+    fun AnAction.getActionDeclaredBehavior(): ActionRemoteBehavior? {
+      return (this as? ActionRemoteBehaviorSpecification)?.getBehavior()
+    }
 
-      return if (useDeclaredBehaviour) {
-        behavior
-      }
-      else {
-        service<ActionRemoteBehaviorCustomizer>().customiseActionUpdateBehavior(this, behavior)
-      }
+    fun AnAction.getActionBehavior(): ActionRemoteBehavior? {
+      return service<ActionRemoteBehaviorCustomizer>().customizeActionUpdateBehavior(this, getActionDeclaredBehavior())
     }
   }
 }
