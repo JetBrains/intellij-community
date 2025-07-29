@@ -129,10 +129,35 @@ public abstract class PyResolveTestCase extends PyTestCase {
     return offset;
   }
 
+  public static int findMarkerOffset(final PsiFile psiFile, @NotNull String marker) {
+    // TODO: harmonize with CythonResolveTest synax
+    // TODO: check and fix work with single letter identifiers
+    Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
+    assert document != null;
+    int offset = -1;
+    for (int i=1; i<document.getLineCount(); i++) {
+      int lineStart = document.getLineStartOffset(i);
+      int lineEnd = document.getLineEndOffset(i);
+      final int index=document.getCharsSequence().subSequence(lineStart, lineEnd).toString().indexOf(marker);
+      if (index>0) {
+        offset = document.getLineStartOffset(i-1) + index;
+      }
+    }
+    assertTrue(marker + " in test file not found", offset >= 0);
+    return offset;
+  }
+
   @NotNull
   public static PsiReference findReferenceByMarker(PsiFile psiFile) {
     final PsiReference ref = psiFile.findReferenceAt(findMarkerOffset(psiFile));
     assertNotNull("No reference found at <ref> position", ref);
+    return ref;
+  }
+
+  @NotNull
+  public static PsiReference findReferenceByMarker(PsiFile psiFile, @NotNull String marker) {
+    final PsiReference ref = psiFile.findReferenceAt(findMarkerOffset(psiFile, marker));
+    assertNotNull("No reference found at " + marker + " position", ref);
     return ref;
   }
 

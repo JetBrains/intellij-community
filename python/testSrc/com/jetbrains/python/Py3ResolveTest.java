@@ -1,10 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.StackOverflowPreventedException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyNamedParameterImpl;
@@ -903,6 +906,20 @@ public class Py3ResolveTest extends PyResolveTestCase {
   // PY-82699
   public void testTypeParameterRebindToLocalVariableInSameScope() {
     assertUnresolved();
+  }
+
+  // PY-82850
+  public void testNonIdempotentComputation() {
+    PyTestCase.fixme("PY-83181", StackOverflowPreventedException.class, () -> {
+      RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+
+      myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
+      PsiElement result1 = findReferenceByMarker(myFixture.getFile(), "<ref1>").resolve();
+      assertNotNull(result1);
+
+      PsiElement result2 = findReferenceByMarker(myFixture.getFile(), "<ref2>").resolve();
+      assertNotNull(result2);
+    });
   }
 
   private void assertResolvesToItself() {

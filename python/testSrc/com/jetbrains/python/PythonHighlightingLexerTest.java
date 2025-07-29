@@ -20,6 +20,8 @@ import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.LanguageLevel;
 
+import static com.jetbrains.python.fixtures.PyTestCase.fixme;
+
 /**
  * user : catherine
  */
@@ -275,7 +277,7 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
 
   // PY-40634
   public void testDocstringAtVariableDeclaration() {
-    fixme("PY-40634", () -> doTest(LanguageLevel.getLatest(), """
+    fixme("PY-40634", AssertionError.class, () -> doTest(LanguageLevel.getLatest(), """
              VAR = 2
                  ""\" variable declaration docstring ""\"
              """,
@@ -285,7 +287,7 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
 
   // PY-40634
   public void testDocstringAtVariableDeclarationWithTrailingComment() {
-    fixme("PY-40634", () -> doTest(LanguageLevel.getLatest(), """
+    fixme("PY-40634", AssertionError.class, () -> doTest(LanguageLevel.getLatest(), """
              VAR = 2
                  ""\" variable declaration docstring ""\" # trailing comment
              """,
@@ -295,7 +297,7 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
 
   // PY-40634
   public void testDocstringAtClassVariableDeclaration() {
-    fixme("PY-40634", () -> doTest(LanguageLevel.getLatest(), """
+    fixme("PY-40634", AssertionError.class, () -> doTest(LanguageLevel.getLatest(), """
              class C:
                def __init__(self):
                    self.thing = 42
@@ -309,7 +311,7 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
 
   // PY-40634
   public void testDocstringAtClassVariableDeclarationWithTrailingComment() {
-    fixme("PY-40634", () -> doTest(LanguageLevel.getLatest(), """
+    fixme("PY-40634", AssertionError.class, () -> doTest(LanguageLevel.getLatest(), """
              class C:
                def __init__(self):
                    self.thing = 42

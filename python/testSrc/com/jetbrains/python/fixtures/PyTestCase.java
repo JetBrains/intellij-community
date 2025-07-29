@@ -612,5 +612,20 @@ public abstract class PyTestCase extends UsefulTestCase {
       }
     }
   }
+
+  public static void fixme(@NotNull String comment, @NotNull Class<? extends Throwable> c, @NotNull Runnable test) {
+    try {
+      test.run();
+    }
+    catch (Throwable failedError) {
+      if (c.isInstance(failedError)) {
+        // fix-me tests are supposed to fail
+        return;
+      }
+      throw failedError;
+    }
+    // the fix-me test passed -> the bug/feature was fixed!
+    fail("Test (" + comment + ") FIXED!");
+  }
 }
 
