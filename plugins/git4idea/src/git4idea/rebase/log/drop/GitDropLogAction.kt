@@ -56,13 +56,19 @@ internal class GitDropLogAction : GitMultipleCommitEditingAction() {
 
   private fun askForConfirmation(project: Project, data: MultipleCommitEditingData): Boolean {
     val commitsCount = data.selection.size
-    val branchName = data.repository.currentBranch?.name!!
-    val branchPresentation = GitBranchPopupActions.getSelectedBranchFullPresentation(branchName)
+    val branch = data.repository.currentBranch
+
+    val confirmationMessage = if (branch != null) {
+      val branchPresentation = GitBranchPopupActions.getSelectedBranchFullPresentation(branch.name)
+      GitBundle.message("rebase.log.drop.action.confirmation.message", commitsCount, branchPresentation)
+    }  else {
+      GitBundle.message("rebase.log.drop.action.confirmation.message.detached", commitsCount)
+    }
 
     return MessageDialogBuilder
       .okCancel(
         GitBundle.message("rebase.log.drop.action.confirmation.title", commitsCount),
-        GitBundle.message("rebase.log.drop.action.confirmation.message", commitsCount, branchPresentation)
+        confirmationMessage
       )
       .asWarning()
       .doNotAsk(object : DoNotAskOption.Adapter() {
