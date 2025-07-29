@@ -8,7 +8,6 @@ import com.intellij.execution.impl.applyToLineRange
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.impl.FrozenDocument
 import com.intellij.openapi.progress.ProgressManager.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.session.TerminalHyperlinkId
@@ -164,11 +163,12 @@ internal class BackendTerminalHyperlinkHighlighter(
       val endLineInclusive = lineCount - 1
       // Process in the reverse direction to highlight the visible part first.
       var endBatchInclusive = endLineInclusive
+      val processor = HyperlinkProcessor(hyperlinkId)
       while (endBatchInclusive >= startLineInclusive) {
         val endBatchExclusive = endBatchInclusive + 1
         val startBatchInclusive = (endBatchExclusive - BATCH_SIZE).coerceAtLeast(startLineInclusive)
         // For consistency, process the lines within the bach also in the reverse direction, hence the start/end are reversed:
-        val batch = processBatch(document, filter, startLine = endBatchInclusive, endLine = startBatchInclusive)
+        val batch = processor.processBatch(outputModel, filter, startLine = endBatchInclusive, endLine = startBatchInclusive)
         send(batch, firstBatch = endBatchInclusive == endLineInclusive, lastBatch = false)
         endBatchInclusive = startBatchInclusive - 1
       }
@@ -185,43 +185,7 @@ internal class BackendTerminalHyperlinkHighlighter(
       }
     }
 
-    private suspend fun processBatch(document: FrozenDocument, filter: CompositeFilter, startLine: Int, endLine: Int): List<TerminalFilterResultInfoDto> =
-      readAction {
-        mutableListOf<TerminalFilterResultInfoDto>().also { results ->
-          filter.applyToLineRange(document, startLine, endLine) { applyResult ->
-            checkCanceled()
-            val hyperlinks = applyResult.filterResult?.resultItems?.mapNotNull { createHyperlinkOrHighlighting(it) } ?: emptyList()
-            results.addAll(hyperlinks)
-          }
-        }
-      }
-
     private fun Long.addRelative(): TerminalOffset = outputModel.absoluteOffset(this)
-
-    private fun createHyperlinkOrHighlighting(resultItem: Filter.ResultItem): TerminalFilterResultInfoDto? {
-      val hyperlinkInfo = resultItem.hyperlinkInfo
-      val highlightAttributes = resultItem.highlightAttributes
-      return when {
-        hyperlinkInfo != null -> TerminalHyperlinkInfoDto(
-          id = TerminalHyperlinkId(hyperlinkId.incrementAndGet()),
-          hyperlinkInfo = hyperlinkInfo,
-          absoluteStartOffset = outputModel.relativeOffset(resultItem.highlightStartOffset).toAbsolute(),
-          absoluteEndOffset = outputModel.relativeOffset(resultItem.highlightEndOffset).toAbsolute(),
-          style = highlightAttributes?.toDto(),
-          followedStyle = resultItem.followedHyperlinkAttributes?.toDto(),
-          hoveredStyle = resultItem.hoveredHyperlinkAttributes?.toDto(),
-          layer = resultItem.highlighterLayer,
-        )
-        highlightAttributes != null -> TerminalHighlightingInfoDto(
-          id = TerminalHyperlinkId(hyperlinkId.incrementAndGet()),
-          absoluteStartOffset = outputModel.relativeOffset(resultItem.highlightStartOffset).toAbsolute(),
-          absoluteEndOffset = outputModel.relativeOffset(resultItem.highlightEndOffset).toAbsolute(),
-          style = highlightAttributes.toDto(),
-          layer = resultItem.highlighterLayer,
-        )
-        else -> null
-      }
-    }
 
     private fun createEvent(hyperlinks: List<TerminalFilterResultInfoDto>, first: Boolean): TerminalHyperlinksChangedEvent {
       return TerminalHyperlinksChangedEvent(
@@ -230,6 +194,56 @@ internal class BackendTerminalHyperlinkHighlighter(
         if (first) startOffset.toAbsolute() else null,
         hyperlinks = hyperlinks,
       )
+    }
+  }
+
+}
+
+private class HyperlinkProcessor(
+  private val hyperlinkId: AtomicLong,
+) {
+
+  suspend fun processBatch(
+    outputModel: FrozenTerminalOutputModel,
+    filter: CompositeFilter,
+    startLine: Int,
+    endLine: Int,
+  ): List<TerminalFilterResultInfoDto> =
+    readAction {
+      mutableListOf<TerminalFilterResultInfoDto>().also { results ->
+        filter.applyToLineRange(outputModel.document, startLine, endLine) { applyResult ->
+          checkCanceled()
+          val hyperlinks = applyResult.filterResult?.resultItems?.mapNotNull { createHyperlinkOrHighlighting(outputModel, it) } ?: emptyList()
+          results.addAll(hyperlinks)
+        }
+      }
+    }
+
+  private fun createHyperlinkOrHighlighting(
+    outputModel: FrozenTerminalOutputModel,
+    resultItem: Filter.ResultItem,
+  ): TerminalFilterResultInfoDto? {
+    val hyperlinkInfo = resultItem.hyperlinkInfo
+    val highlightAttributes = resultItem.highlightAttributes
+    return when {
+      hyperlinkInfo != null -> TerminalHyperlinkInfoDto(
+        id = TerminalHyperlinkId(hyperlinkId.incrementAndGet()),
+        hyperlinkInfo = hyperlinkInfo,
+        absoluteStartOffset = outputModel.relativeOffset(resultItem.highlightStartOffset).toAbsolute(),
+        absoluteEndOffset = outputModel.relativeOffset(resultItem.highlightEndOffset).toAbsolute(),
+        style = highlightAttributes?.toDto(),
+        followedStyle = resultItem.followedHyperlinkAttributes?.toDto(),
+        hoveredStyle = resultItem.hoveredHyperlinkAttributes?.toDto(),
+        layer = resultItem.highlighterLayer,
+      )
+      highlightAttributes != null -> TerminalHighlightingInfoDto(
+        id = TerminalHyperlinkId(hyperlinkId.incrementAndGet()),
+        absoluteStartOffset = outputModel.relativeOffset(resultItem.highlightStartOffset).toAbsolute(),
+        absoluteEndOffset = outputModel.relativeOffset(resultItem.highlightEndOffset).toAbsolute(),
+        style = highlightAttributes.toDto(),
+        layer = resultItem.highlighterLayer,
+      )
+      else -> null
     }
   }
 
