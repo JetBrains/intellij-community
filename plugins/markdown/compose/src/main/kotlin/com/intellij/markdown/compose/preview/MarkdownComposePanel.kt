@@ -4,11 +4,21 @@ package com.intellij.markdown.compose.preview
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.TweenSpec
-import androidx.compose.foundation.*
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollbarAdapter
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -49,7 +59,8 @@ import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableProcesso
 import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableRendererExtension
 import org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
-import org.jetbrains.jewel.markdown.rendering.DefaultInlineMarkdownRenderer
+import org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer
+import org.jetbrains.jewel.markdown.rendering.create
 import org.jetbrains.jewel.markdown.scrolling.ScrollSyncMarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
 import javax.swing.JComponent
@@ -104,7 +115,7 @@ internal class MarkdownComposePanel(
       ScrollSyncMarkdownBlockRenderer(
         markdownStyling,
         allRenderingExtensions,
-        DefaultInlineMarkdownRenderer(allRenderingExtensions),
+        InlineMarkdownRenderer.create(allRenderingExtensions),
       )
     }
     ProvideMarkdownStyling(
