@@ -14,6 +14,7 @@ import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,14 @@ import java.util.function.Function;
  */
 public class JBList<E> extends JList<E> implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer> {
   public static final String IGNORE_LIST_ROW_HEIGHT = "IgnoreListRowHeight";
+
+  /**
+   * Allows performance optimizations if the model and the renderer for all elements are immutable:
+   * the same item is rendered with exactly the same content
+   */
+  @ApiStatus.Internal
+  public static final String IMMUTABLE_MODEL_AND_RENDERER = "ImmutableModelAndRenderer";
+
   private StatusText myEmptyText;
   private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 

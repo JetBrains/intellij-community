@@ -809,6 +809,8 @@ com.intellij.ui.components.JBLoadingPanelListener
 com.intellij.ui.components.Magnificator
 - sf:CLIENT_PROPERTY_KEY:com.intellij.openapi.util.Key
 - a:magnify(D,java.awt.Point):java.awt.Point
+f:com.intellij.ui.components.WideSelectionListUI
+- uninstallUI(javax.swing.JComponent):V
 com.intellij.ui.components.ZoomableViewport
 - a:getMagnificator():com.intellij.ui.components.Magnificator
 - a:magnificationFinished(D):V
