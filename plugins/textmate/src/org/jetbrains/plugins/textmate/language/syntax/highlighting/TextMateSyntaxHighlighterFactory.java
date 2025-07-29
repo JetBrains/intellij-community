@@ -37,14 +37,17 @@ public class TextMateSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
       final TextMateLanguageDescriptor languageDescriptor = textMateService.getLanguageDescriptorByFileName(virtualFile.getName());
       if (languageDescriptor != null) {
         LOG.debug("Textmate highlighting: " + virtualFile.getPath());
-        RegexProvider regexProvider = new CaffeineCachingRegexProvider(new RememberingLastMatchRegexFactory(new JoniRegexFactory()));
-        TextMateSelectorWeigher weigher = TextMateCachingSelectorWeigherKt.caching(new TextMateSelectorWeigherImpl());
-        TextMateSyntaxMatcher syntaxMatcher = TextMateCachingSyntaxMatcherCoreKt.caching(new TextMateSyntaxMatcherImpl(regexProvider, weigher));
         return new TextMateHighlighter(new TextMateHighlightingLexer(languageDescriptor,
-                                                                     syntaxMatcher,
+                                                                     Inner.syntaxMatcher,
                                                                      Registry.get("textmate.line.highlighting.limit").asInteger()));
       }
     }
     return PLAIN_SYNTAX_HIGHLIGHTER;
+  }
+
+  private static class Inner {
+    private static final RegexProvider regexProvider = new CaffeineCachingRegexProvider(new RememberingLastMatchRegexFactory(new JoniRegexFactory()));
+    private static final TextMateSelectorWeigher weigher = TextMateCachingSelectorWeigherKt.caching(new TextMateSelectorWeigherImpl());
+    private static final TextMateSyntaxMatcher syntaxMatcher = TextMateCachingSyntaxMatcherCoreKt.caching(new TextMateSyntaxMatcherImpl(regexProvider, weigher));
   }
 }

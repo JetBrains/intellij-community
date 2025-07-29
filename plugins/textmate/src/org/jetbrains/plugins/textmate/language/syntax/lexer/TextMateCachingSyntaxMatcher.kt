@@ -13,13 +13,11 @@ import java.util.concurrent.TimeUnit
 
 @Deprecated("Use TextMateCachingSyntaxMatcherCore instead")
 class TextMateCachingSyntaxMatcher(private val delegate: TextMateSyntaxMatcher) : TextMateSyntaxMatcher {
-  companion object {
-    private val CACHE = Caffeine.newBuilder()
-      .maximumSize(100000)
-      .expireAfterAccess(1, TimeUnit.MINUTES)
-      .executor(Dispatchers.Default.asExecutor())
-      .build<MatchKey, TextMateLexerState>()
-  }
+  private val CACHE = Caffeine.newBuilder()
+    .maximumSize(10000)
+    .expireAfterAccess(1, TimeUnit.MINUTES)
+    .executor(Dispatchers.Default.asExecutor())
+    .build<MatchKey, TextMateLexerState>()
 
   override fun matchRule(
     syntaxNodeDescriptor: SyntaxNodeDescriptor,
