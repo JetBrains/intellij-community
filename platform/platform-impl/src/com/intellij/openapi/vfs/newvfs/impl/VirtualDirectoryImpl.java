@@ -27,7 +27,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.*;
 
@@ -39,6 +38,8 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 import static com.intellij.openapi.vfs.newvfs.events.VFileEvent.REFRESH_REQUESTOR;
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @ApiStatus.Internal
@@ -58,7 +59,16 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
    * case-insensitive directories.
    * Value=64 is chosen arbitrary, by my intuition.
    */
-  private static final int LINEAR_SEARCH_THRESHOLD = 64;
+  private static final int LINEAR_SEARCH_THRESHOLD = getIntProperty("VirtualDirectoryImpl.LINEAR_SEARCH_THRESHOLD", 64);
+  /**
+   * If true: trust {@link #doFindChildById(int)} callers that supplied childId is indeed an id of existing child.
+   * I.e. don't load _all_ the children from persistence to check is childId really in .children.
+   * Less expensive, but more prone to errors if e.g. orphan records are present in VFS (sometimes they do).
+   * If false: don't trust the caller, check that childId really belongs to .children (loads all children => more expensive)
+   */
+  private static final boolean TRUST_FIND_CHILD_BY_ID_CALLERS = getBooleanProperty(
+    "VirtualDirectoryImpl.TRUST_FIND_CHILD_BY_ID_CALLERS", true
+  );
 
   /**
    * Actual directory data is stored here, VirtualDirectoryImpl instance is just a lightweight wrapper around it, and
@@ -547,96 +557,77 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       //we could just return null (='no such child'), but such a call 99% is a bug:
       throw new IllegalArgumentException("Trying to find childId(=" + childId + ") in parent(=" + getId() + ")");
     }
-    VirtualFileSystemEntry existingChild = findCachedChildById(childId);
-    if (existingChild != null) return existingChild;
 
     //We come here _only_ from PersistentFSImpl.findFileById(), on a descend phase, where we resolve fileIds to
     // VFiles. Hence, it _must_ be a child with childId -- because 'this' was collected as .parent during an
     // ascend phase. If that is not the case -- either something was changed in between (e.g., children were
     // refreshed), or there is an inconsistency in VFS (e.g., children and .parent fell out of sync somehow):
 
-    //So the branch below is almost surely 'child just not loaded yet'
-
     VfsData vfsData = getVfsData();
     PersistentFSImpl pFS = vfsData.owningPersistentFS();
 
     VirtualFileSystemEntry child = vfsData.getFileById(childId, this, /*putToCache: */ true);
-    if (child != null && child.isValid()) {
-      synchronized (directoryData) {
-        VfsData.ChildrenIds children = directoryData.children;
-
-        if (!children.isSorted()) {
-          int indexOfId = children.indexOfId(childId);
-          if (indexOfId < 0) {
-            directoryData.children = children.appendId(childId);
-          }//else: id is already in children
-          return child;
-        }
-
-        if (isChildrenCaseSensitivityKnown() /* && children.isSorted() */) {
-          int indexOfName = findIndexByName(children, child.getName(), isCaseSensitive());
-          if (indexOfName < 0) {
-            int insertionIndex = -indexOfName - 1;
-            directoryData.children = children.insertAt(insertionIndex, childId);
-          }
-          else {
-            int _childId = children.id(indexOfName);
-            if (childId != _childId) {
-              //TODO RC: THROTTLED_LOG.warn() about inconsistency (see below)
-            }
-          }
-          return child;
-        }
-      }
+    if (child != null && !child.isValid()) {
+      return null; // =removed
     }
 
-    //Slow path: let's go via findChild() so it could itself determine case-sensitivity:
-
-    //TODO RC: probably, findChild() here could be simplified quite a lot: it seems, in many cases we could rely on default (FS)
-    //         case-sensitivity, and re-sort children later, if needed.
-    String name = pFS.getName(childId);
-    VirtualFileSystemEntry fileByName = findChild(name, /*refresh: */ false, /*ensureCanonicalName: */ false);
-    if (fileByName != null && fileByName.getId() != childId) {
-      // a child with the same name and different ID was recreated after a refresh session -
-      // it doesn't make sense to check it earlier because it is executed outside the VFS' read/write lock
-      //TODO RC: It seems that apart from race-condition with refresh session, this branch may also deal with 'orphan' files.
-      //         Due to some bugs in VFS we sometimes have duplicated file records -- i.e. fileId1 and fileId2 are both
-      //         corresponds to the same 'file.ext', and both fileId1 & fileId2 have same .parent field, but only fileId1
-      //         is in .parent.children list, while fileId2 is orphan. On call .findFileById(fileId2) we successfully
-      //         climb up .parent chain to the root, but on downclimb from root we'll come to the conflict since there is
-      //         no fileId2 in .children. This branch may serve as workaround: failed to find child by fileId2, we fallback
-      //         to find it by name, which succeed but fileByName.id == fileId1 != fileId2 -- this is what this branch is about
-      //         And since nowadays we have less orphans -- maybe at some point we'll not need this branch anymore?
-
-      boolean deleted = pFS.peer().isDeleted(childId);
-      if (!deleted) {
-        THROTTLED_LOG.info(() -> {
-          int parentId = pFS.peer().getParent(childId);
-          IntOpenHashSet childrenInPersistence = new IntOpenHashSet(pFS.peer().listIds(childId));
-          IntOpenHashSet childrenInMemory = directoryData.children.toIntSet();
-          int[] childrenNotInPersistent = childrenInMemory.intStream()
-            .filter(_childId -> !childrenInPersistence.contains(_childId))
-            .toArray();
-          int[] childrenNotInMemory = childrenInPersistence.intStream()
-            .filter(_childId -> !childrenInMemory.contains(_childId))
-            .toArray();
-          return "FSRecords(id: " + childId + ", parentId: " + parentId + ", name: '" + name + "', !deleted), " +
-                 "but VDI.findChild(" + name + ")=" + fileByName + " with different id(=" + fileByName.getId() + ")" +
-                 "\n\tchildrenInMemory: " + childrenInMemory.size() + ", childrenInPersistence: " + childrenInPersistence.size() + ", " +
-                 "\n\tdiff(" + childrenNotInPersistent.length + " vs " + childrenNotInMemory.length + ")" +
-                 "\n\tchildrenInMemory (up to 64): \n" +
-                 directoryData.children.toIntSet().intStream()
-                   .limit(64)
-                   .mapToObj(_childId -> "\n\t" + _childId + ": '" + pFS.getName(_childId) + "'")
-                   .toList();
-        });
+    synchronized (directoryData) {
+      if (child == null) {
+        //childId hasn't been loaded from persistence yet: load it
+        int childNameId = pFS.peer().getNameIdByFileId(childId);
+        @PersistentFS.Attributes int childAttributes = pFS.getFileAttributes(childId);
+        boolean isEmptyDirectory = PersistentFS.isDirectory(childAttributes) && !pFS.mayHaveChildren(childId);
+        child = createChildIfNotExist(childId, childNameId, childAttributes, isEmptyDirectory);
       }
+
+      //now check child is indeed a child of this dir:
+      VfsData.ChildrenIds children = directoryData.children;
+
+      //TODO RC: code below is similar to addChild(child) -- how to reduce code duplication?
+
+      boolean allChildrenLoaded = children.areAllChildrenLoaded();
+      if (children.isSorted() && worthBinarySearch(children)) {
+        String childName = child.getName();
+        //If children are sorted => 99% caseSensitivity _is_ known; otherwise how could children be sorted?
+        // The only exception is children.size=1, but this is rejected by .worthBinarySearch(). But lets be on a safe side:
+        updateCaseSensitivityIfUnknown(childName);
+        boolean caseSensitive = isCaseSensitive();
+
+        int indexOfName = findIndexByName(children, childName, caseSensitive);
+        if (indexOfName >= 0) {
+          return child;//childId is in cached children: OK
+        }
+        else if (!allChildrenLoaded
+                 && (TRUST_FIND_CHILD_BY_ID_CALLERS || isInPersistentChildren(pFS, getId(), childId))) {
+          // Assume (either by 'trust' or because we checked) that childId is indeed a child of this directory
+          // => we add it to the children list, once it is not there yet:
+          int insertionIndex = -indexOfName - 1;
+          directoryData.children = children.insertAt(insertionIndex, childId);
+          return child;
+        }
+      }
+      else {
+        int indexOfId = children.indexOfId(childId);
+        if (indexOfId >= 0) {
+          return child;//childId is in cached children: OK
+        }
+        else if (!allChildrenLoaded
+                 && (TRUST_FIND_CHILD_BY_ID_CALLERS || isInPersistentChildren(pFS, getId(), childId))) {
+          // Assume (either by 'trust' or because we checked) that childId is indeed a child of this directory
+          // => we add it to the children list, once it is not there yet:
+          //Here we 'trust' that childId is indeed a child of this directory -- so we add it to the children list, if it
+          // is not there yet -- we do not check childId really belongs to the children list
+          directoryData.children = children.appendId(childId);
+          return child;
+        }
+      }
+
+      //childId not really belong to children:
+      LOG.error(child + " expected to be in [" + this + "].children=" + children + ", but absent -> refresh race or VFS inconsistency?");
       return null;
     }
-    return fileByName;
+    //since the child is guaranteed to be in children _already known to VFS_ -- adoptedNames shouldn't be changed at all
   }
-
-
 
   /** @return a cached file by id, if the id is in the children list, null otherwise (method name may be a bit misleading) */
   private @Nullable VirtualFileSystemEntry findCachedChildById(int childId) {
@@ -740,31 +731,37 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
-  /** does nothing if child.id is already in directoryData.children list */
+  /** changes nothing if child.id is already in directoryData.children list */
   public void addChild(@NotNull VirtualFileSystemEntry child) {
     int childId = child.getId();
     if (childId == this.getId()) {
       throw new IllegalArgumentException("Trying to add child(=" + child + ") to itself (parent=" + this + ")");
     }
-    CharSequence childName = child.getNameSequence();
-    boolean isCaseSensitive = isCaseSensitive();
+
+    String childName = child.getName();
     synchronized (directoryData) {
       directoryData.removeAdoptedName(childName);
 
       VfsData.ChildrenIds children = directoryData.children;
-      if (children.isSorted()) {
-        int childIndex = findIndexByName(children, childName, isCaseSensitive);
+      if (children.isSorted() && worthBinarySearch(children)) {
+        //If children are sorted => 99% caseSensitivity _is_ known; otherwise how could children be sorted?
+        // The only exception is children.size=1, but this is rejected by .worthBinarySearch(). But lets be on a safe side:
+        updateCaseSensitivityIfUnknown(childName);
+        boolean caseSensitive = isCaseSensitive();
+
+        int childIndex = findIndexByName(children, childName, caseSensitive);
         if (childIndex < 0) {
           int insertionIndex = -childIndex - 1;
           directoryData.children = children.insertAt(insertionIndex, childId);
-          assertConsistency(isCaseSensitive, child, "insertionIndex", insertionIndex, isCaseSensitive);
+          assertConsistency(caseSensitive, child, "insertionIndex", insertionIndex);
         }// else: child already presents in children
       }
       else {
         int childIndex = children.indexOfId(childId);
         if (childIndex < 0) {
-          directoryData.children = children.appendId(childId);
-          assertConsistency(isCaseSensitive, child, isCaseSensitive);
+          directoryData.children = children.appendId(childId);//'sorted' property will be lost!
+          boolean isCaseSensitive = isCaseSensitive();
+          assertConsistency(isCaseSensitive, child);
         }//else: child is already present in children
       }
     }
@@ -778,7 +775,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       VfsData.ChildrenIds children = directoryData.children;
 
       int childIndex;
-      if (children.isSorted() && children.size() > LINEAR_SEARCH_THRESHOLD) {
+      if (children.isSorted() && worthBinarySearch(children)) {
         childIndex = findIndexByName(children, name, isCaseSensitive);
       }
       else {// otherwise: linear search
@@ -970,7 +967,22 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return directoryData.children.asFiles(fileId -> vfsData.getFileById(fileId, this, putToMemoryCache));
   }
 
+  /** @return true if childId is in a persistent (=not cached in memory!) children list of parentId */
+  private static boolean isInPersistentChildren(@NotNull PersistentFSImpl pFS,
+                                                int parentId,
+                                                int childId) {
+    //MAYBE RC: better to check childId is in children _without_ loading _all_ the children (which could be quite large)
+    //          Maybe create FSRecordsImpl.isInChildren(parentId, childId) method?
+    int[] childrenFromPersistence = pFS.peer().listIds(parentId);
+    for (int id : childrenFromPersistence) {
+      if (id == childId) {
+        return true;
+      }
+    }
+    return false;
+  }
 
+  // =============================== helpers ====================================================================================== //
 
   /** removes forward/backslashes from start/end and return trimmed name or null if there are slashes in the middle, or it's empty */
   private static String deSlash(@NotNull String name) {
@@ -1000,6 +1012,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   private static boolean isFileSeparator(char c) {
     return c == '/' || c == File.separatorChar;
+  }
+
+  private static boolean worthBinarySearch(VfsData.ChildrenIds children) {
+    return children.size() > LINEAR_SEARCH_THRESHOLD;
   }
 
   private void logChildLookupFailure(@NotNull PersistentFSImpl pfs,
