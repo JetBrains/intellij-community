@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.Set;
 
+import static java.util.Objects.hash;
+
 public class DfReferenceConstantType extends DfConstantType<Object> implements DfReferenceType {
   private final @NotNull TypeConstraint myConstraint;
   private final @NotNull Mutability myMutability;
@@ -122,6 +124,18 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
       other.tryJoinExactly(this);
     }
     return null;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return super.equals(obj) && 
+           obj instanceof DfReferenceConstantType refConstant &&
+           myConstraint.equals(refConstant.myConstraint);
+  }
+
+  @Override
+  public int hashCode() {
+    return hash(super.hashCode(), myConstraint);
   }
 
   @Override

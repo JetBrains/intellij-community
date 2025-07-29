@@ -300,6 +300,12 @@ public final class JavaDfaValueFactory {
       }
       return null;
     }
+    if (value instanceof PsiEnumConstant constant) {
+      PsiEnumConstantInitializer cls = constant.getInitializingClass();
+      if (cls != null) {
+        type = JavaPsiFacade.getElementFactory(variable.getProject()).createType(cls);
+      }
+    }
     return factory.fromDfType(DfTypes.constant(value, type));
   }
 

@@ -234,6 +234,9 @@ public enum SpecialField implements DerivedVariableDescriptor {
         TypeConstraint constraint = TypeConstraint.fromDfType(qualifier.getDfType());
         if (constraint.isExact()) {
           PsiClass cls = PsiUtil.resolveClassInClassTypeOnly(constraint.getPsiType(qualifier.getFactory().getProject()));
+          if (cls instanceof PsiEnumConstantInitializer) {
+            cls = cls.getSuperClass();
+          }
           if (cls != null) {
             long count = Arrays.stream(cls.getFields()).filter(field -> field instanceof PsiEnumConstant).count();
             // Keep +1 ordinal for possible enum changes
