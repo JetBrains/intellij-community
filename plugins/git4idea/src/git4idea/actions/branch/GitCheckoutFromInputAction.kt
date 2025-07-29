@@ -5,7 +5,6 @@ import com.intellij.dvcs.DvcsUtil.disableActionIfAnyRepositoryIsFresh
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.vcs.git.branch.popup.GitBranchesPopupActions
 import git4idea.actions.branch.GitBranchActionsUtil.getRepositoriesForTopLevelActions
 import git4idea.branch.GitBrancher
 import git4idea.i18n.GitBundle
@@ -16,7 +15,7 @@ class GitCheckoutFromInputAction
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    if (project == null || e.place != GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE) {
+    if (project == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }

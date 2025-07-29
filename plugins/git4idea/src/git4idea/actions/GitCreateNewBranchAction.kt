@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.vcs.git.branch.popup.GitBranchesPopupActions
 import git4idea.GitUtil.HEAD
 import git4idea.actions.branch.GitBranchActionsUtil.getRepositoriesForTopLevelActions
 import git4idea.i18n.GitBundle
@@ -48,7 +47,6 @@ class GitCreateNewBranchAction : DumbAwareAction() {
 
   private fun collectData(e: AnActionEvent): Data {
     val project = e.project ?: return Data.Invisible
-    if (e.place != GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE) return Data.Invisible
     val repositories = getRepositoriesForTopLevelActions(e)
     if (repositories.any { it.isFresh }) {
       return Data.Disabled(GitBundle.message("action.New.Branch.disabled.fresh.description"))
