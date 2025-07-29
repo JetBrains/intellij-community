@@ -757,7 +757,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     FSRecordsImpl vfsPeer = owningPersistentFS().peer();
     synchronized (myData) {
-      VfsData.ChildrenIds oldChildren = myData.children;
+      VfsData.ChildrenIds oldChildren = ensureChildrenSorted();
       IntList mergedIds = new IntArrayList(oldChildren.size() + addedSize);
 
       List<ChildInfo> existingChildren = new AbstractList<>() {

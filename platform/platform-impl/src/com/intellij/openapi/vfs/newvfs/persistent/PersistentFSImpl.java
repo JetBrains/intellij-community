@@ -1959,7 +1959,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    * <p/>
    * Namely:
    * <ol>
-   * <li>{@link #lookupCachedAncestor(int)}: climbs up from fileId, collecting {@link #ancestorsIds} (=path), until finds an ancestor
+   * <li>{@link #lookupCachedAncestorOrSelf(int)}: climbs up from fileId, collecting {@link #ancestorsIds} (=path), until finds an ancestor
    *     which is already cached in {@link #dirByIdCache}.</li>
    * <li>{@link #resolveDescending(VirtualFileSystemEntry, IntList, int)}: from that cached ancestor climbs down back to fileId,
    *     resolving {@link #ancestorsIds} along the way via {@link #findChild(VirtualFileSystemEntry, int)}</li>
@@ -1975,26 +1975,30 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     public NewVirtualFile resolve(int fileId) {
       assert fileId != FSRecords.NULL_FILE_ID : "fileId=NULL_ID(0) must not be passed into find()";
-      VirtualFileSystemEntry cachedAncestor;
+      VirtualFileSystemEntry cachedAncestorOrSelf;
       try {
-        cachedAncestor = lookupCachedAncestor(fileId);
-        if (cachedAncestor == null) {
+        cachedAncestorOrSelf = lookupCachedAncestorOrSelf(fileId);
+        if (cachedAncestorOrSelf == null) {
           //fileId is deleted or orphan (=one of its ancestors is deleted, or it's root is missed)
           return null;
+        }
+        else if (cachedAncestorOrSelf.getId() == fileId) {
+          return cachedAncestorOrSelf;
         }
       }
       catch (Exception e) {
         throw vfsPeer.handleError(e);
       }
       // {cachedAncestor} / { ancestorsIds[N] / ... / ancestorsIds[0] } / fileId
-      return resolveDescending(cachedAncestor, ancestorsIds, fileId);
+      return resolveDescending(cachedAncestorOrSelf, ancestorsIds, fileId);
     }
 
     /**
      * Climbs up hierarchy, from fileId, until _cached_ ancestor is found, and return this cached ancestor.
-     * Collects all the ancestors along the way into {@link #ancestorsIds}
+     * If file with fileId itself is cached -- it is returned (which is why ...OrSelf)
+     * Collects all the non-cached ancestors along the way into {@link #ancestorsIds}
      */
-    private @Nullable VirtualFileSystemEntry lookupCachedAncestor(int fileId) {
+    private @Nullable VirtualFileSystemEntry lookupCachedAncestorOrSelf(int fileId) {
       int currentId = fileId;
       while (true) {
         if (vfsPeer.isDeleted(currentId)) {
