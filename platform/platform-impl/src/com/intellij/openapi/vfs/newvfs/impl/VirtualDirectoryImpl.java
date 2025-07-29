@@ -367,8 +367,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   private @NotNull VfsData.ChildrenIds sortChildrenByName(@NotNull VfsData.ChildrenIds children,
                                                           boolean caseSensitive) {
+    VfsData vfsData = getVfsData();
     synchronized (directoryData) {
-      VfsData vfsData = getVfsData();
       Comparator<VirtualFile> byName = (f1, f2) -> compareNames(f1.getName(), f2.getName(), caseSensitive);
       VfsData.ChildrenIds sortedChildren = children.sorted(
         id -> vfsData.getFileById(id, this, /*putIntoMemory: */true),
@@ -430,6 +430,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     PersistentFSImpl pFS = vfsData.owningPersistentFS();
 
     List<? extends ChildInfo> childrenInfo = pFS.listAll(this);
+
+    boolean reallyNeedsSorting = sortChildrenOnLoading && (childrenInfo.size() > 1);
+    if (reallyNeedsSorting) {
+      String someChildName = childrenInfo.get(0).getName().toString();
+      updateCaseSensitivityIfUnknown(someChildName);
+    }
     boolean isCaseSensitive = isCaseSensitive();
 
     synchronized (directoryData) {
@@ -439,9 +445,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         return VirtualFile.EMPTY_ARRAY;
       }
 
-      IntSet prevChildren = directoryData.children.toIntSet();
       //We could load children unsorted, and delay the sorting until someone really asks for it:
-      if (sortChildrenOnLoading) {
+      if (reallyNeedsSorting) {
         IntRef errorCount = new IntRef(0);
         List<? extends ChildInfo> _childrenInfo = childrenInfo;//effectively-final, for capturing in lambda
         childrenInfo = ContainerUtil.sorted(childrenInfo, (info1, info2) -> {
@@ -475,6 +480,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         });
       }
 
+      IntSet prevChildren = directoryData.children.toIntSet();
       VirtualFile[] files = new VirtualFile[childrenInfo.size()];
       int[] newChildrenIds = new int[files.length];
       for (int i = 0; i < files.length; i++) {
