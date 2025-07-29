@@ -123,7 +123,7 @@ class IncrementalUpdateFlowProducer<U : Any>(private val state: MutableStateWith
     }
     finally {
       if (updateToForward != null) {
-        outputFlow.emit(versionedUpdate)
+        outputFlow.emit(updateToForward)
         // Clear the reference to the update from the replay buffer now, to avoid leaks.
         outputFlow.emit(fakeUpdate())
       }
