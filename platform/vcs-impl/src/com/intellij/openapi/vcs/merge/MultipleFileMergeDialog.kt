@@ -48,6 +48,7 @@ import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.intellij.util.EditSourceOnDoubleClickHandler
+import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.ColumnInfo
@@ -423,7 +424,9 @@ open class MultipleFileMergeDialog(
 
       val callback = { result: MergeResult ->
         val document = FileDocumentManager.getInstance().getCachedDocument(file)
-        if (document != null) FileDocumentManager.getInstance().saveDocument(document)
+        if (document != null) {
+          application.runWriteAction { FileDocumentManager.getInstance().saveDocument(document) }
+        }
         checkMarkModifiedProject(file)
 
         if (result != MergeResult.CANCEL) {
