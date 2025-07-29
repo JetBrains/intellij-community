@@ -737,6 +737,18 @@ public class Py3TypeTest extends PyTestCase {
                  if a in (1, 2, ""):
                      expr = a
              """);
+    doTest("Literal[1, 2]",
+           """
+             def f(a: int):
+                 if a in {1, 2, ""}:
+                     expr = a
+             """);
+    doTest("Literal[1, 2]",
+           """
+             def f(a: int):
+                 if a in [1, 2, ""]:
+                     expr = a
+             """);
     doTest("Literal[-10, \"a\"]",
            """
              from enum import Enum
