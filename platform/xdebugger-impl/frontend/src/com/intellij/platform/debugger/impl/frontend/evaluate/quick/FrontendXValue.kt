@@ -253,8 +253,13 @@ class FrontendXValue private constructor(
   }
 
   companion object {
+
+    fun extract(value: XValue): FrontendXValue? {
+      return value as? FrontendXValue ?: (value as? FrontendXNamedValue)?.delegate
+    }
+
     @JvmStatic
-    suspend fun create(project: Project, evaluatorCoroutineScope: CoroutineScope, xValueDto: XValueDto, hasParentValue: Boolean): FrontendXValue {
+    suspend fun create(project: Project, evaluatorCoroutineScope: CoroutineScope, xValueDto: XValueDto, hasParentValue: Boolean): XValue {
       // TODO[IJPL-160146]: Is it ok to dispose only when evaluator is changed?
       //   So, XValues will live more than popups where they appeared
       //   But it is needed for Mark object functionality at least.
@@ -263,7 +268,9 @@ class FrontendXValue private constructor(
       //   so we cannot refer to the backend's xValue
       val cs = evaluatorCoroutineScope.childScope("FrontendXValue")
       val presentation = xValueDto.presentation.toFlow().stateIn(cs)
-      return FrontendXValue(project, cs, xValueDto, hasParentValue, presentation)
+      val frontendXValue = FrontendXValue(project, cs, xValueDto, hasParentValue, presentation)
+      val name = xValueDto.name
+      return if (name != null) FrontendXNamedValue(frontendXValue, name) else frontendXValue
     }
   }
 }
@@ -334,4 +341,62 @@ private fun XValueSerializedPresentation.rawText(): String = when (this) {
   is XValueSerializedPresentation.AdvancedPresentation -> parts.joinToString("")
   is XValueSerializedPresentation.ExtendedPresentation -> presentation.rawText()
   is XValueSerializedPresentation.SimplePresentation -> value
+}
+
+private class FrontendXNamedValue(
+  val delegate: FrontendXValue,
+  name: String,
+) : XNamedValue(name) {
+  override fun computePresentation(node: XValueNode, place: XValuePlace) {
+    delegate.computePresentation(node, place)
+  }
+
+  override fun canNavigateToSource(): Boolean {
+    return delegate.canNavigateToSource()
+  }
+
+  override fun getXValueDescriptorAsync(): CompletableFuture<XValueDescriptor?>? {
+    return delegate.xValueDescriptorAsync
+  }
+
+  override fun canNavigateToTypeSource(): Boolean {
+    return delegate.canNavigateToTypeSource()
+  }
+
+  override fun canNavigateToTypeSourceAsync(): Promise<Boolean?>? {
+    return delegate.canNavigateToTypeSourceAsync()
+  }
+
+  override fun computeInlineDebuggerData(callback: XInlineDebuggerDataCallback): ThreeState {
+    return delegate.computeInlineDebuggerData(callback)
+  }
+
+  override fun computeSourcePosition(navigatable: XNavigatable) {
+    delegate.computeSourcePosition(navigatable)
+  }
+
+  override fun computeTypeSourcePosition(navigatable: XNavigatable) {
+    delegate.computeTypeSourcePosition(navigatable)
+  }
+
+  override fun computeChildren(node: XCompositeNode) {
+    delegate.computeChildren(node)
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override fun getModifier(): XValueModifier? {
+    return delegate.modifier
+  }
+
+  override fun calculateEvaluationExpression(): Promise<XExpression?> {
+    return delegate.calculateEvaluationExpression()
+  }
+
+  override fun getReferrersProvider(): XReferrersProvider? {
+    return delegate.referrersProvider
+  }
+
+  override fun toString(): String {
+    return "FrontendXNamedValue(name=$name, delegate=$delegate)"
+  }
 }

@@ -106,6 +106,7 @@ data class XValueDto(
   val valueMark: RpcFlow<XValueMarkerDto?>,
   val presentation: RpcFlow<XValueSerializedPresentation>,
   val fullValueEvaluator: RpcFlow<XFullValueEvaluatorDto?>,
+  val name: String?,
 )
 
 @ApiStatus.Internal

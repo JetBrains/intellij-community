@@ -22,7 +22,7 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
-    val valueId = (value as FrontendXValue).xValueDto.id
+    val valueId = FrontendXValue.extract(value)!!.xValueDto.id
     return block(valueId)
   }
 
@@ -47,6 +47,6 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override fun canShowInlineDebuggerData(xValue: XValue): Boolean {
-    return xValue is FrontendXValue
+    return FrontendXValue.extract(xValue) != null
   }
 }

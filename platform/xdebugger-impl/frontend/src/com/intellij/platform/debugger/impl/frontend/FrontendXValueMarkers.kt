@@ -19,7 +19,7 @@ import org.jetbrains.concurrency.asPromise
 
 internal class FrontendXValueMarkers<V : XValue, M>(private val project: Project) : XValueMarkers<V, M>() {
   override fun getMarkup(value: XValue): ValueMarkup? {
-    val markerDto = (value as? FrontendXValue)?.markerDto ?: return null
+    val markerDto = FrontendXValue.extract(value)?.markerDto ?: return null
     // TODO[IJPL-160146]: Implement implement Color serialization
     return ValueMarkup(markerDto.text, markerDto.color ?: JBColor.RED, markerDto.tooltipText)
   }
@@ -52,7 +52,7 @@ private class FrontendXValueMarkersService(project: Project, private val cs: Cor
   fun markValue(value: XValue, markup: ValueMarkup): Promise<Any> {
     val valueMarked = cs.async {
       val marker = XValueMarkerDto(markup.text, markup.color, markup.toolTipText)
-      XDebuggerValueMarkupApi.getInstance().markValue((value as FrontendXValue).xValueDto.id, marker)
+      XDebuggerValueMarkupApi.getInstance().markValue(FrontendXValue.extract(value)!!.xValueDto.id, marker)
       marker as Any
     }
     return valueMarked.asCompletableFuture().asPromise()
@@ -60,7 +60,7 @@ private class FrontendXValueMarkersService(project: Project, private val cs: Cor
 
   fun unmarkValue(value: XValue): Promise<in Any> {
     val valueUnmarked = cs.async {
-      XDebuggerValueMarkupApi.getInstance().unmarkValue((value as FrontendXValue).xValueDto.id)
+      XDebuggerValueMarkupApi.getInstance().unmarkValue(FrontendXValue.extract(value)!!.xValueDto.id)
       Any()
     }
     return valueUnmarked.asCompletableFuture().asPromise()
