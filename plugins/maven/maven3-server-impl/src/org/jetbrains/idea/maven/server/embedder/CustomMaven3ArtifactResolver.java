@@ -211,7 +211,7 @@ public class CustomMaven3ArtifactResolver
       {
         ArtifactRequest artifactRequest = new ArtifactRequest();
         artifactRequest.setArtifact( RepositoryUtils.toArtifact( artifact ) );
-        artifactRequest.setRepositories( RepositoryUtils.toRepos( remoteRepositories ) );
+        artifactRequest.setRepositories(RepositoryUtils.toRepos( remoteRepositories ) );
 
         // Maven 2.x quirk: an artifact always points at the local repo, regardless whether resolved or not
         LocalRepositoryManager lrm = session.getLocalRepositoryManager();
@@ -346,6 +346,7 @@ public class CustomMaven3ArtifactResolver
       .setLocalRepository( localRepository )
       .setRemoteRepositories( remoteRepositories )
       .setCollectionFilter( filter )
+      .setResolveTransitively(true)
       .setListeners( listeners );
 
     injectSession2( request, legacySupport.getSession() );
@@ -479,6 +480,7 @@ public class CustomMaven3ArtifactResolver
         collectionRequest.setServers( request.getServers() );
         collectionRequest.setMirrors( request.getMirrors() );
         collectionRequest.setProxies( request.getProxies() );
+        collectionRequest.setManagedVersionMap(managedVersions);
         collectionRequest.setRemoteRepositories( resolutionGroup.getResolutionRepositories() );
       }
       catch ( ArtifactMetadataRetrievalException e )

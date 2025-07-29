@@ -405,7 +405,7 @@ object MavenAnnotationProcessorConfiguratorUtil {
     val pluginVersion = project.findPlugin(PLUGIN_GROUP_ID, PLUGIN_ARTIFACT_ID)?.version ?: return null
 
     if (VersionComparatorUtil.compare(pluginVersion, "3.12.0") >= 0 && groupId != null && artifactId != null) {
-      return project.findManagedDependency(groupId, artifactId)?.version
+      return project.findManagedDependencyVersion(groupId, artifactId)
     }
     return null
   }
