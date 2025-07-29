@@ -6,8 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.test.junit4.createComposeRule
 import javax.swing.KeyStroke
+import org.jetbrains.jewel.IntUiTestTheme
 import org.jetbrains.jewel.intui.standalone.menuShortcut.StandaloneShortcutProvider
-import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.ui.LocalMenuItemShortcutProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -110,7 +110,7 @@ class MenuContentShortcutRegistrationTest {
             )
 
         rule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 CompositionLocalProvider(
                     LocalMenuController provides fakeMenuController,
                     LocalMenuItemShortcutProvider provides StandaloneShortcutProvider,
@@ -156,7 +156,7 @@ class MenuContentShortcutRegistrationTest {
             )
 
         rule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 CompositionLocalProvider(
                     LocalMenuController provides fakeMenuController,
                     LocalMenuItemShortcutProvider provides StandaloneShortcutProvider,
@@ -197,7 +197,7 @@ class MenuContentShortcutRegistrationTest {
             )
 
         rule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 CompositionLocalProvider(
                     LocalMenuController provides fakeMenuController,
                     LocalMenuItemShortcutProvider provides StandaloneShortcutProvider,
@@ -239,7 +239,7 @@ class MenuContentShortcutRegistrationTest {
             )
 
         rule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 CompositionLocalProvider(
                     LocalMenuController provides fakeMenuController,
                     LocalMenuItemShortcutProvider provides StandaloneShortcutProvider,
@@ -270,7 +270,7 @@ class MenuContentShortcutRegistrationTest {
                 )
             )
         rule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 CompositionLocalProvider(
                     LocalMenuController provides fakeMenuController,
                     LocalMenuItemShortcutProvider provides StandaloneShortcutProvider,
@@ -307,7 +307,7 @@ class MenuContentShortcutRegistrationTest {
                 )
             )
         rule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 CompositionLocalProvider(
                     LocalMenuController provides fakeMenuController,
                     LocalMenuItemShortcutProvider provides StandaloneShortcutProvider,
@@ -368,7 +368,7 @@ class MenuContentShortcutRegistrationTest {
         val currentMenuController = mutableStateOf<MenuController>(fakeMenuController)
 
         rule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 CompositionLocalProvider(
                     LocalMenuController provides currentMenuController.value,
                     LocalMenuItemShortcutProvider provides StandaloneShortcutProvider,

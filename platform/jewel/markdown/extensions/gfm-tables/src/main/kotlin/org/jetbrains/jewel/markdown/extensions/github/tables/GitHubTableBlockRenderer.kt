@@ -44,7 +44,7 @@ public class GitHubTableBlockRenderer(
 
         // Headers usually have a tweaked font weight
         val headerRootStyling =
-            remember(JewelTheme.name, blockRenderer, tableStyling.headerBaseFontWeight) {
+            remember(JewelTheme.instanceUuid, blockRenderer, tableStyling.headerBaseFontWeight) {
                 val rootStyling = blockRenderer.rootStyling
                 val semiboldInlinesStyling =
                     rootStyling.paragraph.inlinesStyling.withFontWeight(tableStyling.headerBaseFontWeight)
