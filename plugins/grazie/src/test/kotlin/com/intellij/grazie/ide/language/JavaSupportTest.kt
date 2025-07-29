@@ -3,9 +3,10 @@ package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.spellchecker.ProjectDictionaryLayer
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
 
 class JavaSupportTest : GrazieTestBase() {
@@ -66,6 +67,12 @@ class JavaSupportTest : GrazieTestBase() {
   fun `test spellchecking normalization`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.PORTUGAL_PORTUGUESE))
     runHighlightTestForFile("ide/language/java/Normalization.java")
+  }
+
+  fun `test grazie spellchecking in java`() {
+    val words = setOf("SSIZE_MAX", "MacTyppoo", "CANopen", "DBtune", "RESTTful", "typpoTypoo")
+    ProjectDictionaryLayer(project).dictionary.addToDictionary(words)
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/CamelCase.java")
   }
 
   fun `test multiline compounds`() {

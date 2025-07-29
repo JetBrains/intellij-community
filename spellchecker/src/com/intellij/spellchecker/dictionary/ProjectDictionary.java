@@ -131,6 +131,11 @@ public final class ProjectDictionary implements EditableDictionary {
     return getActiveDictionary().getWords();
   }
 
+  @Override
+  public @NotNull Set<String> getCamelCaseWords() {
+    return getActiveDictionary().getCamelCaseWords();
+  }
+
 
   @Override
   public void addToDictionary(@Nullable Collection<String> words) {

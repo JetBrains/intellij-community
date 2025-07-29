@@ -182,6 +182,9 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
   val userDictionaryWords: Set<String>
     get() = projectDictionary!!.editableWords + appDictionary!!.editableWords
 
+  val userCamelCaseWords: Set<String>
+    get() = projectDictionary!!.camelCaseWords + appDictionary!!.camelCaseWords
+
   private fun fillEngineDictionary(spellChecker: SpellCheckerEngine) {
     spellChecker.reset()
     val settings = SpellCheckerSettings.getInstance(project)

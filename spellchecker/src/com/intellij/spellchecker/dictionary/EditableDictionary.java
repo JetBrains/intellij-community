@@ -34,4 +34,7 @@ public interface EditableDictionary extends Dictionary {
 
   @NotNull
   Set<String> getEditableWords();
+
+  @NotNull
+  Set<String> getCamelCaseWords();
 }

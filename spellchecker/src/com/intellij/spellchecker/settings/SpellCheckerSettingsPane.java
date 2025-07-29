@@ -19,7 +19,6 @@ import com.intellij.spellchecker.dictionary.CustomDictionaryProvider;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.statistics.SpellcheckerActionStatistics;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
-import com.intellij.spellchecker.util.Strings;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,8 +30,10 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class SpellCheckerSettingsPane implements Disposable {
@@ -232,11 +233,6 @@ public final class SpellCheckerSettingsPane implements Disposable {
         word = word.trim();
       }
 
-      if (Strings.isMixedCase(word)) {
-        Messages.showWarningDialog(SpellCheckerBundle.message("entered.word.0.is.mixed.cased.you.must.enter.simple.word", word),
-                                   SpellCheckerBundle.message("add.new.word"));
-        return null;
-      }
       if (!manager.hasProblem(word)) {
         Messages.showWarningDialog(SpellCheckerBundle.message("entered.word.0.is.correct.you.no.need.to.add.this.in.list", word),
                                    SpellCheckerBundle.message("add.new.word"));

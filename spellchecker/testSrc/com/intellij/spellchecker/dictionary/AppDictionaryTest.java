@@ -20,7 +20,7 @@ public class AppDictionaryTest extends SpellcheckerInspectionTestCase {
 
   private static EditableDictionary createAppDictionary(Collection<String> projectWords) {
     EditableDictionary editableDictionary = new UserDictionary("TestName");
-    editableDictionary.addToDictionary(APP_WORDS);
+    editableDictionary.addToDictionary(projectWords);
     return editableDictionary;
   }
 

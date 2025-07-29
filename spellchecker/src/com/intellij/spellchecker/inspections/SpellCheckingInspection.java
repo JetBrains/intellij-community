@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
@@ -265,7 +266,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
       }
 
       boolean keyword = myNamesValidator.isKeyword(word, myElement.getProject());
-      if (keyword || !hasProblem(word) || hasSameNamedReferenceInFile(word)) {
+      if (keyword || !hasProblem(word, range) || hasSameNamedReferenceInFile(word)) {
         return;
       }
 
@@ -289,6 +290,29 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
       return references.computeIfAbsent(word, key -> hasSameNamedReferencesInFile(file, key));
     }
 
+    private boolean hasCamelCaseMatch(String word, TextRange range) {
+      Set<String> camelCaseWords = myManager.getUserCamelCaseWords()
+        .stream()
+        .filter(camelCaseWord -> camelCaseWord.contains(word))
+        .collect(Collectors.toSet());
+      if (camelCaseWords.isEmpty()) {
+        return false;
+      }
+
+      String text = myElement.getText();
+      for (String camelCaseWord : camelCaseWords) {
+        ProgressManager.checkCanceled();
+        int[] indexes = new StringSearcher(camelCaseWord, false, true).findAllOccurrences(text);
+        for (int index : indexes) {
+          TextRange hitRange = new TextRange(index, index + camelCaseWord.length());
+          if (range.intersectsStrict(hitRange)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
     private static boolean hasSameNamedReferencesInFile(PsiFile file, String word) {
       int[] occurrences = new StringSearcher(word, true, true).findAllOccurrences(file.getText());
       if (occurrences.length <= 1) {
@@ -305,8 +329,13 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
       return false;
     }
 
-    private boolean hasProblem(String word) {
+    private boolean hasProblem(String word, TextRange range) {
       if (!myManager.hasProblem(word)) {
+        return false;
+      }
+
+      // Check if a user has added CamelCase word to the project / app dictionary
+      if (hasCamelCaseMatch(word, range)) {
         return false;
       }
 
