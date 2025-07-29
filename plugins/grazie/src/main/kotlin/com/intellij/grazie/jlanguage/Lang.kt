@@ -3,6 +3,8 @@ package com.intellij.grazie.jlanguage
 
 import ai.grazie.nlp.langs.LanguageISO
 import ai.grazie.nlp.langs.LanguageWithVariant
+import ai.grazie.spell.utils.DictionaryResources.transformSwissGermanDic
+import ai.grazie.spell.utils.DictionaryResources.transformSwissGermanTrigrams
 import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.GrazieDynamic.getLangDynamicFolder
 import com.intellij.grazie.remote.GrazieRemote
@@ -10,14 +12,12 @@ import com.intellij.grazie.remote.HunspellDescriptor
 import com.intellij.grazie.remote.LanguageToolDescriptor
 import com.intellij.grazie.remote.RemoteLangDescriptor
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
 import com.intellij.spellchecker.hunspell.HunspellDictionary
 import org.jetbrains.annotations.NonNls
 import org.languagetool.Language
 import org.languagetool.language.English
 import org.languagetool.noop.NoopChunker
-import java.io.File
 
 enum class Lang(val displayName: String, val className: String, val iso: LanguageISO, @NlsSafe val nativeName: String, @NonNls val variant: String? = null) {
   BRITISH_ENGLISH("English (GB)", "BritishEnglish", LanguageISO.EN, "English (Great Britain)"),
@@ -121,39 +121,12 @@ enum class Lang(val displayName: String, val className: String, val iso: Languag
 }
 
 private fun createSwissDictionary(path: String): HunspellDictionary {
-  val pathWithoutExtension = FileUtilRt.getNameWithoutExtension(path)
-  val dic = File("$pathWithoutExtension.dic").readText()
-  val aff = File("$pathWithoutExtension.aff").readText()
-  val trigrams = getTrigrams("$pathWithoutExtension.trigrams.txt")
-
+  val (dic, aff, trigrams) = HunspellDictionary.getHunspellPaths(path)
   return HunspellDictionary(
-    transformSwissGermanDic(dic),
-    aff,
-    transformSwissGermanTrigrams(trigrams),
+    transformSwissGermanDic(dic.readText()),
+    aff.readText(),
+    transformSwissGermanTrigrams(trigrams.readLines()),
     path,
     LanguageISO.DE,
   )
 }
-
-//todo use grazie-platform's DictionaryServices functions in newer versions
-private fun transformSwissGermanDic(dicText: String): String {
-  val lines = dicText.lineSequence().drop(1).map { it.replace("ß", "ss") }.distinct().toList()
-  return "${lines.size}\n" + lines.joinToString("\n")
-}
-
-private fun transformSwissGermanTrigrams(trigrams: List<String>?): List<String>? {
-  if (trigrams == null) return null
-  return trigrams
-    .flatMap { s ->
-      val replaced = s.replace("ß", "ss")
-      if (replaced.length > 3) (0..replaced.length - 3).map { start -> replaced.substring(start, start + 3) } else listOf(replaced)
-    }
-    .distinct()
-    .toList()
-}
-
-private fun getTrigrams(path: String): List<String>? {
-  val trigrams = File(path)
-  return if (!trigrams.exists()) return null else trigrams.readLines()
-}
-

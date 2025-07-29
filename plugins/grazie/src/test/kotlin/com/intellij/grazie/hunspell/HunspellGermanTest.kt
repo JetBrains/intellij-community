@@ -23,8 +23,7 @@ class HunspellGermanTest : GrazieTestBase() {
     doTestSuggestion("anschließend", "anschliessend")
   }
 
-  // HunspellWordList isn't fully ready to support some cases
-  fun `_test standard german suggestions`() {
+  fun `test standard german suggestions`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
     doTestSuggestion("anschliessend", "anschließend")
   }

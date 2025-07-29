@@ -30,23 +30,21 @@ class HunspellBundleInfoTest : BasePlatformTestCase() {
 
   @ParameterizedTest
   @EnumSource(LanguageISO::class, names = ["EN", "DE", "UK", "RU"])
-  fun `test hunspell-jvm version matches grazie plugin dictionary version`(iso: LanguageISO) {
+  fun `test hunspell version matches grazie plugin dictionary version`(iso: LanguageISO) {
     assertEquals(GraziePlugin.Hunspell.version, getDictionaryVersion(iso))
   }
 
   private fun isUrlValid(url: String, connectTimeoutMs: Int = 10000, readTimeoutMs: Int = 10000): Boolean {
-    val responseCode = HttpRequests.head(url)
+    return HttpRequests.head(url)
       .connectTimeout(connectTimeoutMs)
       .readTimeout(readTimeoutMs)
       .throwStatusCodeException(false)
-      .tryConnect()
-    return responseCode == HttpURLConnection.HTTP_OK
+      .tryConnect() == HttpURLConnection.HTTP_OK
   }
 
   private fun getDictionaryVersion(iso: LanguageISO): String {
-    val language = iso.name.lowercase()
-    val path = HunspellBundleInfoTest::class.java.getClassLoader().getResource("dictionary/$language.aff")!!.toString()
-    val matcher = Pattern.compile(".*/hunspell-$language-jvm-((\\d|.)+)\\.jar!/.*").matcher(path)
+    val path = HunspellBundleInfoTest::class.java.getClassLoader().getResource("dictionary/$iso.aff")!!.toString()
+    val matcher = Pattern.compile(".*/hunspell-$iso-((\\d|.)+)\\.jar!/.*").matcher(path)
     if (!matcher.matches()) throw AssertionError("Unexpected Hunspell jar path $path")
     return matcher.group(1)
   }
