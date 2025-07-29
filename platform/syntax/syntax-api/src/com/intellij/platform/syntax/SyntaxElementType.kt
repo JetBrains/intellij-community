@@ -19,9 +19,16 @@ import kotlin.jvm.JvmOverloads
 class SyntaxElementType internal constructor(
   private val debugName: String,
   internal val lazyParser: LazyParser?,
+  transient: Boolean,
   @Suppress("unused") unusedParam: Any?, // this parameter is necessary for disambiguation with the factory function
 ) {
-  val index: Int = counter.fetchAndIncrement()
+
+  /**
+   * The unique index of this element type
+   *
+   * If the element type is transient, the index will be -1.
+   */
+  val index: Int = if (transient) -1 else counter.fetchAndIncrement()
 
   /**
    * Checks if this element type is lazy-parseable.
@@ -38,12 +45,20 @@ class SyntaxElementType internal constructor(
   override fun hashCode(): Int = index
 }
 
+/**
+ * Creates a new [SyntaxElementType].
+ *
+ * @param debugName the name of the element type for debug purposes.
+ * @param lazyParser the lazy parser for this element type, or `null` if this element type is not lazy-parseable.
+ * @param transient whether this element type is lightweight or not. If `true`, the element type will not be assigned an index and cannot be stored in a set.
+ */
 @ApiStatus.Experimental
 @JvmOverloads
 fun SyntaxElementType(
   debugName: String,
   lazyParser: LazyParser? = null,
+  transient: Boolean = false,
 ): SyntaxElementType =
-  SyntaxElementType(debugName, lazyParser, null as Any?)
+  SyntaxElementType(debugName, lazyParser, transient, null as Any?)
 
 private val counter = AtomicInt(0)

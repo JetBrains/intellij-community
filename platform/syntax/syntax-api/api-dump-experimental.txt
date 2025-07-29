@@ -48,7 +48,8 @@
 *f:com.intellij.platform.syntax.SyntaxElementTypeKt
 - *sf:SyntaxElementType(java.lang.String):com.intellij.platform.syntax.SyntaxElementType
 - *sf:SyntaxElementType(java.lang.String,com.intellij.platform.syntax.LazyParser):com.intellij.platform.syntax.SyntaxElementType
-- *bs:SyntaxElementType$default(java.lang.String,com.intellij.platform.syntax.LazyParser,I,java.lang.Object):com.intellij.platform.syntax.SyntaxElementType
+- *sf:SyntaxElementType(java.lang.String,com.intellij.platform.syntax.LazyParser,Z):com.intellij.platform.syntax.SyntaxElementType
+- *bs:SyntaxElementType$default(java.lang.String,com.intellij.platform.syntax.LazyParser,Z,I,java.lang.Object):com.intellij.platform.syntax.SyntaxElementType
 *f:com.intellij.platform.syntax.SyntaxElementTypeSet
 - java.util.Set
 - kotlin.jvm.internal.markers.KMappedMarker
