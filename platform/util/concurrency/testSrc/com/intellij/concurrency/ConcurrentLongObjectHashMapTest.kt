@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 class ConcurrentLongObjectHashMapTest {
   @Test
   fun `put and get`() {
-    val map = chLongMap<Int>()
+    val map = ConcurrentCollectionFactory.createConcurrentLongObjectMap<Int>()
     assertThat(map.size()).isEqualTo(0)
     assertThat(map.isEmpty).isTrue()
     map.put(1, 0)
@@ -78,7 +78,7 @@ class ConcurrentLongObjectHashMapTest {
   }
 
   private fun createFrom(vararg pair: Pair<Int, Int>): ConcurrentLongObjectMap<Int> {
-    val map = chLongMap<Int>()
+    val map = ConcurrentCollectionFactory.createConcurrentLongObjectMap<Int>()
     for (entry in pair) {
       map.put(entry.first.toLong(), entry.second)
     }
