@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.inline.InlineMethodHandler;
 import com.intellij.refactoring.inline.InlineMethodProcessor;
@@ -195,6 +196,15 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testParamNameConflictsWithLocalVar() {
+    doTest();
+  }
+  
+  public void testVariablePrefixesSuffixes() {
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    settings.LOCAL_VARIABLE_NAME_PREFIX = "l_";
+    settings.LOCAL_VARIABLE_NAME_SUFFIX = "_v";
+    settings.PARAMETER_NAME_PREFIX = "p_";
+    settings.PARAMETER_NAME_SUFFIX = "_r";
     doTest();
   }
 

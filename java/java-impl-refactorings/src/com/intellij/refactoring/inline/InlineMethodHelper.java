@@ -98,19 +98,29 @@ class InlineMethodHelper {
     PsiCodeBlock block = Objects.requireNonNull(myMethodCopy.getBody());
     boolean compactConstructor = JavaPsiRecordUtil.isCompactConstructor(myMethodCopy);
     final int applicabilityLevel = PsiUtil.getApplicabilityLevel(myMethod, mySubstitutor, myCallArguments);
-    PsiParameter[] parameters = myMethod.getParameterList().getParameters();
+    // myMethodCopy does not have a parameter list for record compact constructors because it doesn't have a containing class
+    // see com.intellij.psi.impl.source.PsiMethodImpl.getParameterList
+    PsiVariable[] parameters = compactConstructor
+                               ? myMethod.getParameterList().getParameters()  
+                               : myMethodCopy.getParameterList().getParameters();
     PsiLocalVariable[] parameterVars = new PsiLocalVariable[parameters.length];
     for (int i = parameters.length - 1; i >= 0; i--) {
-      PsiParameter parameter = parameters[i];
-      String parameterName = parameter.getName();
-      String name = parameterName;
+      PsiVariable variable = parameters[i];
+      if (compactConstructor) {
+        PsiRecordComponent component = JavaPsiRecordUtil.getComponentForCanonicalConstructorParameter((PsiParameter)variable);
+        if (component != null) variable = JavaPsiRecordUtil.getFieldForComponent(component);
+      }
+      assert variable != null;
+      String variableName = variable.getName();
+      String name = variableName;
+      assert name != null;
       name = myJavaCodeStyle.variableNameToPropertyName(name, VariableKind.PARAMETER);
       name = myJavaCodeStyle.propertyNameToVariableName(name, VariableKind.LOCAL_VARIABLE);
-      if (!name.equals(parameterName)) {
+      if (!name.equals(variableName)) {
         name = myJavaCodeStyle.suggestUniqueVariableName(name, block.getFirstChild(), true);
+        RefactoringUtil.renameVariableReferences(variable, name, new LocalSearchScope(block), true);
       }
-      RefactoringUtil.renameVariableReferences(parameter, name, new LocalSearchScope(block), true);
-      PsiType paramType = parameter.getType();
+      PsiType paramType = variable.getType();
       @NonNls String defaultValue;
       if (paramType instanceof PsiEllipsisType ellipsisType) {
         paramType = mySubstitutor.substitute(ellipsisType.toArrayType());
@@ -130,9 +140,9 @@ class InlineMethodHelper {
       PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(name, paramType, initializer);
       declaration = (PsiDeclarationStatement)block.addAfter(declaration, null);
       parameterVars[i] = (PsiLocalVariable)declaration.getDeclaredElements()[0];
-      PsiUtil.setModifierProperty(parameterVars[i], PsiModifier.FINAL, parameter.hasModifierProperty(PsiModifier.FINAL));
+      PsiUtil.setModifierProperty(parameterVars[i], PsiModifier.FINAL, variable.hasModifierProperty(PsiModifier.FINAL));
       if (compactConstructor) {
-        block.add(myFactory.createStatementFromText("this." + name + '=' + name + ';', myMethod));
+        block.add(myFactory.createStatementFromText("this." + variableName + '=' + name + ';', myMethod));
       }
     }
     return parameterVars;
