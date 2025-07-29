@@ -20,10 +20,19 @@ import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineRendererExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
 
+/**
+ * A default implementation of [InlineMarkdownRenderer] that can be extended.
+ *
+ * This renderer handles standard CommonMark inline elements and is `open` to allow for customization of how specific
+ * elements are rendered.
+ *
+ * @param rendererExtensions A list of [MarkdownRendererExtension]s for rendering custom inline nodes.
+ */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<MarkdownRendererExtension>) :
     InlineMarkdownRenderer {
+    /** Extensions for rendering custom delimited inline nodes, such as `~strikethrough~`. */
     protected val delimitedNodeRendererExtensions: List<MarkdownDelimitedInlineRendererExtension> =
         rendererExtensions.mapNotNull { it.delimitedInlineRenderer }
 
@@ -36,6 +45,16 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
         appendInlineMarkdownFrom(inlineMarkdown, styling, enabled, onUrlClicked, styling.textStyle)
     }
 
+    /**
+     * Appends a sequence of [InlineMarkdown] nodes to the [Builder], dispatching to the appropriate `render` function
+     * based on the node type. This is the main recursive-like entry point for rendering children of a node.
+     *
+     * @param inlineMarkdown The sequence of nodes to process.
+     * @param styling The styling rules to apply.
+     * @param enabled The current enabled state.
+     * @param onUrlClicked The callback for link clicks.
+     * @param currentTextStyle The base text style to build upon for nested nodes.
+     */
     private fun Builder.appendInlineMarkdownFrom(
         inlineMarkdown: Iterable<InlineMarkdown>,
         styling: InlinesStyling,
@@ -74,6 +93,7 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
         }
     }
 
+    /** Renders an [InlineMarkdown.Text] node by appending its content. */
     protected open fun Builder.renderText(
         node: InlineMarkdown.Text,
         styling: InlinesStyling,
@@ -83,6 +103,10 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
         append(node.content)
     }
 
+    /**
+     * Renders an [InlineMarkdown.Emphasis] node (e.g., `*text*`). Merges the emphasis style with the current style and
+     * processes child nodes.
+     */
     protected open fun Builder.renderEmphasis(
         node: InlineMarkdown.Emphasis,
         styling: InlinesStyling,
@@ -96,6 +120,10 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
         }
     }
 
+    /**
+     * Renders an [InlineMarkdown.StrongEmphasis] node (e.g., `**text**`). Merges the strong emphasis style with the
+     * current style and processes child nodes.
+     */
     protected open fun Builder.renderStrongEmphasis(
         node: InlineMarkdown.StrongEmphasis,
         styling: InlinesStyling,
@@ -109,6 +137,10 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
         }
     }
 
+    /**
+     * Renders an [InlineMarkdown.Link] node. If enabled, a clickable [LinkAnnotation] is attached. Otherwise, a
+     * disabled style is applied.
+     */
     protected open fun Builder.renderLink(
         node: InlineMarkdown.Link,
         styling: InlinesStyling,
@@ -135,6 +167,7 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
         pop(index)
     }
 
+    /** Renders an [InlineMarkdown.Code] node by applying the inline code style. */
     protected open fun Builder.renderInlineCode(
         node: InlineMarkdown.Code,
         styling: InlinesStyling,
@@ -145,14 +178,17 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
         withStyles(combinedStyle, node) { append(it.content) }
     }
 
+    /** Renders an [InlineMarkdown.HardLineBreak] node by appending a newline. */
     protected open fun Builder.renderHardLineBreak(styling: InlinesStyling, currentTextStyle: TextStyle) {
         appendLine()
     }
 
+    /** Renders an [InlineMarkdown.SoftLineBreak] node by appending a space. */
     protected open fun Builder.renderSoftLineBreak(styling: InlinesStyling, currentTextStyle: TextStyle) {
         append(" ")
     }
 
+    /** Renders an [InlineMarkdown.HtmlInline] node by appending its trimmed content. */
     protected open fun Builder.renderInlineHtml(
         node: InlineMarkdown.HtmlInline,
         styling: InlinesStyling,
@@ -163,6 +199,11 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
         withStyles(combinedStyle, node) { append(it.content.trim()) }
     }
 
+    /**
+     * Renders an [InlineMarkdown.Image] node. The default behavior is to render the image's raw Markdown syntax as
+     * fallback text, as images cannot be embedded directly into an [AnnotatedString]. To actually render the image, use
+     * the [org.jetbrains.jewel.markdown.extensions.ImageRendererExtension].
+     */
     protected open fun Builder.renderImage(
         node: InlineMarkdown.Image,
         styling: InlinesStyling,
@@ -187,8 +228,13 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
         )
     }
 
-    // The T type parameter is needed to avoid issues with capturing lambdas
-    // making smart cast of the child local variable impossible.
+    /**
+     * A utility function that applies a [TextStyle] to a section of the [AnnotatedString.Builder], ensuring the style
+     * is popped correctly after the [action] is executed.
+     *
+     * The `T` type parameter is needed to avoid issues with capturing lambdas that would prevent smart casting of the
+     * `node` variable.
+     */
     private inline fun <T : InlineMarkdown> Builder.withStyles(
         spanStyle: TextStyle,
         node: T,
