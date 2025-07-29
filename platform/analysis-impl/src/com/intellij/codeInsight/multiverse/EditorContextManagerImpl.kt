@@ -15,11 +15,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
 
 internal class EditorContextManagerImpl(
   private val project: Project,
-  private val cs: CoroutineScope,
+  cs: CoroutineScope,
 ) : EditorContextManager, Disposable.Default {
 
   // todo IJPL-339 don't drop current contexts entirely on invalidating contexts. try to restore them on the next request
