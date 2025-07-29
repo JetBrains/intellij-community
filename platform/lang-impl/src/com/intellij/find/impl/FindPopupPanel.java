@@ -1543,9 +1543,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       }
       myLoadingHash = 0;
 
-      //noinspection HardCodedStringLiteral
       showEmptyText(message, false);
-      if(backendValidator.isFinished) {
+      if (backendValidator.isFinished) {
         header.loadingIcon.setIcon(EmptyIcon.ICON_16);
       }
       myHelper.onSearchStop();
