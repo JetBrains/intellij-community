@@ -752,6 +752,11 @@ com.intellij.openapi.wm.impl.TitleInfoProvider
 - a:getBorderlessSuffix():java.lang.String
 - a:getValue(com.intellij.openapi.project.Project):java.lang.String
 - a:isActive(com.intellij.openapi.project.Project):Z
+c:com.intellij.openapi.wm.impl.ToolbarComboButton
+- javax.accessibility.Accessible
+- getAccessibleContext():javax.accessibility.AccessibleContext
+- f:getAccessibleNamePrefix():java.lang.String
+- f:setAccessibleNamePrefix(java.lang.String):V
 f:com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 - s:isTabsReorderingAllowed(com.intellij.openapi.wm.ToolWindow):Z
 - s:setAllowTabsReordering(com.intellij.openapi.wm.ToolWindow,Z):V
