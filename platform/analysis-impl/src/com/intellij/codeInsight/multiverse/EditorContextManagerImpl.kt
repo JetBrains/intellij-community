@@ -3,6 +3,7 @@ package com.intellij.codeInsight.multiverse
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -30,6 +31,7 @@ internal class EditorContextManagerImpl(
     cs.launch {
       project.messageBus.connect(this).subscribe(CodeInsightContextManager.topic, object : CodeInsightContextChangeListener {
         override fun contextsChanged() {
+          log.info("Dropping all editor contexts")
           currentContextCache.invalidate()
         }
       })
@@ -56,12 +58,15 @@ internal class EditorContextManagerImpl(
     return currentContextCache.computeIfAbsent(editor) {
       val file = FileDocumentManager.getInstance().getFile(editor.document)
       if (file == null) {
+        log.trace { "editor context for $editor is set to default" }
         return@computeIfAbsent SingleEditorContext(defaultContext())
       }
       val preferredContext = CodeInsightContextManager.getInstance(project).getPreferredContext(file)
       val contexts = SingleEditorContext(preferredContext)
 
       fireEvent(editor, contexts)
+
+      log.trace { "editor context for $editor is set to $contexts" }
 
       contexts
     }
@@ -71,6 +76,8 @@ internal class EditorContextManagerImpl(
   override fun setEditorContext(editor: Editor, contexts: EditorSelectedContexts) {
     //ThreadingAssertions.assertWriteAccess()
     currentContextCache[editor] = contexts
+
+    log.trace { "Editor context for $editor is set to $contexts" }
 
     fireEvent(editor, contexts)
   }
