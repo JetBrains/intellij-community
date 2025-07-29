@@ -20,6 +20,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboButton
+import com.intellij.openapi.wm.impl.ToolbarComboButtonModel
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.JBLabel
@@ -83,6 +84,12 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun createToolbarComboButton(model: ToolbarComboButtonModel): ToolbarComboButton {
+    return super.createToolbarComboButton(model).apply {
+      accessibleNamePrefix = IdeUICustomization.getInstance().projectMessage("project.widget.accessible.name.prefix")
+    }
+  }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return super.createCustomComponent(presentation, place).apply {
