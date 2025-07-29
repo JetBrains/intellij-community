@@ -863,10 +863,14 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     isPluginCompatible = !pluginUiModel.isIncompatibleWithCurrentOs
     isPluginAvailable = isPluginCompatible && updateDescriptor?.canBeEnabled ?: true
     if (isMarketplace) {
-      installedDescriptorForMarketplace = withContext(Dispatchers.IO) { UiPluginManager.getInstance().findPlugin(plugin!!.pluginId) }
+      withContext(Dispatchers.IO) {
+        if (plugin == null) return@withContext
+        installedDescriptorForMarketplace = UiPluginManager.getInstance().findPlugin(pluginUiModel.pluginId)
+      }
       nameAndButtons!!.setProgressDisabledButton((if (this.updateDescriptor == null) installButton?.getComponent() else updateButton)!!)
     }
-    showPlugin()
+    if (plugin == null) return
+    showPlugin(pluginUiModel)
 
     select(0, true)
 
@@ -908,9 +912,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
-  private fun showPlugin() {
-    val plugin = this.plugin!!
-    val text: @NlsSafe String = "<html><span>" + plugin.name + "</span></html>"
+  private fun showPlugin(pluginModel: PluginUiModel) {
+    val text: @NlsSafe String = "<html><span>" + pluginModel.name + "</span></html>"
     nameComponent.text = text
     nameComponent.foreground = null
     scheduleNotificationsUpdate()
@@ -949,13 +952,13 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       myVersion2!!.isVisible = isVersion
     }
 
-    val tags = plugin.calculateTags(pluginModel.getModel().sessionId)
+    val tags = pluginModel.calculateTags(this@PluginDetailsPageComponent.pluginModel.getModel().sessionId)
 
     tagPanel!!.setTags(tags)
 
     if (isMarketplace) {
-      showMarketplaceData(plugin)
-      updateMarketplaceTabsVisible(show = plugin.isFromMarketplace && !plugin.isConverted)
+      showMarketplaceData(pluginModel)
+      updateMarketplaceTabsVisible(show = pluginModel.isFromMarketplace && !pluginModel.isConverted)
     }
     else {
       val node = installedPluginMarketplaceNode
@@ -966,8 +969,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       updateEnabledForProject()
     }
 
-    val vendor = if (plugin.isBundled) null else plugin.vendor?.trim()
-    val organization = if (plugin.isBundled) null else plugin.organization?.trim()
+    val vendor = if (pluginModel.isBundled) null else pluginModel.vendor?.trim()
+    val organization = if (pluginModel.isBundled) null else pluginModel.organization?.trim()
     if (!organization.isNullOrBlank()) {
       author!!.show(organization) {
         searchListener.linkSelected(
@@ -989,9 +992,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     unavailableWithoutSubscriptionBanner?.isVisible = isNotFreeInFreeMode
     partiallyAvailableBanner?.isVisible = !isNotFreeInFreeMode && PluginManagerCore.dependsOnUltimateOptionally(showComponent?.pluginDescriptor)
 
-    val homepage = getPluginHomepage(plugin.pluginId)
+    val homepage = getPluginHomepage(pluginModel.pluginId)
 
-    if (plugin.isBundled && !plugin.allowBundledUpdate || !isPluginFromMarketplace || homepage == null) {
+    if (pluginModel.isBundled && !pluginModel.allowBundledUpdate || !isPluginFromMarketplace || homepage == null) {
       homePage!!.hide()
     }
     else {
@@ -1009,8 +1012,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     if (suggestedFeatures != null) {
       var feature: String? = null
-      if (isMarketplace && plugin.isFromMarketplace) {
-        feature = plugin.suggestedFeatures.firstOrNull()
+      if (isMarketplace && pluginModel.isFromMarketplace) {
+        feature = pluginModel.suggestedFeatures.firstOrNull()
       }
       suggestedFeatures!!.setSuggestedText(feature)
     }
@@ -1040,7 +1043,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     if (myImagesComponent != null) {
       val node = installedPluginMarketplaceNode
-      myImagesComponent!!.show((node ?: plugin))
+      myImagesComponent!!.show((node ?: pluginModel))
     }
 
     ApplicationManager.getApplication().invokeLater({
@@ -1050,7 +1053,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
                                                       }
                                                     }, ModalityState.any())
 
-    if (pluginModel.isPluginInstallingOrUpdating(plugin)) {
+    if (this@PluginDetailsPageComponent.pluginModel.isPluginInstallingOrUpdating(pluginModel)) {
       showInstallProgress()
     }
     else {
