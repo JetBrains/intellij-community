@@ -55,6 +55,8 @@ import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -272,6 +274,7 @@ private fun BaseScrollbar(
             },
             modifier =
                 modifier
+                    .semantics { hideFromAccessibility() }
                     .thenIf(showScrollbar && canScroll && isExpanded) { background(trackBackground) }
                     .scrollable(
                         state = scrollState,
