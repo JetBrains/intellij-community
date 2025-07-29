@@ -69,6 +69,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.codeInsight.multiverse.CodeInsightContexts.isSharedSourceSupportEnabled;
 import static com.intellij.reference.SoftReference.dereference;
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -301,8 +302,8 @@ public class ClsFileImpl extends PsiBinaryFileImpl
           PsiFileFactory factory = PsiFileFactory.getInstance(getManager().getProject());
           PsiFile mirror = factory.createFileFromText(fileName, JavaLanguage.INSTANCE, mirrorText, false, false, true);
           mirror.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, getLanguageLevel());
-          CodeInsightContextManagerImpl contextManager = CodeInsightContextManagerImpl.getInstanceImpl(getProject());
-          if (contextManager.isSharedSourceSupportEnabled()) {
+          if (isSharedSourceSupportEnabled(getProject())) {
+            CodeInsightContextManagerImpl contextManager = CodeInsightContextManagerImpl.getInstanceImpl(getProject());
             CodeInsightContext context = contextManager.getCodeInsightContext(getViewProvider());
             contextManager.setCodeInsightContext(mirror.getViewProvider(), context);
           }

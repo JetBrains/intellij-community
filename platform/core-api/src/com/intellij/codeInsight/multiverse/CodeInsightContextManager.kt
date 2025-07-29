@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.multiverse
 
 import com.intellij.openapi.components.service
@@ -12,7 +12,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.EventListener
+import java.util.*
 
 /**
  * Handles contexts for virtual files and allows running a code insight session with a given [CodeInsightContext].
@@ -72,6 +72,10 @@ interface CodeInsightContextManager {
    */
   val changeFlow: Flow<Unit>
 
+  /**
+   * Use [com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled] instead.
+   */
+  @get: Internal
   val isSharedSourceSupportEnabled: Boolean
 }
 
