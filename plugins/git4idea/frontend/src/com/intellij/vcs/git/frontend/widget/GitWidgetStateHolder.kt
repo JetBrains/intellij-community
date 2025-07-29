@@ -22,8 +22,8 @@ internal class GitWidgetStateHolder(private val project: Project, cs: CoroutineS
     emitAll(manager.selectedEditorFlow)
   }.flatMapLatest { selectedEditor ->
     val projectId = project.projectIdOrNull() ?: return@flatMapLatest flowOf(GitWidgetState.DoNotShow)
-    GitWidgetApi.Companion.getInstance().getWidgetState(projectId, selectedEditor?.file?.rpcId())
-  }.stateIn(cs, SharingStarted.Companion.Eagerly, GitWidgetState.DoNotShow)
+    GitWidgetApi.getInstance().getWidgetState(projectId, selectedEditor?.file?.rpcId())
+  }.stateIn(cs, SharingStarted.Eagerly, GitWidgetState.DoNotShow)
 
   companion object {
     fun getInstance(project: Project): GitWidgetStateHolder = project.service()

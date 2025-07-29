@@ -62,11 +62,12 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), ActionRemoteBeh
   }
 
   override fun createPopup(event: AnActionEvent): JBPopup? {
-    val state = event.presentation.getClientProperty(GIT_WIDGET_STATE_KEY) ?: return null
     val project = event.project ?: return null
-
-    return when (state) {
-      GitWidgetState.DoNotShow -> null
+    return when (val state = clarifyState(event, project)) {
+      null,
+      GitWidgetState.DoNotShow,
+      GitWidgetState.GitRepositoriesNotLoaded,
+        -> null
       is GitWidgetState.NoVcs -> {
         GitWidgetPlaceholder.updatePlaceholder(project, null)
         getPopupForRepoSetup(state.trustedProject, event)
@@ -75,8 +76,20 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), ActionRemoteBeh
         val repo = GitRepositoriesHolder.getInstance(project).get(state.repository)
         GitBranchesPopup.createDefaultPopup(project, repo)
       }
-      GitWidgetState.GitRepositoriesNotLoaded -> awaitInitializationAndGetPopup(project)
     }
+  }
+
+  private fun clarifyState(event: AnActionEvent, project: Project): GitWidgetState? {
+    val state = event.presentation.getClientProperty(GIT_WIDGET_STATE_KEY) ?: return null
+
+    return if (state is GitWidgetState.GitRepositoriesNotLoaded) {
+      runWithModalProgressBlocking(project, GitBundle.message("action.Git.Loading.Branches.progress")) {
+        project.service<GitRepositoriesHolder>().awaitInitialization()
+      }
+      GitWidgetStateHolder.getInstance(project).state.value.also {
+        event.presentation.putClientProperty(GIT_WIDGET_STATE_KEY, it)
+      }
+    } else state
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
@@ -120,17 +133,6 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), ActionRemoteBeh
     }
 
     e.presentation.putClientProperty(ActionUtil.SECONDARY_ICON, getInAndOutIcons(presentation))
-  }
-
-  private fun awaitInitializationAndGetPopup(project: Project): JBPopup {
-    val repo = runWithModalProgressBlocking(project, GitBundle.message("action.Git.Loading.Branches.progress")) {
-      val repositoriesHolder = project.service<GitRepositoriesHolder>()
-      repositoriesHolder.awaitInitialization()
-      val repository = project.service<GitWidgetStateHolder>().state.value as? GitWidgetState.OnRepository
-      repository?.let { repositoriesHolder.get(it.repository) }
-    }
-
-    return GitBranchesPopup.createDefaultPopup(project, repo)
   }
 
   private fun getPopupForRepoSetup(trustedProject: Boolean, event: AnActionEvent): ListPopup {
