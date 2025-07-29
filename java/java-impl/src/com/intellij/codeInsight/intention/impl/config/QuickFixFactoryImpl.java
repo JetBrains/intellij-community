@@ -1134,6 +1134,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return new ReplaceOnDemandImportAction(importModuleStatement, text);
   }
 
+  @Override
+  public @Nullable ModCommandAction createRecordThisDelegateFix(@NotNull PsiMethod psi) {
+    return RecordThisDelegateFix.create(psi);
+  }
+
   private static class ReplaceOnDemandImportAction extends PsiUpdateModCommandAction<PsiImportModuleStatement> {
     @NlsSafe private final String text;
 
