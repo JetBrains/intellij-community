@@ -77,7 +77,7 @@ public class InstallFromDiskAction extends DumbAwareAction {
     var file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     var sessionId = UUID.randomUUID();
     //As backend and frontend have their own actions, we don't need a combined state and can use the local one.
-    InitSessionResult initSessionResult = DefaultUiPluginManagerController.INSTANCE.initSession(sessionId.toString());
+    InitSessionResult initSessionResult = DefaultUiPluginManagerController.INSTANCE.initSessionSync(sessionId.toString());
     var tableModel = myTableModel == null ? new InstalledPluginsTableModel(null, initSessionResult, sessionId) : myTableModel;
     installPluginFromDisk(file, project, tableModel, myPluginEnabler, myParentComponent, callbackData -> {
       onPluginInstalledFromDisk(callbackData, project);

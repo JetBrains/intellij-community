@@ -27,7 +27,7 @@ object PluginManagerPanelFactory {
   private val LOG = Logger.getInstance(PluginManagerPanelFactory::class.java)
 
   fun createMarketplacePanel(cs: CoroutineScope, myPluginModel: MyPluginModel, project: Project?, callback: (CreateMarketplacePanelModel) -> Unit) {
-    cs.launch {
+    cs.launch(Dispatchers.IO) {
       myPluginModel.waitForSessionInitialization()
       val customRepositoriesMap = UiPluginManager.getInstance().getCustomRepositoryPluginMap()
       val suggestedPlugins = if (project != null) findSuggestedPlugins(project, customRepositoriesMap) else emptyList()
@@ -56,14 +56,14 @@ object PluginManagerPanelFactory {
       }
       val installedPlugins = pluginManager.findInstalledPlugins(marketplaceData.flatMap { it.value.getPlugins().map { plugin -> plugin.pluginId } }.toSet())
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        callback(CreateMarketplacePanelModel(marketplaceData, errors, suggestedPlugins, installedPlugins))
+        callback(CreateMarketplacePanelModel(marketplaceData, errors, suggestedPlugins, customRepositoriesMap, installedPlugins))
       }
     }
   }
 
   @ApiStatus.Internal
   fun createInstalledPanel(cs: CoroutineScope, myPluginModel: MyPluginModel, callback: (CreateInstalledPanelModel) -> Unit) {
-    cs.launch {
+    cs.launch(Dispatchers.IO) {
       myPluginModel.waitForSessionInitialization()
       val pluginManager = UiPluginManager.getInstance()
       val installedPlugins = pluginManager.getInstalledPlugins()
@@ -99,5 +99,6 @@ data class CreateMarketplacePanelModel(
   val marketplaceData: Map<String, PluginSearchResult>,
   val errors: Map<PluginId, List<HtmlChunk>>,
   val suggestedPlugins: List<PluginUiModel>,
+  val customRepositories: Map<String, List<PluginUiModel>>,
   val installedPlugins: Map<PluginId, PluginUiModel>,
 )

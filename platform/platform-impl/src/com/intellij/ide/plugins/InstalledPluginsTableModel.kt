@@ -3,9 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.plugins.marketplace.InitSessionResult
-import com.intellij.ide.plugins.newui.FrontendRpcCoroutineContext
-import com.intellij.ide.plugins.newui.PluginUiModel
-import com.intellij.ide.plugins.newui.UiPluginManager
+import com.intellij.ide.plugins.newui.*
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -15,15 +13,11 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.*
+import java.util.function.Consumer
 
 @ApiStatus.Internal
 open class InstalledPluginsTableModel @JvmOverloads constructor(
@@ -32,11 +26,23 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
   @JvmField val mySessionId: UUID = UUID.randomUUID(),
 ) {
   var coroutineScope: CoroutineScope = service<FrontendRpcCoroutineContext>().coroutineScope
+
   @JvmField
   protected val view: MutableList<PluginUiModel> = mutableListOf()
   protected val enabledMap: MutableMap<PluginId, PluginEnabledState?> = mutableMapOf()
   private val sessionInitializedDeferred = CompletableDeferred<Unit>()
   private val modificationTracker = getModificationTracker()
+
+  @JvmField
+  protected val myInstalledPluginComponents: MutableList<ListPluginComponent> = mutableListOf()
+  @JvmField
+  protected val myInstalledPluginComponentMap: MutableMap<PluginId?, MutableList<ListPluginComponent>> = mutableMapOf()
+  @JvmField
+  protected val myMarketplacePluginComponentMap: MutableMap<PluginId?, MutableList<ListPluginComponent>> = mutableMapOf()
+  @JvmField
+  protected val myDetailPanels: MutableList<PluginDetailsPageComponent> = mutableListOf()
+  @JvmField
+  protected val myEnabledGroups: MutableList<PluginsGroup> = ArrayList<PluginsGroup>()
 
   init {
     if (initSessionResult != null) {
@@ -45,18 +51,21 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
     else {
       if (Registry.`is`("reworked.plugin.manager.enabled", false)) {
         coroutineScope.launch(Dispatchers.IO) {
-          initSessionPlugins()
+          val pluginManager = UiPluginManager.getInstance()
+          initSessionPlugins(pluginManager.initSession(mySessionId),
+                             pluginManager.updatePluginDependencies(mySessionId.toString()))
         }
       }
       else {
-        initSessionPlugins()
+        val sessionResult = DefaultUiPluginManagerController.initSessionSync(mySessionId.toString())
+        val pluginsToEnable = DefaultUiPluginManagerController.updatePluginDependenciesSync(mySessionId.toString())
+        initSessionPlugins(sessionResult, pluginsToEnable)
       }
     }
   }
 
-  private fun initSessionPlugins() {
+  private fun initSessionPlugins(initSessionResult: InitSessionResult, pluginsToEnable: Set<PluginId>) {
     try {
-      val initSessionResult = UiPluginManager.getInstance().initSession(mySessionId)
       view.addAll(initSessionResult.getVisiblePluginsList())
       initSessionResult.pluginStates.forEach { (pluginId, pluginState) ->
         enabledMap[pluginId] = when (pluginState) {
@@ -65,7 +74,9 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
           null -> null
         }
       }
-    } finally {
+      setStatesByIds(pluginsToEnable, true)
+    }
+    finally {
       sessionInitializedDeferred.complete(Unit)
     }
   }
@@ -105,6 +116,28 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
     enabled: PluginEnabledState?,
   ) {
     enabledMap[pluginId] = enabled
+  }
+
+  protected open fun setStatesByIds(ids: Set<PluginId>, enabled: Boolean) {
+    val newState = if (enabled) PluginEnabledState.ENABLED else PluginEnabledState.DISABLED
+    ids.forEach(Consumer { id: PluginId -> setEnabled(id, newState) })
+    updateAfterEnableDisable()
+  }
+
+  protected open fun updateAfterEnableDisable() {
+    for (component in myInstalledPluginComponents) {
+      component.updateEnabledState()
+    }
+    for (plugins in myMarketplacePluginComponentMap.values) {
+      for (plugin in plugins) {
+        if (plugin.installedDescriptorForMarketplace != null) {
+          plugin.updateEnabledState()
+        }
+      }
+    }
+    for (detailPanel in myDetailPanels) {
+      detailPanel.updateEnabledState()
+    }
   }
 
   companion object {

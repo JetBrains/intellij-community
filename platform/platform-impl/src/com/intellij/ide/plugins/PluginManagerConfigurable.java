@@ -519,7 +519,6 @@ public final class PluginManagerConfigurable
         PluginManagerPanelFactory.INSTANCE.createMarketplacePanel(myCoroutineScope, myPluginModelFacade.getModel(), project, model -> {
           List<PluginsGroup> groups = new ArrayList<>();
           try {
-            Map<String, List<PluginUiModel>> customRepositoriesMap = UiPluginManager.getInstance().getCustomRepositoryPluginMap();
             try {
               if (project != null) {
                 addSuggestedGroup(groups, model.getErrors(), model.getSuggestedPlugins(), model.getInstalledPlugins());
@@ -586,7 +585,7 @@ public final class PluginManagerConfigurable
             }
 
             for (String host : RepositoryHelper.getCustomPluginRepositoryHosts()) {
-              List<PluginUiModel> allDescriptors = customRepositoriesMap.get(host);
+              List<PluginUiModel> allDescriptors = model.getCustomRepositories().get(host);
               if (allDescriptors != null) {
                 String groupName = IdeBundle.message("plugins.configurable.repository.0", host);
                 LOG.info("Marketplace tab: '" + groupName + "' group load started");
@@ -1445,7 +1444,7 @@ public final class PluginManagerConfigurable
 
   private void addSuggestedGroup(@NotNull List<? super PluginsGroup> groups,
                                  @NotNull Map<@NotNull PluginId,
-                                 @NotNull List<@NotNull HtmlChunk>> errors,
+                                   @NotNull List<@NotNull HtmlChunk>> errors,
                                  @NotNull List<@NotNull PluginUiModel> plugins,
                                  @NotNull Map<@NotNull PluginId, @NotNull PluginUiModel> installedPlugins) {
     String groupName = IdeBundle.message("plugins.configurable.suggested");

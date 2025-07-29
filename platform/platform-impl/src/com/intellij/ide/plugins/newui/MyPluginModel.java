@@ -54,11 +54,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   private static final Boolean FINISH_DYNAMIC_INSTALLATION_WITHOUT_UI =
     SystemProperties.getBooleanProperty("plugins.finish-dynamic-plugin-installation-without-ui", true);
 
-  private final List<ListPluginComponent> myInstalledPluginComponents = new ArrayList<>();
-  private final Map<PluginId, List<ListPluginComponent>> myInstalledPluginComponentMap = new HashMap<>();
-  private final Map<PluginId, List<ListPluginComponent>> myMarketplacePluginComponentMap = new HashMap<>();
-  private final List<PluginsGroup> myEnabledGroups = new ArrayList<>();
-
   private PluginsGroupComponent myInstalledPanel;
   private PluginsGroup myDownloaded;
   private PluginsGroup myInstalling;
@@ -72,8 +67,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
   public boolean needRestart;
   public boolean createShutdownCallback = true;
-
-  private final List<PluginDetailsPageComponent> myDetailPanels = new ArrayList<>();
 
   private final @Nullable StatusBarEx myStatusBar;
 
@@ -96,8 +89,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
                   statusBar :
                   getStatusBar(window.getOwner());
     myPluginManagerCustomizer = PluginManagerCustomizer.getInstance();
-
-    updatePluginDependencies();
   }
 
   @ApiStatus.Internal
@@ -631,12 +622,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     myDetailPanels.add(detailPanel);
   }
 
-  private void setStatesByIds(Set<PluginId> ids, boolean enabled) {
-    PluginEnabledState newState = enabled ? PluginEnabledState.ENABLED : PluginEnabledState.DISABLED;
-    ids.forEach(id -> super.setEnabled(id, newState));
-    updateEnabledStateInUi();
-  }
-
   private void appendOrUpdateDescriptor(@NotNull PluginUiModel descriptor) {
     int index = view.indexOf(descriptor);
     if (index < 0) {
@@ -868,8 +853,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       .ask(getProject());
   }
 
+
   private void updateEnabledStateInUi() {
     updateAfterEnableDisable();
+    for (PluginsGroup group : myEnabledGroups) {
+      group.titleWithEnabled(new PluginModelFacade(this));
+    }
     runInvalidFixCallback();
     PluginUpdatesService.reapplyFilter();
   }
@@ -919,25 +908,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     changedStates.forEach((pluginId, enabled) -> {
       super.setEnabled(pluginId, enabled ? PluginEnabledState.ENABLED : PluginEnabledState.DISABLED);
     });
-  }
-
-  private void updateAfterEnableDisable() {
-    for (ListPluginComponent component : myInstalledPluginComponents) {
-      component.updateEnabledState();
-    }
-    for (List<ListPluginComponent> plugins : myMarketplacePluginComponentMap.values()) {
-      for (ListPluginComponent plugin : plugins) {
-        if (plugin.myInstalledDescriptorForMarketplace != null) {
-          plugin.updateEnabledState();
-        }
-      }
-    }
-    for (PluginDetailsPageComponent detailPanel : myDetailPanels) {
-      detailPanel.updateEnabledState();
-    }
-    for (PluginsGroup group : myEnabledGroups) {
-      group.titleWithEnabled(new PluginModelFacade(this));
-    }
   }
 
   public void runRestartButton(@NotNull Component component) {
@@ -1081,11 +1051,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
 
     return Collections.unmodifiableList(errors);
-  }
-
-  protected void updatePluginDependencies() {
-    Set<PluginId> pluginsToEnable = UiPluginManager.getInstance().updatePluginDependencies(mySessionId.toString());
-    setStatesByIds(pluginsToEnable, true);
   }
 
   protected @NotNull Collection<PluginUiModel> getCustomRepoPlugins() {

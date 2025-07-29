@@ -26,6 +26,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.pluginManager.shared.rpc.PluginInstallerApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
@@ -55,8 +56,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().getVisiblePlugins(showImplementationDetails).withSource() }
   }
 
-  override fun initSession(sessionId: String): InitSessionResult {
-    return awaitForResult { PluginManagerApi.getInstance().initSession(sessionId) }
+  override suspend fun initSession(sessionId: String): InitSessionResult {
+    return PluginManagerApi.getInstance().initSession(sessionId)
   }
 
   override fun getInstalledPlugins(): List<PluginUiModel> {
@@ -133,8 +134,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().getPluginInstallationStates() }
   }
 
-  override fun checkPluginCanBeDownloaded(pluginUiModel: PluginUiModel, progressIndicator: ProgressIndicator?): Boolean {
-    return awaitForResult { PluginManagerApi.getInstance().checkPluginCanBeDownloaded(PluginDto.fromModel(pluginUiModel)) }
+  override suspend fun checkPluginCanBeDownloaded(pluginUiModel: PluginUiModel, progressIndicator: ProgressIndicator?): Boolean {
+    return PluginManagerApi.getInstance().checkPluginCanBeDownloaded(PluginDto.fromModel(pluginUiModel))
   }
 
   override suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult> {
@@ -178,8 +179,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().getCustomRepoPlugins().withSource() }
   }
 
-  override fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>> {
-    return awaitForResult { PluginManagerApi.getInstance().getCustomRepositoryPluginMap() }
+  override suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>> {
+    return PluginManagerApi.getInstance().getCustomRepositoryPluginMap()
   }
 
   override fun hasPluginRequiresUltimateButItsDisabled(pluginIds: List<PluginId>): Boolean {
@@ -210,8 +211,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginInstallerApi.getInstance().applyPluginSession(sessionId, project?.projectId()) }
   }
 
-  override fun updatePluginDependencies(sessionId: String): Set<PluginId> {
-    return awaitForResult { PluginInstallerApi.getInstance().updatePluginDependencies(sessionId) }
+  override suspend fun updatePluginDependencies(sessionId: String): Set<PluginId> {
+    return PluginInstallerApi.getInstance().updatePluginDependencies(sessionId)
   }
 
   override fun allowLoadUnloadWithoutRestart(pluginId: PluginId): Boolean {

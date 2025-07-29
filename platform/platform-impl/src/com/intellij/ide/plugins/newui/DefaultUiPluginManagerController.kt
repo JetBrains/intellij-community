@@ -55,7 +55,12 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return PluginManagerCore.plugins.map { PluginUiModelAdapter(it).withSource() }
   }
 
-  override fun initSession(sessionId: String): InitSessionResult {
+  override suspend fun initSession(sessionId: String): InitSessionResult {
+    return initSessionSync(sessionId)
+  }
+
+
+  fun initSessionSync(sessionId: String): InitSessionResult {
     val session = createSession(sessionId)
     val applicationInfo = ApplicationInfo.getInstance()
     val visiblePlugins = mutableListOf<PluginUiModel>()
@@ -115,7 +120,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins().toList().withSource()
   }
 
-  override fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>> {
+  override suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>> {
     return CustomPluginRepositoryService.getInstance().getCustomRepositoryPluginMap()
   }
 
@@ -370,7 +375,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     }
   }
 
-  override fun checkPluginCanBeDownloaded(pluginUiModel: PluginUiModel, progressIndicator: ProgressIndicator?): Boolean {
+  override suspend fun checkPluginCanBeDownloaded(pluginUiModel: PluginUiModel, progressIndicator: ProgressIndicator?): Boolean {
     return PluginDownloader.createDownloader(pluginUiModel.getDescriptor(), pluginUiModel.repositoryName, null).checkPluginCanBeDownloaded(null)
   }
 
@@ -508,7 +513,12 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return DynamicPlugins.allowLoadUnloadSynchronously(descriptorImpl)
   }
 
-  override fun updatePluginDependencies(sessionId: String): Set<PluginId> {
+  override suspend fun updatePluginDependencies(sessionId: String): Set<PluginId> {
+    val session = findSession(sessionId) ?: return emptySet()
+    return updatePluginDependencies(session, null, null)
+  }
+
+  fun updatePluginDependenciesSync(sessionId: String): Set<PluginId> {
     val session = findSession(sessionId) ?: return emptySet()
     return updatePluginDependencies(session, null, null)
   }

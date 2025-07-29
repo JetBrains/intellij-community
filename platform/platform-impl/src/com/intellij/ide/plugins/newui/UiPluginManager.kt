@@ -21,6 +21,7 @@ import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
 import javax.swing.JComponent
@@ -42,7 +43,7 @@ class UiPluginManager {
     }
   }
 
-  fun initSession(uuid: UUID): InitSessionResult {
+  suspend fun initSession(uuid: UUID): InitSessionResult {
     return getController().initSession(uuid.toString())
   }
 
@@ -110,7 +111,7 @@ class UiPluginManager {
     return getController().getApplyError(sessionId)
   }
 
-  fun updatePluginDependencies(sessionId: String): Set<PluginId> {
+  suspend fun updatePluginDependencies(sessionId: String): Set<PluginId> {
     return getController().updatePluginDependencies(sessionId)
   }
 
@@ -150,7 +151,7 @@ class UiPluginManager {
     return getController().getCustomRepoPlugins()
   }
 
-  fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>> {
+  suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>> {
     return getController().getCustomRepositoryPluginMap()
   }
 
