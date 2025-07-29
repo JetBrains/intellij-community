@@ -16,6 +16,7 @@ enum class SeLog {
   THROTTLING,
   WARNING,
   LISTENERS,
+  BALANCING,
   EQUALITY;
 
   companion object {
@@ -28,6 +29,7 @@ enum class SeLog {
       THROTTLING,
       WARNING,
       LISTENERS,
+      BALANCING,
       EQUALITY
     )
 

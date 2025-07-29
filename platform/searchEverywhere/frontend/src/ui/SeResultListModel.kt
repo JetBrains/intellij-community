@@ -50,6 +50,12 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
           accumulatedList.handleEvent(it)
         }
         addAll(accumulatedList.list)
+        SeLog.log(SeLog.THROTTLING) {
+          "Added batch of throttled events: ${accumulatedList.list.size}; Providers:" +
+          accumulatedList.list.mapNotNull { (it as? SeResultListItemRow)?.item?.providerId?.value }.groupingBy { it }.eachCount().map {
+            "${it.key} - ${it.value}"
+          }.joinToString(", ")
+        }
 
         accumulatedList.list.filterIsInstance<SeResultListItemRow>().takeIf { it.isNotEmpty() }?.map {
           it.item
