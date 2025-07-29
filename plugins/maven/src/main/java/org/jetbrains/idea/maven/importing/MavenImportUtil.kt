@@ -350,11 +350,16 @@ object MavenImportUtil {
   }
 
   internal fun getModuleNames(project: Project, pomXml: VirtualFile): List<String> {
+    return getModuleEntities(project, pomXml)
+      .map { it.name }
+      .toList()
+  }
+
+  internal fun getModuleEntities(project: Project, pomXml: VirtualFile): List<ModuleEntity> {
     val storage = project.workspaceModel.currentSnapshot
     val pomXmlPath = pomXml.toNioPath()
     return storage.entities<ModuleEntity>()
       .filter { it.exModuleOptions?.linkedProjectId?.toNioPathOrNull() == pomXmlPath }
-      .map { it.name }
       .toList()
   }
 
