@@ -329,6 +329,9 @@ class IjentEphemeralRootAwareFileSystem(
       return IjentEphemeralRootAwarePath(this,root, ijentNioPath)
     }
 
+    val delegateFs = getDelegate(first)
+    val first = first.replace(originalFs.separator, delegateFs.separator)
+    val more = more.toList().map { it.replace(originalFs.separator, delegateFs.separator) }.toTypedArray()
     return super.getPath(first, *more)
   }
 
