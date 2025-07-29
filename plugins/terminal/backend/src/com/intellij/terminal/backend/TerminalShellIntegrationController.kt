@@ -26,10 +26,11 @@ internal class TerminalShellIntegrationController(terminalController: Terminal) 
           "prompt_finished" -> dispatcher.multicaster.promptFinished()
           "aliases_received" -> {
             val aliasesString = args.getOrNull(1)
-            if (aliasesString != null && aliasesString.isNotEmpty()) {
-              val aliases = TerminalAliasesInfo(parseAliases(aliasesString, ShellType.ZSH.name))
-              dispatcher.multicaster.aliasesReceived(aliases)
+            val aliases = if (aliasesString?.isNotEmpty() == true) {
+              parseAliases(aliasesString, ShellType.ZSH.name)
             }
+            else emptyMap()
+            dispatcher.multicaster.aliasesReceived(TerminalAliasesInfo(aliases))
           }
           else -> LOG.warn("Unknown shell integration event: $args")
         }

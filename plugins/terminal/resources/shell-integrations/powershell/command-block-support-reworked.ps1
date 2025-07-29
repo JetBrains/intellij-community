@@ -44,6 +44,8 @@ function Global:Prompt() {
   if ($Global:__JetBrainsIntellijState.IsInitialized -eq $false) {
     $Global:__JetBrainsIntellijState.IsInitialized = $true
     $Result += Global:__JetBrainsIntellijOSC "initialized"
+    # Return the empty aliases list for now
+    $Result += Global:__JetBrainsIntellijOSC "aliases_received"
   }
   elseif ($Global:__JetBrainsIntellijState.IsCommandRunning -eq $true){
     $Global:__JetBrainsIntellijState.IsCommandRunning = $false
