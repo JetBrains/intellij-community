@@ -40,5 +40,6 @@
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.rpc.topics" />
+    <orderEntry type="module" module-name="intellij.platform.project" />
   </component>
 </module>

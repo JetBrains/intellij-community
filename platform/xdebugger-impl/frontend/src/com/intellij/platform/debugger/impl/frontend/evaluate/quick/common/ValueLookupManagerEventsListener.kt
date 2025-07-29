@@ -2,18 +2,15 @@
 package com.intellij.platform.debugger.impl.frontend.evaluate.quick.common
 
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.LOOKUP_HINTS_EVENTS_REMOTE_TOPIC
 import com.intellij.platform.debugger.impl.rpc.ValueHintEvent
-import com.intellij.platform.project.findProject
-import com.intellij.platform.project.findProjectOrNull
-import com.intellij.platform.rpc.topics.RemoteTopic
-import com.intellij.platform.rpc.topics.RemoteTopicListener
+import com.intellij.platform.rpc.topics.ProjectRemoteTopicListener
 
-private class ValueLookupManagerEventsListener : RemoteTopicListener<ValueHintEvent> {
-  override val topic: RemoteTopic<ValueHintEvent> = LOOKUP_HINTS_EVENTS_REMOTE_TOPIC
+private class ValueLookupManagerEventsListener : ProjectRemoteTopicListener<ValueHintEvent> {
+  override val topic = LOOKUP_HINTS_EVENTS_REMOTE_TOPIC
 
-  override fun handleEvent(event: ValueHintEvent) {
-    val project = event.project.findProjectOrNull() ?: return
+  override fun handleEvent(project: Project, event: ValueHintEvent) {
     when (event) {
       is ValueHintEvent.HideHint -> {
         runInEdt {

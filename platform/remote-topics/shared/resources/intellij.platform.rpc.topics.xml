@@ -1,6 +1,8 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.platform.rpc.remoteTopicListener"
-                    interface="com.intellij.platform.rpc.topics.RemoteTopicListener" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.rpc.applicationRemoteTopicListener"
+                    interface="com.intellij.platform.rpc.topics.ApplicationRemoteTopicListener" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.rpc.projectRemoteTopicListener"
+                    interface="com.intellij.platform.rpc.topics.ProjectRemoteTopicListener" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

@@ -20,14 +20,14 @@ class ValueLookupManagerController(private val project: Project, private val cs:
    * Starts [ValueLookupManager] listening for events (e.g. mouse movement) to trigger evaluation popups
    */
   fun startListening() {
-    LOOKUP_HINTS_EVENTS_REMOTE_TOPIC.broadcast(ValueHintEvent.StartListening(project.projectId()))
+    LOOKUP_HINTS_EVENTS_REMOTE_TOPIC.broadcast(project, ValueHintEvent.StartListening)
   }
 
   /**
    * Requests [ValueLookupManager] to hide current evaluation hints
    */
   fun hideHint() {
-    LOOKUP_HINTS_EVENTS_REMOTE_TOPIC.broadcast(ValueHintEvent.HideHint(project.projectId()))
+    LOOKUP_HINTS_EVENTS_REMOTE_TOPIC.broadcast(project, ValueHintEvent.HideHint)
   }
 
   companion object {

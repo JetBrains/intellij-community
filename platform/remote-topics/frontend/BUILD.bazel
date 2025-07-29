@@ -20,6 +20,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
     "//platform/remote-topics/shared:rpc-topics",
+    "//platform/project/shared:project",
   ],
   runtime_deps = [":frontend_resources"]
 )

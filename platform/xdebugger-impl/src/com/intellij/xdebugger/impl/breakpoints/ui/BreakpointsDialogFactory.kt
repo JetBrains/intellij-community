@@ -56,7 +56,7 @@ class BreakpointsDialogFactory(private val project: Project) {
   fun showDialog(initialBreakpointId: XBreakpointId?) {
     if (useFeProxy()) {
       hideBalloon()
-      SHOW_BREAKPOINT_DIALOG_REMOTE_TOPIC.sendToClient(ShowBreakpointDialogRequest(project.projectId(), initialBreakpointId))
+      SHOW_BREAKPOINT_DIALOG_REMOTE_TOPIC.sendToClient(project, ShowBreakpointDialogRequest(initialBreakpointId))
       return
     }
     showDialogImpl(initialBreakpointId)
