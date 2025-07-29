@@ -42,7 +42,7 @@ data class MavenProjectResolutionResult(val mavenProjectMap: Map<String, Collect
 class MavenProjectResolverResult(
   @JvmField val file: File?,
   @JvmField val mavenModel: MavenModel?,
-  @JvmField val managedDependencies: List<MavenId>,
+  @JvmField val managedDependencies: List<MavenArtifactInfo>,
   @JvmField val dependencyHash: String?,
   @JvmField val dependencyResolutionSkipped: Boolean,
   @JvmField val nativeModelMap: Map<String, String>,
