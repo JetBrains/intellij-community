@@ -362,6 +362,12 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
             CodeInsightContexts.isSharedSourceSupportEnabled(getManager().getProject())
         ) {
           message += "; context: " + FileViewProviderUtil.getCodeInsightContext(this);
+
+          FileManager fileManager = PsiManagerEx.getInstanceEx(getManager().getProject()).getFileManager();
+          List<FileViewProvider> providers = fileManager.findCachedViewProviders(myVirtualFile);
+
+          message += "; known view providers: " + providers.size();
+
         }
 
         LOG.error(message, attachments);
