@@ -406,7 +406,8 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
 
     @Override
     public final boolean equals(Object o) {
-      if (!(o instanceof LongEntry<?> e)) return false;
+      if (!(o instanceof LongEntry)) return false;
+      LongEntry<?> e = (LongEntry<?>)o;
       if (e.getKey() != key) return false;
       Object v = e.getValue();
       Object u = val;
@@ -2742,8 +2743,9 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
       implements Set<LongEntry<V>> {
       EntrySetView(ConcurrentLongObjectHashMap<V> map) { super(map); }
 
-      public boolean contains(Object o) {
-        if (!(o instanceof LongEntry<?> e)) return false;
+    public boolean contains(Object o) {
+        if (!(o instanceof LongEntry)) return false;
+        LongEntry<?> e = (LongEntry<?>)o;
         Object r = map.get(e.getKey());
         if (r == null) return false;
         Object v = e.getValue();
@@ -2751,8 +2753,9 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
       }
 
     @Override
-      public boolean remove(Object o) {
-        if (!(o instanceof LongEntry<?> e)) return false;
+    public boolean remove(Object o) {
+      if (!(o instanceof LongEntry)) return false;
+      LongEntry<?> e = (LongEntry<?>)o;
         Object v = e.getValue();
         return map.remove(e.getKey(), v);
       }

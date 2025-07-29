@@ -392,7 +392,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
     @Override
     public final boolean equals(Object o) {
-      if (!(o instanceof Entry<?> e)) return false;
+      if (!(o instanceof Entry)) return false;
+      Entry<?> e = (Entry<?>)o;
       if (e.getKey() != key) return false;
       Object v = e.getValue();
       Object u = val;
@@ -2779,7 +2780,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       EntrySetView(ConcurrentIntObjectHashMap<V> map) { super(map); }
 
       public boolean contains(Object o) {
-        if (!(o instanceof Entry<?> e)) return false;
+        if (!(o instanceof Entry)) return false;
+        Entry<?> e = (Entry<?>)o;
         Object r = map.get(e.getKey());
         if (r == null) return false;
         Object v = e.getValue();
@@ -2788,7 +2790,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
     @Override
       public boolean remove(Object o) {
-        if (!(o instanceof Entry<?> e)) return false;
+        if (!(o instanceof Entry)) return false;
+        Entry<?> e = (Entry<?>)o;
         Object v = e.getValue();
         return map.remove(e.getKey(), v);
       }
