@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere
 
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContributor
+import com.intellij.openapi.application.readAction
 import com.intellij.platform.searchEverywhere.impl.SeItemEntity
 import com.intellij.platform.searchEverywhere.providers.computeCatchingOrNull
 import fleet.kernel.DurableRef
@@ -47,7 +48,9 @@ class SeItemData(
       if (item is SeLegacyItem) {
         computeCatchingOrNull(true, { e-> "Couldn't add language info (${providerId.value}): $e" }) {
           PSIPresentationBgRendererWrapper.toPsi(item.rawObject)?.let {
-            additionalInfo[SeItemDataKeys.PSI_LANGUAGE_ID] = it.language.id
+            readAction {
+              additionalInfo[SeItemDataKeys.PSI_LANGUAGE_ID] = it.language.id
+            }
           }
         }
 
