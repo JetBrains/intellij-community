@@ -49,7 +49,9 @@ internal class EditorContextManagerImpl(
   @RequiresReadLock
   @RequiresBackgroundThread
   private fun getCurrentContextStateWithPreferredDefault(editor: Editor): EditorSelectedContexts {
-    if (!isSharedSourceSupportEnabled(project)) return SingleEditorContext(defaultContext())
+    if (!isSharedSourceSupportEnabled(project)) {
+      return SingleEditorContext(defaultContext())
+    }
 
     return currentContextCache.computeIfAbsent(editor) {
       val file = FileDocumentManager.getInstance().getFile(editor.document)
