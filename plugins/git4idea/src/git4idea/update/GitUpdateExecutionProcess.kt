@@ -30,13 +30,53 @@ internal object GitUpdateExecutionProcess {
     shouldSetAsUpstream: Boolean = false,
   ) {
     if (updateConfig.isEmpty()) {
-      VcsNotifier.getInstance(project).notifyMinorWarning(UPDATE_NOTHING_TO_UPDATE,
-                                                          "",
-                                                          GitBundle.message("update.process.nothing.to.update"))
+      notifyNothingToUpdate(project)
       return
     }
 
     val roots = repositories.map { getFilePath(it.root) }
+    val spec = createSpec(project, roots, updateConfig, updateMethod, shouldSetAsUpstream)
+
+    VcsUpdateProcess.launchUpdate(project,
+                                  roots.toTypedArray(),
+                                  listOf(spec),
+                                  ActionInfo.UPDATE,
+                                  GitBundle.message("progress.title.update"))
+  }
+
+  suspend fun update(
+    project: Project,
+    repositories: Collection<GitRepository>,
+    updateConfig: Map<GitRepository, GitBranchPair>,
+    updateMethod: UpdateMethod,
+    shouldSetAsUpstream: Boolean = false,
+  ) {
+    if (updateConfig.isEmpty()) {
+      notifyNothingToUpdate(project)
+      return
+    }
+
+    val roots = repositories.map { getFilePath(it.root) }
+    val spec = createSpec(project, roots, updateConfig, updateMethod, shouldSetAsUpstream)
+
+    VcsUpdateProcess.update(project,
+                            roots.toTypedArray(),
+                            listOf(spec),
+                            ActionInfo.UPDATE,
+                            GitBundle.message("progress.title.update"))
+  }
+
+  private fun notifyNothingToUpdate(project: Project) {
+    VcsNotifier.getInstance(project).notifyMinorWarning(UPDATE_NOTHING_TO_UPDATE, "", GitBundle.message("update.process.nothing.to.update"))
+  }
+
+  private fun createSpec(
+    project: Project,
+    roots: List<FilePath>,
+    updateConfig: Map<GitRepository, GitBranchPair>,
+    updateMethod: UpdateMethod,
+    shouldSetAsUpstream: Boolean,
+  ): VcsUpdateSpecification {
     val gitUpdateEnvironment = project.service<GitUpdateEnvironment>()
     val updateEnvironment = object : UpdateEnvironment by gitUpdateEnvironment {
       override fun updateDirectories(contentRoots: Array<out FilePath>, updatedFiles: UpdatedFiles, progressIndicator: ProgressIndicator, context: Ref<SequentialUpdatesContext?>): UpdateSession {
@@ -50,12 +90,7 @@ internal object GitUpdateExecutionProcess {
       override fun hasCustomNotification(): Boolean = gitUpdateEnvironment.hasCustomNotification()
     }
     val spec = VcsUpdateSpecification(GitVcs.getInstance(project), updateEnvironment, roots)
-
-    VcsUpdateProcess.launchUpdate(project,
-                                  roots.toTypedArray(),
-                                  listOf(spec),
-                                  ActionInfo.UPDATE,
-                                  GitBundle.message("progress.title.update"))
+    return spec
   }
 
   private fun setBranchUpstream(repository: GitRepository, branchConfig: GitBranchPair) {

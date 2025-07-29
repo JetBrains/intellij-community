@@ -76,13 +76,11 @@ internal fun updateBranches(project: Project, repositories: Collection<GitReposi
       }
 
       if (updateProcessTargets.isNotEmpty()) {
-        // This method is executed asynchronously, which can bring confusion with notifications and the overall update status.
-        // Should be reconsidered one day.
-        GitUpdateExecutionProcess.launchUpdate(project,
-                                               repositories,
-                                               updateProcessTargets,
-                                               GitVcsSettings.getInstance(project).updateMethod,
-                                               false)
+        GitUpdateExecutionProcess.update(project,
+                                         repositories,
+                                         updateProcessTargets,
+                                         GitVcsSettings.getInstance(project).updateMethod,
+                                         false)
       }
     }
   }
