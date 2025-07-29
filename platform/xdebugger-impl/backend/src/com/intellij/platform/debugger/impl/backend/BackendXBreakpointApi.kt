@@ -119,6 +119,13 @@ internal class BackendXBreakpointApi : XBreakpointApi {
     }
   }
 
+  override suspend fun setGroup(breakpointId: XBreakpointId, requestId: Long, group: String?) {
+    val breakpoint = breakpointId.findValue() ?: return
+    edtWriteAction {
+      breakpoint.setGroup(requestId, group)
+    }
+  }
+
   override suspend fun createDocument(frontendDocumentId: FrontendDocumentId, breakpointId: XBreakpointId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): XExpressionDocumentDto? {
     val breakpoint = breakpointId.findValue() ?: return null
     val project = breakpoint.project

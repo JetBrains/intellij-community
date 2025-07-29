@@ -59,7 +59,7 @@ private class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
       }
       .toMutableSet()
 
-    if (breakpointManager.allGroups.isNotEmpty()) {
+    if (breakpointManager.allBreakpoints.any { it.group != null }) {
       res.add(USING_GROUPS.metric(true))
     }
 

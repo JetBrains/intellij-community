@@ -19,8 +19,6 @@ private val LOG = logger<XBreakpointManagerProxy>()
 interface XBreakpointManagerProxy {
   val breakpointsDialogSettings: XBreakpointsDialogState?
 
-  val allGroups: Set<String>
-
   val dependentBreakpointManager: XDependentBreakpointManagerProxy
 
   fun setBreakpointsDialogSettings(settings: XBreakpointsDialogState)
@@ -54,9 +52,6 @@ interface XBreakpointManagerProxy {
   class Monolith(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {
     override val breakpointsDialogSettings: XBreakpointsDialogState?
       get() = breakpointManager.breakpointsDialogSettings
-
-    override val allGroups: Set<String>
-      get() = breakpointManager.allGroups
 
     override val dependentBreakpointManager: XDependentBreakpointManagerProxy
       get() = XDependentBreakpointManagerProxy.Monolith(breakpointManager.dependentBreakpointManager)

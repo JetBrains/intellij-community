@@ -56,9 +56,6 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   override val breakpointsDialogSettings: XBreakpointsDialogState?
     get() = _breakpointsDialogSettings
 
-  override val allGroups: Set<String>
-    get() = setOf() // TODO: implement groups
-
 
   override val dependentBreakpointManager: XDependentBreakpointManagerProxy =
     FrontendXDependentBreakpointManagerProxy(project, cs, breakpointById = {

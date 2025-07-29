@@ -152,7 +152,11 @@ internal open class FrontendXBreakpointProxy(
   override fun getGroup(): String? = currentState.group
 
   override fun setGroup(group: String?) {
-    // TODO IJPL-185322
+    updateStateIfNeeded(newValue = group,
+                        getter = { it.group },
+                        copy = { it.copy(group = group) }) { requestId ->
+      XBreakpointApi.getInstance().setGroup(id, requestId, group)
+    }
   }
 
   override fun getIcon(): Icon {

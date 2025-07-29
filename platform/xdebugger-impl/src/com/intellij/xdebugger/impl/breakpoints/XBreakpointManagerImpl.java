@@ -610,11 +610,6 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     myBreakpointsDialogSettings = breakpointsDialogSettings;
   }
 
-  public Set<String> getAllGroups() {
-    return withLockMaybeCancellable(myLock, () ->
-      StreamEx.of(myAllBreakpoints).map(XBreakpointBase::getGroup).nonNull().toSet());
-  }
-
   public String getDefaultGroup() {
     return myDefaultGroup;
   }

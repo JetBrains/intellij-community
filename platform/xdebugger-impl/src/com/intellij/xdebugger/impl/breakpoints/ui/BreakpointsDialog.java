@@ -276,16 +276,23 @@ public class BreakpointsDialog extends DialogWrapper {
         ActionGroup group = new ActionGroup(XDebuggerBundle.message("move.to.group"), true) {
           @Override
           public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-            Set<String> groups = getBreakpointManager().getAllGroups();
-            AnAction[] res = new AnAction[groups.size() + 3];
-            int i = 0;
-            res[i++] = new MoveToGroupAction(null);
-            for (@NlsSafe String group : groups) {
-              res[i++] = new MoveToGroupAction(group);
-            }
-            res[i++] = new Separator();
-            res[i] = new MoveToGroupAction();
-            return res;
+            List<AnAction> res = new ArrayList<>();
+            res.add(new MoveToGroupAction(null));
+
+            myBreakpointItems.stream()
+              .map(BreakpointItem::getBreakpoint)
+              .filter(Objects::nonNull)
+              .map(XBreakpointProxy::getGroup)
+              .filter(Objects::nonNull)
+              .distinct()
+              .sorted()
+              .forEach((@NlsSafe var g) -> {
+                res.add(new MoveToGroupAction(g));
+              });
+
+            res.add(new Separator());
+            res.add(new MoveToGroupAction());
+            return res.toArray(AnAction.EMPTY_ARRAY);
           }
         };
         List<AnAction> res = new ArrayList<>();
