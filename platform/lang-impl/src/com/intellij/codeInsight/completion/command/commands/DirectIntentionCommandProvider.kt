@@ -178,7 +178,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
       }
       val offsetProvider = IntentionCommandOffsetProvider.EP_NAME.forLanguage(language)
 
-      val result: MutableMap<String, CompletionCommand> = mutableMapOf()
+      val result: MutableMap<String, CompletionCommandWithErrorLevel> = mutableMapOf()
       try {
         val intentionCommandSkipper = IntentionCommandSkipper.EP_NAME.forLanguage(psiFile.language)
         val injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.project)
@@ -240,10 +240,11 @@ internal class DirectIntentionCommandProvider : CommandProvider {
                 if (intentionCommandSkipper != null && intentionCommandSkipper.skip(action, psiFile, currentOffset)) continue
                 if (!isInjected && !ShowIntentionActionsHandler.availableFor(topLevelFile, topLevelEditor, topLevelOffset, action)) continue
                 if (isInjected && !ShowIntentionActionsHandler.availableFor(psiFile, editor, currentOffset, action)) continue
-                val priority = if (level.getSeverity(null) == INFORMATION) 70 else 80
-                val icon = if (level.getSeverity(null) == INFORMATION) AllIcons.Actions.IntentionBulbGrey else AllIcons.Actions.IntentionBulb
+                val isInfo = level.getSeverity(null) == INFORMATION
+                val priority = if (isInfo) 70 else 80
+                val icon = if (isInfo) AllIcons.Actions.IntentionBulbGrey else AllIcons.Actions.IntentionBulb
 
-                result[toolId + ":" + action.text] = (DirectInspectionFixCompletionCommand(
+                result[toolId + ":" + action.text] = CompletionCommandWithErrorLevel(DirectInspectionFixCompletionCommand(
                   inspectionId = toolId,
                   presentableName = action.text,
                   priority = priority,
@@ -252,7 +253,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
                   targetOffset = currentOffset,
                   previewProvider = {
                     computePreview(psiFile, action, editor, offset)
-                  }))
+                  }), if (isInfo) ErrorLevel.INFO else ErrorLevel.WARNING)
               }
             }
           }
@@ -266,18 +267,18 @@ internal class DirectIntentionCommandProvider : CommandProvider {
       }
 
       var strictRange = false
-      for (command in result.values) {
-        if (command.icon == AllIcons.Actions.IntentionBulb && command.highlightInfo?.range?.endOffset == offset) {
+      for (commandWithLevel in result.values) {
+        if (commandWithLevel.level == ErrorLevel.WARNING && commandWithLevel.command.highlightInfo?.range?.endOffset == offset) {
           strictRange = true
           break
         }
       }
 
       if (strictRange) {
-        return@readAction result.values.filter { it.highlightInfo?.range?.contains(offset - 1) == true }.toList()
+        return@readAction result.values.map { it.command }.filter { it.highlightInfo?.range?.contains(offset - 1) == true }.toList()
       }
 
-      return@readAction result.values.toList()
+      return@readAction result.values.map { it.command }.toList()
     }
   }
 
@@ -495,6 +496,9 @@ internal class DirectIntentionCommandProvider : CommandProvider {
     return null
   }
 }
+
+private class CompletionCommandWithErrorLevel(val command: CompletionCommand, val level: ErrorLevel)
+private enum class ErrorLevel { INFO, WARNING }
 
 internal fun getLineRange(psiFile: PsiFile, offset: Int): TextRange {
   val document = psiFile.fileDocument
