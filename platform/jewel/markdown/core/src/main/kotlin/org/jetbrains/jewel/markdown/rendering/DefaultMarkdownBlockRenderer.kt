@@ -77,7 +77,7 @@ import org.jetbrains.jewel.ui.component.Text
 public open class DefaultMarkdownBlockRenderer(
     override val rootStyling: MarkdownStyling,
     override val rendererExtensions: List<MarkdownRendererExtension> = emptyList(),
-    override val inlineRenderer: InlineMarkdownRenderer = DefaultInlineMarkdownRenderer(rendererExtensions),
+    override val inlineRenderer: InlineMarkdownRenderer = InlineMarkdownRenderer.create(rendererExtensions),
 ) : MarkdownBlockRenderer {
     @Composable
     override fun render(
