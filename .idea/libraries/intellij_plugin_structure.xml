@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="intellij-plugin-structure" type="repository">
-    <properties maven-id="org.jetbrains.intellij.plugins:structure-intellij:3.310">
+    <properties maven-id="org.jetbrains.intellij.plugins:structure-intellij:3.313">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.310/structure-intellij-3.310.jar">
-          <sha256sum>969b1546329a879df701a518d864119792f8f9e7259f8c36a0f432c1fa19bb07</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.313/structure-intellij-3.313.jar">
+          <sha256sum>ee1dcc2b281e82d8edfbab2a0683c7d50e4b057f35dca623aa8a9a4a84aee046</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.310/structure-base-3.310.jar">
-          <sha256sum>d97dda309a55243756f04e04f21d75f539cff399607e5d74ed6b777ae08be4fe</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.313/structure-base-3.313.jar">
+          <sha256sum>db9271c6e77b00b6cbc1716ec503b4c616a8ae3383337685c1eaf401701e27a5</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/org/atteo/evo-inflector/1.3/evo-inflector-1.3.jar">
           <sha256sum>ac0192fd110a0363732b17ea94fd1ce8cfd85790c8e1551e14f866908b5d80e1</sha256sum>
@@ -19,7 +19,8 @@
         <dependency maven-id="org.jetbrains:annotations" />
         <dependency maven-id="org.slf4j:slf4j-api" />
         <dependency maven-id="commons-io:commons-io" />
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+        <dependency maven-id="com.github.ben-manes.caffeine:caffeine" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
         <dependency maven-id="com.fasterxml.jackson.module:jackson-module-kotlin" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
         <dependency maven-id="org.apache.commons:commons-compress" />
@@ -27,21 +28,18 @@
         <dependency maven-id="org.jsoup:jsoup" />
         <dependency maven-id="javax.xml.bind:jaxb-api" />
         <dependency maven-id="org.glassfish.jaxb:jaxb-runtime" />
-        <dependency maven-id="com.github.ben-manes.caffeine:caffeine" />
-        <dependency maven-id="com.google.errorprone:error_prone_annotations" />
-        <dependency maven-id="org.checkerframework:checker-qual" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.310/structure-intellij-3.310.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.310/structure-base-3.310.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.313/structure-intellij-3.313.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.313/structure-base-3.313.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/atteo/evo-inflector/1.3/evo-inflector-1.3.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.310/structure-intellij-3.310-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.310/structure-base-3.310-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.313/structure-intellij-3.313-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.313/structure-base-3.313-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/atteo/evo-inflector/1.3/evo-inflector-1.3-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1-sources.jar!/" />
     </SOURCES>
