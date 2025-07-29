@@ -330,8 +330,11 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     val document = editor.document
     val file = getVirtualFile() ?: return
     LOG.debug { "reinitDocumentIndentOptions, file ${file.name}" }
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      computeIndentOptions(project, file).associateWithDocument(document)
+    val app = ApplicationManager.getApplication()
+    if (app.isUnitTestMode) {
+      app.runReadAction {
+        computeIndentOptions(project, file).associateWithDocument(document)
+      }
     }
     else {
       val job = (project as ComponentManagerEx).getCoroutineScope().launch {
