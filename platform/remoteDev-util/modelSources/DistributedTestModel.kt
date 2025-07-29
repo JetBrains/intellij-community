@@ -40,7 +40,7 @@ object DistributedTestModel : Ext(TestRoot) {
     field("lineNumber", int)
   }
 
-  private val RdTestSessionExceptionCause = structdef {
+  private val RdTestSessionLightException = structdef {
     field("type", string)
     field("message", string.nullable)
     field("stacktrace", immutableList(RdTestSessionStackTraceElement))
@@ -51,7 +51,8 @@ object DistributedTestModel : Ext(TestRoot) {
     field("originalType", string.nullable)
     field("message", string.nullable)
     field("stacktrace", immutableList(RdTestSessionStackTraceElement))
-    field("cause", RdTestSessionExceptionCause.nullable)
+    field("cause", RdTestSessionLightException.nullable)
+    field("suppressedExceptions", immutableList(RdTestSessionLightException).nullable)
   }
 
 
