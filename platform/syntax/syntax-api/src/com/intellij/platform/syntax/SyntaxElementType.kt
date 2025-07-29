@@ -13,6 +13,11 @@ import kotlin.jvm.JvmOverloads
 /**
  * A class defining a token or node type.
  *
+ * If the element types can be either permanent or transient. Permanent element types are assigned an index and can be stored in a set.
+ * Transient element types are not assigned an index and cannot be stored in a set.
+ *
+ * Element types can be lazy-parseable. Nodes of such a type are parsed on demand. The lazy parser can also support incremental reparsing.
+ *
  * [debugName] is used only for debug purposes.
  */
 @ApiStatus.Experimental
