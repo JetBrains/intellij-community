@@ -33,13 +33,13 @@ private class OutgoingRequest(
     val requestType: RequestType<*, *, *>,
 )
 
-suspend fun <T> withLsp(
+suspend fun withLsp(
     incoming: ReceiveChannel<JsonElement>,
     outgoing: SendChannel<JsonElement>,
     handlers: LspHandlers,
-    createContext: (LspClient) -> T,
+    middleware: LspHandlersMiddleware = LspHandlersMiddleware.IDENTITY,
     createCoroutineContext: (LspClient) -> CoroutineContext = { EmptyCoroutineContext },
-    body: suspend CoroutineScope.(T) -> Unit,
+    body: suspend CoroutineScope.(LspClient) -> Unit,
 ) {
     coroutineScope {
         val outgoingRequests = ConcurrentHashMap<StringOrInt, OutgoingRequest>()
@@ -87,7 +87,7 @@ suspend fun <T> withLsp(
             }
         }
 
-        val lspHandlerContext = createContext(lspClient)
+        val lspHandlerContext = LspHandlerContext(lspClient)
 
         launch(createCoroutineContext(lspClient)) {
             withSupervisor { supervisor ->
@@ -102,6 +102,7 @@ suspend fun <T> withLsp(
                             val request = LSP.json.decodeFromJsonElement(RequestMessage.serializer(), jsonMessage)
                             supervisor.launch(start = CoroutineStart.ATOMIC) {
                                 val maybeHandler = handlers.requestHandler(request.method)
+                                    ?.let { handler -> middleware.requestHandler(handler)}
                                 runCatching {
                                     val handler = requireNotNull(maybeHandler) {
                                         "no handler for request: ${request.method}"
@@ -109,7 +110,7 @@ suspend fun <T> withLsp(
                                     val deserializedParams = request.params?.let { params ->
                                         LSP.json.decodeFromJsonElement(handler.requestType.paramsSerializer, params)
                                     }
-                                    val result = (handler as LspRequestHandler<Any?, Any?, Any?, T>).handler(
+                                    val result = (handler as LspRequestHandler<Any?, Any?, Any?>).handler(
                                         lspHandlerContext,
                                         this,
                                         deserializedParams
@@ -241,15 +242,16 @@ suspend fun <T> withLsp(
 
                                 else ->
                                     runCatching {
-                                        when (val handler = handlers.notificationHandler(notification.method)) {
+                                        when (val originalHandler = handlers.notificationHandler(notification.method)) {
                                             null ->
                                                 LOG.debug("no handler for notification: ${notification.method}")
 
                                             else -> {
+                                                val handler = middleware.notificationHandler(originalHandler)
                                                 val deserializedParams = notification.params?.let { params ->
                                                     LSP.json.decodeFromJsonElement(handler.notificationType.paramsSerializer, params)
                                                 }
-                                                (handler as LspNotificationHandler<Any?, T>).handler(lspHandlerContext, this, deserializedParams)
+                                                (handler as LspNotificationHandler<Any?>).handler(lspHandlerContext, this, deserializedParams)
                                             }
                                         }
                                     }.onFailure { error ->
@@ -266,7 +268,7 @@ suspend fun <T> withLsp(
                 }
             }
         }.use {
-            body(lspHandlerContext)
+            body(lspHandlerContext.lspClient)
         }
     }
 }
@@ -278,10 +280,11 @@ fun main() {
         val HelloRequestType = RequestType("hello", String.serializer(), String.serializer(), Unit.serializer())
         val HangRequestType = RequestType("hand", Unit.serializer(), Unit.serializer(), Unit.serializer())
         val PrintHelloNotification = NotificationType("printHello", String.serializer())
+
         withLsp(
             incoming = clientToServer,
             outgoing = serverToClient,
-            handlers = lspHandlers<LspHandlerContext> {
+            handlers = lspHandlers {
                 request(HelloRequestType) { str ->
                     "Hello, $str"
                 }
@@ -297,23 +300,21 @@ fun main() {
                     }
                 }
             },
-            createContext = ::LspHandlerContext,
         ) { server ->
             withLsp(
                 incoming = serverToClient,
                 outgoing = clientToServer,
-                handlers = lspHandlers<LspHandlerContext> {
+                handlers = lspHandlers {
                     notification(PrintHelloNotification) { str ->
                         println("client: $str")
                     }
                 },
-                createContext = ::LspHandlerContext,
-            ) { context ->
-                println(context.lspClient.request(HelloRequestType, "World"))
-                context.lspClient.notify(PrintHelloNotification, "Hello World")
-                context.lspClient.notify(PrintHelloNotification, "Hello World")
+            ) { client ->
+                println(client.request(HelloRequestType, "World"))
+                client.notify(PrintHelloNotification, "Hello World")
+                client.notify(PrintHelloNotification, "Hello World")
                 val hangingRequestJob = launch {
-                    context.lspClient.request(HangRequestType, Unit)
+                    client.request(HangRequestType, Unit)
                 }
                 delay(100)
                 hangingRequestJob.cancel()

@@ -126,7 +126,7 @@ suspend fun withBaseProtocolFraming(
 }
 
 fun main() {
-    val handler = lspHandlers<LspHandlerContext> {
+    val handler = lspHandlers {
         request(Initialize) { initParams ->
             InitializeResult(
                 capabilities = ServerCapabilities(
@@ -148,7 +148,7 @@ fun main() {
     runBlocking(Dispatchers.Default) {
         tcpServer(TcpConnectionConfig.Server("127.0.0.1", 9999, isMultiClient = true)) { connection ->
             withBaseProtocolFraming(connection, exitSignal = null) { incoming, outgoing ->
-                withLsp(incoming, outgoing, handler, ::LspHandlerContext) { lsp ->
+                withLsp(incoming, outgoing, handler) { lsp ->
                     awaitCancellation()
                 }
             }

@@ -12,27 +12,27 @@ import kotlinx.coroutines.CoroutineScope
 interface LspHandlers {
     fun requestHandler(
         requestTypeName: String,
-    ): LspRequestHandler<*, *, *, *>?
+    ): LspRequestHandler<*, *, *>?
 
     fun notificationHandler(
         notificationTypeName: String,
-    ): LspNotificationHandler<*, *>?
+    ): LspNotificationHandler<*>?
 
     object EMPTY : LspHandlers {
-        override fun requestHandler(requestTypeName: String): LspRequestHandler<*, *, *, *>? = null
-        override fun notificationHandler(notificationTypeName: String): LspNotificationHandler<*, *>? = null
+        override fun requestHandler(requestTypeName: String): LspRequestHandler<*, *, *>? = null
+        override fun notificationHandler(notificationTypeName: String): LspNotificationHandler<*>? = null
     }
 }
 
-interface LspHandlersBuilder<T> {
+interface LspHandlersBuilder {
     fun <Request, Response, Error> request(
         requestType: RequestType<Request, Response, Error>,
-        handler: suspend context(T) CoroutineScope.(Request) -> Response,
+        handler: suspend context(LspHandlerContext) CoroutineScope.(Request) -> Response,
     )
 
     fun <Notification> notification(
         notifcationType: NotificationType<Notification>,
-        handler: suspend context(T) CoroutineScope.(Notification) -> Unit,
+        handler: suspend context(LspHandlerContext) CoroutineScope.(Notification) -> Unit,
     )
 }
 
@@ -61,31 +61,49 @@ fun LspClient.reportProgressMessage(
 }
 
 
-class LspRequestHandler<Params, Result, Error, Context>(
+class LspRequestHandler<Params, Result, Error>(
     val requestType: RequestType<Params, Result, Error>,
-    val handler: suspend context(Context) CoroutineScope.(Params) -> Result,
+    val handler: suspend context(LspHandlerContext) CoroutineScope.(Params) -> Result,
 )
 
-class LspNotificationHandler<Params, Context>(
+class LspNotificationHandler<Params>(
     val notificationType: NotificationType<Params>,
-    val handler: suspend context(Context) CoroutineScope.(Params) -> Unit,
+    val handler: suspend context(LspHandlerContext) CoroutineScope.(Params) -> Unit,
 )
 
-fun <T> lspHandlers(builder: LspHandlersBuilder<T>.() -> Unit): LspHandlers {
-    val requests = mutableMapOf<String, LspRequestHandler<*, *, *, T>>()
-    val notifications = mutableMapOf<String, LspNotificationHandler<*, T>>()
+interface LspHandlersMiddleware {
+  fun <P, R, E> requestHandler(handler: LspRequestHandler<P, R, E>): LspRequestHandler<P, R, E>
 
-    object : LspHandlersBuilder<T> {
+  fun <P> notificationHandler(handler: LspNotificationHandler<P>): LspNotificationHandler<P>
+
+  companion object {
+    val IDENTITY: LspHandlersMiddleware = object : LspHandlersMiddleware {
+      override fun <P, R, E> requestHandler(handler: LspRequestHandler<P, R, E>): LspRequestHandler<P, R, E> {
+        return handler
+      }
+
+      override fun <P> notificationHandler(handler: LspNotificationHandler<P>): LspNotificationHandler<P> {
+        return handler
+      }
+    }
+  }
+}
+
+fun lspHandlers(builder: LspHandlersBuilder.() -> Unit): LspHandlers {
+    val requests = mutableMapOf<String, LspRequestHandler<*, *, *>>()
+    val notifications = mutableMapOf<String, LspNotificationHandler<*>>()
+
+    object : LspHandlersBuilder {
         override fun <Request, Response, Error> request(
             requestType: RequestType<Request, Response, Error>,
-            handler: suspend context(T) CoroutineScope.(Request) -> Response,
+            handler: suspend context(LspHandlerContext) CoroutineScope.(Request) -> Response,
         ) {
             requests[requestType.method] = LspRequestHandler(requestType, handler)
         }
 
         override fun <Notification> notification(
             notifcationType: NotificationType<Notification>,
-            handler: suspend context(T) CoroutineScope.(Notification) -> Unit,
+            handler: suspend context(LspHandlerContext) CoroutineScope.(Notification) -> Unit,
         ) {
             notifications[notifcationType.method] = LspNotificationHandler(notifcationType, handler)
         }
@@ -95,13 +113,13 @@ fun <T> lspHandlers(builder: LspHandlersBuilder<T>.() -> Unit): LspHandlers {
         @Suppress("UNCHECKED_CAST")
         override fun requestHandler(
             requestType: String,
-        ): LspRequestHandler<*, *, *, T>? =
+        ): LspRequestHandler<*, *, *>? =
             requests[requestType]
 
         @Suppress("UNCHECKED_CAST")
         override fun notificationHandler(
             notificationType: String,
-        ): LspNotificationHandler<*, T>? =
+        ): LspNotificationHandler<*>? =
             notifications[notificationType]
     }
 }
