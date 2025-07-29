@@ -112,11 +112,11 @@ internal class GitForcePushedBranchUpdateExecutor(private val project: Project, 
                                                   "${trackedBranch.nameForLocalOperations}..${branch.name}").commits
     val updateConfig = mapOf(repository to branchPair)
     if (localCommits.containsMergeCommits()) { //merge commits cannot be cherry-picked as is
-      GitUpdateExecutionProcess(project,
-                                listOf(repository),
-                                updateConfig,
-                                GitVcsSettings.getInstance(project).updateMethod,
-                                false).execute()
+      GitUpdateExecutionProcess.launchUpdate(project,
+                                             listOf(repository),
+                                             updateConfig,
+                                             GitVcsSettings.getInstance(project).updateMethod,
+                                             false)
       return GitUpdateResult.SUCCESS
     }
 

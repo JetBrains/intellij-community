@@ -20,14 +20,15 @@ import git4idea.config.UpdateMethod
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 
-internal class GitUpdateExecutionProcess(
-  private val project: Project,
-  private val repositories: Collection<GitRepository>,
-  private val updateConfig: Map<GitRepository, GitBranchPair>,
-  private val updateMethod: UpdateMethod,
-  private val shouldSetAsUpstream: Boolean = false,
-) {
-  fun execute() {
+internal object GitUpdateExecutionProcess {
+  @JvmStatic
+  fun launchUpdate(
+    project: Project,
+    repositories: Collection<GitRepository>,
+    updateConfig: Map<GitRepository, GitBranchPair>,
+    updateMethod: UpdateMethod,
+    shouldSetAsUpstream: Boolean = false,
+  ) {
     if (updateConfig.isEmpty()) {
       VcsNotifier.getInstance(project).notifyMinorWarning(UPDATE_NOTHING_TO_UPDATE,
                                                           "",
@@ -58,17 +59,17 @@ internal class GitUpdateExecutionProcess(
   }
 
   private fun setBranchUpstream(repository: GitRepository, branchConfig: GitBranchPair) {
-    val handler = GitLineHandler(project, repository.root, GitCommand.BRANCH)
+    val handler = GitLineHandler(repository.project, repository.root, GitCommand.BRANCH)
     handler.setSilent(false)
     val (local, remote) = branchConfig
     handler.addParameters("--set-upstream-to", remote.name, local.name)
 
     val result = Git.getInstance().runCommand(handler)
     if (!result.success()) {
-      VcsNotifier.getInstance(project).notifyError(BRANCH_SET_UPSTREAM_ERROR,
-                                                   GitBundle.message("update.process.error.notification.title"),
-                                                   result.errorOutputAsHtmlString,
-                                                   true)
+      VcsNotifier.getInstance(repository.project).notifyError(BRANCH_SET_UPSTREAM_ERROR,
+                                                              GitBundle.message("update.process.error.notification.title"),
+                                                              result.errorOutputAsHtmlString,
+                                                              true)
     }
   }
 }
