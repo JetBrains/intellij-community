@@ -260,7 +260,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
       //children are sorted by name => case-sensitivity change requires re-sorting:
       resortChildren();
-      //TODO RC: not only children, but vfsData.adoptedNames also relies on case-sensitivity!
+      //Not only children, but vfsData.adoptedNames also relies on case-sensitivity:
+      synchronized (directoryData) {
+        List<String> adoptedNames = directoryData.getAdoptedNames();
+        directoryData.clearAdoptedNames();
+        directoryData.addAdoptedNames(adoptedNames, newIsCaseSensitive);
+      }
     }
   }
 
