@@ -143,6 +143,8 @@ public final class AccessibleContextUtil {
   }
 
   public static @Nullable @Nls String combineAccessibleStrings(@Nullable @Nls String s1, @NotNull @NlsSafe String separator, @Nullable @Nls String s2) {
+    if (StringUtil.isEmpty(s1) && StringUtil.isEmpty(s2))
+      return null;
     if (StringUtil.isEmpty(s1))
       return s2;
     if (StringUtil.isEmpty(s2))
