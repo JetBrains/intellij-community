@@ -98,6 +98,11 @@
       <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceField"/>
     </action>
 
+    <action id="IntroduceTypeAlias" class="org.jetbrains.kotlin.idea.k2.refactoring.introduceTypeAlias.IntroduceTypeAliasAction">
+      <keyboard-shortcut keymap="$default" first-keystroke="control alt shift A"/>
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceProperty"/>
+    </action>
+
   </actions>
 </idea-plugin>
 

@@ -379,19 +379,25 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 KtPsiFactory(project).createModifierList(it).firstChild.node.elementType as KtModifierKeywordToken
             }
             val editor = fixture.editor
-            object : KotlinIntroduceTypeAliasHandler() {
-                override fun doInvoke(
-                    project: Project,
-                    editor: Editor,
-                    elements: List<PsiElement>,
-                    targetSibling: PsiElement,
-                    descriptorSubstitutor: ((IntroduceTypeAliasDescriptor) -> IntroduceTypeAliasDescriptor)?
-                ) {
-                    super.doInvoke(project, editor, elements, explicitPreviousSibling ?: targetSibling) {
-                        it.copy(name = aliasName ?: it.name, visibility = aliasVisibility ?: it.visibility)
-                    }
-                }
-            }.invoke(project, editor, file, null)
+            getIntroduceTypeAliasHandler(explicitPreviousSibling, aliasName, aliasVisibility).invoke(project, editor, file, null)
+        }
+    }
+
+    protected open fun getIntroduceTypeAliasHandler(
+        explicitPreviousSibling: PsiElement?,
+        aliasName: String?,
+        aliasVisibility: KtModifierKeywordToken?
+    ): RefactoringActionHandler = object : KotlinIntroduceTypeAliasHandler() {
+        override fun doInvoke(
+            project: Project,
+            editor: Editor,
+            elements: List<PsiElement>,
+            targetSibling: PsiElement,
+            descriptorSubstitutor: ((IntroduceTypeAliasDescriptor) -> IntroduceTypeAliasDescriptor)?
+        ) {
+            super.doInvoke(project, editor, elements, explicitPreviousSibling ?: targetSibling) {
+                it.copy(name = aliasName ?: it.name, visibility = aliasVisibility ?: it.visibility)
+            }
         }
     }
 

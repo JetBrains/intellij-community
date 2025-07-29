@@ -563,7 +563,26 @@ class KotlinNameSuggester(
             }
         }
 
-        val TYPE_PARAMETER_NAMES = listOf(
+        fun suggestNameByMultipleNames(names: Collection<String>, validator: (String) -> Boolean): String {
+            var i = 0
+            while (true) {
+                for (name in names) {
+                    val candidate = if (i > 0) name + i else name
+                    if (validator(candidate)) return candidate
+                }
+                i++
+            }
+        }
+
+        fun suggestNamesForTypeParameters(count: Int, validator: (String) -> Boolean): List<String> {
+            val result = ArrayList<String>()
+            for (i in 0 until count) {
+                result.add(suggestNameByMultipleNames(TYPE_PARAMETER_NAMES, validator))
+            }
+            return result
+        }
+
+        val TYPE_PARAMETER_NAMES: List<String> = listOf(
             "T", "U", "V", "W", "X", "Y", "Z", "A", "B", "C", "D", "E",
             "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "R", "S"
         )
