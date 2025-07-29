@@ -100,8 +100,7 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
       }
     }
 
-    // one for remove and one for add again because referredTestEntity is still in the model
-    assertEquals(referredTestEntityContributor.numberOfCalls.get(), 2)
+    assertEquals(referredTestEntityContributor.numberOfCalls.get(), 1)
   }
 
   // we need SkipAddingToWatchedRoots to pass filter WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors()

@@ -115,7 +115,7 @@ sealed interface DependencyDescription<E : WorkspaceEntity> {
   @ApiStatus.Experimental
   data class OnReference<R: WorkspaceEntityWithSymbolicId, E: WorkspaceEntityWithSymbolicId>(
     /** Type that could contain references to [R] */
-    val referenceClass: Class<E>,
+    val referenceHolderClass: Class<E>,
     /** Type for which a contributor should be called */
     val resultClass: Class<R>,
     /** Computes references */

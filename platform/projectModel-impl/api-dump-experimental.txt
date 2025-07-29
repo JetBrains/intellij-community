@@ -43,7 +43,7 @@
 - f:copy(java.lang.Class,java.lang.Class,kotlin.jvm.functions.Function1):com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnReference
 - bs:copy$default(com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnReference,java.lang.Class,java.lang.Class,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnReference
 - equals(java.lang.Object):Z
-- f:getReferenceClass():java.lang.Class
+- f:getReferenceHolderClass():java.lang.Class
 - f:getReferencedEntitiesGetter():kotlin.jvm.functions.Function1
 - f:getResultClass():java.lang.Class
 - hashCode():I
