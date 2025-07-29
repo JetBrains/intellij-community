@@ -28,14 +28,12 @@ internal class EditorContextManagerImpl(
   private val _eventFlow = MutableSharedFlow<EditorContextManager.ChangeEvent>(extraBufferCapacity = Int.MAX_VALUE)
 
   init {
-    cs.launch {
-      project.messageBus.connect(this).subscribe(CodeInsightContextManager.topic, object : CodeInsightContextChangeListener {
-        override fun contextsChanged() {
-          log.info("Dropping all editor contexts")
-          currentContextCache.invalidate()
-        }
-      })
-    }
+    project.messageBus.connect(cs).subscribe(CodeInsightContextManager.topic, object : CodeInsightContextChangeListener {
+      override fun contextsChanged() {
+        log.info("Dropping all editor contexts")
+        currentContextCache.invalidate()
+      }
+    })
   }
 
   override fun getCachedEditorContexts(editor: Editor): EditorSelectedContexts? {
