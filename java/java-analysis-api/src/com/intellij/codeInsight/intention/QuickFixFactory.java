@@ -311,6 +311,10 @@ public abstract class QuickFixFactory {
   public abstract @NotNull List<@NotNull LocalQuickFix> registerOrderEntryFixes(@NotNull PsiReference reference,
                                                                                 @NotNull List<? super IntentionAction> registrar);
 
+  public abstract @NotNull List<@NotNull LocalQuickFix> registerOrderEntryFixes(@NotNull PsiReference reference,
+                                                                                @NotNull PsiMember target,
+                                                                                @NotNull List<? super IntentionAction> registrar);
+
   /**
    * @param annotationMethods unused, could be empty array
    */

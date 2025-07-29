@@ -979,6 +979,17 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
       }
       return null;
     });
+    multi(CLASS_NOT_ACCESSIBLE, error -> {
+      PsiClass aClass = error.context();
+      String name = aClass.getQualifiedName();
+      if (name != null) {
+        PsiJavaCodeReferenceElement ref = JavaPsiFacade.getElementFactory(error.project()).createReferenceFromText(name, error.psi());
+        List<IntentionAction> fixes = new ArrayList<>();
+        myFactory.registerOrderEntryFixes(ref, aClass, fixes);
+        return fixes;
+      }
+      return List.of();
+    });
     fix(CLASS_EXTENDS_SEALED_LOCAL, error -> myFactory.createConvertLocalToInnerAction(error.context()));
     fix(CLASS_EXTENDS_SEALED_ANOTHER_PACKAGE, error -> {
       if (error.context().superClass().getContainingFile() instanceof PsiClassOwner classOwner) {

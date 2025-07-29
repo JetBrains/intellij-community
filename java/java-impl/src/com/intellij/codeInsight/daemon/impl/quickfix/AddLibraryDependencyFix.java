@@ -131,7 +131,9 @@ class AddLibraryDependencyFix extends OrderEntryFix {
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     Library firstItem = ContainerUtil.getFirstItem(myLibraries.keySet());
     String fqName = myLibraries.get(firstItem);
-    String refName = !StringUtil.isEmpty(fqName) ? StringUtil.getShortName(fqName) : null;
+    PsiReference reference = restoreReference();
+    String refName = reference != null && reference.getElement().isPhysical() 
+                     && !StringUtil.isEmpty(fqName) ? StringUtil.getShortName(fqName) : null;
 
     String libraryList = NlsMessages.formatAndList(ContainerUtil.map(myLibraries.keySet(), library -> "'" + getLibraryName(library) + "'"));
     String libraryName = getLibraryName(firstItem);

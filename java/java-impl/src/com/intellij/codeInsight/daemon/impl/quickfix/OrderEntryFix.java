@@ -23,6 +23,7 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightJavaModule;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtil;
@@ -93,6 +94,12 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     }, r -> r.getCanonicalText());
   }
 
+  public static @NotNull List<@NotNull LocalQuickFix> registerFixes(@NotNull PsiReference reference, 
+                                                                    @NotNull PsiMember target, 
+                                                                    @NotNull List<? super IntentionAction> registrar) {
+    return registerFixes(reference, registrar, shortReferenceName -> new PsiMember[]{target}, r -> r.getCanonicalText());
+  }
+
   public static @NotNull List<@NotNull LocalQuickFix> registerFixes(@NotNull PsiReference reference,
                                                                     @NotNull List<? super IntentionAction> registrar,
                                                                     @NotNull Function<? super String, ? extends PsiMember[]> shortReferenceNameToClassesLookup,
@@ -102,6 +109,12 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
 
     Project project = psiElement.getProject();
     PsiFile containingFile = psiElement.getContainingFile();
+    if (containingFile instanceof DummyHolder dh) {
+      PsiElement context = dh.getContext();
+      if (context != null) {
+        containingFile = context.getContainingFile();
+      }
+    }
     if (containingFile == null) return Collections.emptyList();
     VirtualFile refVFile = containingFile.getOriginalFile().getVirtualFile();
     if (refVFile == null) return Collections.emptyList();

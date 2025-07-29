@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -58,36 +60,36 @@ public class MultipleModuleHighlightingTest extends JavaCodeInsightFixtureTestCa
     ModuleRootModificationUtil.addDependency(mod2, mod1);
 
     myFixture.addFileToProject("mod1/p/A.java", """
-      package p;\s
+      package p;
       public class A {
          public void foo() { /* mod1 A */ }
       }
       """);
     myFixture.addFileToProject("mod1/p/B.java", """
-      package p;\s
+      package p;
       public class B extends A {
          public void foo() { /* mod1 B */ }
       }
       """);
     myFixture.addFileToProject("mod1/p/C.java", """
-      package p;\s
+      package p;
       public class C extends B {
          public void foo() { /* mod1 C */ }
       }
       """);
     myFixture.addFileToProject("mod2/p/A.java", """
-      package p;\s
+      package p;
       public class A {
          public void foo() { /* mod2 A */ }
       }
       """);
     myFixture.addFileToProject("mod2/p/B.java", """
-      package p;\s
+      package p;
       public class B extends A {
       }
       """);
     PsiFile file = myFixture.addFileToProject("mod2/p/D.java", """
-      package p;\s
+      package p;
       public class D extends C {
          {
             super.foo();
@@ -220,6 +222,38 @@ public class MultipleModuleHighlightingTest extends JavaCodeInsightFixtureTestCa
       PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
     ModuleRootModificationUtil.addDependency(getModule(), mod1);
     ModuleRootModificationUtil.addDependency(getModule(), mod2);
+  }
+
+  private void addModuleChain() throws IOException {
+    Module mod1 =
+      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
+    Module mod2 =
+      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
+    ModuleRootModificationUtil.addDependency(getModule(), mod1);
+    ModuleRootModificationUtil.addDependency(mod1, mod2);
+  }
+  
+  public void testIndirectClassInaccessible() throws IOException {
+    addModuleChain();
+    myFixture.addFileToProject("mod2/p/A.java", """
+      package p;
+      public class A {}
+      """);
+    myFixture.addFileToProject("mod1/p/B.java", """
+      package p;
+      public class B extends A {}
+      """);
+    myFixture.configureByText("C.java", """
+      package p;
+      <error descr="Cannot access p.A">class C <caret>extends B</error> {}
+      """);
+    myFixture.checkHighlighting();
+    IntentionAction intention = myFixture.findSingleIntention("Add dependency on module 'mod2'");
+    IntentionPreviewInfo preview = intention.generatePreview(getProject(), myFixture.getEditor(), myFixture.getFile());
+    IntentionPreviewInfo.Html html = assertInstanceOf(preview, IntentionPreviewInfo.Html.class);
+    // The current module name is a sequence of digits
+    String text = html.content().toString().replaceFirst("&#39;\\d+&#39;", "&#39;module_name&#39;");
+    assertEquals("Adds module &#39;mod2&#39; to the dependencies of module &#39;module_name&#39; and imports unresolved classes if necessary", text);
   }
 
   public void testOverridingJdkExceptions() throws IOException {
