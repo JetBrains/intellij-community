@@ -18,7 +18,9 @@ To use the tables extension, you need to add the `GitHubTableProcessorExtension`
 ```kotlin
 val isDark = JewelTheme.isDark
 
-val markdownStyling = remember(isDark) { if (isDark) MarkdownStyling.dark() else MarkdownStyling.light() }
+val markdownStyling = remember(JewelTheme.instanceUuid) {
+  if (isDark) MarkdownStyling.dark() else MarkdownStyling.light()
+}
 
 val processor = remember { MarkdownProcessor(listOf(GitHubTableProcessorExtension)) }
 
