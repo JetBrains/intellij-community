@@ -1111,6 +1111,30 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     myFixture.completeBasic()
   }
 
+
+  fun testHighlightingFormat() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      import java.util.List;
+      .<caret>
+      class A {
+          void foo() {
+              String y = "1";
+          }
+      }""".trimIndent())
+    val elements = myFixture.completeBasic()
+    val lookupElement = elements.first { element ->
+      element.`as`(CommandCompletionLookupElement::class.java) != null &&
+      element.lookupString.contains("Reformat", ignoreCase = true)
+    }
+    val completionLookupElement = lookupElement.`as`(CommandCompletionLookupElement::class.java)
+    if (completionLookupElement == null) {
+      fail()
+      return
+    }
+    assertEquals(TextRange(0, 82), completionLookupElement.highlighting?.range)
+  }
+
   private class TestHintManager : HintManagerImpl() {
     var called: Boolean = false
     override fun showInformationHint(editor: Editor, component: JComponent, position: Short, onHintHidden: Runnable?) {
