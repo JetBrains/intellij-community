@@ -10,7 +10,7 @@ interface TextMateCachedValue<V>: AutoCloseable {
 interface TextMateCache<K, V>: AutoCloseable {
   fun get(key: K): TextMateCachedValue<V>
   fun contains(key: K): Boolean
-  fun cleanup()
+  fun cleanup(ttl: Duration = Duration.ZERO)
   fun clear()
   fun size(): Int
 }
@@ -22,6 +22,7 @@ inline fun <K, V, T> TextMateCache<K, V>.use(key: K, body: (V) -> T): T {
 suspend fun <K, V> withCache(
   cacheFn: () -> TextMateCache<K, V>,
   cleanupInterval: Duration,
+  ttl: Duration = Duration.ZERO,
   body: CoroutineScope.(TextMateCache<K, V>) -> Unit,
 ) {
   coroutineScope {

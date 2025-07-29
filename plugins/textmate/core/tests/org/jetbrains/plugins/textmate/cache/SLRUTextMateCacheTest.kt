@@ -6,7 +6,9 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.testTimeSource
 import org.jetbrains.plugins.textmate.TestUtilMultiplatform
 import org.jetbrains.plugins.textmate.update
 import org.junit.jupiter.api.Test
@@ -16,10 +18,13 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
 import kotlin.random.Random
 import kotlin.test.*
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTime
 
-@OptIn(ExperimentalAtomicApi::class)
+@OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
 class SLRUTextMateCacheTest {
   companion object {
     private val TIMEOUT = 10.seconds
@@ -123,20 +128,20 @@ class SLRUTextMateCacheTest {
     )
 
     // Fill probationary segment
-    cache.use("prob1") { it }
-    cache.use("prob2") { it }
+    cache.get("prob1").close()
+    cache.get("prob2").close()
     assertEquals(2, cache.size())
 
     // Access again - should promote to protected
-    cache.use("prob1") { it }
+    cache.get("prob1").close()
 
     // Fill probationary segment again
-    cache.use("prob3") { it }
-    cache.use("prob4") { it }
+    cache.get("prob3").close()
+    cache.get("prob4").close()
     assertEquals(4, cache.size())
 
     // Add one more - should evict from probationary, not protected
-    cache.use("prob5") { it }
+    cache.get("prob5").close()
 
     assertEquals(4, cache.size())
     assertTrue(cache.contains("prob1"), "Promoted entry should survive eviction")
@@ -173,24 +178,24 @@ class SLRUTextMateCacheTest {
     )
 
     // Fill probationary
-    cache.use("prob1") { it }
-    cache.use("prob2") { it }
+    cache.get("prob1").close()
+    cache.get("prob2").close()
 
     // Promote prob2 to protected
-    cache.use("prob2") { it }
+    cache.get("prob2").close()
     // Promote prob1 to protected, make it more recently used than prob2
-    cache.use("prob1") { it }
+    cache.get("prob1").close()
 
     // Fill probationary again
-    cache.use("prob3") { it }
-    cache.use("prob4") { it }
+    cache.get("prob3").close()
+    cache.get("prob4").close()
 
     // Promote prob3 to protected, prob2 should be evicted
-    cache.use("prob3") { it }
+    cache.get("prob3").close()
 
-    cache.use("prob5") { it }
+    cache.get("prob5").close()
     // prob4 should be evicted
-    cache.use("prob6") { it }
+    cache.get("prob6").close()
 
     assertTrue(cache.contains("prob1"), "Protected entry should survive")
     assertTrue(cache.contains("prob3"), "Recently used probationary entry should survive")
@@ -214,7 +219,7 @@ class SLRUTextMateCacheTest {
     val jobs = List(size = 10) {
       async(Dispatchers.Default) {
         startSignal.join()
-        cache.use("shared-key") { it }
+        cache.get("shared-key").close()
       }
     }
     startSignal.complete()
@@ -270,8 +275,8 @@ class SLRUTextMateCacheTest {
       var counter = 0
       repeat(1000) {
         runCatching {
-          cache.use("evict-key-${counter++}") { it }
-          delay(1)
+          cache.get("evict-key-${counter++}").close()
+          realDelay(1.milliseconds)
         }.onFailure { e ->
           exceptions.update { it.add(e) }
         }
@@ -284,7 +289,7 @@ class SLRUTextMateCacheTest {
         repeat(50) { iteration ->
           runCatching {
             cache.use("access-key-$coroutineId-$iteration") { value ->
-              delay(10) // Simulate work
+              realDelay(10.milliseconds) // Simulate work
               value
             }
           }.onFailure { e ->
@@ -315,7 +320,7 @@ class SLRUTextMateCacheTest {
       repeat(100) {
         runCatching {
           cache.cleanup()
-          delay(10)
+          realDelay(10.milliseconds)
         }.onFailure { e ->
           exceptions.update { it.add(e) }
         }
@@ -327,8 +332,8 @@ class SLRUTextMateCacheTest {
       launch(Dispatchers.Default) {
         repeat(100) { iteration ->
           runCatching {
-            cache.use("key-$coroutineId-$iteration") { it }
-            delay(1)
+            cache.get("key-$coroutineId-$iteration").close()
+            realDelay(1.milliseconds)
           }.onFailure { e ->
             exceptions.update { it.add(e) }
           }
@@ -360,7 +365,7 @@ class SLRUTextMateCacheTest {
             when (iteration % 10) {
               in 0..6 -> {
                 // 70% cache access
-                cache.use("key-${(coroutineId * 100 + iteration) % 50}") { it }
+                cache.get("key-${(coroutineId * 100 + iteration) % 50}").close()
               }
               in 7..8 -> {
                 // 20% cleanup
@@ -375,7 +380,7 @@ class SLRUTextMateCacheTest {
             operations.incrementAndFetch()
 
             // Small random delay
-            delay((0..5).random().toLong())
+            realDelay((0..5).random().milliseconds)
           }.onFailure { e ->
             exceptions.update { it.add(e) }
           }
@@ -417,7 +422,7 @@ class SLRUTextMateCacheTest {
     repeat(5) { i ->
       jobs.add(launch(Dispatchers.Default) {
         val result = cache.use("fast-key-$i") { value ->
-          delay(1)
+          realDelay(1.milliseconds)
           "fast-result-$value"
         }
         results.update { it.add(result) }
@@ -428,7 +433,7 @@ class SLRUTextMateCacheTest {
     repeat(3) { i ->
       jobs.add(launch(Dispatchers.Default) {
         val result = cache.use("slow-key-$i") { value ->
-          delay(10) // Longer async work
+          realDelay(10.milliseconds) // Longer async work
           "slow-result-$value"
         }
         results.update { it.add(result) }
@@ -452,11 +457,11 @@ class SLRUTextMateCacheTest {
       disposeFn = { value -> disposedValues.update { it.add(value) } }
     )
 
-    cache.use("key1") { it }
-    cache.use("key2") { it }
+    cache.get("key1").close()
+    cache.get("key2").close()
 
     // should evict key1
-    cache.use("key3") { it }
+    cache.get("key3").close()
 
     assertTrue(disposedValues.load().contains("value-key1"), "Evicted entry should be disposed")
     assertFalse(cache.contains("key1"), "Evicted entry should not be in cache")
@@ -482,8 +487,8 @@ class SLRUTextMateCacheTest {
       key1IsInUse.join()
 
       // Fill the cache and evict key1 while it's in use
-      cache.use("key2") { it }
-      cache.use("key3") { it } // This should evict key1, but not dispose it yet
+      cache.get("key2").close()
+      cache.get("key3").close() // This should evict key1, but not dispose it yet
 
       assertFalse(disposedValues.load().contains("value-key1"), "Entry in use should not be disposed")
 
@@ -521,8 +526,8 @@ class SLRUTextMateCacheTest {
                            useKeyAndWaitUntilReallyUsed())
 
     // Force eviction from protected while entry is in use by multiple threads
-    cache.use("key2") { it }
-    cache.use("key2") { it }
+    cache.get("key2").close()
+    cache.get("key2").close()
 
     assertFalse(disposedValues.load().contains("value-shared-key"), "Entry in use by multiple threads should not be disposed")
 
@@ -582,8 +587,8 @@ class SLRUTextMateCacheTest {
       disposeFn = { value -> disposedValues.update { it.add(value) } }
     )
 
-    cache.use("key1") { it }
-    cache.use("key2") { it }
+    cache.get("key1").close()
+    cache.get("key2").close()
 
     val keyInUseJob = Job()
     val useJob = launch(Dispatchers.Default) {
@@ -645,11 +650,11 @@ class SLRUTextMateCacheTest {
     )
 
     // Fill cache
-    cache.use("key1") { it }
-    cache.use("key2") { it }
+    cache.get("key1").close()
+    cache.get("key2").close()
 
     // Add third entry - should try to dispose key1, but exception should not break cache
-    cache.use("key3") { it }
+    cache.get("key3").close()
 
     // Cache should remain functional
     assertEquals(2, cache.size())
@@ -712,7 +717,7 @@ class SLRUTextMateCacheTest {
     jobs.joinAll()
 
     assertTrue(exceptions.load().isNotEmpty())
-    cache.use("final-test") { it }
+    cache.get("final-test").close()
     assertTrue(cache.size() > 0, "Cache should still be functional")
   }
 
@@ -724,10 +729,10 @@ class SLRUTextMateCacheTest {
       disposeFn = { }
     )
 
-    cache.use("key1") { it }
+    cache.get("key1").close()
     assertEquals(1, cache.size())
 
-    cache.use("key2") { it }
+    cache.get("key2").close()
     assertEquals(1, cache.size())
 
     assertFalse(cache.contains("key1"))
@@ -833,7 +838,7 @@ class SLRUTextMateCacheTest {
     val duration = measureTime {
       val jobs = List(1000) { i ->
         launch {
-          cache.use("key-${i % 100}") { it } // 50% hit rate
+          cache.get("key-${i % 100}").close() // 50% hit rate
           completedTasks.incrementAndFetch()
         }
       }
@@ -863,7 +868,7 @@ class SLRUTextMateCacheTest {
           cache.use("key-${i % (capacity * 2)}") { }
         }
       }
-      println("Capacity $capacity: ${capacity * 10} operations took ${duration}")
+      println("Capacity $capacity: ${capacity * 10} operations took $duration")
 
       assertEquals(capacity, cache.size())
       assertTrue(duration < 10.seconds, "Should scale reasonably with capacity")
@@ -895,5 +900,105 @@ class SLRUTextMateCacheTest {
     assertEquals(1024, result)
   }
 
+  @Test
+  fun `cleanup with TTL should remove only expired unused entries`() = runConcurrentTest {
+    val disposedValues = AtomicReference<PersistentSet<String>>(persistentSetOf())
+    val cache = SLRUTextMateCache<String, String>(
+      capacity = 10,
+      computeFn = { key -> "value-$key" },
+      disposeFn = { value -> disposedValues.update { it.add(value) } },
+      timeSource = testTimeSource
+    )
+
+    cache.get("old-key1").close()
+    cache.get("old-key2").close()
+
+    advanceTimeBy(100.seconds)
+
+    cache.get("recent-key1").close()
+    cache.get("recent-key2").close()
+
+    assertEquals(4, cache.size())
+
+    cache.cleanup(50.milliseconds)
+
+    assertFalse(cache.contains("old-key1"))
+    assertFalse(cache.contains("old-key2"))
+    assertTrue(cache.contains("recent-key1"))
+    assertTrue(cache.contains("recent-key2"))
+    assertEquals(2, cache.size())
+
+    val expectedDisposed = setOf("value-old-key1", "value-old-key2")
+    assertEquals(expectedDisposed, disposedValues.load().toSet())
+  }
+
+  @Test
+  fun `cleanup with zero TTL should remove all unused entries`() {
+    val disposedValues = AtomicReference<PersistentSet<String>>(persistentSetOf())
+    val cache = SLRUTextMateCache<String, String>(
+      capacity = 10,
+      computeFn = { key -> "value-$key" },
+      disposeFn = { value -> disposedValues.update { it.add(value) } }
+    )
+
+    repeat(5) { i ->
+      cache.get("key$i").close()
+    }
+
+    assertEquals(5, cache.size())
+
+    cache.cleanup(Duration.ZERO)
+
+    assertEquals(0, cache.size())
+    assertEquals(5, disposedValues.load().size)
+  }
+
+  @Test
+  fun `cleanup with very long TTL should not remove any entries`() {
+    val disposedValues = AtomicReference<PersistentSet<String>>(persistentSetOf())
+    val cache = SLRUTextMateCache<String, String>(
+      capacity = 10,
+      computeFn = { key -> "value-$key" },
+      disposeFn = { value -> disposedValues.update { it.add(value) } }
+    )
+
+    repeat(5) { i ->
+      cache.use("key$i") {}
+    }
+
+    assertEquals(5, cache.size())
+
+    cache.cleanup(1.hours)
+
+    assertEquals(5, cache.size())
+    assertTrue(disposedValues.load().isEmpty())
+  }
+
+  @Test
+  fun `cleanup with TTL should update lastAccessed on cache hits`() = runConcurrentTest {
+    val cache = SLRUTextMateCache<String, String>(
+      capacity = 10,
+      computeFn = { key -> "value-$key" },
+      disposeFn = { },
+      timeSource = testTimeSource
+    )
+    cache.get("test-key").close()
+
+    advanceTimeBy(100.milliseconds)
+
+    cache.get("test-key").close()
+
+    cache.cleanup(50.milliseconds)
+
+    assertTrue(cache.contains("test-key"), "Recently accessed entry should not be cleaned up")
+    assertEquals(1, cache.size())
+  }
+
   private fun runConcurrentTest(testBody: suspend TestScope.() -> Unit) = runTest(timeout = TIMEOUT, testBody = testBody)
+
+  private suspend fun realDelay(duration: Duration) {
+    withContext(Dispatchers.Default) {
+      delay(duration)
+    }
+  }
 }

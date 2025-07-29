@@ -1,21 +1,25 @@
 package org.jetbrains.plugins.textmate.cache
 
 import org.jetbrains.plugins.textmate.createTextMateLock
-import kotlin.concurrent.atomics.AtomicBoolean
-import kotlin.concurrent.atomics.AtomicInt
-import kotlin.concurrent.atomics.decrementAndFetch
-import kotlin.concurrent.atomics.incrementAndFetch
+import kotlin.concurrent.atomics.*
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
+@OptIn(ExperimentalTime::class)
 class SLRUTextMateCache<K : Any, V : Any?>(
   capacity: Int,
   private val computeFn: (K) -> V,
   private val disposeFn: (V) -> Unit,
   protectedRatio: Double = 0.8,
+  private val timeSource: TimeSource = TimeSource.Monotonic
 ) : TextMateCache<K, V> {
 
   private data class Entry<K, V>(
     val key: K,
     val value: V,
+    var lastAccessed: AtomicReference<TimeMark>,
     val refCount: AtomicInt = AtomicInt(0),
     val evicted: AtomicBoolean = AtomicBoolean(false),
     var prev: Entry<K, V>? = null,
@@ -56,8 +60,9 @@ class SLRUTextMateCache<K : Any, V : Any?>(
         probationaryCache.get(key)?.also {
           promoteToProtected(it)
         }
-      }?.takeIf { !it.evicted.load() }?.also { createdEntity ->
-        createdEntity.refCount.incrementAndFetch()
+      }?.takeIf { !it.evicted.load() }?.also { existingEntry ->
+        existingEntry.refCount.incrementAndFetch()
+        existingEntry.lastAccessed.store(timeSource.markNow())
       }
     }
     return if (existingEntry != null) {
@@ -65,7 +70,10 @@ class SLRUTextMateCache<K : Any, V : Any?>(
     }
     else {
       val newValue = computeFn(key)
-      val newEntry = Entry(key, newValue, AtomicInt(1))
+      val newEntry = Entry(key = key,
+                           value = newValue,
+                           lastAccessed = AtomicReference(timeSource.markNow()),
+                           refCount = AtomicInt(1))
       val (newOrExistingEntry, newEntryInserted) = lock.withLock {
         val doubleCheckedExistingEntry = protectedCache.get(key) ?: run {
           probationaryCache.get(key)?.also {
@@ -74,6 +82,7 @@ class SLRUTextMateCache<K : Any, V : Any?>(
         }?.takeIf { !it.evicted.load() }
         if (doubleCheckedExistingEntry != null) {
           doubleCheckedExistingEntry.refCount.incrementAndFetch()
+          doubleCheckedExistingEntry.lastAccessed.store(timeSource.markNow())
           doubleCheckedExistingEntry to false
         }
         else {
@@ -110,7 +119,7 @@ class SLRUTextMateCache<K : Any, V : Any?>(
   private fun evictFromProtected() {
     val victim = protectedCache.removeEldest() ?: return
     // if refCount is not zero, someone use-block will be responsible for disposing the value
-    if (victim.evicted.compareAndSet(false, true) && victim.refCount.load() == 0) {
+    if (victim.evicted.compareAndSet(expectedValue = false, newValue = true) && victim.refCount.load() == 0) {
       finalizeEviction(victim)
     }
   }
@@ -118,7 +127,7 @@ class SLRUTextMateCache<K : Any, V : Any?>(
   private fun evictFromProbationary() {
     val victim = probationaryCache.removeEldest() ?: return
     // if refCount is not zero, use-block will be responsible for disposing the value
-    if (victim.evicted.compareAndSet(false, true) && victim.refCount.load() == 0) {
+    if (victim.evicted.compareAndSet(expectedValue = false, newValue = true) && victim.refCount.load() == 0) {
       finalizeEviction(victim)
     }
   }
@@ -136,24 +145,24 @@ class SLRUTextMateCache<K : Any, V : Any?>(
     protectedCache.contains(key) || probationaryCache.contains(key)
   }
 
-  override fun cleanup() {
+  override fun cleanup(ttl: Duration) {
     val toEvict = lock.withLock {
       buildList {
         protectedCache.allEntriesCopy().forEach { entry ->
-          if (entry.refCount.load() == 0) {
+          if (entry.refCount.load() == 0 && entry.lastAccessed.load().elapsedNow() > ttl) {
             protectedCache.remove(entry.key)?.let {
               // if another thread has already marked it, it's ok
-              if (entry.evicted.compareAndSet(false, true)) {
+              if (entry.evicted.compareAndSet(expectedValue = false, newValue = true)) {
                 add(it)
               }
             }
           }
         }
         probationaryCache.allEntriesCopy().forEach { entry ->
-          if (entry.refCount.load() == 0) {
+          if (entry.refCount.load() == 0 && entry.lastAccessed.load().elapsedNow() > ttl) {
             probationaryCache.remove(entry.key)?.let {
               // if another thread has already marked it, it's ok
-              if (entry.evicted.compareAndSet(false, true)) {
+              if (entry.evicted.compareAndSet(expectedValue = false, newValue = true)) {
                 add(it)
               }
             }
@@ -170,7 +179,7 @@ class SLRUTextMateCache<K : Any, V : Any?>(
     lock.withLock {
       val allEntries = probationaryCache.allEntriesCopy() + protectedCache.allEntriesCopy()
       for (entry in allEntries) {
-        if (entry.evicted.compareAndSet(false, true) && entry.refCount.load() == 0) {
+        if (entry.evicted.compareAndSet(expectedValue = false, newValue = true) && entry.refCount.load() == 0) {
           disposeFn(entry.value)
         }
       }
@@ -197,8 +206,8 @@ class SLRUTextMateCache<K : Any, V : Any?>(
    * ## Invariants
    * - `head` points to most recently used entry (or null if empty)
    * - `tail` points to least recently used entry (or null if empty)
-   * - All entries in map are also in the linked list
-   * - All entries in linked list are also in the map
+   * - All entries in a map are also in the linked list
+   * - All entries in a linked list are also in the map
    * - For single entry: head == tail
    * - For empty cache: head == null && tail == null
    */
@@ -252,7 +261,7 @@ class SLRUTextMateCache<K : Any, V : Any?>(
     /**
      * Removes and returns the least recently used (eldest) entry.
      *
-     * @return The eldest entry, or null if cache is empty
+     * @return The eldest entry, or null if the cache is empty
      */
     fun removeEldest(): Entry<K, V>? {
       val last = tail
@@ -273,7 +282,7 @@ class SLRUTextMateCache<K : Any, V : Any?>(
     fun moveToHead(entry: Entry<K, V>) {
       if (head == entry) return
 
-      // Remove from current position
+      // Remove from the current position
       entry.prev?.next = entry.next
       entry.next?.prev = entry.prev
 
