@@ -4,22 +4,16 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.FileASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
@@ -35,58 +29,6 @@ import java.util.List;
 
 @ApiStatus.Internal
 public final class CompletionAssertions {
-  static void assertCommitSuccessful(Editor editor, PsiFile psiFile) {
-    Document document = editor.getDocument();
-    int docLength = document.getTextLength();
-    int psiLength = psiFile.getTextLength();
-    PsiDocumentManager manager = PsiDocumentManager.getInstance(psiFile.getProject());
-    boolean committed = !manager.isUncommited(document);
-    if (docLength == psiLength && committed) {
-      return;
-    }
-
-    FileViewProvider viewProvider = psiFile.getViewProvider();
-
-    String message = "unsuccessful commit:";
-    message += "\nmatching=" + (psiFile == manager.getPsiFile(document));
-    message += "\ninjectedEditor=" + (editor instanceof EditorWindow);
-    message += "\ninjectedFile=" + InjectedLanguageManager.getInstance(psiFile.getProject()).isInjectedFragment(psiFile);
-    message += "\ncommitted=" + committed;
-    message += "\nfile=" + psiFile.getName();
-    message += "\nfile class=" + psiFile.getClass();
-    message += "\nfile.valid=" + psiFile.isValid();
-    message += "\nfile.physical=" + psiFile.isPhysical();
-    message += "\nfile.eventSystemEnabled=" + viewProvider.isEventSystemEnabled();
-    message += "\nlanguage=" + psiFile.getLanguage();
-    message += "\ndoc.length=" + docLength;
-    message += "\npsiFile.length=" + psiLength;
-    String fileText;
-    try {
-      fileText = psiFile.getText();
-    } catch (Throwable e) {
-      // getText() method may fail the length consistency check. Work around it.
-      fileText = psiFile.getViewProvider().getContents().toString();
-    }
-    if (fileText != null) {
-      message += "\npsiFile.text.length=" + fileText.length();
-    }
-    FileASTNode node = psiFile.getNode();
-    if (node != null) {
-      message += "\nnode.length=" + node.getTextLength();
-      String nodeText = node.getText();
-      message += "\nnode.text.length=" + nodeText.length();
-    }
-    VirtualFile virtualFile = viewProvider.getVirtualFile();
-    message += "\nvirtualFile=" + virtualFile;
-    message += "\nvirtualFile.class=" + virtualFile.getClass();
-    message += "\n" + DebugUtil.currentStackTrace();
-
-    throw new RuntimeExceptionWithAttachments(
-      "Commit unsuccessful", message,
-      new Attachment(virtualFile.getPath() + "_file.txt", StringUtil.notNullize(fileText)),
-      createAstAttachment(psiFile, psiFile),
-      new Attachment("docText.txt", document.getText()));
-  }
 
   @ApiStatus.Internal
   public static void checkEditorValid(Editor editor) {
