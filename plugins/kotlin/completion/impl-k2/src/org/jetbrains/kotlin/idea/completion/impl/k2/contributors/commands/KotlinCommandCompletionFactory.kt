@@ -9,14 +9,11 @@ import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.analysisContextModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.contextModule
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.copied
-import org.jetbrains.kotlin.name.Name.identifier
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 
@@ -32,16 +29,6 @@ class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAware {
                 if (it is KtContainerNode) it.firstChild else it
             } ?: return true
             return !parent.loopRange.isAncestor(element)
-        }
-        if (parent is KtNamedFunction && parent.nameIdentifier == element) {
-            val file = psiFile.originalFile as? KtFile ?: return false
-            val provider = KtSymbolFromIndexProvider(file)
-            val text = parent.nameIdentifier?.text ?: return false
-            analyze(parent) {
-                val name = identifier(text)
-                return !(provider.getJavaClassesByName(name, file.resolveScope).any() ||
-                        provider.getKotlinClassesByName(name, file.resolveScope).any())
-            }
         }
         return true
     }

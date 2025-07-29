@@ -28,7 +28,7 @@ public class JavaRenameActionCommandProvider: AbstractRenameActionCommandProvide
     val method = element.parentOfType<PsiMethod>()
     if (method != null &&
         (method.identifyingElement?.textRange?.endOffset == currentOffset ||
-        method.parameterList.textRange.endOffset == currentOffset ||
+        method.parameterList.textRange?.endOffset == currentOffset ||
         method.body?.rBrace?.textRange?.endOffset == currentOffset)) return method.identifyingElement?.textRange?.endOffset
 
     val psiClass = element.parentOfType<PsiClass>()

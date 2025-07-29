@@ -39,7 +39,7 @@ open class ActionCommandProvider(
   val priority: Int? = null,
   val previewText: @Nls String?,
   val synonyms: List<String> = emptyList()
-) : CommandProvider, DumbAware {
+) : CommandProvider {
 
   /**
    * Creates and returns a list of completion commands based on the provided context.

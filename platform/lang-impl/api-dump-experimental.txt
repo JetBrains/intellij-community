@@ -270,7 +270,6 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - f:supportsReadOnly():Z
 *c:com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - com.intellij.codeInsight.completion.command.CommandProvider
-- com.intellij.openapi.project.DumbAware
 - <init>(java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,java.lang.String,java.util.List):V
 - b:<init>(java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,java.lang.String,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
