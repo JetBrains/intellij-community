@@ -8,6 +8,7 @@ import com.intellij.platform.debugger.impl.rpc.XValueComputeChildrenEvent
 import com.intellij.platform.debugger.impl.rpc.XValueGroupDto
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.frame.XCompositeNode
+import com.intellij.xdebugger.frame.XNamedValue
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueContainer
 import kotlinx.coroutines.*
@@ -46,6 +47,10 @@ internal class FrontendXValueContainer(
 
             for (group in computeChildrenEvent.bottomGroups.toFrontendXValueGroups()) {
               childrenList.addBottomGroup(group)
+            }
+
+            for (topValue in computeChildrenEvent.topValues) {
+              childrenList.addTopValue(FrontendXValue.create(project, cs, topValue, hasParentValue) as XNamedValue)
             }
 
             node.addChildren(childrenList, computeChildrenEvent.isLast)

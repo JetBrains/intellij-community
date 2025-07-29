@@ -259,7 +259,11 @@ private sealed interface RawComputeChildrenEvent {
       val topGroups = children.topGroups.toDto()
       val bottomGroups = children.bottomGroups.toDto()
 
-      return XValueComputeChildrenEvent.AddChildren(names, childrenXValueDtos, last, topGroups, bottomGroups)
+      val topValues: List<XValueDto> = children.topValues.map {
+        newChildXValueModel(it, parentCoroutineScope, session).toXValueDto()
+      }
+
+      return XValueComputeChildrenEvent.AddChildren(names, childrenXValueDtos, last, topGroups, bottomGroups, topValues)
     }
   }
 
