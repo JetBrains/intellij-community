@@ -1,10 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
-import com.intellij.tools.build.bazel.jvmIncBuilder.BuildContext;
-import com.intellij.tools.build.bazel.jvmIncBuilder.DataPaths;
-import com.intellij.tools.build.bazel.jvmIncBuilder.Message;
-import com.intellij.tools.build.bazel.jvmIncBuilder.NodeSourceSnapshot;
+import com.intellij.tools.build.bazel.jvmIncBuilder.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
@@ -23,25 +20,56 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.List;
+import java.util.*;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
-import static org.jetbrains.jps.util.Iterators.flat;
-import static org.jetbrains.jps.util.Iterators.map;
+import static org.jetbrains.jps.util.Iterators.*;
 
 public class ConfigurationState {
-  private static final ConfigurationState EMPTY = new ConfigurationState(new PathSourceMapper(), NodeSourceSnapshot.EMPTY, NodeSourceSnapshot.EMPTY);
-
+  private static final ConfigurationState EMPTY = new ConfigurationState(new PathSourceMapper(), NodeSourceSnapshot.EMPTY, NodeSourceSnapshot.EMPTY, Map.of());
+  
+  private static final Set<CLFlags> ourTrackedFlags = EnumSet.of(
+    CLFlags.PLUGIN_ID,
+    CLFlags.PLUGIN_CLASSPATH,
+    CLFlags.PLUGIN_OPTIONS,
+    CLFlags.API_VERSION,
+    CLFlags.LANGUAGE_VERSION,
+    CLFlags.JVM_TARGET,
+    CLFlags.OPT_IN,
+    CLFlags.X_ALLOW_KOTLIN_PACKAGE,
+    CLFlags.X_ALLOW_RESULT_RETURN_TYPE,
+    CLFlags.X_WHEN_GUARDS,
+    CLFlags.X_LAMBDAS,
+    CLFlags.JVM_DEFAULT,
+    CLFlags.X_JVM_DEFAULT, 
+    CLFlags.X_INLINE_CLASSES,
+    CLFlags.X_CONTEXT_RECEIVERS,
+    CLFlags.X_CONTEXT_PARAMETERS,
+    CLFlags.X_CONSISTENT_DATA_CLASS_COPY_VISIBILITY,
+    CLFlags.X_ALLOW_UNSTABLE_DEPENDENCIES,
+    CLFlags.SKIP_METADATA_VERSION_CHECK,
+    CLFlags.X_SKIP_PRERELEASE_CHECK,
+    CLFlags.X_EXPLICIT_API_MODE,
+    CLFlags.X_NO_CALL_ASSERTIONS,
+    CLFlags.X_NO_PARAM_ASSERTIONS,
+    CLFlags.X_SAM_CONVERSIONS,
+    CLFlags.X_STRICT_JAVA_NULLABILITY_ASSERTIONS,
+    CLFlags.X_X_LANGUAGE,
+    CLFlags.FRIENDS
+  );
+  
   private final NodeSourcePathMapper myPathMapper;
   private final NodeSourceSnapshot mySourcesSnapshot;
   private final NodeSourceSnapshot myLibsSnapshot;
+  private final long myFlagsDigest;
 
-  public ConfigurationState(NodeSourcePathMapper pathMapper, NodeSourceSnapshot sourcesSnapshot, NodeSourceSnapshot libsSnapshot) {
+  public ConfigurationState(NodeSourcePathMapper pathMapper, NodeSourceSnapshot sourcesSnapshot, NodeSourceSnapshot libsSnapshot, Map<CLFlags, List<String>> flags) {
     myPathMapper = pathMapper;
     mySourcesSnapshot = sourcesSnapshot;
     myLibsSnapshot = libsSnapshot;
+    myFlagsDigest = buildFlagsDigest(flags);
   }
 
   public ConfigurationState(NodeSourcePathMapper pathMapper, Path savedState) throws IOException {
@@ -50,6 +78,7 @@ public class ConfigurationState {
       GraphDataInput in = GraphDataInputImpl.wrap(stream);
       mySourcesSnapshot = new SourceSnapshotImpl(in, PathSource::new);
       myLibsSnapshot = new SourceSnapshotImpl(in, PathSource::new);
+      myFlagsDigest = in.readLong();
     }
   }
 
@@ -59,6 +88,7 @@ public class ConfigurationState {
       GraphDataOutput out = GraphDataOutputImpl.wrap(stream);
       getSources().write(out);
       getLibraries().write(out);
+      out.writeLong(myFlagsDigest);
     }
     catch (Throwable e) {
       context.report(Message.create(null, e));
@@ -73,7 +103,7 @@ public class ConfigurationState {
       return EMPTY;
     }
     catch (Throwable e) {
-      context.report(Message.create(null, e));
+      context.report(Message.create(null, Message.Kind.INFO, "Error loading configuration state for " + context.getTargetName(), e));
       return EMPTY;
     }
   }
@@ -84,6 +114,10 @@ public class ConfigurationState {
 
   public NodeSourceSnapshot getLibraries() {
     return myLibsSnapshot;
+  }
+
+  public long getFlagsDigest() {
+    return myFlagsDigest;
   }
 
   // tracks names and order of classpath entries as well as content digests of all third-party dependencies
@@ -98,6 +132,26 @@ public class ConfigurationState {
       };
 
     return Utils.digest(flat(map(deps.getElements(), digestMapper)));
+  }
+
+  private static long buildFlagsDigest(Map<CLFlags, List<String>> flags) {
+    if (flags.isEmpty()) {
+      return 0;
+    }
+    
+    List<String> emptyValue = List.of("_empty_");
+    Function<List<String>, Iterable<String>> sorted = col -> {
+      if (col.size() <= 1) {
+        return col;
+      }
+      List<String> copy = new ArrayList<>(col);
+      Collections.sort(copy);
+      return copy;
+    };
+
+    return Utils.digest(
+      flat(map(filter(Arrays.asList(CLFlags.values()), ourTrackedFlags::contains), flg -> flat(asIterable(flg.name()), sorted.fun(flags.getOrDefault(flg, emptyValue)))))
+    );
   }
 
 }

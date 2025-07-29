@@ -50,10 +50,10 @@ public class BazelIncBuilder {
         }
         else {
           ConfigurationState pastState = ConfigurationState.loadSavedState(context);
-          ConfigurationState presentState = new ConfigurationState(context.getPathMapper(), context.getSources(), context.getBinaryDependencies());
+          ConfigurationState presentState = new ConfigurationState(context.getPathMapper(), context.getSources(), context.getBinaryDependencies(), context.getFlags());
 
           srcSnapshotDelta = new SnapshotDeltaImpl(pastState.getSources(), context.getSources());
-          if (shouldRecompileAll(srcSnapshotDelta) || pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest()) {
+          if (shouldRecompileAll(srcSnapshotDelta) || pastState.getFlagsDigest() != presentState.getFlagsDigest() || pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest()) {
             int changedPercent = srcSnapshotDelta.getChangedPercent();
             LOG.info(() -> "Marking whole target for recompilation [" + context.getTargetName() + "]. Changed sources: " + changedPercent + "% (threshold " + RECOMPILE_CHANGED_RATIO_PERCENT + "%) ");
             srcSnapshotDelta.markRecompileAll();
@@ -249,10 +249,10 @@ public class BazelIncBuilder {
     if (srcSnapshotDelta != null) {
       if (context.hasErrors()) {
         ConfigurationState pastState = ConfigurationState.loadSavedState(context);
-        new ConfigurationState(context.getPathMapper(), srcSnapshotDelta.asSnapshot(), pastState.getLibraries()).save(context);
+        new ConfigurationState(context.getPathMapper(), srcSnapshotDelta.asSnapshot(), pastState.getLibraries(), context.getFlags()).save(context);
       }
       else {
-        new ConfigurationState(context.getPathMapper(), srcSnapshotDelta.asSnapshot(), context.getBinaryDependencies()).save(context);
+        new ConfigurationState(context.getPathMapper(), srcSnapshotDelta.asSnapshot(), context.getBinaryDependencies(), context.getFlags()).save(context);
       }
     }
 
