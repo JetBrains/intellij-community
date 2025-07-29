@@ -31,7 +31,7 @@ class DistributedTestModel private constructor(
             serializers.register(LazyCompanionMarshaller(RdId(552672907393700794), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdAgentType"))
             serializers.register(LazyCompanionMarshaller(RdId(-3824320616986309148), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdProductType"))
             serializers.register(LazyCompanionMarshaller(RdId(-4029698853809470560), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdTestSessionStackTraceElement"))
-            serializers.register(LazyCompanionMarshaller(RdId(3844250127064816121), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdTestSessionExceptionCause"))
+            serializers.register(LazyCompanionMarshaller(RdId(-2964405344154034056), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdTestSessionLightException"))
             serializers.register(LazyCompanionMarshaller(RdId(-6820612235039581104), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdTestSessionException"))
             serializers.register(LazyCompanionMarshaller(RdId(8999514109111023287), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdTestActionParameters"))
             serializers.register(LazyCompanionMarshaller(RdId(1797576418817339312), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdTestComponentData"))
@@ -58,7 +58,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = 1161112409833170567L
+        const val serializationHash = 4116578669314861084L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -681,7 +681,8 @@ data class RdTestSessionException (
     val originalType: String?,
     val message: String?,
     val stacktrace: List<RdTestSessionStackTraceElement>,
-    val cause: RdTestSessionExceptionCause?
+    val cause: RdTestSessionLightException?,
+    val suppressedExceptions: List<RdTestSessionLightException>?
 ) : IPrintable {
     //companion
     
@@ -695,8 +696,9 @@ data class RdTestSessionException (
             val originalType = buffer.readNullable { buffer.readString() }
             val message = buffer.readNullable { buffer.readString() }
             val stacktrace = buffer.readList { RdTestSessionStackTraceElement.read(ctx, buffer) }
-            val cause = buffer.readNullable { RdTestSessionExceptionCause.read(ctx, buffer) }
-            return RdTestSessionException(type, originalType, message, stacktrace, cause)
+            val cause = buffer.readNullable { RdTestSessionLightException.read(ctx, buffer) }
+            val suppressedExceptions = buffer.readNullable { buffer.readList { RdTestSessionLightException.read(ctx, buffer) } }
+            return RdTestSessionException(type, originalType, message, stacktrace, cause, suppressedExceptions)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSessionException)  {
@@ -704,7 +706,8 @@ data class RdTestSessionException (
             buffer.writeNullable(value.originalType) { buffer.writeString(it) }
             buffer.writeNullable(value.message) { buffer.writeString(it) }
             buffer.writeList(value.stacktrace) { v -> RdTestSessionStackTraceElement.write(ctx, buffer, v) }
-            buffer.writeNullable(value.cause) { RdTestSessionExceptionCause.write(ctx, buffer, it) }
+            buffer.writeNullable(value.cause) { RdTestSessionLightException.write(ctx, buffer, it) }
+            buffer.writeNullable(value.suppressedExceptions) { buffer.writeList(it) { v -> RdTestSessionLightException.write(ctx, buffer, v) } }
         }
         
         
@@ -725,6 +728,7 @@ data class RdTestSessionException (
         if (message != other.message) return false
         if (stacktrace != other.stacktrace) return false
         if (cause != other.cause) return false
+        if (suppressedExceptions != other.suppressedExceptions) return false
         
         return true
     }
@@ -736,6 +740,7 @@ data class RdTestSessionException (
         __r = __r*31 + if (message != null) message.hashCode() else 0
         __r = __r*31 + stacktrace.hashCode()
         __r = __r*31 + if (cause != null) cause.hashCode() else 0
+        __r = __r*31 + if (suppressedExceptions != null) suppressedExceptions.hashCode() else 0
         return __r
     }
     //pretty print
@@ -747,6 +752,7 @@ data class RdTestSessionException (
             print("message = "); message.print(printer); println()
             print("stacktrace = "); stacktrace.print(printer); println()
             print("cause = "); cause.print(printer); println()
+            print("suppressedExceptions = "); suppressedExceptions.print(printer); println()
         }
         printer.print(")")
     }
@@ -759,26 +765,26 @@ data class RdTestSessionException (
 /**
  * #### Generated from [DistributedTestModel.kt]
  */
-data class RdTestSessionExceptionCause (
+data class RdTestSessionLightException (
     val type: String,
     val message: String?,
     val stacktrace: List<RdTestSessionStackTraceElement>
 ) : IPrintable {
     //companion
     
-    companion object : IMarshaller<RdTestSessionExceptionCause> {
-        override val _type: KClass<RdTestSessionExceptionCause> = RdTestSessionExceptionCause::class
-        override val id: RdId get() = RdId(3844250127064816121)
+    companion object : IMarshaller<RdTestSessionLightException> {
+        override val _type: KClass<RdTestSessionLightException> = RdTestSessionLightException::class
+        override val id: RdId get() = RdId(-2964405344154034056)
         
         @Suppress("UNCHECKED_CAST")
-        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdTestSessionExceptionCause  {
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdTestSessionLightException  {
             val type = buffer.readString()
             val message = buffer.readNullable { buffer.readString() }
             val stacktrace = buffer.readList { RdTestSessionStackTraceElement.read(ctx, buffer) }
-            return RdTestSessionExceptionCause(type, message, stacktrace)
+            return RdTestSessionLightException(type, message, stacktrace)
         }
         
-        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSessionExceptionCause)  {
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSessionLightException)  {
             buffer.writeString(value.type)
             buffer.writeNullable(value.message) { buffer.writeString(it) }
             buffer.writeList(value.stacktrace) { v -> RdTestSessionStackTraceElement.write(ctx, buffer, v) }
@@ -795,7 +801,7 @@ data class RdTestSessionExceptionCause (
         if (this === other) return true
         if (other == null || other::class != this::class) return false
         
-        other as RdTestSessionExceptionCause
+        other as RdTestSessionLightException
         
         if (type != other.type) return false
         if (message != other.message) return false
@@ -813,7 +819,7 @@ data class RdTestSessionExceptionCause (
     }
     //pretty print
     override fun print(printer: PrettyPrinter)  {
-        printer.println("RdTestSessionExceptionCause (")
+        printer.println("RdTestSessionLightException (")
         printer.indent {
             print("type = "); type.print(printer); println()
             print("message = "); message.print(printer); println()
