@@ -16,7 +16,6 @@ class JBTerminalPanelUiComponent(data: ComponentData) : UiComponent(data) {
       val builder = StringBuilder()
       for (i in 0 until terminal.getTerminalTextBuffer().historyLinesStorage.size) {
         builder.append(terminal.getTerminalTextBuffer().historyLinesStorage.get(i).getText())
-        builder.append('\n')
       }
       return builder.toString()
     }
