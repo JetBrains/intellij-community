@@ -5,22 +5,21 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.topHit.SeTopHitItemsProvider
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SeResultsAccumulator(providerIdsAndLimits: Map<SeProviderId, Int>) {
+class SeResultsAccumulator(providerIds: List<SeProviderId>, nonBlockedProviderIds: List<SeProviderId>) {
   private val mutex = Mutex()
   private val items = mutableMapOf<String, SeItemData>()
+  //private val balancer = SeResultsCountBalancer("FE", providerIds, nonBlockedProviderIds)
 
-  private val providerToSemaphore = HashMap<SeProviderId, Semaphore>().apply {
-    this.putAll(providerIdsAndLimits.map { (providerId, limit) -> providerId to Semaphore(limit) })
+  suspend fun end(providerId: SeProviderId) {
+    //balancer.end(providerId)
   }
 
   suspend fun add(newItem: SeItemData): SeResultEvent? {
-    val providerSemaphore = providerToSemaphore[newItem.providerId]
-    providerSemaphore?.acquire()
+    //balancer.add(newItem)
 
     mutex.withLock {
       val event = calculateEventType(newItem)
@@ -35,16 +34,8 @@ class SeResultsAccumulator(providerIdsAndLimits: Map<SeProviderId, Int>) {
           }
 
           items[event.newItemData.uuid] = event.newItemData
-
-          event.uuidsToReplace.mapNotNull {
-            items[it]
-          }.forEach {
-            providerToSemaphore[it.providerId]?.release()
-          }
         }
-        is SeResultEndEvent, null -> {
-          providerSemaphore?.release()
-        }
+        is SeResultEndEvent, null -> {}
       }
 
       return event

@@ -40,16 +40,17 @@ class SeTabDelegate(
   private val providers = initAsync(scope) {
     initializeProviders(project, providerIds, initEvent, sessionRef, logLabel)
   }
-  private val providersAndLimits = providerIds.associateWith { Int.MAX_VALUE }
-
   suspend fun getProvidersIdToName(): Map<SeProviderId, @Nls String> = providers.getValue().getProvidersIdToName()
 
   fun getItems(params: SeParams, disabledProviders: List<SeProviderId>? = null): Flow<SeResultEvent> {
-    val accumulator = SeResultsAccumulator(providersAndLimits)
     val disabledProviders = fixDisabledProviders(disabledProviders)
 
     return flow {
+      val initializedProviders = providers.getValue()
+      val accumulator = SeResultsAccumulator(initializedProviders.getLocalProviderIds(), initializedProviders.getRemoteProviderIds())
+
       disabledProviders?.forEach {
+        accumulator.end(it)
         emit(SeResultEndEvent(it))
       }
 
@@ -57,6 +58,7 @@ class SeTabDelegate(
         when (transferEvent) {
           is SeTransferEnd -> {
             SeLog.log(ITEM_EMIT) { "Tab delegate for ${logLabel} ends: ${transferEvent.providerId.value}" }
+            accumulator.end(transferEvent.providerId)
             SeResultEndEvent(transferEvent.providerId)
           }
           is SeTransferItem -> {
@@ -145,6 +147,9 @@ class SeTabDelegate(
       return localProviders.values.flatMap { it.getTypeVisibilityStates(index) ?: emptyList() } +
              (frontendProvidersFacade?.getTypeVisibilityStates(index) ?: emptyList())
     }
+
+    fun getLocalProviderIds(): List<SeProviderId> = localProviders.keys.toList()
+    fun getRemoteProviderIds(): List<SeProviderId> = frontendProvidersFacade?.providerIds ?: emptyList()
 
     fun getItems(params: SeParams, disabledProviders: List<SeProviderId>, mapToResultEvent: suspend (SeEqualityChecker?, SeTransferEvent) -> SeResultEvent?): Flow<SeResultEvent> {
       return channelFlow {
