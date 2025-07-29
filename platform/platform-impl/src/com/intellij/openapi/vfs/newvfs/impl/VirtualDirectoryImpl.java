@@ -226,7 +226,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                      @NotNull String childName) {
     FSRecordsImpl vfsPeer = pfs.peer();
     LOG.warn(
-      "Child[#" + childId + ", nameId: " + childNameId + "][name='" + vfsPeer.getNameByNameId(childId) + "']" +
+      "Child[#" + childId + ", nameId: " + childNameId + "][name='" + vfsPeer.getNameByNameId(childNameId) + "']" +
       " present in a children list [" + myData.children + "], " +
       " but can't be found by name[" + childName + "] even though ensureCanonicalName=true"
     );
