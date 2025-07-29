@@ -1556,15 +1556,6 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
   /* ---------------- Counter support -------------- */
 
-
-  static final class CounterCell {
-      // Padding fields to avoid contention
-      volatile long p0, p1, p2, p3, p4, p5, p6;
-      volatile long value;
-      // Padding fields to avoid contention
-      volatile long q0, q1, q2, q3, q4, q5, q6;
-      CounterCell(long x) { value = x; }
-  }
   final long sumCount() {
       CounterCell[] cs = counterCells;
       long sum = baseCount;

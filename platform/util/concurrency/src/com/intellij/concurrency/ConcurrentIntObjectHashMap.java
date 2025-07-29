@@ -3,6 +3,7 @@
 package com.intellij.concurrency;
 
 import com.intellij.util.containers.ConcurrentIntObjectMap;
+import com.intellij.util.containers.CounterCell;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.containers.ThreadLocalRandom;
 import org.jetbrains.annotations.NotNull;
@@ -519,7 +520,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   /**
    * Table of counter cells. When non-null, size is a power of 2.
    */
-  private transient volatile ConcurrentHashMap.CounterCell[] counterCells;
+  private transient volatile CounterCell[] counterCells;
 
   // views
   private transient ValuesView<V> values;
@@ -1294,10 +1295,10 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * @param check if <0, don't check resize, if <= 1 only check if uncontended
    */
   private final void addCount(long x, int check) {
-    ConcurrentHashMap.CounterCell[] as; long b, s;
+    CounterCell[] as; long b, s;
       if ((as = counterCells) != null ||
           !BASECOUNT.compareAndSet(this, b = baseCount, s = b + x)) {
-        ConcurrentHashMap.CounterCell a; long v; int m;
+        CounterCell a; long v; int m;
           boolean uncontended = true;
           if (as == null || (m = as.length - 1) < 0 ||
               (a = as[ThreadLocalRandom.getProbe() & m]) == null ||
@@ -1531,10 +1532,10 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
 
   final long sumCount() {
-      ConcurrentHashMap.CounterCell[] cs = counterCells;
+      CounterCell[] cs = counterCells;
       long sum = baseCount;
       if (cs != null) {
-          for (ConcurrentHashMap.CounterCell c : cs)
+          for (CounterCell c : cs)
               if (c != null)
                   sum += c.value;
       }
@@ -1551,16 +1552,16 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       }
       boolean collide = false;                // True if last slot nonempty
       for (;;) {
-          ConcurrentHashMap.CounterCell[] cs; ConcurrentHashMap.CounterCell c; int n; long v;
+          CounterCell[] cs; CounterCell c; int n; long v;
           if ((cs = counterCells) != null && (n = cs.length) > 0) {
               if ((c = cs[(n - 1) & h]) == null) {
                   if (cellsBusy == 0) {            // Try to attach new Cell
-                    ConcurrentHashMap.CounterCell r = new ConcurrentHashMap.CounterCell(x); // Optimistic create
+                    CounterCell r = new CounterCell(x); // Optimistic create
                       if (cellsBusy == 0 &&
                           CELLSBUSY.compareAndSet(this, 0, 1)) {
                           boolean created = false;
                           try {               // Recheck under lock
-                            ConcurrentHashMap.CounterCell[] rs; int m, j;
+                            CounterCell[] rs; int m, j;
                               if ((rs = counterCells) != null &&
                                   (m = rs.length) > 0 &&
                                   rs[j = (m - 1) & h] == null) {
@@ -1603,8 +1604,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
               boolean init = false;
               try {                           // Initialize table
                   if (counterCells == cs) {
-                    ConcurrentHashMap.CounterCell[] rs = new ConcurrentHashMap.CounterCell[2];
-                      rs[h & 1] = new ConcurrentHashMap.CounterCell(x);
+                    CounterCell[] rs = new CounterCell[2];
+                      rs[h & 1] = new CounterCell(x);
                       counterCells = rs;
                       init = true;
                   }

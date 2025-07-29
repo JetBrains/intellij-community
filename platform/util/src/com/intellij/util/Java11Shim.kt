@@ -2,11 +2,9 @@
 package com.intellij.util
 
 import com.intellij.util.containers.ConcurrentLongObjectMap
+import com.intellij.util.containers.DefaultJava11Shim
 import org.jetbrains.annotations.ApiStatus
 
-/**
- * The implementation of `copyOf` is allowed to not do copy - it can return the same map, read `copyOf` as `immutable`.
- */
 @ApiStatus.Internal
 abstract class Java11Shim {
   companion object {
@@ -14,6 +12,9 @@ abstract class Java11Shim {
     var INSTANCE: Java11Shim = DefaultJava11Shim()
   }
 
+  /**
+   * The implementation of `copyOf` is allowed to not do copy - it can return the same map, read `copyOf` as `immutable`.
+   */
   abstract fun <K : Any, V> copyOf(map: Map<K, V>): Map<K, V>
 
   abstract fun <K : Any, V> mapOf(k: K, v: V): Map<K, V>

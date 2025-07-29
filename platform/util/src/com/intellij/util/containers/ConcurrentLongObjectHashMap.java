@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util;
+package com.intellij.util.containers;
 
-import com.intellij.util.containers.ConcurrentLongObjectMap;
-import com.intellij.util.containers.ThreadLocalRandom;
-import com.intellij.util.containers.Unsafe;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
@@ -1563,14 +1560,6 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
   /* ---------------- Counter support -------------- */
 
 
-  static final class CounterCell {
-      // Padding fields to avoid contention
-      volatile long p0, p1, p2, p3, p4, p5, p6;
-      volatile long value;
-      // Padding fields to avoid contention
-      volatile long q0, q1, q2, q3, q4, q5, q6;
-      CounterCell(long x) { value = x; }
-  }
   final long sumCount() {
       CounterCell[] cs = counterCells;
       long sum = baseCount;
