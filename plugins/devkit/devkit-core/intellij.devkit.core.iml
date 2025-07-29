@@ -103,5 +103,9 @@
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.libraries.xerces" />
     <orderEntry type="module" module-name="intellij.platform.usageView.impl" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
+    <orderEntry type="library" name="studio-platform" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.ideLafBridge" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.ui" />
   </component>
 </module>
