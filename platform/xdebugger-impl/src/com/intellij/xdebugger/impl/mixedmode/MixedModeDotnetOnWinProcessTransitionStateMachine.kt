@@ -119,7 +119,13 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
     coroutineScope.launch {
       eventFlow.collect { event ->
         withContext(mainDispatcher) {
-          logger.runAndLogException { setInternal(event) }
+          // I want OperationCancelled also be logged
+          try {
+            setInternal(event)
+          }
+          catch (e: Throwable) {
+            logger.error("Failed to process event $event", e)
+          }
         }
       }
     }
@@ -202,9 +208,18 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
             }
             val threadId = highExtension.getStoppedThreadId(highSuspendCtx)
             highExtension.afterLowLevelStepCompleted(highSuspendCtx, threadId)
-
-            val lowSuspendCtx = event.suspendContext
-            changeState(BothStopped(lowSuspendCtx, requireNotNull(highSuspendCtx)))
+            // When mixed stepping u -> m, LLDB places a breakpoint in a ILStub when no symbols for frames below are loaded.
+            // When we have them, it places a breakpoint in the highest native frame with symbols
+            // in shouldContinueAfterNativeStepCompleted we check if debugger stopped in the ILStub frame and do continue to hit a breakpoint set by dotnet runtime (for stepping)
+            // We only need it when there are no frames with symbols below
+            if (highExtension.shouldContinueAfterNativeStepCompleted(threadId, highSuspendCtx)) {
+              low.resume(event.suspendContext)
+              changeState(WaitingForBothDebuggersRunning)
+            }
+            else {
+              val lowSuspendCtx = event.suspendContext
+              changeState(BothStopped(lowSuspendCtx, requireNotNull(highSuspendCtx)))
+            }
           }
           LeaveHighRunningWaitingForLowStop -> {
             changeState(BothStopped(event.suspendContext, nullObjectHighLevelSuspendContext))
