@@ -26,7 +26,11 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.IntFunction;
 
 /**
- * The place where all the data is stored for VFS parts loaded into a memory: name-ids, flags, user data, children.
+ * Main part of VFS in-memory cache: flags, user data and children are all stored here.
+ * {@link VirtualFileSystemEntry} and {@link VirtualDirectoryImpl} objects mainly just store fileId, so they could be
+ * seen as 'pointers' into this cache.
+ * {@link com.intellij.openapi.vfs.newvfs.persistent.VirtualDirectoryCache} is another part of VFS in-memory cache, which caches
+ * {@link VirtualDirectoryImpl} objects.
  * <p>
  * The purpose is to avoid holding this data in separate immortal file/directory objects because that involves space overhead, significant
  * when there are hundreds of thousands of files.
@@ -41,14 +45,16 @@ import java.util.function.IntFunction;
  * <ol>
  * <li> The file has not been instantiated yet, so {@link #getFileById} returns null. </li>
  *
- * <li> A file is explicitly requested by calling getChildren or findChild on its parent. The parent initializes all the necessary data (in a thread-safe context)
- * and creates the file instance. See {@link Segment#initFileData(int, Object, VirtualDirectoryImpl)} </li>
+ * <li> A file is explicitly requested by calling getChildren or findChild on its parent. The parent initializes all the necessary
+ * data (in a thread-safe context) and creates the file instance.
+ * See {@link Segment#initFileData(int, Object, VirtualDirectoryImpl)} </li>
  *
  * <li> After that the file is live, an object representing it can be retrieved any time from its parent. File system roots are
  * kept on hard references in {@link PersistentFS} </li>
  *
- * <li> If a file is deleted (invalidated), then its data is not needed anymore, and should be removed. But this can only happen after
- * all the listener have been notified about the file deletion and have had their chance to look at the data the last time. See {@link #killInvalidatedFiles()} </li>
+ * <li> If a file is deleted (invalidated), then its data is not needed anymore, and should be removed. But this can only happen
+ * after all the listener has been notified about the file deletion and have had their chance to look at the data the last time.
+ * See {@link #killInvalidatedFiles()} </li>
  *
  * <li> The file with removed data is marked as "dead" (see {@link #deadMarker}), any access to it will throw {@link InvalidVirtualFileAccessException}
  * Dead ids won't be reused in the same session of the IDE. </li>
@@ -71,6 +77,8 @@ public final class VfsData {
   //TODO RC: FSRecords was quite optimized recently, probably caching is not needed anymore?
   //         indexingFlag/nameId caching was already removed -- need to think through about remaining (flag+modCount)
   //         field: on the first sight they look like an additional data, independent from persistent VFS data?
+  //         .children is another thing that could be less cached -- in many cases children could be accessed directly from
+  //         FSRecords?
 
   /** [segmentIndex -> Segment] */
   private final ConcurrentIntObjectMap<Segment> segments = ConcurrentCollectionFactory.createConcurrentIntObjectMap();

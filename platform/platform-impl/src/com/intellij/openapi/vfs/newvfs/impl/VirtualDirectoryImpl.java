@@ -61,7 +61,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
    */
   private static final int LINEAR_SEARCH_THRESHOLD = getIntProperty("VirtualDirectoryImpl.LINEAR_SEARCH_THRESHOLD", 64);
   /**
-   * If true: trust {@link #doFindChildById(int)} callers that supplied childId is indeed an id of existing child.
+   * If true: trust {@link #findChildById(int)} callers that supplied childId is indeed an id of existing child.
    * I.e. don't load _all_ the children from persistence to check is childId really in .children.
    * Less expensive, but more prone to errors if e.g. orphan records are present in VFS (sometimes they do).
    * If false: don't trust the caller, check that childId really belongs to .children (loads all children => more expensive)
@@ -111,7 +111,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     //MAYBE RC: call it only if doRefresh=true?
     updateCaseSensitivityIfUnknown(name);
 
-    VirtualFileSystemEntry result = doFindChild(name, ensureCanonicalName, isCaseSensitive());
+    VirtualFileSystemEntry result = findChildImpl(name, ensureCanonicalName, isCaseSensitive());
 
     //noinspection UseVirtualFileEquals
     if (result == NULL_VIRTUAL_FILE) {
@@ -125,18 +125,21 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return result;
   }
 
-  // null if there can't be a child with this name, NULL_VIRTUAL_FILE it was adopted
-  private @Nullable VirtualFileSystemEntry doFindChildInArray(@NotNull String name, boolean isCaseSensitive) {
-    if (directoryData.isAdoptedName(name)) return NULL_VIRTUAL_FILE;
-    VfsData.ChildrenIds sortedChildren = ensureChildrenSorted();
-    int indexByName = findIndexByName(sortedChildren, name, isCaseSensitive);
+  /**
+   * @return child with given childName (according to isCaseSensitive), among already cached .children.
+   * null if there is no child with this name, NULL_VIRTUAL_FILE it was adopted
+   */
+  private @Nullable VirtualFileSystemEntry findInCachedChildren(@NotNull String childName, boolean isCaseSensitive) {
+    if (directoryData.isAdoptedName(childName)) return NULL_VIRTUAL_FILE;
+    VfsData.ChildrenIds sortedChildren = ensureChildrenSorted(isCaseSensitive);
+    int indexByName = findIndexByName(sortedChildren, childName, isCaseSensitive);
     if (indexByName >= 0) {
-      return getVfsData().getFileById(sortedChildren.id(indexByName), this, true);
+      return getVfsData().getFileById(sortedChildren.id(indexByName), this, /*putInCache: */ true);
     }
     return null;
   }
 
-  private VfsData.ChildrenIds ensureChildrenSorted() {
+  private VfsData.ChildrenIds ensureChildrenSorted(boolean isCaseSensitive) {
     VfsData.ChildrenIds children = directoryData.children;
     if (children.isSorted()) {
       return children;
@@ -148,14 +151,18 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         return children;
       }
 
-      return sortChildrenByName(children, isCaseSensitive());
+      return sortChildrenByName(children, isCaseSensitive);
     }
   }
 
-  // `null` if there can't be a child with this name,` NULL_VIRTUAL_FILE` if cached as absent, the file if found
-  private @Nullable VirtualFileSystemEntry doFindChild(@NotNull String name,
-                                                       boolean ensureCanonicalName,
-                                                       boolean isCaseSensitive) {
+  /**
+   * @return the child, if there is a child with given name (accounting for isCaseSensitive and ensureCanonicalName).
+   * `null` if is no child with given name, ` NULL_VIRTUAL_FILE` if cached as absent (='adopted').
+   * Lookups among: cached children, VFS-persisted children, and actual children in file-system backed this directory.
+   */
+  private @Nullable VirtualFileSystemEntry findChildImpl(@NotNull String name,
+                                                         boolean ensureCanonicalName,
+                                                         boolean isCaseSensitive) {
     if (name.isEmpty()) {
       return null;
     }
@@ -163,14 +170,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return handleInvalidDirectory(null);
     }
 
-    VirtualFileSystemEntry found = doFindChildInArray(name, isCaseSensitive);
+    VirtualFileSystemEntry found = findInCachedChildren(name, isCaseSensitive);
     if (found != null) return found;
 
     if (ensureCanonicalName) {
       String trimmedName = deSlash(name);
       if (trimmedName == null) return null;
       if (!trimmedName.equals(name)) {
-        found = doFindChildInArray(trimmedName, isCaseSensitive);
+        found = findInCachedChildren(trimmedName, isCaseSensitive);
         if (found != null) return found;
         name = trimmedName;
       }
@@ -184,13 +191,18 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return findInPersistence(name, ensureCanonicalName, isCaseSensitive);
   }
 
+  /**
+   * @return the child with given name, or null, if it doesn't exist. Child is looked up among cached children, among
+   * VFS-persistent children, and finally in the actual file-system backing this directory.
+   * If the child is found outside the cache -- it is loaded and cached.
+   */
   private @Nullable VirtualFileSystemEntry findInPersistence(@NotNull String name,
                                                              boolean ensureCanonicalName,
                                                              boolean isCaseSensitive) {
     VirtualFileSystemEntry newlyLoadedChild;
     synchronized (directoryData) {
       // maybe another doFindChild() sneaked in the middle
-      VirtualFileSystemEntry existingChild = doFindChildInArray(name, isCaseSensitive);
+      VirtualFileSystemEntry existingChild = findInCachedChildren(name, isCaseSensitive);
       if (existingChild != null) return existingChild; // including NULL_VIRTUAL_FILE
       if (allChildrenLoaded()) {
         return null;//all children loaded, but child not found -> not exist
@@ -208,7 +220,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         if (!Comparing.equal(name, persistedName)) {
           //lookup again, with persistedName: persistedName _could_ be != name because pfs.findChildInfo() could access
           // actual FS, and FS's rules for file name normalization may be trickier than we implemented in VFS
-          existingChild = doFindChildInArray(persistedName.toString(), isCaseSensitive);
+          existingChild = findInCachedChildren(persistedName.toString(), isCaseSensitive);
           if (existingChild != null) return existingChild;
         }
       }
@@ -374,17 +386,17 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private void resortChildren() {
     //re-sorts children forcibly, regardless of current children.isSorted value:
     synchronized (directoryData) {
-      boolean caseSensitive = isCaseSensitive();
-      VfsData.ChildrenIds sortedChildren = sortChildrenByName(directoryData.children, caseSensitive);
-      assertConsistency(caseSensitive, sortedChildren, "afterCaseSensitivityChanged", caseSensitive);
+      boolean isCaseSensitive = isCaseSensitive();
+      VfsData.ChildrenIds sortedChildren = sortChildrenByName(directoryData.children, isCaseSensitive);
+      assertConsistency(isCaseSensitive, sortedChildren, "afterCaseSensitivityChanged", isCaseSensitive);
     }
   }
 
   private @NotNull VfsData.ChildrenIds sortChildrenByName(@NotNull VfsData.ChildrenIds children,
-                                                          boolean caseSensitive) {
+                                                          boolean isCaseSensitive) {
     VfsData vfsData = getVfsData();
     synchronized (directoryData) {
-      Comparator<VirtualFile> byName = (f1, f2) -> compareNames(f1.getName(), f2.getName(), caseSensitive);
+      Comparator<VirtualFile> byName = (f1, f2) -> compareNames(f1.getName(), f2.getName(), isCaseSensitive);
       VfsData.ChildrenIds sortedChildren = children.sorted(
         id -> vfsData.getFileById(id, this, /*putIntoMemory: */true),
         byName
@@ -401,7 +413,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Override
   public @Nullable NewVirtualFile findChildIfCached(@NotNull String name) {
-    VirtualFileSystemEntry found = doFindChildInArray(name, isCaseSensitive());
+    VirtualFileSystemEntry found = findInCachedChildren(name, isCaseSensitive());
     //noinspection UseVirtualFileEquals
     return found == NULL_VIRTUAL_FILE ? null : found;
   }
@@ -539,7 +551,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     if (allChildrenLoaded()) {
       if (requireSorting && !directoryData.children.isSorted()) {
-        ensureChildrenSorted();
+        //MAYBE RC: check case-sensitivity is defined? updateCaseSensitivityIfUnknown()?
+        ensureChildrenSorted(isCaseSensitive());
       }
       return cachedChildrenArray( /*putToMemoryCache: */ true);
     }
@@ -551,8 +564,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return findChild(name, /*doRefresh: */ false, /*canonicalizeName: */ true);
   }
 
+  /**
+   * @return file with childId, _if it belongs to this directory's children_, null otherwise.
+   * If the file is in VFS,
+   * but not in memory cache -- loads it in memory, adds file.id into .children list
+   */
   @ApiStatus.Internal
-  public @Nullable VirtualFileSystemEntry doFindChildById(int childId) {
+  public @Nullable VirtualFileSystemEntry findChildById(int childId) {
     if (childId == this.getId()) {
       //we could just return null (='no such child'), but such a call 99% is a bug:
       throw new IllegalArgumentException("Trying to find childId(=" + childId + ") in parent(=" + getId() + ")");
@@ -583,7 +601,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       //now check child is indeed a child of this dir:
       VfsData.ChildrenIds children = directoryData.children;
 
-      //TODO RC: code below is similar to addChild(child) -- how to reduce code duplication?
+      //MAYBE RC: code below is similar to addChild(child) -- how to reduce code duplication?
 
       boolean allChildrenLoaded = children.areAllChildrenLoaded();
       if (children.isSorted() && worthBinarySearch(children)) {
@@ -591,9 +609,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         //If children are sorted => 99% caseSensitivity _is_ known; otherwise how could children be sorted?
         // The only exception is children.size=1, but this is rejected by .worthBinarySearch(). But lets be on a safe side:
         updateCaseSensitivityIfUnknown(childName);
-        boolean caseSensitive = isCaseSensitive();
+        boolean isCaseSensitive = isCaseSensitive();
 
-        int indexOfName = findIndexByName(children, childName, caseSensitive);
+        int indexOfName = findIndexByName(children, childName, isCaseSensitive);
         if (indexOfName >= 0) {
           return child;//childId is in cached children: OK
         }
@@ -629,7 +647,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     //since the child is guaranteed to be in children _already known to VFS_ -- adoptedNames shouldn't be changed at all
   }
 
-  /** @return a cached file by id, if the id is in the children list, null otherwise (method name may be a bit misleading) */
+  /**
+   * @return a _cached_ file by childId, if it belongs to this directory's _cached_ in-memory children,
+   * null otherwise (method name may be a bit misleading)
+   */
   private @Nullable VirtualFileSystemEntry findCachedChildById(int childId) {
     int indexOfChild = directoryData.children.indexOfId(childId);
     if (indexOfChild >= 0) {
@@ -680,13 +701,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
 
     // slow-path: when there are many children, it's cheaper to merge sorted lists just like in merge sort
+    //MAYBE RC: ensure case-sensitivity is known? updateCaseSensitivityIfUnknown(childName);
     boolean isCaseSensitive = isCaseSensitive();
     Comparator<ChildInfo> byName = (p1, p2) -> compareNames(p1.getName(), p2.getName(), isCaseSensitive);
     added.sort(byName);
 
     FSRecordsImpl vfsPeer = owningPersistentFS().peer();
     synchronized (directoryData) {
-      VfsData.ChildrenIds oldChildren = ensureChildrenSorted();
+      //TODO RC: if children is not sorted -- we could still work with unsorted, merge the lists by-id
+      VfsData.ChildrenIds oldChildren = ensureChildrenSorted(isCaseSensitive);
       IntList mergedIds = new IntArrayList(oldChildren.size() + addedSize);
 
       List<ChildInfo> existingChildren = new AbstractList<>() {
@@ -704,7 +727,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         }
       };
       ContainerUtil.processSortedListsInOrder(existingChildren, added, byName, /*mergeEqualItems: */ true, (nextInfo, mergeResult) -> {
-        //TODO RC: this branch differs from (added.size=1) branch above in many aspects.
+        //TODO RC: this branch differs from (added.size=1) branch above in few aspects.
         //         The most noticeable are comparison: we merge existing/added lists by-name here, but we look up existing
         //         fileId above. This could be explained though, by the performance considerations.
         //         Another difference is that here we call callback.accept() first, and update directoryData.children list with
@@ -747,13 +770,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         //If children are sorted => 99% caseSensitivity _is_ known; otherwise how could children be sorted?
         // The only exception is children.size=1, but this is rejected by .worthBinarySearch(). But lets be on a safe side:
         updateCaseSensitivityIfUnknown(childName);
-        boolean caseSensitive = isCaseSensitive();
+        boolean isCaseSensitive = isCaseSensitive();
 
-        int childIndex = findIndexByName(children, childName, caseSensitive);
+        int childIndex = findIndexByName(children, childName, isCaseSensitive);
         if (childIndex < 0) {
           int insertionIndex = -childIndex - 1;
           directoryData.children = children.insertAt(insertionIndex, childId);
-          assertConsistency(caseSensitive, child, "insertionIndex", insertionIndex);
+          assertConsistency(isCaseSensitive, child, "insertionIndex", insertionIndex);
         }// else: child already presents in children
       }
       else {
@@ -864,8 +887,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   /**
-   * @return index of a child with the name given (taking into account case sensitivity given), or (-insertionIndex-1)
-   * children must be sorted, or exception will be thrown!
+   * @return index of a child with the name given (taking into account case sensitivity given), among children,
+   * or (-insertionIndex-1), if there is no child with the name given.
+   * The .children must be sorted, or exception will be thrown!
    */
   private int findIndexByName(@NotNull VfsData.ChildrenIds children,
                               @NotNull CharSequence name,
