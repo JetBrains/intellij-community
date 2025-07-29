@@ -52,8 +52,7 @@ class SeActionsAdaptedProvider(private val legacyContributor: ActionSearchEveryw
 
     coroutineScope {
       legacyContributor.fetchWeightedElements(this, inputQuery) {
-        collector.put(SeActionItem(it.item, legacyContributor,
-                                   legacyContributor.getExtendedInfo(it.item), legacyContributor.isMultiSelectionSupported))
+        collector.put(SeActionItem(it.item, legacyContributor, legacyContributor.getExtendedInfo(it.item), legacyContributor.isMultiSelectionSupported))
       }
     }
   }

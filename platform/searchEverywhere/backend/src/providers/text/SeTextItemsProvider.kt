@@ -41,9 +41,10 @@ class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int, 
 
 @ApiStatus.Internal
 class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>) : SeItemsProvider, SeSearchScopesProvider {
+  private val contributor = contributorWrapper.contributor
   override val id: String get() = SeProviderIdUtils.TEXT_ID
   override val displayName: @Nls String
-    get() = contributorWrapper.contributor.fullGroupName
+    get() = contributor.fullGroupName
   private val findModel = FindManager.getInstance(project).findInProjectModel
   private val scopeProviderDelegate = ScopeChooserActionProviderDelegate(contributorWrapper)
 
@@ -80,7 +81,7 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
           val weight = t.weight
           val legacyItem = t.item as? SearchEverywhereItem ?: return true
 
-          return collector.put(SeTextSearchItem(legacyItem, weight, contributorWrapper.contributor.getExtendedInfo(legacyItem), contributorWrapper.contributor.isMultiSelectionSupported))
+          return collector.put(SeTextSearchItem(legacyItem, weight, contributor.getExtendedInfo(legacyItem), contributorWrapper.contributor.isMultiSelectionSupported))
         }
       })
     }
@@ -89,16 +90,12 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
     val legacyItem = (item as? SeTextSearchItem)?.item ?: return false
     return withContext(Dispatchers.EDT) {
-      contributorWrapper.contributor.processSelectedItem(legacyItem, modifiers, searchText)
+      contributor.processSelectedItem(legacyItem, modifiers, searchText)
     }
   }
 
   override suspend fun canBeShownInFindResults(): Boolean {
-    return contributorWrapper.contributor.showInFindResults()
-  }
-
-  override fun dispose() {
-    Disposer.dispose(contributorWrapper)
+    return contributor.showInFindResults()
   }
 
   private fun applyScope(scopeId: String?) {
@@ -112,7 +109,11 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
   override suspend fun performRightAction(item: SeItem) {
     val legacyItem = (item as? SeTextSearchItem)?.item ?: return
     withContext(Dispatchers.EDT) {
-      contributorWrapper.contributor.processSelectedItem(legacyItem, InputEvent.SHIFT_DOWN_MASK, "")
+      contributor.processSelectedItem(legacyItem, InputEvent.SHIFT_DOWN_MASK, "")
     }
+  }
+
+  override fun dispose() {
+    Disposer.dispose(contributorWrapper)
   }
 }

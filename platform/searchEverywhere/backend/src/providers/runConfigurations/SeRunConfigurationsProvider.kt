@@ -31,16 +31,17 @@ class SeRunConfigurationsItem(val item: ChooseRunConfigurationPopup.ItemWrapper<
 
 @ApiStatus.Internal
 class SeRunConfigurationsProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeItemsProvider {
+  private val contributor = contributorWrapper.contributor
   override val id: String get() = SeProviderIdUtils.RUN_CONFIGURATIONS_ID
-  override val displayName: @Nls String get() = contributorWrapper.contributor.fullGroupName
+  override val displayName: @Nls String get() = contributor.fullGroupName
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     coroutineToIndicator {
       val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())
-      contributorWrapper.contributor.fetchElements(params.inputQuery, indicator) { item ->
+      contributor.fetchElements(params.inputQuery, indicator) { item ->
         (item as? ChooseRunConfigurationPopup.ItemWrapper<*>)?.let {
-          val weight = contributorWrapper.contributor.getElementPriority(item, params.inputQuery)
-          runBlockingCancellable { collector.put(SeRunConfigurationsItem(it, weight, contributorWrapper.contributor.getExtendedInfo(it), contributorWrapper.contributor.isMultiSelectionSupported)) }
+          val weight = contributor.getElementPriority(item, params.inputQuery)
+          runBlockingCancellable { collector.put(SeRunConfigurationsItem(it, weight, contributor.getExtendedInfo(it), contributorWrapper.contributor.isMultiSelectionSupported)) }
         } ?: true
       }
     }
@@ -49,12 +50,12 @@ class SeRunConfigurationsProvider(private val contributorWrapper: SeAsyncContrib
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
     val legacyItem = (item as? SeRunConfigurationsItem)?.item ?: return false
     return withContext(Dispatchers.EDT) {
-      contributorWrapper.contributor.processSelectedItem(legacyItem, modifiers, searchText)
+      contributor.processSelectedItem(legacyItem, modifiers, searchText)
     }
   }
 
   override suspend fun canBeShownInFindResults(): Boolean {
-    return contributorWrapper.contributor.showInFindResults()
+    return contributor.showInFindResults()
   }
 
   override fun dispose() {

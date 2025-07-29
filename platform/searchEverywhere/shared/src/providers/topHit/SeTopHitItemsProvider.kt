@@ -30,6 +30,7 @@ open class SeTopHitItemsProvider(
   private val contributorWrapper: SeAsyncContributorWrapper<Any>,
   override val displayName: @Nls String,
 ) : SeItemsProvider {
+  private val contributor = contributorWrapper.contributor
   override val id: String get() = id(isHost)
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
@@ -42,7 +43,7 @@ open class SeTopHitItemsProvider(
 
       contributorWrapper.fetchElements(inputQuery, indicator, object : AsyncProcessor<Any> {
         override suspend fun process(t: Any): Boolean {
-          return collector.put(SeTopHitItem(t, weight, project, contributorWrapper.contributor.getExtendedInfo(t), contributorWrapper.contributor.isMultiSelectionSupported))
+          return collector.put(SeTopHitItem(t, weight, project, contributor.getExtendedInfo(t), contributorWrapper.contributor.isMultiSelectionSupported))
         }
       })
     }
@@ -51,12 +52,12 @@ open class SeTopHitItemsProvider(
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
     val legacyItem = (item as? SeTopHitItem)?.item ?: return false
     return withContext(Dispatchers.EDT) {
-      contributorWrapper.contributor.processSelectedItem(legacyItem, modifiers, searchText)
+      contributor.processSelectedItem(legacyItem, modifiers, searchText)
     }
   }
 
   override suspend fun canBeShownInFindResults(): Boolean {
-    return contributorWrapper.contributor.showInFindResults()
+    return contributor.showInFindResults()
   }
 
   override fun dispose() {

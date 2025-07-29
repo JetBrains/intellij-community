@@ -42,6 +42,7 @@ class SeTargetItem(
 @Internal
 class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>) {
   private val scopeProviderDelegate = ScopeChooserActionProviderDelegate(contributorWrapper)
+  private val contributor = contributorWrapper.contributor
 
   suspend fun <T> collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val inputQuery = params.inputQuery
@@ -53,7 +54,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
       }
     } ?: run {
       val targetsFilter = SeTargetsFilter.from(params.filter)
-      SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributorWrapper.contributor, targetsFilter.hiddenTypes)
+      SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributor, targetsFilter.hiddenTypes)
       targetsFilter.selectedScopeId
     }
     applyScope(scopeToApply)
@@ -65,10 +66,10 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
         override suspend fun process(t: FoundItemDescriptor<Any>): Boolean {
           val weight = t.weight
           val legacyItem = t.item as? ItemWithPresentation<*> ?: return true
-          val matchers = (contributorWrapper.contributor as? PSIPresentationBgRendererWrapper)
+          val matchers = (contributor as? PSIPresentationBgRendererWrapper)
             ?.getNonComponentItemMatchers({ _ -> defaultMatchers }, legacyItem.getItem())
 
-          return collector.put(SeTargetItem(legacyItem, matchers, weight, contributorWrapper.contributor, contributorWrapper.contributor.getExtendedInfo(legacyItem), contributorWrapper.contributor.isMultiSelectionSupported))
+          return collector.put(SeTargetItem(legacyItem, matchers, weight, contributor, contributor.getExtendedInfo(legacyItem), contributorWrapper.contributor.isMultiSelectionSupported))
         }
       })
     }
@@ -78,7 +79,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
     val legacyItem = (item as? SeTargetItem)?.legacyItem ?: return false
 
     return withContext(Dispatchers.EDT) {
-      contributorWrapper.contributor.processSelectedItem(legacyItem, modifiers, searchText)
+      contributor.processSelectedItem(legacyItem, modifiers, searchText)
     }
   }
 
@@ -86,11 +87,11 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
    * Defines if results found by this contributor can be shown in <i>Find</i> toolwindow.
    */
   fun canBeShownInFindResults(): Boolean {
-    return contributorWrapper.contributor.showInFindResults()
+    return contributor.showInFindResults()
   }
 
   private fun createDefaultMatchers(rawPattern: String): ItemMatchers {
-    val namePattern = contributorWrapper.contributor.filterControlSymbols(rawPattern)
+    val namePattern = contributor.filterControlSymbols(rawPattern)
     val matcher = NameUtil.buildMatcherWithFallback("*$rawPattern", "*$namePattern", NameUtil.MatchingCaseSensitivity.NONE)
     return ItemMatchers(matcher, null)
   }
@@ -104,14 +105,13 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
   }
 
   fun <T> getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> {
-    val contributor = contributorWrapper.contributor
     return SeTypeVisibilityStateProviderDelegate.getStates<T>(contributor, index)
   }
 
   suspend fun performRightAction(item: SeItem) {
     val legacyItem = (item as? SeTargetItem)?.legacyItem ?: return
     withContext(Dispatchers.EDT) {
-      contributorWrapper.contributor.processSelectedItem(legacyItem, InputEvent.SHIFT_DOWN_MASK, "")
+      contributor.processSelectedItem(legacyItem, InputEvent.SHIFT_DOWN_MASK, "")
     }
   }
 }
