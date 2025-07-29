@@ -102,6 +102,8 @@ internal object TerminalSessionTestUtil {
       "/opt/homebrew/bin/zsh",
       "/bin/bash",
       "/opt/homebrew/bin/bash",
+      "powershell.exe",
+      "pwsh.exe"
     ).mapNotNull {
       val path = Path.of(it)
       if (Files.isRegularFile(path)) path else PathEnvironmentVariableUtil.findInPath(it)?.toPath()
