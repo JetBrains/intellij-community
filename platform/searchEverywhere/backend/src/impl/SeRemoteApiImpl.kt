@@ -113,10 +113,9 @@ class SeRemoteApiImpl: SeRemoteApi {
     return SeBackendService.getInstance(project).getDisplayNameForProvider(sessionRef, dataContextId, providerIds)
   }
 
-  override suspend fun getTextTabQueryOptions(projectId: ProjectId): List<Boolean> {
+  override suspend fun getTextSearchOptionStates(projectId: ProjectId): List<Boolean> {
     val project = projectId.findProjectOrNull() ?: return emptyList()
-    return listOf(FindManager.getInstance(project).findInProjectModel.isCaseSensitive,
-                  FindManager.getInstance(project).findInProjectModel.isWholeWordsOnly,
-                  FindManager.getInstance(project).findInProjectModel.isRegularExpressions)
+    val findModel = FindManager.getInstance(project).findInProjectModel
+    return listOf(findModel.isCaseSensitive, findModel.isWholeWordsOnly, findModel.isRegularExpressions)
   }
 }

@@ -33,7 +33,7 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
   @Suppress("unused")
   fun `mock test mocked provider`() {
     runBlocking {
-      val params = SeParams("it", SeFilterState.Empty, SeFilterState.Empty)
+      val params = SeParams("it", SeFilterState.Empty)
 
       defaultProvider.collectItems(params, Collector { item ->
         println(item.presentation().text)

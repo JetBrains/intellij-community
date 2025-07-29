@@ -80,5 +80,5 @@ private class SeActionsFilterEditor : SeFilterEditorBase<SeActionsFilter>(SeActi
     }
   })
 
-  override fun getActions(): List<AnAction> = actions
+  override fun getHeaderActions(): List<AnAction> = actions
 }

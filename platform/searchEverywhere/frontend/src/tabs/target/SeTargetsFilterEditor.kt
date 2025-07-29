@@ -32,7 +32,7 @@ class SeTargetsFilterEditor(private val scopesInfo: SearchScopesInfo?,
     }.getAction()
   }
 
-  override fun getActions(): List<AnAction> = listOfNotNull(getScopeFilterAction(), getTypeFilterAction())
+  override fun getHeaderActions(): List<AnAction> = listOfNotNull(getScopeFilterAction(), getTypeFilterAction())
 
   private fun getScopeFilterAction(): AnAction? {
     return scopeFilterAction

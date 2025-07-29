@@ -101,7 +101,7 @@ interface SeRemoteApi : RemoteApi<Unit> {
     providerIds: List<SeProviderId>,
   ): Map<SeProviderId, @Nls String>
 
-  suspend fun getTextTabQueryOptions(projectId: ProjectId): List<Boolean>
+  suspend fun getTextSearchOptionStates(projectId: ProjectId): List<Boolean>
 
   companion object {
     @JvmStatic

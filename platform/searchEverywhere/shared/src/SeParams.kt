@@ -10,5 +10,4 @@ import org.jetbrains.annotations.ApiStatus
 data class SeParams(
   val inputQuery: String,
   val filter: SeFilterState,
-  val queryFilter: SeFilterState
 )

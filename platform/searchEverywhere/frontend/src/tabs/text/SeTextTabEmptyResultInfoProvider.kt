@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfoChunk
-import com.intellij.platform.searchEverywhere.providers.SeTextQueryFilter
+import com.intellij.platform.searchEverywhere.providers.SeTextFilter
 import com.intellij.psi.search.EverythingGlobalScope
 import com.intellij.ui.SimpleTextAttributes
 import org.jetbrains.annotations.ApiStatus
@@ -17,7 +17,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class SeTextTabEmptyResultInfoProvider(
   private val filterEditor: SeTextFilterEditor? = null,
-  private val queryFilterEditor: SeTextQueryFilterEditor? = null,
   private val project: Project?,
 ) {
 
@@ -56,7 +55,7 @@ class SeTextTabEmptyResultInfoProvider(
   }
 
   private val toggleScopeAction: SearchEverywhereToggleAction?
-    get() = filterEditor?.getActions()?.firstOrNull {
+    get() = filterEditor?.getHeaderActions()?.firstOrNull {
       it is SearchEverywhereToggleAction
     } as? SearchEverywhereToggleAction
 
@@ -80,36 +79,36 @@ class SeTextTabEmptyResultInfoProvider(
   // Reset case
 
   private fun showResetCase(): Boolean {
-    return queryFilterEditor?.resultFlow?.value?.let { state ->
-      SeTextQueryFilter.isCaseSensitive(state)
+    return filterEditor?.resultFlow?.value?.let { state ->
+      SeTextFilter.isCaseSensitive(state)
     } ?: return false
   }
 
   private fun resetCase() {
-    queryFilterEditor?.selectCaseSensitiveAction(false)
+    filterEditor?.selectCaseSensitiveAction(false)
   }
 
   // Reset words
 
   private fun showResetWords(): Boolean {
-    return queryFilterEditor?.resultFlow?.value?.let { state ->
-      SeTextQueryFilter.isWholeWordsOnly(state)
+    return filterEditor?.resultFlow?.value?.let { state ->
+      SeTextFilter.isWholeWordsOnly(state)
     } ?: return false
   }
 
   private fun resetWords() {
-    queryFilterEditor?.selectWordAction(false)
+    filterEditor?.selectWordAction(false)
   }
 
   // Reset regexp
 
   private fun showResetRegexp(): Boolean {
-    return queryFilterEditor?.resultFlow?.value?.let { state ->
-      SeTextQueryFilter.isRegularExpressions(state)
+    return filterEditor?.resultFlow?.value?.let { state ->
+      SeTextFilter.isRegularExpressions(state)
     } ?: return false
   }
 
   private fun resetRegexp() {
-    queryFilterEditor?.selectRegexpAction(false)
+    filterEditor?.selectRegexpAction(false)
   }
 }
