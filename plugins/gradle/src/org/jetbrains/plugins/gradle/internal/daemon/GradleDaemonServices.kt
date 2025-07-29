@@ -7,6 +7,8 @@ import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass
 import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.ProjectManager
@@ -33,7 +35,6 @@ import java.io.*
 import java.lang.reflect.Method
 import java.nio.file.Path
 import java.util.function.BiConsumer
-
 
 private val LOG = Logger.getInstance("org.jetbrains.plugins.gradle.internal.daemon.GradleDaemonServices")
 
@@ -195,45 +196,14 @@ fun getConnections() : Map<ClassPath, ConsumerConnection> {
                           ToolingImplementationLoader::class.java,
                           "delegate")
 
-  val connections = getField(CachingToolingImplementationLoader::class.java,
-                             delegate,
-                             Any::class.java,
-                             "connections")
-  if (connections == null) {
-    LOG.warn("There are no 'connections' field in ${delegate::class.java.canonicalName}")
-    return emptyMap()
+  if (GradleVersionUtil.isCurrentGradleOlderThan("8.9")) {
+    return getField(CachingToolingImplementationLoader::class.java, delegate, Map::class.java, "connections")
+      as Map<ClassPath, ConsumerConnection>
   }
-  return when {
-    Map::class.java.isAssignableFrom(connections::class.java) -> connections as Map<ClassPath, ConsumerConnection>
-    isGuavaCache(connections) -> tryExtractCachedConnections(connections)
-    else -> {
-      LOG.warn("Unable to determine the type of the 'collections' field in ${delegate::class.java.canonicalName}")
-      return emptyMap()
-    }
-  }
-}
-
-private fun isGuavaCache(field: Any): Boolean {
-  try {
-    // this trick is required to prevent class cast exception and other side effects of the field being an instance of a re-packaged class
-    Class.forName("org.gradle.internal.impldep.com.google.common.cache.Cache").isAssignableFrom(field::class.java)
-  }
-  catch (_: Exception) {
-    return false
-  }
-  return true
-}
-
-private fun tryExtractCachedConnections(connections: /*org.gradle.internal.impldep.com.google.common.cache.Cache*/ Any)
-  : Map<ClassPath, ConsumerConnection> {
-  try {
+  else {
     val cacheClass = Class.forName("org.gradle.internal.impldep.com.google.common.cache.Cache")
-    val getter = cacheClass.getDeclaredMethod("asMap")
-    return getter.invoke(connections) as Map<ClassPath, ConsumerConnection>
-  }
-  catch (e: Exception) {
-    LOG.error("Unable to extract connections from the delegate", e)
-    return emptyMap()
+    val connections = getField(CachingToolingImplementationLoader::class.java, delegate, cacheClass, "connections")
+    return GradleReflectionUtil.getPrivateValue(connections, "asMap", Map::class.java) as Map<ClassPath, ConsumerConnection>
   }
 }
 

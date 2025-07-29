@@ -131,6 +131,16 @@ class GradleReflectionUtilTest {
   }
 
   @Test
+  fun testGetPrivateValue() {
+    val target = GetValueTestObject()
+    assertEquals("Solved", getPrivateValue(target, "problemSolver", String::class.java))
+    assertThrows<IllegalStateException> { getPrivateValue(target, "problemSolver", Int::class.java) }
+
+    assertEquals(42, getPrivateValue(target, "privateMethod", Integer::class.java))
+    assertThrows<IllegalStateException> { getPrivateValue(target, "privateMethod", String::class.java) }
+  }
+
+  @Test
   fun testSetValue() {
     val target = SetValueTestObject()
     setValue(target, "testSetter", String::class.java, "Hello")

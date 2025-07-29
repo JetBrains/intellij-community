@@ -63,6 +63,29 @@ public final class GradleReflectionUtil {
     }
   }
 
+  public static <T> T getPrivateValue(
+    @NotNull Object receiver,
+    @NotNull String getterName,
+    @NotNull Class<T> valueClass
+  ) {
+    Class<?> receiverClass = receiver.getClass();
+    Method method;
+    try {
+      method = receiverClass.getDeclaredMethod(getterName);
+    }
+    catch (NoSuchMethodException e) {
+      throw new IllegalStateException(String.format("The %s method are not found in %s", getterName, receiverClass.getCanonicalName()));
+    }
+    method.setAccessible(true);
+    Object value = invokeMethod(method, receiver);
+    try {
+      return valueClass.cast(value);
+    }
+    catch (ClassCastException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
   public static <T> void setValue(
     @NotNull Object receiver,
     @NotNull String setterName,
