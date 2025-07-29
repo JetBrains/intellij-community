@@ -627,8 +627,13 @@ public final class VfsData {
     }
 
     public @NotNull ChildrenIds appendId(int id) {
+      //if we append id -- most likely 'sorted' property is lost:
+      return appendId(id, /*stillSorted: */ false);
+    }
+
+    public @NotNull ChildrenIds appendId(int id, boolean stillSorted) {
       int[] updatedIds = ArrayUtil.append(ids, id);
-      return withIds(updatedIds);
+      return new ChildrenIds(updatedIds, stillSorted, areAllChildrenLoaded());
     }
 
     public @NotNull ChildrenIds removeAt(int index) {
