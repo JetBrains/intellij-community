@@ -1,291 +1,282 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python;
+package com.jetbrains.python
 
-import com.intellij.codeInsight.folding.CodeFoldingSettings;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.folding.CustomFoldingBuilder;
-import com.intellij.lang.folding.FoldingDescriptor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.FoldingGroup;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
-import com.jetbrains.python.ast.*;
-import com.jetbrains.python.psi.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInsight.folding.CodeFoldingSettings
+import com.intellij.lang.ASTNode
+import com.intellij.lang.folding.CustomFoldingBuilder
+import com.intellij.lang.folding.FoldingDescriptor
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.FoldingGroup
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.LineTokenizer.Companion.tokenize
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.TokenSet
+import com.jetbrains.python.ast.*
+import com.jetbrains.python.psi.PyStringLiteralCoreUtil
+import kotlin.math.max
 
-import java.util.List;
-
-
-public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAware {
-
-  public static final TokenSet FOLDABLE_COLLECTIONS_LITERALS = TokenSet.create(
-                                                     PyElementTypes.SET_LITERAL_EXPRESSION,
-                                                     PyElementTypes.DICT_LITERAL_EXPRESSION,
-                                                     PyElementTypes.GENERATOR_EXPRESSION,
-                                                     PyElementTypes.SET_COMP_EXPRESSION,
-                                                     PyElementTypes.DICT_COMP_EXPRESSION,
-                                                     PyElementTypes.LIST_LITERAL_EXPRESSION,
-                                                     PyElementTypes.LIST_COMP_EXPRESSION,
-                                                     PyElementTypes.TUPLE_EXPRESSION);
-
-  public static final String PYTHON_TYPE_ANNOTATION_GROUP_NAME = "Python type annotation";
-
-  @Override
-  protected void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> descriptors,
-                                          @NotNull PsiElement root,
-                                          @NotNull Document document,
-                                          boolean quick) {
-    appendDescriptors(root.getNode(), descriptors);
+class PythonFoldingBuilder : CustomFoldingBuilder(), DumbAware {
+  override fun buildLanguageFoldRegions(
+    descriptors: MutableList<FoldingDescriptor?>,
+    root: PsiElement,
+    document: Document,
+    quick: Boolean,
+  ) {
+    appendDescriptors(root.node, descriptors)
   }
 
-  private static void appendDescriptors(ASTNode node, List<FoldingDescriptor> descriptors) {
-    IElementType elementType = node.getElementType();
-    if (node.getPsi() instanceof PyAstFile) {
-      final List<? extends PyAstImportStatementBase> imports = ((PyAstFile)node.getPsi()).getImportBlock();
-      if (imports.size() > 1) {
-        final PyAstImportStatementBase firstImport = imports.get(0);
-        final PyAstImportStatementBase lastImport = imports.get(imports.size()-1);
-        descriptors.add(new FoldingDescriptor(firstImport, new TextRange(firstImport.getTextRange().getStartOffset(),
-                                                                         lastImport.getTextRange().getEndOffset())));
+  override fun getLanguagePlaceholderText(node: ASTNode, range: TextRange): String {
+    if (isImport(node)) {
+      return "import ..."
+    }
+    if (node.elementType === PyElementTypes.STRING_LITERAL_EXPRESSION) {
+      val stringLiteralExpression = node.psi as PyAstStringLiteralExpression
+      val prefix = stringLiteralExpression.stringElements[0].prefix
+      if (stringLiteralExpression.isDocString()) {
+        val stringValue = stringLiteralExpression.stringValue.trim { it <= ' ' }
+        val lines = tokenize(stringValue, true)
+        if (lines.size > 2 && lines[1].trim { it <= ' ' }.isEmpty()) {
+          return prefix + "\"\"\"" + lines[0].trim { it <= ' ' } + "...\"\"\""
+        }
+        return "$prefix\"\"\"...\"\"\""
+      }
+      else {
+        return prefix + getLanguagePlaceholderForString(stringLiteralExpression)
       }
     }
-    else if (elementType == PyElementTypes.MATCH_STATEMENT) {
-      foldMatchStatement(node, descriptors);
+    return "..."
+  }
+
+  override fun isRegionCollapsedByDefault(node: ASTNode): Boolean {
+    if (isImport(node)) {
+      return CodeFoldingSettings.getInstance().COLLAPSE_IMPORTS
     }
-    else if (elementType == PyElementTypes.STATEMENT_LIST) {
-      foldStatementList(node, descriptors);
+    val elementType = node.elementType
+    if (elementType === PyElementTypes.STRING_LITERAL_EXPRESSION) {
+      if (getDocStringOwnerType(node) === PyElementTypes.FUNCTION_DECLARATION && CodeFoldingSettings.getInstance().COLLAPSE_METHODS) {
+        // method will be collapsed, no need to also collapse docstring
+        return false
+      }
+      if (getDocStringOwnerType(node) != null) {
+        return CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS
+      }
+      return PythonFoldingSettings.getInstance().isCollapseLongStrings
     }
-    else if (elementType == PyElementTypes.STRING_LITERAL_EXPRESSION) {
-      foldLongStrings(node, descriptors);
+    if (elementType === PyTokenTypes.END_OF_LINE_COMMENT) {
+      return PythonFoldingSettings.getInstance().isCollapseSequentialComments
     }
-    else if (FOLDABLE_COLLECTIONS_LITERALS.contains(elementType)) {
-      foldCollectionLiteral(node, descriptors);
+    if (elementType === PyElementTypes.ANNOTATION) {
+      return PythonFoldingSettings.getInstance().isCollapseTypeAnnotations
     }
-    else if (elementType == PyTokenTypes.END_OF_LINE_COMMENT) {
-      foldSequentialComments(node, descriptors);
+    if (elementType === PyElementTypes.STATEMENT_LIST && node.treeParent.elementType === PyElementTypes.FUNCTION_DECLARATION) {
+      return CodeFoldingSettings.getInstance().COLLAPSE_METHODS
     }
-    else if (elementType == PyElementTypes.ANNOTATION) {
-      var annotation = node.getPsi();
-      if (annotation instanceof PyAstAnnotation pyAnnotation && pyAnnotation.getValue() != null) {
-        descriptors.add(new FoldingDescriptor(node, pyAnnotation.getValue().getTextRange(),
-                                              FoldingGroup.newGroup(PYTHON_TYPE_ANNOTATION_GROUP_NAME)));
+    if (elementType in FOLDABLE_COLLECTIONS_LITERALS) {
+      return PythonFoldingSettings.getInstance().isCollapseLongCollections
+    }
+    return false
+  }
+
+  override fun isCustomFoldingCandidate(node: ASTNode): Boolean {
+    return node.elementType === PyTokenTypes.END_OF_LINE_COMMENT
+  }
+
+  override fun isCustomFoldingRoot(node: ASTNode): Boolean {
+    return node.psi is PyAstFile || node.elementType === PyElementTypes.STATEMENT_LIST
+  }
+
+  private fun appendDescriptors(node: ASTNode, descriptors: MutableList<FoldingDescriptor?>) {
+    val elementType = node.elementType
+    if (node.psi is PyAstFile) {
+      val imports = (node.psi as PyAstFile).importBlock
+      if (imports.size > 1) {
+        val firstImport: PyAstImportStatementBase = imports[0]
+        val lastImport: PyAstImportStatementBase = imports[imports.size - 1]
+        descriptors.add(FoldingDescriptor(firstImport, TextRange(firstImport.textRange.startOffset,
+                                                                 lastImport.textRange.endOffset)))
       }
     }
-    ASTNode child = node.getFirstChildNode();
+    else if (elementType === PyElementTypes.MATCH_STATEMENT) {
+      foldMatchStatement(node, descriptors)
+    }
+    else if (elementType === PyElementTypes.STATEMENT_LIST) {
+      foldStatementList(node, descriptors)
+    }
+    else if (elementType === PyElementTypes.STRING_LITERAL_EXPRESSION) {
+      foldLongStrings(node, descriptors)
+    }
+    else if (elementType in FOLDABLE_COLLECTIONS_LITERALS) {
+      foldCollectionLiteral(node, descriptors)
+    }
+    else if (elementType === PyTokenTypes.END_OF_LINE_COMMENT) {
+      foldSequentialComments(node, descriptors)
+    }
+    else if (elementType === PyElementTypes.ANNOTATION) {
+      val annotation = node.psi
+      if (annotation is PyAstAnnotation && annotation.value != null) {
+        descriptors.add(FoldingDescriptor(node, annotation.value!!.textRange,
+                                          FoldingGroup.newGroup(PYTHON_TYPE_ANNOTATION_GROUP_NAME)))
+      }
+    }
+    var child = node.firstChildNode
     while (child != null) {
-      appendDescriptors(child, descriptors);
-      child = child.getTreeNext();
+      appendDescriptors(child, descriptors)
+      child = child.treeNext
     }
   }
 
-  private static void foldSequentialComments(ASTNode node, List<FoldingDescriptor> descriptors) {
+  private fun foldSequentialComments(node: ASTNode, descriptors: MutableList<FoldingDescriptor?>) {
     //do not start folded comments from custom region
-    if (isCustomRegionElement(node.getPsi())) {
-      return;
+    if (isCustomRegionElement(node.psi)) {
+      return
     }
     //need to skip previous comments in sequence
-    ASTNode curNode = node.getTreePrev();
+    var curNode = node.treePrev
     while (curNode != null) {
-      if (curNode.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
-        if (isCustomRegionElement(curNode.getPsi())) {
-          break;
+      if (curNode.elementType === PyTokenTypes.END_OF_LINE_COMMENT) {
+        if (isCustomRegionElement(curNode.psi)) {
+          break
         }
-        return;
+        return
       }
-      curNode = curNode.getPsi() instanceof PsiWhiteSpace ? curNode.getTreePrev() : null;
+      curNode = if (curNode.psi is PsiWhiteSpace) curNode.treePrev else null
     }
 
     //fold sequence comments in one block
-    curNode = node.getTreeNext();
-    ASTNode lastCommentNode = node;
+    curNode = node.treeNext
+    var lastCommentNode: ASTNode? = node
     while (curNode != null) {
-      if (curNode.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
+      if (curNode.elementType === PyTokenTypes.END_OF_LINE_COMMENT) {
         //do not end folded comments with custom region
-        if (isCustomRegionElement(curNode.getPsi())) {
-          break;
+        if (isCustomRegionElement(curNode.psi)) {
+          break
         }
-        lastCommentNode = curNode;
-        curNode = curNode.getTreeNext();
-        continue;
+        lastCommentNode = curNode
+        curNode = curNode.treeNext
+        continue
       }
-      curNode = curNode.getPsi() instanceof PsiWhiteSpace ? curNode.getTreeNext() : null;
+      curNode = if (curNode.psi is PsiWhiteSpace) curNode.treeNext else null
     }
 
-    if (lastCommentNode != node) {
-      descriptors.add(new FoldingDescriptor(node, TextRange.create(node.getStartOffset(), lastCommentNode.getTextRange().getEndOffset())));
-    }
-
-  }
-
-  private static void foldCollectionLiteral(ASTNode node, List<FoldingDescriptor> descriptors) {
-    if (StringUtil.countNewLines(node.getChars()) > 0) {
-      TextRange range = node.getTextRange();
-      int delta = node.getElementType() == PyElementTypes.TUPLE_EXPRESSION ? 0 : 1;
-      descriptors.add(new FoldingDescriptor(node, TextRange.create(range.getStartOffset() + delta, range.getEndOffset() - delta)));
+    if (lastCommentNode !== node) {
+      descriptors.add(
+        FoldingDescriptor(node, TextRange.create(node.startOffset, lastCommentNode!!.textRange.endOffset)))
     }
   }
 
-  private static void foldMatchStatement(@NotNull ASTNode node, @NotNull List<FoldingDescriptor> descriptors) {
-    TextRange nodeRange = node.getTextRange();
-    if (nodeRange.isEmpty()) {
-      return;
-    }
-
-    IElementType elType = node.getElementType();
-    if (elType == PyElementTypes.MATCH_STATEMENT) {
-      ASTNode colon = node.findChildByType(PyTokenTypes.COLON);
-      foldSegment(node, descriptors, nodeRange, colon);
+  private fun foldCollectionLiteral(node: ASTNode, descriptors: MutableList<FoldingDescriptor?>) {
+    if (StringUtil.countNewLines(node.chars) > 0) {
+      val range = node.textRange
+      val delta = if (node.elementType === PyElementTypes.TUPLE_EXPRESSION) 0 else 1
+      descriptors.add(FoldingDescriptor(node, TextRange.create(range.startOffset + delta, range.endOffset - delta)))
     }
   }
 
-  private static void foldSegment(@NotNull ASTNode node, @NotNull List<FoldingDescriptor> descriptors, @NotNull TextRange nodeRange, @Nullable ASTNode colon) {
-    int nodeEnd = nodeRange.getEndOffset();
-    if (colon != null && nodeEnd - (colon.getStartOffset() + 1) > 1) {
-      CharSequence chars = node.getChars();
-      int nodeStart = nodeRange.getStartOffset();
-      int foldStart = colon.getStartOffset() + 1;
-      int foldEnd = nodeEnd;
-      while (foldEnd > Math.max(nodeStart, foldStart + 1) && Character.isWhitespace(chars.charAt(foldEnd - nodeStart - 1))) {
-        foldEnd--;
+  private fun foldMatchStatement(node: ASTNode, descriptors: MutableList<FoldingDescriptor?>) {
+    val nodeRange = node.textRange
+    if (nodeRange.isEmpty) {
+      return
+    }
+
+    val elType = node.elementType
+    if (elType === PyElementTypes.MATCH_STATEMENT) {
+      val colon = node.findChildByType(PyTokenTypes.COLON)
+      foldSegment(node, descriptors, nodeRange, colon)
+    }
+  }
+
+  private fun foldSegment(node: ASTNode, descriptors: MutableList<FoldingDescriptor?>, nodeRange: TextRange, colon: ASTNode?) {
+    val nodeEnd = nodeRange.endOffset
+    if (colon != null && nodeEnd - (colon.startOffset + 1) > 1) {
+      val chars = node.chars
+      val nodeStart = nodeRange.startOffset
+      val foldStart = colon.startOffset + 1
+      var foldEnd = nodeEnd
+      while (foldEnd > max(nodeStart, foldStart + 1) && Character.isWhitespace(chars[foldEnd - nodeStart - 1])) {
+        foldEnd--
       }
-      descriptors.add(new FoldingDescriptor(node, new TextRange(foldStart, foldEnd)));
+      descriptors.add(FoldingDescriptor(node, TextRange(foldStart, foldEnd)))
     }
-    else if (nodeRange.getLength() > 1) { // only for ranges at least 1 char wide
-      descriptors.add(new FoldingDescriptor(node, nodeRange));
-    }
-  }
-
-  private static void foldStatementList(ASTNode node, List<FoldingDescriptor> descriptors) {
-    final TextRange nodeRange = node.getTextRange();
-    if (nodeRange.isEmpty()) {
-      return;
-    }
-
-    final IElementType elType = node.getTreeParent().getElementType();
-    if (elType == PyElementTypes.FUNCTION_DECLARATION || elType == PyElementTypes.CLASS_DECLARATION || checkFoldBlocks(node, elType)) {
-      ASTNode colon = node.getTreeParent().findChildByType(PyTokenTypes.COLON);
-      foldSegment(node, descriptors, nodeRange, colon);
+    else if (nodeRange.length > 1) { // only for ranges at least 1 char wide
+      descriptors.add(FoldingDescriptor(node, nodeRange))
     }
   }
 
-  private static boolean checkFoldBlocks(@NotNull ASTNode statementList, @NotNull IElementType parentType) {
-    PsiElement element = statementList.getPsi();
-    assert element instanceof PyAstStatementList;
+  private fun foldStatementList(node: ASTNode, descriptors: MutableList<FoldingDescriptor?>) {
+    val nodeRange = node.textRange
+    if (nodeRange.isEmpty) {
+      return
+    }
 
-    return PyElementTypes.PARTS.contains(parentType) ||
-           parentType == PyElementTypes.WITH_STATEMENT ||
-           parentType == PyElementTypes.CASE_CLAUSE;
+    val elType = node.treeParent.elementType
+    if (elType === PyElementTypes.FUNCTION_DECLARATION || elType === PyElementTypes.CLASS_DECLARATION || checkFoldBlocks(node, elType)) {
+      val colon = node.treeParent.findChildByType(PyTokenTypes.COLON)
+      foldSegment(node, descriptors, nodeRange, colon)
+    }
   }
 
-  private static void foldLongStrings(ASTNode node, List<FoldingDescriptor> descriptors) {
+  private fun checkFoldBlocks(statementList: ASTNode, parentType: IElementType): Boolean {
+    val element = statementList.psi
+    assert(element is PyAstStatementList)
+
+    return parentType in PyElementTypes.PARTS || parentType === PyElementTypes.WITH_STATEMENT || parentType === PyElementTypes.CASE_CLAUSE
+  }
+
+  private fun foldLongStrings(node: ASTNode, descriptors: MutableList<FoldingDescriptor?>) {
     //don't want to fold docstrings like """\n string \n """
-    boolean shouldFoldDocString = getDocStringOwnerType(node) != null && StringUtil.countNewLines(node.getChars()) > 1;
-    boolean shouldFoldString = getDocStringOwnerType(node) == null && StringUtil.countNewLines(node.getChars()) > 0;
+    val shouldFoldDocString = getDocStringOwnerType(node) != null && StringUtil.countNewLines(node.chars) > 1
+    val shouldFoldString = getDocStringOwnerType(node) == null && StringUtil.countNewLines(node.chars) > 0
     if (shouldFoldDocString || shouldFoldString) {
-      descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
+      descriptors.add(FoldingDescriptor(node, node.textRange))
     }
   }
 
-  private static @Nullable IElementType getDocStringOwnerType(ASTNode node) {
-    final ASTNode treeParent = node.getTreeParent();
-    IElementType parentType = treeParent.getElementType();
-    if (parentType == PyElementTypes.EXPRESSION_STATEMENT && treeParent.getTreeParent() != null) {
-      final ASTNode parent2 = treeParent.getTreeParent();
-      if (parent2.getElementType() == PyElementTypes.STATEMENT_LIST && parent2.getTreeParent() != null && treeParent == parent2.getFirstChildNode()) {
-        final ASTNode parent3 = parent2.getTreeParent();
-        if (parent3.getElementType() == PyElementTypes.FUNCTION_DECLARATION || parent3.getElementType() == PyElementTypes.CLASS_DECLARATION) {
-          return parent3.getElementType();
+  private fun getDocStringOwnerType(node: ASTNode): IElementType? {
+    val treeParent = node.treeParent
+    val parentType = treeParent.elementType
+    if (parentType === PyElementTypes.EXPRESSION_STATEMENT && treeParent.treeParent != null) {
+      val parent2 = treeParent.treeParent
+      if (parent2.elementType === PyElementTypes.STATEMENT_LIST && parent2.treeParent != null && treeParent === parent2.firstChildNode) {
+        val parent3 = parent2.treeParent
+        if (parent3.elementType === PyElementTypes.FUNCTION_DECLARATION || parent3.elementType === PyElementTypes.CLASS_DECLARATION) {
+          return parent3.elementType
         }
       }
-      else if (parent2 instanceof PyAstFile) {
-        return parent2.getElementType();
+      else if (parent2 is PyAstFile) {
+        return parent2.elementType
       }
     }
-    return null;
+    return null
   }
 
-  @Override
-  protected String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
-    if (isImport(node)) {
-      return "import ...";
-    }
-    if (node.getElementType() == PyElementTypes.STRING_LITERAL_EXPRESSION) {
-      PyAstStringLiteralExpression stringLiteralExpression = (PyAstStringLiteralExpression)node.getPsi();
-      String prefix = stringLiteralExpression.getStringElements().get(0).getPrefix();
-      if (stringLiteralExpression.isDocString()) {
-        final String stringValue = stringLiteralExpression.getStringValue().trim();
-        final String[] lines = LineTokenizer.tokenize(stringValue, true);
-        if (lines.length > 2 && lines[1].trim().isEmpty()) {
-          return prefix + "\"\"\"" + lines[0].trim() + "...\"\"\"";
-        }
-        return prefix + "\"\"\"...\"\"\"";
-      } else {
-        return prefix + getLanguagePlaceholderForString(stringLiteralExpression);
-      }
-    }
-    return "...";
-  }
-
-  private static String getLanguagePlaceholderForString(PyAstStringLiteralExpression stringLiteralExpression) {
-    String stringText = stringLiteralExpression.getText();
-    Pair<String, String> quotes = PyStringLiteralCoreUtil.getQuotes(stringText);
+  private fun getLanguagePlaceholderForString(stringLiteralExpression: PyAstStringLiteralExpression): String {
+    val stringText = stringLiteralExpression.text
+    val quotes = PyStringLiteralCoreUtil.getQuotes(stringText)
     if (quotes != null) {
-      return quotes.second + "..." + quotes.second;
+      return quotes.second + "..." + quotes.second
     }
-    return "...";
+    return "..."
   }
 
-  @Override
-  protected boolean isRegionCollapsedByDefault(@NotNull ASTNode node) {
-    if (isImport(node)) {
-      return CodeFoldingSettings.getInstance().COLLAPSE_IMPORTS;
-    }
-    var elementType = node.getElementType();
-    if (elementType == PyElementTypes.STRING_LITERAL_EXPRESSION) {
-      if (getDocStringOwnerType(node) == PyElementTypes.FUNCTION_DECLARATION && CodeFoldingSettings.getInstance().COLLAPSE_METHODS) {
-        // method will be collapsed, no need to also collapse docstring
-        return false;
-      }
-      if (getDocStringOwnerType(node) != null) {
-        return CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS;
-      }
-      return PythonFoldingSettings.getInstance().isCollapseLongStrings();
-    }
-    if (elementType == PyTokenTypes.END_OF_LINE_COMMENT) {
-      return PythonFoldingSettings.getInstance().isCollapseSequentialComments();
-    }
-    if (elementType == PyElementTypes.ANNOTATION) {
-      return PythonFoldingSettings.getInstance().isCollapseTypeAnnotations();
-    }
-    if (elementType == PyElementTypes.STATEMENT_LIST && node.getTreeParent().getElementType() == PyElementTypes.FUNCTION_DECLARATION) {
-      return CodeFoldingSettings.getInstance().COLLAPSE_METHODS;
-    }
-    if (FOLDABLE_COLLECTIONS_LITERALS.contains(elementType)) {
-      return PythonFoldingSettings.getInstance().isCollapseLongCollections();
-    }
-    return false;
+  private fun isImport(node: ASTNode): Boolean {
+    return node.elementType in PyElementTypes.IMPORT_STATEMENTS
   }
 
-  @Override
-  protected boolean isCustomFoldingCandidate(@NotNull ASTNode node) {
-    return node.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT;
-  }
+  companion object {
+    val FOLDABLE_COLLECTIONS_LITERALS: TokenSet = TokenSet.create(
+      PyElementTypes.SET_LITERAL_EXPRESSION,
+      PyElementTypes.DICT_LITERAL_EXPRESSION,
+      PyElementTypes.GENERATOR_EXPRESSION,
+      PyElementTypes.SET_COMP_EXPRESSION,
+      PyElementTypes.DICT_COMP_EXPRESSION,
+      PyElementTypes.LIST_LITERAL_EXPRESSION,
+      PyElementTypes.LIST_COMP_EXPRESSION,
+      PyElementTypes.TUPLE_EXPRESSION)
 
-  @Override
-  protected boolean isCustomFoldingRoot(@NotNull ASTNode node) {
-    return node.getPsi() instanceof PyAstFile || node.getElementType() == PyElementTypes.STATEMENT_LIST;
+    const val PYTHON_TYPE_ANNOTATION_GROUP_NAME: String = "Python type annotation"
   }
-
-  private static boolean isImport(@NotNull ASTNode node) {
-    return PyElementTypes.IMPORT_STATEMENTS.contains(node.getElementType());
-  }
-
 }
