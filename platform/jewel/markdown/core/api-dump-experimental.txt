@@ -293,8 +293,12 @@ f:org.jetbrains.jewel.markdown.processing.ProcessingUtilKt
 - render(org.jetbrains.jewel.markdown.MarkdownBlock,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I):V
 - renderThematicBreak(org.jetbrains.jewel.markdown.rendering.MarkdownStyling$ThematicBreak,Z,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I):V
 *:org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer
+- *sf:Companion:org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer$Companion
 - a:renderAsAnnotatedString(java.lang.Iterable,org.jetbrains.jewel.markdown.rendering.InlinesStyling,Z,kotlin.jvm.functions.Function1):androidx.compose.ui.text.AnnotatedString
 - bs:renderAsAnnotatedString$default(org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer,java.lang.Iterable,org.jetbrains.jewel.markdown.rendering.InlinesStyling,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):androidx.compose.ui.text.AnnotatedString
+*f:org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer$Companion
+f:org.jetbrains.jewel.markdown.rendering.InlineMarkdownRendererKt
+- *sf:create(org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer$Companion,java.util.List):org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer
 *f:org.jetbrains.jewel.markdown.rendering.InlinesStyling
 - sf:$stable:I
 - *sf:Companion:org.jetbrains.jewel.markdown.rendering.InlinesStyling$Companion
