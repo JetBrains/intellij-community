@@ -3,12 +3,11 @@
 
 package com.intellij.platform.ijent.spi
 
-import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.Cancellation.ensureActive
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.coroutineNameAppended
 import com.intellij.platform.ijent.spi.IjentSessionMediator.ProcessExitPolicy.*
@@ -51,19 +50,19 @@ abstract class IjentSessionMediator private constructor(
    * Used to determine whether a process termination should be treated as an error.
    */
   enum class ProcessExitPolicy {
-    /** 
+    /**
      * Treat any exit as an error.
      * Used during initialization when process must stay alive.
      */
     ERROR,
 
-    /** 
+    /**
      * Check exit code to determine if it's an error.
      * Normal termination with expected exit codes is allowed.
      */
     CHECK_CODE,
 
-    /** 
+    /**
      * Normal shutdown, never treat as error.
      * Used during intentional process termination.
      */
@@ -220,6 +219,7 @@ private suspend fun ijentProcessStderrLogger(process: Process, ijentLabel: Strin
 
 private val ijentLogMessageRegex = Regex(
   """
+^
 (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+\S*)
 \s+
 (\w+)
@@ -228,6 +228,20 @@ private val ijentLogMessageRegex = Regex(
 """,
   RegexOption.COMMENTS,
 )
+
+private val logTargets: Map<String, Logger> =
+  IjentLogger.ALL_LOGGERS.associateByTo(hashMapOf()) { logger ->
+    val getter = JulLogger::class.java.getDeclaredMethod("getLoggerName")
+    val oldIsAccessible = getter.isAccessible
+    val loggerName = try {
+      getter.isAccessible = true
+      getter.invoke(logger) as String
+    }
+    finally {
+      getter.isAccessible = oldIsAccessible
+    }
+    loggerName.removePrefix("#com.intellij.platform.ijent.")
+  }
 
 private fun logIjentStderr(ijentLabel: String, line: String) {
   val hostDateTime = ZonedDateTime.now()
@@ -256,12 +270,24 @@ private fun logIjentStderr(ijentLabel: String, line: String) {
     return
   }
 
-  val logger: (String) -> Unit = when (level) {
-    "TRACE" -> if (LOG.isTraceEnabled) LOG::trace else return
-    "INFO" -> LOG::info
-    "WARN" -> LOG::warn
-    "ERROR" -> LOG::error
-    else -> if (LOG.isDebugEnabled) LOG::debug else return
+  val logger: ((String) -> Unit) = run {
+    val logTargetPrefix = message
+      .take(256)  // I hope that there will never be a span/target name longer than 256 characters.
+      .split("ijent::#", limit = 2)
+      .getOrNull(1)
+      ?.substringBefore("::")
+      ?.takeWhile { it.isLetter() || it == '_' }
+
+    val logger = logTargets[logTargetPrefix] ?: IjentLogger.OTHER_LOG
+
+    when (level) {
+      "TRACE" -> if (logger.isTraceEnabled) logger::trace else return
+      "INFO" -> logger::info
+      "WARN" -> logger::warn
+      "ERROR" -> logger::error
+      "DEBUG" -> logger::debug
+      else -> if (logger.isDebugEnabled) logger::debug else return
+    }
   }
 
   logger(buildString {
