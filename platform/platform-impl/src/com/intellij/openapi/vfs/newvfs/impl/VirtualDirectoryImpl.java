@@ -62,12 +62,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final int LINEAR_SEARCH_THRESHOLD = getIntProperty("VirtualDirectoryImpl.LINEAR_SEARCH_THRESHOLD", 64);
   /**
    * If true: trust {@link #findChildById(int)} callers that supplied childId is indeed an id of existing child.
-   * I.e. don't load _all_ the children from persistence to check is childId really in .children.
+   * I.e. don't load the children from persistence to check is childId really in .children.
    * Less expensive, but more prone to errors if e.g. orphan records are present in VFS (sometimes they do).
-   * If false: don't trust the caller, check that childId really belongs to .children (loads all children => more expensive)
+   * If false: don't trust the caller, check that childId really belongs to .children (loads children from persistence = more expensive)
    */
   private static final boolean TRUST_FIND_CHILD_BY_ID_CALLERS = getBooleanProperty(
-    "VirtualDirectoryImpl.TRUST_FIND_CHILD_BY_ID_CALLERS", true
+    "VirtualDirectoryImpl.TRUST_FIND_CHILD_BY_ID_CALLERS", false
   );
 
   /**
