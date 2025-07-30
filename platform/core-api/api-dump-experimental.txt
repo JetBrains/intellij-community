@@ -291,8 +291,13 @@ a:com.intellij.openapi.progress.Task
 - com.intellij.openapi.progress.Progressive
 - com.intellij.openapi.progress.TaskInfo
 - *:getId():java.lang.Object
+f:com.intellij.openapi.project.DumbKt
+- *sf:waitForSmartMode(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.openapi.project.DumbService
+- *a:getState():kotlinx.coroutines.flow.StateFlow
 - *a:suspendIndexingAndRun(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.openapi.project.DumbService$DumbState
+- a:isDumb():Z
 *:com.intellij.openapi.project.IncompleteDependenciesService
 - a:enterIncompleteState(java.lang.Object):com.intellij.openapi.project.IncompleteDependenciesService$IncompleteDependenciesAccessToken
 - a:getState():com.intellij.openapi.project.IncompleteDependenciesService$DependenciesState
