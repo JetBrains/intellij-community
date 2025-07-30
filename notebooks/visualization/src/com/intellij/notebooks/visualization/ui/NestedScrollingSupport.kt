@@ -1,6 +1,7 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.scroll.LatchingScroll
 import java.awt.Component
 import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
@@ -13,7 +14,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.DurationUnit
 
 /**
- * Processes Mouse (wheel, motion, click) to handle nested scrolling areas gracefully. Used together with [NotebookAWTMouseDispatcher].
+ * Processes Mouse (wheel, motion, click) to handle nested scrolling areas gracefully.
  * Nested scrolling idea described in [Mozilla documentation](https://wiki.mozilla.org/Gecko:Mouse_Wheel_Scrolling#Mouse_wheel_transaction)
  */
 class NestedScrollingSupportImpl {
@@ -34,6 +35,8 @@ class NestedScrollingSupportImpl {
   private fun isNewEventCreated(e: MouseWheelEvent) = dispatchingEvent != e
 
   private fun isDispatchingInProgress() = dispatchingEvent != null
+
+  private val latchingScroll: LatchingScroll by lazy { LatchingScroll() }
 
   fun processMouseWheelEvent(e: MouseWheelEvent) {
     val component = e.component
@@ -100,11 +103,23 @@ class NestedScrollingSupportImpl {
   }
 
   private fun canScroll(event: MouseWheelEvent, owner: JScrollPane): Boolean {
-    return if (event.wheelRotation > 0) { // Down
-      owner.verticalScrollBar.maximum > owner.verticalScrollBar.value + owner.viewport.height
+    if (latchingScroll.shouldBeIgnored(event)) {
+      event.consume()
+      return true
     }
-    else { // Up
-      owner.verticalScrollBar.minimum < owner.verticalScrollBar.value
+
+    val (scrollBar, size) = if (event.isShiftDown) {
+      owner.horizontalScrollBar to owner.viewport.width
+    }
+    else {
+      owner.verticalScrollBar to owner.viewport.height
+    }
+
+    return if (event.preciseWheelRotation > 0) { // Down / Right
+      scrollBar.maximum > scrollBar.value + size
+    }
+    else { // Up / Left
+      scrollBar.minimum < scrollBar.value
     }
   }
 
