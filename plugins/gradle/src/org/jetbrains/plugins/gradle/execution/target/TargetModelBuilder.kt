@@ -5,11 +5,9 @@ import com.intellij.openapi.util.Key
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.ModelBuilder
 import org.gradle.tooling.ResultHandler
-import org.gradle.tooling.internal.consumer.AbstractLongRunningOperation
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 import java.io.File
-import java.nio.file.Files
 
 internal class TargetModelBuilder<T>(
   private val connection: TargetProjectConnection,
@@ -82,24 +80,5 @@ internal class TargetModelBuilder<T>(
   companion object {
     private val BUILD_ENVIRONMENT_KEY = Key.create<BuildEnvironment>("build environment model")
     private val BUILD_ENVIRONMENT_REQUEST_FAILURE_KEY = Key.create<GradleConnectionException>("build environment model request failure")
-  }
-
-  /*
-    We have to set the value as without the check.
-    It's impossible to set the value with the setter due to the forced `ConsumerOperationParameters.validateJavaHome(javaHome)` invocation.
-    The path would always be invalid if we're dealing with the remote File System due to `java.io.File`'s limitations.
-
-    It couldn't be solved by delegating, due to the overall structure of the BuildParameters because it strictly relies on
-    internal and package private classes such as org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters.
-*/
-  override fun setJavaHome(javaHome: File?): TargetModelBuilder<T> {
-    if (javaHome != null && !Files.isDirectory(javaHome.toPath())) {
-      return `this`
-    }
-    val builderField = AbstractLongRunningOperation::class.java.getDeclaredField("operationParamsBuilder")
-    val javaHomeField = builderField.type.getDeclaredField("javaHome")
-    javaHomeField.setAccessible(true)
-    javaHomeField.set(builderField.get(this), javaHome)
-    return `this`
   }
 }
