@@ -94,7 +94,7 @@ class JCefUI(data: ComponentData) : UiComponent(data) {
   }
 
   fun callJs(@Language("JavaScript") js: String, timeout: Long = 3000): String {
-    waitFor("document exists", 10.seconds) { hasDocument() }
+    waitFor("document loaded", 10.seconds) { getUrl().isNotEmpty() && !jcefWorker.isLoading() }
     injectElementFinderIfNeeded()
     return jcefWorker.callJs(js, timeout)
   }
@@ -212,4 +212,5 @@ private interface JcefComponentWrapper {
   fun callJs(@Language("JavaScript") js: String, executeTimeoutMs: Long): String
   fun hasDocument(): Boolean
   fun getUrl(): String
+  fun isLoading(): Boolean
 }
