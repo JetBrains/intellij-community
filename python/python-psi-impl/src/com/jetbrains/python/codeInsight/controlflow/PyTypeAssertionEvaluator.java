@@ -342,7 +342,13 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
 
   private void pushAssertion(@Nullable PyExpression expr, boolean positive, boolean allowAnyExpr, @NotNull Function<TypeEvalContext, PyType> suggestedType) {
     expr = PyPsiUtils.flattenParens(expr);
-    if (expr instanceof PyAssignmentExpression walrus) {
+    if (expr instanceof PySequenceExpression seqExpr) {
+      PyExpression[] elements = seqExpr.getElements();
+      for (int i = 0; i < elements.length; i++) {
+        pushAssertion(elements[i], positive, allowAnyExpr, getIteratedType(suggestedType, i));
+      }
+    }
+    else if (expr instanceof PyAssignmentExpression walrus) {
       pushAssertion(walrus.getTarget(), positive, allowAnyExpr, suggestedType);
     }
     else if (expr != null) {
@@ -363,17 +369,16 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     }
   }
 
-  public static @Nullable String getAssertionTargetName(@Nullable PyExpression expression) {
-    PyExpression target = PyPsiUtils.flattenParens(expression);
-    if (target instanceof PyAssignmentExpression walrus) {
-      return getAssertionTargetName(walrus.getTarget());
-    }
-    if (target instanceof PyReferenceExpression || target instanceof PyTargetExpression) {
-      if (!((PyQualifiedExpression)target).isQualified()) {
-        return target.getName();
+  @NotNull
+  private static Function<TypeEvalContext, PyType> getIteratedType(@NotNull Function<TypeEvalContext, PyType> sequenceType, int index) {
+    return context -> {
+      var computedSuggestedType = sequenceType.apply(context);
+      if (computedSuggestedType instanceof PyNeverType) return computedSuggestedType;
+      if (computedSuggestedType instanceof PyTupleType tupleType) {
+        return tupleType.getElementType(index);
       }
-    }
-    return null;
+      return null;
+    };
   }
 
   private static boolean isIfReferenceStatement(@NotNull PyExpression node) {

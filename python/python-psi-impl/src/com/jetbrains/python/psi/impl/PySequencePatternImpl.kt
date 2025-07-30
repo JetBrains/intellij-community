@@ -32,7 +32,7 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
     
     if (sequenceCaptureType == null) return expectedType
     return sequenceCaptureType.toList()
-      .map { if (PyTypeChecker.match(expectedType, it, context)) it else expectedType }
+      .map { intersect(it, expectedType, context) }
       .let { PyUnionType.union(it) }
   }
 
@@ -160,4 +160,16 @@ private fun PyTupleType.expandVariadics(variadicElementCount: Int): PyTupleType 
     addAll(elementTypes.subList(unpackedTupleIndex + 1, elementTypes.size))
   }
   return PyTupleType(this.pyClass, adjustedTupleElementTypes, false)
+}
+
+private fun intersect(type1: PyType?, type2: PyType?, context: TypeEvalContext): PyType? {
+  // TODO: replace with proper PyIntersectionType.intersect when it appears
+  if (type1 == null) return type2
+  if (type2 == null) return type1
+  if (type1 is PyTupleType && type2 is PyTupleType) {
+    if (type1.elementCount != type2.elementCount) return PyNeverType.NEVER
+    val elements = type1.elementTypes.zip(type2.elementTypes).map { (t1, t2) -> intersect(t1, t2, context) }
+    return PyTupleType.create(type1.pyClass, elements)
+  }
+  return if (PyTypeChecker.match(type1, type2, context)) type2 else type1
 }
