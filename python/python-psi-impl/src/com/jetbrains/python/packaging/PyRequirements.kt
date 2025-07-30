@@ -12,10 +12,23 @@ import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
  * @see PyRequirementParser.fromText
  * @see PyRequirementParser.fromFile
  */
-fun pyRequirement(name: String, versionSpec: PyRequirementVersionSpec? = null): PyRequirement = PyRequirementImpl(name,
-                                                                                                                  listOfNotNull(versionSpec),
-                                                                                                                  listOf(name),
-                                                                                                                  "")
+
+fun pyRequirement(
+  name: String,
+  versionSpec: PyRequirementVersionSpec? = null,
+): PyRequirement = PyRequirementImpl(name,
+                                     listOfNotNull(versionSpec),
+                                     listOf(name),
+                                     "")
+
+fun pyRequirement(
+  name: String,
+  versionSpec: PyRequirementVersionSpec?,
+  extras: String,
+): PyRequirement = PyRequirementImpl(name,
+                                     listOfNotNull(versionSpec),
+                                     listOf(name),
+                                     extras)
 
 /**
  * This helper is not an API, consider using methods listed below.

@@ -18,9 +18,13 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
   override var dependencies: List<PythonPackage> = emptyList()
   private var packageNames: List<String> = emptyList()
   private var packageDetails: PythonPackageDetails? = null
+  private var packageVersions: Map<String, List<String>> = emptyMap()
 
-  override val repositoryManager: PythonRepositoryManager
-    get() = TestPythonRepositoryManager(project).withPackageNames(packageNames).withPackageDetails(packageDetails)
+  override val repositoryManager: TestPythonRepositoryManager
+    get() = TestPythonRepositoryManager(project)
+      .withPackageNames(packageNames)
+      .withPackageDetails(packageDetails)
+      .withRepoPackagesVersions(packageVersions)
 
   override fun getDependencyManager(): PythonDependenciesManager? {
     val data = sdk.getUserData(REQUIREMENTS_PROVIDER_KEY) ?: return null
@@ -76,6 +80,12 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
   private fun findPackageByName(name: String): PythonPackage? {
     return installedPackages.find { it.name == name }
   }
+
+  fun withRepoPackagesVersions(packageVersions: Map<String, List<String>>): TestPythonPackageManager {
+    this.packageVersions = packageVersions
+    return this
+  }
+
 
   fun withPackageNames(packageNames: List<String>): TestPythonPackageManager {
     this.packageNames = packageNames

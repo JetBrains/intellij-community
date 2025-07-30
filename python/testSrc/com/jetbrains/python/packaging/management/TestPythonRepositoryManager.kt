@@ -12,13 +12,14 @@ import com.jetbrains.python.packaging.repository.PyPackageRepository
 import org.jetbrains.annotations.TestOnly
 
 @TestOnly
-internal class TestPythonRepositoryManager(
+class TestPythonRepositoryManager(
   override val project: Project,
 ) : PythonRepositoryManager {
 
   private var packageNames: Set<String> = emptySet()
   private var packageDetails: PythonPackageDetails? = null
 
+  private var packageVersions = mapOf<String, List<String>>()
   override suspend fun findPackageSpecification(requirement: PyRequirement, repository: PyPackageRepository?): PythonRepositoryPackageSpecification {
     return PythonRepositoryPackageSpecification(repository ?: PyPIPackageRepository, requirement)
   }
@@ -34,6 +35,11 @@ internal class TestPythonRepositoryManager(
     return this
   }
 
+
+  fun withRepoPackagesVersions(versions: Map<String, List<String>>): TestPythonRepositoryManager {
+    this.packageVersions = versions
+    return this
+  }
 
   override val repositories: List<PyPackageRepository>
     get() = listOf(TestPackageRepository(packageNames))
@@ -54,7 +60,7 @@ internal class TestPythonRepositoryManager(
   }
 
   override suspend fun getVersions(packageName: String, repository: PyPackageRepository?): List<String> {
-    return packageDetails?.availableVersions?.toList().orEmpty()
+    return packageDetails?.availableVersions?.toList()?.ifEmpty { null } ?: packageVersions[packageName].orEmpty()
   }
 
   override suspend fun getLatestVersion(packageName: String, repository: PyPackageRepository?): PyPackageVersion {

@@ -3,8 +3,8 @@ package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +18,6 @@ import java.util.List;
  * @see <a href="https://www.python.org/dev/peps/pep-0440/">PEP-440</a>
  */
 public interface PyRequirement {
-
   @NotNull
   String getName();
 
@@ -45,7 +44,7 @@ public interface PyRequirement {
    * @return first package that satisfies this requirement or null.
    */
   @Nullable
-  PyPackage match(@NotNull Collection<? extends PyPackage> packages);
+  PyPackage match(@NotNull Collection<PyPackage> packages);
 
   boolean match(@NotNull PyPackage packageName);
 
@@ -63,4 +62,7 @@ public interface PyRequirement {
   }
 
   @NotNull @NlsSafe String getPresentableTextWithoutVersion();
+
+  @ApiStatus.Internal
+  @NotNull PyRequirement withVersionSpecs(@NotNull List<PyRequirementVersionSpec> spec);
 }

@@ -47,7 +47,11 @@ class PyRequirementImpl(
     }
   }
 
-  override fun hashCode(): Int =  31 * name.hashCode() + versionSpecs.hashCode()
+  override fun withVersionSpecs(specs: List<PyRequirementVersionSpec>): PyRequirement {
+    return PyRequirementImpl(presentableName, specs, installOptions, extras)
+  }
+
+  override fun hashCode(): Int = 31 * name.hashCode() + versionSpecs.hashCode()
 
   override fun toString(): String {
     return presentableText

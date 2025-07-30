@@ -44,4 +44,12 @@ interface PythonRepositoryManager {
   fun searchPackages(query: String): Map<PyPackageRepository, List<String>> {
     return repositories.associateWith { searchPackages(query, it) }
   }
+
+  @ApiStatus.Internal
+  suspend fun matchRequirement(requirement: PyRequirement): Boolean {
+    val versions = getVersions(requirement.name, null) ?: return false
+    return versions.any { version ->
+      requirement.versionSpecs.any { spec -> spec.matches(version) }
+    }
+  }
 }

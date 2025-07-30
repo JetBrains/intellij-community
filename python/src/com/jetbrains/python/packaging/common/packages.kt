@@ -26,7 +26,10 @@ open class PythonPackage(name: String, val version: String, val isEditableMode: 
     private const val HASH_MULTIPLIER = 31
   }
 
-  val name: String = NormalizedPythonPackageName.from(name).name
+  @ApiStatus.Internal
+  val normalizedName: NormalizedPythonPackageName = NormalizedPythonPackageName.from(name)
+
+  val name: String = normalizedName.name
   val presentableName: String = name
 
   @ApiStatus.Internal

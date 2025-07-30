@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface PythonPackageManagementListener {
-  fun packagesChanged(sdk: Sdk)
+  fun packagesChanged(sdk: Sdk) {}
 
   @ApiStatus.Internal
   fun outdatedPackagesChanged(sdk: Sdk) {}
