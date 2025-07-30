@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.terminal.shell_integration
 
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.PathUtil
-import com.intellij.util.system.OS
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.createEnvVariablesMap
@@ -31,8 +31,7 @@ internal object TerminalPSReadLineUpdateUtil {
       return options
     }
 
-    val os = OS.CURRENT
-    val isWin10 = os == OS.Windows && os.isAtLeast(10, 0) && !os.isAtLeast(11, 0)
+    val isWin10 = SystemInfo.isWin10OrNewer && !SystemInfo.isWin11OrNewer
     val alreadyDisabled = options.envVariables[ASK_UPDATE_ENV].equals("false", ignoreCase = true)
     // Show the message only if it is Win10 and the user didn't specify skipping it in the terminal settings (via env vars).
     return if (isWin10 && !alreadyDisabled) {
