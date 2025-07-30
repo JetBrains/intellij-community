@@ -32,7 +32,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.*;
+import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.BLOCK_TERMINAL_FISH_REGISTRY;
 import static org.jetbrains.plugins.terminal.TerminalStartupKt.shouldUseEelApi;
 import static org.jetbrains.plugins.terminal.TerminalStartupKt.startProcess;
 import static org.jetbrains.plugins.terminal.util.ShellNameUtil.*;
@@ -230,9 +230,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @ApiStatus.Internal
   public static boolean supportsBlocksShellIntegration(@NotNull String shellName) {
     if (isPowerShell(shellName)) {
-      return SystemInfo.isWin11OrNewer && Registry.is(BLOCK_TERMINAL_POWERSHELL_WIN11_REGISTRY, false) ||
-             SystemInfo.isWin10OrNewer && !SystemInfo.isWin11OrNewer && Registry.is(BLOCK_TERMINAL_POWERSHELL_WIN10_REGISTRY, false) ||
-             SystemInfo.isUnix;
+      // Let's do not source advanced shell integration on versions older than Windows 10 and on Windows Server.
+      // Since bundled ConPTY might not be used there, and we may break the shell then.
+      return SystemInfo.isWin10OrNewer || SystemInfo.isUnix;
     }
     return shellName.equals(BASH_NAME)
            || SystemInfo.isMac && shellName.equals(SH_NAME)
