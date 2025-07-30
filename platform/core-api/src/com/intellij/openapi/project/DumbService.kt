@@ -55,7 +55,7 @@ abstract class DumbService {
   abstract val isDumb: Boolean
 
   /**
-   * Same as [isDumb], but if form of a flow with the following properties:
+   * Same as [isDumb], but in form of a flow with the following properties:
    *   * This flow never completes
    *   * Last emitted value is always immediately available
    *   * The flow is not conflated by [DumbState] fields, but only by the underlying state
@@ -63,7 +63,7 @@ abstract class DumbService {
    * In most cases you don't need this method, because neither checking `isDumb` outside a read action, nor suspending inside a read action
    *  have little sense except a few very special use cases.
    */
-  @get:ApiStatus.Internal
+  @get:Experimental
   abstract val state: StateFlow<DumbState>
 
   /**
@@ -80,12 +80,15 @@ abstract class DumbService {
 
   /**
    * Executes the runnable as soon as possible on AWT Event Dispatch when:
-   *  * project is initialized
+   *  * a project is initialized
    *  * and there's no dumb mode in progress
    *
    * This may also happen immediately if these conditions are already met.
    *
    * Note that it's not guaranteed that the dumb mode won't start again during this runnable execution, it should manage that situation explicitly.
+   *
+   * In cases when your code needs waiting for the initial import, indexing, configuration and does not change the configuration,
+   * consider using [Observation.awaitConfiguration].
    */
   abstract fun runWhenSmart(runnable: Runnable)
 
@@ -95,6 +98,9 @@ abstract class DumbService {
    * Hence: use with care. Consider using [runWhenSmart] or [runReadActionInSmartMode] instead
    *
    * See [Project.waitForSmartMode] for using in a suspend context.
+   *
+   * In cases when your code needs waiting for the initial import, indexing, configuration and does not change the configuration,
+   * consider using [Observation.awaitConfiguration].
    */
   @RequiresBlockingContext
   abstract fun waitForSmartMode()
@@ -116,7 +122,7 @@ abstract class DumbService {
    *
    * WARNING: This method does not have any effect if it is called inside another read action.
    *
-   * Otherwise, it pauses the current thread until dumb mode ends, and then runs the read action.
+   * Otherwise, it pauses the current thread until dumb mode ends and then runs the read action.
    * In this case, indexes are guaranteed to be available inside.
    *
    * @throws ProcessCanceledException if the project is closed during dumb mode
@@ -174,7 +180,7 @@ abstract class DumbService {
    *
    * WARNING: This method does not have any effect if it is called inside another read action.
    *
-   * Otherwise, it pauses the current thread until dumb mode ends, and then runs the read action.
+   * Otherwise, it pauses the current thread until dumb mode ends and then runs the read action.
    * In this case indexes are guaranteed to be available inside
    *
    * @throws ProcessCanceledException if the project is closed during dumb mode
@@ -211,7 +217,7 @@ abstract class DumbService {
   }
 
   /**
-   * Pause the current thread until dumb mode ends, and then attempt to execute the runnable. If it fails due to another dumb mode having started,
+   * Pause the current thread until dumb mode ends and then attempt to execute the runnable. If it fails due to another dumb mode having started,
    * try again until the runnable can complete successfully.
    */
   @ApiStatus.ScheduledForRemoval
@@ -287,7 +293,7 @@ abstract class DumbService {
   abstract fun cancelTask(task: DumbModeTask)
 
   /**
-   * Cancels all tasks and wait when their execution is finished. Should be called on write thread.
+   * Cancels all tasks and wait when their execution is finished. Should be called on a Write thread.
    */
   @ApiStatus.Internal
   abstract fun cancelAllTasksAndWait()
@@ -297,11 +303,11 @@ abstract class DumbService {
    * earlier within the same Swing event dispatch thread event processing, and there were no other tasks already running at that moment.
    * Otherwise, this method does nothing.
    *
-   * This functionality can be useful in refactorings (invoked in "smart mode"), when after VFS or root changes
-   * (which could start "dumb mode") some references need to be resolved (which again requires "smart mode").
+   * This functionality can be useful in: refactorings (invoked in "smart mode"); when after VFS or root changes
+   * (that could start "dumb mode") some references need to be resolved (which again requires "smart mode").
    *
-   * Should be invoked on dispatch thread.
-   * It's the caller's responsibility to invoke this method only when the model is in internally consistent state,
+   * Should be invoked on the dispatch thread.
+   * It's the caller's responsibility to invoke this method only when the model is in an internally consistent state,
    * so that background threads with read actions don't see half-baked PSI/VFS/etc.
    */
   abstract fun completeJustSubmittedTasks()
@@ -310,7 +316,7 @@ abstract class DumbService {
    * This method starts dumb mode (if not started), then runs suspend lambda, then ends dumb mode (if no other dumb tasks are running).
    *
    * This method can be invoked from any thread. It will switch to EDT to start/stop dumb mode. Runnable itself will be invoked from
-   * method's invocation context (thread).
+   *  the method's invocation context (thread).
    *
    * @param debugReason will only be printed to logs
    */
@@ -325,10 +331,10 @@ abstract class DumbService {
   abstract fun wrapGently(dumbUnawareContent: JComponent, parentDisposable: Disposable): JComponent
 
   /**
-   * Adds a "Results might be incomplete during indexing." decorator to a given component during dumb mode.
+   * Adds a `Results might be incomplete during indexing` decorator to a given component during dumb mode.
    *
    * @param dumbAwareContent - a component to wrap
-   * @param updateRunnable - an action to execute when dumb mode state changed or user explicitly request reload panel
+   * @param updateRunnable - an action to execute when dumb mode state changed or user explicitly requests reloading of the panel
    *
    * @return Wrapped component.
    */
@@ -363,7 +369,7 @@ abstract class DumbService {
   abstract fun showDumbModeNotificationForFailedAction(message: @NlsContexts.PopupContent String, actionId: String?)
 
   /**
-   * Shows balloon about indexing blocking those actions until it is hidden (by key input, mouse event, etc.) or indexing stops.
+   * Shows a balloon about indexing blocking those actions until it is hidden (by key input, mouse event, etc.) or indexing stops.
    * @param runWhenSmartAndBalloonStillShowing will be executed in smart mode on EDT, balloon won't be dismissed by user's actions
    */
   abstract fun showDumbModeActionBalloon(balloonText: @NlsContexts.PopupContent String,
@@ -440,7 +446,7 @@ abstract class DumbService {
   /**
    * Enables or disables alternative resolve strategies for the current thread.
    *
-   * Normally reference resolution uses indexes, and hence is not available in dumb mode. In some cases, alternative ways
+   * Normally reference resolution uses indexes and hence is not available in dumb mode. In some cases, alternative ways
    * of performing resolve are available, although much slower. It's impractical to always use these ways because it'll
    * lead to overloaded CPU (especially given there's also indexing in progress). But for some explicit user actions
    * (e.g., explicit Goto Declaration) turning on these slower methods is beneficial.
@@ -482,12 +488,12 @@ abstract class DumbService {
    */
   interface DumbModeListener {
     /**
-     * The event arrives on EDT.
+     * The event arrives to EDT thread.
      */
     fun enteredDumbMode() {}
 
     /**
-     * The event arrives on EDT.
+     * The event arrives to EDT thread.
      */
     fun exitDumbMode() {}
   }
@@ -573,7 +579,7 @@ abstract class DumbService {
     }
   }
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   interface DumbState {
     val isDumb: Boolean
   }
