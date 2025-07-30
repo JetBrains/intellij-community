@@ -7,6 +7,9 @@ import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyStubElementTypes;
@@ -83,8 +86,11 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     if (classStub == null) {
       return List.of(pyClass.getSuperClassExpressions());
     }
-    return ContainerUtil.mapNotNull(classStub.getSuperClassesText(), 
-                                    x -> PyUtil.createExpressionFromFragment(x, pyClass.getContainingFile()));
+    return CachedValuesManager.getCachedValue(pyClass, () -> CachedValueProvider.Result.create(
+      (ContainerUtil.mapNotNull(classStub.getSuperClassesText(),
+                                x -> PyUtil.createExpressionFromFragment(x, pyClass.getContainingFile()))),
+      PsiModificationTracker.MODIFICATION_COUNT)
+    );
   }
 
   private static @Nullable QualifiedName resolveOriginalSuperClassQName(@NotNull PyExpression superClassExpression) {
