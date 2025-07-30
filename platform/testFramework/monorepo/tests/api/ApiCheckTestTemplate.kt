@@ -13,7 +13,6 @@ import java.io.File
 import java.nio.file.Path
 import kotlin.collections.forEach
 import kotlin.collections.iterator
-import kotlin.collections.toTypedArray
 import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.readText
