@@ -15,6 +15,7 @@ import com.intellij.platform.searchEverywhere.SeOptionActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeRunnableActionItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListItemRow
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListRow
+import com.intellij.platform.searchEverywhere.frontend.ui.weightTextIfEnabled
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.HtmlToSimpleColoredComponentConverter
 import com.intellij.ui.SimpleColoredComponent
@@ -92,6 +93,8 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
           }
         }
 
+        weightTextIfEnabled(value)
+
         if (UISettings.getInstance().showInplaceCommentsInternal && actionId != null) {
           text(actionId) {
             accessibleName = null
@@ -134,6 +137,8 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
             }
           }
         }
+
+        weightTextIfEnabled(value)
       }
     }
 

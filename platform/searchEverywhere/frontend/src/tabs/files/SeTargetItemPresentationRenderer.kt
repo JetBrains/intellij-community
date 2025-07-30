@@ -5,6 +5,7 @@ import com.intellij.ide.actions.SETextShortener
 import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListItemRow
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListRow
+import com.intellij.platform.searchEverywhere.frontend.ui.weightTextIfEnabled
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
@@ -52,6 +53,8 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
         }
       }
     }
+
+    weightTextIfEnabled(value)
 
     presentation.containerText?.let { containerText ->
       val presentableTextWidth = fontMetrics.stringWidth(presentation.presentableText)
