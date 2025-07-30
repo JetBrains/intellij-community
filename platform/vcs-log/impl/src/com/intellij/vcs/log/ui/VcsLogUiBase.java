@@ -60,13 +60,11 @@ public abstract class VcsLogUiBase implements VcsLogUiEx {
     return myLogData;
   }
 
-  @RequiresEdt
   @Override
   public void addLogListener(@NotNull VcsLogListener listener) {
     myLogListeners.add(listener);
   }
 
-  @RequiresEdt
   @Override
   public void removeLogListener(@NotNull VcsLogListener listener) {
     myLogListeners.remove(listener);
