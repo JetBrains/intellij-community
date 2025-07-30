@@ -4,7 +4,7 @@
 
 | Supported IJP versions | Compose Multiplatform version |
 |------------------------|-------------------------------|
-| 2025.2.1+, 2025.1.5+   | 1.8.2                         |
+| 2025.2.1+, 2025.1.4.1+ | 1.8.2                         |
 
 ### ⚠️ Important Changes
 
