@@ -2,6 +2,7 @@ module(name = "community")
 
 bazel_dep(name = "bazel_features", version = "1.32.0")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
+bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "rules_kotlin", version = "2.1.3")
 bazel_dep(name = "rules_java", version = "8.11.0")
 bazel_dep(name = "rules_jvm", version = "0.0.1")
@@ -91,3 +92,21 @@ use_repo(
 #     remote = "https://github.com/develar/rules_graalvm",
 #     commit = "9d12232f7798df7087952314600f1ee0f4e4f9f7",
 # )
+
+jbr_toolchains = use_extension("@community//build:jbr-toolchains.bzl", "jbr_toolchains")
+
+REMOTE_JBR17_REPOS = ["remotejbr17_" + platform for platform in [
+    "linux",
+    "linux_aarch64",
+    "macos",
+    "macos_aarch64",
+    "win",
+    "win_arm64",
+]]
+
+[use_repo(
+    jbr_toolchains,
+    repo + "_toolchain_config_repo",
+) for repo in REMOTE_JBR17_REPOS]
+
+[register_toolchains("@" + repo + "_toolchain_config_repo//:all") for repo in REMOTE_JBR17_REPOS]

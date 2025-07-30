@@ -59,7 +59,7 @@ build:windows --@rules_kotlin//kotlin/settings:jvm_emit_jdeps=False
 # That JDK and JVM are controlled using --tool_java_language_version and --tool_java_runtime_version
 common --tool_java_language_version=17
 # Java runtime the tools should use
-common --tool_java_runtime_version=remotejdk_17
+common --tool_java_runtime_version=remotejbr_17
 
 # make sure you don't need to open file to read compilation errors
 common --experimental_ui_max_stdouterr_bytes=-1
