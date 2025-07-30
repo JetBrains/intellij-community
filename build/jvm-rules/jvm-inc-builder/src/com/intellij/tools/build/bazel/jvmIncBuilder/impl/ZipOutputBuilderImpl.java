@@ -4,13 +4,12 @@ package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 import com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.impl.RW;
 
-import java.io.*;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.ref.SoftReference;
-import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -297,7 +296,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
         @Override
         protected byte[] loadData() throws IOException {
           try (InputStream is = zip.getInputStream(entry)) {
-            return RW.readAllBytes(is);
+            return is.readAllBytes();
           }
         }
 
@@ -308,7 +307,9 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
             os.write(data);
           }
           else {
-            RW.transferTo(StreamAccessor.unwrapInputStream(zip.getInputStream(entry)), StreamAccessor.unwrapOutputStream(os));
+            try (InputStream in = zip.getInputStream(entry)) {
+              in.transferTo(os);
+            }
           }
         }
 
@@ -350,70 +351,6 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
     public void cleanup() {
       myCached = null;
     }
-  }
-
-  private static final class StreamAccessor {
-    private static final MethodHandle outFieldAccessor;
-    private static final MethodHandle inFieldAccessor;
-
-    static {
-      outFieldAccessor = getMethodHandle(FilterOutputStream.class, "out");
-      inFieldAccessor = getMethodHandle(FilterInputStream.class, "in");
-    }
-
-    private static MethodHandle getMethodHandle(Class<?> aClass, String fieldName) {
-      try {
-        Field outField = aClass.getDeclaredField(fieldName);
-        outField.setAccessible(true);
-        return MethodHandles.lookup().unreflectGetter(outField);
-      }
-      catch (Throwable e) {
-        return null;
-      }
-    }
-
-    static InputStream unwrapInputStream(InputStream is) {
-      //if (inFieldAccessor != null && is instanceof FilterInputStream) {
-      //  try {
-      //    return (InputStream) inFieldAccessor.invoke(is);
-      //  }
-      //  catch (Throwable ignored) {
-      //  }
-      //}
-      return is;
-    }
-
-    static OutputStream unwrapOutputStream(OutputStream os) {
-      //if (outFieldAccessor != null && os instanceof ZipOutputStream) {
-      //  try {
-      //    return (OutputStream) outFieldAccessor.invoke(os);
-      //  }
-      //  catch (Throwable ignored) {
-      //  }
-      //}
-      return os;
-    }
-  }
-
-  private Iterable<String> allParentNames(String entryName) {
-    String parent = getParentEntryName(entryName);
-    return parent == null? List.of() : () -> new Iterator<>() {
-      private String next = parent;
-      @Override
-      public boolean hasNext() {
-        return next != null;
-      }
-
-      @Override
-      public String next() {
-        if (next == null) {
-          throw new NoSuchElementException();
-        }
-        String result = next;
-        next = getParentEntryName(next);
-        return result;
-      }
-    };
   }
 
   private void addToPackageIndex(String entryName) {
