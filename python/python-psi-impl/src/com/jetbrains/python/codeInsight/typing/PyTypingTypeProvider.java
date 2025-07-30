@@ -52,7 +52,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.dynatrace.hash4j.hashing.Hashing.murmur3_128;
 import static com.dynatrace.hash4j.hashing.Hashing.xxh3_128;
 import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
 import static com.jetbrains.python.psi.PyKnownDecorator.TYPING_FINAL;
@@ -1123,8 +1122,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
           // we want to parameterize it with its type parameters defaults already here.
           // We need this check for the type argument list because getParameterizedType() relies on getClassType() for
           // getting the type corresponding to the subscription expression operand.
+          PsiElement stubRetainedContext = getStubRetainedTypeHintContext(typeHint);
           if (classLikeType instanceof PyClassType classType &&
-              !(getStubRetainedTypeHintContext(typeHint) instanceof PyClass) &&
+              !(stubRetainedContext instanceof PyClass ||
+                PsiTreeUtil.getStubOrPsiParentOfType(stubRetainedContext, ScopeOwner.class) instanceof PyClass) &&
               !(typeHint.getParent() instanceof PySubscriptionExpression se && typeHint.equals(se.getOperand())) &&
               isGeneric(classType, context.myContext)) {
             PyCollectionType parameterized = parameterizeClassDefaultAware(classType.getPyClass(), List.of(), context);
@@ -2124,14 +2125,14 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     boolean isAsync
   ) {
     /**
-     * Extracts type parameters from typing.Generator and typing.AsyncGenerator 
+     * Extracts type parameters from typing.Generator and typing.AsyncGenerator
      */
     public static @Nullable GeneratorTypeDescriptor fromGenerator(@Nullable PyType type) {
       if (!(type instanceof PyClassType classType)) return null;
 
       final String qName = classType.getClassQName();
       if (qName == null) return null;
-      
+
       boolean isAsync = ASYNC_GENERATOR.equals(qName);
       if (!isAsync && !GENERATOR.equals(qName)) return null;
 
@@ -2151,17 +2152,17 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     /**
      * Unlike {@link #fromGenerator}, this method can also extract yield type from Protocol types like typing.Iterable
      */
-    public static @Nullable GeneratorTypeDescriptor fromGeneratorOrProtocol(@Nullable PyType type, @NotNull TypeEvalContext context) { 
+    public static @Nullable GeneratorTypeDescriptor fromGeneratorOrProtocol(@Nullable PyType type, @NotNull TypeEvalContext context) {
       if (!(type instanceof PyClassType classType)) return null;
-      
+
       GeneratorTypeDescriptor desc = fromGenerator(type);
       if (desc != null) {
         return desc;
       }
-      
+
       if (PyProtocolsKt.isProtocol(classType, context)) {
         PyType yieldType;
-        
+
         PyType syncUpcast = PyTypeUtil.convertToType(classType, "typing.Iterable", classType.getPyClass(), context);
         if (syncUpcast instanceof PyCollectionType collectionType) {
           yieldType = collectionType.getIteratedItemType();
@@ -2172,9 +2173,9 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
           yieldType = asyncCollectionType.getIteratedItemType();
           return new GeneratorTypeDescriptor(yieldType, null, null, true);
         }
-        
+
         // Here we try to understand a yield type by return type of __next__ method of protocol specified in annotation.
-        // We cannot use convertToType with typing.Iterator here, as it inherits from typing.Iterable 
+        // We cannot use convertToType with typing.Iterator here, as it inherits from typing.Iterable
         // and requires both __iter__ and __next__, while it should be possible to decide the yield type only by __next__.
         // TODO: unify logic with PyTargetExpressionImpl.getIterationType (PY-82453)
         PyFunction next = classType.getPyClass().findMethodByName(PyNames.DUNDER_NEXT, true, context);
