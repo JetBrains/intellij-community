@@ -1137,6 +1137,11 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     }
   }
 
+  @ApiStatus.Internal
+  public boolean isScopeSelected(FindPopupScopeUI.ScopeType scopeType) {
+    return mySelectedScope == scopeType;
+  }
+
   private void findSettingsChanged() {
     if (isShowing()) {
       ScrollingUtil.ensureSelectionExists(myResultsPreviewTable);
