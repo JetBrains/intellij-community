@@ -270,7 +270,7 @@ sealed class K2MoveRenameUsageInfo(
             } != null
         }
 
-        context(KaSession)
+        context(_: KaSession)
         private fun KaCallableSymbol.isExtensionDecl(): Boolean {
             if (isExtension == true) return true
             return if (this is KaPropertySymbol) {

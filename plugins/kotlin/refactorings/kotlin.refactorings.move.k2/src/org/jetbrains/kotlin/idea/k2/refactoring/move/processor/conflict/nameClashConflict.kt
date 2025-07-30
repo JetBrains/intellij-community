@@ -6,6 +6,9 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.importableFqName
+import org.jetbrains.kotlin.analysis.api.components.isAnyType
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -55,7 +58,7 @@ private sealed interface SymbolData {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KaType.toTypeInfo(): TypeData {
     if (isAnyOrTypeParameter()) {
         return AnyOrTypeParameter
@@ -70,7 +73,7 @@ private fun KaType.toTypeInfo(): TypeData {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KaSymbol.getContainingSymbolFqn(): FqName? {
     // This breaks if certain modules are used: KT-68810
     runCatching {
@@ -79,13 +82,13 @@ private fun KaSymbol.getContainingSymbolFqn(): FqName? {
     return psi?.kotlinFqName?.parent()
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KaType.isAnyOrTypeParameter(): Boolean {
     if (isAnyType) return true
     return this is KaTypeParameterType
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KaSymbol.toSignatureData(): SymbolData {
     val containingSymbolFqName = getContainingSymbolFqn()
     return when (this) {
