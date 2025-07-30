@@ -29,7 +29,7 @@ class UrlClassLoaderSplitPackageTest {
     )
     val project = IntelliJProjectConfiguration.loadIntelliJProject(PathManager.getHomePath())
     project.modules.filterNot { it.name in platformLoaderModules }.forEach { module -> 
-      val moduleOutput = JpsJavaExtensionService.getInstance().getOutputDirectory(module, false)!!.toPath()
+      val moduleOutput = JpsJavaExtensionService.getInstance().getOutputDirectoryPath(module, false)!!
       urlClassLoaderPackages.forEach { packageName ->
         val packageDir = moduleOutput.resolve(packageName.replace('.', '/'))
         if (packageDir.exists()) {
