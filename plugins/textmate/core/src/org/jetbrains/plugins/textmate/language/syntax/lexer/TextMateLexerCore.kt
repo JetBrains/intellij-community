@@ -362,7 +362,6 @@ class TextMateLexerCore(
       val wsStart = myCurrentOffset
       while (myStripWhitespaces && position > myCurrentOffset && myText[myCurrentOffset].isWhitespace()) {
         myCurrentOffset = TextMateCharOffset(myCurrentOffset.offset + 1)
-        restartable = false
       }
 
       if (wsStart < myCurrentOffset) {
