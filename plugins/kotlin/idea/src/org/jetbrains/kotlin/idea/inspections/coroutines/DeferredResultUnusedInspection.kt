@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.inspections.coroutines
 
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.psi.PsiElementVisitor
@@ -11,21 +12,21 @@ import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.inspections.AbstractResultUnusedChecker
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.callExpressionVisitor
+import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 
-class DeferredResultUnusedInspection(@JvmField var standardOnly: Boolean = false) : AbstractResultUnusedChecker(
-    expressionChecker = fun(expression, inspection): Boolean =
-        inspection is DeferredResultUnusedInspection && expression is KtCallExpression &&
-                (!inspection.standardOnly || expression.calleeExpression?.text in shortNames),
-    callChecker = fun(resolvedCall, inspection): Boolean {
-        if (inspection !is DeferredResultUnusedInspection) return false
+class DeferredResultUnusedInspection(@JvmField var standardOnly: Boolean = false) : AbstractResultUnusedChecker() {
+    override fun isExpressionApplicable(expression: KtExpression): Boolean =
+        expression is KtCallExpression && (!standardOnly || expression.calleeExpression?.text in shortNames)
 
+    override fun shouldReportCall(resolvedCall: ResolvedCall<*>): Boolean {
         val resultingDescriptor = resolvedCall.resultingDescriptor
         val fqName = resultingDescriptor.fqNameOrNull()
         if (fqName in fqNamesThatShouldNotBeReported) return false
 
-        return if (inspection.standardOnly) {
+        return if (standardOnly) {
             fqName in fqNamesAll
         } else {
             val returnTypeClassifier = resultingDescriptor.returnType?.constructor?.declarationDescriptor
@@ -33,14 +34,14 @@ class DeferredResultUnusedInspection(@JvmField var standardOnly: Boolean = false
             importableFqName == deferred || importableFqName == deferredExperimental
         }
     }
-) {
+
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         callExpressionVisitor(fun(expression) {
             if (!check(expression)) return
             holder.registerProblem(expression.calleeExpression ?: expression, KotlinBundle.message("deferred.result.is.never.used"))
         })
 
-  override fun getOptionsPane() = pane(
+  override fun getOptionsPane(): OptPane = pane(
     checkbox("standardOnly", KotlinBundle.message("reports.only.function.calls.from.kotlinx.coroutines")))
 }
 

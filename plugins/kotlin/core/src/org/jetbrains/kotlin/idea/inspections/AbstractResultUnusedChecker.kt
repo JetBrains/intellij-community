@@ -12,13 +12,13 @@ import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-abstract class AbstractResultUnusedChecker(
-    private val expressionChecker: (KtExpression, AbstractResultUnusedChecker) -> Boolean,
-    private val callChecker: (ResolvedCall<*>, AbstractResultUnusedChecker) -> Boolean
-) : AbstractKotlinInspection() {
+abstract class AbstractResultUnusedChecker : AbstractKotlinInspection() {
+    protected abstract fun isExpressionApplicable(expression: KtExpression): Boolean
+    protected abstract fun shouldReportCall(resolvedCall: ResolvedCall<*>): Boolean
+
     protected fun check(expression: KtExpression): Boolean {
         // Check whatever possible by PSI
-        if (!expressionChecker(expression, this)) return false
+        if (!isExpressionApplicable(expression)) return false
         var current: PsiElement? = expression
         var parent: PsiElement? = expression.parent
         while (parent != null) {
@@ -33,6 +33,6 @@ abstract class AbstractResultUnusedChecker(
         val context = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL_WITH_CFA)
         if (context == BindingContext.EMPTY || expression.isUsedAsExpression(context)) return false
         val resolvedCall = expression.getResolvedCall(context) ?: return false
-        return callChecker(resolvedCall, this)
+        return shouldReportCall(resolvedCall)
     }
 }
