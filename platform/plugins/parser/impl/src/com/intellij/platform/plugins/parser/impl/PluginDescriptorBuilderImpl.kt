@@ -2,7 +2,7 @@
 package com.intellij.platform.plugins.parser.impl
 
 import com.intellij.platform.plugins.parser.impl.elements.*
-import com.intellij.util.Java11Shim
+import com.intellij.util.containers.Java11Shim
 import java.time.LocalDate
 
 internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {

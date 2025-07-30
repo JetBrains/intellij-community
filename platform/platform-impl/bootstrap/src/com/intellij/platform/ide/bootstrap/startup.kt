@@ -33,7 +33,7 @@ import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.util.EnvironmentUtil
-import com.intellij.util.Java11Shim
+import com.intellij.util.containers.Java11Shim
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ShellEnvironmentReader
 import com.intellij.util.lang.ZipFilePool

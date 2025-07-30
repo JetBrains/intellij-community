@@ -5,7 +5,7 @@ import com.intellij.platform.plugins.parser.impl.elements.ComponentElement
 import com.intellij.platform.plugins.parser.impl.elements.ExtensionPointElement
 import com.intellij.platform.plugins.parser.impl.elements.ListenerElement
 import com.intellij.platform.plugins.parser.impl.elements.ServiceElement
-import com.intellij.util.Java11Shim
+import com.intellij.util.containers.Java11Shim
 
 internal class ScopedElementsContainerBuilderMemoryOptimized : ScopedElementsContainerBuilder {
   private var _services: MutableList<ServiceElement>? = null

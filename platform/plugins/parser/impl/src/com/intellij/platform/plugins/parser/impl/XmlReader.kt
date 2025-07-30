@@ -9,7 +9,7 @@ import com.intellij.platform.plugins.parser.impl.XmlReadUtils.getNullifiedAttrib
 import com.intellij.platform.plugins.parser.impl.XmlReadUtils.getNullifiedContent
 import com.intellij.platform.plugins.parser.impl.elements.*
 import com.intellij.platform.plugins.parser.impl.elements.ActionElement.*
-import com.intellij.util.Java11Shim
+import com.intellij.util.containers.Java11Shim
 import com.intellij.util.xml.dom.XmlInterner
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import com.intellij.util.xml.dom.readXmlAsModel

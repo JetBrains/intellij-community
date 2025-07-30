@@ -1,10 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.containers
 
-import com.intellij.util.containers.ConcurrentLongObjectMap
-import com.intellij.util.containers.DefaultJava11Shim
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * A factory of various containers which implementations are different in pre/after jdk9.
+ * Used to simplify porting jdk9+ collections to jdk8-modules
+ */
 @ApiStatus.Internal
 abstract class Java11Shim {
   companion object {

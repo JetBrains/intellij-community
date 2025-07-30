@@ -4,7 +4,7 @@ package com.intellij.openapi.extensions.impl
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.util.Java11Shim
+import com.intellij.util.containers.Java11Shim
 
 internal class InterfaceExtensionPoint<T : Any>(
   name: String,
