@@ -3,12 +3,10 @@ package com.intellij.dvcs.actions
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.repo.Repository
-import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.Project
 import java.awt.datatransfer.StringSelection
 
 internal class CopyCurrentBranchNameAction : DumbAwareAction() {
@@ -16,7 +14,7 @@ internal class CopyCurrentBranchNameAction : DumbAwareAction() {
 
     override fun update(e: AnActionEvent) {
         val project = e.project
-        e.presentation.isEnabledAndVisible = project != null && hasVcsSupport(project)
+        e.presentation.isEnabledAndVisible = project != null && DvcsUtil.guessRepositoryForOperation(project, e.dataContext) != null
     }
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -29,10 +27,5 @@ internal class CopyCurrentBranchNameAction : DumbAwareAction() {
         } ?: return
 
         CopyPasteManager.getInstance().setContents(StringSelection(branchName))
-    }
-
-    private fun hasVcsSupport(project: Project): Boolean {
-        val repositoryManager = VcsRepositoryManager.getInstance(project)
-        return repositoryManager.getRepositories().isNotEmpty()
     }
 }
