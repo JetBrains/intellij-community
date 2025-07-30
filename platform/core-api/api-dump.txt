@@ -1534,6 +1534,8 @@ com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider
 - com.intellij.psi.FileViewProvider
 - a:getBaseLanguage():com.intellij.lang.Language
 - a:getTemplateDataLanguage():com.intellij.lang.Language
+com.intellij.psi.tree.CustomLanguageASTComparator
+- compareAST(com.intellij.lang.ASTNode,com.intellij.lang.ASTNode):com.intellij.util.ThreeState
 com.intellij.psi.tree.ICompositeElementType
 - a:createCompositeNode():com.intellij.lang.ASTNode
 com.intellij.psi.tree.ICustomParsingType
