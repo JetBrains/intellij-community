@@ -124,7 +124,7 @@ public class GradleDependencyReportGenerator {
     node.setResolutionState(ResolutionState.RESOLVED);
     ComponentSelectionReason selectionReason = resolvedComponent.getSelectionReason();
     if (DefaultGroovyMethods.asBoolean(DefaultGroovyMethods.hasProperty(selectionReason, "descriptions"))) {
-      List<ComponentSelectionDescriptor> descriptions = selectionReason.getDescriptions();
+      List<? extends ComponentSelectionDescriptor> descriptions = selectionReason.getDescriptions();
       if (!descriptions.isEmpty()) {
         node.setSelectionReason(DefaultGroovyMethods.last(descriptions).getDescription());
       }
