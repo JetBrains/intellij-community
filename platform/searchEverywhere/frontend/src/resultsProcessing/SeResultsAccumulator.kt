@@ -9,18 +9,11 @@ import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SeResultsAccumulator(providerIds: List<SeProviderId>, nonBlockedProviderIds: List<SeProviderId>) {
+class SeResultsAccumulator() {
   private val mutex = Mutex()
   private val items = mutableMapOf<String, SeItemData>()
-  //private val balancer = SeResultsCountBalancer("FE", providerIds, nonBlockedProviderIds)
-
-  suspend fun end(providerId: SeProviderId) {
-    //balancer.end(providerId)
-  }
 
   suspend fun add(newItem: SeItemData): SeResultEvent? {
-    //balancer.add(newItem)
-
     mutex.withLock {
       val event = calculateEventType(newItem)
 
