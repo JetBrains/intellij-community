@@ -105,10 +105,6 @@ f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$ComboBoxe
 - f:getLambda$-1611273135$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda$-2049027872$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function5
 - f:getLambda$1819384926$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function5
-f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$ScrollbarsKt
-- sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$ScrollbarsKt
-- <init>():V
-- f:getLambda$-975955135$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function3
 f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$SplitLayoutsKt
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$SplitLayoutsKt
 - <init>():V
@@ -160,7 +156,7 @@ f:org.jetbrains.jewel.samples.showcase.components.ProgressBarKt
 f:org.jetbrains.jewel.samples.showcase.components.RadioButtonsKt
 - sf:RadioButtons(androidx.compose.runtime.Composer,I):V
 f:org.jetbrains.jewel.samples.showcase.components.ScrollbarsKt
-- sf:Scrollbars(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility,org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility,androidx.compose.runtime.Composer,I):V
+- sf:Scrollbars(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility,org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.SegmentedControlsKt
 - sf:SegmentedControls(androidx.compose.runtime.Composer,I):V
 f:org.jetbrains.jewel.samples.showcase.components.SliderKt

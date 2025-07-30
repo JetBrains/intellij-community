@@ -7,7 +7,7 @@ plugins {
 dependencies {
     api(projects.ui)
     api(projects.intUi.intUiStandalone)
+    testImplementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
     testImplementation(compose.desktop.uiTestJUnit4)
     testImplementation(kotlin("test"))
-    testImplementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
 }
