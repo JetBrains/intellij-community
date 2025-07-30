@@ -1,5 +1,0 @@
-f:org.jetbrains.jewel.intui.markdown.standalone.IntUiMarkdownBlockRendererExtensionsKt
-f:org.jetbrains.jewel.intui.markdown.standalone.IntUiProvideMarkdownStylingKt
-f:org.jetbrains.jewel.intui.markdown.standalone.styling.IntUiMarkdownStylingKt
-f:org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.github.alerts.IntUiGitHubAlertStylingKt
-f:org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.github.tables.IntUiGitHubTableStylingKt
