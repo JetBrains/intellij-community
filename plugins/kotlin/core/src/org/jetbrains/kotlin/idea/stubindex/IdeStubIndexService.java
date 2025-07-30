@@ -29,27 +29,25 @@ public class IdeStubIndexService extends StubIndexService {
         FqName packageFqName = stub.getPackageFqName();
 
         sink.occurrence(KotlinExactPackagesIndex.NAME, packageFqName.asString());
-
         if (stub.isScript()) return;
 
-        FqName facadeFqName = ((KotlinFileStubImpl) stub).getFacadeFqName();
+        KotlinFileStubImpl fileStub = (KotlinFileStubImpl) stub;
+        FqName facadeFqName = fileStub.getFacadeFqName();
         if (facadeFqName != null) {
             sink.occurrence(KotlinFileFacadeFqNameIndex.Helper.getIndexKey(), facadeFqName.asString());
             sink.occurrence(KotlinFileFacadeShortNameIndex.Helper.getIndexKey(), facadeFqName.shortName().asString());
             sink.occurrence(KotlinFileFacadeClassByPackageIndex.Helper.getIndexKey(), packageFqName.asString());
         }
 
-        FqName partFqName = ((KotlinFileStubImpl) stub).getPartFqName();
-        if (partFqName != null) {
+        String partSimpleName = fileStub.getPartSimpleName();
+        if (partSimpleName != null) {
+            FqName partFqName = packageFqName.child(Name.identifier(partSimpleName));
             sink.occurrence(KotlinFilePartClassIndex.Helper.getIndexKey(), partFqName.asString());
         }
 
-        List<String> partNames = ((KotlinFileStubImpl) stub).getFacadePartSimpleNames();
+        List<String> partNames = fileStub.getFacadePartSimpleNames();
         if (partNames != null) {
             for (String partName : partNames) {
-                if (partName == null) {
-                    continue;
-                }
                 FqName multiFileClassPartFqName = packageFqName.child(Name.identifier(partName));
                 sink.occurrence(KotlinMultiFileClassPartIndex.Helper.getIndexKey(), multiFileClassPartFqName.asString());
             }
