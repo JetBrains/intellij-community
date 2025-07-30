@@ -364,9 +364,10 @@ public final class PathManager {
     String path = ourConfigPath;
     if (path == null) {
       String explicit = getExplicitPath(PROPERTY_CONFIG_PATH);
-      ourConfigPath = path = explicit != null ? explicit :
-                             ourPathSelector != null ? getDefaultConfigPathFor(ourPathSelector) :
-                  getHomePath() + '/' + CONFIG_DIRECTORY;
+      ourConfigPath = path =
+        explicit != null ? explicit :
+        ourPathSelector != null ? getDefaultConfigPathFor(ourPathSelector) :
+        getHomePath() + '/' + CONFIG_DIRECTORY;
     }
     return path;
   }
@@ -425,9 +426,9 @@ public final class PathManager {
     String path = ourPluginPath;
     if (path == null) {
       String explicit = getExplicitPath(PROPERTY_PLUGINS_PATH);
-      ourPluginPath = path = explicit != null ? explicit :
-                             ourPathSelector != null && System.getProperty(PROPERTY_CONFIG_PATH) == null ? getDefaultPluginPathFor(
-                               ourPathSelector) :
+      ourPluginPath = path =
+        explicit != null ? explicit :
+        ourPathSelector != null && System.getProperty(PROPERTY_CONFIG_PATH) == null ? getDefaultPluginPathFor(ourPathSelector) :
         getConfigPath() + '/' + PLUGINS_DIRECTORY;
     }
     return path;
@@ -466,8 +467,9 @@ public final class PathManager {
     String path = ourSystemPath;
     if (path == null) {
       String explicit = getExplicitPath(PROPERTY_SYSTEM_PATH);
-      ourSystemPath = path = explicit != null ? explicit :
-                             ourPathSelector != null ? getDefaultSystemPathFor(ourPathSelector) :
+      ourSystemPath = path =
+        explicit != null ? explicit :
+        ourPathSelector != null ? getDefaultSystemPathFor(ourPathSelector) :
         getHomePath() + '/' + SYSTEM_DIRECTORY;
     }
     return path;
@@ -536,15 +538,13 @@ public final class PathManager {
   @ApiStatus.Internal
   public static @NotNull Path getIndexRoot() {
     String indexRootPath = getExplicitPath("index_root_path");
-    if (indexRootPath == null) {
-      indexRootPath = getSystemPath() + "/index";
-    }
+    if (indexRootPath == null) indexRootPath = getSystemPath() + "/index";
     return Paths.get(indexRootPath);
   }
 
   /**
    * Returns the path to the directory where log files are stored.
-   * Usually you don't need to access it directly, use {@link com.intellij.openapi.diagnostic.Logger} instead.
+   * Usually you don't need to access it directly, use {@link Logger} instead.
    */
   public static @NotNull Path getLogDir() {
     return Paths.get(getLogPath());
@@ -557,9 +557,9 @@ public final class PathManager {
     String path = ourLogPath;
     if (path == null) {
       String explicit = getExplicitPath(PROPERTY_LOG_PATH);
-      ourLogPath = path = explicit != null ? explicit :
-                          ourPathSelector != null && System.getProperty(PROPERTY_SYSTEM_PATH) == null ? getDefaultLogPathFor(
-                            ourPathSelector) :
+      ourLogPath = path =
+        explicit != null ? explicit :
+        ourPathSelector != null && System.getProperty(PROPERTY_SYSTEM_PATH) == null ? getDefaultLogPathFor(ourPathSelector) :
         getSystemPath() + '/' + LOG_DIRECTORY;
     }
     return path;
@@ -600,9 +600,7 @@ public final class PathManager {
    */
   public static @Nullable String getResourceRoot(@NotNull Class<?> context, @NotNull String path) {
     URL url = context.getResource(path);
-    if (url == null) {
-      url = ClassLoader.getSystemResource(path.substring(1));
-    }
+    if (url == null) url = ClassLoader.getSystemResource(path.substring(1));
     return url != null ? extractRoot(url, path) : null;
   }
 
@@ -660,7 +658,7 @@ public final class PathManager {
   }
 
   // do not use URLUtil.splitJarUrl here - used in bootstrap
-  private static @Nullable String splitJarUrl(@NotNull String url) {
+  private static @Nullable String splitJarUrl(String url) {
     int pivot = url.indexOf(URLUtil.JAR_SEPARATOR);
     if (pivot < 0) {
       return null;
@@ -921,11 +919,9 @@ public final class PathManager {
     return Paths.get(path).toAbsolutePath().normalize().toString();
   }
 
-  private static @Nullable String getExplicitPath(@NotNull String property) {
+  private static @Nullable String getExplicitPath(String property) {
     String path = System.getProperty(property);
-    if (path == null) {
-      return null;
-    }
+    if (path == null) return null;
 
     try {
       boolean quoted = path.length() > 1 && '"' == path.charAt(0) && '"' == path.charAt(path.length() - 1);
@@ -937,20 +933,24 @@ public final class PathManager {
     }
   }
 
-  private static String platformPath(String selector,
-                                     String macDir, String macSub,
-                                     String winVar, String winSub,
-                                     String xdgVar, String xdgDfl, String xdgSub) {
+  private static String platformPath(
+    String selector,
+    String macDir, String macSub,
+    String winVar, String winSub,
+    String xdgVar, String xdgDfl, String xdgSub
+  ) {
     return platformPath(getLocalOS(), System.getenv(), System.getProperty("user.home"), selector, macDir, macSub, winVar, winSub, xdgVar, xdgDfl, xdgSub);
   }
 
-  private static String platformPath(@NotNull OS os,
-                                     @NotNull Map<String, String> env,
-                                     String userHome,
-                                     String selector,
-                                     String macDir, String macSub,
-                                     String winVar, String winSub,
-                                     String xdgVar, String xdgDfl, String xdgSub) {
+  private static String platformPath(
+    OS os,
+    Map<String, String> env,
+    String userHome,
+    String selector,
+    String macDir, String macSub,
+    String winVar, String winSub,
+    String xdgVar, String xdgDfl, String xdgSub
+  ) {
     String vendorName = vendorName();
 
     if (os == OS.MACOS) {
@@ -985,7 +985,6 @@ public final class PathManager {
     return dir;
   }
 
-  @NotNull
   private static String vendorName() {
     String property = System.getProperty(PROPERTY_VENDOR_NAME);
     if (property == null) {
