@@ -40,6 +40,5 @@
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="library" name="Jaxen" level="project" />
-    <orderEntry type="library" name="rhizomedb-compiler-plugin" level="project" />
   </component>
 </module>
