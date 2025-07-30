@@ -28,6 +28,7 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.ide.internal" />
+    <orderEntry type="module" module-name="intellij.sh" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="library" name="assertJ" level="project" />
     <orderEntry type="library" name="jediterm-core" level="project" />

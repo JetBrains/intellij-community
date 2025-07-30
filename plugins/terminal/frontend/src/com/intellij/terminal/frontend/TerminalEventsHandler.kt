@@ -1,9 +1,11 @@
 package com.intellij.terminal.frontend
 
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
 
-internal interface TerminalEventsHandler {
+@ApiStatus.Internal
+interface TerminalEventsHandler {
   fun keyTyped(e: TimedKeyEvent) {}
   fun keyPressed(e: TimedKeyEvent) {}
 

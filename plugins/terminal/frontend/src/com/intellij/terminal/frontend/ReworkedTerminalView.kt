@@ -31,6 +31,11 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.plugins.terminal.TerminalFontSettingsListener
+import org.jetbrains.plugins.terminal.TerminalFontSettingsService
+import org.jetbrains.plugins.terminal.TerminalFontSizeProviderImpl
 import org.jetbrains.plugins.terminal.TerminalPanelMarker
 import org.jetbrains.plugins.terminal.block.TerminalContentView
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
@@ -54,7 +59,8 @@ import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import kotlin.math.min
 
-internal class ReworkedTerminalView(
+@ApiStatus.Internal
+class ReworkedTerminalView(
   private val project: Project,
   settings: JBTerminalSystemSettingsProviderBase,
   private val sessionFuture: CompletableFuture<TerminalSession>,
@@ -63,22 +69,29 @@ internal class ReworkedTerminalView(
   private val coroutineScope = terminalProjectScope(project).childScope("ReworkedTerminalView")
 
   private val sessionModel: TerminalSessionModel
-  private val blocksModel: TerminalBlocksModel
+
+  @VisibleForTesting
+  val blocksModel: TerminalBlocksModel
   private val encodingManager: TerminalKeyEncodingManager
   private val controller: TerminalSessionController
 
   private val terminalInput: TerminalInput
   private val terminalSearchController: TerminalSearchController
 
-  private val outputEditor: EditorEx
+  @VisibleForTesting
+  val outputEditor: EditorEx
   private val outputHyperlinkFacade: FrontendTerminalHyperlinkFacade?
   private val alternateBufferEditor: EditorEx
+
+  @VisibleForTesting
+  val outputModel: TerminalOutputModelImpl
   private val alternateBufferHyperlinkFacade: FrontendTerminalHyperlinkFacade?
-  private val outputModel: TerminalOutputModelImpl
   private val scrollingModel: TerminalOutputScrollingModel
   private var isAlternateScreenBuffer = false
 
   private val terminalPanel: TerminalPanel
+  @VisibleForTesting
+  val outputEditorEventsHandler: TerminalEventsHandler
 
   override val component: JComponent
     get() = terminalPanel
@@ -105,18 +118,18 @@ internal class ReworkedTerminalView(
 
     alternateBufferEditor = TerminalEditorFactory.createAlternateBufferEditor(project, settings, parentDisposable = this)
     val alternateBufferModel = TerminalOutputModelImpl(alternateBufferEditor.document, maxOutputLength = 0)
+    val alternateBufferEventsHandler = TerminalEventsHandlerImpl(sessionModel, alternateBufferEditor, encodingManager, terminalInput, settings, null, alternateBufferModel)
     configureOutputEditor(
       project,
       editor = alternateBufferEditor,
       model = alternateBufferModel,
       settings,
       sessionModel,
-      encodingManager,
       terminalInput,
       coroutineScope.childScope("TerminalAlternateBufferModel"),
-      scrollingModel = null,
       fusCursorPaintingListener,
       fusFirstOutputListener,
+      alternateBufferEventsHandler,
     )
     alternateBufferHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
       FrontendTerminalHyperlinkFacade(
@@ -138,6 +151,7 @@ internal class ReworkedTerminalView(
 
     scrollingModel = TerminalOutputScrollingModelImpl(outputEditor, outputModel, sessionModel, coroutineScope.childScope("TerminalOutputScrollingModel"))
     outputEditor.putUserData(TerminalOutputScrollingModel.KEY, scrollingModel)
+    outputEditorEventsHandler = TerminalEventsHandlerImpl(sessionModel, outputEditor, encodingManager, terminalInput, settings, scrollingModel, outputModel)
 
     configureOutputEditor(
       project,
@@ -145,12 +159,11 @@ internal class ReworkedTerminalView(
       model = outputModel,
       settings,
       sessionModel,
-      encodingManager,
       terminalInput,
       coroutineScope.childScope("TerminalOutputModel"),
-      scrollingModel,
       fusCursorPaintingListener,
       fusFirstOutputListener,
+      outputEditorEventsHandler,
     )
 
     outputEditor.putUserData(TerminalSessionModel.KEY, sessionModel)
@@ -318,12 +331,11 @@ internal class ReworkedTerminalView(
     model: TerminalOutputModel,
     settings: JBTerminalSystemSettingsProviderBase,
     sessionModel: TerminalSessionModel,
-    encodingManager: TerminalKeyEncodingManager,
     terminalInput: TerminalInput,
     coroutineScope: CoroutineScope,
-    scrollingModel: TerminalOutputScrollingModel?,
     fusCursorPainterListener: TerminalFusCursorPainterListener?,
     fusFirstOutputListener: TerminalFusFirstOutputListener?,
+    eventsHandler: TerminalEventsHandlerImpl,
   ) {
     val parentDisposable = coroutineScope.asDisposable() // same lifecycle as `this@ReworkedTerminalView`
 

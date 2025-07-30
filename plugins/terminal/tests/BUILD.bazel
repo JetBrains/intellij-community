@@ -42,6 +42,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util/coroutines",
     "//platform/platform-impl/internal",
+    "//plugins/sh",
     "//platform/code-style-api:codeStyle",
     "@lib//:assert_j",
     "@lib//:jediterm-core",

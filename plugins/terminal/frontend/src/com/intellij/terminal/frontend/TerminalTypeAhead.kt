@@ -53,7 +53,7 @@ internal class TerminalTypeAhead(
   fun isDisabled() = PlatformUtils.isJetBrainsClient() || isDisabledInRegistry() || !isTypingCommand()
 
   private fun isDisabledInRegistry(): Boolean = !Registry.`is`("terminal.type.ahead", false)
-  
+
   private fun isTypingCommand(): Boolean = blocksModel.blocks.lastOrNull()?.let { lastBlock ->
     // The command start offset is where the prompt ends. If it's not there yet, it means the user can't type a command yet.
     // The output start offset is -1 until the command starts executing. Once that happens, it means the user can't type anymore.
