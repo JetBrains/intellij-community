@@ -5,6 +5,6 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
-    <multiHostInjector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaRegexInjector"/>
+    <multiHostInjector implementation="com.intellij.json.backend.regexp.JsonSchemaRegexInjector"/>
   </extensions>
 </idea-plugin>

@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.jsonSchema.impl;
+package com.intellij.json.backend.regexp;
 
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonStringLiteral;
@@ -7,6 +7,8 @@ import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ThreeState;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker;
+import com.jetbrains.jsonSchema.impl.JsonSchemaInjectorBase;
 import org.intellij.lang.regexp.ecmascript.EcmaScriptRegexpLanguage;
 import org.jetbrains.annotations.NotNull;
 
