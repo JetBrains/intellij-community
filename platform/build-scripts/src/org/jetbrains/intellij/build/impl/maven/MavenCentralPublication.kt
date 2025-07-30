@@ -78,6 +78,7 @@ class MavenCentralPublication(
     private const val UPLOADING_URI_BASE = "$URI_BASE/upload"
     private const val STATUS_URI_BASE = "$URI_BASE/status"
     private val JSON = Json { ignoreUnknownKeys = true }
+    private val SUPPORTED_CHECKSUMS = setOf("md5", "sha1", "sha256", "sha512")
 
     /**
      * See https://central.sonatype.org/publish/requirements/#required-pom-metadata
@@ -118,34 +119,33 @@ class MavenCentralPublication(
     AUTOMATIC,
   }
 
-  private inner class MavenArtifacts(
+  private class MavenArtifacts(
     val coordinates: MavenCoordinates,
-    val distributionFiles: List<Path>,
+    val distributionFiles: Collection<Path>,
   ) {
-    val signatures: List<Path>
-      get() = distributionFiles.asSequence()
-        .map { it.resolveSibling("${it.fileName}.asc") }
-        .onEach {
-          check(sign || it.exists()) {
-            "Signature file $it is expected to be present"
-          }
-        }.filter {
-          it.exists()
-        }.toList()
+    /**
+     * From https://central.sonatype.org/publish/requirements/#sign-files-with-gpgpgp:
+     * > Notice that .asc files don't need checksum files, nor do checksum files need .asc signature files
+     */
+    val signatures: Collection<Path> = distributionFiles.mapNotNull {
+      if (it.extension in SUPPORTED_CHECKSUMS) {
+        null
+      }
+      else {
+        it.resolveSibling("${it.name}.asc")
+      }
+    }
 
-    val checksums: List<Path>
-      get() = distributionFiles.asSequence().flatMap {
-        sequenceOf(
-          it.resolveSibling("${it.fileName}.md5"),
-          it.resolveSibling("${it.fileName}.sha1"),
-          it.resolveSibling("${it.fileName}.sha256"),
-          it.resolveSibling("${it.fileName}.sha512"),
-        )
-      }.onEach {
-        check(it.exists()) {
-          "Checksum file $it is expected to present"
+    val checksums: Collection<Path> = distributionFiles.asSequence().flatMap { file ->
+      if (file.extension in SUPPORTED_CHECKSUMS) {
+        sequenceOf(file)
+      }
+      else {
+        SUPPORTED_CHECKSUMS.asSequence().map {
+          file.resolveSibling("${file.name}.$it")
         }
-      }.toList()
+      }
+    }.toSet()
   }
 
   private fun files(glob: String): List<Path> {
@@ -189,17 +189,24 @@ class MavenCentralPublication(
   }
 
   private suspend fun sign() {
-    if (sign) {
-      context.proprietaryBuildTools.signTool.signFilesWithGpg(
-        artifacts.flatMap { it.distributionFiles }, context
-      )
+    context.proprietaryBuildTools.signTool.signFilesWithGpg(
+      artifacts.flatMap {
+        it.distributionFiles - it.checksums.toSet()
+      }, context
+    )
+    val missing = artifacts.asSequence()
+      .flatMap { it.signatures }
+      .filterNot { it.exists() }
+      .toList()
+    assert(missing.none()) {
+      "Signature files are missing: $missing"
     }
   }
 
   private suspend fun generateOrVerifyChecksums() {
     coroutineScope {
       for (artifact in artifacts) {
-        for (file in artifact.distributionFiles.asSequence() + artifact.signatures) {
+        for (file in artifact.distributionFiles.minus(artifact.checksums.toSet())) {
           launch(CoroutineName("checksums for $file")) {
             val checksums = Checksums(file, sha1(), sha256(), sha512(), md5())
             generateOrVerifyChecksum(file, extension = "sha1", checksums.sha1sum)
@@ -209,6 +216,13 @@ class MavenCentralPublication(
           }
         }
       }
+    }
+    val missing = artifacts.asSequence()
+      .flatMap { it.checksums }
+      .filterNot { it.exists() }
+      .toList()
+    assert(missing.none()) {
+      "Checksum files are missing: $missing"
     }
   }
 
@@ -221,7 +235,7 @@ class MavenCentralPublication(
   private fun CoroutineScope.generateOrVerifyChecksum(file: Path, extension: String, value: String) {
     launch(CoroutineName("checksum $extension for $file")) {
       spanBuilder("checksum").setAttribute("file", "$file").setAttribute("extension", extension).use {
-        val checksumFile = file.resolveSibling("${file.fileName}.$extension")
+        val checksumFile = file.resolveSibling("${file.name}.$extension")
         if (checksumFile.exists()) {
           val suppliedValue = checksumFile.readLines().asSequence()
             // sha256sum command output is a line with checksum,
