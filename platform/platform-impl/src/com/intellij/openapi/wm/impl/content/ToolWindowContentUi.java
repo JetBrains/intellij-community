@@ -688,7 +688,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     sink.set(PlatformDataKeys.TOOL_WINDOW, window);
     sink.set(PlatformCoreDataKeys.HELP_ID, window.getHelpId());
     sink.set(CommonDataKeys.PROJECT, window.toolWindowManager.getProject());
-    sink.set(CloseAction.CloseTarget.KEY, computeCloseTarget());
+    sink.set(CloseAction.CloseTarget.KEY, computeCloseTarget(window));
     if (getCurrentLayout() instanceof MorePopupAware o) {
       sink.set(MorePopupAware.KEY_TOOLWINDOW_TITLE, o);
     }
@@ -721,7 +721,9 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     }
   }
 
-  private @NotNull CloseAction.CloseTarget computeCloseTarget() {
+  @ApiStatus.Internal
+  public static @NotNull CloseAction.CloseTarget computeCloseTarget(@NotNull ToolWindow toolWindow) {
+    ContentManager contentManager = toolWindow.getContentManager();
     if (contentManager.canCloseContents()) {
       Content selected = contentManager.getSelectedContent();
       if (selected != null && selected.isCloseable()) {
@@ -729,17 +731,26 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
       }
     }
 
-    return new HideToolwindowTarget();
+    return new HideToolwindowTarget(toolWindow);
   }
 
-  private final class HideToolwindowTarget implements CloseAction.CloseTarget {
+  private static final class HideToolwindowTarget implements CloseAction.CloseTarget {
+    private final ToolWindow myToolWindow;
+
+    private HideToolwindowTarget(ToolWindow toolWindow) {
+      myToolWindow = toolWindow;
+    }
+
     @Override
     public void close() {
-      window.fireHidden(ToolWindowEventSource.CloseAction);
+      ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myToolWindow.getProject());
+      if (toolWindowManager instanceof ToolWindowManagerImpl impl) {
+        impl.hideToolWindow(myToolWindow.getId(), false, true, false, ToolWindowEventSource.CloseAction);
+      }
     }
   }
 
-  private final class CloseContentTarget implements CloseAction.CloseTarget {
+  private static final class CloseContentTarget implements CloseAction.CloseTarget {
     private final Content myContent;
 
     private CloseContentTarget(Content content) {
@@ -748,7 +759,10 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
 
     @Override
     public void close() {
-      contentManager.removeContent(myContent, true, true, true);
+      ContentManager contentManager = myContent.getManager();
+      if (contentManager != null) {
+        contentManager.removeContent(myContent, true, true, true);
+      }
     }
   }
 
