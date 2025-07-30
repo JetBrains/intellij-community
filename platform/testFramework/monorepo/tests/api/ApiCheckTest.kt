@@ -1,9 +1,15 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.monorepo.api
 
 import com.intellij.platform.testFramework.monorepo.MonorepoProjectStructure
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.*
-import org.junit.jupiter.api.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.cancel
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.TestFactory
 
 class ApiCheckTest {
 
