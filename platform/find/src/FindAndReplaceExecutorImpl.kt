@@ -3,6 +3,7 @@ package com.intellij.platform.find
 
 import com.intellij.find.FindModel
 import com.intellij.find.FindSettings
+import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.find.findInProject.FindInProjectManager
 import com.intellij.find.impl.FindAndReplaceExecutor
 import com.intellij.find.impl.FindInProjectUtil
@@ -60,8 +61,12 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
         currentSearchDisposable?.let { Disposer.dispose(it) }
         currentSearchDisposable = Disposer.newCheckedDisposable(disposableParent, "Find in Project Search")
 
-        FindRemoteApi.getInstance().findByModel(findModel, project.projectId(), filesToScanInitially.map { it.rpcId() })
-          .let {
+        FindRemoteApi.getInstance().findByModel(
+          findModel = findModel,
+          projectId = project.projectId(),
+          filesToScanInitially = filesToScanInitially.map { it.rpcId() },
+          maxUsagesCount = ShowUsagesAction.getUsagesPageSize()
+        ).let {
             if (shouldThrottle) it.throttledWithAccumulation()
             else it.map { event -> ThrottledOneItem(event) }
           }.collect { throttledItems ->

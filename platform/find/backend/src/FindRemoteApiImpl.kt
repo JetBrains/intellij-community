@@ -3,7 +3,6 @@ package com.intellij.platform.find.backend
 
 import com.intellij.find.FindModel
 import com.intellij.find.FindSettings
-import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.find.findInProject.FindInProjectManager
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.find.impl.FindPopupPanel
@@ -39,7 +38,8 @@ private val LOG: Logger = logger<FindRemoteApiImpl>()
 
 internal class FindRemoteApiImpl : FindRemoteApi {
 
-  override suspend fun findByModel(findModel: FindModel, projectId: ProjectId, filesToScanInitially: List<VirtualFileId>): Flow<FindInFilesResult> {
+  override suspend fun findByModel(findModel: FindModel, projectId: ProjectId, filesToScanInitially: List<VirtualFileId>, maxUsagesCount: Int): Flow<FindInFilesResult> {
+    val sentItems = AtomicInteger(0)
     return channelFlow {
         //TODO rewrite find function without using progress indicator and presentation
         val progressIndicator = EmptyProgressIndicator()
@@ -47,7 +47,6 @@ internal class FindRemoteApiImpl : FindRemoteApi {
 
         val isReplaceState = findModel.isReplaceState
         val previousResult = ThreadLocal<UsageInfo2UsageAdapter>()
-        val maxUsages = ShowUsagesAction.getUsagesPageSize()
         val usagesCount = AtomicInteger()
 
         val project = projectId.findProjectOrNull()
@@ -61,46 +60,47 @@ internal class FindRemoteApiImpl : FindRemoteApi {
         //read action is necessary in case of the loading from a directory
         val scope = readAction {  FindInProjectUtil.getGlobalSearchScope(project, findModel) }
         FindInProjectUtil.findUsages(findModel, project, progressIndicator, presentation, filesToScanInitially) { usageInfo ->
+          val usageNum = usagesCount.incrementAndGet()
+          if (usageNum > maxUsagesCount) {
+            return@findUsages false
+          }
           val virtualFile = usageInfo.virtualFile
           if (virtualFile == null)
             return@findUsages true
 
-          val usageNum = usagesCount.incrementAndGet()
-          if (usageNum > maxUsages) {
-            return@findUsages false
-          }
-
           val adapter = UsageInfo2UsageAdapter(usageInfo)
           val previousItem: UsageInfo2UsageAdapter? = previousResult.get()
-          val originalLength = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset
           if (!isReplaceState && previousItem != null) adapter.merge(previousItem)
-          adapter.updateCachedPresentation()
           previousResult.set(adapter)
-
-          val textChunks = adapter.text.map {it.toSerializableTextChunk()
-          }
-          val bgColor = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile)?.rpcId()
-          val presentablePath = getPresentableFilePath(project, scope, virtualFile)
-
-          val result = FindInFilesResult(
-            presentation = textChunks,
-            line = adapter.line,
-            navigationOffset = adapter.navigationOffset,
-            mergedOffsets = adapter.mergedInfos.map { it.navigationOffset },
-            length = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
-            originalLength = originalLength, //could differ from the length in the case of the merged items
-            fileId = virtualFile.rpcId(),
-            presentablePath = if (virtualFile.parent == null) FindPopupPanel.getPresentablePath(project, virtualFile) ?: virtualFile.presentableUrl
-            else FindPopupPanel.getPresentablePath(project, virtualFile.parent) + File.separator + virtualFile.name,
-            shortenPresentablePath = presentablePath,
-            backgroundColor = bgColor,
-            tooltipText = adapter.tooltipText,
-            iconId = adapter.icon?.rpcId(),
-          )
           launch {
+            adapter.updateCachedPresentation()
+            val textChunks = adapter.text.map {
+              it.toSerializableTextChunk()
+            }
+            val bgColor = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile)?.rpcId()
+            val presentablePath = readAction { getPresentableFilePath(project, scope, virtualFile) }
+
+            val result = FindInFilesResult(
+              presentation = textChunks,
+              line = adapter.line,
+              navigationOffset = adapter.navigationOffset,
+              mergedOffsets = adapter.mergedInfos.map { it.navigationOffset },
+              length = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
+              fileId = virtualFile.rpcId(),
+              presentablePath = if (virtualFile.parent == null) FindPopupPanel.getPresentablePath(project, virtualFile)
+                                                                ?: virtualFile.presentableUrl
+              else FindPopupPanel.getPresentablePath(project, virtualFile.parent) + File.separator + virtualFile.name,
+              shortenPresentablePath = presentablePath,
+              backgroundColor = bgColor,
+              tooltipText = adapter.tooltipText,
+              iconId = adapter.icon?.rpcId(),
+            )
+
             send(result)
+            if (usagesCount.get() > maxUsagesCount && sentItems.incrementAndGet() >= maxUsagesCount)
+              close()
           }.start()
-          usagesCount.get() <= maxUsages
+          usagesCount.get() <= maxUsagesCount
         }
     }
   }
