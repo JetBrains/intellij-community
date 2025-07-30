@@ -4,11 +4,14 @@ package com.intellij.platform.searchEverywhere.utils
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.providers.SeLog
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.fetchAndIncrement
@@ -101,7 +104,7 @@ class SeResultsCountBalancer(private val logLabel: String,
     SeLog.logSuspendable(SeLog.BALANCING) {
       val nonBlocked = nonBlockedRunning.associateWith { nonBlockedCounts[it]!!.load() }.map { "${it.key.value}: ${it.value}" }.joinToString(", ")
       val highPriority = highPriorityRunning.associateWith { highPriorityPermits[it]!!.availablePermits }.map { "${it.key.value}: ${it.value}" }.joinToString(", ")
-      val lowPriority = lowPriorityRunning.associateWith { lowPriorityPermits[it]!!.availablePermits() }.map { "${it.key.value}: ${it.value}" }.joinToString(", ")
+      val lowPriority = lowPriorityRunning.associateWith { lowPriorityPermits[it]!!.availablePermits }.map { "${it.key.value}: ${it.value}" }.joinToString(", ")
       "($logLabel) Available permits: nonBlocked: $nonBlocked, high: $highPriority, low: $lowPriority"
     }
   }
@@ -115,40 +118,22 @@ class SeResultsCountBalancer(private val logLabel: String,
  * A semaphore that allows releasing more permits, than the initial permits value.
  */
 @ApiStatus.Internal
-private class RelaxedSemaphore(permits: Int) {
-  private val mutex = Mutex()
-  private var availablePermits = permits
-  private var isFreeToGo = AtomicBoolean(false)
+class RelaxedSemaphore(initialPermits: Int = 0) {
+  private val permitsFlow = MutableStateFlow(initialPermits)
+  val availablePermits: Int get() = permitsFlow.value
+
+  fun release(permits: Int = 1) {
+    permitsFlow.update { it + permits }
+  }
 
   suspend fun acquire() {
-    if (isFreeToGo.get()) return
-
-    mutex.withLock {
-      if (isFreeToGo.get()) return
-
-      while (!isFreeToGo.get() && availablePermits <= 0) {
-        mutex.unlock()
-        // Give other coroutines a chance to execute and possibly release permits
-        kotlinx.coroutines.yield()
-        mutex.lock()
-      }
-      availablePermits--
+    while (true) {
+      val count = permitsFlow.filter { it >= 1 }.first() // Wait until enough permits are available
+      if (permitsFlow.compareAndSet(count, count - 1)) return
     }
   }
 
-  suspend fun release(permits: Int = 1) {
-    mutex.withLock {
-      availablePermits += permits
-    }
-  }
-
-  suspend fun makeItFreeToGo() {
-    mutex.withLock {
-      isFreeToGo.set(true)
-    }
-  }
-
-  suspend fun availablePermits(): Int = mutex.withLock {
-    if (isFreeToGo.get()) Int.MAX_VALUE else availablePermits
+  fun makeItFreeToGo() {
+    permitsFlow.value = Int.MAX_VALUE
   }
 }
