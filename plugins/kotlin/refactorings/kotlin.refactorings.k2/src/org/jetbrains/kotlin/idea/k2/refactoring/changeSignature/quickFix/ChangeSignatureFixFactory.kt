@@ -333,14 +333,21 @@ object ChangeSignatureFixFactory {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun getKtType(argumentExpression: KtExpression?): KaType? {
-        var ktType = argumentExpression?.expressionType
-        val typeKind = ktType?.functionTypeKind
+        val ktType = argumentExpression?.expressionType
+        return ktType?.toFunctionType() ?: ktType
+    }
+
+
+    @OptIn(KaExperimentalApi::class)
+    context(KaSession)
+    fun KaType.toFunctionType(): KaType? {
+        val typeKind = functionTypeKind
         when (typeKind) {
             FunctionTypeKind.KFunction -> typeKind.nonReflectKind()
             FunctionTypeKind.KSuspendFunction -> typeKind.nonReflectKind()
             else -> null
         }?.let {
-            val functionalType = ktType as KaFunctionType
+            val functionalType = this as KaFunctionType
             return buildClassType(it.numberedClassId((functionalType).arity)) {
                 functionalType.parameterTypes.forEach { arg ->
                     argument(arg)
@@ -348,7 +355,7 @@ object ChangeSignatureFixFactory {
                 argument(functionalType.returnType)
             }
         }
-        return ktType
+        return null
     }
 
     context(KaSession)

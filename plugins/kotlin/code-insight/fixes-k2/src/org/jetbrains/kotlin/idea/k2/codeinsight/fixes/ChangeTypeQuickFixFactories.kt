@@ -19,11 +19,11 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
-import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeSignatureFixFactory.toFunctionType
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.isResolvableInScope
 import org.jetbrains.kotlin.idea.quickfix.ChangeTypeFixUtils
 import org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
@@ -74,22 +74,8 @@ internal object ChangeTypeQuickFixFactories {
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun getActualType(ktType: KaType): KaType {
-        val typeKind = ktType.functionTypeKind
-        when (typeKind) {
-            FunctionTypeKind.KFunction -> typeKind.nonReflectKind()
-            FunctionTypeKind.KSuspendFunction -> typeKind.nonReflectKind()
-            else -> null
-        }?.let {
-            val functionalType = ktType as KaFunctionType
-            return buildClassType(it.numberedClassId((functionalType).arity)) {
-                functionalType.parameterTypes.forEach { arg ->
-                    argument(arg)
-                }
-                argument(functionalType.returnType)
-            }
-        }
-        return ktType.approximateToSuperPublicDenotableOrSelf(true)
+    private fun getActualType(ktType: KaType, position: KtElement): KaType {
+        return ktType.toFunctionType() ?: ktType.approximateToDenotableSupertypeOrSelf(position) ?: ktType
     }
 
     context(KaSession)
@@ -117,7 +103,7 @@ internal object ChangeTypeQuickFixFactories {
         val property = this as? KtProperty
         val returnTypes = buildList {
             addAll(returnedExpressions.mapNotNull { returnExpr ->
-                (property?.getPropertyInitializerType() ?: returnExpr.expressionType)?.let { getActualType(it) }
+                (property?.getPropertyInitializerType() ?: returnExpr.expressionType)?.let { getActualType(it, this@returnType) }
                     ?.takeUnless { it is KaErrorType }
             })
             if (!candidateType.isUnitType) {
@@ -159,7 +145,7 @@ internal object ChangeTypeQuickFixFactories {
                         UpdateTypeQuickFix(
                             declaration,
                             if (element is KtPropertyAccessor) TargetType.VARIABLE else TargetType.ENCLOSING_DECLARATION,
-                            createTypeInfo(element.returnType(getActualType(actualType)))
+                            createTypeInfo(element.returnType(getActualType(actualType, declaration)))
                         )
                     )
                 }
@@ -182,7 +168,7 @@ internal object ChangeTypeQuickFixFactories {
         if (!isResolvableInScope(expectedType, expression, mutableSetOf())) return emptyList()
         return buildList {
             addIfNotNull(createUpdateTypeFixForCalledFunction(resolvedCall, expectedType))
-            addAll(createUpdateTypeFixesForCalledVariable(resolvedCall, actualType, expectedType))
+            addAll(createUpdateTypeFixesForCalledVariable(resolvedCall, expression, actualType, expectedType))
         }
     }
 
@@ -206,13 +192,14 @@ internal object ChangeTypeQuickFixFactories {
 
     private fun KaSession.createUpdateTypeFixesForCalledVariable(
         resolvedCall: KaCallInfo,
+        expression: KtExpression,
         actualType: KaType,
         expectedType: KaType
     ): List<ModCommandAction> {
         val callable = resolvedCall.successfulVariableAccessCall()?.symbol ?: return emptyList()
         if (!callable.isSafeForChangeTypeFix()) return emptyList()
         val calledVariable = callable.psi as? KtProperty ?: return emptyList()
-        return registerVariableTypeFixes(calledVariable, getActualType(actualType), expectedType)
+        return registerVariableTypeFixes(calledVariable, getActualType(actualType, expression), expectedType)
     }
 
     val returnTypeNullableTypeMismatch =
@@ -237,7 +224,7 @@ internal object ChangeTypeQuickFixFactories {
             val declaration = diagnostic.psi as? KtProperty
                 ?: return@ModCommandBased emptyList()
 
-            val actualType = getActualType(diagnostic.actualType)
+            val actualType = getActualType(diagnostic.actualType, declaration)
             val expectedType = diagnostic.expectedType
             if (actualType.semanticallyEquals(expectedType)) {
                 return@ModCommandBased emptyList()
@@ -259,7 +246,7 @@ internal object ChangeTypeQuickFixFactories {
                 return@ModCommandBased emptyList()
             }
 
-            val actualType = getActualType(diagnostic.actualType)
+            val actualType = getActualType(diagnostic.actualType, expression)
             val type = if (declaration.initializer?.isNull() == true) actualType.withNullability(KaTypeNullability.NULLABLE) else actualType
             buildList {
                 if (declaration.typeReference == null) {
@@ -278,7 +265,7 @@ internal object ChangeTypeQuickFixFactories {
             val property = expr.parent as? KtProperty
                 ?: return@ModCommandBased emptyList()
 
-            val actualType = getActualType(property.getPropertyInitializerType() ?: diagnostic.actualType)
+            val actualType = getActualType(property.getPropertyInitializerType() ?: diagnostic.actualType, property)
             val expectedType = diagnostic.expectedType
             if (expectedType.semanticallyEquals(actualType)) {
                 return@ModCommandBased emptyList()
@@ -308,7 +295,7 @@ internal object ChangeTypeQuickFixFactories {
     val parameterTypeMismatch =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
             val expression = diagnostic.psi as? KtExpression ?: return@ModCommandBased emptyList()
-            val actualType = getActualType(diagnostic.actualType)
+            val actualType = getActualType(diagnostic.actualType, expression)
             val expectedType = diagnostic.expectedType
             if (actualType.semanticallyEquals(expectedType)) {
                 return@ModCommandBased emptyList()
