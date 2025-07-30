@@ -13633,6 +13633,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/anonymousFunctionCallWithReceiver2.kt");
         }
 
+        @TestMetadata("anonymousFunctionWithExpectedType.kt")
+        public void testAnonymousFunctionWithExpectedType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/anonymousFunctionWithExpectedType.kt");
+        }
+
+        @TestMetadata("anonymousFunctionWithExpectedTypeContextParameters.kt")
+        public void testAnonymousFunctionWithExpectedTypeContextParameters() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/anonymousFunctionWithExpectedTypeContextParameters.kt");
+        }
+
         @TestMetadata("companion.kt")
         public void testCompanion() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/companion.kt");

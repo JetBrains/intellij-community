@@ -83,6 +83,7 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
         ) return
 
         analyze(callableDeclaration) {
+            if (callableDeclaration.expectedType != null) return
             val usedTypeParametersInReceiver = callableDeclaration.collectDescendantsOfType<KtTypeReference>()
                 .mapNotNull { (it.typeIfSafeToResolve as? KaTypeParameterType)?.symbol }
                 .filterTo(mutableSetOf()) { it.isReified }
