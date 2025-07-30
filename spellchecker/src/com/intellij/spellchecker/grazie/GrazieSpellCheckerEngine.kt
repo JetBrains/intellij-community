@@ -3,7 +3,6 @@
 
 package com.intellij.spellchecker.grazie
 
-import ai.grazie.annotation.TestOnly
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.LanguageISO
 import ai.grazie.nlp.langs.alphabet.Alphabet
@@ -15,6 +14,7 @@ import ai.grazie.spell.dictionary.RuleDictionary
 import ai.grazie.spell.dictionary.rule.IgnoreRuleDictionary
 import ai.grazie.spell.language.LanguageModel
 import ai.grazie.spell.suggestion.filter.feature.RadiusSuggestionFilter
+import ai.grazie.spell.suggestion.ranker.*
 import ai.grazie.utils.mpp.Resources
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
@@ -43,6 +43,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 private const val MAX_WORD_LENGTH = 32
 

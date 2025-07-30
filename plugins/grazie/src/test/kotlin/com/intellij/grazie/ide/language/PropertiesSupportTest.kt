@@ -3,7 +3,10 @@ package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
+import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.ui.UIUtil
 import java.nio.charset.StandardCharsets
 
@@ -17,5 +20,14 @@ class PropertiesSupportTest : GrazieTestBase() {
     
     UIUtil.dispatchAllInvocationEvents()
     runHighlightTestForFile("ide/language/properties/Example.properties")
+  }
+
+  fun `test properties typos spellcheck performance`() {
+    Benchmark.newBenchmark("Highlight typos in i18n.properties file") {
+      runHighlightTestForFile("ide/language/properties/i18n.properties")
+    }.setup {
+      psiManager.dropPsiCaches()
+      project.service<GrazieSpellCheckerEngine>().dropSuggestionCache()
+    }.start()
   }
 }

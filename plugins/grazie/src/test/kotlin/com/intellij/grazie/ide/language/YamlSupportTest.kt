@@ -5,6 +5,9 @@ import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
+import com.intellij.openapi.components.service
+import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
 class YamlSupportTest : GrazieTestBase() {
   fun `test grammar check in yaml file`() {
@@ -15,5 +18,14 @@ class YamlSupportTest : GrazieTestBase() {
   fun `test text extraction`() {
     val file = myFixture.configureByText("a.yaml", "foo: 'bar'")
     assertEquals("bar", TextExtractor.findTextAt(file, 6, TextContent.TextDomain.ALL).toString())
+  }
+
+  fun `test yaml typos spellcheck performance`() {
+    Benchmark.newBenchmark("Highlight typos in i18n.yaml file") {
+      runHighlightTestForFile("ide/language/yaml/i18n.yaml")
+    }.setup {
+      psiManager.dropPsiCaches()
+      project.service<GrazieSpellCheckerEngine>().dropSuggestionCache()
+    }.start()
   }
 }

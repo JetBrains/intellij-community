@@ -20,9 +20,7 @@ import java.util.regex.Pattern;
  */
 public class JsonSpellcheckerStrategy extends SpellcheckingStrategy implements DumbAware {
 
-  // JSON is often deserialized to classes,
-  // so we consider literals that look like typical programming language identifier to be code contexts
-  private static final Pattern CODE_LIKE_PATTERN = Pattern.compile("\"([a-zA-Z][a-zA-Z0-9_]*)\"");
+  private static final Pattern CODE_LIKE_PATTERN = Pattern.compile("\"" + CODE_IDENTIFIER_LIKE + "\"");
 
   private final Tokenizer<JsonStringLiteral> ourStringLiteralTokenizer = new Tokenizer<>() {
     @Override

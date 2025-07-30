@@ -39,6 +39,11 @@ final class PropertiesSpellcheckingStrategy extends SpellcheckingStrategy implem
     return super.getTokenizer(element);
   }
 
+  @Override
+  protected boolean isLiteral(@NotNull PsiElement element) {
+    return !super.isComment(element);
+  }
+
   private static class PropertyKeyTokenizer extends TokenizerBase<PropertyKeyImpl> {
     private PropertyKeyTokenizer() {
       super(PropertiesSplitter.getInstance());
