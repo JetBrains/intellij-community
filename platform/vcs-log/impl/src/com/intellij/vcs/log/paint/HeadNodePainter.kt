@@ -2,15 +2,12 @@
 package com.intellij.vcs.log.paint
 
 import com.intellij.ui.paint.PaintUtil
-import com.intellij.ui.paint.PaintUtil.ParityMode.EVEN
 import com.intellij.ui.paint.PaintUtil.ParityMode.ODD
 import com.intellij.ui.paint.PaintUtil.RoundingMode.FLOOR
-import com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.vcs.log.VcsLogHighlighter.VcsCommitStyle
 import java.awt.Graphics2D
 import java.awt.geom.Ellipse2D
-import kotlin.math.floor
 
 internal class HeadNodePainter(
   scaleContext: ScaleContext,
@@ -19,54 +16,51 @@ internal class HeadNodePainter(
   rowHeight: Int,
 ) {
   companion object {
-    // Dimensions:
-    // - All circles share center point at (7.75, 7.75)
-    // - Outer circle: 12.5px diameter
-    // - Outer circle: 6.25px radius
-    // - Middle circle: 4.25px radius
-    // - Inner circle: 2.25px radius
-    private const val OUTER_DIAMETER = 12.5
-    private const val OUTER_RADIUS_RATIO = 6.25
-    private const val MIDDLE_RADIUS_RATIO = 4.25
-    private const val INNER_RADIUS_RATIO = 2.25
-
-    // Proportional ratios calculated from dimensions
-    private const val MIDDLE_CIRCLE_RATIO = MIDDLE_RADIUS_RATIO / OUTER_RADIUS_RATIO
-    private const val INNER_CIRCLE_RATIO = INNER_RADIUS_RATIO / OUTER_RADIUS_RATIO
+    private const val RADIUS_DELTA = 2
   }
 
-  private val outerRadiusAligned = PaintUtil.alignToInt(OUTER_DIAMETER / 2, scaleContext, FLOOR, ODD).floorToInt()
+  private val rawOuterCircleDiameter = 2 * PaintParameters.scaleWithRowHeight(PaintParameters.CIRCLE_RADIUS + RADIUS_DELTA, rowHeight)
+  private val outerCircleDiameter = PaintUtil.alignToInt(rawOuterCircleDiameter, scaleContext, FLOOR, ODD)
+  private val outerCircleRadius = PaintUtil.alignToInt(outerCircleDiameter / 2, scaleContext, FLOOR, null)
 
-  private val outerDiameter = PaintUtil.alignToInt(2 * PaintParameters.getCircleRadius(outerRadiusAligned, rowHeight), scaleContext, ROUND, EVEN)
-  private val selectedOuterCircleDiameter = outerDiameter + selectedLineThickness - lineThickness
-
-  private val outerRadius = PaintUtil.alignToInt(outerDiameter / 2, scaleContext, FLOOR, null)
+  private val selectedOuterCircleDiameter = outerCircleDiameter + selectedLineThickness - lineThickness
   private val selectedOuterCircleRadius = PaintUtil.alignToInt(selectedOuterCircleDiameter / 2, scaleContext, FLOOR, null)
 
-  fun paint(g2: Graphics2D, x: Double, y: Double, isSelected: Boolean, commitStyle: VcsCommitStyle) {
-    val nodeColor = g2.color
-    val radius = if (isSelected) selectedOuterCircleRadius else outerRadius
-    val diameter = if (isSelected) selectedOuterCircleDiameter else outerDiameter
+  private val delta = PaintUtil.alignToInt(PaintParameters.scaleWithRowHeight(RADIUS_DELTA, rowHeight), scaleContext, FLOOR, null)
+
+  fun paint(g2: Graphics2D, xCenter: Double, yCenter: Double, isSelected: Boolean, commitStyle: VcsCommitStyle) {
+    if (isSelected) {
+      g2.fillCircle(xCenter - selectedOuterCircleRadius, yCenter - selectedOuterCircleRadius, selectedOuterCircleDiameter)
+      return
+    }
+
+    var x = xCenter - outerCircleRadius
+    var y = yCenter - outerCircleRadius
+    var diameter = outerCircleDiameter
+
+    fun shrinkDiameter(delta: Double) {
+      diameter -= delta * 2
+      x += delta
+      y += delta
+    }
 
     // Outer circle
-    val outerCircle = Ellipse2D.Double(x - radius, y - radius, diameter, diameter)
-    g2.color = nodeColor
-    g2.fill(outerCircle)
+    g2.fillCircle(x, y, diameter)
 
     // Middle circle
-    val middleRadius = radius * MIDDLE_CIRCLE_RATIO
-    val middleDiameter = diameter * MIDDLE_CIRCLE_RATIO
-    val middleCircle = Ellipse2D.Double(x - middleRadius, y - middleRadius, middleDiameter, middleDiameter)
+    shrinkDiameter(delta)
+    val nodeColor = g2.color
     g2.color = commitStyle.background
-    g2.fill(middleCircle)
+    g2.fillCircle(x, y, diameter)
 
     // Inner circle
-    val innerRadius = radius * INNER_CIRCLE_RATIO
-    val innerDiameter = diameter * INNER_CIRCLE_RATIO
-    val innerCircle = Ellipse2D.Double(x - innerRadius, y - innerRadius, innerDiameter, innerDiameter)
+    shrinkDiameter(delta)
     g2.color = nodeColor
-    g2.fill(innerCircle)
+    g2.fillCircle(x, y, diameter)
   }
 }
 
-private fun Double.floorToInt(): Int = floor(this).toInt()
+private fun Graphics2D.fillCircle(x: Double, y: Double, diameter: Double) {
+  val circle = Ellipse2D.Double(x, y, diameter, diameter)
+  fill(circle)
+}
