@@ -15,7 +15,9 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 @ApiStatus.Internal
@@ -32,7 +34,7 @@ class SimplifyExpressionFix(
         updater: ModPsiUpdater,
     ) {
         val replacement = KtPsiFactory(element.project).createExpression(elementContext.toExpressionText())
-        val result = element.replaced(replacement)
+        val result = (element.getParentOfTypeAndBranch<KtQualifiedExpression> { selectorExpression } ?: element).replaced(replacement)
 
         val booleanExpression = result.getNonStrictParentOfType<KtBinaryExpression>()
         if (booleanExpression != null && areThereExpressionsToBeSimplified(booleanExpression)) {

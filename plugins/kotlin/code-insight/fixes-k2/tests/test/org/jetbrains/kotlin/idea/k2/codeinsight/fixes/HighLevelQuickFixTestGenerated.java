@@ -12614,6 +12614,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantNull.kt");
         }
 
+        @TestMetadata("constantNullWithQualifier.kt")
+        public void testConstantNullWithQualifier() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantNullWithQualifier.kt");
+        }
+
         @TestMetadata("constantTrue.kt")
         public void testConstantTrue() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantTrue.kt");
