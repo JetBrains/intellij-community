@@ -272,6 +272,12 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - <init>():V
 - p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 - a:findElement(I,com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
+*a:com.intellij.codeInsight.completion.command.commands.AbstractTypeInfoCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
+- <init>():V
+- p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
+- a:findElement(I,com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
+- p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 *c:com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - com.intellij.codeInsight.completion.command.CommandProvider
 - <init>(java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,java.lang.String,java.util.List):V
