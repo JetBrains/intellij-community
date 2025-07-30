@@ -64,6 +64,8 @@ public class GradleRunConfiguration
     super(GradleConstants.SYSTEM_ID, project, factory, name);
     setDebugServerProcess(true);
     setReattachDebugProcess(true);
+    // Prevent killing of a Gradle Daemon by DebuggerManagerImpl when stopping the debug
+    setSoftProcessKillEnabled(true);
   }
 
   public boolean isDebugAllEnabled() {

@@ -53,6 +53,7 @@ import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +62,8 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.function.Consumer;
+
+import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler.SOFT_PROCESS_KILL_ENABLED_KEY;
 
 public class ExternalSystemRunConfiguration extends LocatableConfigurationBase implements SearchScopeProvidingRunProfile {
 
@@ -122,6 +125,15 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
   public void setDebuggingDisabled(boolean debuggingDisabled) {
     this.isDebuggingDisabled = debuggingDisabled;
+  }
+
+  /**
+   * This setting will be delivered with user data to {@link ExternalSystemProcessHandler} and used there.
+   * @see com.intellij.execution.process.SoftlyKillableProcessHandler#shouldKillProcessSoftly()
+   */
+  @ApiStatus.Experimental
+  protected void setSoftProcessKillEnabled(boolean softProcessKillEnabled) {
+    putUserData(SOFT_PROCESS_KILL_ENABLED_KEY, softProcessKillEnabled);
   }
 
   @Override

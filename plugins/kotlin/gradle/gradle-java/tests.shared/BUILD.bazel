@@ -22,6 +22,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/execution-impl",
     "//platform/external-system-impl:externalSystem-impl",
+    "//platform/platform-util-io:ide-util-io",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/lang-core",

@@ -224,6 +224,7 @@ f:com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 - s:suggestJdkHomePaths(com.intellij.openapi.project.Project):java.util.Collection
 c:com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler
 - com.intellij.build.process.BuildProcessHandler
+- com.intellij.execution.process.SoftlyKillableProcessHandler
 - com.intellij.openapi.Disposable
 - <init>(com.intellij.openapi.externalSystem.model.task.ExternalSystemTask,java.lang.String):V
 - p:closeInput():V
