@@ -11,16 +11,18 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
+import org.jetbrains.annotations.ApiStatus
 import kotlin.sequences.mapNotNull
 
-internal object CoroutineAgentConnector {
+@ApiStatus.Internal
+object CoroutineAgentConnector {
     private data class KotlinxCoroutinesSearchResult(val jarPath: String?, val debuggerMode: CoroutineDebuggerMode)
 
     private const val KOTLIN_STDLIB = "kotlin-stdlib"
-    private const val KOTLINX_COROUTINES_DEBUG_INTERNAL_PACKAGE = "kotlinx.coroutines.debug.internal"
+    private const val KOTLINX_COROUTINES_DEBUG_PROBES_IMPL_FQN = "kotlinx.coroutines.debug.internal.DebugProbesImpl"
     private val MINIMAL_SUPPORTED_COROUTINES_VERSION = DefaultArtifactVersion("1.3.7-255")
     private const val KOTLINX_COROUTINES_CORE = "kotlinx-coroutines-core"
-    private val KOTLINX_COROUTINES_CORE_JVM_JAR_REGEX = Regex(""".+\W$KOTLINX_COROUTINES_CORE(-jvm)?-(\d[\w.\-]+)?\.jar""")
+    private val KOTLINX_COROUTINES_CORE_JVM_JAR_REGEX = Regex(""".+$KOTLINX_COROUTINES_CORE(-jvm)?-(\d[\w.\-]+)?\.jar""")
 
     fun attachCoroutineAgent(project: Project, configuration: RunConfigurationBase<*>?,  params: JavaParameters): Boolean {
         val searchResult = findKotlinxCoroutinesCoreJar(project, configuration)
@@ -51,13 +53,13 @@ internal object CoroutineAgentConnector {
     }
 
     private fun getKotlinxCoroutinesJarsFromClasspath(project: Project, configuration: RunConfigurationBase<*>?): List<String> {
-        // First, check if any modules corresponding to the given run configuration have loaded the kotlinx.coroutines.debug.internal package,
+        // First, check if any of the modules corresponding to the given run configuration has
+        // the class with the debug probes from kotlinx-coroutines-core in their classpath (kotlinx.coroutines.debug.internal.DebugProbesImpl),
         // if none, then the coroutines debug agent should not be applied.
-        // This is important for a case when a project contains both Kotlin and Java modules, Kotlin modules may contain coroutines dependency,
+        // This is important for a case when a project contains both Kotlin and Java modules; Kotlin modules may contain coroutines dependency,
         // though when a Java run configuration is chosen, the coroutine agent should not be applied.
-        // In case no run configuration is provided or if it's not module-based, then search the whole project for the package.
-        val coroutinesPsiPackage = JavaPsiFacade.getInstance(project).findPackage(KOTLINX_COROUTINES_DEBUG_INTERNAL_PACKAGE) ?: return emptyList()
-
+        // In case no run configuration is provided or if it's not module-based, search the whole project for the package.
+        val psiFacade = JavaPsiFacade.getInstance(project)
         return if (configuration != null && configuration is ModuleBasedConfiguration<*, *>) {
             configuration.modules.flatMap { module ->
                 val moduleScope = GlobalSearchScope.union(
@@ -66,16 +68,11 @@ internal object CoroutineAgentConnector {
                         module.getModuleRuntimeScope(true),
                     )
                 )
-                coroutinesPsiPackage.getDirectories(moduleScope).mapNotNull {
-                    JarFileSystem.getInstance().getVirtualFileForJar(it.virtualFile)?.path
-                }
+                psiFacade.findClasses(KOTLINX_COROUTINES_DEBUG_PROBES_IMPL_FQN, moduleScope).asList()
             }
         } else {
-            coroutinesPsiPackage.getDirectories()
-                .mapNotNull {
-                    JarFileSystem.getInstance().getVirtualFileForJar(it.virtualFile)?.path
-                }
-        }
+            psiFacade.findClasses(KOTLINX_COROUTINES_DEBUG_PROBES_IMPL_FQN, GlobalSearchScope.allScope(project)).asList()
+        }.map { it.containingFile.virtualFile.path.substringBeforeLast(JarFileSystem.JAR_SEPARATOR) }
     }
 
     private fun determineCoreVersionMode(version: String) =
