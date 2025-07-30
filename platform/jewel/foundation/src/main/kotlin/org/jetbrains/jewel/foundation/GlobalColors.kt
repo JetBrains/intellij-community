@@ -58,7 +58,10 @@ public class TextColors(
     public val error: Color,
     public val warning: Color,
 ) {
-    @Deprecated("Use the primary constructors with disabledSelected and warning, instead.")
+    @Deprecated(
+        "Use the primary constructors with disabledSelected and warning, instead.",
+        ReplaceWith("TextColors(normal, selected, disabled, disabled, info, error, normal)"),
+    )
     public constructor(
         normal: Color,
         selected: Color,
