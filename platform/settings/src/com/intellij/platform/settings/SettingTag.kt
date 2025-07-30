@@ -39,7 +39,7 @@ object CacheTag : SettingTag {
 }
 
 @Internal
-class PersistenceStateComponentPropertyTag(val componentName: String) : SettingTag {
+class PersistenceStateComponentPropertyTag(val componentName: String, val stateClass: Class<*>) : SettingTag {
   override fun toString(): String = "PersistenceStateComponentPropertyTag(componentName=$componentName)"
 }
 
