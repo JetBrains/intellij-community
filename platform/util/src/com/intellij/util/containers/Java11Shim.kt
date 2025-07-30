@@ -37,7 +37,9 @@ abstract class Java11Shim {
 
   abstract fun <E> listOf(array: Array<E>, size: Int): List<E>
 
-  abstract fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V>
+  fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> {
+    return ConcurrentLongObjectHashMap()
+  }
 
   abstract fun getCallerClass(stackFrameIndex: Int): Class<*>?
 }

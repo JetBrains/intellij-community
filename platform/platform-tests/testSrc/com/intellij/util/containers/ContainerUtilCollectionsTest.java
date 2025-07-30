@@ -23,7 +23,14 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
-// tests various ContainerUtil.create*, ContainerUtil.new*, CollectionFactory.create*, ConcurrentCollectionFactory.create* collections for being really weak/soft/concurrent
+/**
+ * tests various
+ * {@link ContainerUtil}.create*,
+ * {@link ContainerUtil}.new*,
+ * {@link CollectionFactory}.create*,
+ * {@link ConcurrentCollectionFactory}.create*
+ * collections for being really weak/soft/concurrent
+ */
 @RunFirst
 public class ContainerUtilCollectionsTest extends Assert {
   @Rule

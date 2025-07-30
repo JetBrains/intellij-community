@@ -25,10 +25,6 @@ internal class DefaultJava11Shim : Java11Shim() {
     return Collections.unmodifiableSet(HashSet(collection))
   }
 
-  override fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> {
-    return ConcurrentLongObjectHashMap()
-  }
-
   override fun <K : Any, V> mapOf(): Map<K, V> {
     return Collections.emptyMap()
   }

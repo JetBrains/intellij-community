@@ -4,6 +4,7 @@ package com.intellij.concurrency;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.containers.Java11Shim;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,12 +74,7 @@ public final class ConcurrentCollectionFactory {
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentLongObjectMap<@NotNull V> createConcurrentLongObjectMap() {
-    return new ConcurrentLongObjectHashMap<>();
-  }
-
-  @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <V> ConcurrentLongObjectMap<@NotNull V> createConcurrentLongObjectMap(int initialCapacity) {
-    return new ConcurrentLongObjectHashMap<>(initialCapacity);
+    return Java11Shim.INSTANCE.createConcurrentLongObjectMap();
   }
 
   @Contract(value = " -> new", pure = true)
