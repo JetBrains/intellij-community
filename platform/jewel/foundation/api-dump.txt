@@ -1,3 +1,13 @@
+f:org.jetbrains.jewel.foundation.BorderColors
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.foundation.BorderColors$Companion
+- equals(java.lang.Object):Z
+- f:getDisabled-0d7_KjU():J
+- f:getFocused-0d7_KjU():J
+- f:getNormal-0d7_KjU():J
+- hashCode():I
+f:org.jetbrains.jewel.foundation.BorderColors$Companion
+f:org.jetbrains.jewel.foundation.CompatibilityKt
 f:org.jetbrains.jewel.foundation.DisabledAppearanceValues
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.foundation.DisabledAppearanceValues$Companion
@@ -10,15 +20,134 @@ f:org.jetbrains.jewel.foundation.DisabledAppearanceValues
 f:org.jetbrains.jewel.foundation.DisabledAppearanceValues$Companion
 f:org.jetbrains.jewel.foundation.DisabledAppearanceValuesKt
 - sf:getLocalDisabledAppearanceValues():androidx.compose.runtime.ProvidableCompositionLocal
+@:org.jetbrains.jewel.foundation.ExperimentalJewelApi
+- java.lang.annotation.Annotation
+@:org.jetbrains.jewel.foundation.GenerateDataFunctions
+- java.lang.annotation.Annotation
+f:org.jetbrains.jewel.foundation.GlobalColors
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.foundation.GlobalColors$Companion
+- equals(java.lang.Object):Z
+- f:getBorders():org.jetbrains.jewel.foundation.BorderColors
+- f:getOutlines():org.jetbrains.jewel.foundation.OutlineColors
+- f:getPanelBackground-0d7_KjU():J
+- f:getText():org.jetbrains.jewel.foundation.TextColors
+- hashCode():I
+f:org.jetbrains.jewel.foundation.GlobalColors$Companion
+f:org.jetbrains.jewel.foundation.GlobalColorsKt
+- sf:getLocalGlobalColors():androidx.compose.runtime.ProvidableCompositionLocal
+f:org.jetbrains.jewel.foundation.GlobalMetrics
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.foundation.GlobalMetrics$Companion
+- equals(java.lang.Object):Z
+- f:getOutlineWidth-D9Ej5fM():F
+- f:getRowHeight-D9Ej5fM():F
+- hashCode():I
+f:org.jetbrains.jewel.foundation.GlobalMetrics$Companion
+f:org.jetbrains.jewel.foundation.GlobalMetricsKt
+- sf:getLocalGlobalMetrics():androidx.compose.runtime.ProvidableCompositionLocal
+@:org.jetbrains.jewel.foundation.InternalJewelApi
+- java.lang.annotation.Annotation
 f:org.jetbrains.jewel.foundation.JewelFlags
 - sf:$stable:I
 - sf:INSTANCE:org.jetbrains.jewel.foundation.JewelFlags
-f:org.jetbrains.jewel.foundation.TextColors
-- f:getDisabledSelected-0d7_KjU():J
+f:org.jetbrains.jewel.foundation.OutlineColors
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.foundation.OutlineColors$Companion
+- equals(java.lang.Object):Z
+- f:getError-0d7_KjU():J
+- f:getFocused-0d7_KjU():J
+- f:getFocusedError-0d7_KjU():J
+- f:getFocusedWarning-0d7_KjU():J
 - f:getWarning-0d7_KjU():J
+- hashCode():I
+f:org.jetbrains.jewel.foundation.OutlineColors$Companion
+a:org.jetbrains.jewel.foundation.Stroke
+- sf:$stable:I
+e:org.jetbrains.jewel.foundation.Stroke$Alignment
+- java.lang.Enum
+- sf:Center:org.jetbrains.jewel.foundation.Stroke$Alignment
+- sf:Inside:org.jetbrains.jewel.foundation.Stroke$Alignment
+- sf:Outside:org.jetbrains.jewel.foundation.Stroke$Alignment
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.foundation.Stroke$Alignment
+- s:values():org.jetbrains.jewel.foundation.Stroke$Alignment[]
+f:org.jetbrains.jewel.foundation.Stroke$Brush
+- org.jetbrains.jewel.foundation.Stroke
+- sf:$stable:I
+- equals(java.lang.Object):Z
+- f:getAlignment():org.jetbrains.jewel.foundation.Stroke$Alignment
+- f:getBrush():androidx.compose.ui.graphics.Brush
+- f:getExpand-D9Ej5fM():F
+- f:getWidth-D9Ej5fM():F
+- hashCode():I
+f:org.jetbrains.jewel.foundation.Stroke$None
+- org.jetbrains.jewel.foundation.Stroke
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.foundation.Stroke$None
+f:org.jetbrains.jewel.foundation.Stroke$Solid
+- org.jetbrains.jewel.foundation.Stroke
+- sf:$stable:I
+- equals(java.lang.Object):Z
+- f:getAlignment():org.jetbrains.jewel.foundation.Stroke$Alignment
+- f:getColor-0d7_KjU():J
+- f:getExpand-D9Ej5fM():F
+- f:getWidth-D9Ej5fM():F
+- hashCode():I
+f:org.jetbrains.jewel.foundation.StrokeKt
+- sf:Stroke-Ke5fDM4(F,androidx.compose.ui.graphics.Brush,org.jetbrains.jewel.foundation.Stroke$Alignment,F):org.jetbrains.jewel.foundation.Stroke
+- bs:Stroke-Ke5fDM4$default(F,androidx.compose.ui.graphics.Brush,org.jetbrains.jewel.foundation.Stroke$Alignment,F,I,java.lang.Object):org.jetbrains.jewel.foundation.Stroke
+- sf:Stroke-nMwvq1g(F,J,org.jetbrains.jewel.foundation.Stroke$Alignment,F):org.jetbrains.jewel.foundation.Stroke
+- bs:Stroke-nMwvq1g$default(F,J,org.jetbrains.jewel.foundation.Stroke$Alignment,F,I,java.lang.Object):org.jetbrains.jewel.foundation.Stroke
+f:org.jetbrains.jewel.foundation.TextColors
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.foundation.TextColors$Companion
+- equals(java.lang.Object):Z
+- f:getDisabled-0d7_KjU():J
+- f:getDisabledSelected-0d7_KjU():J
+- f:getError-0d7_KjU():J
+- f:getInfo-0d7_KjU():J
+- f:getNormal-0d7_KjU():J
+- f:getSelected-0d7_KjU():J
+- f:getWarning-0d7_KjU():J
+- hashCode():I
+f:org.jetbrains.jewel.foundation.TextColors$Companion
 org.jetbrains.jewel.foundation.actionSystem.DataProviderContext
 - a:lazy(java.lang.String,kotlin.jvm.functions.Function0):V
 - a:set(java.lang.String,java.lang.Object):V
+f:org.jetbrains.jewel.foundation.actionSystem.DataProviderNode
+- androidx.compose.ui.Modifier$Node
+- androidx.compose.ui.focus.FocusEventModifierNode
+- androidx.compose.ui.node.TraversableNode
+- sf:$stable:I
+- sf:TraverseKey:org.jetbrains.jewel.foundation.actionSystem.DataProviderNode$TraverseKey
+- <init>(kotlin.jvm.functions.Function1):V
+- f:getDataProvider():kotlin.jvm.functions.Function1
+- f:getHasFocus():Z
+- getTraverseKey():org.jetbrains.jewel.foundation.actionSystem.DataProviderNode$TraverseKey
+- onFocusEvent(androidx.compose.ui.focus.FocusState):V
+- f:setDataProvider(kotlin.jvm.functions.Function1):V
+- f:setHasFocus(Z):V
+f:org.jetbrains.jewel.foundation.actionSystem.DataProviderNode$TraverseKey
+f:org.jetbrains.jewel.foundation.actionSystem.ProvideDataKt
+- sf:provideData(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1):androidx.compose.ui.Modifier
+f:org.jetbrains.jewel.foundation.code.MimeType
+- sf:ATTR_FOLDER_TYPE:java.lang.String
+- sf:ATTR_ROLE:java.lang.String
+- sf:ATTR_ROOT_TAG:java.lang.String
+- sf:VALUE_MANIFEST:java.lang.String
+- sf:VALUE_RESOURCE:java.lang.String
+- sf:base-9EQw4cI(java.lang.String):java.lang.String
+- bsf:box-impl(java.lang.String):org.jetbrains.jewel.foundation.code.MimeType
+- s:constructor-impl(java.lang.String):java.lang.String
+- sf:displayName-impl(java.lang.String):java.lang.String
+- equals(java.lang.Object):Z
+- s:equals-impl(java.lang.String,java.lang.Object):Z
+- sf:equals-impl0(java.lang.String,java.lang.String):Z
+- hashCode():I
+- s:hashCode-impl(java.lang.String):I
+- s:toString-impl(java.lang.String):java.lang.String
+- bf:unbox-impl():java.lang.String
 f:org.jetbrains.jewel.foundation.code.MimeType$Known
 - sf:$stable:I
 - sf:INSTANCE:org.jetbrains.jewel.foundation.code.MimeType$Known
@@ -56,10 +185,123 @@ f:org.jetbrains.jewel.foundation.code.MimeType$Known
 - f:getVERSION_CATALOG-9EQw4cI():java.lang.String
 - f:getXML-9EQw4cI():java.lang.String
 - f:getYAML-9EQw4cI():java.lang.String
+f:org.jetbrains.jewel.foundation.code.MimeTypeKt
+- sf:isGradle-KcqRzx0(java.lang.String):Z
+- sf:isJava-KcqRzx0(java.lang.String):Z
+- sf:isKotlin-KcqRzx0(java.lang.String):Z
+- sf:isManifest-KcqRzx0(java.lang.String):Z
+- sf:isProto-KcqRzx0(java.lang.String):Z
+- sf:isRegex-KcqRzx0(java.lang.String):Z
+- sf:isSql-KcqRzx0(java.lang.String):Z
+- sf:isVersionCatalog-KcqRzx0(java.lang.String):Z
+- sf:isXml-KcqRzx0(java.lang.String):Z
+f:org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighterKt
+- sf:getLocalCodeHighlighter():androidx.compose.runtime.ProvidableCompositionLocal
+f:org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
+- org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
+- highlight-zTGadEY(java.lang.String,java.lang.String):kotlinx.coroutines.flow.Flow
+f:org.jetbrains.jewel.foundation.layout.BasicTableLayoutKt
+- sf:BasicTableLayout-yE4rkUQ(I,I,J,androidx.compose.ui.Modifier,F,java.util.List,androidx.compose.runtime.Composer,I,I):V
+c:org.jetbrains.jewel.foundation.lazy.DefaultMacOsSelectableColumnKeybindings
+- org.jetbrains.jewel.foundation.lazy.DefaultSelectableColumnKeybindings
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.foundation.lazy.DefaultMacOsSelectableColumnKeybindings$Companion
+- <init>():V
+- isMultiSelectionKeyPressed-5xRPYO0(I):Z
+- isMultiSelectionKeyPressed-ZmokQxo(java.lang.Object):Z
+f:org.jetbrains.jewel.foundation.lazy.DefaultMacOsSelectableColumnKeybindings$Companion
+- org.jetbrains.jewel.foundation.lazy.DefaultMacOsSelectableColumnKeybindings
+c:org.jetbrains.jewel.foundation.lazy.DefaultSelectableColumnKeybindings
+- org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.foundation.lazy.DefaultSelectableColumnKeybindings$Companion
+- <init>():V
+- isContiguousSelectionKeyPressed-5xRPYO0(I):Z
+- isContiguousSelectionKeyPressed-ZmokQxo(java.lang.Object):Z
+- isEdit-ZmokQxo(java.lang.Object):Z
+- isExtendSelectionToFirstItem-ZmokQxo(java.lang.Object):Z
+- isExtendSelectionToLastItem-ZmokQxo(java.lang.Object):Z
+- isExtendSelectionWithNextItem-ZmokQxo(java.lang.Object):Z
+- isExtendSelectionWithPreviousItem-ZmokQxo(java.lang.Object):Z
+- isMultiSelectionKeyPressed-5xRPYO0(I):Z
+- isMultiSelectionKeyPressed-ZmokQxo(java.lang.Object):Z
+- isScrollPageDownAndExtendSelection-ZmokQxo(java.lang.Object):Z
+- isScrollPageDownAndSelectItem-ZmokQxo(java.lang.Object):Z
+- isScrollPageUpAndExtendSelection-ZmokQxo(java.lang.Object):Z
+- isScrollPageUpAndSelectItem-ZmokQxo(java.lang.Object):Z
+- isSelectAll-ZmokQxo(java.lang.Object):Z
+- isSelectFirstItem-ZmokQxo(java.lang.Object):Z
+- isSelectLastItem-ZmokQxo(java.lang.Object):Z
+- isSelectNextItem-ZmokQxo(java.lang.Object):Z
+- isSelectPreviousItem-ZmokQxo(java.lang.Object):Z
+f:org.jetbrains.jewel.foundation.lazy.DefaultSelectableColumnKeybindings$Companion
+- org.jetbrains.jewel.foundation.lazy.DefaultSelectableColumnKeybindings
+c:org.jetbrains.jewel.foundation.lazy.DefaultSelectableOnKeyEvent
+- org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.foundation.lazy.DefaultSelectableOnKeyEvent$Companion
+- <init>(org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings):V
+- getKeybindings():org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings
+f:org.jetbrains.jewel.foundation.lazy.DefaultSelectableOnKeyEvent$Companion
+- org.jetbrains.jewel.foundation.lazy.DefaultSelectableOnKeyEvent
+org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings
+- a:isContiguousSelectionKeyPressed-5xRPYO0(I):Z
+- a:isContiguousSelectionKeyPressed-ZmokQxo(java.lang.Object):Z
+- a:isEdit-ZmokQxo(java.lang.Object):Z
+- a:isExtendSelectionToFirstItem-ZmokQxo(java.lang.Object):Z
+- a:isExtendSelectionToLastItem-ZmokQxo(java.lang.Object):Z
+- a:isExtendSelectionWithNextItem-ZmokQxo(java.lang.Object):Z
+- a:isExtendSelectionWithPreviousItem-ZmokQxo(java.lang.Object):Z
+- a:isMultiSelectionKeyPressed-5xRPYO0(I):Z
+- a:isMultiSelectionKeyPressed-ZmokQxo(java.lang.Object):Z
+- a:isScrollPageDownAndExtendSelection-ZmokQxo(java.lang.Object):Z
+- a:isScrollPageDownAndSelectItem-ZmokQxo(java.lang.Object):Z
+- a:isScrollPageUpAndExtendSelection-ZmokQxo(java.lang.Object):Z
+- a:isScrollPageUpAndSelectItem-ZmokQxo(java.lang.Object):Z
+- a:isSelectAll-ZmokQxo(java.lang.Object):Z
+- a:isSelectFirstItem-ZmokQxo(java.lang.Object):Z
+- a:isSelectLastItem-ZmokQxo(java.lang.Object):Z
+- a:isSelectNextItem-ZmokQxo(java.lang.Object):Z
+- a:isSelectPreviousItem-ZmokQxo(java.lang.Object):Z
+org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent
+- a:getKeybindings():org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings
+- onEdit():V
+- onExtendSelectionToFirst(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
+- onExtendSelectionToLastItem(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
+- onExtendSelectionWithNextItem(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
+- onExtendSelectionWithPreviousItem(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
+- onScrollPageDownAndExtendSelection(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
+- onScrollPageDownAndSelectItem(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
+- onScrollPageUpAndExtendSelection(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
+- onScrollPageUpAndSelectItem(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
+- onSelectAll(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
+- onSelectFirstItem(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
+- onSelectLastItem(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
+- onSelectNextItem(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
+- onSelectPreviousItem(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
+f:org.jetbrains.jewel.foundation.lazy.SelectableLazyColumnKt
+- sf:SelectableLazyColumn(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.SelectionMode,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,androidx.compose.foundation.layout.PaddingValues,Z,kotlin.jvm.functions.Function1,androidx.compose.foundation.layout.Arrangement$Vertical,androidx.compose.ui.Alignment$Horizontal,androidx.compose.foundation.gestures.FlingBehavior,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I,I):V
 org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
 - androidx.compose.foundation.lazy.LazyItemScope
 - a:isActive():Z
 - a:isSelected():Z
+a:org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey
+- sf:$stable:I
+- equals(java.lang.Object):Z
+- a:getKey():java.lang.Object
+- hashCode():I
+f:org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey$NotSelectable
+- org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey
+- sf:$stable:I
+- <init>(java.lang.Object):V
+- getKey():java.lang.Object
+f:org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey$Selectable
+- org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey
+- sf:$stable:I
+- <init>(java.lang.Object):V
+- getKey():java.lang.Object
 org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope
 - a:item(java.lang.Object,java.lang.Object,Z,kotlin.jvm.functions.Function3):V
 - bs:item$default(org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,java.lang.Object,java.lang.Object,Z,kotlin.jvm.functions.Function3,I,java.lang.Object):V
@@ -67,9 +309,454 @@ org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope
 - bs:items$default(org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function4,I,java.lang.Object):V
 - a:stickyHeader(java.lang.Object,java.lang.Object,Z,kotlin.jvm.functions.Function3):V
 - bs:stickyHeader$default(org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,java.lang.Object,java.lang.Object,Z,kotlin.jvm.functions.Function3,I,java.lang.Object):V
+f:org.jetbrains.jewel.foundation.lazy.SelectableLazyListScopeKt
+- sf:SelectableLazyItemScope(androidx.compose.foundation.lazy.LazyItemScope,Z,Z,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
+- sf:items(org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,java.util.List,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function4):V
+- bs:items$default(org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,java.util.List,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function4,I,java.lang.Object):V
+- sf:itemsIndexed(org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,java.util.List,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function5):V
+- bs:itemsIndexed$default(org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,java.util.List,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function5,I,java.lang.Object):V
+f:org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
+- androidx.compose.foundation.gestures.ScrollableState
+- org.jetbrains.jewel.foundation.lazy.SelectableScope
+- sf:$stable:I
+- <init>(androidx.compose.foundation.lazy.LazyListState):V
+- dispatchRawDelta(F):F
+- getCanScrollBackward():Z
+- getCanScrollForward():Z
+- f:getFirstVisibleItemIndex():I
+- f:getFirstVisibleItemScrollOffset():I
+- f:getInteractionSource():androidx.compose.foundation.interaction.InteractionSource
+- f:getLastActiveItemIndex():java.lang.Integer
+- getLastScrolledBackward():Z
+- getLastScrolledForward():Z
+- f:getLayoutInfo():androidx.compose.foundation.lazy.LazyListLayoutInfo
+- f:getLazyListState():androidx.compose.foundation.lazy.LazyListState
+- getSelectedKeys():java.util.Set
+- f:isKeyboardNavigating():Z
+- isScrollInProgress():Z
+- scroll(androidx.compose.foundation.MutatePriority,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- f:scrollToItem(I,Z,I,kotlin.coroutines.Continuation):java.lang.Object
+- bs:scrollToItem$default(org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,I,Z,I,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:setKeyboardNavigating(Z):V
+- f:setLastActiveItemIndex(java.lang.Integer):V
+- setSelectedKeys(java.util.Set):V
+f:org.jetbrains.jewel.foundation.lazy.SelectableLazyListStateKt
+- sf:getVisibleItemsRange(androidx.compose.foundation.lazy.LazyListState):kotlin.ranges.IntRange
+- sf:getVisibleItemsRange(org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):kotlin.ranges.IntRange
+- sf:rememberSelectableLazyListState(I,I,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
+org.jetbrains.jewel.foundation.lazy.SelectableScope
+- a:getSelectedKeys():java.util.Set
+- a:setSelectedKeys(java.util.Set):V
+e:org.jetbrains.jewel.foundation.lazy.SelectionMode
+- java.lang.Enum
+- sf:Multiple:org.jetbrains.jewel.foundation.lazy.SelectionMode
+- sf:None:org.jetbrains.jewel.foundation.lazy.SelectionMode
+- sf:Single:org.jetbrains.jewel.foundation.lazy.SelectionMode
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.foundation.lazy.SelectionMode
+- s:values():org.jetbrains.jewel.foundation.lazy.SelectionMode[]
+f:org.jetbrains.jewel.foundation.lazy.tree.BasicLazyTreeKt
+- sf:BasicLazyTree-orM9XXQ(org.jetbrains.jewel.foundation.lazy.tree.Tree,org.jetbrains.jewel.foundation.lazy.SelectionMode,kotlin.jvm.functions.Function1,J,J,J,F,androidx.compose.foundation.shape.CornerSize,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,F,F,org.jetbrains.jewel.foundation.lazy.tree.TreeState,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,J,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function4,androidx.compose.runtime.Composer,I,I,I,I):V
+f:org.jetbrains.jewel.foundation.lazy.tree.BuildTreeKt
+- sf:asTree(java.io.File,kotlin.jvm.functions.Function1):org.jetbrains.jewel.foundation.lazy.tree.Tree
+- sf:asTree(java.nio.file.Path,kotlin.jvm.functions.Function1):org.jetbrains.jewel.foundation.lazy.tree.Tree
+- bs:asTree$default(java.io.File,kotlin.jvm.functions.Function1,I,java.lang.Object):org.jetbrains.jewel.foundation.lazy.tree.Tree
+- bs:asTree$default(java.nio.file.Path,kotlin.jvm.functions.Function1,I,java.lang.Object):org.jetbrains.jewel.foundation.lazy.tree.Tree
+- sf:buildTree(kotlin.jvm.functions.Function1):org.jetbrains.jewel.foundation.lazy.tree.Tree
+f:org.jetbrains.jewel.foundation.lazy.tree.ChildrenGeneratorScope
+- org.jetbrains.jewel.foundation.lazy.tree.TreeGeneratorScope
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.foundation.lazy.tree.Tree$Element$Node):V
+- add(org.jetbrains.jewel.foundation.lazy.tree.TreeBuilder$Element):V
+- addLeaf(java.lang.Object,java.lang.Object):V
+- addNode(java.lang.Object,java.lang.Object,kotlin.jvm.functions.Function1):V
+- f:getParent():org.jetbrains.jewel.foundation.lazy.tree.ChildrenGeneratorScope$ParentInfo
+f:org.jetbrains.jewel.foundation.lazy.tree.ChildrenGeneratorScope$ParentInfo
+- sf:$stable:I
+- <init>(java.lang.Object,I,I):V
+- equals(java.lang.Object):Z
+- f:getData():java.lang.Object
+- f:getDepth():I
+- f:getIndex():I
+- hashCode():I
+c:org.jetbrains.jewel.foundation.lazy.tree.DefaultMacOsTreeColumnKeybindings
+- org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewKeybindings
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.foundation.lazy.tree.DefaultMacOsTreeColumnKeybindings$Companion
+- <init>():V
+- isMultiSelectionKeyPressed-5xRPYO0(I):Z
+- isMultiSelectionKeyPressed-ZmokQxo(java.lang.Object):Z
+f:org.jetbrains.jewel.foundation.lazy.tree.DefaultMacOsTreeColumnKeybindings$Companion
+- org.jetbrains.jewel.foundation.lazy.tree.DefaultMacOsTreeColumnKeybindings
+c:org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnEventAction
+- org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions
+- sf:$stable:I
+- <init>():V
+- handlePointerEventPress(androidx.compose.ui.input.pointer.PointerEvent,org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,org.jetbrains.jewel.foundation.lazy.SelectionMode,java.util.List,java.lang.Object):V
+- onExtendSelectionToKey(java.lang.Object,java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,org.jetbrains.jewel.foundation.lazy.SelectionMode):V
+- toggleKeySelection(java.lang.Object,java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,org.jetbrains.jewel.foundation.lazy.SelectionMode):V
+c:org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnKeyActions
+- org.jetbrains.jewel.foundation.lazy.tree.KeyActions
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnKeyActions$Companion
+- <init>(org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings,org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent):V
+- b:<init>(org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings,org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- getActions():org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent
+- getKeybindings():org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings
+- handleOnKeyEvent-jhbQyNo(java.lang.Object,java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,org.jetbrains.jewel.foundation.lazy.SelectionMode):kotlin.jvm.functions.Function1
+f:org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnKeyActions$Companion
+- org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnKeyActions
+f:org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewKeyActions
+- org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnKeyActions
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.foundation.lazy.tree.TreeViewKeybindings,org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewOnKeyEvent):V
+- getActions():org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewOnKeyEvent
+- getKeybindings():org.jetbrains.jewel.foundation.lazy.tree.TreeViewKeybindings
+- handleOnKeyEvent-jhbQyNo(java.lang.Object,java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,org.jetbrains.jewel.foundation.lazy.SelectionMode):kotlin.jvm.functions.Function1
+c:org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewKeybindings
+- org.jetbrains.jewel.foundation.lazy.DefaultSelectableColumnKeybindings
+- org.jetbrains.jewel.foundation.lazy.tree.TreeViewKeybindings
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewKeybindings$Companion
+- <init>():V
+- isEdit-ZmokQxo(java.lang.Object):Z
+- isExtendSelectionToChild-ZmokQxo(java.lang.Object):Z
+- isExtendSelectionToParent-ZmokQxo(java.lang.Object):Z
+- isSelectChild-ZmokQxo(java.lang.Object):Z
+- isSelectNextSibling-ZmokQxo(java.lang.Object):Z
+- isSelectParent-ZmokQxo(java.lang.Object):Z
+- isSelectPreviousSibling-ZmokQxo(java.lang.Object):Z
+f:org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewKeybindings$Companion
+- org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewKeybindings
+f:org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewKeybindingsKt
+- sf:getDefaultWindowsTreeViewClickModifierHandler():kotlin.jvm.functions.Function1
+c:org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewOnKeyEvent
+- org.jetbrains.jewel.foundation.lazy.tree.TreeViewOnKeyEvent
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.foundation.lazy.tree.TreeViewKeybindings,org.jetbrains.jewel.foundation.lazy.tree.TreeState):V
+- getKeybindings():org.jetbrains.jewel.foundation.lazy.tree.TreeViewKeybindings
+- onSelectChild(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
+- onSelectParent(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
+c:org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewPointerEventAction
+- org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnEventAction
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.foundation.lazy.tree.TreeState):V
+- handlePointerEventPress(androidx.compose.ui.input.pointer.PointerEvent,org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,org.jetbrains.jewel.foundation.lazy.SelectionMode,java.util.List,java.lang.Object):V
+org.jetbrains.jewel.foundation.lazy.tree.KeyActions
+- a:getActions():org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent
+- a:getKeybindings():org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings
+- a:handleOnKeyEvent-jhbQyNo(java.lang.Object,java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,org.jetbrains.jewel.foundation.lazy.SelectionMode):kotlin.jvm.functions.Function1
+f:org.jetbrains.jewel.foundation.lazy.tree.KeyActionsKt
+- sf:DefaultTreeViewKeyActions(org.jetbrains.jewel.foundation.lazy.tree.TreeState):org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewKeyActions
+org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions
+- a:handlePointerEventPress(androidx.compose.ui.input.pointer.PointerEvent,org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,org.jetbrains.jewel.foundation.lazy.SelectionMode,java.util.List,java.lang.Object):V
+- a:onExtendSelectionToKey(java.lang.Object,java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,org.jetbrains.jewel.foundation.lazy.SelectionMode):V
+- a:toggleKeySelection(java.lang.Object,java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,org.jetbrains.jewel.foundation.lazy.SelectionMode):V
+f:org.jetbrains.jewel.foundation.lazy.tree.Tree
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.foundation.lazy.tree.Tree$Companion
+- f:getRoots():java.util.List
+- f:isEmpty():Z
+- f:walkBreadthFirst():kotlin.sequences.Sequence
+- f:walkDepthFirst():kotlin.sequences.Sequence
+f:org.jetbrains.jewel.foundation.lazy.tree.Tree$Companion
+org.jetbrains.jewel.foundation.lazy.tree.Tree$Element
+- a:getChildIndex():I
+- a:getData():java.lang.Object
+- a:getDepth():I
+- a:getId():java.lang.Object
+- a:getNext():org.jetbrains.jewel.foundation.lazy.tree.Tree$Element
+- a:getParent():org.jetbrains.jewel.foundation.lazy.tree.Tree$Element
+- a:getPrevious():org.jetbrains.jewel.foundation.lazy.tree.Tree$Element
+- nextElementsIterable():java.lang.Iterable
+- path():java.util.List
+- previousElementsIterable():java.lang.Iterable
+- a:setNext(org.jetbrains.jewel.foundation.lazy.tree.Tree$Element):V
+- a:setPrevious(org.jetbrains.jewel.foundation.lazy.tree.Tree$Element):V
+f:org.jetbrains.jewel.foundation.lazy.tree.Tree$Element$Leaf
+- org.jetbrains.jewel.foundation.lazy.tree.Tree$Element
+- sf:$stable:I
+- <init>(java.lang.Object,I,I,org.jetbrains.jewel.foundation.lazy.tree.Tree$Element,org.jetbrains.jewel.foundation.lazy.tree.Tree$Element,org.jetbrains.jewel.foundation.lazy.tree.Tree$Element,java.lang.Object):V
+- getChildIndex():I
+- getData():java.lang.Object
+- getDepth():I
+- getId():java.lang.Object
+- getNext():org.jetbrains.jewel.foundation.lazy.tree.Tree$Element
+- getParent():org.jetbrains.jewel.foundation.lazy.tree.Tree$Element
+- getPrevious():org.jetbrains.jewel.foundation.lazy.tree.Tree$Element
+- setNext(org.jetbrains.jewel.foundation.lazy.tree.Tree$Element):V
+- setPrevious(org.jetbrains.jewel.foundation.lazy.tree.Tree$Element):V
+f:org.jetbrains.jewel.foundation.lazy.tree.Tree$Element$Node
+- org.jetbrains.jewel.foundation.lazy.tree.Tree$Element
+- sf:$stable:I
+- <init>(java.lang.Object,I,I,org.jetbrains.jewel.foundation.lazy.tree.Tree$Element,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.tree.Tree$Element,org.jetbrains.jewel.foundation.lazy.tree.Tree$Element,java.lang.Object):V
+- f:close():V
+- getChildIndex():I
+- f:getChildren():java.util.List
+- getData():java.lang.Object
+- getDepth():I
+- getId():java.lang.Object
+- getNext():org.jetbrains.jewel.foundation.lazy.tree.Tree$Element
+- getParent():org.jetbrains.jewel.foundation.lazy.tree.Tree$Element
+- getPrevious():org.jetbrains.jewel.foundation.lazy.tree.Tree$Element
+- f:open(Z):V
+- bs:open$default(org.jetbrains.jewel.foundation.lazy.tree.Tree$Element$Node,Z,I,java.lang.Object):V
+- setNext(org.jetbrains.jewel.foundation.lazy.tree.Tree$Element):V
+- setPrevious(org.jetbrains.jewel.foundation.lazy.tree.Tree$Element):V
+f:org.jetbrains.jewel.foundation.lazy.tree.TreeBuilder
+- org.jetbrains.jewel.foundation.lazy.tree.TreeGeneratorScope
+- sf:$stable:I
+- <init>():V
+- add(org.jetbrains.jewel.foundation.lazy.tree.TreeBuilder$Element):V
+- addLeaf(java.lang.Object,java.lang.Object):V
+- addNode(java.lang.Object,java.lang.Object,kotlin.jvm.functions.Function1):V
+- f:build():org.jetbrains.jewel.foundation.lazy.tree.Tree
+a:org.jetbrains.jewel.foundation.lazy.tree.TreeBuilder$Element
+- sf:$stable:I
+- a:getId():java.lang.Object
+f:org.jetbrains.jewel.foundation.lazy.tree.TreeBuilder$Element$Leaf
+- org.jetbrains.jewel.foundation.lazy.tree.TreeBuilder$Element
+- sf:$stable:I
+- <init>(java.lang.Object,java.lang.Object):V
+- equals(java.lang.Object):Z
+- f:getData():java.lang.Object
+- getId():java.lang.Object
+- hashCode():I
+f:org.jetbrains.jewel.foundation.lazy.tree.TreeBuilder$Element$Node
+- org.jetbrains.jewel.foundation.lazy.tree.TreeBuilder$Element
+- sf:$stable:I
+- <init>(java.lang.Object,java.lang.Object,kotlin.jvm.functions.Function1):V
+- equals(java.lang.Object):Z
+- f:getChildrenGenerator():kotlin.jvm.functions.Function1
+- f:getData():java.lang.Object
+- getId():java.lang.Object
+- hashCode():I
+f:org.jetbrains.jewel.foundation.lazy.tree.TreeElementState
+- org.jetbrains.jewel.foundation.state.FocusableComponentState
+- org.jetbrains.jewel.foundation.state.SelectableComponentState
+- sf:Companion:org.jetbrains.jewel.foundation.lazy.tree.TreeElementState$Companion
+- bsf:box-impl(J):org.jetbrains.jewel.foundation.lazy.tree.TreeElementState
+- s:constructor-impl(J):J
+- sf:copy-do3-xvo(J,Z,Z,Z,Z,Z,Z,Z):J
+- bs:copy-do3-xvo$default(J,Z,Z,Z,Z,Z,Z,Z,I,java.lang.Object):J
+- equals(java.lang.Object):Z
+- s:equals-impl(J,java.lang.Object):Z
+- sf:equals-impl0(J,J):Z
+- f:getState-s-VKNKU():J
+- hashCode():I
+- s:hashCode-impl(J):I
+- isActive():Z
+- s:isActive-impl(J):Z
+- isEnabled():Z
+- s:isEnabled-impl(J):Z
+- sf:isExpanded-impl(J):Z
+- isFocused():Z
+- s:isFocused-impl(J):Z
+- isHovered():Z
+- s:isHovered-impl(J):Z
+- isPressed():Z
+- s:isPressed-impl(J):Z
+- isSelected():Z
+- s:isSelected-impl(J):Z
+- s:toString-impl(J):java.lang.String
+- bf:unbox-impl():J
+f:org.jetbrains.jewel.foundation.lazy.tree.TreeElementState$Companion
+- f:of-do3-xvo(Z,Z,Z,Z,Z,Z,Z):J
+- bs:of-do3-xvo$default(org.jetbrains.jewel.foundation.lazy.tree.TreeElementState$Companion,Z,Z,Z,Z,Z,Z,Z,I,java.lang.Object):J
+org.jetbrains.jewel.foundation.lazy.tree.TreeGeneratorScope
+- a:add(org.jetbrains.jewel.foundation.lazy.tree.TreeBuilder$Element):V
+- a:addLeaf(java.lang.Object,java.lang.Object):V
+- bs:addLeaf$default(org.jetbrains.jewel.foundation.lazy.tree.TreeGeneratorScope,java.lang.Object,java.lang.Object,I,java.lang.Object):V
+- a:addNode(java.lang.Object,java.lang.Object,kotlin.jvm.functions.Function1):V
+- bs:addNode$default(org.jetbrains.jewel.foundation.lazy.tree.TreeGeneratorScope,java.lang.Object,java.lang.Object,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+f:org.jetbrains.jewel.foundation.lazy.tree.TreeKt
+- sf:emptyTree():org.jetbrains.jewel.foundation.lazy.tree.Tree
+f:org.jetbrains.jewel.foundation.lazy.tree.TreeState
+- androidx.compose.foundation.gestures.ScrollableState
+- org.jetbrains.jewel.foundation.lazy.SelectableScope
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
+- dispatchRawDelta(F):F
+- getCanScrollBackward():Z
+- getCanScrollForward():Z
+- getLastScrolledBackward():Z
+- getLastScrolledForward():Z
+- f:getOpenNodes():java.util.Set
+- getSelectedKeys():java.util.Set
+- isScrollInProgress():Z
+- f:openNodes(java.util.List):V
+- scroll(androidx.compose.foundation.MutatePriority,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- f:setOpenNodes(java.util.Set):V
+- setSelectedKeys(java.util.Set):V
+- f:toggleNode(java.lang.Object):V
+f:org.jetbrains.jewel.foundation.lazy.tree.TreeStateKt
+- sf:rememberTreeState(androidx.compose.foundation.lazy.LazyListState,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.lazy.tree.TreeState
+org.jetbrains.jewel.foundation.lazy.tree.TreeViewKeybindings
+- org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings
+- a:isExtendSelectionToChild-ZmokQxo(java.lang.Object):Z
+- a:isExtendSelectionToParent-ZmokQxo(java.lang.Object):Z
+- a:isSelectChild-ZmokQxo(java.lang.Object):Z
+- a:isSelectNextSibling-ZmokQxo(java.lang.Object):Z
+- a:isSelectParent-ZmokQxo(java.lang.Object):Z
+- a:isSelectPreviousSibling-ZmokQxo(java.lang.Object):Z
+org.jetbrains.jewel.foundation.lazy.tree.TreeViewOnKeyEvent
+- org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent
+- a:onSelectChild(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
+- a:onSelectParent(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
+f:org.jetbrains.jewel.foundation.modifier.ActivationKt
+- sf:getModifierLocalActivated():androidx.compose.ui.modifier.ProvidableModifierLocal
+- sf:onActivated(androidx.compose.ui.Modifier,Z,kotlin.jvm.functions.Function1):androidx.compose.ui.Modifier
+- bs:onActivated$default(androidx.compose.ui.Modifier,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):androidx.compose.ui.Modifier
+- sf:trackActivation(androidx.compose.ui.Modifier):androidx.compose.ui.Modifier
+- sf:trackComponentActivation(androidx.compose.ui.Modifier,java.awt.Component):androidx.compose.ui.Modifier
+- sf:trackWindowActivation(androidx.compose.ui.Modifier,java.awt.Window):androidx.compose.ui.Modifier
+f:org.jetbrains.jewel.foundation.modifier.BorderKt
+- sf:border(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.Stroke,androidx.compose.ui.graphics.Shape):androidx.compose.ui.Modifier
+- sf:border-AkepmR4(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.Stroke$Alignment,F,androidx.compose.ui.graphics.Brush,androidx.compose.ui.graphics.Shape,F):androidx.compose.ui.Modifier
+- bs:border-AkepmR4$default(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.Stroke$Alignment,F,androidx.compose.ui.graphics.Brush,androidx.compose.ui.graphics.Shape,F,I,java.lang.Object):androidx.compose.ui.Modifier
+- sf:border-QWjY48E(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.Stroke$Alignment,F,J,androidx.compose.ui.graphics.Shape,F):androidx.compose.ui.Modifier
+- bs:border-QWjY48E$default(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.Stroke$Alignment,F,J,androidx.compose.ui.graphics.Shape,F,I,java.lang.Object):androidx.compose.ui.Modifier
+f:org.jetbrains.jewel.foundation.modifier.ModifierExtensionsKt
+- sf:thenIf(androidx.compose.ui.Modifier,Z,kotlin.jvm.functions.Function1):androidx.compose.ui.Modifier
+f:org.jetbrains.jewel.foundation.modifier.PointerModifiersKt
+- sf:onHover(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1):androidx.compose.ui.Modifier
+- sf:onMove(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1):androidx.compose.ui.Modifier
+f:org.jetbrains.jewel.foundation.state.CommonStateBitMask
+- sf:$stable:I
+- sf:FIRST_AVAILABLE_OFFSET:I
+- sf:INSTANCE:org.jetbrains.jewel.foundation.state.CommonStateBitMask
+- f:getActive-s-VKNKU():J
+- f:getEnabled-s-VKNKU():J
+- f:getFocused-s-VKNKU():J
+- f:getHovered-s-VKNKU():J
+- f:getIndeterminate-s-VKNKU():J
+- f:getPressed-s-VKNKU():J
+- f:getSelected-s-VKNKU():J
+org.jetbrains.jewel.foundation.state.FocusableComponentState
+- org.jetbrains.jewel.foundation.state.InteractiveComponentState
+- chooseValue(java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,androidx.compose.runtime.Composer,I):java.lang.Object
+- a:isFocused():Z
+org.jetbrains.jewel.foundation.state.InteractiveComponentState
+- a:isActive():Z
+- a:isEnabled():Z
+- a:isHovered():Z
+- a:isPressed():Z
+org.jetbrains.jewel.foundation.state.SelectableComponentState
+- org.jetbrains.jewel.foundation.state.InteractiveComponentState
+- a:isSelected():Z
+org.jetbrains.jewel.foundation.state.ToggleableComponentState
+- sf:Companion:org.jetbrains.jewel.foundation.state.ToggleableComponentState$Companion
+- a:getToggleableState():androidx.compose.ui.state.ToggleableState
+- isSelected():Z
+- isSelectedOrIndeterminate():Z
+f:org.jetbrains.jewel.foundation.state.ToggleableComponentState$Companion
+- f:readToggleableState-VKZWuLQ(J):androidx.compose.ui.state.ToggleableState
 org.jetbrains.jewel.foundation.theme.JewelTheme
 - sf:Companion:org.jetbrains.jewel.foundation.theme.JewelTheme$Companion
 f:org.jetbrains.jewel.foundation.theme.JewelTheme$Companion
+- f:getConsoleTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- f:getContentColor(androidx.compose.runtime.Composer,I):J
+- f:getDefaultTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- f:getEditorTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- f:getGlobalColors(androidx.compose.runtime.Composer,I):org.jetbrains.jewel.foundation.GlobalColors
+- f:getGlobalMetrics(androidx.compose.runtime.Composer,I):org.jetbrains.jewel.foundation.GlobalMetrics
+- f:getName(androidx.compose.runtime.Composer,I):java.lang.String
+- f:isDark(androidx.compose.runtime.Composer,I):Z
+- f:isSwingCompatMode(androidx.compose.runtime.Composer,I):Z
 f:org.jetbrains.jewel.foundation.theme.JewelThemeKt
+- sf:JewelTheme(org.jetbrains.jewel.foundation.theme.ThemeDefinition,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
+- sf:JewelTheme(org.jetbrains.jewel.foundation.theme.ThemeDefinition,Z,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
+- sf:OverrideDarkMode(Z,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
+- sf:getLocalColorPalette():androidx.compose.runtime.ProvidableCompositionLocal
+- sf:getLocalConsoleTextStyle():androidx.compose.runtime.ProvidableCompositionLocal
+- sf:getLocalContentColor():androidx.compose.runtime.ProvidableCompositionLocal
+- sf:getLocalEditorTextStyle():androidx.compose.runtime.ProvidableCompositionLocal
+- sf:getLocalIconData():androidx.compose.runtime.ProvidableCompositionLocal
+- sf:getLocalTextStyle():androidx.compose.runtime.ProvidableCompositionLocal
+- sf:getLocalThemeName():androidx.compose.runtime.ProvidableCompositionLocal
+f:org.jetbrains.jewel.foundation.theme.ThemeColorPalette
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.foundation.theme.ThemeColorPalette$Companion
+- <init>(java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.Map):V
+- f:blue-vNxB06k(I):J
+- f:blueOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
+- equals(java.lang.Object):Z
+- f:getBlue():java.util.List
+- f:getGray():java.util.List
+- f:getGreen():java.util.List
+- f:getOrange():java.util.List
+- f:getPurple():java.util.List
+- f:getRawMap():java.util.Map
+- f:getRed():java.util.List
+- f:getTeal():java.util.List
+- f:getYellow():java.util.List
+- f:gray-vNxB06k(I):J
+- f:grayOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
+- f:green-vNxB06k(I):J
+- f:greenOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
+- hashCode():I
+- f:lookup-ijrfgN4(java.lang.String):androidx.compose.ui.graphics.Color
+- f:orange-vNxB06k(I):J
+- f:orangeOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
+- f:purple-vNxB06k(I):J
+- f:purpleOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
+- f:red-vNxB06k(I):J
+- f:redOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
+- f:teal-vNxB06k(I):J
+- f:tealOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
+- f:yellow-vNxB06k(I):J
+- f:yellowOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
+f:org.jetbrains.jewel.foundation.theme.ThemeColorPalette$Companion
+- f:getEmpty():org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 f:org.jetbrains.jewel.foundation.theme.ThemeDefinition
+- sf:$stable:I
+- equals(java.lang.Object):Z
+- f:getColorPalette():org.jetbrains.jewel.foundation.theme.ThemeColorPalette
+- f:getConsoleTextStyle():androidx.compose.ui.text.TextStyle
+- f:getContentColor-0d7_KjU():J
+- f:getDefaultTextStyle():androidx.compose.ui.text.TextStyle
 - f:getDisabledAppearanceValues():org.jetbrains.jewel.foundation.DisabledAppearanceValues
+- f:getEditorTextStyle():androidx.compose.ui.text.TextStyle
+- f:getGlobalColors():org.jetbrains.jewel.foundation.GlobalColors
+- f:getGlobalMetrics():org.jetbrains.jewel.foundation.GlobalMetrics
+- f:getIconData():org.jetbrains.jewel.foundation.theme.ThemeIconData
+- f:getName():java.lang.String
+- hashCode():I
+- f:isDark():Z
+org.jetbrains.jewel.foundation.theme.ThemeDescriptor
+- a:getColors():org.jetbrains.jewel.foundation.theme.ThemeColorPalette
+- a:getIconData():org.jetbrains.jewel.foundation.theme.ThemeIconData
+- a:getName():java.lang.String
+- a:isDark():Z
+f:org.jetbrains.jewel.foundation.theme.ThemeIconData
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.foundation.theme.ThemeIconData$Companion
+- <init>(java.util.Map,java.util.Map,java.util.Map):V
+- f:getColorPalette():java.util.Map
+- f:getIconOverrides():java.util.Map
+- f:getSelectionColorPalette():java.util.Map
+- f:selectionColorMapping():java.util.Map
+f:org.jetbrains.jewel.foundation.theme.ThemeIconData$Companion
+- f:getEmpty():org.jetbrains.jewel.foundation.theme.ThemeIconData
+Fa:org.jetbrains.jewel.foundation.util.JewelLogger
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.foundation.util.JewelLogger$Companion
+- <init>():V
+- f:debug(java.lang.String):V
+- a:debug(java.lang.String,java.lang.Throwable):V
+- f:debug(java.lang.Throwable):V
+- f:error(java.lang.String):V
+- a:error(java.lang.String,java.lang.Throwable):V
+- f:error(java.lang.Throwable):V
+- f:info(java.lang.String):V
+- a:info(java.lang.String,java.lang.Throwable):V
+- f:info(java.lang.Throwable):V
+- f:trace(java.lang.String):V
+- a:trace(java.lang.String,java.lang.Throwable):V
+- f:trace(java.lang.Throwable):V
+- f:warn(java.lang.String):V
+- a:warn(java.lang.String,java.lang.Throwable):V
+- f:warn(java.lang.Throwable):V
+f:org.jetbrains.jewel.foundation.util.JewelLogger$Companion
+- f:getInstance(java.lang.Class):org.jetbrains.jewel.foundation.util.JewelLogger
+- f:getInstance(java.lang.String):org.jetbrains.jewel.foundation.util.JewelLogger

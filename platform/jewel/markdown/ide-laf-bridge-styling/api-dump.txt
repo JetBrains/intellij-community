@@ -1,2 +1,5 @@
+f:org.jetbrains.jewel.intui.markdown.bridge.BridgeMarkdownBlockRendererExtensionsKt
 f:org.jetbrains.jewel.intui.markdown.bridge.BridgeProvideMarkdownStylingKt
 f:org.jetbrains.jewel.intui.markdown.bridge.styling.BridgeMarkdownStylingKt
+f:org.jetbrains.jewel.intui.markdown.bridge.styling.extensions.github.alerts.BridgeGitHubAlertStylingKt
+f:org.jetbrains.jewel.intui.markdown.bridge.styling.extensions.github.tables.BridgeGitHubTableStylingKt
