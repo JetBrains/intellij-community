@@ -34,6 +34,10 @@ interface TerminalOutputModel {
 
   fun absoluteOffset(offset: Long): TerminalOffset
 
+  fun relativeLine(line: Int): TerminalLine
+
+  fun absoluteLine(line: Long): TerminalLine
+
   /**
    * Returns document ranges with corresponding text attributes.
    */
@@ -83,10 +87,18 @@ interface FrozenTerminalOutputModel {
 
   fun relativeOffset(offset: Int): TerminalOffset
   fun absoluteOffset(offset: Long): TerminalOffset
+  fun relativeLine(line: Int): TerminalLine
+  fun absoluteLine(line: Long): TerminalLine
 }
 
 @ApiStatus.Internal
 sealed interface TerminalOffset : Comparable<TerminalOffset> {
+  fun toAbsolute(): Long
+  fun toRelative(): Int
+}
+
+@ApiStatus.Internal
+sealed interface TerminalLine : Comparable<TerminalLine> {
   fun toAbsolute(): Long
   fun toRelative(): Int
 }

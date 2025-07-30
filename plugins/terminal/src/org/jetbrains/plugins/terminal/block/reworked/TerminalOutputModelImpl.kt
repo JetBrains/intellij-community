@@ -49,11 +49,15 @@ class TerminalOutputModelImpl(
   private var isTypeAhead: Boolean = false
 
   override fun freeze(): FrozenTerminalOutputModel =
-    FrozenTerminalOutputModelImpl((document as DocumentImpl).freeze(), trimmedCharsCount, cursorOffsetState.value)
+    FrozenTerminalOutputModelImpl((document as DocumentImpl).freeze(), trimmedCharsCount, trimmedLinesCount, cursorOffsetState.value)
 
   override fun relativeOffset(offset: Int): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount, offset)
 
   override fun absoluteOffset(offset: Long): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount, (offset - trimmedCharsCount).toInt())
+
+  override fun relativeLine(line: Int): TerminalLine = TerminalLineImpl(trimmedLinesCount, line)
+
+  override fun absoluteLine(line: Long): TerminalLine = TerminalLineImpl(trimmedLinesCount, (line - trimmedLinesCount).toInt())
 
   override fun getAbsoluteLineIndex(documentOffset: Int): Long {
     val documentLineIndex = document.getLineNumber(documentOffset)
@@ -447,10 +451,13 @@ class TerminalOutputModelImpl(
 class FrozenTerminalOutputModelImpl(
   override val document: FrozenDocument,
   private val trimmedCharsCount: Long,
+  private val trimmedLinesCount: Long,
   override val cursorOffset: Int,
 ) : FrozenTerminalOutputModel {
   override fun relativeOffset(offset: Int): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount, offset)
   override fun absoluteOffset(offset: Long): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount, (offset - trimmedCharsCount).toInt())
+  override fun relativeLine(line: Int): TerminalLine = TerminalLineImpl(trimmedLinesCount, line)
+  override fun absoluteLine(line: Long): TerminalLine = TerminalLineImpl(trimmedLinesCount, (line - trimmedLinesCount).toInt())
 }
 
 private data class TerminalOffsetImpl(
@@ -459,6 +466,16 @@ private data class TerminalOffsetImpl(
 ) : TerminalOffset {
   override fun compareTo(other: TerminalOffset): Int = toAbsolute().compareTo(other.toAbsolute())
   override fun toAbsolute(): Long = trimmedCharsCount + relative
+  override fun toRelative(): Int = relative
+  override fun toString(): String = "${toAbsolute()}(${toRelative()})"
+}
+
+private data class TerminalLineImpl(
+  val trimmedLinesCount: Long,
+  val relative: Int,
+) : TerminalLine {
+  override fun compareTo(other: TerminalLine): Int = toAbsolute().compareTo(other.toAbsolute())
+  override fun toAbsolute(): Long = trimmedLinesCount + relative
   override fun toRelative(): Int = relative
   override fun toString(): String = "${toAbsolute()}(${toRelative()})"
 }
