@@ -37,7 +37,10 @@ class FrontendScopeChooser(private val project: Project, private val preselected
   private val comboBox = ComboBox<ScopeDescriptor>(300)
   private var selectedItem: ScopeDescriptor?
     get() = comboBox.selectedItem as? ScopeDescriptor
-    set(value) = comboBox.setSelectedItem(value)
+    set(value) {
+      if (selectedItem == value) return
+      comboBox.setSelectedItem(value)
+    }
 
   private val editScopesButton = FixedSizeButton(comboBox).apply {
     addActionListener { editScopes() }

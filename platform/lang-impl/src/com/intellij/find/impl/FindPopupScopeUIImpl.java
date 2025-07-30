@@ -79,12 +79,15 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
     myModuleComboBox.setSwingPopup(false);
     myModuleComboBox.setMinimumAndPreferredWidth(JBUIScale.scale(300)); // as ScopeChooser
 
-    ActionListener restartSearchListener = e -> scheduleResultsUpdate();
-    myModuleComboBox.addActionListener(restartSearchListener);
+    myModuleComboBox.addActionListener(e -> {
+      if (myFindPopupPanel.isScopeSelected(MODULE)) {
+        scheduleResultsUpdate();
+      }
+    });
 
     myDirectoryChooser = new FindPopupDirectoryChooser(myFindPopupPanel);
 
-    initScopeCombo(restartSearchListener);
+    initScopeCombo();
   }
 
   private JComponent getScopeChooser() {
@@ -95,7 +98,12 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
     return FindKey.isEnabled() ? newScopeCombo.getComboBox() : myScopeCombo.getComboBox();
   }
 
-  private void initScopeCombo(ActionListener restartSearchListener) {
+  private void initScopeCombo() {
+    ActionListener restartSearchListener = e -> {
+      if (myFindPopupPanel.isScopeSelected(SCOPE)) {
+        scheduleResultsUpdate();
+      }
+    };
     String selection = ObjectUtils.coalesce(myHelper.getModel().getCustomScopeName(), FindSettings.getInstance().getDefaultScopeName());
     if (FindKey.isEnabled()) {
       newScopeCombo = new FrontendScopeChooser(myProject, selection, ScopesFilterConditionType.FIND);
