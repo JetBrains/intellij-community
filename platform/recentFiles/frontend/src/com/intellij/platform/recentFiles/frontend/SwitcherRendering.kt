@@ -25,6 +25,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
 import java.awt.Color
@@ -291,7 +292,8 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
     value.prepareMainRenderer(main, selected)
     applySpeedSearchHighlighting(switcher, main, false, selected)
     panel.accessibleContext.accessibleName = value.mainText
-    panel.accessibleContext.accessibleDescription = value.statusText
+    panel.accessibleContext.accessibleDescription =
+      AccessibleContextUtil.combineAccessibleStrings(value.statusText, ", ", value.shortcutText)
     return panel
   }
 }
