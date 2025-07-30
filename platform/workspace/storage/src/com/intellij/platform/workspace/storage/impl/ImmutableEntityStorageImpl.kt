@@ -74,7 +74,7 @@ internal open class ImmutableEntityStorageImpl(
 
   // I suppose that we can use some kind of array of arrays to get a quicker access (just two accesses by-index)
   // However, it's not implemented currently because I'm not sure about threading.
-  private val entityCache: ConcurrentLongObjectMap<WorkspaceEntity> = Java11Shim.INSTANCE.createConcurrentLongObjectMap()
+  private val entityCache: ConcurrentLongObjectMap<WorkspaceEntity> = Java11Shim.createConcurrentLongObjectMap()
 
   override fun <T> cached(query: StorageQuery<T>): T {
     return snapshotCache.cached(query, this, null).value

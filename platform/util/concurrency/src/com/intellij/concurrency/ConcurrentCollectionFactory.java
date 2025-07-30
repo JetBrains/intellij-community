@@ -74,24 +74,24 @@ public final class ConcurrentCollectionFactory {
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentLongObjectMap<@NotNull V> createConcurrentLongObjectMap() {
-    return Java11Shim.INSTANCE.createConcurrentLongObjectMap();
+    return Java11Shim.Companion.createConcurrentLongObjectMap();
   }
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentIntObjectMap<@NotNull V> createConcurrentIntObjectMap() {
-    return new ConcurrentIntObjectHashMap<>();
+    return Java11Shim.Companion.createConcurrentIntObjectMap();
   }
 
   @Contract(value = "_,_,_ -> new", pure = true)
   public static @NotNull <V> ConcurrentIntObjectMap<@NotNull V> createConcurrentIntObjectMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
-    return new ConcurrentIntObjectHashMap<>(initialCapacity, loadFactor, concurrencyLevel);
+    return Java11Shim.Companion.createConcurrentIntObjectMap(initialCapacity, loadFactor, concurrencyLevel);
   }
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentIntObjectMap<@NotNull V> createConcurrentIntObjectSoftValueMap() {
-    return new ConcurrentIntKeySoftValueHashMap<>();
+    return Java11Shim.Companion.createConcurrentIntObjectSoftValueMap();
   }
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentIntObjectMap<@NotNull V> createConcurrentIntObjectWeakValueMap() {
-    return new ConcurrentIntKeyWeakValueHashMap<>();
+    return Java11Shim.Companion.createConcurrentIntObjectWeakValueMap();
   }
 }

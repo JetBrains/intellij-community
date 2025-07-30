@@ -12,6 +12,11 @@ abstract class Java11Shim {
   companion object {
     @JvmField
     var INSTANCE: Java11Shim = DefaultJava11Shim()
+    fun <V> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> = ConcurrentLongObjectHashMap()
+    fun <V> createConcurrentIntObjectMap(): ConcurrentIntObjectMap<V> = ConcurrentIntObjectHashMap()
+    fun <V> createConcurrentIntObjectMap(initialCapacity:Int, loadFactor:Float, concurrencyLevel:Int): ConcurrentIntObjectMap<V> = ConcurrentIntObjectHashMap(initialCapacity, loadFactor, concurrencyLevel)
+    fun <V> createConcurrentIntObjectSoftValueMap(): ConcurrentIntObjectMap<V> = ConcurrentIntKeySoftValueHashMap()
+    fun <V> createConcurrentIntObjectWeakValueMap(): ConcurrentIntObjectMap<V> = ConcurrentIntKeyWeakValueHashMap()
   }
 
   /**
@@ -36,10 +41,6 @@ abstract class Java11Shim {
   abstract fun <E> listOf(e1: E, e2: E): List<E>
 
   abstract fun <E> listOf(array: Array<E>, size: Int): List<E>
-
-  fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> {
-    return ConcurrentLongObjectHashMap()
-  }
 
   abstract fun getCallerClass(stackFrameIndex: Int): Class<*>?
 }

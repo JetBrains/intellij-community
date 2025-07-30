@@ -2672,7 +2672,7 @@ public final class ContainerUtil {
   @Deprecated
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentIntObjectMap<@NotNull V> createConcurrentIntObjectMap() {
-    return new ConcurrentIntObjectHashMap<>();
+    return Java11Shim.Companion.createConcurrentIntObjectMap();
   }
 
   @Contract(value = " -> new", pure = true)

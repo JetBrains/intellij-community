@@ -17,7 +17,6 @@ public final class Unsafe {
   private static final MethodHandle compareAndSwapObject;
   private static final MethodHandle compareAndSwapInt;
   private static final MethodHandle compareAndSwapLong;
-  private static final MethodHandle getAndAddInt;
   private static final MethodHandle objectFieldOffset;
   private static final MethodHandle arrayIndexScale;
   private static final MethodHandle arrayBaseOffset;
@@ -30,7 +29,6 @@ public final class Unsafe {
       compareAndSwapObject = find("compareAndSwapObject", boolean.class, Object.class, long.class, Object.class, Object.class);
       compareAndSwapInt = find("compareAndSwapInt", boolean.class, Object.class, long.class, int.class, int.class);
       compareAndSwapLong = find("compareAndSwapLong", boolean.class, Object.class, long.class, long.class, long.class);
-      getAndAddInt = find("getAndAddInt", int.class, Object.class, long.class, int.class);
       objectFieldOffset = find("objectFieldOffset", long.class, Field.class);
       arrayBaseOffset = find("arrayBaseOffset", int.class, Class.class);
       arrayIndexScale = find("arrayIndexScale", int.class, Class.class);
@@ -49,7 +47,7 @@ public final class Unsafe {
       .bindTo(unsafe);
   }
 
-  public static boolean compareAndSwapInt(Object object, long offset, int expected, int value) {
+  static boolean compareAndSwapInt(Object object, long offset, int expected, int value) {
     try {
       return (boolean)compareAndSwapInt.invokeExact(object, offset, expected, value);
     }
@@ -58,7 +56,7 @@ public final class Unsafe {
     }
   }
 
-  public static boolean compareAndSwapLong(@NotNull Object object, long offset, long expected, long value) {
+  static boolean compareAndSwapLong(@NotNull Object object, long offset, long expected, long value) {
     try {
       return (boolean)compareAndSwapLong.invokeExact(object, offset, expected, value);
     }
@@ -66,15 +64,8 @@ public final class Unsafe {
       throw new RuntimeException(throwable);
     }
   }
-  public static int getAndAddInt(Object object, long offset, int v) {
-    try {
-      return (int)getAndAddInt.invokeExact(object, offset, v);
-    }
-    catch (Throwable t) {
-      throw new RuntimeException(t);
-    }
-  }
-  public static Object getObjectVolatile(Object object, long offset) {
+
+  static Object getObjectVolatile(Object object, long offset) {
     try {
       return getObjectVolatile.invokeExact(object, offset);
     }
@@ -83,9 +74,9 @@ public final class Unsafe {
     }
   }
 
-  public static boolean compareAndSwapObject(Object o, long offset,
-                                                Object expected,
-                                                Object x) {
+  static boolean compareAndSwapObject(Object o, long offset,
+                                      Object expected,
+                                      Object x) {
     try {
       return (boolean)compareAndSwapObject.invokeExact(o, offset, expected, x);
     }
@@ -94,7 +85,7 @@ public final class Unsafe {
     }
   }
 
-  public static void putObjectVolatile(Object o, long offset, Object x) {
+  static void putObjectVolatile(Object o, long offset, Object x) {
     try {
       putObjectVolatile.invokeExact(o, offset, x);
     }
@@ -102,7 +93,7 @@ public final class Unsafe {
       throw new RuntimeException(throwable);
     }
   }
-  public static long objectFieldOffset(Field f) {
+  static long objectFieldOffset(Field f) {
     try {
       return (long)objectFieldOffset.invokeExact(f);
     }
@@ -111,7 +102,7 @@ public final class Unsafe {
     }
   }
 
-  public static int arrayIndexScale(Class<?> arrayClass) {
+  static int arrayIndexScale(Class<?> arrayClass) {
     try {
       return (int)arrayIndexScale.invokeExact(arrayClass);
     }

@@ -1,19 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.concurrency;
+package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
+import java.lang.ref.SoftReference;
 
 /**
- * Concurrent key:int -> weak value:V map
+ * Concurrent key:int -> soft value:V map
  * Null values are NOT allowed
- * Use {@link ConcurrentCollectionFactory#createConcurrentIntObjectWeakValueMap()} to create
+ * Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentIntObjectSoftValueMap()} to create this
  */
-final class ConcurrentIntKeyWeakValueHashMap<V> extends ConcurrentIntKeyRefValueHashMap<V> {
-  private static final class MyRef<V> extends WeakReference<V> implements IntReference<V> {
+final class ConcurrentIntKeySoftValueHashMap<V> extends ConcurrentIntKeyRefValueHashMap<V> {
+  private static final class MyRef<V> extends SoftReference<V> implements IntReference<V> {
     private final int valueHash;
     private final int key;
 

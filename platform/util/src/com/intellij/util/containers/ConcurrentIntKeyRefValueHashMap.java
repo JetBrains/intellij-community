@@ -1,11 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.concurrency;
+package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.ReferenceQueueable;
-import com.intellij.util.containers.SimpleEntry;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
@@ -162,7 +159,7 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
 
   private @NotNull Iterator<Entry<V>> entriesIterator() {
     final Iterator<Entry<IntReference<V>>> entryIterator = myMap.entrySet().iterator();
-    return new Iterator<>() {
+    return new Iterator<Entry<V>>() {
       private Entry<V> nextVEntry;
       private Entry<IntReference<V>> nextReferenceEntry;
       private Entry<IntReference<V>> lastReturned;
@@ -224,7 +221,7 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
   @Override
   public @NotNull Enumeration<V> elements() {
     final Enumeration<IntReference<V>> elementRefs = myMap.elements();
-    return new Enumeration<>() {
+    return new Enumeration<V>() {
       private V findNextRef() {
         while (elementRefs.hasMoreElements()) {
           IntReference<V> result = elementRefs.nextElement();

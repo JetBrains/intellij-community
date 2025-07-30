@@ -4,10 +4,8 @@ package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.locks.LockSupport;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 /**
@@ -19,9 +17,7 @@ import java.util.function.Consumer;
  * - Null values are NOT allowed
  * @author Doug Lea
  * @param <V> the type of mapped values
- * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentIntObjectMap()} instead
  */
-@Deprecated
 @SuppressWarnings("ALL")
 final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
@@ -121,7 +117,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * slow as in a regular list, but given that N cannot exceed
    * (1<<64) (before running out of addresses) this bounds search
    * steps, lock hold times, etc, to reasonable constants (roughly
-   * 100 nodes inspected per operation worst case) so long as keys
+   * 100 nodes inspected per operation worst case) so int as keys
    * are Comparable (which is very common -- String, Long, etc).
    * TreeBin nodes (TreeNodes) also maintain the same "next"
    * traversal pointers as regular nodes, so can be traversed in
@@ -279,20 +275,6 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    */
   static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
-  /**
-   * The default concurrency level for this table. Unused but
-   * defined for compatibility with previous versions of this class.
-   */
-  private static final int DEFAULT_CONCURRENCY_LEVEL = 16;
-
-  /**
-   * The load factor for this table. Overrides of this value in
-   * constructors affect only the initial table capacity.  The
-   * actual floating point value isn't normally used -- it is
-   * simpler to use expressions such as {@code n - (n >>> 2)} for
-   * the associated resizing threshold.
-   */
-  private static final float LOAD_FACTOR = 0.75f;
 
   /**
    * The bin count threshold for using a tree rather than list for a
@@ -384,6 +366,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       return key;
     }
 
+    @NotNull
     @Override
     public final V getValue() {
       return val;
@@ -401,8 +384,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
     @Override
     public final boolean equals(Object o) {
-      if (!(o instanceof Entry<?>)) return false;
-      Entry<?> e = (Entry<?>)o; 
+      if (!(o instanceof Entry)) return false;
+      Entry<?> e = (Entry<?>)o;
       if (e.getKey() != key) return false;
       Object v = e.getValue();
       Object u = val;
@@ -471,35 +454,19 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * Note that calls to setTabAt always occur within locked regions,
    * and so require only release ordering.
    */
+
+  @SuppressWarnings("unchecked")
   static <V> Node<V> tabAt(Node<V>[] tab, int i) {
-    try {
-      Object o = Unsafe.getObjectVolatile(tab, ((long)i << ASHIFT) + ABASE);
-      return (Node<V>)o;
-    }
-    catch (Throwable throwable) {
-      throw new RuntimeException(throwable);
-    }
+    return (Node<V>)TAB_ARRAY.getVolatileArrayElement(tab, i);
   }
 
-  static <V> boolean casTabAt(Node<V>[] tab, int i,
-                              Node<V> v) {
-    try {
-      return Unsafe.compareAndSwapObject(tab, ((long)i << ASHIFT) + ABASE, null, v);
-    }
-    catch (Throwable throwable) {
-      throw new RuntimeException(throwable);
-    }
+  static <V> boolean casTabAt(Node<V>[] tab, int i, Node<V> v) {
+    return TAB_ARRAY.compareAndSetArrayElement(tab, i, (Node<V>)null, v);
   }
 
   static <V> void setTabAt(Node<V>[] tab, int i, Node<V> v) {
-    try {
-      Unsafe.putObjectVolatile(tab, ((long)i << ASHIFT) + ABASE, v);
-    }
-    catch (Throwable throwable) {
-      throw new RuntimeException(throwable);
-    }
+    TAB_ARRAY.setVolatileArrayElement(tab, i, v);
   }
-
 
   /* ---------------- Fields -------------- */
 
@@ -579,6 +546,57 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     sizeCtl = cap;
   }
 
+
+  /**
+   * Creates a new, empty map with an initial table size based on
+   * the given number of elements ({@code initialCapacity}) and
+   * initial table density ({@code loadFactor}).
+   *
+   * @param initialCapacity the initial capacity. The implementation
+   *                        performs internal sizing to accommodate this many elements,
+   *                        given the specified load factor.
+   * @param loadFactor      the load factor (table density) for
+   *                        establishing the initial table size
+   * @throws IllegalArgumentException if the initial capacity of
+   *                                  elements is negative or the load factor is nonpositive
+   */
+  ConcurrentIntObjectHashMap(int initialCapacity, float loadFactor) {
+    this(initialCapacity, loadFactor, 1);
+  }
+
+  /**
+   * Creates a new, empty map with an initial table size based on
+   * the given number of elements ({@code initialCapacity}), table
+   * density ({@code loadFactor}), and number of concurrently
+   * updating threads ({@code concurrencyLevel}).
+   *
+   * @param initialCapacity  the initial capacity. The implementation
+   *                         performs internal sizing to accommodate this many elements,
+   *                         given the specified load factor.
+   * @param loadFactor       the load factor (table density) for
+   *                         establishing the initial table size
+   * @param concurrencyLevel the estimated number of concurrently
+   *                         updating threads. The implementation may use this value as
+   *                         a sizing hint.
+   * @throws IllegalArgumentException if the initial capacity is
+   *                                  negative or the load factor or concurrencyLevel are
+   *                                  nonpositive
+   */
+  ConcurrentIntObjectHashMap(int initialCapacity,
+                                     float loadFactor, int concurrencyLevel) {
+    if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0) {
+      throw new IllegalArgumentException();
+    }
+    if (initialCapacity < concurrencyLevel)   // Use at least as many bins
+    {
+      initialCapacity = concurrencyLevel;   // as estimated threads
+    }
+    long size = (long)(1.0 + (long)initialCapacity / loadFactor);
+    int cap = (size >= (long)MAXIMUM_CAPACITY) ?
+              MAXIMUM_CAPACITY : tableSizeFor((int)size);
+    sizeCtl = cap;
+  }
+
   // Original (since JDK1.2) Map methods
 
   /**
@@ -610,23 +628,20 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * @throws NullPointerException if the specified key is null
    */
   public V get(int key) {
-      Node<V>[] tab; Node<V> e, p; int n, eh; int ek;
+      Node<V>[] tab; Node<V> e, p; int n, eh;
     int h = spread(key);
       if ((tab = table) != null && (n = tab.length) > 0 &&
           (e = tabAt(tab, (n - 1) & h)) != null) {
           if ((eh = e.hash) == h) {
-            if ((ek = e.key) == key || (isEqual(key, ek))) {
-              return e.val;
-            }
+              if (e.key == key)
+                  return e.val;
           }
-          else if (eh < 0) {
-            return (p = e.find(h, key)) != null ? p.val : null;
-          }
+          else if (eh < 0)
+              return (p = e.find(h, key)) != null ? p.val : null;
           while ((e = e.next) != null) {
-            if (e.hash == h &&
-                ((ek = e.key) == key || (isEqual(key, ek)))) {
-              return e.val;
-            }
+              if (e.hash == h &&
+                  (e.key == key))
+                  return e.val;
           }
       }
       return null;
@@ -691,7 +706,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     int hash = spread(key);
       int binCount = 0;
       for (Node<V>[] tab = table;;) {
-          Node<V> f; int n, i, fh; int fk; V fv;
+          Node<V> f; int n, i, fh; V fv;
         if (tab == null || (n = tab.length) == 0) {
           tab = initTable();
         }
@@ -705,7 +720,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
         }
         else if (onlyIfAbsent // check first node without acquiring lock
                  && fh == hash
-                 && ((fk = f.key) == key)
+                 && (f.key == key)
                  && (fv = f.val) != null) {
           return fv;
         }
@@ -716,9 +731,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
               if (fh >= 0) {
                 binCount = 1;
                 for (Node<V> e = f; ; ++binCount) {
-                  int ek;
                   if (e.hash == hash &&
-                      ((ek = e.key) == key)) {
+                      (e.key == key)) {
                     oldVal = e.val;
                     if (!onlyIfAbsent) {
                       e.val = value;
@@ -785,78 +799,68 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     int hash = spread(key);
       for (Node<V>[] tab = table;;) {
           Node<V> f; int n, i, fh;
-        if (tab == null || (n = tab.length) == 0 ||
-            (f = tabAt(tab, i = (n - 1) & hash)) == null) {
-          break;
-        }
-        else if ((fh = f.hash) == MOVED) {
-          tab = helpTransfer(tab, f);
-        }
-        else {
-          V oldVal = null;
-          boolean validated = false;
-          synchronized (f) {
-            if (tabAt(tab, i) == f) {
-              if (fh >= 0) {
-                validated = true;
-                for (Node<V> e = f, pred = null; ; ) {
-                  if (e.key == key) {
-                    V ev = e.val;
-                    if (cv == null || cv == ev ||
-                        (ev != null && cv.equals(ev))) {
-                      oldVal = ev;
-                      if (value != null) {
-                        e.val = value;
+          if (tab == null || (n = tab.length) == 0 ||
+              (f = tabAt(tab, i = (n - 1) & hash)) == null)
+              break;
+          else if ((fh = f.hash) == MOVED)
+              tab = helpTransfer(tab, f);
+          else {
+              V oldVal = null;
+              boolean validated = false;
+              synchronized (f) {
+                  if (tabAt(tab, i) == f) {
+                      if (fh >= 0) {
+                          validated = true;
+                          for (Node<V> e = f, pred = null;;) {
+                              if (e.key == key) {
+                                  V ev = e.val;
+                                  if (cv == null || cv == ev ||
+                                      (ev != null && cv.equals(ev))) {
+                                      oldVal = ev;
+                                      if (value != null)
+                                          e.val = value;
+                                      else if (pred != null)
+                                          pred.next = e.next;
+                                      else
+                                          setTabAt(tab, i, e.next);
+                                  }
+                                  break;
+                              }
+                              pred = e;
+                              if ((e = e.next) == null)
+                                  break;
+                          }
                       }
-                      else if (pred != null) {
-                        pred.next = e.next;
+                      else if (f instanceof TreeBin) {
+                          validated = true;
+                          TreeBin<V> t = (TreeBin<V>)f;
+                          TreeNode<V> r, p;
+                          if ((r = t.root) != null &&
+                              (p = r.findTreeNode(hash, key)) != null) {
+                              V pv = p.val;
+                              if (cv == null || cv == pv ||
+                                  (pv != null && cv.equals(pv))) {
+                                  oldVal = pv;
+                                  if (value != null)
+                                      p.val = value;
+                                  else if (t.removeTreeNode(p))
+                                      setTabAt(tab, i, untreeify(t.first));
+                              }
+                          }
                       }
-                      else {
-                        setTabAt(tab, i, e.next);
-                      }
-                    }
-                    break;
+                      else if (f instanceof ReservationNode)
+                          throw new IllegalStateException("Recursive update");
                   }
-                  pred = e;
-                  if ((e = e.next) == null) {
-                    break;
+              }
+              if (validated) {
+                  if (oldVal != null) {
+                      if (value == null)
+                          addCount(-1L, -1);
+                      return oldVal;
                   }
-                }
+                  break;
               }
-              else if (f instanceof TreeBin) {
-                validated = true;
-                TreeBin<V> t = (TreeBin<V>)f;
-                TreeNode<V> r, p;
-                if ((r = t.root) != null &&
-                    (p = r.findTreeNode(hash, key)) != null) {
-                  V pv = p.val;
-                  if (cv == null || cv == pv ||
-                      (pv != null && cv.equals(pv))) {
-                    oldVal = pv;
-                    if (value != null) {
-                      p.val = value;
-                    }
-                    else if (t.removeTreeNode(p)) {
-                      setTabAt(tab, i, untreeify(t.first));
-                    }
-                  }
-                }
-              }
-              else if (f instanceof ReservationNode) {
-                throw new IllegalStateException("Recursive update");
-              }
-            }
           }
-          if (validated) {
-            if (oldVal != null) {
-              if (value == null) {
-                addCount(-1L, -1);
-              }
-              return oldVal;
-            }
-            break;
-          }
-        }
       }
       return null;
   }
@@ -871,31 +875,29 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       while (tab != null && i < tab.length) {
           int fh;
           Node<V> f = tabAt(tab, i);
-        if (f == null) {
-          ++i;
-        }
-        else if ((fh = f.hash) == MOVED) {
-          tab = helpTransfer(tab, f);
-          i = 0; // restart
-        }
-        else {
-          synchronized (f) {
-            if (tabAt(tab, i) == f) {
-              Node<V> p = (fh >= 0 ? f :
-                           (f instanceof TreeBin) ?
-                           ((TreeBin<V>)f).first : null);
-              while (p != null) {
-                --delta;
-                p = p.next;
-              }
-              setTabAt(tab, i++, null);
-            }
+          if (f == null)
+              ++i;
+          else if ((fh = f.hash) == MOVED) {
+              tab = helpTransfer(tab, f);
+              i = 0; // restart
           }
-        }
+          else {
+              synchronized (f) {
+                  if (tabAt(tab, i) == f) {
+                      Node<V> p = (fh >= 0 ? f :
+                                     (f instanceof TreeBin) ?
+                                     ((TreeBin<V>)f).first : null);
+                      while (p != null) {
+                          --delta;
+                          p = p.next;
+                      }
+                      setTabAt(tab, i++, null);
+                  }
+              }
+          }
       }
-    if (delta != 0L) {
-      addCount(delta, -1);
-    }
+      if (delta != 0L)
+          addCount(delta, -1);
   }
 
 
@@ -957,9 +959,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       Node<V>[] t;
       if ((t = table) != null) {
           Traverser<V> it = new Traverser<V>(t, t.length, 0, t.length);
-        for (Node<V> p; (p = it.advance()) != null; ) {
-          h += spread(p.key) ^ p.val.hashCode();
-        }
+          for (Node<V> p; (p = it.advance()) != null; )
+            h += spread(p.key) ^ p.val.hashCode();
       }
       return h;
   }
@@ -989,9 +990,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
               sb.append(k);
               sb.append('=');
               sb.append(v == this ? "(this Map)" : v);
-            if ((p = it.advance()) == null) {
-              break;
-            }
+              if ((p = it.advance()) == null)
+                  break;
               sb.append(',').append(' ');
           }
       }
@@ -1036,16 +1036,6 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     }
     return true;
   }
-
-  /**
-   * Stripped-down version of helper class used in previous version,
-   * declared for the sake of serialization compatibility.
-   */
-  static class Segment<V> extends ReentrantLock {
-      final float loadFactor;
-      Segment(float lf) { this.loadFactor = lf; }
-  }
-
 
 
   // ConcurrentMap methods
@@ -1114,9 +1104,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           for (Node<V> p; (p = it.advance()) != null; ) {
               int k = p.key;
               V v = p.val;
-            if (function.test(v) && replaceNode(k, null, v) != null) {
-              removed = true;
-            }
+              if (function.test(v) && replaceNode(k, null, v) != null)
+                  removed = true;
           }
       }
       return removed;
@@ -1166,8 +1155,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * @return an enumeration of the values in this table
    * @see #values()
    */
-  @Override
   @NotNull
+  @Override
   public Enumeration<V> elements() {
     Node<V>[] t;
     int f = (t = table) == null ? 0 : t.length;
@@ -1266,24 +1255,22 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   private final Node<V>[] initTable() {
       Node<V>[] tab; int sc;
       while ((tab = table) == null || tab.length == 0) {
-        if ((sc = sizeCtl) < 0) {
-          Thread.yield(); // lost initialization race; just spin
-        }
-        else if (Unsafe.compareAndSwapInt(this, SIZECTL, sc, -1)) {
-          try {
-            if ((tab = table) == null || tab.length == 0) {
-              int n = (sc > 0) ? sc : DEFAULT_CAPACITY;
-              @SuppressWarnings("unchecked")
-              Node<V>[] nt = (Node<V>[])new Node<?>[n];
-              table = tab = nt;
-              sc = n - (n >>> 2);
-            }
+          if ((sc = sizeCtl) < 0)
+              Thread.yield(); // lost initialization race; just spin
+          else if (SIZECTL.compareAndSet(this, sc, -1)) {
+              try {
+                  if ((tab = table) == null || tab.length == 0) {
+                      int n = (sc > 0) ? sc : DEFAULT_CAPACITY;
+                      @SuppressWarnings("unchecked")
+                      Node<V>[] nt = (Node<V>[])new Node<?>[n];
+                      table = tab = nt;
+                      sc = n - (n >>> 2);
+                  }
+              } finally {
+                  sizeCtl = sc;
+              }
+              break;
           }
-          finally {
-            sizeCtl = sc;
-          }
-          break;
-        }
       }
       return tab;
   }
@@ -1301,19 +1288,18 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   private final void addCount(long x, int check) {
     CounterCell[] as; long b, s;
       if ((as = counterCells) != null ||
-          !Unsafe.compareAndSwapLong(this, BASECOUNT, b = baseCount, s = b + x)) {
+          !BASECOUNT.compareAndSet(this, b = baseCount, s = b + x)) {
         CounterCell a; long v; int m;
           boolean uncontended = true;
           if (as == null || (m = as.length - 1) < 0 ||
               (a = as[ThreadLocalRandom.getProbe() & m]) == null ||
               !(uncontended =
-                  Unsafe.compareAndSwapLong(a, CELLVALUE, v = a.value, v + x))) {
+                  CounterCell.CELLVALUE.compareAndSet(a, v = a.value, v + x))) {
               fullAddCount(x, uncontended);
               return;
           }
-        if (check <= 1) {
-          return;
-        }
+          if (check <= 1)
+              return;
           s = sumCount();
       }
       if (check >= 0) {
@@ -1322,17 +1308,14 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
                  (n = tab.length) < MAXIMUM_CAPACITY) {
               int rs = resizeStamp(n) << RESIZE_STAMP_SHIFT;
               if (sc < 0) {
-                if (sc == rs + MAX_RESIZERS || sc == rs + 1 ||
-                    (nt = nextTable) == null || transferIndex <= 0) {
-                  break;
-                }
-                if (Unsafe.compareAndSwapInt(this, SIZECTL, sc, sc + 1)) {
-                  transfer(tab, nt);
-                }
+                  if (sc == rs + MAX_RESIZERS || sc == rs + 1 ||
+                      (nt = nextTable) == null || transferIndex <= 0)
+                      break;
+                  if (SIZECTL.compareAndSet(this, sc, sc + 1))
+                      transfer(tab, nt);
               }
-              else if (Unsafe.compareAndSwapInt(this, SIZECTL, sc, rs + 2)) {
-                transfer(tab, null);
-              }
+              else if (SIZECTL.compareAndSet(this, sc, rs + 2))
+                  transfer(tab, null);
               s = sumCount();
           }
       }
@@ -1348,11 +1331,10 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           int rs = resizeStamp(tab.length) << RESIZE_STAMP_SHIFT;
           while (nextTab == nextTable && table == tab &&
                  (sc = sizeCtl) < 0) {
-            if (sc == rs + MAX_RESIZERS || sc == rs + 1 ||
-                transferIndex <= 0) {
-              break;
-            }
-              if (Unsafe.compareAndSwapInt(this, SIZECTL, sc, sc + 1)) {
+              if (sc == rs + MAX_RESIZERS || sc == rs + 1 ||
+                  transferIndex <= 0)
+                  break;
+              if (SIZECTL.compareAndSet(this, sc, sc + 1)) {
                   transfer(tab, nextTab);
                   break;
               }
@@ -1375,7 +1357,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           Node<V>[] tab = table; int n;
           if (tab == null || (n = tab.length) == 0) {
               n = (sc > c) ? sc : c;
-              if (Unsafe.compareAndSwapInt(this, SIZECTL, sc, -1)) {
+              if (SIZECTL.compareAndSet(this, sc, -1)) {
                   try {
                       if (table == tab) {
                           @SuppressWarnings("unchecked")
@@ -1388,14 +1370,12 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
                   }
               }
           }
-          else if (c <= sc || n >= MAXIMUM_CAPACITY) {
-            break;
-          }
+          else if (c <= sc || n >= MAXIMUM_CAPACITY)
+              break;
           else if (tab == table) {
-            int rs = resizeStamp(n);
-            if (Unsafe.compareAndSwapInt(this, SIZECTL, sc, (rs << RESIZE_STAMP_SHIFT) + 2)) {
-              transfer(tab, null);
-            }
+              int rs = resizeStamp(n);
+              if (SIZECTL.compareAndSet(this, sc, (rs << RESIZE_STAMP_SHIFT) + 2))
+                  transfer(tab, null);
           }
       }
   }
@@ -1406,9 +1386,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    */
   private final void transfer(Node<V>[] tab, Node<V>[] nextTab) {
       int n = tab.length, stride;
-    if ((stride = (NCPU > 1) ? (n >>> 3) / NCPU : n) < MIN_TRANSFER_STRIDE) {
-      stride = MIN_TRANSFER_STRIDE; // subdivide range
-    }
+      if ((stride = (NCPU > 1) ? (n >>> 3) / NCPU : n) < MIN_TRANSFER_STRIDE)
+          stride = MIN_TRANSFER_STRIDE; // subdivide range
       if (nextTab == null) {            // initiating
           try {
               @SuppressWarnings("unchecked")
@@ -1429,21 +1408,19 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           Node<V> f; int fh;
           while (advance) {
               int nextIndex, nextBound;
-            if (--i >= bound || finishing) {
-              advance = false;
-            }
-            else if ((nextIndex = transferIndex) <= 0) {
-              i = -1;
-              advance = false;
-            }
-            else if (Unsafe.compareAndSwapInt
-                      (this, TRANSFERINDEX, nextIndex,
-                       nextBound = (nextIndex > stride ?
-                                    nextIndex - stride : 0))) {
-              bound = nextBound;
-              i = nextIndex - 1;
-              advance = false;
-            }
+              if (--i >= bound || finishing)
+                  advance = false;
+              else if ((nextIndex = transferIndex) <= 0) {
+                  i = -1;
+                  advance = false;
+              }
+              else if (TRANSFERINDEX.compareAndSet(this, nextIndex,
+                        nextBound = (nextIndex > stride ?
+                                     nextIndex - stride : 0))) {
+                  bound = nextBound;
+                  i = nextIndex - 1;
+                  advance = false;
+              }
           }
           if (i < 0 || i >= n || i + n >= nextn) {
               int sc;
@@ -1454,117 +1431,104 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
                   return;
               }
               sc = sizeCtl;
-              if (Unsafe.compareAndSwapInt(this, SIZECTL, sc, sc - 1)) {
-                if ((sc - 2) != resizeStamp(n) << RESIZE_STAMP_SHIFT) {
-                  return;
-                }
+              if (SIZECTL.compareAndSet(this, sc, sc - 1)) {
+                  if ((sc - 2) != resizeStamp(n) << RESIZE_STAMP_SHIFT)
+                      return;
                   finishing = advance = true;
                   i = n; // recheck before commit
               }
           }
-          else if ((f = tabAt(tab, i)) == null) {
-            advance = casTabAt(tab, i, fwd);
-          }
-          else if ((fh = f.hash) == MOVED) {
-            advance = true; // already processed
-          }
+          else if ((f = tabAt(tab, i)) == null)
+              advance = casTabAt(tab, i, fwd);
+          else if ((fh = f.hash) == MOVED)
+              advance = true; // already processed
           else {
-            synchronized (f) {
-              if (tabAt(tab, i) == f) {
-                Node<V> ln, hn;
-                if (fh >= 0) {
-                  int runBit = fh & n;
-                  Node<V> lastRun = f;
-                  for (Node<V> p = f.next; p != null; p = p.next) {
-                    int b = p.hash & n;
-                    if (b != runBit) {
-                      runBit = b;
-                      lastRun = p;
-                    }
-                  }
-                  if (runBit == 0) {
-                    ln = lastRun;
-                    hn = null;
-                  }
-                  else {
-                    hn = lastRun;
-                    ln = null;
-                  }
-                  for (Node<V> p = f; p != lastRun; p = p.next) {
-                    int ph = p.hash;
-                    int pk = p.key;
-                    V pv = p.val;
-                    if ((ph & n) == 0) {
-                      ln = new Node<V>(ph, pk, pv, ln);
-                    }
-                    else {
-                      hn = new Node<V>(ph, pk, pv, hn);
-                    }
-                  }
-                  setTabAt(nextTab, i, ln);
-                  setTabAt(nextTab, i + n, hn);
-                  setTabAt(tab, i, fwd);
-                  advance = true;
-                }
-                else if (f instanceof TreeBin) {
-                  TreeBin<V> t = (TreeBin<V>)f;
-                  TreeNode<V> lo = null, loTail = null;
-                  TreeNode<V> hi = null, hiTail = null;
-                  int lc = 0, hc = 0;
-                  for (Node<V> e = t.first; e != null; e = e.next) {
-                    int h = e.hash;
-                    TreeNode<V> p = new TreeNode<V>
-                      (h, e.key, e.val, null, null);
-                    if ((h & n) == 0) {
-                      if ((p.prev = loTail) == null) {
-                        lo = p;
+              synchronized (f) {
+                  if (tabAt(tab, i) == f) {
+                      Node<V> ln, hn;
+                      if (fh >= 0) {
+                          int runBit = fh & n;
+                          Node<V> lastRun = f;
+                          for (Node<V> p = f.next; p != null; p = p.next) {
+                              int b = p.hash & n;
+                              if (b != runBit) {
+                                  runBit = b;
+                                  lastRun = p;
+                              }
+                          }
+                          if (runBit == 0) {
+                              ln = lastRun;
+                              hn = null;
+                          }
+                          else {
+                              hn = lastRun;
+                              ln = null;
+                          }
+                          for (Node<V> p = f; p != lastRun; p = p.next) {
+                              int ph = p.hash; int pk = p.key; V pv = p.val;
+                              if ((ph & n) == 0)
+                                  ln = new Node<V>(ph, pk, pv, ln);
+                              else
+                                  hn = new Node<V>(ph, pk, pv, hn);
+                          }
+                          setTabAt(nextTab, i, ln);
+                          setTabAt(nextTab, i + n, hn);
+                          setTabAt(tab, i, fwd);
+                          advance = true;
                       }
-                      else {
-                        loTail.next = p;
+                      else if (f instanceof TreeBin) {
+                          TreeBin<V> t = (TreeBin<V>)f;
+                          TreeNode<V> lo = null, loTail = null;
+                          TreeNode<V> hi = null, hiTail = null;
+                          int lc = 0, hc = 0;
+                          for (Node<V> e = t.first; e != null; e = e.next) {
+                              int h = e.hash;
+                              TreeNode<V> p = new TreeNode<V>
+                                  (h, e.key, e.val, null, null);
+                              if ((h & n) == 0) {
+                                  if ((p.prev = loTail) == null)
+                                      lo = p;
+                                  else
+                                      loTail.next = p;
+                                  loTail = p;
+                                  ++lc;
+                              }
+                              else {
+                                  if ((p.prev = hiTail) == null)
+                                      hi = p;
+                                  else
+                                      hiTail.next = p;
+                                  hiTail = p;
+                                  ++hc;
+                              }
+                          }
+                          ln = (lc <= UNTREEIFY_THRESHOLD) ? untreeify(lo) :
+                              (hc != 0) ? new TreeBin<V>(lo) : t;
+                          hn = (hc <= UNTREEIFY_THRESHOLD) ? untreeify(hi) :
+                              (lc != 0) ? new TreeBin<V>(hi) : t;
+                          setTabAt(nextTab, i, ln);
+                          setTabAt(nextTab, i + n, hn);
+                          setTabAt(tab, i, fwd);
+                          advance = true;
                       }
-                      loTail = p;
-                      ++lc;
-                    }
-                    else {
-                      if ((p.prev = hiTail) == null) {
-                        hi = p;
-                      }
-                      else {
-                        hiTail.next = p;
-                      }
-                      hiTail = p;
-                      ++hc;
-                    }
+                      else if (f instanceof ReservationNode)
+                          throw new IllegalStateException("Recursive update");
                   }
-                  ln = (lc <= UNTREEIFY_THRESHOLD) ? untreeify(lo) :
-                       (hc != 0) ? new TreeBin<V>(lo) : t;
-                  hn = (hc <= UNTREEIFY_THRESHOLD) ? untreeify(hi) :
-                       (lc != 0) ? new TreeBin<V>(hi) : t;
-                  setTabAt(nextTab, i, ln);
-                  setTabAt(nextTab, i + n, hn);
-                  setTabAt(tab, i, fwd);
-                  advance = true;
-                }
-                else if (f instanceof ReservationNode) {
-                  throw new IllegalStateException("Recursive update");
-                }
               }
-            }
           }
       }
   }
 
   /* ---------------- Counter support -------------- */
 
+
   final long sumCount() {
       CounterCell[] cs = counterCells;
       long sum = baseCount;
       if (cs != null) {
-        for (CounterCell c : cs) {
-          if (c != null) {
-            sum += c.value;
-          }
-        }
+          for (CounterCell c : cs)
+              if (c != null)
+                  sum += c.value;
       }
       return sum;
   }
@@ -1585,7 +1549,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
                   if (cellsBusy == 0) {            // Try to attach new Cell
                     CounterCell r = new CounterCell(x); // Optimistic create
                       if (cellsBusy == 0 &&
-                          Unsafe.compareAndSwapInt(this, CELLSBUSY, 0, 1)) {
+                          CELLSBUSY.compareAndSet(this, 0, 1)) {
                           boolean created = false;
                           try {               // Recheck under lock
                             CounterCell[] rs; int m, j;
@@ -1598,45 +1562,36 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
                           } finally {
                               cellsBusy = 0;
                           }
-                        if (created) {
-                          break;
-                        }
+                          if (created)
+                              break;
                           continue;           // Slot is now non-empty
                       }
                   }
                   collide = false;
               }
               else if (!wasUncontended)       // CAS already known to fail
-              {
-                wasUncontended = true;      // Continue after rehash
-              }
-              else if (Unsafe.compareAndSwapLong(c, CELLVALUE, v = c.value, v + x)) {
-                break;
-              }
-              else if (counterCells != cs || n >= NCPU) {
-                collide = false;            // At max size or stale
-              }
-              else if (!collide) {
-                collide = true;
-              }
+                  wasUncontended = true;      // Continue after rehash
+              else if (CounterCell.CELLVALUE.compareAndSet(c, v = c.value, v + x))
+                  break;
+              else if (counterCells != cs || n >= NCPU)
+                  collide = false;            // At max size or stale
+              else if (!collide)
+                  collide = true;
               else if (cellsBusy == 0 &&
-                       Unsafe.compareAndSwapInt(this, CELLSBUSY, 0, 1)) {
-                try {
-                  if (counterCells == cs) // Expand table unless stale
-                  {
-                    counterCells = Arrays.copyOf(cs, n << 1);
+                       CELLSBUSY.compareAndSet(this, 0, 1)) {
+                  try {
+                      if (counterCells == cs) // Expand table unless stale
+                          counterCells = Arrays.copyOf(cs, n << 1);
+                  } finally {
+                      cellsBusy = 0;
                   }
-                }
-                finally {
-                  cellsBusy = 0;
-                }
-                collide = false;
-                continue;                   // Retry with expanded table
+                  collide = false;
+                  continue;                   // Retry with expanded table
               }
               h = ThreadLocalRandom.advanceProbe(h);
           }
           else if (cellsBusy == 0 && counterCells == cs &&
-                   Unsafe.compareAndSwapInt(this, CELLSBUSY, 0, 1)) {
+                   CELLSBUSY.compareAndSet(this, 0, 1)) {
               boolean init = false;
               try {                           // Initialize table
                   if (counterCells == cs) {
@@ -1648,13 +1603,11 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
               } finally {
                   cellsBusy = 0;
               }
-            if (init) {
-              break;
-            }
+              if (init)
+                  break;
           }
-          else if (Unsafe.compareAndSwapLong(this, BASECOUNT, v = baseCount, v + x)) {
-            break;                          // Fall back on using base
-          }
+          else if (BASECOUNT.compareAndSet(this, v = baseCount, v + x))
+              break;                          // Fall back on using base
       }
   }
 
@@ -1667,29 +1620,26 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   private final void treeifyBin(Node<V>[] tab, int index) {
       Node<V> b; int n;
       if (tab != null) {
-        if ((n = tab.length) < MIN_TREEIFY_CAPACITY) {
-          tryPresize(n << 1);
-        }
-        else if ((b = tabAt(tab, index)) != null && b.hash >= 0) {
-          synchronized (b) {
-            if (tabAt(tab, index) == b) {
-              TreeNode<V> hd = null, tl = null;
-              for (Node<V> e = b; e != null; e = e.next) {
-                TreeNode<V> p =
-                  new TreeNode<V>(e.hash, e.key, e.val,
-                                  null, null);
-                if ((p.prev = tl) == null) {
-                  hd = p;
-                }
-                else {
-                  tl.next = p;
-                }
-                tl = p;
+          if ((n = tab.length) < MIN_TREEIFY_CAPACITY)
+              tryPresize(n << 1);
+          else if ((b = tabAt(tab, index)) != null && b.hash >= 0) {
+              synchronized (b) {
+                  if (tabAt(tab, index) == b) {
+                      TreeNode<V> hd = null, tl = null;
+                      for (Node<V> e = b; e != null; e = e.next) {
+                          TreeNode<V> p =
+                              new TreeNode<V>(e.hash, e.key, e.val,
+                                                null, null);
+                          if ((p.prev = tl) == null)
+                              hd = p;
+                          else
+                              tl.next = p;
+                          tl = p;
+                      }
+                      setTabAt(tab, index, new TreeBin<V>(hd));
+                  }
               }
-              setTabAt(tab, index, new TreeBin<V>(hd));
-            }
           }
-        }
       }
   }
 
@@ -1700,12 +1650,10 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       Node<V> hd = null, tl = null;
       for (Node<V> q = b; q != null; q = q.next) {
           Node<V> p = new Node<V>(q.hash, q.key, q.val, null);
-        if (tl == null) {
-          hd = p;
-        }
-        else {
-          tl.next = p;
-        }
+          if (tl == null)
+              hd = p;
+          else
+              tl.next = p;
           tl = p;
       }
       return hd;
@@ -1809,24 +1757,19 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
                   int h = x.hash;
                   for (TreeNode<V> p = r;;) {
                       int dir, ph;
-                    if ((ph = p.hash) > h) {
-                      dir = -1;
-                    }
-                    else if (ph < h) {
-                      dir = 1;
-                    }
-                    else {
-                      dir = 0;
-                    }
+                      if ((ph = p.hash) > h)
+                          dir = -1;
+                      else if (ph < h)
+                          dir = 1;
+                      else
+                          dir = 0;
                       TreeNode<V> xp = p;
                       if ((p = (dir <= 0) ? p.left : p.right) == null) {
                           x.parent = xp;
-                        if (dir <= 0) {
-                          xp.left = x;
-                        }
-                        else {
-                          xp.right = x;
-                        }
+                          if (dir <= 0)
+                              xp.left = x;
+                          else
+                              xp.right = x;
                           r = balanceInsertion(r, x);
                           break;
                       }
@@ -1841,9 +1784,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
        * Acquires write lock for tree restructuring.
        */
       private final void lockRoot() {
-        if (!Unsafe.compareAndSwapInt(this, LOCKSTATE, 0, WRITER)) {
-          contendedLock(); // offload to separate method
-        }
+          if (!LOCKSTATE.compareAndSet(this, 0, WRITER))
+              contendedLock(); // offload to separate method
       }
 
       /**
@@ -1860,22 +1802,20 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           boolean waiting = false;
           for (int s;;) {
               if (((s = lockState) & ~WAITER) == 0) {
-                  if (Unsafe.compareAndSwapInt(this, LOCKSTATE, s, WRITER)) {
-                    if (waiting) {
-                      waiter = null;
-                    }
+                  if (LOCKSTATE.compareAndSet(this, s, WRITER)) {
+                      if (waiting)
+                          waiter = null;
                       return;
                   }
               }
               else if ((s & WAITER) == 0) {
-                  if (Unsafe.compareAndSwapInt(this, LOCKSTATE, s, s | WAITER)) {
+                  if (LOCKSTATE.compareAndSet(this, s, s | WAITER)) {
                       waiting = true;
                       waiter = Thread.currentThread();
                   }
               }
-              else if (waiting) {
-                LockSupport.park(this);
-              }
+              else if (waiting)
+                  LockSupport.park(this);
           }
       }
 
@@ -1894,8 +1834,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
             }
             e = e.next;
           }
-          else if (Unsafe.compareAndSwapInt(this, LOCKSTATE, s,
-                                               s + READER)) {
+          else if (LOCKSTATE.compareAndSet(this, s,
+                                       s + READER)) {
             TreeNode<V> r;
             TreeNode<V> p;
             try {
@@ -1904,9 +1844,14 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
             }
             finally {
               Thread w;
-              if (getAndAddInt(this, LOCKSTATE, -READER) ==
-                              (READER | WAITER) && (w = waiter) != null) {
-                LockSupport.unpark(w);
+              while (true) {
+                int lockState = this.lockState;
+                if (LOCKSTATE.compareAndSetInt(this, lockState, lockState - READER)) {
+                  if (lockState == (READER | WAITER) && (w = waiter) != null) {
+                    LockSupport.unpark(w);
+                  }
+                  break;
+                }
               }
             }
             return p;
@@ -1915,14 +1860,6 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
         return null;
       }
 
-    private static int getAndAddInt(Object object, long offset, int v) {
-      try {
-        return Unsafe.getAndAddInt(object, offset, v);
-      }
-      catch (Throwable t) {
-        throw new RuntimeException(t);
-      }
-    }
       /**
        * Finds or adds a node.
        * @return null if added
@@ -2004,23 +1941,19 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           TreeNode<V> next = (TreeNode<V>)p.next;
           TreeNode<V> pred = p.prev;  // unlink traversal pointers
           TreeNode<V> r, rl;
-        if (pred == null) {
-          first = next;
-        }
-        else {
-          pred.next = next;
-        }
-        if (next != null) {
-          next.prev = pred;
-        }
+          if (pred == null)
+              first = next;
+          else
+              pred.next = next;
+          if (next != null)
+              next.prev = pred;
           if (first == null) {
               root = null;
               return true;
           }
-        if ((r = root) == null || r.right == null || // too small
-            (rl = r.left) == null || rl.left == null) {
-          return true;
-        }
+          if ((r = root) == null || r.right == null || // too small
+              (rl = r.left) == null || rl.left == null)
+              return true;
           lockRoot();
           try {
               TreeNode<V> replacement;
@@ -2028,10 +1961,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
               TreeNode<V> pr = p.right;
               if (pl != null && pr != null) {
                   TreeNode<V> s = pr, sl;
-                while ((sl = s.left) != null) // find successor
-                {
-                  s = sl;
-                }
+                  while ((sl = s.left) != null) // find successor
+                      s = sl;
                   boolean c = s.red; s.red = p.red; p.red = c; // swap colors
                   TreeNode<V> sr = s.right;
                   TreeNode<V> pp = p.parent;
@@ -2042,60 +1973,44 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
                   else {
                       TreeNode<V> sp = s.parent;
                       if ((p.parent = sp) != null) {
-                        if (s == sp.left) {
-                          sp.left = p;
-                        }
-                        else {
-                          sp.right = p;
-                        }
+                          if (s == sp.left)
+                              sp.left = p;
+                          else
+                              sp.right = p;
                       }
-                    if ((s.right = pr) != null) {
-                      pr.parent = s;
-                    }
+                      if ((s.right = pr) != null)
+                          pr.parent = s;
                   }
                   p.left = null;
-                if ((p.right = sr) != null) {
-                  sr.parent = p;
-                }
-                if ((s.left = pl) != null) {
-                  pl.parent = s;
-                }
-                if ((s.parent = pp) == null) {
-                  r = s;
-                }
-                else if (p == pp.left) {
-                  pp.left = s;
-                }
-                else {
-                  pp.right = s;
-                }
-                if (sr != null) {
-                  replacement = sr;
-                }
-                else {
+                  if ((p.right = sr) != null)
+                      sr.parent = p;
+                  if ((s.left = pl) != null)
+                      pl.parent = s;
+                  if ((s.parent = pp) == null)
+                      r = s;
+                  else if (p == pp.left)
+                      pp.left = s;
+                  else
+                      pp.right = s;
+                  if (sr != null)
+                      replacement = sr;
+                  else
+                      replacement = p;
+              }
+              else if (pl != null)
+                  replacement = pl;
+              else if (pr != null)
+                  replacement = pr;
+              else
                   replacement = p;
-                }
-              }
-              else if (pl != null) {
-                replacement = pl;
-              }
-              else if (pr != null) {
-                replacement = pr;
-              }
-              else {
-                replacement = p;
-              }
               if (replacement != p) {
                   TreeNode<V> pp = replacement.parent = p.parent;
-                if (pp == null) {
-                  r = replacement;
-                }
-                else if (p == pp.left) {
-                  pp.left = replacement;
-                }
-                else {
-                  pp.right = replacement;
-                }
+                  if (pp == null)
+                      r = replacement;
+                  else if (p == pp.left)
+                      pp.left = replacement;
+                  else
+                      pp.right = replacement;
                   p.left = p.right = p.parent = null;
               }
 
@@ -2104,12 +2019,10 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
               if (p == replacement) {  // detach pointers
                   TreeNode<V> pp;
                   if ((pp = p.parent) != null) {
-                    if (p == pp.left) {
-                      pp.left = null;
-                    }
-                    else if (p == pp.right) {
-                      pp.right = null;
-                    }
+                      if (p == pp.left)
+                          pp.left = null;
+                      else if (p == pp.right)
+                          pp.right = null;
                       p.parent = null;
                   }
               }
@@ -2127,18 +2040,14 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
                                             TreeNode<V> p) {
           TreeNode<V> r, pp, rl;
           if (p != null && (r = p.right) != null) {
-            if ((rl = p.right = r.left) != null) {
-              rl.parent = p;
-            }
-            if ((pp = r.parent = p.parent) == null) {
-              (root = r).red = false;
-            }
-            else if (pp.left == p) {
-              pp.left = r;
-            }
-            else {
-              pp.right = r;
-            }
+              if ((rl = p.right = r.left) != null)
+                  rl.parent = p;
+              if ((pp = r.parent = p.parent) == null)
+                  (root = r).red = false;
+              else if (pp.left == p)
+                  pp.left = r;
+              else
+                  pp.right = r;
               r.left = p;
               p.parent = r;
           }
@@ -2149,18 +2058,14 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
                                              TreeNode<V> p) {
           TreeNode<V> l, pp, lr;
           if (p != null && (l = p.left) != null) {
-            if ((lr = p.left = l.right) != null) {
-              lr.parent = p;
-            }
-            if ((pp = l.parent = p.parent) == null) {
-              (root = l).red = false;
-            }
-            else if (pp.right == p) {
-              pp.right = l;
-            }
-            else {
-              pp.left = l;
-            }
+              if ((lr = p.left = l.right) != null)
+                  lr.parent = p;
+              if ((pp = l.parent = p.parent) == null)
+                  (root = l).red = false;
+              else if (pp.right == p)
+                  pp.right = l;
+              else
+                  pp.left = l;
               l.right = p;
               p.parent = l;
           }
@@ -2175,9 +2080,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
                   x.red = false;
                   return x;
               }
-              else if (!xp.red || (xpp = xp.parent) == null) {
-                return root;
-              }
+              else if (!xp.red || (xpp = xp.parent) == null)
+                  return root;
               if (xp == (xppl = xpp.left)) {
                   if ((xppr = xpp.right) != null && xppr.red) {
                       xppr.red = false;
@@ -2226,99 +2130,92 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       static <V> TreeNode<V> balanceDeletion(TreeNode<V> root,
                                                  TreeNode<V> x) {
           for (TreeNode<V> xp, xpl, xpr;;) {
-            if (x == null || x == root) {
-              return root;
-            }
-            else if ((xp = x.parent) == null) {
-              x.red = false;
-              return x;
-            }
-            else if (x.red) {
-              x.red = false;
-              return root;
-            }
-            else if ((xpl = xp.left) == x) {
-              if ((xpr = xp.right) != null && xpr.red) {
-                xpr.red = false;
-                xp.red = true;
-                root = rotateLeft(root, xp);
-                xpr = (xp = x.parent) == null ? null : xp.right;
+              if (x == null || x == root)
+                  return root;
+              else if ((xp = x.parent) == null) {
+                  x.red = false;
+                  return x;
               }
-              if (xpr == null) {
-                x = xp;
+              else if (x.red) {
+                  x.red = false;
+                  return root;
               }
-              else {
-                TreeNode<V> sl = xpr.left, sr = xpr.right;
-                if ((sr == null || !sr.red) &&
-                    (sl == null || !sl.red)) {
-                  xpr.red = true;
-                  x = xp;
-                }
-                else {
-                  if (sr == null || !sr.red) {
-                    if (sl != null) {
-                      sl.red = false;
-                    }
-                    xpr.red = true;
-                    root = rotateRight(root, xpr);
-                    xpr = (xp = x.parent) == null ?
-                          null : xp.right;
+              else if ((xpl = xp.left) == x) {
+                  if ((xpr = xp.right) != null && xpr.red) {
+                      xpr.red = false;
+                      xp.red = true;
+                      root = rotateLeft(root, xp);
+                      xpr = (xp = x.parent) == null ? null : xp.right;
                   }
-                  if (xpr != null) {
-                    xpr.red = (xp == null) ? false : xp.red;
-                    if ((sr = xpr.right) != null) {
-                      sr.red = false;
-                    }
+                  if (xpr == null)
+                      x = xp;
+                  else {
+                      TreeNode<V> sl = xpr.left, sr = xpr.right;
+                      if ((sr == null || !sr.red) &&
+                          (sl == null || !sl.red)) {
+                          xpr.red = true;
+                          x = xp;
+                      }
+                      else {
+                          if (sr == null || !sr.red) {
+                              if (sl != null)
+                                  sl.red = false;
+                              xpr.red = true;
+                              root = rotateRight(root, xpr);
+                              xpr = (xp = x.parent) == null ?
+                                  null : xp.right;
+                          }
+                          if (xpr != null) {
+                              xpr.red = (xp == null) ? false : xp.red;
+                              if ((sr = xpr.right) != null)
+                                  sr.red = false;
+                          }
+                          if (xp != null) {
+                              xp.red = false;
+                              root = rotateLeft(root, xp);
+                          }
+                          x = root;
+                      }
                   }
-                  if (xp != null) {
-                    xp.red = false;
-                    root = rotateLeft(root, xp);
-                  }
-                  x = root;
-                }
               }
-            }
-            else { // symmetric
-              if (xpl != null && xpl.red) {
-                xpl.red = false;
-                xp.red = true;
-                root = rotateRight(root, xp);
-                xpl = (xp = x.parent) == null ? null : xp.left;
-              }
-              if (xpl == null) {
-                x = xp;
-              }
-              else {
-                TreeNode<V> sl = xpl.left, sr = xpl.right;
-                if ((sl == null || !sl.red) &&
-                    (sr == null || !sr.red)) {
-                  xpl.red = true;
-                  x = xp;
-                }
-                else {
-                  if (sl == null || !sl.red) {
-                    if (sr != null) {
-                      sr.red = false;
-                    }
-                    xpl.red = true;
-                    root = rotateLeft(root, xpl);
-                    xpl = (xp = x.parent) == null ?
-                          null : xp.left;
+              else { // symmetric
+                  if (xpl != null && xpl.red) {
+                      xpl.red = false;
+                      xp.red = true;
+                      root = rotateRight(root, xp);
+                      xpl = (xp = x.parent) == null ? null : xp.left;
                   }
-                  if (xpl != null) {
-                    xpl.red = (xp == null) ? false : xp.red;
-                    if ((sl = xpl.left) != null) {
-                      sl.red = false;
-                    }
+                  if (xpl == null)
+                      x = xp;
+                  else {
+                      TreeNode<V> sl = xpl.left, sr = xpl.right;
+                      if ((sl == null || !sl.red) &&
+                          (sr == null || !sr.red)) {
+                          xpl.red = true;
+                          x = xp;
+                      }
+                      else {
+                          if (sl == null || !sl.red) {
+                              if (sr != null)
+                                  sr.red = false;
+                              xpl.red = true;
+                              root = rotateLeft(root, xpl);
+                              xpl = (xp = x.parent) == null ?
+                                  null : xp.left;
+                          }
+                          if (xpl != null) {
+                              xpl.red = (xp == null) ? false : xp.red;
+                              if ((sl = xpl.left) != null)
+                                  sl.red = false;
+                          }
+                          if (xp != null) {
+                              xp.red = false;
+                              root = rotateRight(root, xp);
+                          }
+                          x = root;
+                      }
                   }
-                  if (xp != null) {
-                    xp.red = false;
-                    root = rotateRight(root, xp);
-                  }
-                  x = root;
-                }
               }
-            }
           }
       }
 
@@ -2328,45 +2225,33 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       static <V> boolean checkInvariants(TreeNode<V> t) {
           TreeNode<V> tp = t.parent, tl = t.left, tr = t.right,
               tb = t.prev, tn = (TreeNode<V>)t.next;
-        if (tb != null && tb.next != t) {
-          return false;
-        }
-        if (tn != null && tn.prev != t) {
-          return false;
-        }
-        if (tp != null && t != tp.left && t != tp.right) {
-          return false;
-        }
-        if (tl != null && (tl.parent != t || tl.hash > t.hash)) {
-          return false;
-        }
-        if (tr != null && (tr.parent != t || tr.hash < t.hash)) {
-          return false;
-        }
-        if (t.red && tl != null && tl.red && tr != null && tr.red) {
-          return false;
-        }
-        if (tl != null && !checkInvariants(tl)) {
-          return false;
-        }
-        if (tr != null && !checkInvariants(tr)) {
-          return false;
-        }
+          if (tb != null && tb.next != t)
+              return false;
+          if (tn != null && tn.prev != t)
+              return false;
+          if (tp != null && t != tp.left && t != tp.right)
+              return false;
+          if (tl != null && (tl.parent != t || tl.hash > t.hash))
+              return false;
+          if (tr != null && (tr.parent != t || tr.hash < t.hash))
+              return false;
+          if (t.red && tl != null && tl.red && tr != null && tr.red)
+              return false;
+          if (tl != null && !checkInvariants(tl))
+              return false;
+          if (tr != null && !checkInvariants(tr))
+              return false;
           return true;
       }
 
-    private static final long LOCKSTATE;
-
-    static {
-      try {
-        Class<?> k = TreeBin.class;
-        Field field = k.getDeclaredField("lockState");
-        LOCKSTATE = Unsafe.objectFieldOffset(field);
+      private static final VarHandleWrapper LOCKSTATE;
+      static {
+          try {
+            LOCKSTATE = VarHandleWrapper.getFactory().create(TreeBin.class, "lockState", int.class);
+          } catch (Throwable e) {
+              throw new Error(e);
+          }
       }
-      catch (Throwable t) {
-        throw new Error(t);
-      }
-    }
   }
 
   /* ----------------Table Traversal -------------- */
@@ -2426,18 +2311,15 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
        */
       final Node<V> advance() {
           Node<V> e;
-        if ((e = next) != null) {
-          e = e.next;
-        }
+          if ((e = next) != null)
+              e = e.next;
           for (;;) {
               Node<V>[] t; int i, n;  // must use locals in checks
-            if (e != null) {
-              return next = e;
-            }
-            if (baseIndex >= baseLimit || (t = tab) == null ||
-                (n = t.length) <= (i = index) || i < 0) {
-              return next = null;
-            }
+              if (e != null)
+                  return next = e;
+              if (baseIndex >= baseLimit || (t = tab) == null ||
+                  (n = t.length) <= (i = index) || i < 0)
+                  return next = null;
               if ((e = tabAt(t, i)) != null && e.hash < 0) {
                   if (e instanceof ForwardingNode) {
                       tab = ((ForwardingNode<V>)e).nextTable;
@@ -2445,19 +2327,15 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
                       pushState(t, i, n);
                       continue;
                   }
-                  else if (e instanceof TreeBin) {
-                    e = ((TreeBin<V>)e).first;
-                  }
-                  else {
-                    e = null;
-                  }
+                  else if (e instanceof TreeBin)
+                      e = ((TreeBin<V>)e).first;
+                  else
+                      e = null;
               }
-            if (stack != null) {
-              recoverState(n);
-            }
-            else if ((index = i + baseSize) >= n) {
-              index = ++baseIndex; // visit upper slots if present
-            }
+              if (stack != null)
+                  recoverState(n);
+              else if ((index = i + baseSize) >= n)
+                  index = ++baseIndex; // visit upper slots if present
           }
       }
 
@@ -2466,12 +2344,10 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
        */
       private void pushState(Node<V>[] t, int i, int n) {
           TableStack<V> s = spare;  // reuse if possible
-        if (s != null) {
-          spare = s.next;
-        }
-        else {
-          s = new TableStack<V>();
-        }
+          if (s != null)
+              spare = s.next;
+          else
+              s = new TableStack<V>();
           s.tab = t;
           s.length = n;
           s.index = i;
@@ -2496,9 +2372,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
               stack = next;
               spare = s;
           }
-        if (s == null && (index += baseSize) >= n) {
-          index = ++baseIndex;
-        }
+          if (s == null && (index += baseSize) >= n)
+              index = ++baseIndex;
       }
   }
 
@@ -2521,11 +2396,10 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
       public final void remove() {
           Node<V> p;
-        if ((p = lastReturned) == null) {
-          throw new IllegalStateException();
-        }
+          if ((p = lastReturned) == null)
+              throw new IllegalStateException();
           lastReturned = null;
-      map.replaceNode(p.key, null, null);
+        map.replaceNode(p.key, null, null);
       }
   }
 
@@ -2539,9 +2413,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
       public final V next() {
           Node<V> p;
-        if ((p = next) == null) {
-          throw new NoSuchElementException();
-        }
+          if ((p = next) == null)
+              throw new NoSuchElementException();
           V v = p.val;
           lastReturned = p;
           advance();
@@ -2560,9 +2433,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
       public final Entry<V> next() {
           Node<V> p;
-        if ((p = next) == null) {
-          throw new NoSuchElementException();
-        }
+          if ((p = next) == null)
+              throw new NoSuchElementException();
           int k = p.key;
           V v = p.val;
           lastReturned = p;
@@ -2591,17 +2463,15 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
       public void forEachRemaining(Consumer<? super V> action) {
           if (action == null) throw new NullPointerException();
-        for (Node<V> p; (p = advance()) != null; ) {
-          action.accept(p.val);
-        }
+          for (Node<V> p; (p = advance()) != null;)
+              action.accept(p.val);
       }
 
       public boolean tryAdvance(Consumer<? super V> action) {
           if (action == null) throw new NullPointerException();
           Node<V> p;
-        if ((p = advance()) == null) {
-          return false;
-        }
+          if ((p = advance()) == null)
+              return false;
           action.accept(p.val);
           return true;
       }
@@ -2632,17 +2502,15 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
       public void forEachRemaining(Consumer<? super Entry<V>> action) {
           if (action == null) throw new NullPointerException();
-        for (Node<V> p; (p = advance()) != null; ) {
-          action.accept(new SimpleEntry<V>(p.key, p.val));
-        }
+          for (Node<V> p; (p = advance()) != null; )
+              action.accept(new SimpleEntry<V>(p.key, p.val));
       }
 
       public boolean tryAdvance(Consumer<? super Entry<V>> action) {
           if (action == null) throw new NullPointerException();
           Node<V> p;
-        if ((p = advance()) == null) {
-          return false;
-        }
+          if ((p = advance()) == null)
+              return false;
           action.accept(new SimpleEntry<V>(p.key, p.val));
           return true;
       }
@@ -2701,23 +2569,19 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
       public final Object[] toArray() {
           long sz = map.mappingCount();
-        if (sz > MAX_ARRAY_SIZE) {
-          throw new OutOfMemoryError(OOME_MSG);
-        }
+          if (sz > MAX_ARRAY_SIZE)
+              throw new OutOfMemoryError(OOME_MSG);
           int n = (int)sz;
           Object[] r = new Object[n];
           int i = 0;
           for (E e : this) {
               if (i == n) {
-                if (n >= MAX_ARRAY_SIZE) {
-                  throw new OutOfMemoryError(OOME_MSG);
-                }
-                if (n >= MAX_ARRAY_SIZE - (MAX_ARRAY_SIZE >>> 1) - 1) {
-                  n = MAX_ARRAY_SIZE;
-                }
-                else {
-                  n += (n >>> 1) + 1;
-                }
+                  if (n >= MAX_ARRAY_SIZE)
+                      throw new OutOfMemoryError(OOME_MSG);
+                  if (n >= MAX_ARRAY_SIZE - (MAX_ARRAY_SIZE >>> 1) - 1)
+                      n = MAX_ARRAY_SIZE;
+                  else
+                      n += (n >>> 1) + 1;
                   r = Arrays.copyOf(r, n);
               }
               r[i++] = e;
@@ -2728,9 +2592,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       @SuppressWarnings("unchecked")
       public final <T> T[] toArray(T[] a) {
           long sz = map.mappingCount();
-        if (sz > MAX_ARRAY_SIZE) {
-          throw new OutOfMemoryError(OOME_MSG);
-        }
+          if (sz > MAX_ARRAY_SIZE)
+              throw new OutOfMemoryError(OOME_MSG);
           int m = (int)sz;
           T[] r = (a.length >= m) ? a :
               (T[])java.lang.reflect.Array
@@ -2739,15 +2602,12 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           int i = 0;
           for (E e : this) {
               if (i == n) {
-                if (n >= MAX_ARRAY_SIZE) {
-                  throw new OutOfMemoryError(OOME_MSG);
-                }
-                if (n >= MAX_ARRAY_SIZE - (MAX_ARRAY_SIZE >>> 1) - 1) {
-                  n = MAX_ARRAY_SIZE;
-                }
-                else {
-                  n += (n >>> 1) + 1;
-                }
+                  if (n >= MAX_ARRAY_SIZE)
+                      throw new OutOfMemoryError(OOME_MSG);
+                  if (n >= MAX_ARRAY_SIZE - (MAX_ARRAY_SIZE >>> 1) - 1)
+                      n = MAX_ARRAY_SIZE;
+                  else
+                      n += (n >>> 1) + 1;
                   r = Arrays.copyOf(r, n);
               }
               r[i++] = (T)e;
@@ -2778,9 +2638,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
               for (;;) {
                   Object e = it.next();
                   sb.append(e == this ? "(this Collection)" : e);
-                if (!it.hasNext()) {
-                  break;
-                }
+                  if (!it.hasNext())
+                      break;
                   sb.append(',').append(' ');
               }
           }
@@ -2790,9 +2649,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       public final boolean containsAll(Collection<?> c) {
           if (c != this) {
               for (Object e : c) {
-                if (e == null || !contains(e)) {
-                  return false;
-                }
+                  if (e == null || !contains(e))
+                      return false;
               }
           }
           return true;
@@ -2814,9 +2672,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
                   }
               }
           } else {
-            for (Object e : c) {
-              modified |= remove(e);
-            }
+              for (Object e : c)
+                  modified |= remove(e);
           }
           return modified;
       }
@@ -2902,16 +2759,10 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           Node<V>[] t;
           if ((t = map.table) != null) {
               Traverser<V> it = new Traverser<V>(t, t.length, 0, t.length);
-            for (Node<V> p; (p = it.advance()) != null; ) {
-              action.accept(p.val);
-            }
+              for (Node<V> p; (p = it.advance()) != null; )
+                  action.accept(p.val);
           }
       }
-  }
-
-  @NotNull
-  public Iterable<Entry<V>> entries() {
-    return new EntrySetView<>(this);
   }
 
   /**
@@ -2924,7 +2775,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       EntrySetView(ConcurrentIntObjectHashMap<V> map) { super(map); }
 
       public boolean contains(Object o) {
-        if (!(o instanceof Entry<?>)) return false;
+        if (!(o instanceof Entry)) return false;
         Entry<?> e = (Entry<?>)o;
         Object r = map.get(e.getKey());
         if (r == null) return false;
@@ -2934,7 +2785,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
     @Override
       public boolean remove(Object o) {
-        if (!(o instanceof Entry<?>)) return false;
+        if (!(o instanceof Entry)) return false;
         Entry<?> e = (Entry<?>)o;
         Object v = e.getValue();
         return map.remove(e.getKey(), v);
@@ -3001,9 +2852,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           Node<V>[] t;
           if ((t = map.table) != null) {
               Traverser<V> it = new Traverser<V>(t, t.length, 0, t.length);
-            for (Node<V> p; (p = it.advance()) != null; ) {
-              action.accept(new SimpleEntry<V>(p.key, p.val));
-            }
+              for (Node<V> p; (p = it.advance()) != null; )
+                  action.accept(new SimpleEntry<V>(p.key, p.val));
           }
       }
 
@@ -3033,33 +2883,24 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
 
   // Unsafe mechanics
-  private static final long SIZECTL;
-  private static final long TRANSFERINDEX;
-  private static final long BASECOUNT;
-  private static final long CELLSBUSY;
-  private static final long CELLVALUE;
-  private static final long ABASE;
-  private static final int ASHIFT;
+  private static final @NotNull VarHandleWrapper SIZECTL;
+  private static final @NotNull VarHandleWrapper TRANSFERINDEX;
+  private static final @NotNull VarHandleWrapper BASECOUNT;
+  private static final @NotNull VarHandleWrapper CELLSBUSY;
+  private static final @NotNull VarHandleWrapper TAB_ARRAY;
 
   static {
     try {
-      Class<?> k = ConcurrentIntObjectHashMap.class;
-      SIZECTL = Unsafe.objectFieldOffset(k.getDeclaredField("sizeCtl"));
-      TRANSFERINDEX = Unsafe.objectFieldOffset(k.getDeclaredField("transferIndex"));
-      BASECOUNT = Unsafe.objectFieldOffset(k.getDeclaredField("baseCount"));
-      CELLSBUSY = Unsafe.objectFieldOffset(k.getDeclaredField("cellsBusy"));
-      CELLVALUE = Unsafe.objectFieldOffset(CounterCell.class.getDeclaredField("value"));
-      ABASE = Unsafe.arrayBaseOffset(Node[].class);
-      int scale = Unsafe.arrayIndexScale(Node[].class);
-      if ((scale & (scale - 1)) != 0) {
-        throw new Error("data type scale not a power of two");
-      }
-      ASHIFT = 31 - Integer.numberOfLeadingZeros(scale);
-    }
-    catch (Throwable t) {
-      throw new Error(t);
-    }
+        SIZECTL = VarHandleWrapper.getFactory().create(ConcurrentIntObjectHashMap.class, "sizeCtl", int.class);
 
+        TRANSFERINDEX = VarHandleWrapper.getFactory().create(ConcurrentIntObjectHashMap.class, "transferIndex", int.class);
+        BASECOUNT = VarHandleWrapper.getFactory().create(ConcurrentIntObjectHashMap.class, "baseCount", long.class);
+        CELLSBUSY = VarHandleWrapper.getFactory().create(ConcurrentIntObjectHashMap.class, "cellsBusy", int.class);
+
+      TAB_ARRAY = VarHandleWrapper.getFactory().createForArrayElement(ConcurrentIntObjectHashMap.Node[].class);
+    } catch (Throwable e) {
+        throw new Error(e);
+    }
 
       // Reduce the risk of rare disastrous classloading in first call to
       // LockSupport.park: https://bugs.openjdk.java.net/browse/JDK-8074773
@@ -3069,8 +2910,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       ensureLoaded = ReservationNode.class;
   }
 
-
-  private static boolean isEqual(int key1, int key2) {
+  private boolean isEqual(int key1, int key2) {
     return key1 == key2;
   }
 
