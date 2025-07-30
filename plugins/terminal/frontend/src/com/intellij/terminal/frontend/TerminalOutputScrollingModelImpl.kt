@@ -113,9 +113,10 @@ internal class TerminalOutputScrollingModelImpl(
     val lastNotBlankLineBottomY = editor.visualLineToY(lastNotBlankVisualLine) + editor.lineHeight + bottomInset
 
     val isCursorVisible = sessionModel.terminalState.value.isCursorVisible
+    val cursorVisualLine = editor.offsetToVisualLine(cursorOffset, true)
     val screenBottomY = if (isCursorVisible) {
       // Take the cursor into account only if it is visible.
-      val cursorBottomY = editor.offsetToXY(cursorOffset).y + editor.lineHeight + bottomInset
+      val cursorBottomY = editor.visualLineToY(cursorVisualLine) + editor.lineHeight + bottomInset
       max(lastNotBlankLineBottomY, cursorBottomY)
     }
     else lastNotBlankLineBottomY
@@ -123,11 +124,23 @@ internal class TerminalOutputScrollingModelImpl(
     val screenTopY = editor.visualLineToY(screenTopVisualLine) - topInset
     val screenHeight = editor.scrollingModel.visibleArea.height
 
-    val scrollY = max(screenBottomY - screenHeight, screenTopY)
+    val scrollY = if (isCursorVisible && cursorVisualLine == screenTopVisualLine) {
+      // It is a special case: the cursor is at the top of the screen.
+      // In this case we allow adjusting the position by scrolling up.
+      // To support the case when the user executes "clear".
+      screenTopY
+    }
+    else {
+      // In a regular case always try to scroll to the bottom and do not scroll up
+      // to not cause blinking when lines are frequently added and removed from the bottom of the screen
+      maxOf(screenBottomY - screenHeight, screenTopY, editor.scrollingModel.verticalScrollOffset)
+    }
 
-    editor.doTerminalOutputScrollChangingAction {
-      editor.doWithoutScrollingAnimation {
-        editor.scrollingModel.scrollVertically(scrollY)
+    if (scrollY != editor.scrollingModel.verticalScrollOffset) {
+      editor.doTerminalOutputScrollChangingAction {
+        editor.doWithoutScrollingAnimation {
+          editor.scrollingModel.scrollVertically(scrollY)
+        }
       }
     }
   }
