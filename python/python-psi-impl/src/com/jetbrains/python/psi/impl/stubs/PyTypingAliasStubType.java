@@ -19,7 +19,7 @@ import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.psi.*;
@@ -169,25 +169,27 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
    * @see PyTypingAliasStub
    */
   public static @Nullable PyExpression getAssignedValueStubLike(@NotNull PyTargetExpression target) {
-    final PyTargetExpressionStub stub = target.getStub();
-    PyExpression result = null;
-    if (stub != null) {
-      final PyTypingAliasStub aliasStub = stub.getCustomStub(PyTypingAliasStub.class);
-      String aliasText = null;
-      if (aliasStub != null) {
-        aliasText = aliasStub.getText();
+    return CachedValuesManager.getCachedValue(target, () -> {
+      final PyTargetExpressionStub stub = target.getStub();
+      PyExpression result = null;
+      if (stub != null) {
+        final PyTypingAliasStub aliasStub = stub.getCustomStub(PyTypingAliasStub.class);
+        String aliasText = null;
+        if (aliasStub != null) {
+          aliasText = aliasStub.getText();
+        }
+        else if (stub.getInitializerType() == InitializerType.ReferenceExpression) {
+          aliasText = Objects.toString(stub.getInitializer(), null);
+        }
+        if (aliasText != null) {
+          result = PyUtil.createExpressionFromFragment(aliasText, target.getContainingFile());
+        }
       }
-      else if (stub.getInitializerType() == InitializerType.ReferenceExpression) {
-        aliasText = Objects.toString(stub.getInitializer(), null);
+      else {
+        // Use PSI to get the assigned value but only if the same expression would be saved in stubs
+        result = getAssignedValueIfTypeAliasLike(target, false);
       }
-      if (aliasText != null) {
-        result = PyUtil.createExpressionFromFragment(aliasText, target.getContainingFile());
-      }
-    }
-    else {
-      // Use PSI to get the assigned value but only if the same expression would be saved in stubs
-      result = getAssignedValueIfTypeAliasLike(target, false);
-    }
-    return result;
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 }
