@@ -744,6 +744,8 @@ com.intellij.ui.AnActionButtonRunnable
 - com.intellij.util.ParameterizedRunnable
 com.intellij.ui.AnActionButtonUpdater
 - a:isEnabled(com.intellij.openapi.actionSystem.AnActionEvent):Z
+c:com.intellij.ui.CellRendererPanel
+- getAccessibleContext():javax.accessibility.AccessibleContext
 com.intellij.ui.ColorPickerListener
 - a:closed(java.awt.Color):V
 - a:colorChanged(java.awt.Color):V
