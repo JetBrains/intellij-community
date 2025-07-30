@@ -833,8 +833,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     try {
       try {
         MavenExecutionRequest request = createRequest(null,
-                                                      new ArrayList<String>(profiles.getEnabledProfiles()),
-                                                      new ArrayList<String>(profiles.getDisabledProfiles()), null);
+                                                      new ArrayList<>(profiles.getEnabledProfiles()),
+                                                      new ArrayList<>(profiles.getDisabledProfiles()), new Properties());
 
         final Ref<List<MavenArtifact>> mavenArtifacts = Ref.create();
         executeWithMavenSession(request, () -> {
