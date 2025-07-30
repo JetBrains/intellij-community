@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -21,6 +23,8 @@ public final class TypeEvalContextBasedCache<T> {
   private final @NotNull CachedValue<ConcurrentMap<TypeEvalConstraints, T>> myCachedMapStorage;
 
   private final @NotNull Function<? super TypeEvalContext, ? extends T> myProvider;
+  private final LowMemoryWatcher myLowMemoryWatcher;
+  private final SimpleModificationTracker myLowMemoryModificationTracker = new SimpleModificationTracker();
 
   /**
    * @param manager       Cache manager to be used to store cache
@@ -30,6 +34,10 @@ public final class TypeEvalContextBasedCache<T> {
                                    final @NotNull Function<? super TypeEvalContext, ? extends T> valueProvider) {
     myCachedMapStorage = manager.createCachedValue(new MapCreator<>(), false);
     myProvider = valueProvider;
+    myLowMemoryWatcher = LowMemoryWatcher.register(() -> {
+      myLowMemoryModificationTracker.incModificationCount();
+      myCachedMapStorage.getValue();
+    });
   }
 
   /**
@@ -59,13 +67,17 @@ public final class TypeEvalContextBasedCache<T> {
   /**
    * Provider that creates map to store cache. Map depends on PSI modification
    */
-  private static final class MapCreator<T> implements CachedValueProvider<ConcurrentMap<TypeEvalConstraints, T>> {
+  private final class MapCreator<T> implements CachedValueProvider<ConcurrentMap<TypeEvalConstraints, T>> {
     @Override
     public @NotNull Result<ConcurrentMap<TypeEvalConstraints, T>> compute() {
       // This method is called if cache is empty. Create new map for it.
       // Concurrent map allows several threads to call get and put, so it is thread safe but not atomic
       final ConcurrentMap<TypeEvalConstraints, T> map = ContainerUtil.createConcurrentSoftValueMap();
-      return new Result<>(map, PsiModificationTracker.MODIFICATION_COUNT);
+      return new Result<>(map, PsiModificationTracker.MODIFICATION_COUNT, myLowMemoryModificationTracker);
     }
+  }
+
+  public void dispose() {
+    myLowMemoryWatcher.stop();
   }
 }
