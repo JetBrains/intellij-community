@@ -12,10 +12,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.execution.process.KillableColoredProcessHandler;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -203,10 +200,10 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
           final DebugProcessImpl debugProcess = getDebugProcess(processHandler);
           if (debugProcess != null) {
             if (Registry.is("debugger.stop.on.graceful.exit")) {
-              // it is KillableColoredProcessHandler responsibility to terminate VM
+              // it is SoftlyKillableProcessHandler responsibility to terminate VM
               debugProcess.stop(willBeDestroyed &&
-                                !(processHandler instanceof KillableColoredProcessHandler &&
-                                  ((KillableColoredProcessHandler)processHandler).shouldKillProcessSoftly()));
+                                !(processHandler instanceof SoftlyKillableProcessHandler &&
+                                  ((SoftlyKillableProcessHandler)processHandler).shouldKillProcessSoftly()));
 
               // still need to wait in tests for results stability
               if (ApplicationManager.getApplication().isUnitTestMode()) {

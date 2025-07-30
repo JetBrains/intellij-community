@@ -243,6 +243,7 @@ c:com.intellij.execution.process.KillableColoredProcessHandler$Silent
 c:com.intellij.execution.process.KillableProcessHandler
 - com.intellij.execution.process.OSProcessHandler
 - com.intellij.execution.KillableProcess
+- com.intellij.execution.process.SoftlyKillableProcessHandler
 - <init>(com.intellij.execution.configurations.GeneralCommandLine):V
 - p:<init>(java.lang.Process,com.intellij.execution.configurations.GeneralCommandLine):V
 - <init>(java.lang.Process,java.lang.String):V
