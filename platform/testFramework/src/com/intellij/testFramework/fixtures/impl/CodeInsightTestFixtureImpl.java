@@ -2379,7 +2379,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     private static @NotNull SelectionAndCaretMarkupLoader fromFile(@NotNull String path, String charset) {
       VirtualFile virtualFile = VirtualFileUtil.refreshAndFindVirtualFile(Paths.get(path));
-      assert virtualFile != null;
+      assert virtualFile != null : "File not found: " + path;
       return fromFile(virtualFile);
     }
 
