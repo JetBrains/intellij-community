@@ -16,21 +16,55 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.exists
 import kotlin.io.path.name
+import kotlin.io.path.toPath
 
-private const val MAVEN_REPOSITORY_URL = "https://cache-redirector.jetbrains.com/intellij-dependencies"
+private const val INTELLIJ_DEPENDENCIES_REPOSITORY_URL = "https://cache-redirector.jetbrains.com/intellij-dependencies"
 private const val ARTIFACT_GROUP_ID = "org.jetbrains.kotlin"
+private const val USE_MAVEN_LOCAL_PROPERTY = "kotlin.jps.use.maven.local"
 
 object KotlinCompilerDependencyDownloader {
+  private val MAVEN_LOCAL_URL by lazy { "file://${System.getProperty("user.home")}/.m2/repository" }
+
+  /**
+   * Returns whether JPS should be used from the local maven repository rather than downloading it.
+   * This is used in certain CI situations where we can use an experimental Kotlin compiler version that has not been published yet.
+   *
+   * Note: There is a duplicate of this function in `org.jetbrains.jpsBootstrap.KotlinCompiler` that also needs to be adjusted
+   * if this function is modified.
+   */
+  private fun shouldUseMavenLocal(): Boolean {
+    return System.getProperty(USE_MAVEN_LOCAL_PROPERTY) == "true"
+  }
+
+  private fun getMavenRepositoryUrl(): String = if (shouldUseMavenLocal()) {
+    MAVEN_LOCAL_URL
+  } else {
+    INTELLIJ_DEPENDENCIES_REPOSITORY_URL
+  }
+
+
   fun downloadAndExtractKotlinCompiler(communityRoot: BuildDependenciesCommunityRoot): Path {
     val kotlinJpsPluginVersion = getKotlinJpsPluginVersion(communityRoot)
-    val kotlinDistUrl = getUriForMavenArtifact(MAVEN_REPOSITORY_URL, ARTIFACT_GROUP_ID, "kotlin-dist-for-ide", kotlinJpsPluginVersion, "jar")
-    val kotlinDistJar = downloadFileToCacheLocation(communityRoot, kotlinDistUrl)
+    val kotlinDistUrl = getUriForMavenArtifact(getMavenRepositoryUrl(), ARTIFACT_GROUP_ID, "kotlin-dist-for-ide", kotlinJpsPluginVersion, "jar")
+    val kotlinDistJar = if (shouldUseMavenLocal()) {
+      val path = kotlinDistUrl.toPath()
+      check(path.exists()) { "kotlin-dist-for-ide was not found in the local Maven repository" }
+      path
+    } else {
+      downloadFileToCacheLocation(communityRoot, kotlinDistUrl)
+    }
     return extractFileToCacheLocation(communityRoot, kotlinDistJar)
   }
 
   suspend fun downloadKotlinJpsPlugin(communityRoot: BuildDependenciesCommunityRoot): Path = withContext(Dispatchers.IO) {
     val kotlinJpsPluginVersion = getKotlinJpsPluginVersion(communityRoot)
-    val kotlinJpsPluginUrl = getUriForMavenArtifact(MAVEN_REPOSITORY_URL, ARTIFACT_GROUP_ID, "kotlin-jps-plugin-classpath", kotlinJpsPluginVersion, "jar")
+    val kotlinJpsPluginUrl = getUriForMavenArtifact(getMavenRepositoryUrl(), ARTIFACT_GROUP_ID, "kotlin-jps-plugin-classpath", kotlinJpsPluginVersion, "jar")
+
+    if (shouldUseMavenLocal()) {
+      val kotlinJpsPluginJar = kotlinJpsPluginUrl.toPath()
+      check(kotlinJpsPluginJar.exists()) { "kotlin-jps-plugin-classpath was not found in the local Maven repository" }
+      return@withContext kotlinJpsPluginJar
+    }
 
     val cacheLocation = getTargetFile(communityRoot, kotlinJpsPluginUrl.toString())
     if (cacheLocation.exists()) {
