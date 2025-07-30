@@ -13,6 +13,8 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Writer
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.IdeaCommunityProperties
+import org.jetbrains.intellij.build.ProprietaryBuildTools
+import org.jetbrains.intellij.build.SignTool
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.Checksums
 import org.jetbrains.intellij.build.impl.maven.MavenCentralPublication.DeploymentState
@@ -23,6 +25,7 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.extension
 import kotlin.io.path.name
 import kotlin.io.path.writeText
 
@@ -34,6 +37,14 @@ class MavenCentralPublicationTest {
           COMMUNITY_ROOT.communityRoot,
           IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
           setupTracer = false,
+          ProprietaryBuildTools.DUMMY.copy(signTool = object : SignTool by (ProprietaryBuildTools.DUMMY.signTool) {
+            override suspend fun signFilesWithGpg(files: List<Path>, context: BuildContext) {
+              for (file in files) {
+                assert(file.extension != "asc")
+                file.resolveSibling("${file.name}.asc").createFile()
+              }
+            }
+          }),
         )
       }
     }
@@ -46,6 +57,7 @@ class MavenCentralPublicationTest {
   class Result(val workDirPath: Path, zipPath: String) {
     val expectedZipEntries: Sequence<String> =
       sequenceOf(zipPath)
+        .plus("$zipPath.asc")
         .plus("$zipPath.sha1")
         .plus("$zipPath.sha256")
         .plus("$zipPath.sha512")
