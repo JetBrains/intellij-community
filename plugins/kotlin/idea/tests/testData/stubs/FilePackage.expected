@@ -1,4 +1,4 @@
-PsiJetFileStubImpl[package=some.test]
+FILE[kind=File[packageFqName=some.test]]
   PACKAGE_DIRECTIVE
     DOT_QUALIFIED_EXPRESSION
       REFERENCE_EXPRESSION[referencedName=some]
