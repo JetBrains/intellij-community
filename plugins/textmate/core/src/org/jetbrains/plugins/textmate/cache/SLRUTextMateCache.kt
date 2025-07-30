@@ -149,7 +149,7 @@ class SLRUTextMateCache<K : Any, V : Any?>(
     val toEvict = lock.withLock {
       buildList {
         protectedCache.allEntriesCopy().forEach { entry ->
-          if (entry.refCount.load() == 0 && entry.lastAccessed.load().elapsedNow() > ttl) {
+          if (entry.refCount.load() == 0 && entry.lastAccessed.load().elapsedNow() >= ttl) {
             protectedCache.remove(entry.key)?.let {
               // if another thread has already marked it, it's ok
               if (entry.evicted.compareAndSet(expectedValue = false, newValue = true)) {
@@ -159,7 +159,7 @@ class SLRUTextMateCache<K : Any, V : Any?>(
           }
         }
         probationaryCache.allEntriesCopy().forEach { entry ->
-          if (entry.refCount.load() == 0 && entry.lastAccessed.load().elapsedNow() > ttl) {
+          if (entry.refCount.load() == 0 && entry.lastAccessed.load().elapsedNow() >= ttl) {
             probationaryCache.remove(entry.key)?.let {
               // if another thread has already marked it, it's ok
               if (entry.evicted.compareAndSet(expectedValue = false, newValue = true)) {
