@@ -38,7 +38,6 @@ else {
 
 function Global:Prompt() {
   $Success = $Global:?
-  $ExitCode = $Global:LastExitCode
 
   $Result = ""
   if ($Global:__JetBrainsIntellijState.IsInitialized -eq $false) {
@@ -49,9 +48,7 @@ function Global:Prompt() {
   }
   elseif ($Global:__JetBrainsIntellijState.IsCommandRunning -eq $true){
     $Global:__JetBrainsIntellijState.IsCommandRunning = $false
-    if (($ExitCode -eq $null) -or ($ExitCode -eq 0 -and -not $Success)) {
-      $ExitCode = if ($Success) { 0 } else { 1 }
-    }
+    $ExitCode = if ($Success) { 0 } else { 1 }
     $CurrentDirectory = (Get-Location).Path
     $Result += Global:__JetBrainsIntellijOSC "command_finished;exit_code=$ExitCode;current_directory=$(Global:__JetBrainsIntellijEncode $CurrentDirectory)"
   }
