@@ -38,6 +38,7 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.PathWalkOption
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
+import kotlin.io.path.extension
 import kotlin.io.path.inputStream
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -172,6 +173,10 @@ class MavenCentralPublication(
       }
       context.messages.info("Maven artifacts found:")
       distributionFiles.forEach { context.messages.info("$it") }
+      val signatures = distributionFiles.filter { it.extension == "asc" }
+      if (signatures.any()) {
+        throw SuppliedSignatures("Supplied signatures verification is not implemented yet: $signatures")
+      }
       MavenArtifacts(coordinates, distributionFiles)
     }
   }
@@ -209,6 +214,9 @@ class MavenCentralPublication(
 
   @VisibleForTesting
   class ChecksumMismatch(message: String) : RuntimeException(message)
+
+  @VisibleForTesting
+  class SuppliedSignatures(message: String) : RuntimeException(message)
 
   private fun CoroutineScope.generateOrVerifyChecksum(file: Path, extension: String, value: String) {
     launch(CoroutineName("checksum $extension for $file")) {
