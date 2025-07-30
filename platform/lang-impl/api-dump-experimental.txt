@@ -267,6 +267,11 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - a:hasToShow(com.intellij.psi.PsiElement):Z
 - pf:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 - f:supportsReadOnly():Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractTypeHierarchyCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
+- <init>():V
+- p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
+- a:findElement(I,com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
 *c:com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - com.intellij.codeInsight.completion.command.CommandProvider
 - <init>(java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,java.lang.String,java.util.List):V
