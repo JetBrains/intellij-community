@@ -54,8 +54,6 @@
                  description="Enable new terminal for PowerShell on Windows 11"/>
     <registryKey key="terminal.new.ui.powershell.win10" defaultValue="true"
                  description="Enable new terminal for PowerShell on Windows 10"/>
-    <registryKey key="terminal.new.ui.powershell.unix" defaultValue="false"
-                 description="Enable new terminal for PowerShell on Unix"/>
     <registryKey key="terminal.new.ui.show.promotion" defaultValue="false"
                  description="Whether to show the GotIt tooltip with a proposal to try the New Terminal"/>
     <registryKey key="terminal.new.ui.autocompletion" defaultValue="true"
