@@ -58,8 +58,9 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
 
     val splitProviderIds = providerHolder.splitToEssentialAndNonEssential(providerIds)
     val resultsBalancer = SeResultsCountBalancer("BE",
-                                                 splitProviderIds[SeProviderIdUtils.ESSENTIAL_KEY]!!,
-                                                 splitProviderIds[SeProviderIdUtils.NON_ESSENTIAL_KEY]!!)
+                                                 nonBlockedProviderIds = emptyList(),
+                                                 highPriorityProviderIds = splitProviderIds[SeProviderIdUtils.ESSENTIAL_KEY]!!,
+                                                 lowPriorityProviderIds = splitProviderIds[SeProviderIdUtils.NON_ESSENTIAL_KEY]!!)
 
     SeLog.log(SeLog.ITEM_EMIT) { "Backend will request items from providers: ${providerIds.joinToString(", ")}" }
 

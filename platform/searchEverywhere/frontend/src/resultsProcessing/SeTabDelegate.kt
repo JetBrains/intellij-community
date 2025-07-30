@@ -18,6 +18,7 @@ import com.intellij.platform.searchEverywhere.providers.SeLocalItemDataProvider
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
+import com.intellij.platform.searchEverywhere.utils.SeResultsCountBalancer
 import com.intellij.platform.searchEverywhere.utils.initAsync
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.*
@@ -46,10 +47,23 @@ class SeTabDelegate(
 
     return flow {
       val initializedProviders = providers.getValue()
-      val accumulator = SeResultsAccumulator(initializedProviders.getLocalProviderIds(), initializedProviders.getRemoteProviderIds())
+
+      val remoteProviderIds = initializedProviders.getRemoteProviderIds()
+      val allEssentialProviderIds = initializedProviders.essentialProviderIds
+      val localProviders = initializedProviders.getLocalProviderIds().toSet()
+      val localEssentialProviders = allEssentialProviderIds.intersect(localProviders)
+      val localNonEssentialProviders = localProviders.subtract(allEssentialProviderIds)
+
+      // We shouldn't block remoteProviderIds because they may miss some results after equality check on the Backend
+      val balancer = SeResultsCountBalancer("FE",
+                                            nonBlockedProviderIds = remoteProviderIds,
+                                            highPriorityProviderIds = localEssentialProviders,
+                                            lowPriorityProviderIds = localNonEssentialProviders)
+
+      val accumulator = SeResultsAccumulator()
 
       disabledProviders?.forEach {
-        accumulator.end(it)
+        balancer.end(it)
         emit(SeResultEndEvent(it))
       }
 
@@ -57,11 +71,12 @@ class SeTabDelegate(
         when (transferEvent) {
           is SeTransferEnd -> {
             SeLog.log(ITEM_EMIT) { "Tab delegate for ${logLabel} ends: ${transferEvent.providerId.value}" }
-            accumulator.end(transferEvent.providerId)
+            balancer.end(transferEvent.providerId)
             SeResultEndEvent(transferEvent.providerId)
           }
           is SeTransferItem -> {
             val itemData = transferEvent.itemData
+            balancer.add(itemData)
 
             val checkedItemData = if (equalityChecker != null) {
               equalityChecker.checkAndUpdateIfNeeded(itemData)
