@@ -1233,7 +1233,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
           FindPopupItem newItem;
           boolean merged = !myHelper.isReplaceState() && recentItem != null && recentItem.getUsage().merge(usage);
           if (!merged) {
-            if (usage instanceof UsageInfo2UsageAdapter) {
+            if (usage instanceof UsageInfo2UsageAdapter && !FindKey.isEnabled()) {
               ((UsageInfo2UsageAdapter)usage).updateCachedPresentation();
             }
 
@@ -1243,7 +1243,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
           else {
             // recompute presentation of a merged instance
             UsageInfoAdapter recentItemUsage = recentItem.getUsage();
-            if (recentItemUsage instanceof UsageInfo2UsageAdapter) {
+            if (recentItemUsage instanceof UsageInfo2UsageAdapter && !FindKey.isEnabled()) {
               ((UsageInfo2UsageAdapter)recentItemUsage).updateCachedPresentation();
             }
             UsagePresentation recentUsagePresentation = UsagePresentationProvider.getPresentation(recentItemUsage, project, scope);
