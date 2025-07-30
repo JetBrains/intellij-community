@@ -4,6 +4,7 @@ package git4idea.remote.hosting
 import com.intellij.configurationStore.saveSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationListener
+import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
@@ -22,6 +23,7 @@ import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.util.progress.SequentialProgressReporter
 import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.vcs.commit.CommitNotification
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.DialogManager
 import git4idea.GitUtil
@@ -142,6 +144,11 @@ class GitShareProjectService(
               HtmlChunk.link(url, repositoryName).toString(),
               NotificationListener.URL_OPENING_LISTENER
             )
+
+            // Remove project sharing notification
+            NotificationsManager.getNotificationsManager()
+              .getNotificationsOfType(CommitNotification::class.java, project)
+              .forEach { it.expire() }
           }
         }
         catch (error: Throwable) {
