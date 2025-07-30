@@ -60,7 +60,7 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
   }
 
   private fun getTextSpeller(project: Project): TextSpeller? {
-    val speller = project.service<GrazieSpellCheckerEngine>().speller ?: return null
+    val speller = project.service<GrazieSpellCheckerEngine>().getSpeller() ?: return null
     return TextSpeller(listOf(object : Speller by speller {
       override fun languages(): List<LanguageWithVariant> = GrazieConfig.get().enabledLanguages.mapNotNull { it.withVariant }
     }))

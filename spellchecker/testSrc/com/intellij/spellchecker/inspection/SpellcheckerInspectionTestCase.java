@@ -6,6 +6,7 @@ import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 public abstract class SpellcheckerInspectionTestCase extends BasePlatformTestCase {
+
   @Override
   protected boolean isCommunity() {
     return true;

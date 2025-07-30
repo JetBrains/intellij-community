@@ -73,10 +73,9 @@ enum class Lang(val displayName: String, val className: String, val iso: Languag
     get() = HunspellDescriptor.entries.find { it.iso == iso }
 
   val dictionary: HunspellDictionary? by lazy {
-    if (isEnglish()) {
-      return@lazy GrazieSpellCheckerEngine.enDictionary
-    }
+    if (isEnglish()) return@lazy GrazieSpellCheckerEngine.enDictionary
     if (hunspellRemote == null) return@lazy null
+
     val dicPath = getLangDynamicFolder(this).resolve(hunspellRemote!!.file).toString()
     if (this == SWISS_GERMAN) createSwissDictionary(dicPath) else HunspellDictionary(dicPath, language = iso)
   }
@@ -121,12 +120,13 @@ enum class Lang(val displayName: String, val className: String, val iso: Languag
 }
 
 private fun createSwissDictionary(path: String): HunspellDictionary {
-  val (dic, aff, trigrams) = HunspellDictionary.getHunspellPaths(path)
+  val (dic, aff, trigrams, replacingRules) = HunspellDictionary.getHunspellBundle(path)
   return HunspellDictionary(
     transformSwissGermanDic(dic.readText()),
     aff.readText(),
     transformSwissGermanTrigrams(trigrams.readLines()),
     path,
     LanguageISO.DE,
+    replacingRules?.readText()
   )
 }

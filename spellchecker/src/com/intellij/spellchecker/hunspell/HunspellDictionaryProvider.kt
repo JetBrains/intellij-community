@@ -8,7 +8,6 @@ import com.intellij.spellchecker.dictionary.CustomDictionaryProvider
 import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.spellchecker.ui.SpellCheckingNotifier
 import com.intellij.spellchecker.util.SpellCheckerBundle
-import java.io.File
 import java.io.FileNotFoundException
 import java.text.ParseException
 
@@ -22,7 +21,7 @@ internal class HunspellDictionaryProvider : CustomDictionaryProvider {
   override fun get(dicPath: String): Dictionary? {
     try {
       if (isIncompleteHunspell(dicPath)) {
-        val (dic, aff) = HunspellDictionary.getHunspellPaths(dicPath)
+        val (dic, aff) = HunspellDictionary.getHunspellBundle(dicPath)
         SpellCheckingNotifier.showWarningNotificationBalloon(
           SpellCheckerBundle.message("dictionary.hunspell.incomplete.title"),
           SpellCheckerBundle.message("dictionary.hunspell.incomplete", dic.toPath().fileName, aff.toPath().fileName)
@@ -57,7 +56,7 @@ internal class HunspellDictionaryProvider : CustomDictionaryProvider {
 
   private fun isHungarian(path: String): Boolean {
     if (FileUtilRt.getExtension(path) != "dic") return false
-    val (_, aff) = HunspellDictionary.getHunspellPaths(path)
+    val (_, aff) = HunspellDictionary.getHunspellBundle(path)
     if (!aff.exists()) return false
 
     try {
@@ -76,7 +75,7 @@ internal class HunspellDictionaryProvider : CustomDictionaryProvider {
 
   private fun isIncompleteHunspell(path: String): Boolean {
     if (FileUtilRt.getExtension(path) != "dic") return false
-    val (dic, aff) = HunspellDictionary.getHunspellPaths(path)
+    val (dic, aff) = HunspellDictionary.getHunspellBundle(path)
 
     if (dic.exists() && !aff.exists()) {
       try {

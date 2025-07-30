@@ -3,7 +3,6 @@ package com.intellij.grazie.remote
 import ai.grazie.nlp.langs.LanguageISO
 import java.nio.file.Path
 
-
 interface RemoteLangDescriptor {
   /**
    * Returns the file name or directory name where dictionaries are stored locally.

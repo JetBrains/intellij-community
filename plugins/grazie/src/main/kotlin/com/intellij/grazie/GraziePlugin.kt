@@ -1,12 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.grazie.GrazieDynamic.getLangDynamicFolder
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.remote.GrazieRemote.isAvailableLocally
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.spellchecker.SpellCheckerManager
@@ -28,23 +30,28 @@ object GraziePlugin {
     const val url = "https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/spell"
 
     override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
-      GrazieScope.coroutineScope().launch(Dispatchers.IO) {
-        val newLanguages = newState.enabledLanguages.filterHunspell()
-        val prevLanguages = prevState.enabledLanguages.filterHunspell()
+      // Do not preload the hunspell /speller in test mode, so it won't slow down tests not related to the spellchecker.
+      // We will still load it in tests but only when it is actually necessary.
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        return
+      }
 
+      val newLanguages = newState.enabledLanguages.filterHunspell()
+      val prevLanguages = prevState.enabledLanguages.filterHunspell()
+      if (prevLanguages == newLanguages) return
+
+      GrazieScope.coroutineScope().launch(Dispatchers.IO) {
         ProjectManager.getInstance().openProjects.forEach { project ->
           val manager = SpellCheckerManager.getInstance(project)
-          newLanguages.forEach { new ->
-            val dicPath = getLangDynamicFolder(new).resolve(new.hunspellRemote!!.file).toString()
-            if (!manager.isDictionaryLoad(dicPath)) {
-              manager.spellChecker!!.addDictionary(new.dictionary!!)
-            }
+
+          (newLanguages - prevLanguages).forEach { manager.spellChecker!!.addDictionary(it.dictionary!!) }
+          (prevLanguages - newLanguages).forEach { prev ->
+            val dicPath = getLangDynamicFolder(prev).resolve(prev.hunspellRemote!!.file).toString()
+            manager.removeDictionary(dicPath)
           }
-          prevLanguages.forEach { prev ->
-            if (prev !in newLanguages) {
-              val dicPath = getLangDynamicFolder(prev).resolve(prev.hunspellRemote!!.file).toString()
-              manager.removeDictionary(dicPath)
-            }
+
+          if (project.isInitialized && project.isOpen) {
+            DaemonCodeAnalyzer.getInstance(project).restart()
           }
         }
       }

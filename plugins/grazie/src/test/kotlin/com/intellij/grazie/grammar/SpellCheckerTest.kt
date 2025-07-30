@@ -21,6 +21,14 @@ object GrazieSpellchecker {
 }
 
 class SpellCheckerTest : GrazieTestBase() {
+
+  private fun doSuggestionTest(word: String, expected: String) {
+    assertTrue(getInstance(project).hasProblem(word))
+    val suggestions = getInstance(project).getSuggestions(word)
+    assertTrue(suggestions.isNotEmpty())
+    assertEquals(expected, suggestions.first())
+  }
+
   fun `test empty word`() {
     assertFalse(getInstance(project).hasProblem(""))
   }
@@ -69,5 +77,11 @@ class SpellCheckerTest : GrazieTestBase() {
     assertEquals(Alien, GrazieSpellchecker.lookup("привет"))
     assertEquals(Alien, GrazieSpellchecker.lookup("entschuldigung"))
     assertEquals(Alien, GrazieSpellchecker.lookup("кiт"))
+  }
+
+  fun `test advanced dat suggestions`() {
+    enableProofreadingFor(setOf(Lang.RUSSIAN))
+    doSuggestionTest("Врядтли", "Вряд ли")
+    doSuggestionTest("Грейзи", "Грацие")
   }
 }

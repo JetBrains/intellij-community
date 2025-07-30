@@ -7,18 +7,15 @@ import ai.grazie.annotation.TestOnly
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.LanguageISO
 import ai.grazie.nlp.langs.alphabet.Alphabet
-import ai.grazie.nlp.phonetics.metaphone.DoubleMetaphone
 import ai.grazie.nlp.utils.normalization.StripAccentsNormalizer
 import ai.grazie.spell.GrazieSpeller
 import ai.grazie.spell.GrazieSplittingSpeller
+import ai.grazie.spell.Speller
 import ai.grazie.spell.dictionary.RuleDictionary
 import ai.grazie.spell.dictionary.rule.IgnoreRuleDictionary
 import ai.grazie.spell.language.LanguageModel
-import ai.grazie.spell.lists.WordListWithFrequency
 import ai.grazie.spell.suggestion.filter.feature.RadiusSuggestionFilter
-import ai.grazie.spell.suggestion.ranker.*
-import ai.grazie.spell.utils.DictionaryResources
-import ai.grazie.utils.mpp.FromResourcesDataLoader
+import ai.grazie.utils.mpp.Resources
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -41,25 +38,27 @@ import com.intellij.spellchecker.grazie.dictionary.ExtendedWordListWithFrequency
 import com.intellij.spellchecker.grazie.dictionary.WordListAdapter
 import com.intellij.spellchecker.grazie.ranker.DiacriticSuggestionRanker
 import com.intellij.spellchecker.hunspell.HunspellDictionary
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
 private const val MAX_WORD_LENGTH = 32
 
 @Service(Service.Level.PROJECT)
 class GrazieSpellCheckerEngine(
   project: Project,
-  private val coroutineScope: CoroutineScope
-): SpellCheckerEngine, Disposable {
+  private val coroutineScope: CoroutineScope,
+) : SpellCheckerEngine, Disposable {
 
   companion object {
     val enDictionary: HunspellDictionary by lazy {
-      val classLoader = HunspellDictionary::class.java.classLoader
-      val dicContent = classLoader.getResourceAsStream("dictionary/en.dic")!!.bufferedReader().readText()
-      val affContent = classLoader.getResourceAsStream("dictionary/en.aff")!!.bufferedReader().readText()
-      val trigramsContent = classLoader.getResourceAsStream("dictionary/en.trigrams.txt")?.bufferedReader()?.readLines()
-
+      val dic = Resources.text("/dictionary/en.dic")
+      val aff = Resources.text("/dictionary/en.aff")
+      val trigrams = Resources.text("/dictionary/en.trigrams.txt").lines()
       HunspellDictionary(
-        dicContent, affContent, trigramsContent, "dictionary/en.dic", LanguageISO.EN
+        dic, aff, trigrams, "/dictionary/en.dic", LanguageISO.EN, Resources.text("/rule/en.dat")
       )
     }
   }
@@ -71,15 +70,15 @@ class GrazieSpellCheckerEngine(
 
   internal class SpellerLoadActivity : ProjectActivity {
     init {
-      // Do not preload speller in test mode, so it won't slow down tests not related to the spellchecker.
-      // We will still load it in tests but only when it is actually needed.
+      // Do not preload the speller in test mode, so it won't slow down tests not related to the spellchecker.
+      // We will still load it in tests but only when it is actually necessary.
       if (ApplicationManager.getApplication().isUnitTestMode) {
         throw ExtensionNotApplicableException.create()
       }
     }
 
     override suspend fun execute(project: Project) {
-      project.serviceAsync<GrazieSpellCheckerEngine>().waitForSpeller()
+      project.serviceAsync<GrazieSpellCheckerEngine>().initializeSpeller(project)
       project.serviceAsync<SpellCheckerManager>()
 
       // heavy classloading to avoid freezes from FJP thread starvation
@@ -89,60 +88,51 @@ class GrazieSpellCheckerEngine(
     }
   }
 
-  private val deferredSpeller: Deferred<GrazieSplittingSpeller> = coroutineScope.async {
-    val speller = GrazieSplittingSpeller(speller = GrazieSpeller(createSpellerConfig()), config = GrazieSplittingSpeller.UserConfig())
-    coroutineScope.launch {
-      readAction {
-        project.messageBus.syncPublisher(SpellCheckerEngineListener.TOPIC).onSpellerInitialized()
-      }
-    }
-    speller
-  }
-
-  suspend fun waitForSpeller() {
-    deferredSpeller.join()
-  }
-
   @OptIn(ExperimentalCoroutinesApi::class)
   private val suggestionCache = Caffeine.newBuilder().maximumSize(1024).build<SuggestionRequest, List<String>> { request ->
-    val speller = deferredSpeller.getCompleted()
+    val speller = speller!!
     synchronized(speller) {
       speller.suggest(request.word, request.maxSuggestions).take(request.maxSuggestions)
     }
   }
 
-  val speller: GrazieSplittingSpeller?
-    get() = if (deferredSpeller.isCompleted) deferredSpeller.getCompleted() else null
-
-  override fun dispose() {
-    coroutineScope.cancel()
-  }
-
-  private suspend fun createSpellerConfig(): GrazieSpeller.UserConfig {
+  private fun createSpellerConfig(): GrazieSpeller.UserConfig {
     val wordList = ExtendedWordListWithFrequency(enDictionary.dict, adapter)
-    return GrazieSpeller.UserConfig(model = buildModel(Language.ENGLISH, wordList))
-  }
-
-  private suspend fun buildModel(language: Language, wordList: WordListWithFrequency): LanguageModel {
-    return LanguageModel(
-      language = language,
-      words = wordList,
-      rules = RuleDictionary.Aggregated(
-        IgnoreRuleDictionary.standard(tooShortLength = 2),
-        DictionaryResources.getReplacingRules("/rule/en", FromResourcesDataLoader)
-      ),
-      ranker = DiacriticSuggestionRanker(
-        LinearAggregatingSuggestionRanker(
-          JaroWinklerSuggestionRanker() to 0.43,
-          LevenshteinSuggestionRanker() to 0.20,
-          PhoneticSuggestionRanker(DoubleMetaphone()) to 0.11,
-          FrequencySuggestionRanker(wordList) to 0.23
-        )
-      ),
+    return GrazieSpeller.UserConfig(model = LanguageModel(
+      language = Language.ENGLISH,
+      words = ExtendedWordListWithFrequency(enDictionary.dict, adapter),
+      rules = RuleDictionary.Aggregated(this.replacingRules),
+      ranker = DiacriticSuggestionRanker(LanguageModel.getRanker(Language.ENGLISH, wordList)),
       filter = RadiusSuggestionFilter(0.05),
       normalizer = StripAccentsNormalizer(),
       isAlien = { !Alphabet.ENGLISH.matchAny(it) && adapter.isAlien(it) }
+    ))
+  }
+
+  @Volatile
+  private var speller: Speller? = null
+  private val replacingRules: Set<RuleDictionary> = getReplacingRules()
+
+  @ApiStatus.Internal
+  fun initializeSpeller(project: Project) {
+    val speller = GrazieSplittingSpeller(
+      speller = GrazieSpeller(createSpellerConfig()),
+      config = GrazieSplittingSpeller.UserConfig()
     )
+    if (this.speller == null) {
+      coroutineScope.launch {
+        readAction {
+          project.messageBus.syncPublisher(SpellCheckerEngineListener.TOPIC).onSpellerInitialized()
+        }
+      }
+    }
+    this.speller = speller
+  }
+
+  fun getSpeller(): Speller? = speller
+
+  override fun dispose() {
+    coroutineScope.cancel()
   }
 
   override fun isDictionaryLoad(name: String): Boolean = adapter.containsSource(name)
@@ -173,7 +163,7 @@ class GrazieSpellCheckerEngine(
   }
 
   override fun getSuggestions(word: String, maxSuggestions: Int, maxMetrics: Int): List<String> {
-    if (!deferredSpeller.isCompleted) {
+    if (speller == null) {
       return emptyList()
     }
     if (word.length > MAX_WORD_LENGTH) {
@@ -205,6 +195,22 @@ class GrazieSpellCheckerEngine(
   @TestOnly
   fun dropSuggestionCache() {
     suggestionCache.invalidateAll()
+  }
+
+  private fun getReplacingRules(): Set<RuleDictionary> {
+    return object : AbstractSet<RuleDictionary>() {
+      override val size: Int
+        get() = throw UnsupportedOperationException()
+
+      override fun iterator(): Iterator<RuleDictionary> {
+        val replacingRules = mutableSetOf(IgnoreRuleDictionary.standard(tooShortLength = 2), enDictionary.ruleDictionary!!)
+        val hunspellReplacingRules = dictionaryNames
+          .map { adapter.getDictionary(it) }
+          .mapNotNull { (it as? HunspellDictionary)?.ruleDictionary }
+          .toSet()
+        return (replacingRules + hunspellReplacingRules).iterator()
+      }
+    }
   }
 }
 

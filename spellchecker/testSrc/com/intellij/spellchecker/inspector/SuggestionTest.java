@@ -22,7 +22,6 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import java.util.List;
 
-@SuppressWarnings("SpellCheckingInspection")
 public class SuggestionTest extends BasePlatformTestCase {
 
   public static final String TYPPPO = "Typppo";

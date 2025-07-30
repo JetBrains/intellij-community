@@ -4,84 +4,72 @@ package com.intellij.spellchecker.hunspell
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.LanguageISO
 import ai.grazie.nlp.langs.alphabet.Alphabet
+import ai.grazie.spell.dictionary.RuleDictionary
+import ai.grazie.spell.dictionary.rule.ReplacingRuleDictionary
 import ai.grazie.spell.lists.hunspell.HunspellWordList
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.util.Consumer
 import java.io.File
-import java.io.FileNotFoundException
-import java.io.InputStreamReader
+import kotlin.io.path.Path
 
-internal data class HunspellBundle(val dic: File, val aff: File, val trigrams: File)
+data class HunspellBundle(val dic: File, val aff: File, val trigrams: File, val replacingRules: File?) {
+  fun dictionaryExists(): Boolean = dic.exists() && aff.exists()
+}
 
 class HunspellDictionary : Dictionary {
   companion object {
-    private fun loadHunspellBundle(dicPath: String): HunspellBundle? {
-      if (FileUtilRt.getExtension(dicPath) != "dic") return null
-      val (dic, aff, trigrams) = getHunspellPaths(dicPath)
-      return if (dic.exists() && aff.exists()) HunspellBundle(dic, aff, trigrams) else null
+    fun getHunspellBundle(dicPath: String): HunspellBundle {
+      val path = FileUtilRt.getNameWithoutExtension(dicPath)
+      val filename = Path(path).fileName.toString()
+      return HunspellBundle(
+        File("$path.dic"),
+        File("$path.aff"),
+        File("$path.trigrams.txt"),
+        Path(path).parent.resolve("../rule/$filename.dat").toFile()
+      )
     }
 
     fun isHunspell(path: String): Boolean {
-      return loadHunspellBundle(path) != null
-    }
-
-    fun getHunspellPaths(dicPath: String): Triple<File, File, File> {
-      val path = FileUtilRt.getNameWithoutExtension(dicPath)
-      return Triple(
-        File("$path.dic"),
-        File("$path.aff"),
-        File("$path.trigrams.txt")
-      )
+      return getHunspellBundle(path).dictionaryExists()
     }
   }
 
   @JvmOverloads
   constructor(path: String, name: String? = null, language: LanguageISO? = null) {
-    val bundle = loadHunspellBundle(path)
-    if (bundle == null) throw FileNotFoundException("File '$path' not found")
+    val paths = getHunspellBundle(path)
+    check(paths.dictionaryExists()) { "File '$path' not found" }
+
+    val (dic, aff, trigrams, replacingRules) = paths
 
     this.name = name ?: path
     this.language = language
     this.alphabet = if (this.language == null) null else Language.entries.firstOrNull { it.iso == this.language }?.alphabet
     this.dict = HunspellWordList.create(
-      bundle.aff.readText(),
-      bundle.dic.readText(),
-      if (bundle.trigrams.exists()) bundle.trigrams.readLines() else null
+      aff.readText(),
+      dic.readText(),
+      if (trigrams.exists()) trigrams.readLines() else null
     ) { ProgressManager.checkCanceled() }
-
-    if (this.alphabet == null) {
-      InputStreamReader(bundle.dic.inputStream()).use { reader ->
-        reader.forEachLine { line ->
-          line.takeWhile { it != ' ' && it != '/' }.lowercase().chars().forEach { this.letters.add(it) }
-        }
-      }
-    }
+    this.ruleDictionary = if (replacingRules?.exists() == true) parseReplacingRules(replacingRules.readText()) else null
+    buildAlphabet(dic.readText())
   }
 
-  constructor(dic: String, aff: String, trigrams: List<String>?, name: String, language: LanguageISO) {
+  constructor(dic: String, aff: String, trigrams: List<String>?, name: String, language: LanguageISO, replacingRules: String?) {
     check(dic.isNotEmpty()) { "Dictionary must not be empty string" }
     check(aff.isNotEmpty()) { "Affix must not be empty string" }
 
     this.name = name
     this.language = language
     this.alphabet = Language.entries.firstOrNull { it.iso == language }?.alphabet
-    this.dict = HunspellWordList.create(
-      aff,
-      dic,
-      trigrams
-    ) { ProgressManager.checkCanceled() }
-
-    if (this.alphabet == null) {
-      dic.lines().forEach { line ->
-        line.takeWhile { it != ' ' && it != '/' }.lowercase().chars().forEach { this.letters.add(it) }
-      }
-    }
+    this.dict = HunspellWordList.create(aff, dic, trigrams) { ProgressManager.checkCanceled() }
+    this.ruleDictionary = if (replacingRules != null) parseReplacingRules(replacingRules) else null
+    buildAlphabet(dic)
   }
 
   private val name: String
   val dict: HunspellWordList
+  val ruleDictionary: RuleDictionary?
   private val letters: HashSet<Int> = HashSet()
   private val alphabet: Alphabet?
   private val language: LanguageISO?
@@ -109,4 +97,26 @@ class HunspellDictionary : Dictionary {
     if (this.alphabet != null) return !this.alphabet.matchAny(word)
     return word.lowercase().chars().anyMatch { it !in this.letters }
   }
+
+  private fun buildAlphabet(dic: String) {
+    if (this.alphabet == null) {
+      dic.lines().forEach { line ->
+        line.takeWhile { it != ' ' && it != '/' }.lowercase().chars().forEach { this.letters.add(it) }
+      }
+    }
+  }
+
+  // todo: Use DictionaryResources#parseReplacingRules when grazie-platform is updated to 0.8.25+
+  fun parseReplacingRules(datRule: String): RuleDictionary {
+    val rules = HashSet<ReplacingRuleDictionary.Descriptor>()
+
+    for (line in datRule.lines().filter { it.isNotBlank() }) {
+      val (incorrect, correct) = line.splitByDelimiter("->")
+      rules.add(ReplacingRuleDictionary.Descriptor(incorrect.splitByDelimiter(), correct.splitByDelimiter()))
+    }
+
+    return ReplacingRuleDictionary(rules)
+  }
+
+  private fun String.splitByDelimiter(delimiter: String = ",") = this.split(delimiter).map { it.trim() }.toTypedArray()
 }

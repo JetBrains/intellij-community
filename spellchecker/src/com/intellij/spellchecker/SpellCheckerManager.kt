@@ -13,7 +13,6 @@ import com.intellij.openapi.command.undo.BasicUndoableAction
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -43,9 +42,7 @@ import com.intellij.spellchecker.util.SpellCheckerBundle
 import com.intellij.util.EventDispatcher
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.util.function.Consumer
 
@@ -78,8 +75,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
 
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      @Suppress("TestOnlyProblems")
-      ensureSpellerIsLoaded()
+      project.service<GrazieSpellCheckerEngine>().initializeSpeller(project)
     }
 
     fullConfigurationReload()
@@ -88,15 +84,6 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
     BUNDLED_EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker!!) }
     RuntimeDictionaryProvider.EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker!!) }
     CustomDictionaryProvider.EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker!!) }
-  }
-
-  @TestOnly
-  private fun ensureSpellerIsLoaded() {
-    assert(ApplicationManager.getApplication().isUnitTestMode)
-    @Suppress("SSBasedInspection")
-    runBlocking {
-      project.serviceAsync<GrazieSpellCheckerEngine>().waitForSpeller()
-    }
   }
 
   companion object {

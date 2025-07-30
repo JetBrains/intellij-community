@@ -20,6 +20,8 @@ internal abstract class EditableWordListAdapter {
     aggregator.addList(name, list)
   }
 
+  fun getDictionary(name: String): Dictionary? = dictionaries[name]
+
   fun containsSource(name: String): Boolean = dictionaries.containsKey(name) || aggregator.containsList(name)
 
   fun removeSource(name: String) {

@@ -23,6 +23,7 @@ enum class HunspellDescriptor(
 
   companion object {
     private const val DICTIONARY_DIR: String = "dictionary"
+    private const val RULE_DIR: String = "rule"
 
     /**
      * Filter that is used to unpack hunspell jar dictionary.
@@ -30,8 +31,8 @@ enum class HunspellDescriptor(
      */
     fun filenameFilter(): FilenameFilter {
       return FilenameFilter { dir, name ->
-        dir.name == HunspellDescriptor.DICTIONARY_DIR ||
-        dir.parent == HunspellDescriptor.DICTIONARY_DIR ||
+        dir.name == HunspellDescriptor.DICTIONARY_DIR || dir.parent == HunspellDescriptor.DICTIONARY_DIR ||
+        dir.name == RULE_DIR || dir.parent == RULE_DIR ||
         name.startsWith("GPL") || name.equals("license") || name.equals("notice")
       }
     }
