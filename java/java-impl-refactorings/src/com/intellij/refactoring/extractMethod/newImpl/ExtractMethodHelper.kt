@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.IntroduceVariableUtil
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
@@ -262,12 +263,19 @@ object ExtractMethodHelper {
     val targetAsExpression = target.singleOrNull() as? PsiExpression
     if (sourceAsExpression != null && targetAsExpression != null) {
       val replacedExpression = IntroduceVariableUtil.replace(sourceAsExpression, targetAsExpression, sourceAsExpression.project)
-      return listOf(replacedExpression)
+      return listOf(findSubExpression(sourceAsExpression, replacedExpression) ?: replacedExpression)
     }
     val psiRange = getPhysicalPsiRange(sourceAsExpression) ?: PsiRange(source.first().parent, source.first(), source.last())
     val replacedElements = target.reversed().map { statement -> psiRange.lastChild.addSiblingAfter(statement) }.reversed()
     psiRange.parent.deleteChildRange(psiRange.firstChild, psiRange.lastChild)
     return replacedElements
+  }
+
+  private fun findSubExpression(sourceAsExpression: PsiExpression, context: PsiElement): PsiExpression? {
+    val marker = sourceAsExpression.getUserData(ElementToWorkOn.TEXT_RANGE) ?: return null
+    val file = context.containingFile
+    return PsiTreeUtil.findCommonParent(file.findElementAt(marker.textRange.startOffset), file.findElementAt(marker.textRange.endOffset - 1))
+      ?.parentOfType<PsiExpression>(withSelf = true)
   }
 
   fun replaceWithMethod(targetClass: PsiClass, elements: List<PsiElement>, preparedElements: ExtractedElements): ExtractedElements {
