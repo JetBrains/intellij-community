@@ -42,6 +42,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   private final EditorImpl myEditor;
   private final @NotNull CaretModelImpl myCaretModel;
+  private final CaretId myCaretId;
   private boolean isValid = true;
   private Throwable myDisposalTrace;
 
@@ -78,6 +79,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   CaretImpl(@NotNull EditorImpl editor, @NotNull CaretModelImpl caretModel) {
     myEditor = editor;
     myCaretModel = caretModel;
+    myCaretId = new CaretId();
 
     myLogicalCaret = new LogicalPosition(0, 0);
     myVisibleCaret = new VisualPosition(0, 0);
@@ -86,6 +88,10 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     Document doc = myEditor.getDocument();
     myVisualLineEnd = doc.getLineCount() > 1 ? doc.getLineStartOffset(1) : doc.getLineCount() == 0 ? 0 : doc.getLineEndOffset(0);
     myDocumentUpdateCounter = myCaretModel.myDocumentUpdateCounter;
+  }
+
+  public CaretId getCaretId() {
+    return myCaretId;
   }
 
   @Override
