@@ -43,7 +43,7 @@ import java.util.Map;
 import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
 import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote;
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS;
-import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.isBlockTerminalSupported;
+import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.supportsBlocksShellIntegration;
 
 @ApiStatus.Internal
 public final class LocalShellIntegrationInjector {
@@ -77,14 +77,14 @@ public final class LocalShellIntegrationInjector {
     Path rcFile = findRCFile(shellName);
     String remoteRcFilePath = rcFile != null ? transferAndGetRemotePath(rcFile, options.getWorkingDirectory()) : null;
     if (remoteRcFilePath != null) {
-      boolean isBlockTerminal = isBlockTerminalSupported(shellName);
+      boolean addBlocksIntegration = supportsBlocksShellIntegration(shellName);
       if (ShellNameUtil.isBash(shellName) || (SystemInfo.isMac && shellName.equals(ShellNameUtil.SH_NAME))) {
         addBashRcFileArgument(envs, arguments, resultCommand, remoteRcFilePath);
         // remove --login to enable --rcfile sourcing
         boolean loginShell = arguments.removeAll(LOGIN_CLI_OPTIONS);
         setLoginShellEnv(envs, loginShell);
         setCommandHistoryFile(options, envs);
-        integration = new ShellIntegration(ShellType.BASH, isBlockTerminal ? new CommandBlockIntegration() : null);
+        integration = new ShellIntegration(ShellType.BASH, addBlocksIntegration ? new CommandBlockIntegration() : null);
       }
       else if (ShellNameUtil.isZshName(shellName)) {
         String originalZDotDir = envs.get(ZDOTDIR);
@@ -94,19 +94,19 @@ public final class LocalShellIntegrationInjector {
         String intellijZDotDir = PathUtil.getParentPath(remoteRcFilePath);
         envs.put(ZDOTDIR, intellijZDotDir);
         envs.put(IJ_ZSH_DIR, PathUtil.getParentPath(intellijZDotDir));
-        integration = new ShellIntegration(ShellType.ZSH, isBlockTerminal ? new CommandBlockIntegration() : null);
+        integration = new ShellIntegration(ShellType.ZSH, addBlocksIntegration ? new CommandBlockIntegration() : null);
       }
       else if (shellName.equals(ShellNameUtil.FISH_NAME)) {
         // `--init-command=COMMANDS` is available since Fish 2.7.0 (released November 23, 2017)
         // Multiple `--init-command=COMMANDS` are supported.
         resultCommand.add("--init-command=source " + CommandLineUtil.posixQuote(remoteRcFilePath));
-        integration = new ShellIntegration(ShellType.FISH, isBlockTerminal ? new CommandBlockIntegration() : null);
+        integration = new ShellIntegration(ShellType.FISH, addBlocksIntegration ? new CommandBlockIntegration() : null);
       }
       else if (ShellNameUtil.isPowerShell(shellName)) {
         resultCommand.addAll(arguments);
         arguments.clear();
         resultCommand.addAll(List.of("-NoExit", "-ExecutionPolicy", "Bypass", "-File", remoteRcFilePath));
-        integration = new ShellIntegration(ShellType.POWERSHELL, isBlockTerminal ? new CommandBlockIntegration(true) : null);
+        integration = new ShellIntegration(ShellType.POWERSHELL, addBlocksIntegration ? new CommandBlockIntegration(true) : null);
       }
     }
 

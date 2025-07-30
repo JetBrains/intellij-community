@@ -224,10 +224,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   /**
-   * @return true if block terminal can be used with the provided shell name
+   * @return true if we should source advanced shell integration for the specified shell.
+   * This integration makes available such advanced terminal features as command blocks.
    */
   @ApiStatus.Internal
-  public static boolean isBlockTerminalSupported(@NotNull String shellName) {
+  public static boolean supportsBlocksShellIntegration(@NotNull String shellName) {
     if (isPowerShell(shellName)) {
       return SystemInfo.isWin11OrNewer && Registry.is(BLOCK_TERMINAL_POWERSHELL_WIN11_REGISTRY, false) ||
              SystemInfo.isWin10OrNewer && !SystemInfo.isWin11OrNewer && Registry.is(BLOCK_TERMINAL_POWERSHELL_WIN10_REGISTRY, false) ||
