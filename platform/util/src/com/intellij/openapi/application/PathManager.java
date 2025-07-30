@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.io.URLUtil;
@@ -926,8 +927,14 @@ public final class PathManager {
       return null;
     }
 
-    boolean quoted = path.length() > 1 && '"' == path.charAt(0) && '"' == path.charAt(path.length() - 1);
-    return getAbsolutePath(quoted ? path.substring(1, path.length() - 1) : path);
+    try {
+      boolean quoted = path.length() > 1 && '"' == path.charAt(0) && '"' == path.charAt(path.length() - 1);
+      return getAbsolutePath(quoted ? path.substring(1, path.length() - 1) : path);
+    }
+    catch (InvalidPathException e) {
+      Logger.getInstance(PathManager.class).error("Invalid value for property '" + property + "'", e);
+      return null;
+    }
   }
 
   private static String platformPath(String selector,
