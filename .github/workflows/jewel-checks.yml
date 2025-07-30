@@ -32,6 +32,21 @@ jobs:
         # Run checks for all modules except the IDE plugin sample, as that is bound to have missing APIs issues
         run: ./gradlew check -x :samples:ide-plugin:check --continue --no-daemon
 
+      - name: Annotate JUnit test failures
+        uses: mikepenz/action-junit-report@v5
+        if: failure()
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
+          annotate_only: true # A forked repo cannot write comments, so just do annotations
+
+      - name: Upload JUnit test reports
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: junit-test-results
+          path: '**/build/test-results/test/TEST-*.xml'
+          retention-days: 7
+
       - name: Run detektMain and detektTest tasks
         # Run detekt checks for all modules except the IDE plugin sample, as that is bound to have missing APIs issues
         run: ./gradlew detektMain detektTest -x :samples:ide-plugin:detektMain -x :samples:ide-plugin:detektTest --continue --no-daemon

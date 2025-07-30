@@ -225,9 +225,12 @@ public sealed interface ScrollbarVisibility {
      * It is also used when the _Automatically based on mouse or trackpad_ option is selected, and there is a mouse
      * connected to the computer.
      *
-     * Note that this behavior is usually only used on macOS, and it causes the scrollbars to be laid out to the side of
-     * a [org.jetbrains.jewel.ui.component.VerticallyScrollableContainer]'s main content (or below, for a
+     * Note that this behavior is only used on macOS, and it causes the scrollbars to be laid out to the side of a
+     * [org.jetbrains.jewel.ui.component.VerticallyScrollableContainer]'s main content (or below, for a
      * [org.jetbrains.jewel.ui.component.HorizontallyScrollableContainer]), instead of overlaid.
+     *
+     * On Windows and Linux, this behavior matches the [WhenScrolling] behavior, as there is no equivalent to the macOS
+     * behavior.
      *
      * @param trackThickness The thickness of the scrollbar track.
      * @param trackPadding The padding around the scrollbar track.
@@ -306,7 +309,7 @@ public sealed interface ScrollbarVisibility {
     /**
      * A [ScrollbarVisibility] that shows the scrollbar only when scrolling, overlaid on top of the content.
      *
-     * This is the only available behavior on Windows and Linux. On macOS, it is equivalent to the _When scrolling_
+     * This is the only existing behavior on Windows and Linux. On macOS, it is equivalent to the _When scrolling_
      * setting in macOS' _System Settings > Appearance > Show scroll bars_ settings. It is also used when the
      * _Automatically based on mouse or trackpad_ option is selected, and there is no mouse connected to the computer.
      *
