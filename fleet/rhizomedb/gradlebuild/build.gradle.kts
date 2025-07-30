@@ -11,6 +11,7 @@ plugins {
   id("fleet-build-jps-module-plugin")
   alias(libs.plugins.dokka)
   // GRADLE_PLUGINS__MARKER_START
+  alias(jps.plugins.rhizomedb)
   // GRADLE_PLUGINS__MARKER_END
 }
 
