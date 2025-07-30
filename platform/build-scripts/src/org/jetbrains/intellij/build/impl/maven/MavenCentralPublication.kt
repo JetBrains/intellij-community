@@ -26,7 +26,6 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.impl.Checksums
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -68,7 +67,6 @@ class MavenCentralPublication(
   private val token: String? = null,
   private val dryRun: Boolean = context.options.isInDevelopmentMode || TeamCityHelper.isPersonalBuild,
   private val type: PublishingType = if (dryRun) PublishingType.USER_MANAGED else PublishingType.AUTOMATIC,
-  private val sign: Boolean = context.proprietaryBuildTools.signTool != ProprietaryBuildTools.DUMMY,
 ) {
   companion object {
     /**
