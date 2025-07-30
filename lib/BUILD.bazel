@@ -9085,13 +9085,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "slf4j-api-provided",
-  exports = [":slf4j-api"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 jvm_import(
   name = "slf4j-jdk14",
   jar = "@slf4j-jdk14-2_0_13_http//file",
