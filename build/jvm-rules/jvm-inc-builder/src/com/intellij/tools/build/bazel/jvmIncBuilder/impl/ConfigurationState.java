@@ -139,8 +139,10 @@ public class ConfigurationState {
       return 0;
     }
     
-    List<String> emptyValue = List.of("_empty_");
     Function<List<String>, Iterable<String>> sorted = col -> {
+      if (col == null) {
+        return List.of();
+      }
       if (col.size() <= 1) {
         return col;
       }
@@ -150,7 +152,7 @@ public class ConfigurationState {
     };
 
     return Utils.digest(
-      flat(map(filter(Arrays.asList(CLFlags.values()), ourTrackedFlags::contains), flg -> flat(asIterable(flg.name()), sorted.fun(flags.getOrDefault(flg, emptyValue)))))
+      flat(map(filter(Arrays.asList(CLFlags.values()), flg -> ourTrackedFlags.contains(flg) && flags.containsKey(flg)), flg -> flat(asIterable(flg.name()), sorted.fun(flags.get(flg)))))
     );
   }
 
