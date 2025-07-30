@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl.maven
 
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.utils.io.createFile
+import com.intellij.util.io.DigestUtil.md5
 import kotlinx.coroutines.runBlocking
 import org.apache.maven.model.Developer
 import org.apache.maven.model.License
@@ -13,6 +14,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.IdeaCommunityProperties
 import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.Checksums
 import org.jetbrains.intellij.build.impl.maven.MavenCentralPublication.DeploymentState
 import org.jetbrains.intellij.build.io.suspendAwareReadZipFile
 import org.junit.jupiter.api.Assertions
@@ -21,6 +23,7 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.name
 import kotlin.io.path.writeText
 
 class MavenCentralPublicationTest {
@@ -40,7 +43,14 @@ class MavenCentralPublicationTest {
   lateinit var workDir: Path
   val publication: MavenCentralPublication by lazy { MavenCentralPublication(context, workDir, dryRun = true) }
 
-  class Result(val workDirPath: Path, val zipPath: String)
+  class Result(val workDirPath: Path, zipPath: String) {
+    val expectedZipEntries: Sequence<String> =
+      sequenceOf(zipPath)
+        .plus("$zipPath.sha1")
+        .plus("$zipPath.sha256")
+        .plus("$zipPath.sha512")
+        .plus("$zipPath.md5")
+  }
 
   fun createDistributionFiles(flatLayout: Boolean = false): List<Result> {
     return sequenceOf(
@@ -91,27 +101,24 @@ class MavenCentralPublicationTest {
 
   private fun `should generate a bundle zip for artifacts`(flatLayout: Boolean) {
     runBlocking {
-      val files = createDistributionFiles(flatLayout = flatLayout).map { it.zipPath }
+      val files = createDistributionFiles(flatLayout = flatLayout)
       publication.execute()
-      val bundle = workDir.resolve("bundle.zip")
-      assertThat(bundle).exists()
-      val entries = buildList {
-        suspendAwareReadZipFile(bundle) { entry, _ ->
-          add(entry)
-        }
-      }.sorted()
       Assertions.assertEquals(
-        files.asSequence()
-          .plus(files.asSequence().map { "$it.sha1" })
-          .plus(files.asSequence().map { "$it.sha256" })
-          .plus(files.asSequence().map { "$it.sha512" })
-          .plus(files.asSequence().map { "$it.md5" })
-          .sorted().toList(),
-        entries,
+        files.asSequence().flatMap { it.expectedZipEntries }.sorted().toList(),
+        `bundle zip sorted entries`(),
       )
     }
   }
 
+  private suspend fun `bundle zip sorted entries`(): List<String> {
+    val bundle = workDir.resolve("bundle.zip")
+    assertThat(bundle).exists()
+    return buildList {
+      suspendAwareReadZipFile(bundle) { entry, _ ->
+        add(entry)
+      }
+    }.sorted()
+  }
 
   @Test
   fun `should generate a bundle zip for artifacts`() {
@@ -164,6 +171,22 @@ class MavenCentralPublicationTest {
       assertThrows<MavenCentralPublication.SuppliedSignatures> {
         publication.execute()
       }
+    }
+  }
+
+  @Test
+  fun `should use supplied checksums`() {
+    runBlocking {
+      val files = createDistributionFiles().asSequence().onEach {
+        it.workDirPath.resolveSibling("${it.workDirPath.name}.md5")
+          .createFile()
+          .writeText(Checksums(it.workDirPath, md5()).md5sum)
+      }.toList()
+      publication.execute()
+      Assertions.assertEquals(
+        files.asSequence().flatMap { it.expectedZipEntries }.sorted().toList(),
+        `bundle zip sorted entries`(),
+      )
     }
   }
 }
