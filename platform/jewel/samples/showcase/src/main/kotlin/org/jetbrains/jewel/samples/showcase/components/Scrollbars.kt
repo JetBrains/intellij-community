@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -16,11 +17,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,64 +61,104 @@ import org.jetbrains.skiko.hostOs
 public fun Scrollbars(
     alwaysVisibleScrollbarVisibility: ScrollbarVisibility,
     whenScrollingScrollbarVisibility: ScrollbarVisibility,
+    modifier: Modifier = Modifier,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        val baseStyle = JewelTheme.scrollbarStyle
-        var alwaysVisible by remember { mutableStateOf(hostOs != OS.MacOS) }
-        var clickBehavior by remember { mutableStateOf(baseStyle.trackClickBehavior) }
-        SettingsRow(alwaysVisible, clickBehavior, { alwaysVisible = it }, { clickBehavior = it })
+    val baseStyle = JewelTheme.scrollbarStyle
+    var alwaysVisible by remember { mutableStateOf(hostOs != OS.MacOS) }
+    var reducedContent by remember { mutableStateOf(false) }
+    var clickBehavior by remember { mutableStateOf(baseStyle.trackClickBehavior) }
 
-        val style by
-            remember(alwaysVisible, clickBehavior, baseStyle) {
-                mutableStateOf(
-                    if (alwaysVisible) {
-                        ScrollbarStyle(
-                            colors = baseStyle.colors,
-                            metrics = baseStyle.metrics,
-                            trackClickBehavior = clickBehavior,
-                            scrollbarVisibility = alwaysVisibleScrollbarVisibility,
-                        )
-                    } else {
-                        ScrollbarStyle(
-                            colors = baseStyle.colors,
-                            metrics = baseStyle.metrics,
-                            trackClickBehavior = clickBehavior,
-                            scrollbarVisibility = whenScrollingScrollbarVisibility,
-                        )
-                    }
-                )
+    val scrollbarStyle by
+        rememberScrollbarStyle(
+            alwaysVisible,
+            clickBehavior,
+            baseStyle,
+            alwaysVisibleScrollbarVisibility,
+            whenScrollingScrollbarVisibility,
+        )
+
+    VerticallyScrollableContainer(modifier = modifier.fillMaxSize(), style = scrollbarStyle) {
+        Column(
+            modifier = Modifier.padding(bottom = 2.dp).padding(end = scrollbarContentSafePadding()),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            SettingsRow(
+                alwaysVisible,
+                reducedContent,
+                clickBehavior,
+                onAlwaysVisibleChange = { alwaysVisible = it },
+                onReducedContentChange = { reducedContent = it },
+                onClickBehaviorChange = { clickBehavior = it },
+            )
+
+            Row(
+                Modifier.fillMaxWidth().height(250.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val items by remember { derivedStateOf { if (reducedContent) LIST_ITEMS.take(3) else LIST_ITEMS } }
+
+                LazyColumnWithScrollbar(items, scrollbarStyle, Modifier.weight(1f).fillMaxHeight())
+                ColumnWithScrollbar(items, scrollbarStyle, Modifier.weight(1f).fillMaxHeight())
+                AlignedContentExample(items, scrollbarStyle, Modifier.weight(1f).fillMaxHeight())
             }
 
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            LazyColumnWithScrollbar(style, Modifier.height(200.dp).weight(1f))
-            ColumnWithScrollbar(style, Modifier.height(200.dp).weight(1f))
-        }
-
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            HorizontalScrollbarContent(style, Modifier.weight(1f).fillMaxHeight())
-            AlignedContentExample(style, Modifier.weight(1f).fillMaxHeight())
+            val ipsum by remember {
+                derivedStateOf { if (reducedContent) OneLineIpsum.take(64).substringBeforeLast(' ') else OneLineIpsum }
+            }
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                RowWithScrollbar(ipsum, scrollbarStyle, Modifier.fillMaxWidth())
+                LazyRowWithScrollbar(ipsum, scrollbarStyle, Modifier.fillMaxWidth())
+            }
         }
     }
 }
 
 @Composable
-private fun SettingsRow(
+private fun rememberScrollbarStyle(
     alwaysVisible: Boolean,
     clickBehavior: TrackClickBehavior,
+    baseStyle: ScrollbarStyle,
+    alwaysVisibleScrollbarVisibility: ScrollbarVisibility,
+    whenScrollingScrollbarVisibility: ScrollbarVisibility,
+): MutableState<ScrollbarStyle> =
+    remember(alwaysVisible, clickBehavior, baseStyle) {
+        mutableStateOf(
+            if (alwaysVisible) {
+                ScrollbarStyle(
+                    colors = baseStyle.colors,
+                    metrics = baseStyle.metrics,
+                    trackClickBehavior = clickBehavior,
+                    scrollbarVisibility = alwaysVisibleScrollbarVisibility,
+                )
+            } else {
+                ScrollbarStyle(
+                    colors = baseStyle.colors,
+                    metrics = baseStyle.metrics,
+                    trackClickBehavior = clickBehavior,
+                    scrollbarVisibility = whenScrollingScrollbarVisibility,
+                )
+            }
+        )
+    }
+
+@Composable
+private fun SettingsRow(
+    alwaysVisible: Boolean,
+    reducedContent: Boolean,
+    clickBehavior: TrackClickBehavior,
     onAlwaysVisibleChange: (Boolean) -> Unit,
+    onReducedContentChange: (Boolean) -> Unit,
     onClickBehaviorChange: (TrackClickBehavior) -> Unit,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         CheckboxRow(checked = alwaysVisible, onCheckedChange = onAlwaysVisibleChange, text = "Always visible")
 
+        Spacer(Modifier.width(16.dp))
+
+        CheckboxRow(checked = reducedContent, onCheckedChange = onReducedContentChange, text = "Reduced content")
+
+        Spacer(Modifier.width(16.dp))
         Spacer(Modifier.weight(1f))
 
         Text("Track click behavior:")
@@ -136,7 +181,7 @@ private fun SettingsRow(
 }
 
 @Composable
-private fun LazyColumnWithScrollbar(style: ScrollbarStyle, modifier: Modifier) {
+private fun LazyColumnWithScrollbar(items: List<String>, style: ScrollbarStyle, modifier: Modifier = Modifier) {
     Column(modifier) {
         Text("LazyColumn", style = JewelTheme.typography.h2TextStyle)
 
@@ -146,16 +191,13 @@ private fun LazyColumnWithScrollbar(style: ScrollbarStyle, modifier: Modifier) {
         VerticallyScrollableContainer(
             scrollState,
             modifier =
-                Modifier.weight(1f)
-                    .fillMaxWidth()
+                Modifier.fillMaxSize()
+                    .background(JewelTheme.textAreaStyle.colors.background)
                     .border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal),
             style = style,
         ) {
-            LazyColumn(
-                state = scrollState,
-                modifier = Modifier.fillMaxSize().background(JewelTheme.textAreaStyle.colors.background),
-            ) {
-                itemsIndexed(LIST_ITEMS) { index, item ->
+            LazyColumn(state = scrollState, modifier = Modifier.fillMaxWidth()) {
+                itemsIndexed(items) { index, item ->
                     Column {
                         Text(
                             modifier =
@@ -164,7 +206,7 @@ private fun LazyColumnWithScrollbar(style: ScrollbarStyle, modifier: Modifier) {
                             text = item,
                         )
 
-                        if (index != LIST_ITEMS.lastIndex) {
+                        if (index != items.lastIndex) {
                             Divider(
                                 orientation = Orientation.Horizontal,
                                 modifier = Modifier.fillMaxWidth(),
@@ -179,25 +221,27 @@ private fun LazyColumnWithScrollbar(style: ScrollbarStyle, modifier: Modifier) {
 }
 
 @Composable
-private fun ColumnWithScrollbar(style: ScrollbarStyle, modifier: Modifier) {
+private fun ColumnWithScrollbar(items: List<String>, style: ScrollbarStyle, modifier: Modifier = Modifier) {
     Column(modifier) {
         Text("Column", fontSize = 18.sp)
         Spacer(Modifier.height(8.dp))
 
         VerticallyScrollableContainer(
-            modifier = Modifier.border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal),
             style = style,
+            modifier =
+                Modifier.fillMaxSize()
+                    .background(JewelTheme.textAreaStyle.colors.background)
+                    .border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal),
         ) {
-            Column(
-                modifier = Modifier.background(JewelTheme.textAreaStyle.colors.background).align(Alignment.CenterStart)
-            ) {
-                LIST_ITEMS.forEachIndexed { index, line ->
+            Column(modifier = Modifier.fillMaxWidth()) {
+                for ((index, line) in items.withIndex()) {
                     Text(
                         modifier =
-                            Modifier.padding(horizontal = 8.dp).padding(end = scrollbarContentSafePadding(style)),
+                            Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                .padding(end = scrollbarContentSafePadding(style)),
                         text = line,
                     )
-                    if (index < LIST_ITEMS.lastIndex) {
+                    if (index < items.lastIndex) {
                         Box(Modifier.height(8.dp), contentAlignment = Alignment.CenterStart) {
                             Divider(Orientation.Horizontal, Modifier.fillMaxWidth())
                         }
@@ -209,55 +253,19 @@ private fun ColumnWithScrollbar(style: ScrollbarStyle, modifier: Modifier) {
 }
 
 @Composable
-private fun HorizontalScrollbarContent(scrollbarStyle: ScrollbarStyle, modifier: Modifier) {
+private fun AlignedContentExample(items: List<String>, scrollbarStyle: ScrollbarStyle, modifier: Modifier = Modifier) {
     Column(modifier) {
-        Text("Column", fontSize = 18.sp)
-        Spacer(Modifier.height(8.dp))
-
-        HorizontallyScrollableContainer(
-            modifier =
-                Modifier.fillMaxSize().border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal),
-            style = scrollbarStyle,
-        ) {
-            Column(
-                modifier =
-                    Modifier.fillMaxHeight()
-                        .background(JewelTheme.textAreaStyle.colors.background)
-                        .padding(bottom = scrollbarContentSafePadding(scrollbarStyle))
-                        .padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                val oneLineIpsum = LOREM_IPSUM.replace('\n', ' ')
-                repeat(4) { Text(oneLineIpsum) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun AlignedContentExample(scrollbarStyle: ScrollbarStyle, modifier: Modifier) {
-    Column(modifier) {
-        Text("Column", fontSize = 18.sp)
+        Text("Column (aligned)", fontSize = 18.sp)
         Spacer(Modifier.height(8.dp))
 
         VerticallyScrollableContainer(
             style = scrollbarStyle,
             modifier =
-                Modifier.fillMaxWidth().border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal),
+                Modifier.fillMaxSize().border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal),
         ) {
             val shape = RoundedCornerShape(4.dp)
-            val borderColor =
-                if (JewelTheme.isDark) {
-                    JewelTheme.colorPalette.blueOrNull(2) ?: Color(0xFF2E436E)
-                } else {
-                    JewelTheme.colorPalette.blueOrNull(2) ?: Color(0xFF315FBD)
-                }
-            val backgroundColor =
-                if (JewelTheme.isDark) {
-                    JewelTheme.colorPalette.grayOrNull(1) ?: Color(0xFF1E1F22)
-                } else {
-                    JewelTheme.colorPalette.grayOrNull(14) ?: Color(0xFFFFFFFF)
-                }
+            val borderColor = getBorderColor()
+            val backgroundColor = getBackgroundColor()
             Column(
                 modifier =
                     Modifier.align(Alignment.Center)
@@ -267,17 +275,88 @@ private fun AlignedContentExample(scrollbarStyle: ScrollbarStyle, modifier: Modi
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Text("First Row")
-                Text("Second Row")
-                Text("Third Row")
-                Text("Fourth Row")
-                Text("Fifth Row")
-                Text("Sixth Row")
-                Text("Seventh Row")
+                val words = remember(items) { items.map { it.substringBefore(" ") } }
+                for (word in words) {
+                    Text(word)
+                }
             }
         }
     }
 }
+
+@Composable
+private fun RowWithScrollbar(content: String, scrollbarStyle: ScrollbarStyle, modifier: Modifier = Modifier) {
+    Column(modifier) {
+        Text("Row", fontSize = 18.sp)
+        Spacer(Modifier.height(8.dp))
+
+        HorizontallyScrollableContainer(
+            modifier =
+                Modifier.fillMaxWidth().border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal),
+            style = scrollbarStyle,
+        ) {
+            Text(
+                content,
+                modifier =
+                    Modifier.background(JewelTheme.textAreaStyle.colors.background)
+                        .padding(bottom = scrollbarContentSafePadding(scrollbarStyle))
+                        .padding(8.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun LazyRowWithScrollbar(content: String, scrollbarStyle: ScrollbarStyle, modifier: Modifier = Modifier) {
+    Column(modifier) {
+        Text("LazyRow", fontSize = 18.sp)
+        Spacer(Modifier.height(8.dp))
+
+        val scrollState = rememberLazyListState()
+        HorizontallyScrollableContainer(
+            scrollState = scrollState,
+            modifier =
+                Modifier.fillMaxWidth().border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal),
+            style = scrollbarStyle,
+        ) {
+            val words = remember(content) { content.split(' ').filter { it.isNotBlank() } }
+            val shape = RoundedCornerShape(4.dp)
+            val borderColor = getBorderColor()
+            val backgroundColor = getBackgroundColor()
+
+            LazyRow(
+                state = scrollState,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                contentPadding = PaddingValues(bottom = scrollbarContentSafePadding(scrollbarStyle)),
+            ) {
+                items(words) { word ->
+                    Text(
+                        word,
+                        Modifier.background(backgroundColor, shape)
+                            .border(1.dp, borderColor)
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun getBorderColor(): Color =
+    if (JewelTheme.isDark) {
+        JewelTheme.colorPalette.blueOrNull(2) ?: Color(0xFF2E436E)
+    } else {
+        JewelTheme.colorPalette.blueOrNull(2) ?: Color(0xFF315FBD)
+    }
+
+@Composable
+private fun getBackgroundColor(): Color =
+    if (JewelTheme.isDark) {
+        JewelTheme.colorPalette.grayOrNull(1) ?: Color(0xFF1E1F22)
+    } else {
+        JewelTheme.colorPalette.grayOrNull(14) ?: Color(0xFFFFFFFF)
+    }
 
 @Suppress("SpellCheckingInspection")
 private const val LOREM_IPSUM =
@@ -292,6 +371,8 @@ private const val LOREM_IPSUM =
         "Sed aliquam, nisl et lacinia lacinia, diam nunc laoreet nisi, sit amet consectetur dolor lorem et sem. \n" +
         "Duis ultricies, mauris in aliquam interdum, orci nulla finibus massa, a tristique urna sapien vel quam. \n" +
         "Sed nec sapien nec dui rhoncus bibendum. Sed blandit bibendum libero."
+
+private val OneLineIpsum = LOREM_IPSUM.replace('\n', ' ')
 
 private val LIST_ITEMS =
     LOREM_IPSUM.split(",")
