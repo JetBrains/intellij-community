@@ -58,7 +58,7 @@ class LoadFromSourceXIncludeLoader(
     val directoryName = path.substringBeforeLast(delimiter = '/', missingDelimiterValue = "")
     val parentDirectoryName = directoryName.substringBeforeLast('/', missingDelimiterValue = "")
     if (parentDirectoriesPatterns.none { it == directoryName || it.removeSuffix("/*") == parentDirectoryName }) {
-      error("Path $path is referenced in xi:include, but it's parent directory is not specified in the list of directories where files are resolved: $parentDirectoriesPatterns")
+      error("Path $path is referenced in xi:include, but its parent directory is not specified in the list of directories where files are resolved: $parentDirectoriesPatterns")
     }
     val files = shortXmlPathToFullPaths[path] ?: emptyList()
     val file = files.firstOrNull()
