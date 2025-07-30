@@ -1,19 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
-import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.fs.createTemporaryFile
@@ -125,7 +121,7 @@ object EelPathUtils {
   fun getSystemFolder(eel: EelApi): Path {
     val selector = PathManager.getPathsSelector() ?: "IJ-Platform"
     val userHomeFolder = eel.userInfo.home.asNioPath().toString()
-    return PathManager.getDefaultSystemPathFor(eel.platform.toPathManagerOs(), userHomeFolder, selector, eel.exec.fetchLoginShellEnvVariablesBlocking())
+    return PathManager.getDefaultSystemPathFor(eel.platform.toOs(), userHomeFolder, selector, eel.exec.fetchLoginShellEnvVariablesBlocking())
   }
 
   @JvmStatic

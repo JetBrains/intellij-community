@@ -244,7 +244,6 @@ f:com.intellij.openapi.application.PathManager
 - s:getBinPath():java.lang.String
 - s:getBundledRuntimePath():java.lang.String
 - s:getCommonDataPath():java.nio.file.Path
-- s:getCommunityHomePath():java.lang.String
 - s:getConfigDir():java.nio.file.Path
 - s:getConfigPath():java.lang.String
 - s:getCustomOptionsDirectory():java.lang.String

@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelPlatform
@@ -33,15 +31,6 @@ fun EelPlatform.toOs(): OS {
     is EelPlatform.FreeBSD -> OS.FreeBSD
   }
 }
-
-@ApiStatus.Internal
-fun EelPlatform.toPathManagerOs(): PathManager.OS =
-  when (this) {
-    is EelPlatform.Windows -> PathManager.OS.WINDOWS
-    is EelPlatform.Darwin -> PathManager.OS.MACOS
-    is EelPlatform.Linux -> PathManager.OS.LINUX
-    is EelPlatform.FreeBSD -> PathManager.OS.GENERIC_UNIX
-  }
 
 private val archMap by lazy {
   BidirectionalMap<CpuArch, EelPlatform.Arch>().apply {
