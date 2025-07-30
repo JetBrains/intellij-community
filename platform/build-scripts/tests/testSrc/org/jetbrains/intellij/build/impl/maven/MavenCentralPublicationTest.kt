@@ -154,4 +154,16 @@ class MavenCentralPublicationTest {
     )
     )
   }
+
+  @Test
+  fun `supplied signatures are not supported`() {
+    runBlocking {
+      createDistributionFiles().forEach {
+        it.workDirPath.resolveSibling("${it.workDirPath.name}.asc").createFile()
+      }
+      assertThrows<MavenCentralPublication.SuppliedSignatures> {
+        publication.execute()
+      }
+    }
+  }
 }
