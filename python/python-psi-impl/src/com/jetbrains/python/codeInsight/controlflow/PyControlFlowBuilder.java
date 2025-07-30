@@ -339,7 +339,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyMatchStatement(@NotNull PyMatchStatement matchStatement) {
     myBuilder.startNode(matchStatement);
     PyExpression subject = matchStatement.getSubject();
-    String subjectName = PyTypeAssertionEvaluator.getAssertionTargetName(subject);
     if (subject != null) {
       subject.accept(this);
     }
@@ -354,9 +353,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       PyPattern pattern = clause.getPattern();
       if (pattern != null) {
         pattern.accept(this);
-        if (!myPatternBindingNames.contains(subjectName)) {
-          addTypeAssertionNodes(clause, true);
-        }
+        addTypeAssertionNodes(clause, true, myPatternBindingNames);
       }
       
       PyExpression guard = clause.getGuardCondition();
@@ -1124,14 +1121,21 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   private void addTypeAssertionNodes(@NotNull PyElement condition, boolean positive) {
+    addTypeAssertionNodes(condition, positive, null);
+  }
+
+  private void addTypeAssertionNodes(@NotNull PyElement condition, boolean positive, @Nullable List<String> ignoredNames) {
     final PyTypeAssertionEvaluator evaluator = new PyTypeAssertionEvaluator(positive);
     condition.accept(evaluator);
     for (PyTypeAssertionEvaluator.Assertion def : evaluator.getDefinitions()) {
       final PyQualifiedExpression e = def.getElement();
-      String name = null;
+      @Nullable String name = null;
       if (e != null) {
         final QualifiedName qname = e.asQualifiedName();
         name = qname != null ? qname.toString() : e.getName();
+      }
+      if (name != null && ignoredNames != null && ignoredNames.contains(name)) {
+        continue;
       }
       myBuilder.addNode(ReadWriteInstruction.assertType(myBuilder, e, name, def.getTypeEvalFunction()));
     }
