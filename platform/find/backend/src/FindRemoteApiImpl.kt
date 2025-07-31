@@ -28,6 +28,7 @@ import com.intellij.platform.project.findProjectOrNull
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewPresentation
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
@@ -41,67 +42,77 @@ internal class FindRemoteApiImpl : FindRemoteApi {
   override suspend fun findByModel(findModel: FindModel, projectId: ProjectId, filesToScanInitially: List<VirtualFileId>, maxUsagesCount: Int): Flow<FindInFilesResult> {
     val sentItems = AtomicInteger(0)
     return channelFlow {
-        //TODO rewrite find function without using progress indicator and presentation
-        val progressIndicator = EmptyProgressIndicator()
-        val presentation = FindUsagesProcessPresentation(UsageViewPresentation())
+      //TODO rewrite find function without using progress indicator and presentation
+      val progressIndicator = EmptyProgressIndicator()
+      val presentation = FindUsagesProcessPresentation(UsageViewPresentation())
 
-        val isReplaceState = findModel.isReplaceState
-        val previousResult = ThreadLocal<UsageInfo2UsageAdapter>()
-        val usagesCount = AtomicInteger()
+      val isReplaceState = findModel.isReplaceState
+      val previousResult = ThreadLocal<UsageInfo2UsageAdapter>()
+      val usagesCount = AtomicInteger()
+      var firstResultJob: Job? = null
 
-        val project = projectId.findProjectOrNull()
-        if (project == null) {
-          LOG.warn("Project not found for id ${projectId}")
-          return@channelFlow
+      val project = projectId.findProjectOrNull()
+      if (project == null) {
+        LOG.warn("Project not found for id ${projectId}")
+        return@channelFlow
+      }
+      val filesToScanInitially = filesToScanInitially.mapNotNull { it.virtualFile() }.toSet()
+      // SearchScope is not serializable, so we will get it by id from the client
+      setCustomScopeById(project, findModel)
+      //read action is necessary in case of the loading from a directory
+      val scope = readAction { FindInProjectUtil.getGlobalSearchScope(project, findModel) }
+      FindInProjectUtil.findUsages(findModel, project, progressIndicator, presentation, filesToScanInitially) { usageInfo ->
+        val usageNum = usagesCount.incrementAndGet()
+        if (usageNum > maxUsagesCount) {
+          return@findUsages false
         }
-        val filesToScanInitially = filesToScanInitially.mapNotNull { it.virtualFile() }.toSet()
-        // SearchScope is not serializable, so we will get it by id from the client
-        setCustomScopeById(project, findModel)
-        //read action is necessary in case of the loading from a directory
-        val scope = readAction {  FindInProjectUtil.getGlobalSearchScope(project, findModel) }
-        FindInProjectUtil.findUsages(findModel, project, progressIndicator, presentation, filesToScanInitially) { usageInfo ->
-          val usageNum = usagesCount.incrementAndGet()
-          if (usageNum > maxUsagesCount) {
-            return@findUsages false
+        val virtualFile = usageInfo.virtualFile
+        if (virtualFile == null)
+          return@findUsages true
+
+        val adapter = UsageInfo2UsageAdapter(usageInfo)
+        val previousItem: UsageInfo2UsageAdapter? = previousResult.get()
+        if (!isReplaceState && previousItem != null) adapter.merge(previousItem)
+        previousResult.set(adapter)
+        val job = launch {
+          readAction { adapter.updateCachedPresentation() }
+          val textChunks = adapter.text.map {
+            it.toSerializableTextChunk()
           }
-          val virtualFile = usageInfo.virtualFile
-          if (virtualFile == null)
-            return@findUsages true
+          val bgColor = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile)?.rpcId()
+          val presentablePath = readAction { getPresentableFilePath(project, scope, virtualFile) }
 
-          val adapter = UsageInfo2UsageAdapter(usageInfo)
-          val previousItem: UsageInfo2UsageAdapter? = previousResult.get()
-          if (!isReplaceState && previousItem != null) adapter.merge(previousItem)
-          previousResult.set(adapter)
-          launch {
-            readAction {  adapter.updateCachedPresentation() }
-            val textChunks = adapter.text.map {
-              it.toSerializableTextChunk()
-            }
-            val bgColor = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile)?.rpcId()
-            val presentablePath = readAction { getPresentableFilePath(project, scope, virtualFile) }
+          val result = FindInFilesResult(
+            presentation = textChunks,
+            line = adapter.line,
+            navigationOffset = adapter.navigationOffset,
+            mergedOffsets = adapter.mergedInfos.map { it.navigationOffset },
+            length = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
+            fileId = virtualFile.rpcId(),
+            presentablePath = readAction {
+              if (virtualFile.parent == null) FindPopupPanel.getPresentablePath(project, virtualFile) ?: virtualFile.presentableUrl
+              else FindPopupPanel.getPresentablePath(project, virtualFile.parent) + File.separator + virtualFile.name
+            },
+            shortenPresentablePath = presentablePath,
+            backgroundColor = bgColor,
+            tooltipText = adapter.tooltipText,
+            iconId = adapter.icon?.rpcId(),
+          )
 
-            val result = FindInFilesResult(
-              presentation = textChunks,
-              line = adapter.line,
-              navigationOffset = adapter.navigationOffset,
-              mergedOffsets = adapter.mergedInfos.map { it.navigationOffset },
-              length = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
-              fileId = virtualFile.rpcId(),
-              presentablePath = readAction { if (virtualFile.parent == null)  FindPopupPanel.getPresentablePath(project, virtualFile)
-                                                                ?: virtualFile.presentableUrl
-              else FindPopupPanel.getPresentablePath(project, virtualFile.parent) + File.separator + virtualFile.name },
-              shortenPresentablePath = presentablePath,
-              backgroundColor = bgColor,
-              tooltipText = adapter.tooltipText,
-              iconId = adapter.icon?.rpcId(),
-            )
-
+          if (usageNum == 1) {
             send(result)
-            if (usagesCount.get() > maxUsagesCount && sentItems.incrementAndGet() >= maxUsagesCount)
-              close()
-          }.start()
-          usagesCount.get() <= maxUsagesCount
+          }
+          else { // Wait for the first result before sending others
+            firstResultJob?.join()
+            send(result)
+          }
+
+          if (usagesCount.get() > maxUsagesCount && sentItems.incrementAndGet() >= maxUsagesCount) close()
         }
+        if (usageNum == 1) firstResultJob = job
+        job.start()
+        usagesCount.get() <= maxUsagesCount
+      }
     }
   }
 
