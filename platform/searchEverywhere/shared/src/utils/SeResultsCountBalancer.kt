@@ -123,7 +123,11 @@ class RelaxedSemaphore(initialPermits: Int = 0) {
   val availablePermits: Int get() = permitsFlow.value
 
   fun release(permits: Int = 1) {
-    permitsFlow.update { it + permits }
+    permitsFlow.update {
+      // Avoid Int overflow if `makeItFreeToGo` has been called before
+      if (it > Int.MAX_VALUE - permits) Int.MAX_VALUE
+      else  it + permits
+    }
   }
 
   suspend fun acquire() {
