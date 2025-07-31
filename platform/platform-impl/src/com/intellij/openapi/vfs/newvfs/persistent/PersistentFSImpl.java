@@ -778,20 +778,20 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   public @NotNull VirtualFile createChildDirectory(Object requestor,
                                                    @NotNull VirtualFile parent,
-                                                   @NotNull String dir) throws IOException {
+                                                   @NotNull String childDirectoryName) throws IOException {
     ThreadingAssertions.assertWriteAccess();
 
-    getFileSystem(parent).createChildDirectory(requestor, parent, dir);
+    getFileSystem(parent).createChildDirectory(requestor, parent, childDirectoryName);
 
-    processEvent(new VFileCreateEvent(requestor, parent, dir, true, null, null, ChildInfo.EMPTY_ARRAY));
-    VFileEvent caseSensitivityEvent = determineCaseSensitivityAndPrepareUpdate(parent, dir);
+    processEvent(new VFileCreateEvent(requestor, parent, childDirectoryName, true, null, null, ChildInfo.EMPTY_ARRAY));
+    VFileEvent caseSensitivityEvent = determineCaseSensitivityAndPrepareUpdate(parent, childDirectoryName);
     if (caseSensitivityEvent != null) {
       processEvent(caseSensitivityEvent);
     }
 
-    VirtualFile child = parent.findChild(dir);
+    VirtualFile child = parent.findChild(childDirectoryName);
     if (child == null) {
-      throw new IOException("Cannot create child directory '" + dir + "' at " + parent.getPath());
+      throw new IOException("Cannot create child directory '" + childDirectoryName + "' at " + parent.getPath());
     }
     return child;
   }
@@ -799,19 +799,20 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   public @NotNull VirtualFile createChildFile(Object requestor,
                                               @NotNull VirtualFile parent,
-                                              @NotNull String name) throws IOException {
+                                              @NotNull String childName) throws IOException {
     ThreadingAssertions.assertWriteAccess();
 
-    getFileSystem(parent).createChildFile(requestor, parent, name);
-    processEvent(new VFileCreateEvent(requestor, parent, name, false, null, null, null));
-    VFileEvent caseSensitivityEvent = determineCaseSensitivityAndPrepareUpdate(parent, name);
+    getFileSystem(parent).createChildFile(requestor, parent, childName);
+
+    processEvent(new VFileCreateEvent(requestor, parent, childName, false, null, null, null));
+    VFileEvent caseSensitivityEvent = determineCaseSensitivityAndPrepareUpdate(parent, childName);
     if (caseSensitivityEvent != null) {
       processEvent(caseSensitivityEvent);
     }
 
-    VirtualFile child = parent.findChild(name);
+    VirtualFile child = parent.findChild(childName);
     if (child == null) {
-      throw new IOException("Cannot create child file '" + name + "' at " + parent.getPath());
+      throw new IOException("Cannot create child file '" + childName + "' at " + parent.getPath());
     }
     if (child.getCharset().equals(StandardCharsets.UTF_8) &&
         !(child.getFileType() instanceof InternalFileType) &&
@@ -2287,6 +2288,17 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @ApiStatus.Internal
   public VFilePropertyChangeEvent determineCaseSensitivityAndPrepareUpdate(@NotNull VirtualFile parent,
                                                                            @NotNull String childName) {
+    CaseSensitivity actualDirCaseSensitivity = determineCaseSensitivity(parent, childName);
+    if (actualDirCaseSensitivity == null) {
+      return null;
+    }
+
+    return prepareCaseSensitivityUpdateIfNeeded(parent, actualDirCaseSensitivity);
+  }
+
+  /** @return */
+  private @Nullable CaseSensitivity determineCaseSensitivity(@NotNull VirtualFile parent,
+                                                             @NotNull String childName) {
     if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity().isKnown()) {
       //do not update case-sensitivity once determined: assume folder case-sensitivity is constant through the run
       // time of an app -- which is, strictly speaking, incorrect, but we don't want to process those cases so far
@@ -2295,6 +2307,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     VirtualFileSystem fileSystem = parent.getFileSystem();
     if (!(fileSystem instanceof LocalFileSystemBase)) {//MAYBE RC: introduce CaseSensitivityProvidingFileSystem?
+      //For non-local FS we have case-sensitivity defined during RefreshWorker?
       return null;
     }
 
@@ -2302,8 +2315,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     CaseSensitivity actualDirCaseSensitivity = localFileSystem.fetchCaseSensitivity(parent, childName);
     //MAYBE RC: also measure and record execution _time_?
     caseSensitivityReads.incrementAndGet();
-
-    return prepareCaseSensitivityUpdateIfNeeded(parent, actualDirCaseSensitivity);
+    return actualDirCaseSensitivity;
   }
 
   /**

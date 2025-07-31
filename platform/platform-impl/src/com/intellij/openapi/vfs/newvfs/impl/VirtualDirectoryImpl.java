@@ -977,7 +977,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
    *
    * @return is this folder actual case-sensitivity was determined and cached?
    */
-  @ApiStatus.Internal
   private boolean isChildrenCaseSensitivityKnown() {
     return getFlagInt(VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED);
   }
