@@ -309,7 +309,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
           // we need to update case sensitivity
           var event = ((PersistentFSImpl)PersistentFS.getInstance()).prepareCaseSensitivityUpdateIfNeeded(parent, actualCS);
           if (event != null) {
-            RefreshQueue.getInstance().processEvents(false, List.of(event));
+            RefreshQueue.getInstance().processEvents(/* async: */ false, List.of(event));
           }
         }
       }
@@ -324,7 +324,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   //         I'm not really sure it _should_ be used where, because I'm not sure LocalFileSystemBase subclasses other than
   //         LocalFileSystemImpl are really could/should deal with per-directory case-sensitivity though...
   @ApiStatus.Internal
-  public FileAttributes.CaseSensitivity fetchCaseSensitivity(@NotNull VirtualFile parent, @NotNull String childName) {
+  public @NotNull FileAttributes.CaseSensitivity fetchCaseSensitivity(@NotNull VirtualFile parent, @NotNull String childName) {
     return FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
   }
 

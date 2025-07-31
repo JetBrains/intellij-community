@@ -285,8 +285,8 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   );
 
   @Override
-  public FileAttributes.CaseSensitivity fetchCaseSensitivity(@NotNull VirtualFile parent,
-                                                             @NotNull String childName) {
+  public @NotNull FileAttributes.CaseSensitivity fetchCaseSensitivity(@NotNull VirtualFile parent,
+                                                                      @NotNull String childName) {
     return caseSensitivityGetter.accessDiskWithCheckCanceled(Pair.createNonNull(parent, childName));
   }
 

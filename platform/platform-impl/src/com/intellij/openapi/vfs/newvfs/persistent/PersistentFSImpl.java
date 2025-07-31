@@ -2286,8 +2286,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    * Otherwise, return null.
    */
   @ApiStatus.Internal
-  public VFilePropertyChangeEvent determineCaseSensitivityAndPrepareUpdate(@NotNull VirtualFile parent,
-                                                                           @NotNull String childName) {
+  public @Nullable VFilePropertyChangeEvent determineCaseSensitivityAndPrepareUpdate(@NotNull VirtualFile parent,
+                                                                                     @NotNull String childName) {
+    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity().isKnown()) {
+      //do not update case-sensitivity once determined: assume folder case-sensitivity is constant through the run
+      // time of an app -- which is, strictly speaking, incorrect, but we don't want to process those cases so far
+      return null;
+    }
+
     CaseSensitivity actualDirCaseSensitivity = determineCaseSensitivity(parent, childName);
     if (actualDirCaseSensitivity == null) {
       return null;
@@ -2296,23 +2302,17 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return prepareCaseSensitivityUpdateIfNeeded(parent, actualDirCaseSensitivity);
   }
 
-  /** @return */
+  /** @return actual case-sensitivity for parent directory, or null, if it can't be determined */
+  //TODO RC: is there any difference between returning null and UNKNOWN? If there is no -- why bother?
   private @Nullable CaseSensitivity determineCaseSensitivity(@NotNull VirtualFile parent,
                                                              @NotNull String childName) {
-    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity().isKnown()) {
-      //do not update case-sensitivity once determined: assume folder case-sensitivity is constant through the run
-      // time of an app -- which is, strictly speaking, incorrect, but we don't want to process those cases so far
-      return null;
-    }
-
     VirtualFileSystem fileSystem = parent.getFileSystem();
     if (!(fileSystem instanceof LocalFileSystemBase)) {//MAYBE RC: introduce CaseSensitivityProvidingFileSystem?
       //For non-local FS we have case-sensitivity defined during RefreshWorker?
       return null;
     }
 
-    LocalFileSystemBase localFileSystem = (LocalFileSystemBase)fileSystem;
-    CaseSensitivity actualDirCaseSensitivity = localFileSystem.fetchCaseSensitivity(parent, childName);
+    CaseSensitivity actualDirCaseSensitivity = ((LocalFileSystemBase)fileSystem).fetchCaseSensitivity(parent, childName);
     //MAYBE RC: also measure and record execution _time_?
     caseSensitivityReads.incrementAndGet();
     return actualDirCaseSensitivity;
