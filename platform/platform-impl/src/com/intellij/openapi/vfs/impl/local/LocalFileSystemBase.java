@@ -305,7 +305,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         // Wow, I/O created the file successfully even though it already existed in VFS. Maybe we got dir case sensitivity wrong?
         var knownCS = parent.isCaseSensitive();
         var actualCS = fetchCaseSensitivity(parent, name);
-        if ((actualCS == FileAttributes.CaseSensitivity.SENSITIVE) != knownCS) {
+        if (actualCS.isSensitive() != knownCS) {
           // we need to update case sensitivity
           var event = ((PersistentFSImpl)PersistentFS.getInstance()).prepareCaseSensitivityUpdateIfNeeded(parent, actualCS);
           if (event != null) {

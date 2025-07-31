@@ -2334,8 +2334,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return null;
     }
 
-    boolean defaultCaseSensitivity = dir.getFileSystem().isCaseSensitive();
-    if (defaultCaseSensitivity == (actualCaseSensitivity == CaseSensitivity.SENSITIVE)) {
+    boolean defaultIsCaseSensitive = dir.getFileSystem().isCaseSensitive();
+    if (defaultIsCaseSensitive == actualCaseSensitivity.isSensitive()) {
       //If (new case-sensitivity) == (file-system default) => externally-visible dir.isCaseSensitive() does NOT change.
       // We still need to update values in appropriate fields to avoid repeating case-sensitivity lookup later on:
       executeChangeCaseSensitivity((VirtualDirectoryImpl)dir, actualCaseSensitivity);
