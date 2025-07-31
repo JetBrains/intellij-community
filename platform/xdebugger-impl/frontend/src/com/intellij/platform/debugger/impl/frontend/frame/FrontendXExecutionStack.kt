@@ -7,14 +7,17 @@ import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFram
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackApi
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackDto
 import com.intellij.platform.debugger.impl.rpc.XStackFramesEvent
+import com.intellij.xdebugger.frame.XDescriptor
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.rpc.XExecutionStackId
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
+import java.util.concurrent.CompletableFuture
 
 internal class FrontendXExecutionStack(
-  stackDto: XExecutionStackDto,
+  private val stackDto: XExecutionStackDto,
   private val project: Project,
   private val suspendContextLifetimeScope: CoroutineScope,
 ) : XExecutionStack(stackDto.displayName, stackDto.icon?.icon()) {
@@ -47,6 +50,10 @@ internal class FrontendXExecutionStack(
 
   override fun equals(other: Any?): Boolean {
     return other is FrontendXExecutionStack && other.id == id
+  }
+
+  override fun getXExecutionStackDescriptorAsync(): CompletableFuture<XDescriptor?>? {
+    return stackDto.descriptor?.asCompletableFuture()
   }
 
   override fun hashCode(): Int {

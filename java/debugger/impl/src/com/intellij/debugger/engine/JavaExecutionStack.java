@@ -3,6 +3,7 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.feedback.UsageTracker;
@@ -25,7 +26,9 @@ import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.frame.XDescriptor;
 import com.intellij.xdebugger.frame.XExecutionStack;
+import com.intellij.java.debugger.impl.shared.engine.JavaExecutionStackDescriptor;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.frame.XFramesView;
@@ -239,6 +242,23 @@ public class JavaExecutionStack extends XExecutionStack {
         }
       }
     });
+  }
+
+  @Override
+  public @Nullable CompletableFuture<XDescriptor> getXExecutionStackDescriptorAsync() {
+    CompletableFuture<XDescriptor> future = new CompletableFuture<>();
+    Objects.requireNonNull(myDebugProcess.getDebuggerContext().getManagerThread()).schedule(new DebuggerCommandImpl() {
+      @Override
+      protected void action() {
+        future.complete(new JavaExecutionStackDescriptor(myThreadProxy.isSuspended()));
+      }
+
+      @Override
+      public @NotNull Priority getPriority() {
+        return Priority.HIGH;
+      }
+    });
+    return future;
   }
 
   private class AppendFrameCommand extends SuspendContextCommandImpl {
