@@ -25,5 +25,6 @@
     <orderEntry type="module" module-name="intellij.platform.rpc.topics.backend" />
     <orderEntry type="module" module-name="intellij.platform.buildView.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.pluginManager.backend" scope="RUNTIME" />
   </component>
 </module>

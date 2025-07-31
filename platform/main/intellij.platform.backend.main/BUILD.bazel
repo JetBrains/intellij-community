@@ -26,6 +26,7 @@ jvm_library(
     "//platform/remote-topics/backend",
     "//platform/buildView/backend",
     "//platform/lang-impl/backend",
+    "//platform/pluginManager/backend",
   ]
 )
 
@@ -56,6 +57,7 @@ jvm_library(
     "//platform/scopes/backend",
     "//platform/buildView/backend",
     "//platform/lang-impl/backend",
+    "//platform/pluginManager/backend",
   ]
 )
 ### auto-generated section `build intellij.platform.backend.main` end

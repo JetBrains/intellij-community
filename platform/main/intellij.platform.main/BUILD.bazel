@@ -21,6 +21,7 @@ jvm_library(
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
     "//platform/remote-topics/shared:rpc-topics",
+    "//platform/pluginManager/shared",
   ]
 )
 
@@ -32,6 +33,7 @@ jvm_library(
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
     "//platform/remote-topics/shared:rpc-topics",
+    "//platform/pluginManager/shared",
   ],
   runtime_deps = [
     "//platform/bootstrap",
