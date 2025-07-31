@@ -73,7 +73,7 @@ internal class FindRemoteApiImpl : FindRemoteApi {
           if (!isReplaceState && previousItem != null) adapter.merge(previousItem)
           previousResult.set(adapter)
           launch {
-            adapter.updateCachedPresentation()
+            readAction {  adapter.updateCachedPresentation() }
             val textChunks = adapter.text.map {
               it.toSerializableTextChunk()
             }
@@ -87,9 +87,9 @@ internal class FindRemoteApiImpl : FindRemoteApi {
               mergedOffsets = adapter.mergedInfos.map { it.navigationOffset },
               length = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
               fileId = virtualFile.rpcId(),
-              presentablePath = if (virtualFile.parent == null) FindPopupPanel.getPresentablePath(project, virtualFile)
+              presentablePath = readAction { if (virtualFile.parent == null)  FindPopupPanel.getPresentablePath(project, virtualFile)
                                                                 ?: virtualFile.presentableUrl
-              else FindPopupPanel.getPresentablePath(project, virtualFile.parent) + File.separator + virtualFile.name,
+              else FindPopupPanel.getPresentablePath(project, virtualFile.parent) + File.separator + virtualFile.name },
               shortenPresentablePath = presentablePath,
               backgroundColor = bgColor,
               tooltipText = adapter.tooltipText,
