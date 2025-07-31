@@ -311,7 +311,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   public String toString() {
     return "HighlightingSessionImpl: " +
            "myVisibleRange:"+myVisibleRange+
-           "; myPsiFile: "+myPsiFile+ " (" + myPsiFile.getClass() + ")"+
+           "; myPsiFile: "+myPsiFile+ ": "+System.identityHashCode(myPsiFile)+" (" + myPsiFile.getClass() + ")"+
            (myIsEssentialHighlightingOnly ? "; essentialHighlightingOnly":"") +
            (isCanceled() ? "; canceled" : "") +
            (myProgressIndicator.isCanceled() ? "; indicator: "+ myProgressIndicator : "")

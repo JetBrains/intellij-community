@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
@@ -80,6 +81,15 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
     ArrayUtil.EMPTY_INT_ARRAY : null;
     if (effectivePassesToIgnore == null) {
       return List.of();
+    }
+
+    try {
+      HighlightingSessionImpl.getFromCurrentIndicator(psiFile);
+    }
+    catch (IllegalStateException e) {
+      // could not find the session for this psi file;
+      // maybe the document was modified and the not-quite-incremental reparse has replaced the whole file
+      throw new ProcessCanceledException(e);
     }
 
     return TraceKt.use(HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER.spanBuilder("passes instantiation"), span -> {
