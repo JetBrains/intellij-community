@@ -1,2 +1,4 @@
+f:org.jetbrains.jewel.intui.standalone.component.JDialogRendererKt
+- *sf:ProvideNativeWindowPopupRenderer(java.awt.Window,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
 f:org.jetbrains.jewel.intui.standalone.theme.TextStylesKt
 - *sf:EditorLineHeightMultiplier:F

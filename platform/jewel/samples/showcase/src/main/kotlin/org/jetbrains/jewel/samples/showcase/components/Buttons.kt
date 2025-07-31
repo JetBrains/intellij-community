@@ -232,7 +232,7 @@ private fun SplitButtons() {
             content = { Text("Split button") },
             menuContent = {
                 items(
-                    items = listOf("Item 1", "Item 2", "Item 3"),
+                    items = List(10) { "Item ${it + 1}" },
                     isSelected = { false },
                     onItemClick = { JewelLogger.getInstance("Jewel").warn("Item clicked: $it") },
                     content = { Text(it) },
