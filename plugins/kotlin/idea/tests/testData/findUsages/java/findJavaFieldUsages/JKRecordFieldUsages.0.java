@@ -4,4 +4,3 @@ public record A(String f<caret>oo) {
 }
 
 // IGNORE_K1
-// CRI_IGNORE
