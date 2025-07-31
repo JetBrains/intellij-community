@@ -68,6 +68,8 @@ class KotlinGradleFUSLogger(private val project: Project, private val coroutineS
             withContext(Dispatchers.IO) {
                 for (gradleUserHome in gradleUserDirs) {
                     val fusStatisticDir = Path(gradleUserHome, STATISTICS_FOLDER_NAME)
+                    if (fusStatisticDir.notExists()) continue
+
                     clearOldFiles(fusStatisticDir)
                     KotlinBuildToolFusFlowProcessor.process(fusStatisticDir)
                     KotlinGradleFUSLoggerProcessor.process(fusStatisticDir)
