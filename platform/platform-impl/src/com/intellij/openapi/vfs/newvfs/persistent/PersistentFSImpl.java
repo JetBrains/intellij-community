@@ -2246,7 +2246,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           case VirtualFile.PROP_HIDDEN -> executeSetHidden(file, ((Boolean)newValue).booleanValue());
           case VirtualFile.PROP_SYMLINK_TARGET -> executeSetTarget(file, (String)newValue);
           case VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY ->
-            executeChangeCaseSensitivity((VirtualDirectoryImpl)file, (CaseSensitivity)newValue);
+            executeChangeCaseSensitivity((VirtualDirectoryImpl)file, ((CaseSensitivity)newValue).toBooleanOrFail());
         }
       }
     }
@@ -2264,9 +2264,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    */
   @ApiStatus.Internal
   public void executeChangeCaseSensitivity(@NotNull VirtualDirectoryImpl directory,
-                                           @NotNull CaseSensitivity newCaseSensitivity) {
+                                           boolean newIsCaseSensitive) {
     int fileId = fileId(directory);
-    boolean newIsCaseSensitive = newCaseSensitivity.toBooleanOrFail();
     vfsPeer.updateRecordFields(fileId, record -> {
       boolean sensitivityChanged = newIsCaseSensitive
                                    ? record.addFlags(Flags.CHILDREN_CASE_SENSITIVE)
@@ -2288,28 +2287,28 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @ApiStatus.Internal
   public @Nullable VFilePropertyChangeEvent determineCaseSensitivityAndPrepareUpdate(@NotNull VirtualFile parent,
                                                                                      @NotNull String childName) {
-    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity().isKnown()) {
+    VirtualDirectoryImpl vDirectory = (VirtualDirectoryImpl)parent;
+    if (vDirectory.getChildrenCaseSensitivity().isKnown()) {
       //do not update case-sensitivity once determined: assume folder case-sensitivity is constant through the run
       // time of an app -- which is, strictly speaking, incorrect, but we don't want to process those cases so far
       return null;
     }
 
-    CaseSensitivity actualDirCaseSensitivity = determineCaseSensitivity(parent, childName);
-    if (actualDirCaseSensitivity == null) {
+    CaseSensitivity actualDirCaseSensitivity = determineCaseSensitivity(vDirectory, childName);
+    if (actualDirCaseSensitivity.isUnknown()) {
       return null;
     }
 
-    return prepareCaseSensitivityUpdateIfNeeded(parent, actualDirCaseSensitivity);
+    return prepareCaseSensitivityUpdateIfNeeded(vDirectory, actualDirCaseSensitivity.toBooleanOrFail());
   }
 
-  /** @return actual case-sensitivity for parent directory, or null, if it can't be determined */
-  //TODO RC: is there any difference between returning null and UNKNOWN? If there is no -- why bother?
-  private @Nullable CaseSensitivity determineCaseSensitivity(@NotNull VirtualFile parent,
-                                                             @NotNull String childName) {
+  /** @return actual case-sensitivity for 'parent' directory, or {@link CaseSensitivity#UNKNOWN}, if it can't be determined */
+  private @NotNull CaseSensitivity determineCaseSensitivity(@NotNull VirtualFile parent,
+                                                            @NotNull String childName) {
     VirtualFileSystem fileSystem = parent.getFileSystem();
     if (!(fileSystem instanceof LocalFileSystemBase)) {//MAYBE RC: introduce CaseSensitivityProvidingFileSystem?
       //For non-local FS we have case-sensitivity defined during RefreshWorker?
-      return null;
+      return CaseSensitivity.UNKNOWN;
     }
 
     CaseSensitivity actualDirCaseSensitivity = ((LocalFileSystemBase)fileSystem).fetchCaseSensitivity(parent, childName);
@@ -2321,32 +2320,35 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   /**
    * Applies case-sensitivity value for the directory, if needed -- either synchronously, or produces a case-sensitivity-changing
    * event, to apply the change later on:
-   * If actualCaseSensitivity is UNKNOWN -- does nothing
-   * If actualCaseSensitivity is the same, as default file-system case-sensitivity -- updates the value synchronously, and does
+   * If actualIsCaseSensitive is the same, as default file-system case-sensitivity -- updates the value synchronously, and does
    * not produce cs-changing event, since publicly available dir properties do not change.
-   * If actualCaseSensitivity != default file-system case-sensitivity -- updates nothing, but returns a case-sensitivity-changing
+   * If actualIsCaseSensitive != default file-system case-sensitivity -- updates nothing, but returns a case-sensitivity-changing
    * event to be applied later
    */
   @ApiStatus.Internal
-  public VFilePropertyChangeEvent prepareCaseSensitivityUpdateIfNeeded(@NotNull VirtualFile dir,
-                                                                       @NotNull CaseSensitivity actualCaseSensitivity) {
-    if (actualCaseSensitivity.isUnknown()) {
-      return null;
-    }
-
-    boolean defaultIsCaseSensitive = dir.getFileSystem().isCaseSensitive();
-    if (defaultIsCaseSensitive == actualCaseSensitivity.isSensitive()) {
-      //If (new case-sensitivity) == (file-system default) => externally-visible dir.isCaseSensitive() does NOT change.
-      // We still need to update values in appropriate fields to avoid repeating case-sensitivity lookup later on:
-      executeChangeCaseSensitivity((VirtualDirectoryImpl)dir, actualCaseSensitivity);
-      // ... but we may update the fields silently, without issuing the PROP_CHILDREN_CASE_SENSITIVITY event about the
-      // change -- this helps us avoid issuing A LOT of useless events:
+  public VFilePropertyChangeEvent prepareCaseSensitivityUpdateIfNeeded(@NotNull VirtualDirectoryImpl dir,
+                                                                       boolean actualIsCaseSensitive) {
+    CaseSensitivity currentCaseSensitivity = dir.getChildrenCaseSensitivity();
+    boolean currentIsCaseSensitive = dir.isCaseSensitive();
+    if (currentIsCaseSensitive == actualIsCaseSensitive) {
+      //If [actualIsCaseSensitive == dir.isCaseSensitive()] => externally-visible dir.isCaseSensitive() does NOT change
+      if (currentCaseSensitivity.isUnknown()) {
+        // But underneath case-sensitivity may be changed from 'UNKNOWN(=FS.default)' to 'known(=actualIsCaseSensitive)':
+        // So, we still need to update the values in appropriate fields to avoid repeating case-sensitivity lookup later on:
+        executeChangeCaseSensitivity(dir, actualIsCaseSensitive);
+      }
+      // ... but because externally-visible dir.isCaseSensitive() does NOT change => we don't need to issue the
+      // PROP_CHILDREN_CASE_SENSITIVITY event about the change -- this helps us avoid issuing A LOT of useless events:
       return null;
     }
 
     //dir case-sensitivity is actually changed, and to non-default value: return appropriate event to be applied later:
-    return new VFilePropertyChangeEvent(REFRESH_REQUESTOR, dir, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY,
-                                        CaseSensitivity.UNKNOWN, actualCaseSensitivity);
+    return new VFilePropertyChangeEvent(
+      REFRESH_REQUESTOR,
+      dir,
+      VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY,
+      currentCaseSensitivity, /* => */ CaseSensitivity.fromBoolean(actualIsCaseSensitive)
+    );
   }
 
   @Override

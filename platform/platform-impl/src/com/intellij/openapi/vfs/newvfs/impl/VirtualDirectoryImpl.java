@@ -367,19 +367,19 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     PersistentFSImpl pFS = owningPersistentFS();
     VFilePropertyChangeEvent caseSensitivityEvent = pFS.determineCaseSensitivityAndPrepareUpdate(this, childName);
     if (caseSensitivityEvent != null) {
-      //TODO RC: here we immediately apply the new case-sensitivity to the this-dir.
-      //         And inside determineCaseSensitivityAndPrepareUpdate() we also immediately apply the new value, if it does not
-      //         lead to externally-visible change (ie. if it is == default).
-      //         But in other uses of determineCaseSensitivityAndPrepareUpdate() we do NOT do that -- we do not immediately apply
-      //         new cs-value, but just post the cs-changing event. Why we difference?
-      //         Could some changes be lost because of this?
-      pFS.executeChangeCaseSensitivity(this, (CaseSensitivity)caseSensitivityEvent.getNewValue());
+      //RC: here we immediately apply the new case-sensitivity to the this-dir. And inside determineCaseSensitivityAndPrepareUpdate()
+      //    we also immediately apply the new value, if it does not lead to externally-visible change (ie. if it is == default).
+      //    But in other uses of determineCaseSensitivityAndPrepareUpdate() we do NOT do that -- we do not immediately apply new
+      //    cs-value, but just post the cs-changing event -- because in other use-cases we could _synchronously_ apply the
+      //    cs-changing-event, which leads to executeChangeCaseSensitivity() immediately, among other side effects -- while
+      //    here we can't do that, to not freeze for too long, and do only bare minimum, postponing the else.
+      pFS.executeChangeCaseSensitivity(this, ((CaseSensitivity)caseSensitivityEvent.getNewValue()).toBooleanOrFail());
       // fire event asynchronously to avoid deadlocks with possibly currently held VFP/Refresh queue locks
       RefreshQueue.getInstance().processEvents(/*async: */ true, List.of(caseSensitivityEvent));
     }
-    else if (getChildrenCaseSensitivity().isUnknown()) {
-      // Fallback: cache 'default' case sensitivity when we failed to read it from the disk, to avoid freezes on
-      // constant attempts to re-read -- but do not save the new value in persistence:
+    else if (!isChildrenCaseSensitivityKnown()) {
+      // Fallback: cache 'default' case sensitivity when we failed to read it from the disk, to avoid freezes on constant
+      // attempts to re-read -- but do not save the new value in persistence, so we'll retry reading it on next IDE run:
       boolean defaultCaseSensitivity = fileSystem.isCaseSensitive();
       setCaseSensitivityFlag(defaultCaseSensitivity);
     }
@@ -1154,6 +1154,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     //order locks acquisition by their identity hash code:
     if (System.identityHashCode(lock1) <= System.identityHashCode(lock2)) {
       synchronized (lock1) {
+        //noinspection NestedSynchronizedStatement
         synchronized (lock2) {
           return lambda.compute();
         }
@@ -1161,6 +1162,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     else {
       synchronized (lock2) {
+        //noinspection NestedSynchronizedStatement
         synchronized (lock1) {
           return lambda.compute();
         }

@@ -9,12 +9,14 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.PathUtilRt;
@@ -303,11 +305,14 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       NioFiles.createIfNotExists(nioFile);
       if (existing != null) {
         // Wow, I/O created the file successfully even though it already existed in VFS. Maybe we got dir case sensitivity wrong?
-        var knownCS = parent.isCaseSensitive();
-        var actualCS = fetchCaseSensitivity(parent, name);
-        if (actualCS.isSensitive() != knownCS) {
+        boolean knownCS = parent.isCaseSensitive();
+        CaseSensitivity actualCS = fetchCaseSensitivity(parent, name);
+        if (actualCS.isKnown() && actualCS.isSensitive() != knownCS) {
           // we need to update case sensitivity
-          var event = ((PersistentFSImpl)PersistentFS.getInstance()).prepareCaseSensitivityUpdateIfNeeded(parent, actualCS);
+          var event = ((PersistentFSImpl)PersistentFS.getInstance()).prepareCaseSensitivityUpdateIfNeeded(
+            (VirtualDirectoryImpl)parent,
+            actualCS.toBooleanOrFail()
+          );
           if (event != null) {
             RefreshQueue.getInstance().processEvents(/* async: */ false, List.of(event));
           }
@@ -324,7 +329,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   //         I'm not really sure it _should_ be used where, because I'm not sure LocalFileSystemBase subclasses other than
   //         LocalFileSystemImpl are really could/should deal with per-directory case-sensitivity though...
   @ApiStatus.Internal
-  public @NotNull FileAttributes.CaseSensitivity fetchCaseSensitivity(@NotNull VirtualFile parent, @NotNull String childName) {
+  public @NotNull CaseSensitivity fetchCaseSensitivity(@NotNull VirtualFile parent, @NotNull String childName) {
     return FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
   }
 
