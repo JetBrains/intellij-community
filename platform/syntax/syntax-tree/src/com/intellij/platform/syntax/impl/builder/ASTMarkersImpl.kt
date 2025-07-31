@@ -1,11 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.syntax.impl.builder
 
-import com.intellij.multiplatform.util.fastutil.ints.Int2ObjectOpenHashMap
-import com.intellij.multiplatform.util.fastutil.ints.IntArrayList
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
-import com.intellij.platform.syntax.impl.fastutil.ints.Int2IntOpenHashMap
+import com.intellij.util.fastutil.ints.Int2IntOpenHashMap
+import com.intellij.util.fastutil.ints.Int2ObjectOpenHashMap
+import com.intellij.util.fastutil.ints.IntArrayList
+import com.intellij.util.fastutil.ints.forEach
 
 class ASTMarkersImpl private constructor(
   private val packer: Packer,
