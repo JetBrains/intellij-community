@@ -41,8 +41,8 @@ public fun SimpleListItemStyle.Companion.darkFullWidth(
 
 public fun SimpleListItemColors.Companion.light(
     background: Color = Color.Unspecified,
-    backgroundActive: Color = Color.Unspecified,
-    backgroundSelected: Color = IntUiLightTheme.colors.blue(11),
+    backgroundActive: Color = background,
+    backgroundSelected: Color = IntUiLightTheme.colors.gray(11),
     backgroundSelectedActive: Color = IntUiLightTheme.colors.blue(11),
     content: Color = Color.Unspecified,
     contentActive: Color = Color.Unspecified,
@@ -62,8 +62,8 @@ public fun SimpleListItemColors.Companion.light(
 
 public fun SimpleListItemColors.Companion.dark(
     background: Color = Color.Unspecified,
-    backgroundActive: Color = IntUiLightTheme.colors.blue(2),
-    backgroundSelected: Color = IntUiLightTheme.colors.blue(2),
+    backgroundActive: Color = background,
+    backgroundSelected: Color = IntUiLightTheme.colors.gray(2),
     backgroundSelectedActive: Color = IntUiLightTheme.colors.blue(2),
     content: Color = Color.Unspecified,
     contentActive: Color = Color.Unspecified,
