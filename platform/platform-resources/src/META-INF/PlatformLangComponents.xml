@@ -123,7 +123,7 @@
     <projectService serviceInterface="com.intellij.openapi.wm.impl.ToolWindowManagerState"
                     serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerStateImpl"/>
 
-    <ideEventQueueDispatcher implementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$MyEventDispatcher"/>
+    <nonLockedIdeEventQueueDispatcher implementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$MyEventDispatcher"/>
 
     <applicationService serviceInterface="com.intellij.openapi.project.configuration.HeadlessLogging$HeadlessLoggingService"
                         serviceImplementation="com.intellij.openapi.project.configuration.EmptyLoggingService"

@@ -509,7 +509,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
     }
   }
 
-  private static final class MyEventDispatcher implements IdeEventQueue.EventDispatcher  {
+  private static final class MyEventDispatcher implements IdeEventQueue.NonLockedEventDispatcher {
     @Override
     public boolean dispatch(@NotNull AWTEvent event) {
       // IDEA-241266 Editor hint isn't always displayed when pressing Next/Prev error buttons in Inspection Widget

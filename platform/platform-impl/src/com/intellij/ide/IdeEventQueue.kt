@@ -775,7 +775,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     get() = popupManager.isPopupActive
 
   //Windows OS doesn't support a Windows+Up/Down shortcut for dialogs, so we provide a workaround
-  private inner class WindowsUpMaximizer : EventDispatcher {
+  private inner class WindowsUpMaximizer : NonLockedEventDispatcher {
     override fun dispatch(e: AWTEvent): Boolean {
       if ((winMetaPressed
            && e is KeyEvent && e.getID() == KeyEvent.KEY_RELEASED) && (e.keyCode == KeyEvent.VK_UP || e.keyCode == KeyEvent.VK_DOWN)) {
@@ -1189,7 +1189,7 @@ private object SequencedEventNestedFieldHolder {
 var skipWindowDeactivationEvents: Boolean = false
 
 // we have to stop editing with <ESC> (if any) and consume the event to prevent any further processing (dialog closing etc.)
-private class EditingCanceller : IdeEventQueue.EventDispatcher {
+private class EditingCanceller : IdeEventQueue.NonLockedEventDispatcher {
   override fun dispatch(e: AWTEvent): Boolean =
     e is KeyEvent &&
     e.getID() == KeyEvent.KEY_PRESSED &&
@@ -1215,7 +1215,7 @@ private fun cancelCellEditing(): Boolean {
   }
 }
 
-private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
+private class WindowsAltSuppressor : IdeEventQueue.NonLockedEventDispatcher {
   private var waitingForAltRelease = false
   private var robot: Robot? = null
 

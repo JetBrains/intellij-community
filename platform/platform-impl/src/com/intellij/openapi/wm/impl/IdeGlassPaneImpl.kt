@@ -43,7 +43,7 @@ import java.util.*
 import javax.swing.*
 import javax.swing.text.html.HTMLEditorKit
 
-class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatcher {
+class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEventDispatcher {
   private val mouseListeners = ArrayList<EventListener>()
 
   private val sortedMouseListeners = TreeSet<EventListener> { o1, o2 ->

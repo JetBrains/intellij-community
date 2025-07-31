@@ -26,7 +26,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private class RepaintMnemonicRequest(@JvmField val focusOwnerRef: WeakReference<Component>, @JvmField val pressed: Boolean)
 
-private class LaFMnemonicDispatcher : IdeEventQueue.EventDispatcher {
+private class LaFMnemonicDispatcher : IdeEventQueue.NonLockedEventDispatcher {
   override fun dispatch(e: AWTEvent): Boolean {
     if (e !is KeyEvent || e.keyCode != KeyEvent.VK_ALT) {
       return false

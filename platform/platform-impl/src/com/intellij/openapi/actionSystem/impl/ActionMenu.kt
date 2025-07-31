@@ -414,7 +414,7 @@ class ActionMenu constructor(
   }
 }
 
-private class UsabilityHelper(component: Component) : IdeEventQueue.EventDispatcher, AWTEventListener, Disposable {
+private class UsabilityHelper(component: Component) : IdeEventQueue.NonLockedEventDispatcher, AWTEventListener, Disposable {
   private var component: Component?
   private var startMousePoint: Point?
   private var xClosestToTargetSoFar = 0

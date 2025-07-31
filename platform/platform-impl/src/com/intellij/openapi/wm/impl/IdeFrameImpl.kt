@@ -54,7 +54,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
       get() = getFrames().firstOrNull { it.isActive }
   }
 
-  private val mouseActivationWatcher = object : IdeEventQueue.EventDispatcher, Disposable {
+  private val mouseActivationWatcher = object : IdeEventQueue.NonLockedEventDispatcher, Disposable {
     override fun dispatch(e: AWTEvent): Boolean {
       detectWindowActivationByMousePressed(e)
       return false

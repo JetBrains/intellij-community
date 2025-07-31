@@ -750,6 +750,7 @@ com.intellij.openapi.wm.impl.IdeGlassPaneEx
 - a:isInModalContext():Z
 - a:remove(java.awt.Component):V
 f:com.intellij.openapi.wm.impl.IdeGlassPaneImpl
+- com.intellij.ide.IdeEventQueue$NonLockedEventDispatcher
 - isColorfulToolbar():Z
 com.intellij.openapi.wm.impl.TitleInfoProvider
 - sf:Companion:com.intellij.openapi.wm.impl.TitleInfoProvider$Companion
