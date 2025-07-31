@@ -91,7 +91,7 @@ class LangSpecificMergeConflictResolverWrapper(private val project: Project?, co
 
           type.resolutionStrategy = if (resolveResult != null) MergeConflictResolutionStrategy.SEMANTIC else null
 
-          textMergeChange.reinstallHighlighters()
+          //textMergeChange.reinstallHighlighters() FIXME
         }
         scheduleRediff.run()
       }

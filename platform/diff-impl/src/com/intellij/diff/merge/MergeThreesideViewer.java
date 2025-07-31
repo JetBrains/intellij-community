@@ -15,6 +15,7 @@ import com.intellij.diff.statistics.MergeResultSource;
 import com.intellij.diff.statistics.MergeStatisticsCollector;
 import com.intellij.diff.tools.holders.EditorHolderFactory;
 import com.intellij.diff.tools.holders.TextEditorHolder;
+import com.intellij.diff.tools.simple.DiffViewerHighlighters;
 import com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.FoldingModelSupport;
@@ -99,6 +100,9 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
   // all changes - both applied and unapplied ones
   protected final @NotNull List<TextMergeChange> myAllMergeChanges = new ArrayList<>();
+
+  private final @NotNull Map<TextMergeChange, ThreesideMergeHighlighters> myHighlighters = new HashMap<>();
+
   protected @NotNull IgnorePolicy myCurrentIgnorePolicy;
 
   protected boolean myInitialRediffStarted;
@@ -121,6 +125,14 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   protected final @NotNull TextMergeViewer myTextMergeViewer;
 
   private final @NotNull LangSpecificMergeConflictResolverWrapper myConflictResolver;
+
+  private void applyForHighlighters(@NotNull TextMergeChange change,
+                                    @NotNull Consumer<@NotNull ThreesideMergeHighlighters> consumer) {
+    ThreesideMergeHighlighters highlighters = myHighlighters.get(change);
+    if (highlighters != null) {
+      consumer.accept(highlighters);
+    }
+  }
 
   public MergeThreesideViewer(@NotNull DiffContext context,
                               @NotNull ContentDiffRequest request,
@@ -527,9 +539,12 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       MergeConflictType conflictType = conflictTypes.get(index);
 
       boolean isInImportRange = fragmentsWithMetadata.isIndexInImportRange(index);
-      TextMergeChange change = new TextMergeChange(index, isInImportRange, fragment, conflictType, this);
-
+      TextMergeChange change = new TextMergeChange(index, isInImportRange, fragment, conflictType, myModel);
       myAllMergeChanges.add(change);
+
+      ThreesideMergeHighlighters highlighters = new ThreesideMergeHighlighters(change, null, this);
+      myHighlighters.put(change, highlighters);
+      highlighters.reinstallAll();
       onChangeAdded(change);
     }
 
@@ -551,8 +566,11 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     myResolveImportConflicts = getTextSettings().isAutoResolveImportConflicts();
 
     // build initial statistics
-    List<TextMergeChange> autoResolvableChanges = ContainerUtil.filter(getAllChanges(), c -> canResolveChangeAutomatically(c, ThreeSide.BASE));
-    int autoResolvableWithSemanticsChangesCount = ContainerUtil.count(autoResolvableChanges, c -> c.getConflictType().getResolutionStrategy() == MergeConflictResolutionStrategy.SEMANTIC);
+    List<TextMergeChange> autoResolvableChanges =
+      ContainerUtil.filter(getAllChanges(), c -> canResolveChangeAutomatically(c, ThreeSide.BASE));
+    int autoResolvableWithSemanticsChangesCount = ContainerUtil.count(autoResolvableChanges,
+                                                                      c -> c.getConflictType().getResolutionStrategy() ==
+                                                                           MergeConflictResolutionStrategy.SEMANTIC);
     Language language = null;
     if (myPsiFiles.size() == 3) {
       language = ThreeSide.BASE.select(myPsiFiles).getLanguage();
@@ -619,8 +637,9 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     myInnerDiffWorker.stop();
 
     for (TextMergeChange change : myAllMergeChanges) {
-      change.destroy();
+      applyForHighlighters(change, DiffViewerHighlighters::destroy);
     }
+    myHighlighters.clear();
     myAllMergeChanges.clear();
 
     myModel.setChanges(Collections.emptyList());
@@ -698,7 +717,9 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
         myStatusPanel.setBusy(false);
         myScheduled.clear();
         for (TextMergeChange change : myAllMergeChanges) {
-          change.setInnerFragments(null);
+          applyForHighlighters(change, highlighters -> {
+            highlighters.setInnerFragments(null);
+          });
         }
       }
     }
@@ -764,7 +785,10 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
         for (int i = 0; i < scheduled.size(); i++) {
           TextMergeChange change = scheduled.get(i);
           if (myScheduled.contains(change)) continue;
-          change.setInnerFragments(result.get(i));
+          int index = i;
+          applyForHighlighters(change, highlighters -> {
+            highlighters.setInnerFragments(result.get(index));
+          });
         }
 
         myStatusPanel.setBusy(false);
@@ -880,7 +904,9 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   void markChangeResolved(@NotNull TextMergeChange change) {
     if (change.isResolved()) return;
     change.setResolved(Side.LEFT, true);
+    onChangeSideResolved(change, Side.LEFT);
     change.setResolved(Side.RIGHT, true);
+    onChangeSideResolved(change, Side.RIGHT);
 
     onChangeResolved(change);
     myModel.invalidateHighlighters(change.getIndex());
@@ -890,9 +916,23 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   private void markChangeResolved(@NotNull TextMergeChange change, @NotNull Side side) {
     if (change.isResolved(side)) return;
     change.setResolved(side, true);
+    onChangeSideResolved(change, side);
 
     if (change.isResolved()) onChangeResolved(change);
     myModel.invalidateHighlighters(change.getIndex());
+  }
+
+  @RequiresEdt
+  private void onChangeSideResolved(@NotNull TextMergeChange change, @NotNull Side side) {
+    applyForHighlighters(change, highlighters -> {
+      if (change.isResolved()) {
+        highlighters.destroyInnerHighlighters();
+      }
+      else {
+        var document = getEditor(side.select(ThreeSide.LEFT, ThreeSide.RIGHT)).getDocument();
+        highlighters.destroyInnerHighlighters(document);
+      }
+    });
   }
 
   @ApiStatus.Internal
@@ -1012,7 +1052,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     @Override
     protected void reinstallHighlighters(int index) {
       TextMergeChange change = myAllMergeChanges.get(index);
-      change.reinstallHighlighters();
+      applyForHighlighters(change, ThreesideMergeHighlighters::reinstallAll);
       myInnerDiffWorker.scheduleRediff(change);
     }
 
@@ -1021,7 +1061,9 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       if (!Registry.is("semantic.merge.recompute.after.change", false) ||
           myEditablePsiFile == null ||
           myProject == null ||
-          !myConflictResolver.isAvailable()) return;
+          !myConflictResolver.isAvailable()) {
+        return;
+      }
 
       PsiDocumentManager.getInstance(myProject).commitDocument(myEditablePsiFile.getFileDocument());
       List<PsiFile> fileList = List.of(ThreeSide.LEFT.select(myPsiFiles), myEditablePsiFile, ThreeSide.RIGHT.select(myPsiFiles));
@@ -1275,7 +1317,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     getEditor().setViewer(true);
 
     for (TextMergeChange change : getAllChanges()) {
-      change.reinstallHighlighters();
+      applyForHighlighters(change, ThreesideMergeHighlighters::reinstallAll);
     }
   }
 
@@ -1286,7 +1328,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     getEditor().setViewer(false);
 
     for (TextMergeChange change : getAllChanges()) {
-      change.reinstallHighlighters();
+      applyForHighlighters(change, ThreesideMergeHighlighters::reinstallAll);
     }
   }
 
@@ -1365,8 +1407,11 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
     @Override
     public void onModifiersChanged() {
+
       for (TextMergeChange change : myAllMergeChanges) {
-        change.updateGutterActions(false);
+        applyForHighlighters(change, highlighters -> {
+          highlighters.updateOperations(false);
+        });
       }
     }
   }
