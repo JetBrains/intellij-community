@@ -103,7 +103,7 @@ UClass (name = Regex)
     UMethod (name = readObject)
         UParameter (name = input)
         UBlockExpression
-    UMethod (name = findAll$lambda$1)
+    UMethod (name = findAll$lambda$0)
         UParameter (name = this$0)
         UParameter (name = $input)
         UParameter (name = $startIndex)
