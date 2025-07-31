@@ -10,8 +10,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-import static com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.*;
+import static com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Alien;
+import static com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present;
 
 public final class ProjectDictionary implements EditableDictionary {
   public static final @NonNls String DEFAULT_CURRENT_DICT_NAME = "project";
@@ -82,7 +84,7 @@ public final class ProjectDictionary implements EditableDictionary {
     if (result == null) {
       result = new UserDictionary(activeName);
       if (dictionaries == null) {
-        dictionaries = CollectionFactory.createSmallMemoryFootprintSet();
+        dictionaries = ConcurrentHashMap.newKeySet();
       }
       dictionaries.add(result);
     }
