@@ -15035,6 +15035,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/inapplicableThreeUnderscores.kt");
             }
 
+            @TestMetadata("inheritedCalls.kt")
+            public void testInheritedCalls() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/inheritedCalls.kt");
+            }
+
             @TestMetadata("memberFunction1.kt")
             public void testMemberFunction1() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/memberFunction1.kt");
@@ -15053,6 +15058,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("namedRootOfHierarchy.kt")
             public void testNamedRootOfHierarchy() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/namedRootOfHierarchy.kt");
+            }
+
+            @TestMetadata("recursiveCalls.kt")
+            public void testRecursiveCalls() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/recursiveCalls.kt");
             }
 
             @TestMetadata("withDefaultParameterUsage.kt")
