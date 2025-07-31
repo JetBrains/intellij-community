@@ -484,7 +484,12 @@ class IdeEventQueue private constructor() : EventQueue() {
 
     if (e is WindowEvent) {
       // app activation can call methods that need write intent (like project saving)
-      threadingSupport.runPreventiveWriteIntentReadAction { processAppActivationEvent(e) }
+      if (doNotWrapHighLevelActionsInWriteIntent) {
+        processAppActivationEvent(e)
+      }
+      else {
+        threadingSupport.runPreventiveWriteIntentReadAction { processAppActivationEvent(e) }
+      }
     }
 
     // IJPL-177735 Remove Write-Intent lock from IdeEventQueue.EventDispatcher

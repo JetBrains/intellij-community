@@ -6,6 +6,7 @@ import com.intellij.ide.ui.ShowingContainer
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.doNotWrapHighLevelActionsInWriteIntent
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.diagnostic.debug
@@ -50,11 +51,11 @@ internal class IdeKeyboardFocusManager(internal val original: KeyboardFocusManag
       var result = false
       val app = ApplicationManager.getApplication()
       // Don't try to get WIRA if we are in read action or there is no application at all
-      if (app == null || app.isReadAccessAllowed) {
+      if (app == null || app.isReadAccessAllowed || doNotWrapHighLevelActionsInWriteIntent) {
         performActivity(e, false) { result = dispatch() }
       }
       else {
-        //todo fix all clients and remove WIRA here, but for now it is like keyboard or mouse event
+        //todo IJPL-199557 fix all clients and remove WIRA here, but for now it is like keyboard or mouse event
         performActivity(e, false) { getGlobalThreadingSupport().runPreventiveWriteIntentReadAction { result = dispatch() } }
       }
       return result

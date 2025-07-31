@@ -228,7 +228,9 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
 
           if (settings.isSaveOnFrameDeactivation && canSyncOrSave()) {
             // for many tasks (compilation, web development, etc.), it is important to save documents on frame deactivation ASAP
-            (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+            WriteIntentReadAction.run {
+              (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+            }
             if (addToSaveQueue(saveAppAndProjectsSettingsTask)) {
               requestSave()
             }
