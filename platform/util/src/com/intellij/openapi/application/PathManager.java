@@ -2,7 +2,6 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.system.CpuArch;
@@ -126,12 +125,12 @@ public final class PathManager {
         //noinspection TestOnlyProblems
         result = getHomeDirFor(PathManager.class);
         if (result == null) {
-          String advice = SystemInfoRt.isMac ? "reinstall the software." : "make sure product-info.json is present in the installation directory.";
+          String advice = OS.CURRENT == OS.macOS ? "reinstall the software." : "make sure product-info.json is present in the installation directory.";
           throw new RuntimeException("Could not find installation home path. Please " + advice);
         }
       }
 
-      if (result != null && SystemInfoRt.isWindows) {
+      if (result != null && OS.CURRENT == OS.Windows) {
         try {
           result = result.toRealPath(LinkOption.NOFOLLOW_LINKS);
         }
@@ -240,7 +239,7 @@ public final class PathManager {
     List<Path> binDirs = new ArrayList<>();
 
     Path[] candidates = {root.resolve(BIN_DIRECTORY), Paths.get(getCommunityHomePath(root.toString()), "bin")};
-    String osSuffix = SystemInfoRt.isWindows ? "win" : SystemInfoRt.isMac ? "mac" : "linux";
+    String osSuffix = OS.CURRENT == OS.Windows ? "win" : OS.CURRENT == OS.macOS ? "mac" : "linux";
 
     for (Path dir : candidates) {
       if (binDirs.contains(dir) || !Files.isDirectory(dir)) {
@@ -301,9 +300,7 @@ public final class PathManager {
    */
   public static @NotNull Path findBinFileWithException(@NotNull String fileName) {
     Path file = findBinFile(fileName);
-    if (file != null) {
-      return file;
-    }
+    if (file != null) return file;
 
     StringBuilder message = new StringBuilder();
     message.append('\'').append(fileName).append("' not found in directories:");
@@ -335,7 +332,7 @@ public final class PathManager {
 
   /** <b>Note</b>: on macOS, the method returns a "functional" home, pointing to a JRE subdirectory inside a bundle. */
   public static @NotNull String getBundledRuntimePath() {
-    return getHomePath() + '/' + JRE_DIRECTORY + (SystemInfoRt.isMac ? "/Contents/Home" : "");
+    return getHomePath() + '/' + JRE_DIRECTORY + (OS.CURRENT == OS.macOS ? "/Contents/Home" : "");
   }
 
   /**
@@ -633,31 +630,31 @@ public final class PathManager {
     }
 
     String resultPath = null;
-    String protocol = resourceURL.getProtocol();
-    if (URLUtil.FILE_PROTOCOL.equals(protocol)) {
-      File result;
-      try {
-        result = new File(resourceURL.toURI().getSchemeSpecificPart());
+    switch (resourceURL.getProtocol()) {
+      case URLUtil.FILE_PROTOCOL: {
+        Path result;
+        try {
+          result = Paths.get(resourceURL.toURI());
+        }
+        catch (URISyntaxException e) {
+          throw new IllegalArgumentException("URL='" + resourceURL + "'", e);
+        }
+        String path = result.toString();
+        String testPath = path.replace('\\', '/');
+        String testResourcePath = resourcePath.replace('\\', '/');
+        if (StringUtilRt.endsWithIgnoreCase(testPath, testResourcePath)) {
+          resultPath = path.substring(0, path.length() - resourcePath.length());
+        }
+        break;
       }
-      catch (URISyntaxException e) {
-        throw new IllegalArgumentException("URL='" + resourceURL + "'", e);
+      case URLUtil.JAR_PROTOCOL: {
+        // do not use URLUtil.splitJarUrl here - used in bootstrap
+        String jarPath = splitJarUrl(resourceURL.getFile());
+        if (jarPath != null) resultPath = jarPath;
+        break;
       }
-      String path = result.getPath();
-      String testPath = path.replace('\\', '/');
-      String testResourcePath = resourcePath.replace('\\', '/');
-      if (StringUtilRt.endsWithIgnoreCase(testPath, testResourcePath)) {
-        resultPath = path.substring(0, path.length() - resourcePath.length());
-      }
-    }
-    else if (URLUtil.JAR_PROTOCOL.equals(protocol)) {
-      // do not use URLUtil.splitJarUrl here - used in bootstrap
-      String jarPath = splitJarUrl(resourceURL.getFile());
-      if (jarPath != null) {
-        resultPath = jarPath;
-      }
-    }
-    else if (URLUtil.JRT_PROTOCOL.equals(protocol)) {
-      return null;
+      case URLUtil.JRT_PROTOCOL:
+        return null;
     }
 
     if (resultPath == null) {
@@ -737,7 +734,7 @@ public final class PathManager {
     }
 
     Properties sysProperties = System.getProperties();
-    String homePath = getHomePath(true);
+    String homePath = getHomePath();
     for (Path file : files) {
       try (Reader reader = Files.newBufferedReader(file)) {
         //noinspection NonSynchronizedMethodOverridesSynchronizedMethod
@@ -784,7 +781,6 @@ public final class PathManager {
           if (paths.systemPath != null) System.setProperty(PROPERTY_SYSTEM_PATH, paths.systemPath);
           if (paths.pluginsPath != null) System.setProperty(PROPERTY_PLUGINS_PATH, paths.pluginsPath);
           if (paths.logDirPath != null) System.setProperty(PROPERTY_LOG_PATH, paths.logDirPath);
-
           if (paths.startupScriptDir != null) ourStartupScriptDir = paths.startupScriptDir;
           // NB: IDE might use an instance from a different classloader
           ourConfigPath = null;
