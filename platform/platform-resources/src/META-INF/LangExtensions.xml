@@ -101,10 +101,20 @@
                  description="Enable reformat action execution on frontend in remote development"
                  key="reformat.action.execute.on.frontend"
                  restartRequired="false"/>
-    <!-- IJPL-179136 -->
+    <!-- region IJPL-179136 -->
     <registryKey defaultValue="false"
                  description="Disable sending codeStyleSettingsChanged events when settings finish computing"
                  key="disable.codeStyleSettingsChanged.events.on.settings.cached" />
+    <registryKey defaultValue="true"
+                 description="Enable detection of and automatic recovery from too high eviction rate in code style settings cache."
+                 key="code.style.cache.high.eviction.rate.automatic.recovery.enabled" />
+    <registryKey defaultValue="10000"
+                 description="Minimum duration of time in milliseconds of high code style cache eviction rate to trigger automatic recovery."
+                 key="code.style.cache.high.eviction.rate.automatic.recovery.threshold.duration" />
+    <registryKey defaultValue="250"
+                 description="Minimum code style cache evictions per second to trigger automatic recovery."
+                 key="code.style.cache.high.eviction.rate.automatic.recovery.threshold.frequency" />"
+    <!-- endregion -->
 
     <projectService serviceInterface="com.intellij.util.indexing.IndexableFilesIndex"
                     serviceImplementation="com.intellij.util.indexing.roots.IndexableFilesIndexImpl"/>

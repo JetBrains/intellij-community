@@ -244,8 +244,8 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
 
     private fun notifyCachedValueComputed() {
       @Suppress("DEPRECATION")
-      val currSettings = settingsManager.currentSettings
-      val newTrackerSetting = currSettings.modificationTracker.modificationCount
+      val currentProjectSettings = settingsManager.currentSettings
+      val newTrackerSetting = currentProjectSettings.modificationTracker.modificationCount
       if (oldTrackerSetting < newTrackerSetting && !insideRestartedComputation) {
         insideRestartedComputation = true
         try {
@@ -277,7 +277,8 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
          * CodeStyleSettingsModifier implementors are required to fireCodeStyleSettingsChanged events themselves
          * if any TransientCodeStyleSettings dependencies change.
          */
-        if (!Registry.`is`("disable.codeStyleSettingsChanged.events.on.settings.cached")) {
+        if (!TooFrequentCodeStyleComputationWatcher.getInstance(project).isTooHighEvictionRateDetected()
+            && !Registry.`is`("disable.codeStyleSettingsChanged.events.on.settings.cached")) {
           settingsManager.fireCodeStyleSettingsChanged(file)
         }
       }
@@ -294,6 +295,16 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
 
     override fun hashCode(): Int {
       return project.hashCode()
+    }
+
+    fun dumpState(sb: StringBuilder) {
+      sb.append("isActive: ").append(isActive.get()).append('\n')
+      sb.append("computation tracker: ").append(tracker.modificationCount).append('\n')
+      sb.append("oldTrackerSetting: ").append(oldTrackerSetting).append('\n')
+      sb.append("insideRestartedComputation: ").append(insideRestartedComputation).append('\n')
+      sb.append("Current result: ").append(currentResult).append('\n')
+      sb.append("Scheduled runnables: ").append(scheduledRunnables.size).append('\n')
+      sb.append("Job: ").append(job).append('\n')
     }
   }
 
@@ -312,5 +323,13 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
 
   override fun toString(): String {
     return "CodeStyleCachedValueProvider@${Integer.toHexString(super.hashCode())}(file=$file)"
+  }
+
+  fun dumpState(sb: StringBuilder) {
+    sb.append("File: ").append(file.toString()).append('\n')
+    sb.append("file.isValid == ").append(file.isValid).append('\n')
+    sb.append("Computation expired: ").append(isExpired).append('\n')
+    sb.append("Computation:\n")
+    computation.dumpState(sb)
   }
 }

@@ -30,14 +30,16 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
   private final Map<String, FileData> myFileDataCache = new HashMap<>();
 
   private final Object CACHE_LOCK = new Object();
-
   private final PriorityQueue<FileData> myRemoveQueue = new PriorityQueue<>(
     MAX_CACHE_SIZE,
     Comparator.comparingLong(fileData -> fileData.lastRefTimeStamp));
   private final Project myProject;
 
+  private final TooFrequentCodeStyleComputationWatcher myFrequentCodeStyleComputationWatcher;
+
   public CodeStyleCachingServiceImpl(Project project) {
     myProject = project;
+    myFrequentCodeStyleComputationWatcher = TooFrequentCodeStyleComputationWatcher.getInstance(project);
     ApplicationManager.getApplication().getMessageBus().connect(this).
       subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
         @Override
@@ -179,6 +181,7 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
    * @param existingData the result of calling {@code getDataHolder(path)} within a same synchronized block
    */
   private @NotNull FileData createFileData(@NotNull String path, @Nullable FileData existingData) {
+    myFrequentCodeStyleComputationWatcher.beforeCacheEntryInserted(myRemoveQueue);
     if (existingData != null) {
       myFileDataCache.remove(path);
       myRemoveQueue.remove(existingData);
@@ -210,8 +213,9 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
     clearCache();
   }
 
-  private static final class FileData extends UserDataHolderBase {
-    private long lastRefTimeStamp;
+  // exposed for TooFrequentCodeStyleComputationWatcher
+  public static final class FileData extends UserDataHolderBase {
+    public long lastRefTimeStamp;
 
     private FileData() {
       update();
@@ -219,6 +223,33 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
 
     void update() {
       lastRefTimeStamp = System.currentTimeMillis();
+    }
+  }
+
+  void dumpState(StringBuilder sb) {
+    synchronized (CACHE_LOCK) {
+      sb.append("Max cache size: ").append(MAX_CACHE_SIZE).append("\n");
+      sb.append("Cache size: ").append(myFileDataCache.size()).append("\n");
+      sb.append("Cached Entries: \n");
+      myFileDataCache.forEach((key, value) -> {
+        sb
+          .append("URL: ").append(key)
+          .append("\nProvider: ");
+        final var providerRef = value.getUserData(PROVIDER_KEY);
+        if (providerRef != null) {
+          final var provider = providerRef.get();
+          if (provider != null) {
+            provider.dumpState(sb);
+          }
+          else {
+            sb.append("null: garbage collected");
+          }
+        }
+        else {
+          sb.append("null: not initialized");
+        }
+        sb.append("\n");
+      });
     }
   }
 }
