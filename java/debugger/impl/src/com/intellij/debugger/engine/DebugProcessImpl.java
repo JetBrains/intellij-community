@@ -2265,7 +2265,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       var requestor = new FilteredRequestorImpl(process.project) {
         @Override
         public boolean shouldIgnoreThreadFiltering() {
-          // Such low-level requests are not supposed to be filtered out by stepping filters
+          // Such low-level requests are not supposed to be filtered out by thread filter (which is set during stepping, for example)
           return true;
         }
 
