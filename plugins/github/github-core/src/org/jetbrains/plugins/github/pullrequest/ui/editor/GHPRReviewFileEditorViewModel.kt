@@ -29,7 +29,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLoca
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewUnifiedPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 
 interface GHPRReviewFileEditorViewModel {
   val change: RefComparisonChange

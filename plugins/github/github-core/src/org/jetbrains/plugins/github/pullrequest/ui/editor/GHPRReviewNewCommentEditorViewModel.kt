@@ -27,7 +27,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.pendingReviewCompu
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel.SubmitAction
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 
 interface GHPRReviewNewCommentEditorViewModel : CodeReviewSubmittableTextViewModel {
   val position: GHPRReviewCommentPosition

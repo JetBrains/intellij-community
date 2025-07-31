@@ -22,7 +22,7 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRNewThreadCommentV
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 import kotlin.coroutines.cancellation.CancellationException
 
 /**

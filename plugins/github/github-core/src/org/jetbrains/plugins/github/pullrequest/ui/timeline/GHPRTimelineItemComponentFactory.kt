@@ -36,7 +36,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.GHPRTimelineCom
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.GHPRTimelineReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.GHPRTimelineThreadComponentFactory
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.addGithubHyperlinkListener
 import org.jetbrains.plugins.github.ui.util.handleGithubHyperlink
 import javax.swing.JComponent

@@ -5,7 +5,7 @@ import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolv
 import com.intellij.openapi.actionSystem.DataKey
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRNewThreadCommentViewModel
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 
 interface GHPRReviewThreadViewModel : CodeReviewResolvableItemViewModel {
   val avatarIconsProvider: GHAvatarIconsProvider

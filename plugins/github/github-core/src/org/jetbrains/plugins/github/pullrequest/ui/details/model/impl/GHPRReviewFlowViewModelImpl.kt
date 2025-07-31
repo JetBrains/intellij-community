@@ -43,7 +43,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowV
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.RepositoryRestrictions
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRSubmitReviewViewModel
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.JComponent
 import kotlin.coroutines.cancellation.CancellationException
