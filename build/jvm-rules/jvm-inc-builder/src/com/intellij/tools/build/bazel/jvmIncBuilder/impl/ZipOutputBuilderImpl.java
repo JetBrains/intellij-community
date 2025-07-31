@@ -14,7 +14,9 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -24,6 +26,7 @@ import static com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder.*;
 import static org.jetbrains.jps.util.Iterators.*;
 
 public class ZipOutputBuilderImpl implements ZipOutputBuilder {
+  private static final FileTime ZERO_TIME = FileTime.from(0L, TimeUnit.MILLISECONDS);
   private final Map<String, EntryData> myEntries = new TreeMap<>();
   private final Map<String, ZipEntry> myExistingDirectories = new HashMap<>();
 
@@ -250,7 +253,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
 
         @Override
         public ZipEntry getZipEntry() {
-          return entry != null? entry : (entry = new ZipEntry(entryName));
+          return entry != null? entry : (entry = createZipEntry(entryName));
         }
       };
     }
@@ -266,7 +269,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
 
         @Override
         public ZipEntry getZipEntry() {
-          return entry != null? entry : (entry = new ZipEntry(entryName));
+          return entry != null? entry : (entry = createZipEntry(entryName));
         }
 
         @Override
@@ -320,6 +323,15 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
       };
     }
 
+  }
+
+  private static @NotNull ZipEntry createZipEntry(String entryName) {
+    ZipEntry entry = new ZipEntry(entryName);
+    // ensure zip content is not considered 'changed' because of changed timestamps
+    entry.setCreationTime(ZERO_TIME);
+    entry.setLastModifiedTime(ZERO_TIME);
+    entry.setLastAccessTime(ZERO_TIME);
+    return entry;
   }
 
   private static abstract class CachingDataEntry implements EntryData {
