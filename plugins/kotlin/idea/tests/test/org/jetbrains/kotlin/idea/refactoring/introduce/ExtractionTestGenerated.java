@@ -4392,6 +4392,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/partialSubstitution.kt");
             }
 
+            @TestMetadata("primaryConstructorWithJava.kt")
+            public void testPrimaryConstructorWithJava() throws Exception {
+                runTest("testData/refactoring/introduceParameter/primaryConstructorWithJava.kt");
+            }
+
             @TestMetadata("propertyAccessor.kt")
             public void testPropertyAccessor() throws Exception {
                 runTest("testData/refactoring/introduceParameter/propertyAccessor.kt");

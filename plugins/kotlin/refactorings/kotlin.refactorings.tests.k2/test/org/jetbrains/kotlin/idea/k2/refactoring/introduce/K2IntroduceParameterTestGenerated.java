@@ -422,6 +422,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
                 runTest("../../idea/tests/testData/refactoring/introduceParameter/partialSubstitution.kt");
             }
 
+            @TestMetadata("primaryConstructorWithJava.kt")
+            public void testPrimaryConstructorWithJava() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceParameter/primaryConstructorWithJava.kt");
+            }
+
             @TestMetadata("propertyAccessor.kt")
             public void testPropertyAccessor() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/introduceParameter/propertyAccessor.kt");
