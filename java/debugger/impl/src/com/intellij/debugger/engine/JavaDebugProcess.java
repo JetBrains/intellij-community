@@ -69,6 +69,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
+import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.useFeProxy;
+
 public class JavaDebugProcess extends XDebugProcess {
   private final DebuggerSession myJavaSession;
   private final JavaDebuggerEditorsProvider myEditorsProvider;
@@ -327,7 +329,9 @@ public class JavaDebugProcess extends XDebugProcess {
     return new XDebugTabLayouter() {
       @Override
       public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
-        registerThreadsPanel(ui);
+        if (!useFeProxy()) {
+          registerThreadsPanel(ui);
+        }
         registerMemoryViewPanel(ui);
         registerOverheadMonitor(ui);
       }
