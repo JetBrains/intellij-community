@@ -5,6 +5,6 @@ import com.intellij.util.lang.JavaVersion
 import fleet.util.multiplatform.linkToActual
 
 /**
- * see implementation [com.intellij.util.currentJavaVersionPlatformSpecificJvm]
+ * see implementation [com.intellij.util.currentJavaVersionPlatformSpecificJvm], [com.intellij.util.currentJavaVersionPlatformSpecificWasmJs]
  */
 internal fun currentJavaVersionPlatformSpecific(): JavaVersion = linkToActual()
