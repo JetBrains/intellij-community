@@ -2,7 +2,8 @@
 // WITH_STDLIB
 // ERROR: Callable reference resolution ambiguity: <br>public final operator fun plus(other: Byte): Int defined in kotlin.Int<br>public final operator fun plus(other: Double): Double defined in kotlin.Int<br>public final operator fun plus(other: Float): Float defined in kotlin.Int<br>public final operator fun plus(other: Int): Int defined in kotlin.Int<br>public final operator fun plus(other: Long): Long defined in kotlin.Int<br>public final operator fun plus(other: Short): Int defined in kotlin.Int
 // ERROR: Not enough information to infer type variable R
-
+// K2_ERROR: Cannot infer type for type parameter 'R'. Specify it explicitly.
+// K2_ERROR: Unresolved reference 'plus'.
 fun foo(bar: Int) {
     listOf(1,2,3).map {<caret> bar::plus }
 }

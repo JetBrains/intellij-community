@@ -57,6 +57,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/removeRedundantQualifierName")
             model("${idea}/inspectionsLocal/redundantUnitExpression")
             model("${idea}/inspectionsLocal/useExpressionBody")
+            model("${idea}/inspectionsLocal/suspiciousCallableReferenceInLambda")
             model("${idea}/inspectionsLocal/equalsBetweenInconvertibleTypes")
             model("${idea}/inspectionsLocal/covariantEquals")
             model("${idea}/inspectionsLocal/explicitThis")

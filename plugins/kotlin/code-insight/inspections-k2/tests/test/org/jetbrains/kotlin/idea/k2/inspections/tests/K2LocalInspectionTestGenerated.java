@@ -5276,6 +5276,235 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda")
+    public static class SuspiciousCallableReferenceInLambda extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("defaultParameter.kt")
+        public void testDefaultParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/defaultParameter.kt");
+        }
+
+        @TestMetadata("expectedFunction.kt")
+        public void testExpectedFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/expectedFunction.kt");
+        }
+
+        @TestMetadata("expectedFunctionType.kt")
+        public void testExpectedFunctionType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/expectedFunctionType.kt");
+        }
+
+        @TestMetadata("expectedFunctionType0.kt")
+        public void testExpectedFunctionType0() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/expectedFunctionType0.kt");
+        }
+
+        @TestMetadata("expectedFunctionType22.kt")
+        public void testExpectedFunctionType22() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/expectedFunctionType22.kt");
+        }
+
+        @TestMetadata("expectedFunctionWithGenericType.kt")
+        public void testExpectedFunctionWithGenericType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/expectedFunctionWithGenericType.kt");
+        }
+
+        @TestMetadata("expectedFunctionWithGenericType2.kt")
+        public void testExpectedFunctionWithGenericType2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/expectedFunctionWithGenericType2.kt");
+        }
+
+        @TestMetadata("expectedFunctionWithGenericType3.kt")
+        public void testExpectedFunctionWithGenericType3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/expectedFunctionWithGenericType3.kt");
+        }
+
+        @TestMetadata("expectedFunctionWithGenericType4.kt")
+        public void testExpectedFunctionWithGenericType4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/expectedFunctionWithGenericType4.kt");
+        }
+
+        @TestMetadata("expectedFunctionWithGenericType5.kt")
+        public void testExpectedFunctionWithGenericType5() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/expectedFunctionWithGenericType5.kt");
+        }
+
+        @TestMetadata("expectedKFunction.kt")
+        public void testExpectedKFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/expectedKFunction.kt");
+        }
+
+        @TestMetadata("expectedKMutableProperty.kt")
+        public void testExpectedKMutableProperty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/expectedKMutableProperty.kt");
+        }
+
+        @TestMetadata("expectedKMutableProperty0.kt")
+        public void testExpectedKMutableProperty0() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/expectedKMutableProperty0.kt");
+        }
+
+        @TestMetadata("expectedKMutableProperty1.kt")
+        public void testExpectedKMutableProperty1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/expectedKMutableProperty1.kt");
+        }
+
+        @TestMetadata("expectedKProperty.kt")
+        public void testExpectedKProperty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/expectedKProperty.kt");
+        }
+
+        @TestMetadata("expectedKProperty0.kt")
+        public void testExpectedKProperty0() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/expectedKProperty0.kt");
+        }
+
+        @TestMetadata("expectedKProperty1.kt")
+        public void testExpectedKProperty1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/expectedKProperty1.kt");
+        }
+
+        @TestMetadata("explicitThisReceiver.kt")
+        public void testExplicitThisReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/explicitThisReceiver.kt");
+        }
+
+        @TestMetadata("hasExplicitType.kt")
+        public void testHasExplicitType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/hasExplicitType.kt");
+        }
+
+        @TestMetadata("hasExplicitType2.kt")
+        public void testHasExplicitType2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/hasExplicitType2.kt");
+        }
+
+        @TestMetadata("hasExplicitType3.kt")
+        public void testHasExplicitType3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/hasExplicitType3.kt");
+        }
+
+        @TestMetadata("hasExplicitType4.kt")
+        public void testHasExplicitType4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/hasExplicitType4.kt");
+        }
+
+        @TestMetadata("implicitThisReceiver.kt")
+        public void testImplicitThisReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/implicitThisReceiver.kt");
+        }
+
+        @TestMetadata("invalidFunctionReference.kt")
+        public void testInvalidFunctionReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/invalidFunctionReference.kt");
+        }
+
+        @TestMetadata("invalidFunctionReference2.kt")
+        public void testInvalidFunctionReference2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/invalidFunctionReference2.kt");
+        }
+
+        @TestMetadata("invalidFunctionReference3.kt")
+        public void testInvalidFunctionReference3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/invalidFunctionReference3.kt");
+        }
+
+        @TestMetadata("invalidFunctionReference4.kt")
+        public void testInvalidFunctionReference4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/invalidFunctionReference4.kt");
+        }
+
+        @TestMetadata("it.kt")
+        public void testIt() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/it.kt");
+        }
+
+        @TestMetadata("lambdaInsideLambda.kt")
+        public void testLambdaInsideLambda() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/lambdaInsideLambda.kt");
+        }
+
+        @TestMetadata("lambdaInvoke.kt")
+        public void testLambdaInvoke() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/lambdaInvoke.kt");
+        }
+
+        @TestMetadata("lambdaWithArg.kt")
+        public void testLambdaWithArg() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/lambdaWithArg.kt");
+        }
+
+        @TestMetadata("multipleLines.kt")
+        public void testMultipleLines() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/multipleLines.kt");
+        }
+
+        @TestMetadata("noBody.kt")
+        public void testNoBody() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/noBody.kt");
+        }
+
+        @TestMetadata("noneCallableRef.kt")
+        public void testNoneCallableRef() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/noneCallableRef.kt");
+        }
+
+        @TestMetadata("normal.kt")
+        public void testNormal() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/normal.kt");
+        }
+
+        @TestMetadata("onCallableReference.kt")
+        public void testOnCallableReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/onCallableReference.kt");
+        }
+
+        @TestMetadata("parameter.kt")
+        public void testParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/parameter.kt");
+        }
+
+        @TestMetadata("parameter2.kt")
+        public void testParameter2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/parameter2.kt");
+        }
+
+        @TestMetadata("parameterOuter.kt")
+        public void testParameterOuter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/parameterOuter.kt");
+        }
+
+        @TestMetadata("usedAsParameter.kt")
+        public void testUsedAsParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/usedAsParameter.kt");
+        }
+
+        @TestMetadata("usedAsReceiver.kt")
+        public void testUsedAsReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/usedAsReceiver.kt");
+        }
+
+        @TestMetadata("usedAsReturn.kt")
+        public void testUsedAsReturn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/usedAsReturn.kt");
+        }
+
+        @TestMetadata("variableReceiver.kt")
+        public void testVariableReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/variableReceiver.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes")
     public static class EqualsBetweenInconvertibleTypes extends AbstractK2LocalInspectionTest {
         @java.lang.Override
