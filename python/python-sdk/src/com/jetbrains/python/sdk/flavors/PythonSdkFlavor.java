@@ -237,8 +237,8 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   public static @NotNull List<PythonSdkFlavor<?>> getPlatformFlavorsFromExtensions(boolean isIndependent) {
     List<PythonSdkFlavor<?>> result = new ArrayList<>();
     for (PythonFlavorProvider provider : PythonFlavorProvider.EP_NAME.getExtensionList()) {
-      PythonSdkFlavor<?> flavor = provider.getFlavor(isIndependent);
-      if (flavor != null) {
+      PythonSdkFlavor<?> flavor = provider.getFlavor();
+      if (flavor.isPlatformIndependent() == isIndependent) {
         result.add(flavor);
       }
     }

@@ -35,5 +35,5 @@ class MayaSdkFlavor private constructor() : CPythonSdkFlavor<PyFlavorData.Empty>
 
 
 class MayaFlavorProvider: PythonFlavorProvider {
-  override fun getFlavor(platformIndependent: Boolean): MayaSdkFlavor = MayaSdkFlavor.INSTANCE
+  override fun getFlavor(): MayaSdkFlavor = MayaSdkFlavor.INSTANCE
 }
