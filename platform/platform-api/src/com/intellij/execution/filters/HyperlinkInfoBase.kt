@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.filters;
+package com.intellij.execution.filters
 
-import com.intellij.openapi.project.Project;
-import com.intellij.ui.awt.RelativePoint;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.project.Project
+import com.intellij.ui.awt.RelativePoint
 
-public abstract class HyperlinkInfoBase implements HyperlinkInfo {
-  public abstract void navigate(@NotNull Project project, @Nullable RelativePoint hyperlinkLocationPoint);
+abstract class HyperlinkInfoBase : HyperlinkInfo {
+  abstract fun navigate(project: Project, hyperlinkLocationPoint: RelativePoint?)
 
-  @Override
-  public void navigate(@NotNull Project project) {
-    navigate(project, null);
+  override fun navigate(project: Project) {
+    navigate(project, null)
   }
 }

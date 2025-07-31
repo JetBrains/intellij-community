@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.filters;
+package com.intellij.execution.filters
 
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.project.Project
 
-public interface HyperlinkInfo {
-  void navigate(@NotNull Project project);
+fun interface HyperlinkInfo {
+  fun navigate(project: Project)
 
-  default boolean includeInOccurenceNavigation() {
-    return true;
-  }
+  fun includeInOccurenceNavigation(): Boolean = true
 }
