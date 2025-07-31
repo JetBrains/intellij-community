@@ -36,7 +36,7 @@ class PythonFoldingBuilder : CustomFoldingBuilder(), DumbAware {
       return "import ..."
     }
     if (node.elementType === PyElementTypes.STRING_LITERAL_EXPRESSION) {
-      val stringLiteralExpression = node.psi as PyStringLiteralExpression
+      val stringLiteralExpression = node.psi as PyAstStringLiteralExpression
       val prefix = stringLiteralExpression.stringElements[0].prefix
       if (stringLiteralExpression.isDocString()) {
         val stringValue = stringLiteralExpression.stringValue.trim { it <= ' ' }
@@ -94,7 +94,7 @@ class PythonFoldingBuilder : CustomFoldingBuilder(), DumbAware {
   private fun appendDescriptors(node: ASTNode, descriptors: MutableList<FoldingDescriptor?>) {
     val elementType = node.elementType
     if (node.psi is PyAstFile) {
-      val imports = (node.psi as PyFile).importBlock
+      val imports = (node.psi as PyAstFile).importBlock
       if (imports.size > 1) {
         val firstImport: PyAstImportStatementBase = imports[0]
         val lastImport: PyAstImportStatementBase = imports[imports.size - 1]
