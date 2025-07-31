@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.terminal.tests` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "tests_test_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "tests",
@@ -11,7 +17,8 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.terminal.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True)
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  runtime_deps = [":tests_test_resources"]
 )
 ### auto-generated section `build intellij.terminal.tests` end
 
