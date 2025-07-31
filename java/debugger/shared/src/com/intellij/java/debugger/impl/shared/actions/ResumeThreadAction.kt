@@ -34,7 +34,7 @@ private class ResumeThreadAction : XDebuggerTreeActionBase(), ActionRemoteBehavi
   override fun update(e: AnActionEvent) {
     val selectedNodes = getSelectedNodes(e.dataContext)
     e.presentation.apply {
-      text = JavaDebuggerSharedBundle.message("action.resume.thread.text")
+      text = JavaDebuggerSharedBundle.message("action.Debugger.XThreadsView.ResumeThread.text")
       val isSuspendedThreadSelected = selectedNodes.isNotEmpty() && selectedNodes.all { it.isSuspendedJavaThread() }
       isEnabledAndVisible = isSuspendedThreadSelected
     }

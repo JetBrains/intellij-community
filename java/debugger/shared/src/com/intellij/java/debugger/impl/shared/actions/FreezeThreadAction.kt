@@ -38,7 +38,7 @@ private class FreezeThreadAction : XDebuggerTreeActionBase(), ActionRemoteBehavi
         return
       }
       if (selectedNodes.isNotEmpty() && selectedNodes.all { it.isNotSuspendedJavaThread() }) {
-        text = JavaDebuggerSharedBundle.message("action.freeze.thread.text")
+        text = JavaDebuggerSharedBundle.message("action.Debugger.XThreadsView.FreezeThread.text")
         isEnabledAndVisible = true
       }
     }
