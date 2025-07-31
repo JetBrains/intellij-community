@@ -53,6 +53,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +63,8 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 
-public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper {
+@ApiStatus.NonExtendable
+public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper {
   private static final Logger LOG = Logger.getInstance(JavaPsiImplementationHelperImpl.class);
 
   private final Project myProject;
