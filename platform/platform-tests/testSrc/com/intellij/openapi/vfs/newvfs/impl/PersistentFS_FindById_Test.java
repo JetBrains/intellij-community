@@ -31,7 +31,7 @@ public class PersistentFS_FindById_Test {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     for (int i = 0; i < maxFilesToCheck; i++) {
       //generate fileId randomly, so that all combinations of cached/uncached parents are realised:
-      int fileId = rnd.nextInt(FSRecords.ROOT_FILE_ID + 1, maxAllocatedID + 1);
+      int fileId = rnd.nextInt(FSRecords.MIN_REGULAR_FILE_ID, maxAllocatedID + 1);
       NewVirtualFile file = pFS.findFileById(fileId);
       if (fsRecords.isDeleted(fileId)) {
         assertNull(file, "findFileById(" + fileId + ") must be null for deleted files");

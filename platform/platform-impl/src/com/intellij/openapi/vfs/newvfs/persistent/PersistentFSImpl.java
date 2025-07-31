@@ -299,7 +299,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return dirByIdCache.getOrCacheDir(newDir);
   }
 
-  public VirtualFileSystemEntry getCachedDir(int id) {
+  public VirtualDirectoryImpl getCachedDir(int id) {
     return dirByIdCache.getCachedDir(id);
   }
 
@@ -1822,7 +1822,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         return cached;
       }
       else {
-        return null;//return null if the file is deleted
+        return null;// most likely deleted
       }
     }
 
@@ -2449,7 +2449,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     VirtualFile parent = file.getParent();
     int parentId = parent == null ? 0 : fileId(parent);
 
-    clearIdCache();
+    clearIdCache(); //TODO RC: why drop _all_ the cache just for a single delete? maybe we could be more fine-grained?
     if (parentId == 0) {
       String rootUrl = UriUtil.trimTrailingSlashes(file.getUrl());
       synchronized (rootsByUrl) {

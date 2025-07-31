@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor;
 import com.intellij.psi.impl.PsiCachedValue;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,7 +48,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final Logger LOG = Logger.getInstance(VirtualDirectoryImpl.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(30));
 
-  private static final boolean CHECK_CONSISTENCY = ApplicationManager.getApplication().isUnitTestMode();
+  private static final boolean CHECK_CONSISTENCY = ApplicationManager.getApplication().isUnitTestMode()
+                                                   && !ApplicationManagerEx.isInStressTest();
 
   /**
    * Use linear (bruteforce) search for sorted children if size <= this threshold, use binary search by-name, if size is larger.
@@ -566,8 +568,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   /**
    * @return file with childId, _if it belongs to this directory's children_, null otherwise.
-   * If the file is in VFS,
-   * but not in memory cache -- loads it in memory, adds file.id into .children list
+   * If the file is in VFS, but not in memory cache -- loads it in memory, adds file.id into .children list
    */
   @ApiStatus.Internal
   public @Nullable VirtualFileSystemEntry findChildById(int childId) {
@@ -592,8 +593,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     synchronized (directoryData) {
       if (child == null) {
         //childId hasn't been loaded from persistence yet: load it
-        int childNameId = pFS.peer().getNameIdByFileId(childId);
         @PersistentFS.Attributes int childAttributes = pFS.getFileAttributes(childId);
+        if (PersistentFSRecordAccessor.hasDeletedFlag(childAttributes)) {
+          return null;
+        }
+        FSRecordsImpl vfsPeer = pFS.peer();
+        int childNameId = vfsPeer.getNameIdByFileId(childId);
         boolean isEmptyDirectory = PersistentFS.isDirectory(childAttributes) && !pFS.mayHaveChildren(childId);
         child = createChildIfNotExist(childId, childNameId, childAttributes, isEmptyDirectory);
       }

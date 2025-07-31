@@ -286,20 +286,21 @@ public final class VfsUtil extends VfsUtilCore {
 
   /** @return only 'good' ({@code !isBadName(name)}) file names from the array */
   public static String @NotNull [] filterNames(String @NotNull [] names) {
+    //optimistic speculation: in most cases all names are 'good':
     var filteredCount = 0;
-    for (var string : names) {
-      if (isBadName(string)) filteredCount++;
+    for (var name : names) {
+      if (isBadName(name)) filteredCount++;
     }
     if (filteredCount == 0) return names;
 
-    var result = ArrayUtil.newStringArray(names.length - filteredCount);
+    var goodNames = ArrayUtil.newStringArray(names.length - filteredCount);
     var count = 0;
-    for (var string : names) {
-      if (isBadName(string)) continue;
-      result[count++] = string;
+    for (var name : names) {
+      if (isBadName(name)) continue;
+      goodNames[count++] = name;
     }
 
-    return result;
+    return goodNames;
   }
 
   /**

@@ -408,7 +408,7 @@ public final class VfsData {
 
   /**
    * This class is mostly a data-holder: most operations are in {@link VirtualDirectoryImpl}.
-   *
+   * <p>
    * Non-final field modifications are synchronized on 'this' instance (but this is done in {@link VirtualDirectoryImpl})
    */
   @ApiStatus.Internal
@@ -579,7 +579,7 @@ public final class VfsData {
       for (int i = 0; i < ids.length; i++) {
         int id = ids[i];
         VirtualFileSystemEntry child = fileLoader.apply(id);
-        if (child == null) {
+        if (child == null) {//TODO RC: actually this could happen if the file is deleted concurrently?
           throw new AssertionError("Bug: can't load file by id " + id);
         }
         children[i] = child;

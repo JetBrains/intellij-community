@@ -36,11 +36,15 @@ import java.util.function.Supplier;
 public final class VirtualFileImpl extends VirtualFileSystemEntry {
   VirtualFileImpl(int id, @NotNull VfsData.Segment segment, VirtualDirectoryImpl parent) {
     super(id, segment, parent);
+    //TODO RC: why we call it in ctor -- every time we create this wrapper? The wrapper could be created multiple
+    //         times, depending on how often GC collects soft-refed cached instances, so this code is executed
+    //         multiple times, and costs significant fraction of the overall instance construction cost, while
+    //         symlinks are rare
     registerLink(getFileSystem());
   }
 
   @Override
-  public @Nullable NewVirtualFile findChild(final @NotNull @NonNls String name) {
+  public @Nullable NewVirtualFile findChild(@NotNull @NonNls String name) {
     return null;
   }
 
@@ -56,18 +60,18 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
 
   @Override
   public @NotNull NewVirtualFileSystem getFileSystem() {
-    final VirtualFileSystemEntry parent = getParent();
+    VirtualFileSystemEntry parent = getParent();
     assert parent != null;
     return parent.getFileSystem();
   }
 
   @Override
-  public @Nullable NewVirtualFile refreshAndFindChild(final @NotNull String name) {
+  public @Nullable NewVirtualFile refreshAndFindChild(@NotNull String name) {
     return null;
   }
 
   @Override
-  public @Nullable NewVirtualFile findChildIfCached(final @NotNull String name) {
+  public @Nullable NewVirtualFile findChildIfCached(@NotNull String name) {
     return null;
   }
 
@@ -96,7 +100,7 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
 
   @Override
   public @NotNull InputStream getInputStream() throws IOException {
-    final byte[] preloadedContent = getUserData(ourPreloadedContentKey);
+    byte[] preloadedContent = getUserData(ourPreloadedContentKey);
 
     return VfsUtilCore.inputStreamSkippingBOM(
       preloadedContent == null ?
@@ -144,7 +148,7 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  public @NotNull OutputStream getOutputStream(final Object requestor, final long modStamp, final long timeStamp) throws IOException {
+  public @NotNull OutputStream getOutputStream(Object requestor, long modStamp, long timeStamp) throws IOException {
     checkNotTooLarge(requestor);
     return VfsUtilCore.outputStreamAddingBOM(owningPersistentFS().getOutputStream(this, requestor, modStamp, timeStamp), this);
   }

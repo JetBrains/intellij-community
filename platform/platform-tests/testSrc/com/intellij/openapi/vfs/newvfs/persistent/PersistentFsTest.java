@@ -652,7 +652,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
     VirtualFileSystemEntry[] hardReferenceHolder = {vFile, vSubDir3, vSubDir2, vSubDir1};
 
-    VfsTestUtil.deleteFile(vSubDir1);
+    VfsTestUtil.deleteFile(vSubDir1); // delete the top dir => all the files under it should be deleted too
 
     for (VirtualFileSystemEntry f : hardReferenceHolder) {
       assertFalse("file is invalid (=deleted): " + f.getName(), f.isValid());

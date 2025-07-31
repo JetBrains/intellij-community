@@ -20,8 +20,7 @@ final class VirtualDirectoryCache {
   /** FS inner dirs only (dirs with .getParent()!=null), separated from the root cache to speedup clear */
   private final ConcurrentIntObjectMap<VirtualDirectoryImpl> idToDirCache = createConcurrentIntObjectSoftValueMap();
 
-  @NotNull
-  VirtualDirectoryImpl getOrCacheDir(@NotNull VirtualDirectoryImpl newDir) {
+  @NotNull VirtualDirectoryImpl getOrCacheDir(@NotNull VirtualDirectoryImpl newDir) {
     int id = newDir.getId();
     ConcurrentIntObjectMap<VirtualDirectoryImpl> cache = getCache(newDir);
     VirtualDirectoryImpl dir = cache.get(id);
@@ -37,31 +36,27 @@ final class VirtualDirectoryCache {
     getCache(newDir).put(newDir.getId(), newDir);
   }
 
-  @Nullable
-  VirtualDirectoryImpl cacheDirIfAbsent(@NotNull VirtualDirectoryImpl newDir) {
+  @Nullable VirtualDirectoryImpl cacheDirIfAbsent(@NotNull VirtualDirectoryImpl newDir) {
     return getCache(newDir).putIfAbsent(newDir.getId(), newDir);
   }
 
-  @Nullable
-  VirtualFileSystemEntry getCachedDir(int dirId) {
-    VirtualFileSystemEntry dir = idToDirCache.get(dirId);
+  /** @return VirtualFile entry (directory/root) for a given dirId, if cached, or null, if not cached (yet?) */
+  @Nullable VirtualDirectoryImpl getCachedDir(int dirId) {
+    VirtualDirectoryImpl dir = idToDirCache.get(dirId);
     if (dir != null) return dir;
     return idToRootCache.get(dirId);
   }
 
-  @Nullable
-  VirtualFileSystemEntry getCachedRoot(int rootId) {
+  @Nullable VirtualDirectoryImpl getCachedRoot(int rootId) {
     return idToRootCache.get(rootId);
   }
 
   @TestOnly
-  @NotNull
-  Iterable<VirtualFileSystemEntry> getCachedDirs() {
+  @NotNull Iterable<VirtualFileSystemEntry> getCachedDirs() {
     return ContainerUtil.concat(idToDirCache.values(), idToRootCache.values());
   }
 
-  @NotNull
-  Iterable<VirtualDirectoryImpl> getCachedRootDirs() {
+  @NotNull Iterable<VirtualDirectoryImpl> getCachedRootDirs() {
     return idToRootCache.values();
   }
 
@@ -79,5 +74,10 @@ final class VirtualDirectoryCache {
   void clear() {
     idToDirCache.clear();
     idToRootCache.clear();
+  }
+
+  @Override
+  public String toString() {
+    return "VirtualDirectoryCache{" + idToDirCache.size() + " dirs, " + idToRootCache.size() + " roots}";
   }
 }

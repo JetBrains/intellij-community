@@ -38,7 +38,10 @@ import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -1028,7 +1031,7 @@ public final class FSRecordsImpl implements Closeable {
     // find children which are added to the list and call updateSymlinkInfoForNewChild() on them (once)
     ContainerUtil.processSortedListsInOrder(
       oldChildren.children, newChildren.children,
-      Comparator.comparingInt(ChildInfo::getId),
+      ChildInfo.BY_ID,
       /*mergeEqualItems: */ true,
       (childInfo, mergeResult) -> {
         if (mergeResult != ContainerUtil.MergeResult.COPIED_FROM_LIST1) {
