@@ -12,7 +12,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.plugins.terminal.block.util.ShellCompletionTestFixture
+import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTestFixture
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4

@@ -19,7 +19,7 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.plugins.terminal.block.session.ShellIntegrationFunctions.GET_DIRECTORY_FILES
-import org.jetbrains.plugins.terminal.block.util.ShellCompletionTestFixture
+import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTestFixture
 import org.mockito.Mockito.*
 
 class GitShellCommandOverrideSpecTest : BasePlatformTestCase() {
