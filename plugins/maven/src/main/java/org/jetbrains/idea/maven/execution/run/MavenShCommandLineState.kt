@@ -222,7 +222,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
   ): BuildView? {
     val console = createConsole()
     val project = myConfiguration.project
-    val viewManager = project.getService<ExternalSystemRunConfigurationViewManager?>(ExternalSystemRunConfigurationViewManager::class.java)
+    val viewManager = project.getService<ExternalSystemRunConfigurationViewManager>(ExternalSystemRunConfigurationViewManager::class.java)
     return object : BuildView(project, console, descriptor, "build.toolwindow.run.selection.state", viewManager) {
       override fun onEvent(buildId: Any, event: BuildEvent) {
         super.onEvent(buildId, event)
@@ -245,7 +245,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     processHandler: ProcessHandler,
   ): ExecutionResult {
     val consoleView = createConsole()
-    val viewManager = environment.project.getService<BuildViewManager?>(BuildViewManager::class.java)
+    val viewManager = environment.project.getService<BuildViewManager>(BuildViewManager::class.java)
 
     descriptor.withProcessHandler(MavenBuildHandlerFilterSpyWrapper(processHandler, isWrapperedOutput(), isWindows()), null)
     descriptor.withExecutionEnvironment(environment)

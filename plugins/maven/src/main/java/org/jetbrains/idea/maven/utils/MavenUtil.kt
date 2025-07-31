@@ -1735,7 +1735,7 @@ object MavenUtil {
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
     if (mavenProjectsManager.findProject(file) != null) return true
 
-    return ReadAction.compute<Boolean?, RuntimeException?>(ThrowableComputable {
+    return ReadAction.compute<Boolean, RuntimeException>(ThrowableComputable {
       if (project.isDisposed()) return@ThrowableComputable false
       val psiFile = PsiManager.getInstance(project).findFile(file)
       if (psiFile == null) return@ThrowableComputable false
