@@ -41,7 +41,6 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.project" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
-    <orderEntry type="library" name="io.ktor.utils" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="io.github.oshai.kotlin.logging.jvm" level="project" />
     <orderEntry type="library" name="ktor-server-cio" level="project" />

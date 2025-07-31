@@ -3,12 +3,12 @@ package com.intellij.mcpserver.stdio
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.sse.SSE
 import io.ktor.client.request.header
-import io.ktor.utils.io.streams.asInput
 import io.modelcontextprotocol.kotlin.sdk.client.SseClientTransport
 import io.modelcontextprotocol.kotlin.sdk.server.StdioServerTransport
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.asSink
+import kotlinx.io.asSource
 import kotlinx.io.buffered
 
 private const val IJ_MCP_PREFIX = "IJ_MCP_"
@@ -25,7 +25,7 @@ suspend fun main() {
     return
   }
 
-  val stdioServerTransport = StdioServerTransport(inputStream.asInput(), outputStream.asSink().buffered())
+  val stdioServerTransport = StdioServerTransport(inputStream.asSource().buffered(), outputStream.asSink().buffered())
 
   val httpClient = HttpClient() {
     install(SSE)
