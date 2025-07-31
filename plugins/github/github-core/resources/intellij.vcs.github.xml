@@ -76,6 +76,8 @@
                 factoryClass="org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowFactory"/>
 
     <fileIconProvider implementation="org.jetbrains.plugins.github.extensions.GithubYamlIconProvider"/>
+    <iconProvider implementation="org.jetbrains.plugins.github.ui.icons.GHIconProvider"/>
+
     <fileTypeUsageSchemaDescriptor schema="github"
                                    implementationClass="org.jetbrains.plugins.github.extensions.GithubFileTypeSchemaProvider"/>
 
