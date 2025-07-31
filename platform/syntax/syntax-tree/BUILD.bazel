@@ -1,0 +1,74 @@
+### auto-generated section `build intellij.platform.syntax.tree` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom_tree",
+  jvm_target = "8",
+  x_no_call_assertions = True,
+  x_no_param_assertions = True
+)
+
+jvm_resources(
+  name = "tree_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "platform_syntax_multiplatformSupport_provided",
+  lib = "//platform/syntax/syntax-multiplatformSupport:multiplatformSupport"
+)
+
+jvm_library(
+  name = "tree",
+  module_name = "intellij.platform.syntax.tree",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvm/**/*.kt", "srcJvm/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom_tree",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/syntax/syntax-api:syntax",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/base/multiplatform",
+    "//platform/util/multiplatform",
+    "//platform/syntax/syntax-i18n:i18n",
+    "//platform/syntax/syntax-extensions:extensions",
+    "//platform/syntax/syntax-util:util",
+    ":platform_syntax_multiplatformSupport_provided",
+  ],
+  runtime_deps = [":tree_resources"]
+)
+
+jvm_library(
+  name = "tree_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testJvm/**/*.kt", "testJvm/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom_tree",
+  associates = [":tree"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/syntax/syntax-api:syntax",
+    "//platform/syntax/syntax-api:syntax_test_lib",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/base/multiplatform",
+    "//platform/util/multiplatform",
+    "//platform/syntax/syntax-i18n:i18n",
+    "//platform/syntax/syntax-i18n:i18n_test_lib",
+    "//platform/syntax/syntax-extensions:extensions",
+    "//platform/syntax/syntax-extensions:extensions_test_lib",
+    "//platform/syntax/syntax-multiplatformSupport:multiplatformSupport",
+    "//platform/syntax/syntax-util:util",
+  ],
+  runtime_deps = [":tree_resources"]
+)
+### auto-generated section `build intellij.platform.syntax.tree` end
+
+### auto-generated section `test intellij.platform.syntax.tree` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tree_test",
+  runtime_deps = [":tree_test_lib"]
+)
+### auto-generated section `test intellij.platform.syntax.tree` end

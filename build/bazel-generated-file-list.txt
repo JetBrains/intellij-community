@@ -617,6 +617,7 @@ platform/syntax/syntax-multiplatformSupport
 platform/syntax/syntax-psi
 platform/syntax/syntax-psi-tests
 platform/syntax/syntax-scripts
+platform/syntax/syntax-tree
 platform/syntax/syntax-util
 platform/tasks-platform-api
 platform/tasks-platform-impl
