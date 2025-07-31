@@ -196,7 +196,7 @@ public class XDebuggerTree extends DnDAwareTree implements UiCompatibleDataProvi
     });
 
     installSpeedSearch();
-    PopupHandler.installPopupMenu(this, popupActionGroupId, "XDebuggerTreePopup");
+    PopupHandler.installPopupMenu(this, popupActionGroupId, ActionPlaces.XDEBUGGER_TREE_POPUP);
     registerShortcuts();
 
     new AnAction() {
