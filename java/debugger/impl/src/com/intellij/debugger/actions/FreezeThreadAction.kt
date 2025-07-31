@@ -1,74 +1,67 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.debugger.actions;
+package com.intellij.debugger.actions
 
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.debugger.JavaDebuggerBundle
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.executeOnDMT
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
+import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 
-import java.util.Objects;
-
-public class FreezeThreadAction extends DebuggerAction {
-  @Override
-  public void actionPerformed(final @NotNull AnActionEvent e) {
-    DebuggerTreeNodeImpl[] selectedNode = getSelectedNodes(e.getDataContext());
+class FreezeThreadAction : DebuggerAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    val selectedNode = getSelectedNodes(e.dataContext)
     if (selectedNode == null) {
-      return;
+      return
     }
-    final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
-    final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
-    if (debugProcess == null) return;
+    val debuggerContext = getDebuggerContext(e.dataContext)
+    val debugProcess = debuggerContext.debugProcess
+    if (debugProcess == null) return
 
-    for (final DebuggerTreeNodeImpl debuggerTreeNode : selectedNode) {
-      ThreadDescriptorImpl threadDescriptor = ((ThreadDescriptorImpl)debuggerTreeNode.getDescriptor());
-      final ThreadReferenceProxyImpl thread = threadDescriptor.getThreadReference();
-
-      if (!threadDescriptor.isFrozen()) {
-        DebuggerManagerThreadImpl debuggerManagerThread = Objects.requireNonNull(debuggerContext.getManagerThread());
-        debuggerManagerThread.schedule(new DebuggerCommandImpl() {
-          @Override
-          protected void action() {
-            debuggerManagerThread.invokeNow(debugProcess.createFreezeThreadCommand(thread));
-            ApplicationManager.getApplication().invokeLater(() -> debuggerTreeNode.calcValue());
-          }
-        });
+    for (debuggerTreeNode in selectedNode) {
+      val threadDescriptor = (debuggerTreeNode.descriptor as ThreadDescriptorImpl)
+      if (!threadDescriptor.isFrozen) {
+        val managerThread = debuggerContext.getManagerThread() ?: return
+        freezeThread(threadDescriptor.threadReference, debugProcess, managerThread)
+        ApplicationManager.getApplication().invokeLater(Runnable { debuggerTreeNode.calcValue() })
       }
     }
   }
 
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    DebuggerTreeNodeImpl[] selectedNode = getSelectedNodes(e.getDataContext());
+  override fun update(e: AnActionEvent) {
+    val selectedNode = getSelectedNodes(e.dataContext)
     if (selectedNode == null) {
-      return;
+      return
     }
-    DebugProcessImpl debugProcess = getDebuggerContext(e.getDataContext()).getDebugProcess();
+    val debugProcess = getDebuggerContext(e.dataContext).debugProcess
 
-    boolean visible = false;
+    var visible = false
     if (debugProcess != null) {
-      visible = true;
-      for (DebuggerTreeNodeImpl aSelectedNode : selectedNode) {
-        NodeDescriptorImpl threadDescriptor = aSelectedNode.getDescriptor();
-        if (!(threadDescriptor instanceof ThreadDescriptorImpl) || ((ThreadDescriptorImpl)threadDescriptor).isSuspended()) {
-          visible = false;
-          break;
+      visible = true
+      for (aSelectedNode in selectedNode) {
+        val threadDescriptor = aSelectedNode.descriptor
+        if (threadDescriptor !is ThreadDescriptorImpl || threadDescriptor.isSuspended) {
+          visible = false
+          break
         }
       }
     }
-
-    e.getPresentation().setVisible(visible);
+    e.presentation.text = JavaDebuggerBundle.message("action.freeze.thread.text")
+    e.presentation.setVisible(visible)
   }
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
+  companion object {
+    fun freezeThread(thread: ThreadReferenceProxyImpl, debugProcess: DebugProcessImpl, managerThread: DebuggerManagerThreadImpl) {
+      executeOnDMT(managerThread) {
+        managerThread.invokeNow(debugProcess.createFreezeThreadCommand(thread))
+      }
+    }
   }
 }
