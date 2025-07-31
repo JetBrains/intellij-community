@@ -1,82 +1,70 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.debugger.actions;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.debugger.actions
 
-import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.SuspendManagerUtil;
-import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.debugger.JavaDebuggerBundle
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.SuspendManagerUtil
+import com.intellij.debugger.engine.executeOnDMT
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
+import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
+import org.jetbrains.annotations.ApiStatus
 
-import java.util.Objects;
+@ApiStatus.Internal
+class ResumeThreadAction : DebuggerAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    val selectedNodes = getSelectedNodes(e.dataContext) ?: return
+    val debuggerContext = getDebuggerContext(e.dataContext)
+    val debugProcess = debuggerContext.debugProcess
 
-public class ResumeThreadAction extends DebuggerAction {
-  @Override
-  public void actionPerformed(final @NotNull AnActionEvent e) {
-    DebuggerTreeNodeImpl[] selectedNode = getSelectedNodes(e.getDataContext());
-    final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
-    final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
+    if (debugProcess == null) return
 
-    if (debugProcess == null) return;
-
-    //noinspection ConstantConditions
-    for (final DebuggerTreeNodeImpl debuggerTreeNode : selectedNode) {
-      final ThreadDescriptorImpl threadDescriptor = ((ThreadDescriptorImpl)debuggerTreeNode.getDescriptor());
-
-      if (threadDescriptor.isSuspended()) {
-        final ThreadReferenceProxyImpl thread = threadDescriptor.getThreadReference();
-        DebuggerManagerThreadImpl debuggerManagerThread = debuggerContext.getManagerThread();
-        Objects.requireNonNull(debuggerManagerThread).schedule(new DebuggerCommandImpl() {
-          @Override
-          protected void action() {
-            SuspendContextImpl suspendingContext = SuspendManagerUtil.getSuspendingContext(debugProcess.getSuspendManager(), thread);
-            if (suspendingContext != null) {
-              debuggerManagerThread.invokeNow(debugProcess.createResumeThreadCommand(suspendingContext, thread));
-            }
-            ApplicationManager.getApplication().invokeLater(() -> debuggerTreeNode.calcValue());
-          }
-        });
+    for (debuggerTreeNode in selectedNodes) {
+      val threadDescriptor = (debuggerTreeNode.descriptor as ThreadDescriptorImpl)
+      val managerThread = debuggerContext.getManagerThread() ?: return
+      if (threadDescriptor.isSuspended) {
+        resumeThread(threadDescriptor.threadReference, debugProcess, managerThread)
+        ApplicationManager.getApplication().invokeLater(Runnable { debuggerTreeNode.calcValue() })
       }
     }
   }
 
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(e.getDataContext());
+  override fun update(e: AnActionEvent) {
+    val selectedNodes = getSelectedNodes(e.dataContext)
 
-    boolean visible = false;
-    boolean enabled = false;
-    String text = JavaDebuggerBundle.message("action.resume.thread.text.resume");
+    var visible = false
 
-    if (selectedNodes != null && selectedNodes.length > 0) {
-      visible = true;
-      enabled = true;
-      for (DebuggerTreeNodeImpl selectedNode : selectedNodes) {
-        final NodeDescriptorImpl threadDescriptor = selectedNode.getDescriptor();
-        if (!(threadDescriptor instanceof ThreadDescriptorImpl) || !((ThreadDescriptorImpl)threadDescriptor).isSuspended()) {
-          visible = false;
-          break;
+    if (selectedNodes != null && selectedNodes.size > 0) {
+      visible = true
+      for (selectedNode in selectedNodes) {
+        val threadDescriptor = selectedNode.descriptor
+        if (threadDescriptor !is ThreadDescriptorImpl || !threadDescriptor.isSuspended) {
+          visible = false
+          break
         }
       }
     }
-    final Presentation presentation = e.getPresentation();
-    presentation.setText(text);
-    presentation.setVisible(visible);
-    presentation.setEnabled(enabled);
+    e.presentation.apply {
+      isEnabledAndVisible = visible
+      text = JavaDebuggerBundle.message("action.resume.thread.text")
+    }
   }
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
+  companion object {
+    fun resumeThread(thread: ThreadReferenceProxyImpl, debugProcess: DebugProcessImpl, managerThread: DebuggerManagerThreadImpl) {
+      executeOnDMT(managerThread) {
+        val suspendingContext = SuspendManagerUtil.getSuspendingContext(debugProcess.suspendManager, thread)
+        if (suspendingContext != null) {
+          managerThread.invokeNow(debugProcess.createResumeThreadCommand(suspendingContext, thread))
+        }
+      }
+    }
   }
 }
