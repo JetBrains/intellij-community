@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.impl.productInfo
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -7,15 +7,18 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.buildData.productInfo.ProductInfoData
 import com.intellij.platform.ide.productInfo.IdeProductInfo
+import com.intellij.util.system.OS
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import java.nio.file.Path
 import java.time.ZoneId
-import kotlin.io.path.*
+import kotlin.io.path.exists
+import kotlin.io.path.inputStream
+import kotlin.io.path.isDirectory
+import kotlin.io.path.name
 
 internal class IdeProductInfoImpl : IdeProductInfo {
   private val json = Json { ignoreUnknownKeys = true }
@@ -25,30 +28,28 @@ internal class IdeProductInfoImpl : IdeProductInfo {
       createProductInfoFromApplicationInfo()
     }
     else {
-      tryLoadingProductInfo(Path(PathManager.getHomePath()))
+      tryLoadingProductInfo(PathManager.getHomeDir())
     }
   }
 
-  override fun loadProductInfo(ideHome: Path): ProductInfoData? {
-    return try {
-      if (SystemInfo.isMac && ideHome.name != "Contents" && ideHome.resolve("Contents").isDirectory()) {
-        tryLoadingProductInfo(ideHome.resolve("Contents"))
-      }
-      else {
-        tryLoadingProductInfo(ideHome)
-      }
+  override fun loadProductInfo(ideHome: Path): ProductInfoData? = try {
+    if (OS.CURRENT == OS.macOS && ideHome.name != "Contents" && ideHome.resolve("Contents").isDirectory()) {
+      tryLoadingProductInfo(ideHome.resolve("Contents"))
     }
-    catch (e: Exception) {
-      logger<IdeProductInfoImpl>().warn("Cannot load product info from $ideHome", e)
-      null
+    else {
+      tryLoadingProductInfo(ideHome)
     }
+  }
+  catch (e: Exception) {
+    logger<IdeProductInfoImpl>().warn("Cannot load product info from ${ideHome}", e)
+    null
   }
 
   @OptIn(ExperimentalSerializationApi::class)
   private fun tryLoadingProductInfo(ideHome: Path): ProductInfoData {
     val productInfoRelativePath =
-      //cross-platform distribution used for plugin development has the product-info.json file at the root even on macOS
-      if (SystemInfo.isMac && ideHome.resolve(ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC).exists()) ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC
+      // the cross-platform distribution used for plugin development has the product-info.json file at the root even on macOS
+      if (OS.CURRENT == OS.macOS && ideHome.resolve(ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC).exists()) ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC
       else ApplicationEx.PRODUCT_INFO_FILE_NAME
     val productInfoPath = ideHome.resolve(productInfoRelativePath)
     return productInfoPath.inputStream().buffered().use {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.idea.AppMode;
@@ -41,8 +41,8 @@ public final class ApplicationNamesInfo {
       }
 
       if (module != null) {
-        Path file = Paths.get(PathManager.getHomePath() + "/out/classes/production/" + module + "/idea/" +
-                              (prefix.equals("idea") ? "" : prefix) + "ApplicationInfo.xml");
+        String resource = (prefix.equals("idea") ? "" : prefix) + "ApplicationInfo.xml";
+        Path file = PathManager.getHomeDir().resolve("out/classes/production/" + module + "/idea/" + resource);
         try {
           return XmlDomReader.readXmlAsModel(Files.newInputStream(file));
         }
@@ -143,7 +143,7 @@ public final class ApplicationNamesInfo {
     return result;
   }
 
-  private ApplicationNamesInfo(@NotNull XmlElement rootElement) {
+  private ApplicationNamesInfo(XmlElement rootElement) {
     XmlElement names = rootElement.getChild("names");
     assert names != null;
     myProductName = names.getAttributeValue("product");
