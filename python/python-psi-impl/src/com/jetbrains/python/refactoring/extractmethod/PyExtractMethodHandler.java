@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -21,9 +20,6 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyExpressionStatement;
-import com.jetbrains.python.psi.PyKeywordArgument;
-import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -102,7 +98,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
       }
       final PyCodeFragment fragment;
       try {
-        fragment = PyCodeFragmentUtil.createCodeFragment(owner, element1, element2);
+        fragment = PyCodeFragmentUtil.createCodeFragment(owner, element1, element2, null);
       }
       catch (CannotCreateCodeFragmentException e) {
         CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(),
@@ -121,7 +117,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
       }
       final PyCodeFragment fragment;
       try {
-        fragment = PyCodeFragmentUtil.createCodeFragment(owner, element1, element2);
+        fragment = PyCodeFragmentUtil.createCodeFragment(owner, element1, element2, expression);
       }
       catch (CannotCreateCodeFragmentException e) {
         CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(),
