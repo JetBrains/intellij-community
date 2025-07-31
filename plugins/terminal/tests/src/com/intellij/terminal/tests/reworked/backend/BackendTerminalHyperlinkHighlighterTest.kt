@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.backend
+package com.intellij.terminal.tests.reworked.backend
 
 import com.intellij.execution.filters.ConsoleFilterProvider
 import com.intellij.execution.filters.Filter
@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.backend.hyperlinks.BackendTerminalHyperlinkFacade
 import com.intellij.terminal.session.*
+import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -22,7 +23,6 @@ import kotlinx.coroutines.flow.*
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.updateContent
-import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4

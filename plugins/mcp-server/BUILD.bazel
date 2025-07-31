@@ -149,7 +149,6 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//plugins/terminal/backend",
-    "//plugins/terminal/backend:backend_test_lib",
     "//plugins/sh/core",
     "//platform/util/jdom",
   ],

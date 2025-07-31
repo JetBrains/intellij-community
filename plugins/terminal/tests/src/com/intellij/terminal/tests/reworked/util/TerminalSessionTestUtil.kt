@@ -1,4 +1,4 @@
-package com.intellij.terminal.backend.util
+package com.intellij.terminal.tests.reworked.util
 
 import com.google.common.base.Ascii
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
@@ -6,9 +6,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.terminal.backend.TerminalSessionsManager
 import com.intellij.terminal.backend.createTerminalSession
 import com.intellij.terminal.backend.startTerminalProcess
-import com.intellij.terminal.backend.util.TerminalSessionTestUtil.createShellCommand
 import com.intellij.terminal.session.TerminalOutputEvent
 import com.intellij.terminal.session.TerminalSession
+import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil.createShellCommand
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.asDisposable
 import com.jediterm.core.util.TermSize
@@ -19,7 +19,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.TerminalEngine
-import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import java.nio.file.Files
 import java.nio.file.Path
@@ -67,7 +66,7 @@ internal object TerminalSessionTestUtil {
       createTerminalSession(project, ttyConnector, configuredOptions, JBTerminalSystemSettingsProvider(), coroutineScope)
     }
     else {
-      val manager = TerminalSessionsManager.getInstance()
+      val manager = TerminalSessionsManager.Companion.getInstance()
       val sessionStartResult = manager.startSession(allOptions, project, coroutineScope)
       manager.getSession(sessionStartResult.sessionId)!!
     }

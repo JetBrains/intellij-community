@@ -7,6 +7,7 @@ import com.intellij.terminal.session.dto.toDto
 import com.jediterm.terminal.model.TerminalLine
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.model.TextBufferChangesListener
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
 import org.jetbrains.plugins.terminal.block.session.collectLines
 import org.jetbrains.plugins.terminal.block.session.scraper.SimpleStringCollector
@@ -16,7 +17,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
 import kotlin.time.TimeSource
 
-internal class TerminalContentChangesTracker(
+@ApiStatus.Internal
+class TerminalContentChangesTracker(
   private val textBuffer: TerminalTextBuffer,
   private val discardedHistoryTracker: TerminalDiscardedHistoryTracker,
 ) {
@@ -136,7 +138,8 @@ internal class TerminalContentChangesTracker(
   }
 }
 
-internal data class TerminalContentUpdate(
+@ApiStatus.Internal
+data class TerminalContentUpdate(
   val text: String,
   val styles: List<StyleRangeDto>,
   val startLineLogicalIndex: Long,

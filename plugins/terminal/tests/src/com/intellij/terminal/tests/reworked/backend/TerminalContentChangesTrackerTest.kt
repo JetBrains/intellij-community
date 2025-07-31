@@ -1,11 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.backend
+package com.intellij.terminal.tests.reworked.backend
 
-import com.intellij.terminal.backend.util.scrollDown
-import com.intellij.terminal.backend.util.write
+import com.intellij.terminal.backend.TerminalContentChangesTracker
+import com.intellij.terminal.backend.TerminalContentUpdate
+import com.intellij.terminal.backend.TerminalDiscardedHistoryTracker
+import com.intellij.terminal.tests.reworked.util.scrollDown
+import com.intellij.terminal.tests.reworked.util.write
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
+import junit.framework.TestCase
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -28,7 +32,7 @@ internal class TerminalContentChangesTrackerTest : BasePlatformTestCase() {
       ABCDE
     """.trimIndent()
     assertEquals(expectedText, update.text)
-    assertEquals(0, update.startLineLogicalIndex)
+    TestCase.assertEquals(0, update.startLineLogicalIndex)
   }
 
   @Test
@@ -141,7 +145,7 @@ internal class TerminalContentChangesTrackerTest : BasePlatformTestCase() {
       sixth
     """.trimIndent()
     assertEquals(expectedText, update.text)
-    assertEquals(0, update.startLineLogicalIndex)
+    TestCase.assertEquals(0, update.startLineLogicalIndex)
   }
 
   @Test
@@ -168,7 +172,7 @@ internal class TerminalContentChangesTrackerTest : BasePlatformTestCase() {
     val update = contentChangesTracker.getContentUpdate() ?: error("Update is null")
 
     assertEquals("newFirst", update.text)
-    assertEquals(0, update.startLineLogicalIndex)
+    TestCase.assertEquals(0, update.startLineLogicalIndex)
   }
 
   @Suppress("SameParameterValue")

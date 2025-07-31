@@ -4,9 +4,11 @@ package com.intellij.terminal.backend
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-internal interface TerminalDisplayListener : EventListener {
+@ApiStatus.Internal
+interface TerminalDisplayListener : EventListener {
   fun cursorPositionChanged(x: Int, y: Int) {}
 
   fun cursorVisibilityChanged(isVisible: Boolean) {}

@@ -1,8 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.backend
+package com.intellij.terminal.tests.reworked.backend
 
-import com.intellij.terminal.backend.util.write
+import com.intellij.terminal.backend.*
 import com.intellij.terminal.session.TerminalCursorPositionChangedEvent
+import com.intellij.terminal.tests.reworked.util.write
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.ui.settings.DefaultSettingsProvider

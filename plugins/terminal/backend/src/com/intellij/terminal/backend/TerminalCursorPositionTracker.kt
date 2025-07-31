@@ -4,10 +4,12 @@ package com.intellij.terminal.backend
 import com.intellij.terminal.session.TerminalCursorPositionChangedEvent
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.util.CharUtils
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.ui.getLengthWithoutDwc
 import org.jetbrains.plugins.terminal.block.ui.withLock
 
-internal class TerminalCursorPositionTracker(
+@ApiStatus.Internal
+class TerminalCursorPositionTracker(
   private val textBuffer: TerminalTextBuffer,
   private val discardedHistoryTracker: TerminalDiscardedHistoryTracker,
   terminalDisplay: TerminalDisplayImpl,

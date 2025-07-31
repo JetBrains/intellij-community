@@ -21,11 +21,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
 
-internal fun startTerminalProcess(
+@ApiStatus.Internal
+fun startTerminalProcess(
   project: Project,
   options: ShellStartupOptions,
 ): Pair<TtyConnector, ShellStartupOptions> {
@@ -43,8 +45,9 @@ internal fun startTerminalProcess(
  * And if the process is terminated on its own, for example, if user executes `exit` or press Ctrl+D,
  * then the [coroutineScope] will be canceled as well.
  */
+@ApiStatus.Internal
 @OptIn(AwaitCancellationAndInvoke::class)
-internal fun createTerminalSession(
+fun createTerminalSession(
   project: Project,
   ttyConnector: TtyConnector,
   options: ShellStartupOptions,

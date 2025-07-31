@@ -4,8 +4,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.terminal.session.TerminalSession
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 
-internal interface BackendTerminalSession : TerminalSession {
+@ApiStatus.Internal
+interface BackendTerminalSession : TerminalSession {
   /**
    * Scope in which all session-related activities are executed.
    * The lifecycle of the session is bound to it.

@@ -1,10 +1,10 @@
-package com.intellij.terminal.backend
+package com.intellij.terminal.tests.reworked.backend
 
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.terminal.backend.util.TerminalSessionTestUtil
-import com.intellij.terminal.backend.util.TerminalSessionTestUtil.ENTER_BYTES
-import com.intellij.terminal.backend.util.TerminalSessionTestUtil.awaitOutputEvent
 import com.intellij.terminal.session.*
+import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil
+import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil.ENTER_BYTES
+import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil.awaitOutputEvent
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain

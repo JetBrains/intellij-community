@@ -9,15 +9,17 @@ import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
+@ApiStatus.Internal
 @OptIn(AwaitCancellationAndInvoke::class)
 @Service(Service.Level.APP)
-internal class TerminalSessionsManager {
+class TerminalSessionsManager {
   private val sessionsMap = ConcurrentHashMap<TerminalSessionId, BackendTerminalSession>()
 
   /**
@@ -81,7 +83,8 @@ internal class TerminalSessionsManager {
   }
 }
 
-internal data class TerminalSessionStartResult(
+@ApiStatus.Internal
+data class TerminalSessionStartResult(
   val configuredOptions: ShellStartupOptions,
   val sessionId: TerminalSessionId,
   val ttyConnector: ObservableTtyConnector,

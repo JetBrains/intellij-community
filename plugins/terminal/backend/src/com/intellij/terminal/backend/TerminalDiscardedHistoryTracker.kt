@@ -4,8 +4,10 @@ package com.intellij.terminal.backend
 import com.jediterm.terminal.model.TerminalLine
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.model.TextBufferChangesListener
+import org.jetbrains.annotations.ApiStatus
 
-internal class TerminalDiscardedHistoryTracker(private val textBuffer: TerminalTextBuffer) {
+@ApiStatus.Internal
+class TerminalDiscardedHistoryTracker(private val textBuffer: TerminalTextBuffer) {
   private var discardedLogicalLinesCount: Long = 0L
 
   fun getDiscardedLogicalLinesCount(): Long {

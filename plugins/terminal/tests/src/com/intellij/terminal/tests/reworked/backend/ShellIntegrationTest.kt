@@ -1,15 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.backend
+package com.intellij.terminal.tests.reworked.backend
 
 import com.google.common.base.Ascii
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.terminal.backend.util.TerminalSessionTestUtil
-import com.intellij.terminal.backend.util.TerminalSessionTestUtil.ENTER_BYTES
-import com.intellij.terminal.backend.util.TerminalSessionTestUtil.awaitOutputEvent
 import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.toState
 import com.intellij.terminal.session.dto.toStyleRange
+import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil
+import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil.ENTER_BYTES
+import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil.awaitOutputEvent
+import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.testFramework.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jediterm.core.util.TermSize
@@ -18,7 +19,6 @@ import kotlinx.coroutines.channels.SendChannel
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.ShellStartupOptions
-import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil
 import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test

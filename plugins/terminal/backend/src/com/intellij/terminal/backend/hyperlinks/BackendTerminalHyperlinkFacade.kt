@@ -13,12 +13,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 
-internal class BackendTerminalHyperlinkFacade(
+@ApiStatus.Internal
+class BackendTerminalHyperlinkFacade(
   private val project: Project,
   coroutineScope: CoroutineScope,
   private val outputModel: TerminalOutputModel,
@@ -61,7 +63,7 @@ internal class BackendTerminalHyperlinkFacade(
   fun dumpState(): TerminalHyperlinksModelState = model.dumpState()
 
   @TestOnly
-  internal suspend fun awaitTaskCompletion() {
+  suspend fun awaitTaskCompletion() {
     highlighter.awaitTaskCompletion()
   }
 
