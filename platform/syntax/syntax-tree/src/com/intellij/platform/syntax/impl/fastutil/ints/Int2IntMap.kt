@@ -5,10 +5,10 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface Int2IntMap {
-    val size: Int
-    val keys: IntIterator
-    val values: IntIterator
-    val entries: Iterator<Int2IntEntry>
+  val size: Int
+  val keys: IntIterator
+  val values: IntIterator
+  val entries: Iterator<Int2IntEntry>
 
-    operator fun get(key: Int): Int
+  operator fun get(key: Int): Int
 }

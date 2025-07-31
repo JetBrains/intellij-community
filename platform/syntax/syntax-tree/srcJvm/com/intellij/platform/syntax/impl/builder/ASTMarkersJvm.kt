@@ -5,21 +5,21 @@ import fleet.util.multiplatform.Actual
 import java.lang.ref.SoftReference
 
 private class ChameleonRefImpl(
-    @Volatile private var ref: SoftReference<AstMarkersChameleon>? = null
+  @Volatile private var ref: SoftReference<AstMarkersChameleon>? = null,
 ) : ChameleonRef {
-    override val value: AstMarkersChameleon?
-        get() = ref?.get()
+  override val value: AstMarkersChameleon?
+    get() = ref?.get()
 
-    override fun set(value: AstMarkersChameleon) {
-        ref = SoftReference(value)
+  override fun set(value: AstMarkersChameleon) {
+    ref = SoftReference(value)
+  }
+
+  override fun realize(func: () -> AstMarkersChameleon): AstMarkersChameleon =
+    ref?.get() ?: synchronized(this) {
+      ref?.get() ?: func().also { ref = SoftReference(it) }
     }
 
-    override fun realize(func: () -> AstMarkersChameleon): AstMarkersChameleon =
-        ref?.get() ?: synchronized(this) {
-            ref?.get() ?: func().also { ref = SoftReference(it) }
-        }
-
-    override fun toString(): String = ref?.toString() ?: "null"
+  override fun toString(): String = ref?.toString() ?: "null"
 }
 
 /**

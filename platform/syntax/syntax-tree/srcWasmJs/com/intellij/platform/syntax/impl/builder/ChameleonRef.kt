@@ -4,17 +4,17 @@ package com.intellij.platform.syntax.impl.builder
 import fleet.util.multiplatform.Actual
 
 private class ChameleonRefImpl(private var ref: AstMarkersChameleon? = null) : ChameleonRef {
-    override val value: AstMarkersChameleon?
-        get() = ref
+  override val value: AstMarkersChameleon?
+    get() = ref
 
-    override fun set(value: AstMarkersChameleon) {
-        ref = value
-    }
+  override fun set(value: AstMarkersChameleon) {
+    ref = value
+  }
 
-    override fun realize(func: () -> AstMarkersChameleon): AstMarkersChameleon =
-        ref ?: func().also { ref = it }
+  override fun realize(func: () -> AstMarkersChameleon): AstMarkersChameleon =
+    ref ?: func().also { ref = it }
 
-    override fun toString(): String = ref?.toString() ?: "null"
+  override fun toString(): String = ref?.toString() ?: "null"
 }
 
 /**
