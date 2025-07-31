@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.idea.inspections.coroutines
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
@@ -18,7 +17,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 
-class DeferredResultUnusedInspection(@JvmField var standardOnly: Boolean = false) : AbstractKotlinInspection() {
+internal class DeferredResultUnusedInspection(@JvmField var standardOnly: Boolean = false) : AbstractKotlinInspection() {
     private fun isExpressionApplicable(expression: KtExpression): Boolean =
         expression is KtCallExpression && (!standardOnly || expression.calleeExpression?.text in shortNames)
 
@@ -64,8 +63,8 @@ class DeferredResultUnusedInspection(@JvmField var standardOnly: Boolean = false
         holder.registerProblem(expression.calleeExpression ?: expression, KotlinBundle.message("deferred.result.is.never.used"))
     })
 
-  override fun getOptionsPane(): OptPane = pane(
-    checkbox("standardOnly", KotlinBundle.message("reports.only.function.calls.from.kotlinx.coroutines")))
+    override fun getOptionsPane(): OptPane = pane(
+        checkbox("standardOnly", KotlinBundle.message("reports.only.function.calls.from.kotlinx.coroutines")))
 }
 
 private const val COROUTINE_PACKAGE = "kotlinx.coroutines"
