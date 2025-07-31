@@ -2,11 +2,15 @@
 package com.intellij.xdebugger.impl.frame
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.AutoScrollToSourceHandler
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation
+import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.impl.actions.XDebuggerActions.THREADS_VIEW_POPUP_GROUP
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
@@ -124,9 +128,23 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
 
   class FrameValue(val executionStack: XExecutionStack, val frame : XStackFrame) : XValue() {
     override fun computePresentation(node: XValueNode, place: XValuePlace) {
-      frame.customizeTextPresentation { text, attrs -> // todo use TextAttributes in node repr
-        node.setPresentation(null, XRegularValuePresentation(text, null, ""), false)
-      }
+      val component = SimpleColoredComponent()
+      frame.customizeTextPresentation(component)
+      node.setPresentation(component.icon, object : XValuePresentation() {
+        override fun getSeparator(): @NlsSafe String = ""
+        override fun renderValue(renderer: XValueTextRenderer) {
+          val i = component.iterator()
+          while (i.hasNext()) {
+            i.next()
+            val text = i.fragment
+            when (i.textAttributes) {
+              SimpleTextAttributes.GRAYED_ATTRIBUTES -> renderer.renderComment(text)
+              SimpleTextAttributes.ERROR_ATTRIBUTES -> renderer.renderError(text)
+              SimpleTextAttributes.REGULAR_ATTRIBUTES -> renderer.renderValue(text)
+            }
+          }
+        }
+      }, false)
     }
   }
 
