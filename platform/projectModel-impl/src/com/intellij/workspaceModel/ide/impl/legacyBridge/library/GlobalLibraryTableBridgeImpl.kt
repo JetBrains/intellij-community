@@ -80,8 +80,8 @@ class GlobalLibraryTableBridgeImpl(val eelMachine: EelMachine) : GlobalLibraryTa
 
   private fun createEntitySourceForGlobalLibrary(): EntitySource {
     val virtualFileUrlManager = GlobalWorkspaceModel.getInstance(eelMachine).getVirtualFileUrlManager()
-    val globalLibrariesFile = virtualFileUrlManager.getOrCreateFromUrl(PathManager.getOptionsFile(JpsGlobalEntitiesSerializers.GLOBAL_LIBRARIES_FILE_NAME).absolutePath)
-    return JpsGlobalFileEntitySource(globalLibrariesFile)
+    val globalLibrariesFile = PathManager.getOptionsDir().resolve(JpsGlobalEntitiesSerializers.GLOBAL_LIBRARIES_FILE_NAME + PathManager.DEFAULT_EXT)
+    return JpsGlobalFileEntitySource(virtualFileUrlManager.getOrCreateFromUrl(globalLibrariesFile.toAbsolutePath().toString()))
   }
 
   companion object {

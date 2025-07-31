@@ -59,7 +59,7 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
       myHostWorkingDirectory = buildDirectory.toString();
       myWorkingDirectory = myDistribution.getWslPath(myHostWorkingDirectory);
       myClasspathDirectory = myWorkingDirectory + "/jps-" + ApplicationInfo.getInstance().getBuild().asString();
-      myHostClasspathDirectory = Paths.get(myDistribution.getWindowsPath(myClasspathDirectory));
+      myHostClasspathDirectory = Path.of(myDistribution.getWindowsPath(myClasspathDirectory));
       if (ApplicationInfo.getInstance().getBuild().isSnapshot() && !CURRENT_SNAPSHOT_COPIED) {
         //noinspection AssignmentToStaticFieldFromInstanceMethod
         CURRENT_SNAPSHOT_COPIED = true;
@@ -95,7 +95,7 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
       if (!builder.isEmpty()) {
         builder.append(":");
       }
-      Path path = Paths.get(pathName);
+      Path path = Path.of(pathName);
       if (myClasspathDirectory != null && myHostClasspathDirectory != null) {
         Path targetPath = copyProjectAgnosticPathToTargetIfRequired(path);
         if (!myReportedProgress && !targetPath.equals(path) && myProgressIndicator != null) {
@@ -144,7 +144,7 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
 
   @Override
   public @NotNull Path getHostWorkingDirectory() {
-    return Paths.get(myHostWorkingDirectory);
+    return Path.of(myHostWorkingDirectory);
   }
 
   @Override
@@ -182,12 +182,12 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
   }
 
   public static @Nullable Path getWslBuildSystemDirectory(WSLDistribution distribution) {
-    String pathsSelector = PathManager.getPathsSelector();
-    String wslUserHome = distribution.getUserHome();
+    var pathsSelector = PathManager.getPathsSelector();
+    var wslUserHome = distribution.getUserHome();
     if (wslUserHome == null) return null;
-    String windowsUserHomePath = distribution.getWindowsPath(wslUserHome);
+    var windowsUserHomePath = distribution.getWindowsPath(wslUserHome);
     if (pathsSelector == null) pathsSelector = "." + ApplicationNamesInfo.getInstance().getScriptName();
-    String workingDirectory = PathManager.getDefaultSystemPathFor(OS.Linux, windowsUserHomePath, pathsSelector)+ "/" + BuildManager.SYSTEM_ROOT;
-    return Paths.get(workingDirectory);
+    var workingDirectory = PathManager.getDefaultSystemPathFor(OS.Linux, windowsUserHomePath, pathsSelector) + '/' + BuildManager.SYSTEM_ROOT;
+    return Path.of(workingDirectory);
   }
 }

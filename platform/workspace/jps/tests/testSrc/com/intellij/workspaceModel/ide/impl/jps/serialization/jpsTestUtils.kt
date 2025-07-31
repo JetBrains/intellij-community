@@ -21,7 +21,6 @@ import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
@@ -52,7 +51,6 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.function.Supplier
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.io.path.Path
 
 internal val sampleDirBasedProjectFile = File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject")
 internal val sampleFileBasedProjectFile = File(PathManagerEx.getCommunityHomePath(),
@@ -437,9 +435,9 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
                                        parentDisposable: Disposable,
                                        action: (JpsGlobalFileEntitySource, JpsGlobalFileEntitySource) -> Unit) {
   val stateStore = ApplicationManager.getApplication().stateStore
-  val oldConfigPath = PathManager.getConfigPath()
+  val oldConfigDir = PathManager.getConfigDir()
   try {
-    PathManager.setExplicitConfigPath(testDir.absolutePath)
+    PathManager.setExplicitConfigPath(testDir.toPath())
     stateStore.setPath(testDir.toPath())
     stateStore.clearCaches()
 
@@ -487,8 +485,8 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
     }
   }
   finally {
-    PathManager.setExplicitConfigPath(oldConfigPath)
-    stateStore.setPath(Path(oldConfigPath))
+    PathManager.setExplicitConfigPath(oldConfigDir)
+    stateStore.setPath(oldConfigDir)
     stateStore.clearCaches()
   }
 }

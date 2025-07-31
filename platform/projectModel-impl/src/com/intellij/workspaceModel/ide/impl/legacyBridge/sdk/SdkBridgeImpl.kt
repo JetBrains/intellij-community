@@ -225,9 +225,8 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
 
     fun createEntitySourceForSdk(): EntitySource {
       val virtualFileUrlManager = getVirtualFileUrlManager()
-      val globalLibrariesFile = virtualFileUrlManager.getOrCreateFromUrl(
-        PathManager.getOptionsFile(JpsGlobalEntitiesSerializers.SDK_FILE_NAME).absolutePath)
-      return JpsGlobalFileEntitySource(globalLibrariesFile)
+      val sdkFile = PathManager.getOptionsDir().resolve(JpsGlobalEntitiesSerializers.SDK_FILE_NAME + PathManager.DEFAULT_EXT)
+      return JpsGlobalFileEntitySource(virtualFileUrlManager.getOrCreateFromUrl(sdkFile.toAbsolutePath().toString()))
     }
   }
 }

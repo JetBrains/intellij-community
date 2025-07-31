@@ -21,6 +21,36 @@ com.intellij.openapi.Disposable$Parent
 - a:beforeTreeDispose():V
 a:com.intellij.openapi.application.AccessToken
 - s:compound(java.util.List):com.intellij.openapi.application.AccessToken
+f:com.intellij.openapi.application.PathManager
+- s:findBinFile(java.lang.String):java.nio.file.Path
+- s:findBinFileWithException(java.lang.String):java.nio.file.Path
+- s:getBinDir():java.nio.file.Path
+- s:getBinPath():java.lang.String
+- s:getCommonDataPath():java.nio.file.Path
+- s:getConfigDir():java.nio.file.Path
+- s:getConfigPath():java.lang.String
+- s:getHomeDir():java.nio.file.Path
+- s:getHomeDir(Z):java.nio.file.Path
+- s:getHomePath():java.lang.String
+- s:getHomePath(Z):java.lang.String
+- s:getLibDir():java.nio.file.Path
+- s:getLibPath():java.lang.String
+- s:getLogDir():java.nio.file.Path
+- s:getLogPath():java.lang.String
+- s:getOptionsDir():java.nio.file.Path
+- s:getOptionsFile(java.lang.String):java.io.File
+- s:getOptionsPath():java.lang.String
+- s:getPluginTempPath():java.lang.String
+- s:getPluginsDir():java.nio.file.Path
+- s:getPluginsPath():java.lang.String
+- s:getScratchDir():java.nio.file.Path
+- s:getScratchPath():java.lang.String
+- s:getSystemDir():java.nio.file.Path
+- s:getSystemPath():java.lang.String
+- s:getTempDir():java.nio.file.Path
+- s:getTempPath():java.lang.String
+- s:isUnderHomeDirectory(java.lang.String):Z
+- s:isUnderHomeDirectory(java.nio.file.Path):Z
 com.intellij.openapi.diagnostic.ExceptionWithAttachments
 - a:getAttachments():com.intellij.openapi.diagnostic.Attachment[]
 com.intellij.openapi.diagnostic.Logger$Factory
