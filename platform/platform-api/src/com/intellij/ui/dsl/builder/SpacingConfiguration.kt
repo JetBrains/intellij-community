@@ -46,6 +46,11 @@ interface SpacingConfiguration {
   val verticalComponentGap: Int
 
   /**
+   * Vertical gap after component-related comments placed below the component
+   */
+  val verticalCommentBottomGap: Int
+
+  /**
    * Vertical small gap between unrelated settings
    */
   val verticalSmallGap: Int
@@ -83,7 +88,9 @@ open class EmptySpacingConfiguration : SpacingConfiguration {
   override val horizontalCommentGap: Int = 0
   override val horizontalIndent: Int = 0
   override val horizontalToggleButtonIndent: Int = 0
+
   override val verticalComponentGap: Int = 0
+  override val verticalCommentBottomGap: Int = 0
   override val verticalSmallGap: Int = 0
   override val verticalMediumGap: Int = 0
   override val buttonGroupHeaderBottomGap: Int = 0
@@ -101,6 +108,7 @@ open class IntelliJSpacingConfiguration : SpacingConfiguration {
   override val horizontalToggleButtonIndent: Int = calculateHorizontalIndent()
 
   override val verticalComponentGap: Int = 6
+  override val verticalCommentBottomGap: Int = 2
   override val verticalSmallGap: Int = 8
   override val verticalMediumGap: Int = 20
   override val buttonGroupHeaderBottomGap: Int = 2

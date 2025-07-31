@@ -338,6 +338,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
       }
     }
 
+    builder.setRowGaps(UnscaledGapsY(bottom = spacingConfiguration.verticalCommentBottomGap))
     buildRow(columnsAndComments, maxColumnsCount, VerticalAlign.TOP, builder)
   }
 
