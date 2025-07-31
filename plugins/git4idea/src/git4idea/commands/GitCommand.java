@@ -46,6 +46,7 @@ public final class GitCommand {
   public static final GitCommand LS_REMOTE = read("ls-remote");
   public static final GitCommand MERGE = write("merge");
   public static final GitCommand MERGE_BASE = read("merge-base");
+  public static final GitCommand MERGE_TREE = read("merge-tree");
   public static final GitCommand MV = write("mv");
   public static final GitCommand PULL = write("pull");
   public static final GitCommand PUSH = read("push"); // push is a read-command, because it doesn't modify the index. We still benefit from COMMIT & Co being write-commands, preventing HEAD from moving.

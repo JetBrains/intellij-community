@@ -30,6 +30,8 @@ internal class GitObjectRepository(val repository: GitRepository) {
 
   private val objectCache: MutableMap<Oid, GitObject> = HashMap()
 
+  val emptyTree by lazy { createTree(emptyMap()) }
+
   fun findObjectFromCache(oid: Oid): GitObject? {
     return objectCache[oid]
   }
@@ -110,7 +112,7 @@ internal class GitObjectRepository(val repository: GitRepository) {
     treeOid: Oid,
     parentsOids: List<Oid>,
     message: ByteArray,
-    author: GitObject.Commit.Author,
+    author: GitObject.Commit.Author? = null,
   ): Oid {
     LOG.debug("Starting commitTree operation: treeOid=$treeOid, parents=${parentsOids}")
 
@@ -128,9 +130,11 @@ internal class GitObjectRepository(val repository: GitRepository) {
     val handler = GitLineHandler(repository.project, repository.root, GitCommand.COMMIT_TREE).apply {
       setSilent(true)
       parentsOids.forEach { addParameters("-p", it.hex()) }
-      addCustomEnvironmentVariable("GIT_AUTHOR_NAME", author.name)
-      addCustomEnvironmentVariable("GIT_AUTHOR_EMAIL", author.email)
-      addCustomEnvironmentVariable("GIT_AUTHOR_DATE", author.timestamp)
+      if (author != null) {
+        addCustomEnvironmentVariable("GIT_AUTHOR_NAME", author.name)
+        addCustomEnvironmentVariable("GIT_AUTHOR_EMAIL", author.email)
+        addCustomEnvironmentVariable("GIT_AUTHOR_DATE", author.timestamp)
+      }
       if (isGpgSignEnabledCached(repository)) {
         addParameters("--gpg-sign")
       }
@@ -206,8 +210,8 @@ internal class GitObjectRepository(val repository: GitRepository) {
     }
   }
 
-  /*
-  Object should be persisted on disk
+  /**
+   * Object should be persisted on disk
    */
   @RequiresBackgroundThread
   private fun fetchObjectType(oid: Oid): GitObjectType {

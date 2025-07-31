@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitUtil
+import git4idea.i18n.GitBundle
 import git4idea.inMemory.GitObjectRepository
 import git4idea.inMemory.findCommitsRange
 import git4idea.inMemory.objects.GitObject
@@ -28,15 +29,16 @@ internal abstract class GitInMemoryCommitEditingOperation(
   protected lateinit var initialHeadPosition: String
 
   protected val baseToHeadCommitsRange: List<GitObject.Commit> by lazy {
-    objectRepo.findCommitsRange(baseCommitMetadata, initialHeadPosition)
+    objectRepo.findCommitsRange(baseCommitMetadata.id.asString(), initialHeadPosition)
   }
 
-  suspend fun execute(): GitCommitEditingOperationResult {
+  suspend fun execute(showFailureNotification: Boolean = true): GitCommitEditingOperationResult {
     objectRepo.repository.update()
     initialHeadPosition = objectRepo.repository.currentRevision!!
 
     try {
       val result = editCommits()
+      assertCurrentRevMatchesInitialHead()
       GitUtil.updateHead(objectRepo.repository,
                          result.newHead.toHash(),
                          "$reflogMessage $REFLOG_MESSAGE_SUFFIX")
@@ -47,14 +49,15 @@ internal abstract class GitInMemoryCommitEditingOperation(
                                                       result.newHead.hex(), result.commitToFocus?.toHash())
     }
     catch (e: VcsException) {
-      notifyOperationFailed(e)
+      if (showFailureNotification) notifyOperationFailed(e)
       return GitCommitEditingOperationResult.Incomplete
     }
   }
 
   protected abstract suspend fun editCommits(): CommitEditingResult
-  protected abstract val reflogMessage: String
-  protected abstract val failureTitle: String
+
+  protected abstract val reflogMessage: @NonNls String
+  protected abstract val failureTitle: @NonNls String
 
   private fun notifyOperationFailed(exception: VcsException) {
     VcsNotifier.getInstance(objectRepo.repository.project).notifyError(
@@ -68,4 +71,14 @@ internal abstract class GitInMemoryCommitEditingOperation(
     val newHead: Oid,
     val commitToFocus: Oid? = null,
   )
+
+  protected fun assertCurrentRevMatchesInitialHead(performUpdate: Boolean = true) {
+    if (performUpdate) {
+      objectRepo.repository.update()
+    }
+
+    if (objectRepo.repository.currentRevision!! != initialHeadPosition) {
+      throw VcsException(GitBundle.message("in.memory.rebase.fail.head.move"))
+    }
+  }
 }

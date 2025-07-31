@@ -2,9 +2,11 @@
 package git4idea.rebase
 
 import com.intellij.openapi.util.registry.Registry
+import git4idea.GitDisposable
 import git4idea.i18n.GitBundle
 import git4idea.rebase.interactive.interactivelyRebaseUsingLog
 import git4idea.rebase.interactive.startInteractiveRebase
+import kotlinx.coroutines.launch
 
 internal class GitInteractiveRebaseAction : GitSingleCommitEditingAction() {
   override val prohibitRebaseDuringRebasePolicy = ProhibitRebaseDuringRebasePolicy.Prohibit(
@@ -15,11 +17,13 @@ internal class GitInteractiveRebaseAction : GitSingleCommitEditingAction() {
     val commit = commitEditingData.selectedCommit
     val repository = commitEditingData.repository
 
-    if (Registry.`is`("git.interactive.rebase.collect.entries.using.log")) {
-      interactivelyRebaseUsingLog(repository, commit, commitEditingData.logData)
-    }
-    else {
-      startInteractiveRebase(repository, commit)
+    GitDisposable.getInstance(repository.project).coroutineScope.launch {
+      if (Registry.`is`("git.interactive.rebase.collect.entries.using.log")) {
+        interactivelyRebaseUsingLog(repository, commit, commitEditingData.logData)
+      }
+      else {
+        startInteractiveRebase(repository, commit)
+      }
     }
   }
 

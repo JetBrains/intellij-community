@@ -12,6 +12,7 @@ import git4idea.i18n.GitBundle
 import git4idea.inMemory.GitObjectRepository
 import git4idea.inMemory.objects.GitObject
 import git4idea.inMemory.chainCommits
+import git4idea.inMemory.getTreeFromEntry
 import git4idea.inMemory.rebase.log.GitInMemoryCommitEditingOperation
 import org.jetbrains.annotations.NonNls
 
@@ -24,8 +25,6 @@ internal class GitExtractSelectedChangesOperation(
   companion object {
     private val LOG = logger<GitExtractSelectedChangesOperation>()
   }
-
-  private val emptyTree by lazy { objectRepo.createTree(emptyMap()) }
 
   @NonNls
   override val reflogMessage: String = "extract changes from $targetCommitMetadata"
@@ -99,8 +98,8 @@ internal class GitExtractSelectedChangesOperation(
     currentEntry: GitObject.Tree.Entry?,
     matchingPaths: Set<FilePath>,
   ): GitObject.Tree.Entry? {
-    val nextTree = getTreeFromEntry(currentEntry)
-    val nextParentTree = getTreeFromEntry(parentEntry)
+    val nextTree = objectRepo.getTreeFromEntry(currentEntry)
+    val nextParentTree = objectRepo.getTreeFromEntry(parentEntry)
     val nextPaths = advancePaths(matchingPaths)
     val newSubtree = splitTreeByPaths(nextParentTree, nextTree, nextPaths)
     val hasDirectFileMatch = matchingPaths.any { it.componentCount == 1 }
@@ -139,12 +138,6 @@ internal class GitExtractSelectedChangesOperation(
     if (newSubtree.entries.isEmpty()) return null
 
     return GitObject.Tree.Entry(GitObject.Tree.FileMode.DIR, newSubtree.oid)
-  }
-
-  private fun getTreeFromEntry(entry: GitObject.Tree.Entry?): GitObject.Tree {
-    return entry?.takeIf { it.mode == GitObject.Tree.FileMode.DIR }
-             ?.let { objectRepo.findTree(it.oid) }
-           ?: emptyTree
   }
 
   private fun validateNoSubmodules(vararg entries: GitObject.Tree.Entry?) {
