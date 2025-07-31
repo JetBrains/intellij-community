@@ -28,6 +28,10 @@ import java.util.zip.InflaterInputStream;
 import static org.jetbrains.jps.util.Iterators.*;
 
 public class ConfigurationState {
+  // Update the version value whenever a serialization format changes.
+  // This will help to avoid multiple "failed to load configuration" error messages
+  private static final int VERSION = 1;
+
   private static final ConfigurationState EMPTY = new ConfigurationState(new PathSourceMapper(), NodeSourceSnapshot.EMPTY, NodeSourceSnapshot.EMPTY, Map.of());
   
   private static final Set<CLFlags> ourTrackedFlags = EnumSet.of(
@@ -76,9 +80,17 @@ public class ConfigurationState {
     myPathMapper = pathMapper;
     try (var stream = new DataInputStream(new InflaterInputStream(Files.newInputStream(savedState, StandardOpenOption.READ)))) {
       GraphDataInput in = GraphDataInputImpl.wrap(stream);
-      mySourcesSnapshot = new SourceSnapshotImpl(in, PathSource::new);
-      myLibsSnapshot = new SourceSnapshotImpl(in, PathSource::new);
-      myFlagsDigest = in.readLong();
+      int version = in.readInt();
+      if (version == VERSION) {
+        mySourcesSnapshot = new SourceSnapshotImpl(in, PathSource::new);
+        myLibsSnapshot = new SourceSnapshotImpl(in, PathSource::new);
+        myFlagsDigest = in.readLong();
+      }
+      else { // version differs
+        mySourcesSnapshot = NodeSourceSnapshot.EMPTY;
+        myLibsSnapshot = NodeSourceSnapshot.EMPTY;
+        myFlagsDigest = buildFlagsDigest(Map.of());
+      }
     }
   }
 
@@ -86,6 +98,7 @@ public class ConfigurationState {
     Path snapshotPath = DataPaths.getConfigStateStoreFile(context);
     try (var stream = new DataOutputStream(new DeflaterOutputStream(Files.newOutputStream(snapshotPath), new Deflater(Deflater.BEST_SPEED)))) {
       GraphDataOutput out = GraphDataOutputImpl.wrap(stream);
+      out.writeInt(VERSION);
       getSources().write(out);
       getLibraries().write(out);
       out.writeLong(myFlagsDigest);
