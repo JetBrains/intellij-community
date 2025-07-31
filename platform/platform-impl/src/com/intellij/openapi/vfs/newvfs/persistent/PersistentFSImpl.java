@@ -1827,8 +1827,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     fileByIdCacheMisses.incrementAndGet();
-    FileByIdResolver resolver = new FileByIdResolver();
-    return resolver.resolve(fileId);
+    NewVirtualFile file = new FileByIdResolver().resolve(fileId);
+    if (file != null && file.isValid()) {
+      return file;
+    }
+    else {
+      return null;
+    }
   }
 
   /**
@@ -1976,7 +1981,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     public NewVirtualFile resolve(int fileId) {
       assert fileId != FSRecords.NULL_FILE_ID : "fileId=NULL_ID(0) must not be passed into find()";
-      VirtualFileSystemEntry cachedAncestorOrSelf;
+      VirtualDirectoryImpl cachedAncestorOrSelf;
       try {
         cachedAncestorOrSelf = lookupCachedAncestorOrSelf(fileId);
         if (cachedAncestorOrSelf == null) {
@@ -1999,19 +2004,20 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
      * If file with fileId itself is cached -- it is returned (which is why ...OrSelf)
      * Collects all the non-cached ancestors along the way into {@link #ancestorsIds}
      */
-    private @Nullable VirtualFileSystemEntry lookupCachedAncestorOrSelf(int fileId) {
+    private @Nullable VirtualDirectoryImpl lookupCachedAncestorOrSelf(int fileId) {
       int currentId = fileId;
       while (true) {
-        if (vfsPeer.isDeleted(currentId)) {
-          return null;
-        }
-
         int parentId = vfsPeer.getParent(currentId);
 
         if (parentId != FSRecords.NULL_FILE_ID) {
-          VirtualFileSystemEntry cachedParent = dirByIdCache.getCachedDir(parentId);
+          VirtualDirectoryImpl cachedParent = dirByIdCache.getCachedDir(parentId);
           if (cachedParent != null) {
-            return cachedParent;
+            if (cachedParent.isValid()) {
+              return cachedParent;
+            }
+            else {
+              return null;
+            }
           }
         }
         else {
@@ -2021,7 +2027,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           //    => we need to force dirByIdCache to cache the root it misses:
           cacheMissedRootFromPersistence(currentId);
 
-          VirtualFileSystemEntry cachedParent = dirByIdCache.getCachedDir(currentId);
+          VirtualDirectoryImpl cachedParent = dirByIdCache.getCachedDir(currentId);
           if (cachedParent != null) {
             //currentId is in the list, but shouldn't be, if it is == foundParent
             // => remove it
@@ -2041,7 +2047,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           // fileId is passed in? -- so I keep that legacy behaviour (just log warning with diagnostic) until I'll
           // be sure all 'legal' cases are covered:
           logVeryDetailedErrorMessageAboutParentNotFound(currentId, fileId);
-          return cachedParent; // =null
+          return null; // =null
         }
 
 
@@ -2068,30 +2074,30 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
      *
      * <pre>{cachedAncestor} -> { ancestorsIds[N] -> ... -> ancestorsIds[0] } -> fileId</pre>
      */
-    private @Nullable VirtualFileSystemEntry resolveDescending(@NotNull VirtualFileSystemEntry cachedRoot,
+    private @Nullable VirtualFileSystemEntry resolveDescending(@NotNull VirtualDirectoryImpl cachedRoot,
                                                                @Nullable IntList ancestorsIds,
                                                                int fileId) {
-      VirtualFileSystemEntry currentDir = cachedRoot;
+      VirtualDirectoryImpl currentDir = cachedRoot;
       if (ancestorsIds != null) {
         for (int i = ancestorsIds.size() - 1; i >= 0; i--) {
-          currentDir = findChild(currentDir, ancestorsIds.getInt(i));
+          currentDir = (VirtualDirectoryImpl)findChild(currentDir, ancestorsIds.getInt(i));
+          if (currentDir == null) {
+            return null;//most likely deleted
+          }
         }
       }
 
       return findChild(currentDir, fileId);
     }
 
-    private @Nullable VirtualFileSystemEntry findChild(VirtualFileSystemEntry parent,
+    private @Nullable VirtualFileSystemEntry findChild(@NotNull VirtualDirectoryImpl parent,
                                                        int childId) {
-      if (!(parent instanceof VirtualDirectoryImpl)) {
-        return null;
-      }
-      VirtualFileSystemEntry child = ((VirtualDirectoryImpl)parent).findChildById(childId);
+      VirtualFileSystemEntry child = parent.findChildById(childId);
       if (child instanceof VirtualDirectoryImpl childDir) {
         if (child.getId() != childId) {
-          LOG.error("doFindChildById(" + childId + "): " + child + " doesn't have expected id!");
+          LOG.error("findChildById(" + childId + "): " + child + " doesn't have expected id!");
         }
-        VirtualFileSystemEntry old = dirByIdCache.cacheDirIfAbsent(childDir);
+        VirtualDirectoryImpl old = dirByIdCache.cacheDirIfAbsent(childDir);
         if (old != null) child = old;
       }
       return child;

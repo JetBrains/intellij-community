@@ -157,13 +157,12 @@ public final class VfsData {
     }
 
     if (entryData instanceof DirectoryData directoryData) {
-      if (putToMemoryCache) {
-        return owningPersistentFS.getOrCacheDir(new VirtualDirectoryImpl(id, segment, directoryData, parent, parent.getFileSystem()));
+      VirtualDirectoryImpl newDirInstance = new VirtualDirectoryImpl(id, segment, directoryData, parent, parent.getFileSystem());
+      if (putToMemoryCache && newDirInstance.isValid()) {//don't cache deleted instances
+        return owningPersistentFS.getOrCacheDir(newDirInstance);
       }
       else {
-        VirtualFileSystemEntry entry = owningPersistentFS.getCachedDir(id);
-        if (entry != null) return entry;
-        return new VirtualDirectoryImpl(id, segment, directoryData, parent, parent.getFileSystem());
+        return newDirInstance;
       }
     }
     return new VirtualFileImpl(id, segment, parent);

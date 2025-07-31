@@ -659,8 +659,14 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     }
 
     for (VirtualFileSystemEntry f : hardReferenceHolder) {
-      assertNull(fs.getCachedDir(f.getId()));
-      assertNull(fs.findFileById(f.getId()));
+      int id = f.getId();
+      VirtualFileSystemEntry cachedDir = fs.getCachedDir(id);
+      //RC: we can't strictly define contract 'getCachedDir() returns null for deleted dirs' because of asynchronicity
+      //    -- i.e. it could be the returned cachedDir become deleted right after it was returned. So I think this check
+      //    is a bit of over-specification: it should be (cachedDir == null || !cachedDir.isValid())
+      assertNull(id + " is deleted", cachedDir);
+      NewVirtualFile fileById = fs.findFileById(id);
+      assertNull(id + " is deleted", fileById);
     }
 
     for (VirtualFileSystemEntry f : fs.getDirCache()) {
