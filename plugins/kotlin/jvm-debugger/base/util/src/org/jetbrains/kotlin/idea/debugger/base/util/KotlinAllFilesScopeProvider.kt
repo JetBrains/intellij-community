@@ -21,10 +21,9 @@ class KotlinAllFilesScopeProvider(private val project: Project) {
             KotlinSourceFilterScope.projectAndLibrarySources(GlobalSearchScope.allScope(project), project)
         ) {
             private val projectIndex = ProjectRootManager.getInstance(this@KotlinAllFilesScopeProvider.project).fileIndex
-            private val scopeComparator = Comparator
-                .comparing<VirtualFile?, Boolean?> { projectIndex.isInSourceContent(it) }
-                .thenComparing<Boolean?> { projectIndex.isInLibrarySource(it) }
-                .thenComparing { file1, file2 -> super.compare(file1, file2) }
+            private val scopeComparator = compareBy<VirtualFile> { projectIndex.isInSourceContent(it) }
+                .thenComparing { file: VirtualFile -> projectIndex.isInLibrarySource(file) }
+                .thenComparing { file1: VirtualFile, file2: VirtualFile -> super.compare(file1, file2) }
 
             override fun compare(file1: VirtualFile, file2: VirtualFile): Int = scopeComparator.compare(file1, file2)
         }
