@@ -103,7 +103,7 @@ class NestedScrollingSupportImpl {
   }
 
   private fun canScroll(event: MouseWheelEvent, owner: JScrollPane): Boolean {
-    if (latchingScroll.shouldBeIgnored(event)) {
+    if (event.source is JScrollPane && latchingScroll.shouldBeIgnored(event)) {
       event.consume()
       return true
     }
