@@ -9,7 +9,7 @@ import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
-import com.intellij.xdebugger.frame.XValueDescriptor
+import com.intellij.xdebugger.frame.XDescriptor
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import com.intellij.xdebugger.impl.rpc.XValueGroupId
@@ -100,7 +100,7 @@ sealed interface XEvaluationResult {
 @Serializable
 data class XValueDto(
   val id: XValueId,
-  @Serializable(with = DeferredSerializer::class) val descriptor: Deferred<XValueDescriptor>?,
+  @Serializable(with = DeferredSerializer::class) val descriptor: Deferred<XDescriptor>?,
   val canNavigateToSource: Boolean,
   @Serializable(with = DeferredSerializer::class) val canNavigateToTypeSource: Deferred<Boolean>,
   @Serializable(with = DeferredSerializer::class) val canBeModified: Deferred<Boolean>,

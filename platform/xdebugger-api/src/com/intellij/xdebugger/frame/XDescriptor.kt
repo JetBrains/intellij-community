@@ -14,50 +14,44 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Provides additional information about XValue which can be used by UI and actions on the Frontend.
+ * Provides additional information about a platform entity (e.g., [XValue], [XStackFrame], [XExecutionStack] ...)
+ * which can be used by UI and actions on the Frontend.
  *
  * Internal plugins may extend this interface providing custom implementation, but they should be serializable.
  * Also, it is required to provide serializer for the implementation using
- * [com.intellij.xdebugger.frame.XValueCustomDescriptorSerializerProvider].
+ * [com.intellij.xdebugger.frame.CustomXDescriptorSerializerProvider].
  * Otherwise, the default implementation will be used during a serialization/deserialization process.
  *
- *
- * @see createXValueDescriptor
- * @see XValueCustomDescriptorSerializerProvider
+ * @see CustomXDescriptorSerializerProvider
  */
 @ApiStatus.Internal
-@Serializable(with = XValueDescriptorSerializer::class)
-interface XValueDescriptor {
+@Serializable(with = XDescriptorSerializer::class)
+interface XDescriptor {
   /**
-   * [kind] is used to differentiate various implementations of XValue by their type instead of using `instanceOf` on [XValue].
-   * Examples of possible kinds: "JavaValue", "PhpValue", "RubyValue"
+   * [kind] is used to differentiate various implementations of platform entities by their type instead of using `instanceOf`.
+   * For [XValue] examples of possible kinds may be: "JavaValue", "PhpValue", "RubyValue";
+   * Or alternatively for [XExecutionStack]: "JavaExecutionStack", "PhpExecutionStack".
    *
    * Implementation detail: since the frontend uses [com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue],
-   * which makes `instanceOf` comparisons of XValue impossible, this property provides a way to
-   * differentiate between various types of XValue on the frontend.
+   * which makes `instanceOf` comparisons of [XValue] impossible, this property provides a way to
+   * differentiate between various types of [XValue] on the frontend.
    */
   val kind: String
 }
 
-// TODO: should be called just XValueDescriptor, but it won't be available in Java then
 @ApiStatus.Internal
-fun createXValueDescriptor(kind: String): XValueDescriptor {
-  return XValueDescriptorImpl(kind)
-}
-
-@ApiStatus.Internal
-interface XValueCustomDescriptorSerializerProvider {
+interface CustomXDescriptorSerializerProvider {
   companion object {
-    internal val EP_NAME = ExtensionPointName<XValueCustomDescriptorSerializerProvider>("com.intellij.xdebugger.xValueCustomDescriptorSerializerProvider")
+    internal val EP_NAME = ExtensionPointName<CustomXDescriptorSerializerProvider>("com.intellij.xdebugger.customXDescriptorSerializerProvider")
   }
 
-  fun getSerializer(kind: String): KSerializer<out XValueDescriptor>?
+  fun getSerializer(kind: String): KSerializer<out XDescriptor>?
 }
 
 @Serializable
-private data class XValueDescriptorImpl(override val kind: String) : XValueDescriptor
+private data class XDescriptorImpl(override val kind: String) : XDescriptor
 
-private object XValueDescriptorSerializer : KSerializer<XValueDescriptor> {
+private object XDescriptorSerializer : KSerializer<XDescriptor> {
   private val json = Json {
     ignoreUnknownKeys = true
     encodeDefaults = true
@@ -65,13 +59,13 @@ private object XValueDescriptorSerializer : KSerializer<XValueDescriptor> {
 
   override val descriptor: SerialDescriptor = JsonElement.serializer().descriptor
 
-  override fun serialize(encoder: Encoder, value: XValueDescriptor) {
+  override fun serialize(encoder: Encoder, value: XDescriptor) {
     val serializer = getSerializerByKind(value.kind)
-    val element = json.encodeToJsonElement(serializer as KSerializer<XValueDescriptor>, value)
+    val element = json.encodeToJsonElement(serializer as KSerializer<XDescriptor>, value)
     encoder.encodeSerializableValue(JsonElement.serializer(), element)
   }
 
-  override fun deserialize(decoder: Decoder): XValueDescriptor {
+  override fun deserialize(decoder: Decoder): XDescriptor {
     val element = decoder.decodeSerializableValue(JsonElement.serializer())
     if (!element.jsonObject.containsKey("kind")) {
       throw IllegalArgumentException("Missing required 'kind' property")
@@ -81,8 +75,8 @@ private object XValueDescriptorSerializer : KSerializer<XValueDescriptor> {
     return json.decodeFromJsonElement(serializer, element)
   }
 
-  private fun getSerializerByKind(kind: String): KSerializer<out XValueDescriptor> {
-    return XValueCustomDescriptorSerializerProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.getSerializer(kind) }
-           ?: XValueDescriptorImpl.serializer()
+  private fun getSerializerByKind(kind: String): KSerializer<out XDescriptor> {
+    return CustomXDescriptorSerializerProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.getSerializer(kind) }
+           ?: XDescriptorImpl.serializer()
   }
 }

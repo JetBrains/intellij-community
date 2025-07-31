@@ -36,8 +36,8 @@
     <extensionPoint name="xdebugger.customMuteBreakpointHandler"
                     interface="com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomMuteBreakpointHandler" dynamic="true"/>
 
-    <extensionPoint name="xdebugger.xValueCustomDescriptorSerializerProvider"
-                    interface="com.intellij.xdebugger.frame.XValueCustomDescriptorSerializerProvider" dynamic="true"/>
+    <extensionPoint name="xdebugger.customXDescriptorSerializerProvider"
+                    interface="com.intellij.xdebugger.frame.CustomXDescriptorSerializerProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.managerProxy" interface="com.intellij.xdebugger.impl.frame.XDebugManagerProxy"
                     dynamic="true"/>
     <extensionPoint name="xdebugger.splitDebuggerModeEnabler" interface="com.intellij.xdebugger.impl.XDebuggerSplitModeEnabler"

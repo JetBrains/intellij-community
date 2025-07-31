@@ -94,7 +94,7 @@ class FrontendXValue private constructor(
     return xValueDto.canNavigateToSource
   }
 
-  override fun getXValueDescriptorAsync(): CompletableFuture<XValueDescriptor?>? {
+  override fun getXValueDescriptorAsync(): CompletableFuture<XDescriptor?>? {
     return xValueDto.descriptor?.asCompletableFuture()
   }
 
@@ -355,7 +355,7 @@ private class FrontendXNamedValue(
     return delegate.canNavigateToSource()
   }
 
-  override fun getXValueDescriptorAsync(): CompletableFuture<XValueDescriptor?>? {
+  override fun getXValueDescriptorAsync(): CompletableFuture<XDescriptor?>? {
     return delegate.xValueDescriptorAsync
   }
 
