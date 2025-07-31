@@ -50,12 +50,9 @@
     <orderEntry type="module" module-name="intellij.platform.remote.core" />
     <orderEntry type="module" module-name="intellij.platform.remoteServers" />
     <orderEntry type="module" module-name="intellij.platform.remoteServers.impl" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" name="jediterm-core" level="project" />
     <orderEntry type="library" name="jediterm-ui" level="project" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
-    <orderEntry type="module" module-name="intellij.platform.configurationStore.tests" scope="TEST" />
     <orderEntry type="library" name="winp" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
@@ -113,7 +110,6 @@
     <orderEntry type="library" scope="PROVIDED" name="opentelemetry-semconv" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="opentelemetry-extension-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
-    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.platform.kernel" />
     <orderEntry type="module" module-name="intellij.platform.project" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
