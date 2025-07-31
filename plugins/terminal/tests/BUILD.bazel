@@ -28,7 +28,6 @@ jvm_library(
     "//plugins/terminal/backend",
     "//plugins/terminal/backend:backend_test_lib",
     "//plugins/terminal/frontend",
-    "//plugins/terminal/frontend:frontend_test_lib",
     "//plugins/terminal/completion",
     "//plugins/terminal/completion:completion_test_lib",
     "//plugins/terminal/sh",

@@ -3,13 +3,15 @@ package com.intellij.terminal.frontend
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.LineWrapPositionStrategy
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * The Terminal requires the simplest line wrapping logic:
  * part of the logical line that doesn't fit into the width, should be moved to the next visual line.
  * So, actually, it is a hard wrap.
  */
-internal class TerminalLineWrapPositionStrategy : LineWrapPositionStrategy {
+@ApiStatus.Internal
+class TerminalLineWrapPositionStrategy : LineWrapPositionStrategy {
   /**
    * By default, disallows breaking before low surrogate characters to prevent break inside of surrogate pairs.
    */
