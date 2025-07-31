@@ -12,7 +12,7 @@ import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_4_XLMNS
 import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_4_XSD
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 
-internal class UpdateXmlsTo410 : LocalQuickFix {
+class UpdateXmlsTo410 : LocalQuickFix {
   override fun getName(): String {
     return MavenProjectBundle.message("maven.project.updating.model.command.name", "modelVersion")
   }
@@ -24,7 +24,11 @@ internal class UpdateXmlsTo410 : LocalQuickFix {
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
 
     val rootTag = findProjectTag(descriptor) ?: return
+    val xmlnsXsi = rootTag.getAttribute("xmlns:xsi")
     rootTag.setAttribute("xmlns", MAVEN_4_XLMNS)
+    if (xmlnsXsi == null) {
+      rootTag.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
+    }
     rootTag.setAttribute("xsi:schemaLocation", "$MAVEN_4_XLMNS $MAVEN_4_XSD")
     val modelVersion = rootTag.findSubTags("modelVersion")
     if (modelVersion.isNotEmpty()) {

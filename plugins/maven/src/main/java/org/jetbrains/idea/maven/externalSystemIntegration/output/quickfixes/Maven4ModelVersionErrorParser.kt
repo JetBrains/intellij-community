@@ -13,7 +13,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.executeCommand
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.Cancellation.checkCancelled
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -44,7 +43,6 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
-import org.jetbrains.idea.maven.utils.MavenLog
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
@@ -211,9 +209,12 @@ class UpdateVersionQuickFix(val path: Path) : BuildIssueQuickFix {
               if (modelVersion.exists()) {
                 modelVersion.stringValue = MavenConstants.MODEL_VERSION_4_1_0
               }
-              val rootTag = psiFile.document?.rootTag
-              rootTag?.setAttribute("xmlns", NEW_XMLNS)
-              rootTag?.setAttribute("xsi:schemaLocation", NEW_SCHEMA_LOCATION)
+              val rootTag = psiFile.document?.rootTag ?: return@executeCommand
+              if (rootTag.getAttribute("xmlns:xsi") == null) {
+                rootTag.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
+              }
+              rootTag.setAttribute("xmlns", NEW_XMLNS)
+              rootTag.setAttribute("xsi:schemaLocation", NEW_SCHEMA_LOCATION)
             }
 
             documentManager.doPostponedOperationsAndUnblockDocument(document)
