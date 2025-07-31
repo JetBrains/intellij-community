@@ -342,6 +342,8 @@ def _to_flags(opts, attr_provider):
     flags = []
     for n, o in opts.items():
         value = getattr(attr_provider, n, None)
+        if value == None:
+            continue
         if o.value_to_flag and o.value_to_flag.get(derive.info, None):
             info = o.value_to_flag[derive.info]
             flag = info.derive(info.ctx, value)
