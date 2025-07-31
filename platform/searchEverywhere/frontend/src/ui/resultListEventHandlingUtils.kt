@@ -107,7 +107,8 @@ private fun SeResultList.firstIndexOrNull(fullSearch: Boolean, predicate: (SeIte
   }
 }
 
-private val SeResultList.lastIndexToInsertItem: Int
+val SeResultList.lastIndexToInsertItem: Int
+  @ApiStatus.Internal
   get() =
     if (size == 0) 0
     else if (getRow(size - 1) is SeResultListMoreRow) size - 1

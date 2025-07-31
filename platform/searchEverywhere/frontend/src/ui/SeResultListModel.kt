@@ -43,13 +43,21 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
   fun addFromThrottledEvent(searchId: String, throttledEvent: ThrottledItems<SeResultEvent>) {
     if (!isValid) reset()
 
+    val resultListAdapter = SeResultListModelAdapter(this, selectionModelProvider())
     when (throttledEvent) {
       is ThrottledAccumulatedItems<SeResultEvent> -> {
         val accumulatedList = SeResultListCollection()
         throttledEvent.items.forEach {
           accumulatedList.handleEvent(it)
         }
-        addAll(accumulatedList.list)
+
+        // Remove SeResultListMoreRow from the accumulatedList if we already have one in the real listModel
+        if (size > 0 && getElementAt(size - 1) is SeResultListMoreRow
+            && accumulatedList.list.isNotEmpty() && accumulatedList.list.last() is SeResultListMoreRow) {
+          accumulatedList.list.removeLast()
+        }
+
+        addAll(resultListAdapter.lastIndexToInsertItem, accumulatedList.list)
         SeLog.log(SeLog.THROTTLING) {
           "Added batch of throttled events: ${accumulatedList.list.size}; Providers:" +
           accumulatedList.list.mapNotNull { (it as? SeResultListItemRow)?.item?.providerId?.value }.groupingBy { it }.eachCount().map {
@@ -64,7 +72,7 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
         }
       }
       is ThrottledOneItem<SeResultEvent> -> {
-        SeResultListModelAdapter(this, selectionModelProvider()).handleEvent(throttledEvent.item, onAdd = {
+        resultListAdapter.handleEvent(throttledEvent.item, onAdd = {
           searchStatePublisher.elementsAdded(searchId, mapOf(it.uuid to it))
         }, onRemove = {
           searchStatePublisher.elementsRemoved(searchId, 1)

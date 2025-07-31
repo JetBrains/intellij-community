@@ -192,12 +192,19 @@ class SeTabVm(
 private const val ESSENTIALS_WAITING_TIMEOUT: Long = 2000
 private const val ESSENTIALS_THROTTLE_DELAY: Long = 100
 private const val ESSENTIALS_ENOUGH_COUNT: Int = 15
+private const val FAST_PASS_THROTTLE: Long = 100
 
 private fun Flow<SeResultEvent>.throttleUntilEssentialsArrive(essentialProviderIds: Set<SeProviderId>): Flow<ThrottledItems<SeResultEvent>> {
   val essentialProvidersCounts = essentialProviderIds.associateWith { 0 }.toMutableMap()
 
   SeLog.log(SeLog.THROTTLING) { "Will start throttle with essential providers: $essentialProviderIds"}
-  return throttledWithAccumulation(ESSENTIALS_WAITING_TIMEOUT, { it !is SeResultEndEvent }) { event, size ->
+
+  return throttledWithAccumulation(
+    resultThrottlingMs = ESSENTIALS_WAITING_TIMEOUT,
+    shouldPassItem = { it !is SeResultEndEvent },
+    fastPassThrottlingMs = FAST_PASS_THROTTLE,
+    shouldFastPassItem = { it.providerId().shouldIgnoreThrottling() }
+  ) { event: SeResultEvent, _: Int ->
     val providerId = event.providerId()
 
     when (event) {
@@ -228,6 +235,9 @@ private fun SeResultEvent.providerId() = when (this) {
   is SeResultReplacedEvent -> newItemData.providerId
   is SeResultEndEvent -> providerId
 }
+
+private fun SeProviderId.shouldIgnoreThrottling(): Boolean =
+  AdvancedSettings.getBoolean("search.everywhere.recent.at.top") && (this.value == SeProviderIdUtils.RECENT_FILES_ID)
 
 @ApiStatus.Internal
 class SeSearchContext(val searchId: String, val tabId: String, val searchPattern: String, val resultsFlow: Flow<ThrottledItems<SeResultEvent>>)
