@@ -204,7 +204,7 @@ class MainToolbar(
 
     for (widget in widgets) {
       // separate EDT action - avoid long-running update
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.UiWithModelAccess) {
         widget.first.updateActions()
       }
     }

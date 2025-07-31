@@ -9,7 +9,7 @@ import com.intellij.facet.FacetManagerFactory
 import com.intellij.facet.impl.FacetEventsPublisher
 import com.intellij.facet.impl.FacetManagerFactoryImpl
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ModulePathMacroManager
@@ -179,7 +179,7 @@ open class ModuleBridgeImpl(
 
     internal suspend fun initFacets(modules: Collection<Pair<ModuleEntity, ModuleBridge>>, project: Project) {
       val facetManagerFactory = project.serviceAsync<FacetManagerFactory>() as FacetManagerFactoryImpl
-      span("init facets in EDT", Dispatchers.EDT) {
+      span("init facets in EDT", Dispatchers.UiWithModelAccess) {
         facetsInitializationTimeMs.addMeasuredTime {
           doInitFacetsInEdt(modules, facetManagerFactory)
         }

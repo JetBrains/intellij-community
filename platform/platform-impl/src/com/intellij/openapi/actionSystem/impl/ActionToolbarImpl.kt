@@ -941,7 +941,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
 
     val cs = service<CoreUiCoroutineScopeHolder>().coroutineScope
     val job = cs.launch(
-      Dispatchers.EDT + ModalityState.any().asContextElement() +
+      Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement() +
       ClientId.coroutineContext(), CoroutineStart.UNDISPATCHED) {
       try {
         val actions = Utils.expandActionGroupSuspend(

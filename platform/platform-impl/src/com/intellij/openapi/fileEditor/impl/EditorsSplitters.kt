@@ -477,7 +477,7 @@ open class EditorsSplitters internal constructor(
     val frame = getFrame() ?: return
     val file = currentCompositeFlow.value?.file
     if (file == null) {
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.UiWithModelAccess) {
         frame.setFileTitle(null, null)
       }
     }
@@ -489,7 +489,7 @@ open class EditorsSplitters internal constructor(
       catch (ignored: InvalidPathException) {
         null
       }
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.UiWithModelAccess) {
         frame.setFileTitle(title, ioFile)
       }
     }
