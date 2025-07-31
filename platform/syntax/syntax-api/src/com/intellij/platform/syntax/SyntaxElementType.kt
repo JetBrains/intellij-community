@@ -24,6 +24,7 @@ import kotlin.jvm.JvmOverloads
 class SyntaxElementType internal constructor(
   private val debugName: String,
   internal val lazyParser: LazyParser?,
+  val userData: Any?,
   transient: Boolean,
   @Suppress("unused") unusedParam: Any?, // this parameter is necessary for disambiguation with the factory function
 ) {
@@ -62,8 +63,9 @@ class SyntaxElementType internal constructor(
 fun SyntaxElementType(
   debugName: String,
   lazyParser: LazyParser? = null,
+  userData: Any? = null,
   transient: Boolean = false,
 ): SyntaxElementType =
-  SyntaxElementType(debugName, lazyParser, transient, null as Any?)
+  SyntaxElementType(debugName, lazyParser, userData, transient, null as Any?)
 
 private val counter = AtomicInt(0)
