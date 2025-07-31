@@ -58,12 +58,12 @@ fun fleetClient(
 ): Resource<FleetClient> =
   resource { cc ->
     val stats = MutableStateFlow(TransportStats())
-    connectionLoop<IRpcClient>(delayStrategy) { c ->
-      transportFactory.connect(stats) { transport ->
-        rpcClient(transport, clientId.uid, requestInterceptor, abortOnError) { rpcClient ->
-          c(rpcClient)
-        }
-      }
+    connectionLoop(
+      transportFactory = transportFactory,
+      transportStats = stats,
+      delayStrategy = delayStrategy,
+    ) { transport ->
+      rpcClient(transport, clientId.uid, requestInterceptor, abortOnError)
     }.use { connectionStatus ->
       val fl = FleetClient(connectionStatus, stats)
       try {

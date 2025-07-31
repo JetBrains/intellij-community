@@ -3,12 +3,10 @@ package fleet.rpc.core
 
 import fleet.util.async.*
 import fleet.util.causeOfType
-import fleet.util.causes
 import fleet.util.logging.logger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.datetime.Clock
 
 private object ConnectionLoop {
@@ -26,10 +24,12 @@ private const val minReconnectDelay = 1L
 private const val maxReconnectDelay = 30_000L
 internal val Exponential = DelayStrategy.exponential(minReconnectDelay, maxReconnectDelay)
 
-fun <T> connectionLoop(
+fun <T, M> connectionLoop(
+  transportFactory: TransportFactory<M>,
+  transportStats: MutableStateFlow<TransportStats>? = null,
   delayStrategy: DelayStrategy = Exponential,
   debugName: String? = null,
-  connection: suspend CoroutineScope.(suspend (T) -> Unit) -> Unit,
+  client: (Transport<M>) -> Resource<T>,
 ): Resource<StateFlow<ConnectionStatus<T>>> =
   resource { cc ->
     val status = MutableStateFlow<ConnectionStatus<T>>(ConnectionStatus.Connecting())
@@ -39,14 +39,13 @@ fun <T> connectionLoop(
       var curDelayMs = delayStrategy.nextDelay(0)
       while (coroutineContext.isActive) {
         val ex = try {
-          coroutineScope {
-            connection { value ->
-              curDelayMs = delayStrategy.nextDelay(0)
+          transportFactory.connect(transportStats) { transport ->
+            curDelayMs = delayStrategy.nextDelay(0)
+            client(transport).use { value ->
               status.value = ConnectionStatus.Connected(value)
               awaitCancellation()
             }
           }
-          error("unreachable")
         }
         catch (ex: Throwable) {
           coroutineContext.ensureActive()
@@ -59,7 +58,7 @@ fun <T> connectionLoop(
         }
         status.value = ConnectionStatus.TemporarilyDisconnected(
           connectionScheduledFor = Clock.System.now().toEpochMilliseconds() + curDelayMs,
-          delayJob = Job(),
+          delayJob = delayJob,
           reason = ex.causeOfType<TransportDisconnectedException>() ?: ex)
         delayJob.join()
         curDelayMs = delayStrategy.nextDelay(curDelayMs)
@@ -67,58 +66,32 @@ fun <T> connectionLoop(
     }.use {
       cc(status)
     }
-  }.onContext(CoroutineName("connectionLoop"))
+  }.onContext(CoroutineName("connectionLoop $debugName"))
 
-@Deprecated("use the new one", replaceWith = ReplaceWith("connectionLoop"))
-fun <T> CoroutineScope.connectionLoopOld(
-  name: String,
+suspend fun <M> serviceConnectionLoop(
+  transportFactory: TransportFactory<M>,
+  debugName: String? = null,
   delayStrategy: DelayStrategy = Exponential,
-  body: suspend CoroutineScope.() -> T,
-): Pair<Job, StateFlow<ConnectionStatus<T>>> {
-  val status = MutableStateFlow<ConnectionStatus<T>>(ConnectionStatus.Connecting())
-  val job = launch(coroutineNameAppended(name)) {
-    val connectionJobName = coroutineContext[CoroutineName]?.name ?: error("Guaranteed by coroutineNameAppended above")
-    var curDelayMs = delayStrategy.nextDelay(0)
-    var attempt = 0
-
-    while (isActive) {
-      val reason = try {
-        withContext(coroutineNameAppended("Connection")) {
-          status.value = ConnectionStatus.Connected(body())
-          curDelayMs = delayStrategy.nextDelay(0)
-          attempt = 0
-          null
-        }
+  service: suspend CoroutineScope.(Transport<M>) -> Nothing,
+): Nothing {
+  var attempt = 0
+  var curDelayMs = delayStrategy.nextDelay(0)
+  while (true) {
+    currentCoroutineContext().ensureActive()
+    val ex = try {
+      transportFactory.connect(null) { transport ->
+        curDelayMs = delayStrategy.nextDelay(0)
+        service(transport)
       }
-      catch (cause: Throwable) {
-        cause.causeOfType<TransportDisconnectedException>() ?: cause.takeIf { it !is CancellationException }
-      }
-
-      if (reason != null) {
-        ConnectionLoop.logger.info(reason.takeIf { ConnectionLoop.logger.isDebugEnabled }) {
-          "Connection by <$connectionJobName> lost. Cause=${reason.causes().joinToString { it.message ?: it.toString() }}\n" +
-          "Consider increasing logging level to DEBUG for ${ConnectionLoop::class.qualifiedName}"
-        }
-      }
-
-      if (!isActive) break
-
-      val delayJob =
-        launch(coroutineNameAppended("Disconnected, awaiting for attempt to connect")) {
-          attempt++
-          ConnectionLoop.logger.info { "Reconnect by <$connectionJobName> attempt #$attempt in ${curDelayMs}ms" }
-          delay(curDelayMs)
-        }
-      delayJob.invokeOnCompletion { e ->
-        if (e != null) {
-          ConnectionLoop.logger.info { "Delay for <$connectionJobName>(attempt #$attempt) was canceled for reason: ${e.message}" }
-        }
-      }
-      status.value = ConnectionStatus.TemporarilyDisconnected(Clock.System.now().toEpochMilliseconds() + curDelayMs, delayJob, reason)
-
-      delayJob.join()
-      curDelayMs = delayStrategy.nextDelay(curDelayMs)
     }
+    catch (ex: Throwable) {
+      ex
+    }
+    val reason = ex.causeOfType<TransportDisconnectedException>() ?: ex
+    ConnectionLoop.logger.debug(reason) { "Connection broken <${debugName}>" }
+    attempt++
+    ConnectionLoop.logger.info { "Reconnect by <${debugName}> attempt #$attempt in ${curDelayMs}ms" }
+    delay(curDelayMs)
+    curDelayMs = delayStrategy.nextDelay(curDelayMs)
   }
-  return job to status.asStateFlow()
 }

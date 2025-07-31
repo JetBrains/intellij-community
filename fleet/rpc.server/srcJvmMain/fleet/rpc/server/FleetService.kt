@@ -2,7 +2,8 @@
 package fleet.rpc.server
 
 import fleet.rpc.core.FleetTransportFactory
-import fleet.rpc.core.connectionLoop
+import fleet.rpc.core.TransportDisconnectedException
+import fleet.rpc.core.serviceConnectionLoop
 import fleet.util.UID
 import fleet.util.async.use
 import kotlinx.coroutines.*
@@ -21,21 +22,15 @@ class FleetService private constructor(
     ): T =
       coroutineScope {
         launch {
-          connectionLoop(debugName = "RpcExecutor for service provider ${providerId}") { cc ->
-            transportFactory.connect(transportStats = null) { transport ->
-              cc(
-                RpcExecutor.serve(
-                  services = services,
-                  sendChannel = transport.outgoing,
-                  receiveChannel = transport.incoming,
-                  rpcInterceptor = rpcInterceptor,
-                  rpcCallDispatcher = rpcCallDispatcher,
-                  route = providerId,
-                )
-              )
-            }
-          }.use {
-            awaitCancellation()
+          serviceConnectionLoop(transportFactory, debugName = "RpcExecutor for service provider ${providerId}") { transport ->
+            RpcExecutor.serve(
+              services = services,
+              transport = transport,
+              rpcInterceptor = rpcInterceptor,
+              rpcCallDispatcher = rpcCallDispatcher,
+              route = providerId,
+            )
+            throw TransportDisconnectedException("RpcExecutor has completed", null)
           }
         }.use {
           body(FleetService(serviceId = providerId))

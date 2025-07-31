@@ -15,14 +15,13 @@ import fleet.util.logging.KLoggers
 import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.json.Json
 import fleet.multiplatform.shims.ConcurrentHashMap
 import fleet.multiplatform.shims.ConcurrentHashSet
+import fleet.util.async.withSupervisor
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.coroutines.coroutineContext
 
 class RpcExecutor private constructor(
   private val services: RpcServiceLocator,
@@ -44,39 +43,14 @@ class RpcExecutor private constructor(
     suspend fun serve(
       services: RpcServiceLocator,
       route: UID,
-      sendChannel: SendChannel<TransportMessage>,
-      receiveChannel: ReceiveChannel<TransportMessage>,
+      transport: Transport<TransportMessage>,
       rpcInterceptor: RpcExecutorMiddleware,
       rpcCallDispatcher: CoroutineDispatcher? = null,
     ) {
+      val sendChannel = transport.outgoing
+      val receiveChannel = transport.incoming
       val queueChannel = Channel<Pair<TransportMessage, ((Throwable?) -> Unit)?>>(Channel.UNLIMITED)
-      val rpcScope = CoroutineScope(coroutineContext + SupervisorJob(coroutineContext[Job]))
-      val executor = RpcExecutor(services = services,
-                                 queue = queueChannel,
-                                 fallbackCoroutineScope = rpcScope,
-                                 rpcInterceptor = rpcInterceptor,
-                                 rpcCallDispatcher = rpcCallDispatcher,
-                                 route = route)
       coroutineScope {
-        launch {
-          receiveChannel.consumeEach { message ->
-            logger.trace { "Received $message" }
-            when (message) {
-              is TransportMessage.Envelope -> {
-                executor.processRpcMessage(message.origin, message.parseMessage())
-              }
-              is TransportMessage.RouteClosed -> {
-                executor.cancelAllOngoingWork(message.address)
-              }
-              is TransportMessage.RouteOpened -> {
-              }
-            }
-          }
-        }.invokeOnCompletion {
-          logger.trace { "RpcExecutor receiver coroutine has finished" }
-          queueChannel.close(it)
-          rpcScope.cancel()
-        }
         launch {
           queueChannel.consumeEach { (message, completion) ->
             try {
@@ -88,9 +62,38 @@ class RpcExecutor private constructor(
               throw ex
             }
           }
-        }.invokeOnCompletion {
-          logger.trace { "RpcExecutor sender coroutine has finished" }
-          rpcScope.cancel()
+        }.apply {
+          invokeOnCompletion {
+            logger.trace { "RpcExecutor sender coroutine has finished" }
+          }
+        }
+        withSupervisor(CoroutineName("rpc scope")) { rpcScope ->
+          val executor = RpcExecutor(
+            services = services,
+            queue = queueChannel,
+            fallbackCoroutineScope = rpcScope,
+            rpcInterceptor = rpcInterceptor,
+            rpcCallDispatcher = rpcCallDispatcher,
+            route = route,
+          )
+          try {
+            receiveChannel.consumeEach { message ->
+              logger.trace { "Received $message" }
+              when (message) {
+                is TransportMessage.Envelope -> {
+                  executor.processRpcMessage(message.origin, message.parseMessage())
+                }
+                is TransportMessage.RouteClosed -> {
+                  executor.cancelAllOngoingWork(message.address)
+                }
+                is TransportMessage.RouteOpened -> {
+                }
+              }
+            }
+          }
+          finally {
+            logger.trace { "RpcExecutor receiver coroutine has finished" }
+          }
         }
       }
     }
