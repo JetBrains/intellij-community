@@ -1307,6 +1307,11 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
                 runTest("../testData/inspectionsLocal/coroutines/deferredResultUnused/asyncPassedAsArgument.kt");
             }
 
+            @TestMetadata("asyncReturnedFromGenericCoroutineBuilder.kt")
+            public void testAsyncReturnedFromGenericCoroutineBuilder() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/deferredResultUnused/asyncReturnedFromGenericCoroutineBuilder.kt");
+            }
+
             @TestMetadata("asyncWithAssertNotNull.kt")
             public void testAsyncWithAssertNotNull() throws Exception {
                 runTest("../testData/inspectionsLocal/coroutines/deferredResultUnused/asyncWithAssertNotNull.kt");
