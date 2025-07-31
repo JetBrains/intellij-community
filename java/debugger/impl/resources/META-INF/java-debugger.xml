@@ -378,6 +378,7 @@
     <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="AllIcons.ToolbarDecorator.Export">
       <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
       <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend"/>
+      <add-to-group group-id="XDebugger.Threads.View.Popup"/>
       <add-to-group group-id="XDebugger.Actions"/>
     </action>
 
