@@ -1,17 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.debugger.impl.backend
 
+import com.intellij.debugger.actions.FreezeThreadAction
 import com.intellij.debugger.actions.ThreadDumpAction
 import com.intellij.debugger.engine.AsyncStacksUtils
 import com.intellij.debugger.engine.JavaDebugProcess
+import com.intellij.debugger.engine.JavaExecutionStack
 import com.intellij.debugger.engine.executeOnDMT
 import com.intellij.execution.filters.ExceptionFilters
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.debugger.actions.ResumeThreadAction
 import com.intellij.java.debugger.impl.shared.rpc.*
 import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.unscramble.CompoundDumpItem
 import com.intellij.unscramble.DumpItem
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
+import com.intellij.xdebugger.impl.rpc.XExecutionStackId
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import fleet.util.channels.use
 import kotlinx.coroutines.CompletableDeferred
@@ -57,6 +61,32 @@ internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
   override suspend fun setAsyncStacksEnabled(sessionId: XDebugSessionId, state: Boolean) {
     val session = sessionId.findValue() ?: return
     AsyncStacksUtils.setAsyncStacksEnabled(session, state)
+  }
+
+  override suspend fun resumeThread(executionStackId: XExecutionStackId) {
+    invokeThreadCommand(executionStackId, ThreadCommand.RESUME)
+  }
+
+  private fun invokeThreadCommand(executionStackId: XExecutionStackId, command: ThreadCommand) {
+    val executionStackModel = executionStackId.findValue() ?: return
+    val xSession = executionStackModel.session
+    val javaDebugProcess = xSession.debugProcess as JavaDebugProcess
+    val session = javaDebugProcess.debuggerSession
+    val context = session.contextManager.context
+    val debugProcess = context.debugProcess!!
+    if (session == null || !session.isAttached) return
+
+    val executionStack = (executionStackModel.executionStack as? JavaExecutionStack) ?: return
+    val threadProxy = executionStack.threadProxy
+    val managerThread = context.managerThread ?: return
+    when(command) {
+      ThreadCommand.RESUME -> {
+        ResumeThreadAction.resumeThread(threadProxy, debugProcess, managerThread)
+      }
+    }
+  }
+  companion object {
+    private enum class ThreadCommand { FREEZE, RESUME }
   }
 }
 

@@ -22,6 +22,9 @@
       <add-to-group group-id="DebuggingActionsGroup" anchor="last"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
     </action>
+    <action id="Debugger.XThreadsView.ResumeThread" class="com.intellij.java.debugger.impl.shared.actions.ResumeThreadAction">
+      <add-to-group group-id="XDebugger.Threads.View.Popup"/>
+    </action>
     <action class="com.intellij.debugger.memory.action.ShowInstancesByClassAction"
             id="MemoryView.ShowInstancesFromDebuggerTree">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after"

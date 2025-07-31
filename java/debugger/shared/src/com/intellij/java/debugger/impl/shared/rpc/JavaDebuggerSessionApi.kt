@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.debugger.impl.rpc.SerializableSimpleTextAttributes
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
+import com.intellij.xdebugger.impl.rpc.XExecutionStackId
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.ReceiveChannelSerializer
@@ -24,6 +25,8 @@ interface JavaDebuggerSessionApi : RemoteApi<Unit> {
   suspend fun dumpThreads(sessionId: XDebugSessionId, maxItems: Int = Int.MAX_VALUE, onlyPlatformThreads: Boolean): JavaThreadDumpResponseDto?
 
   suspend fun setAsyncStacksEnabled(sessionId: XDebugSessionId, state: Boolean)
+
+  suspend fun resumeThread(executionStackId: XExecutionStackId)
 
   companion object {
     @JvmStatic
