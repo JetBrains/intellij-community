@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import org.jetbrains.plugins.textmate.Constants
+import org.jetbrains.plugins.textmate.language.syntax.InjectionNodeDescriptor
 import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh
 import org.jetbrains.plugins.textmate.regex.MatchData
@@ -27,10 +28,11 @@ class TextMateCachingSyntaxMatcher(private val delegate: TextMateSyntaxMatcher) 
     matchBeginString: Boolean,
     priority: TextMateWeigh.Priority,
     currentScope: TextMateScope,
+    injections: List<InjectionNodeDescriptor>,
     checkCancelledCallback: Runnable?,
   ): TextMateLexerState {
     return CACHE.get(
-      MatchKey(syntaxNodeDescriptor, string, byteOffset, matchBeginPosition, matchBeginString, priority, currentScope)) {
+      MatchKey(syntaxNodeDescriptor, string, byteOffset, matchBeginPosition, matchBeginString, priority, currentScope, injections)) {
       delegate.matchRule(syntaxNodeDescriptor = it.syntaxNodeDescriptor,
                          string = it.string,
                          byteOffset = it.byteOffset,
@@ -38,6 +40,7 @@ class TextMateCachingSyntaxMatcher(private val delegate: TextMateSyntaxMatcher) 
                          matchBeginString = it.matchBeginString,
                          priority = it.priority,
                          currentScope = it.currentScope,
+                         injections = injections,
                          checkCancelledCallback = checkCancelledCallback)
     }
   }
@@ -66,5 +69,6 @@ class TextMateCachingSyntaxMatcher(private val delegate: TextMateSyntaxMatcher) 
     val matchBeginString: Boolean,
     val priority: TextMateWeigh.Priority,
     val currentScope: TextMateScope,
+    val injections: List<InjectionNodeDescriptor>,
   )
 }

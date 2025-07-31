@@ -18,6 +18,7 @@ object TestUtil {
   const val JAVA: @NonNls String = "java"
   const val LOG: @NonNls String = "log"
   const val JAVASCRIPT: @NonNls String = "javascript"
+  const val CSS: @NonNls String = "css"
   const val CHEF: @NonNls String = "chef"
   const val HTML: @NonNls String = "html"
   const val HTML_VSC: @NonNls String = "html_vsc"

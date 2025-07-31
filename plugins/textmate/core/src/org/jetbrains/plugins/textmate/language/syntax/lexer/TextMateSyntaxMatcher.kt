@@ -2,6 +2,7 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer
 
 import kotlinx.coroutines.Runnable
 import org.jetbrains.plugins.textmate.Constants
+import org.jetbrains.plugins.textmate.language.syntax.InjectionNodeDescriptor
 import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh
@@ -21,6 +22,7 @@ interface TextMateSyntaxMatcher {
     matchBeginString: Boolean,
     priority: TextMateWeigh.Priority,
     currentScope: TextMateScope,
+    injections: List<InjectionNodeDescriptor> = emptyList(),
     checkCancelledCallback: Runnable?,
   ): TextMateLexerState
 
@@ -54,6 +56,7 @@ class TextMateSyntaxMatcherImpl(
     matchBeginString: Boolean,
     priority: TextMateWeigh.Priority,
     currentScope: TextMateScope,
+    injections: List<InjectionNodeDescriptor>,
     checkCancelledCallback: Runnable?,
   ): TextMateLexerState {
     var resultState = TextMateLexerState.notMatched(syntaxNodeDescriptor)
@@ -78,6 +81,7 @@ class TextMateSyntaxMatcherImpl(
                                                            matchBeginPosition = matchBeginPosition,
                                                            matchBeginString = matchBeginString,
                                                            currentScope = currentScope,
+                                                           injections = injections,
                                                            checkCancelledCallback = checkCancelledCallback))
   }
 
@@ -149,7 +153,7 @@ class TextMateSyntaxMatcherImpl(
       return TextMateLexerState.notMatched(syntaxNodeDescriptor)
     }
     return matchRule(syntaxNodeDescriptor, string, byteOffset, matchBeginPosition, matchBeginString, priority, currentScope,
-                     checkCancelledCallback)
+                     emptyList(), checkCancelledCallback)
   }
 
   private fun hasBeginKey(lexerState: TextMateLexerState): Boolean {
@@ -180,21 +184,32 @@ class TextMateSyntaxMatcherImpl(
     matchBeginPosition: Boolean,
     matchBeginString: Boolean,
     currentScope: TextMateScope,
+    injections: List<InjectionNodeDescriptor>,
     checkCancelledCallback: Runnable?,
   ): TextMateLexerState {
     var resultState = TextMateLexerState.notMatched(syntaxNodeDescriptor)
-    val injections = syntaxNodeDescriptor.injections
 
     for (injection in injections) {
       val selectorWeigh = mySelectorWeigher.weigh(injection.selector, currentScope)
       if (selectorWeigh.weigh <= 0) {
         continue
       }
-      val injectionState: TextMateLexerState =
-        matchRule(injection.syntaxNodeDescriptor, string, byteOffset, matchBeginPosition, matchBeginString, selectorWeigh.priority,
-                  currentScope, checkCancelledCallback)
+      val injectionState =
+        matchRule(
+          injection.syntaxNodeDescriptor,
+          string,
+          byteOffset,
+          matchBeginPosition,
+          matchBeginString,
+          selectorWeigh.priority,
+          currentScope,
+          emptyList(),
+          checkCancelledCallback
+        )
+
       resultState = moreImportantState(resultState, injectionState)
     }
+
     return resultState
   }
 }

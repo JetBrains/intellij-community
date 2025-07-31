@@ -6,6 +6,7 @@ import org.jetbrains.plugins.textmate.cache.SLRUTextMateCache
 import org.jetbrains.plugins.textmate.cache.TextMateCache
 import org.jetbrains.plugins.textmate.cache.use
 import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor
+import org.jetbrains.plugins.textmate.language.syntax.InjectionNodeDescriptor
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh
 import org.jetbrains.plugins.textmate.regex.MatchData
 import org.jetbrains.plugins.textmate.regex.TextMateByteOffset
@@ -15,7 +16,7 @@ fun TextMateSyntaxMatcher.caching(): TextMateCachingSyntaxMatcherCore {
   val delegate = this
   return TextMateCachingSyntaxMatcherCore(delegate, SLRUTextMateCache(
     computeFn = { key ->
-      delegate.matchRule(key.syntaxNodeDescriptor, key.string, key.byteOffset, key.matchBeginString, key.matchBeginString, key.priority, key.currentScope, key.checkCancelledCallback)
+      delegate.matchRule(key.syntaxNodeDescriptor, key.string, key.byteOffset, key.matchBeginString, key.matchBeginString, key.priority, key.currentScope, key.injections, key.checkCancelledCallback)
     },
     disposeFn = { },
     capacity = 1000,
@@ -25,14 +26,14 @@ fun TextMateSyntaxMatcher.caching(): TextMateCachingSyntaxMatcherCore {
 
 class TextMateCachingSyntaxMatcherCore(private val delegate: TextMateSyntaxMatcher,
                                        private val cache: TextMateCache<TextMateMatchRuleCacheKey, TextMateLexerState>) : TextMateSyntaxMatcher, AutoCloseable {
-  override fun matchRule(syntaxNodeDescriptor: SyntaxNodeDescriptor, string: TextMateString, byteOffset: TextMateByteOffset, matchBeginPosition: Boolean, matchBeginString: Boolean, priority: TextMateWeigh.Priority, currentScope: TextMateScope, checkCancelledCallback: Runnable?): TextMateLexerState {
+  override fun matchRule(syntaxNodeDescriptor: SyntaxNodeDescriptor, string: TextMateString, byteOffset: TextMateByteOffset, matchBeginPosition: Boolean, matchBeginString: Boolean, priority: TextMateWeigh.Priority, currentScope: TextMateScope, injections: List<InjectionNodeDescriptor>, checkCancelledCallback: Runnable?): TextMateLexerState {
     return cache.use(TextMateMatchRuleCacheKey(syntaxNodeDescriptor = syntaxNodeDescriptor,
                                                string = string,
                                                byteOffset = byteOffset,
                                                matchBeginPosition = matchBeginPosition,
                                                matchBeginString = matchBeginString,
                                                priority = priority,
-                                               currentScope = currentScope,
+                                               currentScope = currentScope, injections = injections,
                                                checkCancelledCallback = checkCancelledCallback)) { it }
   }
 
@@ -63,7 +64,8 @@ class TextMateMatchRuleCacheKey(
   val matchBeginString: Boolean,
   val priority: TextMateWeigh.Priority,
   val currentScope: TextMateScope,
-  val checkCancelledCallback: Runnable?
+  val injections: List<InjectionNodeDescriptor>,
+  val checkCancelledCallback: Runnable?,
 ) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -74,6 +76,7 @@ class TextMateMatchRuleCacheKey(
     if (matchBeginPosition != other.matchBeginPosition) return false
     if (matchBeginString != other.matchBeginString) return false
     if (syntaxNodeDescriptor != other.syntaxNodeDescriptor) return false
+    if (injections != other.injections) return false
     if (string != other.string) return false
     if (priority != other.priority) return false
     if (currentScope != other.currentScope) return false
@@ -86,6 +89,7 @@ class TextMateMatchRuleCacheKey(
     result = 31 * result + matchBeginPosition.hashCode()
     result = 31 * result + matchBeginString.hashCode()
     result = 31 * result + syntaxNodeDescriptor.hashCode()
+    result = 31 * result + injections.hashCode()
     result = 31 * result + string.hashCode()
     result = 31 * result + priority.hashCode()
     result = 31 * result + currentScope.hashCode()
