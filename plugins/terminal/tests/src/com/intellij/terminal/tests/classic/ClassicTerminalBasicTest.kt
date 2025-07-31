@@ -4,13 +4,13 @@ package com.intellij.terminal.tests.classic
 import com.intellij.execution.CommandLineUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.tests.block.util.TerminalSessionTestUtil
-import com.intellij.terminal.tests.classic.fixture.ClassicTerminalTestShellSession
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.util.io.delete
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
+import org.jetbrains.plugins.terminal.testFramework.classic.ClassicTerminalTestShellSession
 import org.junit.*
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized

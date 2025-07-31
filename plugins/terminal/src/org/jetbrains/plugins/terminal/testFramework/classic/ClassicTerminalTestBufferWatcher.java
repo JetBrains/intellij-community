@@ -1,13 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.tests.classic.fixture;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.testFramework.classic;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.terminal.Terminal;
 import com.jediterm.terminal.model.TerminalLine;
 import com.jediterm.terminal.model.TerminalModelListener;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,12 +16,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 
-public class ClassicTerminalTestBufferWatcher {
+class ClassicTerminalTestBufferWatcher {
   private static final Logger LOG = Logger.getInstance(ClassicTerminalTestBufferWatcher.class);
   private final TerminalTextBuffer myBuffer;
   private final Terminal myTerminal;
 
-  public ClassicTerminalTestBufferWatcher(@NotNull TerminalTextBuffer buffer, @NotNull Terminal terminal) {
+  ClassicTerminalTestBufferWatcher(@NotNull TerminalTextBuffer buffer, @NotNull Terminal terminal) {
     myBuffer = buffer;
     myTerminal = terminal;
   }
@@ -48,16 +48,23 @@ public class ClassicTerminalTestBufferWatcher {
   public void awaitScreenLinesAre(@NotNull List<String> expectedScreenLines, long timeoutMillis) {
     boolean ok = awaitBuffer(() -> expectedScreenLines.equals(getScreenLines(true)), timeoutMillis);
     if (!ok) {
-      Assert.assertEquals(expectedScreenLines, getScreenLines(true));
-      Assert.fail("Unexpected failure");
+      assertScreenLines(expectedScreenLines);
+      throw new AssertionError("Unexpected failure");
     }
   }
 
   public void awaitScreenLinesEndWith(@NotNull List<String> expectedScreenLines, long timeoutMillis) {
     boolean ok = awaitBuffer(() -> checkScreenLinesEndWith(expectedScreenLines), timeoutMillis);
     if (!ok) {
-      Assert.assertEquals(expectedScreenLines, getScreenLines(true));
-      Assert.fail("Unexpected failure");
+      assertScreenLines(expectedScreenLines);
+      throw new AssertionError("Unexpected failure");
+    }
+  }
+
+  private void assertScreenLines(@NotNull List<String> expectedScreenLines) {
+    List<String> actualScreenLines = getScreenLines(true);
+    if (!ContainerUtil.equalsIdentity(expectedScreenLines, actualScreenLines)) {
+      throw new AssertionError("Expected:\n" + expectedScreenLines + "\nActual:\n" + actualScreenLines);
     }
   }
 

@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.tests.classic.fixture
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.testFramework.classic
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
@@ -12,16 +12,23 @@ import com.intellij.util.io.delete
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import com.pty4j.windows.conpty.WinConPtyProcess
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.shellStartupOptions
-import org.junit.Assume
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.util.function.BooleanSupplier
 
+/**
+ * Use this class for testing Classic Terminal scenarios.
+ *
+ * It starts the terminal session with the provided shell command and attaches it to the [ShellTerminalWidget].
+ * Allowing executing commands and checking the output state.
+ */
+@ApiStatus.Experimental
 class ClassicTerminalTestShellSession(shellCommand: List<String>?, val widget: ShellTerminalWidget) {
 
   constructor(project: Project, parentDisposable: Disposable): this(null, ShellTerminalWidget(project, JBTerminalSystemSettingsProvider(), parentDisposable))
@@ -53,7 +60,7 @@ class ClassicTerminalTestShellSession(shellCommand: List<String>?, val widget: S
     get() = watcher.screenLines
 
   companion object {
-    fun start(shellCommand: List<String>?, terminalWidget: JBTerminalWidget) {
+    private fun start(shellCommand: List<String>?, terminalWidget: JBTerminalWidget) {
       val runner = LocalTerminalDirectRunner.createTerminalRunner(terminalWidget.project)
       val baseOptions = shellStartupOptions(terminalWidget.project.basePath) {
         it.shellCommand = shellCommand
@@ -80,8 +87,12 @@ class ClassicTerminalTestShellSession(shellCommand: List<String>?, val widget: S
 
       if (SystemInfo.isWindows) {
         val msg = "On Windows, the bundled ConPTY in required for test stability"
-        Assume.assumeTrue(msg + ", but got " + process::class.java, process is WinConPtyProcess)
-        Assume.assumeTrue(msg, (process as WinConPtyProcess).isBundledConPtyLibrary)
+        if (process !is WinConPtyProcess) {
+          throw IllegalStateException(msg + ", but got " + process::class.java)
+        }
+        if (!process.isBundledConPtyLibrary) {
+          throw IllegalStateException(msg)
+        }
       }
     }
   }
