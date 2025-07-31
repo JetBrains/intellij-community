@@ -36,7 +36,6 @@ import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.unit.dp
 import junit.framework.TestCase.assertEquals
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
-import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -87,7 +86,7 @@ class ListComboBoxUiTest {
     fun `TAB navigation focuses only the editable combo box's text field`() {
         val focusRequester = FocusRequester()
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 Box(modifier = Modifier.size(20.dp).focusRequester(focusRequester).testTag("Pre-Box").focusable(true))
                 EditableListComboBox(
                     items = comboBoxItems,
@@ -393,7 +392,7 @@ class ListComboBoxUiTest {
         var selectedIndex = 0
 
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
                     selectedIndex = selectedIndex,
@@ -431,7 +430,7 @@ class ListComboBoxUiTest {
         var selectedIndex = 0
 
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
                     selectedIndex = selectedIndex,
@@ -504,7 +503,7 @@ class ListComboBoxUiTest {
         var selectedText = "Item 3"
 
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 ListComboBox(
                     items = comboBoxItems,
                     selectedIndex = selectedIndex,
@@ -540,7 +539,7 @@ class ListComboBoxUiTest {
         var selectedIndex by mutableStateOf(0)
 
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 ListComboBox(
                     items = comboBoxItems,
                     selectedIndex = selectedIndex,
@@ -582,7 +581,7 @@ class ListComboBoxUiTest {
         val focusRequester = FocusRequester()
 
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
                     selectedIndex = selectedIndex,
@@ -612,7 +611,7 @@ class ListComboBoxUiTest {
         val focusRequester = FocusRequester()
 
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
                     selectedIndex = selectedIndex,
@@ -659,7 +658,7 @@ class ListComboBoxUiTest {
     private fun editableListComboBox(): SemanticsNodeInteraction {
         val focusRequester = FocusRequester()
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
                     selectedIndex = 0,
@@ -701,7 +700,7 @@ class ListComboBoxUiTest {
 
     private fun injectListComboBox(focusRequester: FocusRequester, isEnabled: Boolean) {
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 ListComboBox(
                     items = comboBoxItems,
                     selectedIndex = 0,
@@ -716,7 +715,7 @@ class ListComboBoxUiTest {
 
     private fun injectEditableListComboBox(focusRequester: FocusRequester, isEnabled: Boolean) {
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
                     selectedIndex = 0,
