@@ -101,12 +101,11 @@ object TestKotlinArtifacts {
     }
 
     private fun getFileFromBazelRuntime(label: BazelLabel): Path {
-        // TODO Check how it work in community Bazel project
-        // TODO use _repo_mapping to resolve correct location
-        // https://fuchsia.googlesource.com/fuchsia/+/HEAD/build/bazel/BAZEL_RUNFILES.md
-
+        val repoEntry = BazelTestUtil.bazelTestRepoMapping.getOrElse(label.repo) {
+            error("Unable to determine dependency path '${label.asLabel}'")
+        }
         val file = BazelTestUtil.bazelTestRunfilesPath.resolve(
-            "community++kotlin_test_deps+" + label.repo + "/${label.packageName}/${label.file}"
+            repoEntry.runfilesRelativePath + "/${label.packageName}/${label.file}"
         )
         if (!Files.isRegularFile(file)) {
             error("Unable to find test dependency '${label.asLabel}' at $file")

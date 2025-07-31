@@ -5,6 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.absolute
 import kotlin.io.path.isDirectory
+import kotlin.io.path.useLines
 
 @ApiStatus.Experimental
 object BazelTestUtil {
@@ -17,6 +18,21 @@ object BazelTestUtil {
   val isUnderBazelTest: Boolean =
     System.getenv(TEST_SRCDIR_ENV_NAME) != null &&
     System.getenv(TEST_UNDECLARED_OUTPUTS_DIR_ENV_NAME) != null
+
+  /**
+   * https://fuchsia.googlesource.com/fuchsia/+/HEAD/build/bazel/BAZEL_RUNFILES.md
+   * repo -> (repo, path) based on _repo_mapping file to resolve as a subdirectory of bazelTestRunfilesPath
+   */
+  @JvmStatic
+  val bazelTestRepoMapping: Map<String, RepoMappingEntry> by lazy {
+    bazelTestRunfilesPath.resolve("_repo_mapping").useLines { lines ->
+      lines
+        .filter { it.isNotBlank() && it.isNotEmpty() }
+        .map { parseRepoEntry(it) }
+        .distinct()
+        .associateBy { it.repoName }
+    }
+  }
 
   /**
    * Absolute path to the base of the runfiles tree (your test dependencies too),
@@ -81,5 +97,13 @@ object BazelTestUtil {
             "Please remove $root1 or $root2 or use a different relative path for test rule")
     }
     return if (root1exists) root1 else root2
+  }
+
+  data class RepoMappingEntry(val repoName: String, val runfilesRelativePath: String)
+
+  private fun parseRepoEntry(line: String): RepoMappingEntry {
+    val parts = line.split(",", limit = 3)
+    require(parts.size == 3) { "_repo_mapping line must have exactly 3 comma-separated values: '$line'" }
+    return RepoMappingEntry( parts[1], parts[2])
   }
 }
