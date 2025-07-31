@@ -167,8 +167,7 @@ abstract class PythonAddInterpreterModel(
   suspend fun detectHatchEnvironments(hatchExecutablePathString: String): PyResult<List<HatchVirtualEnvironment>> = withContext(Dispatchers.IO) {
     val projectPath = projectPathFlows.projectPathWithDefault.first()
     val hatchExecutablePath = NioFiles.toPath(hatchExecutablePathString)
-                              ?: return@withContext Result.failure(
-                                HatchUIError.HatchExecutablePathIsNotValid(hatchExecutablePathString))
+                              ?: return@withContext Result.failure(HatchUIError.HatchExecutablePathIsNotValid(hatchExecutablePathString))
     val hatchWorkingDirectory = if (projectPath.isDirectory()) projectPath else projectPath.parent
     val hatchService = hatchWorkingDirectory.getHatchService(hatchExecutablePath).getOr { return@withContext it }
 
@@ -181,18 +180,20 @@ abstract class PythonAddInterpreterModel(
   }
 
   private suspend fun getExistingSelectableInterpreters(): List<ExistingSelectableInterpreter> = withContext(Dispatchers.IO) {
-    val projectPathPrefix: String = projectPathFlows.projectPathWithDefault.first().toString()
+    val projectPathPrefix = projectPathFlows.projectPathWithDefault.first()
     val allValidSdks = PythonSdkUtil
       .getAllSdks()
       .filter { sdk ->
-        val associatedModulePath = sdk.associatedModulePath ?: return@filter true
-        associatedModulePath.startsWith(projectPathPrefix)
-      }
-      .map {
-        ExistingSelectableInterpreter(
-          it,
-          PySdkUtil.getLanguageLevelForSdk(it),
-          it.isSystemWide)
+        try {
+          val associatedModulePath = sdk.associatedModulePath?.let { Path(it) } ?: return@filter true
+          associatedModulePath.startsWith(projectPathPrefix)
+        }
+        catch (e: InvalidPathException) {
+          LOG.warn("Skipping bad association ${sdk.associatedModulePath}", e)
+          false
+        }
+      }.map {
+        ExistingSelectableInterpreter(it, PySdkUtil.getLanguageLevelForSdk(it), it.isSystemWide)
       }
     allValidSdks
   }
@@ -208,10 +209,7 @@ abstract class PythonAddInterpreterModel(
       LanguageLevel.fromPythonVersionSafe(it.installation.release.version)?.let { languageLevel ->
         languageLevel to it
       }
-    }
-      .filter { it.first !in languageLevels }
-      .sortedByDescending { it.first }
-      .map { InstallableSelectableInterpreter(it.second) }
+    }.filter { it.first !in languageLevels }.sortedByDescending { it.first }.map { InstallableSelectableInterpreter(it.second) }
     filteredInstallable
   }
 
@@ -220,8 +218,7 @@ abstract class PythonAddInterpreterModel(
     val existingSdkPaths = existingSelectableInterpreters.mapNotNull { tryResolvePath(it.homePath) }.toSet()
 
     // Venvs are not detected manually, but must migrate to VenvService or so
-    val venvs: List<VanillaPythonWithLanguageLevel> = VanillaPythonWithLanguageLevelImpl.createByPythonBinaries(
-      VirtualEnvSdkFlavor.getInstance().suggestLocalHomePaths(null, null)).mapNotNull { (venv, r) ->
+    val venvs: List<VanillaPythonWithLanguageLevel> = VanillaPythonWithLanguageLevelImpl.createByPythonBinaries(VirtualEnvSdkFlavor.getInstance().suggestLocalHomePaths(null, null)).mapNotNull { (venv, r) ->
       when (r) {
         is Result.Failure -> {
           fileLogger().warn("Skipping $venv : ${r.error}")
@@ -235,14 +232,7 @@ abstract class PythonAddInterpreterModel(
     val system: List<SystemPython> = systemPythonService.findSystemPythons()
 
     // Python + isBase. Both: system and venv.
-    val detected: List<DetectedSelectableInterpreter> =
-      (
-        venvs.map { Triple(it, false, null) } +
-        system.map { Triple(it, true, it.ui) }
-      )
-        .filterNot { (python, _) -> python.pythonBinary in existingSdkPaths }
-        .map { (python, base, ui) -> DetectedSelectableInterpreter(python.pythonBinary.pathString, python.languageLevel, base, ui) }
-        .sorted()
+    val detected: List<DetectedSelectableInterpreter> = (venvs.map { Triple(it, false, null) } + system.map { Triple(it, true, it.ui) }).filterNot { (python, _) -> python.pythonBinary in existingSdkPaths }.map { (python, base, ui) -> DetectedSelectableInterpreter(python.pythonBinary.pathString, python.languageLevel, base, ui) }.sorted()
 
     detected
   }
@@ -394,8 +384,7 @@ sealed class PythonSelectableInterpreter : Comparable<PythonSelectableInterprete
   override val ui: UICustomization? = null
   override fun toString(): String = "PythonSelectableInterpreter(homePath='$homePath')"
 
-  override fun compareTo(other: PythonSelectableInterpreter): Int =
-    comparator.compare(this, other)
+  override fun compareTo(other: PythonSelectableInterpreter): Int = comparator.compare(this, other)
 }
 
 class ExistingSelectableInterpreter(
@@ -510,7 +499,5 @@ internal suspend fun PythonAddInterpreterModel.getBaseCondaOrError(): PyResult<P
 internal suspend fun PythonAddInterpreterModel.getBasePath(module: Module?): Path = withContext(Dispatchers.IO) {
   val pyProjectTomlBased = module?.let { PyProjectToml.findFile(it)?.toNioPathOrNull()?.parent }
 
-  pyProjectTomlBased
-  ?: module?.basePath?.let { Path.of(it) }
-  ?: projectPathFlows.projectPathWithDefault.first()
+  pyProjectTomlBased ?: module?.basePath?.let { Path.of(it) } ?: projectPathFlows.projectPathWithDefault.first()
 }
