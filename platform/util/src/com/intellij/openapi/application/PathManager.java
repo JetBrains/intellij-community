@@ -8,7 +8,6 @@ import com.intellij.util.system.CpuArch;
 import com.intellij.util.system.OS;
 import org.jetbrains.annotations.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.UncheckedIOException;
@@ -693,15 +692,15 @@ public final class PathManager {
     }
 
     try {
-      File result;
+      Path result;
       URL parsedUrl = new URL(jarPath);
       try {
-        result = new File(parsedUrl.toURI().getSchemeSpecificPart());
+        result = Paths.get(parsedUrl.toURI());
       }
       catch (URISyntaxException e) {
         throw new IllegalArgumentException("URL='" + parsedUrl + "'", e);
       }
-      return result.getPath().replace('\\', '/');
+      return result.toString().replace('\\', '/');
     }
     catch (Exception e) {
       jarPath = jarPath.substring(URLUtil.FILE_PROTOCOL.length());
