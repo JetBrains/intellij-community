@@ -138,8 +138,14 @@ com.intellij.ide.CommandLineInspectionProjectConfigurator$ConfiguratorContext
 - a:getProgressIndicator():com.intellij.openapi.progress.ProgressIndicator
 - a:getProjectPath():java.nio.file.Path
 - getVirtualFilesFilter():java.util.function.Predicate
+f:com.intellij.ide.IdeEventQueue
+- f:addDispatcher(com.intellij.ide.IdeEventQueue$NonLockedEventDispatcher,com.intellij.openapi.Disposable):V
+- f:addDispatcher(com.intellij.ide.IdeEventQueue$NonLockedEventDispatcher,kotlinx.coroutines.CoroutineScope):V
+- f:removeDispatcher(com.intellij.ide.IdeEventQueue$NonLockedEventDispatcher):V
 com.intellij.ide.IdeEventQueue$EventDispatcher
 - a:dispatch(java.awt.AWTEvent):Z
+com.intellij.ide.IdeEventQueue$NonLockedEventDispatcher
+- com.intellij.ide.IdeEventQueue$EventDispatcher
 com.intellij.ide.IdeTooltip$Ui
 - a:getShowingPoint():com.intellij.ui.awt.RelativePoint
 - a:isInside(com.intellij.ui.awt.RelativePoint):Z

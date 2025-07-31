@@ -117,6 +117,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   private var lastActiveTime = System.nanoTime()
   private var lastEventTime = System.currentTimeMillis()
   private val dispatchers = ContainerUtil.createLockFreeCopyOnWriteList<EventDispatcher>()
+  private val nonLockingDispatchers = ContainerUtil.createLockFreeCopyOnWriteList<NonLockedEventDispatcher>()
   private val postProcessors = ContainerUtil.createLockFreeCopyOnWriteList<EventDispatcher>()
   private val preProcessors = ContainerUtil.createLockFreeCopyOnWriteList<EventDispatcher>()
   private val ready = HashSet<Runnable>()
@@ -203,10 +204,16 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
+  @Deprecated("Use version for NonLockedEventDispatcher")
   fun addDispatcher(dispatcher: EventDispatcher, parent: Disposable?) {
     addProcessor(dispatcher, parent, dispatchers)
   }
 
+  fun addDispatcher(dispatcher: NonLockedEventDispatcher, parent: Disposable?) {
+    addProcessor(dispatcher, parent, nonLockingDispatchers)
+  }
+
+  @Deprecated("Use version for NonLockedEventDispatcher")
   fun addDispatcher(dispatcher: EventDispatcher, scope: CoroutineScope) {
     dispatchers.add(dispatcher)
     scope.coroutineContext.job.invokeOnCompletion {
@@ -214,11 +221,23 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
+  fun addDispatcher(dispatcher: NonLockedEventDispatcher, scope: CoroutineScope) {
+    nonLockingDispatchers.add(dispatcher)
+    scope.coroutineContext.job.invokeOnCompletion {
+      nonLockingDispatchers.remove(dispatcher)
+    }
+  }
+
+  @Deprecated("Use version for NonLockedEventDispatcher")
   fun removeDispatcher(dispatcher: EventDispatcher) {
     dispatchers.remove(dispatcher)
   }
 
-  fun containsDispatcher(dispatcher: EventDispatcher): Boolean = dispatchers.contains(dispatcher)
+  fun removeDispatcher(dispatcher: NonLockedEventDispatcher) {
+    nonLockingDispatchers.remove(dispatcher)
+  }
+
+  fun containsDispatcher(dispatcher: EventDispatcher): Boolean = dispatchers.contains(dispatcher) || nonLockingDispatchers.contains(dispatcher)
 
   fun addPostprocessor(dispatcher: EventDispatcher, parent: Disposable?) {
     addProcessor(dispatcher, parent, postProcessors)
@@ -469,7 +488,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
 
     // IJPL-177735 Remove Write-Intent lock from IdeEventQueue.EventDispatcher
-    if (!shouldSkipListeners(e) && threadingSupport.runPreventiveWriteIntentReadAction { dispatchByCustomDispatchers(e) }) {
+    if (!shouldSkipListeners(e) && dispatchByCustomDispatchers(e)) {
       return
     }
     if (e is InputMethodEvent && SystemInfoRt.isMac && keyEventDispatcher.isWaitingForSecondKeyStroke) {
@@ -559,7 +578,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   private fun dispatchByCustomDispatchers(e: AWTEvent): Boolean {
-    for (eachDispatcher in dispatchers) {
+    for (eachDispatcher in nonLockingDispatchers) {
       try {
         if (eachDispatcher.dispatch(e)) {
           return true
@@ -570,16 +589,55 @@ class IdeEventQueue private constructor() : EventQueue() {
       }
     }
 
-    for (eachDispatcher in DISPATCHER_EP.extensionsIfPointIsRegistered) {
+    val extensions = DISPATCHER_EP.extensionsIfPointIsRegistered + NON_LOCKED_DISPATCHER_EP.extensionsIfPointIsRegistered
+    var hasOldDispatchers = false
+
+    for (eachDispatcher in extensions) {
       try {
-        if (eachDispatcher.dispatch(e)) {
-          return true
+        if (eachDispatcher is NonLockedEventDispatcher) {
+          if (eachDispatcher.dispatch(e)) {
+            return true
+          }
+        }
+        else {
+          hasOldDispatchers = true
         }
       }
       catch (t: Throwable) {
         processException(t)
       }
     }
+
+    if (dispatchers.isNotEmpty() || hasOldDispatchers) {
+      val result = WriteIntentReadAction.compute<Boolean, Throwable> {
+        for (eachDispatcher in dispatchers) {
+          try {
+            if (eachDispatcher.dispatch(e)) {
+              return@compute true
+            }
+          }
+          catch (t: Throwable) {
+            processException(t)
+          }
+        }
+
+        for (eachDispatcher in DISPATCHER_EP.extensionsIfPointIsRegistered) {
+          try {
+            if (eachDispatcher !is NonLockedEventDispatcher && eachDispatcher.dispatch(e)) {
+              return@compute true
+            }
+          }
+          catch (t: Throwable) {
+            processException(t)
+          }
+        }
+        false
+      }
+      if (result) {
+        return true
+      }
+    }
+
     return false
   }
 
@@ -662,6 +720,11 @@ class IdeEventQueue private constructor() : EventQueue() {
   fun interface EventDispatcher {
     fun dispatch(e: AWTEvent): Boolean
   }
+
+  /**
+   * Marker interface for [EventDispatcher] which means that the dispatcher can be invoked without the write-intent lock
+   */
+  interface NonLockedEventDispatcher : EventDispatcher
 
   val idleTime: Long
     get() = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastActiveTime)
@@ -890,6 +953,7 @@ private object Logs {
 typealias PostEventHook = (event: AWTEvent) -> Boolean
 
 private val DISPATCHER_EP = ExtensionPointName<IdeEventQueue.EventDispatcher>("com.intellij.ideEventQueueDispatcher")
+private val NON_LOCKED_DISPATCHER_EP = ExtensionPointName<IdeEventQueue.NonLockedEventDispatcher>("com.intellij.nonLockedIdeEventQueueDispatcher")
 
 private const val defaultEventWithWrite = false
 
@@ -915,7 +979,7 @@ private fun skipMoveResizeEvents(event: AWTEvent): Boolean {
   return false
 }
 
-private fun addProcessor(dispatcher: IdeEventQueue.EventDispatcher, parent: Disposable?, set: MutableCollection<IdeEventQueue.EventDispatcher>) {
+private fun <T : IdeEventQueue.EventDispatcher> addProcessor(dispatcher: T, parent: Disposable?, set: MutableCollection<T>) {
   set.add(dispatcher)
   if (parent != null) {
     Disposer.register(parent) { set.remove(dispatcher) }
