@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
@@ -34,11 +34,15 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
+import static com.intellij.diff.tools.simple.SimpleDiffViewerHighlighters.getApplyActionText;
+
 public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   protected final @NotNull SimpleThreesideTextDiffProvider myTextDiffProvider;
 
   private final @NotNull List<SimpleThreesideDiffChange> myDiffChanges = new ArrayList<>();
-  private final @NotNull List<SimpleThreesideDiffChange> myInvalidDiffChanges = new ArrayList<>();
+
+  private final @NotNull Map<SimpleThreesideDiffChange, SimpleDiffViewerHighlighters> myHighlighters = new HashMap<>();
+  private final @NotNull Map<SimpleThreesideDiffChange, SimpleDiffViewerHighlighters> myInvalidHighlighters = new HashMap<>();
 
   public SimpleThreesideDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
@@ -148,8 +152,10 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
         MergeConflictType conflictType = fragment.getConflictType();
         MergeInnerDifferences innerFragments = fragment.getInnerFragments();
 
-        SimpleThreesideDiffChange change = new SimpleThreesideDiffChange(fragment, conflictType, innerFragments, this);
+        SimpleThreesideDiffChange change = new SimpleThreesideDiffChange(fragment, conflictType);
+        SimpleDiffViewerHighlighters highlighters = new SimpleDiffViewerHighlighters(change, innerFragments,this);
         myDiffChanges.add(change);
+        myHighlighters.put(change, highlighters);
         onChangeAdded(change);
       }
 
@@ -166,15 +172,13 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   @RequiresEdt
   protected void destroyChangedBlocks() {
     super.destroyChangedBlocks();
-    for (SimpleThreesideDiffChange change : myDiffChanges) {
-      change.destroy();
-    }
-    myDiffChanges.clear();
+    myHighlighters.values().forEach(SimpleDiffViewerHighlighters::destroy);
+    myHighlighters.clear();
 
-    for (SimpleThreesideDiffChange change : myInvalidDiffChanges) {
-      change.destroy();
-    }
-    myInvalidDiffChanges.clear();
+    myInvalidHighlighters.values().forEach(SimpleDiffViewerHighlighters::destroy);
+    myInvalidHighlighters.clear();
+
+    myDiffChanges.clear();
   }
 
   //
@@ -206,10 +210,15 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
 
     if (!invalid.isEmpty()) {
       myDiffChanges.removeAll(invalid);
-      myInvalidDiffChanges.addAll(invalid);
 
       for (SimpleThreesideDiffChange change : invalid) {
+        SimpleDiffViewerHighlighters removed = myHighlighters.remove(change);
         change.markInvalid();
+
+        if (removed != null) {
+          myInvalidHighlighters.put(change, removed);
+          removed.destroyOperations();
+        }
       }
     }
   }
@@ -253,11 +262,22 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
                                getEditor(sourceSide).getDocument(), change.getStartLine(sourceSide), change.getEndLine(sourceSide));
 
     myDiffChanges.remove(change);
-    myInvalidDiffChanges.add(change);
     change.markInvalid();
+    SimpleDiffViewerHighlighters removed = myHighlighters.remove(change);
+    if (removed != null) {
+      myInvalidHighlighters.put(change, removed);
+      removed.destroyOperations();
+    }
 
     // Do not rely on DocumentListener in case of identical change
     scheduleRediff();
+  }
+
+  @RequiresEdt
+  public void reinstallHighlighters() {
+    for (SimpleDiffViewerHighlighters highlighters : myHighlighters.values()) {
+      highlighters.reinstallAll();
+    }
   }
 
   //
@@ -312,7 +332,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
 
     @Override
     protected @NotNull String getText(@NotNull ThreeSide side) {
-      return SimpleThreesideDiffChange.getApplyActionText(SimpleThreesideDiffViewer.this, mySourceSide, myModifiedSide);
+      return getApplyActionText(SimpleThreesideDiffViewer.this, mySourceSide, myModifiedSide);
     }
 
     @Override

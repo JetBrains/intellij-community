@@ -77,10 +77,7 @@ public final class DiffPreviewPanel implements PreviewPanel {
 
   @Override
   public void updateView() {
-    List<SimpleThreesideDiffChange> changes = myViewer.getChanges();
-    for (SimpleThreesideDiffChange change : changes) {
-      change.reinstallHighlighters();
-    }
+    myViewer.reinstallHighlighters();
     myViewer.repaint();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge
 
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor
@@ -66,15 +66,16 @@ internal class ChangeReferenceProcessor(private val project: Project, private va
     if (change.getStartLine(sourceThreeSide) == change.getEndLine(sourceThreeSide)) return
 
     if (processInnerFragments) {
-      val innerDifferences = change.innerFragments ?: compareInner(change) ?: return
+      //val innerDifferences = change.innerFragments ?: compareInner(change) ?: return FIXME
+      val innerDifferences = compareInner(change) ?: return
 
-      innerDifferences.get(sourceThreeSide)?.forEach {
-        if (it.isEmpty) return@forEach
+      innerDifferences.get(sourceThreeSide)?.forEach { textRange ->
+        if (textRange.isEmpty) return@forEach
 
         val baseDocument = editor.document
         val text = baseDocument.getText(rangeMarker.textRange)
-        val fragmentStartOffset = sourceRange.startOffset + it.startOffset
-        val rangeInDocument = TextRange(fragmentStartOffset, fragmentStartOffset + it.length)
+        val fragmentStartOffset = sourceRange.startOffset + textRange.startOffset
+        val rangeInDocument = TextRange(fragmentStartOffset, fragmentStartOffset + textRange.length)
         val fragmentText = sourceDocument.getText(rangeInDocument)
 
         if (fragmentText.isBlank()) return@forEach
