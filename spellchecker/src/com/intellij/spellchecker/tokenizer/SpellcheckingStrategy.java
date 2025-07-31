@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Defines spellchecking support for a custom language.
@@ -39,6 +40,9 @@ import java.util.Set;
  * Mark your strategy as {@link com.intellij.openapi.project.DumbAware} if it does not need indexes to perform
  */
 public class SpellcheckingStrategy implements PossiblyDumbAware {
+  // Consider literals that look like typical programming language identifier to be code contexts
+  protected static final Pattern CODE_IDENTIFIER_LIKE = Pattern.compile("([a-zA-Z][a-zA-Z0-9_]*)");
+
   protected final Tokenizer<PsiComment> myCommentTokenizer = new CommentTokenizer();
 
   public static final ExtensionPointName<KeyedLazyInstance<SpellcheckingStrategy>> EP_NAME =

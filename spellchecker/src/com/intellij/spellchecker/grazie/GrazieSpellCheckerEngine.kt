@@ -3,7 +3,6 @@
 
 package com.intellij.spellchecker.grazie
 
-import ai.grazie.annotation.TestOnly
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.alphabet.Alphabet
 import ai.grazie.nlp.phonetics.metaphone.DoubleMetaphone
@@ -43,6 +42,7 @@ import com.intellij.spellchecker.grazie.dictionary.ExtendedWordListWithFrequency
 import com.intellij.spellchecker.grazie.dictionary.WordListAdapter
 import com.intellij.spellchecker.grazie.ranker.DiacriticSuggestionRanker
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.TestOnly
 
 private const val MAX_WORD_LENGTH = 32
 
