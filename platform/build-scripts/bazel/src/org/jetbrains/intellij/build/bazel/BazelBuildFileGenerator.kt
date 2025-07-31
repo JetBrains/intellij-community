@@ -598,6 +598,9 @@ internal class BazelBuildFileGenerator(
       load("@rules_jvm//:jvm.bzl", "jvm_library")
       target("jvm_library") {
         option("name", testLibTargetName)
+        if (testDeps == null || testDeps.associates.isEmpty()) { // => in this case no 'associates' attribute will be generated
+          option("module_name", module.name)
+        }
 
         visibility(arrayOf("//visibility:public"))
 
