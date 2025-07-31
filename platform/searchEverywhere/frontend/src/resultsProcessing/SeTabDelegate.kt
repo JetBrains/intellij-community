@@ -49,15 +49,15 @@ class SeTabDelegate(
     return flow {
       val initializedProviders = providers.getValue()
 
-      val remoteProviderIds = initializedProviders.getRemoteProviderIds()
-      val allEssentialProviderIds = initializedProviders.essentialProviderIds
+      val allEssentialProviders = initializedProviders.essentialProviderIds
+      val remoteEssentialProviders = initializedProviders.getRemoteProviderIds().toSet().intersect(allEssentialProviders)
       val localProviders = initializedProviders.getLocalProviderIds().toSet()
-      val localEssentialProviders = allEssentialProviderIds.intersect(localProviders)
-      val localNonEssentialProviders = localProviders.subtract(allEssentialProviderIds)
+      val localEssentialProviders = allEssentialProviders.intersect(localProviders)
+      val localNonEssentialProviders = localProviders.subtract(allEssentialProviders)
 
       // We shouldn't block remoteProviderIds because they may miss some results after equality check on the Backend
       val balancer = SeResultsCountBalancer("FE",
-                                            nonBlockedProviderIds = remoteProviderIds,
+                                            nonBlockedProviderIds = remoteEssentialProviders,
                                             highPriorityProviderIds = localEssentialProviders,
                                             lowPriorityProviderIds = localNonEssentialProviders)
 
