@@ -9,6 +9,7 @@ jvm_library(
 
 jvm_library(
   name = "graphImplementationTests_test_lib",
+  module_name = "kotlin.jps.graphImplementationTests",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   deps = [

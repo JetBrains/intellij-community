@@ -58,6 +58,7 @@ jvm_library(
 ### auto-generated section `build intellij.settingsRepository.tests` start
 jvm_library(
   name = "settingsRepository-tests_test_lib",
+  module_name = "intellij.settingsRepository.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [

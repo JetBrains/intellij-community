@@ -27,6 +27,7 @@ jvm_library(
 ### auto-generated section `build intellij.sh.copyright.tests` start
 jvm_library(
   name = "copyright-tests_test_lib",
+  module_name = "intellij.sh.copyright.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   deps = [

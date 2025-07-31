@@ -9,6 +9,7 @@ jvm_library(
 
 jvm_library(
   name = "analysis-kotlin-tests-k2_test_lib",
+  module_name = "intellij.jvm.analysis.kotlin.tests.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [

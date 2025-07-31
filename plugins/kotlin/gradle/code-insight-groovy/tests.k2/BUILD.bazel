@@ -9,6 +9,7 @@ jvm_library(
 
 jvm_library(
   name = "tests.k2_test_lib",
+  module_name = "kotlin.gradle.code-insight-groovy.tests.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [

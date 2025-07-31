@@ -111,6 +111,7 @@ jvm_library(
 
 jvm_library(
   name = "pycharm-community-main_test_lib",
+  module_name = "intellij.pycharm.community.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   deps = [
@@ -176,6 +177,7 @@ jvm_library(
 
 jvm_library(
   name = "python-commonTests_test_lib",
+  module_name = "intellij.python.commonTests",
   visibility = ["//visibility:public"],
   srcs = glob(["python-common-tests/**/*.kt", "python-common-tests/**/*.java"], allow_empty = True),
   deps = [
@@ -376,6 +378,7 @@ jvm_library(
 
 jvm_library(
   name = "python-community-plugin-main_test_lib",
+  module_name = "intellij.python.community.plugin.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   deps = [
@@ -570,6 +573,7 @@ jvm_resources(
 
 jvm_library(
   name = "python-helpers-tests_test_lib",
+  module_name = "intellij.python.helpers.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["helpers/tests/**/*.kt", "helpers/tests/**/*.java"], allow_empty = True, exclude = [
     "helpers/tests/.gradle/**/*",

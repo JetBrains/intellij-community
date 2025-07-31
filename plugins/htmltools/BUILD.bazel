@@ -41,6 +41,7 @@ jvm_library(
 
 jvm_library(
   name = "html-tools-tests_test_lib",
+  module_name = "intellij.html.tools.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [

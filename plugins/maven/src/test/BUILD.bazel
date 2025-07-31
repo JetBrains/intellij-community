@@ -15,6 +15,7 @@ jvm_library(
 
 jvm_library(
   name = "maven-tests_test_lib",
+  module_name = "intellij.maven.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["java/**/*.kt", "java/**/*.java"], allow_empty = True),
   deps = [

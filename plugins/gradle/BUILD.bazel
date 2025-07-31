@@ -111,6 +111,7 @@ jvm_library(
 
 jvm_library(
   name = "gradle-tests_test_lib",
+  module_name = "intellij.gradle.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
   deps = [

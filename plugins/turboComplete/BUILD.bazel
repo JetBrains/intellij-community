@@ -35,6 +35,7 @@ jvm_library(
 ### auto-generated section `build intellij.turboComplete.tests` start
 jvm_library(
   name = "turboComplete-tests_test_lib",
+  module_name = "intellij.turboComplete.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [

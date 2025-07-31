@@ -78,6 +78,7 @@ jvm_resources(
 
 jvm_library(
   name = "polySymbols-tests_test_lib",
+  module_name = "intellij.platform.polySymbols.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [

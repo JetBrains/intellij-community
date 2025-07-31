@@ -74,6 +74,7 @@ jvm_library(
 
 jvm_library(
   name = "build-tests_test_lib",
+  module_name = "intellij.platform.jps.build.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [

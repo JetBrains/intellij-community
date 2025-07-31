@@ -9,6 +9,7 @@ jvm_library(
 
 jvm_library(
   name = "k2-lombok-tests_test_lib",
+  module_name = "kotlin.k2.lombok.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [

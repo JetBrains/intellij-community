@@ -30,6 +30,7 @@ jvm_library(
 
 jvm_library(
   name = "editorconfig-plugin-main_test_lib",
+  module_name = "intellij.editorconfig.plugin.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

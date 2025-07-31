@@ -21,6 +21,7 @@ jvm_library(
 
 jvm_library(
   name = "plugin-main_test_lib",
+  module_name = "intellij.markdown.plugin.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

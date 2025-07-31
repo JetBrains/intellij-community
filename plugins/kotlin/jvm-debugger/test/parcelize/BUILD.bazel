@@ -9,6 +9,7 @@ jvm_library(
 
 jvm_library(
   name = "kotlin-jvm-debugger-test-parcelize-k2_test_lib",
+  module_name = "kotlin.jvm-debugger.test.parcelize.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [

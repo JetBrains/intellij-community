@@ -15,6 +15,7 @@ jvm_library(
 
 jvm_library(
   name = "tests_test_lib",
+  module_name = "kotlin.injection.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom_tests",

@@ -9,6 +9,7 @@ jvm_library(
 
 jvm_library(
   name = "performance-test-utils_test_lib",
+  module_name = "kotlin.performance-tests.performance-test-utils",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [

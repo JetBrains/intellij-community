@@ -27,6 +27,7 @@ jvm_library(
 
 jvm_library(
   name = "main_test_lib",
+  module_name = "intellij.platform.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   deps = [

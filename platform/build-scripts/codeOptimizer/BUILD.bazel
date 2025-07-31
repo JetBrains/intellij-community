@@ -9,6 +9,7 @@ jvm_resources(
 
 jvm_library(
   name = "codeOptimizer_test_lib",
+  module_name = "intellij.platform.buildScripts.codeOptimizer",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [

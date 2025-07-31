@@ -35,6 +35,7 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.declarativeSync.tests` start
 jvm_library(
   name = "declarativeSync-tests_test_lib",
+  module_name = "intellij.gradle.declarativeSync.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
   deps = [

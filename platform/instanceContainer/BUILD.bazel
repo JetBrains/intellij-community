@@ -19,6 +19,7 @@ jvm_library(
 ### auto-generated section `build intellij.platform.instanceContainer.tests` start
 jvm_library(
   name = "instanceContainer-tests_test_lib",
+  module_name = "intellij.platform.instanceContainer.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   deps = [

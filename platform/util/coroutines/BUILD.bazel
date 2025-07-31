@@ -25,6 +25,7 @@ jvm_library(
 
 jvm_library(
   name = "coroutines-tests_test_lib",
+  module_name = "intellij.platform.util.coroutines.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   deps = [

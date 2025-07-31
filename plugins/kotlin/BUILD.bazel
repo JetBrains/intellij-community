@@ -441,6 +441,7 @@ jvm_library(
 
 jvm_library(
   name = "kotlin-plugin-community-main_test_lib",
+  module_name = "intellij.kotlin.plugin.community.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   deps = [

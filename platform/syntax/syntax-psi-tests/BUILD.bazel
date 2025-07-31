@@ -9,6 +9,7 @@ jvm_library(
 
 jvm_library(
   name = "psi-tests_test_lib",
+  module_name = "intellij.platform.syntax.psi.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [

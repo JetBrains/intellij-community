@@ -259,6 +259,7 @@ jvm_library(
 
 jvm_library(
   name = "main_test_lib",
+  module_name = "intellij.idea.community.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   deps = [
@@ -552,6 +553,7 @@ jvm_library(
 
 jvm_library(
   name = "main-android_test_lib",
+  module_name = "intellij.idea.community.main.android",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

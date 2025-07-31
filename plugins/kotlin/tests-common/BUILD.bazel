@@ -9,6 +9,7 @@ jvm_library(
 
 jvm_library(
   name = "tests-common_test_lib",
+  module_name = "kotlin.tests-common",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [

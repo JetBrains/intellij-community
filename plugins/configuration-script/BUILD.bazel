@@ -92,6 +92,7 @@ jvm_library(
 
 jvm_library(
   name = "configurationScript-test-java_test_lib",
+  module_name = "intellij.configurationScript.test.java",
   visibility = ["//visibility:public"],
   srcs = glob(["testJava/**/*.kt", "testJava/**/*.java"], allow_empty = True),
   deps = [

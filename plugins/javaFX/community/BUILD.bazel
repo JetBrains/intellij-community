@@ -16,6 +16,7 @@ jvm_library(
 
 jvm_library(
   name = "community_test_lib",
+  module_name = "intellij.javaFX.community",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [

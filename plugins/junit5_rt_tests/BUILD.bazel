@@ -9,6 +9,7 @@ jvm_library(
 
 jvm_library(
   name = "junit-v5-rt-tests_test_lib",
+  module_name = "intellij.junit.v5.rt.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [

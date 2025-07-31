@@ -15,6 +15,7 @@ jvm_library(
 
 jvm_library(
   name = "community-junit5Tests-framework_test_lib",
+  module_name = "intellij.python.community.junit5Tests.framework",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [

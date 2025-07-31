@@ -32,6 +32,7 @@ jvm_library(
 
 jvm_library(
   name = "backend-main_test_lib",
+  module_name = "intellij.platform.backend.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   deps = [

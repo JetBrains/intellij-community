@@ -16,6 +16,7 @@ jvm_library(
 
 jvm_library(
   name = "kotlin-refactorings-tests-k2_test_lib",
+  module_name = "kotlin.refactorings.tests.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom_kotlin-refactorings-tests-k2",

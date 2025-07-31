@@ -35,6 +35,7 @@ jvm_resources(
 
 jvm_library(
   name = "externalSystem-dependencyUpdater-tests_test_lib",
+  module_name = "intellij.platform.externalSystem.dependencyUpdater.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [

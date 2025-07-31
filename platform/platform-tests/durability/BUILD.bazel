@@ -12,6 +12,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "durability_test_lib",
+  module_name = "intellij.platform.durability",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom_durability",

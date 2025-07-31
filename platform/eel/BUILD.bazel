@@ -17,6 +17,7 @@ jvm_library(
 ### auto-generated section `build intellij.platform.eel.codegen` start
 jvm_library(
   name = "eel-codegen_test_lib",
+  module_name = "intellij.platform.eel.codegen",
   visibility = ["//visibility:public"],
   srcs = glob(["codegen/**/*.kt", "codegen/**/*.java"], allow_empty = True),
   deps = [
@@ -58,6 +59,7 @@ jps_test(
 ### auto-generated section `build intellij.platform.eel.tests` start
 jvm_library(
   name = "eel-tests_test_lib",
+  module_name = "intellij.platform.eel.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   deps = [

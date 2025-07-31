@@ -24,6 +24,7 @@ jvm_library(
 
 jvm_library(
   name = "frontend-main_test_lib",
+  module_name = "intellij.platform.frontend.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   deps = [

@@ -38,6 +38,7 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.native.tooling.tests` start
 jvm_library(
   name = "gradle-native-tooling-tests_test_lib",
+  module_name = "intellij.gradle.native.tooling.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
   deps = [

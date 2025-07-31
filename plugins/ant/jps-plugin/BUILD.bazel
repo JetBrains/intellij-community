@@ -34,6 +34,7 @@ jvm_library(
 
 jvm_library(
   name = "jps-tests_test_lib",
+  module_name = "intellij.ant.jps.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
