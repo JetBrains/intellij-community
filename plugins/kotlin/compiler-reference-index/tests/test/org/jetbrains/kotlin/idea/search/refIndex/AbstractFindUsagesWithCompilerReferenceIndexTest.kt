@@ -20,7 +20,7 @@ import kotlin.io.path.readText
 abstract class AbstractFindUsagesWithCompilerReferenceIndexTest : KotlinCompilerReferenceTestBase() {
     override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
         super.tuneFixture(moduleBuilder)
-        moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8)
+        moduleBuilder.setLanguageLevel(LanguageLevel.JDK_17)
         moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().path)
     }
 
