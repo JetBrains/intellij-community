@@ -13,6 +13,7 @@ import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.fetchAndDecrement
 import kotlin.concurrent.atomics.fetchAndIncrement
 
 /**
@@ -38,7 +39,7 @@ class SeResultsCountBalancer(private val logLabel: String,
 
   private val nonBlockedRunning = nonBlockedProviderIds.toMutableSet()
   private val nonBlockedCounts = HashMap<SeProviderId, AtomicInt>().apply {
-    this.putAll(nonBlockedProviderIds.map { it to AtomicInt(-DIFFERENCE_LIMIT) })
+    this.putAll(nonBlockedProviderIds.map { it to AtomicInt(DIFFERENCE_LIMIT) })
   }
 
   private val highPriorityRunning = highPriorityProviderIds.toMutableSet()
@@ -52,6 +53,8 @@ class SeResultsCountBalancer(private val logLabel: String,
   }
 
   suspend fun end(providerId: SeProviderId) {
+    SeLog.log(SeLog.BALANCING) { "($logLabel) Ending $providerId" }
+
     highPriorityPermits[providerId]?.acquire() ?: lowPriorityPermits[providerId]?.acquire()
     balancePermits(providerId)
   }
@@ -61,7 +64,7 @@ class SeResultsCountBalancer(private val logLabel: String,
 
     highPriorityPermits[newItem.providerId]?.acquire()
     ?: lowPriorityPermits[newItem.providerId]?.acquire()
-    ?: nonBlockedCounts[newItem.providerId]?.fetchAndIncrement()
+    ?: nonBlockedCounts[newItem.providerId]?.fetchAndDecrement()
     balancePermits()
     return newItem
   }
@@ -80,12 +83,12 @@ class SeResultsCountBalancer(private val logLabel: String,
         return
       }
 
-      val nonBlockedCountMaximum = nonBlockedRunning.mapNotNull { nonBlockedCounts[it]?.load() }.maxOrNull() ?: Int.MAX_VALUE
+      val nonBlockedCountMaximum = nonBlockedRunning.mapNotNull { nonBlockedCounts[it]?.load() }.maxOrNull() ?: -1
       val highPriorityToAvailablePermits = highPriorityRunning.associateWith { highPriorityPermits[it]!!.availablePermits }
 
-      if (highPriorityToAvailablePermits.values.all { it == 0 } && nonBlockedCountMaximum >= 0) {
+      if (highPriorityToAvailablePermits.values.all { it == 0 } && nonBlockedCountMaximum <= 0) {
         nonBlockedRunning.forEach { providerId ->
-          nonBlockedCounts[providerId]?.fetchAndAdd(-DIFFERENCE_LIMIT)
+          nonBlockedCounts[providerId]?.fetchAndAdd(DIFFERENCE_LIMIT)
         }
 
         highPriorityToAvailablePermits.keys.forEach { providerId ->
