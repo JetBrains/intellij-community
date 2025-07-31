@@ -1003,7 +1003,8 @@ public final class PluginManagerConfigurable
                   }
                 }
               }
-
+              Set<PluginId> ids = result.getModels().stream().map(it -> it.getPluginId()).collect(Collectors.toSet());
+              result.setInstalledPlugins(UiPluginManager.getInstance().findInstalledPluginsSync(ids));
               PluginManagerUsageCollector.INSTANCE.performMarketplaceSearch(
                 ProjectUtil.getActiveProject(), parser, result.getModels(), searchIndex, pluginToScore);
             }
