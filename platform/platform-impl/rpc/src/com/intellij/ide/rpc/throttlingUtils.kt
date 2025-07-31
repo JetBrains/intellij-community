@@ -23,7 +23,7 @@ private const val DEFAULT_RESULT_COUNT_TO_STOP_THROTTLING: Int = 15
 fun <T> Flow<T>.throttledWithAccumulation(resultThrottlingMs: Long = DEFAULT_RESULT_THROTTLING_MS,
                                           shouldPassItem: (T) -> Boolean = { true },
                                           resultCountToStopThrottling: Int = DEFAULT_RESULT_COUNT_TO_STOP_THROTTLING): Flow<ThrottledItems<T>> =
-  throttledWithAccumulation(resultThrottlingMs, shouldPassItem) { _, accumulatedSize ->
+  throttledWithAccumulation(resultThrottlingMs, shouldPassItem, 0, { false }) { _, accumulatedSize ->
     if (accumulatedSize >= resultCountToStopThrottling) 0 else null
   }
 
@@ -31,20 +31,41 @@ fun <T> Flow<T>.throttledWithAccumulation(resultThrottlingMs: Long = DEFAULT_RES
 @ApiStatus.Internal
 fun <T> Flow<T>.throttledWithAccumulation(resultThrottlingMs: Long = DEFAULT_RESULT_THROTTLING_MS,
                                           shouldPassItem: (T) -> Boolean,
+                                          fastPassThrottlingMs: Long,
+                                          shouldFastPassItem: (T) -> Boolean,
                                           shouldStopThrottlingAfterDelay: (T, Int) -> Long?): Flow<ThrottledItems<T>> {
   val originalFlow = this
   return channelFlow {
-    var pendingFirstBatch: MutableList<T>? = mutableListOf<T>() // null -> no more throttling
+    var pendingFastPassBatch: MutableList<T>? = mutableListOf()
+    var pendingBatch: MutableList<T>? = mutableListOf() // null -> no more throttling
     var stopRequestWasScheduled = false
+    var sendFastPassBatchWasScheduled = false
     val mutex = Mutex()
 
-    suspend fun sendFirstBatchIfNeeded() {
+    fun getAndMarkSentFastPassBatch(): List<T> {
+      if (isClosedForSend) return emptyList()
+
+      val batch = pendingFastPassBatch
+      pendingFastPassBatch = null
+      return batch ?: emptyList()
+    }
+
+    suspend fun sendFastPassBatchIfNeeded() {
       if (isClosedForSend) return
 
-      val firstBatch = pendingFirstBatch
-      pendingFirstBatch = null
-      if (!firstBatch.isNullOrEmpty()) {
-        send(ThrottledAccumulatedItems(firstBatch))
+      val batch = getAndMarkSentFastPassBatch()
+      if (!batch.isEmpty()) {
+        send(ThrottledAccumulatedItems(batch))
+      }
+    }
+
+    suspend fun sendBatchIfNeeded() {
+      if (isClosedForSend) return
+
+      val batch = getAndMarkSentFastPassBatch() + (pendingBatch ?: emptyList())
+      pendingBatch = null
+      if (!batch.isEmpty()) {
+        send(ThrottledAccumulatedItems(batch))
       }
     }
 
@@ -52,7 +73,7 @@ fun <T> Flow<T>.throttledWithAccumulation(resultThrottlingMs: Long = DEFAULT_RES
       delay(resultThrottlingMs)
 
       mutex.withLock {
-        sendFirstBatchIfNeeded()
+        sendBatchIfNeeded()
       }
     }
 
@@ -61,12 +82,33 @@ fun <T> Flow<T>.throttledWithAccumulation(resultThrottlingMs: Long = DEFAULT_RES
     launch {
       originalFlow.collect { item ->
         mutex.withLock {
-          val firstBatch = pendingFirstBatch
-          if (firstBatch != null) {
+          val batch = pendingBatch
+
+          if (batch != null) {
+            val fastPassBatch = pendingFastPassBatch
+
             if (shouldPassItem(item)) {
-              firstBatch += item
+              if (fastPassBatch != null && shouldFastPassItem(item)) {
+                fastPassBatch += item
+
+                // Schedule sending fast pass batch only once after the first fast pass item came
+                if (!sendFastPassBatchWasScheduled) {
+                  sendFastPassBatchWasScheduled = true
+                  parentScope.launch {
+                    delay(fastPassThrottlingMs)
+
+                    mutex.withLock {
+                      sendFastPassBatchIfNeeded()
+                    }
+                  }
+                }
+              }
+              else {
+                batch += item
+              }
             }
-            val stopDelay = shouldStopThrottlingAfterDelay(item, firstBatch.size)
+
+            val stopDelay = shouldStopThrottlingAfterDelay(item, batch.size + (fastPassBatch?.size ?: 0))
             if (stopDelay != null) {
               if (stopDelay > 0) {
                 if (!stopRequestWasScheduled) {
@@ -75,13 +117,13 @@ fun <T> Flow<T>.throttledWithAccumulation(resultThrottlingMs: Long = DEFAULT_RES
                     delay(stopDelay)
 
                     mutex.withLock {
-                      sendFirstBatchIfNeeded()
+                      sendBatchIfNeeded()
                     }
                   }
                 }
               }
               else {
-                sendFirstBatchIfNeeded()
+                sendBatchIfNeeded()
               }
             }
           }
@@ -91,7 +133,7 @@ fun <T> Flow<T>.throttledWithAccumulation(resultThrottlingMs: Long = DEFAULT_RES
         }
       }
       mutex.withLock {
-        sendFirstBatchIfNeeded()
+        sendBatchIfNeeded()
         close()
       }
     }
