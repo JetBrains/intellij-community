@@ -227,9 +227,9 @@ public class ContainerUtilCollectionsTest extends Assert {
   @Test(timeout = TIMEOUT)
   public void testConcurrentSoftMapWithStrategyAndListenerTossed() {
     AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
-    map.set(CollectionFactory.createConcurrentSoftMap(HashingStrategy.identity(), (thisMap,value) -> {
-      assertSame(map.get(), thisMap);
-    }));
+    map.set(CollectionFactory.createConcurrentSoftMap(HashingStrategy.identity(), (thisMap,value) ->
+      assertSame(map.get(), thisMap)
+    ));
     checkKeyTossedEventually(map.get());
   }
 
@@ -504,10 +504,6 @@ public class ContainerUtilCollectionsTest extends Assert {
   @Test(timeout = TIMEOUT)
   public void testConcurrentLongObjectHashMap() {
     ConcurrentLongObjectMap<Object> map = ConcurrentCollectionFactory.createConcurrentLongObjectMap();
-    check(map);
-  }
-
-  private static void check(ConcurrentLongObjectMap<Object> map) {
     for (long i = Long.MAX_VALUE - 1000; i != Long.MIN_VALUE + 1000; i++) {
       Object prev = map.put(i, i);
       assertNull(prev);
@@ -817,13 +813,11 @@ public class ContainerUtilCollectionsTest extends Assert {
   @Test
   public void testEntrySet() {
     checkEntrySetIterator(ConcurrentCollectionFactory.createConcurrentIntObjectMap());
-    checkEntrySetIterator(ContainerUtil.createConcurrentIntObjectMap());
     checkEntrySetIterator(ConcurrentCollectionFactory.createConcurrentIntObjectSoftValueMap());
     checkEntrySetIterator(ConcurrentCollectionFactory.createConcurrentIntObjectWeakValueMap());
     checkEntrySetIterator(ContainerUtil.createIntKeyWeakValueMap());
 
     checkEntrySetIterator(ConcurrentCollectionFactory.createConcurrentLongObjectMap());
-    checkEntrySetIterator(Java11Shim.Companion.createConcurrentLongObjectMap());
   }
 
   @Test
