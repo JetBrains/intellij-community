@@ -61,6 +61,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun initSession(sessionId: String): InitSessionResult
   suspend fun isPluginEnabled(pluginId: PluginId): Boolean
   suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginDto>
+  suspend fun loadDescriptorById(pluginId: PluginId): PluginDto?
 
 
   companion object {

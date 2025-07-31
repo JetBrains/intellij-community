@@ -85,6 +85,10 @@ class BackendPluginManagerApi : PluginManagerApi {
     return DefaultUiPluginManagerController.getPluginInstallationStates()
   }
 
+  override suspend fun loadDescriptorById(pluginId: PluginId): PluginDto? {
+    return DefaultUiPluginManagerController.loadDescriptorById(pluginId)?.let { PluginDto.fromModel(it) }
+  }
+
   override suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginDto> {
     return DefaultUiPluginManagerController.findInstalledPlugins(plugins).mapValues { PluginDto.fromModel(it.value) }
   }

@@ -520,9 +520,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     installOptionButton.setOptions(customizationModel.additionalActions)
     val mainAction = customizationModel.mainAction
     if (mainAction != null) {
-      installOptionButton.action = mainAction
-      installOptionButton.setEnabled(true)
-      installOptionButton.isVisible = true
+      setInstallAction(installOptionButton, mainAction)
+      installOptionButton.setEnabled(customizationModel.isVisible, customizationModel.text)
+      installOptionButton.isVisible = customizationModel.isVisible
     }
     else {
       setDefaultInstallAction(installOptionButton)
@@ -1517,9 +1517,13 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun setDefaultInstallAction(button: InstallOptionButton) {
+    setInstallAction(button) { installOrUpdatePlugin() }
+  }
+
+  private fun setInstallAction(button: InstallOptionButton, action: () -> Unit) {
     button.action = object : AbstractAction() {
       override fun actionPerformed(e: ActionEvent?) {
-        installOrUpdatePlugin()
+        action()
       }
     }
   }

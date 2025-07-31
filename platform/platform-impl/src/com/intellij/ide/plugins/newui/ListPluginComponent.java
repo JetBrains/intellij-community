@@ -107,13 +107,14 @@ public final class ListPluginComponent extends JPanel {
                              @NotNull LinkListener<Object> searchListener,
                              @NotNull List<HtmlChunk> errors,
                              @NotNull CoroutineScope coroutineScope,
-                             boolean marketplace){
+                             boolean marketplace) {
     this(pluginModelFacade, pluginUiModel, null, group, searchListener, errors, coroutineScope, marketplace);
   }
 
   public ListPluginComponent(@NotNull PluginModelFacade pluginModelFacade,
                              @NotNull PluginUiModel pluginUiModel,
-                             @Nullable PluginUiModel installedDescriptorForMarketplace, @NotNull PluginsGroup group,
+                             @Nullable PluginUiModel installedDescriptorForMarketplace,
+                             @NotNull PluginsGroup group,
                              @NotNull LinkListener<Object> searchListener,
                              @NotNull List<HtmlChunk> errors,
                              @NotNull CoroutineScope coroutineScope,
@@ -277,8 +278,9 @@ public final class ListPluginComponent extends JPanel {
 
         myLayout.addButtonComponent(myInstallButton = createInstallButton());
 
-        myInstallButton.addActionListener(
-          e -> myModelFacade.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
+        myInstallButton.addActionListener(e -> {
+          PluginModelAsyncOperationsExecutor.INSTANCE.performAutoInstall(myCoroutineScope, myModelFacade, myPlugin, myCustomizer, this);
+        });
         myInstallButton.setEnabled(showInstall, IdeBundle.message("plugin.status.installed"));
 
         ColorButton.setWidth72(myInstallButton);

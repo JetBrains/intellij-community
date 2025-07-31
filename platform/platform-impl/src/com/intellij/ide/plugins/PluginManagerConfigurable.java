@@ -876,7 +876,8 @@ public final class PluginManagerConfigurable
                                                                      @Nullable PluginUiModel installedDescriptorDorMarketplace) {
             return new ListPluginComponent(myPluginModelFacade,
                                            model,
-                                           installedDescriptorDorMarketplace, group,
+                                           installedDescriptorDorMarketplace,
+                                           group,
                                            searchListener,
                                            errors,
                                            myCoroutineScope,

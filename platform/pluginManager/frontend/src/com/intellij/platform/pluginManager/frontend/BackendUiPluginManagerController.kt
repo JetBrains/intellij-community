@@ -119,6 +119,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().findInstalledPlugins(plugins)
   }
 
+  override suspend fun loadDescriptorById(pluginId: PluginId): PluginUiModel? {
+    return PluginManagerApi.getInstance().loadDescriptorById(pluginId)
+  }
+
   override suspend fun isPluginEnabled(pluginId: PluginId): Boolean {
     return PluginManagerApi.getInstance().isPluginEnabled(pluginId)
   }

@@ -37,6 +37,27 @@ internal object PluginModelAsyncOperationsExecutor {
     }
   }
 
+  fun performAutoInstall(
+    cs: CoroutineScope,
+    modelFacade: PluginModelFacade,
+    descriptor: PluginUiModel,
+    customizer: PluginManagerCustomizer,
+    component: JComponent,
+  ) {
+    cs.launch(Dispatchers.IO) {
+      val stateForComponent = ModalityState.stateForComponent(component)
+      val customizationModel = customizer.getInstallButonCustomizationModel(modelFacade, descriptor, stateForComponent)
+      withContext(Dispatchers.EDT + stateForComponent.asContextElement()) {
+        val customAction = customizationModel?.mainAction
+        if (customAction != null) {
+          customAction()
+          return@withContext
+        }
+        modelFacade.installOrUpdatePlugin(component, descriptor, null, stateForComponent)
+      }
+    }
+  }
+
   @JvmOverloads
   @ApiStatus.Internal
   fun updateErrors(cs: CoroutineScope = service<FrontendRpcCoroutineContext>().coroutineScope, sessionId: String, pluginId: PluginId, callback: (List<HtmlChunk>) -> Unit) {

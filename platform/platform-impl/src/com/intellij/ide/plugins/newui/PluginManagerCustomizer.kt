@@ -65,7 +65,7 @@ interface PluginManagerCustomizer {
 data class OptionsButonCustomizationModel(
   val additionalActions: List<AnAction>,
   val isVisible: Boolean = true,
-  val mainAction: Action? = null,
+  val mainAction: (() -> Unit)? = null,
   @param:NlsSafe val text: String? = null,
 )
 

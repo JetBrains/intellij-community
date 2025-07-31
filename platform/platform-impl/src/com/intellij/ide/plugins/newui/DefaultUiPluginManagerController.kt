@@ -249,6 +249,15 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return plugins.mapNotNull { getPlugin(it) }.associateBy { it.pluginId }
   }
 
+  override suspend fun loadDescriptorById(pluginId: PluginId): PluginUiModel? {
+    val clientPluginId = PluginId.getId(pluginId.idString)
+    val updateData = UpdateChecker.getInternalPluginUpdates(updateablePluginsMap = mutableMapOf(clientPluginId to null))
+    return updateData.pluginUpdates.all.asSequence()
+      .filter { it.pluginVersion != null }
+      .map { it.uiModel ?: PluginUiModelAdapter(it.descriptor) }
+      .firstOrNull()
+  }
+
   override fun connectToUpdateServiceWithCounter(sessionId: String, callback: (Int?) -> Unit): PluginUpdatesService {
     val session = PluginManagerSessionService.getInstance().getSession(sessionId)
     val service = PluginUpdatesService.connectWithCounter(callback)
