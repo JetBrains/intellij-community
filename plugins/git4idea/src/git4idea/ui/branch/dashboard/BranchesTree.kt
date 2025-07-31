@@ -243,10 +243,11 @@ internal class FilteringBranchesTree(
       // need EDT because of RA in TreeUtil.promiseVisit
       withContext(Dispatchers.EDT) {
         model.addListener(listener)
-        if (model.root.children.isNotEmpty() != (searchModel.root.childCount > 0)) {
-          updateTree()
-        }
         try {
+          val currentlyEmpty = searchModel.root.childCount > 0
+          if (!currentlyEmpty || model.root.children.isNotEmpty()) {
+            updateTree()
+          }
           awaitCancellation()
         }
         finally {
