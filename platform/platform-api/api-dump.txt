@@ -6,6 +6,7 @@ com.intellij.codeInsight.editorActions.TextBlockTransferableData
 - getOffsets(I[],I):I
 - getPriority():I
 - setOffsets(I[],I):I
+f:com.intellij.execution.filters.HyperlinkInfoBaseKt
 com.intellij.execution.ui.FragmentWrapper
 - a:getComponentToRegister():javax.swing.JComponent
 com.intellij.featureStatistics.ApplicabilityFilter

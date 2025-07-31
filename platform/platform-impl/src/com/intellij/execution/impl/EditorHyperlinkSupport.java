@@ -3,7 +3,6 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.execution.filters.HyperlinkInfoBase;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +22,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.pom.NavigatableAdapter;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import kotlin.Unit;
 import org.jetbrains.annotations.*;
@@ -38,6 +36,8 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import static com.intellij.execution.filters.HyperlinkInfoBaseKt.navigate;
 
 public final class EditorHyperlinkSupport {
   private static final Logger LOG = Logger.getInstance(EditorHyperlinkSupport.class);
@@ -219,14 +219,7 @@ public final class EditorHyperlinkSupport {
       HyperlinkInfo hyperlinkInfo = getHyperlinkInfo(range);
       if (hyperlinkInfo != null) {
         return () -> {
-          if (hyperlinkInfo instanceof HyperlinkInfoBase) {
-            Point point = myEditor.logicalPositionToXY(logical);
-            MouseEvent event = new MouseEvent(myEditor.getContentComponent(), 0, 0, 0, point.x, point.y, 1, false);
-            ((HyperlinkInfoBase)hyperlinkInfo).navigate(myProject, new RelativePoint(event));
-          }
-          else {
-            hyperlinkInfo.navigate(myProject);
-          }
+          navigate(hyperlinkInfo, myProject, myEditor, logical);
           linkFollowed(range);
           fireListeners(hyperlinkInfo);
         };

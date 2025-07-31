@@ -1,3 +1,5 @@
+f:com.intellij.execution.filters.HyperlinkInfoBaseKt
+- *sf:navigate(com.intellij.execution.filters.HyperlinkInfo,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.LogicalPosition):V
 *:com.intellij.execution.process.CommandLineEnvCustomizer
 - *sf:Companion:com.intellij.execution.process.CommandLineEnvCustomizer$Companion
 - a:customizeEnv(com.intellij.execution.configurations.GeneralCommandLine,java.util.Map):V
