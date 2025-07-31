@@ -527,7 +527,7 @@ final class MethodChecker {
     MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
     List<PsiMethod> methods = (List<PsiMethod>)duplicateMethods.get(methodSignature);
     if (methods.size() > 1) {
-      myVisitor.report(JavaErrorKinds.METHOD_DUPLICATE.create(method));
+      myVisitor.report(JavaErrorKinds.METHOD_DUPLICATE.create(method, new JavaErrorKinds.DuplicateMethodsContext(methods)));
     }
   }
 

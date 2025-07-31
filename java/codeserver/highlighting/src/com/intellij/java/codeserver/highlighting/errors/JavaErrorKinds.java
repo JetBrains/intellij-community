@@ -640,11 +640,11 @@ public final class JavaErrorKinds {
                                                 owner.getTypeParameters().length));
   public static final Simple<PsiTypeElement> TYPE_PARAMETER_ACTUAL_INFERRED_MISMATCH = error("type.parameter.actual.inferred.mismatch");
 
-  public static final Simple<PsiMethod> METHOD_DUPLICATE =
-    error(PsiMethod.class, "method.duplicate")
-      .withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange)
+  public static final Parameterized<PsiMethod, DuplicateMethodsContext> METHOD_DUPLICATE =
+    parameterized(PsiMethod.class, DuplicateMethodsContext.class, "method.duplicate")
+      .withRange((method, duplicates) -> getMethodDeclarationTextRange(method))
       .withDescription(
-        method -> message("method.duplicate", formatMethod(method), formatClass(requireNonNull(method.getContainingClass()))));
+        (method, duplicates) -> message("method.duplicate", formatMethod(method), formatClass(requireNonNull(method.getContainingClass()))));
   public static final Simple<PsiMethod> METHOD_NO_PARAMETER_LIST =
     error(PsiMethod.class, "method.no.parameter.list").withAnchor(PsiMethod::getNameIdentifier);
   public static final Simple<PsiJavaCodeReferenceElement> METHOD_THROWS_CLASS_NAME_EXPECTED =
@@ -1775,4 +1775,6 @@ public final class JavaErrorKinds {
   public record DeconstructionCountMismatchContext(@NotNull PsiPattern @NotNull [] patternComponents,
                                                    @NotNull PsiRecordComponent @NotNull [] recordComponents,
                                                    boolean hasMismatch) {}
+
+  public record DuplicateMethodsContext(@NotNull List<@NotNull PsiMethod> methods) {}
 }

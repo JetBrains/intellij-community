@@ -14,6 +14,7 @@ import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.codeserver.core.JavaPsiMethodUtil;
 import com.intellij.java.codeserver.core.JavaPsiModifierUtil;
 import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.java.codeserver.core.JpmsModuleAccessInfo;
@@ -334,6 +335,13 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
     fix(METHOD_GENERIC_CLASH, error ->
       error.context().method() instanceof SyntheticElement ?
       null : myFactory.createSameErasureButDifferentMethodsFix(error.context().method(), error.context().superMethod()));
+    fixes(METHOD_DUPLICATE, (error, sink) -> {
+      error.context().methods().stream()
+        .filter(m -> !m.equals(error.psi()))
+        .filter(m -> !(m instanceof SyntheticElement)) // filters out synthetic methods, such as Enum#values()
+        .findFirst()
+        .ifPresent(m -> sink.accept(myFactory.createNavigateToDuplicateElementFix(m)));
+    });
   }
 
   private void createExceptionFixes() {
