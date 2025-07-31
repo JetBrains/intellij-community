@@ -7,7 +7,6 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * API for a Syntax Node.
- *
  */
 @ApiStatus.Experimental
 interface SyntaxNode {
@@ -18,15 +17,17 @@ interface SyntaxNode {
   val startOffset: Int
   val endOffset: Int
 
-  val parent: SyntaxNode?
-
-  val prevSibling: SyntaxNode?
-  val nextSibling: SyntaxNode?
-
-  val firstChild: SyntaxNode?
-  val lastChild: SyntaxNode?
-
   val errorMessage: String?
 
   val language: SyntaxLanguage?
+
+  fun parent(): SyntaxNode?
+
+  fun prevSibling(): SyntaxNode?
+  fun nextSibling(): SyntaxNode?
+
+  fun firstChild(): SyntaxNode?
+  fun lastChild(): SyntaxNode?
+
+  fun childByOffset(offset: Int): SyntaxNode?
 }
