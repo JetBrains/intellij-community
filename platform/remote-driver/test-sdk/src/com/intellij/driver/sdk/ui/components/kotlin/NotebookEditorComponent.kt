@@ -1,11 +1,7 @@
 package com.intellij.driver.sdk.ui.components.kotlin
 
 import com.intellij.driver.client.service
-import com.intellij.driver.sdk.PsiFile
-import com.intellij.driver.sdk.PsiManager
-import com.intellij.driver.sdk.invokeActionWithRetries
-import com.intellij.driver.sdk.singleProject
-import com.intellij.driver.sdk.step
+import com.intellij.driver.sdk.*
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
@@ -18,8 +14,6 @@ import com.intellij.driver.sdk.ui.components.elements.LetsPlotComponent
 import com.intellij.driver.sdk.ui.components.elements.NotebookTableOutputUi
 import com.intellij.driver.sdk.ui.pasteText
 import com.intellij.driver.sdk.ui.ui
-import com.intellij.driver.sdk.waitFor
-import com.intellij.driver.sdk.waitForCodeAnalysis
 import org.intellij.lang.annotations.Language
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -45,6 +39,7 @@ fun NotebookEditorUiComponent.waitForHighlighting() {
 typealias CellSelector = (List<UiComponent>) -> UiComponent
 
 val FirstCell: CellSelector = { it.first() }
+val SecondCell: CellSelector = { it.drop(1).first() }
 val LastCell: CellSelector = { it.last() }
 
 
@@ -59,6 +54,8 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     get() = x("//div[@myicon='clearOutputs.svg']")
   private val restartKernel
     get() = x("//div[@myicon='restartKernel.svg']")
+  private val interruptKernel
+    get() = x("//div[@myicon='stop.svg']")
 
   override val editorComponent: EditorComponentImpl
     get() = when {
@@ -93,6 +90,16 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
   fun clearAllOutputs(): Unit = clearOutputs.click()
 
   fun restartKernel(): Unit = restartKernel.click()
+
+  fun interruptKernel(): Unit = interruptKernel.click()
+
+  fun restartHighlighting() {
+    driver.withContext {
+      invokeActionWithRetries("RestartKotlinNotebookHighlighting")
+
+      waitForHighlighting()
+    }
+  }
 
   fun runCellAndWaitExecuted(timeout: Duration = 30.seconds): Unit = step("Executing cell") {
     runCell()
