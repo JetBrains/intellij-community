@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -314,7 +313,7 @@ object MavenDomUtil {
       }
     }
 
-    return Pair.create<String?, Int?>(tagName, index)
+    return tagName to index
   }
 
   private fun getIndexedTag(parent: XmlTag, index: Int?): XmlTag? {
@@ -367,7 +366,7 @@ object MavenDomUtil {
         set = mutableSetOf<VirtualFile?>()
       }
 
-      cachedValue = Pair.create<Long?, MutableSet<VirtualFile?>?>(VirtualFileManager.getInstance().getModificationCount(), set)
+      cachedValue = VirtualFileManager.getInstance().getModificationCount() to set
       mavenProject.putCachedValue<Pair<Long?, MutableSet<VirtualFile?>?>?>(FILTERED_RESOURCES_ROOTS_KEY, cachedValue)
     }
 

@@ -117,7 +117,7 @@ class PythonUpdater {
 
     fun getLangLevelReleases(languageLevel: LanguageLevel): Map<String, List<TrackedResource>> {
       val remoteVersionsSortedDesc = remoteVersions[languageLevel]!!
-        .sortedWith(Comparator.comparing<String?, Version?> { Version.parseVersion(it) }.reversed())
+        .sortedWith(compareByDescending { Version.parseVersion(it) })
 
       val resolvedResources = mutableMapOf<TrackedResource, String>()
       for (version in remoteVersionsSortedDesc) {

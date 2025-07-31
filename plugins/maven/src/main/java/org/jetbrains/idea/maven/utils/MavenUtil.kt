@@ -908,7 +908,7 @@ object MavenUtil {
 
 
     if (list.size > 1) {
-      list.sortWith(Comparator.comparing<Path?, String?>(java.util.function.Function { obj: Path? -> obj.toString() }))
+      list.sortBy { obj: Path? -> obj.toString() }
     }
 
     val file = brewDir?.resolve(list.get(0).toString() + "/libexec")
