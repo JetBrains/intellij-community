@@ -27,7 +27,10 @@
     </action>
     <action id="Debugger.XThreadsView.FreezeThread" class="com.intellij.java.debugger.impl.shared.actions.FreezeThreadAction">
       <add-to-group group-id="XDebugger.Threads.View.Popup"/>
-    </action>>
+    </action>
+    <action id="Debugger.XThreadsView.InterruptThread" class="com.intellij.java.debugger.impl.shared.actions.InterruptThreadAction">
+      <add-to-group group-id="XDebugger.Threads.View.Popup"/>
+    </action>
     <action class="com.intellij.debugger.memory.action.ShowInstancesByClassAction"
             id="MemoryView.ShowInstancesFromDebuggerTree">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after"

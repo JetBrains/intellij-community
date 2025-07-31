@@ -2,6 +2,7 @@
 package com.intellij.java.debugger.impl.backend
 
 import com.intellij.debugger.actions.FreezeThreadAction
+import com.intellij.debugger.actions.InterruptThreadAction
 import com.intellij.debugger.actions.ThreadDumpAction
 import com.intellij.debugger.engine.AsyncStacksUtils
 import com.intellij.debugger.engine.JavaDebugProcess
@@ -71,6 +72,10 @@ internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
     invokeThreadCommand(executionStackId, ThreadCommand.FREEZE)
   }
 
+  override suspend fun interruptThread(executionStackId: XExecutionStackId) {
+    invokeThreadCommand(executionStackId, ThreadCommand.INTERRUPT)
+  }
+
   private fun invokeThreadCommand(executionStackId: XExecutionStackId, command: ThreadCommand) {
     val executionStackModel = executionStackId.findValue() ?: return
     val xSession = executionStackModel.session
@@ -90,11 +95,14 @@ internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
       ThreadCommand.FREEZE -> {
         FreezeThreadAction.freezeThread(threadProxy, debugProcess, managerThread)
       }
+      ThreadCommand.INTERRUPT -> {
+        InterruptThreadAction.interruptThread(threadProxy, debugProcess, managerThread)
+      }
     }
   }
 
   companion object {
-    private enum class ThreadCommand { FREEZE, RESUME }
+    private enum class ThreadCommand { FREEZE, RESUME, INTERRUPT }
   }
 }
 

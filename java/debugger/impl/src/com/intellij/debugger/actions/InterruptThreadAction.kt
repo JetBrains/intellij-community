@@ -12,9 +12,10 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.MessageType
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
-import java.util.*
+import org.jetbrains.annotations.ApiStatus
 
-internal class InterruptThreadAction : DebuggerAction() {
+@ApiStatus.Internal
+class InterruptThreadAction : DebuggerAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val nodes = getSelectedNodes(e.dataContext)
     if (nodes == null) {
