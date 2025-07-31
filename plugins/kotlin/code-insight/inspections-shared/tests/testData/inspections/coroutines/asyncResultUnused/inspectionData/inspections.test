@@ -1,2 +1,3 @@
 // INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.DeferredResultUnusedInspection
+// K2_INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.DeferredResultUnusedInspection
 // RUNTIME_WITH_KOTLIN_TEST
