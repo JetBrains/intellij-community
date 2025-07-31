@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util.text
 
+import fleet.util.binarySearch
+
 /**
  * Ranges char codepoints which are both unicode identifier part and java identifier part (could be made two lists, but very long)
  * Each pair of numbers in the list represent the start and exclusive end of a range.

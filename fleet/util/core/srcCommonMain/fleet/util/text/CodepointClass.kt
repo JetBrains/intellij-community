@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util.text
 
+import fleet.util.binarySearch
+
 private const val SEPARATORS = "`~!@#\$%^&*()-=+[{]}\\|;:'\",.<>/?"
 private val maxSeparatorCode = SEPARATORS.maxBy { it.code }.code
 private val separatorCodes = BooleanArray(maxSeparatorCode + 1).apply {
@@ -64,27 +66,6 @@ private fun isLuCategory(codepoint: Int): Boolean {
       codepoint <= upperCaseRangeEnds[-(insertionPoint + 2)]
     }
   }
-}
-
-internal fun IntArray.binarySearch(element: Int): Int {
-  var l = 0
-  var r = size - 1
-
-  while (l <= r) {
-    val m = (l + r) / 2
-    val midElement = get(m)
-
-    if (midElement < element) {
-      l = m + 1
-    }
-    else if (midElement > element) {
-      r = m - 1
-    }
-    else {
-      return m
-    }
-  }
-  return -(l + 1)
 }
 
 // Code points are derived from:
