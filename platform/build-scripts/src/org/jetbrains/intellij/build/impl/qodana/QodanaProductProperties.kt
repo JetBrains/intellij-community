@@ -24,7 +24,7 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Dmaven.default.headless.import=true",
   )
 
-private const val IS_EAP = true
+private const val IS_EAP = false
 
 /**
  * Represents a set of properties specific to the Qodana product.
