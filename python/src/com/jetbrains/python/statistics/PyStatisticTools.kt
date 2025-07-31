@@ -16,6 +16,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.asSafely
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.extensions.getSdk
+import com.jetbrains.python.hatch.sdk.isHatch
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isVirtualEnv
 import com.jetbrains.python.psi.LanguageLevel
@@ -152,6 +153,7 @@ val Sdk.interpreterType: InterpreterType
     isPipEnv -> PIPENV
     isUv -> UV
     isPoetry -> POETRY
+    isHatch -> HATCH
     this.isCondaVirtualEnv || this.sdkAdditionalData.asSafely<PythonSdkAdditionalData>()?.flavor is CondaEnvSdkFlavor -> CONDAVENV
     VirtualEnvReader.Instance.isPyenvSdk(getHomePath()) -> PYENV
     this.isVirtualEnv -> VIRTUALENV
