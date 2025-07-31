@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
@@ -140,6 +141,9 @@ internal class TerminalSessionController(
       is TerminalAliasesReceivedEvent -> {
         terminalAliasesStorage.setAliasesInfo(event.aliases)
       }
+      is TerminalHyperlinksHeartbeatEvent -> {
+        LOG.warn("TerminalHyperlinksHeartbeatEvent isn't supposed to reach the frontend")
+      }
       is TerminalHyperlinksChangedEvent -> {
         withContext(edtContext) {
           getCurrentHyperlinkFacade(event)?.updateHyperlinks(event)
@@ -199,3 +203,5 @@ internal class TerminalSessionController(
     shellIntegrationEventDispatcher.addListener(listener, parentDisposable)
   }
 }
+
+private val LOG = logger<TerminalSessionController>()

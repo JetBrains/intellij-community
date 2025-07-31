@@ -95,8 +95,8 @@ internal class StateAwareTerminalSession(
       val originalOutputFlow = if (outputHyperlinkFacade != null && alternateBufferHyperlinkFacade != null) {
         merge(
           delegate.getOutputFlow(),
-          outputHyperlinkFacade.resultFlow.map { listOf(it) },
-          alternateBufferHyperlinkFacade.resultFlow.map { listOf(it) },
+          outputHyperlinkFacade.heartbeatFlow.map { listOf(it) },
+          alternateBufferHyperlinkFacade.heartbeatFlow.map { listOf(it) },
         )
       }
       else {
@@ -145,7 +145,7 @@ internal class StateAwareTerminalSession(
   private fun getHyperlinkFacade(event: TerminalHyperlinkClickedEvent): BackendTerminalHyperlinkFacade? =
     if (event.isInAlternateBuffer) alternateBufferHyperlinkFacade else outputHyperlinkFacade
 
-  private fun getHyperlinkFacade(event: TerminalHyperlinksChangedEvent): BackendTerminalHyperlinkFacade? =
+  private fun getHyperlinkFacade(event: TerminalHyperlinksHeartbeatEvent): BackendTerminalHyperlinkFacade? =
     if (event.isInAlternateBuffer) alternateBufferHyperlinkFacade else outputHyperlinkFacade
 
   override suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>> = outputFlowProducer.getIncrementalUpdateFlow()
@@ -156,11 +156,14 @@ internal class StateAwareTerminalSession(
   override suspend fun hasRunningCommands(): Boolean = delegate.hasRunningCommands()
 
   private inner class State : MutableStateWithIncrementalUpdates<List<TerminalOutputEvent>> {
-    override suspend fun applyUpdate(update: List<TerminalOutputEvent>): List<TerminalOutputEvent>? {
-      var anyHandled = false
+    override suspend fun applyUpdate(update: List<TerminalOutputEvent>): List<TerminalOutputEvent> {
       for (event in update) {
         try {
-          anyHandled = handleEvent(event)
+          val replacement = handleEvent(event)
+          if (replacement !== event) {
+            check(update.size == 1) { "Multiple event replacement not supported, events = $update" }
+            return listOfNotNull(replacement)
+          }
         }
         catch (e: CancellationException) {
           throw e
@@ -169,10 +172,10 @@ internal class StateAwareTerminalSession(
           thisLogger().error(t)
         }
       }
-      return if (anyHandled) update else null
+      return update
     }
 
-    private fun handleEvent(event: TerminalOutputEvent): Boolean {
+    private fun handleEvent(event: TerminalOutputEvent): TerminalOutputEvent? {
       when (event) {
         is TerminalContentUpdatedEvent -> {
           val model = getCurrentOutputModel()
@@ -203,16 +206,20 @@ internal class StateAwareTerminalSession(
         is TerminalCommandFinishedEvent -> {
           blocksModel.commandFinished(event.exitCode)
         }
-        is TerminalHyperlinksChangedEvent -> {
+        is TerminalHyperlinksHeartbeatEvent -> {
           val facade = getHyperlinkFacade(event)
-          checkNotNull(facade) { "The hyperlink facade is null, so who sent the TerminalHyperlinksChangedEvent event then? It's a bug" }
-          return facade.updateModelState(event)
+          checkNotNull(facade) { "The hyperlink facade is null, so who sent the TerminalHyperlinksHeartbeatEvent event then? It's a bug" }
+          val changeEvent = facade.collectResultsAndMaybeStartNewTask()
+          if (changeEvent != null) {
+            facade.updateModelState(changeEvent)
+          }
+          return changeEvent // if null, don't send anything, otherwise send the update, not the heartbeat
         }
         else -> {
           // Do nothing: other events are not related to the models we update
         }
       }
-      return true
+      return event
     }
 
     override suspend fun takeSnapshot(): List<List<TerminalOutputEvent>> {

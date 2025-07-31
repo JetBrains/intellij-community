@@ -356,15 +356,18 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
 
         // do what StateAwareTerminalSession does, but with less infrastructure around
         val eventJob = launch(CoroutineName("BackendTerminalHyperlinkHighlighterTest event processing"), start = UNDISPATCHED) {
-          merge(updateEvents, backendFacade.resultFlow.map { listOf(it) }).collect { events ->
+          merge(updateEvents, backendFacade.heartbeatFlow.map { listOf(it) }).collect { events ->
             events.forEach { event ->
               when (event) {
                 is TerminalContentUpdatedEvent -> {
                   outputModel.updateContent(event)
                   pendingUpdateEventCount.update { it - 1 }
                 }
-                is TerminalHyperlinksChangedEvent -> {
-                  backendFacade.updateModelState(event)
+                is TerminalHyperlinksHeartbeatEvent -> {
+                  val modelUpdateEvent = backendFacade.collectResultsAndMaybeStartNewTask()
+                  if (modelUpdateEvent != null) {
+                    backendFacade.updateModelState(modelUpdateEvent)
+                  }
                 }
                 else -> throw Exception("Event type is not used in the test: $event")
               }

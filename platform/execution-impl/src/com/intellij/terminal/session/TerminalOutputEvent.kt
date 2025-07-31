@@ -79,6 +79,13 @@ data object TerminalPromptFinishedEvent : TerminalShellIntegrationEvent
 data class TerminalAliasesReceivedEvent(val aliases: TerminalAliasesInfo) : TerminalShellIntegrationEvent
 
 /**
+ * A backend-only event indicating that there may be hyperlink events to pull from the highlighter.
+ */
+@ApiStatus.Internal
+@Serializable
+data class TerminalHyperlinksHeartbeatEvent(val isInAlternateBuffer: Boolean) : TerminalOutputEvent
+
+/**
  * A change in terminal hyperlinks.
  *
  * If there are a lot of links, they may arrive in batches with the same events having the same [documentModificationStamp].
@@ -110,7 +117,4 @@ data class TerminalHyperlinksChangedEvent(
    * May be empty for the first event in a batch, always empty for the last event.
    */
   val hyperlinks: List<TerminalFilterResultInfoDto>,
-) : TerminalOutputEvent {
-  val isFirstEventInTheBatch: Boolean get() = removeFromOffset != null
-  val isLastEventInTheBatch: Boolean get() = removeFromOffset == null && hyperlinks.isEmpty()
-}
+) : TerminalOutputEvent
