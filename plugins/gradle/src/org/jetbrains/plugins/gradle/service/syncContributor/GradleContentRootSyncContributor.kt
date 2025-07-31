@@ -7,23 +7,21 @@ import com.intellij.openapi.externalSystem.service.project.nameGenerator.ModuleN
 import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.progress.checkCanceled
-import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
-import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.model.GradleLightBuild
 import org.jetbrains.plugins.gradle.model.GradleLightProject
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
+import org.jetbrains.plugins.gradle.service.syncAction.virtualFileUrl
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleBuildEntitySource
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleLinkedProjectEntitySource
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleProjectEntitySource
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import java.nio.file.Path
 
 @Order(GradleSyncContributor.Order.CONTENT_ROOT_CONTRIBUTOR)
 internal class GradleContentRootSyncContributor : GradleSyncContributor {
@@ -46,28 +44,21 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
     context: ProjectResolverContext,
     storage: MutableEntityStorage,
   ) {
-    val project = context.project
-    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
-
     val contentRoots = storage.entities<ContentRootEntity>()
       .mapTo(LinkedHashSet()) { it.url }
 
-    val linkedProjectRootPath = Path.of(context.projectPath)
-    val linkedProjectRootUrl = linkedProjectRootPath.toVirtualFileUrl(virtualFileUrlManager)
-    val linkedProjectEntitySource = GradleLinkedProjectEntitySource(linkedProjectRootUrl)
+    val linkedProjectEntitySource = GradleLinkedProjectEntitySource(context.virtualFileUrl(context.projectPath))
 
     for (buildModel in context.allBuilds) {
 
-      val buildRootPath = buildModel.buildIdentifier.rootDir.toPath()
-      val buildRootUrl = buildRootPath.toVirtualFileUrl(virtualFileUrlManager)
+      val buildRootUrl = context.virtualFileUrl(buildModel.buildIdentifier.rootDir)
       val buildEntitySource = GradleBuildEntitySource(linkedProjectEntitySource, buildRootUrl)
 
       for (projectModel in buildModel.projects) {
 
         checkCanceled()
 
-        val projectRootPath = projectModel.projectDirectory.toPath()
-        val projectRootUrl = projectRootPath.toVirtualFileUrl(virtualFileUrlManager)
+        val projectRootUrl = context.virtualFileUrl(projectModel.projectDirectory)
         val projectEntitySource = GradleProjectEntitySource(buildEntitySource, projectRootUrl)
 
         val externalProject = context.getProjectModel(projectModel, ExternalProject::class.java) ?: continue
@@ -109,9 +100,6 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
     storage: EntityStorage,
     contentRootData: GradleContentRootData,
   ): ModuleEntity.Builder {
-    val virtualFileUrlManager = context.project.workspaceModel.getVirtualFileUrlManager()
-
-    val contentRootPath = contentRootData.projectModel.projectDirectory.toPath()
     return ModuleEntity(
       name = resolveUniqueModuleName(context, storage, contentRootData),
       entitySource = contentRootData.entitySource,
@@ -119,11 +107,11 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
         InheritedSdkDependency,
         ModuleSourceDependency
       )
-    ) {
+    ).apply {
       exModuleOptions = createModuleOptionsEntity(context, contentRootData)
       contentRoots = listOf(
         ContentRootEntity(
-          url = contentRootPath.toVirtualFileUrl(virtualFileUrlManager),
+          url = context.virtualFileUrl(contentRootData.projectModel.projectDirectory),
           entitySource = contentRootData.entitySource,
           excludedPatterns = emptyList()
         )

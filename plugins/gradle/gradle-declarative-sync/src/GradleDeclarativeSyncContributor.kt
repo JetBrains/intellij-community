@@ -17,21 +17,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
-import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.toPath
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
-import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
+import org.jetbrains.plugins.gradle.service.syncAction.virtualFileUrl
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleDeclarativeEntitySource
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleLinkedProjectEntitySource
 import java.io.File
-import java.nio.file.Path
 
 private val LOG = logger<GradleDeclarativeSyncContributor>()
 
@@ -78,10 +76,8 @@ class GradleDeclarativeSyncContributor : GradleSyncContributor {
     storage: MutableEntityStorage,
   ) {
     val project = context.project
-    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
 
-    val projectRootPath = Path.of(context.projectPath)
-    val projectRootUrl = projectRootPath.toVirtualFileUrl(virtualFileUrlManager)
+    val projectRootUrl = context.virtualFileUrl(context.projectPath)
     val entitySource = GradleDeclarativeEntitySource(projectRootUrl)
 
     // return if there is already a model other than the simple project root one
@@ -133,7 +129,7 @@ class GradleDeclarativeSyncContributor : GradleSyncContributor {
       for (modulePath in settingsModel.modulePaths()) {
         LOG.debug("Found module path: $modulePath")
         val buildModel = settingsModel.moduleModel(modulePath)
-        val moduleRootUrl = Path.of(settingsModel.moduleDirectory(modulePath).toString()).toVirtualFileUrl(virtualFileUrlManager)
+        val moduleRootUrl = context.virtualFileUrl(settingsModel.moduleDirectory(modulePath) ?: continue)
         val moduleName: String = resolveModuleName(modulePath, projectRootUrl)
 
         // if the build file is missing in root, configure the project root module
@@ -353,13 +349,7 @@ class GradleDeclarativeSyncContributor : GradleSyncContributor {
     context: ProjectResolverContext,
     storage: MutableEntityStorage,
   ) {
-    val project = context.project
-    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
-
-    val projectRootPath = Path.of(context.projectPath)
-    val projectRootUrl = projectRootPath.toVirtualFileUrl(virtualFileUrlManager)
-    val entitySource = GradleDeclarativeEntitySource(projectRootUrl)
-
+    val entitySource = GradleDeclarativeEntitySource(context.virtualFileUrl(context.projectPath))
     val projectEntities = storage.entitiesBySource { it == entitySource }
     for (projectEntity in projectEntities.toList()) {
       storage.removeEntity(projectEntity)

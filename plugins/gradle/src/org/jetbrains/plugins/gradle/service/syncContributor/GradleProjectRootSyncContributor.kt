@@ -6,19 +6,14 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.externalSystem.service.project.nameGenerator.ModuleNameGenerator
 import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
-import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.workspace.jps.entities.ContentRootEntity
-import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
-import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
+import org.jetbrains.plugins.gradle.service.syncAction.virtualFileUrl
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleLinkedProjectEntitySource
 import java.nio.file.Path
 import kotlin.io.path.name
@@ -43,17 +38,12 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
 
   private suspend fun configureProjectRoot(
     context: ProjectResolverContext,
-    storage: MutableEntityStorage,
+    storage: MutableEntityStorage
   ) {
-    val project = context.project
-    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
-
     val contentRoots = storage.entities<ContentRootEntity>()
       .mapTo(LinkedHashSet()) { it.url }
 
-    val linkedProjectRootPath = Path.of(context.projectPath)
-    val linkedProjectRootUrl = linkedProjectRootPath.toVirtualFileUrl(virtualFileUrlManager)
-    val linkedProjectEntitySource = GradleLinkedProjectEntitySource(linkedProjectRootUrl)
+    val linkedProjectEntitySource = GradleLinkedProjectEntitySource(context.virtualFileUrl(context.projectPath))
 
     val projectRootData = GradleProjectRootData(Path.of(context.projectPath), linkedProjectEntitySource)
 
@@ -90,7 +80,6 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
     storage: EntityStorage,
     projectRootData: GradleProjectRootData,
   ): ModuleEntity.Builder {
-    val virtualFileUrlManager = context.project.workspaceModel.getVirtualFileUrlManager()
     return ModuleEntity(
       name = resolveUniqueModuleName(storage, projectRootData),
       entitySource = projectRootData.entitySource,
@@ -101,7 +90,7 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
     ) {
       contentRoots = listOf(
         ContentRootEntity(
-          url = projectRootData.projectRoot.toVirtualFileUrl(virtualFileUrlManager),
+          url = context.virtualFileUrl(projectRootData.projectRoot),
           entitySource = entitySource,
           excludedPatterns = emptyList()
         )
@@ -135,13 +124,7 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
    * They will be used as project roots in the result project model.
    */
   private fun removeProjectRoot(context: ProjectResolverContext, storage: MutableEntityStorage) {
-    val project = context.project
-    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
-
-    val linkedProjectRootPath = Path.of(context.projectPath)
-    val linkedProjectRootUrl = linkedProjectRootPath.toVirtualFileUrl(virtualFileUrlManager)
-    val linkedProjectEntitySource = GradleLinkedProjectEntitySource(linkedProjectRootUrl)
-
+    val linkedProjectEntitySource = GradleLinkedProjectEntitySource(context.virtualFileUrl(context.projectPath))
     val linkedProjectEntities = storage.entitiesBySource { it == linkedProjectEntitySource }
     for (linkedProjectEntity in linkedProjectEntities.toList()) {
       storage.removeEntity(linkedProjectEntity)
