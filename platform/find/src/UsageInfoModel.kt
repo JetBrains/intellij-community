@@ -33,10 +33,7 @@ import com.intellij.usages.rules.MergeableUsage
 import com.intellij.usages.rules.UsageDocumentProcessor
 import com.intellij.usages.rules.UsageInFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
@@ -49,6 +46,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
     virtualFile
   }
 
+  private val initializationTimeoutMs = 3000L
   private var cachedPsiFile: PsiFile? = null
   private var document: Document? = null
   private var cachedSmartRange: SmartPsiFileRange? = null
@@ -80,9 +78,18 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
   private fun initialize(onDocumentUpdated: ((usageInfos: List<UsageInfo>) -> Unit?)? = null) {
     coroutineScope.launch(Dispatchers.Default) {
       try {
+        if (project.isDisposed) {
+          LOG.warn("Project is disposed for ${model.presentablePath}")
+          initializationCompleted.complete(Unit)
+          return@launch
+        }
+        if (virtualFile?.isValid == false) {
+          LOG.warn("VirtualFile is invalid for ${model.presentablePath}")
+          initializationCompleted.complete(Unit)
+          return@launch
+        }
 
         val (file, range, mergedRanges, usageInfos) = readAction {
-
           val psiFile = virtualFile?.let { vFile ->
             PsiManager.getInstance(project).findFile(vFile)
           }
@@ -125,6 +132,16 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
         withContext(Dispatchers.EDT) {
           onDocumentUpdated?.invoke(cachedUsageInfos)
         }
+      }
+    }.invokeOnCompletion {
+      initializationCompleted.complete(Unit)
+    }
+
+    coroutineScope.launch {
+      delay(initializationTimeoutMs)
+      if (!initializationCompleted.isDone) {
+        initializationCompleted.complete(Unit)
+        LOG.error("Initialization timed out for ${model.presentablePath}. Completion forced.")
       }
     }
   }
