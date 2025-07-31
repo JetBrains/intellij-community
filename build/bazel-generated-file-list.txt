@@ -1241,6 +1241,7 @@ plugins/terminal/backend
 plugins/terminal/completion
 plugins/terminal/frontend
 plugins/terminal/sh
+plugins/terminal/tests
 plugins/testng
 plugins/testng_rt
 plugins/testng_rt/tests

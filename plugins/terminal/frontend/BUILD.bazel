@@ -56,7 +56,6 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//plugins/terminal",
-    "//plugins/terminal:terminal_test_lib",
     "//platform/execution-impl",
     "//platform/util/coroutines",
     "//platform/editor-ui-ex:editor-ex",

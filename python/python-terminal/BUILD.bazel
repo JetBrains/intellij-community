@@ -32,7 +32,6 @@ jvm_library(
   deps = [
     "//python:python-community-impl",
     "//plugins/terminal",
-    "//plugins/terminal:terminal_test_lib",
     "@lib//:mockito",
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",

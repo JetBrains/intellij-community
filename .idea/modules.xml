@@ -1154,6 +1154,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/terminal/completion/intellij.terminal.completion.iml" filepath="$PROJECT_DIR$/plugins/terminal/completion/intellij.terminal.completion.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/terminal/frontend/intellij.terminal.frontend.iml" filepath="$PROJECT_DIR$/plugins/terminal/frontend/intellij.terminal.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/terminal/sh/intellij.terminal.sh.iml" filepath="$PROJECT_DIR$/plugins/terminal/sh/intellij.terminal.sh.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/terminal/tests/intellij.terminal.tests.iml" filepath="$PROJECT_DIR$/plugins/terminal/tests/intellij.terminal.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/testng/intellij.testng.iml" filepath="$PROJECT_DIR$/plugins/testng/intellij.testng.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/testng_rt/intellij.testng.rt.iml" filepath="$PROJECT_DIR$/plugins/testng_rt/intellij.testng.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/testng_rt/tests/intellij.testng.rt.tests.iml" filepath="$PROJECT_DIR$/plugins/testng_rt/tests/intellij.testng.rt.tests.iml" />

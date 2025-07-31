@@ -112,7 +112,6 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/execution-impl",
     "//plugins/terminal",
-    "//plugins/terminal:terminal_test_lib",
     "//platform/vcs-api:vcs",
     "//plugins/git4idea:vcs-git",
     "//plugins/git4idea:vcs-git_test_lib",
