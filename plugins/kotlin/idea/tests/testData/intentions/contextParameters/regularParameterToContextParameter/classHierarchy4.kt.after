@@ -11,9 +11,7 @@ interface IFace {
     }
 
     private fun String.usage2() {
-        with(this) {
-            foo()
-        }
+        foo()
     }
 
     context(s: String)
@@ -33,9 +31,7 @@ open class OpenClass : IFace {
     }
 
     private fun String.usage2() {
-        with(this) {
-            foo()
-        }
+        foo()
     }
 
     context(s: String)
@@ -55,9 +51,7 @@ class FinalClass : OpenClass(), IFace {
     }
 
     private fun String.usage2() {
-        with(this) {
-            foo()
-        }
+        foo()
     }
 
     context(s: String)

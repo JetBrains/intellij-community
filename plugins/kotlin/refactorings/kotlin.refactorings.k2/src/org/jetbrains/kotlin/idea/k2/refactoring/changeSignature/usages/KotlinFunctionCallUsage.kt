@@ -277,6 +277,7 @@ internal class KotlinFunctionCallUsage(
                     val element = elementPointer.element
                     when {
                         element == null -> null
+                        element is KtThisExpression -> null
                         (element.mainReference?.resolve() as? KtParameter)?.isContextParameter == true -> null
                         else -> element.text
                     }

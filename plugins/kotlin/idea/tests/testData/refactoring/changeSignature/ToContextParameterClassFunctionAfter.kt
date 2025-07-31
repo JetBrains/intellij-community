@@ -40,16 +40,12 @@ fun MyClass.foo() {
 }
 
 fun String.bar(m: MyClass) {
-    with(this) {
-        m.doSomething(this@bar)
-    }
+    m.doSomething(this)
 }
 
 class Bar {
     fun String.bar(m: MyClass) {
-        with(this@bar) {
-            m.doSomething(this@bar)
-        }
+        m.doSomething(this@bar)
     }
 }
 

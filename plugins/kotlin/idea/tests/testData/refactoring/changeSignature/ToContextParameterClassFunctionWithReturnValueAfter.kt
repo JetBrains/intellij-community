@@ -41,6 +41,4 @@ fun MyClass.foo() = with("param1") {
     getLength()
 }
 
-fun String.bar(m: MyClass) = with(this) {
-    m.getLength()
-}
+fun String.bar(m: MyClass) = m.getLength()

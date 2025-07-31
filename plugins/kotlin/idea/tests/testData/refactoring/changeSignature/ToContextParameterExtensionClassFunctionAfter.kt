@@ -48,18 +48,14 @@ fun MyClass.foo() {
 
 fun String.bar(m: MyClass) {
     with(m) {
-        with(this@bar) {
-            4.doSomething(this@bar)
-        }
+        4.doSomething(this@bar)
     }
 }
 
 class Bar {
     fun String.bar(m: MyClass) {
         with(m) {
-            with(this@bar) {
-                5.doSomething(this@bar)
-            }
+            5.doSomething(this@bar)
         }
     }
 }

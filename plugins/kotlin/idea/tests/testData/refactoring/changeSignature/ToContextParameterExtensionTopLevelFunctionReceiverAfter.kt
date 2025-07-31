@@ -9,9 +9,7 @@ class MyClass {
     }
 
     fun inside1(param: String) {
-        with(this) {
-            doSomething(param)
-        }
+        doSomething(param)
     }
 
     fun inside2(param: String, another: MyClass) {
