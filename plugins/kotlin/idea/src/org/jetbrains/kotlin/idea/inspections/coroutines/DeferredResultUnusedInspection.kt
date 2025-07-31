@@ -6,22 +6,26 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.imports.importableFqName
-import org.jetbrains.kotlin.idea.inspections.AbstractResultUnusedChecker
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.callExpressionVisitor
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-class DeferredResultUnusedInspection(@JvmField var standardOnly: Boolean = false) : AbstractResultUnusedChecker() {
-    override fun isExpressionApplicable(expression: KtExpression): Boolean =
+class DeferredResultUnusedInspection(@JvmField var standardOnly: Boolean = false) : AbstractKotlinInspection() {
+    private fun isExpressionApplicable(expression: KtExpression): Boolean =
         expression is KtCallExpression && (!standardOnly || expression.calleeExpression?.text in shortNames)
 
-    override fun shouldReportCall(resolvedCall: ResolvedCall<*>): Boolean {
+    private fun shouldReportCall(resolvedCall: ResolvedCall<*>): Boolean {
         val resultingDescriptor = resolvedCall.resultingDescriptor
         val fqName = resultingDescriptor.fqNameOrNull()
         if (fqName in fqNamesThatShouldNotBeReported) return false
@@ -33,6 +37,26 @@ class DeferredResultUnusedInspection(@JvmField var standardOnly: Boolean = false
             val importableFqName = returnTypeClassifier?.importableFqName
             importableFqName == deferred || importableFqName == deferredExperimental
         }
+    }
+
+    private fun check(expression: KtExpression): Boolean {
+        // Check whatever possible by PSI
+        if (!isExpressionApplicable(expression)) return false
+        var current: PsiElement? = expression
+        var parent: PsiElement? = expression.parent
+        while (parent != null) {
+            if (parent is KtBlockExpression || parent is KtFunction || parent is KtFile) break
+            if (parent is KtValueArgument || parent is KtBinaryExpression || parent is KtUnaryExpression) return false
+            if (parent is KtQualifiedExpression && parent.receiverExpression == current) return false
+            // TODO: add when condition, if condition (later when it's applicable not only to Deferred)
+            current = parent
+            parent = parent.parent
+        }
+        // Then check by call
+        val context = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL_WITH_CFA)
+        if (context == BindingContext.EMPTY || expression.isUsedAsExpression(context)) return false
+        val resolvedCall = expression.getResolvedCall(context) ?: return false
+        return shouldReportCall(resolvedCall)
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
