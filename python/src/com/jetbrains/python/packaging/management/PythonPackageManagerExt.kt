@@ -40,6 +40,11 @@ fun PythonPackageManager.hasInstalledPackageSnapshot(packageName: String, versio
 
 
 @ApiStatus.Internal
+fun PythonPackageManager.isNotInstalledAndCanBeInstalled(packageName: String, version: String? = null): Boolean =
+  !hasInstalledPackageSnapshot(packageName, version) && repositoryManager.hasPackageSnapshot(packageName)
+
+
+@ApiStatus.Internal
 suspend fun PythonPackageManager.findPackageSpecification(
   packageName: String,
   versionSpec: PyRequirementVersionSpec? = null,

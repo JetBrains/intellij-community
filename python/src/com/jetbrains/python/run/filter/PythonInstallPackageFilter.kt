@@ -7,7 +7,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiDocumentManager
-import com.jetbrains.python.packaging.PyPackageInstallUtils
+import com.jetbrains.python.PyPsiPackageUtil
+import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.isNotInstalledAndCanBeInstalled
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
@@ -21,8 +23,15 @@ class PythonInstallPackageFilter(val project: Project, var editor: EditorImpl? =
 
     val moduleName = line.removePrefix(prefix).dropLastWhile { it != '\'' }.dropLast(1)
     val pythonSdk = getSdkForFile(editor) ?: project.pythonSdk ?: project.modules.firstNotNullOfOrNull { it.pythonSdk } ?: return null
-    val pipPackageName = PyPackageInstallUtils.offeredPackageForNotFoundModule(project, pythonSdk, moduleName) ?: return null
-    val info = InstallPackageButtonItem(project, pythonSdk, entireLength - line.length + "ModuleNotFoundError:".length, pipPackageName)
+
+    val packageManager = PythonPackageManager.forSdk(project, pythonSdk)
+
+    val packageName = PyPsiPackageUtil.moduleToPackageName(moduleName)
+    val isCanBeInstalled = packageManager.isNotInstalledAndCanBeInstalled(packageName)
+    if (!isCanBeInstalled)
+      return null
+
+    val info = InstallPackageButtonItem(project, pythonSdk, entireLength - line.length + "ModuleNotFoundError:".length, packageName)
     return Filter.Result(
       listOf(
         info,

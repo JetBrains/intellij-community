@@ -35,6 +35,11 @@ interface PythonRepositoryManager {
     return repository.getPackages().filter { StringUtil.containsIgnoreCase(normalizePackageName(it), normalizedQuery) }
   }
 
+
+  fun hasPackageSnapshot(packageName: String): Boolean {
+    return repositories.any { packageName in it.getPackages() }
+  }
+
   suspend fun findPackageSpecification(
     requirement: PyRequirement,
     repository: PyPackageRepository? = null,

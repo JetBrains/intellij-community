@@ -21,6 +21,7 @@ import com.intellij.psi.util.QualifiedName
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction
@@ -30,8 +31,9 @@ import com.jetbrains.python.getEffectiveLanguageLevel
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider
 import com.jetbrains.python.inspections.quickfix.*
-import com.jetbrains.python.packaging.PyPackageInstallUtils
 import com.jetbrains.python.packaging.PyPackageUtil
+import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.isNotInstalledAndCanBeInstalled
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyFromImportStatementImpl
 import com.jetbrains.python.psi.impl.PyImportElementImpl
@@ -86,8 +88,8 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       if (components.isEmpty()) {
         return emptyList()
       }
+      val packageName = PyPsiPackageUtil.moduleToPackageName(components[0])
 
-      val packageName = components[0]
       val module = ModuleUtilCore.findModuleForPsiElement(node)
       val sdk = PythonSdkUtil.findPythonSdk(module)
       if (module == null || sdk == null || !PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
@@ -95,9 +97,12 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       }
 
 
-      val pyPackage = PyPackageInstallUtils.offeredPackageForNotFoundModule(module.project, sdk, packageName)
-      val packageCandidates = listOfNotNull(pyPackage)
-      return packageCandidates.map { pkg: String -> InstallPackageQuickFix(pkg) }
+      val packageManager = PythonPackageManager.forSdk(module.project, sdk)
+
+      val shouldBeSuggest = packageManager.isNotInstalledAndCanBeInstalled(packageName)
+      if (!shouldBeSuggest)
+        return emptyList()
+      return listOfNotNull(InstallPackageQuickFix(packageName))
     }
 
     override fun getInstallAllPackagesQuickFix(): InstallAllPackagesQuickFix {
@@ -180,9 +185,11 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       return inspectionProfile.getUnwrappedTool(SHORT_NAME_KEY.toString(), element) as PyUnresolvedReferencesInspection?
     }
 
-    private fun createInstallAndImportQuickFix(project: Project, pythonSdk: Sdk, packageName: String, asName: String?): LocalQuickFix? {
-      return if (PyPackageInstallUtils.checkShouldToInstallSnapshot(project, pythonSdk, packageName))
-        InstallAndImportPackageQuickFix(packageName, asName)
+    private fun createInstallAndImportQuickFix(project: Project, pythonSdk: Sdk, importedModuleName: String, asName: String?): LocalQuickFix? {
+      val packageName = PyPsiPackageUtil.moduleToPackageName(importedModuleName)
+      val canBeInstalled = PythonPackageManager.forSdk(project, pythonSdk).isNotInstalledAndCanBeInstalled(packageName)
+      return if (canBeInstalled)
+        InstallAndImportPackageQuickFix(importedModuleName, asName)
       else
         null
     }

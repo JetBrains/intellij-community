@@ -3,7 +3,6 @@ package com.jetbrains.python.packaging.management.ui
 
 import com.intellij.ui.awt.RelativePoint
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.PyPackageInstallUtils.confirmAndInstall
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
@@ -42,7 +41,7 @@ fun PythonPackageManagerUI.launchInstallPackageWithBalloonBackground(packageName
     val loadBalloon = PythonPackageManagerUIHelpers.showBalloon(point, PyBundle.message("python.packaging.installing.package", packageName),
                                                                 PythonPackageManagerUIHelpers.BalloonStyle.INFO)
     try {
-      confirmAndInstall(project, sdk, packageName, versionSpec = versionSpec)
+      installPyRequirementsWithConfirmation(listOf(pyRequirement(packageName, versionSpec)))
       loadBalloon.hide()
       PyPackagesUsageCollector.installPackageFromConsole.log(project)
       PythonPackageManagerUIHelpers.showBalloon(point, PyBundle.message("python.packaging.notification.description.installed.packages", packageName), PythonPackageManagerUIHelpers.BalloonStyle.SUCCESS)

@@ -13,7 +13,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.IdeUtilIoBundle
-import com.intellij.util.net.HttpConfigurable
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.errorProcessing.PyResult
@@ -27,6 +26,7 @@ import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerEngine
 import com.jetbrains.python.packaging.management.PythonPackageManagerRunner
+import com.jetbrains.python.packaging.utils.PyProxyUtils
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.ensureProjectSdkAndModuleDirsAreOnTarget
@@ -120,7 +120,7 @@ class PipPackageManagerEngine(
 
     pythonExecution.addParameter(operation)
     if (operation == "install") {
-      proxyString?.let {
+      PyProxyUtils.proxyString?.let {
         pythonExecution.addParameter("--proxy")
         pythonExecution.addParameter(it)
       }
@@ -182,15 +182,6 @@ class PipPackageManagerEngine(
     return@withContext PyResult.success(result.stdout)
   }
 
-  private val proxyString: String?
-    get() {
-      val settings = HttpConfigurable.getInstance()
-      if (settings != null && settings.USE_HTTP_PROXY) {
-        val credentials = if (settings.PROXY_AUTHENTICATION) "${settings.proxyLogin}:${settings.plainProxyPassword}@" else ""
-        return "http://$credentials${settings.PROXY_HOST}:${settings.PROXY_PORT}"
-      }
-      return null
-    }
 
   private fun partitionPackagesBySource(installRequest: PythonPackageInstallRequest): List<List<String>> {
     when (installRequest) {

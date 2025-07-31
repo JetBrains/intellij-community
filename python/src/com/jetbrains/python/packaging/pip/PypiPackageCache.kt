@@ -37,8 +37,7 @@ private val LOG = logger<PypiPackageCache>()
 private val ALPHABET_REGEX = Regex("[-a-z0-9]+")
 
 @ApiStatus.Internal
-@Service
-class PypiPackageCache : PythonPackageCache<String> {
+open class PypiPackageCache : PythonPackageCache<String> {
   override val packages: Set<String>
     get() = cache
 
@@ -63,7 +62,7 @@ class PypiPackageCache : PythonPackageCache<String> {
   val filePath: Path = Paths.get(PathManager.getSystemPath(), "python_packages", "packages_v2.json")
 
   @CheckReturnValue
-  suspend fun reloadCache(force: Boolean = false): Result<Unit, IOException> {
+  open suspend fun reloadCache(force: Boolean = false): Result<Unit, IOException> {
     lock.withLock {
       if ((cache.isNotEmpty() && !force) || loadInProgress) {
         return Result.success(Unit)
@@ -93,7 +92,7 @@ class PypiPackageCache : PythonPackageCache<String> {
         return@withContext false
       }
 
-      var packageList = emptySet<String>()
+      var packageList: Set<String>
       try {
         val type = object : TypeToken<LinkedHashSet<String>>() {}.type
         packageList = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)

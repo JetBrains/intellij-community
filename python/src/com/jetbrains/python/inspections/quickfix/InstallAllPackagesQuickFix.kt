@@ -4,34 +4,25 @@ package com.jetbrains.python.inspections.quickfix
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiPackageUtil.moduleToPackageName
-import com.jetbrains.python.packaging.PyPackageInstallUtils
-import com.jetbrains.python.packaging.pyRequirement
+import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import org.jetbrains.annotations.Nls
 
 class InstallAllPackagesQuickFix(private val packageNames: List<String>) : LocalQuickFix {
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement ?: return
-    val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
     val sdk = PythonSdkUtil.findPythonSdk(element) ?: return
 
     val normalizedPackageNames = packageNames.map { moduleToPackageName(it) }
-    val pyRequirements = normalizedPackageNames.map { pyRequirement(it) }
-    val confirmedPackages = PyPackageInstallUtils.getConfirmedPackages(pyRequirements, project)
 
-    if (confirmedPackages.isEmpty()) return
-
-    val fix = PyInstallRequirementsFix(familyName, sdk,
-                                       confirmedPackages.toList(),
-                                       emptyList())
-    fix.applyFix(module.project, descriptor)
-    PyPackagesUsageCollector.installAllEvent.log(confirmedPackages.size)
+    PyPackageCoroutine.launch(project) {
+      PythonPackageManagerUI.forSdk(project, sdk).installWithConfirmation(normalizedPackageNames)
+    }
   }
 
   override fun getFamilyName(): @Nls String = PyBundle.message("python.unresolved.reference.inspection.install.all")

@@ -6,8 +6,8 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.PyPackageInstallUtils
 import com.jetbrains.python.packaging.PyRequirement
+import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.requirements.getPythonSdk
 
@@ -20,7 +20,7 @@ internal class InstallRequirementQuickFix(val requirement: PyRequirement) : Loca
     val pythonSdk = getPythonSdk(descriptor.psiElement.containingFile) ?: return
 
     PyPackageCoroutine.launch(project) {
-      PyPackageInstallUtils.confirmAndInstall(project, pythonSdk, requirement)
+      PythonPackageManagerUI.forSdk(project, pythonSdk).installPyRequirementsWithConfirmation(listOf(requirement))
     }
   }
 

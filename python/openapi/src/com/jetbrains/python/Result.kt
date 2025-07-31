@@ -114,12 +114,15 @@ sealed class Result<out SUCC, out ERR> {
     fun <S> success(value: S): Success<S> = Success(value)
     fun <E> failure(error: E): Failure<E> = Failure(error)
     fun localizedError(message: @Nls String): Failure<MessageError> = failure(MessageError(message))
+
+    @ApiStatus.Internal
+    inline fun <T> runCatching(body: () -> T): PyResult<T> = pyRunCatching(body)
   }
 }
 
 @Suppress("UsagesOfObsoleteApi")
 @ApiStatus.Internal
-fun <T> pyRunCatching(body: () -> T): PyResult<T> {
+inline fun <T> pyRunCatching(body: () -> T): PyResult<T> {
   return try {
     PyResult.success(body())
   }
