@@ -64,7 +64,7 @@ internal class FrontendTerminalHyperlinkFacade(
         followedAttributes = followedStyle,
         hoveredAttributes = hoveredStyle,
         layer = layer,
-        action = { terminalInput.sendLinkClicked(isInAlternateBuffer, id) },
+        action = { terminalInput.sendLinkClicked(isInAlternateBuffer, id, it) },
       )
       is TerminalHighlightingInfo -> Hyperlink(
         id = id.toPlatformId(),

@@ -1,6 +1,9 @@
 package com.intellij.terminal.backend.hyperlinks
 
+import com.intellij.execution.filters.HyperlinkInfoBase
+import com.intellij.execution.filters.navigate
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.session.TerminalHyperlinkId
 import com.intellij.terminal.session.TerminalHyperlinksChangedEvent
@@ -42,10 +45,15 @@ internal class BackendTerminalHyperlinkFacade(
     return true
   }
 
-  suspend fun hyperlinkClicked(hyperlinkId: TerminalHyperlinkId) {
+  suspend fun hyperlinkClicked(hyperlinkId: TerminalHyperlinkId, mouseEvent: EditorMouseEvent?) {
     val hyperlink = model.getHyperlink(hyperlinkId)?.hyperlinkInfo ?: return
     withContext(Dispatchers.EDT) { // navigation might need the WIL
-      hyperlink.navigate(project)
+      if (hyperlink is HyperlinkInfoBase && mouseEvent != null) {
+        hyperlink.navigate(project, mouseEvent.editor, mouseEvent.logicalPosition)
+      }
+      else {
+        hyperlink.navigate(project)
+      }
       ReworkedTerminalUsageCollector.logHyperlinkFollowed(hyperlink.javaClass)
     }
   }

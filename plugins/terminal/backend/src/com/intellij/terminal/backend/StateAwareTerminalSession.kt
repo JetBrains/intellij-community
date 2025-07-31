@@ -137,7 +137,7 @@ internal class StateAwareTerminalSession(
   private fun handleInputEvent(event: TerminalInputEvent) {
     if (event is TerminalHyperlinkClickedEvent) {
       coroutineScope.launch(CoroutineName("StateAwareTerminalSession: hyperlink click")) {
-        getHyperlinkFacade(event)?.hyperlinkClicked(event.hyperlinkId)
+        getHyperlinkFacade(event)?.hyperlinkClicked(event.hyperlinkId, event.mouseEvent)
       }
     }
   }

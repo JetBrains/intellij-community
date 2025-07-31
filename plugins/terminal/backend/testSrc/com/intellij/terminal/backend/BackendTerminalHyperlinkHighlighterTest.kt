@@ -437,7 +437,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     suspend fun assertClicks(vararg clicks: LinkLocator) {
       awaitEventProcessing()
       for (click in clicks) {
-        backendFacade.hyperlinkClicked(click.locateLink(outputModel, backendFacade).id)
+        backendFacade.hyperlinkClicked(click.locateLink(outputModel, backendFacade).id, null)
       }
       awaitEventProcessing()
       assertThat(clickedLinks).containsExactlyElementsOf(clicks.map { it.substring })
