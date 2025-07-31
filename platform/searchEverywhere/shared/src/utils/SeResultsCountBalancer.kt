@@ -34,6 +34,8 @@ class SeResultsCountBalancer(private val logLabel: String,
                              lowPriorityProviderIds: Collection<SeProviderId>) {
   private val mutex = Mutex()
 
+  private val allProvidersCounts = (nonBlockedProviderIds + highPriorityProviderIds + lowPriorityProviderIds).map { it to AtomicInt(0) }.toMap()
+
   private val nonBlockedRunning = nonBlockedProviderIds.toMutableSet()
   private val nonBlockedCounts = HashMap<SeProviderId, AtomicInt>().apply {
     this.putAll(nonBlockedProviderIds.map { it to AtomicInt(-DIFFERENCE_LIMIT) })
@@ -55,6 +57,8 @@ class SeResultsCountBalancer(private val logLabel: String,
   }
 
   suspend fun add(newItem: SeItemData): SeItemData {
+    allProvidersCounts[newItem.providerId]?.fetchAndIncrement()
+
     highPriorityPermits[newItem.providerId]?.acquire()
     ?: lowPriorityPermits[newItem.providerId]?.acquire()
     ?: nonBlockedCounts[newItem.providerId]?.fetchAndIncrement()
@@ -101,12 +105,14 @@ class SeResultsCountBalancer(private val logLabel: String,
 
   private suspend fun reportPermits() {
     SeLog.logSuspendable(SeLog.BALANCING) {
-      val nonBlocked = nonBlockedRunning.associateWith { nonBlockedCounts[it]!!.load() }.map { "${it.key.value}: ${it.value}" }.joinToString(", ")
-      val highPriority = highPriorityRunning.associateWith { highPriorityPermits[it]!!.availablePermits }.map { "${it.key.value}: ${it.value}" }.joinToString(", ")
-      val lowPriority = lowPriorityRunning.associateWith { lowPriorityPermits[it]!!.availablePermits }.map { "${it.key.value}: ${it.value}" }.joinToString(", ")
+      val nonBlocked = nonBlockedRunning.associateWith { nonBlockedCounts[it]!!.load() }.toReportString()
+      val highPriority = highPriorityRunning.associateWith { highPriorityPermits[it]!!.availablePermits }.toReportString()
+      val lowPriority = lowPriorityRunning.associateWith { lowPriorityPermits[it]!!.availablePermits }.toReportString()
       "($logLabel) Available permits: nonBlocked: $nonBlocked, high: $highPriority, low: $lowPriority"
     }
   }
+
+  private fun Map<SeProviderId, Int>.toReportString() = map { "${it.key.value}: ${it.value} (${allProvidersCounts[it.key]?.load()})" }.joinToString(", ")
 
   companion object {
     private const val DIFFERENCE_LIMIT: Int = 15
