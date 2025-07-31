@@ -2,7 +2,7 @@
 // (probably, it's possible to run arbitrary `main`/runConfiguration on TeamCity but I don't know how to do it yet)
 
 plugins {
-	id "org.jetbrains.kotlin.jvm" version "1.9.0"
+	id "org.jetbrains.kotlin.jvm" version "2.0.0"
     id "application"
 }
 

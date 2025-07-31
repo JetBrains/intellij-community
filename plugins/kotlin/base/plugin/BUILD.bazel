@@ -97,6 +97,7 @@ jvm_library(
     "//platform/util",
     "//platform/build-scripts/downloader",
     "//platform/lang-core",
+    "//plugins/kotlin/util/project-model-updater",
   ],
   runtime_deps = [
     ":plugin_resources",

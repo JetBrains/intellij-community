@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.testGenerator.model.TAnnotation
 import org.jetbrains.kotlin.testGenerator.model.TGroup
 import org.jetbrains.kotlin.testGenerator.model.TSuite
 import org.jetbrains.kotlin.testGenerator.model.TWorkspace
+import org.jetbrains.tools.model.updater.KotlinTestsDependenciesUtil
 import org.junit.runner.RunWith
 import java.io.File
 import java.nio.file.Files
@@ -29,36 +30,46 @@ import java.util.*
 object TestGenerator {
     fun writeLibrariesVersion(isUpToDateCheck: Boolean = false) {
         val kotlincKotlinCompilerCliVersion = KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_compiler_cli.xml")
-        val kotlincKotlinJpsPluginTests = KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_jps_plugin_tests.xml")
+        val kotlincKotlinJpsPluginTestsVersion = KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_jps_plugin_tests.xml")
 
-        val kotlincKotlinCompilerCliVersionFile = File(PathManager.getCommunityHomePath())
-            .resolve("plugins/kotlin/base/plugin/testResources/kotlincKotlinCompilerCliVersion.txt")
-        val kotlincKotlinCompilerCliOldVersion = kotlincKotlinCompilerCliVersionFile.readText()
-        write(
-            kotlincKotlinCompilerCliVersionFile,
-            kotlincKotlinCompilerCliVersion, isUpToDateCheck)
-
-
-
-        val kotlincKotlinJpsPluginTestsFile = File(PathManager.getCommunityHomePath())
-            .resolve("plugins/kotlin/base/plugin/testResources/kotlincKotlinJpsPluginTests.txt")
-        val kotlincKotlinJpsPluginTestsOldVersion = kotlincKotlinJpsPluginTestsFile.readText()
-        write(
-            kotlincKotlinJpsPluginTestsFile,
-            kotlincKotlinJpsPluginTests, isUpToDateCheck)
+        val kotlinCompilerCliVersionRegex = Regex("""kotlinCompilerCliVersion\s*=\s*"(\S+)"""")
+        val kotlincKotlinJpsPluginTestsVersionRegex = Regex("""kotlincKotlinJpsPluginTestsVersion\s*=\s*"(\S+)"""")
 
         val kotlinDependenciesBazelFile = File(PathManager.getCommunityHomePath()).resolve("plugins/kotlin/kotlin_test_dependencies.bzl")
-        val newContent = kotlinDependenciesBazelFile.readText()
-            .replace(
-                "$kotlincKotlinJpsPluginTestsOldVersion/js-ir-runtime-for-ide-$kotlincKotlinJpsPluginTestsOldVersion.klib",
-                "$kotlincKotlinJpsPluginTests/js-ir-runtime-for-ide-$kotlincKotlinJpsPluginTests.klib")
-            .replace("$kotlincKotlinJpsPluginTestsOldVersion/kotlin-jps-plugin-classpath-$kotlincKotlinJpsPluginTestsOldVersion.jar",
-                     "$kotlincKotlinJpsPluginTests/kotlin-jps-plugin-classpath-$kotlincKotlinJpsPluginTests.jar")
-            .replace("$kotlincKotlinJpsPluginTestsOldVersion/kotlin-dist-for-ide-$kotlincKotlinJpsPluginTestsOldVersion.jar",
-                     "$kotlincKotlinJpsPluginTests/kotlin-dist-for-ide-$kotlincKotlinJpsPluginTests.jar")
-            .replace(kotlincKotlinCompilerCliOldVersion, kotlincKotlinCompilerCliVersion)
+        val content = kotlinDependenciesBazelFile.readText()
+        if (isUpToDateCheck) {
+            kotlinCompilerCliVersionRegex.find(content)?.let { match ->
+                if (match.groupValues[1] != kotlincKotlinCompilerCliVersion) {
+                    error(
+                        "Inconsistent version of kotlinc compiler cli version in '${kotlinDependenciesBazelFile.absolutePath}' " +
+                                "expected $kotlincKotlinCompilerCliVersion actual ${match.groupValues[1]}"
+                    )
+                }
+            } ?: error("Cannot find kotlinc compiler version in '${kotlinDependenciesBazelFile.absolutePath}'")
+            kotlincKotlinJpsPluginTestsVersionRegex.find(content)?.let { match ->
+                if (match.groupValues[1] != kotlincKotlinJpsPluginTestsVersion) {
+                    error(
+                        "Inconsistent version of JPS plugin tests version in '${kotlinDependenciesBazelFile.absolutePath}' " +
+                                "expected $kotlincKotlinJpsPluginTestsVersion actual ${match.groupValues[1]}"
+                    )
 
-        write(kotlinDependenciesBazelFile,newContent, isUpToDateCheck)
+                }
+            } ?: error("Cannot find JPS plugin tests version in '${kotlinDependenciesBazelFile.absolutePath}'")
+            KotlinTestsDependenciesUtil.updateChecksum(true)
+        } else {
+            kotlinDependenciesBazelFile.writeText(
+                content
+                    .replace(
+                        """kotlinCompilerCliVersion\s*=\s*"(\S+)"""".toRegex(),
+                        "kotlinCompilerCliVersion = \"$kotlincKotlinCompilerCliVersion\""
+                    )
+                    .replace(
+                        """kotlincKotlinJpsPluginTestsVersion\s*=\s*"\S+"""".toRegex(),
+                        "kotlincKotlinJpsPluginTestsVersion = \"$kotlincKotlinJpsPluginTestsVersion\""
+                    )
+            )
+            KotlinTestsDependenciesUtil.updateChecksum(false)
+        }
     }
 
     fun write(workspace: TWorkspace, isUpToDateCheck: Boolean = false) {
