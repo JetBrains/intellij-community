@@ -55,7 +55,6 @@ import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
-import org.jetbrains.plugins.terminal.util.ShellNameUtil
 import java.awt.Color
 import java.awt.Component
 import java.awt.event.ActionListener
@@ -454,7 +453,7 @@ private fun isShellWithIntegration(text: String): Boolean {
   val shellPath = command.firstOrNull() ?: return false
   val shellName = PathUtil.getFileName(shellPath)
 
-  return ShellNameUtil.isZshName(shellName) || ShellNameUtil.isBash(shellName)
+  return LocalTerminalDirectRunner.supportsBlocksShellIntegration(shellName)
 }
 
 private fun getDefaultValueColor(): Color {
