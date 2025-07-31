@@ -1285,6 +1285,85 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspectionsLocal/coroutines/deferredResultUnused")
+        public static class DeferredResultUnused extends AbstractSharedK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("asyncAssignedToVariable.kt")
+            public void testAsyncAssignedToVariable() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/deferredResultUnused/asyncAssignedToVariable.kt");
+            }
+
+            @TestMetadata("asyncPassedAsArgument.kt")
+            public void testAsyncPassedAsArgument() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/deferredResultUnused/asyncPassedAsArgument.kt");
+            }
+
+            @TestMetadata("asyncWithAssertNotNull.kt")
+            public void testAsyncWithAssertNotNull() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/deferredResultUnused/asyncWithAssertNotNull.kt");
+            }
+
+            @TestMetadata("asyncWithAwait.kt")
+            public void testAsyncWithAwait() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/deferredResultUnused/asyncWithAwait.kt");
+            }
+
+            @TestMetadata("asyncWithBinaryOperator.kt")
+            public void testAsyncWithBinaryOperator() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/deferredResultUnused/asyncWithBinaryOperator.kt");
+            }
+
+            @TestMetadata("asyncWithCheckNotNull.kt")
+            public void testAsyncWithCheckNotNull() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/deferredResultUnused/asyncWithCheckNotNull.kt");
+            }
+
+            @TestMetadata("asyncWithRequireNotNull.kt")
+            public void testAsyncWithRequireNotNull() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/deferredResultUnused/asyncWithRequireNotNull.kt");
+            }
+
+            @TestMetadata("asyncWithUnaryOperator.kt")
+            public void testAsyncWithUnaryOperator() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/deferredResultUnused/asyncWithUnaryOperator.kt");
+            }
+
+            @TestMetadata("basicUnusedAsync.kt")
+            public void testBasicUnusedAsync() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/deferredResultUnused/basicUnusedAsync.kt");
+            }
+
+            @TestMetadata("deferredFromMethod.kt")
+            public void testDeferredFromMethod() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/deferredResultUnused/deferredFromMethod.kt");
+            }
+
+            @TestMetadata("deferredFromMethodWithAwait.kt")
+            public void testDeferredFromMethodWithAwait() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/deferredResultUnused/deferredFromMethodWithAwait.kt");
+            }
+
+            @TestMetadata("deferredUnitUnused.kt")
+            public void testDeferredUnitUnused() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/deferredResultUnused/deferredUnitUnused.kt");
+            }
+
+            @TestMetadata("deferredUnitWithAwait.kt")
+            public void testDeferredUnitWithAwait() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/deferredResultUnused/deferredUnitWithAwait.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/coroutines/forEachJoinOnCollectionOfJob")
         public static class ForEachJoinOnCollectionOfJob extends AbstractSharedK2LocalInspectionTest {
             @java.lang.Override
