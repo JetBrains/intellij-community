@@ -215,6 +215,14 @@ abstract class TextMateSelectorWeigherTestCase {
     assertEquals(0, getWeigh(selector, "foo text.html bar source"))
   }
 
+  @Test
+  fun testAstroScriptSelector() {
+    val selector = "L:meta.script.astro - meta.lang - (meta source)"
+    val scope = "source.astro meta.scope.tag.script.astro meta.script.astro meta.embedded.block.astro source.js"
+
+    assertEquals(0, getWeigh(selector, scope))
+  }
+
   private fun getWeigh(selector: String, scopeString: String): Int {
     return withWeigher {
       it.weigh(selector, TestUtil.scopeFromString(scopeString)).weigh

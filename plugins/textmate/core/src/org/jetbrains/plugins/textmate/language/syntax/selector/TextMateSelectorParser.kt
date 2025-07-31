@@ -56,7 +56,16 @@ class TextMateSelectorParser internal constructor(private val myHighlightingSele
     })
   }
 
+
   private fun parseScopeSelector(): Node? {
+    return parseScopeNode(false)
+  }
+
+  private fun parseScopeExclusion(): Node? {
+    return parseScopeNode(true)
+  }
+
+  private fun parseScopeNode(isExclusion: Boolean): Node? {
     val token = getCurrentToken()
     val priority = if (token is PriorityToken) {
       advance()
@@ -77,9 +86,9 @@ class TextMateSelectorParser internal constructor(private val myHighlightingSele
       next = parseSelector()
     }
 
-    while (getCurrentToken() == TextMateSelectorToken.MINUS) {
+    while ((!isExclusion || children.isEmpty()) && getCurrentToken() == TextMateSelectorToken.MINUS) {
       advance()
-      val exclusion = parseScopeSelector()
+      val exclusion = parseScopeExclusion()
       if (exclusion != null) {
         exclusions.add(exclusion)
       }
