@@ -3,6 +3,9 @@
     <group id="XDebugger.Frames.Tree.Popup.Frontend">
       <reference ref="Debugger.PopFrame"/>
     </group>
+    <group id="XDebugger.Threads.View.Popup">
+      <reference ref="Debugger.PopFrame"/>
+    </group>
     <group id="XDebugger.Inspect.Tree.Popup.Frontend">
       <group id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend"/>
       <separator/>
@@ -120,6 +123,7 @@
         <synonym key="action.Debugger.ThawSelectedThreads.synonym"/>
       </action>
       <action id="Debugger.ShowLibraryFrames" class="com.intellij.xdebugger.impl.actions.ShowLibraryFramesAction"/>
+      <action id="Debugger.CopyStack" class="com.intellij.xdebugger.impl.frame.XDebuggerFramesList$CopyStackAction" icon="AllIcons.Actions.Copy"/>
     </group>
 
     <group id="XDebugger.ToolWindow.TopToolbar">
@@ -195,9 +199,9 @@
 
     <group id="XDebugger.Frames.Tree.Popup">
       <reference ref="Debugger.PopFrame" />
-      <action id="Debugger.CopyStack" class="com.intellij.xdebugger.impl.frame.XDebuggerFramesList$CopyStackAction" icon="AllIcons.Actions.Copy">
+      <reference ref="Debugger.CopyStack">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend"/>
-      </action>
+      </reference>
     </group>
 
     <group id="XDebugger.Frames.TopToolbar">

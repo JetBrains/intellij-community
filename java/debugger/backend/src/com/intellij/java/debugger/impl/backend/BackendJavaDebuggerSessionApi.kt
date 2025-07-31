@@ -67,6 +67,10 @@ internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
     invokeThreadCommand(executionStackId, ThreadCommand.RESUME)
   }
 
+  override suspend fun freezeThread(executionStackId: XExecutionStackId) {
+    invokeThreadCommand(executionStackId, ThreadCommand.FREEZE)
+  }
+
   private fun invokeThreadCommand(executionStackId: XExecutionStackId, command: ThreadCommand) {
     val executionStackModel = executionStackId.findValue() ?: return
     val xSession = executionStackModel.session
@@ -83,8 +87,12 @@ internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
       ThreadCommand.RESUME -> {
         ResumeThreadAction.resumeThread(threadProxy, debugProcess, managerThread)
       }
+      ThreadCommand.FREEZE -> {
+        FreezeThreadAction.freezeThread(threadProxy, debugProcess, managerThread)
+      }
     }
   }
+
   companion object {
     private enum class ThreadCommand { FREEZE, RESUME }
   }

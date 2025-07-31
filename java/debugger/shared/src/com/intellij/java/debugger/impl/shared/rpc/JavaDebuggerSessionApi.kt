@@ -28,6 +28,8 @@ interface JavaDebuggerSessionApi : RemoteApi<Unit> {
 
   suspend fun resumeThread(executionStackId: XExecutionStackId)
 
+  suspend fun freezeThread(executionStackId: XExecutionStackId)
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): JavaDebuggerSessionApi {
