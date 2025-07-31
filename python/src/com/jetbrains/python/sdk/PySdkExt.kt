@@ -61,8 +61,10 @@ internal data class TargetAndPath(
   val path: FullPathOnTarget?,
 )
 
+@get:Internal
 val BASE_DIR: Key<Path> = Key.create("PYTHON_PROJECT_BASE_PATH")
 
+@Internal
 fun findAllPythonSdks(baseDir: Path?): List<Sdk> {
   val context: UserDataHolder = UserDataHolderBase()
   if (baseDir != null) {
@@ -71,7 +73,7 @@ fun findAllPythonSdks(baseDir: Path?): List<Sdk> {
   val existing = PythonSdkUtil.getAllSdks()
   return detectVirtualEnvs(null, existing, context) + findBaseSdks(existing, null, context)
 }
-
+@Internal
 fun findBaseSdks(existingSdks: List<Sdk>, module: Module?, context: UserDataHolder): List<Sdk> {
   val existing = filterSystemWideSdks(existingSdks)
     .sortedWith(PreferredSdkComparator.INSTANCE)
@@ -83,6 +85,7 @@ fun findBaseSdks(existingSdks: List<Sdk>, module: Module?, context: UserDataHold
 
 fun mostPreferred(sdks: List<Sdk>): Sdk? = sdks.minWithOrNull(PreferredSdkComparator.INSTANCE)
 
+@Internal
 fun filterSystemWideSdks(existingSdks: List<Sdk>): List<Sdk> {
   return existingSdks.filter { it.sdkType is PythonSdkType && it.isSystemWide }
 }
@@ -140,7 +143,7 @@ private fun PythonSdkFlavor<*>.detectSdkPaths(
     }
     .filter { TargetAndPath(targetModuleSitsOn?.asTargetConfig, it) !in existingPaths }
 
-fun resetSystemWideSdksDetectors() {
+internal fun resetSystemWideSdksDetectors() {
   PythonSdkFlavor.getApplicableFlavors(false).forEach(PythonSdkFlavor<*>::dropCaches)
 }
 
@@ -235,7 +238,7 @@ suspend fun createSdk(
          ?: PyResult.localizedError(PyBundle.message("python.sdk.failed.to.create.interpreter.title"))
 }
 
-fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsContexts.DialogTitle title: String) {
+internal fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsContexts.DialogTitle title: String) {
   runInEdt {
     val description = PyPackageManagementService.toErrorDescription(listOf(e), sdk) ?: return@runInEdt
     PackagesNotificationPanel.showError(title, description)
@@ -258,6 +261,7 @@ fun Sdk.isAssociatedWithAnotherModule(module: Module?): Boolean {
   return basePath != associatedPath
 }
 
+@get:Internal
 val Sdk.associatedModulePath: String?
   // TODO: Support .project associations
   get() = associatedPathFromAdditionalData /*?: associatedPathFromDotProject*/
@@ -269,17 +273,18 @@ val Sdk.associatedModuleNioPath: Path?
     associatedModulePath?.let { Path(it) }
   }.getOrNull()
 
-val Sdk.associatedModuleDir: VirtualFile?
+internal val Sdk.associatedModuleDir: VirtualFile?
   get() {
     val nioPath = associatedModuleNioPath ?: return null
     return VirtualFileManager.getInstance().findFileByNioPath(nioPath) ?: TempFileSystem.getInstance().findFileByNioFile(nioPath)
   }
 
-fun Sdk.adminPermissionsNeeded(): Boolean {
+internal fun Sdk.adminPermissionsNeeded(): Boolean {
   val pathToCheck = sitePackagesDirectory?.path ?: homePath ?: return false
   return !Files.isWritable(Paths.get(pathToCheck))
 }
 
+@Internal
 fun PyDetectedSdk.setup(existingSdks: List<Sdk>): Sdk? {
   val homeDir = homeDirectory ?: return null
   return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeDir, PythonSdkType.getInstance(), null, null)
@@ -408,13 +413,12 @@ fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
   }
 }
 
-fun Project.excludeInnerVirtualEnv(sdk: Sdk) {
+internal fun Project.excludeInnerVirtualEnv(sdk: Sdk) {
   val binary = sdk.homeDirectory ?: return
   ModuleUtil.findModuleForFile(binary, this)?.excludeInnerVirtualEnv(sdk)
 }
 
 @Internal
-
 fun getInnerVirtualEnvRoot(sdk: Sdk): VirtualFile? {
   val binaryPath = sdk.homePath ?: return null
 
@@ -476,6 +480,7 @@ private fun Sdk.isLocatedInsideBaseDir(baseDir: Path?): Boolean {
   return FileUtil.isAncestor(basePath, homePath, true)
 }
 
+@get:Internal
 val PyDetectedSdk.guessedLanguageLevel: LanguageLevel?
   get() {
     val path = homePath ?: return null
@@ -522,23 +527,28 @@ private fun filterSuggestedPaths(
     .toList()
 }
 
+@Internal
 fun Sdk?.isTargetBased(): Boolean = this != null && targetEnvConfiguration != null
 
 /**
  *  Additional data if sdk is target-based
  */
+@get:Internal
 val Sdk.targetAdditionalData: PyTargetAwareAdditionalData?
   get():PyTargetAwareAdditionalData? = sdkAdditionalData as? PyTargetAwareAdditionalData
 
 /**
  * Returns target environment if configuration is target api based
  */
+
+@get:Internal
 val Sdk.targetEnvConfiguration: TargetEnvironmentConfiguration?
   get():TargetEnvironmentConfiguration? = (sdkAdditionalData as? TargetBasedSdkAdditionalData)?.targetEnvironmentConfiguration
 
 /**
  * Where a "remote_sources" folder for certain SDK is stored
  */
+@get:Internal
 val Sdk.remoteSourcesLocalPath: Path
   get() =
     Path.of(PathManager.getSystemPath()) /
