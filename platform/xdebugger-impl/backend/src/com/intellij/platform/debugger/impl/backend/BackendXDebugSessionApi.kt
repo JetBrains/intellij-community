@@ -44,6 +44,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.await
 
@@ -209,8 +210,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
         override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
           val session = suspendContextModel.session
           val stacks = executionStacks.map { stack ->
-            val id = stack.getOrStoreGlobally(suspendContextModel.coroutineScope, session)
-            XExecutionStackDto(id, stack.displayName, stack.icon?.rpcId())
+            stack.toRpc(suspendContextModel.coroutineScope, session)
           }
           trySend(XExecutionStacksEvent.NewExecutionStacks(stacks, last))
           if (last) {
@@ -295,30 +295,34 @@ internal suspend fun XDebugSessionImpl.suspendData(): SuspendData? {
     suspendContext.getOrStoreGlobally(suspendScope, this@suspendData)
   }
   val suspendContextDto = XSuspendContextDto(suspendContextId, suspendContext is XSteppingSuspendContext)
-  val executionStackDto = suspendContext.activeExecutionStack?.let {
-    val activeExecutionStackId = it.getOrStoreGlobally(suspendScope, this@suspendData)
-    XExecutionStackDto(activeExecutionStackId, it.displayName, it.icon?.rpcId())
-  }
-  val stackTraceDto = currentStackFrame?.let {
-    createXStackFrameDto(it, suspendScope, this@suspendData)
-  }
+  val executionStackDto = suspendContext.activeExecutionStack?.toRpc(suspendScope, this@suspendData)
+  val stackTraceDto = currentStackFrame?.toRpc(suspendScope, this@suspendData)
 
   return SuspendData(suspendContextDto,
                      executionStackDto,
                      stackTraceDto)
 }
 
-internal fun createXStackFrameDto(frame: XStackFrame, coroutineScope: CoroutineScope, session: XDebugSessionImpl): XStackFrameDto {
-  val id = frame.getOrStoreGlobally(coroutineScope, session)
-  val equalityObject = frame.equalityObject
+internal fun XStackFrame.toRpc(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XStackFrameDto {
+  val id = getOrStoreGlobally(coroutineScope, session)
+  val equalityObject = equalityObject
   val serializedEqualityObject = when (equalityObject) {
     is String -> XStackFrameStringEqualityObject(equalityObject)
     else -> null // TODO support other types
   }
-  val canEvaluateInDocument = frame.isDocumentEvaluator
-  val evaluatorDto = XDebuggerEvaluatorDto(canEvaluateInDocument)
-  return XStackFrameDto(id, frame.sourcePosition?.toRpc(), serializedEqualityObject, evaluatorDto, frame.computeTextPresentation(),
-                        frame.captionInfo(), frame.customBackgroundInfo(), frame.canDrop(session))
+  val evaluatorDto = XDebuggerEvaluatorDto(isDocumentEvaluator)
+  return XStackFrameDto(id, sourcePosition?.toRpc(), serializedEqualityObject, evaluatorDto, computeTextPresentation(),
+                        captionInfo(), customBackgroundInfo(), canDrop(session))
+}
+
+internal fun XExecutionStack.toRpc(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XExecutionStackDto {
+  val id = getOrStoreGlobally(coroutineScope, session)
+  return XExecutionStackDto(
+    id,
+    displayName,
+    icon?.rpcId(),
+    xExecutionStackDescriptorAsync?.asDeferred()
+  )
 }
 
 private fun XStackFrame.captionInfo(): XStackFrameCaptionInfo {

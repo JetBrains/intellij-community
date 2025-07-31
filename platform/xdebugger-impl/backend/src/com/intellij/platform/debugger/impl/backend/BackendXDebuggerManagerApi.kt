@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
-import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditorOrNull
@@ -96,13 +95,8 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
             suspendContext.getOrStoreGlobally(suspendScope, currentSession)
           }
           val suspendContextDto = XSuspendContextDto(suspendContextId, suspendContext is XSteppingSuspendContext)
-          val executionStackDto = suspendContext.activeExecutionStack?.let {
-            val activeExecutionStackId = it.getOrStoreGlobally(suspendScope, currentSession)
-            XExecutionStackDto(activeExecutionStackId, it.displayName, it.icon?.rpcId())
-          }
-          val stackTraceDto = currentSession.currentStackFrame?.let {
-            createXStackFrameDto(it, suspendScope, currentSession)
-          }
+          val executionStackDto = suspendContext.activeExecutionStack?.toRpc(suspendScope, currentSession)
+          val stackTraceDto = currentSession.currentStackFrame?.toRpc(suspendScope, currentSession)
           SuspendData(suspendContextDto,
                       executionStackDto,
                       stackTraceDto)
@@ -126,7 +120,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
         val suspendScope = currentSession.currentSuspendCoroutineScope ?: return
         val stackTraceDto = currentSession.currentStackFrame?.let {
           async {
-            createXStackFrameDto(it, suspendScope, currentSession)
+            it.toRpc(suspendScope, currentSession)
           }
         }
         trySend(XDebuggerSessionEvent.StackFrameChanged(stackTraceDto))
