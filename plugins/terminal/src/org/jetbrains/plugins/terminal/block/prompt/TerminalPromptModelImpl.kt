@@ -23,6 +23,7 @@ import com.intellij.util.DocumentUtil
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptionsListener
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
@@ -37,7 +38,8 @@ import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
 import org.jetbrains.plugins.terminal.block.ui.getDisposed
 import org.jetbrains.plugins.terminal.block.ui.invokeLater
 
-internal class TerminalPromptModelImpl(
+@ApiStatus.Internal
+class TerminalPromptModelImpl(
   override val editor: EditorEx,
   private val session: BlockTerminalSession,
 ) : TerminalPromptModel, Disposable {

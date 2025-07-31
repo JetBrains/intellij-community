@@ -6,9 +6,11 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Scheduler
 import com.intellij.terminal.completion.spec.ShellCommandExecutor
 import com.intellij.terminal.completion.spec.ShellCommandResult
+import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 
-internal class ShellCachingGeneratorCommandsRunner(private val delegate: ShellCommandExecutor) : ShellCommandExecutor {
+@ApiStatus.Internal
+class ShellCachingGeneratorCommandsRunner(private val delegate: ShellCommandExecutor) : ShellCommandExecutor {
   val cache: Cache<String, ShellCommandResult> = Caffeine.newBuilder()
     .maximumSize(5)
     .expireAfterAccess(Duration.ofMinutes(5))

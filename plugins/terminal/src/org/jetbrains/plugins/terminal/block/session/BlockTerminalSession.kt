@@ -43,7 +43,8 @@ class BlockTerminalSession(
    * Use [terminalOutputStream] whenever possible instead of this field.
    * @see [terminalOutputStream]
    */
-  internal val terminalStarterFuture: CompletableFuture<TerminalStarter?> = CompletableFuture()
+  @ApiStatus.Internal
+  val terminalStarterFuture: CompletableFuture<TerminalStarter?> = CompletableFuture()
 
   /**
    * This stream sends input to the terminal.
@@ -56,9 +57,9 @@ class BlockTerminalSession(
   private val executorServiceManager: TerminalExecutorServiceManager = TerminalExecutorServiceManagerImpl()
 
   private val textBuffer: TerminalTextBuffer
-  internal val controller: JediTerminal
-  internal val commandManager: ShellCommandManager
-  internal val commandExecutionManager: ShellCommandExecutionManager
+  val controller: JediTerminal
+  val commandManager: ShellCommandManager
+  val commandExecutionManager: ShellCommandExecutionManager
   private val typeAheadManager: TerminalTypeAheadManager
   private val terminationListeners: MutableList<Runnable> = CopyOnWriteArrayList()
   val commandBlockIntegration: CommandBlockIntegration = shellIntegration.commandBlockIntegration!!

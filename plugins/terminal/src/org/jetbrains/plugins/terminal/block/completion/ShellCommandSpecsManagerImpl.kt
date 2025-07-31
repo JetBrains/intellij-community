@@ -18,6 +18,7 @@ import com.intellij.util.containers.MultiMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellMergedCommandSpec
@@ -52,10 +53,11 @@ import java.time.Duration
  * Merged specs consist of several json-based and code-based specs.
  * So, to get the full version of this spec, [getFullCommandSpec] method should be used.
  */
+@ApiStatus.Internal
 @Service
-internal class ShellCommandSpecsManagerImpl(coroutineScope: CoroutineScope) : ShellCommandSpecsManager {
+class ShellCommandSpecsManagerImpl(coroutineScope: CoroutineScope) : ShellCommandSpecsManager {
 
-  val tracer = TelemetryManager.getTracer(TerminalCompletionScope)
+  private val tracer = TelemetryManager.getTracer(TerminalCompletionScope)
 
   /**
    * Cache for all **Light** json-based and code based specs with resolved conflicts.

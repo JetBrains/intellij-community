@@ -24,7 +24,8 @@ data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAt
     get() = endOffset - startOffset
 }
 
-internal data class TextWithHighlightings(val text: String, val highlightings: List<HighlightingInfo>)
+@ApiStatus.Internal
+data class TextWithHighlightings(val text: String, val highlightings: List<HighlightingInfo>)
 
 internal data class TextWithAttributes(val text: String, val attributes: TextAttributesProvider)
 
@@ -33,12 +34,16 @@ interface TextAttributesProvider {
   fun getTextAttributes(): TextAttributes
 }
 
-internal object EmptyTextAttributesProvider : TextAttributesProvider {
+@ApiStatus.Internal
+object EmptyTextAttributesProvider : TextAttributesProvider {
   override fun getTextAttributes(): TextAttributes = TextAttributes.ERASE_MARKER
 }
 
-internal class TextStyleAdapter(private val style: TextStyle,
-                       private val colorPalette: TerminalColorPalette): TextAttributesProvider {
+@ApiStatus.Internal
+class TextStyleAdapter(
+  private val style: TextStyle,
+  private val colorPalette: TerminalColorPalette,
+) : TextAttributesProvider {
   override fun getTextAttributes(): TextAttributes = style.toTextAttributes(colorPalette)
 
   override fun equals(other: Any?): Boolean {

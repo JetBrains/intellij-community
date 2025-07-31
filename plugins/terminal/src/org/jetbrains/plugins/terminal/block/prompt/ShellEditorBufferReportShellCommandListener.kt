@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.block.prompt
 
 import com.google.common.base.Ascii
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.CommandFinishedEvent
 import org.jetbrains.plugins.terminal.block.session.KeyBinding
@@ -14,9 +15,10 @@ import java.nio.charset.StandardCharsets
  * Supports extracting this collected input buffer and inserting it to the prompt editor when the command is finished.
  * Without this class, the collected input buffer will be lost and the user would have to type command again.
  */
-internal class ShellEditorBufferReportShellCommandListener(
+@ApiStatus.Internal
+class ShellEditorBufferReportShellCommandListener(
   private val blockTerminalSession: BlockTerminalSession,
-  private val onShellEditorBufferReceived: (String) -> Unit
+  private val onShellEditorBufferReceived: (String) -> Unit,
 ) : ShellCommandListener {
 
   @Volatile

@@ -272,7 +272,7 @@ internal class TerminalHyperlinkHighlighterTest : BasePlatformTestCase() {
 
   private suspend fun awaitHyperlinks(timeout: Duration): List<RangeHighlighter> {
     hyperlinkHighlighter.awaitDelayedHighlightings()
-    val hyperlinkSupport = hyperlinkHighlighter.getHyperlinkSupport()
+    val hyperlinkSupport = hyperlinkHighlighter.hyperlinkSupport
     hyperlinkSupport.waitForPendingFilters(timeout.inWholeMilliseconds)
     return hyperlinkSupport.getAllHyperlinks(0, editor.document.textLength)
   }
@@ -292,7 +292,7 @@ internal class TerminalHyperlinkHighlighterTest : BasePlatformTestCase() {
 
   private suspend fun awaitInlays(timeout: Duration): List<Inlay<*>> {
     hyperlinkHighlighter.awaitDelayedHighlightings()
-    val hyperlinkSupport = hyperlinkHighlighter.getHyperlinkSupport()
+    val hyperlinkSupport = hyperlinkHighlighter.hyperlinkSupport
     hyperlinkSupport.waitForPendingFilters(timeout.inWholeMilliseconds)
     return hyperlinkSupport.collectAllInlays()
   }

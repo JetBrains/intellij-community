@@ -4,8 +4,10 @@ package org.jetbrains.plugins.terminal.block.session
 import com.intellij.openapi.Disposable
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import kotlinx.coroutines.Deferred
+import org.jetbrains.annotations.ApiStatus
 
-internal interface ShellCommandExecutionManager  {
+@ApiStatus.Internal
+interface ShellCommandExecutionManager {
 
   /**
    * Runs user command in Shell.

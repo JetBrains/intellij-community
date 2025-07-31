@@ -18,12 +18,13 @@ import kotlin.time.Duration
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
-internal class ShellCommandManager(
+@ApiStatus.Internal
+class ShellCommandManager(
   private val commandEndMarker: String?,
   private val terminal: Terminal,
   private val shellIntegration: ShellIntegration,
   private val parentDisposable: Disposable,
-  private val terminalTextBuffer: TerminalTextBuffer
+  private val terminalTextBuffer: TerminalTextBuffer,
 ) {
 
   constructor(session: BlockTerminalSession) : this(

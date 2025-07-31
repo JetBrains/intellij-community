@@ -9,20 +9,22 @@ import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCommandExecutor
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.util.PathUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionScope
-import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
-import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
-import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.toShellName
+import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptState
+import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.CommandFinishedEvent
+import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
 
-internal class ShellRuntimeContextProviderImpl(
+@ApiStatus.Internal
+class ShellRuntimeContextProviderImpl(
   private val project: Project,
-  private val session: BlockTerminalSession
+  private val session: BlockTerminalSession,
 ) : ShellRuntimeContextProvider {
 
-  val tracer = TelemetryManager.getTracer(TerminalCompletionScope)
+  private val tracer = TelemetryManager.getTracer(TerminalCompletionScope)
 
   private val realGeneratorRunner: ShellCommandExecutor = ShellCommandExecutor { command ->
     tracer.spanBuilder("terminal-completion-run-generator-command")

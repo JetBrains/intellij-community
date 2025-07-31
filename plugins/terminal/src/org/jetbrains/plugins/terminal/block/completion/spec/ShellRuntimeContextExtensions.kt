@@ -13,7 +13,8 @@ import java.io.File
 val ShellRuntimeContext.project: Project
   get() = getUserData(PROJECT_KEY) ?: error("No project data in $this")
 
-internal val PROJECT_KEY: Key<Project> = Key.create("Project")
+@ApiStatus.Internal
+val PROJECT_KEY: Key<Project> = Key.create("Project")
 
 @get:ApiStatus.Experimental
 val ShellRuntimeContext.isReworkedTerminal: Boolean

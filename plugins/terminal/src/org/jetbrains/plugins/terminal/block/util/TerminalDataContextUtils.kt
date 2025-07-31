@@ -21,7 +21,8 @@ import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 @ApiStatus.Experimental
 object TerminalDataContextUtils {
   // gen1
-  internal val IS_PROMPT_EDITOR_KEY: Key<Boolean> = Key.create("PromptEditor")
+  @ApiStatus.Internal
+  val IS_PROMPT_EDITOR_KEY: Key<Boolean> = Key.create("PromptEditor")
   internal val IS_OUTPUT_EDITOR_KEY: Key<Boolean> = Key.create("OutputEditor")
   internal val IS_ALTERNATE_BUFFER_EDITOR_KEY: Key<Boolean> = Key.create("AlternateBufferEditor")
   // gen2

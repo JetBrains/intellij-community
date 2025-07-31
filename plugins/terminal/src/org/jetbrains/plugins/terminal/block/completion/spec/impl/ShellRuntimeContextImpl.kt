@@ -6,12 +6,14 @@ import com.intellij.terminal.completion.spec.ShellCommandExecutor
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.terminal.completion.spec.ShellName
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
+import org.jetbrains.annotations.ApiStatus
 
-internal class ShellRuntimeContextImpl(
+@ApiStatus.Internal
+class ShellRuntimeContextImpl(
   override val currentDirectory: String,
   override val typedPrefix: String,
   override val shellName: ShellName,
-  private val generatorCommandsRunner: ShellCommandExecutor
+  private val generatorCommandsRunner: ShellCommandExecutor,
 ) : ShellRuntimeContext, UserDataHolderBase() {
 
   override suspend fun runShellCommand(command: String): ShellCommandResult {

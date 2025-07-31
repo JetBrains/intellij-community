@@ -31,10 +31,12 @@ internal data class CommandBlockImpl(
     get() = !range.isGreedyToRight
 }
 
-internal val CommandBlock.withPrompt: Boolean
+@get:ApiStatus.Internal
+val CommandBlock.withPrompt: Boolean
   get() = !prompt.isNullOrEmpty()
 
-internal val CommandBlock.withCommand: Boolean
+@get:ApiStatus.Internal
+val CommandBlock.withCommand: Boolean
   get() = !command.isNullOrEmpty()
 
 @get:ApiStatus.Internal
@@ -42,5 +44,6 @@ val CommandBlock.withOutput: Boolean
   // There is something after the command and block is not empty
   get() = outputStartOffset <= endOffset && startOffset != endOffset
 
-internal val CommandBlock.textRange: TextRange
+@get:ApiStatus.Internal
+val CommandBlock.textRange: TextRange
   get() = TextRange(startOffset, endOffset)

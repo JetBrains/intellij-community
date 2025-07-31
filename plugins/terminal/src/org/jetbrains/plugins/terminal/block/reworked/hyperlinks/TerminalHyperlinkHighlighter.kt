@@ -22,6 +22,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
@@ -50,7 +51,8 @@ class TerminalHyperlinkHighlighter private constructor(
   private val document: Document
     get() = editor.document
 
-  private val hyperlinkSupport: EditorHyperlinkSupport
+  @get:VisibleForTesting
+  val hyperlinkSupport: EditorHyperlinkSupport
     get() = EditorHyperlinkSupport.get(editor, true)
 
   init {
@@ -128,17 +130,14 @@ class TerminalHyperlinkHighlighter private constructor(
   }
 
   @TestOnly
-  internal suspend fun awaitInitialized() {
+  suspend fun awaitInitialized() {
     filterWrapper.awaitFiltersComputed()
   }
 
   @TestOnly
-  internal suspend fun awaitDelayedHighlightings() {
+  suspend fun awaitDelayedHighlightings() {
     delayedHighlightingJob?.join()
   }
-
-  @TestOnly
-  internal fun getHyperlinkSupport(): EditorHyperlinkSupport = hyperlinkSupport
 
   companion object {
     fun install(project: Project, model: TerminalOutputModel, editor: Editor, coroutineScope: CoroutineScope): TerminalHyperlinkHighlighter {

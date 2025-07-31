@@ -13,7 +13,8 @@ import org.jetbrains.plugins.terminal.util.addModelListener
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.max
 
-internal class ShellCommandOutputScraperImpl(
+@ApiStatus.Internal
+class ShellCommandOutputScraperImpl(
   private val textBuffer: TerminalTextBuffer,
   parentDisposable: Disposable,
   private val commandEndMarker: String?,
@@ -98,7 +99,8 @@ internal class ShellCommandOutputScraperImpl(
 @ApiStatus.Internal
 data class StyledCommandOutput(val text: String, val commandEndMarkerFound: Boolean, val styleRanges: List<StyleRange>)
 
-internal interface ShellCommandOutputListener {
+@ApiStatus.Internal
+interface ShellCommandOutputListener {
   fun commandOutputChanged(output: StyledCommandOutput) {}
 }
 

@@ -3,15 +3,17 @@ package org.jetbrains.plugins.terminal.block.completion.spec.impl
 
 import com.intellij.terminal.completion.spec.*
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.createCacheKey
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import javax.swing.Icon
 
-internal class ShellMergedCommandSpec(
+@ApiStatus.Internal
+class ShellMergedCommandSpec(
   val baseSpec: ShellCommandSpec?,
   val overridingSpecs: List<ShellCommandSpec>,
-  val parentNames: List<String> = emptyList()
+  val parentNames: List<String> = emptyList(),
 ) : ShellCommandSpec {
   init {
     assert(overridingSpecs.isNotEmpty()) { "Overriding specs must not be empty. Command: ${parentNames + baseSpec?.name}" }
