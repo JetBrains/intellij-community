@@ -9,12 +9,11 @@ public class JavaTypeHierarchyCompletionCommandProvider : AbstractTypeHierarchyC
   override fun findElement(offset: Int, psiFile: PsiFile): PsiElement? {
     var context = getCommandContext(offset, psiFile)
     if (context is PsiWhiteSpace) context = context.prevSibling
-    if (context is PsiIdentifier && context.parent is PsiClass) return context
-    if (context is PsiIdentifier &&
-        ((context.parent?.parent as? PsiTypeElement)?.type as? PsiClassType)?.resolve() is PsiClass) return context
-    if (context is PsiIdentifier &&
-        context.parent?.parent is PsiReferenceList &&
-        (context.parent as? PsiJavaCodeReferenceElement)?.resolve() is PsiClass) return context
+    if (context !is PsiIdentifier) return null
+    if (context.parent is PsiClass) return context
+    if (((context.parent?.parent as? PsiTypeElement)?.type as? PsiClassType)?.resolve() is PsiClass) return context
+    if (context.parent?.parent is PsiReferenceList && (context.parent as? PsiJavaCodeReferenceElement)?.resolve() is PsiClass) return context
+    if (context.parent is PsiNameValuePair) return context
     return null
   }
 }

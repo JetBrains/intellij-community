@@ -254,6 +254,11 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - a:getTextRangeImportList(com.intellij.psi.PsiFile,I):com.intellij.openapi.util.TextRange
 - p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 - a:isImportList(com.intellij.psi.PsiFile,I):Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractQuickDocumentationCompletionCommand
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
+- <init>():V
+- p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
+- a:findElement(I,com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
 *a:com.intellij.codeInsight.completion.command.commands.AbstractRenameActionCommandProvider
 - com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V

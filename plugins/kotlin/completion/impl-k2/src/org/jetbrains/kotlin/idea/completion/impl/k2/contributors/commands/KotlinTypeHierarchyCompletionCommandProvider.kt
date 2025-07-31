@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands
 
 import com.intellij.codeInsight.completion.command.commands.AbstractTypeHierarchyCompletionCommandProvider
 import com.intellij.codeInsight.completion.command.getCommandContext
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
@@ -25,7 +26,8 @@ class KotlinTypeHierarchyCompletionCommandProvider : AbstractTypeHierarchyComple
         ) {
             val type = (context.parent?.parent as? KtUserType) ?: return null
             analyze(type) {
-                if (type.referenceExpression?.mainReference?.resolve() is KtClass) return context
+                val resolved = type.referenceExpression?.mainReference?.resolve()
+                if (resolved is KtClass || resolved is PsiClass) return context
             }
         }
         return null
