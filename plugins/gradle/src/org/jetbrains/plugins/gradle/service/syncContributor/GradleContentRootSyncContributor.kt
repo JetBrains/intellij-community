@@ -36,11 +36,8 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
     phase: GradleModelFetchPhase
   ) {
     if (context.isPhasedSyncEnabled) {
-      if (phase == GradleModelFetchPhase.PROJECT_LOADED_PHASE) {
-        configureProjectContentRoots(context, storage)
-      }
       if (phase == GradleModelFetchPhase.PROJECT_MODEL_PHASE) {
-        configureExModuleOptions(context, storage)
+        configureProjectContentRoots(context, storage)
       }
     }
   }
@@ -74,7 +71,9 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
         val projectRootUrl = projectRootPath.toVirtualFileUrl(virtualFileUrlManager)
         val projectEntitySource = GradleProjectEntitySource(buildEntitySource, projectRootUrl)
 
-        val contentRootData = GradleContentRootData(buildModel, projectModel, projectEntitySource)
+        val externalProject = context.getProjectModel(projectModel, ExternalProject::class.java) ?: continue
+
+        val contentRootData = GradleContentRootData(buildModel, projectModel, externalProject, projectEntitySource)
 
         if (contentRootEntities.any { isConflictedContentRootEntity(it, contentRootData) }) {
           continue
@@ -126,6 +125,7 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
   ) {
     val moduleEntity = addModuleEntity(context, storage, contentRootData)
     addContentRootEntity(storage, contentRootData, moduleEntity)
+    addExModuleOptionsEntity(context, storage, contentRootData, moduleEntity)
   }
 
   private fun addModuleEntity(
@@ -159,6 +159,29 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
       excludedPatterns = emptyList()
     ) {
       module = moduleEntity
+    }
+  }
+
+  private fun addExModuleOptionsEntity(
+    context: ProjectResolverContext,
+    storage: MutableEntityStorage,
+    contentRootData: GradleContentRootData,
+    moduleEntity: ModuleEntity.Builder,
+  ) {
+    val entitySource = contentRootData.entitySource
+    val externalProject = contentRootData.externalProject
+    storage addEntity ExternalSystemModuleOptionsEntity(
+      entitySource = entitySource
+    ) {
+      module = moduleEntity
+
+      externalSystem = GradleConstants.SYSTEM_ID.id
+      linkedProjectId = getModuleId(context, externalProject)
+      linkedProjectPath = externalProject.projectDir.path
+      rootProjectPath = context.projectPath
+
+      externalSystemModuleGroup = externalProject.group
+      externalSystemModuleVersion = externalProject.version
     }
   }
 
@@ -216,81 +239,7 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
   private class GradleContentRootData(
     val buildModel: GradleLightBuild,
     val projectModel: GradleLightProject,
-    val entitySource: GradleProjectEntitySource,
-  )
-
-  private suspend fun configureExModuleOptions(
-    context: ProjectResolverContext,
-    storage: MutableEntityStorage,
-  ) {
-    val project = context.project
-    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
-
-    val exModuleOptionsToAdd = LinkedHashMap<GradleProjectEntitySource, GradleExModuleOptionsData>()
-
-    val moduleEntities = storage.entities<ModuleEntity>()
-
-    val linkedProjectRootPath = Path.of(context.projectPath)
-    val linkedProjectRootUrl = linkedProjectRootPath.toVirtualFileUrl(virtualFileUrlManager)
-    val linkedProjectEntitySource = GradleLinkedProjectEntitySource(linkedProjectRootUrl)
-
-    for (buildModel in context.allBuilds) {
-
-      val buildRootPath = buildModel.buildIdentifier.rootDir.toPath()
-      val buildRootUrl = buildRootPath.toVirtualFileUrl(virtualFileUrlManager)
-      val buildEntitySource = GradleBuildEntitySource(linkedProjectEntitySource, buildRootUrl)
-
-      for (projectModel in buildModel.projects) {
-
-        checkCanceled()
-
-        val projectRootPath = projectModel.projectDirectory.toPath()
-        val projectRootUrl = projectRootPath.toVirtualFileUrl(virtualFileUrlManager)
-        val projectEntitySource = GradleProjectEntitySource(buildEntitySource, projectRootUrl)
-
-        val moduleEntity = moduleEntities.find { it.entitySource == projectEntitySource } ?: continue
-        val externalProject = context.getProjectModel(projectModel, ExternalProject::class.java) ?: continue
-
-        val exModuleOptionsData = GradleExModuleOptionsData(externalProject, projectEntitySource, moduleEntity)
-
-        exModuleOptionsToAdd[projectEntitySource] = exModuleOptionsData
-      }
-    }
-
-    for (exModuleOptionsData in exModuleOptionsToAdd.values) {
-
-      checkCanceled()
-
-      configureExModuleOptionsEntity(context, storage, exModuleOptionsData)
-    }
-  }
-
-  private fun configureExModuleOptionsEntity(
-    context: ProjectResolverContext,
-    storage: MutableEntityStorage,
-    exModuleOptionsData: GradleExModuleOptionsData,
-  ) {
-    val externalProject = exModuleOptionsData.externalProject
-    val entitySource = exModuleOptionsData.entitySource
-    val moduleEntity = exModuleOptionsData.moduleEntity
-    storage.modifyModuleEntity(moduleEntity) {
-      exModuleOptions = ExternalSystemModuleOptionsEntity(
-        entitySource = entitySource
-      ) {
-        externalSystem = GradleConstants.SYSTEM_ID.id
-        linkedProjectId = getModuleId(context, externalProject)
-        linkedProjectPath = externalProject.projectDir.path
-        rootProjectPath = context.projectPath
-
-        externalSystemModuleGroup = externalProject.group
-        externalSystemModuleVersion = externalProject.version
-      }
-    }
-  }
-
-  private class GradleExModuleOptionsData(
     val externalProject: ExternalProject,
     val entitySource: GradleProjectEntitySource,
-    val moduleEntity: ModuleEntity,
   )
 }

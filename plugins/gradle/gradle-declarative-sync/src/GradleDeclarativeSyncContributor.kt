@@ -52,7 +52,7 @@ class GradleDeclarativeSyncContributor : GradleSyncContributor {
 
   override suspend fun onModelFetchPhaseCompleted(context: ProjectResolverContext, storage: MutableEntityStorage, phase: GradleModelFetchPhase) {
     if (context.isPhasedSyncEnabled) {
-      if (phase == GradleModelFetchPhase.PROJECT_LOADED_PHASE) {
+      if (phase == GradleModelFetchPhase.PROJECT_MODEL_PHASE) {
         removeDeclarativeModel(context, storage)
       }
     }

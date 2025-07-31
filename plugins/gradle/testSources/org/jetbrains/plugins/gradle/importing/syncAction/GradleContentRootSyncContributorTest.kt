@@ -27,7 +27,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
       val contentRootContributorAssertion = ListenerAssertion()
 
       whenPhaseCompleted(disposable) { _, storage, phase ->
-        if (phase == GradleModelFetchPhase.PROJECT_LOADED_PHASE) {
+        if (phase == GradleModelFetchPhase.PROJECT_MODEL_PHASE) {
           contentRootContributorAssertion.trace {
             assertModules(storage, "project")
             assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
@@ -60,7 +60,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
       val contentRootContributorAssertion = ListenerAssertion()
 
       whenPhaseCompleted(disposable) { _, storage, phase ->
-        if (phase == GradleModelFetchPhase.PROJECT_LOADED_PHASE) {
+        if (phase == GradleModelFetchPhase.PROJECT_MODEL_PHASE) {
           contentRootContributorAssertion.trace {
             assertModules(storage, "project", "project.main", "project.test", "project.module")
             assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
@@ -114,7 +114,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
       val contentRootContributorAssertion = ListenerAssertion()
 
       whenPhaseCompleted(disposable) { _, storage, phase ->
-        if (phase == GradleModelFetchPhase.PROJECT_LOADED_PHASE) {
+        if (phase == GradleModelFetchPhase.PROJECT_MODEL_PHASE) {
           contentRootContributorAssertion.trace {
             assertModules(storage, "project", "includedProject1")
             assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
@@ -162,7 +162,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
       val contentRootContributorAssertion = ListenerAssertion()
 
       whenPhaseCompleted(disposable) { _, storage, phase ->
-        if (phase == GradleModelFetchPhase.PROJECT_LOADED_PHASE) {
+        if (phase == GradleModelFetchPhase.PROJECT_MODEL_PHASE) {
           contentRootContributorAssertion.trace {
             assertModules(
               storage,
@@ -244,7 +244,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
       val isBuildSrcShouldBeResolved = AtomicBoolean(!isBuildSrcResolvedOnSecondCall)
 
       whenPhaseCompleted(disposable) { _, storage, phase ->
-        if (phase == GradleModelFetchPhase.PROJECT_LOADED_PHASE) {
+        if (phase == GradleModelFetchPhase.PROJECT_MODEL_PHASE) {
           contentRootContributorAssertion.trace {
             when {
               !isBuildSrcShouldBeResolved.getAndSet(true) -> {
@@ -313,7 +313,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
       val contentRootContributorAssertion = ListenerAssertion()
 
       whenPhaseCompleted(disposable) { _, storage, phase ->
-        if (phase == GradleModelFetchPhase.PROJECT_LOADED_PHASE) {
+        if (phase == GradleModelFetchPhase.PROJECT_MODEL_PHASE) {
           contentRootContributorAssertion.trace {
             assertModules(
               storage,
