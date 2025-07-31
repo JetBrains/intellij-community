@@ -7,6 +7,17 @@ import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+enum class MarkdownStyle {
+  JETBRAINS,
+  GITHUB,
+  GITHUB_LIGHT,
+  GITHUB_DARK;
+
+  fun isVariable(): Boolean = this == JETBRAINS || this == GITHUB
+  fun isAlwaysDark(): Boolean = this == GITHUB_DARK
+}
+
+@ApiStatus.Internal
 class MarkdownSettingsState: BaseState() {
   var areInjectionsEnabled by property(true)
   var showProblemsInCodeBlocks by property(true)
@@ -16,6 +27,8 @@ class MarkdownSettingsState: BaseState() {
 
   var splitLayout by enum(TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW)
   var previewPanelProviderInfo by property(MarkdownSettings.defaultProviderInfo) { it == MarkdownSettings.defaultProviderInfo }
+  var style by enum(MarkdownSettings.defaultStyle)
+  var useGitHubSyntaxColors by property(false)
   var isVerticalSplit by property(true)
   var isAutoScrollEnabled by property(true)
   var isRunnerEnabled by property(true)

@@ -1,44 +1,130 @@
 package org.intellij.plugins.markdown.extensions.common.highlighter
 
 import com.intellij.lang.Language
-import com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.psi.*
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.ColorUtil
 import com.intellij.util.text.TextRangeUtil
 import com.intellij.util.text.splitToTextRanges
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.html.HtmlGenerator
+import org.intellij.plugins.markdown.extensions.jcef.MarkdownASTNode
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.lang.psi.util.textRange
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.html.DefaultCodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.ui.preview.html.children
+import org.intellij.plugins.markdown.ui.preview.jcef.CodeFenceParsingService
+import org.intellij.plugins.markdown.ui.preview.jcef.CodeFenceParsingServiceImpl
 import java.awt.Color
 import kotlin.math.max
 import kotlin.math.min
 
-private inline fun collectHighlights(language: Language, text: String, crossinline consumer: (String, IntRange, Color) -> Unit) {
-  HtmlSyntaxHighlighter.parseContent(project = null, language, text) { content, range, color ->
-    if (color != null) {
-      consumer.invoke(content, range, color)
+class FenceHighlighting()
+
+private val fenceLanguage = Regex("^lang(uage)=")
+private val terminalDoubleNewline = Regex("""\n\n$""", RegexOption.DOT_MATCHES_ALL)
+private var fallbackParsingService: CodeFenceParsingService? = null // Only needed for testing Markdown plugin as a dropped-in .jar file
+private val LOG = logger<FenceHighlighting>()
+
+private fun parseContent(project: Project?, language: Language, text: String, node: ASTNode,
+                         collector: (String, IntRange, Color?, String?) -> Unit) {
+  val file = LightVirtualFile("markdown_temp", text)
+  val highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file)
+  var fenceParsing = fallbackParsingService
+  val ecm = EditorColorsManager.getInstance()
+  var colorScheme = ecm.globalScheme
+  val settings = project?.let(MarkdownSettings::getInstance)
+
+  // This code is only needed for testing Markdown plugin as a dropped-in .jar file.
+  if (fenceParsing == null) {
+    try { // Normally this should never fail
+      fenceParsing = service<CodeFenceParsingService>()
+    }
+    catch (_: RuntimeException) {
+      LOG.error("CodeFenceParsingService was not registered as a service. Creating a fallback instance instead.")
+      try {
+        fenceParsing = CodeFenceParsingServiceImpl()
+        fallbackParsingService = fenceParsing
+      }
+      catch (_: Throwable) {
+        LOG.error("Fallback CodeFenceParsingService failed to be created.")
+      }
+    }
+  }
+
+  if (settings?.style?.isVariable() != true) {
+    val isCurrentThemeDark = ColorUtil.isDark(colorScheme.defaultBackground)
+    val isMarkdownDark = settings!!.isDark()
+
+    if (isCurrentThemeDark != isMarkdownDark) {
+      colorScheme = ecm.getScheme(if (isMarkdownDark) "_@user_Dark" else "_@user_Light")
+    }
+  }
+
+  if (settings.useAlternativeHighlighting && fenceParsing?.altHighlighterAvailable() == true) {
+    val lang = (if (language == Language.ANY) ((node as? MarkdownASTNode)?.language ?: "") else language.id.lowercase())
+        .replace(fenceLanguage, "")
+    val html = fenceParsing.parseToHighlightedHtml(lang, text, node)?.replace(terminalDoubleNewline, "\n")
+
+    if (html.isNullOrEmpty() && language == Language.ANY) {
+      // Alterative highlighting failed, and default highlighting doesn't work for the current language.
+      return
+    }
+    else if (html?.isNotEmpty() == true) {
+      collector(text, 0..text.length, null, html)
+      return
+    }
+    // Fall through to default highlighting if alternative failed but default understands the current language.
+  }
+
+  val psiFile = PsiFileFactory.getInstance(project).createFileFromText(file.name, language, text)
+
+	// Traverse the PSI tree and collect highlights
+	psiFile?.accept(object : PsiRecursiveElementVisitor() {
+		override fun visitElement(element: PsiElement) {
+			super.visitElement(element)
+			val range = element.textRange
+      val attributesKey = highlighter.getTokenHighlights(element.node.elementType).lastOrNull()
+			val color = colorScheme.getAttributes(attributesKey)?.foregroundColor
+            ?: colorScheme.defaultForeground
+
+			collector(element.text, range.startOffset..range.endOffset, color, null)
+		}
+	})
+}
+
+private inline fun collectHighlights(language: Language, text: String, project: Project? = null,
+                                     node: ASTNode, crossinline consumer: (String, IntRange, Color?, String?) -> Unit) {
+  parseContent(project, language, text, node) { content, range, color, html ->
+    if (color != null || html != null) {
+      consumer.invoke(content, range, color, html)
     }
   }
 }
 
 internal data class HighlightedRange(
   val range: TextRange,
-  val color: Color
+  val color: Color? = null,
+  val html: String? = null
 ): Comparable<HighlightedRange> {
   override fun compareTo(other: HighlightedRange): Int {
     return TextRangeUtil.RANGE_COMPARATOR.compare(range, other.range)
   }
 }
 
-internal fun collectHighlightedChunks(language: Language, text: String): List<HighlightedRange> {
+internal fun collectHighlightedChunks(language: Language, text: String, project: Project?, node: ASTNode): List<HighlightedRange> {
   return buildList {
-    collectHighlights(language, text) { _, range, color ->
-      add(HighlightedRange(TextRange(range.first, range.last), color))
+    collectHighlights(language, text, project, node) { _, range, color, id ->
+      add(HighlightedRange(TextRange(range.first, range.last), color, id))
     }
   }
 }

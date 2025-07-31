@@ -366,6 +366,10 @@
     <advancedSetting id="markdown.squash.multiple.dashes.in.header.anchors" default="false" groupKey="markdown.settings.name"/>
 
     <statistics.counterUsagesCollector implementationClass="org.intellij.plugins.markdown.MarkdownUsageCollector"/>
+
+    <applicationService serviceInterface="org.intellij.plugins.markdown.ui.preview.jcef.CodeFenceParsingService"
+                        serviceImplementation="org.intellij.plugins.markdown.ui.preview.jcef.CodeFenceParsingServiceImpl"/>
+    <cachesInvalidator implementation="org.intellij.plugins.markdown.ui.preview.jcef.HighlighterCache"/>
   </extensions>
 
   <applicationListeners>
