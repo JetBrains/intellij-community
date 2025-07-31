@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.tests.block.util
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.testFramework.completion
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -7,15 +7,22 @@ import com.intellij.terminal.completion.ShellCommandSpecCompletion
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.spec.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
+import org.jetbrains.plugins.terminal.testFramework.completion.impl.TestCommandSpecsManager
+import org.jetbrains.plugins.terminal.testFramework.completion.impl.TestGeneratorCommandsRunner
+import org.jetbrains.plugins.terminal.testFramework.completion.impl.TestGeneratorsExecutor
+import org.jetbrains.plugins.terminal.testFramework.completion.impl.TestRuntimeContextProvider
 
 /**
  * Fixture for testing shell command specification-based completion in a New Terminal.
+ *
  * Can be used to test new [ShellCommandSpec]'s and ensure that completion items are relevant in the test cases.
  * Allows mocking the shell current directory, shell name, and [ShellRuntimeDataGenerator] results.
  * This fixture is not running the terminal session, mocking is used to provide the actual results for shell commands.
  */
 @ApiStatus.Experimental
+@TestOnly
 class ShellCompletionTestFixture private constructor(
   private val project: Project?,
   private val curDirectory: String,
@@ -41,7 +48,7 @@ class ShellCompletionTestFixture private constructor(
     val commandSpecsManager = if (commandSpecs != null) {
       TestCommandSpecsManager(commandSpecs)
     }
-    else ShellCommandSpecsManagerImpl.getInstance()
+    else ShellCommandSpecsManagerImpl.Companion.getInstance()
 
     val completion = ShellCommandSpecCompletion(
       commandSpecsManager,
@@ -54,6 +61,7 @@ class ShellCompletionTestFixture private constructor(
     return completion.computeCompletionItems(command, arguments) ?: error("Not found command spec for command: $command")
   }
 
+  @TestOnly
   class Builder internal constructor(private val project: Project?) {
     private var curDirectory: String = project?.guessProjectDir()?.path ?: ""
     private var shellName: ShellName = ShellName("dummy")
@@ -112,7 +120,7 @@ class ShellCompletionTestFixture private constructor(
      * By default, the generator is just executed for the provided [ShellRuntimeContext].
      */
     fun mockDataGeneratorResults(
-      mock: suspend (context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<*>) -> Any
+      mock: suspend (context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<*>) -> Any,
     ): Builder {
       generatorsExecutor = TestGeneratorsExecutor(mock)
       return this
@@ -123,6 +131,7 @@ class ShellCompletionTestFixture private constructor(
     }
   }
 
+  @TestOnly
   companion object {
     fun builder(project: Project?): Builder = Builder(project)
   }

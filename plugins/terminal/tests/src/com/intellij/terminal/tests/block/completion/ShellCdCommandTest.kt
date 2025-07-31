@@ -2,10 +2,10 @@
 package com.intellij.terminal.tests.block.completion
 
 import com.intellij.terminal.completion.spec.ShellCommandResult
-import com.intellij.terminal.tests.block.util.ShellCompletionTestFixture
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.block.session.ShellIntegrationFunctions.GET_DIRECTORY_FILES
+import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTestFixture
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4

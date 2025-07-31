@@ -3,12 +3,12 @@ package com.intellij.terminal.tests.block.completion
 
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
-import com.intellij.terminal.tests.block.util.ShellCompletionTestFixture
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.terminal.block.completion.spec.specs.make.ShellMakeCommandSpec
+import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTestFixture
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4

@@ -4,7 +4,6 @@ package com.intellij.terminal.tests.block
 import com.intellij.terminal.completion.spec.ShellName
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.tests.block.util.TestCommandSpecsProvider
-import com.intellij.terminal.tests.block.util.TestGeneratorCommandsRunner
 import com.intellij.terminal.tests.block.util.TestJsonCommandSpecsProvider
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -16,6 +15,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellMergedCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
+import org.jetbrains.plugins.terminal.testFramework.completion.impl.TestGeneratorCommandsRunner
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4

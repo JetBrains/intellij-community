@@ -5,13 +5,13 @@ import com.intellij.terminal.completion.ShellCommandSpecCompletion
 import com.intellij.terminal.completion.spec.ShellCommandExecutor
 import com.intellij.terminal.completion.spec.ShellCommandParserOptions
 import com.intellij.terminal.completion.spec.ShellCommandResult
-import com.intellij.terminal.tests.block.util.TestCommandSpecsManager
-import com.intellij.terminal.tests.block.util.TestGeneratorsExecutor
-import com.intellij.terminal.tests.block.util.TestRuntimeContextProvider
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
+import org.jetbrains.plugins.terminal.testFramework.completion.impl.TestCommandSpecsManager
+import org.jetbrains.plugins.terminal.testFramework.completion.impl.TestGeneratorsExecutor
+import org.jetbrains.plugins.terminal.testFramework.completion.impl.TestRuntimeContextProvider
 import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.fail

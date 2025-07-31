@@ -1,10 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.tests.block.util
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.testFramework.completion.impl
 
 import com.intellij.terminal.completion.ShellCommandSpecsManager
 import com.intellij.terminal.completion.spec.ShellCommandSpec
+import org.jetbrains.annotations.ApiStatus
 
-internal class TestCommandSpecsManager(vararg specs: ShellCommandSpec) : ShellCommandSpecsManager {
+@ApiStatus.Internal
+class TestCommandSpecsManager(vararg specs: ShellCommandSpec) : ShellCommandSpecsManager {
   constructor(specs: List<ShellCommandSpec>) : this(*specs.toTypedArray())
 
   private val specs: Map<String, ShellCommandSpec> = specs.associateBy { it.name }
