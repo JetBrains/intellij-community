@@ -123,8 +123,8 @@ private fun encodePath(path: String): ByteArray {
   val bytes = Charsets.UTF_8.encode(path).toByteArray()
   if (SystemInfo.isWindows) {
     for (i in bytes.indices) {
-      if (bytes[i].toChar() == '\\') {
-        bytes[i] = '/'.toByte()
+      if (bytes[i].toInt().toChar() == '\\') {
+        bytes[i] = '/'.code.toByte()
       }
     }
   }

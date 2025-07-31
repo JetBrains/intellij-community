@@ -23,7 +23,7 @@ private class IdGenerator {
 
   fun getId(longId: String): String {
     val shortId = Base62.encode(DigestUtil.sha256().digest(longId.toByteArray())).copyOfRange(0, 2)
-    return "${shortId[0].toChar()}${shortId[1].toChar()}${collisions.addTo(shortId, 1).takeIf { it != 0 } ?: ""}"
+    return "${shortId[0].toInt().toChar()}${shortId[1].toInt().toChar()}${collisions.addTo(shortId, 1).takeIf { it != 0 } ?: ""}"
   }
 }
 
