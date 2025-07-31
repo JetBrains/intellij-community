@@ -522,6 +522,12 @@ internal class WorkspaceFileIndexDataImpl(
     hasDirtyEntities = false
 
     WorkspaceFileIndexDataMetrics.updateDirtyEntitiesTimeNanosec.addElapsedTime(start)
+    if (storeRegistrar.storedFileSets.isNotEmpty() || removeRegistrar.removedFileSets.isNotEmpty()) {
+      val changeLog = WorkspaceFileIndexChangedEventImpl(project,
+                                                         removedFileSets = removeRegistrar.removedFileSets.values,
+                                                         storedFileSets = storeRegistrar.storedFileSets.values,)
+      project.messageBus.syncPublisher(WorkspaceFileIndexListener.TOPIC).workspaceFileIndexChanged(changeLog)
+    }
   }
 
   override fun resetFileCache() {
