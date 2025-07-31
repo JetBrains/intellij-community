@@ -5479,6 +5479,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/unknownTypeInReturn.kt");
             }
 
+            @TestMetadata("withMissedArgument.kt")
+            public void testWithMissedArgument() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/withMissedArgument.kt");
+            }
+
             @TestMetadata("withPackageName.kt")
             public void testWithPackageName() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/withPackageName.kt");
