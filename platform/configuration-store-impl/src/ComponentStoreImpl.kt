@@ -710,7 +710,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       throw AssertionError("This method must be called under remote client id")
     }
 
-    val perClientComponent = (storageManager.componentManager ?: application).getService(componentClass) ?: return
+    val perClientComponent = (storageManager.componentManager ?: application).getServiceForClient(componentClass) ?: return
     if (perClientComponent === info.component) {
       LOG.error(
         "Failed to reload per-client component '${info.stateSpec?.name ?: componentClass.simpleName}': " +

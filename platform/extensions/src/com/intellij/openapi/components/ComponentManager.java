@@ -101,6 +101,11 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    */
   <T> T getService(@NotNull Class<T> serviceClass);
 
+  @ApiStatus.Internal
+  default <T> T getServiceForClient(@NotNull Class<T> serviceClass) {
+    return getService(serviceClass);
+  }
+
   /**
    * Collects all services registered with matching client="..." attribute in xml.
    * Take a look at {@link com.intellij.openapi.client.ClientSession}
