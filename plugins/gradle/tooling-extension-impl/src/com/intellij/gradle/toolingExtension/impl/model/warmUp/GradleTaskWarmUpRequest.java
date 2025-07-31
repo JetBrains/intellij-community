@@ -7,8 +7,8 @@ import java.io.Serializable;
 
 /**
  * Marker interface to request for warming-up task configurations.
- *
- * @see com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase#WARM_UP_PHASE
+ * It evaluates all lazy task configurations that may modify a Gradle project model which is necessary for the following model builders.
+ * Also, warmed tasks don't throw configuration exceptions during {@link org.gradle.api.Project#getTasks}
  */
 @ApiStatus.Internal
 public interface GradleTaskWarmUpRequest extends Serializable {

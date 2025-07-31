@@ -18,7 +18,7 @@ internal object GradleSyncCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("gradle.sync", 3)
+  private val GROUP = EventLogGroup("gradle.sync", 4)
 
   private val ACTIVITY_ID = EventFields.Long("ide_activity_id")
 
@@ -28,7 +28,6 @@ internal object GradleSyncCollector : CounterUsagesCollector() {
   private val MODEL_FETCH_COMPLETION_STAMP = EventFields.Long("model_fetch_completion_stamp_ms")
 
   private val PROJECT_LOADED_PHASE_COMPLETION_STAMP = EventFields.Long("project_loaded_phase_completion_stamp_ms")
-  private val WARM_UP_PHASE_COMPLETION_STAMP = EventFields.Long("warm_up_phase_completion_stamp_ms")
   private val PROJECT_MODEL_PHASE_COMPLETION_STAMP = EventFields.Long("project_model_phase_completion_stamp_ms")
   private val PROJECT_SOURCE_SET_PHASE_COMPLETION_STAMP = EventFields.Long("project_source_set_phase_completion_stamp_ms")
   private val PROJECT_SOURCE_SET_DEPENDENCY_PHASE_COMPLETION_STAMP = EventFields.Long("project_source_set_dependency_phase_completion_stamp_ms")
@@ -44,7 +43,6 @@ internal object GradleSyncCollector : CounterUsagesCollector() {
     MODEL_FETCH_COMPLETION_STAMP,
 
     PROJECT_LOADED_PHASE_COMPLETION_STAMP,
-    WARM_UP_PHASE_COMPLETION_STAMP,
     PROJECT_MODEL_PHASE_COMPLETION_STAMP,
     PROJECT_SOURCE_SET_PHASE_COMPLETION_STAMP,
     PROJECT_SOURCE_SET_DEPENDENCY_PHASE_COMPLETION_STAMP,
@@ -98,7 +96,6 @@ internal object GradleSyncCollector : CounterUsagesCollector() {
     private fun GradleModelFetchPhase.getModelFetchPhaseStampEventField(): LongEventField {
       return when (this) {
         PROJECT_LOADED_PHASE -> PROJECT_LOADED_PHASE_COMPLETION_STAMP
-        WARM_UP_PHASE -> WARM_UP_PHASE_COMPLETION_STAMP
         PROJECT_MODEL_PHASE -> PROJECT_MODEL_PHASE_COMPLETION_STAMP
         PROJECT_SOURCE_SET_PHASE -> PROJECT_SOURCE_SET_PHASE_COMPLETION_STAMP
         PROJECT_SOURCE_SET_DEPENDENCY_PHASE -> PROJECT_SOURCE_SET_DEPENDENCY_PHASE_COMPLETION_STAMP

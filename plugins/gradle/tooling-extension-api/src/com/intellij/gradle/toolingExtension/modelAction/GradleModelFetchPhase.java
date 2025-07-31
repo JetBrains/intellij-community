@@ -15,18 +15,6 @@ public enum GradleModelFetchPhase {
   PROJECT_LOADED_PHASE("Project loaded phase"),
 
   /**
-   * Model providers, in this phase, warm up Gradle tasks configurations.
-   * <p>
-   * This phase should be first, because this phase:
-   * 1. Warmed tasks don't throw configuration exceptions during {@link org.gradle.api.Project#getTasks};
-   * 2. It evaluates all lazy task configurations that may modify a Gradle project model which is necessary for the following phases.
-   *
-   * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished
-   * @see org.gradle.tooling.BuildActionExecuter#setStreamedValueListener
-   */
-  WARM_UP_PHASE("Configuration warm-up phase"),
-
-  /**
    * Model providers, in this phase, fetch a Gradle project identification models.
    *
    * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished

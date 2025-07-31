@@ -11,10 +11,6 @@ interface TestPhasedModel : TestModel {
     override val phase = GradleModelFetchPhase.PROJECT_LOADED_PHASE
   }
 
-  class WarmUpPhase : TestPhasedModel {
-    override val phase = GradleModelFetchPhase.WARM_UP_PHASE
-  }
-
   class ProjectModelPhase : TestPhasedModel {
     override val phase = GradleModelFetchPhase.PROJECT_MODEL_PHASE
   }
@@ -36,7 +32,6 @@ interface TestPhasedModel : TestModel {
     fun getModelClass(phase: GradleModelFetchPhase): Class<out TestPhasedModel> {
       return when (phase) {
         GradleModelFetchPhase.PROJECT_LOADED_PHASE -> ProjectLoadedPhase::class.java
-        GradleModelFetchPhase.WARM_UP_PHASE -> WarmUpPhase::class.java
         GradleModelFetchPhase.PROJECT_MODEL_PHASE -> ProjectModelPhase::class.java
         GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE -> ProjectSourceSetPhase::class.java
         GradleModelFetchPhase.PROJECT_SOURCE_SET_DEPENDENCY_PHASE -> ProjectSourceSetDependencyPhase::class.java
