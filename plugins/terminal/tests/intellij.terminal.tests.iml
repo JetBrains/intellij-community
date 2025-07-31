@@ -8,5 +8,30 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" />
+    <orderEntry type="module" module-name="intellij.platform.configurationStore.tests" />
+    <orderEntry type="module" module-name="intellij.terminal" />
+    <orderEntry type="module" module-name="intellij.terminal.backend" />
+    <orderEntry type="module" module-name="intellij.terminal.frontend" />
+    <orderEntry type="module" module-name="intellij.terminal.completion" />
+    <orderEntry type="module" module-name="intellij.terminal.sh" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="library" name="assertJ" level="project" />
+    <orderEntry type="library" name="jediterm-core" level="project" />
+    <orderEntry type="library" name="jediterm-ui" level="project" />
+    <orderEntry type="library" name="pty4j" level="project" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>
