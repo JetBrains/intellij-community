@@ -50,6 +50,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
     protected open fun isApplicableDirectiveName(): String = "IS_APPLICABLE"
 
     private val templateRenameDirectiveName: String = "NEW_NAME"
+    private val noTemplateTestingDirectiveName: String = "NO_TEMPLATE_TESTING"
 
     protected open fun isApplicableDirective(fileText: String): Boolean {
         val isApplicableString = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// ${isApplicableDirectiveName()}: ")
@@ -245,8 +246,9 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                     KotlinTestHelpers.registerChooserInterceptor(myFixture.testRootDisposable) { options -> options.last() }
                 }
 
-                val renamePrefix = "// $templateRenameDirectiveName: "
-                withTemplateRenameAfter(InTextDirectivesUtils.findStringWithPrefixes(fileText, renamePrefix)) {
+                val newName = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $templateRenameDirectiveName: ")
+                val isTemplateTestingEnabled = !InTextDirectivesUtils.isDirectiveDefined(fileText, "// $noTemplateTestingDirectiveName")
+                withTemplateRenameAfter(newName, isTemplateTestingEnabled) {
                     runIntentionCommand(intentionAction, modCommandAction, file, editor) {
                         intentionAction.invoke(project, editor, file)
                     }
@@ -320,12 +322,13 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
     /**
      * Runs the intention action and possibly renames the active template after.
      *
-     * If [newName] is not `null`, enables template testing and renames the element under the template after the intention.
+     * Enables template testing if not disabled by the directive ([noTemplateTestingDirectiveName]).
+     * Renames the element under the template after the intention if the name is provided ([templateRenameDirectiveName]).
      * The function dispatches UI events and waits for completion of async tasks to make sure the template is activated.
      * The presence of a template after the intention is mandatory if [newName] is not `null`.
      */
-    private fun withTemplateRenameAfter(newName: String?, mainIntentionAction: () -> Unit) {
-        if (newName == null) {
+    private fun withTemplateRenameAfter(newName: String?, isTemplateTestingEnabled: Boolean, mainIntentionAction: () -> Unit) {
+        if (!isTemplateTestingEnabled) {
             mainIntentionAction()
             return
         }
@@ -337,17 +340,29 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
         UIUtil.dispatchAllInvocationEvents()
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
-        val templateStateAfterIntention = TemplateManagerImpl.getTemplateState(editor)
-        assert(templateStateAfterIntention != null) { "The editor should have an active rename template after the intention" }
-        val range = templateStateAfterIntention!!.currentVariableRange
-        check(range != null) { "Rename template is present, but current variable range is null" }
-        WriteCommandAction.runWriteCommandAction(project) {
-            editor.document.replaceString(range.startOffset, range.endOffset, newName)
-        }
+        val templateStateAfterIntentionBeforeRename = TemplateManagerImpl.getTemplateState(editor)
 
-        val templateStateAfterReplacement = TemplateManagerImpl.getTemplateState(editor)
-        assert(templateStateAfterReplacement != null) { "Template disappeared unexpectedly after rename replacement" }
-        templateStateAfterReplacement!!.gotoEnd(false)
+        if (newName != null) {
+            assert(templateStateAfterIntentionBeforeRename != null) {
+                "The editor should have an active rename template after the intention"
+            }
+        }
+        if (templateStateAfterIntentionBeforeRename == null) return
+
+        WriteCommandAction.runWriteCommandAction(project) {
+            val range = templateStateAfterIntentionBeforeRename.currentVariableRange
+            check(range != null) { "Rename template is present, but current variable range is null" }
+
+            val templateStateAfter = if (newName != null) {
+                editor.document.replaceString(range.startOffset, range.endOffset, newName)
+                TemplateManagerImpl.getTemplateState(editor).also { templateStateAfterReplacement ->
+                    assert(templateStateAfterReplacement != null) { "Template disappeared unexpectedly after rename replacement" }
+                }
+            } else {
+                templateStateAfterIntentionBeforeRename
+            }
+            templateStateAfter!!.gotoEnd(false)
+        }
     }
 
     companion object {
