@@ -26,9 +26,9 @@ class AnalysisToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun get_project_problems() = runBlocking {
+  fun build_project() = runBlocking {
     testMcpTool(
-      AnalysisToolset::get_project_problems.name,
+      AnalysisToolset::build_project.name,
       buildJsonObject {},
       "[]"
     )
