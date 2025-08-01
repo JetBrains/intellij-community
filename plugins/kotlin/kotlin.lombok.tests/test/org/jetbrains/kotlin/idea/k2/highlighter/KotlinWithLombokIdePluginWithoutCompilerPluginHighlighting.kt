@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-internal class KotlinWithLombokHighlighting : JavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+internal class KotlinWithLombokIdePluginWithoutCompilerPluginHighlighting : JavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
 
@@ -25,7 +25,7 @@ internal class KotlinWithLombokHighlighting : JavaCodeInsightFixtureTestCase(), 
         LombokTestUtil.LOMBOK_JAVA_1_8_DESCRIPTOR.registerSdk(testRootDisposable)
     }
 
-    fun `test using lombok classes from java module in kotlin module without lombok compiler plugin`() {
+    fun `test lombok builder methods`() {
         val javaWithLombokModule = PsiTestUtil.addModule(
             project,
             JavaModuleType.getModuleType(),
