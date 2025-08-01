@@ -1,6 +1,6 @@
-*f:com.intellij.platform.syntax.impl.builder.KmpSyntaxNode
+*f:com.intellij.platform.syntax.tree.KmpSyntaxNode
 - com.intellij.platform.syntax.tree.SyntaxNode
-- *sf:Companion:com.intellij.platform.syntax.impl.builder.KmpSyntaxNode$Companion
+- *sf:Companion:com.intellij.platform.syntax.tree.KmpSyntaxNode$Companion
 - childByOffset(I):com.intellij.platform.syntax.tree.SyntaxNode
 - equals(java.lang.Object):Z
 - firstChild():com.intellij.platform.syntax.tree.SyntaxNode
@@ -19,21 +19,16 @@
 - parent():com.intellij.platform.syntax.tree.SyntaxNode
 - prevSibling():com.intellij.platform.syntax.tree.SyntaxNode
 - f:reportState():java.lang.String
-- f:tryReparse(com.intellij.platform.syntax.impl.builder.SyntaxBuilderFactory,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.lexer.TokenList,java.lang.CharSequence,J,J,com.intellij.platform.syntax.CancellationProvider):kotlin.Pair
-*f:com.intellij.platform.syntax.impl.builder.KmpSyntaxNode$Companion
-- f:root(java.lang.CharSequence,com.intellij.platform.syntax.tree.ASTMarkers,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.impl.builder.TokenizationPolicy,com.intellij.platform.syntax.impl.builder.SyntaxBuilderFactory,com.intellij.platform.syntax.lexer.TokenList,com.intellij.platform.syntax.util.language.SyntaxElementLanguageProvider,kotlin.jvm.functions.Function0):com.intellij.platform.syntax.impl.builder.KmpSyntaxNode
-*:com.intellij.platform.syntax.impl.builder.LanguageMapper
+- f:tryReparse(com.intellij.platform.syntax.tree.SyntaxBuilderFactory,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.lexer.TokenList,java.lang.CharSequence,J,J,com.intellij.platform.syntax.CancellationProvider):kotlin.Pair
+*f:com.intellij.platform.syntax.tree.KmpSyntaxNode$Companion
+- f:root(java.lang.CharSequence,com.intellij.platform.syntax.tree.ASTMarkers,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.tree.TokenizationPolicy,com.intellij.platform.syntax.tree.SyntaxBuilderFactory,com.intellij.platform.syntax.lexer.TokenList,com.intellij.platform.syntax.util.language.SyntaxElementLanguageProvider,kotlin.jvm.functions.Function0):com.intellij.platform.syntax.tree.KmpSyntaxNode
+*:com.intellij.platform.syntax.tree.LanguageMapper
 - a:map(com.intellij.platform.syntax.SyntaxElementType):java.lang.Object
-*f:com.intellij.platform.syntax.impl.builder.ParseKt
+*f:com.intellij.platform.syntax.tree.ParseKt
 - sf:getDefaultWhitespaceBindingPolicy():com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy
-- sf:parse(java.lang.CharSequence,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,com.intellij.platform.syntax.SyntaxElementTypeSet,com.intellij.platform.syntax.SyntaxElementTypeSet,com.intellij.platform.syntax.util.language.SyntaxElementLanguageProvider,com.intellij.platform.syntax.CancellationProvider,com.intellij.platform.syntax.Logger):com.intellij.platform.syntax.impl.builder.KmpSyntaxNode
-- bs:parse$default(java.lang.CharSequence,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,com.intellij.platform.syntax.SyntaxElementTypeSet,com.intellij.platform.syntax.SyntaxElementTypeSet,com.intellij.platform.syntax.util.language.SyntaxElementLanguageProvider,com.intellij.platform.syntax.CancellationProvider,com.intellij.platform.syntax.Logger,I,java.lang.Object):com.intellij.platform.syntax.impl.builder.KmpSyntaxNode
-*:com.intellij.platform.syntax.impl.builder.SyntaxBuilderFactory
+- sf:parse(java.lang.CharSequence,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,com.intellij.platform.syntax.SyntaxElementTypeSet,com.intellij.platform.syntax.SyntaxElementTypeSet,com.intellij.platform.syntax.util.language.SyntaxElementLanguageProvider,com.intellij.platform.syntax.CancellationProvider,com.intellij.platform.syntax.Logger):com.intellij.platform.syntax.tree.KmpSyntaxNode
+- bs:parse$default(java.lang.CharSequence,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,com.intellij.platform.syntax.SyntaxElementTypeSet,com.intellij.platform.syntax.SyntaxElementTypeSet,com.intellij.platform.syntax.util.language.SyntaxElementLanguageProvider,com.intellij.platform.syntax.CancellationProvider,com.intellij.platform.syntax.Logger,I,java.lang.Object):com.intellij.platform.syntax.tree.KmpSyntaxNode
+*:com.intellij.platform.syntax.tree.SyntaxBuilderFactory
 - a:build(java.lang.CharSequence,com.intellij.platform.syntax.lexer.TokenList,I):com.intellij.platform.syntax.parser.SyntaxTreeBuilder
-*:com.intellij.platform.syntax.impl.builder.TokenizationPolicy
+*:com.intellij.platform.syntax.tree.TokenizationPolicy
 - a:tokenize(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.CancellationProvider):com.intellij.platform.syntax.lexer.TokenList
-*f:com.intellij.platform.syntax.impl.lexer.TokenListBuilder
-- f:token(java.lang.String,com.intellij.platform.syntax.SyntaxElementType):V
-*f:com.intellij.platform.syntax.impl.lexer.UtilsKt
-- sf:buildTokenList(kotlin.jvm.functions.Function1):com.intellij.platform.syntax.lexer.TokenList
-- sf:tokenIndexAtOffset(com.intellij.platform.syntax.lexer.TokenList,I):I

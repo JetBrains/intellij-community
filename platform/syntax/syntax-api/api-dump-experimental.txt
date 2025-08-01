@@ -128,6 +128,8 @@
 - a:getTokenizedText():java.lang.CharSequence
 - a:remap(I,com.intellij.platform.syntax.SyntaxElementType):V
 - a:slice(I,I):com.intellij.platform.syntax.lexer.TokenList
+*f:com.intellij.platform.syntax.lexer.TokenListBuilder
+- f:token(java.lang.String,com.intellij.platform.syntax.SyntaxElementType):V
 *f:com.intellij.platform.syntax.lexer.TokenListUtil
 - sf:TokenList(I[],com.intellij.platform.syntax.SyntaxElementType[],I,java.lang.CharSequence):com.intellij.platform.syntax.lexer.TokenList
 - sf:backWhile(com.intellij.platform.syntax.lexer.TokenList,I,com.intellij.platform.syntax.SyntaxElementTypeSet):I
@@ -139,6 +141,9 @@
 - sf:performLexing(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.CancellationProvider,com.intellij.platform.syntax.Logger):com.intellij.platform.syntax.lexer.TokenList
 - sf:tokenListLexer(com.intellij.platform.syntax.lexer.TokenList,com.intellij.platform.syntax.Logger):com.intellij.platform.syntax.lexer.Lexer
 - bs:tokenListLexer$default(com.intellij.platform.syntax.lexer.TokenList,com.intellij.platform.syntax.Logger,I,java.lang.Object):com.intellij.platform.syntax.lexer.Lexer
+*f:com.intellij.platform.syntax.lexer.UtilsKt
+- sf:buildTokenList(kotlin.jvm.functions.Function1):com.intellij.platform.syntax.lexer.TokenList
+- sf:tokenIndexAtOffset(com.intellij.platform.syntax.lexer.TokenList,I):I
 *f:com.intellij.platform.syntax.logger.NoopLogger
 - *sf:noopLogger():com.intellij.platform.syntax.Logger
 *:com.intellij.platform.syntax.parser.OpaqueElementPolicy

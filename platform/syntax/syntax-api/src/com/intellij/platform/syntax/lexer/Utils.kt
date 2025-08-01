@@ -2,10 +2,9 @@
 
 @file:ApiStatus.Experimental
 
-package com.intellij.platform.syntax.impl.lexer
+package com.intellij.platform.syntax.lexer
 
 import com.intellij.platform.syntax.SyntaxElementType
-import com.intellij.platform.syntax.lexer.TokenList
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental

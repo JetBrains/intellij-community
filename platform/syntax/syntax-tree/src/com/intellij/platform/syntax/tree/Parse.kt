@@ -1,21 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Experimental
 
-package com.intellij.platform.syntax.impl.builder
+package com.intellij.platform.syntax.tree
 
 import com.intellij.platform.syntax.CancellationProvider
 import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.extensions.ExtensionSupport
-import com.intellij.platform.syntax.impl.lexer.buildTokenList
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.TokenList
+import com.intellij.platform.syntax.lexer.buildTokenList
 import com.intellij.platform.syntax.lexer.performLexing
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory
 import com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy
-import com.intellij.platform.syntax.tree.toAstMarkers
 import com.intellij.platform.syntax.util.language.SyntaxElementLanguageProvider
 import org.jetbrains.annotations.ApiStatus
 
