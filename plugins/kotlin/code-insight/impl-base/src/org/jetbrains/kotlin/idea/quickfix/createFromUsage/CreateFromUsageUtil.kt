@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.shouldAddDeclarationBeforeUsage
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.ForwardDeclarationPolicyProvider
 import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -74,7 +74,7 @@ object CreateFromUsageUtil {
                 }
                 val addBefore = insertToBlock ||
                         declaration is KtTypeAlias ||
-                        shouldAddDeclarationBeforeUsage(container)
+                        ForwardDeclarationPolicyProvider.requiresDeclarationBeforeUse(container) == true
                 addNextToOriginalElementContainer(addBefore, anchor, declaration, actualContainer)
             }
 

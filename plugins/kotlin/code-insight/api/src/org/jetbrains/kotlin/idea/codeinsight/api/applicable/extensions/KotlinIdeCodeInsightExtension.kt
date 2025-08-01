@@ -19,12 +19,6 @@ interface KotlinIdeCodeInsightExtension {
      */
     fun chooseDanglingFileResolutionMode(contextElement: PsiElement): KaDanglingFileResolutionMode?
 
-    /**
-     * Allows deciding whether declarations inside this [container] should be added before or after the usage.
-     * This method is called for some cases of "Create from usage" refactorings.
-     */
-    fun shouldAddDeclarationBeforeUsage(container: PsiElement): Boolean?
-
     companion object {
         internal val EP_NAME: ExtensionPointName<KotlinIdeCodeInsightExtension> =
             ExtensionPointName.Companion.create("org.jetbrains.kotlin.ideCodeInsightExtension")
@@ -39,20 +33,4 @@ fun chooseDanglingFileResolutionMode(contextElement: PsiElement): KaDanglingFile
     return KotlinIdeCodeInsightExtension.EP_NAME.extensionList.mapNotNull { extension ->
         extension.chooseDanglingFileResolutionMode(contextElement)
     }.singleOrNull() ?: KaDanglingFileResolutionMode.PREFER_SELF
-}
-
-/**
- * Employs [KotlinIdeCodeInsightExtension]s to decide
- * whether declarations inside this [container] should be added before or after the usage.
- * Returns true iff none of the extensions returned false and at least one returned true.
- */
-fun shouldAddDeclarationBeforeUsage(container: PsiElement): Boolean {
-    val default = false
-    return KotlinIdeCodeInsightExtension.EP_NAME.extensionList.fold(default) { result, extension ->
-        when (extension.shouldAddDeclarationBeforeUsage(container)) {
-            default -> return default
-            !default -> !default
-            else -> result
-        }
-    }
 }

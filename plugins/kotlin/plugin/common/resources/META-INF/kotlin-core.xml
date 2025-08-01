@@ -112,6 +112,10 @@
     <extensionPoint qualifiedName="org.jetbrains.kotlin.implementationDetailClassNameCheckerProvider"
                     interface="org.jetbrains.kotlin.idea.base.psi.extensions.ImplementationDetailClassNameCheckerProvider"
                     dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.forwardDeclarationPolicyProvider"
+                    interface="org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.ForwardDeclarationPolicyProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
