@@ -101,18 +101,22 @@ public fun VerticallyScrollableContainer(
             )
         },
         horizontalScrollbar = null,
-        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
         scrollbarStyle = style,
-    ) {
-        Box(Modifier.layoutId(ID_CONTENT).verticalScroll(scrollState, reverseScrolling = reverseLayout)) { content() }
-    }
+        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
+        {
+            Box(Modifier.layoutId(ID_CONTENT).verticalScroll(scrollState, reverseScrolling = reverseLayout)) {
+                content()
+            }
+        },
+    )
 }
 
+@Suppress("ModifierNaming")
 @Composable
 internal fun TextAreaScrollableContainer(
     scrollState: ScrollState,
     style: ScrollbarStyle,
-    contentModifier: Modifier,
+    contentModifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
@@ -128,11 +132,10 @@ internal fun TextAreaScrollableContainer(
             )
         },
         horizontalScrollbar = null,
-        modifier = Modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
         scrollbarStyle = style,
-    ) {
-        Box(contentModifier.layoutId(ID_CONTENT)) { content() }
-    }
+        modifier = Modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
+        { Box(contentModifier.layoutId(ID_CONTENT)) { content() } },
+    )
 }
 
 /**
@@ -188,11 +191,10 @@ public fun VerticallyScrollableContainer(
             )
         },
         horizontalScrollbar = null,
-        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
         scrollbarStyle = style,
-    ) {
-        Box(Modifier.layoutId(ID_CONTENT)) { content() }
-    }
+        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
+        { Box(Modifier.layoutId(ID_CONTENT)) { content() } },
+    )
 }
 
 /**
@@ -248,11 +250,10 @@ public fun VerticallyScrollableContainer(
             )
         },
         horizontalScrollbar = null,
-        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
         scrollbarStyle = style,
-    ) {
-        Box(Modifier.layoutId(ID_CONTENT)) { content() }
-    }
+        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
+        { Box(Modifier.layoutId(ID_CONTENT)) { content() } },
+    )
 }
 
 /**
@@ -307,11 +308,14 @@ public fun HorizontallyScrollableContainer(
                 interactionSource = scrollbarInteractionSource,
             )
         },
-        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
         scrollbarStyle = style,
-    ) {
-        Box(Modifier.layoutId(ID_CONTENT).horizontalScroll(scrollState, reverseScrolling = reverseLayout)) { content() }
-    }
+        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
+        {
+            Box(Modifier.layoutId(ID_CONTENT).horizontalScroll(scrollState, reverseScrolling = reverseLayout)) {
+                content()
+            }
+        },
+    )
 }
 
 /**
@@ -367,11 +371,10 @@ public fun HorizontallyScrollableContainer(
                 interactionSource = scrollbarInteractionSource,
             )
         },
-        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
         scrollbarStyle = style,
-    ) {
-        Box(Modifier.layoutId(ID_CONTENT)) { content() }
-    }
+        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
+        { Box(Modifier.layoutId(ID_CONTENT)) { content() } },
+    )
 }
 
 /**
@@ -427,11 +430,10 @@ public fun HorizontallyScrollableContainer(
                 interactionSource = scrollbarInteractionSource,
             )
         },
-        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
         scrollbarStyle = style,
-    ) {
-        Box(Modifier.layoutId(ID_CONTENT)) { content() }
-    }
+        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
+        { Box(Modifier.layoutId(ID_CONTENT)) { content() } },
+    )
 }
 
 private fun Modifier.withKeepVisible(
@@ -461,8 +463,8 @@ private fun Modifier.withKeepVisible(
 private fun ScrollableContainerImpl(
     verticalScrollbar: (@Composable () -> Unit)?,
     horizontalScrollbar: (@Composable () -> Unit)?,
-    modifier: Modifier,
     scrollbarStyle: ScrollbarStyle,
+    modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     Layout(

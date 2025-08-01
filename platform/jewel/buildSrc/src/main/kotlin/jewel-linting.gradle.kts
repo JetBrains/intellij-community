@@ -15,6 +15,7 @@ detekt {
 dependencies {
     // Use the Jewel custom rules
     detektPlugins(project(":detekt-plugin"))
+    detektPlugins(rootProject.files("libs/detekt-compose.jar"))
 }
 
 ktfmt {

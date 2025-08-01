@@ -1,5 +1,5 @@
 f:org.jetbrains.jewel.ui.component.ComboBoxKt
-- *sf:ComboBox-05tvjtU(androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,org.jetbrains.jewel.ui.component.PopupManager,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I,I):V
+- *sf:ComboBox-8u0NR3k(kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,org.jetbrains.jewel.ui.component.PopupManager,androidx.compose.runtime.Composer,I,I,I):V
 *f:org.jetbrains.jewel.ui.component.FixedCursorPoint
 - androidx.compose.foundation.TooltipPlacement
 - sf:$stable:I

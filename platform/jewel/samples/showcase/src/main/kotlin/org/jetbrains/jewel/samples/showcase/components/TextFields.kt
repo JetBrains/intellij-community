@@ -38,8 +38,8 @@ import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.textFieldStyle
 
 @Composable
-public fun TextFields() {
-    VerticallyScrollableContainer(Modifier.fillMaxSize()) {
+public fun TextFields(modifier: Modifier = Modifier) {
+    VerticallyScrollableContainer(modifier.fillMaxSize()) {
         Column {
             TextFieldsRows(readOnly = false)
 

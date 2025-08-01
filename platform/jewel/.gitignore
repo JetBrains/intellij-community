@@ -97,6 +97,9 @@ $RECYCLE.BIN/
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
 
+# Avoid ignoring Detekt rules jar file (.jar files are usually ignored)
+!libs/detekt-compose.jar
+
 # Ignore IJP temp folder
 /.intellijPlatform
 

@@ -32,7 +32,6 @@ import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.modifier.thenIf
@@ -53,7 +52,7 @@ import org.jetbrains.jewel.ui.outline
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.dropdownStyle
 
-@ScheduledForRemoval(inVersion = "2025.2")
+@Suppress("ComposableParamOrder")
 @Deprecated(message = "Use ListComboBox instead. This component will be removed in a future release.")
 @Composable
 public fun Dropdown(
@@ -69,7 +68,8 @@ public fun Dropdown(
     var expanded by remember { mutableStateOf(false) }
     var skipNextClick by remember { mutableStateOf(false) }
 
-    var dropdownState by remember(interactionSource) { mutableStateOf(DropdownState.of(enabled = enabled)) }
+    var dropdownState by
+        remember(interactionSource) { @Suppress("DEPRECATION") mutableStateOf(DropdownState.of(enabled = enabled)) }
 
     remember(enabled) { dropdownState = dropdownState.copy(enabled = enabled) }
 
@@ -106,6 +106,7 @@ public fun Dropdown(
                         if (!skipNextClick) {
                             expanded = !expanded
                         }
+                        @Suppress("AssignedValueIsNeverRead")
                         skipNextClick = false
                     },
                     enabled = enabled,
@@ -169,7 +170,7 @@ public fun Dropdown(
     }
 }
 
-@ScheduledForRemoval(inVersion = "2025.2")
+@Suppress("DEPRECATION")
 @Deprecated(message = "Use ListComboBox instead. Dropdown will be removed in a future release.")
 @Immutable
 @JvmInline
