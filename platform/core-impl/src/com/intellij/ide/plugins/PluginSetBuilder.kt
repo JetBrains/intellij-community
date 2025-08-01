@@ -16,13 +16,15 @@ import java.util.function.Supplier
 
 @ApiStatus.Internal
 class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>) {
+  private val moduleGraph: ModuleGraph
   private val sortedModulesWithDependencies: ModulesWithDependencies
   private val builder: DFSTBuilder<PluginModuleDescriptor>
   val topologicalComparator: Comparator<PluginModuleDescriptor>
 
   init {
     val (unsortedModulesWithDependencies, additionalEdges) = createModulesWithDependenciesAndAdditionalEdges(unsortedPlugins)
-    builder = DFSTBuilder(ModuleGraph(unsortedModulesWithDependencies, additionalEdges), null, true)
+    moduleGraph = ModuleGraph(unsortedModulesWithDependencies, additionalEdges)
+    builder = DFSTBuilder(moduleGraph, null, true)
     topologicalComparator = toCoreAwareComparator(builder.comparator())
     sortedModulesWithDependencies = unsortedModulesWithDependencies.sorted(topologicalComparator)
   }
@@ -55,7 +57,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         .sortedWith(Comparator.comparing({ it.second }, String.CASE_INSENSITIVE_ORDER))
         .forEach {
           detailedMessage.append("  ").append(it.second).append(" depends on:\n")
-          (sortedModulesWithDependencies.directDependencies[it.first] ?: emptyList()).asSequence()
+          moduleGraph.getIn(it.first).asSequence()
             .filter { o: IdeaPluginDescriptorImpl -> component.contains(o) }
             .map(pluginToString)
             .sortedWith(java.lang.String.CASE_INSENSITIVE_ORDER)
