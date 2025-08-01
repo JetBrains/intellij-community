@@ -2,7 +2,8 @@
 package com.intellij.terminal.session
 
 import com.intellij.execution.filters.HyperlinkInfo
-import com.intellij.execution.impl.HyperlinkId
+import com.intellij.execution.impl.EditorDecorationId
+import com.intellij.execution.impl.createTextDecorationId
 import com.intellij.openapi.editor.markup.TextAttributes
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -46,6 +47,6 @@ data class TerminalHighlightingInfo(
 @ApiStatus.Internal
 @Serializable
 data class TerminalHyperlinkId(val value: Long) {
-  fun toPlatformId(): HyperlinkId = HyperlinkId(value)
+  fun toPlatformId(): EditorDecorationId = createTextDecorationId(value)
   override fun toString(): String = value.toString()
 }

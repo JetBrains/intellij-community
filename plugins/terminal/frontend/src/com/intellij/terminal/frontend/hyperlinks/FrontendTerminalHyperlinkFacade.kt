@@ -1,7 +1,9 @@
 package com.intellij.terminal.frontend.hyperlinks
 
-import com.intellij.execution.impl.EditorHyperlinkApplier
-import com.intellij.execution.impl.Hyperlink
+import com.intellij.execution.impl.EditorDecoration
+import com.intellij.execution.impl.buildHighlighting
+import com.intellij.execution.impl.buildHyperlink
+import com.intellij.execution.impl.createDecorationApplier
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.terminal.frontend.TerminalInput
 import com.intellij.terminal.session.TerminalFilterResultInfo
@@ -23,7 +25,7 @@ internal class FrontendTerminalHyperlinkFacade(
   coroutineScope: CoroutineScope,
 ) {
   private val model = TerminalHyperlinksModel(if (isInAlternateBuffer) "Frontend AltBuf" else "Frontend Output", outputModel)
-  private val applier = EditorHyperlinkApplier(editor, coroutineScope.asDisposable())
+  private val applier = createDecorationApplier(editor, coroutineScope.asDisposable())
 
   fun updateHyperlinks(event: TerminalHyperlinksChangedEvent) {
     val removedFrom = event.removeFromOffset
@@ -41,40 +43,39 @@ internal class FrontendTerminalHyperlinkFacade(
 
   private fun removeHyperlinks(absoluteStartOffset: Long) {
     val removed = model.removeHyperlinks(absoluteStartOffset)
-    for (id in removed) {
-      applier.removeHyperlink(id.toPlatformId())
-    }
+    applier.removeDecorations(removed.map { it.toPlatformId() })
   }
 
   private fun addHyperlinks(hyperlinks: List<TerminalFilterResultInfo>) {
     // Unlike the backend variant, no timestamp checking here, because it was already checked at the backend.
     model.addHyperlinks(hyperlinks)
-    for (hyperlink in hyperlinks) {
-      applier.addHyperlink(hyperlink.toPlatformHyperlink())
-    }
+    applier.addDecorations(hyperlinks.mapNotNull { it.toEditorDecoration() })
   }
 
-  private fun TerminalFilterResultInfo.toPlatformHyperlink(): Hyperlink =
+  private fun TerminalFilterResultInfo.toEditorDecoration(): EditorDecoration? =
     when (this) {
-      is TerminalHyperlinkInfo -> Hyperlink(
-        id = id.toPlatformId(),
-        start = outputModel.absoluteOffset(absoluteStartOffset).toRelative(),
-        end = outputModel.absoluteOffset(absoluteEndOffset).toRelative(),
-        attributes = style,
-        followedAttributes = followedStyle,
-        hoveredAttributes = hoveredStyle,
-        layer = layer,
-        action = { terminalInput.sendLinkClicked(isInAlternateBuffer, id, it) },
-      )
-      is TerminalHighlightingInfo -> Hyperlink(
-        id = id.toPlatformId(),
-        start = outputModel.absoluteOffset(absoluteStartOffset).toRelative(),
-        end = outputModel.absoluteOffset(absoluteEndOffset).toRelative(),
-        attributes = style,
-        followedAttributes = null,
-        hoveredAttributes = null,
-        layer = layer,
-        action = null,
-      )
+      is TerminalHyperlinkInfo -> {
+        buildHyperlink(
+          id = id.toPlatformId(),
+          startOffset = outputModel.absoluteOffset(absoluteStartOffset).toRelative(),
+          endOffset = outputModel.absoluteOffset(absoluteEndOffset).toRelative(),
+          attributes = style,
+          action = { terminalInput.sendLinkClicked(isInAlternateBuffer, id, it) },
+        ) {
+          followedAttributes = followedStyle
+          hoveredAttributes = hoveredStyle
+          layer = layer
+        }
+      }
+      is TerminalHighlightingInfo -> style?.let { style ->
+        buildHighlighting(
+          id = id.toPlatformId(),
+          startOffset = outputModel.absoluteOffset(absoluteStartOffset).toRelative(),
+          endOffset = outputModel.absoluteOffset(absoluteEndOffset).toRelative(),
+          attributes = style,
+        ) {
+          layer = layer
+        }
+      }
     }
 }
