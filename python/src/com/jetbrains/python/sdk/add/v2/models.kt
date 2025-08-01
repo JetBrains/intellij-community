@@ -102,11 +102,10 @@ abstract class PythonAddInterpreterModel(
     }.launchIn(scope + Dispatchers.EDT)
 
     scope.launch(CoroutineName("Loading Interpreter List") + Dispatchers.EDT) {
+      installable = getExistingInstallableInterpreters()
       val existingSelectableInterpreters = getExistingSelectableInterpreters()
-      val detectedSelectableInterpreters = getDetectedSelectableInterpreters(existingSelectableInterpreters)
       knownInterpreters.value = existingSelectableInterpreters
-      _detectedInterpreters.value = detectedSelectableInterpreters
-      installable = getExistingInstallableInterpreters(existingSelectableInterpreters, detectedSelectableInterpreters)
+      _detectedInterpreters.value = getDetectedSelectableInterpreters(existingSelectableInterpreters)
     }.invokeOnCompletion {
       this.interpreterLoading.value = false
     }
@@ -121,8 +120,10 @@ abstract class PythonAddInterpreterModel(
 
     this.baseInterpreters = detectedInterpreters.map { all ->
       all.filter(DetectedSelectableInterpreter::isBase)
-    }.mapLatest { all ->
-      all + installable
+    }.mapLatest { allExisting ->
+      val existingLanguageLevels = allExisting.map { it.languageLevel }.toSet()
+      val nonExistingInstallable = installable.filter { it.languageLevel !in existingLanguageLevels }
+      allExisting + nonExistingInstallable
     }.stateIn(scope, started = SharingStarted.Eagerly, initialValue = emptyList())
 
 
@@ -197,19 +198,15 @@ abstract class PythonAddInterpreterModel(
     allValidSdks
   }
 
-  private suspend fun getExistingInstallableInterpreters(
-    existingSelectableInterpreters: List<ExistingSelectableInterpreter>,
-    detectedSelectableInterpreters: List<DetectedSelectableInterpreter>,
-  ): List<InstallableSelectableInterpreter> = withContext(Dispatchers.IO) {
-    val languageLevels = existingSelectableInterpreters.map { it.languageLevel }.toSet() +
-                         detectedSelectableInterpreters.map { it.languageLevel }.toSet()
-
-    val filteredInstallable: List<InstallableSelectableInterpreter> = getSdksToInstall().mapNotNull {
-      LanguageLevel.fromPythonVersionSafe(it.installation.release.version)?.let { languageLevel ->
-        languageLevel to it
+  private suspend fun getExistingInstallableInterpreters(): List<InstallableSelectableInterpreter> = withContext(Dispatchers.IO) {
+    getSdksToInstall()
+      .mapNotNull { sdk ->
+        LanguageLevel.fromPythonVersionSafe(sdk.installation.release.version)?.let { it to sdk }
       }
-    }.filter { it.first !in languageLevels }.sortedByDescending { it.first }.map { InstallableSelectableInterpreter(it.second) }
-    filteredInstallable
+      .sortedByDescending { it.first }
+      .map { (languageLevel, sdk) ->
+        InstallableSelectableInterpreter(languageLevel, sdk)
+      }
   }
 
 
@@ -421,9 +418,8 @@ class ManuallyAddedSelectableInterpreter(
 
 }
 
-class InstallableSelectableInterpreter(val sdk: PySdkToInstall) : PythonSelectableInterpreter() {
+class InstallableSelectableInterpreter(override val languageLevel: LanguageLevel, val sdk: PySdkToInstall) : PythonSelectableInterpreter() {
   override val homePath: String = ""
-  override val languageLevel: LanguageLevel = PySdkUtil.getLanguageLevelForSdk(sdk)
 }
 
 
