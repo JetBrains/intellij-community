@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.utils;
 
 import com.intellij.ide.ConsentOptionsProvider;
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 import static com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProvider;
 
@@ -29,6 +30,10 @@ public final class StatisticsUploadAssistant {
   private StatisticsUploadAssistant() {}
 
   public static boolean isSendAllowed() {
+    return isSendAllowed(StatisticsUploadAssistant::isAllowedByUserConsent);
+  }
+
+  public static boolean isSendAllowed(@NotNull BooleanSupplier isAllowedByUserConsent) {
     if (isSuppressStatisticsReport() || isLocalStatisticsWithoutReport()) {
       return false;
     }
@@ -37,16 +42,20 @@ public final class StatisticsUploadAssistant {
       return isHeadlessStatisticsEnabled();
     }
 
-    return isAllowedByUserConsent();
+    return isAllowedByUserConsent.getAsBoolean();
   }
 
   public static boolean isCollectAllowed() {
+    return isCollectAllowed(StatisticsUploadAssistant::isAllowedByUserConsent);
+  }
+
+  public static boolean isCollectAllowed(@NotNull BooleanSupplier isAllowedByUserConsent) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       return isHeadlessStatisticsEnabled();
     }
 
     if (!isDisableCollectStatistics() && !isCollectionForceDisabled()) {
-      if (isAllowedByUserConsent() || isLocalStatisticsWithoutReport()) {
+      if (isAllowedByUserConsent.getAsBoolean() || isLocalStatisticsWithoutReport()) {
         return true;
       }
     }
