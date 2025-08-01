@@ -14,7 +14,7 @@ class K2CommandCompletionTypeInfoTest : KotlinLightCodeInsightFixtureTestCase() 
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     }
 
-    fun testTypeInfo() {
+    fun testNormalExpression() {
         myFixture.configureByText(
             "x.kt", """
         class A { 
@@ -22,9 +22,19 @@ class K2CommandCompletionTypeInfoTest : KotlinLightCodeInsightFixtureTestCase() 
                 var b = a.<caret>
             } 
         }
-      """.trimIndent()
+        """.trimIndent()
         )
         val elements = myFixture.completeBasic()
-        assertNotNull(elements.firstOrNull() { element -> element.lookupString.contains("Type Info", ignoreCase = true) })
+        assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Type Info", ignoreCase = true) })
+    }
+
+    fun testClassIdentifier() {
+        myFixture.configureByText(
+            "x.kt", """
+        class A<caret> { }
+        """.trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        assertNull(elements.firstOrNull { element -> element.lookupString.contains("Type Info", ignoreCase = true) })
     }
 }
