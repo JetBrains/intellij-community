@@ -266,6 +266,11 @@ internal class RuntimeModuleRepositoryChecker private constructor(
               else {
                 append("If it should, make sure that all necessary modules are included in the distribution of $currentDistributionName.\n")
               }
+              if (mainModule.failedDependencyPath.size > 1) {
+                append("If some dependencies in the chain ${mainModule.failedDependencyPath.joinToString(" <- ") { it.stringId }}\n")
+                append("are not actually needed, they can be removed from configuration of the corresponding JPS modules (*.iml) to fix this problem.\n")
+              }
+              append("Please refer to https://youtrack.jetbrains.com/articles/IJPL-A-268 to learn more how the frontend process starts.")
             }
           )
         )
