@@ -57,14 +57,22 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
    *
    * Error is shown to user. Do not catch all exceptions, only return exceptions valuable to user
    */
-  abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk>
+  protected abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk>
+
+  protected suspend fun setupSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
+    val sdk = getOrCreateSdk(moduleOrProject).getOr { return it }
+
+    moduleOrProject.moduleIfExists?.excludeInnerVirtualEnv(sdk)
+
+    return Result.success(sdk)
+  }
 
   @ApiStatus.Internal
   suspend fun getOrCreateSdkWithModal(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
     return withModalProgress(ModalTaskOwner.guess(),
                              message("python.sdk.progress.setting.up.environment"),
                              TaskCancellation.cancellable()) {
-      getOrCreateSdk(moduleOrProject)
+      setupSdk(moduleOrProject)
     }
   }
 
@@ -73,7 +81,7 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
     return withBackgroundProgress(moduleOrProject.project,
                                   message("python.sdk.progress.setting.up.environment"),
                                   TaskCancellation.cancellable()) {
-      getOrCreateSdk(moduleOrProject)
+      setupSdk(moduleOrProject)
     }
   }
 

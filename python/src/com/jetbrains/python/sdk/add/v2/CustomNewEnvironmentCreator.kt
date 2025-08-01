@@ -87,7 +87,6 @@ internal abstract class CustomNewEnvironmentCreator(
 
     newSdk.persist()
     if (module != null) {
-      module.excludeInnerVirtualEnv(newSdk)
       if (!model.state.makeAvailableForAllProjects.get()) {
         newSdk.setAssociationToModule(module)
       }
