@@ -9,8 +9,8 @@ import com.intellij.platform.syntax.impl.lexer.tokenIndexAtOffset
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.TokenList
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
-import com.intellij.platform.syntax.tree.SyntaxNode
-import com.intellij.platform.syntax.tree.children
+import com.intellij.platform.syntax.tree.*
+import com.intellij.platform.syntax.util.cancellation.cancellationProvider
 import com.intellij.platform.syntax.util.language.SyntaxElementLanguageProvider
 import com.intellij.platform.syntax.util.language.getLanguage
 
@@ -282,9 +282,8 @@ class KmpSyntaxNode internal constructor(
           val chameleonText = context.text.subSequence(startOffsetInContext, endOffsetInContext)
 
           val newContextLexer = performWithExtensionSupport(context.extensions()) {
-            val lexingContext =
-              LazyLexingContext(this@KmpSyntaxNode, cancellationProviderOrNoop())
-            elementType.lazyParser!!.createLexer(lexingContext) ?: context.lexer
+            val lexingContext = LazyLexingContext(this@KmpSyntaxNode, cancellationProviderOrNoop())
+            createLexer(lexingContext) ?: context.lexer
           }
           rootWithContext(
             context.copy(
@@ -332,10 +331,9 @@ class KmpSyntaxNode internal constructor(
     cancellationProvider: CancellationProvider,
   ): AstMarkersChameleon {
     val node = this@KmpSyntaxNode
-    val lazyParser = elementType.lazyParser!!
     val lexingContext = LazyLexingContext(node, cancellationProvider)
     val lexer = performWithExtensionSupport(context.extensions()) {
-      lazyParser.createLexer(lexingContext)
+      createLexer(lexingContext)
     }
     val chameleonText: CharSequence
     val chameleonTokens: TokenList
@@ -372,7 +370,7 @@ class KmpSyntaxNode internal constructor(
     )
 
     performWithExtensionSupport(context.extensions()) {
-      lazyParser.parse(lazyParsingContext)
+      parseLazyNode(lazyParsingContext)
     }
     return AstMarkersChameleon(
       chameleonTokens.takeIf { lexerChanged },
@@ -442,13 +440,8 @@ class KmpSyntaxNode internal constructor(
     var currentLexer = rootLexer
     while (node != null && node.startOffset <= startOffset && node.endOffset > endOffset) {
       val type = node.type
-      val lazyParser = type.lazyParser
-      val lexingContext = LazyLexingContext(node, cancellationProvider)
-      val lexer = performWithExtensionSupport(context.extensions()) {
-        lazyParser?.createLexer(lexingContext)
-      }
       val nodeText = newText.subSequence(node.startOffset, node.endOffset)
-      if (lazyParser != null) {
+      if (type.isLazyParseable()) {
         val startLexemeIndex = currentTokens
           .tokenIndexAtOffset((node.startOffset - node.context.offset))
           .onMinusOne(currentTokens.tokenCount - 1)
@@ -463,11 +456,7 @@ class KmpSyntaxNode internal constructor(
           syntaxTreeBuilder = builderFactory.build(nodeText, slice, node.startOffset),
           cancellationProvider = cancellationProvider
         )
-        if (performWithExtensionSupport(context.extensions()) {
-            lazyParser.canBeReparsedIncrementally(
-              parsingContext
-            )
-          }) {
+        if (performWithExtensionSupport(context.extensions()) { canLazyNodeBeReparsedIncrementally(parsingContext) }) {
           deepestReparseableNode = node
           nodeTokens = currentTokens
         }
@@ -480,6 +469,11 @@ class KmpSyntaxNode internal constructor(
             currentLexer != rootLexer
           )
         }
+      }
+
+      val lexingContext = LazyLexingContext(node, cancellationProvider)
+      val lexer = performWithExtensionSupport(context.extensions()) {
+        createLexer(lexingContext)
       }
       if (lexer != null && lexer != currentLexer) {
         currentLexer = lexer

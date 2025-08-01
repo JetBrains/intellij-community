@@ -76,6 +76,10 @@ fun canLazyNodeBeReparsedIncrementally(parsingContext: LazyParsingContext): Bool
   return parsingContext.lazyParser.canBeReparsedIncrementally(parsingContext)
 }
 
+fun createLexer(lexerContext: LazyLexingContext): Lexer? {
+  return lexerContext.node.type.lazyParser!!.createLexer(lexerContext)
+}
+
 /**
  * @param node the node being parsed
  * @param tokenList the token list being parsed. Might be missing if the parsing engine does not store this information.
