@@ -395,7 +395,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     val applicationInfo = ApplicationInfoEx.getInstanceEx()
     val idMap = buildPluginIdMap()
     val contentModuleIdMap = getPluginSet().buildContentModuleIdMap()
-    val dependentsMap = pluginsToUninstall.associateWith { getDependents(it, applicationInfo, idMap, contentModuleIdMap).map { it.name } }
+    val dependentsMap = pluginsToUninstall.associateWith { pluginId -> getDependents(pluginId, applicationInfo, idMap, contentModuleIdMap).map { PluginNameAndId(it.name, it.pluginId) } }
     val bundledPlugins = pluginsToUninstall
       .mapNotNull { idMap[it] }
       .filter { isBundledUpdate(it) }

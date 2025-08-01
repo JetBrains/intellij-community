@@ -206,7 +206,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
       PrepareToUninstallResult prepareToUninstallResult = UiPluginManager.getInstance().prepareToUninstall(pluginIds);
       for (Map.Entry<C, PluginUiModel> entry : selection.entrySet()) {
         PluginUiModel model = entry.getValue();
-        List<String> dependents = prepareToUninstallResult.getDependants().get(model.getPluginId());
+        List<String> dependents = map(prepareToUninstallResult.getDependants().get(model.getPluginId()), it -> it.getName());
         if (dependents.isEmpty()) {
           toDeleteWithAsk.add(model);
         }

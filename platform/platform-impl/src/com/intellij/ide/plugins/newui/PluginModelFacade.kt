@@ -93,8 +93,8 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
   }
 
   @JvmOverloads
-  fun uninstallAndUpdateUi(descriptor: PluginUiModel, controller: UiPluginManagerController = UiPluginManager.getInstance().getController()) {
-    pluginModel.uninstallAndUpdateUi(descriptor, controller)
+  fun uninstallAndUpdateUi(descriptor: PluginUiModel, controller: UiPluginManagerController = UiPluginManager.getInstance().getController(), callback: () -> Unit = {}) {
+    pluginModel.uninstallAndUpdateUi(descriptor, controller, callback)
   }
 
   suspend fun isDisabledInDiff(model: PluginUiModel): Boolean {

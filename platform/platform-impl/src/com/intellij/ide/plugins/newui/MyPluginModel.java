@@ -946,6 +946,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
   @ApiStatus.Internal
   public void uninstallAndUpdateUi(@NotNull PluginUiModel descriptor, UiPluginManagerController controller) {
+    uninstallAndUpdateUi(descriptor, controller, null);
+  }
+
+  @ApiStatus.Internal
+  public void uninstallAndUpdateUi(@NotNull PluginUiModel descriptor,
+                                   UiPluginManagerController controller,
+                                   @Nullable Runnable callback) {
     CoroutineScope scope = CoroutineScopeKt.childScope(getCoroutineScope(), getClass().getName(), Dispatchers.getIO(), true);
     myTopController.showProgress(true);
     for (PluginDetailsPageComponent panel : myDetailPanels) {
@@ -961,11 +968,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
           if (myPluginManagerCustomizer != null) {
             myPluginManagerCustomizer.updateAfterModification(() -> {
               updateUiAfterUninstall(descriptor, needRestartForUninstall, errors);
+              callback.run();
               return null;
             });
           }
           else {
             updateUiAfterUninstall(descriptor, needRestartForUninstall, errors);
+            callback.run();
           }
           return null;
         });
