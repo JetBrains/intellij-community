@@ -53,7 +53,8 @@ com.intellij.build.events.MessageEventResult
 - a:getKind():com.intellij.build.events.MessageEvent$Kind
 com.intellij.build.events.OutputBuildEvent
 - a:getMessage():java.lang.String
-- a:isStdOut():Z
+- a:getOutputType():com.intellij.execution.process.ProcessOutputType
+- isStdOut():Z
 com.intellij.build.events.SkippedResult
 - com.intellij.build.events.EventResult
 com.intellij.build.events.StartBuildEvent

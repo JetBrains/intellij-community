@@ -61,6 +61,10 @@ com.intellij.application.options.editor.AutoImportOptionsProvider
 - com.intellij.openapi.options.UnnamedConfigurable
 com.intellij.application.options.editor.CodeFoldingOptionsProvider
 - com.intellij.openapi.options.UnnamedConfigurable
+f:com.intellij.build.events.impl.OutputBuildEventImpl
+- <init>(java.lang.Object,java.lang.Object,java.lang.String,com.intellij.execution.process.ProcessOutputType):V
+- <init>(java.lang.Object,java.lang.String,com.intellij.execution.process.ProcessOutputType):V
+- getOutputType():com.intellij.execution.process.ProcessOutputType
 com.intellij.codeInsight.actions.DirectoryFormattingOptions
 - com.intellij.codeInsight.actions.ReformatFilesOptions
 - a:isIncludeSubdirectories():Z

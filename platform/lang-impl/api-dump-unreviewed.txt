@@ -1162,7 +1162,6 @@ f:com.intellij.build.events.impl.OutputBuildEventImpl
 - com.intellij.build.events.OutputBuildEvent
 - <init>(java.lang.Object,java.lang.Object,java.lang.String,Z):V
 - <init>(java.lang.Object,java.lang.String,Z):V
-- isStdOut():Z
 f:com.intellij.build.events.impl.ProgressBuildEventImpl
 - com.intellij.build.events.impl.AbstractBuildEvent
 - com.intellij.build.events.ProgressBuildEvent
