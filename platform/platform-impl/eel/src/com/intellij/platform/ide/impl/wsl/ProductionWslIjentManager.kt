@@ -41,7 +41,7 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
   }
 
   override suspend fun getIjentApi(descriptor: EelDescriptor?, wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi {
-    val descriptor = (descriptor ?: project?.getEelDescriptor() ?: WslEelDescriptor(wslDistribution)) as WslEelDescriptor
+    val descriptor = (descriptor ?: (project?.getEelDescriptor() as? WslEelDescriptor) ?: WslEelDescriptor(wslDistribution)) as WslEelDescriptor
 
     val ijentSessionRegistry = IjentSessionRegistry.instanceAsync()
     val ijentId = myCache.computeIfAbsent("""wsl:${wslDistribution.id}${if (rootUser) ":root" else ""}""") { ijentName ->
