@@ -287,7 +287,7 @@ class AnalysisToolset : McpToolset {
   @Serializable
   data class BuildProjectResult(
     @property:McpDescription("Whether the build was successful")
-    val isSuccess: Boolean? = true,
+    val isSuccess: Boolean?,
     @property:McpDescription("A list of problems encountered during the build. May be empty if the build was successful.")
     val problems: List<ProjectProblem>,
     @property:McpDescription(Constants.TIMED_OUT_DESCRIPTION)

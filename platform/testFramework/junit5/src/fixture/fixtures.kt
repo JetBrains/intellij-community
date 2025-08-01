@@ -63,6 +63,17 @@ fun tempPathFixture(root: Path? = null, prefix: String = "IJ"): TestFixture<Path
 }
 
 @TestOnly
+fun TestFixture<Project>.pathInProjectFixture(path: Path): TestFixture<Path> {
+  return testFixture {
+    val project = init()
+    val subpath = project.baseDir.toNioPath().resolve(path)
+    initialized(subpath) {
+      // will be removed with project directory
+    }
+  }
+}
+
+@TestOnly
 fun projectFixture(
   pathFixture: TestFixture<Path> = tempPathFixture(),
   openProjectTask: OpenProjectTask = OpenProjectTask.build(),
