@@ -3,6 +3,7 @@ package com.intellij.terminal.session
 
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.impl.EditorDecorationId
+import com.intellij.execution.impl.InlayProvider
 import com.intellij.execution.impl.createTextDecorationId
 import com.intellij.openapi.editor.markup.TextAttributes
 import kotlinx.serialization.Serializable
@@ -40,6 +41,16 @@ data class TerminalHighlightingInfo(
   override val absoluteEndOffset: Long,
   val style: TextAttributes?,
   val layer: Int,
+) : TerminalFilterResultInfo() {
+  override val hyperlinkInfo: HyperlinkInfo? = null
+}
+
+@ApiStatus.Internal
+data class TerminalInlayInfo(
+  override val id: TerminalHyperlinkId,
+  override val absoluteStartOffset: Long,
+  override val absoluteEndOffset: Long,
+  val inlayProvider: InlayProvider?,
 ) : TerminalFilterResultInfo() {
   override val hyperlinkInfo: HyperlinkInfo? = null
 }

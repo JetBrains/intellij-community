@@ -4,6 +4,7 @@ package com.intellij.terminal.backend.hyperlinks
 
 import com.intellij.execution.filters.CompositeFilter
 import com.intellij.execution.filters.Filter
+import com.intellij.execution.impl.InlayProvider
 import com.intellij.execution.impl.applyToLineRange
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.debug
@@ -14,10 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.terminal.session.TerminalHyperlinkId
 import com.intellij.terminal.session.TerminalHyperlinksChangedEvent
 import com.intellij.terminal.session.TerminalHyperlinksHeartbeatEvent
-import com.intellij.terminal.session.dto.TerminalFilterResultInfoDto
-import com.intellij.terminal.session.dto.TerminalHighlightingInfoDto
-import com.intellij.terminal.session.dto.TerminalHyperlinkInfoDto
-import com.intellij.terminal.session.dto.toDto
+import com.intellij.terminal.session.dto.*
 import com.intellij.util.asDisposable
 import com.intellij.util.containers.ComparatorUtil.min
 import kotlinx.coroutines.*
@@ -413,7 +411,14 @@ private class HyperlinkProcessor(
   ): TerminalFilterResultInfoDto? {
     val hyperlinkInfo = resultItem.hyperlinkInfo
     val highlightAttributes = resultItem.highlightAttributes
+    val inlayProvider = resultItem as? InlayProvider
     return when {
+      inlayProvider != null -> TerminalInlayInfoDto(
+        id = TerminalHyperlinkId(hyperlinkId.incrementAndGet()),
+        absoluteStartOffset = outputModel.relativeOffset(resultItem.highlightStartOffset).toAbsolute(),
+        absoluteEndOffset = outputModel.relativeOffset(resultItem.highlightEndOffset).toAbsolute(),
+        inlayProvider = inlayProvider,
+      )
       hyperlinkInfo != null -> TerminalHyperlinkInfoDto(
         id = TerminalHyperlinkId(hyperlinkId.incrementAndGet()),
         hyperlinkInfo = hyperlinkInfo,

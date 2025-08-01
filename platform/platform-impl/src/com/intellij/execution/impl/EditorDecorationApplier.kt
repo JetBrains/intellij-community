@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.SlowOperations
 import org.jetbrains.annotations.ApiStatus
@@ -91,6 +92,14 @@ sealed interface HyperlinkDecoration : EditorDecoration
  */
 @ApiStatus.Experimental
 sealed interface HighlightingDecoration : EditorDecoration
+
+/**
+ * An inlay.
+ *
+ * A custom element inserted into the text.
+ */
+@ApiStatus.Experimental
+sealed interface InlayDecoration : EditorDecoration
 
 /**
  * Creates a new ID with the given value.
@@ -184,6 +193,33 @@ sealed interface HighlightingBuilder {
   var layer: Int
 }
 
+/**
+ * Builds a new inlay.
+ *
+ * @param id the inlay ID, unique within a given editor for all decorations combined
+ * @param offset the inlay position within the document
+ * @param inlayProvider the provider that will be used to create the inlay
+ * @param builder reserved for future use
+ */
+@ApiStatus.Experimental
+fun buildInlay(
+  id: EditorDecorationId,
+  offset: Int,
+  inlayProvider: InlayProvider,
+  builder: (InlayBuilder.() -> Unit)? = null,
+) : InlayDecoration = InlayBuilderImpl(id, offset, inlayProvider).run {
+  builder?.invoke(this)
+  build()
+}
+
+/**
+ * An inlay builder.
+ *
+ * Reserved for future use in case inlays get optional attributes.
+ */
+@ApiStatus.Experimental
+sealed interface InlayBuilder
+
 private class HyperlinkBuilderImpl(
   private val id: EditorDecorationId,
   private val startOffset: Int,
@@ -224,6 +260,18 @@ private class HighlightingBuilderImpl(
   )
 }
 
+private class InlayBuilderImpl(
+  private val id: EditorDecorationId,
+  private val offset: Int,
+  private val inlayProvider: InlayProvider,
+) : InlayBuilder {
+  fun build(): InlayDecoration = InlayDecorationImpl(
+    id = id,
+    offset,
+    inlayProvider = inlayProvider,
+  )
+}
+
 private data class EditorDecorationIdImpl(override val value: Long) : EditorDecorationId {
   override fun compareTo(other: EditorDecorationId): Int = value.compareTo(other.value)
   override fun toString(): String = value.toString()
@@ -240,8 +288,15 @@ private data class HyperlinkOrHighlightingImpl(
   val action: ((EditorMouseEvent) -> Unit)? = null,
 ) : HyperlinkDecoration, HighlightingDecoration
 
+private data class InlayDecorationImpl(
+  override val id: EditorDecorationId,
+  val offset: Int,
+  val inlayProvider: InlayProvider,
+) : InlayDecoration
+
 private class EditorDecorationApplierImpl(private val editor: EditorEx, parentDisposable: Disposable) : EditorDecorationApplier {
   private val highlightersById = hashMapOf<EditorDecorationId, RangeHighlighterEx>()
+  private val inlaysById = hashMapOf<EditorDecorationId, com.intellij.openapi.editor.Inlay<*>>()
   private val effectSupport = EditorHyperlinkEffectSupport(editor, MyEffectSupplier())
 
   init {
@@ -250,21 +305,31 @@ private class EditorDecorationApplierImpl(private val editor: EditorEx, parentDi
   }
 
   override fun addDecorations(decorations: Collection<EditorDecoration>) {
+    val inlays = mutableListOf<InlayDecorationImpl>()
     for (decoration in decorations) {
-      if (decoration is HyperlinkOrHighlightingImpl) {
-        addHyperlinkOrHighlighting(decoration)
+      if(decoration.id in highlightersById) {
+        LOG.warn("There's already a highlighter with the id ${decoration.id}")
+        continue
+      }
+      if(decoration.id in inlaysById) {
+        LOG.warn("There's already an inlay with the id ${decoration.id}")
+        continue
+      }
+      when (decoration) {
+        is HyperlinkOrHighlightingImpl -> addHyperlinkOrHighlighting(decoration)
+        is InlayDecorationImpl -> inlays += decoration
       }
     }
+    addInlays(inlays)
   }
 
   override fun removeDecorations(decorationIds: Collection<EditorDecorationId>) {
     for (id in decorationIds) {
-      removeHyperlink(id)
+      removeDecoration(id)
     }
   }
 
   private fun addHyperlinkOrHighlighting(decoration: HyperlinkOrHighlightingImpl) {
-    require(decoration.id !in highlightersById) { "There's already a decoration with the id ${decoration.id}" }
     editor.markupModel.addRangeHighlighterAndChangeAttributes(
       if (decoration.action != null) CodeInsightColors.HYPERLINK_ATTRIBUTES else null,
       decoration.start,
@@ -281,10 +346,31 @@ private class EditorDecorationApplierImpl(private val editor: EditorEx, parentDi
     }
   }
 
-  private fun removeHyperlink(decorationId: EditorDecorationId) {
+  private fun addInlays(inlays: Collection<InlayDecorationImpl>) {
+    if (inlays.isEmpty()) return
+    editor.inlayModel.execute(inlays.size > 100) {
+      for (inlayFromFilter in inlays) {
+        val inlay = inlayFromFilter.inlayProvider.createInlay(editor, inlayFromFilter.offset)
+        if (inlay != null) {
+          inlaysById[inlayFromFilter.id] = inlay
+        }
+      }
+    }
+  }
+
+  private fun removeDecoration(decorationId: EditorDecorationId) {
     val highlighter = highlightersById.remove(decorationId)
-    checkNotNull(highlighter) { "Decoration ${decorationId} not found" }
-    editor.markupModel.removeHighlighter(highlighter)
+    val inlay = inlaysById.remove(decorationId)
+    when {
+      highlighter == null && inlay == null -> LOG.warn("Decoration ${decorationId} not found")
+      highlighter != null && inlay != null -> LOG.warn("The ID ${decorationId} corresponds to both an inlay and a highlighter")
+    }
+    if (highlighter != null) {
+      editor.markupModel.removeHighlighter(highlighter)
+    }
+    if (inlay != null) {
+      Disposer.dispose(inlay)
+    }
   }
 
   private fun findDecoration(event: EditorMouseEvent): HighlightedDecoration? {
@@ -388,4 +474,5 @@ private fun RangeHighlighterEx.getHyperlink(): HyperlinkOrHighlightingImpl = che
 private fun RangeHighlighterEx.getHyperlinkOrNull(): HyperlinkOrHighlightingImpl? = getUserData(HYPERLINK_OR_HIGHLIGHTING)
 
 private val HYPERLINK_OR_HIGHLIGHTING: Key<HyperlinkOrHighlightingImpl> = Key.create("HYPERLINK_OR_HIGHLIGHTING")
+
 private val LOG = logger<EditorDecorationApplierImpl>()

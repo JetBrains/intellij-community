@@ -3,6 +3,7 @@ package com.intellij.terminal.frontend.hyperlinks
 import com.intellij.execution.impl.EditorDecoration
 import com.intellij.execution.impl.buildHighlighting
 import com.intellij.execution.impl.buildHyperlink
+import com.intellij.execution.impl.buildInlay
 import com.intellij.execution.impl.createDecorationApplier
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.terminal.frontend.TerminalInput
@@ -10,6 +11,7 @@ import com.intellij.terminal.session.TerminalFilterResultInfo
 import com.intellij.terminal.session.TerminalHighlightingInfo
 import com.intellij.terminal.session.TerminalHyperlinkInfo
 import com.intellij.terminal.session.TerminalHyperlinksChangedEvent
+import com.intellij.terminal.session.TerminalInlayInfo
 import com.intellij.terminal.session.dto.TerminalHyperlinksModelStateDto
 import com.intellij.terminal.session.dto.toFilterResultInfo
 import com.intellij.util.asDisposable
@@ -76,6 +78,13 @@ internal class FrontendTerminalHyperlinkFacade(
         ) {
           layer = layer
         }
+      }
+      is TerminalInlayInfo -> inlayProvider?.let { inlayProvider ->
+        buildInlay(
+          id = id.toPlatformId(),
+          offset = outputModel.absoluteOffset(absoluteEndOffset).toRelative(), // for inlays the end offset corresponds to the position
+          inlayProvider = inlayProvider,
+        )
       }
     }
 }

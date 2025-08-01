@@ -2,6 +2,7 @@
 package com.intellij.terminal.session.dto
 
 import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.execution.impl.InlayProvider
 import com.intellij.execution.ui.tryRecoverConsoleTextAttributesKey
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -40,6 +41,15 @@ data class TerminalHighlightingInfoDto(
   override val absoluteEndOffset: Long,
   val style: TerminalTextAttributesDto?,
   val layer: Int,
+) : TerminalFilterResultInfoDto()
+
+@ApiStatus.Internal
+@Serializable
+data class TerminalInlayInfoDto(
+  override val id: TerminalHyperlinkId,
+  override val absoluteStartOffset: Long,
+  override val absoluteEndOffset: Long,
+  @Transient val inlayProvider: InlayProvider? = null,
 ) : TerminalFilterResultInfoDto()
 
 @ApiStatus.Internal
@@ -90,6 +100,12 @@ fun TerminalFilterResultInfo.toDto(): TerminalFilterResultInfoDto =
       style = style?.toDto(),
       layer = layer,
     )
+    is TerminalInlayInfo -> TerminalInlayInfoDto(
+      id = id,
+      absoluteStartOffset = absoluteStartOffset,
+      absoluteEndOffset = absoluteEndOffset,
+      inlayProvider = inlayProvider,
+    )
   }
 
 
@@ -126,6 +142,12 @@ fun TerminalFilterResultInfoDto.toFilterResultInfo(): TerminalFilterResultInfo =
       absoluteEndOffset = absoluteEndOffset,
       style = style?.toTextAttributes(),
       layer = layer,
+    )
+    is TerminalInlayInfoDto -> TerminalInlayInfo(
+      id = id,
+      absoluteStartOffset = absoluteStartOffset,
+      absoluteEndOffset = absoluteEndOffset,
+      inlayProvider = inlayProvider,
     )
   }
 
