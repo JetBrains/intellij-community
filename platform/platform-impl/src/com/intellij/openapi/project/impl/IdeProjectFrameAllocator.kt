@@ -391,7 +391,7 @@ private suspend fun focusSelectedEditor(editorComponent: EditorsSplitters) {
   else {
     // in Remote Dev we cannot wait for composite availability synchronously,
     // since editors come from the backend and this is a too long process
-    composite.coroutineScope.launch(Dispatchers.EDT + FUSProjectHotStartUpMeasurer.getContextElementToPass()) {
+    composite.coroutineScope.launch(Dispatchers.EDT) {
       composite.waitForAvailable()
       focusSelectedEditorInComposite(composite)
     }

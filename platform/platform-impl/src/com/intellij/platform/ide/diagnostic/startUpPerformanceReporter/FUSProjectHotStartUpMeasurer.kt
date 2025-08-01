@@ -152,12 +152,6 @@ object FUSProjectHotStartUpMeasurer {
     return if (isProperContext()) MyMarker else null
   }
 
-  // This code is necessary for reporting metrics from the frontend because frontend metrics are sent outside the project initialization process.
-  @Internal
-  fun getContextElementToPass(): CoroutineContext.Element {
-    return MyMarker
-  }
-
   private fun reportViolation(violation: Violation) {
     channel.trySend(Event.ViolationEvent(violation))
     channel.close()
