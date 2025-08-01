@@ -273,6 +273,12 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - a:hasToShow(com.intellij.psi.PsiElement):Z
 - pf:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 - f:supportsReadOnly():Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractSurroundWithCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.CommandProvider
+- <init>():V
+- getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
+- a:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- a:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.lang.surroundWith.Surrounder):Z
 *a:com.intellij.codeInsight.completion.command.commands.AbstractTypeHierarchyCompletionCommandProvider
 - com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V

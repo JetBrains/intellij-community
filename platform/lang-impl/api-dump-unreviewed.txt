@@ -3073,7 +3073,6 @@ f:com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler
 - com.intellij.codeInsight.CodeInsightActionHandler
 - sf:CARET_IS_OK:com.intellij.openapi.util.TextRange
 - <init>():V
-- s:buildSurroundActions(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):java.util.List
 - s:doSurround(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.lang.surroundWith.Surrounder,com.intellij.psi.PsiElement[]):V
 - invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
 - s:invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.lang.surroundWith.Surrounder):V

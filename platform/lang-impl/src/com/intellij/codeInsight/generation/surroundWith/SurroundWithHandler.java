@@ -49,6 +49,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -105,7 +106,7 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
       .ifPresent(elements -> doSurround(project, editor, surrounder, elements));
   }
 
-  @TestOnly
+  @ApiStatus.Internal
   public static @Nullable List<AnAction> buildSurroundActions(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
     Map<Surrounder, PsiElement[]> surrounders = computeSurrounders(editor, file);
     return doBuildSurroundActions(project, editor, file, surrounders);
@@ -312,20 +313,32 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
     return applicable.isEmpty() ? null : applicable;
   }
 
-  private static final class InvokeSurrounderAction extends AnAction implements AnActionWithPreview {
+  @ApiStatus.Internal
+  public static final class InvokeSurrounderAction extends AnAction implements AnActionWithPreview {
     private final Surrounder mySurrounder;
     private final Project myProject;
     private final Editor myEditor;
     private final PsiElement[] myElements;
 
-    InvokeSurrounderAction(Surrounder surrounder, Project project, Editor editor, PsiElement[] elements, char mnemonic) {
+    @ApiStatus.Internal
+    public InvokeSurrounderAction(Surrounder surrounder, Project project, Editor editor, PsiElement[] elements, char mnemonic) {
       super(UIUtil.MNEMONIC + String.valueOf(mnemonic) + ". " + surrounder.getTemplateDescription());
       mySurrounder = surrounder;
       myProject = project;
       myEditor = editor;
       myElements = elements;
     }
-    
+
+    @ApiStatus.Internal
+    public PsiElement[] getElements() {
+      return myElements;
+    }
+
+    @ApiStatus.Internal
+    public Surrounder getSurrounder() {
+      return mySurrounder;
+    }
+
     @Override
     public @NotNull IntentionPreviewInfo getPreview() {
       if (mySurrounder instanceof ModCommandSurrounder modCommandSurrounder) {
