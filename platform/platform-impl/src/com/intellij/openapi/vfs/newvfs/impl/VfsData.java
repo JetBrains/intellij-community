@@ -6,7 +6,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -102,6 +101,7 @@ public final class VfsData {
                  @NotNull PersistentFSImpl pfs) {
     this.app = app;
     this.owningPersistentFS = pfs;
+    //TODO RC: replace with ((ApplicationEx)app).addWriteActionListener(new WriteActionListener()) ?
     app.addApplicationListener(new ApplicationListener() {
       @Override
       public void writeActionFinished(@NotNull Object action) {
@@ -142,7 +142,7 @@ public final class VfsData {
    * If the given id corresponds to a file, not a directory -- this param has no effect.
    */
   @Nullable VirtualFileSystemEntry getFileById(int id, @NotNull VirtualDirectoryImpl parent, boolean putToMemoryCache) {
-    VirtualFileSystemEntry dir = owningPersistentFS.getCachedDir(id);
+    VirtualFileSystemEntry dir = owningPersistentFS.getCachedDir(id);// (parent!=null) => regular directory, not a root
     if (dir != null) return dir;
 
     Segment segment = getSegment(id, /*create: */ false);
@@ -448,7 +448,7 @@ public final class VfsData {
 
     /**
      * must call removeAdoptedName() before adding new child with the same name
-     * or otherwise {@link VirtualDirectoryImpl#doFindChild(String, boolean, NewVirtualFileSystem, boolean)} would risk finding already non-existing child
+     * or otherwise {@link VirtualDirectoryImpl#findChildImpl(String, boolean, boolean)} would risk finding already non-existing child
      * <p>
      * Must be called in synchronized(VfsData)
      */

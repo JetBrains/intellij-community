@@ -41,10 +41,17 @@ final class VirtualDirectoryCache {
   }
 
   /** @return VirtualFile entry (directory/root) for a given dirId, if cached, or null, if not cached (yet?) */
-  @Nullable VirtualDirectoryImpl getCachedDir(int dirId) {
-    VirtualDirectoryImpl dir = idToDirCache.get(dirId);
+  @Nullable VirtualDirectoryImpl getCachedDirOrRoot(int dirId) {
+    //TODO RC: why to have dedicated ConcurrentHashMap, if we already have DirectoryData for every existing
+    //         directory, which could be used as a host for SoftReference<VirtualDirectoryImpl>?
+    VirtualDirectoryImpl dir = getCachedDir(dirId);
     if (dir != null) return dir;
     return idToRootCache.get(dirId);
+  }
+
+  /** @return directory for a dirId, if cached. Only NON-root directories are returned by this method! */
+  @Nullable VirtualDirectoryImpl getCachedDir(int dirId) {
+    return idToDirCache.get(dirId);
   }
 
   @Nullable VirtualDirectoryImpl getCachedRoot(int rootId) {
