@@ -481,9 +481,10 @@ elements:
             since: "2020.2"
             references:
               - |
-                [Declaring Incompatibility with Module](https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#declaring-incompatibility-with-module)
+                [Declaring Incompatibility with Plugin](https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#declaring-incompatibility-with-module)
             description: |
-              Declares incompatibility with a provided module.
+              The [ID](#element:idea-plugin__id) or [alias](#element:idea-plugin__module) of the plugin the current plugin is incompatible 
+              with. The plugin is not loaded if the incompatible plugin is installed in the current IDE. 
             requirement:
               required: no
               details:
@@ -493,6 +494,12 @@ elements:
                 ```xml
                 <incompatible-with>
                   com.intellij.modules.appcode.ide
+                </incompatible-with>
+                ```
+              - |
+                ```xml
+                <incompatible-with>
+                  com.intellij.java
                 </incompatible-with>
                 ```
 
