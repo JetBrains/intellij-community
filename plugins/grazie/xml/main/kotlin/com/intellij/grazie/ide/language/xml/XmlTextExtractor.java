@@ -67,7 +67,7 @@ public class XmlTextExtractor extends TextExtractor {
 
     if (type == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN && allowedDomains.contains(LITERALS) && hasSuitableDialect(element)) {
       TextContent content = builder.build(element, LITERALS);
-      if (content != null && seemsNatural(content)) {
+      if (content != null) {
         return List.of(content);
       }
     }
@@ -193,10 +193,6 @@ public class XmlTextExtractor extends TextExtractor {
     container.acceptChildren(visitor);
     visitor.flushGroup(unknownContainer);
     return visitor.result;
-  }
-
-  private static boolean seemsNatural(TextContent content) {
-    return content.toString().contains(" ");
   }
 
   private static boolean isText(PsiElement leaf) {

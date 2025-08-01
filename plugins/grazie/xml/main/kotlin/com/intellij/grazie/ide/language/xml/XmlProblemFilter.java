@@ -10,12 +10,16 @@ import org.jetbrains.annotations.NotNull;
 final class XmlProblemFilter extends ProblemFilter {
   @Override
   public boolean shouldIgnore(@NotNull TextProblem problem) {
-    if (isAfterPossibleEscape(problem)) return true;
+    if (!seemsNatural(problem.getText()) || isAfterPossibleEscape(problem)) return true;
 
     // This HTML (<b>text</b>) is currently split into 3 parts, and the bracket-pairing rule produces false positives.
     // This can be removed when we implement smarter tag content merging.
     String id = problem.getRule().getGlobalId();
     return id.startsWith("LanguageTool.") && id.endsWith("UNPAIRED_BRACKETS");
+  }
+
+  private static boolean seemsNatural(TextContent content) {
+    return content.toString().contains(" ");
   }
 
   private static boolean isAfterPossibleEscape(@NotNull TextProblem problem) {
