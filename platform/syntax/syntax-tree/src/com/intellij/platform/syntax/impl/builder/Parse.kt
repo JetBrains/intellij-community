@@ -13,6 +13,7 @@ import com.intellij.platform.syntax.lexer.performLexing
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory
 import com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy
+import com.intellij.platform.syntax.tree.toAstMarkers
 import com.intellij.platform.syntax.util.language.SyntaxElementLanguageProvider
 
 fun parse(

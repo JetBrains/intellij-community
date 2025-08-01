@@ -2,7 +2,10 @@
 package com.intellij.platform.syntax.impl.builder
 
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
-import kotlin.test.Test
+import com.intellij.platform.syntax.tree.ASTMarkersImpl
+import com.intellij.platform.syntax.tree.ChameleonRef
+import com.intellij.platform.syntax.tree.MarkerKind
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
@@ -406,9 +409,9 @@ class ASTMarkersTests {
     result.id(1) shouldBe 1
     result.id(2) shouldBe 2
   }
-}
 
-// Makes it slightly more readable.
-private infix fun <T> T.shouldBe(expected: T) {
-  assertEquals(expected, this)
+  // Makes it slightly more readable.
+  private infix fun <T> T.shouldBe(expected: T) {
+    assertEquals(expected, this)
+  }
 }
