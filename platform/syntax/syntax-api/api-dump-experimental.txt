@@ -17,6 +17,7 @@
 - a:parse(com.intellij.platform.syntax.LazyParsingContext):com.intellij.platform.syntax.parser.ProductionResult
 *f:com.intellij.platform.syntax.LazyParserKt
 - *sf:canLazyNodeBeReparsedIncrementally(com.intellij.platform.syntax.LazyParsingContext):Z
+- sf:createLexer(com.intellij.platform.syntax.LazyLexingContext):com.intellij.platform.syntax.lexer.Lexer
 - *sf:parseLazyNode(com.intellij.platform.syntax.LazyParsingContext):com.intellij.platform.syntax.parser.ProductionResult
 *f:com.intellij.platform.syntax.LazyParsingContext
 - <init>(com.intellij.platform.syntax.tree.SyntaxNode,com.intellij.platform.syntax.lexer.TokenList,com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.CancellationProvider):V
@@ -228,6 +229,50 @@
 - f:defaultRightBinder():com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 - f:greedyLeftBinder():com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 - f:greedyRightBinder():com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
+*:com.intellij.platform.syntax.tree.ASTMarkers
+- a:chameleonAt(I):com.intellij.platform.syntax.tree.ChameleonRef
+- a:chameleons():java.util.List
+- a:collapsed(I):Z
+- a:elementType(I):com.intellij.platform.syntax.SyntaxElementType
+- a:errorMessage(I):java.lang.String
+- a:getSize():I
+- a:kind(I):B
+- a:lexemeCount(I):I
+- a:lexemeRelOffset(I):I
+- a:markersCount(I):I
+- a:mutate(kotlin.jvm.functions.Function1):com.intellij.platform.syntax.tree.ASTMarkers
+*:com.intellij.platform.syntax.tree.ASTMarkers$MutableContext
+- a:changeChameleons(java.util.List):V
+- a:changeLexCount(I,I,I):V
+- a:changeMarkerCount(I,I,I):V
+- a:substitute(I,I,com.intellij.platform.syntax.tree.ASTMarkers):V
+*f:com.intellij.platform.syntax.tree.ASTMarkersKt
+- sf:ChameleonRef():com.intellij.platform.syntax.tree.ChameleonRef
+- sf:ChameleonRef(com.intellij.platform.syntax.tree.AstMarkersChameleon):com.intellij.platform.syntax.tree.ChameleonRef
+- sf:firstChild(com.intellij.platform.syntax.tree.ASTMarkers,I):I
+- sf:lastChild(com.intellij.platform.syntax.tree.ASTMarkers,I):I
+- sf:nextSibling(com.intellij.platform.syntax.tree.ASTMarkers,I):I
+- sf:prevSibling(com.intellij.platform.syntax.tree.ASTMarkers,I):I
+*f:com.intellij.platform.syntax.tree.AstMarkersChameleon
+- <init>(com.intellij.platform.syntax.lexer.TokenList,com.intellij.platform.syntax.tree.ASTMarkers):V
+- f:component1():com.intellij.platform.syntax.lexer.TokenList
+- f:component2():com.intellij.platform.syntax.tree.ASTMarkers
+- f:copy(com.intellij.platform.syntax.lexer.TokenList,com.intellij.platform.syntax.tree.ASTMarkers):com.intellij.platform.syntax.tree.AstMarkersChameleon
+- bs:copy$default(com.intellij.platform.syntax.tree.AstMarkersChameleon,com.intellij.platform.syntax.lexer.TokenList,com.intellij.platform.syntax.tree.ASTMarkers,I,java.lang.Object):com.intellij.platform.syntax.tree.AstMarkersChameleon
+- equals(java.lang.Object):Z
+- f:getAst():com.intellij.platform.syntax.tree.ASTMarkers
+- f:getCustomLexemeStore():com.intellij.platform.syntax.lexer.TokenList
+- hashCode():I
+*:com.intellij.platform.syntax.tree.ChameleonRef
+- a:getValue():com.intellij.platform.syntax.tree.AstMarkersChameleon
+- a:realize(kotlin.jvm.functions.Function0):com.intellij.platform.syntax.tree.AstMarkersChameleon
+- a:set(com.intellij.platform.syntax.tree.AstMarkersChameleon):V
+*f:com.intellij.platform.syntax.tree.MarkerKind
+- sf:End:B
+- sf:Error:B
+- sf:INSTANCE:com.intellij.platform.syntax.tree.MarkerKind
+- sf:Start:B
+- sf:Undone:B
 *:com.intellij.platform.syntax.tree.SyntaxNode
 - a:childByOffset(I):com.intellij.platform.syntax.tree.SyntaxNode
 - a:firstChild():com.intellij.platform.syntax.tree.SyntaxNode
@@ -274,3 +319,5 @@
 - sf:skip(com.intellij.platform.syntax.tree.SyntaxNode):com.intellij.platform.syntax.tree.SyntaxNode
 - sf:skipForward(com.intellij.platform.syntax.tree.SyntaxNode,java.lang.Object,Z):com.intellij.platform.syntax.tree.SyntaxNode
 - bs:skipForward$default(com.intellij.platform.syntax.tree.SyntaxNode,java.lang.Object,Z,I,java.lang.Object):com.intellij.platform.syntax.tree.SyntaxNode
+*f:com.intellij.platform.syntax.tree.ToAstMarkersKt
+- sf:toAstMarkers(com.intellij.platform.syntax.parser.SyntaxTreeBuilder):com.intellij.platform.syntax.tree.ASTMarkers

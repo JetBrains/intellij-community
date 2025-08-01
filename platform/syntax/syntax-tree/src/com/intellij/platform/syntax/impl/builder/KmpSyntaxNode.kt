@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Experimental
+
 package com.intellij.platform.syntax.impl.builder
 
 import com.intellij.platform.syntax.*
@@ -13,11 +15,13 @@ import com.intellij.platform.syntax.tree.*
 import com.intellij.platform.syntax.util.cancellation.cancellationProvider
 import com.intellij.platform.syntax.util.language.SyntaxElementLanguageProvider
 import com.intellij.platform.syntax.util.language.getLanguage
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * This factory type is used for specifying the builder for lazily parseable nodes
  * in the tree. All the parameters
  */
+@ApiStatus.Experimental
 fun interface SyntaxBuilderFactory {
   fun build(
     text: CharSequence,
@@ -29,10 +33,12 @@ fun interface SyntaxBuilderFactory {
 /**
  * Specifies which language each element type belong to.
  */
+@ApiStatus.Experimental
 fun interface LanguageMapper {
   fun map(language: SyntaxElementType): Any?
 }
 
+@ApiStatus.Experimental
 class KmpSyntaxNode internal constructor(
   internal val parent: KmpSyntaxNode?,
   internal val prevSibling: KmpSyntaxNode?,
@@ -572,6 +578,7 @@ private fun TokenList.endCharAt(index: Int): Int = when {
   else -> getTokenEnd(index)
 }
 
+@ApiStatus.Experimental
 fun interface TokenizationPolicy {
   fun tokenize(
     text: CharSequence,

@@ -8,7 +8,7 @@ import com.intellij.util.fastutil.ints.Int2ObjectOpenHashMap
 import com.intellij.util.fastutil.ints.IntArrayList
 import com.intellij.util.fastutil.ints.forEach
 
-class ASTMarkersImpl private constructor(
+internal class ASTMarkersImpl private constructor(
   private val packer: Packer,
   private val elementTypes: ArrayList<SyntaxElementType>,
   private val errorMessages: Int2ObjectOpenHashMap<String>,
@@ -267,7 +267,7 @@ class ASTMarkersImpl private constructor(
   override fun mutate(mutator: ASTMarkers.MutableContext.() -> Unit): ASTMarkersImpl =
     MutableContextImpl().also(mutator).ast
 
-  data class LexemeInfo(val relOffset: Int, val count: Int)
+  private data class LexemeInfo(val relOffset: Int, val count: Int)
   private class Packer {
     // short mode: (kind(2) + collapsed(1) + hasError(1) + markersCount(12) + id(16), lexemeRelOffset(16) + lexemeCount(16) = 2
     // long mode: kind(2) + collapsed(1) + hasError(1) + markersCount(28), id(32), lexemeRelOffset(32), lexemeCount(32) = 4 ints
@@ -452,8 +452,6 @@ class ASTMarkersImpl private constructor(
       },
       nextId = nextId
     )
-
-  companion object {
-    private const val DEFAULT_CAPACITY = 256
-  }
 }
+
+private const val DEFAULT_CAPACITY = 256

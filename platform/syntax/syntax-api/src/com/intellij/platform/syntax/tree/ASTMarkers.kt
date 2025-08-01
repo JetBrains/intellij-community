@@ -1,15 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+@file:ApiStatus.Experimental
+
 package com.intellij.platform.syntax.tree
 
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.lexer.TokenList
 import fleet.util.multiplatform.linkToActual
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 data class AstMarkersChameleon(
   val customLexemeStore: TokenList?,
   val ast: ASTMarkers,
 )
 
+@ApiStatus.Experimental
 interface ChameleonRef {
   val value: AstMarkersChameleon?
   fun set(value: AstMarkersChameleon)
@@ -22,6 +28,7 @@ fun ChameleonRef(): ChameleonRef = linkToActual()
 @Suppress("unused")
 fun ChameleonRef(chameleon: AstMarkersChameleon): ChameleonRef = linkToActual()
 
+@ApiStatus.Experimental
 interface ASTMarkers {
   val size: Int
   fun kind(i: Int): Byte
@@ -42,6 +49,7 @@ interface ASTMarkers {
 
   fun mutate(mutator: MutableContext.() -> Unit): ASTMarkers
 
+  @ApiStatus.Experimental
   interface MutableContext {
     fun substitute(i: Int, lexemeIndex: Int, astMarkers: ASTMarkers)
     fun changeChameleons(pairs: List<Pair<Int, ChameleonRef>>)
@@ -50,6 +58,7 @@ interface ASTMarkers {
   }
 }
 
+@ApiStatus.Experimental
 object MarkerKind {
   const val Undone: Byte = 0
   const val Start: Byte = 1
