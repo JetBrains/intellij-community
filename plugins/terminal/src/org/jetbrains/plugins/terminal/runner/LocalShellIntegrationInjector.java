@@ -11,9 +11,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.platform.eel.EelDescriptor;
-import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.terminal.ui.TerminalWidget;
@@ -32,7 +30,6 @@ import org.jetbrains.plugins.terminal.util.ShellType;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
@@ -44,6 +41,7 @@ import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath
 import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote;
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS;
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.supportsBlocksShellIntegration;
+import static org.jetbrains.plugins.terminal.TerminalStartupKt.findEelDescriptor;
 
 @ApiStatus.Internal
 public final class LocalShellIntegrationInjector {
@@ -75,7 +73,8 @@ public final class LocalShellIntegrationInjector {
 
     String shellName = PathUtil.getFileName(shellExe);
     Path rcFile = findRCFile(shellName);
-    String remoteRcFilePath = rcFile != null ? transferAndGetRemotePath(rcFile, options.getWorkingDirectory()) : null;
+    EelDescriptor eelDescriptor = findEelDescriptor(options.getWorkingDirectory(), shellCommand);
+    String remoteRcFilePath = rcFile != null ? transferAndGetRemotePath(rcFile, eelDescriptor) : null;
     if (remoteRcFilePath != null) {
       boolean addBlocksIntegration = supportsBlocksShellIntegration(shellName);
       if (ShellNameUtil.isBash(shellName) || (SystemInfo.isMac && shellName.equals(ShellNameUtil.SH_NAME))) {
@@ -210,14 +209,12 @@ public final class LocalShellIntegrationInjector {
    * are transferred together, preserving their relative paths.
    *
    * @param localFileOrDir the path to the local file or directory to be transferred
-   * @param workingDir the working directory pointing to the remote environment
+   * @param eelDescriptor descriptor of the remote environment
    * @return the remote path corresponding to the transferred file or directory if the transfer was successful,
    *         or the original path if no transfer was needed; null if an error occurs.
    */
-  private static @Nullable String transferAndGetRemotePath(@NotNull Path localFileOrDir, @Nullable String workingDir) {
-    EelDescriptor eelDescriptor = findEelDescriptor(workingDir);
+  private static @Nullable String transferAndGetRemotePath(@NotNull Path localFileOrDir, @NotNull EelDescriptor eelDescriptor) {
     if (eelDescriptor == LocalEelDescriptor.INSTANCE) return localFileOrDir.toString();
-    if (eelDescriptor == null) return localFileOrDir.toString();
     Path baseDirectory = findUpShellIntegrationBaseDirectory(localFileOrDir);
     if (baseDirectory == null) return null;
     try {
@@ -236,23 +233,6 @@ public final class LocalShellIntegrationInjector {
       LOG.info("Unable to transfer shell integration (" + baseDirectory + ") to remote (" + eelDescriptor + ")", e);
       return null;
     }
-  }
-
-  private static @Nullable EelDescriptor findEelDescriptor(@Nullable String workingDir) {
-    if (!TerminalStartupKt.shouldUseEelApi()) return null;
-    if (Strings.isEmptyOrSpaces(workingDir)) {
-      LOG.warn("Empty working directory: " + workingDir);
-      return null;
-    }
-    Path workingDirectoryNioPath;
-    try {
-      workingDirectoryNioPath = Path.of(workingDir);
-    }
-    catch (InvalidPathException e) {
-      LOG.warn("Invalid working directory: " + workingDir, e);
-      return null;
-    }
-    return EelProviderUtil.getEelDescriptor(workingDirectoryNioPath);
   }
 
   /**

@@ -8,18 +8,16 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.*
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.spawnProcess
 import com.intellij.util.PathUtil
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import com.pty4j.PtyProcess
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
@@ -57,8 +55,10 @@ internal fun startProcess(
   initialTermSize: TermSize,
 ): PtyProcess {
   return runBlockingMaybeCancellable {
-    val (eelApi, workingDirectory) = getEelApi(initialWorkingDirectory, command)
+    val context = buildStartupEelContext(initialWorkingDirectory, command)
+    val eelApi = context.eelDescriptor.toEelApi()
     val remoteCommand = convertCommandToRemote(eelApi, command)
+    val workingDirectory = context.workingDirectoryProvider(eelApi)
     doStartProcess(eelApi, remoteCommand, envs, workingDirectory, initialTermSize)
   }
 }
@@ -80,10 +80,31 @@ private fun isWslCommand(command: List<String>): Boolean {
   return false
 }
 
-private suspend fun getEelApi(
-  workingDirectory: Path,
-  command: List<String>,
-): Pair<EelApi, Path> {
+internal fun findEelDescriptor(workingDir: String?, shellCommand: List<String>): EelDescriptor {
+  if (!shouldUseEelApi()) {
+    return LocalEelDescriptor
+  }
+  if (workingDir.isNullOrBlank()) {
+    log.info("Cannot find EelDescriptor due to empty working directory. Fallback to LocalEelDescriptor.")
+    return LocalEelDescriptor
+  }
+  val workingDirectoryNioPath: Path = try {
+    Path.of(workingDir)
+  }
+  catch (e: InvalidPathException) {
+    log.warn("Cannot find EelDescriptor due to invalid working directory ($workingDir). Fallback to LocalEelDescriptor", e)
+    return LocalEelDescriptor
+  }
+  return try {
+    buildStartupEelContext(workingDirectoryNioPath, shellCommand).eelDescriptor
+  }
+  catch (e: Exception) {
+    log.warn("Cannot find EelDescriptor: " + e.message)
+    LocalEelDescriptor
+  }
+}
+
+private fun buildStartupEelContext(workingDirectory: Path, command: List<String>): TerminalStartupEelContext {
   val wslDistribNameFromCommandline = getWslDistributionNameFromCommand(command)
   if (wslDistribNameFromCommandline != null) {
     val wslDistribNameFromWorkingDirectory = WslPath.parseWindowsUncPath(workingDirectory.toString())?.distributionId
@@ -91,14 +112,20 @@ private suspend fun getEelApi(
       val wslRootPath = WSLDistribution(wslDistribNameFromCommandline).getUNCRootPath()
       val eelDescriptor = wslRootPath.getEelDescriptor()
       if (eelDescriptor != LocalEelDescriptor) {
-        val eelApi = eelDescriptor.toEelApi()
-        val userHome = runCatching { eelApi.exec.fetchLoginShellEnvVariables()["HOME"] }.getOrNull()
-        return eelApi to wslRootPath.resolve(userHome ?: ".")
+        return TerminalStartupEelContext(eelDescriptor) { eelApi ->
+          val userHome = runCatching { eelApi.exec.fetchLoginShellEnvVariables()["HOME"] }.getOrNull()
+          wslRootPath.resolve(userHome ?: ".")
+        }
       }
     }
   }
-  return workingDirectory.getEelDescriptor().toEelApi() to workingDirectory
+  return TerminalStartupEelContext(workingDirectory.getEelDescriptor()) { workingDirectory }
 }
+
+internal class TerminalStartupEelContext(
+  val eelDescriptor: EelDescriptor,
+  val workingDirectoryProvider: suspend (eelApi: EelApi) -> Path,
+)
 
 private fun getWslDistributionNameFromCommand(command: List<String>): String? {
   if (isWslCommand(command)) {
