@@ -294,6 +294,16 @@
             nameKey="hints.settings.compiler.plugins.supertypes"
             descriptionKey="hints.description.compiler.plugins.supertypes"/>
 
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtDefaultParameterInlayHintsProvider"
+            isEnabledByDefault="true"
+            group="OTHER_GROUP"
+            providerId="kotlin.default.parameters.hints"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.default.parameters"
+            descriptionKey="inlay.kotlin.default.parameters.hints"/>
+
     <vcs.codeVisionLanguageContext language="kotlin"
                                    implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinVcsCodeVisionContext"/>
     <codeInsight.codeVisionProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KotlinReferencesCodeVisionProvider"/>
