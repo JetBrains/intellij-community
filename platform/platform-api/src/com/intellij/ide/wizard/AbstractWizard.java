@@ -589,7 +589,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   @Override
   protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(getHelpID());
+    HelpManager.getInstance().invokeHelp(getHelpId() == null ? getHelpID() : getHelpId());
   }
 
   protected int getNumberOfSteps() {

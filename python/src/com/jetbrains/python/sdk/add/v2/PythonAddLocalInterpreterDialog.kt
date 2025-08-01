@@ -15,6 +15,7 @@ import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.moduleIfExists
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.supervisorScope
+import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 
 
@@ -35,6 +36,9 @@ internal class PythonAddLocalInterpreterDialog(private val dialogPresenter: Pyth
     init()
   }
 
+  override fun getHelpId(): @NonNls String {
+    return "create.python.interpreter"
+  }
 
   @RequiresEdt
   override fun doOKAction() {
