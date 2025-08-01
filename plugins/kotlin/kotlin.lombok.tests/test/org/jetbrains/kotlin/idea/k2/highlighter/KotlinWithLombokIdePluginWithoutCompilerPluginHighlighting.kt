@@ -105,4 +105,78 @@ internal class KotlinWithLombokIdePluginWithoutCompilerPluginHighlighting : Java
         myFixture.openFileInEditor(kotlinMainFile.virtualFile)
         myFixture.checkHighlighting()
     }
+
+    fun `test lombok generic container with builder`() {
+        val javaWithLombokModule = PsiTestUtil.addModule(
+            project,
+            JavaModuleType.getModuleType(),
+            "javaWithLombokModule",
+            myFixture.tempDirFixture.findOrCreateDir("javaWithLombokModule"),
+        )
+        
+        @Language("JAVA")
+        val javaContainerText = """
+            package lib;
+            
+            import lombok.Getter;
+            import lombok.Setter;
+            import lombok.NoArgsConstructor;
+            import lombok.AllArgsConstructor;
+            import lombok.Builder;
+            
+            @Getter
+            @Setter
+            @Builder
+            public class Container<D> {
+                private D value;
+            }
+            """.trimIndent()
+        
+        val javaContainerFile = myFixture.addFileToProject(
+            "javaWithLombokModule/lib/Container.java",
+            javaContainerText,
+        )
+
+        myFixture.allowTreeAccessForFile(javaContainerFile.virtualFile)
+
+        ConfigLibraryUtil.configureSdk(javaWithLombokModule, sdk)
+        ModuleRootModificationUtil.modifyModel(javaWithLombokModule) { model ->
+            LombokTestUtil.addLombokDependency(model)
+            true
+        }
+
+        val kotlinModule = PsiTestUtil.addModule(
+            project,
+            JavaModuleType.getModuleType(),
+            "kotlinModule",
+            myFixture.tempDirFixture.findOrCreateDir("kotlinModule"),
+        )
+
+        @Language("kotlin")
+        val kotlinMainText = """
+            package main
+            
+            import lib.Container
+            
+            fun main() {
+                val container = Container<String>()
+            
+                // check setter type
+                container.value = ""
+                // check getter type
+                val value: String = container.value
+            }
+        """.trimIndent()
+
+        val kotlinMainFile = myFixture.addFileToProject(
+            "kotlinModule/Main.kt",
+            kotlinMainText,
+        )
+
+        ConfigLibraryUtil.configureKotlinRuntimeAndSdk(kotlinModule, sdk)
+        ModuleRootModificationUtil.addDependency(kotlinModule, javaWithLombokModule)
+
+        myFixture.openFileInEditor(kotlinMainFile.virtualFile)
+        myFixture.checkHighlighting()
+    }
 }
