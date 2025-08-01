@@ -380,14 +380,14 @@ class ProjectEntityIndexingService(
         val removedEntities: MutableSet<C> = mutableSetOf()
         val addedEntities: MutableSet<C> = mutableSetOf()
         oldEntity?.let {
-          dependency.resultGetter(it).toCollection(removedEntities)
+          dependency.dependantEntitiesGetter(it).toCollection(removedEntities)
         }
         newEntity?.let {
-          dependency.resultGetter(it).toCollection(addedEntities)
+          dependency.dependantEntitiesGetter(it).toCollection(addedEntities)
         }
         val entitiesToKeep = mutableSetOf<C>()
         val entitiesToRemove = mutableSetOf<C>()
-        val entitiesInCurrentStorage = entityStorage.entities(dependency.resultClass).toSet()
+        val entitiesInCurrentStorage = entityStorage.entities(contributor.entityClass).toSet()
 
         if (removedEntities.isNotEmpty()) {
           entitiesToKeep.addAll(entitiesInCurrentStorage.intersect(removedEntities))

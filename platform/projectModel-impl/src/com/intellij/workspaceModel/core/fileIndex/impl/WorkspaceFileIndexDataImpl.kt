@@ -321,8 +321,6 @@ internal class WorkspaceFileIndexDataImpl(
                                                                 removeRegistrar: RemoveFileSetsRegistrarImpl) {
     val removedEntities = LinkedHashSet<E>()
     val addedEntities = LinkedHashSet<E>()
-    val entitiesInStorage = LinkedHashSet<E>()
-    val entitiesNotInStorage = LinkedHashSet<E>()
     for (change in event.getChanges(contributor.entityClass)) {
       change.oldEntity?.let { removedEntities.add(it) }
       change.newEntity?.let { addedEntities.add(it) }
@@ -338,8 +336,8 @@ internal class WorkspaceFileIndexDataImpl(
                                                                              event,
                                                                              removedEntities,
                                                                              addedEntities,
-                                                                             entitiesInStorage,
-                                                                             entitiesNotInStorage)
+                                                                             contributor.entityClass,
+        )
         is DependencyDescription.OnReference<*, *> -> processOnReference(dependency,
                                                                          event,
                                                                          removedEntities as MutableSet<WorkspaceEntity>,
@@ -352,16 +350,10 @@ internal class WorkspaceFileIndexDataImpl(
       for (removed in removedEntities) {
         contributor.registerFileSets(removed, removeRegistrar, event.storageBefore)
       }
-      for (entityInStorage in entitiesInStorage) {
-        contributor.registerFileSets(entityInStorage, storeRegistrar, event.storageAfter)
-      }
     }
     WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
       for (added in addedEntities) {
         contributor.registerFileSets(added, storeRegistrar, event.storageAfter)
-      }
-      for (entityNotInStorage in entitiesNotInStorage) {
-        contributor.registerFileSets(entityNotInStorage, removeRegistrar, event.storageBefore)
       }
     }
   }
@@ -396,45 +388,33 @@ internal class WorkspaceFileIndexDataImpl(
       .mapNotNullTo(removedEntities) { it.resolve(event.storageBefore) }
   }
 
-  /**
-   * This method searches for entities [R] that were affected by the change of entity [E].
-   *
-   * Example:
-   *
-   * Suppose we add entities A, B, C into [removedEntities] and E, F, G in [addedEntities] and we have B and F actually in storage.
-   * We remove file sets for A, B, C, but we need to register a file set for B, so entity B will be in [entitiesToKeep].
-   * By the same logic we register file sets for E, F, G, but we need to remove file sets for E and G, so they will in [entitiesToRemove].
-   *
-   * [entitiesToRemove] = [addedEntities] - [entitiesInCurrentStorage]
-   *
-   * [entitiesToKeep] = [removedEntities] intersect [affectedByRemovalEntities]
-   *
-   */
   private fun <R: WorkspaceEntity, E: WorkspaceEntity> processOnEntityDependency(dependency: DependencyDescription.OnEntity<R, E>,
                                                                                  event: VersionedStorageChange,
                                                                                  removedEntities: MutableSet<R>,
                                                                                  addedEntities: MutableSet<R>,
-                                                                                 entitiesToKeep: MutableSet<R>,
-                                                                                 entitiesToRemove: MutableSet<R>) {
-    var onEntityDependencyApplied = false
+                                                                                 dependantClass: Class<R>,) {
+
+    val dependantEntitiesInStorageAfter by lazy(LazyThreadSafetyMode.NONE) { event.storageAfter.entities(dependantClass).toSet() }
+    val dependantEntitiesInStorageBefore by lazy(LazyThreadSafetyMode.NONE) { event.storageBefore.entities(dependantClass).toSet() }
+
     event.getChanges(dependency.entityClass).asSequence().forEach { change ->
-      onEntityDependencyApplied = true
       change.oldEntity?.let {
-        dependency.resultGetter(it).toCollection(removedEntities)
+        val dependantEntities = dependency.dependantEntitiesGetter(it)
+        for (entity in dependantEntities) {
+          removedEntities.add(entity)
+          if (dependantEntitiesInStorageAfter.contains(entity)) {
+            addedEntities.add(entity)
+          }
+        }
       }
       change.newEntity?.let {
-        dependency.resultGetter(it).toCollection(addedEntities)
-      }
-    }
-
-    if (onEntityDependencyApplied) {
-      val entitiesInCurrentStorage = event.storageAfter.entities(dependency.resultClass).toSet()
-
-      if (removedEntities.isNotEmpty()) {
-        entitiesToKeep.addAll(removedEntities.intersect(entitiesInCurrentStorage))
-      }
-      if (addedEntities.isNotEmpty()) {
-        entitiesToRemove.addAll(addedEntities - entitiesInCurrentStorage)
+        val dependantEntities = dependency.dependantEntitiesGetter(it)
+        for (entity in dependantEntities) {
+          addedEntities.add(entity)
+          if (dependantEntitiesInStorageBefore.contains(entity)) {
+            removedEntities.add(entity)
+          }
+        }
       }
     }
   }

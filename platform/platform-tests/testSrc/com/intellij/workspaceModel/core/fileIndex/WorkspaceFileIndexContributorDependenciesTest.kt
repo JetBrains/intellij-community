@@ -125,11 +125,10 @@ class WorkspaceFileIndexContributorDependenciesTest {
     // call from WorkspaceFileIndexData:
     // first call changed parent
     // second call to remove file sets
-    // third call to add file sets back
 
     // two calls through ProjectEntityIndexingService - removed and added file sets
     // case with changed parent is not handled through ProjectEntityIndexingService
-    assertEquals(5, childWorkspaceFileIndexContributor.numberOfCalls.get(), "ChildWorkspaceFileIndexContributor should be called after relative removed")
+    assertEquals(4, childWorkspaceFileIndexContributor.numberOfCalls.get(), "ChildWorkspaceFileIndexContributor should be called after relative removed")
   }
 
   @Test
@@ -168,7 +167,7 @@ class WorkspaceFileIndexContributorDependenciesTest {
     override val dependenciesOnOtherEntities: List<DependencyDescription<ChildTestEntity>>
       get() = listOf(
         DependencyDescription.OnParent(ParentTestEntity::class.java) { sequenceOfNotNull(it.child) },
-        DependencyDescription.OnEntity(SiblingEntity::class.java, ChildTestEntity::class.java) { sequenceOfNotNull(it.parent.child) }
+        DependencyDescription.OnEntity(SiblingEntity::class.java) { sequenceOfNotNull(it.parent.child) }
       )
 
     override fun registerFileSets(entity: ChildTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
