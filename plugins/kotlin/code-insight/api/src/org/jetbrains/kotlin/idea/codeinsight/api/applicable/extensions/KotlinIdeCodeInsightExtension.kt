@@ -20,12 +20,6 @@ interface KotlinIdeCodeInsightExtension {
     fun chooseDanglingFileResolutionMode(contextElement: PsiElement): KaDanglingFileResolutionMode?
 
     /**
-     * Allows amending the type rendered for a given [contextElement].
-     * This method is called some code-generating refactorings, such as "Introduce variable" or "Extract method".
-     */
-    fun modifyRenderedType(contextElement: PsiElement, renderedType: String): String?
-
-    /**
      * Allows deciding whether declarations inside this [container] should be added before or after the usage.
      * This method is called for some cases of "Create from usage" refactorings.
      */
@@ -60,15 +54,5 @@ fun shouldAddDeclarationBeforeUsage(container: PsiElement): Boolean {
             !default -> !default
             else -> result
         }
-    }
-}
-
-/**
- * Employs [KotlinIdeCodeInsightExtension]s to modify the [renderedType] for a given [contextElement].
- * Returns unchanged [renderedType] if no extensions are applicable.
- */
-fun modifyRenderedType(contextElement: PsiElement, renderedType: String): String {
-    return KotlinIdeCodeInsightExtension.EP_NAME.extensionList.fold(renderedType) { type, extension ->
-        extension.modifyRenderedType(contextElement, type) ?: type
     }
 }

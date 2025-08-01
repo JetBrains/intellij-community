@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.*
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer.WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
@@ -31,6 +30,7 @@ import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
+import org.jetbrains.kotlin.idea.base.psi.extensions.ImplementationDetailClassNameCheckerProvider
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
@@ -287,7 +287,7 @@ object K2CreateFunctionFromUsageUtil {
                                 }
                             },
                             {
-                                WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS
+                                WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS_WITHOUT_IMPLEMENTATION_DETAILS
                                     .renderClassTypeQualifier(analysisSession, type, qualifiers, typeRenderer, printer)
                             },
                         )
@@ -414,6 +414,51 @@ object K2CreateFunctionFromUsageUtil {
         val receiverType = receiverExpression?.expressionType
         return call.valueArguments.mapIndexed { index, valueArgument ->
             valueArgument.getExpectedParameterInfo("p$index", isAnnotation && call.valueArguments.size == 1, receiverType)
+        }
+    }
+
+    /**
+     * This renderer is similar to [KaClassTypeQualifierRenderer.WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS],
+     * but filters out implementation detail outer classes of a given class, such as `Line_1_jupyter`.
+     */
+    @KaExperimentalApi
+    private val WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS_WITHOUT_IMPLEMENTATION_DETAILS: KaClassTypeQualifierRenderer = object : KaClassTypeQualifierRenderer {
+        override fun renderClassTypeQualifier(
+            analysisSession: KaSession,
+            type: KaType,
+            qualifiers: List<KaClassTypeQualifier>,
+            typeRenderer: KaTypeRenderer,
+            printer: PrettyPrinter,
+        ) {
+            KaClassTypeQualifierRenderer.WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS.renderClassTypeQualifier(
+                analysisSession,
+                type,
+                filterOutImplementationDetailQualifiers(type, qualifiers),
+                typeRenderer,
+                printer
+            )
+        }
+    }
+
+    @KaExperimentalApi
+    val WITH_SHORT_NAMES_FOR_CREATE_ELEMENTS: KaTypeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES.with {
+        classIdRenderer = WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS_WITHOUT_IMPLEMENTATION_DETAILS
+    }
+
+    /**
+     * Filters out implementation detail qualifiers from the given list of class type qualifiers.
+     *
+     * @param contextType The context used to determine the appropriate implementation detail checker
+     * @param qualifiers List of class type qualifiers to filter
+     * @return Filtered list containing only qualifiers that are not implementation details
+     */
+    fun filterOutImplementationDetailQualifiers(
+        contextType: KaType,
+        qualifiers: List<KaClassTypeQualifier>,
+    ): List<KaClassTypeQualifier> {
+        val checker = ImplementationDetailClassNameCheckerProvider.get(contextType.symbol?.psi)
+        return qualifiers.filterNot {
+            checker.isImplementationDetail(it.name.asString())
         }
     }
 }
