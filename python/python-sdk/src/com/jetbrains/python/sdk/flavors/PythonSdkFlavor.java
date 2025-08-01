@@ -225,7 +225,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
       }
     }
 
-    result.addAll(getPlatformFlavorsFromExtensions(addPlatformIndependent));
+    result.addAll(getPlatformFlavorsFromExtensions());
 
     // Sort flavors to make venv go before unix/windows, see method doc
     if (addPlatformIndependent) {
@@ -234,13 +234,11 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return result;
   }
 
-  public static @NotNull List<PythonSdkFlavor<?>> getPlatformFlavorsFromExtensions(boolean isIndependent) {
+  private static @NotNull List<PythonSdkFlavor<?>> getPlatformFlavorsFromExtensions() {
     List<PythonSdkFlavor<?>> result = new ArrayList<>();
     for (PythonFlavorProvider provider : PythonFlavorProvider.EP_NAME.getExtensionList()) {
       PythonSdkFlavor<?> flavor = provider.getFlavor();
-      if (flavor.isPlatformIndependent() == isIndependent) {
-        result.add(flavor);
-      }
+      result.add(flavor);
     }
     return result;
   }
@@ -309,7 +307,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
       }
     }
 
-    for (PythonSdkFlavor<?> flavor : getPlatformFlavorsFromExtensions(true)) {
+    for (PythonSdkFlavor<?> flavor : getPlatformFlavorsFromExtensions()) {
       if (flavor.isValidSdkPath(sdkPath)) {
         return flavor;
       }
