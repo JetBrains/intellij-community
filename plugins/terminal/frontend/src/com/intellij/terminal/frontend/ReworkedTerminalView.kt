@@ -383,8 +383,6 @@ internal class ReworkedTerminalView(
       cursorOffsetFlow = model.cursorOffsetState,
       sendInputString = { text -> terminalInput.sendString(text) },
     )
-
-    CopyOnSelectionHandler.install(editor, settings)
   }
 
   private fun addTopAndBottomInsets(editor: Editor) {
@@ -439,6 +437,8 @@ internal class ReworkedTerminalView(
     result.putUserData(ChangeEditorFontSizeStrategy.KEY, ChangeTerminalFontSizeStrategy)
     result.putUserData(TerminalFontSizeProvider.KEY, TerminalFontSizeProviderImpl.getInstance())
     listenEditorFontChanges(result, settings, parentDisposable)
+
+    CopyOnSelectionHandler.install(result, settings)
 
     return result
   }
