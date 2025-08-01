@@ -47,6 +47,8 @@
                  description="Removes custom processing of Global Libraries and SDKs in the Workspace Model"/>
     <registryKey key="ide.workspace.model.per.environment.model.separation" defaultValue="false" restartRequired="true"
                  description="Enable existence of multiple workspace models, one per each isolated environment"/>
+    <registryKey key="use.workspace.file.index.for.partial.scanning" defaultValue="true" restartRequired="true"
+                 description="If enabled, relies on events from WorkspaceFileIndex for partial scanning"/>
 
     <persistentFsConnectionListener implementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexCleaner"/>
   </extensions>

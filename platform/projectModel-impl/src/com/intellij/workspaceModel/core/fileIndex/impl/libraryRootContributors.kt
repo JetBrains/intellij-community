@@ -10,11 +10,13 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryRoot.InclusionOptions.*
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.asSafely
@@ -32,6 +34,12 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
       if (entity.symbolicId.tableId is LibraryTableId.GlobalLibraryTableId) return
       entity.symbolicId.takeIf { it.tableId == LibraryTableId.ProjectLibraryTableId }
     }
+    if (Registry.`is`("ide.workspace.model.sdk.remove.custom.processing") && libraryId != null) {
+      if (libraryId.tableId !is LibraryTableId.ModuleLibraryTableId &&
+          storage.referrers(libraryId, ModuleEntity::class.java).none()) {
+        return
+      }
+    }
     val compiledRootsData = LibraryRootFileSetData(libraryId)
     val sourceRootFileSetData = LibrarySourceRootFileSetData(libraryId)
     for (root in entity.roots) {
@@ -45,7 +53,7 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
         LibraryRootTypeId.SOURCES -> {
           data = sourceRootFileSetData
           kind = WorkspaceFileKind.EXTERNAL_SOURCE
-        } 
+        }
         else -> continue
       }
       when (root.inclusionOptions) {
@@ -55,6 +63,13 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
       }
     }
   }
+
+  override val dependenciesOnOtherEntities: List<DependencyDescription<LibraryEntity>>
+    get() = listOf(
+      DependencyDescription.OnReference(ModuleEntity::class.java) { moduleEntity ->
+        moduleEntity.dependencies.asSequence().filterIsInstance<LibraryDependency>().map { it.library }
+      }
+    )
 
   private fun registerArchivesUnderRoot(root: VirtualFileUrl,
                                         registrar: WorkspaceFileSetRegistrar,
