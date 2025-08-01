@@ -34,6 +34,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/refactoring",
     "//platform/lang-impl",
+    "//java/java-psi-api:psi",
     "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move-k2",

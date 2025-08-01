@@ -34,6 +34,7 @@ jvm_library(
     "//plugins/kotlin/idea",
     "//plugins/IntelliLang:langInjection",
     "//platform/lang-impl",
+    "//java/java-psi-api:psi",
   ],
   runtime_deps = [":k1_resources"]
 )
