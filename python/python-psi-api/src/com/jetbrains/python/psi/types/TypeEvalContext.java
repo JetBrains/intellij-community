@@ -52,7 +52,6 @@ public sealed class TypeEvalContext {
 
   protected final Map<PyTypedElement, PyType> myEvaluated = createMap();
   protected final Map<PyCallable, PyType> myEvaluatedReturn = createMap();
-  @ApiStatus.Internal
   protected final Map<Pair<PyExpression, Object>, PyType> contextTypeCache = createMap();
   /**
    * AssumptionContext invariant requires that if type is in the map, 
@@ -249,7 +248,12 @@ public sealed class TypeEvalContext {
   }
 
   private @NotNull TypeEvalContext getLibraryContext(@NotNull Project project) {
-    return project.getService(TypeEvalContextCache.class).getLibraryContext(new LibraryTypeEvalContext(getConstraints()));
+    TypeEvalConstraints constraints = new TypeEvalConstraints(myConstraints.myAllowDataFlow,
+                                                              myConstraints.myAllowStubToAST,
+                                                              myConstraints.myAllowCallContext,
+                                                              // code completion will always have a new PsiFile, use original file instead
+                                                              myConstraints.myOrigin != null ? myConstraints.myOrigin.getOriginalFile() : null);
+    return project.getService(TypeEvalContextCache.class).getLibraryContext(new LibraryTypeEvalContext(constraints));
   }
 
   /**
