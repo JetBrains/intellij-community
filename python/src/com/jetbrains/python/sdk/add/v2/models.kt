@@ -37,7 +37,6 @@ import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.v2.conda.toExecutor
 import com.jetbrains.python.sdk.add.v2.hatch.HatchUIError
 import com.jetbrains.python.sdk.conda.suggestCondaPath
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
@@ -70,10 +69,10 @@ abstract class PythonAddInterpreterModel(
   val targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null
 
   internal val knownInterpreters: MutableStateFlow<List<PythonSelectableInterpreter>> = MutableStateFlow(emptyList())
-  private val _detectedInterpreters: MutableStateFlow<List<PythonSelectableInterpreter>> = MutableStateFlow(emptyList())
-  val detectedInterpreters: StateFlow<List<PythonSelectableInterpreter>> = _detectedInterpreters
+  private val _detectedInterpreters: MutableStateFlow<List<DetectedSelectableInterpreter>> = MutableStateFlow(emptyList())
+  val detectedInterpreters: StateFlow<List<DetectedSelectableInterpreter>> = _detectedInterpreters
   val manuallyAddedInterpreters: MutableStateFlow<List<PythonSelectableInterpreter>> = MutableStateFlow(emptyList())
-  private var installable: List<PythonSelectableInterpreter> = emptyList()
+  private var installable: List<InstallableSelectableInterpreter> = emptyList()
   val condaEnvironments: MutableStateFlow<List<PyCondaEnv>> = MutableStateFlow(emptyList())
   val hatchEnvironmentsResult: MutableStateFlow<PyResult<List<HatchVirtualEnvironment>>?> = MutableStateFlow(null)
 
@@ -120,10 +119,10 @@ abstract class PythonAddInterpreterModel(
       added + known + detected
     }.map { it.distinctBy { int -> int.homePath }.sorted() }.stateIn(scope, started = SharingStarted.Eagerly, initialValue = emptyList())
 
-    this.baseInterpreters = allInterpreters.map { all ->
-      all.filter { it.isBasePython() }
+    this.baseInterpreters = detectedInterpreters.map { all ->
+      all.filter(DetectedSelectableInterpreter::isBase)
     }.mapLatest { all ->
-      all.filter { it !is ExistingSelectableInterpreter || it.isSystemWide } + installable
+      all + installable
     }.stateIn(scope, started = SharingStarted.Eagerly, initialValue = emptyList())
 
 
@@ -371,14 +370,6 @@ sealed class PythonSelectableInterpreter : Comparable<PythonSelectableInterprete
     private val comparator = LanguageLevelWithUiComparator<PythonSelectableInterpreter>()
   }
 
-  /**
-   * Base python is some system python (not venv) which can be used as a base for venv.
-   * In terms of flavors we call it __not__ [PythonSdkFlavor.isPlatformIndependent]
-   */
-  open suspend fun isBasePython(): Boolean = withContext(Dispatchers.IO) {
-    PythonSdkFlavor.tryDetectFlavorByLocalPath(homePath)?.isPlatformIndependent == false
-  }
-
   abstract val homePath: String
   abstract override val languageLevel: LanguageLevel
   override val ui: UICustomization? = null
@@ -392,9 +383,6 @@ class ExistingSelectableInterpreter(
   override val languageLevel: LanguageLevel,
   val isSystemWide: Boolean,
 ) : PythonSelectableInterpreter() {
-  override suspend fun isBasePython(): Boolean = withContext(Dispatchers.IO) {
-    !sdk.sdkFlavor.isPlatformIndependent
-  }
 
   override fun toString(): String {
     return "ExistingSelectableInterpreter(sdk=$sdk, languageLevel=$languageLevel, isSystemWide=$isSystemWide, homePath='$homePath')"
@@ -411,10 +399,9 @@ class ExistingSelectableInterpreter(
 class DetectedSelectableInterpreter(
   override val homePath: String,
   override val languageLevel: LanguageLevel,
-  private val isBase: Boolean,
+  val isBase: Boolean,
   override val ui: UICustomization? = null,
 ) : PythonSelectableInterpreter() {
-  override suspend fun isBasePython(): Boolean = isBase
   override fun toString(): String {
     return "DetectedSelectableInterpreter(homePath='$homePath', languageLevel=$languageLevel, isBase=$isBase, uiCustomization=$ui)"
   }
@@ -435,7 +422,6 @@ class ManuallyAddedSelectableInterpreter(
 }
 
 class InstallableSelectableInterpreter(val sdk: PySdkToInstall) : PythonSelectableInterpreter() {
-  override suspend fun isBasePython(): Boolean = true
   override val homePath: String = ""
   override val languageLevel: LanguageLevel = PySdkUtil.getLanguageLevelForSdk(sdk)
 }
