@@ -52,7 +52,8 @@ public sealed class TypeEvalContext {
 
   protected final Map<PyTypedElement, PyType> myEvaluated = createMap();
   protected final Map<PyCallable, PyType> myEvaluatedReturn = createMap();
-
+  @ApiStatus.Internal
+  protected final Map<Pair<PyExpression, Object>, PyType> contextTypeCache = createMap();
   /**
    * AssumptionContext invariant requires that if type is in the map, 
    * it's dependencies are also in the map, so we can't use softValueMap.
@@ -328,6 +329,11 @@ public sealed class TypeEvalContext {
 
   public @Nullable PsiFile getOrigin() {
     return myConstraints.myOrigin;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull Map<Pair<PyExpression, Object>, PyType> getContextTypeCache() {
+    return contextTypeCache;
   }
 
   /**
