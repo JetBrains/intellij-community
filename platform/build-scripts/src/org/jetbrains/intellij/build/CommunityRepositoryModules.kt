@@ -521,7 +521,7 @@ object CommunityRepositoryModules {
         }
         else {
           spec.withGeneratedPlatformResources(supportedOs, supportedArch, supportedLibc) { targetDir, context ->
-            val streamingModule = context.projectModel.project.modules.find { it.name == "intellij.android.streaming" }!!
+            val streamingModule = context.projectModel.project.findModuleByName("intellij.android.streaming")!!
             val ffmpegLibrary = streamingModule.libraryCollection.findLibrary(ffmpegLibraryName)!!
             val javacppLibrary = streamingModule.libraryCollection.findLibrary(javacppLibraryName)!!
             val libDir = targetDir.resolve("lib")

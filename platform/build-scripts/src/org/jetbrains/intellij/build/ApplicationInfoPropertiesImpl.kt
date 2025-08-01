@@ -237,7 +237,7 @@ private fun withAppInfoOverride(originalPatchedAppInfo: String,
 private fun shortenCompanyName(name: String) = name.removeSuffix(" s.r.o.").removeSuffix(" Inc.")
 
 fun findApplicationInfoInSources(project: JpsProject, productProperties: ProductProperties): Path {
-  val module = checkNotNull(project.modules.find { it.name == productProperties.applicationInfoModule }) {
+  val module = checkNotNull(project.findModuleByName(productProperties.applicationInfoModule)) {
     "Cannot find required '${productProperties.applicationInfoModule}' module"
   }
   val appInfoRelativePath = "idea/${productProperties.platformPrefix ?: ""}ApplicationInfo.xml"

@@ -82,7 +82,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
   private fun <T : Comparable<T>> buildClasspath(modulesToScopes: Map<String, JpsJavaClasspathKind>, logClasspath: Boolean, mapper: (Path) -> T): List<T> {
     val classpath = LinkedHashSet<T>()
     for ((moduleName, jpsJavaClasspathKind) in modulesToScopes) {
-      val module = model.project.modules.singleOrNull { it.name == moduleName }
+      val module = model.project.findModuleByName(moduleName)
                    ?: throw Exception("Module $moduleName not found")
 
       classpath.addAll(getClasspathForModule(module, jpsJavaClasspathKind, mapper))
