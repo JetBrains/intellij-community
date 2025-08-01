@@ -18,7 +18,6 @@ import com.intellij.driver.sdk.ui.components.common.Icon
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
 import com.intellij.driver.sdk.ui.xQuery
-import com.intellij.driver.sdk.wait
 import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
 import java.awt.Point
@@ -125,12 +124,13 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun expandPath(vararg path: String, fullMatch: Boolean = true) {
     for (subPathLength in 0 until path.size) {
+      waitForNodesLoaded(10.seconds)
       val subPath = path.sliceArray(0..subPathLength)
       findExpandedPath(*subPath, fullMatch = fullMatch)?.let {
         driver.withContext(OnDispatcher.EDT) { treeComponent.expandRow(it.row) }
-        wait(1.seconds) // wait expand
       } ?: PathNotFoundException(path.toList())
     }
+    waitForNodesLoaded(10.seconds)
   }
 
   fun expandPathWithEnter(vararg path: String, fullMatch: Boolean = true) = waitFor("Expand path by enter '${path.toList()}'") {
