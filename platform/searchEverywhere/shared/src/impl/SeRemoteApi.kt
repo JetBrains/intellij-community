@@ -101,7 +101,7 @@ interface SeRemoteApi : RemoteApi<Unit> {
     providerIds: List<SeProviderId>,
   ): Map<SeProviderId, @Nls String>
 
-  suspend fun getTextSearchOptionStates(projectId: ProjectId): List<Boolean>
+  suspend fun getTextSearchOptions(projectId: ProjectId): SeTextSearchOptions?
 
   companion object {
     @JvmStatic

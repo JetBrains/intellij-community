@@ -10,23 +10,23 @@ import org.jetbrains.annotations.ApiStatus
 class SeTextFilter(
   val selectedScopeId: String?,
   val selectedType: String?,
-  val selectedCase: Boolean,
-  val selectedWords: Boolean,
-  val selectedRegex: Boolean,
+  val isCaseSensitive: Boolean,
+  val isWholeWordsOnly: Boolean,
+  val isRegex: Boolean,
 ) : SeFilter {
-  fun cloneWithScope(selectedScopeId: String?): SeTextFilter = SeTextFilter(selectedScopeId, selectedType, selectedCase, selectedWords, selectedRegex)
-  fun cloneWithType(selectedType: String?): SeTextFilter = SeTextFilter(selectedScopeId, selectedType, selectedCase, selectedWords, selectedRegex)
-  fun cloneWithCase(selectedCase: Boolean): SeTextFilter = SeTextFilter(selectedScopeId, selectedType, selectedCase, selectedWords, selectedRegex)
-  fun cloneWithWords(selectedWords: Boolean): SeTextFilter = SeTextFilter(selectedScopeId, selectedType, selectedCase, selectedWords, selectedRegex)
-  fun cloneWithRegex(selectedRegex: Boolean): SeTextFilter = SeTextFilter(selectedScopeId, selectedType, selectedCase, selectedWords, selectedRegex)
+  fun cloneWithScope(selectedScopeId: String?): SeTextFilter = SeTextFilter(selectedScopeId, selectedType, isCaseSensitive, isWholeWordsOnly, isRegex)
+  fun cloneWithType(selectedType: String?): SeTextFilter = SeTextFilter(selectedScopeId, selectedType, isCaseSensitive, isWholeWordsOnly, isRegex)
+  fun cloneWithCase(selectedCase: Boolean): SeTextFilter = SeTextFilter(selectedScopeId, selectedType, selectedCase, isWholeWordsOnly, isRegex)
+  fun cloneWithWords(selectedWords: Boolean): SeTextFilter = SeTextFilter(selectedScopeId, selectedType, isCaseSensitive, selectedWords, isRegex)
+  fun cloneWithRegex(selectedRegex: Boolean): SeTextFilter = SeTextFilter(selectedScopeId, selectedType, isCaseSensitive, isWholeWordsOnly, selectedRegex)
 
   override fun toState(): SeFilterState {
     val map = mutableMapOf<String, SeFilterValue>()
     selectedScopeId?.let { map[SELECTED_SCOPE_ID] = SeFilterValue.One(it) }
     selectedType?.let { map[SELECTED_TYPE] = SeFilterValue.One(it) }
-    map[MATCH_CASE] = SeFilterValue.One(selectedCase.toString())
-    map[WORDS] = SeFilterValue.One(selectedWords.toString())
-    map[REGEX] = SeFilterValue.One(selectedRegex.toString())
+    map[MATCH_CASE] = SeFilterValue.One(isCaseSensitive.toString())
+    map[WORDS] = SeFilterValue.One(isWholeWordsOnly.toString())
+    map[REGEX] = SeFilterValue.One(isRegex.toString())
     return SeFilterState.Data(map)
   }
 

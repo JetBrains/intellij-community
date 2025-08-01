@@ -10,6 +10,7 @@ import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.SeSessionEntity
+import com.intellij.platform.searchEverywhere.SeTextSearchOptions
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
@@ -29,7 +30,7 @@ class SeTextTab(private val delegate: SeTabDelegate) : SeTab {
   private val filterEditorDisposable = Disposer.newDisposable()
   private val filterEditor: SuspendLazyProperty<SeTextFilterEditor> = initAsync(delegate.scope) {
     SeTextFilterEditor(delegate.project, delegate.getSearchScopesInfos().firstOrNull(),
-                       getTextSearchOptionStates(), filterEditorDisposable)
+                       getTextSearchOptions(), filterEditorDisposable)
   }
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> = delegate.getItems(params)
@@ -52,10 +53,10 @@ class SeTextTab(private val delegate: SeTabDelegate) : SeTab {
     return delegate.openInFindToolWindow(sessionRef, params, initEvent, false)
   }
 
-  suspend fun getTextSearchOptionStates(): List<Boolean> {
+  private suspend fun getTextSearchOptions(): SeTextSearchOptions? {
     val project = delegate.project
-    if (project == null) return emptyList()
-    return SeRemoteApi.getInstance().getTextSearchOptionStates(project.projectId())
+    if (project == null) return null
+    return SeRemoteApi.getInstance().getTextSearchOptions(project.projectId())
   }
 
   override fun dispose() {

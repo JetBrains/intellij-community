@@ -17,6 +17,7 @@ import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
 import com.intellij.platform.scopes.SearchScopesInfo
+import com.intellij.platform.searchEverywhere.SeTextSearchOptions
 import com.intellij.platform.searchEverywhere.frontend.tabs.target.SeScopeChooserActionProvider
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
 import com.intellij.platform.searchEverywhere.providers.SeTextFilter
@@ -26,11 +27,14 @@ import org.jetbrains.annotations.ApiStatus
 class SeTextFilterEditor(
   private val project: Project?,
   private val scopesInfo: SearchScopesInfo?,
-  initialTextSearchOptionStates: List<Boolean>,
+  initialTextSearchOptions: SeTextSearchOptions?,
   private val disposable: Disposable,
 ) : SeFilterEditorBase<SeTextFilter>(
-  SeTextFilter(scopesInfo?.selectedScopeId, null, initialTextSearchOptionStates[0],
-               initialTextSearchOptionStates[1], initialTextSearchOptionStates[2])
+  SeTextFilter(selectedScopeId = scopesInfo?.selectedScopeId,
+               selectedType = null,
+               isCaseSensitive = initialTextSearchOptions?.isCaseSensitive ?: false,
+               isWholeWordsOnly = initialTextSearchOptions?.isWholeWordsOnly ?: false,
+               isRegex = initialTextSearchOptions?.isRegex ?: false)
 ) {
   private val scopeFilterAction: AnAction? = scopesInfo?.let {
     SeScopeChooserActionProvider(scopesInfo) {
@@ -42,13 +46,13 @@ class SeTextFilterEditor(
       disposable.whenDisposed { it.saveMask() }
     }
   }
-  private val caseSensitiveAction = CaseSensitiveAction(AtomicBooleanProperty(initialTextSearchOptionStates[0]).apply {
+  private val caseSensitiveAction = CaseSensitiveAction(AtomicBooleanProperty(initialTextSearchOptions?.isCaseSensitive ?: false).apply {
     afterChange { filterValue = filterValue.cloneWithCase(it) }
   }, { }, {})
-  private val wordAction = WordAction(AtomicBooleanProperty(initialTextSearchOptionStates[1]).apply {
+  private val wordAction = WordAction(AtomicBooleanProperty(initialTextSearchOptions?.isWholeWordsOnly ?: false).apply {
     afterChange { filterValue = filterValue.cloneWithWords(it) }
   }, { }, { })
-  private val regexpAction = RegexpAction(AtomicBooleanProperty(initialTextSearchOptionStates[2]).apply {
+  private val regexpAction = RegexpAction(AtomicBooleanProperty(initialTextSearchOptions?.isRegex ?: false).apply {
     afterChange { filterValue = filterValue.cloneWithRegex(it) }
   }, { }, { })
 
