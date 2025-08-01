@@ -4864,7 +4864,6 @@ c:com.intellij.ide.wizard.AbstractWizardEx
 - p:dispose():V
 - p:doNextAction():V
 - p:doPreviousAction():V
-- p:getHelpID():java.lang.String
 - p:getNextStep(I):I
 - p:getPreviousStep(I):I
 - p:isLastStep():Z

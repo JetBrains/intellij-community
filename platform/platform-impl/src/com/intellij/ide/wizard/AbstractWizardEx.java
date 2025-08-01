@@ -111,7 +111,7 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
   }
 
   @Override
-  protected String getHelpID() {
+  protected String getHelpId() {
     return getCurrentStepObject().getHelpId();
   }
 

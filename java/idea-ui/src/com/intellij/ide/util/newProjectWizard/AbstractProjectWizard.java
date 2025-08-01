@@ -42,13 +42,13 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   public AbstractProjectWizard(@Nls String title, @Nullable Project project, String defaultPath) {
     super(title, project);
     myWizardContext = initContext(project, defaultPath, getDisposable());
-    myWizardContext.putUserData(AbstractWizard.KEY, this);
+    myWizardContext.putUserData(KEY, this);
   }
 
   public AbstractProjectWizard(@NlsContexts.DialogTitle String title, @Nullable Project project, Component dialogParent) {
     super(title, dialogParent);
     myWizardContext = initContext(project, null, getDisposable());
-    myWizardContext.putUserData(AbstractWizard.KEY, this);
+    myWizardContext.putUserData(KEY, this);
   }
 
   @Override
@@ -250,7 +250,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
 
   @Override
-  protected String getHelpID() {
+  protected String getHelpId() {
     ModuleWizardStep step = getCurrentStepObject();
     if (step != null) {
       return step.getHelpId();

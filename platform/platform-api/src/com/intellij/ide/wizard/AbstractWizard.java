@@ -23,7 +23,6 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -576,7 +575,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   protected void helpAction() {
-    HelpManager.getInstance().invokeHelp(getHelpID());
+    HelpManager.getInstance().invokeHelp(getHelpId());
   }
 
   @Override
@@ -589,12 +588,11 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   @Override
   protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(getHelpId() == null ? getHelpID() : getHelpId());
+    HelpManager.getInstance().invokeHelp(getHelpId());
   }
 
   protected int getNumberOfSteps() {
     return mySteps.size();
   }
 
-  protected abstract @Nullable @NonNls String getHelpID();
 }

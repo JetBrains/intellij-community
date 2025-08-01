@@ -121,7 +121,7 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
   }
 
   @Override
-  protected String getHelpID() {
+  protected String getHelpId() {
     return "editing.altInsert.equals";
   }
 

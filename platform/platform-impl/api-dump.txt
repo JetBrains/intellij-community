@@ -333,6 +333,8 @@ com.intellij.ide.vcs.RecentProjectsBranchesProvider
 - a:getCurrentBranch(java.lang.String,Z):java.lang.String
 f:com.intellij.ide.vcs.RecentProjectsBranchesProvider$Companion
 - f:getCurrentBranch(java.lang.String,Z):java.lang.String
+c:com.intellij.ide.wizard.AbstractWizardEx
+- p:getHelpId():java.lang.String
 com.intellij.ide.wizard.BuildSystemNewProjectWizardData
 - com.intellij.ide.wizard.LanguageNewProjectWizardData
 - a:getBuildSystem():java.lang.String
