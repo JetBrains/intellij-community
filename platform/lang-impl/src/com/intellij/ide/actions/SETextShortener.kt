@@ -2,8 +2,8 @@
 package com.intellij.ide.actions
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import java.util.LinkedList
 import kotlin.math.max
@@ -32,7 +32,7 @@ object SETextShortener {
 
     val separator = when {
       text.contains("/") -> "/"
-      SystemInfo.isWindows && text.contains("\\") -> "\\"
+      OS.CURRENT == OS.Windows && text.contains("\\") -> "\\"
       text.contains(".") -> "."
       text.contains("-") -> "-"
       else -> " "
@@ -43,12 +43,12 @@ object SETextShortener {
     while (parts.size > 1) {
       index = parts.size / 2 - 1
       parts.removeAt(index)
-      if (getTextWidth(left + StringUtil.join(parts, separator) + "...") < maxWidth) {
+      if (getTextWidth(left + StringUtil.join(parts, separator) + "..." + separator) < maxWidth) {
         parts.add(index, "...")
         return left + StringUtil.join(parts, separator)
       }
     }
-    val adjustedWidth = max((adjustedText.length * maxWidth / fullWidth - 1).toDouble(), (left.length + 3).toDouble()).toInt()
+    val adjustedWidth = max(adjustedText.length * maxWidth / fullWidth - 1,left.length + 3)
     return StringUtil.trimMiddle(adjustedText, adjustedWidth)
   }
 }
