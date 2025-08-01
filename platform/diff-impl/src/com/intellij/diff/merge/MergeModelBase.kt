@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge
 
 import com.intellij.diff.util.DiffUtil
@@ -10,16 +10,12 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.ints.IntList
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
-import it.unimi.dsi.fastutil.ints.IntSet
+import it.unimi.dsi.fastutil.ints.*
 import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
 import java.util.function.IntConsumer
@@ -27,66 +23,64 @@ import kotlin.math.max
 import kotlin.math.min
 
 @ApiStatus.Internal
-abstract class MergeModelBase<S : MergeModelBase.State?>(private val myProject: Project?, private val myDocument: Document) : Disposable {
-  private val myUndoManager: UndoManager?
+abstract class MergeModelBase<S : MergeModelBase.State>(
+  private val project: Project?,
+  private val document: Document,
+) : Disposable {
+  private val undoManager: UndoManager? = createUndoManager(project)
 
-  private val myStartLines: IntList = IntArrayList()
-  private val myEndLines: IntList = IntArrayList()
+  private val startLines: IntList = IntArrayList()
+  private val endLines: IntList = IntArrayList()
 
-  private val myChangesToUpdate: IntSet = IntOpenHashSet()
-  private var myBulkChangeUpdateDepth = 0
+  private val changesCount: Int
+    get() = startLines.size
+
+  private val changesToUpdate: IntSet = IntOpenHashSet()
+  private var bulkChangeUpdateDepth = 0
 
   @get:RequiresEdt
-  var isInsideCommand: Boolean = false
-    private set
+  private var isInsideCommand = false
 
-  var isDisposed: Boolean = false
-    private set
+  private var isDisposed = false
 
   init {
-    myUndoManager = if (myProject != null) UndoManager.getInstance(myProject) else UndoManager.getGlobalInstance()
-
-    myDocument.addDocumentListener(MergeModelBase.MyDocumentListener(), this)
+    document.addDocumentListener(DocumentListener(), this)
   }
 
   @RequiresEdt
   override fun dispose() {
-    if (this.isDisposed) return
-    this.isDisposed = true
+    if (isDisposed) return
+    isDisposed = true
 
-    LOG.assertTrue(myBulkChangeUpdateDepth == 0)
+    LOG.assertTrue(bulkChangeUpdateDepth == 0)
 
-    myStartLines.clear()
-    myEndLines.clear()
+    clearAll()
   }
 
-  val changesCount: Int
-    get() = myStartLines.size
+  fun getLineStart(index: Int): Int = startLines.getInt(index)
 
-  fun getLineStart(index: Int): Int {
-    return myStartLines.getInt(index)
-  }
+  fun getLineEnd(index: Int): Int = endLines.getInt(index)
 
-  fun getLineEnd(index: Int): Int {
-    return myEndLines.getInt(index)
-  }
-
-  fun setChanges(changes: MutableList<out LineRange>) {
-    myStartLines.clear()
-    myEndLines.clear()
+  fun setChanges(changes: List<LineRange>) {
+    clearAll()
 
     for (range in changes) {
-      myStartLines.add(range.start)
-      myEndLines.add(range.end)
+      startLines.add(range.start)
+      endLines.add(range.end)
     }
   }
 
   private fun setLineStart(index: Int, line: Int) {
-    myStartLines.set(index, line)
+    startLines.set(index, line)
   }
 
   private fun setLineEnd(index: Int, line: Int) {
-    myEndLines.set(index, line)
+    endLines.set(index, line)
+  }
+
+  private fun clearAll() {
+    startLines.clear()
+    endLines.clear()
   }
 
   //
@@ -94,8 +88,8 @@ abstract class MergeModelBase<S : MergeModelBase.State?>(private val myProject: 
   //
   @RequiresEdt
   fun invalidateHighlighters(index: Int) {
-    if (myBulkChangeUpdateDepth > 0) {
-      myChangesToUpdate.add(index)
+    if (bulkChangeUpdateDepth > 0) {
+      changesToUpdate.add(index)
     }
     else {
       reinstallHighlighters(index)
@@ -103,20 +97,20 @@ abstract class MergeModelBase<S : MergeModelBase.State?>(private val myProject: 
   }
 
   @RequiresEdt
-  fun enterBulkChangeUpdateBlock() {
-    myBulkChangeUpdateDepth++
+  private fun enterBulkChangeUpdateBlock() {
+    bulkChangeUpdateDepth++
   }
 
   @RequiresEdt
-  fun exitBulkChangeUpdateBlock() {
-    myBulkChangeUpdateDepth--
-    LOG.assertTrue(myBulkChangeUpdateDepth >= 0)
+  private fun exitBulkChangeUpdateBlock() {
+    bulkChangeUpdateDepth--
+    LOG.assertTrue(bulkChangeUpdateDepth >= 0)
 
-    if (myBulkChangeUpdateDepth == 0) {
-      myChangesToUpdate.forEach(IntConsumer { index: Int ->
+    if (bulkChangeUpdateDepth == 0) {
+      changesToUpdate.forEach(IntConsumer { index: Int ->
         reinstallHighlighters(index)
       })
-      myChangesToUpdate.clear()
+      changesToUpdate.clear()
       postInstallHighlighters()
     }
   }
@@ -132,12 +126,12 @@ abstract class MergeModelBase<S : MergeModelBase.State?>(private val myProject: 
   // Undo
   //
   @RequiresEdt
-  protected abstract fun storeChangeState(index: Int): S?
+  protected abstract fun storeChangeState(index: Int): S
 
   @RequiresEdt
   protected open fun restoreChangeState(state: S) {
-    setLineStart(state!!.myIndex, state.myStartLine)
-    setLineEnd(state.myIndex, state.myEndLine)
+    setLineStart(state.index, state.startLine)
+    setLineEnd(state.index, state.endLine)
   }
 
   @RequiresEdt
@@ -151,7 +145,7 @@ abstract class MergeModelBase<S : MergeModelBase.State?>(private val myProject: 
     val rangeAffected = newRange.damaged || (oldLine2 >= line1 && oldLine1 <= line2)
 
     val rangeManuallyEdit = newRange.damaged || (oldLine2 > line1 && oldLine1 < line2)
-    if (rangeManuallyEdit && !this.isInsideCommand && (myUndoManager != null && !myUndoManager.isUndoOrRedoInProgress())) {
+    if (rangeManuallyEdit && !isInsideCommand && (undoManager != null && !undoManager.isUndoOrRedoInProgress)) {
       onRangeManuallyEdit(index)
     }
 
@@ -167,124 +161,116 @@ abstract class MergeModelBase<S : MergeModelBase.State?>(private val myProject: 
   protected open fun onRangeManuallyEdit(index: Int) {
   }
 
-  private inner class MyDocumentListener : DocumentListener {
+  private inner class DocumentListener : com.intellij.openapi.editor.event.DocumentListener {
     override fun beforeDocumentChange(e: DocumentEvent) {
-      if (this.isDisposed) return
+      if (isDisposed) return
       enterBulkChangeUpdateBlock()
 
-      if (this.changesCount == 0) return
+      if (changesCount == 0) return
 
       val lineRange = DiffUtil.getAffectedLineRange(e)
       val shift = DiffUtil.countLinesShift(e)
 
-      val corruptedStates: MutableList<S?> = SmartList<S?>()
-      for (index in 0..<this.changesCount) {
+      val corruptedStates: MutableList<S> = SmartList<S>()
+      for (index in 0..<changesCount) {
         val oldState = processDocumentChange(index, lineRange.start, lineRange.end, shift)
         if (oldState == null) continue
 
         invalidateHighlighters(index)
-        if (!this.isInsideCommand) corruptedStates.add(oldState)
+        if (!isInsideCommand) corruptedStates.add(oldState)
       }
 
-      if (myUndoManager != null && !corruptedStates.isEmpty()) {
+      if (undoManager != null && !corruptedStates.isEmpty()) {
         // document undo is registered inside onDocumentChange, so our undo() will be called after its undo().
         // thus thus we can avoid checks for isUndoInProgress() (to avoid modification of the same TextMergeChange by this listener)
-        myUndoManager.undoableActionPerformed(MergeModelBase.MyUndoableAction(this@MergeModelBase, corruptedStates, true))
+        undoManager.undoableActionPerformed(MyUndoableAction(this@MergeModelBase, corruptedStates, true))
       }
     }
 
     override fun documentChanged(e: DocumentEvent) {
-      if (this.isDisposed) return
+      if (isDisposed) return
       exitBulkChangeUpdateBlock()
     }
   }
 
-
   fun executeMergeCommand(
-    @NlsContexts.Command commandName: @NlsContexts.Command String?,
+    commandName: @NlsContexts.Command String?,
     commandGroupId: String?,
     confirmationPolicy: UndoConfirmationPolicy,
     underBulkUpdate: Boolean,
     affectedChanges: IntList?,
     task: Runnable,
   ): Boolean {
-    val allAffectedChanges = if (affectedChanges != null) collectAffectedChanges(affectedChanges) else null
-    return DiffUtil.executeWriteCommand(
-      myProject,
-      myDocument,
-      commandName,
-      commandGroupId,
-      confirmationPolicy,
-      underBulkUpdate,
-      Runnable {
-        LOG.assertTrue(!this.isInsideCommand)
-        // We should restore states after changes in document (by DocumentUndoProvider) to avoid corruption by our onBeforeDocumentChange()
-        // Undo actions are performed in backward order, while redo actions are performed in forward order.
-        // Thus we should register two UndoableActions.
-        this.isInsideCommand = true
-        enterBulkChangeUpdateBlock()
+    val allAffectedChanges = if (affectedChanges != null) collectAffectedChanges(affectedChanges) else IntLists.emptyList()
+    return DiffUtil.executeWriteCommand(project, document, commandName, commandGroupId, confirmationPolicy, underBulkUpdate, Runnable {
+      LOG.assertTrue(!isInsideCommand)
+      // We should restore states after changes in document (by DocumentUndoProvider) to avoid corruption by our onBeforeDocumentChange()
+      // Undo actions are performed in backward order, while redo actions are performed in forward order.
+      // Thus we should register two UndoableActions.
+      isInsideCommand = true
+      enterBulkChangeUpdateBlock()
+      try {
+        registerUndoRedo(true, allAffectedChanges)
         try {
-          registerUndoRedo(true, allAffectedChanges)
-          try {
-            task.run()
-          }
-          finally {
-            registerUndoRedo(false, allAffectedChanges)
-          }
+          task.run()
         }
         finally {
-          exitBulkChangeUpdateBlock()
-          this.isInsideCommand = false
+          registerUndoRedo(false, allAffectedChanges)
         }
-      })
+      }
+      finally {
+        exitBulkChangeUpdateBlock()
+        isInsideCommand = false
+      }
+    })
   }
 
-  private fun registerUndoRedo(undo: Boolean, affectedChanges: IntList?) {
-    if (myUndoManager == null) return
+  private fun registerUndoRedo(undo: Boolean, affectedChanges: IntList) {
+    if (undoManager == null) return
 
-    val states: MutableList<S?>?
-    if (affectedChanges != null) {
-      states = ArrayList<S?>(affectedChanges.size)
+    val states: MutableList<S>
+    if (affectedChanges.isNotEmpty()) {
+      states = ArrayList(affectedChanges.size)
       affectedChanges.forEach(IntConsumer { index: Int ->
         states.add(storeChangeState(index))
       })
     }
     else {
-      states = ArrayList<S?>(this.changesCount)
-      for (index in 0..<this.changesCount) {
+      states = ArrayList(changesCount)
+      for (index in 0..<changesCount) {
         states.add(storeChangeState(index))
       }
     }
-    myUndoManager.undoableActionPerformed(MergeModelBase.MyUndoableAction(this, states, undo))
+    undoManager.undoableActionPerformed(MyUndoableAction(this, states, undo))
   }
 
-  private class MyUndoableAction(model: MergeModelBase<*>, private val myStates: MutableList<out State>, private val myUndo: Boolean) :
-    BasicUndoableAction(model.myDocument) {
-    private val myModelRef: WeakReference<MergeModelBase<*>?>
-
-    init {
-      myModelRef = WeakReference<MergeModelBase<*>?>(model)
-    }
+  private class MyUndoableAction(
+    model: MergeModelBase<*>,
+    private val states: List<State>,
+    private val isUndo: Boolean,
+  ) : BasicUndoableAction(model.document) {
+    private val modelRef: WeakReference<MergeModelBase<*>> = WeakReference<MergeModelBase<*>>(model)
 
     override fun undo() {
-      val model = myModelRef.get()
-      if (model != null && myUndo) restoreStates(model)
+      val model = modelRef.get() ?: return
+      if (isUndo) restoreStates(model)
     }
 
     override fun redo() {
-      val model = myModelRef.get()
-      if (model != null && !myUndo) restoreStates(model)
+      val model = modelRef.get() ?: return
+      if (!isUndo) restoreStates(model)
     }
 
-    fun restoreStates(model: MergeModelBase<*>) {
+    private fun restoreStates(model: MergeModelBase<*>) {
       if (model.isDisposed) return
       if (model.changesCount == 0) return
 
       model.enterBulkChangeUpdateBlock()
       try {
-        for (state in myStates) {
+        model as MergeModelBase<State>
+        for (state in states) {
           model.restoreChangeState(state)
-          model.invalidateHighlighters(state.myIndex)
+          model.invalidateHighlighters(state.index)
         }
       }
       finally {
@@ -297,12 +283,12 @@ abstract class MergeModelBase<S : MergeModelBase.State?>(private val myProject: 
   // Actions
   //
   @RequiresWriteLock
-  fun replaceChange(index: Int, newContent: MutableList<out CharSequence?>) {
-    LOG.assertTrue(this.isInsideCommand)
+  fun replaceChange(index: Int, newContent: List<CharSequence>) {
+    LOG.assertTrue(isInsideCommand)
     val outputStartLine = getLineStart(index)
     val outputEndLine = getLineEnd(index)
 
-    DiffUtil.applyModification(myDocument, outputStartLine, outputEndLine, newContent)
+    DiffUtil.applyModification(document, outputStartLine, outputEndLine, newContent)
 
     if (outputStartLine == outputEndLine) { // onBeforeDocumentChange() should process other cases correctly
       val newOutputEndLine = outputStartLine + newContent.size
@@ -311,40 +297,38 @@ abstract class MergeModelBase<S : MergeModelBase.State?>(private val myProject: 
   }
 
   @RequiresWriteLock
-  fun appendChange(index: Int, newContent: MutableList<out CharSequence?>) {
-    LOG.assertTrue(this.isInsideCommand)
+  fun appendChange(index: Int, newContent: List<CharSequence>) {
+    LOG.assertTrue(isInsideCommand)
     val outputStartLine = getLineStart(index)
     val outputEndLine = getLineEnd(index)
 
-    DiffUtil.applyModification(myDocument, outputEndLine, outputEndLine, newContent)
+    DiffUtil.applyModification(document, outputEndLine, outputEndLine, newContent)
 
     val newOutputEndLine = outputEndLine + newContent.size
     moveChangesAfterInsertion(index, outputStartLine, newOutputEndLine)
   }
 
   /*
- * We want to include inserted block into change, so we are updating endLine(BASE).
- *
- * It could break order of changes if there are other changes that starts/ends at this line.
- * So we should check all other changes and shift them if necessary.
- */
+   * We want to include inserted block into change, so we are updating endLine(BASE).
+   *
+   * It could break order of changes if there are other changes that starts/ends at this line.
+   * So we should check all other changes and shift them if necessary.
+   */
   private fun moveChangesAfterInsertion(
     index: Int,
     newOutputStartLine: Int,
     newOutputEndLine: Int,
   ) {
-    LOG.assertTrue(this.isInsideCommand)
+    LOG.assertTrue(isInsideCommand)
 
-    if (getLineStart(index) != newOutputStartLine ||
-        getLineEnd(index) != newOutputEndLine
-    ) {
+    if (getLineStart(index) != newOutputStartLine || getLineEnd(index) != newOutputEndLine) {
       setLineStart(index, newOutputStartLine)
       setLineEnd(index, newOutputEndLine)
       invalidateHighlighters(index)
     }
 
     var beforeChange = true
-    for (otherIndex in 0..<this.changesCount) {
+    for (otherIndex in 0..<changesCount) {
       val startLine = getLineStart(otherIndex)
       val endLine = getLineEnd(otherIndex)
       if (endLine < newOutputStartLine) continue
@@ -365,17 +349,17 @@ abstract class MergeModelBase<S : MergeModelBase.State?>(private val myProject: 
   }
 
   /*
- * Nearby changes could be affected as well (ex: by moveChangesAfterInsertion)
- *
- * null means all changes could be affected
- */
+   * Nearby changes could be affected as well (ex: by moveChangesAfterInsertion)
+   *
+   * null means all changes could be affected
+   */
   @RequiresEdt
   private fun collectAffectedChanges(directChanges: IntList): IntList {
     val result: IntList = IntArrayList(directChanges.size)
 
     var directArrayIndex = 0
     var otherIndex = 0
-    while (directArrayIndex < directChanges.size && otherIndex < this.changesCount) {
+    while (directArrayIndex < directChanges.size && otherIndex < changesCount) {
       val directIndex = directChanges.getInt(directArrayIndex)
 
       if (directIndex == otherIndex) {
@@ -409,8 +393,11 @@ abstract class MergeModelBase<S : MergeModelBase.State?>(private val myProject: 
   //
   // Helpers
   //
-  open class State(@JvmField val myIndex: Int, val myStartLine: Int, val myEndLine: Int)
+  open class State(@JvmField val index: Int, val startLine: Int, val endLine: Int)
+
   companion object {
     private val LOG = Logger.getInstance(MergeModelBase::class.java)
   }
 }
+
+private fun createUndoManager(project: Project?): UndoManager? = if (project != null) UndoManager.getInstance(project) else UndoManager.getGlobalInstance()

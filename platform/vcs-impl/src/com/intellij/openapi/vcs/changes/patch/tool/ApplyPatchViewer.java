@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -396,7 +396,7 @@ class ApplyPatchViewer implements Disposable {
     @Override
     protected void restoreChangeState(@NotNull ApplyPatchChange.State state) {
       super.restoreChangeState(state);
-      ApplyPatchChange change = myModelChanges.get(state.myIndex);
+      ApplyPatchChange change = myModelChanges.get(state.index);
 
       boolean wasResolved = change.isResolved();
       change.restoreState(state);

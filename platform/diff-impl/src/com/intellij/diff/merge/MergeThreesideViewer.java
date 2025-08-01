@@ -1047,7 +1047,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     @Override
     protected void restoreChangeState(@NotNull TextMergeChange.State state) {
       super.restoreChangeState(state);
-      TextMergeChange change = myAllMergeChanges.get(state.myIndex);
+      TextMergeChange change = myAllMergeChanges.get(state.index);
 
       boolean wasResolved = change.isResolved();
       if (change.isResolvedWithAI()) {
