@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.utils;
 
 import com.intellij.ide.ConsentOptionsProvider;
@@ -30,7 +30,7 @@ public final class StatisticsUploadAssistant {
   private StatisticsUploadAssistant() {}
 
   public static boolean isSendAllowed() {
-    return isSendAllowed(() -> isAllowedByUserConsent());
+    return isSendAllowed(StatisticsUploadAssistant::isAllowedByUserConsent);
   }
 
   public static boolean isSendAllowed(@NotNull BooleanSupplier isAllowedByUserConsent) {
@@ -46,7 +46,7 @@ public final class StatisticsUploadAssistant {
   }
 
   public static boolean isCollectAllowed() {
-    return isCollectAllowed(() -> isAllowedByUserConsent());
+    return isCollectAllowed(StatisticsUploadAssistant::isAllowedByUserConsent);
   }
 
   public static boolean isCollectAllowed(@NotNull BooleanSupplier isAllowedByUserConsent) {

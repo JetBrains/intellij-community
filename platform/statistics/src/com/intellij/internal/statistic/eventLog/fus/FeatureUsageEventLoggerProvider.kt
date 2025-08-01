@@ -18,13 +18,26 @@ internal class FeatureUsageEventLoggerProvider : StatisticsEventLoggerProviderEx
   maxFileSizeInBytes = DEFAULT_MAX_FILE_SIZE_BYTES,
   sendLogsOnIdeClose = true) {
 
-  override fun isRecordEnabled(): Boolean {
-    return !ApplicationManager.getApplication().isUnitTestMode &&
-           StatisticsUploadAssistant.isCollectAllowed() &&
-           (ApplicationInfo.getInstance() == null || PlatformUtils.isJetBrainsProduct() || "AndroidStudio" == PlatformUtils.getPlatformPrefix())
+  override fun isRecordEnabled(): Boolean = when {
+    ApplicationManager.getApplication().isUnitTestMode -> false
+    ApplicationInfo.getInstance() == null || PlatformUtils.isJetBrainsProduct() -> StatisticsUploadAssistant.isCollectAllowed()
+    isCompatibleVendor() -> StatisticsUploadAssistant.isCollectAllowed { isAllowedByUserConsentWithJetBrains() }
+    else -> false
   }
 
-  override fun isSendEnabled(): Boolean = isRecordEnabled() && StatisticsUploadAssistant.isSendAllowed()
+  override fun isSendEnabled(): Boolean = when {
+    !isRecordEnabled() -> false
+    ApplicationInfo.getInstance() == null || PlatformUtils.isJetBrainsProduct() -> StatisticsUploadAssistant.isSendAllowed()
+    isCompatibleVendor() -> StatisticsUploadAssistant.isSendAllowed { isAllowedByUserConsentWithJetBrains() }
+    else -> false
+  }
+
+  private fun isAllowedByUserConsentWithJetBrains(): Boolean {
+    // TODO: explicitly use JetBrains user consent
+    return false
+  }
+
+  private fun isCompatibleVendor(): Boolean = "AndroidStudio" == PlatformUtils.getPlatformPrefix()
 
   override fun createEventsMergeStrategy(): StatisticsEventMergeStrategy {
     // this happens rather early on startup, do not touch EventFields.*
