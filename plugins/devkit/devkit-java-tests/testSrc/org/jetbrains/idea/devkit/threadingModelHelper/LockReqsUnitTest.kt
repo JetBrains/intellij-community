@@ -38,6 +38,71 @@ class LockReqsUnitTest : BasePlatformTestCase() {
 
   override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "threadingModelHelper/"
 
+  fun testMethodsInDifferentClassesInline() {
+    val testFileContent = """
+        package test;
+        
+        import com.intellij.util.concurrency.annotations.RequiresReadLock;
+        
+        public class MethodsInDifferentClasses {
+            public void testMethod() {
+                Helper helper = new Helper();
+                helper.helperMethod();
+            }
+        }
+        
+        class Helper {
+            public void helperMethod() {
+                Service service = new Service();
+                service.serviceMethod();
+            }
+        }
+        
+        class Service {
+            @RequiresReadLock
+            public void serviceMethod() {
+                System.out.println("Service method");
+            }
+        }
+
+    """.trimIndent()
+
+    // Write the content to a temporary file
+    val psiJavaFile = myFixture.configureByText("TestFile.java", testFileContent) as PsiJavaFile
+
+    // Create the analyzer
+    val analyzer = LockReqsAnalyzer()
+
+    // Get all classes from the file
+    println("Classes in file: ${psiJavaFile.classes.map { it.name }}")
+
+    // Find the main test class
+    val testClass = psiJavaFile.classes.find { it.name == "MethodsInDifferentClasses" }
+    assertNotNull("Could not find MethodsInDifferentClasses", testClass)
+    println("Found test class: ${testClass?.name}")
+
+    // Extract expected paths
+    val expectedPathAnnotations = testClass!!.annotations
+    println("Annotations on test class: ${expectedPathAnnotations.map { it.qualifiedName }}")
+
+    val expectedPaths = listOf("MethodsInDifferentClasses.testMethod -> Helper.helperMethod -> Service.serviceMethod -> @RequiresReadLock")
+
+    println("Expected paths: $expectedPaths")
+
+    // Find the test method
+    val sourceMethod = testClass.findMethodsByName("testMethod", false).firstOrNull()
+    assertNotNull("Could not find testMethod", sourceMethod)
+    println("Found method: ${sourceMethod?.name}")
+
+    // Analyze the method
+    val executionPaths = analyzer.analyzeMethod(sourceMethod!!)
+    println("Found ${executionPaths.size} execution paths")
+
+    val actualPaths = executionPaths.map { it.pathString }
+
+    assertEquals("Paths don't match!", expectedPaths, actualPaths)
+  }
+
   fun testNoLockRequirements() {
     doTest()
   }
