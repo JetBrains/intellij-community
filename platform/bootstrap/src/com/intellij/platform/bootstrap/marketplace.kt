@@ -109,17 +109,13 @@ internal fun initMarketplace() {
 }
 
 private class SimpleVersion(private val major: Int, private val minor: Int) : Comparable<SimpleVersion> {
-  private fun isAtLeast(ver: Comparable<SimpleVersion>) = ver <= this
-
-  fun isCompatible(since: SimpleVersion?, until: SimpleVersion?): Boolean = when {
-    since != null && until != null -> compareTo(since) >= 0 && compareTo(until) <= 0
-    since != null -> isAtLeast(since)
-    until != null -> until.isAtLeast(this)
-    else -> true  // assume compatible of nothing is specified
-  }
+  fun isCompatible(since: SimpleVersion?, until: SimpleVersion?): Boolean =
+    (since == null || this >= since) && (until == null || this <= until)  // assume compatible when no bounds are specified
 
   override fun compareTo(other: SimpleVersion): Int =
     if (major != other.major) major.compareTo(other.major) else minor.compareTo(other.minor)
+
+  override fun toString(): String = "${major}/${minor}"
 }
 
 private fun parseVersion(rawText: String?): SimpleVersion? {
