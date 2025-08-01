@@ -398,16 +398,12 @@ open class ProjectRootManagerImpl(
 
   @ApiStatus.Internal
   override fun setProjectSdk(sdk: Sdk?) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (sdk == null) {
-      stateComponent.projectSdkName = null
-      stateComponent.projectSdkType = null
+      setOrClearProjectSdkName(null, null)
     }
     else {
-      stateComponent.projectSdkName = sdk.getName()
-      stateComponent.projectSdkType = sdk.getSdkType().getName()
+      setOrClearProjectSdkName(sdk.getName(), sdk.getSdkType().getName())
     }
-    projectJdkChanged()
   }
 
   fun projectJdkChanged() {
@@ -439,6 +435,11 @@ open class ProjectRootManagerImpl(
 
   @ApiStatus.Internal
   override fun setProjectSdkName(name: String, sdkTypeName: String) {
+    setOrClearProjectSdkName(name, sdkTypeName)
+  }
+
+  private fun setOrClearProjectSdkName(name: String?, sdkTypeName: String?) {
+    LOG.assertTrue((name == null) == (sdkTypeName == null), "Sdk name and type should both be null or not-null")
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     stateComponent.projectSdkName = name
     stateComponent.projectSdkType = sdkTypeName
