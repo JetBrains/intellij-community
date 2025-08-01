@@ -129,7 +129,6 @@ internal class ReworkedTerminalView(
       scrollingModel = null,
       fusCursorPaintingListener,
       fusFirstOutputListener,
-      withTopAndBottomInsets = false,
     )
     alternateBufferHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
       FrontendTerminalHyperlinkFacade(
@@ -164,7 +163,6 @@ internal class ReworkedTerminalView(
       scrollingModel,
       fusCursorPaintingListener,
       fusFirstOutputListener,
-      withTopAndBottomInsets = true,
     )
 
     outputEditor.putUserData(TerminalSessionModel.KEY, sessionModel)
@@ -338,7 +336,6 @@ internal class ReworkedTerminalView(
     scrollingModel: TerminalOutputScrollingModel?,
     fusCursorPainterListener: TerminalFusCursorPainterListener?,
     fusFirstOutputListener: TerminalFusFirstOutputListener?,
-    withTopAndBottomInsets: Boolean,
   ) {
     val parentDisposable = coroutineScope.asDisposable() // same lifecycle as `this@ReworkedTerminalView`
 
@@ -370,10 +367,6 @@ internal class ReworkedTerminalView(
     val cursorPainter = TerminalCursorPainter.install(editor, model, sessionModel, coroutineScope.childScope("TerminalCursorPainter"))
     if (fusCursorPainterListener != null) {
       cursorPainter.addListener(parentDisposable, fusCursorPainterListener)
-    }
-
-    if (withTopAndBottomInsets) {
-      addTopAndBottomInsets(editor)
     }
 
     val eventsHandler = TerminalEventsHandlerImpl(sessionModel, editor, encodingManager, terminalInput, settings, scrollingModel, model)
@@ -408,6 +401,7 @@ internal class ReworkedTerminalView(
     val document = createDocument(withLanguage = true)
     val editor = createEditor(document, settings, parentDisposable)
     editor.putUserData(TerminalDataContextUtils.IS_OUTPUT_MODEL_EDITOR_KEY, true)
+    addTopAndBottomInsets(editor)
 
     BackgroundHighlightingUtil.disableBackgroundHighlightingForeverIn(editor)
     TextEditorProvider.putTextEditor(editor, TerminalOutputTextEditor(editor))
