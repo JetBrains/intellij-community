@@ -26,8 +26,9 @@ class PsiSyntaxBuilderFactory {
   ): PsiSyntaxBuilder {
     val parserDefinition = getParserDefinition(lang, chameleon.getElementType())
     val tokenConverter = getConverter(lang, chameleon.getElementType())
-    val syntaxDefinition = LanguageSyntaxDefinitions.INSTANCE.forLanguage(lang) ?: throw IllegalStateException("No SyntaxDefinition for language: $lang")
-    val actualLexer = lexer ?: syntaxDefinition.getLexer()
+    val syntaxDefinition = LanguageSyntaxDefinitions.INSTANCE.forLanguage(lang)
+                           ?: throw IllegalStateException("No SyntaxDefinition for language: $lang")
+    val actualLexer = lexer ?: syntaxDefinition.createLexer()
     val cachedLexemes = extractCachedLexemes(chameleon)
     val lexingResult = performLexingIfNecessary(cachedLexemes, actualLexer, text, lang)
 
@@ -57,7 +58,7 @@ class PsiSyntaxBuilderFactory {
     val parserDefinition = getParserDefinition(null, chameleon.getTokenType())
     val tokenConverter = getConverter(lang, chameleon.getTokenType())
     val languageSyntaxDefinition = LanguageSyntaxDefinitions.INSTANCE.forLanguage(lang)
-    val actualLexer = lexer ?: languageSyntaxDefinition.getLexer()
+    val actualLexer = lexer ?: languageSyntaxDefinition.createLexer()
     val cachedLexemes = extractCachedLexemes(chameleon)
     val lexingResult = performLexingIfNecessary(cachedLexemes, actualLexer, text, lang)
     return PsiSyntaxBuilderImpl(

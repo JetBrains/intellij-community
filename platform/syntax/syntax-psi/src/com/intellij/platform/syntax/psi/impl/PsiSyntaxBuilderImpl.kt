@@ -57,8 +57,8 @@ internal class PsiSyntaxBuilderImpl(
 
   internal val builder: SyntaxTreeBuilder = builder(
     text = text,
-    whitespaces = syntaxDefinition.getWhitespaceTokens(),
-    comments = syntaxDefinition.getCommentTokens(),
+    whitespaces = syntaxDefinition.whitespaces,
+    comments = syntaxDefinition.comments,
     tokenList = tokenList,
   )
     .withStartOffset(startOffset)
@@ -169,7 +169,7 @@ internal class PsiSyntaxBuilderImpl(
     item: SyntaxTreeBuilder.Production,
     parent: CompositeNode,
     nodeData: NodeData,
-    markedId: Int
+    markedId: Int,
   ): ErrorNode {
     val error = ErrorNode(
       markerId = markedId,

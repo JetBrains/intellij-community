@@ -3,15 +3,18 @@ package com.intellij.java.syntax
 
 import com.intellij.java.syntax.element.JavaWhitespaceOrCommentBindingPolicy
 import com.intellij.java.syntax.element.JavaDocSyntaxElementType
+import com.intellij.java.syntax.element.JavaSyntaxElementType
 import com.intellij.java.syntax.element.JavaSyntaxTokenType
 import com.intellij.java.syntax.lexer.JavaDocLexer
 import com.intellij.java.syntax.lexer.JavaLexer
 import com.intellij.java.syntax.lexer.JavaTypeEscapeLexer
+import com.intellij.java.syntax.parser.JavaParser
 import com.intellij.platform.syntax.LanguageSyntaxDefinition
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.SyntaxLanguage
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.lexer.Lexer
+import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import com.intellij.pom.java.LanguageLevel
@@ -29,19 +32,24 @@ object JavaSyntaxDefinition : LanguageSyntaxDefinition {
   @JvmStatic
   fun createLexerWithMarkdownEscape(level: LanguageLevel): Lexer = JavaTypeEscapeLexer(createLexer(level))
 
-  val commentSet: SyntaxElementTypeSet = syntaxElementTypeSetOf(
+  @JvmStatic
+  fun createParser(languageLevel: LanguageLevel): JavaParser = JavaParser(languageLevel)
+
+  override fun createLexer(): Lexer = JavaLexer(LanguageLevel.HIGHEST)
+
+  override fun parse(builder: SyntaxTreeBuilder) {
+    val root = builder.mark()
+    createParser(LanguageLevel.HIGHEST).fileParser.parse(builder)
+    root.done(JavaSyntaxElementType.JAVA_FILE)
+  }
+
+  override val comments: SyntaxElementTypeSet = syntaxElementTypeSetOf(
     JavaSyntaxTokenType.END_OF_LINE_COMMENT,
     JavaSyntaxTokenType.C_STYLE_COMMENT,
     JavaDocSyntaxElementType.DOC_COMMENT
   )
 
-  val whitespaces: SyntaxElementTypeSet = syntaxElementTypeSetOf(SyntaxTokenTypes.WHITE_SPACE)
+  override val whitespaces: SyntaxElementTypeSet = syntaxElementTypeSetOf(SyntaxTokenTypes.WHITE_SPACE)
 
-  override fun getLexer(): Lexer = JavaLexer(LanguageLevel.HIGHEST)
-
-  override fun getCommentTokens(): SyntaxElementTypeSet = commentSet
-
-  override fun getWhitespaceTokens(): SyntaxElementTypeSet = whitespaces
-
-  override fun getWhitespaceOrCommentBindingPolicy(): WhitespaceOrCommentBindingPolicy = JavaWhitespaceOrCommentBindingPolicy
+  override val whitespaceOrCommentBindingPolicy: WhitespaceOrCommentBindingPolicy = JavaWhitespaceOrCommentBindingPolicy
 }
