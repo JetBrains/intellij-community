@@ -209,6 +209,7 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - b:<init>(com.intellij.codeInsight.actions.CodeInsightAction,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
 - f:getAction():com.intellij.codeInsight.actions.CodeInsightAction
+- getAdditionalInfo():java.lang.String
 - f:getCustomI18nName():java.lang.String
 - f:getCustomName():java.lang.String
 - getPresentableName():java.lang.String

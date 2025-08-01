@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
@@ -79,6 +80,16 @@ abstract class AbstractGenerateCommandProvider : CommandProvider, DumbAware {
     var customName: String? = null,
     var customI18nName: @Nls String? = null,
   ) : CompletionCommand() {
+
+    override val additionalInfo: String?
+      get() {
+        val shortcutText = KeymapUtil.getFirstKeyboardShortcutText("Generate")
+        if (shortcutText.isNotEmpty()) {
+          return shortcutText
+        }
+        return null
+      }
+
     override val presentableName: @Nls String
       get() = customI18nName ?: (CodeInsightBundle.message("command.completion.generate.text", action.templateText))
 
