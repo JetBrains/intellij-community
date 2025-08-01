@@ -28,7 +28,7 @@ class ParallelBuildTest: JpsBuildTestCase() {
       val file = createFile("m$i/Class$i.java", "public class Class$i { Class${i-1} prev; }")
       val module = addModule("m$i", PathUtil.getParentPath(file))
       if (i > 1) {
-        module.dependenciesList.addModuleDependency(myProject.modules.first { it.name == "m${i-1}" })
+        module.dependenciesList.addModuleDependency(myProject.findModuleByName("m${i-1}")!!)
       }
     }
     rebuildAllModules()

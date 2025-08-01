@@ -67,7 +67,7 @@ class ModuleClasspathTest : JpsBuildTestCase() {
   }
 
   private fun createChunk(moduleName: String): ModuleChunk {
-    val module = myProject.modules.first { it.name == moduleName }
+    val module = myProject.findModuleByName(moduleName)!!
     return ModuleChunk(setOf(ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION)))
   }
 

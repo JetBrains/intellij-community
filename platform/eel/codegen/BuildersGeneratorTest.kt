@@ -349,7 +349,7 @@ class BuildersGeneratorTest {
     val newEelModule: Module = writeAction {
       val projectModel = ModuleManager.getInstance(tempProject).getModifiableModel()
 
-      val jpsModuleQueue = mutableListOf(ultimateProject.modules.first { it.name == moduleName })
+      val jpsModuleQueue = mutableListOf(ultimateProject.findModuleByName(moduleName)!!)
       // TODO Dependencies don't work well. Kotlin can't resolve types from them.
       run {
         var i = 0

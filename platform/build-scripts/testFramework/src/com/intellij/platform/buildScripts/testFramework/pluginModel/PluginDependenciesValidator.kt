@@ -43,7 +43,7 @@ import kotlin.io.path.pathString
  */
 class PluginDependenciesValidator private constructor(
   private val tempDir: Path,
-  project: JpsProject,
+  private val project: JpsProject,
   private val productMode: ProductMode,
   pluginLayoutProvider: PluginLayoutProvider,
   private val missingDependenciesToIgnore: List<Pair<String, String>>,
@@ -84,7 +84,6 @@ class PluginDependenciesValidator private constructor(
     }
     .associateBy { it.mainJpsModule }
 
-  private val jpsModules = project.modules.associateBy { it.name }
   private val zipPool = ZipFilePoolImpl()
   private val errors = ArrayList<PluginModuleConfigurationError>()
 
@@ -109,7 +108,7 @@ class PluginDependenciesValidator private constructor(
     val unusedIgnoredDependenciesPatterns = missingDependenciesToIgnore.toMutableSet()
 
     checkSourceModule@ for ((sourceModuleName, sourceDescriptors) in jpsModuleToRuntimeDescriptors) {
-      val sourceModule = jpsModules.getValue(sourceModuleName)
+      val sourceModule = project.findModuleByName(sourceModuleName) ?: error("Cannot find module $sourceModuleName")
       if (sourceModule.getSourceRoots(JavaSourceRootType.SOURCE).toList().isEmpty()) {
         //for now only dependencies used in source code are checked
         continue
@@ -282,7 +281,7 @@ class PluginDependenciesValidator private constructor(
   }
 
   private fun createPluginDescriptor(pluginLayout: PluginLayoutDescription, loadingContext: PluginDescriptorLoadingContext): PluginMainDescriptor {
-    val mainModule = jpsModules[pluginLayout.mainJpsModule] ?: error("Cannot find module ${pluginLayout.mainJpsModule}")
+    val mainModule = project.findModuleByName(pluginLayout.mainJpsModule) ?: error("Cannot find module ${pluginLayout.mainJpsModule}")
     val pluginDir = tempDir.resolve("plugin").resolve(mainModule.name)
     val pluginDescriptorPath = findResourceFile(mainModule, pluginLayout.pluginDescriptorPath)
     require(pluginDescriptorPath != null) { "Cannot find plugin descriptor file in '${mainModule.name}' module" }
@@ -326,7 +325,7 @@ class PluginDependenciesValidator private constructor(
       }
       val file = layout.jpsModulesInClasspath
         .asSequence()
-        .mapNotNull { jpsModules[it] }
+        .mapNotNull { project.findModuleByName(it) }
         .flatMap { it.productionSourceRoots }
         .firstNotNullOfOrNull { it.findFile(path) }
       if (file != null) {
@@ -371,7 +370,7 @@ class PluginDependenciesValidator private constructor(
     override fun resolvePath(readContext: PluginDescriptorReaderContext, dataLoader: DataLoader, relativePath: String): PluginDescriptorBuilder? {
       val path = LoadPathUtil.toLoadPath(relativePath)
       for (pluginModule in layout.jpsModulesInClasspath) {
-        val module = jpsModules[pluginModule] ?: continue
+        val module = project.findModuleByName(pluginModule) ?: continue
         for (root in module.productionSourceRoots) {
           val file = root.findFile(path)
           if (file != null) {
@@ -387,7 +386,7 @@ class PluginDependenciesValidator private constructor(
 
     override fun resolveModuleFile(readContext: PluginDescriptorReaderContext, dataLoader: DataLoader, path: String): PluginDescriptorBuilder {
       val jpsModuleName = customConfigFileToModule[path] ?: path.removeSuffix(".xml")
-      val jpsModule = jpsModules[jpsModuleName] 
+      val jpsModule = project.findModuleByName(jpsModuleName) 
                       ?: error("Cannot find module '$jpsModuleName' referenced in '${layout.mainJpsModule}' plugin")
       val configFilePath = path.replace('/', '.')
       val moduleDescriptor = findResourceFile(jpsModule, configFilePath)

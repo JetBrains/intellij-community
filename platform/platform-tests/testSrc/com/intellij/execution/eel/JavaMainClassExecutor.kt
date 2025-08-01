@@ -69,7 +69,7 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
     private fun module(helperModuleName: String): JpsModule {
       for (homePath in arrayOf(PathManager.getHomePath(), PathManager.getCommunityHomePath())) {
         val jpsProject = JpsSerializationManager.getInstance().loadProject(homePath, mapOf())
-        val helperModule = jpsProject.modules.firstOrNull { module -> module.name == helperModuleName }
+        val helperModule = jpsProject.findModuleByName(helperModuleName)
         if (helperModule != null) return helperModule
         logger.value.warn("$helperModuleName not found in $homePath modules. Checked: ${jpsProject.modules}")
       }
