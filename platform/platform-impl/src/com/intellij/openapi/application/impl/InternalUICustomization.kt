@@ -85,8 +85,6 @@ open class InternalUICustomization {
 
   open fun installEditorBackground(component: JComponent) {}
 
-  open fun paintBeforeEditorEmptyText(component: JComponent, graphics: Graphics) {}
-
   open fun frameHeaderBackgroundConverter(color: Color?): Color? = color
 
   open fun transformGraphics(component: JComponent, graphics: Graphics): Graphics = graphics

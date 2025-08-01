@@ -262,6 +262,17 @@ open class EditorsSplitters internal constructor(
     }
   }
 
+  internal var borderPainter: BorderPainter = DefaultBorderPainter()
+
+  override fun paintChildren(g: Graphics) {
+    super.paintChildren(g)
+    borderPainter.paintAfterChildren(this, g)
+  }
+
+  override fun isPaintingOrigin(): Boolean {
+    return borderPainter.isPaintingOrigin(this)
+  }
+
   fun writeExternal(element: Element) {
     writeExternal(element = element, delayedStates = emptyMap())
   }
