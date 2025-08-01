@@ -28,7 +28,6 @@ import com.intellij.platform.project.findProjectOrNull
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewPresentation
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
@@ -49,7 +48,6 @@ internal class FindRemoteApiImpl : FindRemoteApi {
       val isReplaceState = findModel.isReplaceState
       val previousResult = ThreadLocal<UsageInfo2UsageAdapter>()
       val usagesCount = AtomicInteger()
-      var firstResultJob: Job? = null
 
       val project = projectId.findProjectOrNull()
       if (project == null) {
@@ -74,43 +72,36 @@ internal class FindRemoteApiImpl : FindRemoteApi {
         val previousItem: UsageInfo2UsageAdapter? = previousResult.get()
         if (!isReplaceState && previousItem != null) adapter.merge(previousItem)
         previousResult.set(adapter)
-        val job = launch {
-          readAction { adapter.updateCachedPresentation() }
-          val textChunks = adapter.text.map {
-            it.toSerializableTextChunk()
-          }
-          val bgColor = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile)?.rpcId()
-          val presentablePath = readAction { getPresentableFilePath(project, scope, virtualFile) }
-
-          val result = FindInFilesResult(
-            presentation = textChunks,
-            line = adapter.line,
-            navigationOffset = adapter.navigationOffset,
-            mergedOffsets = adapter.mergedInfos.map { it.navigationOffset },
-            length = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
-            fileId = virtualFile.rpcId(),
-            presentablePath = readAction {
-              if (virtualFile.parent == null) FindPopupPanel.getPresentablePath(project, virtualFile) ?: virtualFile.presentableUrl
-              else FindPopupPanel.getPresentablePath(project, virtualFile.parent) + File.separator + virtualFile.name
-            },
-            shortenPresentablePath = presentablePath,
-            backgroundColor = bgColor,
-            tooltipText = adapter.tooltipText,
-            iconId = adapter.icon?.rpcId(),
-          )
-
-          if (usageNum == 1) {
-            send(result)
-          }
-          else { // Wait for the first result before sending others
-            firstResultJob?.join()
-            send(result)
-          }
-
-          if (usagesCount.get() > maxUsagesCount && sentItems.incrementAndGet() >= maxUsagesCount) close()
+        adapter.updateCachedPresentation()
+        val textChunks = adapter.text.map {
+          it.toSerializableTextChunk()
         }
-        if (usageNum == 1) firstResultJob = job
-        job.start()
+        val bgColor = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile)?.rpcId()
+        val presentablePath = getPresentableFilePath(project, scope, virtualFile)
+
+        val result = FindInFilesResult(
+          presentation = textChunks,
+          line = adapter.line,
+          navigationOffset = adapter.navigationOffset,
+          mergedOffsets = adapter.mergedInfos.map { it.navigationOffset },
+          length = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
+          fileId = virtualFile.rpcId(),
+          presentablePath =
+            if (virtualFile.parent == null) FindPopupPanel.getPresentablePath(project, virtualFile) ?: virtualFile.presentableUrl
+            else FindPopupPanel.getPresentablePath(project, virtualFile.parent) + File.separator + virtualFile.name
+          ,
+          shortenPresentablePath = presentablePath,
+          backgroundColor = bgColor,
+          tooltipText = adapter.tooltipText,
+          iconId = adapter.icon?.rpcId(),
+        )
+
+        launch {
+          send(result)
+        }
+
+        if (usagesCount.get() > maxUsagesCount && sentItems.incrementAndGet() >= maxUsagesCount) close()
+
         usagesCount.get() <= maxUsagesCount
       }
     }
