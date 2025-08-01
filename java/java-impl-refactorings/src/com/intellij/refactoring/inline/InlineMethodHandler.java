@@ -1,5 +1,4 @@
-
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.CommonBundle;
@@ -100,13 +99,7 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
     }
 
     if (method.isConstructor()) {
-      if (method.isVarArgs()) {
-        String message = JavaRefactoringBundle.message("refactoring.cannot.be.applied.to.vararg.constructors", getRefactoringName());
-        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_CONSTRUCTOR);
-        return;
-      }
-      final boolean chainingConstructor = InlineUtil.isChainingConstructor(method);
-      if (!chainingConstructor) {
+      if (!InlineUtil.isChainingConstructor(method)) {
         InlineObjectProcessor processor = InlineObjectProcessor.create(reference, method);
         if (processor != null) {
           if (Messages.showOkCancelDialog(JavaRefactoringBundle.message("inline.method.object.suggestion.message"),

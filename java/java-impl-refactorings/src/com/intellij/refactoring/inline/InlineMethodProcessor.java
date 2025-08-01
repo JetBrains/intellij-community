@@ -565,28 +565,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiMethod oldConstructor = constructorCall.resolveMethod();
     LOG.assertTrue(oldConstructor != null);
     oldConstructor = (PsiMethod)oldConstructor.getNavigationElement();
-    PsiExpression[] instanceCreationArguments = constructorCall.getArgumentList().getExpressions();
-    if (oldConstructor.isVarArgs()) { //wrap with explicit array
-      final PsiParameter[] parameters = oldConstructor.getParameterList().getParameters();
-      final PsiType varargType = parameters[parameters.length - 1].getType();
-      if (varargType instanceof PsiEllipsisType) {
-        final PsiType arrayType =
-          constructorCall.resolveMethodGenerics().getSubstitutor().substitute(((PsiEllipsisType)varargType).getComponentType());
-        final PsiExpression[] exprs = new PsiExpression[parameters.length];
-        System.arraycopy(instanceCreationArguments, 0, exprs, 0, parameters.length - 1);
-        StringBuilder varargs = new StringBuilder();
-        for (int i = parameters.length - 1; i < instanceCreationArguments.length; i++) {
-          if (!varargs.isEmpty()) varargs.append(", ");
-          varargs.append(instanceCreationArguments[i].getText());
-        }
 
-        exprs[parameters.length - 1] = JavaPsiFacade.getElementFactory(constructorCall.getProject())
-          .createExpressionFromText("new " + arrayType.getCanonicalText() + "[]{" + varargs + "}", constructorCall);
-
-        instanceCreationArguments = exprs;
-      }
-    }
-
+    PsiExpression[] arguments = CommonJavaRefactoringUtil.getNonVarargArguments(constructorCall);
     PsiStatement[] statements = oldConstructor.getBody().getStatements();
     LOG.assertTrue(statements.length == 1 && statements[0] instanceof PsiExpressionStatement);
     PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
@@ -594,14 +574,16 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     ChangeContextUtil.encodeContextInfo(expression, true);
 
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression.copy();
-    final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
-    for (PsiExpression arg : args) {
-      replaceParameterReferences(arg, oldConstructor, instanceCreationArguments);
+    for (PsiExpression arg : methodCall.getArgumentList().getExpressions()) {
+      replaceParameterReferences(arg, oldConstructor, arguments);
     }
-
     try {
       final PsiExpressionList exprList = (PsiExpressionList) constructorCall.getArgumentList().replace(methodCall.getArgumentList());
       ChangeContextUtil.decodeContextInfo(exprList, PsiTreeUtil.getParentOfType(constructorCall, PsiClass.class), null);
+      if (!exprList.isEmpty()) {
+        PsiExpression[] expressions = exprList.getExpressions();
+        CommonJavaRefactoringUtil.tryToInlineArrayCreationForVarargs(expressions[expressions.length - 1]);
+      }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

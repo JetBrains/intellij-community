@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -854,6 +854,47 @@ public final class CommonJavaRefactoringUtil {
                                           context,
                                           true,
                                           (allowConjunctions && PsiUtil.isLanguageLevel8OrHigher(context)) ? JavaCodeFragmentFactory.ALLOW_INTERSECTION : 0);
+  }
+
+  /**
+   * Returns the arguments of the call with any vararg arguments wrapped in an array.
+   * Arguments to calls to non-vararg methods are returned as-is.
+   * 
+   * @param call  the call to return the arguments for.
+   * @return the arguments to the call, with vararg arguments wrapped in an array when present
+   */
+  public static PsiExpression[] getNonVarargArguments(PsiCall call) {
+    final PsiExpressionList argumentList = call.getArgumentList();
+    if (argumentList == null) return PsiExpression.EMPTY_ARRAY;
+    final PsiExpression[] arguments = argumentList.getExpressions();
+    final JavaResolveResult resolveResult = call.resolveMethodGenerics();
+    final PsiMethod method = (PsiMethod)resolveResult.getElement();
+    if (method == null || !method.isVarArgs()) {
+      return arguments;
+    }
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    final PsiType varargType = parameters[parameters.length - 1].getType();
+    if (!(varargType instanceof PsiEllipsisType ellipsis)) {
+      return arguments;
+    }
+    final PsiType argumentType = arguments[parameters.length - 1].getType();
+    boolean isCompatibleArray = arguments.length == parameters.length && argumentType != null && varargType.isAssignableFrom(argumentType);
+    if (isCompatibleArray) {
+      return arguments;
+    }
+    final PsiType arrayType = resolveResult.getSubstitutor().substitute(ellipsis.getComponentType());
+    final PsiExpression[] result = new PsiExpression[parameters.length];
+    System.arraycopy(arguments, 0, result, 0, parameters.length - 1);
+    
+    final StringBuilder varargs = new StringBuilder();
+    for (int i = parameters.length - 1; i < arguments.length; i++) {
+      if (!varargs.isEmpty()) varargs.append(',');
+      varargs.append(arguments[i].getText());
+    }
+    result[parameters.length - 1] = JavaPsiFacade.getElementFactory(call.getProject())
+      .createExpressionFromText("new " + arrayType.getCanonicalText() + "[]{" + varargs + "}", call);
+
+    return result;
   }
 
   public static void inlineArrayCreationForVarargs(final PsiNewExpression arrayCreation) {

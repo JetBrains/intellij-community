@@ -22,7 +22,6 @@ import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -296,40 +295,15 @@ class InlineToAnonymousConstructorProcessor {
   }
 
   private PsiExpression[] initConstructorArguments() {
-    PsiExpressionList argumentList = myNewExpression.getArgumentList();
-    return argumentList != null ? argumentList.getExpressions() : PsiExpression.EMPTY_ARRAY;
+    return CommonJavaRefactoringUtil.getNonVarargArguments(myNewExpression);
   }
 
   private void generateLocalsForArguments() {
     for (int i = 0; i < myConstructorArguments.length; i++) {
       PsiExpression expr = myConstructorArguments[i];
       PsiParameter parameter = myConstructorParameters.getParameters()[i];
-      if (parameter.isVarArgs()) {
-        PsiEllipsisType ellipsisType = (PsiEllipsisType)parameter.getType();
-        PsiType baseType = ellipsisType.getComponentType();
-        @NonNls StringBuilder exprBuilder = new StringBuilder("new ");
-        exprBuilder.append(baseType.getCanonicalText());
-        exprBuilder.append("[] { }");
-        try {
-          PsiNewExpression newExpr = (PsiNewExpression) myElementFactory.createExpressionFromText(exprBuilder.toString(), myClass);
-          PsiArrayInitializerExpression arrayInitializer = newExpr.getArrayInitializer();
-          assert arrayInitializer != null;
-          for(int j = i; j < myConstructorArguments.length; j++) {
-            arrayInitializer.add(myConstructorArguments[j]);
-          }
-
-          PsiLocalVariable variable = generateLocal(parameter.getName(), ellipsisType.toArrayType(), newExpr);
-          myLocalsForParameters.put(parameter, variable);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-
-        break;
-      }
-      else if (!isConstant(expr)) {
-        PsiLocalVariable variable = generateLocal(parameter.getName(), parameter.getType(), expr);
-        myLocalsForParameters.put(parameter, variable);
+      if (!isConstant(expr)) {
+        myLocalsForParameters.put(parameter, generateLocal(parameter.getName(), parameter.getType(), expr));
       }
     }
   }
