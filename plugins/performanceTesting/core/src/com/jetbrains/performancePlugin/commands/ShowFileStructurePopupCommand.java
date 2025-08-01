@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
+import java.util.Collection;
+
 import static com.intellij.ide.actions.ViewStructureAction.createPopup;
 
 public final class ShowFileStructurePopupCommand extends AbstractCommand implements Disposable {
@@ -36,6 +38,16 @@ public final class ShowFileStructurePopupCommand extends AbstractCommand impleme
     ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
       @NotNull Project project = context.getProject();
       FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor();
+      //fallback for the remote case to avoid changing the default monolith behavior
+      if (fileEditor == null) {
+        Collection<FileEditor> editors = FileEditorManager.getInstance(project).getSelectedEditorWithRemotes();
+        if (editors.size() > 1) {
+          actionCallback.reject("Too many selected editors");
+          return;
+        }
+        fileEditor = editors.iterator().next();
+      }
+
       if (fileEditor != null) {
         Span span = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).startSpan();
         try (Scope ignored = span.makeCurrent()) {
