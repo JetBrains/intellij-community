@@ -48,26 +48,128 @@ open class ProjectRootManagerImpl(
   @JvmField val project: Project,
   @JvmField protected val coroutineScope: CoroutineScope,
 ) : ProjectRootManagerEx(), PersistentStateComponent<Element> {
+
+  private class ProjectRootManagerStateComponentImpl(
+    private val notifyAll: () -> Unit,
+    private val notifyExtensionsOnly: suspend (Sdk?) -> Unit,
+  ) {
+
+    var projectSdkName: String? = null
+    var projectSdkType: String? = null
+    private var isStateLoaded = false
+
+    @Volatile
+    var shouldFireRootsChanged: Ref<Boolean>? = null
+
+    fun loadState(element: Element, project: Project, coroutineScope: CoroutineScope) {
+      LOG.debug("Loading state into element")
+      var stateChanged = false
+      for (extension in EP_NAME.getExtensions(project)) {
+        stateChanged = stateChanged or extension.readExternalElement(element)
+      }
+
+      val oldSdkName = projectSdkName
+      val oldSdkType = projectSdkType
+      projectSdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR)
+      projectSdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR)
+      if (oldSdkName != projectSdkName) stateChanged = true
+      if (oldSdkType != projectSdkType) stateChanged = true
+      val app = ApplicationManager.getApplication()
+      LOG.debug { "ProjectRootManagerImpl state was changed: $stateChanged" }
+      if (app != null) {
+        val isStateLoaded = isStateLoaded
+        if (stateChanged) {
+          if (!project.isInitialized) {
+            shouldFireRootsChanged = Ref.create(isStateLoaded)
+          }
+          else {
+            coroutineScope.launch {
+              // make sure we execute it only after any current modality dialog
+              withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+              }
+              applyState(isStateLoaded)
+            }
+          }
+        }
+      }
+      isStateLoaded = true
+    }
+
+    fun noStateLoaded() {
+      isStateLoaded = true
+    }
+
+    fun getState(project: Project): Element {
+      val element = Element("state")
+      element.setAttribute(ATTRIBUTE_VERSION, "2")
+      for (extension in EP_NAME.getExtensions(project)) {
+        extension.writeExternal(element)
+      }
+      if (projectSdkName != null) {
+        element.setAttribute(PROJECT_JDK_NAME_ATTR, projectSdkName)
+      }
+      if (projectSdkType != null) {
+        element.setAttribute(PROJECT_JDK_TYPE_ATTR, projectSdkType)
+      }
+      if (element.attributes.size == 1) {
+        // remove an empty element to not write defaults
+        element.removeAttribute(ATTRIBUTE_VERSION)
+      }
+      return element
+    }
+
+    suspend fun applyState(isStateLoaded: Boolean) {
+      if (isStateLoaded) {
+        LOG.debug("Run write action for projectJdkChanged()")
+        backgroundWriteAction {
+          notifyAll()
+        }
+        return
+      }
+
+      // prevent root changed event during startup to improve startup performance
+      val projectSdkName = projectSdkName
+      val sdk = if (projectSdkName == null) {
+        null
+      }
+      else {
+        val projectJdkTable = serviceAsync<ProjectJdkTable>()
+        readActionBlocking {
+          if (projectSdkType == null) {
+            projectJdkTable.findJdk(projectSdkName)
+          }
+          else {
+            projectJdkTable.findJdk(projectSdkName, projectSdkType!!)
+          }
+        }
+      }
+
+      notifyExtensionsOnly(sdk)
+    }
+
+    suspend fun initProjectActivity(){
+      val oldShouldFireRootsChanged = shouldFireRootsChanged?.get() ?: return
+      shouldFireRootsChanged = null
+      applyState(oldShouldFireRootsChanged)
+    }
+  }
+
   private val projectJdkEventDispatcher = EventDispatcher.create(ProjectJdkListener::class.java)
   private val moduleRootManagerInstances = ConcurrentHashMap<Module, ModuleRootManager>()
-  private var projectSdkName: String? = null
-  private var projectSdkType: String? = null
-  private val rootCache: OrderRootsCache
-  private var isStateLoaded = false
+  private val stateComponent = ProjectRootManagerStateComponentImpl(this::projectJdkChanged, this::notifyExtensions)
 
-  @Volatile
-  var shouldFireRootsChanged: Ref<Boolean>? = null
+  private val rootCache: OrderRootsCache
 
   init {
     @Suppress("LeakingThis")
     rootCache = getOrderRootsCache(project)
     project.getMessageBus().simpleConnect().subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, object : ProjectJdkTable.Listener {
       override fun jdkNameChanged(jdk: Sdk, previousName: String) {
-        val currentName = projectSdkName
+        val currentName = getProjectSdkName()
         if (previousName == currentName) {
           // if already had jdk name and that name was the name of the jdk just changed
-          projectSdkName = jdk.getName()
-          projectSdkType = jdk.getSdkType().getName()
+          stateComponent.projectSdkName = jdk.getName()
+          stateComponent.projectSdkType = jdk.getSdkType().getName()
         }
       }
     })
@@ -280,7 +382,7 @@ open class ProjectRootManagerImpl(
     }
 
     val projectJdkTable = ProjectJdkTable.getInstance(project)
-    val sdkType = projectSdkType
+    val sdkType = projectSdkTypeName
     return if (sdkType == null) {
       projectJdkTable.findJdk(sdkName)
     } else {
@@ -289,21 +391,21 @@ open class ProjectRootManagerImpl(
   }
 
   @ApiStatus.Internal
-  override fun getProjectSdkName(): String? = projectSdkName
+  override fun getProjectSdkName(): String? = stateComponent.projectSdkName
 
   @ApiStatus.Internal
-  override fun getProjectSdkTypeName(): String? = projectSdkType
+  override fun getProjectSdkTypeName(): String? = stateComponent.projectSdkType
 
   @ApiStatus.Internal
   override fun setProjectSdk(sdk: Sdk?) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (sdk == null) {
-      projectSdkName = null
-      projectSdkType = null
+      stateComponent.projectSdkName = null
+      stateComponent.projectSdkType = null
     }
     else {
-      projectSdkName = sdk.getName()
-      projectSdkType = sdk.getSdkType().getName()
+      stateComponent.projectSdkName = sdk.getName()
+      stateComponent.projectSdkType = sdk.getSdkType().getName()
     }
     projectJdkChanged()
   }
@@ -321,6 +423,16 @@ open class ProjectRootManagerImpl(
     }
   }
 
+  private suspend fun notifyExtensions(sdk: Sdk?){
+    LOG.debug("Run write action for extension.projectSdkChanged(sdk)")
+    val extensions = EP_NAME.getExtensions(project)
+    backgroundWriteAction {
+      for (extension in extensions) {
+        extension.projectSdkChanged(sdk)
+      }
+    }
+  }
+
   @get:ApiStatus.Internal
   protected open val actionToRunWhenProjectJdkChanges: Runnable
     get() = Runnable { projectJdkEventDispatcher.getMulticaster().projectJdkChanged() }
@@ -328,8 +440,8 @@ open class ProjectRootManagerImpl(
   @ApiStatus.Internal
   override fun setProjectSdkName(name: String, sdkTypeName: String) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-    projectSdkName = name
-    projectSdkType = sdkTypeName
+    stateComponent.projectSdkName = name
+    stateComponent.projectSdkType = sdkTypeName
     projectJdkChanged()
   }
 
@@ -343,97 +455,17 @@ open class ProjectRootManagerImpl(
 
   @ApiStatus.Internal
   override fun loadState(element: Element) {
-    LOG.debug("Loading state into element")
-    var stateChanged = false
-    for (extension in EP_NAME.getExtensions(project)) {
-      stateChanged = stateChanged or extension.readExternalElement(element)
-    }
-
-    val oldSdkName = projectSdkName
-    val oldSdkType = projectSdkType
-    projectSdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR)
-    projectSdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR)
-    if (oldSdkName != projectSdkName) stateChanged = true
-    if (oldSdkType != projectSdkType) stateChanged = true
-    val app = ApplicationManager.getApplication()
-    LOG.debug { "ProjectRootManagerImpl state was changed: $stateChanged" }
-    if (app != null) {
-      val isStateLoaded = isStateLoaded
-      if (stateChanged) {
-        if (!project.isInitialized) {
-          shouldFireRootsChanged = Ref.create(isStateLoaded)
-        }
-        else {
-          coroutineScope.launch {
-            // make sure we execute it only after any current modality dialog
-            withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-            }
-            applyState(isStateLoaded)
-          }
-        }
-      }
-    }
-    isStateLoaded = true
-  }
-
-  internal suspend fun applyState(isStateLoaded: Boolean) {
-    if (isStateLoaded) {
-      LOG.debug("Run write action for projectJdkChanged()")
-      backgroundWriteAction {
-        projectJdkChanged()
-      }
-      return
-    }
-
-    // prevent root changed event during startup to improve startup performance
-    val projectSdkName = projectSdkName
-    val sdk = if (projectSdkName == null) {
-      null
-    }
-    else {
-      val projectJdkTable = serviceAsync<ProjectJdkTable>()
-      readActionBlocking {
-        if (projectSdkType == null) {
-          projectJdkTable.findJdk(projectSdkName)
-        }
-        else {
-          projectJdkTable.findJdk(projectSdkName, projectSdkType!!)
-        }
-      }
-    }
-
-    LOG.debug("Run write action for extension.projectSdkChanged(sdk)")
-    val extensions = EP_NAME.getExtensions(project)
-    backgroundWriteAction {
-      for (extension in extensions) {
-        extension.projectSdkChanged(sdk)
-      }
-    }
+    stateComponent.loadState(element, project, coroutineScope)
   }
 
   @ApiStatus.Internal
   override fun noStateLoaded() {
-    isStateLoaded = true
+    stateComponent.noStateLoaded()
   }
 
   @ApiStatus.Internal
   override fun getState(): Element? {
-    val element = Element("state")
-    element.setAttribute(ATTRIBUTE_VERSION, "2")
-    for (extension in EP_NAME.getExtensions(project)) {
-      extension.writeExternal(element)
-    }
-    if (projectSdkName != null) {
-      element.setAttribute(PROJECT_JDK_NAME_ATTR, projectSdkName)
-    }
-    if (projectSdkType != null) {
-      element.setAttribute(PROJECT_JDK_TYPE_ATTR, projectSdkType)
-    }
-    if (element.attributes.size == 1) {
-      // remove an empty element to not write defaults
-      element.removeAttribute(ATTRIBUTE_VERSION)
-    }
-    return element
+    return stateComponent.getState(project)
   }
 
   @ApiStatus.Internal
@@ -543,13 +575,15 @@ open class ProjectRootManagerImpl(
 
   @ApiStatus.Internal
   override fun markRootsForRefresh(): List<VirtualFile> = emptyList()
+
+  suspend fun initProjectActivity() {
+    stateComponent.initProjectActivity()
+  }
 }
 
 private class ProjectRootManagerInitProjectActivity : InitProjectActivity {
   override suspend fun run(project: Project) {
     val projectRootManager = project.serviceAsync<ProjectRootManager>() as? ProjectRootManagerImpl ?: return
-    val shouldFireRootsChanged = projectRootManager.shouldFireRootsChanged?.get() ?: return
-    projectRootManager.shouldFireRootsChanged = null
-    projectRootManager.applyState(shouldFireRootsChanged)
+    projectRootManager.initProjectActivity()
   }
 }
