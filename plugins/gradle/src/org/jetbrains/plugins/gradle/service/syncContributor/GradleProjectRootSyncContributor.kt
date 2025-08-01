@@ -119,20 +119,29 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
     return ModuleNameGenerator.generate(null, moduleName, modulePath, ".")
   }
 
-  /**
-   * The [GradleContentRootSyncContributor] has the complete information to configure the accurate build roots.
-   * They will be used as project roots in the result project model.
-   */
-  private fun removeProjectRoot(context: ProjectResolverContext, storage: MutableEntityStorage) {
-    val linkedProjectEntitySource = GradleLinkedProjectEntitySource(context.virtualFileUrl(context.projectPath))
-    val linkedProjectEntities = storage.entitiesBySource { it == linkedProjectEntitySource }
-    for (linkedProjectEntity in linkedProjectEntities.toList()) {
-      storage.removeEntity(linkedProjectEntity)
-    }
-  }
-
   private class GradleProjectRootData(
     val projectRoot: Path,
     val entitySource: GradleLinkedProjectEntitySource
   )
+}
+
+/**
+ * The [GradleContentRootSyncContributor] has the complete information to configure the accurate build roots.
+ * They will be used as project roots in the result project model.
+ */
+@ApiStatus.Internal // Visible for GradleDeclarativeSyncContributor
+fun removeProjectRoot(context: ProjectResolverContext, storage: MutableEntityStorage) {
+  val entitySource = GradleLinkedProjectEntitySource(context.virtualFileUrl(context.projectPath))
+  val entities = storage.entitiesBySource { it == entitySource }
+  for (entity in entities.toList()) {
+    storage.removeEntity(entity)
+  }
+}
+
+@ApiStatus.Internal // Visible for GradleDeclarativeSyncContributor
+fun hasNonPreviewEntities(context: ProjectResolverContext, storage: MutableEntityStorage): Boolean {
+  return storage.entities<ModuleEntity>()
+    .filter { it.entitySource !is GradleLinkedProjectEntitySource }
+    .filter { it.exModuleOptions?.rootProjectPath == context.projectPath }
+    .any()
 }

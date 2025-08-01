@@ -21,14 +21,14 @@ import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.toPath
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.virtualFileUrl
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleDeclarativeEntitySource
-import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleLinkedProjectEntitySource
+import org.jetbrains.plugins.gradle.service.syncContributor.hasNonPreviewEntities
+import org.jetbrains.plugins.gradle.service.syncContributor.removeProjectRoot
 import java.io.File
 
 private val LOG = logger<GradleDeclarativeSyncContributor>()
@@ -54,6 +54,12 @@ class GradleDeclarativeSyncContributor : GradleSyncContributor {
       LOG.debug("Skipped Declarative Gradle static import: No Gradle DCL files")
       return
     }
+    if (hasNonPreviewEntities(context, storage)) {
+      LOG.debug("Skipped Declarative Gradle static import: Secondary sync")
+      return
+    }
+    LOG.debug("Removing preview project root")
+    removeProjectRoot(context, storage)
     LOG.debug("Starting Declarative Gradle static import")
     configureProject(context, storage)
     LOG.debug("Finished Declarative Gradle static import")
@@ -79,20 +85,6 @@ class GradleDeclarativeSyncContributor : GradleSyncContributor {
 
     val projectRootUrl = context.virtualFileUrl(context.projectPath)
     val entitySource = GradleDeclarativeEntitySource(projectRootUrl)
-
-    // return if there is already a model other than the simple project root one
-    val contentRootEntities = storage.entities<ContentRootEntity>()
-    if (!contentRootEntities.toList().isEmpty()) {
-      val linkedProjectEntitySource = GradleLinkedProjectEntitySource(projectRootUrl)
-      if (contentRootEntities.any { it.entitySource != linkedProjectEntitySource })
-        return
-
-      // remove the old one
-      val linkedProjectEntities = storage.entitiesBySource { it == linkedProjectEntitySource }
-      for (linkedProjectEntity in linkedProjectEntities.toList()) {
-        storage.removeEntity(linkedProjectEntity)
-      }
-    }
 
     // try finding the Gradle build file in the project root directory
     val declarativeGradleBuildFile = File(context.projectPath, "build.gradle.dcl")
