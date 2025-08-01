@@ -736,43 +736,49 @@ class CancellationPropagationTest {
     assertFalse(job.isCancelled)
   }
 
-  @RepeatedTest(1000)
+  @Test
   fun `synchronous non-blocking read action is awaited`() = timeoutRunBlocking {
-    val dummyDisposable = Disposer.newDisposable()
-    var allowedToCompleteRA by AtomicReference(false)
-    val readActionCompletedSemaphore = Semaphore(1)
-    val job = withRootJob { job ->
-      ReadAction.nonBlocking(Callable {
-        while (!allowedToCompleteRA) {
-          assertTrue(job.isActive)
-        }
-        readActionCompletedSemaphore.up()
-      }).expireWith(dummyDisposable)
-        .executeSynchronously()
+    repeat(1000) {
+      val dummyDisposable = Disposer.newDisposable()
+      var allowedToCompleteRA by AtomicReference(false)
+      val readActionCompletedSemaphore = Semaphore(1)
+      val job = withRootJob { job ->
+        ReadAction.nonBlocking(Callable {
+          while (!allowedToCompleteRA) {
+            assertTrue(job.isActive)
+          }
+          readActionCompletedSemaphore.up()
+        }).expireWith(dummyDisposable)
+          .executeSynchronously()
+      }
+      assertTrue(job.isActive)
+      allowedToCompleteRA = true
+      readActionCompletedSemaphore.timeoutWaitUp()
+      job.join()
+      Disposer.dispose(dummyDisposable)
+      assertFalse(job.isCancelled)
     }
-    assertTrue(job.isActive)
-    allowedToCompleteRA = true
-    readActionCompletedSemaphore.timeoutWaitUp()
-    job.join()
-    Disposer.dispose(dummyDisposable)
-    assertFalse(job.isCancelled)
   }
 
-  @RepeatedTest(1000)
-  fun `non-blocking read action is externally disposed`() = timeoutRunBlocking {
-    val dummyDisposable = Disposer.newDisposable()
-    val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Test NBRA", 1)
-    val job = withRootJob { job ->
-      ReadAction.nonBlocking(Callable {
-        while (true) {
-          ProgressManager.checkCanceled()
+  @Test
+  fun `non-blocking read action is externally disposed`() {
+    repeat(1000) {
+      timeoutRunBlocking {
+        val dummyDisposable = Disposer.newDisposable()
+        val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Test NBRA", 1)
+        val job = withRootJob { job ->
+          ReadAction.nonBlocking(Callable {
+            while (true) {
+              ProgressManager.checkCanceled()
+            }
+          }).expireWith(dummyDisposable)
+            .submit(executor)
         }
-      }).expireWith(dummyDisposable)
-        .submit(executor)
+        Disposer.dispose(dummyDisposable)
+        // if NBRA is not properly canceled, we would have a leaking Job, and `blockingContextScope` would never finish
+        job.join()
+      }
     }
-    Disposer.dispose(dummyDisposable)
-    // if NBRA is not properly canceled, we would have a leaking Job, and `blockingContextScope` would never finish
-    job.join()
   }
 
   @Test
