@@ -90,7 +90,7 @@ private fun getConditionScopes(expr: KtExpression, value: Boolean?): List<KtElem
         is KtBinaryExpression -> {
             if (parent.operationToken != KtTokens.ANDAND && parent.operationToken != KtTokens.OROR) emptyList()
             else {
-                val newValue = if ((value == true) == (parent.operationToken == KtTokens.ANDAND)) null else value
+                val newValue = if ((value == true) == (parent.operationToken == KtTokens.OROR)) null else value
                 if (parent.left == expr) getConditionScopes(parent, newValue) + listOfNotNull(parent.right)
                 else getConditionScopes(parent, newValue)
             }

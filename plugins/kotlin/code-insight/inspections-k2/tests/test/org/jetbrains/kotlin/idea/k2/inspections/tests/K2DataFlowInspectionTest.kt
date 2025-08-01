@@ -131,6 +131,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testWhenIsObject() = doTest()
     fun testWhenGuarded() = doTest()
     fun testWhenGuardedElse() = doTest()
+    fun testWhenImpliesSmartCast() = doTest()
     fun testWhileLoop() = doTest()
 
     fun doTest(warnOnConstantRefs: Boolean = true) {
