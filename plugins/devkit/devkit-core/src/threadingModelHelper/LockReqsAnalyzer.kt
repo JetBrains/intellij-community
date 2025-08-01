@@ -15,9 +15,10 @@ class LockReqsAnalyzer {
     private const val REQUIRES_READ_LOCK_ANNOTATION = "com.intellij.util.concurrency.annotations.RequiresReadLock"
     private const val MAX_PATH_DEPTH = 1000
 
+    private val ASYNC_METHODS = setOf("invokeLater", "invokeAndWait", "runInEdt")
+
     enum class LockCheckType {
-      ANNOTATION,
-      ASSERTION
+      ANNOTATION, ASSERTION
     }
 
     data class LockRequirement(
@@ -32,12 +33,13 @@ class LockReqsAnalyzer {
       val pathString: String
         get() = buildString {
           append(methodChain.joinToString(" -> ") {
-            "${it.containingClass?.name}.${it.name}" +
-            when (lockRequirement.type) {
-              LockCheckType.ANNOTATION -> "@RequiresReadLock"
-              LockCheckType.ASSERTION -> "ThreadingAssertions.assertReadAccess()"
-            }
+            "${it.containingClass?.name}.${it.name}"
           })
+          append(" -> ")
+          when (lockRequirement.type) {
+            LockCheckType.ANNOTATION -> append("@RequiresReadLock")
+            LockCheckType.ASSERTION -> append("ThreadingAssertions.assertReadAccess()")
+          }
         }
     }
   }
@@ -64,8 +66,16 @@ class LockReqsAnalyzer {
     findLockChecks(method).forEach { check ->
       paths.add(ExecutionPath(currentPath.toList(), LockRequirement(check, method)))
     }
-    getMethodCallees(method).forEach { callee -> processMethodDFS(callee, currentPath, paths) }
+    getMethodCallees(method).forEach {
+      if (!isAsyncMethod(it)) {
+        processMethodDFS(it, currentPath, paths)
+      }
+    }
     currentPath.removeAt(currentPath.lastIndex)
+  }
+
+  private fun isAsyncMethod(method: PsiMethod): Boolean {
+    return method.name in ASYNC_METHODS
   }
 
   private fun getMethodCallees(method: PsiMethod): List<PsiMethod> {
@@ -96,8 +106,7 @@ class LockReqsAnalyzer {
   }
 
   private fun isAssertReadAccess(expression: PsiMethodCallExpression): Boolean {
-    return ASSERT_READ_ACCESS_METHOD == expression.methodExpression.referenceName &&
-           THREADING_ASSERTIONS_CLASS == expression.resolveMethod()?.containingClass?.qualifiedName
+    return ASSERT_READ_ACCESS_METHOD == expression.methodExpression.referenceName && THREADING_ASSERTIONS_CLASS == expression.resolveMethod()?.containingClass?.qualifiedName
   }
 
   private fun hasAssertReadAccessCall(method: PsiMethod): Boolean {

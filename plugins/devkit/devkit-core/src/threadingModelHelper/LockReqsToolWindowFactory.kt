@@ -1,20 +1,36 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
-import androidx.compose.runtime.Composable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
-import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.jewel.bridge.addComposeTab
-import org.jetbrains.jewel.ui.component.Text
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.table.JBTable
+import javax.swing.JPanel
+import javax.swing.table.DefaultTableModel
+import java.awt.BorderLayout
 
 class LockReqsToolWindowFactory : ToolWindowFactory {
+
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val service = project.service<LockReqsService>()
-    toolWindow.addComposeTab(DevKitBundle.message("tab.title.locking.requirements")) {
-      LockReqsToolWindow(service)
-    }
+
+    val tableModel = DefaultTableModel(arrayOf("Execution Path"), 0)
+    val panel = JPanel(BorderLayout())
+    val table = JBTable(tableModel)
+    val scrollPane = JBScrollPane(table)
+    panel.add(scrollPane)
+
+    service.onResultsUpdated = { loadData(service.currentResults, tableModel) }
+    val factory = toolWindow.contentManager.factory
+    val content = factory.createContent(panel, null, false)
+    toolWindow.contentManager.addContent(content)
+  }
+
+  private fun loadData(results: List<String>, tableModel: DefaultTableModel) {
+    tableModel.rowCount = 0
+    results.forEach { tableModel.addRow(arrayOf(it)) }
   }
 }
+

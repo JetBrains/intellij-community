@@ -8,14 +8,23 @@ import com.intellij.psi.PsiMethod
 
 @Service(Service.Level.PROJECT)
 class LockReqsService(private val project: Project) {
-  private var currentResults: List<String> = emptyList()
+
+  companion object {
+    const val TOOL_WINDOW_ID: String = "Locking Requirements"
+  }
+
+  private var _currentResults: List<String> = emptyList()
+  val currentResults: List<String>
+    get() = _currentResults
+
+  var onResultsUpdated: (() -> Unit)? = null
 
   fun updateResults(method: PsiMethod) {
     val analyzer = LockReqsAnalyzer()
-    val paths = analyzer.analyzeMethod(method).map { it.pathString }
-    currentResults = paths
-    ToolWindowManager.getInstance(project).getToolWindow("LockReqsToolWindow")?.show()
-  }
+    val paths = analyzer.analyzeMethod(method)
+    _currentResults = paths.map { it.pathString }
+    onResultsUpdated?.invoke()
 
-  fun getCurrentResults(): List<String> = currentResults
+    ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID)?.show()
+  }
 }
