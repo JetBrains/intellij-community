@@ -10,6 +10,8 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.platform.eel.EelApi;
+import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
 import com.intellij.util.concurrency.AppJavaExecutorUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
@@ -145,6 +147,9 @@ class GitExecutableFileTester {
       WSLDistribution distribution = ((GitExecutable.Wsl)executable).getDistribution();
       type = distribution.getVersion() == 1 ? GitVersion.Type.WSL1 : GitVersion.Type.WSL2;
       workingDirectory = Path.of(distribution.getWindowsPath("/"));
+    } else if (executable instanceof GitExecutable.Eel) {
+      EelApi eelApi = ((GitExecutable.Eel)executable).getEel();
+      workingDirectory = EelNioBridgeServiceKt.asNioPath(eelApi.getUserInfo().getHome());
     }
 
     LOG.debug("Acquiring git version for " + executable);

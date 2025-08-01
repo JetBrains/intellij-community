@@ -89,7 +89,8 @@ class GitCloneDialogComponent(project: Project,
     }
 
     try {
-      val executable = executableManager.getExecutable(null)
+      val directory = runCatching { Paths.get(getDirectory()).toAbsolutePath() }.getOrNull()
+      val executable = executableManager.getExecutable(null, directory)
       val gitVersion = executableManager.identifyVersion(project, executable)
 
       invokeAndWaitIfNeeded(modalityState) {
