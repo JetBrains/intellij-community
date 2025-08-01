@@ -7,11 +7,11 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="io.ktor.http" level="project" />
-    <orderEntry type="library" exported="" name="io.ktor.io" level="project" />
-    <orderEntry type="library" exported="" name="io.ktor.network" level="project" />
-    <orderEntry type="library" exported="" name="io.ktor.network.tls" level="project" />
-    <orderEntry type="library" exported="" name="io.ktor.utils" level="project" />
+    <orderEntry type="library" exported="" name="fleet:io.ktor.http" level="project" />
+    <orderEntry type="library" exported="" name="fleet:io.ktor.io" level="project" />
+    <orderEntry type="library" exported="" name="fleet:io.ktor.network" level="project" />
+    <orderEntry type="library" exported="" name="fleet:io.ktor.network.tls" level="project" />
+    <orderEntry type="library" exported="" name="fleet:io.ktor.utils" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
