@@ -152,7 +152,7 @@ internal class RuntimeModuleRepositoryTarget(
     }
 
     private fun isIntellijPlatformProject(project: JpsProject): Boolean {
-      return project.modules.any { it.name == "intellij.idea.community.main" || it.name == "intellij.platform.commercial" }
+      return project.findModuleByName("intellij.idea.community.main") != null || project.findModuleByName("intellij.platform.commercial") != null
     }
 
     private fun updateFromRoots(library: JpsLibrary, digest: HashSink, relativizer: PathRelativizerService) {
