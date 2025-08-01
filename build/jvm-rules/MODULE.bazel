@@ -75,20 +75,6 @@ http_file(
 )
 
 http_file(
-  name = "rhizomedb-compiler-plugin-2_2_0-0_1_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/rhizomedb-compiler-plugin/2.2.0-0.1/rhizomedb-compiler-plugin-2.2.0-0.1.jar",
-  sha256 = "165948b750213b56826af6e8971cd19c843759fe5f019a5ef29e210043965e66",
-  downloaded_file_path = "rhizomedb-compiler-plugin-2.2.0-0.1.jar"
-)
-
-http_file(
-  name = "rhizomedb-compiler-plugin-2_2_0-0_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/rhizomedb-compiler-plugin/2.2.0-0.1/rhizomedb-compiler-plugin-2.2.0-0.1-sources.jar",
-  sha256 = "5e7019f0c60fed083b441a7f2890674bc3af70f6cce099d5726cae5445378f27",
-  downloaded_file_path = "rhizomedb-compiler-plugin-2.2.0-0.1-sources.jar"
-)
-
-http_file(
   name = "rpc-compiler-plugin-2_2_0-0_2_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fleet/rpc-compiler-plugin/2.2.0-0.2/rpc-compiler-plugin-2.2.0-0.2.jar",
   sha256 = "aba987ad87817fc6574e3362fbc3159712bc9c592e48d13484c2f505b5ad42f1",

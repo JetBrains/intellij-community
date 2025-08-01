@@ -103,7 +103,6 @@ java_library(
     #":kotlinx-coroutines-core-jvm-1_8_0_http_import",
     #":annotations-23_0_0_http_import",
     ":expects-compiler-plugin-2_2_0-0_1_http_import",
-    ":rhizomedb-compiler-plugin-2_2_0-0_1_http_import",
     ":rpc-compiler-plugin-2_2_0-0_2_http_import",
     ":noria-compiler-plugin-2_2_0-0_2_http_import",
     ":patched-jvm-abi-gen-for-bazel_http_import",
@@ -118,12 +117,6 @@ jvm_import(
 jvm_import(
     name = "expects-compiler-plugin-2_2_0-0_1_http_import",
     jar = "@expects-compiler-plugin-2_2_0-0_1_http//file",
-)
-
-jvm_import(
-    name = "rhizomedb-compiler-plugin-2_2_0-0_1_http_import",
-    jar = "@rhizomedb-compiler-plugin-2_2_0-0_1_http//file",
-    source_jar = "@rhizomedb-compiler-plugin-2_2_0-0_1-sources_http//file",
 )
 
 jvm_import(

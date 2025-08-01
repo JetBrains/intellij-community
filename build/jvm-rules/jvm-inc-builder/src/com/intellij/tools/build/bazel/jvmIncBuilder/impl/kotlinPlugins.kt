@@ -6,8 +6,6 @@ import androidx.compose.compiler.plugins.kotlin.ComposePluginRegistrar
 import com.intellij.tools.build.bazel.jvmIncBuilder.StorageManager
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputOrigin
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputSink
-import com.jetbrains.rhizomedb.plugin.RhizomedbCommandLineProcessor
-import com.jetbrains.rhizomedb.plugin.RhizomedbComponentRegistrar
 import org.jetbrains.kotlin.backend.common.output.OutputFileCollection
 import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser.RegisteredPluginInfo
 import org.jetbrains.kotlin.compiler.plugin.*
@@ -61,16 +59,6 @@ fun configurePlugins(
           compilerPluginRegistrar = ComposePluginRegistrar(),
           commandLineProcessor = ComposeCommandLineProcessor(),
           pluginOptions = emptyList(),
-        ))
-      }
-
-      "org.jetbrains.fleet.rhizomedb-compiler-plugin" -> {
-        val fileProvider = RhizomedbFileProvider(out, storageManager)
-        consumer(RegisteredPluginInfo(
-          componentRegistrar = null,
-          compilerPluginRegistrar = RhizomedbComponentRegistrar(fileProvider.createReadProvider(), fileProvider.createWriteProvider()),
-          commandLineProcessor = RhizomedbCommandLineProcessor(),
-                 pluginOptions = emptyList(),
         ))
       }
 
@@ -183,23 +171,4 @@ private fun getConstructor(registrar: String, commandLineProcessor: String?): La
 private fun findConstructor(name: String): MethodHandle {
   val aClass = KotlinCompilerRunner::class.java.classLoader.loadClass(name)
   return MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE))
-}
-
-class RhizomedbFileProvider(private val out: OutputSink, private val storageManager: StorageManager) {
-  fun readFile(filePath: String): List<String> {
-    val outputBuilder: ZipOutputBuilderImpl = storageManager.getOutputBuilder()
-    val moduleEntryPath: String = outputBuilder.listEntries("META-INF/").singleOrNull { n -> n.endsWith(filePath) } ?: return emptyList()
-    return outputBuilder.getContent(moduleEntryPath)?.toString(Charsets.UTF_8)?.split("\n") ?: emptyList()
-  }
-
-  fun writeFile(filePath: String, lines: Collection<String>) {
-    lines.joinToString(separator = "\n").toByteArray(Charsets.UTF_8)
-    out.addFile(
-      OutputFileImpl(filePath, com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputFile.Kind.other, lines.joinToString(separator = "\n").toByteArray(Charsets.UTF_8), false),
-      OutputOrigin.create(OutputOrigin.Kind.kotlin, emptyList())
-    )
-  }
-
-  fun createReadProvider(): (String) -> List<String> = { filePath -> readFile(filePath) }
-  fun createWriteProvider(): (String, Collection<String>) -> Unit = { filePath, lines -> writeFile(filePath, lines) }
 }
