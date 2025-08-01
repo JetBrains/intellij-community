@@ -3,15 +3,12 @@ package org.jetbrains.plugins.gradle.service.syncAction
 
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.progress.checkCanceled
-import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.serviceContainer.AlreadyDisposedException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -72,10 +69,5 @@ object GradleSyncProjectConfigurator {
       runCatching { action(contributor) }
         .getOrLogException(LOG)
     }
-  }
-
-  @Deprecated("Use ProjectResolverContext#getProject instead")
-  suspend fun ProjectResolverContext.project(): Project {
-    return project
   }
 }
