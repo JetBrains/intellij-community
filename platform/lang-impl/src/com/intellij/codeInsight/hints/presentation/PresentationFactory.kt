@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -25,10 +26,7 @@ import com.intellij.ui.LightweightHint
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
-import java.awt.Color
-import java.awt.Component
-import java.awt.Cursor
-import java.awt.Point
+import java.awt.*
 import java.awt.event.MouseEvent
 import java.util.*
 import javax.swing.Icon
@@ -476,6 +474,28 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
     )
 
     return hint
+  }
+
+  @ApiStatus.Internal
+  fun highlighted(text: String, highlighter: SyntaxHighlighter): InlayPresentation {
+    val lexer = highlighter.highlightingLexer
+    lexer.start(text)
+    val tokenPresentations = mutableListOf<InlayPresentation>()
+    while (lexer.tokenType != null) {
+      val tokenText = lexer.tokenText
+      val tokenType = lexer.tokenType
+      val textKeys = highlighter.getTokenHighlights(tokenType)
+      if (textKeys.isEmpty() || textKeys.firstOrNull()?.defaultAttributes == null || textKeys.firstOrNull()?.defaultAttributes?.fontType == 0) {
+        tokenPresentations.add(smallText(tokenText))
+      }
+      else {
+        val textKey = textKeys.first()
+        val textWithoutBox = InsetPresentation(TextInlayPresentation(textMetricsStorage, true, tokenText), top = 1, down = 1)
+        tokenPresentations.add(attributes(textWithoutBox, textKey))
+      }
+      lexer.advance()
+    }
+    return SequencePresentation(tokenPresentations)
   }
 
   private fun locationAt(e: MouseEvent, component: Component): Point {
