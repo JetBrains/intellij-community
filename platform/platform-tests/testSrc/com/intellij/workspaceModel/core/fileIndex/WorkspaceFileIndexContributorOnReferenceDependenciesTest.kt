@@ -112,7 +112,7 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
 
     override val dependenciesOnOtherEntities: List<DependencyDescription<ReferredTestEntity>>
       get() = listOf(
-        DependencyDescription.OnReference(WithReferenceTestEntity::class.java, ReferredTestEntity::class.java) {
+        DependencyDescription.OnReference(WithReferenceTestEntity::class.java) {
           it.references.asSequence().map { it.reference }
         },
       )

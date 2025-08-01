@@ -336,13 +336,11 @@ internal class WorkspaceFileIndexDataImpl(
                                                                              event,
                                                                              removedEntities,
                                                                              addedEntities,
-                                                                             contributor.entityClass,
-        )
+                                                                             contributor.entityClass,)
         is DependencyDescription.OnReference<*, *> -> processOnReference(dependency,
                                                                          event,
                                                                          removedEntities as MutableSet<WorkspaceEntity>,
-                                                                         addedEntities as MutableSet<WorkspaceEntity>,
-        )
+                                                                         addedEntities as MutableSet<WorkspaceEntity>,)
       }
     }
 

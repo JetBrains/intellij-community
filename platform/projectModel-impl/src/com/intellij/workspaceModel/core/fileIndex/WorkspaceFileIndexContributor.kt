@@ -108,18 +108,16 @@ sealed interface DependencyDescription<E : WorkspaceEntity> {
   ) : DependencyDescription<E>
 
   /**
-   * Indicates that the contributor must be called for the entities [R] when any entity of type [E] adds the first
-   * or remove the last reference to [R].
+   * Indicates that the contributor must be called for the entities [E] when any entity of type [R] adds the first
+   * or remove the last reference to [E].
    */
   @ApiStatus.Experimental
-  data class OnReference<R: WorkspaceEntityWithSymbolicId, E: WorkspaceEntityWithSymbolicId>(
-    /** Type that could contain references to [R] */
-    val referenceHolderClass: Class<E>,
-    /** Type for which a contributor should be called */
-    val resultClass: Class<R>,
+  data class OnReference<E: WorkspaceEntityWithSymbolicId, R: WorkspaceEntityWithSymbolicId>(
+    /** Type that could contain references to [E] */
+    val referenceHolderClass: Class<R>,
     /** Computes references */
-    val referencedEntitiesGetter: (E) -> Sequence<SymbolicEntityId<R>>
-  ): DependencyDescription<R>
+    val referencedEntitiesGetter: (R) -> Sequence<SymbolicEntityId<E>>
+  ): DependencyDescription<E>
 }
 
 /**
