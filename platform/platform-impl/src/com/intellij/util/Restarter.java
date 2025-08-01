@@ -3,10 +3,12 @@ package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.platform.ide.productInfo.IdeProductInfo;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.system.OS;
 import com.intellij.util.ui.StartupUiUtil;
@@ -37,38 +39,14 @@ public final class Restarter {
   }
 
   private static final NullableLazyValue<Path> ourLauncherWithoutRemoteDevOverride = lazyNullable(() -> {
-    switch (OS.CURRENT) {
-      case Windows -> {
-        var name = ApplicationNamesInfo.getInstance().getScriptName() + (Boolean.getBoolean("ide.native.launcher") ? "64.exe" : ".bat");
-        var launcher = PathManager.getBinDir().resolve(name);
-        if (Files.exists(launcher)) {
-          return launcher;
-        }
-      }
-      case macOS -> {
-        if (PlatformUtils.isJetBrainsClient()) {
-          var appDir = PathManager.getHomeDir().getParent();
-          if (appDir != null && appDir.getFileName().toString().endsWith(".app") && Files.isDirectory(appDir)) {
-            return appDir;
-          }
-        }
-        else {
-          var launcher = PathManager.getHomeDir().resolve("MacOS").resolve(ApplicationNamesInfo.getInstance().getScriptName());
-          if (Files.exists(launcher)) {
-            return launcher;
-          }
-        }
-      }
-      case Linux -> {
-        var name = ApplicationNamesInfo.getInstance().getScriptName() + (Boolean.getBoolean("ide.native.launcher") ? "" : ".sh");
-        var launcher = PathManager.getBinDir().resolve(name);
-        if (Files.exists(launcher)) {
-          return launcher;
-        }
-      }
-    }
-
-    return null;
+    var baseName = ApplicationNamesInfo.getInstance().getScriptName();
+    var launcher = switch (OS.CURRENT) {
+      case Windows -> PathManager.getBinDir().resolve(baseName + (Boolean.getBoolean("ide.native.launcher") ? "64.exe" : ".bat"));
+      case macOS -> PathManager.getHomeDir().resolve("MacOS").resolve(baseName);
+      case Linux -> PathManager.getBinDir().resolve(baseName + (Boolean.getBoolean("ide.native.launcher") ? "" : ".sh"));
+      default -> null;
+    };
+    return launcher != null && Files.exists(launcher) ? launcher : null;
   });
 
   private static final NullableLazyValue<Path> ourLauncher = lazyNullable(() -> {
@@ -80,7 +58,24 @@ public final class Restarter {
       );
     }
 
-    return ourLauncherWithoutRemoteDevOverride.getValue();
+    var launcher = ourLauncherWithoutRemoteDevOverride.getValue();
+    if (launcher != null) return launcher;
+
+    if (PlatformUtils.isJetBrainsClient()) {
+      // the client launched from a host IDE overrides `ApplicationNamesInfo#getScriptName`
+      var launchData = IdeProductInfo.getInstance().getCurrentProductInfo().getLaunch();
+      if (launchData.size() == 1) {
+        var hostLauncher = PathManager.getHomeDir()
+          .resolve(OS.CURRENT == OS.macOS ? ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC : ApplicationEx.PRODUCT_INFO_FILE_NAME)
+          .getParent()
+          .resolve(launchData.get(0).getLauncherPath())
+          .normalize();
+        if (Files.exists(hostLauncher)) return hostLauncher;
+      }
+      Logger.getInstance(Restarter.class).error("Cannot find an actual launcher for the frontend");
+    }
+
+    return null;
   });
 
   private static final Supplier<Boolean> ourRestartSupported = new SynchronizedClearableLazy<>(() -> {
@@ -161,11 +156,7 @@ public final class Restarter {
       restartOnWindows(elevate, List.of(beforeRestart), mainAppArgs);
     }
     else if (OS.CURRENT == OS.macOS) {
-      if (PlatformUtils.isJetBrainsClient()) {
-        restartJBCOnMac(List.of(beforeRestart), mainAppArgs);
-      } else {
-        restartOnMac(List.of(beforeRestart), mainAppArgs);
-      }
+      restartOnMac(List.of(beforeRestart), mainAppArgs);
     }
     else if (OS.CURRENT == OS.Linux) {
       restartOnLinux(List.of(beforeRestart), mainAppArgs);
@@ -190,29 +181,6 @@ public final class Restarter {
     }
     command.add(starter.toString());
     command.addAll(args);
-    runRestarter(command);
-  }
-
-  private static void restartJBCOnMac(List<String> beforeRestart, List<String> args) throws IOException {
-    var appDir = ourLauncher.getValue();
-    if (appDir == null) throw new IOException("Application bundle not found: " + PathManager.getHomeDir());
-    var command = prepareCommand("restarter", beforeRestart);
-
-    var runProcessCommand = new ArrayList<String>();
-    runProcessCommand.add("/usr/bin/open");
-
-    /* JetBrains Client process may be started from the same bundle as the full IDE, so we need to force 'open' command to run a new
-       process from that bundle instead of focusing on the existing application if it's running */
-    runProcessCommand.add("-n");
-
-    runProcessCommand.add(appDir.toString());
-    if (!args.isEmpty()) {
-      runProcessCommand.add("--args");
-      runProcessCommand.addAll(args);
-    }
-
-    command.add(String.valueOf(runProcessCommand.size()));
-    command.addAll(runProcessCommand);
     runRestarter(command);
   }
 
