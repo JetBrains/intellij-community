@@ -8,7 +8,7 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportList
 
-class KotlinOptimizeImportCompletionCommandProvider : AbstractOptimizeImportCompletionCommandProvider() {
+internal class KotlinOptimizeImportCompletionCommandProvider : AbstractOptimizeImportCompletionCommandProvider() {
     override fun isImportList(psiFile: PsiFile, offset: Int): Boolean {
         if (offset - 1 < 0) return false
         val element = psiFile.findElementAt(offset - 1)

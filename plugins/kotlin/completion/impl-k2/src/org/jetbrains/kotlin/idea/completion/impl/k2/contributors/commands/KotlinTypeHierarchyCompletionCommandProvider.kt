@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtUserType
 
-class KotlinTypeHierarchyCompletionCommandProvider : AbstractTypeHierarchyCompletionCommandProvider() {
+internal class KotlinTypeHierarchyCompletionCommandProvider : AbstractTypeHierarchyCompletionCommandProvider() {
     override fun findElement(offset: Int, psiFile: PsiFile): PsiElement? {
         var context = getCommandContext(offset, psiFile)
         if (context is PsiWhiteSpace) context = context.prevSibling

@@ -10,7 +10,7 @@ import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtProperty
 
-class KotlinExtractParameterCompletionCommandProvider : AbstractExtractParameterCompletionCommandProvider() {
+internal class KotlinExtractParameterCompletionCommandProvider : AbstractExtractParameterCompletionCommandProvider() {
     override fun findOffsetToCall(offset: Int, psiFile: PsiFile): Int? {
         return findOffsetForLocalVariable(offset, psiFile)
     }

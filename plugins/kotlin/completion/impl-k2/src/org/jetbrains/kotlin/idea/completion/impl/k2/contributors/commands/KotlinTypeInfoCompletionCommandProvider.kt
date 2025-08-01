@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.psi.KtExpression
 
-class KotlinTypeInfoCompletionCommandProvider : AbstractTypeInfoCompletionCommandProvider() {
+internal class KotlinTypeInfoCompletionCommandProvider : AbstractTypeInfoCompletionCommandProvider() {
     override fun findElement(offset: Int, psiFile: PsiFile): PsiElement? {
         var context = getCommandContext(offset, psiFile)
         if (context is PsiWhiteSpace) context = context.prevSibling

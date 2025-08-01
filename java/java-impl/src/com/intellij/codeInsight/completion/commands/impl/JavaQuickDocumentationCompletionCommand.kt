@@ -6,7 +6,7 @@ import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 
-public class JavaQuickDocumentationCompletionCommand : AbstractQuickDocumentationCompletionCommand() {
+internal class JavaQuickDocumentationCompletionCommand : AbstractQuickDocumentationCompletionCommand() {
   override fun findElement(offset: Int, psiFile: PsiFile): PsiElement? {
     var context = getCommandContext(offset, psiFile) ?: return null
     if (context is PsiWhiteSpace) context = context.prevSibling

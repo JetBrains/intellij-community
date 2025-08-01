@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
-class KotlinMoveCompletionCommandProvider : AbstractMoveCompletionCommandProvider() {
+internal class KotlinMoveCompletionCommandProvider : AbstractMoveCompletionCommandProvider() {
     override fun findMoveClassOffset(offset: Int, psiFile: PsiFile): Int? {
         var currentOffset = offset
         if (currentOffset == 0) return null

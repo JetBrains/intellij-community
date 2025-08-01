@@ -9,7 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.psi.KtCallExpression
 
-class KotlinInlineMethodCompletionCommandProvider : AbstractInlineMethodCompletionCommandProvider() {
+internal class KotlinInlineMethodCompletionCommandProvider : AbstractInlineMethodCompletionCommandProvider() {
     override fun findOffsetToCall(offset: Int, psiFile: PsiFile): Int? {
         var currentOffset = offset
         if (currentOffset == 0) return null

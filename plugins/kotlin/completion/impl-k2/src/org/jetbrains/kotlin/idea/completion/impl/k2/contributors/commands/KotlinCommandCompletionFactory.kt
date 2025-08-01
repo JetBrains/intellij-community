@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 
-class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAware {
+internal class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAware {
     override fun isApplicable(psiFile: PsiFile, offset: Int): Boolean {
         if (offset < 1) return false
         if (psiFile !is KtFile) return false

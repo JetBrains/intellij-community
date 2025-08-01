@@ -5,7 +5,7 @@ import com.intellij.codeInsight.completion.command.commands.AbstractTypeHierarch
 import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.psi.*
 
-public class JavaTypeHierarchyCompletionCommandProvider : AbstractTypeHierarchyCompletionCommandProvider() {
+internal class JavaTypeHierarchyCompletionCommandProvider : AbstractTypeHierarchyCompletionCommandProvider() {
   override fun findElement(offset: Int, psiFile: PsiFile): PsiElement? {
     var context = getCommandContext(offset, psiFile)
     if (context is PsiWhiteSpace) context = context.prevSibling

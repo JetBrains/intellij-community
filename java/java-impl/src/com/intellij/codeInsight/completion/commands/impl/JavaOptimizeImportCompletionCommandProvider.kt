@@ -8,7 +8,7 @@ import com.intellij.psi.PsiImportList
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.util.parentOfType
 
-public class JavaOptimizeImportCompletionCommandProvider : AbstractOptimizeImportCompletionCommandProvider() {
+internal class JavaOptimizeImportCompletionCommandProvider : AbstractOptimizeImportCompletionCommandProvider() {
   override fun isImportList(psiFile: PsiFile, offset: Int): Boolean {
     if (offset - 1 < 0) return false
     val element = psiFile.findElementAt(offset - 1)

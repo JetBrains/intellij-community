@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtUserType
 
-class KotlinQuickDocumentationCompletionCommandProvider : AbstractQuickDocumentationCompletionCommand() {
+internal class KotlinQuickDocumentationCompletionCommandProvider : AbstractQuickDocumentationCompletionCommand() {
     override fun findElement(offset: Int, psiFile: PsiFile): PsiElement? {
         var context = getCommandContext(offset, psiFile)
         if (context is PsiWhiteSpace) context = context.prevSibling

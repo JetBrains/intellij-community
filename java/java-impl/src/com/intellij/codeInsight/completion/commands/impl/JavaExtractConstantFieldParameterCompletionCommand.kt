@@ -11,19 +11,19 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
 
-public class JavaExtractConstantCompletionCommandProvider : AbstractExtractConstantCompletionCommandProvider() {
+internal class JavaExtractConstantCompletionCommandProvider : AbstractExtractConstantCompletionCommandProvider() {
   override fun findOffsetToCall(offset: Int, psiFile: PsiFile): Int? {
     return findOffsetForLocalVariable(offset, psiFile)
   }
 }
 
-public class JavaExtractFieldCompletionCommandProvider : AbstractExtractFieldCompletionCommandProvider() {
+internal class JavaExtractFieldCompletionCommandProvider : AbstractExtractFieldCompletionCommandProvider() {
   override fun findOffsetToCall(offset: Int, psiFile: PsiFile): Int? {
     return findOffsetForLocalVariable(offset, psiFile)
   }
 }
 
-public class JavaExtractParameterCompletionCommandProvider : AbstractExtractParameterCompletionCommandProvider() {
+internal class JavaExtractParameterCompletionCommandProvider : AbstractExtractParameterCompletionCommandProvider() {
   override fun findOffsetToCall(offset: Int, psiFile: PsiFile): Int? {
     return findOffsetForLocalVariable(offset, psiFile)
   }
