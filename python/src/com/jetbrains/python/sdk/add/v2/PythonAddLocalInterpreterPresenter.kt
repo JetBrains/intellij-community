@@ -37,7 +37,7 @@ class PythonAddLocalInterpreterPresenter(val moduleOrProject: ModuleOrProject, v
   val sdkCreatedFlow: Flow<Sdk> = _sdkShared.asSharedFlow()
 
   suspend fun okClicked(addEnvironment: PythonAddEnvironment) {
-    when (val r = addEnvironment.getOrCreateSdk(moduleOrProject)) {
+    when (val r = addEnvironment.setupSdk(moduleOrProject)) {
       is Result.Failure -> {
         errorSink.emit(r.error)
         return

@@ -177,7 +177,7 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
         model.setupVirtualenv(projectPath.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME), moduleOrProject)
       }
       BASE_CONDA -> model.selectCondaEnvironment(base = true)
-      CUSTOM -> custom.currentSdkManager.getOrCreateSdk(moduleOrProject)
+      CUSTOM -> custom.currentSdkManager.setupSdk(moduleOrProject)
     }.getOr { return it }
 
     val statistics = withContext(Dispatchers.EDT) { createStatisticsInfo() }

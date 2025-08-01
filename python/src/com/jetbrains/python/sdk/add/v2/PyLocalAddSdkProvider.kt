@@ -92,7 +92,7 @@ class V3AddSdkPanel(val project: Project, val module: Module?, val projectPath: 
     val sdk = runWithModalProgressBlocking(project, PyBundle.message("python.sdk.creating.python.sdk")) {
       dialogPanel.apply()
       val sdkManager = mainPanel.currentSdkManager
-      sdkManager.getOrCreateSdk(moduleOrProject).getOr {
+      sdkManager.setupSdk(moduleOrProject).getOr {
         errorSink.emit(it.error)
         return@runWithModalProgressBlocking null
       }.also {

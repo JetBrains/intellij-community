@@ -110,4 +110,6 @@ fun switchToSdk(module: Module, sdk: Sdk, currentSdk: Sdk?) {
   removeTransferredRoots(module, currentSdk)
   module.pythonSdk = sdk
   transferRoots(module, sdk)
+
+  module.excludeInnerVirtualEnv(sdk)
 }

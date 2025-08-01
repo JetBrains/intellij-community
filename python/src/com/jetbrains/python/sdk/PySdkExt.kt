@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.*
+import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
@@ -13,7 +14,6 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
@@ -364,17 +364,9 @@ var Project.pythonSdk: Sdk?
 fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
   val root = getInnerVirtualEnvRoot(sdk) ?: return
 
-  val model = ModuleRootManager.getInstance(this).modifiableModel
-
-  val contentEntry = model.contentEntries.firstOrNull {
-    val contentFile = it.file
-    contentFile != null && VfsUtil.isAncestor(contentFile, root, true)
-  } ?: return
-
-  contentEntry.addExcludeFolder(root)
-  invokeAndWaitIfNeeded {
-    WriteAction.run<Throwable> {
-      model.commit()
+  runInEdt {
+    MarkRootsManager.modifyRoots(this, arrayOf(root)) { vFile, entry ->
+      entry.addExcludeFolder(vFile)
     }
   }
 }
