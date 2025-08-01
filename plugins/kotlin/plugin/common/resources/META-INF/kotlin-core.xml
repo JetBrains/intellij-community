@@ -105,16 +105,16 @@
                     interface="org.jetbrains.kotlin.idea.base.analysis.KotlinIdeInjectedFilesAnalysisPromoter"
                     dynamic="true"/>
 
-    <extensionPoint qualifiedName="org.jetbrains.kotlin.ideCodeInsightExtension"
-                    interface="org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KotlinIdeCodeInsightExtension"
-                    dynamic="true"/>
-
     <extensionPoint qualifiedName="org.jetbrains.kotlin.implementationDetailClassNameCheckerProvider"
                     interface="org.jetbrains.kotlin.idea.base.psi.extensions.ImplementationDetailClassNameCheckerProvider"
                     dynamic="true"/>
 
     <extensionPoint qualifiedName="org.jetbrains.kotlin.forwardDeclarationPolicyProvider"
                     interface="org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.ForwardDeclarationPolicyProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.kaDanglingFileResolutionModeProvider"
+                    interface="org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KaDanglingFileResolutionModeProvider"
                     dynamic="true"/>
   </extensionPoints>
 
