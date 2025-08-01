@@ -52,4 +52,8 @@ public class CommentsWithMistakesInspectionTest extends SpellcheckerInspectionTe
   public void testTxt() {
     doTest("test.txt");
   }
+
+  public void testLongTxt() {
+    doTest("longTest.txt");
+  }
 }
