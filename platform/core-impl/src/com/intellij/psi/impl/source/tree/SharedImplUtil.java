@@ -26,7 +26,7 @@ public final class SharedImplUtil {
   private SharedImplUtil() {
   }
 
-  public static PsiElement getParent(ASTNode thisElement) {
+  public static PsiElement getParent(@NotNull ASTNode thisElement) {
     if (CHECK_FOR_READ_ACTION && thisElement instanceof TreeElement) {
       ((TreeElement)thisElement).assertReadAccessAllowed();
     }
@@ -56,13 +56,13 @@ public final class SharedImplUtil {
     throw new AssertionError("Invalid PSI " + psi + " of " + psi.getClass() + " for AST " + node + " of " + node.getClass());
   }
 
-  public static boolean isValid(ASTNode thisElement) {
+  public static boolean isValid(@NotNull ASTNode thisElement) {
     LOG.assertTrue(thisElement instanceof PsiElement);
     PsiFile file = getContainingFile(thisElement);
     return file != null && file.isValid();
   }
 
-  public static boolean isWritable(ASTNode thisElement) {
+  public static boolean isWritable(@NotNull ASTNode thisElement) {
     PsiFile file = getContainingFile(thisElement);
     return file == null || file.isWritable();
   }
@@ -84,7 +84,7 @@ public final class SharedImplUtil {
     return null;
   }
 
-  public static @NotNull CharTable findCharTableByTree(ASTNode tree) {
+  public static @NotNull CharTable findCharTableByTree(@NotNull ASTNode tree) {
     for (ASTNode o = tree; o != null; o = o.getTreeParent()) {
       CharTable charTable = o.getUserData(CharTable.CHAR_TABLE_KEY);
       if (charTable != null) {
@@ -97,11 +97,11 @@ public final class SharedImplUtil {
     throw new AssertionError("CharTable not found in: " + tree);
   }
 
-  public static PsiElement addRange(PsiElement thisElement,
-                                    PsiElement first,
-                                    PsiElement last,
-                                    ASTNode anchor,
-                                    Boolean before) throws IncorrectOperationException {
+  public static PsiElement addRange(@NotNull PsiElement thisElement,
+                                    @NotNull PsiElement first,
+                                    @NotNull PsiElement last,
+                                    @Nullable ASTNode anchor,
+                                    @Nullable Boolean before) throws IncorrectOperationException {
     CheckUtil.checkWritable(thisElement);
     CharTable table = findCharTableByTree(SourceTreeToPsiMap.psiElementToTree(thisElement));
 
@@ -137,12 +137,12 @@ public final class SharedImplUtil {
     return SourceTreeToPsiMap.treeElementToPsi(copyFirst);
   }
 
-  public static PsiManager getManagerByTree(ASTNode node) {
+  public static PsiManager getManagerByTree(@NotNull ASTNode node) {
     if(node instanceof FileElement) return node.getPsi().getManager();
     return node.getTreeParent().getPsi().getManager();
   }
 
-  public static ASTNode @NotNull [] getChildrenOfType(@NotNull ASTNode node, @NotNull IElementType elementType) {
+  public static @NotNull ASTNode @NotNull [] getChildrenOfType(@NotNull ASTNode node, @NotNull IElementType elementType) {
     int count = countChildrenOfType(node, elementType);
     if (count == 0) {
       return ASTNode.EMPTY_ARRAY;

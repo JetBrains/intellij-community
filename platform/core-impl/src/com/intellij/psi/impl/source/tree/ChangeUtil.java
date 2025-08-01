@@ -32,15 +32,15 @@ public final class ChangeUtil {
 
   private static final Logger LOG = Logger.getInstance(ChangeUtil.class);
 
-  public static void encodeInformation(TreeElement element) {
+  public static void encodeInformation(@NotNull TreeElement element) {
     encodeInformation(element, element);
   }
 
-  private static void encodeInformation(TreeElement element, ASTNode original) {
+  private static void encodeInformation(@NotNull TreeElement element, @NotNull ASTNode original) {
     DebugUtil.performPsiModification(null, () -> encodeInformation(element, original, new HashMap<>()));
   }
 
-  private static void encodeInformation(TreeElement element, ASTNode original, Map<Object, Object> state) {
+  private static void encodeInformation(@NotNull TreeElement element, @NotNull ASTNode original, @NotNull Map<Object, Object> state) {
     for (TreeCopyHandler handler : TreeCopyHandler.EP_NAME.getExtensionList()) {
       try {
         handler.encodeInformation(element, original, state);
@@ -59,11 +59,11 @@ public final class ChangeUtil {
     }
   }
 
-  public static TreeElement decodeInformation(TreeElement element) {
+  public static @NotNull TreeElement decodeInformation(@NotNull TreeElement element) {
     return DebugUtil.performPsiModification(null, () -> decodeInformation(element, new HashMap<>()));
   }
 
-  private static TreeElement decodeInformation(TreeElement element, Map<Object, Object> state) {
+  private static @NotNull TreeElement decodeInformation(@NotNull TreeElement element, @NotNull Map<Object, Object> state) {
     TreeElement child = element.getFirstChildNode();
     while (child != null) {
       child = decodeInformation(child, state);
@@ -88,12 +88,12 @@ public final class ChangeUtil {
     return element;
   }
 
-  public static @NotNull TreeElement copyElement(@NotNull TreeElement original, CharTable table) {
+  public static @NotNull TreeElement copyElement(@NotNull TreeElement original, @Nullable CharTable table) {
     CompositeElement treeParent = original.getTreeParent();
     return copyElement(original, treeParent == null ? null : treeParent.getPsi(), table);
   }
 
-  public static @NotNull TreeElement copyElement(@NotNull TreeElement original, PsiElement context, CharTable table) {
+  public static @NotNull TreeElement copyElement(@NotNull TreeElement original, @Nullable PsiElement context, @Nullable CharTable table) {
     TreeElement element = (TreeElement)original.clone();
     PsiManager manager = original.getManager();
     DummyHolderFactory.createHolder(manager, element, context, table).getTreeElement();
@@ -103,7 +103,7 @@ public final class ChangeUtil {
     return element;
   }
 
-  private static void saveIndentationToCopy(TreeElement original, TreeElement element) {
+  private static void saveIndentationToCopy(@Nullable TreeElement original, @Nullable TreeElement element) {
     if(original == null || element == null || CodeEditUtil.isNodeGenerated(original)) return;
     int indentation = CodeEditUtil.getOldIndentation(original);
     if(indentation < 0) CodeEditUtil.saveWhitespacesInfo(original);

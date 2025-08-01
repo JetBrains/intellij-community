@@ -23,23 +23,23 @@ public class DummyHolder extends PsiFileImpl {
   @SuppressWarnings("EmptyClass") private static class DummyHolderTreeLock {}
   private final DummyHolderTreeLock myTreeElementLock = new DummyHolderTreeLock();
 
-  public DummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context) {
+  public DummyHolder(@NotNull PsiManager manager, @NotNull TreeElement contentElement, @Nullable PsiElement context) {
     this(manager, contentElement, context, SharedImplUtil.findCharTableByTree(contentElement));
   }
 
-  public DummyHolder(@NotNull PsiManager manager, CharTable table, boolean validity) {
+  public DummyHolder(@NotNull PsiManager manager, @Nullable CharTable table, boolean validity) {
     this(manager, null, null, table, Boolean.valueOf(validity), PlainTextLanguage.INSTANCE);
   }
 
-  public DummyHolder(@NotNull PsiManager manager, PsiElement context) {
+  public DummyHolder(@NotNull PsiManager manager, @Nullable PsiElement context) {
     this(manager, null, context, null);
   }
 
-  public DummyHolder(@NotNull PsiManager manager, @Nullable TreeElement contentElement, PsiElement context, @Nullable CharTable table) {
+  public DummyHolder(@NotNull PsiManager manager, @Nullable TreeElement contentElement, @Nullable PsiElement context, @Nullable CharTable table) {
     this(manager, contentElement, context, table, null, language(context, PlainTextLanguage.INSTANCE));
   }
 
-  protected static @NotNull Language language(PsiElement context, @NotNull Language defaultLanguage) {
+  protected static @NotNull Language language(@Nullable PsiElement context, @NotNull Language defaultLanguage) {
     if (context == null) return defaultLanguage;
     PsiFile file = context.getContainingFile();
     if (file == null) return defaultLanguage;
@@ -67,15 +67,15 @@ public class DummyHolder extends PsiFileImpl {
     myExplicitlyValid = validity;
   }
 
-  public DummyHolder(@NotNull PsiManager manager, PsiElement context, CharTable table) {
+  public DummyHolder(@NotNull PsiManager manager, @Nullable PsiElement context, @Nullable CharTable table) {
     this(manager, null, context, table);
   }
 
-  public DummyHolder(@NotNull PsiManager manager, CharTable table, @NotNull Language language) {
+  public DummyHolder(@NotNull PsiManager manager, @Nullable CharTable table, @NotNull Language language) {
     this(manager, null, null, table, null, language);
   }
 
-  public DummyHolder(@NotNull PsiManager manager, @NotNull Language language, PsiElement context) {
+  public DummyHolder(@NotNull PsiManager manager, @NotNull Language language, @Nullable PsiElement context) {
     this(manager, null, context, null, null, language);
   }
 
