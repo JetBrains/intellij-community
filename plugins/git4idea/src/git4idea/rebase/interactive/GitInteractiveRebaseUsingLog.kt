@@ -41,8 +41,8 @@ internal fun getEntriesUsingLog(
     val details = mutableListOf<VcsCommitMetadata>()
     try {
       traverser.traverse(repository.root) { (commitId, parents) ->
-        // commit is not root or merge
-        if (parents.size == 1) {
+        // commit is not merge
+        if (parents.size <= 1) {
           loadMetadataLater(commitId) { metadata ->
             details.add(metadata)
           }
