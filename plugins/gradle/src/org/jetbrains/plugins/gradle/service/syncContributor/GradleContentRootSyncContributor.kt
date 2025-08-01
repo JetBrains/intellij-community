@@ -54,7 +54,7 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
 
     val contentRootsToAdd = LinkedHashMap<GradleProjectEntitySource, GradleContentRootData>()
 
-    val contentRootEntities = storage.entities<ContentRootEntity>()
+    val contentRootsByUrl = storage.entities<ContentRootEntity>().associateBy { it.url }
 
     val linkedProjectRootPath = Path.of(context.projectPath)
     val linkedProjectRootUrl = linkedProjectRootPath.toVirtualFileUrl(virtualFileUrlManager)
@@ -76,7 +76,7 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
 
         val contentRootData = GradleContentRootData(buildModel, projectModel, projectEntitySource)
 
-        if (contentRootEntities.any { isConflictedContentRootEntity(it, contentRootData) }) {
+        if (contentRootsByUrl[projectRootUrl].let { it != null && it.entitySource == projectEntitySource }) {
           continue
         }
         if (isUnloadedModule(context, project, contentRootData)) {
@@ -93,15 +93,6 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
 
       configureContentRoot(context, storage, contentRootData)
     }
-  }
-
-  private fun isConflictedContentRootEntity(
-    contentRootEntity: ContentRootEntity,
-    contentRootData: GradleContentRootData,
-  ): Boolean {
-    val entitySource = contentRootData.entitySource
-    return contentRootEntity.entitySource == entitySource ||
-           contentRootEntity.url == entitySource.projectRootUrl
   }
 
   private fun isUnloadedModule(
@@ -228,7 +219,7 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
 
     val exModuleOptionsToAdd = LinkedHashMap<GradleProjectEntitySource, GradleExModuleOptionsData>()
 
-    val moduleEntities = storage.entities<ModuleEntity>()
+    val contentRootsByUrl = storage.entities<ContentRootEntity>().associateBy { it.url }
 
     val linkedProjectRootPath = Path.of(context.projectPath)
     val linkedProjectRootUrl = linkedProjectRootPath.toVirtualFileUrl(virtualFileUrlManager)
@@ -248,7 +239,7 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
         val projectRootUrl = projectRootPath.toVirtualFileUrl(virtualFileUrlManager)
         val projectEntitySource = GradleProjectEntitySource(buildEntitySource, projectRootUrl)
 
-        val moduleEntity = moduleEntities.find { it.entitySource == projectEntitySource } ?: continue
+        val moduleEntity = contentRootsByUrl[projectRootUrl]?.module ?: continue
         val externalProject = context.getProjectModel(projectModel, ExternalProject::class.java) ?: continue
 
         val exModuleOptionsData = GradleExModuleOptionsData(externalProject, projectEntitySource, moduleEntity)
