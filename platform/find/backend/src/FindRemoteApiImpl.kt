@@ -98,9 +98,10 @@ internal class FindRemoteApiImpl : FindRemoteApi {
 
         launch {
           send(result)
+          if (sentItems.incrementAndGet() >= maxUsagesCount) {
+            close()
+          }
         }
-
-        if (usagesCount.get() > maxUsagesCount && sentItems.incrementAndGet() >= maxUsagesCount) close()
 
         usagesCount.get() <= maxUsagesCount
       }
