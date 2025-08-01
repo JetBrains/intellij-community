@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources
 
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.util.Computable
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.test.TestMetadata
@@ -26,4 +28,7 @@ abstract class ComposeResourcesTestCase : KotlinGradleImportingTestCase() {
     @Parameters(name = "{index}: source set {1} with Gradle-{0}")
     fun data(): Collection<Any> = SOURCE_SETS.map { arrayOf(TARGET_GRADLE_VERSION, it) }
   }
+
+  protected fun <R> runWriteAction(update: () -> R): R =
+    WriteCommandAction.runWriteCommandAction(project, Computable { update() })
 }

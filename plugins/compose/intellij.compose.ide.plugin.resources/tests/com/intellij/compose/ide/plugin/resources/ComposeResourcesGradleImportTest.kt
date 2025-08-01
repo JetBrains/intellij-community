@@ -91,8 +91,4 @@ class ComposeResourcesGradleImportTest : ComposeResourcesTestCase() {
     importProject()
     return files
   }
-
-  private fun <R> runWriteAction(update: () -> R): R =
-    WriteCommandAction.runWriteCommandAction(myProject, Computable { update() })
 }
-
