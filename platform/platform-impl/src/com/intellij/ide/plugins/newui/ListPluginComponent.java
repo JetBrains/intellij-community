@@ -1267,9 +1267,9 @@ public final class ListPluginComponent extends JPanel {
     });
   }
 
-  private @NotNull SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> createUninstallAction(@NotNull List<? extends ListPluginComponent> selection,
-                                                                                                              @NotNull Function<? super ListPluginComponent, PluginUiModel> function) {
-    return new SelectionBasedPluginModelAction.UninstallAction<>(myModelFacade, true, this, selection, function, () -> {
+  private @NotNull UninstallAction<ListPluginComponent> createUninstallAction(@NotNull List<? extends ListPluginComponent> selection,
+                                                                              @NotNull Function<? super ListPluginComponent, PluginUiModel> function) {
+    return new UninstallAction<>(myModelFacade, true, this, selection, function, () -> {
     });
   }
 

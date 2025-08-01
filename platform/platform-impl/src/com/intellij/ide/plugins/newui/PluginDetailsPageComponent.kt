@@ -1140,8 +1140,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     reviewNextPageButton!!.isVisible = comments != null && comments.isNextPage
   }
 
-  private fun createUninstallAction(): SelectionBasedPluginModelAction.UninstallAction<PluginDetailsPageComponent> {
-    return SelectionBasedPluginModelAction.UninstallAction(
+  private fun createUninstallAction(): UninstallAction<PluginDetailsPageComponent> {
+    return UninstallAction(
       pluginModel, false, this, java.util.List.of(this),
       { obj: PluginDetailsPageComponent -> obj.descriptorForActions },
       {
