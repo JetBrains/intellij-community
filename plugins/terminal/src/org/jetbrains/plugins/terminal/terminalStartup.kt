@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -113,18 +114,20 @@ private fun buildStartupEelContext(workingDirectory: Path, command: List<String>
       val eelDescriptor = wslRootPath.getEelDescriptor()
       if (eelDescriptor != LocalEelDescriptor) {
         return TerminalStartupEelContext(eelDescriptor) { eelApi ->
-          val userHome = runCatching { eelApi.exec.fetchLoginShellEnvVariables()["HOME"] }.getOrNull()
-          wslRootPath.resolve(userHome ?: ".")
+          eelApi.userInfo.home
         }
       }
     }
   }
-  return TerminalStartupEelContext(workingDirectory.getEelDescriptor()) { workingDirectory }
+  val workingDirectoryEelPath = workingDirectory.asEelPath()
+  return TerminalStartupEelContext(workingDirectoryEelPath.descriptor) {
+    workingDirectoryEelPath
+  }
 }
 
 internal class TerminalStartupEelContext(
   val eelDescriptor: EelDescriptor,
-  val workingDirectoryProvider: suspend (eelApi: EelApi) -> Path,
+  val workingDirectoryProvider: suspend (eelApi: EelApi) -> EelPath,
 )
 
 private fun getWslDistributionNameFromCommand(command: List<String>): String? {
@@ -142,13 +145,13 @@ private suspend fun doStartProcess(
   eelApi: EelApi,
   command: List<String>,
   envs: Map<String, String>,
-  workingDirectory: Path,
+  workingDirectory: EelPath,
   initialTermSize: TermSize,
 ): PtyProcess {
   val execOptions = eelApi.exec.spawnProcess(command.first())
     .args(command.takeLast(command.size - 1))
     .env(envs)
-    .workingDirectory(workingDirectory.asEelPath())
+    .workingDirectory(workingDirectory)
     .interactionOptions(EelExecApi.Pty(initialTermSize.columns, initialTermSize.rows, true))
   return execOptions.eelIt().convertToJavaProcess() as PtyProcess
 }
