@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.fir.testGenerator
 
+import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
 import org.jetbrains.fir.uast.test.*
 import org.jetbrains.kotlin.fir.testGenerator.codeinsight.generateK2CodeInsightTests
 import org.jetbrains.kotlin.fir.testGenerator.gradle.generateK2GradleTests
@@ -268,7 +269,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
             model("navigation/moveToNextMethod", pattern = TEST, testMethodName = "doTest")
         }
 
-        testClass<AbstractFirGotoTest> {
+        testClass<AbstractFirGotoTest>(indexingMode = listOf(IndexingMode.DUMB_FULL_INDEX, IndexingMode.SMART)) {
             model("navigation/gotoClass", testMethodName = "doClassTest")
             model("navigation/gotoSymbol", testMethodName = "doSymbolTest")
         }

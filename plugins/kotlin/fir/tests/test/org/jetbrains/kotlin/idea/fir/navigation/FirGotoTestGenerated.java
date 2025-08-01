@@ -7,6 +7,10 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
+import com.intellij.testFramework.TestIndexingModeSupporter;
+import org.jetbrains.kotlin.idea.base.test.TestIndexingMode;
+import static com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode.DUMB_FULL_INDEX;
+import static com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode.SMART;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -19,6 +23,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 public abstract class FirGotoTestGenerated extends AbstractFirGotoTest {
+    @TestIndexingMode({DUMB_FULL_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/navigation/gotoClass")
     public static class GotoClass extends AbstractFirGotoTest {
@@ -103,6 +108,7 @@ public abstract class FirGotoTestGenerated extends AbstractFirGotoTest {
         }
     }
 
+    @TestIndexingMode({DUMB_FULL_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/navigation/gotoSymbol")
     public static class GotoSymbol extends AbstractFirGotoTest {
