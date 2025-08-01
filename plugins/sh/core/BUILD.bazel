@@ -74,6 +74,8 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/eel",
     "//platform/eel-provider",
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
   ],
   runtime_deps = ["//plugins/sh"]
 )
