@@ -67,15 +67,16 @@ public final class CommonJavaRefactoringUtil {
     return type;
   }
 
-  public static @Nullable PsiType getTypeByExpression(@Nullable PsiExpression expr, @NotNull final PsiElementFactory factory) {
+  public static @Nullable PsiType getTypeByExpression(@Nullable PsiExpression expr, @NotNull PsiElementFactory factory) {
     PsiType type = RefactoringChangeUtil.getTypeByExpression(expr);
     if (PsiTypes.nullType().equals(type)) {
       ExpectedTypeInfo[] infos = ExpectedTypesProvider.getExpectedTypes(expr, false);
       if (infos.length > 0) {
         type = infos[0].getType();
         if (type instanceof PsiPrimitiveType primitiveType) {
-          type = infos.length > 1 && !(infos[1].getType() instanceof PsiPrimitiveType) ? infos[1].getType()
-                                                                                       : primitiveType.getBoxedType(expr);
+          type = infos.length > 1 && !(infos[1].getType() instanceof PsiPrimitiveType) 
+                 ? infos[1].getType()
+                 : primitiveType.getBoxedType(expr);
         }
       }
       else {
@@ -87,24 +88,18 @@ public final class CommonJavaRefactoringUtil {
   }
 
   @Contract("null, _ -> null")
-  public static PsiExpression convertInitializerToNormalExpression(PsiExpression expression, PsiType forcedReturnType)
-    throws IncorrectOperationException {
-    if (expression instanceof PsiArrayInitializerExpression && (forcedReturnType == null || forcedReturnType instanceof PsiArrayType)) {
-      return createNewExpressionFromArrayInitializer((PsiArrayInitializerExpression)expression, forcedReturnType);
+  public static PsiExpression convertInitializerToNormalExpression(PsiExpression expression, PsiType forcedReturnType) {
+    if (expression instanceof PsiArrayInitializerExpression array && 
+        (forcedReturnType == null || forcedReturnType instanceof PsiArrayType)) {
+      return createNewExpressionFromArrayInitializer(array, forcedReturnType);
     }
     return expression;
   }
 
-  public static PsiExpression createNewExpressionFromArrayInitializer(PsiArrayInitializerExpression initializer, PsiType forcedType)
-    throws IncorrectOperationException {
+  public static PsiExpression createNewExpressionFromArrayInitializer(PsiArrayInitializerExpression initializer, PsiType forcedType) {
     PsiType initializerType = null;
     if (initializer != null) {
-      if (forcedType != null) {
-        initializerType = forcedType;
-      }
-      else {
-        initializerType = getTypeByExpression(initializer);
-      }
+      initializerType = (forcedType != null) ? forcedType : getTypeByExpression(initializer);
     }
     if (initializerType == null) {
       return initializer;
@@ -120,10 +115,9 @@ public final class CommonJavaRefactoringUtil {
     return result;
   }
 
-  public static String qNameToCreateInSourceRoot(PackageWrapper aPackage, final VirtualFile sourceRoot) throws IncorrectOperationException {
+  public static String qNameToCreateInSourceRoot(PackageWrapper aPackage, VirtualFile sourceRoot) {
     String targetQName = aPackage.getQualifiedName();
-    String sourceRootPackage =
-      PackageIndex.getInstance(aPackage.getManager().getProject()).getPackageNameByDirectory(sourceRoot);
+    String sourceRootPackage = PackageIndex.getInstance(aPackage.getManager().getProject()).getPackageNameByDirectory(sourceRoot);
     if (!canCreateInSourceRoot(sourceRootPackage, targetQName)) {
       throw new IncorrectOperationException(
         "Cannot create package '" + targetQName + "' in source folder " + sourceRoot.getPresentableUrl());
@@ -133,13 +127,13 @@ public final class CommonJavaRefactoringUtil {
     return result;
   }
 
-  public static boolean canCreateInSourceRoot(final String sourceRootPackage, final String targetQName) {
+  public static boolean canCreateInSourceRoot(String sourceRootPackage, String targetQName) {
     if (sourceRootPackage == null || !targetQName.startsWith(sourceRootPackage)) return false;
     if (sourceRootPackage.isEmpty() || targetQName.length() == sourceRootPackage.length()) return true;
     return targetQName.charAt(sourceRootPackage.length()) == '.';
   }
 
-  public static @Nullable PsiDirectory findPackageDirectoryInSourceRoot(PackageWrapper aPackage, final VirtualFile sourceRoot) {
+  public static @Nullable PsiDirectory findPackageDirectoryInSourceRoot(PackageWrapper aPackage, VirtualFile sourceRoot) {
     final PsiDirectory[] directories = aPackage.getDirectories();
     for (PsiDirectory directory : directories) {
       if (VfsUtilCore.isAncestor(sourceRoot, directory.getVirtualFile(), false)) {
@@ -166,8 +160,7 @@ public final class CommonJavaRefactoringUtil {
     return current;
   }
 
-  public static @NotNull PsiDirectory createPackageDirectoryInSourceRoot(@NotNull PackageWrapper aPackage, final @NotNull VirtualFile sourceRoot)
-    throws IncorrectOperationException {
+  public static @NotNull PsiDirectory createPackageDirectoryInSourceRoot(@NotNull PackageWrapper aPackage, @NotNull VirtualFile sourceRoot) {
     PsiDirectory[] existing = aPackage.getDirectories(
       GlobalSearchScopes.directoryScope(aPackage.getManager().getProject(), sourceRoot, true));
     if (existing.length > 0) {
@@ -197,8 +190,8 @@ public final class CommonJavaRefactoringUtil {
 
   @Contract(value = "null -> null", pure = true)
   public static PsiExpression unparenthesizeExpression(PsiExpression expression) {
-    while (expression instanceof PsiParenthesizedExpression) {
-      final PsiExpression innerExpression = ((PsiParenthesizedExpression)expression).getExpression();
+    while (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
+      final PsiExpression innerExpression = parenthesizedExpression.getExpression();
       if (innerExpression == null) return expression;
       expression = innerExpression;
     }
@@ -222,10 +215,7 @@ public final class CommonJavaRefactoringUtil {
     }
   }
 
-  public static List<PsiExpression> collectExpressions(final PsiFile file,
-                                                       final Document document,
-                                                       final int offset,
-                                                       boolean acceptVoid) {
+  public static List<PsiExpression> collectExpressions(PsiFile file, Document document, int offset, boolean acceptVoid) {
     CharSequence text = document.getCharsSequence();
     int correctedOffset = offset;
     int textLength = document.getTextLength();
@@ -267,15 +257,13 @@ public final class CommonJavaRefactoringUtil {
       return true;
     }
     else if (!(expression instanceof PsiAssignmentExpression)) {
-      if (!(expression instanceof PsiReferenceExpression)) {
+      if (!(expression instanceof PsiReferenceExpression ref)) {
         return true;
       }
-      else {
-        if (!(expression.getParent() instanceof PsiMethodCallExpression)) {
-          final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
-          if (!(resolve instanceof PsiClass) && !(resolve instanceof PsiPackage)) {
-            return true;
-          }
+      else if (!(expression.getParent() instanceof PsiMethodCallExpression)) {
+        final PsiElement resolve = ref.resolve();
+        if (!(resolve instanceof PsiClass) && !(resolve instanceof PsiPackage)) {
+          return true;
         }
       }
     }
@@ -293,13 +281,13 @@ public final class CommonJavaRefactoringUtil {
     final Project project = lambdaExpression.getProject();
     final PsiCodeBlock codeBlock = JavaPsiFacade.getElementFactory(project).createCodeBlockFromText(newLambdaText, lambdaExpression);
     PsiStatement statement = codeBlock.getStatements()[0];
-    if (statement instanceof PsiReturnStatement) {
-      PsiExpression value = ((PsiReturnStatement)statement).getReturnValue();
+    if (statement instanceof PsiReturnStatement returnStatement) {
+      PsiExpression value = returnStatement.getReturnValue();
       LOG.assertTrue(value != null);
       value.replace(body);
     }
-    else if (statement instanceof PsiExpressionStatement){
-      ((PsiExpressionStatement)statement).getExpression().replace(body);
+    else if (statement instanceof PsiExpressionStatement expressionStatement) {
+      expressionStatement.getExpression().replace(body);
     }
     PsiElement arrow = PsiTreeUtil.skipWhitespacesBackward(body);
     if (arrow != null && arrow.getNextSibling() != body) {
@@ -318,11 +306,12 @@ public final class CommonJavaRefactoringUtil {
     }
     PsiElement parentStatement = parent;
     while (parent instanceof PsiStatement && !(parent instanceof PsiSwitchLabeledRuleStatement)) {
-      if (!skipScopingStatements && ((parent instanceof PsiForStatement && parentStatement == ((PsiForStatement)parent).getBody()) || (
-        parent instanceof PsiForeachStatement && parentStatement == ((PsiForeachStatement)parent).getBody()) || (
-        parent instanceof PsiWhileStatement && parentStatement == ((PsiWhileStatement)parent).getBody()) || (
-        parent instanceof PsiIfStatement &&
-        (parentStatement == ((PsiIfStatement)parent).getThenBranch() || parentStatement == ((PsiIfStatement)parent).getElseBranch())))) {
+      if (!skipScopingStatements && 
+          ((parent instanceof PsiForStatement forStatement && parentStatement == forStatement.getBody()) ||
+           (parent instanceof PsiForeachStatement foreachStatement && parentStatement == foreachStatement.getBody()) || 
+           (parent instanceof PsiWhileStatement whileStatement && parentStatement == whileStatement.getBody()) ||
+           (parent instanceof PsiIfStatement ifStatement && (parentStatement == ifStatement.getThenBranch() || 
+                                                             parentStatement == ifStatement.getElseBranch())))) {
         return parentStatement;
       }
       parentStatement = parent;
@@ -334,19 +323,18 @@ public final class CommonJavaRefactoringUtil {
   public static PsiStatement putStatementInLoopBody(PsiStatement declaration,
                                                     PsiElement container,
                                                     PsiElement finalAnchorStatement,
-                                                    boolean replaceBody)
-    throws IncorrectOperationException {
+                                                    boolean replaceBody) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(container.getProject());
-    if(isLoopOrIf(container)) {
+    if (isLoopOrIf(container)) {
       PsiStatement loopBody = getLoopBody(container, finalAnchorStatement);
       PsiStatement loopBodyCopy = loopBody != null ? (PsiStatement) loopBody.copy() : null;
       PsiBlockStatement blockStatement = (PsiBlockStatement)elementFactory
         .createStatementFromText("{}", null);
       blockStatement = (PsiBlockStatement) CodeStyleManager.getInstance(container.getProject()).reformat(blockStatement);
       final PsiElement prevSibling = loopBody.getPrevSibling();
-      if(prevSibling instanceof PsiWhiteSpace) {
+      if (prevSibling instanceof PsiWhiteSpace) {
         final PsiElement pprev = prevSibling.getPrevSibling();
-        if (!(pprev instanceof PsiComment) || !((PsiComment)pprev).getTokenType().equals(JavaTokenType.END_OF_LINE_COMMENT)) {
+        if (!(pprev instanceof PsiComment comment) || !comment.getTokenType().equals(JavaTokenType.END_OF_LINE_COMMENT)) {
           prevSibling.delete();
         }
       }
@@ -361,7 +349,8 @@ public final class CommonJavaRefactoringUtil {
 
       String lambdaParamListWithArrowAndComments = lambdaExpression.getText()
         .substring(0, (declaration.isPhysical() ? declaration : invalidBody).getStartOffsetInParent());
-      final PsiLambdaExpression expressionFromText = (PsiLambdaExpression)elementFactory.createExpressionFromText(lambdaParamListWithArrowAndComments + "{}", lambdaExpression.getParent());
+      final PsiLambdaExpression expressionFromText = (PsiLambdaExpression)
+        elementFactory.createExpressionFromText(lambdaParamListWithArrowAndComments + "{}", lambdaExpression.getParent());
       PsiCodeBlock newBody = (PsiCodeBlock)expressionFromText.getBody();
       LOG.assertTrue(newBody != null);
       newBody.add(declaration);
@@ -397,15 +386,15 @@ public final class CommonJavaRefactoringUtil {
   }
 
   private static @Nullable PsiStatement getLoopBody(PsiElement container, PsiElement anchorStatement) {
-    if(container instanceof PsiLoopStatement) {
-      return ((PsiLoopStatement) container).getBody();
+    if (container instanceof PsiLoopStatement statement) {
+      return statement.getBody();
     }
-    else if (container instanceof PsiIfStatement) {
-      final PsiStatement thenBranch = ((PsiIfStatement)container).getThenBranch();
+    else if (container instanceof PsiIfStatement statement) {
+      final PsiStatement thenBranch = statement.getThenBranch();
       if (thenBranch != null && PsiTreeUtil.isAncestor(thenBranch, anchorStatement, false)) {
         return thenBranch;
       }
-      final PsiStatement elseBranch = ((PsiIfStatement)container).getElseBranch();
+      final PsiStatement elseBranch = statement.getElseBranch();
       if (elseBranch != null && PsiTreeUtil.isAncestor(elseBranch, anchorStatement, false)) {
         return elseBranch;
       }
@@ -415,18 +404,16 @@ public final class CommonJavaRefactoringUtil {
     return null;
   }
 
-  public static PsiStatement putStatementInLoopBody(PsiStatement declaration,
-                                                    PsiElement container,
-                                                    PsiElement finalAnchorStatement) throws IncorrectOperationException {
+  public static PsiStatement putStatementInLoopBody(PsiStatement declaration, PsiElement container, PsiElement finalAnchorStatement) {
     return putStatementInLoopBody(declaration, container, finalAnchorStatement, false);
   }
 
-  public static void collectTypeParameters(final Set<? super PsiTypeParameter> used, final PsiElement element) {
+  public static void collectTypeParameters(Set<? super PsiTypeParameter> used, PsiElement element) {
     collectTypeParameters(used, element, Conditions.alwaysTrue());
   }
 
-  public static void collectTypeParameters(final Set<? super PsiTypeParameter> used, final PsiElement element,
-                                           final Condition<? super PsiTypeParameter> filter) {
+  public static void collectTypeParameters(Set<? super PsiTypeParameter> used, PsiElement element,
+                                           Condition<? super PsiTypeParameter> filter) {
     element.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
@@ -439,14 +426,14 @@ public final class CommonJavaRefactoringUtil {
       }
 
       @Override
-      public void visitExpression(final @NotNull PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         super.visitExpression(expression);
         final PsiType type = expression.getType();
         if (type != null) {
           final PsiTypesUtil.TypeParameterSearcher searcher = new PsiTypesUtil.TypeParameterSearcher();
           type.accept(searcher);
           for (PsiTypeParameter typeParam : searcher.getTypeParameters()) {
-            if (PsiTreeUtil.isAncestor(typeParam.getOwner(), element, false) && filter.value(typeParam)){
+            if (PsiTreeUtil.isAncestor(typeParam.getOwner(), element, false) && filter.value(typeParam)) {
               used.add(typeParam);
             }
           }
@@ -457,9 +444,7 @@ public final class CommonJavaRefactoringUtil {
 
   public static boolean canBeDeclaredFinal(@NotNull PsiVariable variable) {
     LOG.assertTrue(variable instanceof PsiLocalVariable || variable instanceof PsiParameter);
-    final boolean isReassigned = ControlFlowUtil
-      .isReassigned(variable, new HashMap<>());
-    return !isReassigned;
+    return !ControlFlowUtil.isReassigned(variable, new HashMap<>());
   }
 
   public static PsiElement getParentExpressionAnchorElement(PsiElement place) {
@@ -549,26 +534,19 @@ public final class CommonJavaRefactoringUtil {
     return anchor;
   }
 
-  public static List<PsiExpression> collectExpressions(final PsiFile file,
-                                                       final Editor editor,
-                                                       final int offset) {
+  public static List<PsiExpression> collectExpressions(PsiFile file, Editor editor, int offset) {
     return collectExpressions(file, editor, offset, false);
   }
 
-  public static List<PsiExpression> collectExpressions(final PsiFile file,
-                                                       final Editor editor,
-                                                       final int offset,
-                                                       boolean acceptVoid) {
+  public static List<PsiExpression> collectExpressions(PsiFile file, Editor editor, int offset, boolean acceptVoid) {
     return collectExpressions(file, editor.getDocument(), offset, acceptVoid);
   }
 
-  public static SuggestedNameInfo getSuggestedName(@Nullable PsiType type, final @NotNull PsiExpression expression) {
+  public static SuggestedNameInfo getSuggestedName(@Nullable PsiType type, @NotNull PsiExpression expression) {
     return getSuggestedName(type, expression, expression);
   }
 
-  public static SuggestedNameInfo getSuggestedName(@Nullable PsiType type,
-                                                   final @NotNull PsiExpression expression,
-                                                   final PsiElement anchor) {
+  public static SuggestedNameInfo getSuggestedName(@Nullable PsiType type, @NotNull PsiExpression expression, PsiElement anchor) {
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
     final SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, expression, type);
     final String[] strings = JavaCompletionUtil
@@ -583,9 +561,10 @@ public final class CommonJavaRefactoringUtil {
     PsiType type = typeByExpression;
     final boolean isFunctionalType = LambdaUtil.notInferredType(type);
     PsiType exprType = expr.getType();
-    final boolean detectConjunct = exprType instanceof PsiIntersectionType ||
-                                   exprType instanceof PsiWildcardType && ((PsiWildcardType)exprType).getBound() instanceof PsiIntersectionType ||
-                                   exprType instanceof PsiCapturedWildcardType && ((PsiCapturedWildcardType)exprType).getUpperBound() instanceof PsiIntersectionType;
+    final boolean detectConjunct = 
+      exprType instanceof PsiIntersectionType ||
+      exprType instanceof PsiWildcardType wildcardType && wildcardType.getBound() instanceof PsiIntersectionType ||
+      exprType instanceof PsiCapturedWildcardType capturedWildcardType && capturedWildcardType.getUpperBound() instanceof PsiIntersectionType;
     if (type != null && !isFunctionalType && !detectConjunct) {
       return type;
     }
@@ -600,7 +579,7 @@ public final class CommonJavaRefactoringUtil {
     return detectConjunct ? type : null;
   }
 
-  public static boolean isInStaticContext(PsiElement element, final @Nullable PsiClass aClass) {
+  public static boolean isInStaticContext(PsiElement element, @Nullable PsiClass aClass) {
     return PsiUtil.getEnclosingStaticElement(element, aClass) != null;
   }
 
@@ -627,21 +606,21 @@ public final class CommonJavaRefactoringUtil {
     return null;
   }
 
-  public static @Nullable PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(final PsiElement @NotNull ... elements) {
+  public static @Nullable PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(PsiElement @NotNull ... elements) {
     return createTypeParameterListWithUsedTypeParameters(null, elements);
   }
 
-  public static @Nullable PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(final @Nullable PsiTypeParameterList fromList,
-                                                                                             final PsiElement @NotNull ... elements) {
+  public static @Nullable PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(@Nullable PsiTypeParameterList fromList,
+                                                                                             PsiElement @NotNull ... elements) {
     return createTypeParameterListWithUsedTypeParameters(fromList, Conditions.alwaysTrue(), elements);
   }
 
-  public static @Nullable PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(final @Nullable PsiTypeParameterList fromList,
+  public static @Nullable PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(@Nullable PsiTypeParameterList fromList,
                                                                                              Condition<? super PsiTypeParameter> filter,
-                                                                                             final PsiElement @NotNull ... elements) {
+                                                                                             PsiElement @NotNull ... elements) {
     if (elements.length == 0) return null;
     final Set<PsiTypeParameter> used = new HashSet<>();
-    for (final PsiElement element : elements) {
+    for (PsiElement element : elements) {
       if (element == null) continue;
       collectTypeParameters(used, element, filter);  //pull up extends cls class with type params
 
@@ -662,7 +641,7 @@ public final class CommonJavaRefactoringUtil {
       final PsiClass aClass = elementFactory.createClassFromText("class A {}", null);
       PsiTypeParameterList list = aClass.getTypeParameterList();
       assert list != null;
-      for (final PsiTypeParameter typeParameter : typeParameters) {
+      for (PsiTypeParameter typeParameter : typeParameters) {
         list.add(typeParameter);
       }
       return list;
@@ -675,7 +654,7 @@ public final class CommonJavaRefactoringUtil {
   }
 
   public static void collectTypeParametersInDependencies(Condition<? super PsiTypeParameter> filter, Set<PsiTypeParameter> used) {
-    Stack<PsiTypeParameter> toProcess = new com.intellij.util.containers.Stack<>();
+    Stack<PsiTypeParameter> toProcess = new Stack<>();
     toProcess.addAll(used);
     while (!toProcess.isEmpty()) {
       PsiTypeParameter parameter = toProcess.pop();
@@ -693,20 +672,20 @@ public final class CommonJavaRefactoringUtil {
     return dataElements[0].getText();
   }
 
-  public static void fixJavadocsForParams(PsiMethod method, Set<? extends PsiParameter> newParameters) throws IncorrectOperationException {
+  public static void fixJavadocsForParams(PsiMethod method, Set<? extends PsiParameter> newParameters) {
     fixJavadocsForParams(method, newParameters, Conditions.alwaysFalse());
   }
 
   public static void fixJavadocsForParams(PsiMethod method,
                                           Set<? extends PsiParameter> newParameters,
-                                          Condition<? super Pair<PsiParameter, String>> eqCondition) throws IncorrectOperationException {
+                                          Condition<? super Pair<PsiParameter, String>> eqCondition) {
     fixJavadocsForParams(method, newParameters, eqCondition, Conditions.alwaysTrue());
   }
 
   public static void fixJavadocsForParams(@NotNull PsiMethod method,
                                           @NotNull Set<? extends PsiParameter> newParameters,
                                           @NotNull Condition<? super Pair<PsiParameter, String>> eqCondition,
-                                          @NotNull Condition<? super String> matchedToOldParam) throws IncorrectOperationException {
+                                          @NotNull Condition<? super String> matchedToOldParam) {
     fixJavadocsForParams(method, method.getDocComment(), newParameters, eqCondition, matchedToOldParam);
   }
 
@@ -714,7 +693,7 @@ public final class CommonJavaRefactoringUtil {
                                           @Nullable PsiDocComment docComment,
                                           @NotNull Set<? extends PsiParameter> newParameters,
                                           @NotNull Condition<? super Pair<PsiParameter, String>> eqCondition,
-                                          @NotNull Condition<? super String> matchedToOldParam) throws IncorrectOperationException {
+                                          @NotNull Condition<? super String> matchedToOldParam) {
     if (docComment == null) return;
     PsiDocComment oldDocComment = (PsiDocComment)docComment.copy();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -770,14 +749,12 @@ public final class CommonJavaRefactoringUtil {
         newTags.add(createParamTag(parameter));
       }
     }
-    PsiElement anchor = paramTags.length > 0 ? paramTags[0].getPrevSibling() : null;
+    PsiElement anchor = (paramTags.length > 0) ? paramTags[0].getPrevSibling() : null;
     for (PsiDocTag paramTag : paramTags) {
       paramTag.delete();
     }
     for (PsiDocTag psiDocTag : newTags) {
-      anchor = anchor != null && anchor.isValid()
-               ? docComment.addAfter(psiDocTag, anchor)
-               : docComment.add(psiDocTag);
+      anchor = (anchor != null && anchor.isValid()) ? docComment.addAfter(psiDocTag, anchor) : docComment.add(psiDocTag);
     }
     formatJavadocIgnoringSettings(method, docComment, oldDocComment);
   }
@@ -786,7 +763,8 @@ public final class CommonJavaRefactoringUtil {
     formatJavadocIgnoringSettings(method, docComment, null);
   }
 
-  public static void formatJavadocIgnoringSettings(@NotNull PsiMethod method, @NotNull PsiDocComment docComment, @Nullable PsiDocComment oldComment) {
+  public static void formatJavadocIgnoringSettings(@NotNull PsiMethod method, @NotNull PsiDocComment docComment,
+                                                   @Nullable PsiDocComment oldComment) {
     PsiFile containingFile = method.getContainingFile();
     if (containingFile == null) {
       return;
@@ -809,8 +787,8 @@ public final class CommonJavaRefactoringUtil {
     return JavaPsiFacade.getElementFactory(parameter.getProject()).createParamTag(parameter.getName(), "");
   }
 
-  public static PsiElement replaceElementsWithMap(PsiElement replaceIn, final Map<PsiElement, PsiElement> elementsToReplace) throws IncorrectOperationException {
-    for(Map.Entry<PsiElement, PsiElement> e: elementsToReplace.entrySet()) {
+  public static PsiElement replaceElementsWithMap(PsiElement replaceIn, Map<PsiElement, PsiElement> elementsToReplace) {
+    for (Map.Entry<PsiElement, PsiElement> e : elementsToReplace.entrySet()) {
       if (e.getKey() == replaceIn) {
         return e.getKey().replace(e.getValue());
       }
@@ -819,21 +797,16 @@ public final class CommonJavaRefactoringUtil {
     return replaceIn;
   }
 
-  public static PsiField appendField(final PsiClass destClass,
-                                   final PsiField psiField,
-                                   final PsiElement anchorMember,
-                                   final PsiField forwardReference) {
+  public static PsiField appendField(PsiClass destClass, PsiField psiField, PsiElement anchorMember, PsiField forwardReference) {
     final PsiClass parentClass = PsiTreeUtil.getParentOfType(anchorMember, PsiClass.class);
 
-    if (anchorMember instanceof PsiField &&
+    if (anchorMember instanceof PsiField anchorField &&
         anchorMember.getParent() == parentClass &&
         destClass == parentClass &&
-        ((PsiField)anchorMember).hasModifierProperty(PsiModifier.STATIC) == psiField.hasModifierProperty(PsiModifier.STATIC)) {
+        anchorField.hasModifierProperty(PsiModifier.STATIC) == psiField.hasModifierProperty(PsiModifier.STATIC)) {
       return (PsiField)destClass.addBefore(psiField, anchorMember);
     }
-    else if (anchorMember instanceof PsiClassInitializer &&
-             anchorMember.getParent() == parentClass &&
-             destClass == parentClass) {
+    else if (anchorMember instanceof PsiClassInitializer && anchorMember.getParent() == parentClass && destClass == parentClass) {
       PsiField field = (PsiField)destClass.addBefore(psiField, anchorMember);
       destClass.addBefore(CodeEditUtil.createLineFeed(field.getManager()), anchorMember);
       return field;
@@ -850,10 +823,8 @@ public final class CommonJavaRefactoringUtil {
                                                             @NotNull PsiElement context,
                                                             @NotNull JavaCodeFragmentFactory factory,
                                                             boolean allowConjunctions) {
-    return factory.createTypeCodeFragment(type == null ? "" : type.getCanonicalText(),
-                                          context,
-                                          true,
-                                          (allowConjunctions && PsiUtil.isLanguageLevel8OrHigher(context)) ? JavaCodeFragmentFactory.ALLOW_INTERSECTION : 0);
+    int flags = (allowConjunctions && PsiUtil.isLanguageLevel8OrHigher(context)) ? JavaCodeFragmentFactory.ALLOW_INTERSECTION : 0;
+    return factory.createTypeCodeFragment(type == null ? "" : type.getCanonicalText(), context, true, flags);
   }
 
   /**
@@ -897,7 +868,7 @@ public final class CommonJavaRefactoringUtil {
     return result;
   }
 
-  public static void inlineArrayCreationForVarargs(final PsiNewExpression arrayCreation) {
+  public static void inlineArrayCreationForVarargs(PsiNewExpression arrayCreation) {
     PsiExpressionList argumentList = (PsiExpressionList)PsiUtil.skipParenthesizedExprUp(arrayCreation.getParent());
     if (argumentList == null) return;
     PsiExpression[] args = argumentList.getExpressions();
@@ -948,12 +919,7 @@ public final class CommonJavaRefactoringUtil {
   }
 
   public static PsiElement getVariableScope(PsiLocalVariable localVar) {
-    if (!(localVar instanceof ImplicitVariable)) {
-      return localVar.getParent().getParent();
-    }
-    else {
-      return ((ImplicitVariable)localVar).getDeclarationScope();
-    }
+    return localVar instanceof ImplicitVariable variable ? variable.getDeclarationScope() : localVar.getParent().getParent();
   }
 
   /**
@@ -961,8 +927,8 @@ public final class CommonJavaRefactoringUtil {
    * Cannot use method from code style manager: a collision with fieldToReplace is not a collision
    */
   public static String suggestUniqueVariableName(String baseName, PsiElement place, PsiField fieldToReplace) {
-    for(int index = 0;;index++) {
-      final String name = index > 0 ? baseName + index : baseName;
+    for (int index = 0; ; index++) {
+      final String name = (index > 0) ? baseName + index : baseName;
       final PsiManager manager = place.getManager();
       PsiResolveHelper helper = JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper();
       PsiVariable refVar = helper.resolveAccessibleReferencedVariable(name, place);
@@ -971,7 +937,6 @@ public final class CommonJavaRefactoringUtil {
       place.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitClass(@NotNull PsiClass aClass) {
-
         }
 
         @Override
@@ -1027,7 +992,7 @@ public final class CommonJavaRefactoringUtil {
     }
     PsiType lastParamType = lastParameter.getType();
     LOG.assertTrue(lastParamType instanceof PsiEllipsisType, lastParamType);
-    if (!(lastArg instanceof PsiNewExpression)) {
+    if (!(lastArg instanceof PsiNewExpression newExpression)) {
       return null;
     }
     final PsiType substitutedLastParamType = substitutor.substitute(((PsiEllipsisType)lastParamType).toArrayType());
@@ -1036,11 +1001,8 @@ public final class CommonJavaRefactoringUtil {
                                !lastArgType.equals(TypeConversionUtil.erasure(substitutedLastParamType))) {
       return null;
     }
-    PsiExpression[] initializers = getInitializers((PsiNewExpression)lastArg);
-    if (initializers == null) {
-      return null;
-    }
-    if (ContainerUtil.exists(initializers, expr -> expr instanceof PsiArrayInitializerExpression)) {
+    PsiExpression[] initializers = getInitializers(newExpression);
+    if (initializers == null || ContainerUtil.exists(initializers, expr -> expr instanceof PsiArrayInitializerExpression)) {
       return null;
     }
     return initializers;
@@ -1049,10 +1011,10 @@ public final class CommonJavaRefactoringUtil {
   /**
    * Should be called with {@code arrayElements} = {@link #getArrayInitializersToFlattenInVarargs(PsiCall)}.
    * 
-   * @return {@code true} iff {@code callExpression} would resolve to the same method after replacement of last argument with {@code arrayElements}
+   * @return {@code true} iff {@code callExpression} would resolve to the same method after replacement of last argument 
+   * with {@code arrayElements}
    */
-  public static boolean isSafeToFlattenToVarargsCall(final @NotNull PsiCall callExpression,
-                                                     final @NotNull PsiExpression @NotNull [] arrayElements) {
+  public static boolean isSafeToFlattenToVarargsCall(@NotNull PsiCall callExpression, @NotNull PsiExpression @NotNull [] arrayElements) {
     final @NotNull PsiMethod oldRefMethod = Objects.requireNonNull(callExpression.resolveMethod());
     if (arrayElements.length == 1) {
       PsiType type = arrayElements[0].getType();
@@ -1101,7 +1063,7 @@ public final class CommonJavaRefactoringUtil {
     }
   }
 
-  private static PsiExpression @Nullable [] getInitializers(final @NotNull PsiNewExpression newExpression) {
+  private static PsiExpression @Nullable [] getInitializers(@NotNull PsiNewExpression newExpression) {
     PsiArrayInitializerExpression initializer = newExpression.getArrayInitializer();
     if (initializer != null) {
       return initializer.getInitializers();
@@ -1111,13 +1073,13 @@ public final class CommonJavaRefactoringUtil {
       PsiExpression firstDimension = dims[0];
       Object value =
         JavaPsiFacade.getInstance(newExpression.getProject()).getConstantEvaluationHelper().computeConstantExpression(firstDimension);
-      if (value instanceof Integer && ((Integer)value).intValue() == 0) return PsiExpression.EMPTY_ARRAY;
+      if (value instanceof Integer i && i.intValue() == 0) return PsiExpression.EMPTY_ARRAY;
     }
 
     return null;
   }
 
-  public static void tryToInlineArrayCreationForVarargs(final PsiExpression expr) {
+  public static void tryToInlineArrayCreationForVarargs(PsiExpression expr) {
     if (expr instanceof PsiNewExpression newExpression && newExpression.getArrayInitializer() != null &&
         expr.getParent() instanceof PsiExpressionList exprList && exprList.getParent() instanceof PsiCall parentCall) {
       PsiExpression[] initializers = getArrayInitializersToFlattenInVarargs(parentCall);
@@ -1127,8 +1089,9 @@ public final class CommonJavaRefactoringUtil {
     }
   }
 
-  public static boolean canBeStatic(final PsiClass targetClass, final PsiElement place, final PsiElement[] elements, Set<? super PsiField> usedFields) {
-    if (!PsiUtil.isLocalOrAnonymousClass(targetClass) && (targetClass.getContainingClass() == null || targetClass.hasModifierProperty(PsiModifier.STATIC))) {
+  public static boolean canBeStatic(PsiClass targetClass, PsiElement place, PsiElement[] elements, Set<? super PsiField> usedFields) {
+    if (!PsiUtil.isLocalOrAnonymousClass(targetClass) && 
+        (targetClass.getContainingClass() == null || targetClass.hasModifierProperty(PsiModifier.STATIC))) {
       boolean canBeStatic = true;
       if (targetClass.isInterface()) {
         final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(place, PsiMethod.class, false);
@@ -1138,10 +1101,10 @@ public final class CommonJavaRefactoringUtil {
         ElementNeedsThis needsThis = new ElementNeedsThis(targetClass) {
           @Override
           protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
-            if (classMember instanceof PsiField && !classMember.hasModifierProperty(PsiModifier.STATIC)) {
+            if (classMember instanceof PsiField field && !classMember.hasModifierProperty(PsiModifier.STATIC)) {
               final PsiExpression expression = PsiTreeUtil.getParentOfType(classMemberReference, PsiExpression.class, false);
               if (expression == null || !PsiUtil.isAccessedForWriting(expression)) {
-                usedFields.add((PsiField)classMember);
+                usedFields.add(field);
                 return;
               }
             }
@@ -1169,10 +1132,10 @@ public final class CommonJavaRefactoringUtil {
     }
     if (enclosingMethods.size() > 1) {
       List<PsiMethod> methodsNotImplementingLibraryInterfaces = new ArrayList<>();
-      for(PsiMethod enclosing: enclosingMethods) {
+      for (PsiMethod enclosing : enclosingMethods) {
         PsiMethod[] superMethods = enclosing.findDeepestSuperMethods();
         boolean libraryInterfaceMethod = false;
-        for(PsiMethod superMethod: superMethods) {
+        for (PsiMethod superMethod : superMethods) {
           libraryInterfaceMethod |= isLibraryInterfaceMethod(superMethod);
         }
         if (!libraryInterfaceMethod) {
@@ -1186,7 +1149,7 @@ public final class CommonJavaRefactoringUtil {
     return enclosingMethods;
   }
 
-  private static boolean isLibraryInterfaceMethod(final PsiMethod method) {
+  private static boolean isLibraryInterfaceMethod(PsiMethod method) {
     return method.hasModifierProperty(PsiModifier.ABSTRACT) && !method.getManager().isInProject(method);
   }
 
