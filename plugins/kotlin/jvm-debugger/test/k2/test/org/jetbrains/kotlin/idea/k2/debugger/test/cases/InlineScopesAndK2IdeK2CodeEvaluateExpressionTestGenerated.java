@@ -1948,6 +1948,11 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("../testData/evaluation/singleBreakpoint/importsLambdaContext.kt");
             }
 
+            @TestMetadata("inlineFromOtherFileInContextFile.kt")
+            public void testInlineFromOtherFileInContextFile() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/inlineFromOtherFileInContextFile.kt");
+            }
+
             @TestMetadata("inlineFunInMultiFilePackage.kt")
             public void testInlineFunInMultiFilePackage() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/inlineFunInMultiFilePackage.kt");
