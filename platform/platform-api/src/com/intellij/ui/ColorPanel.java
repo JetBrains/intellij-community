@@ -4,6 +4,8 @@ package com.intellij.ui;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsKt;
 import com.intellij.ui.picker.ColorListener;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -35,6 +37,8 @@ public class ColorPanel extends JComponent {
     myTextField.setEditable(false);
     myTextField.putClientProperty(JBTextField.IS_FORCE_INNER_BACKGROUND_PAINT, true);
     MONOSPACED_FONT.install(myTextField);
+
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGapsKt.toUnscaledGaps(myTextField.getInsets()));
   }
 
   @SuppressWarnings("unused") // used from event handler

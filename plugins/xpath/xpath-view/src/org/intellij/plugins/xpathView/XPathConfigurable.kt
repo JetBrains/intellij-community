@@ -1,74 +1,65 @@
-/*
- * Copyright 2005-2009 Sascha Weinreuter
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package org.intellij.plugins.xpathView;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.intellij.plugins.xpathView
 
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
-import org.intellij.plugins.xpathView.ui.ConfigUI;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.ColorPanel
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.MutableProperty
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.layout.selected
+import java.awt.Color
 
-import javax.swing.*;
+internal class XPathConfigurable : BoundSearchableConfigurable(
+  XPathBundle.message("configurable.XPathConfigurable.display.name"),
+  "xpath.settings"
+) {
 
-public class XPathConfigurable implements SearchableConfigurable {
-    private ConfigUI configUI;
+  override fun createPanel(): DialogPanel {
+    return panel {
+      val config = XPathAppComponent.getInstance().getConfig()
+      lateinit var useContextAtCursor: JBCheckBox
 
-    @Override
-  public String getDisplayName() {
-    return XPathBundle.message("configurable.XPathConfigurable.display.name");
-  }
-
-  @Override
-  public @Nullable String getHelpTopic() {
-        return "xpath.settings";
-    }
-
-  @Override
-  public @NotNull String getId() {
-    return getHelpTopic();
-  }
-
-  @Override
-  public JComponent createComponent() {
-        configUI = new ConfigUI(XPathAppComponent.getInstance().getConfig());
-
-        return configUI;
-    }
-
-    @Override
-    public synchronized boolean isModified() {
-        return configUI != null && !configUI.getConfig().equals(XPathAppComponent.getInstance().getConfig());
-    }
-
-    @Override
-    public synchronized void apply() throws ConfigurationException {
-        if (configUI != null) {
-            XPathAppComponent.getInstance().setConfig(configUI.getConfig());
+      group(XPathBundle.message("settings.settings")) {
+        row {
+          checkBox(XPathBundle.message("settings.scroll.first.hit.into.visible.area"))
+            .bindSelected(config::scrollToFirst)
         }
-    }
-
-    @Override
-    public synchronized void reset() {
-        if (configUI != null) {
-            configUI.setConfig(XPathAppComponent.getInstance().getConfig());
+        row {
+          useContextAtCursor = checkBox(XPathBundle.message("settings.use.node.at.cursor.as.context.node"))
+            .bindSelected(config::bUseContextAtCursor)
+            .component
         }
-    }
+        row {
+          checkBox(XPathBundle.message("settings.highlight.only.start.tag.instead.of.whole.tag.content"))
+            .bindSelected(config::bHighlightStartTagOnly)
+        }
+        row {
+          checkBox(XPathBundle.message("settings.add.error.stripe.markers.for.each.result"))
+            .bindSelected(config::bAddErrorStripe)
+        }
+      }
 
-    @Override
-    public synchronized void disposeUIResources() {
-        configUI = null;
+      group(XPathBundle.message("settings.colors")) {
+        row(XPathBundle.message("settings.highlight.color")) {
+          cell(ColorPanel())
+            .bindColor({ config.attributes.backgroundColor }, { config.attributes.backgroundColor = it })
+        }
+        row(XPathBundle.message("settings.context.node.color")) {
+          cell(ColorPanel())
+            .bindColor({ config.contextAttributes.backgroundColor }, { config.contextAttributes.backgroundColor = it })
+            .enabledIf(useContextAtCursor.selected)
+            .applyIfEnabled()
+        }
+      }
     }
+  }
+}
+
+private fun <T : ColorPanel> Cell<T>.bindColor(getter: () -> Color?, setter: (value: Color?) -> Unit): Cell<T> {
+  bind({ it.selectedColor }, { it, value -> it.selectedColor = value }, MutableProperty(getter, setter))
+
+  return this
 }
