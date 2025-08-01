@@ -11,7 +11,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.entities
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleEntitySource
 
 @ApiStatus.Internal
 class GradleBridgeProjectDataService : AbstractProjectDataService<GradleBridgeData, Unit>() {
@@ -34,7 +33,7 @@ class GradleBridgeProjectDataService : AbstractProjectDataService<GradleBridgeDa
     val moduleModel = modelsProvider.modifiableModuleModel
     val entityStorage = modelsProvider.actualStorageBuilder
     val moduleNames = entityStorage.entities<ModuleEntity>()
-      .filter { it.entitySource is GradleEntitySource }
+      .filter { it.entitySource is GradleBridgeEntitySource }
       .map { it.name }
       .toList()
     for (moduleName in moduleNames) {
@@ -45,7 +44,7 @@ class GradleBridgeProjectDataService : AbstractProjectDataService<GradleBridgeDa
 
   private fun removeEntitiesFromWorkspaceModel(modelsProvider: IdeModifiableModelsProvider) {
     val entityStorage = modelsProvider.actualStorageBuilder
-    val entities = entityStorage.entitiesBySource { it is GradleEntitySource }
+    val entities = entityStorage.entitiesBySource { it is GradleBridgeEntitySource }
       .toList()
     for (entity in entities) {
       entityStorage.removeEntity(entity)

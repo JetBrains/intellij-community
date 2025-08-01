@@ -26,7 +26,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.virtualFileUrl
-import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleDeclarativeEntitySource
+import org.jetbrains.plugins.gradle.service.syncContributor.bridge.GradleBridgeEntitySource
 import org.jetbrains.plugins.gradle.service.syncContributor.hasNonPreviewEntities
 import org.jetbrains.plugins.gradle.service.syncContributor.removeProjectRoot
 import java.io.File
@@ -84,7 +84,7 @@ class GradleDeclarativeSyncContributor : GradleSyncContributor {
     val project = context.project
 
     val projectRootUrl = context.virtualFileUrl(context.projectPath)
-    val entitySource = GradleDeclarativeEntitySource(projectRootUrl)
+    val entitySource = GradleDeclarativeEntitySource(context.projectPath)
 
     // try finding the Gradle build file in the project root directory
     val declarativeGradleBuildFile = File(context.projectPath, "build.gradle.dcl")
@@ -341,10 +341,14 @@ class GradleDeclarativeSyncContributor : GradleSyncContributor {
     context: ProjectResolverContext,
     storage: MutableEntityStorage,
   ) {
-    val entitySource = GradleDeclarativeEntitySource(context.virtualFileUrl(context.projectPath))
+    val entitySource = GradleDeclarativeEntitySource(context.projectPath)
     val projectEntities = storage.entitiesBySource { it == entitySource }
     for (projectEntity in projectEntities.toList()) {
       storage.removeEntity(projectEntity)
     }
   }
+
+  private data class GradleDeclarativeEntitySource(
+    override val projectPath: String,
+  ) : GradleBridgeEntitySource
 }

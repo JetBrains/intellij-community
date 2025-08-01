@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.service.project.nameGenerator.ModuleN
 import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.virtualFileUrl
-import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleLinkedProjectEntitySource
+import org.jetbrains.plugins.gradle.service.syncContributor.bridge.GradleBridgeEntitySource
 import java.nio.file.Path
 import kotlin.io.path.name
 
@@ -24,7 +25,9 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
 
   override suspend fun onResolveProjectInfoStarted(context: ProjectResolverContext, storage: MutableEntityStorage) {
     if (context.isPhasedSyncEnabled) {
-      configureProjectRoot(context, storage)
+      if (!hasNonPreviewEntities(context, storage)) {
+        configureProjectRoot(context, storage)
+      }
     }
   }
 
@@ -43,9 +46,8 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
     val contentRoots = storage.entities<ContentRootEntity>()
       .mapTo(LinkedHashSet()) { it.url }
 
-    val linkedProjectEntitySource = GradleLinkedProjectEntitySource(context.virtualFileUrl(context.projectPath))
-
-    val projectRootData = GradleProjectRootData(Path.of(context.projectPath), linkedProjectEntitySource)
+    val entitySource = GradleProjectRootEntitySource(context.projectPath)
+    val projectRootData = GradleProjectRootData(Path.of(context.projectPath), entitySource)
 
     if (isUnloadedModule(context, projectRootData)) {
       return
@@ -121,9 +123,13 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
 
   private class GradleProjectRootData(
     val projectRoot: Path,
-    val entitySource: GradleLinkedProjectEntitySource
+    val entitySource: EntitySource,
   )
 }
+
+private data class GradleProjectRootEntitySource(
+  override val projectPath: String,
+) : GradleBridgeEntitySource
 
 /**
  * The [GradleContentRootSyncContributor] has the complete information to configure the accurate build roots.
@@ -131,7 +137,7 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
  */
 @ApiStatus.Internal // Visible for GradleDeclarativeSyncContributor
 fun removeProjectRoot(context: ProjectResolverContext, storage: MutableEntityStorage) {
-  val entitySource = GradleLinkedProjectEntitySource(context.virtualFileUrl(context.projectPath))
+  val entitySource = GradleProjectRootEntitySource(context.projectPath)
   val entities = storage.entitiesBySource { it == entitySource }
   for (entity in entities.toList()) {
     storage.removeEntity(entity)
@@ -141,7 +147,7 @@ fun removeProjectRoot(context: ProjectResolverContext, storage: MutableEntitySto
 @ApiStatus.Internal // Visible for GradleDeclarativeSyncContributor
 fun hasNonPreviewEntities(context: ProjectResolverContext, storage: MutableEntityStorage): Boolean {
   return storage.entities<ModuleEntity>()
-    .filter { it.entitySource !is GradleLinkedProjectEntitySource }
+    .filter { it.entitySource !is GradleProjectRootEntitySource }
     .filter { it.exModuleOptions?.rootProjectPath == context.projectPath }
     .any()
 }

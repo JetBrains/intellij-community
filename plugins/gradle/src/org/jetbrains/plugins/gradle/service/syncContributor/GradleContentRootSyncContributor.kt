@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
@@ -18,9 +19,7 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.virtualFileUrl
-import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleBuildEntitySource
-import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleLinkedProjectEntitySource
-import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleProjectEntitySource
+import org.jetbrains.plugins.gradle.service.syncContributor.bridge.GradleBridgeEntitySource
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 @Order(GradleSyncContributor.Order.CONTENT_ROOT_CONTRIBUTOR)
@@ -47,23 +46,15 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
     val contentRoots = storage.entities<ContentRootEntity>()
       .mapTo(LinkedHashSet()) { it.url }
 
-    val linkedProjectEntitySource = GradleLinkedProjectEntitySource(context.virtualFileUrl(context.projectPath))
+    val entitySource = GradleContentRootEntitySource(context.projectPath)
 
     for (buildModel in context.allBuilds) {
-
-      val buildRootUrl = context.virtualFileUrl(buildModel.buildIdentifier.rootDir)
-      val buildEntitySource = GradleBuildEntitySource(linkedProjectEntitySource, buildRootUrl)
-
       for (projectModel in buildModel.projects) {
 
         checkCanceled()
 
-        val projectRootUrl = context.virtualFileUrl(projectModel.projectDirectory)
-        val projectEntitySource = GradleProjectEntitySource(buildEntitySource, projectRootUrl)
-
         val externalProject = context.getProjectModel(projectModel, ExternalProject::class.java) ?: continue
-
-        val contentRootData = GradleContentRootData(buildModel, projectModel, externalProject, projectEntitySource)
+        val contentRootData = GradleContentRootData(buildModel, projectModel, externalProject, entitySource)
 
         if (isUnloadedModule(context, contentRootData)) {
           continue
@@ -193,6 +184,10 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
     val buildModel: GradleLightBuild,
     val projectModel: GradleLightProject,
     val externalProject: ExternalProject,
-    val entitySource: GradleProjectEntitySource,
+    val entitySource: EntitySource,
   )
+
+  private data class GradleContentRootEntitySource(
+    override val projectPath: String,
+  ) : GradleBridgeEntitySource
 }

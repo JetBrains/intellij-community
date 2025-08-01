@@ -15,6 +15,7 @@ import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.util.io.PathPrefixTree
 import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
@@ -32,10 +33,7 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.virtualFileUrl
-import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleBuildEntitySource
-import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleLinkedProjectEntitySource
-import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleProjectEntitySource
-import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleSourceSetEntitySource
+import org.jetbrains.plugins.gradle.service.syncContributor.bridge.GradleBridgeEntitySource
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -78,30 +76,22 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
       }
     }
 
-    val linkedProjectEntitySource = GradleLinkedProjectEntitySource(context.virtualFileUrl(context.projectPath))
+    val entitySource = GradleSourceRootEntitySource(context.projectPath)
 
     for (buildModel in context.allBuilds) {
-
-      val buildRootUrl = context.virtualFileUrl(buildModel.buildIdentifier.rootDir)
-      val buildEntitySource = GradleBuildEntitySource(linkedProjectEntitySource, buildRootUrl)
-
       for (projectModel in buildModel.projects) {
-
-        val projectRootUrl = context.virtualFileUrl(projectModel.projectDirectory)
-        val projectEntitySource = GradleProjectEntitySource(buildEntitySource, projectRootUrl)
 
         val externalProject = context.getProjectModel(projectModel, ExternalProject::class.java) ?: continue
         val sourceSetModel = context.getProjectModel(projectModel, GradleSourceSetModel::class.java) ?: continue
+        val projectRootUrl = context.virtualFileUrl(projectModel.projectDirectory)
         val projectModuleEntity = projectModuleEntities[projectRootUrl] ?: continue
 
         for (sourceSet in sourceSetModel.sourceSets.values) {
 
           checkCanceled()
 
-          val sourceSetEntitySource = GradleSourceSetEntitySource(projectEntitySource, sourceSet.name)
-
           val contentRootPaths = contentRootIndex.resolveContentRoots(externalProject, sourceSet)
-          val sourceRootData = GradleSourceRootData(externalProject, sourceSet, contentRootPaths, projectModuleEntity, sourceSetEntitySource)
+          val sourceRootData = GradleSourceRootData(externalProject, sourceSet, contentRootPaths, projectModuleEntity, entitySource)
 
           if (isUnloadedModule(context, sourceRootData)) {
             continue
@@ -268,6 +258,10 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
     val externalSourceSet: ExternalSourceSet,
     val contentRoots: Set<Path>,
     val projectModuleEntity: ModuleEntity,
-    val entitySource: GradleSourceSetEntitySource,
+    val entitySource: EntitySource,
   )
+
+  private data class GradleSourceRootEntitySource(
+    override val projectPath: String,
+  ) : GradleBridgeEntitySource
 }
