@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.event.MockDocumentEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.impl.SoftWrapModelImpl
 import com.intellij.openapi.editor.impl.softwrap.EmptySoftWrapPainter
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
@@ -393,8 +392,6 @@ internal class ReworkedTerminalView(
     )
 
     CopyOnSelectionHandler.install(editor, settings)
-
-    (editor.softWrapModel as? SoftWrapModelImpl)?.setSoftWrapPainter(EmptySoftWrapPainter)
   }
 
   private fun addTopAndBottomInsets(editor: Editor) {
@@ -411,8 +408,6 @@ internal class ReworkedTerminalView(
     val document = createDocument(withLanguage = true)
     val editor = createEditor(document, settings, parentDisposable)
     editor.putUserData(TerminalDataContextUtils.IS_OUTPUT_MODEL_EDITOR_KEY, true)
-    editor.settings.isUseSoftWraps = true
-    editor.useTerminalDefaultBackground(parentDisposable = this)
 
     BackgroundHighlightingUtil.disableBackgroundHighlightingForeverIn(editor)
     TextEditorProvider.putTextEditor(editor, TerminalOutputTextEditor(editor))
@@ -427,7 +422,6 @@ internal class ReworkedTerminalView(
     val document = createDocument(withLanguage = false)
     val editor = createEditor(document, settings, parentDisposable)
     editor.putUserData(TerminalDataContextUtils.IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY, true)
-    editor.useTerminalDefaultBackground(parentDisposable = this)
     editor.scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_NEVER
     editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
 
@@ -443,34 +437,50 @@ internal class ReworkedTerminalView(
     parentDisposable: Disposable,
   ): EditorImpl {
     val result = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = false)
+    result.useTerminalDefaultBackground(parentDisposable = this)
 
     result.contextMenuGroupId = "Terminal.ReworkedTerminalContextMenu"
-    result.softWrapModel.applianceManager.setLineWrapPositionStrategy(TerminalLineWrapPositionStrategy())
-    result.softWrapModel.applianceManager.setSoftWrapsUnderScrollBar(true)
+    configureSoftWraps(result)
 
     result.putUserData(ChangeEditorFontSizeStrategy.KEY, ChangeTerminalFontSizeStrategy)
     result.putUserData(TerminalFontSizeProvider.KEY, TerminalFontSizeProviderImpl.getInstance())
+    listenEditorFontChanges(result, settings, parentDisposable)
 
+    return result
+  }
+
+  private fun configureSoftWraps(editor: EditorImpl) {
+    editor.settings.isUseSoftWraps = true
+    editor.settings.isUseCustomSoftWrapIndent = false
+    val softWrapModel = editor.softWrapModel
+    softWrapModel.applianceManager.setLineWrapPositionStrategy(TerminalLineWrapPositionStrategy())
+    softWrapModel.applianceManager.setSoftWrapsUnderScrollBar(true)
+    softWrapModel.setSoftWrapPainter(EmptySoftWrapPainter)
+  }
+
+  private fun listenEditorFontChanges(
+    editor: EditorImpl,
+    settings: JBTerminalSystemSettingsProviderBase,
+    parentDisposable: Disposable,
+  ) {
     val fontSettingsListener = object : TerminalFontSettingsListener {
       override fun fontSettingsChanged() {
-        result.applyFontSettings(settings)
-        result.reinitSettings()
-        result.resizeIfShowing()
+        editor.applyFontSettings(settings)
+        editor.reinitSettings()
+        editor.resizeIfShowing()
       }
     }
     TerminalFontSettingsService.getInstance().addListener(fontSettingsListener, parentDisposable)
 
     TerminalFontSizeProviderImpl.getInstance().addListener(parentDisposable, object : TerminalFontSizeProvider.Listener {
       override fun fontChanged(showZoomIndicator: Boolean) {
-        result.setTerminalFontSize(
+        editor.setTerminalFontSize(
           fontSize = TerminalFontSizeProviderImpl.getInstance().getFontSize(),
           showZoomIndicator = showZoomIndicator,
         )
-        result.resizeIfShowing()
+        editor.resizeIfShowing()
       }
     })
-
-    return result
   }
 
   private fun EditorImpl.resizeIfShowing() {
