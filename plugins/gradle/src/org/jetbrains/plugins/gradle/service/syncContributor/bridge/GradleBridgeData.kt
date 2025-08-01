@@ -7,5 +7,5 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object GradleBridgeData {
 
-  val KEY = Key.create(GradleBridgeData::class.java, 0)
+  val KEY: Key<GradleBridgeData> = Key.create(GradleBridgeData::class.java, 0)
 }

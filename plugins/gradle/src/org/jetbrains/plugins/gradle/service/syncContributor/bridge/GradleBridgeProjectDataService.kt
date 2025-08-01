@@ -2,11 +2,12 @@
 package org.jetbrains.plugins.gradle.service.syncContributor.bridge
 
 import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.entities
 import org.jetbrains.annotations.ApiStatus
@@ -15,7 +16,7 @@ import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleEnti
 @ApiStatus.Internal
 class GradleBridgeProjectDataService : AbstractProjectDataService<GradleBridgeData, Unit>() {
 
-  override fun getTargetDataKey() = GradleBridgeData.KEY
+  override fun getTargetDataKey(): Key<GradleBridgeData> = GradleBridgeData.KEY
 
   override fun importData(
     toImport: Collection<DataNode<GradleBridgeData>>,
@@ -23,12 +24,13 @@ class GradleBridgeProjectDataService : AbstractProjectDataService<GradleBridgeDa
     project: Project,
     modelsProvider: IdeModifiableModelsProvider
   ) {
-    modelsProvider as IdeModifiableModelsProviderImpl
-    removeModulesFromModelProvider(modelsProvider)
-    removeEntitiesFromWorkspaceModel(modelsProvider)
+    if (!Registry.`is`("gradle.phased.sync.bridge.disabled")) {
+      removeModulesFromModelProvider(modelsProvider)
+      removeEntitiesFromWorkspaceModel(modelsProvider)
+    }
   }
 
-  private fun removeModulesFromModelProvider(modelsProvider: IdeModifiableModelsProviderImpl) {
+  private fun removeModulesFromModelProvider(modelsProvider: IdeModifiableModelsProvider) {
     val moduleModel = modelsProvider.modifiableModuleModel
     val entityStorage = modelsProvider.actualStorageBuilder
     val moduleNames = entityStorage.entities<ModuleEntity>()
@@ -41,7 +43,7 @@ class GradleBridgeProjectDataService : AbstractProjectDataService<GradleBridgeDa
     }
   }
 
-  private fun removeEntitiesFromWorkspaceModel(modelsProvider: IdeModifiableModelsProviderImpl) {
+  private fun removeEntitiesFromWorkspaceModel(modelsProvider: IdeModifiableModelsProvider) {
     val entityStorage = modelsProvider.actualStorageBuilder
     val entities = entityStorage.entitiesBySource { it is GradleEntitySource }
       .toList()

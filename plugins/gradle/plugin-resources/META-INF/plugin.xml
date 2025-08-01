@@ -62,6 +62,7 @@
 
     <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncContributor.GradleProjectRootSyncContributor"/>
     <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncContributor.GradleContentRootSyncContributor"/>
+    <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncContributor.bridge.GradleBridgeSyncContributor"/>
 
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseResolverExtension"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.CommonGradleProjectResolverExtension"/>
@@ -208,6 +209,8 @@
                  description="Enable to allow new projects to be created with the Gradle Daemon JVM criteria"/>
     <registryKey key="gradle.phased.sync.enabled" defaultValue="true"
                  description="Enable the phased Gradle sync execution"/>
+    <registryKey key="gradle.phased.sync.bridge.disabled" defaultValue="false"
+                 description="Disable bridges for the phased Gradle sync execution"/>
     <registryKey defaultValue="https://download.jetbrains.com/resources/intellij/plugins/gradle/v1/compatibility.json"
                  description="URL to get updates for gradle/jvm compatibility matrix" key="gradle.compatibility.config.url"/>
     <registryKey defaultValue="86400"
