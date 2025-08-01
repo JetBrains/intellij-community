@@ -128,14 +128,10 @@ public class CheckResourcesTarget extends BuildTarget<GroovyResourceRootDescript
 
     @Override
     public @NotNull BuildTargetLoader<CheckResourcesTarget> createLoader(@NotNull JpsModel model) {
-      final Map<String, JpsModule> modules = new HashMap<>();
-      for (JpsModule module : model.getProject().getModules()) {
-        modules.put(module.getName(), module);
-      }
       return new BuildTargetLoader<CheckResourcesTarget>() {
         @Override
         public @Nullable CheckResourcesTarget createTarget(@NotNull String targetId) {
-          JpsModule module = modules.get(targetId);
+          JpsModule module = model.getProject().findModuleByName(targetId);
           return module != null ? new CheckResourcesTarget(module, Type.this) : null;
         }
       };

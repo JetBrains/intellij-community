@@ -10,9 +10,7 @@ import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
 * @author Eugene Zhuravlev
@@ -46,14 +44,10 @@ public final class MavenResourcesTargetType extends ModuleBasedBuildTargetType<M
 
   @Override
   public @NotNull BuildTargetLoader<MavenResourcesTarget> createLoader(@NotNull JpsModel model) {
-    final Map<String, JpsModule> modules = new HashMap<>();
-    for (JpsModule module : model.getProject().getModules()) {
-      modules.put(module.getName(), module);
-    }
     return new BuildTargetLoader<MavenResourcesTarget>() {
       @Override
       public @Nullable MavenResourcesTarget createTarget(@NotNull String targetId) {
-        final JpsModule module = modules.get(targetId);
+        final JpsModule module = model.getProject().findModuleByName(targetId);
         return module != null ? new MavenResourcesTarget(MavenResourcesTargetType.this, module) : null;
       }
     };

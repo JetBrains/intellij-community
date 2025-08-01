@@ -194,17 +194,11 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
     Map<JpsModule, ProcessorConfigProfile> map = myAnnotationProcessingProfileMap;
     if (map == null) {
       map = new HashMap<>();
-      final Map<String, JpsModule> namesMap = new HashMap<>();
-      for (JpsModule m : module.getProject().getModules()) {
-        namesMap.put(m.getName(), m);
-      }
-      if (!namesMap.isEmpty()) {
-        for (ProcessorConfigProfile profile : getAnnotationProcessingProfiles()) {
-          for (String name : profile.getModuleNames()) {
-            final JpsModule mod = namesMap.get(name);
-            if (mod != null) {
-              map.put(mod, profile);
-            }
+      for (ProcessorConfigProfile profile : getAnnotationProcessingProfiles()) {
+        for (String name : profile.getModuleNames()) {
+          final JpsModule mod = module.getProject().findModuleByName(name);
+          if (mod != null) {
+            map.put(mod, profile);
           }
         }
       }
