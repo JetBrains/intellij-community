@@ -3,7 +3,6 @@ package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -38,8 +37,6 @@ import java.util.function.Predicate;
  */
 @ApiStatus.NonExtendable
 public class PsiTreeUtil {
-  private static final Logger LOG = Logger.getInstance(PsiTreeUtil.class);
-
   private static final Key<Object> MARKER = Key.create("PsiTreeUtil.copyElements.MARKER");
   @SuppressWarnings("unchecked") private static final Class<? extends PsiElement>[] WS = new Class[]{PsiWhiteSpace.class};
   @SuppressWarnings("unchecked") private static final Class<? extends PsiElement>[] WS_COMMENTS = new Class[]{PsiWhiteSpace.class, PsiComment.class};
@@ -972,40 +969,35 @@ public class PsiTreeUtil {
   }
 
   /**
-   * Recursively process children elements, including the root element.
+   * Recursively process children elements, including the root root.
    *
-   * @param element root element to process
+   * @param root root element to process
    * @param processor processor to consume elements
    * @return {@code true} if processing was not canceled ({@code Processor.execute()} method returned {@code true} for all elements).
-   * @see PsiElementProcessor#execute 
+   * @see PsiElementProcessor#execute
    */
   @Contract("null, _ -> true")
-  public static boolean processElements(@Nullable PsiElement element, @NotNull PsiElementProcessor<? super PsiElement> processor) {
-    if (element == null) return true;
-
-    if (element instanceof PsiCompiledElement || !element.isPhysical()) {
-      // DummyHolders cannot be visited by walking visitors because the children / parent relationship is broken there
-      if (!processor.execute(element)) return false;
-      for (PsiElement child : element.getChildren()) {
-        if (!processElements(child, processor)) return false;
-      }
+  public static boolean processElements(@Nullable PsiElement root, @NotNull PsiElementProcessor<? super PsiElement> processor) {
+    if (root == null) {
       return true;
     }
-
-    boolean[] result = {true};
-    element.accept(new PsiRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(@NotNull PsiElement element) {
-        if (processor.execute(element)) {
-          super.visitElement(element);
-        }
-        else {
-          stopWalking();
-          result[0] = false;
-        }
+    // walking visitors are not used here because the children/parent relationship is broken in DummyHolders
+    Deque<PsiElement> stack = new ArrayDeque<>();
+    stack.push(root);
+    boolean ret = true;
+    while (!stack.isEmpty()) {
+      PsiElement element = stack.pop();
+      if (!processor.execute(element)) {
+        ret = false;
+        break;
       }
-    });
-    return result[0];
+      PsiElement child = element.getLastChild();
+      while (child != null) {
+        stack.push(child);
+        child = child.getPrevSibling();
+      }
+    }
+    return ret;
   }
 
   public static boolean processElements(@NotNull PsiElementProcessor<? super PsiElement> processor, PsiElement @Nullable ... elements) {
