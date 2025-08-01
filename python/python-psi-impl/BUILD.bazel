@@ -50,6 +50,7 @@ jvm_library(
     "//python/python-syntax-core:syntax-core",
     "//platform/ml-api:ml",
     "//python/impl.helperLocator:community-helpersLocator",
+    "@lib//:hash4j",
   ],
   exports = ["//python/python-syntax-core:syntax-core"],
   runtime_deps = [":psi-impl_resources"]
