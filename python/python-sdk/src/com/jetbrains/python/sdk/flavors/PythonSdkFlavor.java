@@ -47,6 +47,7 @@ import static com.jetbrains.python.venvReader.ResolveUtilKt.tryResolvePath;
  * @param <D> is flavor-specific data attached to each SDK.
  */
 public abstract class PythonSdkFlavor<D extends PyFlavorData> {
+  @ApiStatus.Internal
   public static final ExtensionPointName<PythonSdkFlavor<?>> EP_NAME = ExtensionPointName.create("Pythonid.pythonSdkFlavor");
   /**
    * <code>
@@ -71,6 +72,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   /**
    * To provide <pre>PYCHARM_HOSTED</pre> or not. Some libs assume output is tty when this var set, which may lead to DS-4036
    */
+  @ApiStatus.Internal
   public boolean providePyCharmHosted() {
     return true;
   }
@@ -124,6 +126,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    *
    * @return whether this flavor is applicable
    */
+  @ApiStatus.Internal
   public boolean isApplicable() {
     return false;
   }
@@ -133,6 +136,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    *
    * @return whether the flavor is platform independent
    */
+  @ApiStatus.Internal
   public boolean isPlatformIndependent() {
     return false;
   }
@@ -143,6 +147,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * @return name of env variable to contain current folder.
    * {@code null} if the flavor doesn't need it
    */
+  @ApiStatus.Internal
   public @Nullable String envPathParam() {
     return null;
   }
@@ -150,6 +155,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   /**
    * This flavour doesn't need special data and could be used with {@link PyFlavorData.Empty}
    */
+  @ApiStatus.Internal
   public boolean supportsEmptyData() {
     return true;
   }
@@ -192,6 +198,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
 
+  @ApiStatus.Internal
   public static void clearExecutablesCache() {
     ourExecutableFiles.invalidateAll();
   }
@@ -243,6 +250,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return result;
   }
 
+  @ApiStatus.Internal
   public static @NotNull List<PythonSdkFlavor<?>> getPlatformIndependentFlavors() {
     List<PythonSdkFlavor<?>> result = new ArrayList<>();
     for (PythonSdkFlavor<?> flavor : EP_NAME.getExtensionList()) {
@@ -254,6 +262,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return result;
   }
 
+  @ApiStatus.Internal
   public static @Nullable PythonSdkFlavor<?> getFlavor(final @NotNull Sdk sdk) {
     final SdkAdditionalData data = sdk.getSdkAdditionalData();
     if (data instanceof PythonSdkAdditionalData) {
@@ -318,6 +327,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   /**
    * It only validates path for local target, hence use {@link #sdkSeemsValid(Sdk, PyFlavorData, TargetEnvironmentConfiguration)} instead
    */
+  @ApiStatus.Internal
   public boolean isValidSdkPath(@NotNull String pathStr) {
     Path path = tryResolvePath(pathStr);
     if (path == null) {
@@ -350,6 +360,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return getVersionStringFromOutput(processOutput);
   }
 
+  @ApiStatus.Internal
   public static @Nullable String getVersionStringFromOutput(@NotNull ProcessOutput processOutput) {
     if (processOutput.getExitCode() != 0) {
       String errors = processOutput.getStderr();
@@ -366,14 +377,17 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return getVersionStringFromOutput(processOutput.getStdout());
   }
 
+  @ApiStatus.Internal
   public static @Nullable String getVersionStringFromOutput(@NotNull String output) {
     return PatternUtil.getFirstMatch(Arrays.asList(StringUtil.splitByLines(output)), VERSION_RE);
   }
 
+  @ApiStatus.Internal
   public @NotNull Collection<String> getExtraDebugOptions() {
     return Collections.emptyList();
   }
 
+  @ApiStatus.Internal
   public void initPythonPath(@NotNull GeneralCommandLine cmd, boolean passParentEnvs, @NotNull Collection<String> path) {
     initPythonPath(path, passParentEnvs, cmd.getEnvironment());
   }
@@ -383,6 +397,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   /**
    * Unique flavor name to be stored in persistence storage. Do not change value not to break compatibility.
    */
+  @ApiStatus.Internal
   public @NotNull String getUniqueId() {
     return getClass().getSimpleName();
   }
@@ -431,14 +446,17 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return PythonPsiApiIcons.Python;
   }
 
+  @ApiStatus.Internal
   public void initPythonPath(@NotNull Collection<String> path, boolean passParentEnvs, @NotNull Map<String, String> env) {
     PythonEnvUtil.initPythonPath(env, passParentEnvs, path);
   }
 
+  @ApiStatus.Internal
   public @Nullable VirtualFile getSdkPath(@NotNull VirtualFile path) {
     return path;
   }
 
+  @ApiStatus.Internal
   public @Nullable CommandLinePatcher commandLinePatcher() {
     return null;
   }
@@ -447,9 +465,10 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * Could be called intentionally if another component suppose that
    * there could be new data provided by a flavor.
    */
+  @ApiStatus.Internal
   public void dropCaches() {
   }
-
+@ApiStatus.Internal
   public static final class UnknownFlavor extends PythonSdkFlavor<PyFlavorData.Empty> {
 
     public static final UnknownFlavor INSTANCE = new UnknownFlavor();
