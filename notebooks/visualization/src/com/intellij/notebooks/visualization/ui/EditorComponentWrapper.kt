@@ -130,9 +130,35 @@ class EditorComponentWrapper private constructor(private val editor: EditorImpl)
   }
 
   // Used in drawing cell frame for selected and hovered .
-  fun addOverlayLine(line: Line2D, color: Color) {
+  fun replaceOverlayLine(oldLine: Line2D?, line: Line2D, color: Color) {
+    val repaintRect = if (oldLine != null) {
+      val oldBounds = Rectangle(
+        oldLine.x1.toInt().coerceAtMost(oldLine.x2.toInt()),
+        oldLine.y1.toInt().coerceAtMost(oldLine.y2.toInt()),
+        Math.abs(oldLine.x2.toInt() - oldLine.x1.toInt()) + 1,
+        Math.abs(oldLine.y2.toInt() - oldLine.y1.toInt()) + 1
+      )
+
+      val newBounds = Rectangle(
+        line.x1.toInt().coerceAtMost(line.x2.toInt()),
+        line.y1.toInt().coerceAtMost(line.y2.toInt()),
+        Math.abs(line.x2.toInt() - line.x1.toInt()) + 1,
+        Math.abs(line.y2.toInt() - line.y1.toInt()) + 1
+      )
+
+      oldBounds.union(newBounds)
+    }
+    else {
+      Rectangle(
+        line.x1.toInt().coerceAtMost(line.x2.toInt()),
+        line.y1.toInt().coerceAtMost(line.y2.toInt()),
+        Math.abs(line.x2.toInt() - line.x1.toInt()) + 1,
+        Math.abs(line.y2.toInt() - line.y1.toInt()) + 1
+      )
+    }
+    overlayLines.removeIf { it.first == oldLine }
     overlayLines.add(line to color)
-    layeredPane.repaint()
+    layeredPane.repaint(repaintRect)
   }
 
   fun removeOverlayLine(line: Line2D) {

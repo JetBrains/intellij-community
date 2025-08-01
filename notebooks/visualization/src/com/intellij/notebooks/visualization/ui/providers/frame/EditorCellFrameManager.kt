@@ -97,8 +97,8 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
     }?.bounds ?: return null
 
     val lineX = upperInlayBounds.x + upperInlayBounds.width - 0.5
-    val lineStartY = (topPosition).toDouble()
-    val lineEndY = (lowerInlayBounds.y + lowerInlayBounds.height).toDouble()
+    val lineStartY = (topPosition).toDouble() + 0.5
+    val lineEndY = (lowerInlayBounds.y + lowerInlayBounds.height).toDouble() - 1
 
     val line2DDouble = Line2D.Double(lineX, lineStartY, lineX, lineEndY)
     cachedRightLine = line2DDouble

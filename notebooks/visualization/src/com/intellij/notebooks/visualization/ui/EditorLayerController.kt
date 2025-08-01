@@ -12,14 +12,14 @@ import java.awt.geom.Line2D
  */
 class EditorLayerController(private val wrapper: EditorComponentWrapper) {
 
-  fun addOverlayLine(line: Line2D, color: Color) {
-    ApplicationManager.getApplication().invokeLater {
-      wrapper.addOverlayLine(line, color)
+  fun replaceOverlayLine(oldLine: Line2D?, newline: Line2D, color: Color) {
+    com.intellij.util.ui.UIUtil.invokeLaterIfNeeded {
+      wrapper.replaceOverlayLine(oldLine, newline, color)
     }
   }
 
   fun removeOverlayLine(line: Line2D) {
-    ApplicationManager.getApplication().invokeLater {
+    com.intellij.util.ui.UIUtil.invokeLaterIfNeeded  {
       wrapper.removeOverlayLine(line)
     }
   }
