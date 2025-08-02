@@ -169,7 +169,10 @@ public fun <T : Any> ListComboBox(
         interactionSource = interactionSource,
         outline = outline,
         popupManager = popupManager,
-        labelContent = { itemContent(items[selectedIndex], false, false) },
+        labelContent = {
+            // We draw label items as not selected and not active
+            itemContent(items[selectedIndex], false, false)
+        },
     ) {
         PopupContent(
             items = items,
@@ -585,7 +588,8 @@ private fun <T : Any> PopupContent(
                         val showAsSelected =
                             (isItemSelected && previewSelectedItemIndex < 0) || previewSelectedItemIndex == index
 
-                        itemContent(item, showAsSelected, isActive)
+                        // We assume items are active when visible (the popup isn't really, but should show as such)
+                        itemContent(item, showAsSelected, true)
                     }
                 },
             )
