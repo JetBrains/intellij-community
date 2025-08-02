@@ -165,8 +165,20 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
     else {
       val packagesByRepository = manager.repositoryManager.packagesByRepository().map { (repository, packages) ->
-        val shownPackages = packages.asSequence().limitResultAndFilterOutInstalled(repository)
-        PyPackagesViewData(repository, shownPackages, moreItems = packages.size - PACKAGES_LIMIT)
+        val shownPackages = if (packages.size < PACKAGES_LIMIT) {
+          packages.asSequence().limitResultAndFilterOutInstalled(repository)
+        }
+        else {
+          emptyList()
+        }
+
+        val moreItems = if (packages.size < PACKAGES_LIMIT) {
+          0
+        }
+        else {
+          packages.size
+        }
+        PyPackagesViewData(repository, shownPackages, moreItems = moreItems)
       }.toList()
 
       toolWindowPanel?.resetSearch(installedPackages.values.toList(), packagesByRepository + invalidRepositories, currentSdk)

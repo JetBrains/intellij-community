@@ -55,6 +55,7 @@ class PyPackagesTreeTable(
     set(value) {
       field = value
       treeTableModel.items = value
+      treeListener?.onTreeStructureChanged()
     }
 
   init {
