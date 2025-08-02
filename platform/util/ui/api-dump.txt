@@ -635,6 +635,7 @@ f:com.intellij.icons.AllIcons$Gutter
 - sf:OverridingMethod:javax.swing.Icon
 - sf:ReadAccess:javax.swing.Icon
 - sf:RecursiveMethod:javax.swing.Icon
+- sf:RunInQueue:javax.swing.Icon
 - sf:SiblingInheritedMethod:javax.swing.Icon
 - sf:SuggestedRefactoringBulb:javax.swing.Icon
 - sf:SuggestedRefactoringBulbDisabled:javax.swing.Icon

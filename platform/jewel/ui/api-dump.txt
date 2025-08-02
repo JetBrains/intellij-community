@@ -2892,6 +2892,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Gutter
 - sf:OverridingMethod:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ReadAccess:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:RecursiveMethod:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:RunInQueue:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:SiblingInheritedMethod:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:SuggestedRefactoringBulb:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:SuggestedRefactoringBulbDisabled:org.jetbrains.jewel.ui.icon.IntelliJIconKey

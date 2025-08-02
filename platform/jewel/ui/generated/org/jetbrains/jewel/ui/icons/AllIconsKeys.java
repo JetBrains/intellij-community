@@ -664,6 +664,7 @@ public final class AllIconsKeys {
     /** 12x12 */ public static final @NotNull IntelliJIconKey OverridingMethod = new IntelliJIconKey("gutter/overridingMethod.svg", "expui/gutter/overridingMethod.svg", AllIconsKeys.class);
     /** 12x12 */ public static final @NotNull IntelliJIconKey ReadAccess = new IntelliJIconKey("gutter/readAccess.svg", "expui/gutter/readAccess.svg", AllIconsKeys.class);
     /** 12x12 */ public static final @NotNull IntelliJIconKey RecursiveMethod = new IntelliJIconKey("gutter/recursiveMethod.svg", "expui/gutter/recursiveMethod.svg", AllIconsKeys.class);
+    /** 14x14 */ public static final @NotNull IntelliJIconKey RunInQueue = new IntelliJIconKey("expui/gutter/runInQueue.svg", "expui/gutter/runInQueue.svg", AllIconsKeys.class);
     /** 12x12 */ public static final @NotNull IntelliJIconKey SiblingInheritedMethod = new IntelliJIconKey("gutter/siblingInheritedMethod.svg", "expui/gutter/siblingInheritedMethod.svg", AllIconsKeys.class);
     /** 12x12 */ public static final @NotNull IntelliJIconKey SuggestedRefactoringBulb = new IntelliJIconKey("gutter/suggestedRefactoringBulb.svg", "expui/gutter/suggestedRefactoring.svg", AllIconsKeys.class);
     /** 13x12 */ public static final @NotNull IntelliJIconKey SuggestedRefactoringBulbDisabled = new IntelliJIconKey("gutter/suggestedRefactoringBulbDisabled.svg", "expui/gutter/suggestedRefactoringDisabled.svg", AllIconsKeys.class);

@@ -671,6 +671,7 @@ public class AllIcons {
     /** 12x12 */ public static final @NotNull Icon OverridingMethod = load("expui/gutter/overridingMethod.svg", "gutter/overridingMethod.svg", 2079881534, 2);
     /** 12x12 */ public static final @NotNull Icon ReadAccess = load("expui/gutter/readAccess.svg", "gutter/readAccess.svg", 1716318348, 2);
     /** 12x12 */ public static final @NotNull Icon RecursiveMethod = load("expui/gutter/recursiveMethod.svg", "gutter/recursiveMethod.svg", 30131460, 2);
+    /** 14x14 */ public static final @NotNull Icon RunInQueue = load("expui/gutter/runInQueue.svg", -134130707, 2);
     /** 12x12 */ public static final @NotNull Icon SiblingInheritedMethod = load("expui/gutter/siblingInheritedMethod.svg", "gutter/siblingInheritedMethod.svg", 829470965, 7);
     /** 12x12 */ public static final @NotNull Icon SuggestedRefactoringBulb = load("expui/gutter/suggestedRefactoring.svg", "gutter/suggestedRefactoringBulb.svg", -1399925877, 2);
     /** 13x12 */ public static final @NotNull Icon SuggestedRefactoringBulbDisabled = load("expui/gutter/suggestedRefactoringDisabled.svg", "gutter/suggestedRefactoringBulbDisabled.svg", 1536207532, 2);
