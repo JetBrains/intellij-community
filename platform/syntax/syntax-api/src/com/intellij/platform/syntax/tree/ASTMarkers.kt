@@ -31,7 +31,7 @@ fun ChameleonRef(chameleon: AstMarkersChameleon): ChameleonRef = linkToActual()
 @ApiStatus.Experimental
 interface ASTMarkers {
   val size: Int
-  fun kind(i: Int): Byte
+  fun kind(i: Int): MarkerKind
 
   fun errorMessage(i: Int): String?
 
@@ -59,13 +59,9 @@ interface ASTMarkers {
 }
 
 @ApiStatus.Experimental
-object MarkerKind {
-  const val Undone: Byte = 0
-  const val Start: Byte = 1
-  const val End: Byte = 2
-  const val Error: Byte = 3
+enum class MarkerKind {
+  Undone, Start, End, Error,
 }
-
 
 fun ASTMarkers.prevSibling(markerIndex: Int): Int = if (markerIndex == 0) {
   -1

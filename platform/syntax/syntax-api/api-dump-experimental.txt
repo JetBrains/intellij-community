@@ -245,7 +245,7 @@
 - a:elementType(I):com.intellij.platform.syntax.SyntaxElementType
 - a:errorMessage(I):java.lang.String
 - a:getSize():I
-- a:kind(I):B
+- a:kind(I):com.intellij.platform.syntax.tree.MarkerKind
 - a:lexemeCount(I):I
 - a:lexemeRelOffset(I):I
 - a:markersCount(I):I
@@ -276,12 +276,15 @@
 - a:getValue():com.intellij.platform.syntax.tree.AstMarkersChameleon
 - a:realize(kotlin.jvm.functions.Function0):com.intellij.platform.syntax.tree.AstMarkersChameleon
 - a:set(com.intellij.platform.syntax.tree.AstMarkersChameleon):V
-*f:com.intellij.platform.syntax.tree.MarkerKind
-- sf:End:B
-- sf:Error:B
-- sf:INSTANCE:com.intellij.platform.syntax.tree.MarkerKind
-- sf:Start:B
-- sf:Undone:B
+*e:com.intellij.platform.syntax.tree.MarkerKind
+- java.lang.Enum
+- sf:End:com.intellij.platform.syntax.tree.MarkerKind
+- sf:Error:com.intellij.platform.syntax.tree.MarkerKind
+- sf:Start:com.intellij.platform.syntax.tree.MarkerKind
+- sf:Undone:com.intellij.platform.syntax.tree.MarkerKind
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.syntax.tree.MarkerKind
+- s:values():com.intellij.platform.syntax.tree.MarkerKind[]
 *:com.intellij.platform.syntax.tree.SyntaxNode
 - a:childByOffset(I):com.intellij.platform.syntax.tree.SyntaxNode
 - a:firstChild():com.intellij.platform.syntax.tree.SyntaxNode

@@ -34,7 +34,7 @@ internal class ASTMarkersImpl private constructor(
 
   override val size: Int get() = packer.size
 
-  override fun kind(i: Int): Byte {
+  override fun kind(i: Int): MarkerKind {
     return packer.kind(i)
   }
 
@@ -216,7 +216,7 @@ internal class ASTMarkersImpl private constructor(
   fun setMarker(
     index: Int,
     id: Int,
-    kind: Byte,
+    kind: MarkerKind,
     collapsed: Boolean,
     errorMessage: String?,
     elementType: SyntaxElementType?,
@@ -290,9 +290,7 @@ internal class ASTMarkersImpl private constructor(
 
     private fun index(i: Int): Int = if (longMode) i * 4 else i * 2
 
-    fun kind(i: Int): Byte {
-      return (ints[index(i)] and KIND_MASK).toByte()
-    }
+    fun kind(i: Int): MarkerKind = MarkerKind.entries[(ints[index(i)] and KIND_MASK)]
 
     fun lexemeInfo(i: Int): LexemeInfo {
       val index = index(i)
@@ -344,12 +342,12 @@ internal class ASTMarkersImpl private constructor(
       ints[index] = (ints[index] and (MAX_SHORT_MARKERS_COUNT shl 4).inv()) or (count shl 4)
     }
 
-    fun setInitialInfo(i: Int, id: Int, kind: Byte, collapsed: Boolean, hasErrors: Boolean) {
+    fun setInitialInfo(i: Int, id: Int, kind: MarkerKind, collapsed: Boolean, hasErrors: Boolean) {
       val collapsedInt = if (collapsed) 4 else 0
       val hasErrorInt = if (hasErrors) 8 else 0
       if (shortMode && id > MAX_SHORT_ID_VALUE) grow()
       val index = index(i)
-      ints[index] = kind.toInt() + collapsedInt + hasErrorInt
+      ints[index] = kind.ordinal + collapsedInt + hasErrorInt
       setId(i, id)
     }
 
@@ -381,7 +379,7 @@ internal class ASTMarkersImpl private constructor(
         setInitialInfo(
           i,
           firstInt ushr 16,
-          (firstInt and 3).toByte(),
+          MarkerKind.entries[(firstInt and 3)],
           (firstInt and 4) == 4,
           (firstInt and 8) == 8
         )
