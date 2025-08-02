@@ -29,14 +29,6 @@ fun interface SyntaxBuilderFactory {
   ): SyntaxTreeBuilder
 }
 
-/**
- * Specifies which language each element type belong to.
- */
-@ApiStatus.Experimental
-fun interface LanguageMapper {
-  fun map(language: SyntaxElementType): Any?
-}
-
 @ApiStatus.Experimental
 class KmpSyntaxNode internal constructor(
   internal val parent: KmpSyntaxNode?,
