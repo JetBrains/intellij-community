@@ -47,7 +47,7 @@ public class JUnit4ParameterizedIntegrationTest extends AbstractTestFrameworkCom
     assertFalse(testOutput, testOutput.contains("another"));
   }
 
-  public void _testSingleMethod() throws ExecutionException {
+  public void testSingleMethod() throws ExecutionException {
     PsiClass psiClass = findClass(myModule, "a.Test3");
     assertNotNull(psiClass);
     PsiMethod testMethod = psiClass.findMethodsByName("simple", false)[0];

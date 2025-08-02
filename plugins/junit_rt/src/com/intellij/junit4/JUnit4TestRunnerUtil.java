@@ -237,12 +237,23 @@ public final class JUnit4TestRunnerUtil {
     return false;
   }
 
-  public static boolean hasAnnotatedPublicMethod(Method method, Class<? extends Annotation> annotationClass) {
-    Class<?> aClass = method.getDeclaringClass();
-    String name = method.getName();
-    Class<?>[] types = method.getParameterTypes();
-    for (Method aMethod : aClass.getMethods()) {
-      if (aMethod.getName().equals(name) && Arrays.equals(aMethod.getParameterTypes(), types) && aMethod.isAnnotationPresent(annotationClass)) {
+  public static boolean hasAnnotatedPublicMethod(Class<?> clazz,
+                                                 String name,
+                                                 Class<?>[] parameterTypes,
+                                                 Class<? extends Annotation> annotationClass) {
+    try {
+      if (clazz.getMethod(name, parameterTypes).isAnnotationPresent(annotationClass)) {
+        return true;
+      }
+    }
+    catch (NoSuchMethodException ignore) {
+    }
+    Class<?> sc = clazz.getSuperclass();
+    if (sc != null && hasAnnotatedPublicMethod(sc, name, parameterTypes, annotationClass)) {
+      return true;
+    }
+    for (Class<?> intf : clazz.getInterfaces()) {
+      if (hasAnnotatedPublicMethod(intf, name, parameterTypes, annotationClass)) {
         return true;
       }
     }
@@ -261,7 +272,7 @@ public final class JUnit4TestRunnerUtil {
         if (methodName != null) {
           try {
             final Method method = clazz.getMethod(methodName);
-            if (!hasAnnotatedPublicMethod(method, Test.class) && TestCase.class.isAssignableFrom(clazz)) {
+            if (!hasAnnotatedPublicMethod(clazz, methodName, method.getParameterTypes(), Test.class) && TestCase.class.isAssignableFrom(clazz)) {
               return Request.runner(JUnit45ClassesRequestBuilder.createIgnoreAnnotationAndJUnit4ClassRunner(clazz));
             }
           }
