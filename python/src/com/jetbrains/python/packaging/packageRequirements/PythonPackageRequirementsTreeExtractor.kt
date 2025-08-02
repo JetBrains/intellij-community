@@ -3,7 +3,7 @@ package com.jetbrains.python.packaging.packageRequirements
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonPackage
 import org.jetbrains.annotations.ApiStatus
 
@@ -35,7 +35,7 @@ interface PythonPackageRequirementsTreeExtractorProvider {
 
 @ApiStatus.Internal
 data class PackageNode(
-  val name: NormalizedPythonPackageName,
+  val name: PyPackageName,
   val children: MutableList<PackageNode> = mutableListOf(),
 )
 
@@ -54,7 +54,7 @@ class TreeParser {
   private fun parseLevel(lines: List<String>, startIndent: Int, index: Int): ParseResult {
     val line = lines[index]
     val name = extractPackageName(line)
-    val node = PackageNode(NormalizedPythonPackageName.from(name))
+    val node = PackageNode(PyPackageName.from(name))
     var currentIndex = index + 1
     while (currentIndex < lines.size && calculateIndentLevel(lines[currentIndex]) > startIndent) {
       val result = parseLevel(lines, calculateIndentLevel(lines[currentIndex]), currentIndex)

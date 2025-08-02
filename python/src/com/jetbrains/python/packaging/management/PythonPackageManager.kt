@@ -18,13 +18,13 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PythonDependenciesExtractor
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.dependencies.PythonDependenciesManager
-import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PythonSdkType
 import kotlinx.coroutines.CoroutineStart
@@ -104,7 +104,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
     waitForInit()
     reloadDependencies()
 
-    val normalizedPackagesNames = packages.map { normalizePackageName(it) }
+    val normalizedPackagesNames = packages.map { PyPackageName.normalizePackageName(it) }
     uninstallPackageCommand(*normalizedPackagesNames.toTypedArray()).getOr { return it }
     return reloadPackages()
   }

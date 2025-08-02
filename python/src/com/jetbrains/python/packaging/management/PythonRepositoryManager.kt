@@ -4,11 +4,11 @@ package com.jetbrains.python.packaging.management
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyPackageVersion
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -31,8 +31,8 @@ interface PythonRepositoryManager {
   suspend fun initCaches()
 
   fun searchPackages(query: String, repository: PyPackageRepository): List<String> {
-    val normalizedQuery = normalizePackageName(query)
-    return repository.getPackages().filter { StringUtil.containsIgnoreCase(normalizePackageName(it), normalizedQuery) }
+    val normalizedQuery = PyPackageName.normalizePackageName(query)
+    return repository.getPackages().filter { StringUtil.containsIgnoreCase(PyPackageName.normalizePackageName(it), normalizedQuery) }
   }
 
 

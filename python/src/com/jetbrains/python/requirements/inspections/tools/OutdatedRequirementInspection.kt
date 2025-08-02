@@ -6,8 +6,8 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.requirements.RequirementsFile
 import com.jetbrains.python.requirements.RequirementsInspectionVisitor
 import com.jetbrains.python.requirements.getPythonSdk
@@ -26,14 +26,14 @@ internal class OutdatedRequirementInspection : LocalInspectionTool() {
       val psiFile = session.file
       val sdk = getPythonSdk(psiFile) ?: return
 
-      val packageManager = PythonPackageManager.Companion.forSdk(psiFile.project, sdk)
+      val packageManager = PythonPackageManager.forSdk(psiFile.project, sdk)
 
       val outdatedPackages = packageManager.listOutdatedPackagesSnapshot().toMap()
       if (outdatedPackages.isEmpty())
         return
 
       val outdatedRequirements = requirements.mapNotNull { requirement ->
-        val packageName = normalizePackageName(requirement.displayName)
+        val packageName = PyPackageName.normalizePackageName(requirement.displayName)
         if (packageName in outdatedPackages.keys)
           packageName to requirement
         else

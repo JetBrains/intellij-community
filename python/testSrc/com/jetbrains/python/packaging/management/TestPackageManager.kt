@@ -15,7 +15,6 @@ import org.jetbrains.annotations.TestOnly
 @TestOnly
 class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   override var installedPackages: List<PythonPackage> = DEFAULT_PACKAGES.toMutableList()
-  override var dependencies: List<PythonPackage> = emptyList()
   private var packageNames: List<String> = emptyList()
   private var packageDetails: PythonPackageDetails? = null
   private var packageVersions: Map<String, List<String>> = emptyMap()

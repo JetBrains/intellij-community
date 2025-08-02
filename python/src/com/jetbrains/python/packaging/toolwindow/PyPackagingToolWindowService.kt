@@ -21,14 +21,17 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.getOrNull
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyPackageService
 import com.jetbrains.python.packaging.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
-import com.jetbrains.python.packaging.common.*
+import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.common.PythonPackageDetails
+import com.jetbrains.python.packaging.common.PythonPackageManagementListener
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.conda.CondaPackage
 import com.jetbrains.python.packaging.management.*
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
-import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.packaging.packageRequirements.PackageNode
 import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor
 import com.jetbrains.python.packaging.pyRequirement
@@ -70,7 +73,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     val packageManager = manager
     return withContext(Dispatchers.IO) {
       PythonPackagesToolwindowStatisticsCollector.requestDetailsEvent.log(project)
-      val pkgName = NormalizedPythonPackageName.from(selectedPackage.name).name
+      val pkgName = PyPackageName.from(selectedPackage.name).name
       val pyRequirement = pyRequirement(pkgName)
       val repository = selectedPackage.repository
 
@@ -93,7 +96,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       StringUtil.containsIgnoreCase(pkg.name, query)
     }
     else {
-      StringUtil.containsIgnoreCase(normalizePackageName(pkg.name), normalizePackageName(query))
+      StringUtil.containsIgnoreCase(PyPackageName.normalizePackageName(pkg.name), PyPackageName.normalizePackageName(query))
     }
   }
 

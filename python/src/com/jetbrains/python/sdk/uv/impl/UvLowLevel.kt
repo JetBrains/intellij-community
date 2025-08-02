@@ -10,7 +10,7 @@ import com.jetbrains.python.errorProcessing.*
 import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onFailure
-import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
@@ -135,7 +135,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     return PyExecResult.success(parsePackageList(out))
   }
 
-  override suspend fun listPackageRequirements(name: PythonPackage): PyResult<List<NormalizedPythonPackageName>> {
+  override suspend fun listPackageRequirements(name: PythonPackage): PyResult<List<PyPackageName>> {
     val out = uvCli.runUv(cwd, "pip", "show", name.name)
       .getOr { return it }
 
@@ -275,7 +275,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     packageList
   }
 
-  private fun parsePackageRequirements(input: String): List<NormalizedPythonPackageName> {
+  private fun parsePackageRequirements(input: String): List<PyPackageName> {
     val requiresLine = input.lines().find { it.startsWith(REQUIRES_LINE_PREFIX) } ?: return emptyList()
 
     return requiresLine
@@ -283,7 +283,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
       .split(",")
       .map { it.trim() }
       .filter { it.isNotEmpty() }
-      .map { NormalizedPythonPackageName.from(it) }
+      .map { PyPackageName.from(it) }
   }
 
   companion object {

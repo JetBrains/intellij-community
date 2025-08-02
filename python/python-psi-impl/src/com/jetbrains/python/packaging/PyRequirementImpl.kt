@@ -18,9 +18,12 @@ class PyRequirementImpl(
   private val extras: String,
 ) : PyRequirement {
 
-  private val name: String = normalizePackageName(presentableName)
+  private val packageName: PyPackageName = PyPackageName.from(presentableName)
+  private val name: String = packageName.name
 
   override fun getName(): String = name
+  override fun getPackageName(): PyPackageName = packageName
+
   override fun getExtras(): String = extras
   override fun getVersionSpecs(): List<PyRequirementVersionSpec> = versionSpecs
   override fun getInstallOptions(): List<String> = installOptions
@@ -31,7 +34,7 @@ class PyRequirementImpl(
   }
 
   override fun match(packageName: PyPackage): Boolean {
-    return name == normalizePackageName(packageName.name) && versionSpecs
+    return name == PyPackageName.normalizePackageName(packageName.name) && versionSpecs
       .all { it.matches(packageName.version) }
   }
 
@@ -41,7 +44,7 @@ class PyRequirementImpl(
     }
 
     return when (other) {
-      is String -> name == normalizePackageName(other)
+      is String -> name == PyPackageName.normalizePackageName(other)
       is PyRequirementImpl -> name == other.name && versionSpecs == other.versionSpecs
       else -> false
     }

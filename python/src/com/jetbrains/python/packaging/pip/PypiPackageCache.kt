@@ -13,8 +13,8 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.SafeFileOutputStream
 import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.PyPIPackageUtil
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.cache.PythonPackageCache
-import com.jetbrains.python.packaging.normalizePackageName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -104,7 +104,7 @@ open class PypiPackageCache : PythonPackageCache<String> {
       }
 
       LOG.info("Package list loaded from file with ${packageList.size} entries")
-      cache = packageList.map { normalizePackageName(it) }.toSet()
+      cache = packageList.map { PyPackageName.normalizePackageName(it) }.toSet()
       true
     }
   }
@@ -145,7 +145,7 @@ open class PypiPackageCache : PythonPackageCache<String> {
     @RequiresBackgroundThread
     fun loadPackages(): Result<Collection<String>, IOException> = try {
       val pypiPackages = PyPIPackageUtil.parsePyPIListFromWeb(PyPIPackageUtil.PYPI_LIST_URL)
-        .map { normalizePackageName(it) }.toSet()
+        .map { PyPackageName.normalizePackageName(it) }.toSet()
       Result.success(pypiPackages)
     }
     catch (e: IOException) {

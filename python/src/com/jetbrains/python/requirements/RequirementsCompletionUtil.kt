@@ -10,8 +10,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 
 fun completePackageNames(project: Project, sdk: Sdk, result: CompletionResultSet) {
@@ -31,7 +31,8 @@ fun completeVersions(name: String, project: Project, sdk: Sdk, result: Completio
 
   val versions = ApplicationUtil.runWithCheckCanceled({
                                                         runBlockingCancellable {
-                                                          repositoryManager.getVersions(normalizePackageName(name), null)
+                                                          repositoryManager.getVersions(
+                                                            PyPackageName.normalizePackageName(name), null)
                                                           ?: emptyList()
                                                         }
                                                       }, EmptyProgressIndicator.notNullize(ProgressManager.getInstance().progressIndicator))

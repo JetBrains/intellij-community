@@ -3,7 +3,7 @@ package com.jetbrains.python.uv.packaging
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.packageRequirements.PackageNode
 import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor
@@ -29,7 +29,7 @@ internal class UvPackageRequirementsTreeExtractor(private val uvWorkingDirectory
   }
 
   private fun createLeafPackageNode(packageName: String): PackageNode =
-    PackageNode(NormalizedPythonPackageName.from(packageName), mutableListOf())
+    PackageNode(PyPackageName.from(packageName), mutableListOf())
 }
 
 

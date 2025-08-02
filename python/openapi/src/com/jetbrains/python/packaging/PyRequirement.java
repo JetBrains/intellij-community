@@ -22,6 +22,9 @@ public interface PyRequirement {
   String getName();
 
   @NotNull
+  PyPackageName getPackageName();
+
+  @NotNull
   List<PyRequirementVersionSpec> getVersionSpecs();
 
   /**

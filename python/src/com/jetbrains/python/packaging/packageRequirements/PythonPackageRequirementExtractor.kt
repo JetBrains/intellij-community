@@ -4,14 +4,14 @@ package com.jetbrains.python.packaging.packageRequirements
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonPackage
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface PythonPackageRequirementExtractor {
 
-  suspend fun extract(pkg: PythonPackage, module: Module): List<NormalizedPythonPackageName>
+  suspend fun extract(pkg: PythonPackage, module: Module): List<PyPackageName>
 
   companion object {
     fun forSdk(sdk: Sdk): PythonPackageRequirementExtractor? =

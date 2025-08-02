@@ -14,7 +14,7 @@ import com.intellij.ui.SideBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.pyRequirement
@@ -44,7 +44,7 @@ object PyPackagesUiComponents {
       override fun onChosen(selectedValue: String?, finalChoice: Boolean): PopupStep<*>? {
         return doFinalStep {
           val repository = checkNotNull(selectedPackage.repository)
-          val packageName = NormalizedPythonPackageName.from(selectedPackage.name).name
+          val packageName = PyPackageName.from(selectedPackage.name).name
           val version = selectedValue?.let { pyRequirementVersionSpec(it) }
           val specification = repository.findPackageSpecification(pyRequirement(packageName, version))
           PyPackageCoroutine.launch(project, Dispatchers.IO) {

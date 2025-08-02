@@ -11,8 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.packaging.PyPIPackageCache
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkUtil
 
@@ -55,7 +55,7 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
           ProgressManager.checkCanceled()
           val version = req.versionSpecs.firstOrNull()?.version?.trim() ?: "unknown"
           val data = ArrayList(usageData) // Not to calculate interpreter on each call
-          data.add(PACKAGE_FIELD.with(normalizePackageName(req.name)))
+          data.add(PACKAGE_FIELD.with(PyPackageName.normalizePackageName(req.name)))
           data.add(PACKAGE_VERSION_FIELD.with(version))
           result.add(PYTHON_PACKAGE_INSTALLED.metric(data))
         }
@@ -81,7 +81,7 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
         .forEach { pythonPackage ->
           val version = pythonPackage.version
           val data = buildList {
-            add(PACKAGE_FIELD.with(normalizePackageName(pythonPackage.name)))
+            add(PACKAGE_FIELD.with(PyPackageName.normalizePackageName(pythonPackage.name)))
             add(PACKAGE_VERSION_FIELD.with(version))
             add(EXECUTION_TYPE.with(executionType.value))
             add(INTERPRETER_TYPE.with(interpreterType.value))

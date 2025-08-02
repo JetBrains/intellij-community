@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.common
 
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.management.findPackageSpecification
-import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPackageRepository
@@ -12,22 +12,13 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-@ApiStatus.Internal
-@JvmInline
-value class NormalizedPythonPackageName private constructor(val name: String) {
-  companion object {
-    fun from(name: String): NormalizedPythonPackageName =
-      NormalizedPythonPackageName(normalizePackageName(name))
-  }
-}
-
 open class PythonPackage(name: String, val version: String, val isEditableMode: Boolean) {
   companion object {
     private const val HASH_MULTIPLIER = 31
   }
 
   @ApiStatus.Internal
-  val normalizedName: NormalizedPythonPackageName = NormalizedPythonPackageName.from(name)
+  val normalizedName: PyPackageName = PyPackageName.from(name)
 
   val name: String = normalizedName.name
   val presentableName: String = name

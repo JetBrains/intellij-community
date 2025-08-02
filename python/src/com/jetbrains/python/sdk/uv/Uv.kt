@@ -2,7 +2,7 @@
 package com.jetbrains.python.sdk.uv
 
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
@@ -35,7 +35,7 @@ interface UvLowLevel {
   suspend fun listPackages(): PyResult<List<PythonPackage>>
   suspend fun listOutdatedPackages(): PyResult<List<PythonOutdatedPackage>>
   suspend fun listTopLevelPackages(): PyResult<List<PythonPackage>>
-  suspend fun listPackageRequirements(name: PythonPackage): PyResult<List<NormalizedPythonPackageName>>
+  suspend fun listPackageRequirements(name: PythonPackage): PyResult<List<PyPackageName>>
   suspend fun listPackageRequirementsTree(name: PythonPackage): PyResult<String>
 
   suspend fun isProjectSynced(inexact: Boolean): PyResult<Boolean>

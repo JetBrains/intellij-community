@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
@@ -60,17 +60,17 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
   /**
    * Categorizes packages into standalone packages and pyproject.toml declared packages.
    */
-  private fun categorizePackages(packages: Array<out String>): Pair<List<NormalizedPythonPackageName>, List<NormalizedPythonPackageName>> {
+  private fun categorizePackages(packages: Array<out String>): Pair<List<PyPackageName>, List<PyPackageName>> {
     val dependencyNames = dependencies.map { it.name }.toSet()
     return packages
-      .map { NormalizedPythonPackageName.from(it) }
+      .map { PyPackageName.from(it) }
       .partition { it.name !in dependencyNames }
   }
 
   /**
    * Uninstalls packages using pip through Poetry.
    */
-  private suspend fun uninstallStandalonePackages(packages: List<NormalizedPythonPackageName>): PyResult<Unit> {
+  private suspend fun uninstallStandalonePackages(packages: List<PyPackageName>): PyResult<Unit> {
     return if (packages.isNotEmpty()) {
       poetryUninstallPackage(
         sdk = sdk,
@@ -85,7 +85,7 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
   /**
    * Removes packages declared in pyproject.toml using Poetry.
    */
-  private suspend fun uninstallDeclaredPackages(packages: List<NormalizedPythonPackageName>): PyResult<Unit> {
+  private suspend fun uninstallDeclaredPackages(packages: List<PyPackageName>): PyResult<Unit> {
     return if (packages.isNotEmpty()) {
       poetryRemovePackage(
         sdk = sdk,
