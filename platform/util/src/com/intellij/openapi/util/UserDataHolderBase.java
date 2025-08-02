@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -30,7 +30,7 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
   }
 
   public UserDataHolderBase() {
-    set(KeyFMap.EMPTY_MAP);
+    super(KeyFMap.EMPTY_MAP);
   }
 
   @Override

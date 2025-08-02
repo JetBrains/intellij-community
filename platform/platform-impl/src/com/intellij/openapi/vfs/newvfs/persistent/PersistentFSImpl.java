@@ -1988,10 +1988,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     if (fs == null) {
-      LOG.warn("\tdetectFileSystem(" + rootUrl + ") -> protocol [" + protocol + "] is not registered (yet?)");
+      THROTTLED_LOG.warn("\tdetectFileSystem(" + rootUrl + ") -> protocol [" + protocol + "] is not registered (yet?)");
     }
     else {
-      LOG.warn("\tdetectFileSystem(" + rootUrl + ") -> protocol [" + protocol + "] -> " + fs + " is not NewVirtualFileSystem");
+      THROTTLED_LOG.warn("\tdetectFileSystem(" + rootUrl + ") -> protocol [" + protocol + "] -> " + fs + " is not NewVirtualFileSystem");
     }
     return null;
   }

@@ -23,7 +23,7 @@ public final class FsRoot extends VirtualDirectoryImpl {
                 @NotNull FileAttributes attributes,
                 @NotNull String originalDebugPath,
                 @NotNull PersistentFS persistentFs) throws VfsData.FileAlreadyCreatedException {
-    super(id, vfsData.getSegment(id, true), new VfsData.DirectoryData(), null, fs);
+    super(id, vfsData.getSegment(id, /* create: */true), new VfsData.DirectoryData(), null, fs);
     if (!looksCanonical(pathBeforeSlash)) {
       throw new IllegalArgumentException(
         "path must be canonical but got: '" + pathBeforeSlash + "'. FS: " + fs + "; attributes: " + attributes + "; " +

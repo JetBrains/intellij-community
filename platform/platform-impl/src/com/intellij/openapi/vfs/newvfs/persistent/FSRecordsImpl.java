@@ -521,8 +521,7 @@ public final class FSRecordsImpl implements Closeable {
   /**
    * @return records (ids) freed in previous session, and not yet re-used in a current session.
    */
-  @NotNull
-  IntList getRemainFreeRecords() {
+  @NotNull IntList getRemainFreeRecords() {
     checkNotClosed();
     return connection.freeRecords();
   }
@@ -532,8 +531,7 @@ public final class FSRecordsImpl implements Closeable {
    * Returns !empty list only in unit-tests -- outside of testing records freed in a current session are marked by REMOVED
    * flag, but not collected into free-list
    */
-  @NotNull
-  IntList getNewFreeRecords() {
+  @NotNull IntList getNewFreeRecords() {
     return recordAccessor.getNewFreeRecords();
   }
 
@@ -759,12 +757,11 @@ public final class FSRecordsImpl implements Closeable {
    * If setAllChildrenCached=true: sets {@link com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags#CHILDREN_CACHED}
    * flag on a parent record, if setAllChildrenCached=false does nothing additional (i.e. does NOT update CHILDREN_CACHED flag at all)
    */
-  @NotNull
   @VisibleForTesting
-  public ListResult update(@NotNull VirtualFile parent,
-                           int parentId,
-                           @NotNull Function<? super ListResult, ListResult> childrenConvertor,
-                           boolean setAllChildrenCached) {
+  public @NotNull ListResult update(@NotNull VirtualFile parent,
+                                    int parentId,
+                                    @NotNull Function<? super ListResult, ListResult> childrenConvertor,
+                                    boolean setAllChildrenCached) {
     SlowOperations.assertSlowOperationsAreAllowed();
     PersistentFSConnection.ensureIdIsValid(parentId);
 
@@ -1057,8 +1054,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  @Nullable
-  String readSymlinkTarget(int fileId) {
+  @Nullable String readSymlinkTarget(int fileId) {
     try (DataInputStream stream = readAttribute(fileId, SYMLINK_TARGET_ATTRIBUTE)) {
       if (stream != null) {
         try {
@@ -1602,8 +1598,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  @NotNull
-  InputStream readContentById(int contentId) {
+  @NotNull InputStream readContentById(int contentId) {
     try {
       return contentAccessor.readContentByContentId(contentId);
     }
@@ -1638,9 +1633,8 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  @NotNull
   @VisibleForTesting
-  public DataOutputStream writeContent(int fileId, boolean fixedSize) {
+  public @NotNull DataOutputStream writeContent(int fileId, boolean fixedSize) {
     return new DataOutputStream(contentAccessor.new ContentOutputStream(fileId, fixedSize)) {
       @Override
       public void close() {

@@ -95,6 +95,11 @@ public final class VfsData {
    */
   private IntSet queueOfFileIdsToBeInvalidated = new IntOpenHashSet();
 
+  /**
+   * If file/directory is moved (==parent is changed), then the change is added to this map, as (originalParentId -> newParent).
+   * @see Segment#replacement
+   * @see VirtualFileSystemEntry#updateSegmentAndParent(Segment)
+   */
   private final IntObjectMap<VirtualDirectoryImpl> changedParents = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   public VfsData(@NotNull Application app,
@@ -243,7 +248,18 @@ public final class VfsData {
      */
     private final AtomicIntegerArray intFieldsArray;
 
-    /** the reference is synchronized by read-write lock; clients outside read-action deserve to get outdated result */
+
+    /**
+     * The reference is synchronized by read-write lock; clients outside read-action deserve to get outdated result
+     * MAYBE RC: use volatile instead of relying to RA/WA somewhere up the stack?
+     * <p/>
+     * This replacement serves as a _signal_ for instances of {@link VirtualFileSystemEntry} instances (which could be many!)
+     * to check are their parents updated via {@link VfsData#getChangedParent(int)}. The replacement segment is exactly the
+     * same, as the original one -- they share all the same data -- only the Segment instance is different, which makes it
+     * possible to deliver signal 'some parent(s) in this segment is/are changed' for all the {@link VirtualFileSystemEntry}
+     * instances to get.
+     * @see VirtualFileSystemEntry#updateSegmentAndParent(Segment)
+     */
     @Nullable Segment replacement;
 
     @VisibleForTesting
@@ -498,7 +514,7 @@ public final class VfsData {
       return adopted;
     }
 
-    @NotNull @Unmodifiable List<String> getAdoptedNames() {
+    @Unmodifiable @NotNull List<String> getAdoptedNames() {
       Set<CharSequence> adopted = adoptedNames;
       if (adopted == null) return Collections.emptyList();
       synchronized (adopted) {
