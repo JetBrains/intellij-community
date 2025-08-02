@@ -15,7 +15,6 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.cache.PythonPackageCache
-import com.jetbrains.python.packaging.common.PythonRankingAwarePackageNameComparator
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
@@ -103,7 +102,7 @@ internal class CondaPackageCache : PythonPackageCache<String> {
         .filterNot { it[0].startsWith("r-") } // todo[akniazev]: make sure it's the best way to get rid of R packages
         .groupBy({ it[0] }, { it[1] })
         .mapValues { it.value.distinct().sortedWith(PyPackageVersionComparator.STR_COMPARATOR.reversed()) }
-        .toSortedMap(PythonRankingAwarePackageNameComparator())
+        .toMap()
 
       cache = packages
     }

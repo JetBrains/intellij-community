@@ -14,7 +14,6 @@ import com.intellij.util.io.SafeFileOutputStream
 import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.cache.PythonPackageCache
-import com.jetbrains.python.packaging.common.PythonRankingAwarePackageNameComparator
 import com.jetbrains.python.packaging.normalizePackageName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -30,7 +29,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.Duration
 import java.time.Instant
-import java.util.*
 import kotlin.io.path.exists
 
 private val LOG = logger<PypiPackageCache>()
@@ -116,10 +114,7 @@ open class PypiPackageCache : PythonPackageCache<String> {
     withContext(Dispatchers.IO) {
       LOG.info("Loading python packages from PyPi")
       val pypiList = service<PypiPackageLoader>().loadPackages().getOr { return@withContext it }
-      val newCache = TreeSet(PythonRankingAwarePackageNameComparator())
-      newCache.addAll(pypiList)
-
-      cache = newCache
+      cache = pypiList.toSet()
       store()
     }
     return Result.success(Unit)
