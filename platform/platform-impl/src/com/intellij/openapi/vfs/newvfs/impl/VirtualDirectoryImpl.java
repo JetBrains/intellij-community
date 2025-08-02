@@ -325,9 +325,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     boolean isDirectory = PersistentFS.isDirectory(attributes);
     Object fileData = isDirectory ? new VfsData.DirectoryData() : KeyFMap.EMPTY_MAP;
-    segment.initFileData(id, fileData, this);
+    segment.initFileData(id, fileData, /*parent: */ this);
 
-    VirtualFileSystemEntry child = vfsData.getFileById(id, this, /*putIntoCache: */ true);
+    VirtualFileSystemEntry child = vfsData.getFileById(id, /*parent: */ this, /*putIntoCache: */ true);
     assert child != null;
 
     segment.setFlags(id, ALL_FLAGS_MASK, VfsDataFlags.toFlags(attributes, isDirectory));
@@ -510,24 +510,23 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
 
       IntSet prevChildren = directoryData.children.toIntSet();
-      VirtualFile[] files = new VirtualFile[childrenInfo.size()];
-      int[] newChildrenIds = new int[files.length];
-      for (int i = 0; i < files.length; i++) {
-        ChildInfo child = childrenInfo.get(i);
-        int childId = child.getId();
+      VirtualFile[] newChildren = new VirtualFile[childrenInfo.size()];
+      int[] newChildrenIds = new int[newChildren.length];
+      for (int i = 0; i < newChildren.length; i++) {
+        ChildInfo childInfo = childrenInfo.get(i);
+        int childId = childInfo.getId();
         newChildrenIds[i] = childId;
         prevChildren.remove(childId);
-        VirtualFileSystemEntry file = vfsData.getFileById(childId, this, /*putIntoMemory: */true);
-        if (file == null) {
+        VirtualFileSystemEntry child = vfsData.getFileById(childId, this, /*putIntoMemory: */true);
+        if (child == null) {
           int attributes = pFS.getFileAttributes(childId);
           boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !pFS.mayHaveChildren(childId);
-          file = createChildImpl(childId, child.getNameId(), attributes, isEmptyDirectory);
+          child = createChildImpl(childId, childInfo.getNameId(), attributes, isEmptyDirectory);
         }
-        files[i] = file;
+        newChildren[i] = child;
       }
       if (!prevChildren.isEmpty()) {
-        var missing = vfsData.getFileById(prevChildren.iterator().nextInt(), this, /*putInCache: */false);
-        LOG.error("Loaded child disappeared: parent=" + verboseToString(this) + "; child=" + verboseToString(missing));
+        logDisappearedChildren(vfsData, prevChildren, newChildren);
       }
 
       directoryData.clearAdoptedNames();
@@ -536,7 +535,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         assertConsistency(isCaseSensitive, childrenInfo);
       }
 
-      return files;
+      return newChildren;
     }
   }
 
@@ -1122,9 +1121,26 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
            ", id: " + file.getId() +
            ", FS: " + file.getFileSystem() +
            ", fs.attrs: " + file.getFileSystem().getAttributes(file) +
-           ", isCaseSensitive: " + file.isCaseSensitive() +
-           ", canonical: " + file.getFileSystem().getCanonicallyCasedName(file) +
-           ')';
+           ", file.isCaseSensitive: " + file.isCaseSensitive() +
+           ", canonicalName: '" + file.getFileSystem().getCanonicallyCasedName(file) +
+           "')";
+  }
+
+  private void logDisappearedChildren(@NotNull VfsData vfsData,
+                                      @NotNull IntSet prevChildren,
+                                      @NotNull VirtualFile[] newChildren) {
+    StringBuilder sb = new StringBuilder("Loaded child(ren) disappeared: \n" +
+                                         "parent: " + verboseToString(this) +"\n" +
+                                         "missed children: ");
+    for (int disappearedChildId : prevChildren.toIntArray()) {
+      VirtualFileSystemEntry missing = vfsData.getFileById(disappearedChildId, this, /*putInCache: */false);
+      sb.append("\n\t["+disappearedChildId+"]").append(verboseToString(missing));
+    }
+    sb.append("\nexisting children:");
+    for (VirtualFile existingChild : newChildren) {
+      sb.append("\n\t").append(verboseToString((VirtualFileSystemEntry)existingChild));
+    }
+    LOG.error(sb.toString());
   }
 
   protected static void checkLeaks(@NotNull KeyFMap newMap) {
