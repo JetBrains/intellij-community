@@ -92,6 +92,20 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
              (sensitivity.isSensitive() ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0) |
              (PersistentFS.isSpecialFile(attributes) ? VfsDataFlags.IS_SPECIAL_FLAG : 0);
     }
+
+    static @Flags int toFlags(@NotNull FileAttributes attributes,
+                              boolean isOfflineByDefault) {
+      FileAttributes.CaseSensitivity sensitivity = attributes.areChildrenCaseSensitive() ;
+      return (attributes.isWritable() ? VfsDataFlags.IS_WRITABLE_FLAG : 0) |
+             (attributes.isHidden() ? VfsDataFlags.IS_HIDDEN_FLAG : 0) |
+             (isOfflineByDefault ? VfsDataFlags.IS_OFFLINE : 0) |
+
+             (sensitivity.isKnown() ? VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED : 0) |
+
+             (attributes.isSymLink() ? VfsDataFlags.IS_SYMLINK_FLAG : 0) |
+             (sensitivity.isSensitive() ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0) |
+             (attributes.isSpecial() ? VfsDataFlags.IS_SPECIAL_FLAG : 0);
+    }
   }
 
   static final @Flags int ALL_FLAGS_MASK =

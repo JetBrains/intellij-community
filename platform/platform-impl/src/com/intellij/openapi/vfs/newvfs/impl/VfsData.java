@@ -80,6 +80,10 @@ public final class VfsData {
   //         FSRecords?
 
   /** [segmentIndex -> Segment] */
+  //MAYBE RC: making this map SoftReference-based allows VFS cache to shrink it's memory consumption by GCing unused
+  //          Segments as soon, as no VirtualFile referring a specific Segment are in play anymore.
+  //          Currently a VirtualFileSystemEntry keeps a reference to it's Segment => Segment is strongly-reachable
+  //          until at least a single its VirtualFileSystemEntry is strongly-reachable, i.e. in use.
   private final ConcurrentIntObjectMap<Segment> segments = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   /**
@@ -128,7 +132,7 @@ public final class VfsData {
       if (!queueOfFileIdsToBeInvalidated.isEmpty()) {
         for (IntIterator iterator = queueOfFileIdsToBeInvalidated.iterator(); iterator.hasNext(); ) {
           int id = iterator.nextInt();
-          Segment segment = Objects.requireNonNull(getSegment(id, false));
+          Segment segment = Objects.requireNonNull(getSegment(id, /*create: */false));
           segment.objectFieldsArray.set(objectOffsetInSegment(id), deadMarker);
           //skip cleaning segment.intFieldsArray since dead marker means slot is _not reusable_ in this session
           changedParents.remove(id);
@@ -141,15 +145,11 @@ public final class VfsData {
   /**
    * @return a VirtualFileSystemEntry wrapper for the file data in the cache ({@link #segments}).
    * If there is no data in {@link #segments} cache for given id yet -- returns null.
-   * If the file with given id was deleted -- throws {@link InvalidVirtualFileAccessException}.
-   * <p/>
-   * If putToMemoryCache=true, and the wrapper created is a directory -- it is also put into {@link PersistentFSImpl#dirByIdCache}.
-   * If the given id corresponds to a file, not a directory -- this param has no effect.
+   * If the file with given id was deleted -- throws {@link InvalidVirtualFileAccessException}, but
+   * in some cases it could return files with {@code !VirtualFile.isValid()} (ie. deleted, but
+   * not yet cleaned)
    */
   @Nullable VirtualFileSystemEntry getFileById(int id, @NotNull VirtualDirectoryImpl parent, boolean putToMemoryCache) {
-    VirtualFileSystemEntry dir = owningPersistentFS.getCachedDir(id);// (parent!=null) => regular directory, not a root
-    if (dir != null) return dir;
-
     Segment segment = getSegment(id, /*create: */ false);
     if (segment == null) return null;
 
@@ -162,15 +162,53 @@ public final class VfsData {
     }
 
     if (entryData instanceof DirectoryData directoryData) {
-      VirtualDirectoryImpl newDirInstance = new VirtualDirectoryImpl(id, segment, directoryData, parent, parent.getFileSystem());
-      if (putToMemoryCache && newDirInstance.isValid()) {//don't cache deleted instances
-        return owningPersistentFS.getOrCacheDir(newDirInstance);
+      VirtualDirectoryImpl directory = directoryData.directory;
+      if (directory == null) {
+        throw new IllegalStateException(directoryData + " must have .directory != null set at initialization!");
       }
-      else {
-        return newDirInstance;
-      }
+      return directory;
     }
     return new VirtualFileImpl(id, segment, parent);
+  }
+
+  public @Nullable VirtualDirectoryImpl cachedDir(int id) {
+    Segment segment = getSegment(id, /*create: */ false);
+    if (segment == null) return null;
+
+    int offset = objectOffsetInSegment(id);
+    Object entryData = segment.objectFieldsArray.get(offset);
+    if (entryData == null) return null;
+
+    if (entryData == deadMarker) {
+      return null;
+    }
+
+    if (entryData instanceof DirectoryData directoryData) {
+      VirtualDirectoryImpl dir = directoryData.directory;
+      if (dir != null && !dir.isValid()) {
+        return null;
+      }
+      return dir;
+    }
+    return null;
+  }
+
+  public @NotNull Iterable<? extends VirtualFileSystemEntry> getCachedDirs() {
+    List<VirtualFileSystemEntry> cachedDirs = new ArrayList<>();
+    for (final Segment segment : segments.values()) {
+      AtomicReferenceArray<Object> fileDataEntries = segment.objectFieldsArray;
+      int length = fileDataEntries.length();
+      for (int i = 0; i < length; i++) {
+        Object entry = fileDataEntries.get(i);
+        if (entry instanceof DirectoryData directoryData) {
+          VirtualDirectoryImpl directory = directoryData.directory;
+          if (directory != null && directory.isValid()) {
+            cachedDirs.add(directory);
+          }
+        }
+      }
+    }
+    return cachedDirs;
   }
 
   private static @NotNull InvalidVirtualFileAccessException reportDeadFileAccess(@NotNull VirtualFileSystemEntry file) {
@@ -178,7 +216,7 @@ public final class VfsData {
   }
 
   @Contract("_,true->!null")
-  Segment getSegment(int id, boolean create) {
+  public Segment getSegment(int id, boolean create) {
     int segmentIndex = segmentIndex(id);
     Segment segment = segments.get(segmentIndex);
     if (segment != null || !create) {
@@ -258,6 +296,7 @@ public final class VfsData {
      * same, as the original one -- they share all the same data -- only the Segment instance is different, which makes it
      * possible to deliver signal 'some parent(s) in this segment is/are changed' for all the {@link VirtualFileSystemEntry}
      * instances to get.
+     *
      * @see VirtualFileSystemEntry#updateSegmentAndParent(Segment)
      */
     @Nullable Segment replacement;
@@ -363,8 +402,7 @@ public final class VfsData {
     //@GuardedBy("parent.directoryData")
     void initFileData(int fileId, @NotNull Object fileData, @NotNull VirtualDirectoryImpl parent) throws FileAlreadyCreatedException {
       int offset = objectOffsetInSegment(fileId);
-
-      Object existingData = objectFieldsArray.get(offset);
+      Object existingData = objectFieldsArray.compareAndExchange(offset, /*expected: */null, fileData);
       if (existingData != null) {
         //RC: it seems like concurrency issue, but I can't find a specific location
         //MAYBE RC: don't throw the exception -- if an entry was already created, so be it, log warn and go on?
@@ -390,8 +428,6 @@ public final class VfsData {
           + ", synchronized(parentData): " + (parentData != null ? Thread.holdsLock(parentData) : "...")
         );
       }
-
-      objectFieldsArray.set(offset, fileData);
     }
 
 
@@ -447,6 +483,15 @@ public final class VfsData {
 
     /** assigned under lock(this) only; accessed/modified map contents under lock(adoptedNames) */
     private volatile Set<CharSequence> adoptedNames;
+
+    private VirtualDirectoryImpl directory = null;
+
+    public DirectoryData() {
+    }
+
+    public void assignDirectory(@NotNull VirtualDirectoryImpl directory) {
+      this.directory = directory;
+    }
 
     boolean changeUserMap(@NotNull KeyFMap oldMap, @NotNull KeyFMap newMap) {
       return USER_MAP_UPDATER.compareAndSet(this, oldMap, newMap);

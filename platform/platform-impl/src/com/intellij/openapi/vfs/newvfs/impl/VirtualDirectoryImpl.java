@@ -54,7 +54,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   /**
    * Use linear (bruteforce) search for sorted children if size <= this threshold, use binary search by-name, if size is larger.
    * <p>
-   * Children ids ({@link com.intellij.openapi.vfs.newvfs.impl.VfsData.DirectoryData#children} are either unsorted, or sorted
+   * Children ids ({@link VfsData.DirectoryData#children} are either unsorted, or sorted
    * _by (file)name_. It is natural to use binary-search to search in a sorted array, but really even if children ids _are_
    * sorted by-name -- it may be still faster to look for given childId with linear scan, because scanning through int[] is
    * quite fast on modern CPUs, while binary search requires costly (String,String) comparison -- especially costly for
@@ -314,39 +314,52 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
    * Note: the id is _not_ added to a parent's children list -- this should be done separately.
    */
   //@GuardedBy("directoryData")
-  private @NotNull VirtualFileSystemEntry createChildImpl(int id,
+  private @NotNull VirtualFileSystemEntry createChildImpl(int childId,
                                                           int nameId,
                                                           @PersistentFS.Attributes int attributes,
                                                           boolean isEmptyDirectory) {
     FileLoadingTracker.fileLoaded(this, nameId);
 
     VfsData vfsData = getVfsData();
-    VfsData.Segment segment = vfsData.getSegment(id, true);
+    VfsData.Segment segment = vfsData.getSegment(childId, /*create: */ true);
 
     boolean isDirectory = PersistentFS.isDirectory(attributes);
-    Object fileData = isDirectory ? new VfsData.DirectoryData() : KeyFMap.EMPTY_MAP;
-    segment.initFileData(id, fileData, /*parent: */ this);
+    segment.setFlags(childId, ALL_FLAGS_MASK, VfsDataFlags.toFlags(attributes, isDirectory));
 
-    VirtualFileSystemEntry child = vfsData.getFileById(id, /*parent: */ this, /*putIntoCache: */ true);
-    assert child != null;
+    VirtualFileSystemEntry childEntry;
+    if (isDirectory) {
+      VfsData.DirectoryData childDirectoryData = new VfsData.DirectoryData();
+      VirtualDirectoryImpl childDirectory = new VirtualDirectoryImpl(childId, segment, childDirectoryData, /*parent: */ this, fileSystem);
+      childDirectoryData.assignDirectory(childDirectory);
 
-    segment.setFlags(id, ALL_FLAGS_MASK, VfsDataFlags.toFlags(attributes, isDirectory));
-    child.updateLinkStatus(this);
+      if (isEmptyDirectory) {
+        // When creating an empty directory, we need to make sure that every file created inside it will fire a "file created" event
+        // for virtual file pointer manager to update its pointers properly
+        // (because currently VirtualFilePointerManager ignores empty directory creation events for performance reasons).
+
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (childDirectoryData) {
+          childDirectoryData.children = childDirectoryData.children.withAllChildrenLoaded(true);
+        }
+      }
+
+      //publish directoryData only _after_ all the initialization is done:
+      segment.initFileData(childId, childDirectoryData, /*parent: */ this);
+      childEntry = childDirectory;
+    }
+    else {//we're not caching leafs (as of today):
+      //publish fileData only _after_ all the initialization is done:
+      segment.initFileData(childId, KeyFMap.EMPTY_MAP, /*parent: */ this);
+      childEntry = new VirtualFileImpl(childId, segment, /*parent: */ this);
+    }
+
+    childEntry.updateLinkStatus(this);
 
     if (fileSystem.markNewFilesAsDirty()) {
-      child.markDirty();
-    }
-    if (isDirectory && (child instanceof VirtualDirectoryImpl) && isEmptyDirectory) {
-      // When creating an empty directory, we need to make sure that every file created inside it will fire a "file created" event
-      // for virtual file pointer manager to update its pointers properly
-      // (because currently VirtualFilePointerManager ignores empty directory creation events for performance reasons).
-      VfsData.DirectoryData childVfsData = ((VirtualDirectoryImpl)child).directoryData;
-      synchronized (childVfsData) {
-        childVfsData.children = childVfsData.children.withAllChildrenLoaded(true);
-      }
+      childEntry.markDirty();
     }
 
-    return child;
+    return childEntry;
   }
 
   private @Nullable VirtualFileSystemEntry createAndFindChildWithEventFire(@NotNull String name) {
@@ -1130,11 +1143,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                       @NotNull IntSet prevChildren,
                                       @NotNull VirtualFile[] newChildren) {
     StringBuilder sb = new StringBuilder("Loaded child(ren) disappeared: \n" +
-                                         "parent: " + verboseToString(this) +"\n" +
+                                         "parent: " + verboseToString(this) + "\n" +
                                          "missed children: ");
     for (int disappearedChildId : prevChildren.toIntArray()) {
       VirtualFileSystemEntry missing = vfsData.getFileById(disappearedChildId, this, /*putInCache: */false);
-      sb.append("\n\t["+disappearedChildId+"]").append(verboseToString(missing));
+      sb.append("\n\t[" + disappearedChildId + "]").append(verboseToString(missing));
     }
     sb.append("\nexisting children:");
     for (VirtualFile existingChild : newChildren) {
