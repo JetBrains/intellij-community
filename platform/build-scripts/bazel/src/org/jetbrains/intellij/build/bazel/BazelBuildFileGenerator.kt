@@ -930,7 +930,7 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
   val pluginOptions = mergedCompilerArguments.pluginOptions
   if (pluginOptions?.isNotEmpty() == true) {
     options.put("plugin_options", pluginOptions.map {
-      it.replace("${module.bazelBuildFileDir.absolutePathString()}/", "")
+      it.replace("${module.bazelBuildFileDir.invariantSeparatorsPathString}/", "")
     })
   }
   //x_allow_kotlin_package
