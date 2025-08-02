@@ -146,7 +146,7 @@ public fun JewelTheme.Companion.darkThemeDefinition(
 @Composable
 public fun ComponentStyling.default(): ComponentStyling = with {
     val isDark = JewelTheme.isDark
-    remember(isDark) { if (isDark) dark() else light() }
+    remember(JewelTheme.instanceUuid) { if (isDark) dark() else light() }
 }
 
 public fun ComponentStyling.dark(
@@ -298,7 +298,7 @@ public fun ComponentStyling.light(
 @Composable
 public fun IntUiTheme(isDark: Boolean = false, swingCompatMode: Boolean = false, content: @Composable () -> Unit) {
     val themeDefinition =
-        remember(isDark) {
+        remember(JewelTheme.instanceUuid) {
             if (isDark) {
                 JewelTheme.darkThemeDefinition()
             } else {
