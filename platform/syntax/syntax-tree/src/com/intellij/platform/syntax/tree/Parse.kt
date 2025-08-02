@@ -12,9 +12,9 @@ import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.TokenList
 import com.intellij.platform.syntax.lexer.buildTokenList
 import com.intellij.platform.syntax.lexer.performLexing
+import com.intellij.platform.syntax.parser.DefaultWhitespaceBindingPolicy
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory
-import com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy
 import com.intellij.platform.syntax.util.language.SyntaxElementLanguageProvider
 import org.jetbrains.annotations.ApiStatus
 
@@ -37,7 +37,7 @@ fun parse(
     tokens,
     whitespaces,
     comments,
-  ).withWhitespaceOrCommentBindingPolicy(DefaultWhitespaceBindingPolicy)
+  ).withWhitespaceOrCommentBindingPolicy(DefaultWhitespaceBindingPolicy) // todo this is incorrect!
     .withStartOffset(startLexemeOffset)
     .build()
 
@@ -84,12 +84,4 @@ fun parse(
     },
     extensions = ::ExtensionSupport
   )
-}
-
-/**
- * A [WhitespaceOrCommentBindingPolicy], which makes the [SyntaxTokenTypes.ERROR_ELEMENT] type
- * left-bound.
- */
-val DefaultWhitespaceBindingPolicy: WhitespaceOrCommentBindingPolicy = WhitespaceOrCommentBindingPolicy {
-  it == SyntaxTokenTypes.ERROR_ELEMENT
 }

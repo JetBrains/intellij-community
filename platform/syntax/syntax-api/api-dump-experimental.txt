@@ -146,6 +146,10 @@
 - sf:tokenIndexAtOffset(com.intellij.platform.syntax.lexer.TokenList,I):I
 *f:com.intellij.platform.syntax.logger.NoopLogger
 - *sf:noopLogger():com.intellij.platform.syntax.Logger
+*f:com.intellij.platform.syntax.parser.DefaultWhitespaceBindingPolicy
+- com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy
+- sf:INSTANCE:com.intellij.platform.syntax.parser.DefaultWhitespaceBindingPolicy
+- isLeftBound(com.intellij.platform.syntax.SyntaxElementType):Z
 *:com.intellij.platform.syntax.parser.OpaqueElementPolicy
 - a:getTextOfOpaqueElement(com.intellij.platform.syntax.SyntaxElementType):java.lang.String
 *:com.intellij.platform.syntax.parser.ProductionMarkerList
