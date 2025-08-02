@@ -9,6 +9,7 @@ f:org.jetbrains.jewel.markdown.processing.MarkdownParserFactory
 - bs:create$default(org.jetbrains.jewel.markdown.processing.MarkdownParserFactory,Z,java.util.List,kotlin.jvm.functions.Function1,I,java.lang.Object):org.commonmark.parser.Parser
 f:org.jetbrains.jewel.markdown.processing.ProcessingUtilKt
 - sf:toInlineMarkdownOrNull(org.commonmark.node.Node,org.jetbrains.jewel.markdown.processing.MarkdownProcessor):org.jetbrains.jewel.markdown.InlineMarkdown
+f:org.jetbrains.jewel.markdown.rendering.InlineMarkdownRendererKt
 org.jetbrains.jewel.markdown.rendering.WithInlinesStyling
 - a:getInlinesStyling():org.jetbrains.jewel.markdown.rendering.InlinesStyling
 org.jetbrains.jewel.markdown.rendering.WithUnderline
