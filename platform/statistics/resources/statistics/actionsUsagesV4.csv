@@ -1044,7 +1044,7 @@ SendFeedback,org.jetbrains.android,JB_BUNDLED,3,3,300609
 Terminal.SplitVertically,org.jetbrains.plugins.terminal,JB_BUNDLED,3,6,300609
 GuiDesigner.MainToolbarActions,,PLATFORM,3,3,300609
 PhpCSAddToIgnored,com.jetbrains.php,JB_BUNDLED,3,6,300609
-ReverteOverrideFileTypeAction,,PLATFORM,3,4,300609
+RevertOverrideFileTypeAction,,PLATFORM,3,4,300609
 EditorSplitLine,,PLATFORM,3,3,300609
 ExpandAllToLevel2,,PLATFORM,3,4,300609
 ConvertToMacLineSeparators,,PLATFORM,3,3,300609
