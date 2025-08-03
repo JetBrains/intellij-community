@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.path.EelPath
@@ -14,10 +15,12 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.PathUtil
+import com.intellij.util.system.OS
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import com.pty4j.PtyProcess
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
+import org.jetbrains.plugins.terminal.util.ShellNameUtil
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.time.Duration
@@ -105,8 +108,24 @@ internal fun findEelDescriptor(workingDir: String?, shellCommand: List<String>):
   }
 }
 
-private fun buildStartupEelContext(workingDirectory: Path, command: List<String>): TerminalStartupEelContext {
-  val wslDistribNameFromCommandline = getWslDistributionNameFromCommand(command)
+private fun buildStartupEelContext(workingDirectory: Path, shellCommand: List<String>): TerminalStartupEelContext {
+  val executable = shellCommand.firstOrNull()
+  if (OS.CURRENT == OS.Windows && executable != null &&
+      (ShellNameUtil.isPowerShell(executable) || OSAgnosticPathUtil.isAbsoluteDosPath(executable))) {
+    // Enforce running a Windows shell locally even if the project is opened in WSL.
+    //
+    // Although WSL can run Windows processes, it's best to avoid it:
+    // 1. Command-block shell integration won't work because the order of operations is not maintained.
+    //    It works when using the local environment with bundled ConPTY (IJPL-190952).
+    // 2. WSL fails to run a Windows process if the executable is specified without the '.exe' extension, e.g. 'powershell'.
+    // 3. WSL fails to run a Windows process specified with an absolute Windows path,
+    //    e.g. 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'.
+    // 4. Using two interoperability layers to run a local Windows process is generally unnecessary.
+    return TerminalStartupEelContext(LocalEelDescriptor) {
+      EelPath.parse(workingDirectory.toString(), LocalEelDescriptor)
+    }
+  }
+  val wslDistribNameFromCommandline = getWslDistributionNameFromCommand(shellCommand)
   if (wslDistribNameFromCommandline != null) {
     val wslDistribNameFromWorkingDirectory = WslPath.parseWindowsUncPath(workingDirectory.toString())?.distributionId
     if (wslDistribNameFromCommandline != wslDistribNameFromWorkingDirectory) {
