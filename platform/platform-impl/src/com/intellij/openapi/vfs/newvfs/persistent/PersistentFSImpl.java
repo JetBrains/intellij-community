@@ -1644,8 +1644,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (!(vf instanceof VirtualDirectoryImpl)) {
       return;
     }
-    parent =
-      (VirtualDirectoryImpl)vf;  // retain in `idToDirCache` at least for the duration of this block, so that subsequent `findFileById` won't crash
+    parent = (VirtualDirectoryImpl)vf;
     NewVirtualFileSystem fs = getFileSystem(parent);
 
     List<ChildInfo> childrenAdded = new ArrayList<>(createEvents.size());
@@ -1663,7 +1662,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     boolean caseSensitive = parent.isCaseSensitive();
     //@formatter:off
     vfsPeer.update(parent, parentId, oldChildren -> oldChildren.merge(vfsPeer, childrenAdded, caseSensitive), /*setAllChildrenCached: */ false);
-    parent.createAndAddChildren(childrenAdded, false, (__, ___) -> { });
+    parent.initializeAndAddChildren(childrenAdded, false, (__, ___) -> { });
     //@formatter:on
 
     saveScannedChildrenRecursively(createEvents, fs, parent.isCaseSensitive());
@@ -1700,7 +1699,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                          oldChildren -> oldChildren.merge(vfsPeer, added, isCaseSensitive), /*setAllChildrenCached: */ true);
           // set "all children loaded" because the first "fileCreated" listener (looking at you, local history)
           // will call getChildren() anyway, beyond a shadow of a doubt
-          directory.createAndAddChildren(added, true, (childCreated, childInfo) -> {
+          directory.initializeAndAddChildren(added, true, (childCreated, childInfo) -> {
             // enqueue recursive children
             if (childCreated instanceof VirtualDirectoryImpl && childInfo.getChildren() != null) {
               queue.add(new Pair<>((VirtualDirectoryImpl)childCreated, childInfo.getChildren()));
@@ -2380,7 +2379,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                   @Nullable FileAttributes attributes,
                                   @Nullable String symlinkTarget,
                                   boolean isEmptyDirectory) {
+    assert (parent instanceof VirtualDirectoryImpl) : parent;
     NewVirtualFileSystem fs = getFileSystem(parent);
+    VirtualDirectoryImpl parentDir = (VirtualDirectoryImpl)parent;
     int parentId = fileId(parent);
     Pair<@NotNull FileAttributes, String> childData = getChildData(fs, parent, name, attributes, symlinkTarget);
     if (childData == null) {
@@ -2412,10 +2413,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     int childId = inserter.insertedChildInfo.getId();
     int nameId = inserter.insertedChildInfo.getNameId();//vfsPeer.getNameId(name);
-    assert parent instanceof VirtualDirectoryImpl : parent;
-    VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
-    VirtualFileSystemEntry child = dir.createChildIfNotExist(childId, nameId, fileAttributesToFlags(childData.first), isEmptyDirectory);
-    dir.addChild(child);
+    VirtualFileSystemEntry child = parentDir.initializeChildIfNotYet(childId, nameId, fileAttributesToFlags(childData.first), isEmptyDirectory);
+    parentDir.addChild(child);
     incStructuralModificationCount();
   }
 

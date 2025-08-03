@@ -44,7 +44,7 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
  * The lifecycle of a file object is as follows:
  *
  * <ol>
- * <li> The file has not been instantiated yet, so {@link #getFileById} returns null. </li>
+ * <li> The file has not been instantiated yet, so {@link #cachedFileById} returns null. </li>
  *
  * <li> A file is explicitly requested by calling getChildren or findChild on its parent. The parent initializes all the necessary
  * data (in a thread-safe context) and creates the file instance.
@@ -166,11 +166,10 @@ public final class VfsData {
   /**
    * @return a VirtualFileSystemEntry wrapper for the file data in the cache ({@link #segments}).
    * If there is no data in {@link #segments} cache for given id yet -- returns null.
-   * If the file with given id was deleted -- throws {@link InvalidVirtualFileAccessException}, but
-   * in some cases it could return files with {@code !VirtualFile.isValid()} (ie. deleted, but
-   * not yet cleaned)
+   * If the file with given id was 'just deleted' (i.e. in the current WA) -- returns the wrapped what is {@code !isValid()},
+   * but if the file was deleted in already finished WA -- throws {@link InvalidVirtualFileAccessException}
    */
-  @Nullable VirtualFileSystemEntry getFileById(int id, @NotNull VirtualDirectoryImpl parent, boolean putToMemoryCache) {
+  @Nullable VirtualFileSystemEntry cachedFileById(int id, @NotNull VirtualDirectoryImpl parent, boolean putToMemoryCache) {
     Segment segment = getSegment(id, /*create: */ false);
     if (segment == null) return null;
 
@@ -185,7 +184,7 @@ public final class VfsData {
     if (entryData instanceof DirectoryData directoryData) {
       VirtualDirectoryImpl directory = directoryData.directory;
       if (directory == null) {
-        throw new IllegalStateException(directoryData + " must have .directory != null set at initialization!");
+        throw new AssertionError("Bug: " + directoryData + " must have .directory != null set at initialization!");
       }
       return directory;
     }

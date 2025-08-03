@@ -670,7 +670,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     }
 
     for (VirtualFileSystemEntry f : fs.getDirCache()) {
-      assertTrue(f.isValid());
+      assertTrue("File " + f + " must be valid", f.isValid());
     }
   }
 
