@@ -61,6 +61,9 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @ApiStatus.Internal
   static final class VfsDataFlags {
+    //Flags are contained in the highest byte, because lowest 3 bytes are for (content)ModCount,
+    // see VfsData.Segment.intFieldsArray for details
+
     static final int IS_WRITABLE_FLAG = 0x0100_0000;
     static final int IS_HIDDEN_FLAG = 0x0200_0000;
     static final int IS_OFFLINE = 0x0400_0000;

@@ -30,19 +30,17 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
  * Main part of VFS in-memory cache: flags, user data and children are all stored here.
  * {@link VirtualFileSystemEntry} and {@link VirtualDirectoryImpl} objects mainly just store fileId, so they could be
  * seen as 'pointers' into this cache.
- * {@link com.intellij.openapi.vfs.newvfs.persistent.VirtualDirectoryCache} is another part of VFS in-memory cache, which caches
- * {@link VirtualDirectoryImpl} objects.
  * <p>
- * The purpose is to avoid holding this data in separate immortal file/directory objects because that involves space overhead, significant
- * when there are hundreds of thousands of files.
+ * The purpose is to avoid holding this data in separate immortal file/directory objects because that involves space overhead,
+ * significant when there are hundreds of thousands of files.
  * <p>
- * The data is stored per-id in blocks of {@link #SEGMENT_SIZE}. File ids in one project tend to cluster together,
- * so the overhead for non-loaded id should not be large in most cases.
+ * The data is stored per-id in blocks of {@link #SEGMENT_SIZE}. File ids in one project tend to cluster together, so the
+ * overhead for non-loaded id should not be large in most cases.
  * <p>
- * File objects are still created if needed. There might be several objects for the same file, so equals() should be used instead of ==.
+ * File objects are still created if needed. There might be several objects for the same file, so equals() should be used
+ * instead of ==.
  * <p>
  * The lifecycle of a file object is as follows:
- *
  * <ol>
  * <li> The file has not been instantiated yet, so {@link #cachedFileById} returns null. </li>
  *
@@ -85,6 +83,10 @@ public final class VfsData {
   private final Application app;
   private final PersistentFSImpl owningPersistentFS;
 
+  /**
+   * Mark 'invalidated' (=deleted) files in {@link Segment#objectFieldsArray}.
+   * Also used as a lock to protect {@link #queueOfFileIdsToBeInvalidated}
+   */
   private final Object deadMarker = ObjectUtils.sentinel("dead file");
 
   //TODO RC: FSRecords was quite optimized recently, probably caching is not needed anymore?
@@ -107,8 +109,14 @@ public final class VfsData {
                                                            ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   /**
-   * Set of deleted file ids. Never cleaned during a session (deleted fileId could be re-used,
-   * but it could be done only on a session start, see {@link FSRecordsImpl})
+   * Set of deleted file ids. Never cleaned during a session (deleted fileId could be re-used, but it could be done only on
+   * a session start, see {@link FSRecordsImpl}).
+   * File ids are added to this set immediately on file deletion, while _also_ added to the {@link #queueOfFileIdsToBeInvalidated},
+   * to be later (after-WA) used to replace the file's data {@link Segment#objectFieldsArray} with {@link #deadMarker}.
+   * MAYBE RC: maybe steal a bit for it in {@link Segment#intFieldsArray}? 16M->8M modCounts seems to be not very critical.
+   *           Or FSRecords.isDeleted could be used -- it would be even better, since it reduces data duplication: now
+   *           we have 'persistent file record marked deleted' and 'in-memory file record marked as invalid', but they could
+   *           be merged into one.
    */
   private final ConcurrentBitSet invalidatedFileIds = ConcurrentBitSet.create();
 
@@ -164,9 +172,9 @@ public final class VfsData {
   }
 
   /**
-   * @return a VirtualFileSystemEntry wrapper for the file data in the cache ({@link #segments}).
+   * @return a {@link VirtualFileSystemEntry} wrapper for the file data in the cache ({@link #segments}).
    * If there is no data in {@link #segments} cache for given id yet -- returns null.
-   * If the file with given id was 'just deleted' (i.e. in the current WA) -- returns the wrapped what is {@code !isValid()},
+   * If the file with given id was 'just deleted' (i.e. in the current WA) -- returns the wrapper what is {@code !isValid()},
    * but if the file was deleted in already finished WA -- throws {@link InvalidVirtualFileAccessException}
    */
   @Nullable VirtualFileSystemEntry cachedFileById(int id, @NotNull VirtualDirectoryImpl parent, boolean putToMemoryCache) {
@@ -291,7 +299,7 @@ public final class VfsData {
     return fileId >>> SEGMENT_BITS;
   }
 
-  /** Caches info about SEGMENT_SIZE consequent files, indexed by fileId */
+  /** Caches info about {@link #SEGMENT_SIZE} consequent files, indexed by {@code (fileId % SEGMENT_SIZE)} */
   @ApiStatus.Internal
   public static final class Segment {
     private static final int INT_FIELDS_COUNT = 1;
@@ -311,7 +319,7 @@ public final class VfsData {
      * [flags | modCount] per fileId
      * Currently it is single int32 per fileId: flag bits (highest byte) and modificationCounter (lowest 3 bytes)
      * Flags are from {@link VirtualFileSystemEntry.VfsDataFlags}: they are a subset of underlying {@link PersistentFS.Flags},
-     * see {@link VirtualDirectoryImpl#createChildImpl(int, int, int, boolean)} for an assignment.
+     * see {@link VirtualDirectoryImpl#initializeChildData(int, int, int, boolean)} for an assignment.
      * Modification counter is separated from underlying {@link FSRecordsImpl#getModCount(int)}: it is transient (not persistent),
      * and incremented only on file _content_ modification, while {@link FSRecordsImpl#getModCount(int)} is incremented on _any_
      * file attribute/content/etc change.
@@ -555,7 +563,7 @@ public final class VfsData {
      * must call removeAdoptedName() before adding new child with the same name
      * or otherwise {@link VirtualDirectoryImpl#findChildImpl(String, boolean, boolean)} would risk finding already non-existing child
      * <p>
-     * Must be called in synchronized(VfsData)
+     * Must be called in synchronized(DirectoryData)
      */
     void removeAdoptedName(@NotNull CharSequence name) {
       Set<CharSequence> adopted = adoptedNames;
@@ -570,9 +578,7 @@ public final class VfsData {
       }
     }
 
-    /**
-     * Must be called in synchronized(VfsData)
-     */
+    /** Must be called in synchronized(DirectoryData) */
     void addAdoptedName(@NotNull String name, boolean caseSensitive) {
       Set<CharSequence> adopted = getOrCreateAdoptedNames(caseSensitive);
       synchronized (adopted) {
@@ -582,7 +588,7 @@ public final class VfsData {
 
     /**
      * Optimization: faster than call {@link #addAdoptedName(String, boolean)} one by one
-     * Must be called in synchronized(VfsData)
+     * Must be called in synchronized(DirectoryData)
      */
     void addAdoptedNames(@NotNull Collection<? extends CharSequence> names, boolean caseSensitive) {
       Set<CharSequence> adopted = getOrCreateAdoptedNames(caseSensitive);
@@ -592,7 +598,7 @@ public final class VfsData {
     }
 
     /**
-     * Must be called in synchronized(VfsData)
+     * Must be called in synchronized(DirectoryData)
      */
     private @NotNull Set<CharSequence> getOrCreateAdoptedNames(boolean caseSensitive) {
       Set<CharSequence> adopted = adoptedNames;
@@ -612,9 +618,7 @@ public final class VfsData {
       }
     }
 
-    /**
-     * Must be called in synchronized(VfsData)
-     */
+    /** Must be called in synchronized(DirectoryData) */
     void clearAdoptedNames() {
       adoptedNames = null;
     }
@@ -736,7 +740,7 @@ public final class VfsData {
      */
     public int findIndexByName(@NotNull CharSequence name,
                                @NotNull Comparator<? super CharSequence> namesComparator,
-                               @NotNull IntFunction<? extends CharSequence> nameLoader) {
+                               @NotNull IntFunction<? extends @NotNull CharSequence> nameLoader) {
       if (!isSorted()) {
         throw new IllegalStateException("Children must be sorted for binary search");
       }

@@ -114,18 +114,18 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     //MAYBE RC: call it only if doRefresh=true?
     updateCaseSensitivityIfUnknown(name);
 
-    VirtualFileSystemEntry result = findChildImpl(name, ensureCanonicalName, isCaseSensitive());
+    VirtualFileSystemEntry child = findChildImpl(name, ensureCanonicalName, isCaseSensitive());
 
     //noinspection UseVirtualFileEquals
-    if (result == NULL_VIRTUAL_FILE) {
-      result = doRefresh ? createAndFindChildWithEventFire(name) : null;
+    if (child == NULL_VIRTUAL_FILE) {
+      child = doRefresh ? createAndFindChildWithEventFire(name) : null;
     }
-    else if (result != null && doRefresh && fileSystem.isDirectory(result) != result.isDirectory()) {
-      RefreshQueue.getInstance().refresh(false, false, null, result);
-      result = findChild(name, false, ensureCanonicalName);
+    else if (child != null && doRefresh && fileSystem.isDirectory(child) != child.isDirectory()) {
+      RefreshQueue.getInstance().refresh( /*async: */ false, /*recursive: */ false, null, child);
+      child = findChild(name, /*doRefresh: */ false, ensureCanonicalName);
     }
 
-    return result;
+    return child;
   }
 
   /**
@@ -382,18 +382,27 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return childEntry;
   }
 
-  private @Nullable VirtualFileSystemEntry createAndFindChildWithEventFire(@NotNull String name) {
-    VirtualFile fake = new FakeVirtualFile(this, name);
+  private @Nullable VirtualFileSystemEntry createAndFindChildWithEventFire(@NotNull String childName) {
+    VirtualFile fake = new FakeVirtualFile(this, childName);
     FileAttributes attributes = fileSystem.getAttributes(fake);
-    if (attributes == null) return null;
-    String realName = fileSystem.getCanonicallyCasedName(fake);
+    if (attributes == null) {
+      return null;
+    }
+
+    String canonicallyCasedName = fileSystem.getCanonicallyCasedName(fake);
     boolean isDirectory = attributes.isDirectory();
     boolean isEmptyDirectory = isDirectory && !fileSystem.hasChildren(fake);
     String symlinkTarget = attributes.isSymLink() ? fileSystem.resolveSymLink(fake) : null;
     ChildInfo[] children = isEmptyDirectory ? ChildInfo.EMPTY_ARRAY : null;
-    var event = new VFileCreateEvent(REFRESH_REQUESTOR, this, realName, isDirectory, attributes, symlinkTarget, children);
-    RefreshQueue.getInstance().processEvents(false, List.of(event));
-    return findChild(realName);
+    var event = new VFileCreateEvent(REFRESH_REQUESTOR, this, canonicallyCasedName, isDirectory, attributes, symlinkTarget, children);
+    RefreshQueue.getInstance().processEvents(/*async: */ false, List.of(event));
+
+    VirtualFileSystemEntry child = findChild(canonicallyCasedName);
+    if(child == null && LOG.isDebugEnabled()) {
+      LOG.debug(this + "/[" + childName + " | " + canonicallyCasedName + "]: exists (attributes: " + attributes + "), " +
+                "but somehow still absent after refresh");
+    }
+    return child;
   }
 
   private void updateCaseSensitivityIfUnknown(@NotNull String childName) {
@@ -682,7 +691,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
 
       //childId not really belong to children:
-      LOG.error(child + " expected to be in [" + this + "].children=" + children + ", but absent -> refresh race or VFS inconsistency?");
+      LOG.error(
+        "[" + child + ", id: " + child.getId() + "] expected to be in [" + this + "].children=" + children + ", but absent. " +
+        "childId in persistent children: " + isInPersistentChildren(pFS, getId(), childId) + " " +
+        "-> refresh race or VFS inconsistency?"
+      );
       return null;
     }
     //since the child is guaranteed to be in children _already known to VFS_ -- adoptedNames shouldn't be changed at all
@@ -1183,7 +1196,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                          "missed children: ");
     for (int disappearedChildId : prevChildren.toIntArray()) {
       VirtualFileSystemEntry missing = vfsData.cachedFileById(disappearedChildId, this, /*putInCache: */false);
-      sb.append("\n\t[" + disappearedChildId + "]").append(verboseToString(missing));
+      sb.append("\n\t[" + disappearedChildId + "] ").append(verboseToString(missing));
     }
     sb.append("\nexisting children:");
     for (VirtualFile existingChild : newChildren) {

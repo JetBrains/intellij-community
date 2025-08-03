@@ -264,7 +264,9 @@ public final class FileAttributes {
     if (isSet(flags, READ_ONLY)) sb.append("ro");
     sb.append("', ").append(length).append('b');
     sb.append(", modified: ").append(lastModified);
-    sb.append(", case-sensitive: ").append(areChildrenCaseSensitive());
+    if (isDirectory()) {
+      sb.append(", case-sensitive: ").append(areChildrenCaseSensitive());
+    }
     sb.append(']');
     return sb.toString();
   }
