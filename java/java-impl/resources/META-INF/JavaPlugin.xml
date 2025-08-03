@@ -2791,21 +2791,7 @@
   </extensions>
 
   <actions>
-    <group id="Java.MarkRootGroup" searchable="false">
-      <group id="MarkSourceRootGroup" class="com.intellij.ide.projectView.actions.MarkSourceRootActionGroup"/>
-      <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction"/>
-      <action id="MarkAsContentRoot" class="com.intellij.ide.projectView.actions.MarkAsContentRootAction"/>
-      <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction"/>
-      <add-to-group group-id="MarkRootGroup"/>
-    </group>
-
     <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction"/>
-
-    <group id="MarkGeneratedSourceRootGroup">
-      <action id="MarkGeneratedSourceRoot" class="com.intellij.ide.projectView.actions.MarkGeneratedSourceRootAction"/>
-      <action id="UnmarkGeneratedSourceRoot" class="com.intellij.ide.projectView.actions.UnmarkGeneratedSourceRootAction"/>
-      <add-to-group group-id="MarkRootGroup" anchor="after" relative-to-action="MarkSourceRootGroup"/>
-    </group>
 
     <group id="Java.ProjectTemplate.Group" searchable="false">
       <separator/>
@@ -2816,6 +2802,18 @@
   </actions>
 
   <actions resource-bundle="messages/JavaUiBundle">
+    <group id="Java.MarkRootGroup" searchable="false">
+      <!-- Java-only actions that operate with JVM source root types -->
+      <group id="MarkSourceRootGroup" class="com.intellij.ide.projectView.actions.MarkSourceRootActionGroup"/>
+
+      <group id="MarkGeneratedSourceRootGroup">
+        <action id="MarkGeneratedSourceRoot" class="com.intellij.ide.projectView.actions.MarkGeneratedSourceRootAction"/>
+        <action id="UnmarkGeneratedSourceRoot" class="com.intellij.ide.projectView.actions.UnmarkGeneratedSourceRootAction"/>
+      </group>
+
+      <add-to-group group-id="MarkRootGroup" anchor="before" relative-to-action="MarkContentRootGroup"/>
+    </group>
+
     <group id="JarRepositoryLibraries" internal="true" popup="true" searchable="false">
       <action internal="true" id="EnableAllRepositoryLibrariesSha256Checksum"
               class="com.intellij.ide.actions.EnableAllRepositoryLibrariesSha256ChecksumAction"/>
