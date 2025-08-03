@@ -19,6 +19,7 @@ import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
+import org.jetbrains.kotlin.cli.common.arguments.Argument
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.nio.file.Path
@@ -27,6 +28,9 @@ import java.util.TreeMap
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeTo
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.javaField
 
 internal class ModuleList(
   @JvmField val community: List<ModuleDescriptor>,
@@ -917,86 +921,119 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
   val kotlinFacetModuleExtension = module.module.container.getChild(JpsKotlinFacetModuleExtension.KIND) ?: return null
   val mergedCompilerArguments = kotlinFacetModuleExtension.settings.mergedCompilerArguments as? K2JVMCompilerArguments ?: return null
   val options = HashMap<String, Any>()
-  // see create_kotlinc_options
-  var effectiveOptIn = mergedCompilerArguments.optIn?.asList() ?: emptyList()
-  if (effectiveOptIn.size == 1 && effectiveOptIn[0] == "com.intellij.openapi.util.IntellijInternalApi") {
-    effectiveOptIn = emptyList()
+
+  val handledArguments = mutableSetOf<String>()
+  fun <T> handleArgument(property: KProperty1<out K2JVMCompilerArguments, T>, body: (T) -> Unit) {
+    body(property.getter.call(mergedCompilerArguments))
+    check(handledArguments.add(property.name))
   }
+
   //optin
-  if (effectiveOptIn.isNotEmpty()) {
-    options.put("opt_in", effectiveOptIn)
+  handleArgument(K2JVMCompilerArguments::optIn) {
+    // see create_kotlinc_options
+    var effectiveOptIn = it?.asList() ?: emptyList()
+    if (effectiveOptIn.size == 1 && effectiveOptIn[0] == "com.intellij.openapi.util.IntellijInternalApi") {
+      effectiveOptIn = emptyList()
+    }
+    if (effectiveOptIn.isNotEmpty()) {
+      options.put("opt_in", effectiveOptIn)
+    }
   }
   //plugin_options
-  val pluginOptions = mergedCompilerArguments.pluginOptions
-  if (pluginOptions?.isNotEmpty() == true) {
-    options.put("plugin_options", pluginOptions.map {
-      it.replace("${module.bazelBuildFileDir.invariantSeparatorsPathString}/", "")
-    })
+  handleArgument(K2JVMCompilerArguments::pluginOptions) { pluginOptions ->
+    if (pluginOptions?.isNotEmpty() == true) {
+      options.put("plugin_options", pluginOptions.map {
+        it.replace("${module.bazelBuildFileDir.invariantSeparatorsPathString}/", "")
+      })
+    }
   }
   //x_allow_kotlin_package
-  if (mergedCompilerArguments.allowKotlinPackage) {
-    options.put("x_allow_kotlin_package", true)
+  handleArgument(K2JVMCompilerArguments::allowKotlinPackage) {
+    if (it) {
+      options.put("x_allow_kotlin_package", true)
+    }
   }
   //x_allow_result_return_type
   if (mergedCompilerArguments.errors?.unknownExtraFlags?.contains("-Xallow-result-return-type") == true) {
     options.put("x_allow_result_return_type", true)
   }
   //x_allow_unstable_dependencies
-  if (mergedCompilerArguments.allowUnstableDependencies) {
-    options.put("x_allow_unstable_dependencies", true)
+  handleArgument(K2JVMCompilerArguments::allowUnstableDependencies) {
+    if (it) {
+      options.put("x_allow_unstable_dependencies", true)
+    }
   }
   //x_consistent_data_class_copy_visibility
-  if (mergedCompilerArguments.consistentDataClassCopyVisibility) {
-    options.put("x_consistent_data_class_copy_visibility", true)
+  handleArgument(K2JVMCompilerArguments::consistentDataClassCopyVisibility) {
+    if (it) {
+      options.put("x_consistent_data_class_copy_visibility", true)
+    }
   }
   //x_context_parameters
-  if (mergedCompilerArguments.contextParameters) {
-    options.put("x_context_parameters", true)
+  handleArgument(K2JVMCompilerArguments::contextParameters) {
+    if (it) {
+      options.put("x_context_parameters", true)
+    }
   }
   //x_context_receivers
-  if (mergedCompilerArguments.contextReceivers) {
-    options.put("x_context_receivers", true)
+  handleArgument(K2JVMCompilerArguments::contextReceivers) {
+    if (it) {
+      options.put("x_context_receivers", true)
+    }
   }
   //x_explicit_api_mode
-  if (mergedCompilerArguments.explicitApi != "disable") {
-    options.put("x_explicit_api_mode", mergedCompilerArguments.explicitApi)
+  handleArgument(K2JVMCompilerArguments::explicitApi) {
+    if (it != "disable") {
+      options.put("x_explicit_api_mode", it)
+    }
   }
   //x_inline_classes
-  if (mergedCompilerArguments.inlineClasses) {
-    options.put("x_inline_classes", true)
+  handleArgument(K2JVMCompilerArguments::inlineClasses) {
+    if (it) {
+      options.put("x_inline_classes", true)
+    }
   }
   //x_jvm_default
-  val xJvmDefault = mergedCompilerArguments.jvmDefault
-  if (xJvmDefault != null) {
-    if (xJvmDefault != "all") {
-      options.put("x_jvm_default", xJvmDefault)
-    }
-  } else {
-    if (mergedCompilerArguments.jvmDefaultStable == null) {
-      options.put("x_jvm_default", "all-compatibility")
+  handleArgument(K2JVMCompilerArguments::jvmDefault) { xJvmDefault ->
+    if (xJvmDefault != null) {
+      if (xJvmDefault != "all") {
+        options.put("x_jvm_default", xJvmDefault)
+      }
+    } else {
+      if (mergedCompilerArguments.jvmDefaultStable == null) {
+        options.put("x_jvm_default", "all-compatibility")
+      }
     }
   }
   //x_lambdas
-  val lambdas = mergedCompilerArguments.lambdas
-  if (lambdas != null && lambdas != "indy") {
-    options.put("x_lambdas", lambdas)
+  handleArgument(K2JVMCompilerArguments::lambdas) { lambdas ->
+    if (lambdas != null && lambdas != "indy") {
+      options.put("x_lambdas", lambdas)
+    }
   }
   //x_no_call_assertions
-  if (mergedCompilerArguments.noCallAssertions) {
-    options.put("x_no_call_assertions", true)
+  handleArgument(K2JVMCompilerArguments::noCallAssertions) {
+    if (it) {
+      options.put("x_no_call_assertions", true)
+    }
   }
   //x_no_param_assertions
-  if (mergedCompilerArguments.noParamAssertions) {
-    options.put("x_no_param_assertions", true)
+  handleArgument(K2JVMCompilerArguments::noParamAssertions) {
+    if (it) {
+      options.put("x_no_param_assertions", true)
+    }
   }
   //x_sam_conversions
-  val samConversions = mergedCompilerArguments.samConversions
-  if (samConversions != null) {
-    options.put("x_sam_conversions", samConversions)
+  handleArgument(K2JVMCompilerArguments::samConversions) { samConversions ->
+    if (samConversions != null) {
+      options.put("x_sam_conversions", samConversions)
+    }
   }
   //x_skip_prerelease_check
-  if (mergedCompilerArguments.skipPrereleaseCheck) {
-    options.put("x_skip_prerelease_check", true)
+  handleArgument(K2JVMCompilerArguments::skipPrereleaseCheck) {
+    if (it) {
+      options.put("x_skip_prerelease_check", true)
+    }
   }
   //x_strict_java_nullability_assertions
   if (mergedCompilerArguments.errors?.unknownExtraFlags?.contains("-Xstrict-java-nullability-assertions") == true) {
@@ -1007,14 +1044,24 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
     options.put("x_wasm_attach_js_exception", true)
   }
   //x_when_guards
-  if (mergedCompilerArguments.whenGuards) {
-    options.put("x_when_guards", true)
+  handleArgument(K2JVMCompilerArguments::whenGuards) {
+    if (it) {
+      options.put("x_when_guards", true)
+    }
   }
   //x_x_language
   val xXLanguageInlineClass = mergedCompilerArguments.internalArguments.any { it.stringRepresentation == "-XXLanguage:+InlineClasses"}
   if (xXLanguageInlineClass) {
     options.put("x_x_language", "+InlineClasses")
   }
+
+  checkNoUnhandledKotlincOptions(
+    module.module,
+    mergedCompilerArguments,
+    handledArguments = handledArguments + setOf("jvmTarget", "apiVersion", "languageVersion", "pluginClasspaths"),  // TODO: check ignored arguments
+    handledInternalArguments = setOf("-XXLanguage:+InlineClasses"),
+    handledUnknownExtraFlags = setOf("-Xallow-result-return-type", "-Xstrict-java-nullability-assertions", "-Xwasm-attach-js-exception"),
+  )
 
   if (options.isEmpty()) {
     return null
@@ -1033,6 +1080,44 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
     }
   }
   return ":$kotlincOptionsName"
+}
+
+private fun checkNoUnhandledKotlincOptions(module: JpsModule, mergedCompilerArguments: K2JVMCompilerArguments, handledArguments: Set<String>, handledInternalArguments: Set<String>, handledUnknownExtraFlags: Set<String>) {
+  // check arguments:
+  mergedCompilerArguments::class.memberProperties
+    .filter { it.javaField!!.getAnnotation(Argument::class.java) != null }
+    .filterNot { it.name in handledArguments }
+    .forEach {
+      val defaultValue = it.getter.call(K2JVMCompilerArguments())
+      if (it.getter.call(mergedCompilerArguments) != defaultValue) {
+        error("module '${module.name}' has compiler argument which is not supported: ${it.name}")
+      }
+    }
+
+  // check internal arguments:
+  mergedCompilerArguments.internalArguments.filterNot { it.stringRepresentation in handledInternalArguments }.forEach {
+    error("module '${module.name}' has compiler internal argument which is not supported: ${it.stringRepresentation}")
+  }
+
+  // check errors:
+  mergedCompilerArguments.errors?.unknownArgs.orEmpty().forEach {
+    error("module '${module.name}' has unknown compiler argument: $it")
+  }
+  mergedCompilerArguments.errors?.unknownExtraFlags.orEmpty().filterNot { it in handledUnknownExtraFlags }.forEach {
+    error("module '${module.name}' has unknown compiler extra flag: $it")
+  }
+  mergedCompilerArguments.errors?.argumentWithoutValue?.let {
+    error("module '${module.name}' has compiler argument without value: $it")
+  }
+  mergedCompilerArguments.errors?.booleanArgumentWithValue?.let {
+    error("module '${module.name}' has compiler boolean argument with value: $it")
+  }
+  mergedCompilerArguments.errors?.argfileErrors.orEmpty().forEach {
+    error("module '${module.name}' has compiler argfile error: $it")
+  }
+  mergedCompilerArguments.errors?.internalArgumentsParsingProblems.orEmpty().forEach {
+    error("module '${module.name}' has compiler internal arguments parsing problem: $it")
+  }
 }
 
 private val addExportsRegex = Regex("""--add-exports\s+([^=]+)=\S+""")
