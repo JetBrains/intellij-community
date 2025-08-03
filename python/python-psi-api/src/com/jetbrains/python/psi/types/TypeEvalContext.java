@@ -2,10 +2,12 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
@@ -233,7 +235,28 @@ public sealed class TypeEvalContext {
     return null;
   }
 
+  private static boolean isLibraryElement(@NotNull PsiElement element) {
+    VirtualFile vFile = element.getContainingFile().getOriginalFile().getVirtualFile();
+    return vFile != null && ("pyi".equals(vFile.getExtension()) || ProjectFileIndex.getInstance(element.getProject()).isInLibrary(vFile));
+  }
+
+  private @NotNull TypeEvalContext getLibraryContext(@NotNull Project project) {
+    return project.getService(TypeEvalContextCache.class).getLibraryContext(new LibraryTypeEvalContext(getConstraints()));
+  }
+
+  /**
+   * If true the element's type will be calculated and stored in the long-life context bounded to the PyLibraryModificationTracker.
+   */
+  protected boolean canDelegateToLibraryContext(PyTypedElement element) {
+    return Registry.is("python.use.separated.libraries.type.cache") && isLibraryElement(element);
+  }
+
   public @Nullable PyType getType(final @NotNull PyTypedElement element) {
+    if (canDelegateToLibraryContext(element)) {
+      var context = getLibraryContext(element.getProject());
+      return context.getType(element);
+    }
+
     final PyType knownType = getKnownType(element);
     if (knownType != null) {
       return knownType == PyNullType.INSTANCE ? null : knownType;
@@ -251,6 +274,11 @@ public sealed class TypeEvalContext {
   }
 
   public @Nullable PyType getReturnType(final @NotNull PyCallable callable) {
+    if (canDelegateToLibraryContext(callable)) {
+      var context = getLibraryContext(callable.getProject());
+      return context.getReturnType(callable);
+    }
+
     final PyType knownReturnType = getKnownReturnType(callable);
     if (knownReturnType != null) {
       return knownReturnType == PyNullType.INSTANCE ? null : knownReturnType;
@@ -414,6 +442,18 @@ public sealed class TypeEvalContext {
     public boolean equals(Object o) {
       // Otherwise, it can be equal to other AssumptionContext with same constraints
       return this == o;
+    }
+  }
+
+  final static class LibraryTypeEvalContext extends TypeEvalContext {
+    private LibraryTypeEvalContext(@NotNull TypeEvalConstraints constraints) {
+      super(constraints);
+    }
+
+    @Override
+    protected boolean canDelegateToLibraryContext(PyTypedElement element) {
+      // It's already the library-context.
+      return false;
     }
   }
 }
