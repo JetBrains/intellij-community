@@ -20,7 +20,6 @@ import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.EnvironmentRestorer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,11 +45,11 @@ public final class LocalOptionsConfigurer {
   private static final Logger LOG = Logger.getInstance(LocalOptionsConfigurer.class);
 
   public static @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions, @NotNull Project project) {
+    List<String> initialCommand = getInitialCommand(baseOptions, project);
     String workingDir = getWorkingDirectory(baseOptions.getWorkingDirectory(), project);
-    var eelDescriptor = findEelDescriptor(workingDir, ContainerUtil.notNullize(baseOptions.getShellCommand()));
+    var eelDescriptor = findEelDescriptor(workingDir, initialCommand);
     Map<String, String> envs = getTerminalEnvironment(baseOptions.getEnvVariables(), workingDir, project, eelDescriptor);
 
-    List<String> initialCommand = getInitialCommand(baseOptions, project);
     TerminalWidget widget = baseOptions.getWidget();
     if (widget != null) {
       widget.setShellCommand(initialCommand);
