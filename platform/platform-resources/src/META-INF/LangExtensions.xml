@@ -1691,6 +1691,8 @@
                  description="Replaces Indexing progress with Analyzing during dumb mode"/>
 
     <saveAndSyncHandlerListener implementation="com.intellij.codeInsight.daemon.impl.EssentialHighlightingRestarter" />
+
+    <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.platform.backend">
