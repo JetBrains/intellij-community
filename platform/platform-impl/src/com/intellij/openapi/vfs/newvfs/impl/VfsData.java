@@ -186,6 +186,13 @@ public final class VfsData {
       if (directory == null) {
         throw new AssertionError("Bug: " + directoryData + " must have .directory != null set at initialization!");
       }
+
+      if (directory.getId() != id) {
+        throw new AssertionError(
+          "Bug: cachedFileById(" + id + ") returns " + directory + " with different id(=" + directory.getId() + ")"
+        );
+      }
+
       return directory;
     }
     return new VirtualFileImpl(id, segment, parent);
@@ -677,7 +684,8 @@ public final class VfsData {
       for (int i = 0; i < ids.length; i++) {
         int id = ids[i];
         VirtualFileSystemEntry child = fileLoader.apply(id);
-        if (child == null) {//TODO RC: actually this could happen if the file is deleted concurrently?
+        if (child == null) {
+          //TODO RC: actually this may happen -- if the file is deleted concurrently, without WA/RA?
           throw new AssertionError("Bug: can't load file by id " + id);
         }
         children[i] = child;

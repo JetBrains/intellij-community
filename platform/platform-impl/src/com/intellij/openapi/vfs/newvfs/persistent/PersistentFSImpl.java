@@ -2413,7 +2413,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     int childId = inserter.insertedChildInfo.getId();
     int nameId = inserter.insertedChildInfo.getNameId();//vfsPeer.getNameId(name);
-    VirtualFileSystemEntry child = parentDir.initializeChildIfNotYet(childId, nameId, fileAttributesToFlags(childData.first), isEmptyDirectory);
+    VirtualFileSystemEntry child = parentDir.initializeChildDataIfNotYet(childId, nameId, fileAttributesToFlags(childData.first), isEmptyDirectory);
     parentDir.addChild(child);
     incStructuralModificationCount();
   }
@@ -2502,6 +2502,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
     }
     else {
+      //The order: first(remove the file from it's parent.children) then(mark the file as deleted) -- is important!
+      // During .children processing we rely on the fact that .children are all valid files
       vfsPeer.update(parent, parentId, list -> list.remove(fileIdToDelete), /*setAllChildrenCached: */ false);
 
       ((VirtualDirectoryImpl)parent).removeChild((VirtualFileSystemEntry)file);

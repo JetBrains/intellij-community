@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Attributes;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor;
 import com.intellij.psi.impl.PsiCachedValue;
@@ -210,8 +211,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         return null;//all children loaded, but child not found -> not exist
       }
 
-      PersistentFSImpl pfs = owningPersistentFS();
-      ChildInfo childInfo = pfs.findChildInfo(this, name, fileSystem);
+      VfsData vfsData = getVfsData();
+      PersistentFSImpl pFS = vfsData.owningPersistentFS();
+      ChildInfo childInfo = pFS.findChildInfo(this, name, fileSystem);
       if (childInfo == null) {
         directoryData.addAdoptedName(name, isCaseSensitive);
         return null;
@@ -234,25 +236,36 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       //Lookup a child by id: it is mostly useful for ensureCanonicalName=false, but it seems there are some cases
       // there even with ensureCanonicalName=true a child couldn't be found by name, but _could_ be found by id
       // so let's be sure:
-      VirtualFileSystemEntry childById = findCachedChildById(childId);
+      VirtualFileSystemEntry childById = vfsData.cachedFileById(childId, this, /*putToCache: */true);
       if (childById != null) {
-        if (ensureCanonicalName) {
-          //It is definitely possible for childId to be in this.children list, but not found by name, if
-          // ensureCanonicalName=false -- because of file name normalisation intricacies.
-          // But same for ensureCanonicalName=true it is a suspicious case: why didn't we find a child by name then?
-          logChildLookupFailure(pfs, childId, childNameId, name);
+        int indexOfChild = directoryData.children.indexOfId(childId);
+        if (indexOfChild >= 0) {
+          if (ensureCanonicalName) {
+            //It is definitely possible for childId to be in this.children list, but not found by name, if
+            // ensureCanonicalName=false -- because of file name normalisation intricacies.
+            // But same for ensureCanonicalName=true it is a suspicious case: why didn't we find a child by name then?
+            logChildLookupFailure(pFS, childId, childNameId, name);
+          }
         }
-
+        else {
+          addChild(childById);
+        }
         return childById;
       }
+      else {
+        @Attributes int childAttributes = pFS.getFileAttributes(childId);
+        if (PersistentFSRecordAccessor.hasDeletedFlag(childAttributes)) {
+          //If childId was already deleted, it should be removed from ChildrenIds list first,
+          // see PersistentFSImpl.executeDelete() -- but here we are, with childId from findChildInfo(),
+          // executed under the directoryLock:
+          throw new IllegalStateException("file(=#" + childId + ") is deleted, but still in .children list");
+        }
+        boolean isEmptyDirectory = PersistentFS.isDirectory(childAttributes) && !pFS.mayHaveChildren(childId);
 
-      int childAttributes = pfs.getFileAttributes(childId);
-      //TODO RC: check isDeleted(attributes) before .mayHaveChildren() call,
-      //         otherwise 'already deleted' exception is thrown sometimes (EA-933381)?
-      boolean isEmptyDirectory = PersistentFS.isDirectory(childAttributes) && !pfs.mayHaveChildren(childId);
-
-      newlyLoadedChild = initializeChildData(childId, childNameId, childAttributes, isEmptyDirectory);
-      addChild(newlyLoadedChild);
+        //it shouldn't be concurrent initializations, since we've locked directoryData, and checked cachedFileById()
+        newlyLoadedChild = initializeChildData(childId, childNameId, childAttributes, isEmptyDirectory);
+        addChild(newlyLoadedChild);
+      }
     }
 
     if (!newlyLoadedChild.isDirectory()) {
@@ -293,14 +306,19 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
+  /**
+   * If the slot for a child data in {@link VfsData} in-memory cache isn't already filled in -- method instantiates the
+   * slot, fills it with the data provided, and return {@link VirtualFileSystemEntry} wrapper around that data.
+   * <p/>
+   * Note: the childId is _not_ added to a parent's children list -- this should be done separately.
+   */
   @ApiStatus.Internal
-  public @NotNull VirtualFileSystemEntry initializeChildIfNotYet(int fileId,
-                                                                 int nameId,
-                                                                 @PersistentFS.Attributes int attributes,
-                                                                 boolean isEmptyDirectory) {
+  public @NotNull VirtualFileSystemEntry initializeChildDataIfNotYet(int fileId,
+                                                                     int nameId,
+                                                                     @Attributes int attributes,
+                                                                     boolean isEmptyDirectory) {
     synchronized (directoryData) {
       //check is it already initialized:
-      //MAYBE RC: getVfsData().hasLoadedFile() is probably a better way to check this?
       VirtualFileSystemEntry entry = getVfsData().cachedFileById(fileId, this, /*putInCache: */ true);
       if (entry != null) {
         return entry;
@@ -312,13 +330,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   /**
    * Method instantiates a slot for child data in {@link VfsData} in-memory cache, and fills it with the
    * data provided. childId shouldn't be initialized yet -- otherwise an {@link com.intellij.openapi.vfs.newvfs.impl.VfsData.FileAlreadyCreatedException}
-   * is thrown.
+   * is thrown.<p/>
    * Note: the childId is _not_ added to a parent's children list -- this should be done separately.
    */
   //@GuardedBy("directoryData")
   private @NotNull VirtualFileSystemEntry initializeChildData(int childId,
                                                               int nameId,
-                                                              @PersistentFS.Attributes int attributes,
+                                                              @Attributes int attributes,
                                                               boolean isEmptyDirectory) {
     FileLoadingTracker.fileLoaded(this, nameId);
 
@@ -415,7 +433,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     synchronized (directoryData) {
       Comparator<VirtualFile> byName = (f1, f2) -> compareNames(f1.getName(), f2.getName(), isCaseSensitive);
       VfsData.ChildrenIds sortedChildren = children.sorted(
-        id -> vfsData.cachedFileById(id, this, /*putIntoMemory: */true),
+        id -> loadChildFileEntry(id, vfsData,  /*putIntoMemory: */true),
         byName
       );
       directoryData.children = sortedChildren;
@@ -534,9 +552,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         prevChildren.remove(childId);
         VirtualFileSystemEntry child = vfsData.cachedFileById(childId, this, /*putIntoMemory: */true);
         if (child == null) {
-          int attributes = pFS.getFileAttributes(childId);
-          boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !pFS.mayHaveChildren(childId);
-          child = initializeChildData(childId, childInfo.getNameId(), attributes, isEmptyDirectory);
+          @Attributes int childAttributes = pFS.getFileAttributes(childId);
+          if (PersistentFSRecordAccessor.hasDeletedFlag(childAttributes)) {
+            //It is an error to come here with childId which was already deleted -- such childId should be removed from ChildrenIds
+            // list first, see PersistentFSImpl.executeDelete()
+            throw new IllegalStateException("file[" + i + "](=#" + childId + ") is deleted, but still in .children list");
+          }
+          boolean isEmptyDirectory = PersistentFS.isDirectory(childAttributes) && !pFS.mayHaveChildren(childId);
+          child = initializeChildData(childId, childInfo.getNameId(), childAttributes, isEmptyDirectory);
         }
         newChildren[i] = child;
       }
@@ -605,16 +628,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
 
     synchronized (directoryData) {
-      if (child == null) {
-        //childId hasn't been loaded from persistence yet: load it
-        @PersistentFS.Attributes int childAttributes = pFS.getFileAttributes(childId);
+      if (child == null) {//childId hasn't been loaded from persistence yet: load it
+        FSRecordsImpl vfsPeer = pFS.peer();
+        @Attributes int childAttributes = pFS.getFileAttributes(childId);
         if (PersistentFSRecordAccessor.hasDeletedFlag(childAttributes)) {
           return null;
         }
-        FSRecordsImpl vfsPeer = pFS.peer();
         int childNameId = vfsPeer.getNameIdByFileId(childId);
         boolean isEmptyDirectory = PersistentFS.isDirectory(childAttributes) && !pFS.mayHaveChildren(childId);
-        child = initializeChildIfNotYet(childId, childNameId, childAttributes, isEmptyDirectory);
+        child = initializeChildDataIfNotYet(childId, childNameId, childAttributes, isEmptyDirectory);
       }
 
       //now check child is indeed a child of this dir:
@@ -666,26 +688,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     //since the child is guaranteed to be in children _already known to VFS_ -- adoptedNames shouldn't be changed at all
   }
 
-  /**
-   * @return a _cached_ file by childId, if it belongs to this directory's _cached_ in-memory children,
-   * null otherwise (method name may be a bit misleading)
-   */
-  private @Nullable VirtualFileSystemEntry findCachedChildById(int childId) {
-    int indexOfChild = directoryData.children.indexOfId(childId);
-    if (indexOfChild >= 0) {
-      VirtualFileSystemEntry fileById = getVfsData().cachedFileById(childId, this, /*putToCache: */true);
-      if (fileById != null) {
-        if (fileById.getId() == childId) {
-          return fileById;
-        }
-
-        //MAYBE RC: how could it be? Maybe throw an exception would be better reaction?
-        LOG.error("getFileById(" + childId + ") returns " + fileById + " with different id(=" + fileById.getId() + ") -> return null");
-      }
-    }
-    return null;
-  }
-
   // optimization: works faster than added.forEach(this::addChild)
   @ApiStatus.Internal
   @Contract(mutates = "this,param1")
@@ -698,7 +700,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         for (int i = 0; i < addedSize; i++) {
           ChildInfo info = added.get(i);
           assert info.getId() > 0 : info;
-          @PersistentFS.Attributes int attributes = info.getFileAttributeFlags();
+          @Attributes int attributes = info.getFileAttributeFlags();
           boolean isEmptyDirectory = (info.getChildren() != null) && (info.getChildren().length == 0);
 
           //We look for existing child in children by-id because, likely, linear O(N) search in int[] is still faster than
@@ -754,7 +756,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         //         and call the callback afterwards -- I'm not sure that semantic consequences could be of this difference.
         if (mergeResult == ContainerUtil.MergeResult.COPIED_FROM_LIST2) {
           assert nextInfo.getId() > 0 : nextInfo;
-          @PersistentFS.Attributes int attributes = nextInfo.getFileAttributeFlags();
+          @Attributes int attributes = nextInfo.getFileAttributeFlags();
           boolean isEmptyDirectory = nextInfo.getChildren() != null && nextInfo.getChildren().length == 0;
           directoryData.removeAdoptedName(nextInfo.getName());
           VirtualFileSystemEntry file = initializeChildData(nextInfo.getId(), nextInfo.getNameId(), attributes, isEmptyDirectory);
@@ -1006,7 +1008,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   private VirtualFileSystemEntry @NotNull [] cachedChildrenArray(boolean putToMemoryCache) {
     VfsData vfsData = getVfsData();
-    return directoryData.children.asFiles(fileId -> vfsData.cachedFileById(fileId, this, putToMemoryCache));
+    synchronized (directoryData) {
+      return directoryData.children.asFiles(childId -> {
+        return loadChildFileEntry(childId, vfsData, putToMemoryCache);
+      });
+    }
   }
 
   /** @return true if childId is in a persistent (=not cached in memory!) children list of parentId */
@@ -1022,6 +1028,34 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
     }
     return false;
+  }
+
+  /**
+   * @return file entry for given childId, if already cached, if not already cached -- initializes the file entry in cache by
+   * loading the apt file data from VFS persistence (but NOT from backing file-system!)
+   */
+  //@GuardedBy("directoryData")
+  private @NotNull VirtualFileSystemEntry loadChildFileEntry(int childId,
+                                                             @NotNull VfsData vfsData,
+                                                             boolean putToMemoryCache) {
+    VirtualFileSystemEntry cachedChild = vfsData.cachedFileById(childId, this, putToMemoryCache);
+    if (cachedChild != null) {
+      return cachedChild;
+    }
+
+    PersistentFSImpl pFS = vfsData.owningPersistentFS();
+    FSRecordsImpl vfsPeer = pFS.peer();
+
+    @Attributes int childAttributes = pFS.getFileAttributes(childId);
+    if (PersistentFSRecordAccessor.hasDeletedFlag(childAttributes)) {
+      //It is an error to come here with childId which was already deleted -- such childId should be removed from ChildrenIds
+      // list first, see PersistentFSImpl.executeDelete()
+      throw new IllegalStateException("file[#" + childId + "] is deleted, can't be loaded");
+    }
+
+    int childNameId = vfsPeer.getNameIdByFileId(childId);
+    boolean isEmptyDirectory = PersistentFS.isDirectory(childAttributes) && !pFS.mayHaveChildren(childId);
+    return initializeChildDataIfNotYet(childId, childNameId, childAttributes, isEmptyDirectory);
   }
 
   // =============================== helpers ====================================================================================== //
