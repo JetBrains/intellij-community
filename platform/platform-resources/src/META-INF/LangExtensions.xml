@@ -23,7 +23,7 @@
     <referencesSearch implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.NonPhysicalReferenceSearcher"/>
 
-    <!-- FileBasedIndex / SerializationManager is quite important and in any case will be used, better to preload it -->
+    <!-- FileBasedIndex / SerializationManager is quite important and in any case will be used better to preload it -->
     <applicationService serviceInterface="com.intellij.util.indexing.FileBasedIndex"
                         serviceImplementation="com.intellij.util.indexing.FileBasedIndexImpl" preload="notLightEdit"/>
     <vfs.asyncListener implementation="com.intellij.util.indexing.events.ChangedFilesCollector"/>
@@ -489,7 +489,7 @@
     <applicationConfigurable groupId="editor" groupWeight="130" instance="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable"
                              id="editing.templates"
                              key="templates.settings.page.title" bundle="messages.CodeInsightBundle"/>
-    <registryKey defaultValue="true" description="Use subfolders for live template setttings" key="live.templates.separated.group"
+    <registryKey defaultValue="true" description="Use subfolders for live template settings" key="live.templates.separated.group"
                  restartRequired="false"/>
     <search.optionContributor implementation="com.intellij.codeInsight.template.impl.TemplateSearchableOptionContributor"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.template.impl.LiveTemplateLookupActionProvider"/>
@@ -1227,7 +1227,7 @@
 
     <applicationService serviceImplementation="com.intellij.openapi.editor.richcopy.settings.RichCopySettings"/>
     <copyPastePostProcessor implementation="com.intellij.openapi.editor.richcopy.TextWithMarkupProcessor"/>
-    <!--the following binding uses 'first' order to make sure it captures raw text before any other processor modifies it -->
+    <!--the following binding uses 'first' to make sure it captures raw text before any other processor modifies it -->
     <copyPastePreProcessor implementation="com.intellij.openapi.editor.richcopy.TextWithMarkupProcessor$RawTextSetter" order="first"
                            id="richcopy"/>
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.LineCommentCopyPastePreProcessor"/>
