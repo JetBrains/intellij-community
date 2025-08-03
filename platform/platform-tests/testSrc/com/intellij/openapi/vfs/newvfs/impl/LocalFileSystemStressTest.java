@@ -38,7 +38,7 @@ public class LocalFileSystemStressTest extends BareTestFixtureTestCase {
       expectedPath.append(testDir.getPath());
       VirtualFile nested = WriteAction.computeAndWait(() -> {
         VirtualFile v = testDir;
-        VfsData.Segment segment = new VfsData.Segment(new VfsData(ApplicationManager.getApplication(), (PersistentFSImpl)PersistentFS.getInstance()));
+        VfsData.Segment segment = new VfsData.Segment(0, new VfsData(ApplicationManager.getApplication(), (PersistentFSImpl)PersistentFS.getInstance()));
         VfsData.DirectoryData directoryData = new VfsData.DirectoryData();
         for (int i = 1; i < N_LEVELS; i++) {
           // create VirtualDirectory manually instead of calling "createChildDirectory" to avoid filling persistence with garbage, which is slow and harmful for other tests

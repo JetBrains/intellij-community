@@ -24,6 +24,8 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.IntFunction;
 
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+
 /**
  * Main part of VFS in-memory cache: flags, user data and children are all stored here.
  * {@link VirtualFileSystemEntry} and {@link VirtualDirectoryImpl} objects mainly just store fileId, so they could be
@@ -63,6 +65,19 @@ import java.util.function.IntFunction;
 public final class VfsData {
   private static final Logger LOG = Logger.getInstance(VfsData.class);
 
+  /**
+   * If true, {@link #segments} map uses soft-references, i.e., GC may squeeze unused entries, preventing it from
+   * growing too large. <p/>
+   * If false (legacy option) -- {@link #segments} map is strong-reference based, i.e., entries are never evicted, and the
+   * map only grows. <p/>
+   * (This option may look like a regular cause of memory issues -- but practice proves otherwise: it was the only option
+   * for years, and caused the memory issues only occasionally. The reason for that is that overall files number in VFS is
+   * limited in most use-cases, and only a fraction of all VFS files is really accessed in a single IDE session. Thus, VFS
+   * cache size without an eviction is still typically in the range 20-50Mbs for the intellij project -- which is tolerable.
+   * I.e., this option definitely _could_ be used in practice)
+   */
+  private static final boolean USE_SOFT_REFERENCES = getBooleanProperty("platform.vfs.cache.use-soft-references", false);
+
   private static final int SEGMENT_BITS = 9;
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
@@ -72,19 +87,24 @@ public final class VfsData {
 
   private final Object deadMarker = ObjectUtils.sentinel("dead file");
 
-  //TODO RC: seems like the segments are only cached, but never evicted -- this could create memory problems
   //TODO RC: FSRecords was quite optimized recently, probably caching is not needed anymore?
   //         indexingFlag/nameId caching was already removed -- need to think through about remaining (flag+modCount)
   //         field: on the first sight they look like an additional data, independent from persistent VFS data?
   //         .children is another thing that could be less cached -- in many cases children could be accessed directly from
   //         FSRecords?
 
-  /** [segmentIndex -> Segment] */
-  //MAYBE RC: making this map SoftReference-based allows VFS cache to shrink it's memory consumption by GCing unused
-  //          Segments as soon, as no VirtualFile referring a specific Segment are in play anymore.
-  //          Currently a VirtualFileSystemEntry keeps a reference to it's Segment => Segment is strongly-reachable
-  //          until at least a single its VirtualFileSystemEntry is strongly-reachable, i.e. in use.
-  private final ConcurrentIntObjectMap<Segment> segments = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+  /**
+   * Map[segmentIndex -> Segment]
+   * <p/>
+   * Notes for the case the map is SoftReference-based: {@link VirtualFileSystemEntry#segment} is a backref to the {@link Segment}
+   * that contains the entry's data -- which means that segment is strongly-reachable if at least one {@link VirtualFileSystemEntry},
+   * backed by this segment, is strongly reachable (which includes {@link VirtualFileSystemEntry#parent} field!).
+   * So GC is free to collect only the segments that are not used by any {@link VirtualFileSystemEntry} currently in use
+   * (i.e., strongly-reachable). Which seems to be quite intuitive behavior.
+   */
+  private final ConcurrentIntObjectMap<Segment> segments = USE_SOFT_REFERENCES ?
+                                                           ConcurrentCollectionFactory.createConcurrentIntObjectSoftValueMap() :
+                                                           ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   /**
    * Set of deleted file ids. Never cleaned during a session (deleted fileId could be re-used,
@@ -101,6 +121,7 @@ public final class VfsData {
 
   /**
    * If file/directory is moved (==parent is changed), then the change is added to this map, as (originalParentId -> newParent).
+   *
    * @see Segment#replacement
    * @see VirtualFileSystemEntry#updateSegmentAndParent(Segment)
    */
@@ -222,7 +243,7 @@ public final class VfsData {
     if (segment != null || !create) {
       return segment;
     }
-    return segments.cacheOrGet(segmentIndex, new Segment(this));
+    return segments.cacheOrGet(segmentIndex, new Segment(segmentIndex, this));
   }
 
   public boolean hasLoadedFile(int id) {
@@ -270,7 +291,12 @@ public final class VfsData {
     private static final int INT_FIELDS_COUNT = 1;
     private static final int FLAGS_AND_MOD_COUNT_FIELD_NO = 0;
 
+    /** Sequential index of the segment: only for debug/logging */
+    private final int segmentIndex;
+
     final @NotNull VfsData owningVfsData;
+
+    //TODO RC: replace AtomicArrays with int[]/Object[] and access via VarHandle
 
     /** user data (KeyFMap) for files, {@link DirectoryData} for folders */
     private final AtomicReferenceArray<Object> objectFieldsArray;
@@ -302,13 +328,21 @@ public final class VfsData {
     @Nullable Segment replacement;
 
     @VisibleForTesting
-    public Segment(@NotNull VfsData owningVfsData) {
-      this(owningVfsData, new AtomicReferenceArray<>(SEGMENT_SIZE), new AtomicIntegerArray(SEGMENT_SIZE * INT_FIELDS_COUNT));
+    public Segment(int segmentIndex,
+                   @NotNull VfsData owningVfsData) {
+      this(segmentIndex,
+           owningVfsData,
+           new AtomicReferenceArray<>(SEGMENT_SIZE),
+           new AtomicIntegerArray(SEGMENT_SIZE * INT_FIELDS_COUNT)
+      );
     }
 
-    private Segment(@NotNull VfsData owningVfsData,
+    /** Copying ctor */
+    private Segment(int segmentIndex,
+                    @NotNull VfsData owningVfsData,
                     @NotNull AtomicReferenceArray<Object> objectFieldsArray,
                     @NotNull AtomicIntegerArray intFieldsArray) {
+      this.segmentIndex = segmentIndex;
       this.objectFieldsArray = objectFieldsArray;
       this.intFieldsArray = intFieldsArray;
       this.owningVfsData = owningVfsData;
@@ -392,7 +426,7 @@ public final class VfsData {
       int segmentIndex = segmentIndex(fileId);
 
       assert replacement == null;
-      replacement = new Segment(owningVfsData, objectFieldsArray, intFieldsArray);
+      replacement = new Segment(this.segmentIndex, owningVfsData, objectFieldsArray, intFieldsArray);
       boolean replaced = owningVfsData.segments.replace(segmentIndex, this, replacement);
       assert replaced;
 
@@ -430,6 +464,10 @@ public final class VfsData {
       }
     }
 
+    @Override
+    public String toString() {
+      return "Segment[#" + segmentIndex + "][replacement: " + replacement + "]";
+    }
 
     /** @return offset of field #fieldNo of file=fileId in a {@link #intFieldsArray} */
     private static int fieldOffset(int fileId, int fieldNo) {
@@ -559,7 +597,8 @@ public final class VfsData {
       return adopted;
     }
 
-    @Unmodifiable @NotNull List<String> getAdoptedNames() {
+    @Unmodifiable
+    @NotNull List<String> getAdoptedNames() {
       Set<CharSequence> adopted = adoptedNames;
       if (adopted == null) return Collections.emptyList();
       synchronized (adopted) {
