@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.system.OS;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
@@ -46,6 +47,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   public static final List<String> LOGIN_CLI_OPTIONS = List.of(LOGIN_CLI_OPTION, "-l");
 
   protected final Charset myDefaultCharset;
+
+  private final Map<PtyProcess, ShellProcessHolder> myProcessHolderMap = CollectionFactory.createConcurrentWeakMap();
 
   public LocalTerminalDirectRunner(Project project) {
     super(project);
@@ -117,7 +120,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       long startNano = System.nanoTime();
       PtyProcess process;
       if (workingDirPath != null && shouldUseEelApi()) {
-        process = startProcess(List.of(command), envs, workingDirPath, Objects.requireNonNull(initialTermSize));
+        ShellProcessHolder processWrapper = startProcess(List.of(command), envs, workingDirPath, Objects.requireNonNull(initialTermSize));
+        process = processWrapper.getPtyProcess();
+        myProcessHolderMap.put(process, processWrapper);
       }
       else {
         process = (PtyProcess)LocalProcessService.getInstance().startPtyProcess(
@@ -180,9 +185,16 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
   }
 
+  @ApiStatus.Internal
+  protected @Nullable ShellProcessHolder getHolder(@NotNull PtyProcess process) {
+    ShellProcessHolder holder = myProcessHolderMap.get(process);
+    myProcessHolderMap.remove(process);
+    return holder;
+  }
+
   @Override
   public @NotNull TtyConnector createTtyConnector(@NotNull PtyProcess process) {
-    return new LocalTerminalTtyConnector(process, myDefaultCharset);
+    return new LocalTerminalTtyConnector(process, myDefaultCharset, getHolder(process));
   }
 
   @Override
