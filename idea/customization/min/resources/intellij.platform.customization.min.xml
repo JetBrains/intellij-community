@@ -1,7 +1,8 @@
 <!--suppress PluginXmlRegistrationCheck -->
 <!-- Used by IDEs built on top of IntelliJ Platform to customize the IDE;
      By using this customization, IDEs also get most of the behaviors of IntelliJ IDEA by default.
-     Other IDEs may differ still! -->
+     Used only by IntelliJ IDEA and Android Studio.
+     Other IDEs differ still! -->
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
