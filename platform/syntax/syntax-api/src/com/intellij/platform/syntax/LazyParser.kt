@@ -77,7 +77,8 @@ fun canLazyNodeBeReparsedIncrementally(parsingContext: LazyParsingContext): Bool
 }
 
 fun createLexer(lexerContext: LazyLexingContext): Lexer? {
-  return lexerContext.node.type.lazyParser!!.createLexer(lexerContext)
+  val lazyParser = lexerContext.node.type.lazyParser ?: error("Node ${lexerContext.node} is not lazy parseable")
+  return lazyParser.createLexer(lexerContext)
 }
 
 /**

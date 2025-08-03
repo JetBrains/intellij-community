@@ -437,8 +437,8 @@ class KmpSyntaxNode internal constructor(
     var currentLexer = rootLexer
     while (node != null && node.startOffset <= startOffset && node.endOffset > endOffset) {
       val type = node.type
-      val nodeText = newText.subSequence(node.startOffset, node.endOffset)
       if (type.isLazyParseable()) {
+        val nodeText = newText.subSequence(node.startOffset, node.endOffset)
         val startLexemeIndex = currentTokens
           .tokenIndexAtOffset((node.startOffset - node.context.offset))
           .onMinusOne(currentTokens.tokenCount - 1)
@@ -466,19 +466,19 @@ class KmpSyntaxNode internal constructor(
             currentLexer != rootLexer
           )
         }
-      }
 
-      val lexingContext = LazyLexingContext(node, cancellationProvider)
-      val lexer = performWithExtensionSupport(context.extensions()) {
-        createLexer(lexingContext)
-      }
-      if (lexer != null && lexer != currentLexer) {
-        currentLexer = lexer
-        currentTokens = context.tokenizationPolicy.tokenize(
-          text = nodeText,
-          lexer = lexer,
-          cancellationProvider = cancellationProvider,
-        )
+        val lexingContext = LazyLexingContext(node, cancellationProvider)
+        val lexer = performWithExtensionSupport(context.extensions()) {
+          createLexer(lexingContext)
+        }
+        if (lexer != null && lexer != currentLexer) {
+          currentLexer = lexer
+          currentTokens = context.tokenizationPolicy.tokenize(
+            text = nodeText,
+            lexer = lexer,
+            cancellationProvider = cancellationProvider,
+          )
+        }
       }
       node = node.children()
         .firstOrNull { it.startOffset <= startOffset && it.endOffset >= endOffset } as KmpSyntaxNode?
