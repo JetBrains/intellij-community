@@ -9354,9 +9354,6 @@ f:com.intellij.ide.projectView.actions.MarkRootActionBase$RootsSelection
 - mySelectedExcludeRoots:java.util.List
 - mySelectedRoots:java.util.List
 - <init>(com.intellij.openapi.module.Module):V
-f:com.intellij.ide.projectView.actions.MarkRootGroup
-- com.intellij.ide.actions.NonTrivialActionGroup
-- <init>():V
 c:com.intellij.ide.projectView.actions.MarkSourceRootAction
 - com.intellij.ide.projectView.actions.MarkRootActionBase
 - <init>(org.jetbrains.jps.model.module.JpsModuleSourceRootType):V
