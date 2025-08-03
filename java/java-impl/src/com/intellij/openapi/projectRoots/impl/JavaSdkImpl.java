@@ -64,7 +64,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class JavaSdkImpl extends JavaSdk {
   private static final Logger LOG = Logger.getInstance(JavaSdkImpl.class);
 
-  private static final String VM_EXE_NAME = SystemInfo.isWindows ? "java.exe" : "java";  // do not use JavaW.exe because of issues with encoding
+  private static final String VM_EXE_NAME = SystemInfo.isWindows ? "java.exe" : "java";
+  // do not use JavaW.exe because of issues with encoding
 
   private final Map<String, JdkVersionDetector.JdkVersionInfo> myCachedSdkHomeToInfo = new ConcurrentHashMap<>();
   private final Map<String, JavaVersion> myCachedVersionStringToJdkVersion = new ConcurrentHashMap<>();
@@ -73,22 +74,22 @@ public final class JavaSdkImpl extends JavaSdk {
     super("JavaSDK");
 
     Disposable parentDisposable = ExtensionPointUtil.createExtensionDisposable(this, EP_NAME);
-    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
-        for (VFileEvent event : events) {
-          if (event instanceof VFileContentChangeEvent || event instanceof VFileDeleteEvent) {
-            updateCache(event, PathUtil.getFileName(event.getPath()));
-            break;
-          }
-          else if (event instanceof VFileCreateEvent) {
-            updateCache(event, ((VFileCreateEvent)event).getChildName());
-            break;
+    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable)
+      .subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+        @Override
+        public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
+          for (VFileEvent event : events) {
+            if (event instanceof VFileContentChangeEvent || event instanceof VFileDeleteEvent) {
+              updateCache(event, PathUtil.getFileName(event.getPath()));
+              break;
+            }
+            else if (event instanceof VFileCreateEvent) {
+              updateCache(event, ((VFileCreateEvent)event).getChildName());
+              break;
+            }
           }
         }
-
-      }
-    });
+      });
   }
 
   private void updateCache(@NotNull VFileEvent event, @NotNull String fileName) {
@@ -163,8 +164,9 @@ public final class JavaSdkImpl extends JavaSdk {
   @Override
   public String getToolsPath(@NotNull Sdk sdk) {
     JavaVersion version = getJavaVersion(sdk);
-    return version == null || version.feature > 9 ? null :
-           getConvertedHomePath(sdk) + "lib" + File.separator + (version.feature < 2 ? "classes.zip" : "tools.jar");
+    return version == null || version.feature > 9
+           ? null
+           : getConvertedHomePath(sdk) + "lib" + File.separator + (version.feature < 2 ? "classes.zip" : "tools.jar");
   }
 
   @Override
@@ -208,10 +210,7 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public @Unmodifiable @NotNull Collection<SdkEntry> collectSdkEntries(@Nullable Project project) {
-    return ContainerUtil.mapNotNull(
-      JavaHomeFinder.findJdks(getEelDescriptor(project), false),
-      JavaHomeFinder.JdkEntry::toSdkEntry
-    );
+    return ContainerUtil.mapNotNull(JavaHomeFinder.findJdks(getEelDescriptor(project), false), JavaHomeFinder.JdkEntry::toSdkEntry);
   }
 
   private static @NotNull EelDescriptor getEelDescriptor(@Nullable Project project) {
@@ -274,7 +273,7 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public void setupSdkPaths(@NotNull Sdk sdk) {
-    Runnable sdkSetter = ()->{
+    Runnable sdkSetter = () -> {
       String homePath = sdk.getHomePath();
       assert homePath != null : sdk;
       Path jdkHome = Path.of(homePath);
@@ -297,24 +296,23 @@ public final class JavaSdkImpl extends JavaSdk {
         sdkModificator.commitChanges();
       }
       else {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        ApplicationManager.getApplication().runWriteAction(() ->
-                                                             sdkModificator.commitChanges());
-      });
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          ApplicationManager.getApplication().runWriteAction(() -> sdkModificator.commitChanges());
+        });
       }
     };
     Application application = ApplicationManager.getApplication();
-      if (application.isDispatchThread()) {
-        //com.intellij.openapi.projectRoots.impl.UnknownMissingSdkFixLocal.applyLocalFix run everything in EDT,
-        //because some extensions need to show notifications
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-          sdkSetter.run();
-          return null;
-        }, ProjectBundle.message("sdk.lookup.resolving.sdk.progress", sdk.getName()), false, null);
-      }
-      else {
+    if (application.isDispatchThread()) {
+      //com.intellij.openapi.projectRoots.impl.UnknownMissingSdkFixLocal.applyLocalFix run everything in EDT,
+      //because some extensions need to show notifications
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         sdkSetter.run();
-      }
+        return null;
+      }, ProjectBundle.message("sdk.lookup.resolving.sdk.progress", sdk.getName()), false, null);
+    }
+    else {
+      sdkSetter.run();
+    }
   }
 
   public static void attachJdkAnnotations(@NotNull SdkModificator modificator) {
@@ -348,33 +346,33 @@ public final class JavaSdkImpl extends JavaSdk {
         root = null;
       }
       if (root == null) {
-        String msg = "Paths checked:\n"+
-                     StringUtil.join(pathsChecked, path -> {
-                       File file = new File(path);
-                       File parentFile = file.getParentFile();
-                       return " "+path+"; exists: "+file.exists()+(parentFile == null ? "" : "; siblings: "+Arrays.toString(parentFile.list()));
-                     }, "\n");
+        String msg = "Paths checked:\n" + StringUtil.join(pathsChecked, path -> {
+          File file = new File(path);
+          File parentFile = file.getParentFile();
+          return " " +
+                 path +
+                 "; exists: " +
+                 file.exists() +
+                 (parentFile == null ? "" : "; siblings: " + Arrays.toString(parentFile.list()));
+        }, "\n");
         LOG.error("JDK annotations not found", msg);
         return null;
       }
-        SdkModificator modificator = sdk.getSdkModificator();
+      SdkModificator modificator = sdk.getSdkModificator();
       return new Pair<>(root, modificator);
-    })
-      .finishOnUiThread(ModalityState.nonModal(), rootAndModificator -> {
-        if (rootAndModificator == null) {
-          return;
-        }
-        VirtualFile root = rootAndModificator.first;
-        SdkModificator modificator = rootAndModificator.second;
-        OrderRootType annoType = AnnotationOrderRootType.getInstance();
-        if (modificator.getRoots(annoType).length != 0) {
-          modificator.removeRoot(root, annoType);
-        }
-        modificator.addRoot(root, annoType);
-        ApplicationManager.getApplication().runWriteAction(() -> modificator.commitChanges());
-      })
-      .submit(AppExecutorUtil.getAppExecutorService())
-      .then(file -> file != null);
+    }).finishOnUiThread(ModalityState.nonModal(), rootAndModificator -> {
+      if (rootAndModificator == null) {
+        return;
+      }
+      VirtualFile root = rootAndModificator.first;
+      SdkModificator modificator = rootAndModificator.second;
+      OrderRootType annoType = AnnotationOrderRootType.getInstance();
+      if (modificator.getRoots(annoType).length != 0) {
+        modificator.removeRoot(root, annoType);
+      }
+      modificator.addRoot(root, annoType);
+      ApplicationManager.getApplication().runWriteAction(() -> modificator.commitChanges());
+    }).submit(AppExecutorUtil.getAppExecutorService()).then(file -> file != null);
   }
 
   // whether this file look like the genuine root for all correct `annotations.xml` files
@@ -388,7 +386,8 @@ public final class JavaSdkImpl extends JavaSdk {
     MostlySingularMultiMap<String, BaseExternalAnnotationsManager.AnnotationData> loaded =
       BaseExternalAnnotationsManager.loadData(xml, LoadTextUtil.loadText(xml), null);
     Iterable<BaseExternalAnnotationsManager.AnnotationData> data = loaded.get("java.awt.event.InputEvent int getModifiers()");
-    BaseExternalAnnotationsManager.AnnotationData magicAnno = ContainerUtil.find(data, ann -> ann.toString().startsWith(MagicConstant.class.getName() + "("));
+    BaseExternalAnnotationsManager.AnnotationData magicAnno =
+      ContainerUtil.find(data, ann -> ann.toString().startsWith(MagicConstant.class.getName() + "("));
     if (magicAnno != null) return true;
     reportCorruptedJdkAnnotations(root, "java.awt.event.InputEvent.getModifiers() not annotated with MagicConstant: " + data);
     return false;
@@ -421,8 +420,9 @@ public final class JavaSdkImpl extends JavaSdk {
       if (projectRoot != null) {
         Path root1 = projectRoot.resolve("community/java/jdkAnnotations");
         Path root2 = projectRoot.resolve("java/jdkAnnotations");
-        root = Files.isDirectory(root1) ? (refresh ? lfs.refreshAndFindFileByNioFile(root1) : lfs.findFileByNioFile(root1)) :
-               Files.isDirectory(root2) ? (refresh ? lfs.refreshAndFindFileByNioFile(root2) : lfs.findFileByNioFile(root2)) : null;
+        root = Files.isDirectory(root1)
+               ? (refresh ? lfs.refreshAndFindFileByNioFile(root1) : lfs.findFileByNioFile(root1))
+               : Files.isDirectory(root2) ? (refresh ? lfs.refreshAndFindFileByNioFile(root2) : lfs.findFileByNioFile(root2)) : null;
       }
       else {
         root = null;
@@ -555,7 +555,8 @@ public final class JavaSdkImpl extends JavaSdk {
           }
         }
       }
-      catch (IOException ignore) { }
+      catch (IOException ignore) {
+      }
     }
     else if (JdkUtil.isModularRuntime(jdkHome)) {
       String jrtBaseUrl = JrtFileSystem.PROTOCOL_PREFIX + vfsPath(jdkHome) + JrtFileSystem.SEPARATOR;
