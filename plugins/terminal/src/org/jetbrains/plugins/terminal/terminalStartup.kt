@@ -76,7 +76,7 @@ internal fun startProcess(
     val workingDirectory = context.workingDirectoryProvider(eelApi)
     val process = doStartProcess(eelApi, remoteCommand, envs, workingDirectory, initialTermSize)
     val ptyProcess = process.convertToJavaProcess() as PtyProcess
-    ptyProcess to ShellProcessHolder(process, WeakReference(ptyProcess), eelApi) 
+    ptyProcess to ShellProcessHolder(process.pid, WeakReference(ptyProcess), eelApi)
   }
 }
 
@@ -191,7 +191,7 @@ private suspend fun doStartProcess(
 internal fun shouldUseEelApi(): Boolean = Registry.`is`("terminal.use.EelApi", true)
 
 internal class ShellProcessHolder(
-  private val shellEelProcess: EelProcess,
+  private val shellPid: EelApi.Pid,
   private val ptyProcessRef: WeakReference<PtyProcess>,
   private val eelApi: EelApi,
 ) {
@@ -200,7 +200,6 @@ internal class ShellProcessHolder(
   fun terminatePosixShell() {
     val ptyProcess = ptyProcessRef.get() ?: return
     terminalApplicationScope().launch(Dispatchers.IO) {
-      val shellPid = shellEelProcess.pid
       val killProcess = eelApi.exec.spawnProcess("kill").args("-HUP", shellPid.value.toString()).eelIt()
       val exitCode = withTimeoutOrNull(5.seconds) {
         ptyProcess.awaitExit()
