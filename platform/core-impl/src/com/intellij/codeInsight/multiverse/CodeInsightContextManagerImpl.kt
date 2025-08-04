@@ -242,7 +242,9 @@ class CodeInsightContextManagerImpl(
         project.getUserData(multiverse_enabler_key)?.let { return it }
         val result = computeSharedSourceEnabled()
         project.putUserData(multiverse_enabler_key, result)
-        log.info("multiverse is ${if (result) "enabled" else "disabled"}")
+        if (logMultiverseState) {
+          log.info("multiverse is ${if (result) "enabled" else "disabled"}")
+        }
         return result
       }
     }
@@ -269,6 +271,12 @@ private val EP_NAME = ExtensionPointName.create<CodeInsightContextProvider>("com
 private val codeInsightContextKey = Key.create<CodeInsightContext>("codeInsightContextKey")
 
 private val log = logger<CodeInsightContextManagerImpl>()
+
+/**
+ * LSP-202
+ */
+@ApiStatus.Internal
+var logMultiverseState: Boolean = true
 
 private val multiverse_enabler_key = Key.create<Boolean>("shared.source.support.enabled")
 
