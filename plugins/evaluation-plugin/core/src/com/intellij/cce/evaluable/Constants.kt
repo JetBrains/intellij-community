@@ -9,6 +9,8 @@ const val EXTERNAL_API_CALLS_PROPERTY = "external_api_calls"
 const val INTERNAL_RELEVANT_FILES_PROPERTY = "internal_relevant_files"
 const val ORIGINAL_FILE = "original_file"
 const val ORIGINAL_TEXT_PROPERTY = "original_text"
+const val GENERATED_QUESTION_PROPERTY: String = "generated_question"
+const val GROUND_TRUTH_TEXT_CHUNK_ID_PROPERTY: String = "ground_truth_text_chunk_id"
 
 const val METHOD_NAME_PROPERTY = "method_name"
 const val METHOD_BODY_PROPERTY = "method_body"
