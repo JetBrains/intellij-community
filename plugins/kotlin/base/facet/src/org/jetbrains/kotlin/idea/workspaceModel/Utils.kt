@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.workspaceModel
 
-import com.google.gson.Gson
+import com.google.gson.*
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.platform.impl.FakeK2NativeCompilerArguments
+import java.lang.reflect.Type
 
 class ObservableCompilerSettings(val updateEntity: (CompilerSettings) -> Unit) : CompilerSettings() {
     override var additionalArguments: String = DEFAULT_ADDITIONAL_ARGUMENTS
@@ -85,7 +86,9 @@ fun deserializeExternalSystemTestRunTask(deserializedTask: String): ExternalSyst
 }
 
 object CompilerArgumentsSerializer {
-    private val gson = Gson()
+    private val gson = GsonBuilder()
+        .registerTypeAdapter(InternalArgument::class.java, InternalArgumentSerializer)
+        .create()
 
     private val argumentsTypeMap = mapOf(
         "J" to K2JVMCompilerArguments::class.java,
@@ -116,5 +119,37 @@ object CompilerArgumentsSerializer {
 
             else -> error("Invalid serialization format: $serializedArguments")
         }
+    }
+}
+
+private object InternalArgumentSerializer : JsonSerializer<InternalArgument>, JsonDeserializer<InternalArgument> {
+    private const val TYPE = "type"
+
+    private val argumentsTypeMap: Map<String, Class<out InternalArgument>> = mapOf(
+        "M" to ManualLanguageFeatureSetting::class.java,
+    )
+
+    private val gson = Gson()
+
+    override fun serialize(
+        src: InternalArgument,
+        typeOfSrc: Type,
+        context: JsonSerializationContext
+    ): JsonElement {
+        val classIdentifier = argumentsTypeMap.entries.firstOrNull { it.value == src.javaClass }?.key
+            ?: error("Class not found: ${src.javaClass}")
+        val result = gson.toJsonTree(src).asJsonObject
+        result.addProperty(TYPE, classIdentifier)
+        return result
+    }
+
+    override fun deserialize(
+        json: JsonElement,
+        typeOfT: Type,
+        context: JsonDeserializationContext,
+    ): InternalArgument {
+        val classIdentifier = json.asJsonObject[TYPE].asString
+        val classType = argumentsTypeMap[classIdentifier] ?: error("Class identifier not found: $classIdentifier")
+        return gson.fromJson(json, classType)
     }
 }
