@@ -197,7 +197,7 @@ internal class KotlinChangeSignatureDialog(
         return KtPsiFactory(project).createTypeCodeFragment(
             allowAnalysisOnEdt {
                 analyze(method) {
-                    method.returnType.getPresentableText()
+                    (method as? KtCallableDeclaration)?.returnType?.getPresentableText() ?: ""
                 }
             },
             KotlinCallableParameterTableModel.getTypeCodeFragmentContext(myMethod.baseDeclaration)

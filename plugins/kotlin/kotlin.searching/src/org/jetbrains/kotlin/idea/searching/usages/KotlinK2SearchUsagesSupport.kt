@@ -219,7 +219,7 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
                                                     })
                                         }
 
-                                        declaration.returnType.containsClassType(classPointer.element)
+                                        (declaration as? KtDeclarationWithReturnType)?.returnType?.containsClassType(classPointer.element) == true
                                     }
                                 }
                             }

@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtDeclarationWithReturnType
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
@@ -39,7 +40,7 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KaSession>(KtTok
         val result = mutableListOf<LookupElement>()
 
         for (parent in expression.parentsWithSelf.filterIsInstance<KtDeclarationWithBody>()) {
-            val returnType = parent.returnType
+            val returnType = (parent as? KtDeclarationWithReturnType)?.returnType ?: continue
             if (parent is KtFunctionLiteral) {
                 val (label, call) = parent.findLabelAndCall()
                 if (label != null) {

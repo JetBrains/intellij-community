@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithReturnType
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.types.Variance
 
@@ -16,7 +17,7 @@ class KotlinHighLevelExpressionTypeProvider : KotlinExpressionTypeProvider() {
     // this method gets called from the non-blocking read action
     @OptIn(KaExperimentalApi::class)
     override fun getInformationHint(element: KtExpression): String = analyze(element) {
-        val ktType = if (element is KtDeclaration) {
+        val ktType = if (element is KtDeclarationWithReturnType) {
             element.returnType
         } else {
             element.expressionType ?: return KotlinBundle.message("type.provider.unknown.type")

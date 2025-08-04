@@ -373,7 +373,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
 internal fun specifyNullTypeExplicitly(codeToInline: MutableCodeToInline, originalDeclaration: KtDeclaration) {
     val mainExpression = codeToInline.mainExpression
     if (mainExpression?.isNull() == true) {
-        val useSiteKtElement = originalDeclaration
+        val useSiteKtElement = originalDeclaration as KtDeclarationWithReturnType
         val nullCast = analyze(useSiteKtElement) {
             "null as ${useSiteKtElement.returnType.render(position = Variance.OUT_VARIANCE)}"
         }
