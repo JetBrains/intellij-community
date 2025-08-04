@@ -65,7 +65,7 @@ import javax.swing.Icon
 abstract class StarterModuleBuilder : ModuleBuilder() {
   companion object {
     @JvmField
-    val INVALID_PACKAGE_NAME_SYMBOL_PATTERN: Regex = Regex("[^a-zA-Z\\d_.]")
+    val INVALID_PACKAGE_NAME_SYMBOL_PATTERN: Regex = Regex("^\\d|[^a-zA-Z\\d_.]")
 
     @JvmStatic
     private val IMPORTER_EP_NAME: ExtensionPointName<StarterModuleImporter> = ExtensionPointName("com.intellij.starter.moduleImporter")
@@ -408,7 +408,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
 
   override fun doAddContentEntry(modifiableRootModel: ModifiableRootModel): ContentEntry? {
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      // do not create new content entry
+      // do not create a new content entry
       return modifiableRootModel.contentEntries.first { it.sourceFolders.isNotEmpty() }
     }
     return super.doAddContentEntry(modifiableRootModel)
