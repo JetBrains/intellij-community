@@ -30,6 +30,11 @@ public class KotlinVariablePrintingTestGenerated extends AbstractKotlinVariableP
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("defaultArgAndInlineLambda.kt")
+    public void testDefaultArgAndInlineLambda() throws Exception {
+        runTest("testData/variables/defaultArgAndInlineLambda.kt");
+    }
+
     @TestMetadata("extractCapturesFromSuspendLambdas.kt")
     public void testExtractCapturesFromSuspendLambdas() throws Exception {
         runTest("testData/variables/extractCapturesFromSuspendLambdas.kt");
