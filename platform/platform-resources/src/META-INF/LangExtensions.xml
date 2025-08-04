@@ -90,7 +90,7 @@
                  description="Check if files found during scanning are still in the project during indexing, and skip excluded files."/>
     <registryKey defaultValue="true" key="vfs.try.eel.for.content.loading"
                  description="Use specialized Eel API for working with remote filesystems. This may result in a significant performance improvement and better CPU utilization"/>
-    <registryKey defaultValue="false" description="Use EEL for file watching." key="use.eel.file.watcher" restartRequired="true"/>
+    <registryKey defaultValue="true" description="Use EEL for file watching." key="use.eel.file.watcher" restartRequired="true"/>
     <registryKey defaultValue="true" key="cache.nulls.for.pushed.properties" restartRequired="true"
                  description="Cache null values for pushed properties to avoid reading nulls from disk every time."/>
     <registryKey defaultValue="true" key="use.workspace.file.index.to.generate.iterators" restartRequired="true"
