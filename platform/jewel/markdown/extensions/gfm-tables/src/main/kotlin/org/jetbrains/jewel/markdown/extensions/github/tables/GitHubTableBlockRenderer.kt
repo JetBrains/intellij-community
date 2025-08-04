@@ -22,9 +22,15 @@ import org.jetbrains.jewel.markdown.rendering.InlinesStyling
 import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 
+/**
+ * Renders a [TableBlock] as a [BasicTableLayout].
+ *
+ * @param rootStyling The root styling to use.
+ * @param tableStyling The styling to use for the table.
+ */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
-public class GitHubTableBlockRenderer(
+internal class GitHubTableBlockRenderer(
     private val rootStyling: MarkdownStyling,
     private val tableStyling: GfmTableStyling,
 ) : MarkdownBlockRendererExtension {
@@ -32,14 +38,13 @@ public class GitHubTableBlockRenderer(
 
     @Suppress("LambdaParameterEventTrailing")
     @Composable
-    override fun render(
+    override fun RenderCustomBlock(
         block: CustomBlock,
         blockRenderer: MarkdownBlockRenderer,
         inlineRenderer: InlineMarkdownRenderer,
         enabled: Boolean,
         modifier: Modifier,
         onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
     ) {
         val tableBlock = block as TableBlock
 
@@ -81,7 +86,6 @@ public class GitHubTableBlockRenderer(
                                 enabled = enabled,
                                 paragraphStyling = headerRenderer.rootStyling.paragraph,
                                 onUrlClick = onUrlClick,
-                                onTextClick = onTextClick,
                             )
                         }
                     }
@@ -110,7 +114,6 @@ public class GitHubTableBlockRenderer(
                                     enabled = enabled,
                                     paragraphStyling = rootStyling.paragraph,
                                     onUrlClick = onUrlClick,
-                                    onTextClick = onTextClick,
                                 )
                             }
                         }
@@ -154,18 +157,16 @@ public class GitHubTableBlockRenderer(
         enabled: Boolean,
         paragraphStyling: MarkdownStyling.Paragraph,
         onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
     ) {
         Box(
             modifier = Modifier.background(backgroundColor).padding(padding),
             contentAlignment = (cell.alignment ?: defaultAlignment).asContentAlignment(),
         ) {
-            blockRenderer.render(
+            blockRenderer.RenderParagraph(
                 block = MarkdownBlock.Paragraph(cell.content),
                 styling = paragraphStyling,
                 enabled = enabled,
                 onUrlClick = onUrlClick,
-                onTextClick = onTextClick,
                 modifier = Modifier,
             )
         }
