@@ -2,8 +2,8 @@
 package com.intellij.util.lang.test
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.platform.testFramework.monorepo.processProductionOutput
 import com.intellij.project.IntelliJProjectConfiguration
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.junit.Assert
 import org.junit.Test
 import kotlin.io.path.exists
@@ -28,17 +28,18 @@ class UrlClassLoaderSplitPackageTest {
       "JavaVersion\$Companion",
     )
     val project = IntelliJProjectConfiguration.loadIntelliJProject(PathManager.getHomePath())
-    project.modules.filterNot { it.name in platformLoaderModules }.forEach { module -> 
-      val moduleOutput = JpsJavaExtensionService.getInstance().getOutputDirectoryPath(module, false)!!
-      urlClassLoaderPackages.forEach { packageName ->
-        val packageDir = moduleOutput.resolve(packageName.replace('.', '/'))
-        if (packageDir.exists()) {
-          val classNames = packageDir.listDirectoryEntries("*.class").map { it.fileName.toString().removeSuffix(".class") }
-          val incorrectClasses = classNames - knownClassesFromOtherModules
-          Assert.assertTrue("""
+    project.modules.filterNot { it.name in platformLoaderModules }.forEach { module ->
+      module.processProductionOutput { outputRoot -> 
+        urlClassLoaderPackages.forEach { packageName ->
+          val packageDir = outputRoot.resolve(packageName.replace('.', '/'))
+          if (packageDir.exists()) {
+            val classNames = packageDir.listDirectoryEntries("*.class").map { it.fileName.toString().removeSuffix(".class") }
+            val incorrectClasses = classNames - knownClassesFromOtherModules
+            Assert.assertTrue("""
               |Module '${module.name}' defines classes (${incorrectClasses.joinToString()}) in '$packageName' which is treated in a special way by UrlClassLoader::findClass:
               |Move these classes to a different package to avoid problems (see IDEA-331043 for details).
             """.trimMargin(), incorrectClasses.isEmpty())
+          }
         }
       }
     }

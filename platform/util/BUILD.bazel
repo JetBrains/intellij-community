@@ -123,6 +123,7 @@ jvm_library(
     "@lib//:mockito-kotlin",
     "@lib//:jimfs",
     "//platform/ijent/buildConstants",
+    "//platform/testFramework/monorepo:monorepo_test_lib",
   ],
   runtime_deps = [
     ":util-tests_test_resources",
