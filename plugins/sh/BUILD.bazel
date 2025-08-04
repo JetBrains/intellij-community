@@ -11,8 +11,17 @@ jvm_library(
   name = "sh",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
+  runtime_deps = [":sh_resources"]
+)
+### auto-generated section `build intellij.sh` end
+
+### auto-generated section `build intellij.sh.main` start
+jvm_library(
+  name = "sh-main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   runtime_deps = [
-    ":sh_resources",
+    "//platform/bootstrap/coroutine",
     "//plugins/sh/core",
     "//plugins/sh/backend",
     "//plugins/sh/terminal",
@@ -21,4 +30,20 @@ jvm_library(
     "//plugins/sh/python",
   ]
 )
-### auto-generated section `build intellij.sh` end
+
+jvm_library(
+  name = "sh-main_test_lib",
+  module_name = "intellij.sh.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  deps = [
+    "//platform/bootstrap/coroutine",
+    "//plugins/sh/core",
+    "//plugins/sh/terminal",
+    "//plugins/sh/copyright",
+    "//plugins/sh/markdown",
+    "//plugins/sh/python",
+  ],
+  runtime_deps = ["//plugins/sh/backend"]
+)
+### auto-generated section `build intellij.sh.main` end
