@@ -6,7 +6,7 @@ jvm_library(
   module_name = "intellij.groovy.rt",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
+  kotlinc_opts = "@community//:k7",
   deps = [
     "@lib//:org-codehaus-groovy-groovy",
     "@lib//:jetbrains-annotations-java5",
