@@ -28,8 +28,10 @@ suspend fun <K, V> withCache(
   coroutineScope {
     cacheFn().use { cache ->
       val cleaningJob = launch {
-        delay(cleanupInterval)
-        cache.cleanup()
+        while (isActive) {
+          delay(cleanupInterval)
+          cache.cleanup(ttl)
+        }
       }
       try {
         body(cache)
