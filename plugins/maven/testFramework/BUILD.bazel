@@ -32,6 +32,7 @@ jvm_library(
     "//platform/backend/observation",
     "//platform/backend/workspace",
     "//platform/workspace/storage",
+    "@lib//:bouncy-castle-provider",
   ]
 )
 ### auto-generated section `build intellij.maven.testFramework` end

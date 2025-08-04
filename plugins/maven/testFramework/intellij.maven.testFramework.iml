@@ -49,5 +49,6 @@
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
+    <orderEntry type="library" name="bouncy-castle-provider" level="project" />
   </component>
 </module>
