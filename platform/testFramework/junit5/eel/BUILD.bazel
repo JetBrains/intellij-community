@@ -58,6 +58,7 @@ jvm_library(
     "//platform/util",
     "//platform/util/coroutines",
     "//platform/util-ex",
+    "//platform/execution",
   ],
   runtime_deps = [":eel_test_resources"]
 )

@@ -111,11 +111,12 @@ internal class EelInterceptor : InvocationInterceptor, BeforeAllCallback, Before
       for (eelHolder in eelHolders) {
         when (eelHolder) {
           is EelHolderImpl<*> -> {
-            val (eel, closable) = eelHolder.startIjentProvider(scope)
+            val (eel, target, closable) = eelHolder.startIjentProvider(scope)
             closable?.let {
               closeAfterTest.add(it)
             }
             eelHolder.eel = eel
+            eelHolder.target = target
             testContext.store.put(REMOTE_EEL_EXECUTED, true)
           }
           LocalEelHolder -> Unit
