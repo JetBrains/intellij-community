@@ -13,8 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import coil3.compose.LocalPlatformContext
-import java.awt.Desktop
-import java.net.URI
+import java.awt.Desktop.getDesktop
+import java.net.URI.create
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
@@ -115,16 +115,14 @@ internal fun MarkdownPreview(rawMarkdown: CharSequence, modifier: Modifier = Mod
         val lazyListState = rememberLazyListState()
         VerticallyScrollableContainer(lazyListState, modifier.background(background)) {
             LazyMarkdown(
-                markdownBlocks = markdownBlocks,
+                blocks = markdownBlocks,
                 modifier = Modifier.background(background),
                 contentPadding =
                     PaddingValues(start = 8.dp, top = 8.dp, end = 8.dp + scrollbarContentSafePadding(), bottom = 8.dp),
                 state = lazyListState,
                 selectable = true,
-                onUrlClick = onUrlClick(),
+                onUrlClick = { url: String -> getDesktop().browse(create(url)) },
             )
         }
     }
 }
-
-private fun onUrlClick(): (String) -> Unit = { url -> Desktop.getDesktop().browse(URI.create(url)) }
