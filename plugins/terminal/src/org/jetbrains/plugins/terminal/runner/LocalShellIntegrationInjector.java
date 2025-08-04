@@ -230,7 +230,7 @@ public final class LocalShellIntegrationInjector {
       return asEelPath(remoteBaseDirectory.resolve(relativePath)).toString();
     }
     catch (Exception e) {
-      LOG.info("Unable to transfer shell integration (" + baseDirectory + ") to remote (" + eelDescriptor + ")", e);
+      LOG.warn("Unable to transfer shell integration (" + baseDirectory + ") to remote (" + eelDescriptor.getMachine().getName() + ")", e);
       return null;
     }
   }
