@@ -50,6 +50,11 @@ sealed interface EditorDecorationApplier {
    * Removes the decorations with the provided IDs from the editor.
    */
   fun removeDecorations(decorationIds: Collection<EditorDecorationId>)
+
+  /**
+   * Returns the currently hovered hyperlink, if any.
+   */
+  fun getHoveredHyperlink(): HyperlinkDecoration?
 }
 
 /**
@@ -298,6 +303,7 @@ private class EditorDecorationApplierImpl(private val editor: EditorEx, parentDi
   private val highlightersById = hashMapOf<EditorDecorationId, RangeHighlighterEx>()
   private val inlaysById = hashMapOf<EditorDecorationId, com.intellij.openapi.editor.Inlay<*>>()
   private val effectSupport = EditorHyperlinkEffectSupport(editor, MyEffectSupplier())
+  private var hoveredHyperlink: HyperlinkDecoration? = null
 
   init {
     editor.addEditorMouseListener(MyMouseListener(), parentDisposable)
@@ -328,6 +334,8 @@ private class EditorDecorationApplierImpl(private val editor: EditorEx, parentDi
       removeDecoration(id)
     }
   }
+
+  override fun getHoveredHyperlink(): HyperlinkDecoration? = hoveredHyperlink
 
   private fun addHyperlinkOrHighlighting(decoration: HyperlinkOrHighlightingImpl) {
     editor.markupModel.addRangeHighlighterAndChangeAttributes(
@@ -438,6 +446,7 @@ private class EditorDecorationApplierImpl(private val editor: EditorEx, parentDi
 
     override fun mouseExited(event: EditorMouseEvent) {
       effectSupport.linkHovered(null)
+      hoveredHyperlink = null
     }
   }
 
@@ -447,10 +456,12 @@ private class EditorDecorationApplierImpl(private val editor: EditorEx, parentDi
       if (highlightedLink?.link?.action == null) {
         editor.setCustomCursor(EditorDecorationApplierImpl::class.java, null)
         effectSupport.linkHovered(null)
+        hoveredHyperlink = null
       }
       else {
         editor.setCustomCursor(EditorDecorationApplierImpl::class.java, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
         effectSupport.linkHovered(highlightedLink.highlighter)
+        hoveredHyperlink = highlightedLink.link
       }
     }
   }
