@@ -33,7 +33,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   override fun runInDispatchThread(): Boolean = false
 
   @Test
-  fun `no links`() = withHelper {
+  fun `no links`() = withFixture {
     updateModel(0L, """
       0: line1
       1: line2
@@ -47,7 +47,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   }
 
   @Test
-  fun `some links`() = withHelper {
+  fun `some links`() = withFixture {
     updateModel(0L, """
       0: line1 link1
       1: line2 link2
@@ -64,7 +64,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   }
 
   @Test
-  fun `remove line before processing`() = withHelper {
+  fun `remove line before processing`() = withFixture {
     updateModel(0L, """
       0: line1 link1
       1: line2 link2
@@ -78,7 +78,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   }
 
   @Test
-  fun `remove line after processing`() = withHelper {
+  fun `remove line after processing`() = withFixture {
     updateModel(0L, """
       0: line1 link1
       1: line2 link2
@@ -96,7 +96,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   }
 
   @Test
-  fun `one click`() = withHelper {
+  fun `one click`() = withFixture {
     updateModel(0L, """
       0: line1 link1
       1: line2 link2
@@ -107,7 +107,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   }
 
   @Test
-  fun `several clicks`() = withHelper {
+  fun `several clicks`() = withFixture {
     updateModel(0L, """
       0: line1 link1
       1: line2 link2
@@ -119,7 +119,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   }
 
   @Test
-  fun `several links per line`() = withHelper {
+  fun `several links per line`() = withFixture {
     updateModel(0L, """
       0: line1 link11 link12
       1: line2 link2
@@ -137,7 +137,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   }
 
   @Test
-  fun `some highlighted links`() = withHelper {
+  fun `some highlighted links`() = withFixture {
     filter.highlight = HIGHLIGHT1
     filter.followedHighlight = HIGHLIGHT2
     filter.hoveredHighlight = HIGHLIGHT3
@@ -165,7 +165,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   }
 
   @Test
-  fun `some highlighting`() = withHelper {
+  fun `some highlighting`() = withFixture {
     filter.highlight = HIGHLIGHT1
     updateModel(0L, """
       0: line1 highlight1
@@ -189,7 +189,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   }
 
   @Test
-  fun `some links and some highlightings`() = withHelper {
+  fun `some links and some highlightings`() = withFixture {
     filter.highlight = HIGHLIGHT1
     updateModel(0L, """
       0: line1 highlight1
@@ -215,7 +215,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   }
 
   @Test
-  fun `links update`() = withHelper {
+  fun `links update`() = withFixture {
     updateModel(0L, """
       0: line1 link1
       1: line2 link2
@@ -240,7 +240,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   }
 
   @Test
-  fun `many links, fast filter`() = withHelper {
+  fun `many links, fast filter`() = withFixture {
     updateModel(0L, generateLines(0, 499, links = (0..499).toList()))
     assertLinks(
       *(0..499).map { link(at(it, "link${it + 1}")) }.toTypedArray(),
@@ -248,7 +248,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   }
 
   @Test
-  fun `many links, slow filter, several updates`() = withHelper {
+  fun `many links, slow filter, several updates`() = withFixture {
     filter.delayPerLine = 1
     updateModel(0L, generateLines(0, 499, links = (0..499).toList()))
     delay(50.milliseconds)
@@ -266,7 +266,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   }
 
   @Test
-  fun `sparse links, fast filter`() = withHelper {
+  fun `sparse links, fast filter`() = withFixture {
     updateModel(0L, generateLines(0, 499, links = listOf(1, 100, 400)))
     assertLinks(
       link(at(1, "link2")),
@@ -278,7 +278,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
 
   @Test
   fun `link trimming, fast filter`() {
-    withHelper {
+    withFixture {
       updateModel(0L, generateLines(0, 499, links = (0..499).toList()))
       updateModel(500L, generateLines(500, 3999, links = (500..3999).toList()))
       assertLinks(
@@ -290,7 +290,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
 
   @Test
   fun `link trimming, slow filter, just started`() {
-    withHelper {
+    withFixture {
       filter.delayPerLine = 1
       updateModel(0L, generateLines(0, 499, links = (0..499).toList()))
       delay(100.milliseconds)
@@ -305,7 +305,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
 
   @Test
   fun `link trimming, slow filter, partially done`() {
-    withHelper {
+    withFixture {
       filter.delayPerLine = 1
       updateModel(0L, generateLines(0, 499, links = (0..499).toList()))
       delay(400.milliseconds)
@@ -325,7 +325,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     }
   }
 
-  private fun withHelper(test: suspend Fixture.() -> Unit) = timeoutRunBlocking(coroutineName = "BackendTerminalHyperlinkHighlighterTest") {
+  private fun withFixture(test: suspend Fixture.() -> Unit) = timeoutRunBlocking(coroutineName = "BackendTerminalHyperlinkHighlighterTest") {
     val fixture = Fixture(project)
     ExtensionTestUtil.maskExtensions<ConsoleFilterProvider>(
       ConsoleFilterProvider.FILTER_PROVIDERS,
