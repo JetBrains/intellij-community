@@ -19,6 +19,8 @@ import kotlin.jvm.JvmOverloads
  * Element types can be lazy-parseable. Nodes of such a type are parsed on demand. The lazy parser can also support incremental reparsing.
  *
  * [debugName] is used only for debug purposes.
+ *
+ * @see [SyntaxElementType(String, LazyParser?, Any?, Boolean)] builder function
  */
 @ApiStatus.Experimental
 class SyntaxElementType internal constructor(
@@ -56,6 +58,7 @@ class SyntaxElementType internal constructor(
  *
  * @param debugName the name of the element type for debug purposes.
  * @param lazyParser the lazy parser for this element type, or `null` if this element type is not lazy-parseable.
+ * @param userData an arbitrary object associated with this element type.
  * @param transient whether this element type is lightweight or not. If `true`, the element type will not be assigned an index and cannot be stored in a set.
  */
 @ApiStatus.Experimental
