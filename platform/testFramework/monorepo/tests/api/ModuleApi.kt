@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.monorepo.api
 
-import com.intellij.openapi.application.PathManager
+import com.intellij.platform.testFramework.monorepo.processModuleProductionOutput
 import com.intellij.tools.apiDump.API
 import com.intellij.tools.apiDump.api
 import com.intellij.tools.apiDump.emptyApiIndex
@@ -13,13 +13,9 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.fold
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.jps.ProjectPaths
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
-import org.junit.jupiter.api.fail
-import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.name
 
 @ApiStatus.Internal
 class ModuleApi(private val cs: CoroutineScope) {
@@ -57,14 +53,8 @@ class ModuleApi(private val cs: CoroutineScope) {
       acc + item
     }
 
-    var outputDir = ProjectPaths.getModuleOutputDir(module, false)?.toPath()
-                    ?: fail("'${module.name}' has no out directory")
-    val mapping = PathManager.getArchivedCompiledClassesMapping()
-    if (mapping != null) {
-      // path is absolute, mapping contains only the last two path elements
-      outputDir = mapping[outputDir.parent.name + "/" + outputDir.name]?.let { Path.of(it) } ?: outputDir
+    return processModuleProductionOutput(module) { outputRoot ->
+      api(dependencyIndex, outputRoot)
     }
-
-    return api(dependencyIndex, outputDir)
   }
 }

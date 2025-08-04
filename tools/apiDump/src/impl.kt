@@ -10,9 +10,6 @@ import kotlinx.validation.api.*
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AnnotationNode
-import java.net.URI
-import java.nio.file.FileSystemAlreadyExistsException
-import java.nio.file.FileSystems
 import java.nio.file.Path
 import kotlin.io.path.*
 import kotlin.metadata.jvm.JvmFieldSignature
@@ -310,22 +307,11 @@ private fun stableAndExperimentalApi(classSignatures: List<ApiClass>): Pair<List
 
 @OptIn(ExperimentalPathApi::class)
 private fun classFilePaths(classRoot: Path): Sequence<Path> {
-  var root = classRoot
-  if (root.isRegularFile() && root.extension == "jar") {
-    val uri = URI("jar:${classRoot.toUri()}!/")
-    val fs = try {
-      FileSystems.newFileSystem(uri, emptyMap<String, Any>())
-    }
-    catch (ignored: FileSystemAlreadyExistsException) {
-      FileSystems.getFileSystem(uri)
-    }
-    root = fs.rootDirectories.single()
-  }
-  return root
+  return classRoot
     .walk()
     .filter { path ->
       path.extension == "class" &&
-      !root.relativize(path).startsWith("META-INF/")
+      !classRoot.relativize(path).startsWith("META-INF/")
     }
 }
 
