@@ -4,13 +4,10 @@ package com.intellij.compose.ide.plugin.resources
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.compose.ide.plugin.resources.psi.asUnderscoredIdentifier
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.xml.XmlTag
 import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
@@ -19,20 +16,8 @@ import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Assume.assumeTrue
 import org.junit.Test
-import kotlin.test.assertNotNull as kAssertNotNull
 
 class ComposeResourcesGotoDeclarationTest : ComposeResourcesTestCase() {
-  private var _codeInsightTestFixture: CodeInsightTestFixture? = null
-
-  private val codeInsightTestFixture: CodeInsightTestFixture
-    get() = kAssertNotNull(_codeInsightTestFixture, "_codeInsightTestFixture was not initialized")
-
-  override fun setUpFixtures() {
-    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).fixture
-    _codeInsightTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture)
-    codeInsightTestFixture.setUp()
-    codeInsightTestFixture.testDataPath = PathManagerEx.getCommunityHomePath() + "/plugins/compose/intellij.compose.ide.plugin.resources/testData/"
-  }
 
   override fun tearDownFixtures() {
     runAll(
