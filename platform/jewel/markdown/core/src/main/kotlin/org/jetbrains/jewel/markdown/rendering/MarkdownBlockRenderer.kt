@@ -24,7 +24,6 @@ import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
  * @param rendererExtensions The [MarkdownRendererExtension]s used to render [MarkdownBlock.CustomBlock]s.
  * @param inlineRenderer The [InlineMarkdownRenderer] used to render
  *   [inline content][org.jetbrains.jewel.markdown.InlineMarkdown].
- * @see render
  */
 @Suppress("ComposableNaming")
 @ApiStatus.Experimental
@@ -40,16 +39,34 @@ public interface MarkdownBlockRenderer {
      * @param blocks The list of blocks to render.
      * @param enabled True if the blocks should be enabled, false otherwise.
      * @param onUrlClick The callback invoked when the user clicks on a URL.
-     * @param onTextClick The callback invoked when the user clicks on a text.
+     * @param onTextClick The callback invoked when the user clicks on a text. **Ignored.**
      * @param modifier The modifier to be applied to the root composable (usually, a `Column` or `LazyColumn`).
-     * @see render
      */
+    @Deprecated("Use RenderBlocks instead.", ReplaceWith("RenderBlocks(blocks, enabled, onUrlClick, modifier)"))
     @Composable
     public fun render(
         blocks: List<MarkdownBlock>,
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
+    ) {
+        RenderBlocks(blocks, enabled, onUrlClick, modifier)
+    }
+
+    /**
+     * Renders a list of [MarkdownBlock]s into a Compose UI.
+     *
+     * @param blocks The list of blocks to render.
+     * @param enabled True if the blocks should be enabled, false otherwise.
+     * @param onUrlClick The callback invoked when the user clicks on a URL.
+     * @param modifier The modifier to be applied to the root composable (usually, a `Column` or `LazyColumn`).
+     */
+    @Composable
+    public fun RenderBlocks(
+        blocks: List<MarkdownBlock>,
+        enabled: Boolean,
+        onUrlClick: (String) -> Unit,
         modifier: Modifier,
     )
 
@@ -59,10 +76,10 @@ public interface MarkdownBlockRenderer {
      * @param block The block to render.
      * @param enabled True if the block should be enabled, false otherwise.
      * @param onUrlClick The callback invoked when the user clicks on a URL.
-     * @param onTextClick The callback invoked when the user clicks on a text.
+     * @param onTextClick The callback invoked when the user clicks on a text. **Ignored.**
      * @param modifier The modifier to be applied to the composable.
-     * @see render
      */
+    @Deprecated("Use RenderBlock instead.", ReplaceWith("RenderBlock(block, enabled, onUrlClick, modifier)"))
     @Composable
     public fun render(
         block: MarkdownBlock,
@@ -70,7 +87,20 @@ public interface MarkdownBlockRenderer {
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
         modifier: Modifier,
-    )
+    ) {
+        RenderBlock(block, enabled, onUrlClick, modifier)
+    }
+
+    /**
+     * Renders a [MarkdownBlock] into a Compose UI.
+     *
+     * @param block The block to render.
+     * @param enabled True if the block should be enabled, false otherwise.
+     * @param onUrlClick The callback invoked when the user clicks on a URL.
+     * @param modifier The modifier to be applied to the composable.
+     */
+    @Composable
+    public fun RenderBlock(block: MarkdownBlock, enabled: Boolean, onUrlClick: (String) -> Unit, modifier: Modifier)
 
     /**
      * Renders a [Paragraph] into a Compose UI.
@@ -79,10 +109,13 @@ public interface MarkdownBlockRenderer {
      * @param styling The [`Paragraph`][MarkdownStyling.Paragraph] styling to use to render.
      * @param enabled True if the block should be enabled, false otherwise.
      * @param onUrlClick The callback invoked when the user clicks on a URL.
-     * @param onTextClick The callback invoked when the user clicks on a text.
+     * @param onTextClick The callback invoked when the user clicks on a text. **Ignored.**
      * @param modifier The modifier to be applied to the composable.
-     * @see render
      */
+    @Deprecated(
+        "Use RenderParagraph instead.",
+        ReplaceWith("RenderParagraph(block, styling, enabled, onUrlClick, modifier)"),
+    )
     @Composable
     public fun render(
         block: Paragraph,
@@ -90,6 +123,26 @@ public interface MarkdownBlockRenderer {
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
+    ) {
+        RenderParagraph(block, styling, enabled, onUrlClick, modifier)
+    }
+
+    /**
+     * Renders a [Paragraph] into a Compose UI.
+     *
+     * @param block The paragraph to render.
+     * @param styling The [`Paragraph`][MarkdownStyling.Paragraph] styling to use to render.
+     * @param enabled True if the block should be enabled, false otherwise.
+     * @param onUrlClick The callback invoked when the user clicks on a URL.
+     * @param modifier The modifier to be applied to the composable.
+     */
+    @Composable
+    public fun RenderParagraph(
+        block: Paragraph,
+        styling: MarkdownStyling.Paragraph,
+        enabled: Boolean,
+        onUrlClick: (String) -> Unit,
         modifier: Modifier,
     )
 
@@ -100,10 +153,13 @@ public interface MarkdownBlockRenderer {
      * @param styling The [`Heading`][MarkdownStyling.Heading] styling to use to render.
      * @param enabled True if the block should be enabled, false otherwise.
      * @param onUrlClick The callback invoked when the user clicks on a URL.
-     * @param onTextClick The callback invoked when the user clicks on a text.
+     * @param onTextClick The callback invoked when the user clicks on a text. **Ignored.**
      * @param modifier The modifier to be applied to the composable.
-     * @see render
      */
+    @Deprecated(
+        "Use RenderHeading instead.",
+        ReplaceWith("RenderHeading(block, styling, enabled, onUrlClick, modifier)"),
+    )
     @Composable
     public fun render(
         block: MarkdownBlock.Heading,
@@ -111,6 +167,26 @@ public interface MarkdownBlockRenderer {
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
+    ) {
+        RenderHeading(block, styling, enabled, onUrlClick, modifier)
+    }
+
+    /**
+     * Renders a [MarkdownBlock.Heading] into a Compose UI.
+     *
+     * @param block The heading to render.
+     * @param styling The [`Heading`][MarkdownStyling.Heading] styling to use to render.
+     * @param enabled True if the block should be enabled, false otherwise.
+     * @param onUrlClick The callback invoked when the user clicks on a URL.
+     * @param modifier The modifier to be applied to the composable.
+     */
+    @Composable
+    public fun RenderHeading(
+        block: MarkdownBlock.Heading,
+        styling: MarkdownStyling.Heading,
+        enabled: Boolean,
+        onUrlClick: (String) -> Unit,
         modifier: Modifier,
     )
 
@@ -121,10 +197,13 @@ public interface MarkdownBlockRenderer {
      * @param styling The [`Heading.HN`][MarkdownStyling.Heading.HN] styling to use to render.
      * @param enabled True if the block should be enabled, false otherwise.
      * @param onUrlClick The callback invoked when the user clicks on a URL.
-     * @param onTextClick The callback invoked when the user clicks on a text.
+     * @param onTextClick The callback invoked when the user clicks on a text. **Ignored.**
      * @param modifier The modifier to be applied to the composable.
-     * @see render
      */
+    @Deprecated(
+        "Use RenderHeading instead.",
+        ReplaceWith("RenderHeading(block, styling, enabled, onUrlClick, modifier)"),
+    )
     @Composable
     public fun render(
         block: MarkdownBlock.Heading,
@@ -132,6 +211,26 @@ public interface MarkdownBlockRenderer {
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
+    ) {
+        RenderHeading(block, styling, enabled, onUrlClick, modifier)
+    }
+
+    /**
+     * Renders a [MarkdownBlock.Heading] into a Compose UI, using a specific [`HN`][MarkdownStyling.Heading.HN] styling.
+     *
+     * @param block The heading to render.
+     * @param styling The [`Heading.HN`][MarkdownStyling.Heading.HN] styling to use to render.
+     * @param enabled True if the block should be enabled, false otherwise.
+     * @param onUrlClick The callback invoked when the user clicks on a URL.
+     * @param modifier The modifier to be applied to the composable.
+     */
+    @Composable
+    public fun RenderHeading(
+        block: MarkdownBlock.Heading,
+        styling: MarkdownStyling.Heading.HN,
+        enabled: Boolean,
+        onUrlClick: (String) -> Unit,
         modifier: Modifier,
     )
 
@@ -142,10 +241,13 @@ public interface MarkdownBlockRenderer {
      * @param styling The [`BlockQuote`][MarkdownStyling.BlockQuote] styling to use to render.
      * @param enabled True if the block should be enabled, false otherwise.
      * @param onUrlClick The callback invoked when the user clicks on a URL.
-     * @param onTextClick The callback invoked when the user clicks on a text.
+     * @param onTextClick The callback invoked when the user clicks on a text. **Ignored.**
      * @param modifier The modifier to be applied to the composable.
-     * @see render
      */
+    @Deprecated(
+        "Use RenderBlockQuote instead.",
+        ReplaceWith("RenderBlockQuote(block, styling, enabled, onUrlClick, modifier)"),
+    )
     @Composable
     public fun render(
         block: BlockQuote,
@@ -153,6 +255,26 @@ public interface MarkdownBlockRenderer {
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
+    ) {
+        RenderBlockQuote(block, styling, enabled, onUrlClick, modifier)
+    }
+
+    /**
+     * Renders a [BlockQuote] into a Compose UI.
+     *
+     * @param block The blockquote to render.
+     * @param styling The [`BlockQuote`][MarkdownStyling.BlockQuote] styling to use to render.
+     * @param enabled True if the block should be enabled, false otherwise.
+     * @param onUrlClick The callback invoked when the user clicks on a URL.
+     * @param modifier The modifier to be applied to the composable.
+     */
+    @Composable
+    public fun RenderBlockQuote(
+        block: BlockQuote,
+        styling: MarkdownStyling.BlockQuote,
+        enabled: Boolean,
+        onUrlClick: (String) -> Unit,
         modifier: Modifier,
     )
 
@@ -163,10 +285,10 @@ public interface MarkdownBlockRenderer {
      * @param styling The [`List`][MarkdownStyling.List] styling to use to render.
      * @param enabled True if the block should be enabled, false otherwise.
      * @param onUrlClick The callback invoked when the user clicks on a URL.
-     * @param onTextClick The callback invoked when the user clicks on a text.
+     * @param onTextClick The callback invoked when the user clicks on a text. **Ignored.**
      * @param modifier The modifier to be applied to the composable.
-     * @see render
      */
+    @Deprecated("Use RenderList instead.", ReplaceWith("RenderList(block, styling, enabled, onUrlClick, modifier)"))
     @Composable
     public fun render(
         block: ListBlock,
@@ -174,6 +296,26 @@ public interface MarkdownBlockRenderer {
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
+    ) {
+        RenderList(block, styling, enabled, onUrlClick, modifier)
+    }
+
+    /**
+     * Renders a [ListBlock] into a Compose UI.
+     *
+     * @param block The list to render.
+     * @param styling The [`List`][MarkdownStyling.List] styling to use to render.
+     * @param enabled True if the block should be enabled, false otherwise.
+     * @param onUrlClick The callback invoked when the user clicks on a URL.
+     * @param modifier The modifier to be applied to the composable.
+     */
+    @Composable
+    public fun RenderList(
+        block: ListBlock,
+        styling: MarkdownStyling.List,
+        enabled: Boolean,
+        onUrlClick: (String) -> Unit,
         modifier: Modifier,
     )
 
@@ -184,10 +326,13 @@ public interface MarkdownBlockRenderer {
      * @param styling The [`List.Ordered`][MarkdownStyling.List.Ordered] styling to use to render.
      * @param enabled True if the block should be enabled, false otherwise.
      * @param onUrlClick The callback invoked when the user clicks on a URL.
-     * @param onTextClick The callback invoked when the user clicks on a text.
+     * @param onTextClick The callback invoked when the user clicks on a text. **Ignored.**
      * @param modifier The modifier to be applied to the composable.
-     * @see render
      */
+    @Deprecated(
+        "Use RenderOrderedList instead.",
+        ReplaceWith("RenderOrderedList(block, styling, enabled, onUrlClick, modifier)"),
+    )
     @Composable
     public fun render(
         block: OrderedList,
@@ -195,6 +340,26 @@ public interface MarkdownBlockRenderer {
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
+    ) {
+        RenderOrderedList(block, styling, enabled, onUrlClick, modifier)
+    }
+
+    /**
+     * Renders a [OrderedList] into a Compose UI.
+     *
+     * @param block The ordered list to render.
+     * @param styling The [`List.Ordered`][MarkdownStyling.List.Ordered] styling to use to render.
+     * @param enabled True if the block should be enabled, false otherwise.
+     * @param onUrlClick The callback invoked when the user clicks on a URL.
+     * @param modifier The modifier to be applied to the composable.
+     */
+    @Composable
+    public fun RenderOrderedList(
+        block: OrderedList,
+        styling: MarkdownStyling.List.Ordered,
+        enabled: Boolean,
+        onUrlClick: (String) -> Unit,
         modifier: Modifier,
     )
 
@@ -205,10 +370,13 @@ public interface MarkdownBlockRenderer {
      * @param styling The [`List.Unordered`][MarkdownStyling.List.Unordered] styling to use to render.
      * @param enabled True if the block should be enabled, false otherwise.
      * @param onUrlClick The callback invoked when the user clicks on a URL.
-     * @param onTextClick The callback invoked when the user clicks on a text.
+     * @param onTextClick The callback invoked when the user clicks on a text. **Ignored.**
      * @param modifier The modifier to be applied to the composable.
-     * @see render
      */
+    @Deprecated(
+        "Use RenderUnorderedList instead.",
+        ReplaceWith("RenderUnorderedList(block, styling, enabled, onUrlClick, modifier)"),
+    )
     @Composable
     public fun render(
         block: UnorderedList,
@@ -216,6 +384,26 @@ public interface MarkdownBlockRenderer {
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
+    ) {
+        RenderUnorderedList(block, styling, enabled, onUrlClick, modifier)
+    }
+
+    /**
+     * Renders a [UnorderedList] into a Compose UI.
+     *
+     * @param block The unordered list to render.
+     * @param styling The [`List.Unordered`][MarkdownStyling.List.Unordered] styling to use to render.
+     * @param enabled True if the block should be enabled, false otherwise.
+     * @param onUrlClick The callback invoked when the user clicks on a URL.
+     * @param modifier The modifier to be applied to the composable.
+     */
+    @Composable
+    public fun RenderUnorderedList(
+        block: UnorderedList,
+        styling: MarkdownStyling.List.Unordered,
+        enabled: Boolean,
+        onUrlClick: (String) -> Unit,
         modifier: Modifier,
     )
 
@@ -225,10 +413,10 @@ public interface MarkdownBlockRenderer {
      * @param block The list item to render.
      * @param enabled True if the block should be enabled, false otherwise.
      * @param onUrlClick The callback invoked when the user clicks on a URL.
-     * @param onTextClick The callback invoked when the user clicks on a text.
+     * @param onTextClick The callback invoked when the user clicks on a text. **Ignored.**
      * @param modifier The modifier to be applied to the composable.
-     * @see render
      */
+    @Deprecated("Use RenderListItem instead.", ReplaceWith("RenderListItem(block, enabled, onUrlClick, modifier)"))
     @Composable
     public fun render(
         block: ListItem,
@@ -236,30 +424,78 @@ public interface MarkdownBlockRenderer {
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
         modifier: Modifier,
-    )
+    ) {
+        RenderListItem(block, enabled, onUrlClick, modifier)
+    }
+
+    /**
+     * Renders a [ListItem] into a Compose UI.
+     *
+     * @param block The list item to render.
+     * @param enabled True if the block should be enabled, false otherwise.
+     * @param onUrlClick The callback invoked when the user clicks on a URL.
+     * @param modifier The modifier to be applied to the composable.
+     */
+    @Composable
+    public fun RenderListItem(block: ListItem, enabled: Boolean, onUrlClick: (String) -> Unit, modifier: Modifier)
 
     /**
      * Renders a [CodeBlock] into a Compose UI.
      *
-     * @param block The heading to render.
+     * @param block The code block to render.
      * @param styling The [`Code`][MarkdownStyling.Code] styling to use to render.
      * @param enabled True if the block should be enabled, false otherwise.
      * @param modifier The modifier to be applied to the composable.
-     * @see render
      */
-    @Composable public fun render(block: CodeBlock, styling: MarkdownStyling.Code, enabled: Boolean, modifier: Modifier)
+    @Deprecated("Use RenderCodeBlock instead.", ReplaceWith("RenderCodeBlock(block, styling, enabled, modifier)"))
+    @Composable
+    public fun render(block: CodeBlock, styling: MarkdownStyling.Code, enabled: Boolean, modifier: Modifier) {
+        RenderCodeBlock(block, styling, enabled, modifier)
+    }
+
+    /**
+     * Renders a [CodeBlock] into a Compose UI.
+     *
+     * @param block The code block to render.
+     * @param styling The [`Code`][MarkdownStyling.Code] styling to use to render.
+     * @param enabled True if the block should be enabled, false otherwise.
+     * @param modifier The modifier to be applied to the composable.
+     */
+    @Composable
+    public fun RenderCodeBlock(block: CodeBlock, styling: MarkdownStyling.Code, enabled: Boolean, modifier: Modifier)
 
     /**
      * Renders a [IndentedCodeBlock] into a Compose UI.
      *
-     * @param block The heading to render.
+     * @param block The indented code block to render.
      * @param styling The [`Code.Indented`][MarkdownStyling.Code.Indented] styling to use to render.
      * @param enabled True if the block should be enabled, false otherwise.
      * @param modifier The modifier to be applied to the composable.
-     * @see render
      */
+    @Deprecated(
+        "Use RenderIndentedCodeBlock instead.",
+        ReplaceWith("RenderIndentedCodeBlock(block, styling, enabled, modifier)"),
+    )
     @Composable
     public fun render(
+        block: IndentedCodeBlock,
+        styling: MarkdownStyling.Code.Indented,
+        enabled: Boolean,
+        modifier: Modifier,
+    ) {
+        RenderIndentedCodeBlock(block, styling, enabled, modifier)
+    }
+
+    /**
+     * Renders a [IndentedCodeBlock] into a Compose UI.
+     *
+     * @param block The indented code block to render.
+     * @param styling The [`Code.Indented`][MarkdownStyling.Code.Indented] styling to use to render.
+     * @param enabled True if the block should be enabled, false otherwise.
+     * @param modifier The modifier to be applied to the composable.
+     */
+    @Composable
+    public fun RenderIndentedCodeBlock(
         block: IndentedCodeBlock,
         styling: MarkdownStyling.Code.Indented,
         enabled: Boolean,
@@ -268,17 +504,40 @@ public interface MarkdownBlockRenderer {
 
     /**
      * Renders a [FencedCodeBlock] into a Compose UI. If the fenced block defines a language, it can be
-     * syntax-highlighted by the the [org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter].
+     * syntax-highlighted by the [org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter].
      *
-     * @param block The heading to render.
+     * @param block The fenced code block to render.
      * @param styling The [`Code.Fenced`][MarkdownStyling.Code.Fenced] styling to use to render.
      * @param enabled True if the block should be enabled, false otherwise.
      * @param modifier The modifier to be applied to the composable.
-     * @see render
+     * @see org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
+     */
+    @Deprecated(
+        "Use RenderFencedCodeBlock instead.",
+        ReplaceWith("RenderFencedCodeBlock(block, styling, enabled, modifier)"),
+    )
+    @Composable
+    public fun render(
+        block: FencedCodeBlock,
+        styling: MarkdownStyling.Code.Fenced,
+        enabled: Boolean,
+        modifier: Modifier,
+    ) {
+        RenderFencedCodeBlock(block, styling, enabled, modifier)
+    }
+
+    /**
+     * Renders a [FencedCodeBlock] into a Compose UI. If the fenced block defines a language, it can be
+     * syntax-highlighted by the [org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter].
+     *
+     * @param block The fenced code block to render.
+     * @param styling The [`Code.Fenced`][MarkdownStyling.Code.Fenced] styling to use to render.
+     * @param enabled True if the block should be enabled, false otherwise.
+     * @param modifier The modifier to be applied to the composable.
      * @see org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
      */
     @Composable
-    public fun render(
+    public fun RenderFencedCodeBlock(
         block: FencedCodeBlock,
         styling: MarkdownStyling.Code.Fenced,
         enabled: Boolean,
@@ -291,23 +550,54 @@ public interface MarkdownBlockRenderer {
      * @param styling The [`ThematicBreak`][MarkdownStyling.ThematicBreak] styling to use to render.
      * @param enabled True if the block should be enabled, false otherwise.
      * @param modifier The modifier to be applied to the composable.
-     * @see render
+     */
+    @Deprecated("Use RenderThematicBreak instead.", ReplaceWith("RenderThematicBreak(styling, enabled, modifier)"))
+    @Composable
+    public fun renderThematicBreak(styling: MarkdownStyling.ThematicBreak, enabled: Boolean, modifier: Modifier) {
+        RenderThematicBreak(styling, enabled, modifier)
+    }
+
+    /**
+     * Renders a thematic break (horizontal divider) into a Compose UI.
+     *
+     * @param styling The [`ThematicBreak`][MarkdownStyling.ThematicBreak] styling to use to render.
+     * @param enabled True if the block should be enabled, false otherwise.
+     * @param modifier The modifier to be applied to the composable.
      */
     @Composable
-    public fun renderThematicBreak(styling: MarkdownStyling.ThematicBreak, enabled: Boolean, modifier: Modifier)
+    public fun RenderThematicBreak(styling: MarkdownStyling.ThematicBreak, enabled: Boolean, modifier: Modifier)
 
     /**
      * Renders a [HtmlBlock] into a Compose UI. Since Compose can't render HTML out of the box, this might result in a
      * no-op (e.g., in [DefaultMarkdownBlockRenderer.render]).
      *
-     * @param block The heading to render.
-     * @param styling The [`Code`][MarkdownStyling.Code] styling to use to render.
+     * @param block The HTML block to render.
+     * @param styling The [`HtmlBlock`][MarkdownStyling.HtmlBlock] styling to use to render.
      * @param enabled True if the block should be enabled, false otherwise.
      * @param modifier The modifier to be applied to the composable.
-     * @see render
+     */
+    @Deprecated("Use RenderHtmlBlock instead.", ReplaceWith("RenderHtmlBlock(block, styling, enabled, modifier)"))
+    @Composable
+    public fun render(block: HtmlBlock, styling: MarkdownStyling.HtmlBlock, enabled: Boolean, modifier: Modifier) {
+        RenderHtmlBlock(block, styling, enabled, modifier)
+    }
+
+    /**
+     * Renders a [HtmlBlock] into a Compose UI. Since Compose can't render HTML out of the box, this might result in a
+     * no-op (e.g., in [DefaultMarkdownBlockRenderer.render]).
+     *
+     * @param block The HTML block to render.
+     * @param styling The [`HtmlBlock`][MarkdownStyling.HtmlBlock] styling to use to render.
+     * @param enabled True if the block should be enabled, false otherwise.
+     * @param modifier The modifier to be applied to the composable.
      */
     @Composable
-    public fun render(block: HtmlBlock, styling: MarkdownStyling.HtmlBlock, enabled: Boolean, modifier: Modifier)
+    public fun RenderHtmlBlock(
+        block: HtmlBlock,
+        styling: MarkdownStyling.HtmlBlock,
+        enabled: Boolean,
+        modifier: Modifier,
+    )
 
     /**
      * Creates a copy of this instance, using the provided non-null parameters, or the current values for the null ones.

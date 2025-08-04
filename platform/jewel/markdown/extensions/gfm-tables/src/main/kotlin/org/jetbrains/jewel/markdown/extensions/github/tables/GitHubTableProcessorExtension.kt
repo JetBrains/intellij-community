@@ -18,15 +18,11 @@ import org.commonmark.renderer.text.TextContentRenderer
 import org.commonmark.renderer.text.TextContentRenderer.TextContentRendererExtension
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
-import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension
-import org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
-import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.processing.readInlineMarkdown
-import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 
 /**
  * Adds support for table parsing. Tables are a GitHub Flavored Markdown extension, defined
@@ -130,39 +126,3 @@ private object GitHubTablesCommonMarkExtension : ParserExtension, TextContentRen
         rendererBuilder.extensions(listOf(TablesExtension.create()))
     }
 }
-
-@ApiStatus.Experimental
-@ExperimentalJewelApi
-public class GitHubTableRendererExtension(tableStyling: GfmTableStyling, rootStyling: MarkdownStyling) :
-    MarkdownRendererExtension {
-    override val blockRenderer: MarkdownBlockRendererExtension = GitHubTableBlockRenderer(rootStyling, tableStyling)
-}
-
-internal data class TableBlock(val header: TableHeader, val rows: List<TableRow>) : MarkdownBlock.CustomBlock {
-    val rowCount: Int = rows.size + 1 // We always have a header
-    val columnCount: Int
-
-    init {
-        require(header.cells.isNotEmpty()) { "Header cannot be empty" }
-        val headerColumns = header.cells.size
-
-        if (rows.isNotEmpty()) {
-            val bodyColumns = rows.first().cells.size
-            require(rows.all { it.cells.size == bodyColumns }) { "Inconsistent cell count in table body" }
-            require(headerColumns == bodyColumns) { "Inconsistent cell count between table body and header" }
-        }
-
-        columnCount = headerColumns
-    }
-}
-
-internal data class TableHeader(val cells: List<TableCell>) : MarkdownBlock.CustomBlock
-
-internal data class TableRow(val rowIndex: Int, val cells: List<TableCell>) : MarkdownBlock.CustomBlock
-
-internal data class TableCell(
-    val rowIndex: Int,
-    val columnIndex: Int,
-    val content: List<InlineMarkdown>,
-    val alignment: Alignment.Horizontal?,
-) : MarkdownBlock.CustomBlock

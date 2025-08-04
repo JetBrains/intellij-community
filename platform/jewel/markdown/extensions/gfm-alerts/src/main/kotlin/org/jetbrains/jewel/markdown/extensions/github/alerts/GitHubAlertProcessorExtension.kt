@@ -19,17 +19,20 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension
-import org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
-import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
 import org.jetbrains.jewel.markdown.extensions.github.alerts.AlertBlock.Caution
 import org.jetbrains.jewel.markdown.extensions.github.alerts.AlertBlock.Important
 import org.jetbrains.jewel.markdown.extensions.github.alerts.AlertBlock.Note
 import org.jetbrains.jewel.markdown.extensions.github.alerts.AlertBlock.Tip
 import org.jetbrains.jewel.markdown.extensions.github.alerts.AlertBlock.Warning
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
-import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 
+/**
+ * A [MarkdownProcessorExtension] that adds support for GFM alerts.
+ *
+ * See the
+ * [GitHub documentation]https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/).
+ */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public object GitHubAlertProcessorExtension : MarkdownProcessorExtension {
@@ -59,13 +62,6 @@ public object GitHubAlertProcessorExtension : MarkdownProcessorExtension {
             }
         }
     }
-}
-
-@ApiStatus.Experimental
-@ExperimentalJewelApi
-public class GitHubAlertRendererExtension(alertStyling: AlertStyling, rootStyling: MarkdownStyling) :
-    MarkdownRendererExtension {
-    override val blockRenderer: MarkdownBlockRendererExtension = GitHubAlertBlockRenderer(alertStyling, rootStyling)
 }
 
 private object GitHubAlertCommonMarkExtension : ParserExtension, TextContentRendererExtension {
@@ -155,16 +151,4 @@ private class AlertTextContentNodeRenderer(private val context: TextContentNodeR
             child = child.next
         }
     }
-}
-
-internal sealed class AlertBlock : CustomBlock() {
-    class Note : AlertBlock()
-
-    class Tip : AlertBlock()
-
-    class Important : AlertBlock()
-
-    class Warning : AlertBlock()
-
-    class Caution : AlertBlock()
 }
