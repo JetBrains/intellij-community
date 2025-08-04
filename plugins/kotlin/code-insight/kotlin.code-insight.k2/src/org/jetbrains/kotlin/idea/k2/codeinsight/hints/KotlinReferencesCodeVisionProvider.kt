@@ -5,6 +5,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.codeInsight.hints.codeVision.CodeVisionProviderBase
 import com.intellij.codeInsight.hints.codeVision.RenameAwareReferencesCodeVisionProvider
 import com.intellij.java.JavaBundle
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -20,7 +21,7 @@ class KotlinReferencesCodeVisionProvider : RenameAwareReferencesCodeVisionProvid
         const val ID: String = "kotlin.references"
     }
 
-    override fun acceptsFile(file: PsiFile): Boolean = file.language == KotlinLanguage.INSTANCE
+    override fun acceptsFile(file: PsiFile): Boolean = Registry.`is`("enable.kotlin.code.vision.inlay") && file.language == KotlinLanguage.INSTANCE
 
     override fun acceptsElement(element: PsiElement): Boolean =
         element is KtNamedFunction && !element.isLocal || element is KtProperty && !element.isLocal || element is KtClassLikeDeclaration

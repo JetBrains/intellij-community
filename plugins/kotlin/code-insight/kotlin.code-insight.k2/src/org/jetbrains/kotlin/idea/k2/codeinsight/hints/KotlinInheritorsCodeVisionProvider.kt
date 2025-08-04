@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hints.codeVision.InheritorsCodeVisionProvider
 import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
@@ -30,7 +31,7 @@ class KotlinInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
         const val ID: String = "kotlin.inheritors"
     }
 
-    override fun acceptsFile(file: PsiFile): Boolean = file.language == KotlinLanguage.INSTANCE
+    override fun acceptsFile(file: PsiFile): Boolean = Registry.`is`("enable.kotlin.code.vision.inlay") && file.language == KotlinLanguage.INSTANCE
 
     override fun acceptsElement(element: PsiElement): Boolean = element is KtCallableDeclaration || element is KtClass
 

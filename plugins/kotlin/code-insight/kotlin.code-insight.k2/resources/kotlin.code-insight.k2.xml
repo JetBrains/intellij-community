@@ -319,6 +319,9 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinToStringTemplatesManager"/>
 
     <testGenerator id="kotlinTestGenerator" language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinTestGenerator"/>
+    <registryKey key="enable.kotlin.code.vision.inlay"
+                 defaultValue="true"
+                 description="Allows to disable usages and inheritors code vision for kotlin" />
   </extensions>
   <actions>
     <group id="KotlinGenerateGroup">
