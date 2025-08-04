@@ -83,6 +83,19 @@ public abstract class TextExtractor {
 
   /**
    * @return text contents intersecting the given PSI element with the domains from the allowed set.
+   * <p>
+   * Same as {@link #findTextsAt}, but the extensions are queried only for the given {@code psi}. The results are cached and reused.
+   */
+  public static @NotNull List<TextContent> findTextExactlyAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
+    PsiFile file = psi.getContainingFile();
+    return ContainerUtil.filter(
+      obtainContents(allowedDomains, file.getLanguage(), psi),
+      c -> c.getUserData(IGNORED) == null && allowedDomains.contains(c.getDomain())
+    );
+  }
+
+  /**
+   * @return text contents intersecting the given PSI element with the domains from the allowed set.
    * The extensions are queried for the given {@code psi} and its parents, the results are cached and reused.
    */
   public static @Unmodifiable @NotNull List<TextContent> findTextsAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
@@ -255,7 +268,8 @@ public abstract class TextExtractor {
    */
   public static Set<Language> getSupportedLanguages() {
     Set<Language> result = new HashSet<>();
-    ExtensionPoint<LanguageExtensionPoint<TextExtractor>> ep = ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(EP.getName());
+    ExtensionPoint<LanguageExtensionPoint<TextExtractor>> ep =
+      ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(EP.getName());
     for (var point : ep.getExtensionList()) {
       ContainerUtil.addIfNotNull(result, Language.findLanguageByID(point.language));
     }

@@ -74,9 +74,7 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
       val allContents: MutableSet<TextContent> = HashSet()
       for (root in vp.allFiles) {
         for (element in SyntaxTraverser.psiTraverser(root)) {
-          if (element.firstChild == null) {
-            allContents.addAll(TextExtractor.findTextsAt(element, domains))
-          }
+          allContents.addAll(TextExtractor.findTextExactlyAt(element, domains))
         }
       }
       return allContents
@@ -152,8 +150,8 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
                "fileLanguage = ${psiFile.language}, " +
                "viewProviderLanguages = ${psiFile.viewProvider.allFiles.map { it.language }.toSet()}, " +
                "parentLanguages = ${contents.map { it.commonParent }.map { it.language }.toSet()},"
-               "isPhysical = ${psiFile.isPhysical}, " +
-               "contentLengths = ${contents.map { it.length }}]"
+        "isPhysical = ${psiFile.isPhysical}, " +
+        "contentLengths = ${contents.map { it.length }}]"
       }
     }
   }
