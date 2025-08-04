@@ -6,7 +6,7 @@ import com.intellij.tools.apiDump.API
 import com.intellij.tools.apiDump.api
 import com.intellij.tools.apiDump.emptyApiIndex
 import com.intellij.util.SuspendingLazy
-import com.intellij.util.suspendingLazy
+import com.intellij.util.suspendingLazyNoRecursionCheck
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.channelFlow
@@ -28,20 +28,14 @@ class ModuleApi(private val cs: CoroutineScope) {
 
   fun discoverModule(module: JpsModule) {
     knownModules.computeIfAbsent(module.name) {
-      cs.suspendingLazy(CoroutineName(module.name)) {
+      cs.suspendingLazyNoRecursionCheck(CoroutineName(module.name)) {
         computeModuleApi(module)
       }
     }
   }
 
   private suspend fun computeModuleApi(module: JpsModule): API {
-    val dependencies = JpsJavaExtensionService.dependencies(module)
-      .compileOnly()
-      .productionOnly()
-      .modules
-      .filter {
-        knownModules.containsKey(it.name)
-      }
+    val dependencies = module.moduleDependencies { knownModules.containsKey(it.name) }
     val dependencyIndex = channelFlow {
       for (dependency in dependencies) {
         launch {
@@ -57,4 +51,12 @@ class ModuleApi(private val cs: CoroutineScope) {
       api(dependencyIndex, outputRoot)
     }
   }
+}
+
+internal fun JpsModule.moduleDependencies(filter: (JpsModule) -> Boolean): List<JpsModule> {
+  return JpsJavaExtensionService.dependencies(this)
+    .compileOnly()
+    .productionOnly()
+    .modules
+    .filter(filter)
 }

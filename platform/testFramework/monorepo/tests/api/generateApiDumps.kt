@@ -31,7 +31,8 @@ suspend fun generateApiDumps(coroutineScope: CoroutineScope, wantedModules: List
       || it.firstContentRoot().let { it != null && (it / MODULE_API_DUMP_FILE_NAME).exists() }
     }
     .filter(JpsModule::hasProductionSources)
-    .toList()
+    .prepareModuleList()
+
   val moduleApi = ModuleApi(coroutineScope + Dispatchers.Default)
   for (module in modules) {
     moduleApi.discoverModule(module)

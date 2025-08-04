@@ -5,19 +5,22 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.tools.apiDump.*
 import com.intellij.util.diff.Diff
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.assertAll
+import org.junit.jupiter.api.fail
 import java.io.File
 import java.nio.file.Path
-import kotlin.collections.forEach
-import kotlin.collections.iterator
 import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 
-fun performApiCheckTest(cs: CoroutineScope, modules: List<JpsModule>): List<DynamicTest> = buildList {
+fun performApiCheckTest(cs: CoroutineScope, wantedModules: List<JpsModule>): List<DynamicTest> = buildList {
+  val modules = wantedModules.prepareModuleList()
+
   val exposedThirdPartyApiFilter: FileApiClassFilter = globalExposedThirdPartyClasses(modules)
   val moduleApi = ModuleApi(cs)
   for (module in modules) {

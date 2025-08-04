@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import kotlinx.coroutines.*
@@ -13,6 +13,7 @@ internal class SuspendingLazyImpl<out T>(
   initCs: CoroutineScope,
   initCtx: CoroutineContext,
   initializer: suspend CoroutineScope.() -> T,
+  private val checkRecursion: Boolean,
 ) : SuspendingLazy<T> {
 
   companion object {
@@ -209,6 +210,10 @@ internal class SuspendingLazyImpl<out T>(
   }
 
   private fun checkRecursion(): Boolean {
+    if (!checkRecursion) {
+      return true
+    }
+
     val cycle = findCycle<SuspendingLazyImpl<*>>(this) { callingLazy ->
       val state = stateHandle.getVolatile(callingLazy)
       if (state is InProgress) {
