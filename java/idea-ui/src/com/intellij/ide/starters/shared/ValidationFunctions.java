@@ -96,7 +96,7 @@ public final class ValidationFunctions {
 
   public static final TextValidationFunction CHECK_ARTIFACT_SIMPLE_FORMAT = new TextValidationFunction() {
     private final Pattern myUsedSymbolsCheckPattern = Pattern.compile("[a-zA-Z0-9-_]*");
-    private final Pattern myFirstSymbolCheckPattern = Pattern.compile("[a-zA-Z_].*");
+    private final Pattern myFirstSymbolCheckPattern = Pattern.compile("[a-zA-Z0-9_].*");
 
     @Override
     public String checkText(String fieldText) {
