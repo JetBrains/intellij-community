@@ -137,6 +137,10 @@ internal class GitObjectRepository(val repository: GitRepository) {
       addParameters("-F")
       addAbsoluteFile(messageFile)
       addParameters(treeOid.hex())
+
+      if (message.isEmpty()) { // in this case git will ignore -F and read message from stdin
+        setInputProcessor(GitHandlerInputProcessorUtil.redirectStream(byteArrayOf().inputStream()))
+      }
     }
 
     val oid = Oid.fromHex(Git.getInstance().runCommand(handler).getOutputOrThrow())

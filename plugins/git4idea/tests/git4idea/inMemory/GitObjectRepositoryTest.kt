@@ -191,6 +191,24 @@ class GitObjectRepositoryTest : GitSingleRepoTest() {
     verifyObjectExistsInGit(newTree)
   }
 
+  // IJPL-200053
+  fun `test commitTree creates commit with empty message`() {
+    val repository = GitObjectRepository(repo)
+
+    val blob = repository.createBlob(SAMPLE_CONTENT.toByteArray())
+
+    val entries = createTreeEntries(blob)
+    val tree = repository.createTree(entries)
+
+    repository.persistObject(tree)
+
+    val emptyMessage = byteArrayOf()
+    val commitOid = repository.commitTree(tree.oid, emptyList(), emptyMessage, SAMPLE_AUTHOR)
+    val commit = repository.findCommit(commitOid)
+
+    assertEquals("Commit should have empty message", "", commit.message.toString(Charsets.UTF_8))
+  }
+
   private fun createTreeEntries(blob: GitObject.Blob): Map<GitObject.Tree.FileName, GitObject.Tree.Entry> {
     return mapOf(GitObject.Tree.FileName("test.txt") to GitObject.Tree.Entry(GitObject.Tree.FileMode.REGULAR, blob.oid))
   }
