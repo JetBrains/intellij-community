@@ -4,7 +4,6 @@ package com.intellij.platform.testFramework.junit5.eel.params.impl.junit5
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.testFramework.junit5.eel.params.api.*
 import com.intellij.platform.testFramework.junit5.eel.params.impl.providers.getIjentTestProviders
@@ -21,6 +20,7 @@ import org.junit.jupiter.api.extension.*
 import org.junit.platform.commons.util.AnnotationUtils
 import org.opentest4j.TestAbortedException
 import java.io.Closeable
+import java.lang.AutoCloseable
 import java.lang.reflect.Method
 import kotlin.jvm.optionals.getOrNull
 
@@ -83,12 +83,12 @@ internal class EelInterceptor : InvocationInterceptor, BeforeAllCallback, Before
 
 
     val testContext = extensionContext.parent.get()
-    testContext.getStore(ExtensionContext.Namespace.GLOBAL).put("remoteEelCallback", object : ExtensionContext.Store.CloseableResource {
+    testContext.getStore(ExtensionContext.Namespace.GLOBAL).put("remoteEelCallback", object : AutoCloseable {
       override fun close() {
         if (testContext.store.get(REMOTE_EEL_EXECUTED) == null && extensionContext.atLeastOneRemoteEelRequired) {
 
           val advice = buildString {
-            if (SystemInfo.isWindows) {
+            if (com.intellij.util.system.OS.CURRENT == com.intellij.util.system.OS.Windows) {
               append("Install WSL2. ")
             }
             append("Install docker. ")
