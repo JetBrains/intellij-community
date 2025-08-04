@@ -1,132 +1,143 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.repo;
+package git4idea.repo
 
-import com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer;
-import com.intellij.internal.statistic.StructuredIdeActivity;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl;
-import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder;
-import com.intellij.openapi.vcs.util.paths.RecursiveFilePathSet;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.update.ComparableObject;
-import com.intellij.util.ui.update.DisposableUpdate;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
-import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitContentRevision;
-import git4idea.GitRefreshUsageCollector;
-import git4idea.ignore.GitRepositoryIgnoredFilesHolder;
-import git4idea.index.GitIndexStatusUtilKt;
-import git4idea.index.LightFileStatus.StatusRecord;
-import git4idea.status.GitRefreshListener;
-import org.jetbrains.annotations.*;
+import com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
+import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder
+import com.intellij.openapi.vcs.util.paths.RecursiveFilePathSet
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.ui.update.ComparableObject
+import com.intellij.util.ui.update.DisposableUpdate
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update.Companion.create
+import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitContentRevision
+import git4idea.GitRefreshUsageCollector.logUntrackedRefresh
+import git4idea.ignore.GitRepositoryIgnoredFilesHolder
+import git4idea.index.LightFileStatus.StatusRecord
+import git4idea.index.getFileStatus
+import git4idea.index.isIgnored
+import git4idea.index.isUntracked
+import git4idea.status.GitRefreshListener
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import kotlin.concurrent.Volatile
 
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeoutException;
+class GitUntrackedFilesHolder internal constructor(
+  private val repository: GitRepository,
+) : Disposable {
+  private val project: Project = repository.getProject()
+  private val repoRoot: VirtualFile = repository.getRoot()
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
+  private val dirtyFiles = HashSet<FilePath>()
+  private var isEverythingDirty = true
 
-public class GitUntrackedFilesHolder implements Disposable {
-  private static final Logger LOG = Logger.getInstance(GitUntrackedFilesHolder.class);
+  @Volatile
+  var isInUpdateMode: Boolean = false
+    private set
 
-  private final Project myProject;
-  private final VirtualFile myRoot;
-  private final GitRepository myRepository;
+  private val untrackedFiles: CopyOnWriteFilePathSet = CopyOnWriteFilePathSet(repoRoot.isCaseSensitive)
+  val untrackedFilePaths: Collection<FilePath> get() = untrackedFiles.toSet()
 
-  private final Set<FilePath> myDirtyFiles = new HashSet<>();
-  private boolean myEverythingDirty = true;
+  private val _ignoredFilesHolder = MyGitRepositoryIgnoredFilesHolder()
+  val ignoredFilesHolder: GitRepositoryIgnoredFilesHolder get() = _ignoredFilesHolder
 
-  private final MergingUpdateQueue myQueue;
-  private final Object LOCK = new Object();
-  private volatile boolean myInUpdate = false;
+  private val queue = VcsIgnoreManagerImpl.getInstanceImpl(project).ignoreRefreshQueue
+  private val LOCK = Any()
 
-  private final CopyOnWriteFilePathSet myUntrackedFiles;
-  private final MyGitRepositoryIgnoredFilesHolder myIgnoredFilesHolder;
+  @get:ApiStatus.Internal
+  val isInitialized: Boolean
+    get() = untrackedFiles.initialized
 
-  GitUntrackedFilesHolder(@NotNull GitRepository repository) {
-    myRepository = repository;
-    myProject = repository.getProject();
-    myRoot = repository.getRoot();
-
-    myUntrackedFiles = new CopyOnWriteFilePathSet(myRoot.isCaseSensitive());
-    myIgnoredFilesHolder = new MyGitRepositoryIgnoredFilesHolder();
-    myQueue = VcsIgnoreManagerImpl.getInstanceImpl(myProject).getIgnoreRefreshQueue();
-
-    scheduleUpdate();
+  init {
+    scheduleUpdate()
   }
 
-  @Override
-  public void dispose() {
-    synchronized (LOCK) {
-      myUntrackedFiles.clear();
-      myIgnoredFilesHolder.clear();
-      myDirtyFiles.clear();
+  override fun dispose() {
+    synchronized(LOCK) {
+      untrackedFiles.clear()
+      _ignoredFilesHolder.clear()
+      dirtyFiles.clear()
     }
   }
 
   /**
    * Adds the file to the list of untracked.
    */
-  public void addUntracked(@NotNull FilePath file) {
-    addUntracked(Collections.singletonList(file));
+  fun addUntracked(file: FilePath) {
+    addUntracked(listOf(file))
   }
 
   /**
    * Adds several files to the list of untracked.
    */
-  public void addUntracked(@NotNull Collection<? extends FilePath> files) {
-    synchronized (LOCK) {
-      if (myUntrackedFiles.getInitialized()) {
-        myUntrackedFiles.add(files);
+  fun addUntracked(files: Collection<FilePath>) {
+    synchronized(LOCK) {
+      if (untrackedFiles.initialized) {
+        untrackedFiles.add(files)
       }
-      if (!myEverythingDirty) myDirtyFiles.addAll(files);
+      if (!isEverythingDirty) dirtyFiles.addAll(files)
     }
-    ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
-    scheduleUpdate();
+    ChangeListManagerImpl.getInstanceImpl(project).notifyUnchangedFileStatusChanged()
+    scheduleUpdate()
   }
 
   /**
    * Removes several files from untracked.
    */
-  public void removeUntracked(@NotNull Collection<? extends FilePath> files) {
-    synchronized (LOCK) {
-      if (myUntrackedFiles.getInitialized()) {
-        myUntrackedFiles.remove(files);
+  fun removeUntracked(files: Collection<FilePath>) {
+    synchronized(LOCK) {
+      if (untrackedFiles.initialized) {
+        untrackedFiles.remove(files)
       }
-      if (!myEverythingDirty) myDirtyFiles.addAll(files);
+      if (!isEverythingDirty) dirtyFiles.addAll(files)
     }
-    ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
-    scheduleUpdate();
+    ChangeListManagerImpl.getInstanceImpl(project).notifyUnchangedFileStatusChanged()
+    scheduleUpdate()
   }
 
   /**
-   * Marks files as possibly untracked to be checked on the next {@link #update()} call.
+   * Marks files as possibly untracked to be checked on the next [.update] call.
    *
    * @param files files that are possibly untracked.
    */
-  public void markPossiblyUntracked(@NotNull Collection<? extends FilePath> files) {
-    synchronized (LOCK) {
-      if (myEverythingDirty) return;
-      for (FilePath filePath : files) {
-        if (myIgnoredFilesHolder.ignoredFiles.containsExplicitly(filePath) || !myIgnoredFilesHolder.ignoredFiles.hasAncestor(filePath)) {
-          myDirtyFiles.add(filePath);
+  fun markPossiblyUntracked(files: Collection<FilePath>) {
+    synchronized(LOCK) {
+      if (isEverythingDirty) return
+      val ignoredFiles = _ignoredFilesHolder.ignoredFiles
+      for (filePath in files) {
+        if (ignoredFiles.containsExplicitly(filePath) || !ignoredFiles.hasAncestor(filePath)) {
+          dirtyFiles.add(filePath)
         }
       }
     }
-    scheduleUpdate();
+    scheduleUpdate()
+  }
+
+  fun invalidate() {
+    synchronized(LOCK) {
+      isEverythingDirty = true
+      dirtyFiles.clear()
+    }
+    scheduleUpdate()
   }
 
   /**
@@ -135,296 +146,264 @@ public class GitUntrackedFilesHolder implements Disposable {
    *
    * @return untracked files.
    * @throws VcsException if there is an unexpected error during Git execution.
-   * @deprecated use {@link #retrieveUntrackedFilePaths} instead
    */
-  @Deprecated(forRemoval = true)
-  public @NotNull Collection<VirtualFile> retrieveUntrackedFiles() throws VcsException {
-    return ContainerUtil.mapNotNull(retrieveUntrackedFilePaths(), FilePath::getVirtualFile);
+  @Deprecated("use {@link #retrieveUntrackedFilePaths} instead")
+  @Throws(VcsException::class)
+  fun retrieveUntrackedFiles(): Collection<VirtualFile?> = retrieveUntrackedFilePaths().mapNotNull { it.getVirtualFile() }
+
+  @Throws(VcsException::class)
+  fun retrieveUntrackedFilePaths(): Collection<FilePath> {
+    VcsIgnoreManagerImpl.getInstanceImpl(project).awaitRefreshQueue()
+    return untrackedFilePaths
   }
 
-  public void invalidate() {
-    synchronized (LOCK) {
-      myEverythingDirty = true;
-      myDirtyFiles.clear();
+  fun containsUntrackedFile(filePath: FilePath): Boolean {
+    return untrackedFiles.hasAncestor(filePath)
+  }
+
+  private val isDirty: Boolean
+    get() = synchronized(LOCK) {
+      isEverythingDirty || !dirtyFiles.isEmpty()
     }
-    scheduleUpdate();
-  }
 
-  public boolean isInUpdateMode() {
-    return myInUpdate;
-  }
-
-  public @NotNull Collection<FilePath> getUntrackedFilePaths() {
-    return myUntrackedFiles.toSet();
-  }
-
-  public boolean containsUntrackedFile(@NotNull FilePath filePath) {
-    return myUntrackedFiles.hasAncestor(filePath);
-  }
-
-  public @NotNull Collection<FilePath> retrieveUntrackedFilePaths() throws VcsException {
-    VcsIgnoreManagerImpl.getInstanceImpl(myProject).awaitRefreshQueue();
-    return getUntrackedFilePaths();
-  }
-
-  @NotNull GitRepositoryIgnoredFilesHolder getIgnoredFilesHolder() {
-    return myIgnoredFilesHolder;
-  }
-
-  @ApiStatus.Internal
-  public boolean isInitialized() {
-    return myUntrackedFiles.getInitialized();
-  }
-
-  private boolean isDirty() {
-    synchronized (LOCK) {
-      return myEverythingDirty || !myDirtyFiles.isEmpty();
+  private fun scheduleUpdate() {
+    synchronized(LOCK) {
+      if (!isDirty) return
+      isInUpdateMode = true
     }
-  }
-
-  private void scheduleUpdate() {
-    synchronized (LOCK) {
-      if (!isDirty()) return;
-      myInUpdate = true;
-    }
-    BackgroundTaskUtil.syncPublisher(myProject, VcsManagedFilesHolder.TOPIC).updatingModeChanged();
-    myQueue.queue(DisposableUpdate.createDisposable(this, new ComparableObject.Impl(this, "update"), this::update));
+    BackgroundTaskUtil.syncPublisher(project, VcsManagedFilesHolder.TOPIC).updatingModeChanged()
+    queue.queue(DisposableUpdate.createDisposable(this, ComparableObject.Impl(this, "update"), Runnable { update() }))
   }
 
   /**
-   * Queries Git to check the status of {@code myPossiblyUntrackedFiles} and moves them to {@code myDefinitelyUntrackedFiles}.
+   * Queries Git to check the status of [dirtyFiles] and moves them to [untrackedFiles].
    */
-  private void update() {
-    boolean nothingToDo;
-    @Nullable List<FilePath> dirtyFiles;
-    synchronized (LOCK) {
-      nothingToDo = !isDirty();
-      if (nothingToDo) myInUpdate = false;
+  private fun update() {
+    val nothingToDo: Boolean
+    val dirt: List<FilePath>?
+    synchronized(LOCK) {
+      nothingToDo = !isDirty
+      if (nothingToDo) isInUpdateMode = false
 
-      dirtyFiles = myEverythingDirty ? null : new ArrayList<>(myDirtyFiles);
-      myDirtyFiles.clear();
-      myEverythingDirty = false;
+      dirt = if (isEverythingDirty) null else dirtyFiles.toList()
+      dirtyFiles.clear()
+      isEverythingDirty = false
     }
     if (nothingToDo) {
-      BackgroundTaskUtil.syncPublisher(myProject, VcsManagedFilesHolder.TOPIC).updatingModeChanged();
-      return;
+      BackgroundTaskUtil.syncPublisher(project, VcsManagedFilesHolder.TOPIC).updatingModeChanged()
+      return
     }
 
-    BackgroundTaskUtil.syncPublisher(myProject, GitRefreshListener.TOPIC).progressStarted();
+    BackgroundTaskUtil.syncPublisher(project, GitRefreshListener.TOPIC).progressStarted()
     try {
-      boolean everythingDirty = dirtyFiles == null || dirtyFiles.contains(VcsUtil.getFilePath(myRoot));
-      StructuredIdeActivity activity = GitRefreshUsageCollector.logUntrackedRefresh(myProject, everythingDirty);
-      RefreshResult result = refreshFiles(dirtyFiles);
-      activity.finished();
+      val everythingDirty = dirt == null || dirt.contains(VcsUtil.getFilePath(repoRoot))
+      val activity = logUntrackedRefresh(project, everythingDirty)
+      val (untracked, ignored) = refreshFiles(dirt)
+      activity.finished()
 
-      removePathsUnderOtherRoots(result.untracked, "unversioned");
-      removePathsUnderOtherRoots(result.ignored, "ignored");
+      val filteredUntracked = removePathsUnderOtherRoots(untracked, "unversioned")
+      val filteredIgnored = removePathsUnderOtherRoots(ignored, "ignored")
 
-      RecursiveFilePathSet dirtyScope = null;
-      if (dirtyFiles != null) {
-        dirtyScope = new RecursiveFilePathSet(myRoot.isCaseSensitive());
-        dirtyScope.addAll(dirtyFiles);
+      val dirtyScope = dirt?.let {
+        RecursiveFilePathSet(repoRoot.isCaseSensitive).apply {
+          addAll(it)
+        }
       }
 
-      Set<FilePath> oldIgnored;
-      Set<FilePath> newIgnored;
-      synchronized (LOCK) {
-        oldIgnored = myIgnoredFilesHolder.getIgnoredFilePaths();
-        applyRefreshResult(result, dirtyScope, oldIgnored);
-        newIgnored = myIgnoredFilesHolder.getIgnoredFilePaths();
-
-        myInUpdate = isDirty();
+      val oldIgnored: Set<FilePath>
+      val newIgnored: Set<FilePath>
+      synchronized(LOCK) {
+        oldIgnored = _ignoredFilesHolder.ignoredFilePaths
+        applyRefreshResult(filteredUntracked, filteredIgnored, dirtyScope, oldIgnored)
+        newIgnored = _ignoredFilesHolder.ignoredFilePaths
+        isInUpdateMode = isDirty
       }
 
-      BackgroundTaskUtil.syncPublisher(myProject, GitRefreshListener.TOPIC).repositoryUpdated(myRepository);
-      BackgroundTaskUtil.syncPublisher(myProject, VcsManagedFilesHolder.TOPIC).updatingModeChanged();
-      ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
+      BackgroundTaskUtil.syncPublisher(project, GitRefreshListener.TOPIC).repositoryUpdated(repository)
+      BackgroundTaskUtil.syncPublisher(project, VcsManagedFilesHolder.TOPIC).updatingModeChanged()
+      ChangeListManagerImpl.getInstanceImpl(project).notifyUnchangedFileStatusChanged()
 
-      myProject.getService(IgnoredToExcludedSynchronizer.class).onIgnoredFilesUpdate(newIgnored, oldIgnored);
+      project.service<IgnoredToExcludedSynchronizer>().onIgnoredFilesUpdate(newIgnored, oldIgnored)
     }
     finally {
-      BackgroundTaskUtil.syncPublisher(myProject, GitRefreshListener.TOPIC).progressStopped();
+      BackgroundTaskUtil.syncPublisher(project, GitRefreshListener.TOPIC).progressStopped()
     }
   }
 
-  private void applyRefreshResult(@NotNull RefreshResult result,
-                                  @Nullable RecursiveFilePathSet dirtyScope,
-                                  @NotNull Set<FilePath> oldIgnored) {
-    RecursiveFilePathSet newIgnored = new RecursiveFilePathSet(myRoot.isCaseSensitive());
-    RecursiveFilePathSet newUntracked = new RecursiveFilePathSet(myRoot.isCaseSensitive());
+  private fun applyRefreshResult(
+    untracked: Set<FilePath>,
+    ignored: Set<FilePath>,
+    dirtyScope: RecursiveFilePathSet?,
+    oldIgnored: Set<FilePath>,
+  ) {
+    val newIgnored = RecursiveFilePathSet(repoRoot.isCaseSensitive)
+    val newUntracked = RecursiveFilePathSet(repoRoot.isCaseSensitive)
 
     if (dirtyScope != null) {
-      var untrackedSet = myUntrackedFiles.toSet();
-      untrackedSet.removeIf(filePath -> dirtyScope.hasAncestor(filePath));
-      untrackedSet.addAll(result.untracked);
-      newUntracked.addAll(untrackedSet);
+      val untrackedSet = untrackedFiles.toSet()
+      untrackedSet.removeIf { dirtyScope.hasAncestor(it) }
+      untrackedSet.addAll(untracked)
+      newUntracked.addAll(untrackedSet)
 
-      for (FilePath filePath : oldIgnored) {
+      for (filePath in oldIgnored) {
         if (!dirtyScope.hasAncestor(filePath)) {
-          newIgnored.add(filePath);
+          newIgnored.add(filePath)
         }
       }
-      for (FilePath filePath : result.ignored) {
+      for (filePath in ignored) {
         if (!newIgnored.hasAncestor(filePath)) { // prevent storing both parent and child directories
-          newIgnored.add(filePath);
+          newIgnored.add(filePath)
         }
       }
     }
     else {
-      newUntracked.addAll(result.untracked);
-      newIgnored.addAll(result.ignored);
+      newUntracked.addAll(untracked)
+      newIgnored.addAll(ignored)
     }
 
-    myIgnoredFilesHolder.ignoredFiles.set(newIgnored);
-    myUntrackedFiles.set(newUntracked);
+    _ignoredFilesHolder.ignoredFiles.set(newIgnored)
+    untrackedFiles.set(newUntracked)
   }
 
   /**
-   * @see git4idea.status.GitStagingAreaHolder#removeUnwantedRecords
+   * @see git4idea.status.GitStagingAreaHolder.removeUnwantedRecords
    */
-  private void removePathsUnderOtherRoots(@NotNull Collection<FilePath> untrackedFiles, @NonNls String type) {
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+  private fun removePathsUnderOtherRoots(untrackedFiles: Collection<FilePath>, type: @NonNls String?): Set<FilePath> {
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
 
-    int removedFiles = 0;
-    int maxFilesToReport = 10;
+    var removedFiles = 0
+    val maxFilesToReport = 10
 
-    Iterator<FilePath> it = untrackedFiles.iterator();
-    while (it.hasNext()) {
-      FilePath filePath = it.next();
-      VirtualFile root = vcsManager.getVcsRootFor(filePath);
-      if (myRoot.equals(root)) continue;
+    val filtered = untrackedFiles.filterTo(mutableSetOf()) { filePath ->
+      val root = vcsManager.getVcsRootFor(filePath)
+      val sameRoot = root == repoRoot
 
-      it.remove();
-      removedFiles++;
-      if (removedFiles < maxFilesToReport) {
-        LOG.debug(String.format("Ignoring %s file under another root: %s; root: %s; mapped root: %s",
-                                type, filePath.getPresentableUrl(), myRoot.getPresentableUrl(),
-                                root != null ? root.getPresentableUrl() : "null"));
+      if (!sameRoot) {
+        removedFiles++
+        if (removedFiles < maxFilesToReport) {
+          LOG.debug(String.format("Ignoring %s file under another root: %s; root: %s; mapped root: %s",
+                                  type, filePath.presentableUrl, repoRoot.presentableUrl, root?.presentableUrl ?: "null"))
+        }
       }
+
+      sameRoot
     }
+
     if (removedFiles >= maxFilesToReport) {
-      LOG.debug(String.format("Ignoring %s files under another root: %s files total", type, removedFiles));
+      LOG.debug(String.format("Ignoring %s files under another root: %s files total", type, removedFiles))
     }
+    return filtered
   }
 
 
-  private @NotNull RefreshResult refreshFiles(@Nullable List<FilePath> dirty) {
+  private fun refreshFiles(dirty: List<FilePath>?): RefreshResult {
     try {
-      boolean withIgnored = AdvancedSettings.getBoolean("vcs.process.ignored");
-      List<StatusRecord> fileStatuses = GitIndexStatusUtilKt.getFileStatus(myProject, myRoot, ContainerUtil.notNullize(dirty),
-                                                                           false, true, withIgnored);
+      val withIgnored = AdvancedSettings.getBoolean("vcs.process.ignored")
+      val fileStatuses = getFileStatus(project, repoRoot, dirty.orEmpty(), false, true, withIgnored)
 
-      RefreshResult result = new RefreshResult();
-      for (StatusRecord status : fileStatuses) {
-        if (GitIndexStatusUtilKt.isUntracked(status.getIndex())) {
-          result.untracked.add(getFilePath(myRoot, status));
+      val untracked = HashSet<FilePath>()
+      val ignored = HashSet<FilePath>()
+      for (status in fileStatuses) {
+        if (isUntracked(status.index)) {
+          untracked.add(getFilePath(repoRoot, status))
         }
-        if (GitIndexStatusUtilKt.isIgnored(status.getIndex())) {
-          result.ignored.add(getFilePath(myRoot, status));
+        if (isIgnored(status.index)) {
+          ignored.add(getFilePath(repoRoot, status))
         }
       }
-      return result;
+      return RefreshResult(untracked, ignored)
     }
-    catch (VcsException e) {
-      LOG.warn(e);
-      return new RefreshResult();
+    catch (e: VcsException) {
+      LOG.warn(e)
+      return RefreshResult()
     }
   }
 
-  private class MyGitRepositoryIgnoredFilesHolder extends GitRepositoryIgnoredFilesHolder {
-    private final @NotNull CopyOnWriteFilePathSet ignoredFiles = new CopyOnWriteFilePathSet(myRoot.isCaseSensitive());
+  private inner class MyGitRepositoryIgnoredFilesHolder : GitRepositoryIgnoredFilesHolder() {
+    val ignoredFiles = CopyOnWriteFilePathSet(repoRoot.isCaseSensitive)
 
-    @Override
-    public boolean getInitialized() {
-      return ignoredFiles.getInitialized();
+    override val initialized: Boolean
+      get() = ignoredFiles.initialized
+
+    override val ignoredFilePaths: Set<FilePath>
+      get() = ignoredFiles.toSet()
+
+    override fun isInUpdateMode(): Boolean {
+      return this@GitUntrackedFilesHolder.isInUpdateMode
     }
 
-    @Override
-    public @NotNull Set<FilePath> getIgnoredFilePaths() {
-      return ignoredFiles.toSet();
+    override fun containsFile(file: FilePath): Boolean {
+      return ignoredFiles.hasAncestor(file)
     }
 
-    @Override
-    public boolean isInUpdateMode() {
-      return GitUntrackedFilesHolder.this.isInUpdateMode();
-    }
-
-    @Override
-    public boolean containsFile(@NotNull FilePath file) {
-      return ignoredFiles.hasAncestor(file);
-    }
-
-    @Override
-    public void removeIgnoredFiles(@NotNull Collection<? extends FilePath> filePaths) {
-      synchronized (LOCK) {
-        if (ignoredFiles.getInitialized()) {
-          ignoredFiles.remove(filePaths);
+    override fun removeIgnoredFiles(filePaths: Collection<FilePath>) {
+      synchronized(LOCK) {
+        if (ignoredFiles.initialized) {
+          ignoredFiles.remove(filePaths)
         }
-
-        if (!myEverythingDirty) {
+        if (!isEverythingDirty) {
           // break parent ignored directory into separate ignored files
-          if (ContainerUtil.exists(filePaths, ignoredFiles::hasAncestor)) {
-            myEverythingDirty = true;
+          if (filePaths.any { ignoredFiles.hasAncestor(it) }) {
+            isEverythingDirty = true
           }
           else {
-            myDirtyFiles.addAll(filePaths);
+            dirtyFiles.addAll(filePaths)
           }
         }
       }
-      ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
+      ChangeListManagerImpl.getInstanceImpl(project).notifyUnchangedFileStatusChanged()
     }
 
-    private void clear() {
-      ignoredFiles.clear();
+    fun clear() {
+      ignoredFiles.clear()
     }
-  }
-
-  private static @NotNull FilePath getFilePath(@NotNull VirtualFile root, @NotNull StatusRecord status) {
-    String path = status.getPath();
-    return GitContentRevision.createPath(root, path, path.endsWith("/"));
-  }
-
-  private static class RefreshResult {
-    public final @NotNull Set<FilePath> untracked = new HashSet<>();
-    public final @NotNull Set<FilePath> ignored = new HashSet<>();
-  }
-
-
-  @TestOnly
-  public Waiter createWaiter() {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    return new Waiter(myQueue);
   }
 
   @TestOnly
-  public static class Waiter {
-    private static final int WAITING_TIMEOUT_MS = 10_000;
+  fun createWaiter(): Waiter {
+    assert(ApplicationManager.getApplication().isUnitTestMode())
+    return Waiter(queue)
+  }
 
-    private final MergingUpdateQueue myQueue;
-
-    public Waiter(@NotNull MergingUpdateQueue queue) {
-      myQueue = queue;
-    }
-
-    public void waitFor() {
-      CountDownLatch waiter = new CountDownLatch(1);
-      myQueue.queue(Update.create(waiter, () -> waiter.countDown()));
-      long start = System.currentTimeMillis();
-      ProgressIndicatorUtils.awaitWithCheckCanceled(() -> {
-        if (!myQueue.isActive()) {
-          throw new RuntimeException("Queue is not active");
+  @TestOnly
+  class Waiter(private val queue: MergingUpdateQueue) {
+    fun waitFor() {
+      val waiter = CountDownLatch(1)
+      queue.queue(create(waiter, Runnable { waiter.countDown() }))
+      val start = System.currentTimeMillis()
+      ProgressIndicatorUtils.awaitWithCheckCanceled(ThrowableComputable {
+        if (!queue.isActive) {
+          throw RuntimeException("Queue is not active")
         }
         if (System.currentTimeMillis() - start > WAITING_TIMEOUT_MS) {
-          throw new RuntimeException("Update wasn't performed in " + WAITING_TIMEOUT_MS + "ms");
+          throw RuntimeException("Update wasn't performed in " + WAITING_TIMEOUT_MS + "ms")
         }
-        return waiter.await(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, MILLISECONDS);
-      });
+        waiter.await(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+      })
       try {
-        myQueue.waitForAllExecuted(WAITING_TIMEOUT_MS, MILLISECONDS);
+        queue.waitForAllExecuted(WAITING_TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
       }
-      catch (TimeoutException e) {
-        throw new RuntimeException(e);
+      catch (e: TimeoutException) {
+        throw RuntimeException(e)
       }
+    }
+
+    companion object {
+      private const val WAITING_TIMEOUT_MS = 10000
+    }
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(GitUntrackedFilesHolder::class.java)
+
+    private fun getFilePath(root: VirtualFile, status: StatusRecord): FilePath {
+      val path = status.path
+      return GitContentRevision.createPath(root, path, path.endsWith("/"))
     }
   }
 }
+
+private data class RefreshResult(
+  val untracked: Set<FilePath> = emptySet(),
+  val ignored: Set<FilePath> = emptySet(),
+)
