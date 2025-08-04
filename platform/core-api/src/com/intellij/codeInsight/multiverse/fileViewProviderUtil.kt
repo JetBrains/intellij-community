@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 @file:JvmName("FileViewProviderUtil")
 package com.intellij.codeInsight.multiverse
@@ -6,6 +6,7 @@ package com.intellij.codeInsight.multiverse
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.psi.FileViewProvider
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -30,6 +31,9 @@ val FileViewProvider.codeInsightContext: CodeInsightContext
 
 val PsiFile.codeInsightContext: CodeInsightContext
   get() = this.viewProvider.codeInsightContext
+
+val PsiElement.codeInsightContext: CodeInsightContext
+  get() = this.containingFile.codeInsightContext
 
 fun List<FileViewProvider>.isEventSystemEnabled(): Boolean {
   val size = this.size
