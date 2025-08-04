@@ -36,6 +36,8 @@ import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
+import javax.swing.JComponent
+import org.jetbrains.jewel.foundation.LocalComponent
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.modifier.trackWindowActivation
@@ -152,7 +154,12 @@ public fun DecoratedWindow(
                 Modifier
             }
 
-        CompositionLocalProvider(LocalTitleBarInfo provides TitleBarInfo(title, icon)) {
+        val currentComponent = remember(window) { window.contentPane.components.filterIsInstance<JComponent>().first() }
+
+        CompositionLocalProvider(
+            LocalComponent provides currentComponent,
+            LocalTitleBarInfo provides TitleBarInfo(title, icon),
+        ) {
             Layout(
                 content = {
                     val scope =

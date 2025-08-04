@@ -1,6 +1,8 @@
 package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ProvidableCompositionLocal
@@ -27,6 +29,7 @@ import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.JewelFlags
+import org.jetbrains.jewel.ui.component.popup.JDialogRenderer
 
 /**
  * Displays a popup with the provided content at a position determined by the given [PopupPositionProvider].
@@ -46,6 +49,8 @@ import org.jetbrains.jewel.foundation.JewelFlags
  *   consume the event.
  * @param onKeyEvent Callback invoked for key events after they are dispatched to children. Return `true` to consume the
  *   event.
+ * @param cornerSize The size of the popup's rounded corners. This value gets ignored if the popup's implementation used
+ *   is the default Compose popup.
  * @param content The composable content to be displayed inside the popup.
  */
 @ApiStatus.Experimental
@@ -59,15 +64,41 @@ public fun Popup(
     onKeyEvent: ((KeyEvent) -> Boolean)? = null,
     content: @Composable () -> Unit,
 ) {
-    val popupRenderer = if (JewelFlags.useCustomPopupRenderer) LocalPopupRenderer.current else DefaultPopupRenderer
-    popupRenderer.Popup(
-        popupPositionProvider = popupPositionProvider,
-        onDismissRequest = onDismissRequest,
-        properties = properties,
-        onPreviewKeyEvent = onPreviewKeyEvent,
-        onKeyEvent = onKeyEvent,
-        content = content,
-    )
+    Popup(popupPositionProvider, ZeroCornerSize, onDismissRequest, properties, onPreviewKeyEvent, onKeyEvent, content)
+}
+
+@ApiStatus.Experimental
+@ExperimentalJewelApi
+@Composable
+public fun Popup(
+    popupPositionProvider: PopupPositionProvider,
+    cornerSize: CornerSize,
+    onDismissRequest: (() -> Unit)? = null,
+    properties: PopupProperties = PopupProperties(),
+    onPreviewKeyEvent: ((KeyEvent) -> Boolean)? = null,
+    onKeyEvent: ((KeyEvent) -> Boolean)? = null,
+    content: @Composable () -> Unit,
+) {
+    if (JewelFlags.useCustomPopupRenderer) {
+        LocalPopupRenderer.current.Popup(
+            popupPositionProvider = popupPositionProvider,
+            properties = properties,
+            onDismissRequest = onDismissRequest,
+            onPreviewKeyEvent = onPreviewKeyEvent,
+            onKeyEvent = onKeyEvent,
+            cornerSize = cornerSize,
+            content = content,
+        )
+    } else {
+        ComposePopup(
+            popupPositionProvider = popupPositionProvider,
+            onDismissRequest = onDismissRequest,
+            properties = properties,
+            onPreviewKeyEvent = onPreviewKeyEvent,
+            onKeyEvent = onKeyEvent,
+            content = content,
+        )
+    }
 }
 
 /**
@@ -87,6 +118,7 @@ public interface PopupRenderer {
         onDismissRequest: (() -> Unit)?,
         onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
         onKeyEvent: ((KeyEvent) -> Boolean)?,
+        cornerSize: CornerSize,
         content: @Composable () -> Unit,
     )
 
@@ -98,32 +130,10 @@ public interface PopupRenderer {
  *
  * Note that the value will only be used if the [JewelFlags.useCustomPopupRenderer] flag is set to `true`.
  */
+@Suppress("CompositionLocalAllowlist")
 @ApiStatus.Experimental
 @ExperimentalJewelApi
-public val LocalPopupRenderer: ProvidableCompositionLocal<PopupRenderer> = staticCompositionLocalOf {
-    DefaultPopupRenderer
-}
-
-private object DefaultPopupRenderer : PopupRenderer {
-    @Composable
-    override fun Popup(
-        popupPositionProvider: PopupPositionProvider,
-        properties: PopupProperties,
-        onDismissRequest: (() -> Unit)?,
-        onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
-        onKeyEvent: ((KeyEvent) -> Boolean)?,
-        content: @Composable () -> Unit,
-    ) {
-        ComposePopup(
-            popupPositionProvider = popupPositionProvider,
-            onDismissRequest = onDismissRequest,
-            properties = properties,
-            onPreviewKeyEvent = onPreviewKeyEvent,
-            onKeyEvent = onKeyEvent,
-            content = content,
-        )
-    }
-}
+public val LocalPopupRenderer: ProvidableCompositionLocal<PopupRenderer> = staticCompositionLocalOf { JDialogRenderer }
 
 internal fun handlePopupMenuOnKeyEvent(
     keyEvent: KeyEvent,

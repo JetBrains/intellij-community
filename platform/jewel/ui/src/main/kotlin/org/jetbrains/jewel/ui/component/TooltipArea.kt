@@ -5,6 +5,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.TooltipArea as ComposeTooltipArea
 import androidx.compose.foundation.TooltipPlacement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +52,7 @@ internal fun FlagAwareTooltipArea(
     modifier: Modifier = Modifier,
     delayMillis: Int = 500,
     tooltipPlacement: TooltipPlacement = TooltipPlacement.CursorPoint(offset = DpOffset(0.dp, 16.dp)),
+    cornerSize: CornerSize = ZeroCornerSize,
     content: @Composable () -> Unit,
 ) {
     if (JewelFlags.useCustomPopupRenderer) {
@@ -58,6 +61,7 @@ internal fun FlagAwareTooltipArea(
             modifier = modifier,
             delayMillis = delayMillis,
             tooltipPlacement = tooltipPlacement,
+            cornerSize = cornerSize,
             content = content,
         )
     } else {
@@ -78,6 +82,7 @@ private fun JewelTooltipArea(
     modifier: Modifier = Modifier,
     delayMillis: Int = 500,
     tooltipPlacement: TooltipPlacement = TooltipPlacement.CursorPoint(offset = DpOffset(0.dp, 16.dp)),
+    cornerSize: CornerSize = ZeroCornerSize,
     content: @Composable () -> Unit,
 ) {
     var parentBounds by remember { mutableStateOf(Rect.Zero) }
@@ -134,6 +139,7 @@ private fun JewelTooltipArea(
             Popup(
                 popupPositionProvider = tooltipPlacement.positionProvider(cursorPosition),
                 onDismissRequest = { isVisible = false },
+                cornerSize = cornerSize,
             ) {
                 var popupPosition by remember { mutableStateOf(Offset.Zero) }
                 Box(

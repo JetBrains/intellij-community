@@ -12,6 +12,7 @@ plugins {
 
 dependencies {
     api(projects.foundation)
+    implementation(libs.jbr.api)
     implementation(compose.components.resources)
     iconGeneration(libs.intellijPlatform.util.ui)
     iconGeneration(libs.intellijPlatform.icons)

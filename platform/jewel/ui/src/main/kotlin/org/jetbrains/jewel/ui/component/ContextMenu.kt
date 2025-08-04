@@ -75,14 +75,16 @@ internal fun ContextMenu(
             menuController.findAndExecuteShortcut(swingKeyStroke)
                 ?: handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuController)
         },
-    ) {
-        focusManager = LocalFocusManager.current
-        inputModeManager = LocalInputModeManager.current
+        cornerSize = style.metrics.cornerSize,
+        content = {
+            focusManager = LocalFocusManager.current
+            inputModeManager = LocalInputModeManager.current
 
-        CompositionLocalProvider(LocalMenuController provides menuController) {
-            MenuContent(modifier = modifier, content = content)
-        }
-    }
+            CompositionLocalProvider(LocalMenuController provides menuController) {
+                MenuContent(modifier = modifier, content = content)
+            }
+        },
+    )
 }
 
 private fun MenuScope.contextItems(items: () -> List<ContextMenuItem>) {
