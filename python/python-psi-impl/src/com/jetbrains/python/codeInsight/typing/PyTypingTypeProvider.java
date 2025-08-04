@@ -839,11 +839,11 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
                                                                  @NotNull PsiElement resolved,
                                                                  @NotNull Context context) {
     if (alias != null) {
-      if (context.getTypeAliasStack().contains(alias)) {
+      if (context.containsTypeAlias(alias)) {
         // Recursive types are not yet supported
         return null;
       }
-      context.getTypeAliasStack().add(alias);
+      context.addTypeAlias(alias);
     }
     try {
       final Ref<PyType> typeHintFromProvider = PyTypeHintProvider.Companion.parseTypeHint(
@@ -976,7 +976,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     }
     finally {
       if (alias != null) {
-        context.getTypeAliasStack().remove(alias);
+        context.removeTypeAlias(alias);
       }
     }
   }
@@ -1052,7 +1052,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   }
 
   private static @Nullable PyType anchorTypeParameter(@NotNull PyExpression typeHint, @Nullable PyType type, @NotNull Context context) {
-    PyQualifiedNameOwner typeParamDefinitionFromStack = context.getTypeAliasStack().isEmpty() ? null : context.getTypeAliasStack().peek();
+    PyQualifiedNameOwner typeParamDefinitionFromStack = context.isTypeAliasStackEmpty() ? null : context.peekTypeAlias();
     assert typeParamDefinitionFromStack == null || typeParamDefinitionFromStack instanceof PyTargetExpression;
     PyTargetExpression targetExpr = (PyTargetExpression)typeParamDefinitionFromStack;
     if (type instanceof PyTypeVarTypeImpl typeVar) {
@@ -1673,7 +1673,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   private static @Nullable PyQualifiedNameOwner getTypeParameterScope(@NotNull String name,
                                                                       @NotNull PyExpression typeHint,
                                                                       @NotNull Context context) {
-    if (!context.myComputeTypeParameterScope) return null;
+    if (!context.isComputeTypeParameterScopeEnabled()) return null;
 
     PsiElement typeHintContext = getStubRetainedTypeHintContext(typeHint);
     List<PyQualifiedNameOwner> typeParamOwnerCandidates =
@@ -1694,13 +1694,12 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       }
     }
     if (closestOwner != null) {
-      boolean prevComputeTypeParameterScope = context.myComputeTypeParameterScope;
-      context.myComputeTypeParameterScope = false;
+      boolean prevComputeTypeParameterScope = context.setComputeTypeParameterScopeEnabled(false);
       try {
         return findSameTypeParameterInDefinition(closestOwner, name, context) != null ? closestOwner : null;
       }
       finally {
-        context.myComputeTypeParameterScope = prevComputeTypeParameterScope;
+        context.setComputeTypeParameterScopeEnabled(prevComputeTypeParameterScope);
       }
     }
 
@@ -1730,10 +1729,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     // While evaluating type hints of enclosing functions' parameters, resolving to the same TypeVar
     // definition shouldn't trigger the protection against recursive aliases, so we manually remove
     // it from the top for the time being.
-    if (context.getTypeAliasStack().isEmpty()) {
+    if (context.isTypeAliasStackEmpty()) {
       return null;
     }
-    PyQualifiedNameOwner typeVarDeclaration = context.getTypeAliasStack().pop();
+    PyQualifiedNameOwner typeVarDeclaration = context.popTypeAlias();
     assert typeVarDeclaration instanceof PyTargetExpression;
     try {
       final Iterable<PyTypeParameterType> typeParameters;
@@ -1749,7 +1748,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       return ContainerUtil.find(typeParameters, type -> name.equals(type.getName()));
     }
     finally {
-      context.getTypeAliasStack().push(typeVarDeclaration);
+      context.pushTypeAlias(typeVarDeclaration);
     }
   }
 
@@ -2322,6 +2321,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
     private Context(@NotNull TypeEvalContext context) {
       myContext = context;
+      recomputeStrongHashValue();
     }
 
     public @NotNull TypeEvalContext getTypeContext() {
@@ -2330,6 +2330,51 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
     public @NotNull Stack<PyQualifiedNameOwner> getTypeAliasStack() {
       return myTypeAliasStack;
+    }
+
+    // Explicit API for manipulating type alias stack
+    public boolean containsTypeAlias(@NotNull PyQualifiedNameOwner alias) {
+      return myTypeAliasStack.contains(alias);
+    }
+
+    public void addTypeAlias(@NotNull PyQualifiedNameOwner alias) {
+      myTypeAliasStack.add(alias);
+      recomputeStrongHashValue();
+    }
+
+    public void removeTypeAlias(@NotNull PyQualifiedNameOwner alias) {
+      myTypeAliasStack.remove(alias);
+      recomputeStrongHashValue();
+    }
+
+    public boolean isTypeAliasStackEmpty() {
+      return myTypeAliasStack.isEmpty();
+    }
+
+    public @Nullable PyQualifiedNameOwner peekTypeAlias() {
+      return myTypeAliasStack.isEmpty() ? null : myTypeAliasStack.peek();
+    }
+
+    public void pushTypeAlias(@NotNull PyQualifiedNameOwner alias) {
+      myTypeAliasStack.push(alias);
+      recomputeStrongHashValue();
+    }
+
+    public @Nullable PyQualifiedNameOwner popTypeAlias() {
+      PyQualifiedNameOwner res = myTypeAliasStack.isEmpty() ? null : myTypeAliasStack.pop();
+      recomputeStrongHashValue();
+      return res;
+    }
+
+    public boolean isComputeTypeParameterScopeEnabled() {
+      return myComputeTypeParameterScope;
+    }
+
+    public boolean setComputeTypeParameterScopeEnabled(boolean value) {
+      boolean prev = myComputeTypeParameterScope;
+      myComputeTypeParameterScope = value;
+      recomputeStrongHashValue();
+      return prev;
     }
 
     public @Nullable PyType getKnownType(@NotNull PyExpression expression) {
@@ -2341,11 +2386,16 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       myContext.getContextTypeCache().put(new Pair<>(expression, getContextStrongHashValue()), type);
     }
 
-    private @NotNull HashValue128 getContextStrongHashValue() {
-      var result = xxh3_128().hashCharsTo128Bits(Stream.concat(Stream.of(myComputeTypeParameterScope ? "1" : "0"),
+    private @NotNull HashValue128 myContextStrongHashValue;
+
+    private void recomputeStrongHashValue() {
+      myContextStrongHashValue = xxh3_128().hashCharsTo128Bits(Stream.concat(Stream.of(myComputeTypeParameterScope ? "1" : "0"),
                                                     myTypeAliasStack.stream().map(it -> it.getQualifiedName()))
                                                    .collect(Collectors.joining("#")));
-      return result;
+    }
+
+    private @NotNull HashValue128 getContextStrongHashValue() {
+      return myContextStrongHashValue;
     }
 
     @Override
