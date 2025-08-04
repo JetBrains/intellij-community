@@ -48,7 +48,7 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
     phase: GradleModelFetchPhase,
   ) {
     if (context.isPhasedSyncEnabled) {
-      if (phase == GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE) {
+      if (phase == GradleModelFetchPhase.SOURCE_SET_MODEL_PHASE) {
         configureProjectSourceRoots(context, storage)
       }
     }

@@ -5,6 +5,7 @@ import com.intellij.gradle.toolingExtension.impl.model.utilTurnOffDefaultTasksMo
 import com.intellij.gradle.toolingExtension.impl.modelSerialization.ToolingSerializerConverter;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry;
 import com.intellij.gradle.toolingExtension.impl.util.GradleExecutorServiceUtil;
+import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollections;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -35,8 +36,7 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
 
   private final @NotNull String myGradleVersion;
 
-  private final NavigableSet<GradleModelFetchPhase> myModelFetchPhases = new TreeSet<>(Arrays.asList(GradleModelFetchPhase.values()));
-  private final Map<GradleModelFetchPhase, Set<ProjectImportModelProvider>> myModelProviders = new LinkedHashMap<>();
+  private final NavigableMap<GradleModelFetchPhase, Set<ProjectImportModelProvider>> myModelProviders = new TreeMap<>();
   private final Set<Class<?>> myTargetTypes = new LinkedHashSet<>();
 
   private boolean myUseProjectsLoadedPhase = false;
@@ -223,7 +223,7 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
 
     try {
       getModelFetchPhases().forEach(phase -> {
-        telemetry.runWithSpan(phase.name(), __ -> {
+        telemetry.runWithSpan(phase.getName(), __ -> {
           Set<ProjectImportModelProvider> modelProviders = myModelProviders.getOrDefault(phase, Collections.emptySet());
           populateModels(buildController, telemetry, modelConsumer, gradleBuilds, modelProviders);
           sendPendingState(buildController, telemetry, models, phase);
@@ -265,9 +265,9 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     });
   }
 
-  private @NotNull SortedSet<GradleModelFetchPhase> getModelFetchPhases() {
+  private @NotNull Collection<GradleModelFetchPhase> getModelFetchPhases() {
     if (!myUseProjectsLoadedPhase) {
-      return myModelFetchPhases;
+      return myModelProviders.keySet();
     }
     if (myProjectLoadedAction) {
       return getProjectLoadedModelFetchPhases();
@@ -275,18 +275,12 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     return getBuildFinishedModelFetchPhases();
   }
 
-  /**
-   * @see org.gradle.tooling.BuildActionExecuter.Builder#projectsLoaded
-   */
-  public @NotNull SortedSet<GradleModelFetchPhase> getProjectLoadedModelFetchPhases() {
-    return myModelFetchPhases.headSet(GradleModelFetchPhase.PROJECT_LOADED_PHASE, true);
+  public @NotNull List<GradleModelFetchPhase> getProjectLoadedModelFetchPhases() {
+    return GradleCollections.filter(myModelProviders.keySet(), it -> it instanceof GradleModelFetchPhase.ProjectLoaded);
   }
 
-  /**
-   * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished
-   */
-  public @NotNull SortedSet<GradleModelFetchPhase> getBuildFinishedModelFetchPhases() {
-    return myModelFetchPhases.tailSet(GradleModelFetchPhase.PROJECT_LOADED_PHASE, false);
+  public @NotNull List<GradleModelFetchPhase> getBuildFinishedModelFetchPhases() {
+    return GradleCollections.filter(myModelProviders.keySet(), it -> it instanceof GradleModelFetchPhase.BuildFinished);
   }
 
   private static @NotNull GradleModelHolderState withOpenTelemetry(

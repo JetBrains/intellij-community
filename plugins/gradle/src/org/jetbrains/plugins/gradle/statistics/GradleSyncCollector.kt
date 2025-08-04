@@ -2,15 +2,17 @@
 package org.jetbrains.plugins.gradle.statistics
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
-import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.*
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.Companion.ADDITIONAL_MODEL_PHASE
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.Companion.PROJECT_LOADED_PHASE
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.Companion.PROJECT_MODEL_PHASE
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.Companion.PROJECT_SOURCE_SET_DEPENDENCY_PHASE
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.Companion.PROJECT_SOURCE_SET_PHASE
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.LongEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
-import java.util.*
 
 
 @ApiStatus.Internal
@@ -53,9 +55,9 @@ internal object GradleSyncCollector : CounterUsagesCollector() {
     private val context: DefaultProjectResolverContext,
   ) : AutoCloseable {
 
-    private val modelFetchStartStamp: GlobalStamp = GlobalStamp.now()
+    private val modelFetchStartStamp = GlobalStamp.now()
 
-    private val phaseCompletionStamps: MutableMap<GradleModelFetchPhase, LocalStamp> = EnumMap(GradleModelFetchPhase::class.java)
+    private val phaseCompletionStamps = HashMap<GradleModelFetchPhase, GlobalStamp>()
 
     private val exceptions = ArrayList<Throwable>()
 
@@ -64,9 +66,7 @@ internal object GradleSyncCollector : CounterUsagesCollector() {
         ?.getUserData(ExternalSystemDataKeys.NEWLY_OPENED_PROJECT_WITH_IDE_CACHES)
 
     fun logModelFetchPhaseCompleted(phase: GradleModelFetchPhase) {
-      val currentStamp = GlobalStamp.now()
-      val phaseCompletionStamp = currentStamp - modelFetchStartStamp
-      phaseCompletionStamps[phase] = phaseCompletionStamp
+      phaseCompletionStamps[phase] = GlobalStamp.now()
     }
 
     fun logModelFetchFailure(exception: Throwable) {
@@ -74,7 +74,6 @@ internal object GradleSyncCollector : CounterUsagesCollector() {
     }
 
     override fun close() {
-      val currentStamp = GlobalStamp.now()
       val project = context.externalSystemTaskId.findProject()
       MODEL_FETCH_COMPLETED_EVENT.log(project) {
         add(ACTIVITY_ID with context.externalSystemTaskId.id)
@@ -83,24 +82,22 @@ internal object GradleSyncCollector : CounterUsagesCollector() {
         }
         add(MODEL_FETCH_FOR_BUILD_SRC with context.isBuildSrcProject)
         add(MODEL_FETCH_ERROR_COUNT with exceptions.size)
-        val modelFetchStamp = currentStamp - modelFetchStartStamp
-        add(MODEL_FETCH_COMPLETION_STAMP with modelFetchStamp.time)
-        for (phase in entries) {
-          val field = phase.getModelFetchPhaseStampEventField()
-          val stamp = phaseCompletionStamps[phase] ?: continue
-          add(field with stamp.time)
-        }
+        add(MODEL_FETCH_COMPLETION_STAMP with getModelFetchCompletionStamp())
+        add(PROJECT_LOADED_PHASE_COMPLETION_STAMP with getPhaseCompletionStamp(PROJECT_LOADED_PHASE))
+        add(PROJECT_MODEL_PHASE_COMPLETION_STAMP with getPhaseCompletionStamp(PROJECT_MODEL_PHASE))
+        add(PROJECT_SOURCE_SET_PHASE_COMPLETION_STAMP with getPhaseCompletionStamp(PROJECT_SOURCE_SET_PHASE))
+        add(PROJECT_SOURCE_SET_DEPENDENCY_PHASE_COMPLETION_STAMP with getPhaseCompletionStamp(PROJECT_SOURCE_SET_DEPENDENCY_PHASE))
+        add(ADDITIONAL_MODEL_PHASE_COMPLETION_STAMP with getPhaseCompletionStamp(ADDITIONAL_MODEL_PHASE))
       }
     }
 
-    private fun GradleModelFetchPhase.getModelFetchPhaseStampEventField(): LongEventField {
-      return when (this) {
-        PROJECT_LOADED_PHASE -> PROJECT_LOADED_PHASE_COMPLETION_STAMP
-        PROJECT_MODEL_PHASE -> PROJECT_MODEL_PHASE_COMPLETION_STAMP
-        PROJECT_SOURCE_SET_PHASE -> PROJECT_SOURCE_SET_PHASE_COMPLETION_STAMP
-        PROJECT_SOURCE_SET_DEPENDENCY_PHASE -> PROJECT_SOURCE_SET_DEPENDENCY_PHASE_COMPLETION_STAMP
-        ADDITIONAL_MODEL_PHASE -> ADDITIONAL_MODEL_PHASE_COMPLETION_STAMP
-      }
+    private fun getModelFetchCompletionStamp(): Long {
+      return (GlobalStamp.now() - modelFetchStartStamp).time
+    }
+
+    private fun getPhaseCompletionStamp(phase: GradleModelFetchPhase): Long {
+      val stamp = phaseCompletionStamps[phase] ?: return -1
+      return (stamp - modelFetchStartStamp).time
     }
   }
 

@@ -40,15 +40,6 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
       })
   }
 
-  fun whenModelFetchPhaseCompleted(parentDisposable: Disposable, action: (ProjectResolverContext, GradleModelFetchPhase) -> Unit) {
-    application.messageBus.connect(parentDisposable)
-      .subscribe(GradleSyncListener.TOPIC, object : GradleSyncListener {
-        override fun onModelFetchPhaseCompleted(context: ProjectResolverContext, phase: GradleModelFetchPhase) {
-          action(context, phase)
-        }
-      })
-  }
-
   fun whenModelFetchCompleted(parentDisposable: Disposable, action: (ProjectResolverContext) -> Unit) {
     application.messageBus.connect(parentDisposable)
       .subscribe(GradleSyncListener.TOPIC, object : GradleSyncListener {
@@ -67,10 +58,7 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
       })
   }
 
-  fun addSyncContributor(
-    parentDisposable: Disposable,
-    action: suspend (ProjectResolverContext, MutableEntityStorage, GradleModelFetchPhase) -> Unit,
-  ) {
+  fun addSyncContributor(parentDisposable: Disposable, action: suspend (ProjectResolverContext, MutableEntityStorage, GradleModelFetchPhase) -> Unit) {
     GradleSyncContributor.EP_NAME.point.registerExtension(
       object : GradleSyncContributor {
         override suspend fun onModelFetchPhaseCompleted(

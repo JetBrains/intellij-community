@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 
-interface TestPhasedModel : TestModel {
+sealed interface TestPhasedModel : TestModel {
 
   val phase: GradleModelFetchPhase
 
@@ -19,7 +19,7 @@ interface TestPhasedModel : TestModel {
     override val phase = GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE
   }
 
-  class ProjectSourceSetDependencyPhase : TestPhasedModel {
+  class ProjectDependencyPhase : TestPhasedModel {
     override val phase = GradleModelFetchPhase.PROJECT_SOURCE_SET_DEPENDENCY_PHASE
   }
 
@@ -34,8 +34,9 @@ interface TestPhasedModel : TestModel {
         GradleModelFetchPhase.PROJECT_LOADED_PHASE -> ProjectLoadedPhase::class.java
         GradleModelFetchPhase.PROJECT_MODEL_PHASE -> ProjectModelPhase::class.java
         GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE -> ProjectSourceSetPhase::class.java
-        GradleModelFetchPhase.PROJECT_SOURCE_SET_DEPENDENCY_PHASE -> ProjectSourceSetDependencyPhase::class.java
+        GradleModelFetchPhase.PROJECT_SOURCE_SET_DEPENDENCY_PHASE -> ProjectDependencyPhase::class.java
         GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE -> AdditionalModelPhase::class.java
+        else -> throw NoWhenBranchMatchedException("Unexpected $phase in tests")
       }
     }
   }

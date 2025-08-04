@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing.syncAction
 
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import java.util.concurrent.atomic.AtomicReference
 
 abstract class GradlePhasedSyncTestCase : GradleProjectResolverTestCase() {
@@ -28,5 +29,16 @@ abstract class GradlePhasedSyncTestCase : GradleProjectResolverTestCase() {
 
   override fun handleImportFailure(errorMessage: String, errorDetails: String?) {
     syncErrorHandler.get()(errorMessage, errorDetails)
+  }
+
+  companion object {
+
+    val DEFAULT_MODEL_FETCH_PHASES: List<GradleModelFetchPhase> = listOf(
+      GradleModelFetchPhase.PROJECT_LOADED_PHASE,
+      GradleModelFetchPhase.PROJECT_MODEL_PHASE,
+      GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE,
+      GradleModelFetchPhase.PROJECT_SOURCE_SET_DEPENDENCY_PHASE,
+      GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE
+    )
   }
 }
