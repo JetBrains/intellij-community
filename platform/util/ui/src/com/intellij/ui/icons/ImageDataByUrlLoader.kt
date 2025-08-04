@@ -37,6 +37,8 @@ internal class ImageDataByUrlLoader internal constructor(
 
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean = this.classLoader === classLoader
 
+  override fun getCoords(): Pair<String, ClassLoader>? = classLoader?.let { path to classLoader }
+
   override fun toString(): String {
     return "ImageDataByUrlLoader(ownerClass=${ownerClass?.name}, classLoader=$classLoader, url=$url"
   }
@@ -79,6 +81,8 @@ internal class ImageDataByPathResourceLoader(
   }
 
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean = this.classLoader === classLoader
+
+  override fun getCoords(): Pair<String, ClassLoader>? = classLoader?.let { path to classLoader }
 
   override fun toString(): String = "ImageDataByPathResourceLoader(ownerClass=${ownerClass?.name}, classLoader=$classLoader, path=$path)"
 }
@@ -140,6 +144,8 @@ internal class ImageDataByFilePathLoader(override val path: String) : PatchedIma
                      scaleContext = scaleContext)
   }
 
+  override fun getCoords(): Pair<String, ClassLoader>? = null
+
   override fun toString(): String = "ImageDataByFilePathLoader(path=$path)"
 }
 
@@ -182,6 +188,8 @@ private class FinalImageDataLoader(override val path: String, classLoader: Class
 
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean = classLoaderRef.get() === classLoader
 
+  override fun getCoords(): Pair<String, ClassLoader>? = classLoaderRef.get()?.let { path to it }
+
   override fun toString(): String = "FinalImageDataLoader(classLoader=${classLoaderRef.get()}, path='$path')"
 }
 
@@ -199,4 +207,5 @@ internal object EmptyImageDataLoader : ImageDataLoader {
   override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? = null
   override fun patch(transform: IconTransform): ImageDataLoader? = null
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean = false
+  override fun getCoords(): Pair<String, ClassLoader>? = null
 }

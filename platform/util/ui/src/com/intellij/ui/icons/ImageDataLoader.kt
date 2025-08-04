@@ -20,7 +20,7 @@ interface ImageDataLoader {
   val url: URL?
 
   @Experimental
-  fun getCoords(): Pair<String, ClassLoader>? = null
+  fun getCoords(): Pair<String, ClassLoader>?
 
   fun patch(transform: IconTransform): ImageDataLoader?
 
