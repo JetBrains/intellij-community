@@ -9,7 +9,6 @@
     <module name="intellij.xml.psi" loading="embedded"/>
     <module name="intellij.xml.psi.impl" loading="embedded"/>
     <module name="intellij.xml.analysis" loading="embedded"/>
-    <module name="intellij.xml.frontback.impl" loading="embedded"/>
     <module name="intellij.xml.ui.common" loading="embedded"/>
     <module name="intellij.xml.parser" loading="embedded"/>
     <module name="intellij.relaxng"/>

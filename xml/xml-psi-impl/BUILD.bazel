@@ -25,7 +25,6 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//jps/model-serialization",
     "//platform/projectModel-api:projectModel",
-    "//xml/xml-frontback-impl:frontback-impl",
     "//xml/xml-psi-api:psi",
     "//platform/core-api:core",
     "//platform/core-impl",
@@ -45,7 +44,6 @@ jvm_library(
     "//platform/polySymbols",
     "//RegExpSupport:regexp",
   ],
-  exports = ["//xml/xml-frontback-impl:frontback-impl"],
   runtime_deps = [
     ":psi-impl_resources",
     ":psi-impl_resources_1",

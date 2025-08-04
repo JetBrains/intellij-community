@@ -30,7 +30,6 @@ jvm_library(
     "//platform/refactoring",
     "//platform/indexing-impl",
     "//platform/usageView",
-    "//xml/xml-frontback-impl:frontback-impl",
     "//xml/xml-psi-api:psi",
     "//xml/xml-psi-impl:psi-impl",
     "//xml/xml-ui-common:ui-common",

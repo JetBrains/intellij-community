@@ -29,7 +29,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.properties" exported="" />
-    <orderEntry type="module" module-name="intellij.xml.frontback.impl" />
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.xml.psi.impl" />
   </component>
 </module>

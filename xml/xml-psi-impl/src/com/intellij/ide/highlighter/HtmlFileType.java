@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.highlighter;
 
 import com.intellij.icons.AllIcons;
@@ -18,7 +18,7 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-import static com.intellij.xml.util.CharsetDetector.detectCharsetFromMetaTag;
+import static com.intellij.util.CharsetDetector.detectCharsetFromMetaTag;
 
 public class HtmlFileType extends XmlLikeFileType {
   public static final @NonNls String DOT_DEFAULT_EXTENSION = ".html";

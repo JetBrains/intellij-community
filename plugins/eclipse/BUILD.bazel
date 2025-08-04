@@ -36,10 +36,10 @@ jvm_library(
     "//platform/core-ui",
     "//platform/workspace/jps",
     "//platform/workspace/storage",
-    "//xml/xml-frontback-impl:frontback-impl",
     "//platform/statistics",
     "@lib//:kotlin-reflect",
     "//platform/backend/workspace",
+    "//xml/xml-psi-impl:psi-impl",
   ],
   runtime_deps = [":eclipse_resources"]
 )
@@ -79,7 +79,6 @@ jvm_library(
     "//platform/core-ui",
     "//platform/workspace/jps",
     "//platform/workspace/storage",
-    "//xml/xml-frontback-impl:frontback-impl",
     "@lib//:kotlinx-coroutines-core",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
@@ -88,6 +87,7 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/backend/workspace",
+    "//xml/xml-psi-impl:psi-impl",
   ],
   runtime_deps = [":eclipse_resources"]
 )

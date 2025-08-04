@@ -1349,7 +1349,6 @@ xml/testFramework
 xml/tests
 xml/xml-analysis-api
 xml/xml-analysis-impl
-xml/xml-frontback-impl
 xml/xml-parser
 xml/xml-psi-api
 xml/xml-psi-impl

@@ -34,7 +34,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/util/jdom",
     "//plugins/properties/properties-common:properties",
-    "//xml/xml-frontback-impl:frontback-impl",
+    "//xml/xml-psi-impl:psi-impl",
   ],
   exports = [
     "//plugins/properties/properties-psi-api:psi",

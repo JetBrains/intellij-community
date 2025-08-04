@@ -26,7 +26,7 @@ import com.intellij.psi.xml.*
 import com.intellij.util.asSafely
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolsBundle
-import com.intellij.xml.frontback.impl.icons.XmlFrontbackImplIcons
+import com.intellij.xml.psi.impl.icons.XmlPsiImplIcons
 import com.intellij.xml.util.HtmlUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -282,7 +282,7 @@ class MdnSymbolDocumentationAdapter(
       result.append("<div>\n")
     }
     result.append("<table class='mdn-baseline'><tr><td width=2 valign=top class='mdn-baseline-icon'>" +
-                  "<icon src='" + XmlFrontbackImplIcons::class.java.name + ".Baseline${baseline.level.name.lowercase().capitalize()}'></icon>\n" +
+                  "<icon src='" + XmlPsiImplIcons::class.java.name + ".Baseline${baseline.level.name.lowercase().capitalize()}'></icon>\n" +
                   "<td class='mdn-baseline-info'>")
     when (baseline.level) {
       BaselineLevel.NONE -> {

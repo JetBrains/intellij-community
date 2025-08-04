@@ -17,7 +17,6 @@ jvm_library(
     "//xml/xml-parser:parser",
     "//platform/code-style-api:codeStyle",
     "//platform/extensions",
-    "//xml/xml-frontback-impl:frontback-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/core-api:core",
     "//platform/core-ui",

@@ -9,7 +9,6 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/testFramework",
-    "//xml/xml-frontback-impl:frontback-impl",
     "//xml/xml-psi-api:psi",
     "//xml/xml-psi-impl:psi-impl",
     "//xml/xml-parser:parser",
