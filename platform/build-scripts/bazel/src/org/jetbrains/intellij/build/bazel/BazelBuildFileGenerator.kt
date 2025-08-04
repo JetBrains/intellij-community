@@ -760,7 +760,7 @@ internal class BazelBuildFileGenerator(
     return when {
       languageLevel == LanguageLevel.JDK_1_7 -> "7"
       languageLevel == LanguageLevel.JDK_1_8 -> "8"
-      languageLevel == LanguageLevel.JDK_1_9 || languageLevel == LanguageLevel.JDK_11 -> "11"
+      languageLevel == LanguageLevel.JDK_11 -> "11"
       languageLevel == LanguageLevel.JDK_17 -> "17"
       languageLevel != null -> error("Unsupported language level: $languageLevel")
       else -> "17"
