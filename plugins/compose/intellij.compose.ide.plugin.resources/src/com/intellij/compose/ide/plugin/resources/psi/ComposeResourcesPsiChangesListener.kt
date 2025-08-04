@@ -6,6 +6,7 @@ import com.intellij.compose.ide.plugin.resources.findComposeResourcesDirFor
 import com.intellij.compose.ide.plugin.resources.isValidInnerComposeResourcesDirName
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.*
 import com.intellij.psi.xml.*
@@ -18,8 +19,8 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 private val PsiTreeChangeEvent.isIgnorable: Boolean
   get() {
     if (file?.language == KotlinLanguage.INSTANCE) return true
-    val parentName = file?.parent?.name /* for string values */ ?: parent?.namedUnwrappedElement?.name // for files
-    if (parentName?.isValidInnerComposeResourcesDirName != true) return true
+    val parentName = getParentName() ?: return true
+    if (!parentName.isValidInnerComposeResourcesDirName) return true
 
     // We can ignore edits in whitespace, XML error nodes, and modification in comments.
     // (Note that editing text in an attribute value, including whitespace characters,
@@ -33,7 +34,7 @@ private val PsiTreeChangeEvent.isIgnorable: Boolean
     // Editing text or whitespace has no effect outside values files.
     if (child is PsiWhiteSpace || child is XmlText || parent is XmlText) return true
 
-    val file = this.file
+    val file = this.file ?: (this.child as? PsiFile)
     // Spurious events from the IDE doing internal things, such as the formatter using a light
     // virtual filesystem to process text formatting chunks etc.
     return file != null && (file.parent == null || !file.viewProvider.isPhysical)
@@ -127,11 +128,19 @@ class ComposeResourcesPsiChangesListener(private val project: Project) : PsiTree
   private fun notice(event: PsiTreeChangeEvent) {
     if (project.isDisposed) return
     if (event.isIgnorable) return
-    val virtualFile = event.file?.virtualFile /* for string values */ ?: (event.parent as? PsiDirectory)?.virtualFile /* for files */
-                      ?: return
+    val virtualFile = event.getVirtualFile() ?: return
     val composeResourcesGenerationService = project.service<ComposeResourcesGenerationService>()
     val path = virtualFile.toNioPathOrNull() ?: return
     val composeResourcesDir = project.findComposeResourcesDirFor(path) ?: return
     composeResourcesGenerationService.tryEmit(composeResourcesDir)
   }
+
+  private fun PsiTreeChangeEvent.getVirtualFile(): VirtualFile? = file?.virtualFile /* for string values */
+                                                                  ?: (this.parent as? PsiDirectory)?.virtualFile /* for files */
+                                                                  ?: (this.child as? PsiFile)?.virtualFile /* CHILD_MOVED case */
+
 }
+
+private fun PsiTreeChangeEvent.getParentName(): String? = file?.parent?.name /* for string values */
+                                                          ?: parent?.namedUnwrappedElement?.name /* for files */
+                                                          ?: newParent?.namedUnwrappedElement?.name /* CHILD_MOVED case */

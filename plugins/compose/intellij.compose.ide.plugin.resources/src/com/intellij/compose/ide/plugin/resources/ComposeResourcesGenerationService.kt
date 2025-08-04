@@ -16,7 +16,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.annotations.TestOnly
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -30,6 +32,9 @@ internal class ComposeResourcesGenerationService(private val project: Project, p
   private val notificationService = ComposeResourcesNotificationService.getInstance(project)
 
   private val composeResourcesPsiChangesFlow = MutableSharedFlow<ComposeResourcesDir>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  @TestOnly
+  val composeResourcesPsiChanges = composeResourcesPsiChangesFlow.asSharedFlow() // only used to test psi changes listener
 
   fun tryEmit(composeResourcesDir: ComposeResourcesDir) = composeResourcesPsiChangesFlow.tryEmit(composeResourcesDir)
 
