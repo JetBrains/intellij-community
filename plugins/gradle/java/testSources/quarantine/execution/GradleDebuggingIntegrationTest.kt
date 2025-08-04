@@ -6,6 +6,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.execution.GradleDebuggingIntegrationTestCase
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJunit5Supported
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.createGradleWrapper
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
@@ -290,6 +291,38 @@ class GradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase() {
     assertDebugJvmArgs(":module:printArgs", moduleArgsFile)
     assertDebugJvmArgs(":composite:printArgs", compositeArgsFile, shouldBeStarted = false)
     assertDebugJvmArgs(":composite:module:printArgs", compositeModuleArgsFile, shouldBeStarted = false)
+  }
+
+  /**
+   * The test checks the legacy scenario when the task is executed with a non-root `modulePath`.
+   * This means that the task is executed without the root project scope, as an independent of the root project task.
+   * As a result, the nested composite project must have its own Gradle wrapper.
+   */
+  @Test
+  fun `test composite tasks debugging for composite build`() {
+    createPrintArgsClass()
+    createPrintArgsClass("module")
+    createPrintArgsClass("composite")
+    createPrintArgsClass("composite/module")
+
+    val projectArgsFile = createArgsFile()
+    val moduleArgsFile = createArgsFile("module")
+    val compositeArgsFile = createArgsFile("composite")
+    val compositeModuleArgsFile = createArgsFile("composite/module")
+
+    createSettingsFile("composite") { include("module") }
+    createBuildFile("composite") { withPrintArgsTask(compositeArgsFile) }
+    createBuildFile("composite/module") { withPrintArgsTask(compositeModuleArgsFile) }
+
+    // we should explicitly create a wrapper config for the nested project
+    createGradleWrapper("./composite")
+
+    createSettingsFile {
+      include("module")
+      includeBuild("composite")
+    }
+    createBuildFile("module") { withPrintArgsTask(moduleArgsFile) }
+    importProject { withPrintArgsTask(projectArgsFile) }
 
     if (isGradleAtLeast("6.9")) {
       ensureDeleted(projectArgsFile, moduleArgsFile, compositeArgsFile, compositeModuleArgsFile)
