@@ -28,12 +28,6 @@
 - f:getMetrics():org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableMetrics
 - hashCode():I
 *f:org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableStyling$Companion
-*f:org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableBlockRenderer
-- org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension
-- sf:$stable:I
-- <init>(org.jetbrains.jewel.markdown.rendering.MarkdownStyling,org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableStyling):V
-- canRender(org.jetbrains.jewel.markdown.MarkdownBlock$CustomBlock):Z
-- render(org.jetbrains.jewel.markdown.MarkdownBlock$CustomBlock,org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer,org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer,Z,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0,androidx.compose.runtime.Composer,I):V
 *f:org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableProcessorExtension
 - org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
 - sf:$stable:I

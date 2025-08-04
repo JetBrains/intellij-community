@@ -406,7 +406,11 @@ private fun RowScope.ColumnTwo(project: Project) {
 @Composable
 private fun MarkdownExample(project: Project) {
     var enabled by remember { mutableStateOf(true) }
-    CheckboxRow("Enabled", enabled, { enabled = it })
+    var selectable by remember { mutableStateOf(false) }
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        CheckboxRow("Enabled", enabled, { enabled = it })
+        CheckboxRow("Selectable", selectable, { selectable = it })
+    }
 
     val contentColor = if (enabled) JewelTheme.globalColors.text.normal else JewelTheme.globalColors.text.disabled
     CompositionLocalProvider(LocalContentColor provides contentColor) {
@@ -435,6 +439,7 @@ private fun MarkdownExample(project: Project) {
                     .border(1.dp, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR.toComposeColor(), RoundedCornerShape(8.dp))
                     .padding(8.dp),
                 enabled = enabled,
+                selectable = selectable,
                 onUrlClick = { url -> BrowserUtil.open(url) },
             )
         }
