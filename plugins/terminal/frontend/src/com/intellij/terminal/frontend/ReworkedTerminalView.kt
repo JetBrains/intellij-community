@@ -33,6 +33,7 @@ import com.intellij.terminal.TerminalFontSizeProvider
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
 import com.intellij.terminal.frontend.hyperlinks.FrontendTerminalHyperlinkFacade
+import com.intellij.terminal.session.TerminalHyperlinkId
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.asDisposable
@@ -50,6 +51,8 @@ import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinkHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.isSplitHyperlinksSupportEnabled
+import org.jetbrains.plugins.terminal.block.reworked.session.FrontendTerminalSession
+import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
 import org.jetbrains.plugins.terminal.block.ui.*
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
@@ -81,9 +84,12 @@ internal class ReworkedTerminalView(
   private val terminalSearchController: TerminalSearchController
 
   private val outputEditor: EditorEx
+  private val outputHyperlinkFacade: FrontendTerminalHyperlinkFacade?
   private val alternateBufferEditor: EditorEx
+  private val alternateBufferHyperlinkFacade: FrontendTerminalHyperlinkFacade?
   private val outputModel: TerminalOutputModelImpl
   private val scrollingModel: TerminalOutputScrollingModel
+  private var isAlternateScreenBuffer = false
 
   private val terminalPanel: TerminalPanel
 
@@ -126,7 +132,7 @@ internal class ReworkedTerminalView(
       fusFirstOutputListener,
       withTopAndBottomInsets = false,
     )
-    val alternateBufferHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
+    alternateBufferHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
       FrontendTerminalHyperlinkFacade(
         isInAlternateBuffer = true,
         editor = alternateBufferEditor,
@@ -170,7 +176,7 @@ internal class ReworkedTerminalView(
     outputEditor.putUserData(TerminalTypeAhead.KEY, typeAhead)
     TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
     outputEditor.putUserData(TerminalBlocksModel.KEY, blocksModel)
-    val outputHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
+    outputHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
       FrontendTerminalHyperlinkFacade(
         isInAlternateBuffer = false,
         editor = outputEditor,
@@ -304,7 +310,6 @@ internal class ReworkedTerminalView(
 
   private fun listenAlternateBufferSwitch() {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement() + CoroutineName("Alternate buffer switch listener")) {
-      var isAlternateScreenBuffer = false
       sessionModel.terminalState.collect { state ->
         if (state.isAlternateScreenBuffer != isAlternateScreenBuffer) {
           isAlternateScreenBuffer = state.isAlternateScreenBuffer
@@ -552,6 +557,10 @@ internal class ReworkedTerminalView(
       sink[TerminalInput.DATA_KEY] = terminalInput
       sink[TerminalOutputModel.KEY] = outputModel
       sink[TerminalSearchController.KEY] = terminalSearchController
+      sink[TerminalSessionId.KEY] = (sessionFuture.getNow(null) as? FrontendTerminalSession?)?.id
+      sink[IS_ALTERNATE_BUFFER_KEY] = isAlternateScreenBuffer
+      val hyperlinkFacade = if (isAlternateScreenBuffer) alternateBufferHyperlinkFacade else outputHyperlinkFacade
+      sink[TerminalHyperlinkId.KEY] = hyperlinkFacade?.getHoveredHyperlinkId()
     }
 
     fun setTerminalContent(editor: Editor) {

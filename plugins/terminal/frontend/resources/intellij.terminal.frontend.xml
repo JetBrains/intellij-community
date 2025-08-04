@@ -136,6 +136,8 @@
       <separator/>
       <reference ref="Terminal.LineUp"/>
       <reference ref="Terminal.LineDown"/>
+      <separator/>
+      <reference ref="Terminal.HyperlinkContextMenu" />
     </group>
   </actions>
   <projectListeners>

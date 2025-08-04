@@ -22,6 +22,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfo
 
 @ApiStatus.Internal
 class BackendTerminalHyperlinkFacade(
@@ -72,6 +73,11 @@ class BackendTerminalHyperlinkFacade(
       ReworkedTerminalUsageCollector.logHyperlinkFollowed(hyperlink.javaClass)
     }
   }
+
+  fun getHyperlink(hyperlinkId: TerminalHyperlinkId): BackendHyperlinkInfo? =
+    model.getHyperlink(hyperlinkId)?.hyperlinkInfo?.let {
+      hyperlinkInfo -> BackendHyperlinkInfo(hyperlinkInfo, highlighter.fakeMouseEvent)
+    }
 
   fun dumpState(): TerminalHyperlinksModelState = model.dumpState()
 

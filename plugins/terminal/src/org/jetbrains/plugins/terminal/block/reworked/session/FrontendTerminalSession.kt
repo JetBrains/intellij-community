@@ -10,6 +10,7 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.onEach
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionApi
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
 
@@ -19,7 +20,8 @@ import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSession
  * Normally, it should be located in the frontend module, but it can't be moved there
  * because it should be accessible from the shared terminal widget creating API with a lot of external usages.
  */
-internal class FrontendTerminalSession(private val id: TerminalSessionId) : TerminalSession {
+@ApiStatus.Internal
+class FrontendTerminalSession(val id: TerminalSessionId) : TerminalSession {
   @Volatile
   override var isClosed: Boolean = false
     private set

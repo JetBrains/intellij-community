@@ -181,5 +181,6 @@
       <action id="TerminalNewPredefinedSession" class="org.jetbrains.plugins.terminal.action.TerminalNewPredefinedSessionAction"
               icon="AllIcons.Toolbar.Expand"/>
     </group>
+    <group id="Terminal.HyperlinkContextMenu" class="org.jetbrains.plugins.terminal.hyperlinks.HyperlinkContextMenuActionGroup" />
   </actions>
 </idea-plugin>

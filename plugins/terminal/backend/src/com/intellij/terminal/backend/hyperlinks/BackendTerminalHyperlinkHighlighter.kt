@@ -6,6 +6,9 @@ import com.intellij.execution.filters.CompositeFilter
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.impl.InlayProvider
 import com.intellij.execution.impl.applyToLineRange
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -23,10 +26,12 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.block.reworked.*
+import java.awt.event.MouseEvent
 import java.util.*
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+import javax.swing.JLabel
 import kotlin.time.Duration.Companion.milliseconds
 
 internal class BackendTerminalHyperlinkHighlighter(
@@ -57,6 +62,23 @@ internal class BackendTerminalHyperlinkHighlighter(
       }
     }
 
+  private val fakeMouseEventJob = coroutineScope.async(Dispatchers.UI + ModalityState.any().asContextElement()) {
+    MouseEvent(JLabel(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 0, 0, 1, true, MouseEvent.BUTTON2)
+  }
+
+  /**
+   * Returns a fake mouse event to be used in [com.intellij.execution.filters.HyperlinkWithPopupMenuInfo.getPopupMenuGroup].
+   *
+   * It's not actually used by any implementation at the moment of writing, but there are external usages with null checks,
+   * so passing `null` will cause them to throw NPE. Which is why this hack exists, for API compatibility only.
+   *
+   * Guaranteed to successfully return a non-null event if accessed after the first hyperlink is computed,
+   * which, in itself, is guaranteed by the fact that nobody can invoke a context menu for a hyperlink that doesn't exist yet.
+   */
+  @OptIn(ExperimentalCoroutinesApi::class)
+  val fakeMouseEvent: MouseEvent
+    get() = fakeMouseEventJob.getCompleted()
+
   // If we have nothing to do, then both of these will be null.
   // If either is not null, it's possible that there will be no results,
   // but we may have to do some cleanup nevertheless or start a new task.
@@ -81,6 +103,7 @@ internal class BackendTerminalHyperlinkHighlighter(
       }
     })
     coroutineScope.launch(CoroutineName("running filters")) {
+      fakeMouseEventJob.await() // must complete before any attempt to show a context menu for a HyperlinkWithPopupMenuInfo
       currentTaskRunner.collect { runner ->
         runner?.run()
       }

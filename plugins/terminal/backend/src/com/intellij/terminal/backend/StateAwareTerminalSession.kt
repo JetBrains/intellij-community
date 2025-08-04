@@ -143,10 +143,13 @@ internal class StateAwareTerminalSession(
   }
 
   private fun getHyperlinkFacade(event: TerminalHyperlinkClickedEvent): BackendTerminalHyperlinkFacade? =
-    if (event.isInAlternateBuffer) alternateBufferHyperlinkFacade else outputHyperlinkFacade
+    getHyperlinkFacade(event.isInAlternateBuffer)
 
   private fun getHyperlinkFacade(event: TerminalHyperlinksHeartbeatEvent): BackendTerminalHyperlinkFacade? =
-    if (event.isInAlternateBuffer) alternateBufferHyperlinkFacade else outputHyperlinkFacade
+    getHyperlinkFacade(event.isInAlternateBuffer)
+
+  fun getHyperlinkFacade(isInAlternateBuffer: Boolean): BackendTerminalHyperlinkFacade? =
+    if (isInAlternateBuffer) alternateBufferHyperlinkFacade else outputHyperlinkFacade
 
   override suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>> = outputFlowProducer.getIncrementalUpdateFlow()
 

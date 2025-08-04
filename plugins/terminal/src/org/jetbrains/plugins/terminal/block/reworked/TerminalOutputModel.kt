@@ -80,6 +80,9 @@ interface TerminalOutputModel {
 }
 
 @ApiStatus.Internal
+val IS_ALTERNATE_BUFFER_KEY: DataKey<Boolean> = DataKey.create("IS_ALTERNATE_BUFFER")
+
+@ApiStatus.Internal
 interface FrozenTerminalOutputModel {
   val document: FrozenDocument
 

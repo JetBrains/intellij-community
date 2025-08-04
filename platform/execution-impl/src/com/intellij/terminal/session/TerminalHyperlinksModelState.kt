@@ -5,6 +5,7 @@ import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.impl.EditorDecorationId
 import com.intellij.execution.impl.InlayProvider
 import com.intellij.execution.impl.createTextDecorationId
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.markup.TextAttributes
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -58,6 +59,13 @@ data class TerminalInlayInfo(
 @ApiStatus.Internal
 @Serializable
 data class TerminalHyperlinkId(val value: Long) {
-  fun toPlatformId(): EditorDecorationId = createTextDecorationId(value)
   override fun toString(): String = value.toString()
+  companion object {
+    @JvmStatic val KEY: DataKey<TerminalHyperlinkId> = DataKey.create("TerminalHyperlinkId")
+  }
 }
+
+@ApiStatus.Internal
+fun TerminalHyperlinkId.toPlatformId(): EditorDecorationId = createTextDecorationId(value)
+@ApiStatus.Internal
+fun EditorDecorationId.toTerminalId(): TerminalHyperlinkId = TerminalHyperlinkId(value)
