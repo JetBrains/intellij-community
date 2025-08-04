@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.concurrency
 
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -9,6 +10,7 @@ import com.intellij.util.Function
 import com.intellij.util.concurrency.captureBiConsumerThreadContext
 import com.intellij.util.concurrency.createChildContext
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.concurrency.Promise.State
@@ -180,14 +182,17 @@ open class AsyncPromise<T> private constructor(
 
   override fun <SUB_RESULT : Any?> thenAsync(doneF: Function<in T, out Promise<SUB_RESULT>>): Promise<SUB_RESULT> {
     return AsyncPromise(f.thenCompose {
-      val promise = doneF.`fun`(it)
-      val future = CompletableFuture<SUB_RESULT>()
-      promise
-        .onSuccess { value -> future.complete(value) }
-        .onError { error -> future.completeExceptionally(error) }
-      future
+      installThreadContext(currentThreadContext().minusKey(Job), true) {
+        val promise = doneF.`fun`(it)
+        val future = CompletableFuture<SUB_RESULT>()
+        promise
+          .onSuccess { value -> future.complete(value) }
+          .onError { error -> future.completeExceptionally(error) }
+        future
+      }
     }, hasErrorHandler, addExceptionHandler = true)
   }
+
 
   override fun processed(child: Promise<in T>): Promise<T> {
     if (child !is AsyncPromise) {

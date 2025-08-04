@@ -22,12 +22,16 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.resolvedPromise
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.test.assertTrue
 
 @TestApplication
 class PlatformUtilitiesTest {
@@ -365,4 +369,31 @@ class PlatformUtilitiesTest {
     }
     assertThat(counter.get()).isEqualTo(numberOfNonBlockingReadActions)
   }
+
+
+  fun <T> Deferred<T>.toPromise(): Promise<T> = AsyncPromise<T>().also { promise ->
+    invokeOnCompletion { throwable ->
+      if (throwable != null) {
+        promise.setError(throwable)
+      }
+      else {
+        @Suppress("OPT_IN_USAGE")
+        promise.setResult(getCompleted())
+      }
+    }
+  }
+
+  @Test
+  fun `async promise does not leak cancellation`(): Unit = timeoutRunBlocking {
+    coroutineScope {
+      async { 100 }
+        .toPromise()
+        .thenAsync {
+          // acceptable if there is no job
+          assertTrue { Cancellation.currentJob()?.isActive ?: true }
+          resolvedPromise(42)
+        }
+    }
+  }
+
 }
