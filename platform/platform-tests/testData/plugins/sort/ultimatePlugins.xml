@@ -304,7 +304,7 @@
     <depends>com.intellij.modules.lang</depends>
     <depends optional="true">-com-intellij-copyright-</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.javascript.impl/META-INF/plugin.xml">
+  <idea-plugin url="file://out/intellij.javascript.backend/META-INF/plugin.xml">
     <id>-JavaScript-</id>
     <name>JavaScript and TypeScript</name>
     <depends>com.intellij.modules.ultimate</depends>

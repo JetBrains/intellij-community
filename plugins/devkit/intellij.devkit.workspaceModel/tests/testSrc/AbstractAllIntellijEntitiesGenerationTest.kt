@@ -120,7 +120,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
     LOG.info("Generating workspace code for module: ${moduleEntity.name}, path $path")
     myFixture.copyDirectoryToProject(path, path)
 
-    if (moduleEntity.name == "intellij.javascript.impl") {
+    if (moduleEntity.name == "intellij.javascript.backend") {
       javascriptNodeModulesPackageExclusionFixForTests()
     }
 

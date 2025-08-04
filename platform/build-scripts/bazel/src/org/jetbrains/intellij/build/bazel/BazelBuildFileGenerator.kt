@@ -327,7 +327,7 @@ internal class BazelBuildFileGenerator(
     // bazel build file -> (bzlFile (for import) -> already imported symbols)
     val existingLoads = mutableMapOf<Path, MutableMap<String, MutableSet<String>>>()
     for (module in (if (isCommunity) list.community else list.ultimate)) {
-      if (module.module.name == "intellij.javascript.impl") {
+      if (module.module.name == "intellij.javascript.backend") {
         println("STOP")
       }
       if (generated.putIfAbsent(module, true) == null) {
