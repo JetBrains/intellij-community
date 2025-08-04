@@ -2,63 +2,50 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.plugins.marketplace.PluginNameAndId
-import com.intellij.ide.plugins.newui.UiPluginManager.Companion.getInstance
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
-import com.intellij.openapi.util.Condition
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.xml.util.XmlStringUtil
-import one.util.streamex.StreamEx
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.Nls
-import java.util.*
 import java.util.function.Function
 import javax.swing.JComponent
 
-internal class UninstallAction<C : JComponent?>(
+internal class UninstallAction<C : JComponent>(
+  coroutineScope: CoroutineScope,
   pluginModelFacade: PluginModelFacade,
   showShortcut: Boolean,
   private val myUiParent: JComponent,
-  selection: MutableList<out C?>,
-  pluginModelGetter: Function<in C?, PluginUiModel?>,
-  private val myOnFinishAction: Runnable
+  selection: MutableList<C>,
+  pluginModelGetter: Function<C, PluginUiModel?>,
+  private val myOnFinishAction: Runnable,
 ) : SelectionBasedPluginModelAction<C?>(
-  IdeBundle.message(if (isBundledUpdate(selection, pluginModelGetter as Function<Any?, PluginUiModel?>))
-                      "plugins.configurable.uninstall.bundled.update"
-                    else
-                      "plugins.configurable.uninstall"),
+  getText(selection, pluginModelGetter),
   pluginModelFacade,
   showShortcut,
   selection,
-  pluginModelGetter) {
-  private val myDynamicTitle: Boolean
-
-  init {
-    myDynamicTitle = selection.size == 1 && pluginModelGetter.apply(selection.iterator().next()) == null
-  }
+  pluginModelGetter
+) {
+  private val myDynamicTitle: Boolean = selection.size == 1 && pluginModelGetter.apply(selection.first()) == null
 
   override fun update(e: AnActionEvent) {
-    val descriptors = getAllDescriptors()
+    val descriptors = allDescriptors
 
     if (myDynamicTitle) {
-      val uiModel = descriptors.iterator().next()
-      e.getPresentation().setText(IdeBundle.message(
+      val uiModel = descriptors.first()
+      e.presentation.text = IdeBundle.message(
         if (descriptors.size == 1 && uiModel.isBundledUpdate)
           "plugins.configurable.uninstall.bundled.update"
         else
-          "plugins.configurable.uninstall"))
+          "plugins.configurable.uninstall"
+      )
     }
 
     val disabled = descriptors.isEmpty() ||
-                   ContainerUtil.exists<PluginUiModel?>(descriptors, PluginUiModel::isBundled) ||
-                   ContainerUtil.exists<PluginUiModel?>(descriptors, Condition { it: PluginUiModel? ->
-                     myPluginModelFacade.isUninstalled(
-                       it!!.pluginId)
-                   })
-    e.getPresentation().setEnabledAndVisible(!disabled)
+                   descriptors.any { it.isBundled } ||
+                   descriptors.any { myPluginModelFacade.isUninstalled(it.pluginId) }
 
+    e.presentation.setEnabledAndVisible(!disabled)
     setShortcutSet(SHORTCUT_SET, myShowShortcut)
   }
 
@@ -69,21 +56,21 @@ internal class UninstallAction<C : JComponent?>(
   override fun actionPerformed(e: AnActionEvent) {
     val selection = getSelection()
 
-    val toDeleteWithAsk: MutableList<PluginUiModel> = ArrayList<PluginUiModel>()
-    val toDelete: MutableList<PluginUiModel> = ArrayList<PluginUiModel>()
+    val toDeleteWithAsk = mutableListOf<PluginUiModel>()
+    val toDelete = mutableListOf<PluginUiModel>()
 
-    val pluginIds = ContainerUtil.map<PluginUiModel?, PluginId?>(selection.values, PluginUiModel::pluginId)
-    val prepareToUninstallResult = getInstance().prepareToUninstall(pluginIds)
-    for (entry in selection.entries) {
-      val model: PluginUiModel = entry.value!!
-      val dependents: MutableList<String?> = ContainerUtil.map<PluginNameAndId, String?>(
-        prepareToUninstallResult.dependants.get(model.pluginId), com.intellij.util.Function { it: PluginNameAndId -> it.name })
+    val pluginIds = selection.values.map { it.pluginId }
+    val prepareToUninstallResult = UiPluginManager.getInstance().prepareToUninstall(pluginIds)
+
+    for ((component, model) in selection) {
+      val dependents = prepareToUninstallResult.dependants[model.pluginId]?.map { it.name } ?: emptyList()
+
       if (dependents.isEmpty()) {
         toDeleteWithAsk.add(model)
       }
       else {
         val bundledUpdate = prepareToUninstallResult.isPluginBundled(model.pluginId)
-        if (Companion.askToUninstall(getUninstallDependentsMessage(model, dependents, bundledUpdate), entry.key!!, bundledUpdate)) {
+        if (askToUninstall(getUninstallDependentsMessage(model, dependents, bundledUpdate), component!!, bundledUpdate)) {
           toDelete.add(model)
         }
       }
@@ -91,68 +78,79 @@ internal class UninstallAction<C : JComponent?>(
 
     var runFinishAction = false
 
-    if (!toDeleteWithAsk.isEmpty()) {
-      val bundledUpdate = toDeleteWithAsk.size == 1
-                          && prepareToUninstallResult.isPluginBundled(toDeleteWithAsk.get(0).pluginId)
+    if (toDeleteWithAsk.isNotEmpty()) {
+      val bundledUpdate = toDeleteWithAsk.size == 1 && prepareToUninstallResult.isPluginBundled(toDeleteWithAsk.first().pluginId)
       if (askToUninstall(getUninstallAllMessage(toDeleteWithAsk, bundledUpdate), myUiParent, bundledUpdate)) {
-        for (descriptor in toDeleteWithAsk) {
-          myPluginModelFacade.uninstallAndUpdateUi(descriptor)
-        }
+        toDeleteWithAsk.forEach(myPluginModelFacade::uninstallAndUpdateUi)
         runFinishAction = true
       }
     }
 
-    for (descriptor in toDelete) {
-      myPluginModelFacade.uninstallAndUpdateUi(descriptor)
-    }
+    toDelete.forEach(myPluginModelFacade::uninstallAndUpdateUi)
 
-    if (runFinishAction || !toDelete.isEmpty()) {
+    if (runFinishAction || toDelete.isNotEmpty()) {
       myOnFinishAction.run()
     }
   }
 
   companion object {
-    private val SHORTCUT_SET: ShortcutSet
+    private val SHORTCUT_SET: ShortcutSet = EventHandler.getShortcuts(IdeActions.ACTION_EDITOR_DELETE)
+                                            ?: CustomShortcutSet(EventHandler.DELETE_CODE)
 
-    init {
-      val deleteShortcutSet = EventHandler.getShortcuts(IdeActions.ACTION_EDITOR_DELETE)
-      SHORTCUT_SET = if (deleteShortcutSet != null) deleteShortcutSet else CustomShortcutSet(EventHandler.DELETE_CODE)
-    }
-
-    private fun isBundledUpdate(selection: MutableList<*>, pluginDescriptor: Function<Any?, PluginUiModel?>?): Boolean {
-      return StreamEx.of(selection)
-        .map<PluginUiModel?>(pluginDescriptor)
-        .filter { obj: PluginUiModel? -> Objects.nonNull(obj) }
-        .allMatch(PluginUiModel::isBundledUpdate)
-    }
-
-    private fun getUninstallAllMessage(descriptors: MutableCollection<PluginUiModel>, bundledUpdate: Boolean): @Nls String {
-      if (descriptors.size == 1) {
-        val descriptor = descriptors.iterator().next()
-        return IdeBundle.message("prompt.uninstall.plugin", descriptor.name, if (bundledUpdate) 1 else 0)
+    private fun getUninstallAllMessage(descriptors: Collection<PluginUiModel>, bundledUpdate: Boolean): @Nls String {
+      return if (descriptors.size == 1) {
+        val descriptor = descriptors.first()
+        IdeBundle.message("prompt.uninstall.plugin", descriptor.name, if (bundledUpdate) 1 else 0)
       }
-      return IdeBundle.message("prompt.uninstall.several.plugins", descriptors.size)
+      else {
+        IdeBundle.message("prompt.uninstall.several.plugins", descriptors.size)
+      }
     }
 
     private fun getUninstallDependentsMessage(
       descriptor: PluginUiModel,
-      dependents: MutableList<String?>,
-      bundledUpdate: Boolean
+      dependents: List<String>,
+      bundledUpdate: Boolean,
     ): @Nls String {
-      val listOfDeps: String?
-      String > StringUtil.join<String?>(dependents,
-                                        com.intellij.util.Function { plugin: String? -> "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + plugin },
-                                        "<br>")
-      val message = IdeBundle.message("dialog.message.following.plugin.depend.on",
-                                      dependents.size,
-                                      descriptor.name,
-                                      listOfDeps,
-                                      if (bundledUpdate) 1 else 0)
+      val listOfDeps = StringUtil.join(
+        dependents,
+        { plugin -> "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$plugin" },
+        "<br>"
+      )
+      val message = IdeBundle.message(
+        "dialog.message.following.plugin.depend.on",
+        dependents.size,
+        descriptor.name,
+        listOfDeps,
+        if (bundledUpdate) 1 else 0
+      )
       return XmlStringUtil.wrapInHtml(message)
     }
 
     private fun askToUninstall(message: @Nls String, parentComponent: JComponent, bundledUpdate: Boolean): Boolean {
-      return yesNo(IdeBundle.message("title.plugin.uninstall", if (bundledUpdate) 1 else 0), message).ask(parentComponent)
+      return MessageDialogBuilder.yesNo(
+        IdeBundle.message("title.plugin.uninstall", if (bundledUpdate) 1 else 0),
+        message
+      ).ask(parentComponent)
     }
+
   }
+
 }
+
+@Suppress("UNCHECKED_CAST")
+private fun <C> isBundledUpdate(selection: MutableList<C>, pluginDescriptor: Function<C, PluginUiModel?>): Boolean {
+  return selection
+    .mapNotNull { element -> pluginDescriptor.apply(element) }
+    .all(PluginUiModel::isBundledUpdate)
+}
+
+private fun <C> getText(
+  selection: MutableList<C>,
+  pluginModelGetter: Function<C, PluginUiModel?>,
+): @Nls String = IdeBundle.message(
+  if (isBundledUpdate(selection, pluginModelGetter))
+    "plugins.configurable.uninstall.bundled.update"
+  else
+    "plugins.configurable.uninstall"
+)

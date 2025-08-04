@@ -1142,6 +1142,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun createUninstallAction(): UninstallAction<PluginDetailsPageComponent> {
     return UninstallAction(
+      coroutineScope,
       pluginModel, false, this, java.util.List.of(this),
       { obj: PluginDetailsPageComponent -> obj.descriptorForActions },
       {

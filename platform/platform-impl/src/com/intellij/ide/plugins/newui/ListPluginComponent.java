@@ -972,7 +972,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   public void createPopupMenu(@NotNull DefaultActionGroup group,
-                              @NotNull List<? extends ListPluginComponent> selection) {
+                              @NotNull List<ListPluginComponent> selection) {
     if (selection.isEmpty()) {
       return;
     }
@@ -1063,7 +1063,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   public void handleKeyAction(@NotNull KeyEvent event,
-                              @NotNull List<? extends ListPluginComponent> selection) {
+                              @NotNull List<ListPluginComponent> selection) {
     if (selection.isEmpty()) {
       return;
     }
@@ -1267,9 +1267,9 @@ public final class ListPluginComponent extends JPanel {
     });
   }
 
-  private @NotNull UninstallAction<ListPluginComponent> createUninstallAction(@NotNull List<? extends ListPluginComponent> selection,
-                                                                              @NotNull Function<? super ListPluginComponent, PluginUiModel> function) {
-    return new UninstallAction<>(myModelFacade, true, this, selection, function, () -> {
+  private @NotNull UninstallAction<ListPluginComponent> createUninstallAction(@NotNull List<ListPluginComponent> selection,
+                                                                              @NotNull Function<ListPluginComponent, PluginUiModel> function) {
+    return new UninstallAction<>(myCoroutineScope, myModelFacade, true, this, selection, function, () -> {
     });
   }
 
