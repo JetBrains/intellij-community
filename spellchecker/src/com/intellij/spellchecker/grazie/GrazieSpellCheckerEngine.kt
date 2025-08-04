@@ -138,7 +138,7 @@ class GrazieSpellCheckerEngine(
 
   override fun isDictionaryLoad(name: String): Boolean = adapter.containsSource(name)
 
-  override fun getDictionaryNames(): Set<String> = adapter.names
+  override fun getDictionaryNames(): Set<String> = adapter.dictionaryNames
 
   override fun loadDictionary(loader: Loader) {
     this.loader.loadWordList(loader, adapter::addList)

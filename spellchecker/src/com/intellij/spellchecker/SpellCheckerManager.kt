@@ -223,8 +223,6 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
 
   fun removeDictionary(path: String): Unit = spellChecker!!.removeDictionary(path)
 
-  fun isDictionaryLoad(path: String): Boolean = spellChecker!!.isDictionaryLoad(path)
-
   fun hasProblem(word: String): Boolean {
     return !spellChecker!!.isCorrect(word) && !isCorrectExtensionWord(word)
   }

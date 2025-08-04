@@ -12,6 +12,9 @@ internal abstract class EditableWordListAdapter {
   val names: Set<String>
     get() = aggregator.keys + dictionaries.keys
 
+  val dictionaryNames: Set<String>
+   get() = dictionaries.keys
+
   fun addDictionary(dictionary: Dictionary) {
     dictionaries[dictionary.name] = dictionary
   }
