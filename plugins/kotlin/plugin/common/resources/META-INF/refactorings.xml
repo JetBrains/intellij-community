@@ -51,6 +51,7 @@
     <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticParameterRenamerFactory"/>
     <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticInheritorRenamerFactory"/>
     <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticOverloadsRenamerFactory"/>
+    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinAutomaticTestRenamerFactory"/>
 
     <renamePsiElementProcessor id="KotlinAwareJavaGetter"
                                implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinAwareJavaGetterRenameProcessor"

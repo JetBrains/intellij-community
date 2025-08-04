@@ -112,8 +112,6 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.rename.K1RenameRefactoringSupport"
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport"/>
 
-    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinAutomaticTestRenamerFactory"/>
-
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlinePropertyHandler"/>
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlineNamedFunctionHandler"/>
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlineAnonymousFunctionHandler"/>
