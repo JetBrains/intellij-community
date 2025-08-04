@@ -30,6 +30,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import org.jetbrains.plugins.terminal.util.ShellNameUtil
 import org.jetbrains.plugins.terminal.util.terminalApplicationScope
+import java.lang.ref.WeakReference
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.time.Duration
@@ -67,14 +68,15 @@ internal fun startProcess(
   envs: Map<String, String>,
   initialWorkingDirectory: Path,
   initialTermSize: TermSize,
-): ShellProcessHolder {
+): Pair<PtyProcess, ShellProcessHolder> {
   return runBlockingMaybeCancellable {
     val context = buildStartupEelContext(initialWorkingDirectory, command)
     val eelApi = context.eelDescriptor.toEelApi()
     val remoteCommand = convertCommandToRemote(eelApi, command)
     val workingDirectory = context.workingDirectoryProvider(eelApi)
     val process = doStartProcess(eelApi, remoteCommand, envs, workingDirectory, initialTermSize)
-    ShellProcessHolder(process, eelApi)
+    val ptyProcess = process.convertToJavaProcess() as PtyProcess
+    ptyProcess to ShellProcessHolder(process, WeakReference(ptyProcess), eelApi) 
   }
 }
 
@@ -188,11 +190,15 @@ private suspend fun doStartProcess(
 
 internal fun shouldUseEelApi(): Boolean = Registry.`is`("terminal.use.EelApi", true)
 
-internal class ShellProcessHolder(private val shellEelProcess: EelProcess, private val eelApi: EelApi) {
-  val ptyProcess: PtyProcess = shellEelProcess.convertToJavaProcess() as PtyProcess
+internal class ShellProcessHolder(
+  private val shellEelProcess: EelProcess,
+  private val ptyProcessRef: WeakReference<PtyProcess>,
+  private val eelApi: EelApi,
+) {
   val isPosix: Boolean get() = eelApi.platform.isPosix
 
   fun terminatePosixShell() {
+    val ptyProcess = ptyProcessRef.get() ?: return
     terminalApplicationScope().launch(Dispatchers.IO) {
       val shellPid = shellEelProcess.pid
       val killProcess = eelApi.exec.spawnProcess("kill").args("-HUP", shellPid.value.toString()).eelIt()

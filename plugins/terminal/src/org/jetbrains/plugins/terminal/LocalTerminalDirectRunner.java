@@ -13,6 +13,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
+import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +48,17 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   protected final Charset myDefaultCharset;
 
+  /**
+   * A workaround to pass some additional information ({@link ShellProcessHolder})
+   * from {@link #createProcess(ShellStartupOptions)} to {@link #createTtyConnector(PtyProcess)}.
+   * <p>
+   * This map references {@code PtyProcess} objects weakly, so no memory leaks are possible
+   * as long as {@code ShellProcessHolder} and {@code PtyProcess} are not strongly reachable
+   * from other GC roots.
+   * <p>
+   * TODO merge {@link #createProcess(ShellStartupOptions)} and {@link #createTtyConnector(PtyProcess)} into
+   *     a single {@code createTtyConnector(ShellStartupOptions)} and remove this workaround
+   */
   private final Map<PtyProcess, ShellProcessHolder> myProcessHolderMap = CollectionFactory.createConcurrentWeakMap();
 
   public LocalTerminalDirectRunner(Project project) {
@@ -119,9 +131,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       long startNano = System.nanoTime();
       PtyProcess process;
       if (workingDirPath != null && shouldUseEelApi()) {
-        ShellProcessHolder processWrapper = startProcess(List.of(command), envs, workingDirPath, Objects.requireNonNull(initialTermSize));
-        process = processWrapper.getPtyProcess();
-        myProcessHolderMap.put(process, processWrapper);
+        Pair<PtyProcess, ShellProcessHolder> processPair = startProcess(
+          List.of(command), envs, workingDirPath, Objects.requireNonNull(initialTermSize)
+        );
+        myProcessHolderMap.put(processPair.getFirst(), processPair.getSecond());
+        process = processPair.getFirst();
       }
       else {
         process = (PtyProcess)LocalProcessService.getInstance().startPtyProcess(
