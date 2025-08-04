@@ -814,6 +814,14 @@ public final class FileManagerImpl implements FileManagerEx {
     }
     myTempProviders.put(file, context, null);
     try {
+      if (CodeInsightContexts.isSharedSourceSupportEnabled(myManager.getProject()) &&
+          context != CodeInsightContexts.defaultContext() &&
+          !CodeInsightContextManager.getInstance(myManager.getProject()).getCodeInsightContexts(file).contains(context)
+      ) {
+        // invalid PsiFile if its context is not associated with the file anymore
+        return false;
+      }
+
       FileViewProvider recreated = createFileViewProvider(file, true);
       myTempProviders.put(file, context, recreated);
       return areViewProvidersEquivalent(viewProvider, recreated) &&
