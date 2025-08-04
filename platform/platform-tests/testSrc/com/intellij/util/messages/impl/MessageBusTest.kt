@@ -687,7 +687,7 @@ class MessageBusTest : MessageBusOwner {
   }
 }
 
-private class DoNoRethrowMessageBusErrors : LoggedErrorProcessorEnabler() {
+private class DoNoRethrowMessageBusErrors : LoggedErrorProcessorEnabler {
   override fun createErrorProcessor(): LoggedErrorProcessor {
     return object : LoggedErrorProcessor() {
       override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
