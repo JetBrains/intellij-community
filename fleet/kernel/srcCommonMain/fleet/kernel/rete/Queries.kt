@@ -514,6 +514,18 @@ fun <T> Query<Many, T>.matches(): Set<T> =
     }
   }
 
+fun <T> StateQuery<T>.match(): T =
+  let { query ->
+    DummyQueryScope.run {
+      val hs = HashSet<T>()
+      query.producer().collect { token ->
+        require(token.added)
+        hs.add(token.match.value)
+      }
+      hs.single()
+    }
+  }
+
 /**
  * Yields a [Unit] when both [this] and [rhs] supplied theirs
  * */
