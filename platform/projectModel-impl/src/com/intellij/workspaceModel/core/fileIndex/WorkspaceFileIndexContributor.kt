@@ -98,9 +98,9 @@ sealed interface DependencyDescription<E : WorkspaceEntity> {
 
   /**
    * Indicates that the contributor must be called for the entities [E] when any entity of type [A] is added, removed or replaced.
-   * This is a more general option, but [OnParent] and [OnChild] should be used whenever possible, as they are more efficient.
+   * This is a more generic option, but [OnParent] and [OnChild] should be used whenever possible, as they are more efficient.
    */
-  data class OnEntity<E : WorkspaceEntity, A : WorkspaceEntity>(
+  data class OnArbitraryEntity<E : WorkspaceEntity, A : WorkspaceEntity>(
     /** Type of entity */
     val entityClass: Class<A>,
     /** Computes dependant entities*/

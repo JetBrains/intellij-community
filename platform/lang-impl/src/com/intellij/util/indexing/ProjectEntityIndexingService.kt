@@ -371,11 +371,11 @@ class ProjectEntityIndexingService(
       entityStorage: EntityStorage,
     ) {
       for (dependency in contributor.dependenciesOnOtherEntities) {
-        if (dependency !is DependencyDescription.OnEntity<*, *> || entityClass != dependency.entityClass) {
+        if (dependency !is DependencyDescription.OnArbitraryEntity<*, *> || entityClass != dependency.entityClass) {
           continue
         }
         @Suppress("UNCHECKED_CAST")
-        dependency as DependencyDescription.OnEntity<C, E>
+        dependency as DependencyDescription.OnArbitraryEntity<C, E>
 
         val removedEntities: MutableSet<C> = mutableSetOf()
         val addedEntities: MutableSet<C> = mutableSetOf()

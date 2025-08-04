@@ -332,11 +332,11 @@ internal class WorkspaceFileIndexDataImpl(
                                                                                     event, removedEntities, addedEntities)
         is DependencyDescription.OnChild<*, *> -> collectEntitiesWithChangedChild(dependency as DependencyDescription.OnChild<E, *>,
                                                                                   event, removedEntities, addedEntities)
-        is DependencyDescription.OnEntity<*, *> -> processOnEntityDependency(dependency as DependencyDescription.OnEntity<E, *>,
-                                                                             event,
-                                                                             removedEntities,
-                                                                             addedEntities,
-                                                                             contributor.entityClass,)
+        is DependencyDescription.OnArbitraryEntity<*, *> -> processOnArbitraryEntityDependency(dependency as DependencyDescription.OnArbitraryEntity<E, *>,
+                                                                                               event,
+                                                                                               removedEntities,
+                                                                                               addedEntities,
+                                                                                               contributor.entityClass,)
         is DependencyDescription.OnReference<*, *> -> processOnReference(dependency,
                                                                          event,
                                                                          removedEntities as MutableSet<WorkspaceEntity>,
@@ -386,11 +386,11 @@ internal class WorkspaceFileIndexDataImpl(
       .mapNotNullTo(removedEntities) { it.resolve(event.storageBefore) }
   }
 
-  private fun <R: WorkspaceEntity, E: WorkspaceEntity> processOnEntityDependency(dependency: DependencyDescription.OnEntity<R, E>,
-                                                                                 event: VersionedStorageChange,
-                                                                                 removedEntities: MutableSet<R>,
-                                                                                 addedEntities: MutableSet<R>,
-                                                                                 dependantClass: Class<R>,) {
+  private fun <R: WorkspaceEntity, E: WorkspaceEntity> processOnArbitraryEntityDependency(dependency: DependencyDescription.OnArbitraryEntity<R, E>,
+                                                                                          event: VersionedStorageChange,
+                                                                                          removedEntities: MutableSet<R>,
+                                                                                          addedEntities: MutableSet<R>,
+                                                                                          dependantClass: Class<R>,) {
 
     val dependantEntitiesInStorageAfter by lazy(LazyThreadSafetyMode.NONE) { event.storageAfter.entities(dependantClass).toSet() }
     val dependantEntitiesInStorageBefore by lazy(LazyThreadSafetyMode.NONE) { event.storageBefore.entities(dependantClass).toSet() }
@@ -400,6 +400,8 @@ internal class WorkspaceFileIndexDataImpl(
         val dependantEntities = dependency.dependantEntitiesGetter(it)
         for (entity in dependantEntities) {
           removedEntities.add(entity)
+          // We might remove a file set for an entity that is still in the workspace model
+          // in that case we want to register its file sets
           if (dependantEntitiesInStorageAfter.contains(entity)) {
             addedEntities.add(entity)
           }
@@ -409,6 +411,8 @@ internal class WorkspaceFileIndexDataImpl(
         val dependantEntities = dependency.dependantEntitiesGetter(it)
         for (entity in dependantEntities) {
           addedEntities.add(entity)
+          // We might register a file set for an entity that is already having registered file sets.
+          // in that case we need to remove its file sets first to avoid duplication
           if (dependantEntitiesInStorageBefore.contains(entity)) {
             removedEntities.add(entity)
           }

@@ -1,4 +1,15 @@
 *:com.intellij.workspaceModel.core.fileIndex.DependencyDescription
+*f:com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnArbitraryEntity
+- com.intellij.workspaceModel.core.fileIndex.DependencyDescription
+- <init>(java.lang.Class,kotlin.jvm.functions.Function1):V
+- f:component1():java.lang.Class
+- f:component2():kotlin.jvm.functions.Function1
+- f:copy(java.lang.Class,kotlin.jvm.functions.Function1):com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnArbitraryEntity
+- bs:copy$default(com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnArbitraryEntity,java.lang.Class,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnArbitraryEntity
+- equals(java.lang.Object):Z
+- f:getDependantEntitiesGetter():kotlin.jvm.functions.Function1
+- f:getEntityClass():java.lang.Class
+- hashCode():I
 *f:com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnChild
 - com.intellij.workspaceModel.core.fileIndex.DependencyDescription
 - <init>(java.lang.Class,kotlin.jvm.functions.Function1):V
@@ -9,17 +20,6 @@
 - equals(java.lang.Object):Z
 - f:getChildClass():java.lang.Class
 - f:getParentGetter():kotlin.jvm.functions.Function1
-- hashCode():I
-*f:com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnEntity
-- com.intellij.workspaceModel.core.fileIndex.DependencyDescription
-- <init>(java.lang.Class,kotlin.jvm.functions.Function1):V
-- f:component1():java.lang.Class
-- f:component2():kotlin.jvm.functions.Function1
-- f:copy(java.lang.Class,kotlin.jvm.functions.Function1):com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnEntity
-- bs:copy$default(com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnEntity,java.lang.Class,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnEntity
-- equals(java.lang.Object):Z
-- f:getDependantEntitiesGetter():kotlin.jvm.functions.Function1
-- f:getEntityClass():java.lang.Class
 - hashCode():I
 *f:com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnParent
 - com.intellij.workspaceModel.core.fileIndex.DependencyDescription
