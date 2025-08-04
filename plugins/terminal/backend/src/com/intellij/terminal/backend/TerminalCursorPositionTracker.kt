@@ -45,7 +45,7 @@ class TerminalCursorPositionTracker(
     else null
   }
 
-  private fun doGetCursorPositionUpdate(): TerminalCursorPositionChangedEvent? {
+  private fun doGetCursorPositionUpdate(): TerminalCursorPositionChangedEvent {
     check(cursorPositionChanged) { "It is expected that this method is called only if something is changed" }
 
     var line = cursorY
