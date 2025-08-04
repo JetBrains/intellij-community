@@ -127,14 +127,14 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
       FileBasedIndex.getInstance().getContainingFiles(NAME, getDependsIndexingKey(file.getName()),
                                                       GlobalSearchScopesCore.projectProductionScope(project));
 
-    final Collection<VirtualFile> contentFiles = findContentDependsTo(project, file);
+    final Collection<VirtualFile> contentFiles = findFilesIncludingContentModule(project, file);
 
     Collection<VirtualFile> allFiles = new ArrayList<>(dependsFiles);
     allFiles.addAll(contentFiles);
     return allFiles;
   }
 
-  public static Collection<VirtualFile> findContentDependsTo(Project project, VirtualFile file) {
+  public static Collection<VirtualFile> findFilesIncludingContentModule(Project project, VirtualFile file) {
     return FileBasedIndex.getInstance().getContainingFiles(NAME, getContentIndexingKey(file.getNameWithoutExtension()),
                                                       GlobalSearchScopesCore.projectProductionScope(project));
   }

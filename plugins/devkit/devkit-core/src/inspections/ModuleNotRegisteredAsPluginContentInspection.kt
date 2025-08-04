@@ -50,7 +50,7 @@ internal class ModuleNotRegisteredAsPluginContentInspection : LocalInspectionToo
 
   private fun isNotReferencedAsContentModule(xmlFile: XmlFile): Boolean {
     val moduleVirtualFile = xmlFile.virtualFile ?: return false
-    return PluginIdDependenciesIndex.findContentDependsTo(xmlFile.project, moduleVirtualFile).none()
+    return PluginIdDependenciesIndex.findFilesIncludingContentModule(xmlFile.project, moduleVirtualFile).none()
   }
 
   private fun fixIfPluginXmlFound(file: XmlFile, moduleName: String): Array<out LocalQuickFix> {
