@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
-import java.lang.reflect.Method
 
 /**
  * If extension provides eel for parametrized tests, it must call [makeFixturesEelAware] and must be registered *before* [TestFixtures].
@@ -23,7 +22,7 @@ fun interface EelForFixturesProvider {
   /**
    * @return eel for the certain [invocationContext] of parametrized test)
    */
-  fun getEel(invocationContext: ReflectiveInvocationContext<Method>): EelApi
+  fun getEel(invocationContext: ReflectiveInvocationContext<*>): EelApi
 
   companion object {
 

@@ -12,9 +12,10 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.platform.commons.util.AnnotationUtils
 import org.junitpioneer.jupiter.cartesian.CartesianParameterArgumentsProvider
-import java.lang.reflect.Method
+import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Parameter
 import java.util.stream.Stream
+import kotlin.jvm.optionals.getOrElse
 
 @TestOnly
 internal class EelArgumentsProvider : ArgumentsProvider {
@@ -33,14 +34,18 @@ internal class EelCartesianArgumentsProvider : CartesianParameterArgumentsProvid
 @TestOnly
 private fun getProvidersAsStream(context: ExtensionContext): Stream<EelHolder> {
   val providers: Array<EelHolder> = arrayOf<EelHolder>(LocalEelHolder) + getIjentTestProviders().flatMap { provider ->
-    createHolders(provider, context.testMethod.get())
+
+    val annotatedElement: AnnotatedElement = arrayOf(context.testMethod, context.testClass).first { it.isPresent }.getOrElse {
+      error("No method nor class has ${EelHolder::class} argument")
+    }
+    createHolders(provider, annotatedElement)
   }.toTypedArray<EelHolder>()
   return Stream.of(*providers)
 }
 
-private fun <T : Annotation> createHolders(provider: EelIjentTestProvider<T>, testMethod: Method): List<EelHolderImpl<T>> {
+private fun <T : Annotation> createHolders(provider: EelIjentTestProvider<T>, annotatedElement: AnnotatedElement): List<EelHolderImpl<T>> {
   val annotations =
-    AnnotationUtils.findRepeatableAnnotations(testMethod, provider.mandatoryAnnotationClass.java)
+    AnnotationUtils.findRepeatableAnnotations(annotatedElement, provider.mandatoryAnnotationClass.java)
   return if (annotations.isEmpty()) {
     listOf(EelHolderImpl(provider, null))
   }

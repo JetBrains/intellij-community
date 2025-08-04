@@ -9,6 +9,7 @@ import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.*
 import org.junit.platform.commons.support.HierarchyTraversalMode
 import org.junit.platform.commons.support.ReflectionSupport
+import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.util.function.Predicate
@@ -33,6 +34,16 @@ internal class TestFixtureExtension : BeforeAllCallback,
     }
   }
 
+  override fun <T : Any?> interceptTestClassConstructor(invocation: InvocationInterceptor.Invocation<T?>?, invocationContext: ReflectiveInvocationContext<Constructor<T>>, extensionContext: ExtensionContext): T? {
+    val instance = super.interceptTestClassConstructor(invocation, invocationContext, extensionContext)
+    val eelForFixturesProvider = extensionContext.getEelForParametrizedTestProvider()
+    if (eelForFixturesProvider != null) {
+      before(extensionContext, static = false, eelApi = eelForFixturesProvider.getEel(invocationContext), instance=instance)
+
+    }
+    return instance
+  }
+
   override fun interceptTestTemplateMethod(invocation: InvocationInterceptor.Invocation<Void>, invocationContext: ReflectiveInvocationContext<Method>, extensionContext: ExtensionContext) {
     val eelForFixturesProvider = extensionContext.getEelForParametrizedTestProvider()
     if (eelForFixturesProvider != null) {
@@ -40,15 +51,11 @@ internal class TestFixtureExtension : BeforeAllCallback,
     }
 
     super.interceptTestTemplateMethod(invocation, invocationContext, extensionContext)
-
-    if (eelForFixturesProvider != null) {
-      after(extensionContext)
-    }
   }
 
-  private fun before(context: ExtensionContext, static: Boolean, eelApi: EelApi? = null) {
+  private fun before(context: ExtensionContext, static: Boolean, eelApi: EelApi? = null, instance: Any? = null) {
     val testClass: Class<*> = context.testClass.getOrNull() ?: return
-    val testInstance = context.testInstance.getOrNull()
+    val testInstance = instance ?: context.testInstance.getOrNull()
 
     @OptIn(DelicateCoroutinesApi::class)
     val testScope = GlobalScope.childScope(context.displayName)
@@ -66,9 +73,7 @@ internal class TestFixtureExtension : BeforeAllCallback,
   }
 
   override fun afterEach(context: ExtensionContext) {
-    if (context.getEelForParametrizedTestProvider() == null) {
       after(context)
-    }
   }
 
   override fun afterAll(context: ExtensionContext) {

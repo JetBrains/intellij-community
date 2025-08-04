@@ -14,13 +14,22 @@ import org.junit.jupiter.api.extension.ExtendWith
  * class MyTest {
  *     private val projectFixture = projectFixture() // these fixtures are
  *     private val tempDir = tempPathFixture() // are also sit on en eel, but only instance-level, not project level
- *   @ParametrizedTest
+ *   @ParametrizedTest // JUnit5 Pioneer also supported
  *   @EelSource // With Junit5Pioneer annotate parameter
  *   fun myTest(eh:EelHolder) {
  *   eh.eel
  *   }
  * }
+ *  // OR use parametrized class (No pioneer, plain JUnit5 only)
+ * @TestApplicationWithEel
+ * @ParameterizedClass
+ * class EelParametrizedClassShowCaseTest(val eelProvider: EelHolder) {
+ * // tests go here
+ * }
+ *
  * ```
+ *
+ *
  *
  * Warning: You need to provide a special vm option, most likely
  * ```
@@ -45,4 +54,5 @@ import org.junit.jupiter.api.extension.ExtendWith
   EelInterceptor::class,
 )
 @TestApplication
+@EelSource
 annotation class TestApplicationWithEel(vararg val osesMayNotHaveRemoteEels: OS)
