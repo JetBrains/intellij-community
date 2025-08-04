@@ -1656,8 +1656,10 @@ private fun <X> runBlockingInitialization(action: suspend CoroutineScope.() -> X
         lockPermitContext + // capture whether the caller holds the read lock
         (currentTemporaryThreadContextOrNull() ?: EmptyCoroutineContext) + // propagate modality state/CurrentlyInitializingInstance
         NestedBlockingEventLoop(Thread.currentThread()) // avoid processing events from outer runBlocking (if any)
-      @OptIn(InternalCoroutinesApi::class)
-      IntellijCoroutines.runBlockingWithParallelismCompensation(contextForInitializer, action)
+      resetThreadLocalEventLoop {
+        @OptIn(InternalCoroutinesApi::class)
+        IntellijCoroutines.runBlockingWithParallelismCompensation(contextForInitializer, action)
+      }
     }
     catch (e: ProcessCanceledException) {
       throw e
@@ -1667,6 +1669,24 @@ private fun <X> runBlockingInitialization(action: suspend CoroutineScope.() -> X
     }
     finally {
       cleanup.finish()
+    }
+  }
+}
+
+/**
+ * Coroutines paranoidally try to shutdown the existing event loop if they think that there is nothing to do in continuation-interceptor-based event loop
+ * So we counter their paranoia by resetting the thread-local loop before running our logic.
+ */
+@Suppress("INVISIBLE_REFERENCE")
+private inline fun <T> resetThreadLocalEventLoop(action: () -> T): T {
+  val existingEventLoop = ThreadLocalEventLoop.currentOrNull()
+  ThreadLocalEventLoop.resetEventLoop()
+  try {
+    return action()
+  }
+  finally {
+    if (existingEventLoop != null) {
+      ThreadLocalEventLoop.setEventLoop(existingEventLoop)
     }
   }
 }

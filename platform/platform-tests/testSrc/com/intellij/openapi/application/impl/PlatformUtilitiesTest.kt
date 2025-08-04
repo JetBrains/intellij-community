@@ -11,6 +11,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -31,7 +32,9 @@ import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import javax.swing.JComponent
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 class PlatformUtilitiesTest {
@@ -393,6 +396,24 @@ class PlatformUtilitiesTest {
           assertTrue { Cancellation.currentJob()?.isActive ?: true }
           resolvedPromise(42)
         }
+    }
+  }
+
+  @Test
+  fun `unconfined loop does not break modal dialogs`(): Unit = timeoutRunBlocking(timeout = 100.seconds, context = Dispatchers.EDT) {
+    withContext(Dispatchers.Unconfined) {
+      val dialog: DialogWrapper = object : DialogWrapper(null) {
+        override fun createCenterPanel(): JComponent? {
+          return null
+        }
+
+        // a slight hack: headless dialogs are disposed in their event loop
+        // so we execute a test in `dispose`
+        override fun dispose() {
+          launch(Dispatchers.EdtImmediate) { }.asCompletableFuture().join()
+        }
+      }
+      dialog.show()
     }
   }
 

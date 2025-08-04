@@ -412,10 +412,12 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
         // Unblock `getNextEvent()` in case it's blocked.
         SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
       }
-      IdeEventQueue.getInstance().pumpEventsForHierarchy(
-        exitCondition = modalJob::isCompleted,
-        modalComponent = deferredDialog::modalComponent,
-      )
+      resetThreadLocalEventLoop {
+        IdeEventQueue.getInstance().pumpEventsForHierarchy(
+          exitCondition = modalJob::isCompleted,
+          modalComponent = deferredDialog::modalComponent,
+        )
+      }
       try {
         @OptIn(ExperimentalCoroutinesApi::class)
         taskJob.getCompleted().getOrThrow()
@@ -423,6 +425,24 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
       finally {
         cleanup.finish()
       }
+    }
+  }
+}
+
+/**
+ * We are installing a nested _modal_ event loop, so the EDT coroutines launched in immediate dispatcher must go to the modal loop,
+ * and not to the unconfined loop as they do now.
+ */
+@Suppress("INVISIBLE_REFERENCE")
+private inline fun <T> resetThreadLocalEventLoop(action: () -> T): T {
+  val existingEventLoop = ThreadLocalEventLoop.currentOrNull()
+  ThreadLocalEventLoop.resetEventLoop()
+  try {
+    return action()
+  }
+  finally {
+    if (existingEventLoop != null) {
+      ThreadLocalEventLoop.setEventLoop(existingEventLoop)
     }
   }
 }

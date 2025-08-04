@@ -50,12 +50,15 @@ import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import kotlin.Pair;
 import kotlin.Unit;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlin.jvm.functions.Function0;
+import kotlinx.coroutines.EventLoop;
+import kotlinx.coroutines.ThreadLocalEventLoop;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -479,7 +482,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     CompletableFuture<Void> result = new CompletableFuture<>();
     SplashManagerKt.hideSplash();
     try (
-      AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET)
+      AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET);
+      AccessToken ignore2 = resetCoroutinesEventLoop()
     ) {
       lockContextWrapper.accept(() -> {
         if (!isProgressDialog() &&
@@ -521,6 +525,20 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     StackingPopupDispatcher.getInstance().hidePersistentPopups();
     myDisposeActions.add(() -> StackingPopupDispatcher.getInstance().restorePersistentPopups());
+  }
+
+  @RequiresEdt
+  private static AccessToken resetCoroutinesEventLoop() {
+    EventLoop currentEventLoop = ThreadLocalEventLoop.INSTANCE.currentOrNull$kotlinx_coroutines_core();
+    ThreadLocalEventLoop.INSTANCE.resetEventLoop$kotlinx_coroutines_core();
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        if (currentEventLoop != null) {
+          ThreadLocalEventLoop.INSTANCE.resetEventLoop$kotlinx_coroutines_core();
+        }
+      }
+    };
   }
 
   private final class AnCancelAction extends AnAction implements DumbAware {

@@ -499,6 +499,17 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
       }
     }
   }
+
+  @Test
+  fun `undispatched event loop outside modal progress`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    withContext(Dispatchers.Unconfined) {
+      runWithModalProgressBlocking {
+        withContext(Dispatchers.EDT) {
+          launch(Dispatchers.EdtImmediate) { }
+        }
+      }
+    }
+  }
 }
 
 private fun CoroutineScope.runWithModalProgressBlockingCoroutine(action: suspend CoroutineScope.() -> Unit): Job {
