@@ -6,9 +6,10 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.model.Pointer
-import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.psi.PsiElementVisitor
@@ -92,6 +93,10 @@ internal class ModuleNotRegisteredAsPluginContentInspection : LocalInspectionToo
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val pluginXmlFile = pluginXmlFilePointer.dereference() ?: return
+      includeModuleInPluginXml(pluginXmlFile)
+    }
+
+    private fun includeModuleInPluginXml(pluginXmlFile: XmlFile) {
       val ideaPlugin = DescriptorUtil.getIdeaPlugin(pluginXmlFile) ?: return
       ideaPlugin.content.addModuleEntry().name.stringValue = addedModuleName
     }
@@ -100,9 +105,17 @@ internal class ModuleNotRegisteredAsPluginContentInspection : LocalInspectionToo
       return DevKitBundle.message("inspection.module.not.registered.as.plugin.content.fix.add", pluginId)
     }
 
-    // no preview needed
     override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
-      return IntentionPreviewInfo.EMPTY
+      val originalPluginXmlFile = pluginXmlFilePointer.dereference() ?: return IntentionPreviewInfo.EMPTY
+      val pluginXmlFileCopy = originalPluginXmlFile.copy() as XmlFile
+      includeModuleInPluginXml(pluginXmlFileCopy)
+      return IntentionPreviewInfo.CustomDiff(
+        XmlFileType.INSTANCE,
+        originalPluginXmlFile.name,
+        originalPluginXmlFile.text,
+        pluginXmlFileCopy.text,
+        true
+      )
     }
   }
 }
