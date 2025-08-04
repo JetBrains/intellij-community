@@ -758,7 +758,8 @@ internal class BazelBuildFileGenerator(
   private fun getLanguageLevel(module: JpsModule): String {
     val languageLevel = javaExtensionService.getLanguageLevel(module)
     return when {
-      languageLevel == LanguageLevel.JDK_1_7 || languageLevel == LanguageLevel.JDK_1_8 -> "8"
+      languageLevel == LanguageLevel.JDK_1_7 -> "7"
+      languageLevel == LanguageLevel.JDK_1_8 -> "8"
       languageLevel == LanguageLevel.JDK_1_9 || languageLevel == LanguageLevel.JDK_11 -> "11"
       languageLevel == LanguageLevel.JDK_17 -> "17"
       languageLevel != null -> error("Unsupported language level: $languageLevel")

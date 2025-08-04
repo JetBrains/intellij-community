@@ -1,6 +1,7 @@
 load("@rules_java//java:defs.bzl", "java_binary")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+create_kotlinc_options(name= "k7", jvm_target = "7")
 create_kotlinc_options(name= "k8", jvm_target = "8")
 create_kotlinc_options(name= "k11", jvm_target = "11")
 create_kotlinc_options(name = "k17", jvm_target = "17")
