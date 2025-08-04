@@ -23,11 +23,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import fleet.multiplatform.shims.ConcurrentHashMap
 import fleet.multiplatform.shims.newSingleThreadCoroutineDispatcher
-import fleet.util.async.Resource
-import fleet.util.async.onContext
 import kotlin.coroutines.*
-
-internal const val RPC_TIMEOUT = 60_000L
 
 private data class OutgoingRequest(
   val route: UID,
@@ -41,30 +37,28 @@ private data class OutgoingRequest(
 
 private data class OngoingRequest(val request: OutgoingRequest)
 
-fun rpcClient(
+@OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
+suspend fun <T> rpcClient(
   transport: Transport<TransportMessage>,
   origin: UID,
   requestInterceptor: RpcInterceptor = RpcInterceptor,
   abortOnError: Boolean,
-): Resource<IRpcClient> =
-  resource { cc ->
-    newSingleThreadCoroutineDispatcher("rpc-client-$origin").use { dispatcher ->
-      withSupervisor { supervisor ->
-        val client = RpcClient(
-          coroutineScope = supervisor + CoroutineName("RpcScope"),
-          transport = transport,
-          origin = origin,
-          requestInterceptor = requestInterceptor,
-        )
-        launch(start = CoroutineStart.ATOMIC, context = dispatcher) { client.work(abortOnError) }
-          .use {
-            cc(client)
-          }
-      }
+  body: suspend CoroutineScope.(RpcClient) -> T,
+): T =
+  newSingleThreadCoroutineDispatcher("rpc-client-$origin").use { dispatcher ->
+    withSupervisor { supervisor ->
+      val client = RpcClient(coroutineScope = supervisor + CoroutineName("RpcScope"),
+                             transport = transport,
+                             origin = origin,
+                             requestInterceptor = requestInterceptor)
+      launch(start = CoroutineStart.ATOMIC, context = dispatcher + CoroutineName("RpcClient")) { client.work(abortOnError) }
+        .use {
+          body(client)
+        }
     }
-  }.onContext(CoroutineName("rpcClient"))
+  }
 
-private class RpcClient(
+class RpcClient internal constructor(
   private val coroutineScope: CoroutineScope,
   private val transport: Transport<TransportMessage>,
   private val origin: UID,
@@ -118,6 +112,7 @@ private class RpcClient(
 
   companion object {
     internal val logger = KLoggers.logger(RpcClient::class)
+    internal const val RPC_TIMEOUT = 60_000L
   }
 
   private sealed class Event {

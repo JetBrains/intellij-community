@@ -36,6 +36,8 @@ fun RequestDispatcher.directRpcClient(
         origin = origin,
         requestInterceptor = interceptor,
         abortOnError = abortOnError,
-      ).use { cc(it) }
+      ) { rpcClient ->
+        cc(rpcClient)
+      }
     }
   }.span("directRpcClient").onContext(CoroutineName("directRpcClient"))

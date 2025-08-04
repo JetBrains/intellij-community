@@ -94,7 +94,7 @@ internal fun reconnectingRpcClient(attempts: StateFlow<ConnectionStatus<IRpcClie
     var disconnectedClient: IRpcClient? = null
 
     override suspend fun call(call: Call, publish: (SuspendInvocationHandler.CallResult) -> Unit) {
-      withTimeoutOrNull(RPC_TIMEOUT) {
+      withTimeoutOrNull(RpcClient.RPC_TIMEOUT) {
         mayHaveCalls = true
         val awaitConnection = coroutineContext[RpcStrategyContextElement]?.awaitConnection ?: true
         val client = if (awaitConnection) {
@@ -116,7 +116,7 @@ internal fun reconnectingRpcClient(attempts: StateFlow<ConnectionStatus<IRpcClie
           throw x
         }
         Unit
-      } ?: throw RpcTimeoutException("Client did not connect after ${RPC_TIMEOUT}", null)
+      } ?: throw RpcTimeoutException("Client did not connect after ${RpcClient.RPC_TIMEOUT}", null)
     }
   }
 }
