@@ -267,6 +267,14 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 - a:findRenameOffset(I,com.intellij.psi.PsiFile):java.lang.Integer
 - p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractSafeDeleteCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
+- com.intellij.codeInsight.completion.command.commands.HighlightCommandSkipper
+- <init>():V
+- p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
+- a:findElement(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.psi.PsiElement
+- p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- a:skipForHighlightCommand(com.intellij.codeInsight.completion.command.CompletionCommand):Z
 *a:com.intellij.codeInsight.completion.command.commands.AbstractShowUsagesActionCompletionCommandProvider
 - com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V
@@ -322,11 +330,23 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - getPriority():java.lang.Integer
 - getSynonyms():java.util.List
 - f:setActionId(java.lang.String):V
+*f:com.intellij.codeInsight.completion.command.commands.DirectInspectionFixCompletionCommand
+- com.intellij.codeInsight.completion.command.CompletionCommand
+- <init>(java.lang.String,java.lang.String,java.lang.Integer,javax.swing.Icon,com.intellij.codeInsight.completion.command.HighlightInfoLookup,I,kotlin.jvm.functions.Function0):V
+- execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
+- getHighlightInfo():com.intellij.codeInsight.completion.command.HighlightInfoLookup
+- getIcon():javax.swing.Icon
+- f:getInspectionId():java.lang.String
+- getPresentableName():java.lang.String
+- getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+- getPriority():java.lang.Integer
 *:com.intellij.codeInsight.completion.command.commands.ErrorFixCommandProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - *sf:Companion:com.intellij.codeInsight.completion.command.commands.ErrorFixCommandProvider$Companion
 - a:getCommands(com.intellij.psi.PsiFile,java.util.List,I):java.util.List
 *f:com.intellij.codeInsight.completion.command.commands.ErrorFixCommandProvider$Companion
+*:com.intellij.codeInsight.completion.command.commands.HighlightCommandSkipper
+- a:skipForHighlightCommand(com.intellij.codeInsight.completion.command.CompletionCommand):Z
 *:com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider
 - *sf:Companion:com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider$Companion
 - findOffsets(com.intellij.psi.PsiFile,I):java.util.List

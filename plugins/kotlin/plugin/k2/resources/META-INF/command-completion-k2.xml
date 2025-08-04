@@ -45,6 +45,7 @@
     <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinTypeInfoCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinQuickDocumentationCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinSurroundWithCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinSafeDeleteCompletionCommandProvider" order="last"/>
   </extensions>
 
 </idea-plugin>

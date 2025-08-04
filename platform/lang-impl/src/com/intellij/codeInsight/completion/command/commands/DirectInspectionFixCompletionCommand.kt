@@ -31,8 +31,8 @@ import kotlinx.coroutines.job
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-internal class DirectInspectionFixCompletionCommand(
-  private val inspectionId: String,
+class DirectInspectionFixCompletionCommand(
+  val inspectionId: String,
   override val presentableName: @Nls String,
   override val priority: Int?,
   override val icon: Icon?,

@@ -72,6 +72,11 @@ import java.util.function.Predicate
  * based on intentions, errors, and inspections within the given context.
  */
 internal class DirectIntentionCommandProvider : CommandProvider {
+  private var mySkipper: Set<CommandProvider> = emptySet()
+  fun setSkippers(skippers: Set<CommandProvider>) {
+    mySkipper = skippers
+  }
+
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return emptyList()
     val originalEditor = context.originalEditor
@@ -136,8 +141,30 @@ internal class DirectIntentionCommandProvider : CommandProvider {
 
       val intentions = asyncIntentions.await()
       result.addAll(intentions)
+      result.addAll(processSkippers(result, context))
       return@runBlockingCancellable result
     }
+  }
+
+  private fun processSkippers(fromHighlights: MutableList<CompletionCommand>, context: CommandCompletionProviderContext): Collection<CompletionCommand> {
+    val result = mutableListOf<CompletionCommand>()
+    if (mySkipper.isEmpty()) return emptyList()
+    for (provider in mySkipper) {
+      if (provider is HighlightCommandSkipper) {
+        if (fromHighlights.any { provider.skipForHighlightCommand(it) }) continue
+        try {
+          context.editor.caretModel.moveToOffset(context.offset)
+          result.addAll(provider.getCommands(context))
+        }
+        catch (e: Exception) {
+          if (e is ControlFlowException || e is CancellationException) {
+            throw e
+          }
+          thisLogger().error("Can't collect commands", e)
+        }
+      }
+    }
+    return result
   }
 
   private fun createCustomEditor(
@@ -485,7 +512,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
       modCommandAction.getPresentation(ActionContext.from(editor, psiFile))
         ?.rangesToHighlight()
         ?.firstOrNull { highlightRange ->
-          highlightRange.highlightingKind() == Presentation.HighlightingKind.APPLICABLE_TO_RANGE  &&
+          highlightRange.highlightingKind() == Presentation.HighlightingKind.APPLICABLE_TO_RANGE &&
           highlightRange.range.startOffset <= currentOffset
         }
         ?.let {
