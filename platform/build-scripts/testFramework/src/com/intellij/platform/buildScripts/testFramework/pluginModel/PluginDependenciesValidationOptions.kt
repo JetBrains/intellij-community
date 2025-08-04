@@ -10,6 +10,11 @@ class PluginDependenciesValidationOptions(
    * This can be used to temporarily suppress some errors while they are being fixed in plugins or while a false-positives are being fixed in the validator. 
    */
   val missingDependenciesToIgnore: List<Pair<String, String>>,
+
+  /**
+   * Prefixes of plugin loading error messages which shouldn't be reported by the validator.
+   */
+  val pluginErrorPrefixesToIgnore: List<String>,
   
   /**
    * Relative paths to XML files which are located in libraries and included in plugin descriptors via `<xi:include>`.

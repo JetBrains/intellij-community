@@ -14,6 +14,7 @@ import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.plugins.contentModuleName
 import com.intellij.ide.plugins.loadPluginSubDescriptors
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.platform.plugins.parser.impl.LoadPathUtil
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
@@ -33,6 +34,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import java.io.InputStream
 import java.nio.file.Path
+import java.util.function.Supplier
 import kotlin.io.path.inputStream
 import kotlin.io.path.name
 import kotlin.io.path.pathString
@@ -86,8 +88,34 @@ class PluginDependenciesValidator private constructor(
   private val errors = ArrayList<PluginModuleConfigurationError>()
 
   fun verifyClassLoaderConfigurations() {
+    PluginManagerCore.getAndClearPluginLoadingErrors() //clear errors from previous invocations, if any
     val pluginSet = loadPluginSet()
+    val loadingErrors = PluginManagerCore.getAndClearPluginLoadingErrors()
+    reportPluginLoadingErrors(loadingErrors)
     checkPluginSet(pluginSet)
+  }
+
+  private fun reportPluginLoadingErrors(loadingErrors: List<Supplier<HtmlChunk>>) {
+    for (error in loadingErrors) {
+      val errorMessage = error.get().toString()
+      if (options.pluginErrorPrefixesToIgnore.any { errorMessage.startsWith(it) }) {
+        continue
+      }
+      if (errorMessage.startsWith("<a href")) {
+        //it's an action, not a real error, so ignore it
+        continue
+      }
+      if (errorMessage.contains("is not compatible with the current host platform")) {
+        //just ignore the problem on this OS
+        continue
+      }
+      val pluginErrorRegexp = Regex("Plugin &#39;(.*?)&#39;.*")
+      val matchResult = pluginErrorRegexp.matchEntire(errorMessage)
+      val moduleName =
+        if (matchResult != null) "plugin_${matchResult.groupValues[1].replace(Regex("[^a-zA-Z0-9_]"), "_")}"
+        else "unknown"
+      errors.add(PluginModuleConfigurationError(moduleName, errorMessage))
+    }
   }
 
   private fun checkPluginSet(pluginSet: PluginSet) {
