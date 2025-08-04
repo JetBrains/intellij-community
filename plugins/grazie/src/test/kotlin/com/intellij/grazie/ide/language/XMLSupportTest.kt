@@ -11,40 +11,40 @@ class XMLSupportTest : GrazieTestBase() {
   override val additionalEnabledRules: Set<String> = setOf("LanguageTool.EN.EN_QUOTES")
 
   fun `test grammar check in xsd file`() {
-    runHighlightTestForFile("ide/language/xml/Example.xsd")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/xml/Example.xsd")
   }
 
   fun `test grammar check in xml file`() {
     enableProofreadingFor(setOf(Lang.RUSSIAN))
-    runHighlightTestForFile("ide/language/xml/Example.xml")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/xml/Example.xml")
   }
 
   fun `test typo checks and self references xml file`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.PORTUGAL_PORTUGUESE))
-    runHighlightTestForFile("ide/language/xml/SelfReferenceExample.xml")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/xml/SelfReferenceExample.xml")
   }
 
   fun `test typo checks when comments are before root tag xml file`() {
-    runHighlightTestForFile("ide/language/xml/Comment.xml")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/xml/Comment.xml")
   }
 
   fun `test no grammar checks in svg file`() {
-    runHighlightTestForFile("ide/language/xml/Example.svg")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/xml/Example.svg")
   }
 
   fun `test grammar check in html file`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
     GrazieConfig.update { it.copy(checkingContext = it.checkingContext.copy(disabledLanguages = setOf(XMLLanguage.INSTANCE.id))) }
-    runHighlightTestForFile("ide/language/xml/Example.html")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/xml/Example.html")
   }
 
   fun `test typo checks and self references html file`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.PORTUGAL_PORTUGUESE))
-    runHighlightTestForFile("ide/language/xml/SelfReferenceExample.html")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/xml/SelfReferenceExample.html")
   }
 
   fun `test typo checks when comments are before root tag html file`() {
-    runHighlightTestForFile("ide/language/xml/Comment.html")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/xml/Comment.html")
   }
 
   fun `test grazie spellchecking in html file`() {

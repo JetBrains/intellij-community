@@ -16,12 +16,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
-import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
-import com.intellij.spellchecker.inspections.SpellCheckingInspection
-import com.intellij.spellchecker.inspections.SpellCheckingInspection.SpellCheckingScope.Code
+import com.intellij.spellchecker.inspections.IdentifierSplitter.MINIMAL_TYPO_LENGTH
 import com.intellij.spellchecker.inspections.SpellcheckingExtension
 import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellCheckingResult
 import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellingTypo
@@ -29,32 +27,22 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.function.Consumer
 
-
 class GrazieSpellcheckingExtension : SpellcheckingExtension {
 
   override fun spellcheck(element: PsiElement, session: LocalInspectionToolSession, consumer: Consumer<SpellingTypo>): SpellCheckingResult {
-    if (!Registry.`is`("spellchecker.grazie.enabled", false)) return SpellCheckingResult.Ignored
-    ProgressManager.checkCanceled()
+    if (!Registry.`is`("spellchecker.grazie.enabled")) return SpellCheckingResult.Ignored
     if (element is PsiWhiteSpace) return SpellCheckingResult.Checked
+    ProgressManager.checkCanceled()
 
     val texts = sortByPriority(TextExtractor.findTextsAt(element, allDomains()), session.priorityRange)
+    if (texts.isEmpty()) return SpellCheckingResult.Ignored
+
     val textSpeller = getTextSpeller(element.project) ?: return SpellCheckingResult.Ignored
-    if (texts.isNotEmpty()) {
-      texts
-        .map { it to findTypos(it, session, textSpeller) }
-        .flatMap { mapTypo(it.first, it.second) }
-        .filter { belongsToPsiElement(element, it) }
-        .forEach { consumer.accept(it) }
-      return SpellCheckingResult.Checked
-    }
-
-    val strategy = SpellCheckingInspection.getSpellcheckingStrategy(element)
-    if (strategy.elementFitsScope(element, setOf(Code))) return SpellCheckingResult.Ignored
-
-    val range = ElementManipulators.getManipulator(element)?.getRangeInElement(element) ?: TextRange(0, element.textLength)
-    val text = range.substring(element.text)
-    textSpeller.checkText(text)
-      .map { SimpleTypo(it.word, mapRange(it.range).shiftRight(range.startOffset), element) }
+    texts.asSequence()
+      .map { it to findTypos(it, session, textSpeller) }
+      .flatMap { mapTypo(it.first, it.second) }
+      .filterNot { shouldBeIgnored(it, element) }
+      .filterNot { it.word.length < MINIMAL_TYPO_LENGTH }
       .forEach { consumer.accept(it) }
     return SpellCheckingResult.Checked
   }
@@ -66,19 +54,21 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
     }))
   }
 
-  private fun belongsToPsiElement(element: PsiElement, typo: SpellingTypo): Boolean {
-    return typo.range.intersectsStrict(TextRange(0, element.text.length))
-  }
-
   private fun allDomains(): Set<TextContent.TextDomain> = TextContent.TextDomain.entries.toSet()
 
-  private fun mapTypo(text: TextContent, typos: List<Typo>): List<SpellingTypo> {
+  private fun shouldBeIgnored(typo: SimpleTypo, element: PsiElement): Boolean {
+    if (element.getFirstChild() != null) return true
+    val psiRange = element.getTextRange()
+    return !psiRange.intersectsStrict(typo.range.shiftRight(typo.text.commonParent.textRange.startOffset))
+  }
+
+  private fun mapTypo(text: TextContent, typos: List<Typo>): List<SimpleTypo> {
     val range = text.commonParent.textRange
     return typos.map {
       SimpleTypo(
         it.word,
         text.textRangeToFile(mapRange(it.range)).shiftLeft(range.startOffset),
-        text.commonParent
+        text
       )
     }
   }
@@ -104,7 +94,10 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
 private data class SimpleTypo(
   override val word: String,
   override val range: TextRange,
-  override val element: PsiElement,
-) : SpellingTypo
+  val text: TextContent,
+) : SpellingTypo {
+  override val element: PsiElement
+    get() = text.commonParent
+}
 
 private val KEY_TYPO_CACHE = Key.create<ConcurrentMap<TextContent, List<Typo>>>("KEY_TYPO_CACHE")

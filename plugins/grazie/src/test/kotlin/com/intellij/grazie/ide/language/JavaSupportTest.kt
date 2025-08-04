@@ -17,38 +17,38 @@ class JavaSupportTest : GrazieTestBase() {
   }
 
   fun `test spellcheck in constructs`() {
-    runHighlightTestForFile("ide/language/java/Constructs.java")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/Constructs.java")
   }
 
   fun `test grammar check in docs`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
-    runHighlightTestForFile("ide/language/java/Docs.java")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/Docs.java")
   }
 
   fun `test grammar check in string literals`() {
-    runHighlightTestForFile("ide/language/java/StringLiterals.java")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/StringLiterals.java")
   }
 
   fun `test grammar check in comments`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.UKRAINIAN, Lang.BELARUSIAN))
-    runHighlightTestForFile("ide/language/java/Comments.java")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/Comments.java")
   }
 
   fun `test split line quick fix`() {
-    runHighlightTestForFile("ide/language/java/SplitLine.java")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/SplitLine.java")
     myFixture.launchAction(myFixture.findSingleIntention(", but"))
     myFixture.checkResultByFile("ide/language/java/SplitLine_after.java")
   }
 
   fun `test do not merge text with non-text`() {
-    runHighlightTestForFile("ide/language/java/AccidentalMerge.java")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/AccidentalMerge.java")
     myFixture.launchAction(myFixture.findSingleIntention("Remove"))
     myFixture.checkResultByFile("ide/language/java/AccidentalMerge_after.java")
   }
 
   fun `test long comment performance`() {
     Benchmark.newBenchmark("highlighting") {
-      runHighlightTestForFile("ide/language/java/LongCommentPerformance.java")
+      runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/LongCommentPerformance.java")
     }.setup { psiManager.dropPsiCaches() }.start()
   }
 
@@ -61,12 +61,12 @@ class JavaSupportTest : GrazieTestBase() {
   }
 
   fun testCommentIsNotHighlightedIfThereIsReference() {
-    runHighlightTestForFile("ide/language/java/VectorablexxClass.java")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/VectorablexxClass.java")
   }
 
   fun `test spellchecking normalization`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.PORTUGAL_PORTUGUESE))
-    runHighlightTestForFile("ide/language/java/Normalization.java")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/Normalization.java")
   }
 
   fun `test grazie spellchecking in java`() {

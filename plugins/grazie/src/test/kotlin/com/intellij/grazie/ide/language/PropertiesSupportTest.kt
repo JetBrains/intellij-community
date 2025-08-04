@@ -19,12 +19,12 @@ class PropertiesSupportTest : GrazieTestBase() {
     EncodingProjectManager.getInstance(project).setNative2AsciiForPropertiesFiles(null, false)
     
     UIUtil.dispatchAllInvocationEvents()
-    runHighlightTestForFile("ide/language/properties/Example.properties")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/properties/Example.properties")
   }
 
   fun `test properties typos spellcheck performance`() {
     Benchmark.newBenchmark("Highlight typos in i18n.properties file") {
-      runHighlightTestForFile("ide/language/properties/i18n.properties")
+      runHighlightTestForFileUsingGrazieSpellchecker("ide/language/properties/i18n.properties")
     }.setup {
       psiManager.dropPsiCaches()
       project.service<GrazieSpellCheckerEngine>().dropSuggestionCache()

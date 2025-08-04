@@ -11,7 +11,7 @@ import com.intellij.ui.TextFieldWithAutoCompletion
 class PlainTextSupportTest : GrazieTestBase() {
   fun `test grammar check in file`() {
     enableProofreadingFor(setOf(Lang.RUSSIAN))
-    runHighlightTestForFile("ide/language/plain/Example.txt")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/plain/Example.txt")
   }
 
   fun `test no grammar checks in TextFieldWithAutoCompletion`() {

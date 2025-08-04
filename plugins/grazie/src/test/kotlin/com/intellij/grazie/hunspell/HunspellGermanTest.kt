@@ -15,7 +15,7 @@ class HunspellGermanTest : GrazieTestBase() {
 
   fun `test hunspell de`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
-    runHighlightTestForFile("hunspell/Hunspell.java")
+    runHighlightTestForFileUsingGrazieSpellchecker("hunspell/Hunspell.java")
   }
 
   fun `test swiss german suggestions`() {

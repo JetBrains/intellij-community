@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 interface SpellcheckingExtension {
 
   /**

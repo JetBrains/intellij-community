@@ -14,7 +14,7 @@ class MarkdownSupportTest : GrazieTestBase() {
 
   fun `test grammar check in file`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
-    runHighlightTestForFile("ide/language/markdown/Example.md")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/markdown/Example.md")
   }
 
   fun `test grazie spellchecker in file`() {

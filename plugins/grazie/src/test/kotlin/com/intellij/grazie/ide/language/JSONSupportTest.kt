@@ -10,12 +10,12 @@ import com.intellij.tools.ide.metrics.benchmark.Benchmark
 class JSONSupportTest : GrazieTestBase() {
   fun `test grammar check in file`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
-    runHighlightTestForFile("ide/language/json/Example.json")
+    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/json/Example.json")
   }
 
   fun `test json typos spellcheck performance`() {
     Benchmark.newBenchmark("Highlight typos in i18n.json file") {
-      runHighlightTestForFile("ide/language/json/i18n.json")
+      runHighlightTestForFileUsingGrazieSpellchecker("ide/language/json/i18n.json")
     }.setup {
       psiManager.dropPsiCaches()
       project.service<GrazieSpellCheckerEngine>().dropSuggestionCache()

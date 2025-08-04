@@ -96,7 +96,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
     if (!Registry.is("spellchecker.inspection.enabled", true) || InspectionProfileManager.hasTooLowSeverity(session, this)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-    var scope = buildAllowedScopes();
+    var scopes = buildAllowedScopes();
     return new PsiElementVisitor() {
       @Override
       public void visitElement(final @NotNull PsiElement element) {
@@ -112,7 +112,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
           return;
         }
 
-        if (!strategy.elementFitsScope(element, scope)) {
+        if (!strategy.elementFitsScope(element, scopes)) {
           return;
         }
 
@@ -130,13 +130,21 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
                        @NotNull LocalInspectionToolSession session,
                        @NotNull SpellcheckingStrategy strategy,
                        @NotNull ProblemsHolder holder) {
-    SpellCheckingResult result = SpellcheckingExtension.Companion.spellcheck(element, session, typo -> registerProblem(typo, holder));
+    SpellCheckingResult result = SpellcheckingExtension.Companion.spellcheck(
+      element,
+      session,
+      typo -> {
+        if (hasSameNamedReferenceInFile(typo.getWord(), element, strategy)) return;
+        registerProblem(typo, holder);
+      }
+    );
     if (result == SpellCheckingResult.Checked) return;
 
     SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());
     Set<SpellCheckingScope> scopes = buildAllowedScopes();
-    tokenize(element, new MyTokenConsumer(manager, strategy, holder, LanguageNamesValidation.INSTANCE.forLanguage(element.getLanguage())),
-             scopes);
+    tokenize(
+      element, new MyTokenConsumer(manager, strategy, holder, LanguageNamesValidation.INSTANCE.forLanguage(element.getLanguage())), scopes
+    );
   }
 
   private Set<SpellCheckingScope> buildAllowedScopes() {
@@ -266,7 +274,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
       }
 
       boolean keyword = myNamesValidator.isKeyword(word, myElement.getProject());
-      if (keyword || !hasProblem(word, range) || hasSameNamedReferenceInFile(word)) {
+      if (keyword || !hasProblem(word, range) || hasSameNamedReferenceInFile(word, myElement, myStrategy)) {
         return;
       }
 
@@ -278,16 +286,6 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
         myAlreadyChecked.add(word);
       }
       registerProblem(myHolder, myElement, range, myUseRename, word);
-    }
-
-    private boolean hasSameNamedReferenceInFile(String word) {
-      if (!myStrategy.elementFitsScope(myElement, Set.of(SpellCheckingScope.Comments))) {
-        return false;
-      }
-
-      PsiFile file = myElement.getContainingFile();
-      Map<String, Boolean> references = CachedValuesManager.getProjectPsiDependentCache(file, (psi) -> new ConcurrentHashMap<>());
-      return references.computeIfAbsent(word, key -> hasSameNamedReferencesInFile(file, key));
     }
 
     private boolean hasCamelCaseMatch(String word, TextRange range) {
@@ -308,22 +306,6 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
           if (range.intersectsStrict(hitRange)) {
             return true;
           }
-        }
-      }
-      return false;
-    }
-
-    private static boolean hasSameNamedReferencesInFile(PsiFile file, String word) {
-      int[] occurrences = new StringSearcher(word, true, true).findAllOccurrences(file.getText());
-      if (occurrences.length <= 1) {
-        return false;
-      }
-
-      for (int occurrence : occurrences) {
-        PsiReference reference = file.findReferenceAt(occurrence);
-        PsiElement resolvedReference = reference != null ? reference.resolve() : null;
-        if (reference != null && resolvedReference != null && reference.getElement() != resolvedReference) {
-          return true;
         }
       }
       return false;
@@ -351,6 +333,32 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
         .filter(suggestion -> RenameUtil.isValidName(project, myElement, suggestion))
         .noneMatch(suggestion -> Diacritics.equalsIgnoringDiacritics(word, suggestion));
     }
+  }
+
+  private static boolean hasSameNamedReferenceInFile(String word, PsiElement element, SpellcheckingStrategy strategy) {
+    if (!strategy.elementFitsScope(element, Set.of(SpellCheckingScope.Comments))) {
+      return false;
+    }
+
+    PsiFile file = element.getContainingFile();
+    Map<String, Boolean> references = CachedValuesManager.getProjectPsiDependentCache(file, (psi) -> new ConcurrentHashMap<>());
+    return references.computeIfAbsent(word, key -> hasSameNamedReferencesInFile(key, file));
+  }
+
+  private static boolean hasSameNamedReferencesInFile(String word, PsiFile file) {
+    int[] occurrences = new StringSearcher(word, true, true).findAllOccurrences(file.getText());
+    if (occurrences.length <= 1) {
+      return false;
+    }
+
+    for (int occurrence : occurrences) {
+      PsiReference reference = file.findReferenceAt(occurrence);
+      PsiElement resolvedReference = reference != null ? reference.resolve() : null;
+      if (reference != null && resolvedReference != null && reference.getElement() != resolvedReference) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void registerProblem(@NotNull SpellingTypo typo, @NotNull ProblemsHolder holder) {
