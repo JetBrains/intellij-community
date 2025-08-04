@@ -113,6 +113,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
             if (declaration.isMainFunction()) return true
 
             val lightElement: PsiElement = when (declaration) {
+                is KtEnumEntry -> LightClassUtil.getLightClassBackingField(declaration)
                 is KtClassOrObject -> declaration.toLightClass()
                 is KtNamedFunction, is KtSecondaryConstructor -> LightClassUtil.getLightClassMethod(declaration as KtFunction)
                 is KtProperty, is KtParameter -> {

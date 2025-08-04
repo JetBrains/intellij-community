@@ -14,8 +14,10 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.psi.util.PsiTreeUtil
 import com.siyeh.ig.junit.JUnitCommonClassNames.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.toUElement
 
 private fun parameterIsUsedByParameterizedTest(parameter: PsiParameter): Boolean {
   val declarationScope = parameter.declarationScope
@@ -48,10 +50,9 @@ private fun enumReferenceIsUsedByParameterizedTest(element: PsiEnumConstant): Bo
     val useScope = psiClass.useScope
     if (!isCheapEnough(psiClass, className, useScope)) return false
     return ReferencesSearch.search(psiClass, useScope, false).anyMatch { reference ->
-      val referenceElement = reference.element
-      val annotation = PsiTreeUtil.getParentOfType(referenceElement, PsiAnnotation::class.java, true, PsiStatement::class.java, PsiMember::class.java)
-                       ?: return@anyMatch false
-      annotation.qualifiedName == ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ENUM_SOURCE && annotation.attributes.size == 1
+      val referenceElement = reference.element.toUElement() ?: return@anyMatch false
+      val annotation = referenceElement.getParentOfType<UAnnotation>() ?: return@anyMatch false
+      annotation.qualifiedName == ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ENUM_SOURCE && annotation.attributeValues.size == 1
     }
   }
 

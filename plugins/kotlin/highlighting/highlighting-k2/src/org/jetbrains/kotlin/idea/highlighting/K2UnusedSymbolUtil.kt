@@ -761,6 +761,7 @@ object K2UnusedSymbolUtil {
     ): Boolean {
         if (declaration.hasKotlinAdditionalAnnotation()) return true
         val lightElement: PsiElement = when (declaration) {
+            is KtEnumEntry -> LightClassUtil.getLightClassBackingField(declaration)
             is KtClass -> {
                 if (declaration.declarations.any { it.hasKotlinAdditionalAnnotation() }) return true
                 declaration.toLightClass()
