@@ -2,19 +2,19 @@ package com.intellij.driver.sdk.ui.components.settings
 
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
-import com.intellij.driver.sdk.ui.components.elements.accessibleList
 import com.intellij.driver.sdk.ui.components.elements.checkBox
-import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.components.elements.textField
 import javax.swing.JButton
 import javax.swing.JCheckBox
+import javax.swing.JLabel
 
 fun SettingsDialogUiComponent.pluginsSettingsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
   x("//div[@class='ConfigurableEditor']/ancestor::div[.//div[@accessiblename='Installed']][1]", PluginsSettingsPageUiComponent::class.java).apply(action)
 
 class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
   val searchPluginTextField = textField { byAccessibleName("Search plugins") }
-  val installedTab = x { byAccessibleName("Installed") }
+  val installedTab = x { and(byType(JLabel::class.java), byAccessibleName("Installed")) }
+  val marketplaceTab = x { and(byType(JLabel::class.java), byAccessibleName ("Marketplace")) }
 
   fun listPluginComponent(pluginName: String, action: ListPluginComponent.() -> Unit = {}): ListPluginComponent =
     x(ListPluginComponent::class.java) {
