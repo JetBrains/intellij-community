@@ -18,6 +18,7 @@ import com.intellij.driver.sdk.ui.components.common.Icon
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
 import com.intellij.driver.sdk.ui.xQuery
+import com.intellij.driver.sdk.wait
 import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
 import java.awt.Point
@@ -123,12 +124,13 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   fun expandPath(vararg path: String, fullMatch: Boolean = true) {
-    for (subPathLength in 0 until path.size) {
+    for (i in path.indices) {
       waitForNodesLoaded(10.seconds)
-      val subPath = path.sliceArray(0..subPathLength)
+      val subPath = path.sliceArray(0..i)
       findExpandedPath(*subPath, fullMatch = fullMatch)?.let {
         driver.withContext(OnDispatcher.EDT) { treeComponent.expandRow(it.row) }
-      } ?: PathNotFoundException(path.toList())
+        wait(1.seconds) // wait expand
+      } ?: throw PathNotFoundException(path.toList())
     }
     waitForNodesLoaded(10.seconds)
   }
@@ -167,8 +169,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     vararg path: String,
     fullMatch: Boolean,
   ): List<TreePathToRow> = collectExpandedPaths().filter { expandedPath ->
-    expandedPath.path.size == path.size && expandedPath.path.containsAllNodes(*path, fullMatch = fullMatch) ||
-    expandedPath.path.size - 1 == path.size && expandedPath.path.drop(1).containsAllNodes(*path, fullMatch = fullMatch)
+    expandedPath.path.size == path.size && expandedPath.path.containsAllNodes(*path, fullMatch = fullMatch)
   }
 
   fun collectExpandedPaths(): List<TreePathToRow> {
