@@ -196,8 +196,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().isBundledUpdate(pluginIds)
   }
 
-  override fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult {
-    return awaitForResult { PluginInstallerApi.getInstance().prepareToUninstall(pluginsToUninstall) }
+  override suspend fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult {
+    return PluginInstallerApi.getInstance().prepareToUninstall(pluginsToUninstall)
   }
 
   override suspend fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent?): Map<PluginId, Boolean> {

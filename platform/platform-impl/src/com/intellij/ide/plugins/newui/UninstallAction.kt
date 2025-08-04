@@ -3,16 +3,22 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.util.function.Function
 import javax.swing.JComponent
 
 internal class UninstallAction<C : JComponent>(
-  coroutineScope: CoroutineScope,
+  private val coroutineScope: CoroutineScope,
   pluginModelFacade: PluginModelFacade,
   showShortcut: Boolean,
   private val myUiParent: JComponent,
@@ -54,42 +60,44 @@ internal class UninstallAction<C : JComponent>(
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val selection = getSelection()
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(myUiParent).asContextElement()) {
+      val selection = getSelection()
 
-    val toDeleteWithAsk = mutableListOf<PluginUiModel>()
-    val toDelete = mutableListOf<PluginUiModel>()
+      val toDeleteWithAsk = mutableListOf<PluginUiModel>()
+      val toDelete = mutableListOf<PluginUiModel>()
 
-    val pluginIds = selection.values.map { it.pluginId }
-    val prepareToUninstallResult = UiPluginManager.getInstance().prepareToUninstall(pluginIds)
+      val pluginIds = selection.values.map { it.pluginId }
+      val prepareToUninstallResult = withContext(Dispatchers.EDT) { UiPluginManager.getInstance().prepareToUninstall(pluginIds) }
 
-    for ((component, model) in selection) {
-      val dependents = prepareToUninstallResult.dependants[model.pluginId]?.map { it.name } ?: emptyList()
+      for ((component, model) in selection) {
+        val dependents = prepareToUninstallResult.dependants[model.pluginId]?.map { it.name } ?: emptyList()
 
-      if (dependents.isEmpty()) {
-        toDeleteWithAsk.add(model)
-      }
-      else {
-        val bundledUpdate = prepareToUninstallResult.isPluginBundled(model.pluginId)
-        if (askToUninstall(getUninstallDependentsMessage(model, dependents, bundledUpdate), component!!, bundledUpdate)) {
-          toDelete.add(model)
+        if (dependents.isEmpty()) {
+          toDeleteWithAsk.add(model)
+        }
+        else {
+          val bundledUpdate = prepareToUninstallResult.isPluginBundled(model.pluginId)
+          if (askToUninstall(getUninstallDependentsMessage(model, dependents, bundledUpdate), component!!, bundledUpdate)) {
+            toDelete.add(model)
+          }
         }
       }
-    }
 
-    var runFinishAction = false
+      var runFinishAction = false
 
-    if (toDeleteWithAsk.isNotEmpty()) {
-      val bundledUpdate = toDeleteWithAsk.size == 1 && prepareToUninstallResult.isPluginBundled(toDeleteWithAsk.first().pluginId)
-      if (askToUninstall(getUninstallAllMessage(toDeleteWithAsk, bundledUpdate), myUiParent, bundledUpdate)) {
-        toDeleteWithAsk.forEach(myPluginModelFacade::uninstallAndUpdateUi)
-        runFinishAction = true
+      if (toDeleteWithAsk.isNotEmpty()) {
+        val bundledUpdate = toDeleteWithAsk.size == 1 && prepareToUninstallResult.isPluginBundled(toDeleteWithAsk.first().pluginId)
+        if (askToUninstall(getUninstallAllMessage(toDeleteWithAsk, bundledUpdate), myUiParent, bundledUpdate)) {
+          toDeleteWithAsk.forEach(myPluginModelFacade::uninstallAndUpdateUi)
+          runFinishAction = true
+        }
       }
-    }
 
-    toDelete.forEach(myPluginModelFacade::uninstallAndUpdateUi)
+      toDelete.forEach(myPluginModelFacade::uninstallAndUpdateUi)
 
-    if (runFinishAction || toDelete.isNotEmpty()) {
-      myOnFinishAction.run()
+      if (runFinishAction || toDelete.isNotEmpty()) {
+        myOnFinishAction.run()
+      }
     }
   }
 

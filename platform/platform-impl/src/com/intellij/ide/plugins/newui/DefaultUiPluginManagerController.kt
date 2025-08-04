@@ -391,7 +391,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return getPlugins().map { it.pluginId }.associateWith { getErrors(session, it) }
   }
 
-  override fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult {
+  override suspend fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult {
     val applicationInfo = ApplicationInfoEx.getInstanceEx()
     val idMap = buildPluginIdMap()
     val contentModuleIdMap = getPluginSet().buildContentModuleIdMap()

@@ -128,7 +128,7 @@ class UiPluginManager {
     return getController().enablePlugins(sessionId, descriptorIds, enable, project)
   }
 
-  fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult {
+  suspend fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult {
     return getController().prepareToUninstall(pluginsToUninstall)
   }
 
