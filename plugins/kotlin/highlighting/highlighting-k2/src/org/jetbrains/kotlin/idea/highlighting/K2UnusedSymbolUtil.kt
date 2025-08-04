@@ -793,6 +793,12 @@ object K2UnusedSymbolUtil {
                         }
                     }
                 }
+                if (declaration is KtProperty) {
+                    val javaFieldPsi = LightClassUtil.getLightClassBackingField(declaration)
+                    if (javaFieldPsi != null && isJavaEntryPoint.isEntryPoint(javaFieldPsi)) {
+                        return true
+                    }
+                }
                 // can't rely on a light element, check annotation ourselves
                 val entryPointsManager = EntryPointsManager.getInstance(declaration.project) as EntryPointsManagerBase
                 return checkAnnotatedUsingPatterns(

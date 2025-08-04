@@ -33,7 +33,9 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MyTest {
         @org.junit.jupiter.params.ParameterizedTest(name = "{0}")
-        fun byName(name: String) { }
+        fun byName(name: String) {
+          println(name)
+        }
       }
    """.trimIndent())
   }
@@ -59,6 +61,28 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
     """.trimIndent())
   }
 
+  fun `test usage of method source with method name`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      import java.util.stream.*
+      
+      class MyTest {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("bar")
+        fun foo(input: String) {
+          System.out.println(input)
+        }
+        
+        companion object {
+          @JvmStatic
+          private fun <warning descr="Function \"foo\" is never used">foo</warning>() = Stream.of("")
+          
+          @JvmStatic
+          private fun bar() = Stream.of("")
+        }
+      }
+    """.trimIndent())
+  }
+
   fun `test implicit usage of field source with implicit field name`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.jupiter.params.ParameterizedTest
@@ -74,6 +98,28 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
         companion object {
           @JvmStatic
           val foo = listOf("a", "b")
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test usage of field source with field name`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      import org.junit.jupiter.params.ParameterizedTest
+      import org.junit.jupiter.params.provider.FieldSource
+
+      class MyTest {
+        @ParameterizedTest
+        @FieldSource("bar")
+        fun foo(input: String) {
+          println(input)
+        }
+
+        companion object {
+          @JvmStatic
+          val <warning descr="Property \"foo\" is never used">foo</warning> = listOf("a", "b")
+          @JvmStatic
+          val bar = listOf("a", "b")
         }
       }
     """.trimIndent())

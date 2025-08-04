@@ -21,6 +21,9 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/code-insight/inspections-k2:kotlin-code-insight-inspections-k2",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
   ],
   runtime_deps = ["//plugins/kotlin/plugin/k2"]
 )

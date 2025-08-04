@@ -73,10 +73,10 @@ private fun methodSourceIsImplicitlyUsed(element: PsiMethod): Boolean {
       if (parent is PsiClass) psiClass = parent
     }
 
-    return psiClass.findMethodsByName(methodName, false).any { otherMethod ->
-      psiMethod != otherMethod
-      && MetaAnnotationUtil.isMetaAnnotated(otherMethod, setOf(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE))
+    return psiClass.methods.any { otherMethod ->
+      MetaAnnotationUtil.isMetaAnnotated(otherMethod, setOf(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE))
       && MetaAnnotationUtil.isMetaAnnotated(otherMethod, setOf(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST))
+      && isAnnotationMemberContainsName(methodName, otherMethod, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE)
     }
   }
   return CachedValuesManager.getCachedValue(element) {
@@ -94,15 +94,33 @@ private fun fieldSourceIsImplicitlyUsed(element: PsiField): Boolean {
       if (parent is PsiClass) psiClass = parent
     }
 
-    return psiClass.findMethodsByName(fieldName, false).any { method ->
+    return psiClass.methods.any { method ->
       MetaAnnotationUtil.isMetaAnnotated(method, setOf(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_FIELD_SOURCE))
       && MetaAnnotationUtil.isMetaAnnotated(method, setOf(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST))
+      && isAnnotationMemberContainsName(fieldName, method, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_FIELD_SOURCE)
     }
   }
 
   return CachedValuesManager.getCachedValue(element) {
     CachedValueProvider.Result.create(check(element), PsiModificationTracker.MODIFICATION_COUNT)
   }
+}
+
+private fun isAnnotationMemberContainsName(name: String, method: PsiMethod, annotationFqn: String): Boolean {
+  val annotation = method.getAnnotation(annotationFqn) ?: return false
+  val value = annotation.findAttributeValue("value")
+  if (value == null && method.name == name) return true
+  if (value is PsiArrayInitializerMemberValue) {
+    if (value.initializers.isEmpty() && method.name == name) return true
+    for (memberValue in value.initializers) {
+      if (memberValue is PsiLiteralExpression) {
+        val data = JavaConstantExpressionEvaluator.computeConstantExpression(memberValue, null, false) as? String ?: continue
+        if (data.isEmpty() && method.name == name) return true
+        if (data == name) return true
+      }
+    }
+  }
+  return false
 }
 
 class JUnit5ImplicitUsageProvider : ImplicitUsageProvider {

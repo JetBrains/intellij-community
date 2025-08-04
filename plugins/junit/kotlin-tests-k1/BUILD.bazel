@@ -21,6 +21,10 @@ jvm_library(
     "//java/testFramework",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/idea",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//plugins/kotlin/code-insight/api",
   ],
   runtime_deps = ["//plugins/kotlin/plugin/k1"]
 )

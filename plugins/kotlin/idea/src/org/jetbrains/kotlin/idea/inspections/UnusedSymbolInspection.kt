@@ -126,6 +126,12 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                             }
                         }
                     }
+                    if (declaration is KtProperty) {
+                        val javaFieldPsi = LightClassUtil.getLightClassBackingField(declaration)
+                        if (javaFieldPsi != null && javaInspection.isEntryPoint(javaFieldPsi)) {
+                            return true
+                        }
+                    }
                     // can't rely on light element, check annotation ourselves
                     val entryPointsManager = EntryPointsManager.getInstance(declaration.project) as EntryPointsManagerBase
                     return checkAnnotatedUsingPatterns(

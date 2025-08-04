@@ -179,6 +179,45 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     """.trimIndent())
   }
 
+  fun `test usage of method source with method name`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.util.stream.*;
+      
+      class MyTest {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("bar")
+        void foo(String input) {
+          System.out.println(input);
+        }
+  
+        private static Stream<String> <warning descr="Private method 'foo()' is never used">foo</warning>() {
+            return Stream.of("");
+        }
+        
+        private static Stream<String> bar() {
+            return Stream.of("");
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test usage of field source with field name`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.util.stream.*;
+      
+      class MyTest {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.FieldSource("bar")
+        void foo(String input) {
+          System.out.println(input);
+        }
+  
+        private static Stream<String> <warning descr="Private field 'foo' is never used">foo</warning> = Stream.of("");
+        private static Stream<String> bar = Stream.of("");
+      }
+    """.trimIndent())
+  }
+
   fun `test implicit usage of TempDir as direct annotation`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       class Test {
