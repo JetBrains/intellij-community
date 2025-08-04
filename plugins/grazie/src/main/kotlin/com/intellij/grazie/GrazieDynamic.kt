@@ -84,7 +84,7 @@ object GrazieDynamic : DynamicPluginListener {
     if (customFolder != null) {
       return Path.of(customFolder)
     }
-    return Paths.get(PathManager.getSystemPath(), "grazie")
+    return PathManager.getConfigDir().resolve("grazie")
   }
 
   fun getLangDynamicFolder(lang: Lang): Path = dynamicFolder.resolve(getStorageDescriptor(lang))
