@@ -57,7 +57,7 @@ fun main(args: Array<String>) {
     val kotlinCompilerCliVersionRegex = Regex("""kotlinCompilerCliVersion\s*=\s*"(\S+)"""")
     kotlinDependenciesBazelFile.writeText(
         kotlinDependenciesBazelFile.readText()
-            .replace(kotlinCompilerCliVersionRegex, "kotlinCompilerCliVersion = \"${preferences.kotlinGradlePluginVersion}\"")
+            .replace(kotlinCompilerCliVersionRegex, "kotlinCompilerCliVersion = \"${preferences.kotlincVersion}\"")
     )
     KotlinTestsDependenciesUtil.updateChecksum(isUpToDateCheck = false)
 
