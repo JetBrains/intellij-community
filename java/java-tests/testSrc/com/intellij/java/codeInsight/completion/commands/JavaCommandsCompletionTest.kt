@@ -137,6 +137,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       }
     """.trimIndent())
   }
+
   fun testFormatOutside() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
@@ -198,6 +199,17 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
           }
       }
     """.trimIndent())
+  }
+
+  fun testGenerateConstructorWithoutSpecialChars() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A { 
+        .generate con<caret>
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Generate 'Constructor'", ignoreCase = true) })
   }
 
   fun testGenerateConstructorInline() {
