@@ -21,9 +21,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.getOrNull
-import com.jetbrains.python.packaging.PyPackageName
-import com.jetbrains.python.packaging.PyPackageService
-import com.jetbrains.python.packaging.PyPackageVersionNormalizer
+import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
@@ -34,7 +32,6 @@ import com.jetbrains.python.packaging.management.*
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.packageRequirements.PackageNode
 import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor
-import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.repository.*
 import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
 import com.jetbrains.python.packaging.toolwindow.model.*
@@ -285,9 +282,8 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   suspend fun refreshInstalledPackages() {
     val sdk = currentSdk ?: return
-    val manager = manager ?: return
     withContext(Dispatchers.Default) {
-      val declaredPackages = manager.reloadDependencies()
+      val declaredPackages = PythonDependenciesExtractor.forSdk(project, sdk)?.extract() ?: emptyList()
       val installedDeclaredPackages = findInstalledDeclaredPackages(declaredPackages)
       val treeExtractor = PythonPackageRequirementsTreeExtractor.forSdk(sdk)
 
@@ -313,9 +309,9 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   }
 
   private suspend fun findInstalledDeclaredPackages(declaredPackages: List<PythonPackage>): List<PythonPackage> =
-    manager?.listInstalledPackages()?.filter {
+    manager.listInstalledPackages().filter {
       it.name in declaredPackages.map { pkg -> pkg.name }
-    } ?: emptyList()
+    }
 
   private suspend fun processPackagesWithRequirementsTree(
     packages: List<PythonPackage>,

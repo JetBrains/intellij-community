@@ -19,7 +19,6 @@ import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageName
-import com.jetbrains.python.packaging.PythonDependenciesExtractor
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
@@ -53,13 +52,10 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
   }
 
 
-  @get:ApiStatus.Internal
-  @set:ApiStatus.Internal
-  protected open var dependencies: List<PythonPackage> = emptyList()
 
   @ApiStatus.Internal
   @Volatile
-  protected open var installedPackages: List<PythonPackage> = emptyList()
+  protected var installedPackages: List<PythonPackage> = emptyList()
 
   @ApiStatus.Internal
   @Volatile
@@ -102,7 +98,6 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
     }
 
     waitForInit()
-    reloadDependencies()
 
     val normalizedPackagesNames = packages.map { PyPackageName.normalizePackageName(it) }
     uninstallPackageCommand(*normalizedPackagesNames.toTypedArray()).getOr { return it }
@@ -115,7 +110,6 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
       return it
     }
 
-    reloadDependencies()
     if (packages != installedPackages) {
       installedPackages = packages
       PyPackageCoroutine.launch(project) {
@@ -196,16 +190,6 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
 
   @ApiStatus.Internal
   protected abstract suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>>
-
-  @ApiStatus.Internal
-  suspend fun reloadDependencies(): List<PythonPackage> {
-    val dependenciesExtractor = PythonDependenciesExtractor.forSdk(project, sdk) ?: return emptyList()
-    dependencies = dependenciesExtractor.extract()
-    return dependencies
-  }
-
-  @ApiStatus.Internal
-  fun listDependencies(): List<PythonPackage> = dependencies
 
   @ApiStatus.Internal
   suspend fun waitForInit() {

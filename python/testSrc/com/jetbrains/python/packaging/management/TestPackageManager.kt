@@ -14,10 +14,13 @@ import org.jetbrains.annotations.TestOnly
 
 @TestOnly
 class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
-  override var installedPackages: List<PythonPackage> = DEFAULT_PACKAGES.toMutableList()
   private var packageNames: List<String> = emptyList()
   private var packageDetails: PythonPackageDetails? = null
   private var packageVersions: Map<String, List<String>> = emptyMap()
+
+  init {
+    installedPackages = DEFAULT_PACKAGES.toMutableList()
+  }
 
   override val repositoryManager: TestPythonRepositoryManager
     get() = TestPythonRepositoryManager(project)

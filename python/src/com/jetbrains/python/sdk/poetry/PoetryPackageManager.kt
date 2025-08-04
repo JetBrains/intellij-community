@@ -6,6 +6,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.packaging.PythonDependenciesExtractor
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
@@ -60,8 +61,8 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
   /**
    * Categorizes packages into standalone packages and pyproject.toml declared packages.
    */
-  private fun categorizePackages(packages: Array<out String>): Pair<List<PyPackageName>, List<PyPackageName>> {
-    val dependencyNames = dependencies.map { it.name }.toSet()
+  private suspend fun categorizePackages(packages: Array<out String>): Pair<List<PyPackageName>, List<PyPackageName>> {
+    val dependencyNames = PythonDependenciesExtractor.forSdk(project, sdk)?.extract()?.map { it.name }?.toSet() ?: emptySet()
     return packages
       .map { PyPackageName.from(it) }
       .partition { it.name !in dependencyNames }
