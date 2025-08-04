@@ -448,14 +448,14 @@ public final class VfsData {
     }
 
     //@GuardedBy("parent.directoryData")
-    void initFileData(int fileId, @NotNull Object fileData, @NotNull VirtualDirectoryImpl parent) throws FileAlreadyCreatedException {
+    void initFileData(int fileId, @NotNull Object fileData, @Nullable VirtualDirectoryImpl parent) throws FileAlreadyCreatedException {
       int offset = objectOffsetInSegment(fileId);
       Object existingData = objectFieldsArray.compareAndExchange(offset, /*expected: */null, fileData);
       if (existingData != null) {
         //RC: it seems like concurrency issue, but I can't find a specific location
-        //MAYBE RC: don't throw the exception -- if an entry was already created, so be it, log warn and go on?
-        //TODO RC: why it is even an error? This could happen if the cached file entry was dropped by GC (it is a soft-ref),
-        //         or sometimes just by concurrency
+        //MAYBE RC: why it is even an error? It seems, like this could happen if the cached file entry was dropped by GC
+        //          (it is a soft-ref), or sometimes just by concurrency. Maybe if an entry was already created -- so be
+        //          it, log warn and go on?
 
         FSRecordsImpl vfsPeer = owningVfsData.owningPersistentFS.peer();
         int parentId = vfsPeer.getParent(fileId);
@@ -472,7 +472,8 @@ public final class VfsData {
           describeAlreadyCreatedFile(fileId)
           + " data: " + fileData
           + ", alreadyExistingData: " + existingData
-          + ", parentData: " + parentData + ", parent.data: " + parent.directoryData + " equals: " + (parentData == parent.directoryData)
+          + ", parentData: " + parentData
+          + ((parent != null) ? ", parent.data: " + parent.directoryData + " equals: " + (parentData == parent.directoryData) : ", parent = null")
           + ", synchronized(parentData): " + (parentData != null ? Thread.holdsLock(parentData) : "...")
         );
       }

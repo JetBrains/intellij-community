@@ -33,26 +33,24 @@ public final class FsRoot extends VirtualDirectoryImpl {
     directoryData.assignDirectory(root);
 
     segment.setFlags(id, ALL_FLAGS_MASK, VfsDataFlags.toFlags(fileAttributes, offlineByDefault));
-    //TODO RC: WRITABLE, HIDDEN, SPECIAL, SYMLINK flags are set 'false' by the legacy version -- was it intentional, or just
-    //         an omission?
+    //TODO RC: WRITABLE, HIDDEN, SPECIAL, SYMLINK flags are set 'false' by the legacy version.
+    //         Was it intentional, or just an omission?
     //segment.setFlag(id, VfsDataFlags.IS_WRITABLE_FLAG, false);
     //segment.setFlag(id, VfsDataFlags.IS_HIDDEN_FLAG, false);
     //segment.setFlag(id, VfsDataFlags.IS_SPECIAL_FLAG, false);
     //segment.setFlag(id, VfsDataFlags.IS_SYMLINK_FLAG, false);
 
     //publish directoryData only _after_ all the initialization is done:
-    // TODO RC: root should have null parent, but parent is @NotNull, hence we're forced to supply _something_
-    //          really, initFileData() uses parent only for formatting error message, so it could be made @Nullable with no problem
-    segment.initFileData(id, directoryData, /*parent: */ root);
+    segment.initFileData(id, directoryData, /*parent: */ null);
 
     return root;
   }
 
-  public FsRoot(int id,
-                @NotNull VfsData.Segment segment,
-                @NotNull VfsData.DirectoryData directoryData,
-                @NotNull NewVirtualFileSystem fileSystem,
-                @NotNull String pathBeforeSlash) throws VfsData.FileAlreadyCreatedException {
+  private FsRoot(int id,
+                 @NotNull VfsData.Segment segment,
+                 @NotNull VfsData.DirectoryData directoryData,
+                 @NotNull NewVirtualFileSystem fileSystem,
+                 @NotNull String pathBeforeSlash) {
     super(id, segment, directoryData, /*parent: */ null, fileSystem);
 
     pathWithOneTrailingSlash = pathBeforeSlash + '/';
