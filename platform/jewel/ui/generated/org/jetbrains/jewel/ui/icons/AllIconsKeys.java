@@ -63,9 +63,9 @@ public final class AllIconsKeys {
     /** 16x16 */ public static final @NotNull IntelliJIconKey FindAndShowNextMatchesSmall = new IntelliJIconKey("actions/findAndShowNextMatchesSmall.svg", "expui/general/chevronDown.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey FindAndShowPrevMatches = new IntelliJIconKey("actions/findAndShowPrevMatches.svg", "expui/general/chevronUp.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey FindAndShowPrevMatchesSmall = new IntelliJIconKey("actions/findAndShowPrevMatchesSmall.svg", "expui/general/chevronUp.svg", AllIconsKeys.class);
-    /** 16x16 */ public static final @NotNull IntelliJIconKey FindBackward = new IntelliJIconKey("actions/findBackward.svg", "actions/findBackward.svg", AllIconsKeys.class);
-    /** 16x16 */ public static final @NotNull IntelliJIconKey FindEntireFile = new IntelliJIconKey("actions/findEntireFile.svg", "actions/findEntireFile.svg", AllIconsKeys.class);
-    /** 16x16 */ public static final @NotNull IntelliJIconKey FindForward = new IntelliJIconKey("actions/findForward.svg", "actions/findForward.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey FindBackward = new IntelliJIconKey("actions/findBackward.svg", "expui/actions/findBackward.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey FindEntireFile = new IntelliJIconKey("actions/findEntireFile.svg", "expui/actions/findEntireFile.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey FindForward = new IntelliJIconKey("actions/findForward.svg", "expui/actions/findForward.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey ForceRefresh = new IntelliJIconKey("actions/forceRefresh.svg", "expui/actions/forceRefresh.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Forward = new IntelliJIconKey("actions/forward.svg", "expui/general/right.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey GC = new IntelliJIconKey("actions/gc.svg", "expui/general/delete.svg", AllIconsKeys.class);
