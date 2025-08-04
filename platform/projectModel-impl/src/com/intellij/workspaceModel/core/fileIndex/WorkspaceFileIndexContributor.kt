@@ -112,7 +112,7 @@ sealed interface DependencyDescription<E : WorkspaceEntity> {
    * or remove the last reference to [E].
    */
   @ApiStatus.Experimental
-  data class OnReference<E: WorkspaceEntityWithSymbolicId, R: WorkspaceEntityWithSymbolicId>(
+  data class OnReference<E: WorkspaceEntityWithSymbolicId, R: WorkspaceEntity>(
     /** Type that could contain references to [E] */
     val referenceHolderClass: Class<R>,
     /** Computes references */

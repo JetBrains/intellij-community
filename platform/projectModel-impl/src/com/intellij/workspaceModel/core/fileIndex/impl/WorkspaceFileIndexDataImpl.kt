@@ -356,7 +356,7 @@ internal class WorkspaceFileIndexDataImpl(
     }
   }
 
-  private fun <R : WorkspaceEntityWithSymbolicId, E : WorkspaceEntityWithSymbolicId> processOnReference(
+  private fun <R : WorkspaceEntityWithSymbolicId, E : WorkspaceEntity> processOnReference(
     dependencyDescription: DependencyDescription.OnReference<R, E>,
     event: VersionedStorageChange,
     removedEntities: MutableSet<WorkspaceEntity>,
@@ -364,7 +364,6 @@ internal class WorkspaceFileIndexDataImpl(
   ) {
     val previousDependencies = mutableSetOf<SymbolicEntityId<R>>()
     val actualDependencies = mutableSetOf<SymbolicEntityId<R>>()
-
 
     event.getChanges(dependencyDescription.referenceHolderClass).asSequence().forEach { change ->
       change.oldEntity?.let {
