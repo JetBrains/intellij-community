@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiClass
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
@@ -20,8 +21,11 @@ import org.jetbrains.kotlin.scripting.definitions.runReadAction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KtFileClassProviderImpl(val project: Project) : KtFileClassProvider {
+    /**
+     * It would be used e.g. to find a class in dumb mode
+     */
     override fun getFileClasses(file: KtFile): Array<PsiClass> {
-        if (file.project.isInDumbMode) return emptyArray()
+        if (!Registry.`is`("kotlin.analysis.allowRestrictedAnalysis", true) && file.project.isInDumbMode) return emptyArray()
 
         if (file.isCompiled) {
             return file.safeAs<KtClsFile>()?.let {

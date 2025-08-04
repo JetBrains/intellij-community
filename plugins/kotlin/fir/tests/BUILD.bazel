@@ -93,6 +93,8 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//plugins/kotlin/completion/impl-k2:kotlin-completion-impl-k2",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.fir.tests` end

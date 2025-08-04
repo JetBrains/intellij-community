@@ -85,5 +85,6 @@
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module" module-name="kotlin.completion.impl.k2" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.smRunner" scope="TEST" />
   </component>
 </module>

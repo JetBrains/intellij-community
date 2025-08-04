@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirMultilineParameter
 import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.projectView.AbstractK2ProjectViewTest
 import org.jetbrains.kotlin.idea.fir.resolve.*
+import org.jetbrains.kotlin.idea.fir.run.AbstractKotlinTestNavigationTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractKotlinBuiltInsResolveScopeEnlargerTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractScopeEnlargerTest
@@ -145,6 +146,10 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
     }
 
     testGroup("fir/tests", testDataPath = "../../idea/tests/testData", category = CODE_INSIGHT) {
+        testClass<AbstractKotlinTestNavigationTest>(indexingMode = listOf(IndexingMode.DUMB_FULL_INDEX, IndexingMode.SMART)) {
+            model("navigation/navigateToTestFromView", pattern = Patterns.forRegex("^([^.]+)\\.(kt|java)$"))
+        }
+
         testClass<AbstractK2AddImportActionTest> {
             model("idea/actions/kotlinAddImportAction", pattern = KT_WITHOUT_DOTS)
         }
