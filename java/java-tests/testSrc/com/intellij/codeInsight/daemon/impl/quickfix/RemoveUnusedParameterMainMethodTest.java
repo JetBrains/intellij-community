@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,7 @@ public class RemoveUnusedParameterMainMethodTest extends LightJavaInspectionTest
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_25;
+    return new ProjectDescriptor(LanguageLevel.JDK_25);
   }
 
   @Nullable
