@@ -2,7 +2,8 @@
 package fleet.rpc.core
 
 import fleet.rpc.core.util.map
-import kotlinx.coroutines.CoroutineScope
+import fleet.util.async.Resource
+import fleet.util.async.map
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
@@ -55,18 +56,17 @@ sealed class WebSocketMessage {
   }
 }
 
-fun websocketTransportFactory(connect: suspend (SocketStats?, suspend CoroutineScope.(Transport<WebSocketMessage>) -> Unit) -> Unit): FleetTransportFactory {
-  return FleetTransportFactory { transportStats, body ->
+fun websocketTransportFactory(connect: (SocketStats?) -> Resource<Transport<WebSocketMessage>>): FleetTransportFactory =
+  FleetTransportFactory { transportStats ->
     val stats = transportStats?.let { SocketStats.reportToFlow(it) }
     val serializer = TransportMessage.serializer()
-    connect(stats) { wsTransport ->
+    connect(stats).map { wsTransport ->
       val incomingMsg = wsTransport.incoming.map { wsMsg ->
         Json.decodeFromString(serializer, wsMsg.textOrThrow())
       }
       val outgoingMsg = wsTransport.outgoing.map { transportMsg: TransportMessage ->
         WebSocketMessage.Text(Json.encodeToString(serializer, transportMsg))
       }
-      body(Transport(outgoingMsg, incomingMsg))
+      Transport(outgoingMsg, incomingMsg)
     }
   }
-}

@@ -3,6 +3,7 @@ package fleet.rpc.server
 
 import fleet.reporting.shared.tracing.spannedScope
 import fleet.rpc.EndpointKind
+import fleet.rpc.core.Transport
 import fleet.rpc.core.TransportMessage
 import fleet.util.UID
 import fleet.util.async.coroutineNameAppended
@@ -38,11 +39,12 @@ suspend fun RequestDispatcher.serveRpc(
                                   receive = dispatcherReceive)
     }
     withContext(coroutineNameAppended("Serving RPC as provider ${route}")) {
-      RpcExecutor.serve(services = services,
-                        sendChannel = executorSend,
-                        receiveChannel = executorReceive,
-                        rpcInterceptor = interceptor,
-                        route = route)
+      RpcExecutor.serve(
+        services = services,
+        transport = Transport(executorSend, executorReceive),
+        rpcInterceptor = interceptor,
+        route = route,
+      )
     }
   }
 }
