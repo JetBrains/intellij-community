@@ -201,9 +201,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @ApiStatus.Internal
   protected @Nullable ShellProcessHolder getHolder(@NotNull PtyProcess process) {
-    ShellProcessHolder holder = myProcessHolderMap.get(process);
-    myProcessHolderMap.remove(process);
-    return holder;
+    return myProcessHolderMap.remove(process);
   }
 
   @Override
