@@ -26,7 +26,7 @@ internal class ModuleNotRegisteredAsPluginContentInspection : LocalInspectionToo
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return object : XmlElementVisitor() {
       override fun visitXmlFile(file: XmlFile) {
-        if (isPluginModuleFile(file) && isModuleReferencedAsContentModule(file)) {
+        if (isPluginModuleFile(file) && isNotReferencedAsContentModule(file)) {
           val moduleName = getModuleName(file)
           holder.registerProblem(
             file,
@@ -48,7 +48,7 @@ internal class ModuleNotRegisteredAsPluginContentInspection : LocalInspectionToo
     return parentDirName != "META-INF"
   }
 
-  private fun isModuleReferencedAsContentModule(xmlFile: XmlFile): Boolean {
+  private fun isNotReferencedAsContentModule(xmlFile: XmlFile): Boolean {
     val moduleVirtualFile = xmlFile.virtualFile ?: return false
     return PluginIdDependenciesIndex.findContentDependsTo(xmlFile.project, moduleVirtualFile).none()
   }
