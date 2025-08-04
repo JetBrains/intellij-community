@@ -34,15 +34,15 @@ object MonorepoProjectStructure {
 fun JpsModule.hasProductionSources(): Boolean = getSourceRoots(JavaSourceRootType.SOURCE).iterator().hasNext()
 
 /**
- * Calls [processor] for the path containing the production output of [module].
+ * Calls [processor] for the path containing the production output of [this@processModuleProductionOutput].
  * Works both when module output is located in a directory and when it's packed in a JAR.
  */
-fun <T> processModuleProductionOutput(module: JpsModule, processor: (Path) -> T): T {
+fun <T> JpsModule.processProductionOutput(processor: (outputRoot: Path) -> T): T {
   val archivedCompiledClassesMapping = PathManager.getArchivedCompiledClassesMapping()
-  val outputJarPath = archivedCompiledClassesMapping?.get("production/${module.name}")
+  val outputJarPath = archivedCompiledClassesMapping?.get("production/$name")
   if (outputJarPath == null) {
-    val outputDirectoryPath = JpsJavaExtensionService.getInstance().getOutputDirectoryPath(module, false)
-                              ?: error("Output directory is not specified for '${module.name}'")
+    val outputDirectoryPath = JpsJavaExtensionService.getInstance().getOutputDirectoryPath(this, false)
+                              ?: error("Output directory is not specified for '$name'")
     return processor(outputDirectoryPath)
   }
   else {
