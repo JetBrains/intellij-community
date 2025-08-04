@@ -16,7 +16,7 @@
 package com.intellij.psi.codeStyle;
 
 public interface CodeStyleConstraints {
-  int MAX_RIGHT_MARGIN = 1000;
+  int MAX_RIGHT_MARGIN = Integer.MAX_VALUE;
   int MIN_INDENT_SIZE = 0;
   int MAX_INDENT_SIZE = 32;
   int MIN_TAB_SIZE = 1;
