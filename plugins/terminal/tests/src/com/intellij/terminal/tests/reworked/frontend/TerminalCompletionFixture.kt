@@ -54,22 +54,7 @@ class TerminalCompletionFixture(val project: Project, testRootDisposable: Dispos
   }
 
   fun callCompletionPopup() {
-    val actionId = "Terminal.CommandCompletion.Gen2"
-    val action = ActionManager.getInstance().getAction(actionId)
-
-    val context = SimpleDataContext.builder()
-      .add(CommonDataKeys.PROJECT, project)
-      .add(CommonDataKeys.EDITOR, view.outputEditor)
-      .add(TerminalOutputModel.KEY, view.outputModel)
-      .build()
-
-    val event = AnActionEvent.createEvent(action, context, null,
-                                          "", ActionUiKind.NONE, null)
-
-    ActionUtil.updateAction(action, event)
-    if (event.presentation.isEnabledAndVisible) {
-      ActionUtil.performAction(action, event)
-    }
+    runActionById("Terminal.CommandCompletion.Gen2")
   }
 
   fun isLookupActive(): Boolean {
@@ -81,5 +66,34 @@ class TerminalCompletionFixture(val project: Project, testRootDisposable: Dispos
     val lookupManager = LookupManager.getInstance(project)
     val activeLookup = lookupManager.activeLookup
     return activeLookup?.items ?: emptyList()
+  }
+
+  fun getCurrentItem(): LookupElement? {
+    val lookupManager = LookupManager.getInstance(project)
+    val activeLookup = lookupManager.activeLookup
+    return activeLookup?.currentItem
+  }
+
+  fun downCompletionPopup() {
+    runActionById("Terminal.DownCommandCompletion")
+  }
+
+  fun upCompletionPopup() {
+    runActionById("Terminal.UpCommandCompletion")
+  }
+
+  private fun runActionById(actionId: String) {
+    val action = ActionManager.getInstance().getAction(actionId)
+    val context = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(CommonDataKeys.EDITOR, view.outputEditor)
+      .add(TerminalOutputModel.KEY, view.outputModel)
+      .build()
+    val event = AnActionEvent.createEvent(action, context, null,
+                                          "", ActionUiKind.NONE, null)
+    ActionUtil.updateAction(action, event)
+    if (event.presentation.isEnabledAndVisible) {
+      ActionUtil.performAction(action, event)
+    }
   }
 }

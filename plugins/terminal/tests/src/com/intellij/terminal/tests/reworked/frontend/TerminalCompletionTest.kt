@@ -1,6 +1,7 @@
 package com.intellij.terminal.tests.reworked.frontend
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -24,4 +25,21 @@ class TerminalCompletionTest : BasePlatformTestCase() {
     assertEquals(listOf("stage", "stash", "status"), resultStrings)
   }
 
+  @Test
+  fun `test terminal completion up and down`() {
+    val terminalCompletionFixture = TerminalCompletionFixture(project, testRootDisposable)
+    terminalCompletionFixture.type("git b")
+    terminalCompletionFixture.callCompletionPopup()
+    val startResult = terminalCompletionFixture.getLookupElements()
+    assertEquals(3, startResult.size)
+
+    val firstElement = terminalCompletionFixture.getCurrentItem()
+    terminalCompletionFixture.downCompletionPopup()
+    val secondElement = terminalCompletionFixture.getCurrentItem()
+    terminalCompletionFixture.upCompletionPopup()
+    val fistAfterElement = terminalCompletionFixture.getCurrentItem()
+
+    assertEquals(firstElement, fistAfterElement)
+    assertNotEquals(secondElement, fistAfterElement)
+  }
 }
