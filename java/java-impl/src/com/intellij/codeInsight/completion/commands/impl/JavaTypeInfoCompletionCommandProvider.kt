@@ -3,10 +3,8 @@ package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.completion.command.commands.AbstractTypeInfoCompletionCommandProvider
 import com.intellij.codeInsight.completion.command.getCommandContext
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiExpression
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiWhiteSpace
+import com.intellij.java.syntax.parser.JavaKeywords
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 
 internal class JavaTypeInfoCompletionCommandProvider : AbstractTypeInfoCompletionCommandProvider() {
@@ -15,6 +13,8 @@ internal class JavaTypeInfoCompletionCommandProvider : AbstractTypeInfoCompletio
     if (context is PsiWhiteSpace) context = context.prevSibling
     val expression = PsiTreeUtil.getParentOfType(context, PsiExpression::class.java, false)
     if (expression != null && expression.type != null) return expression
+    if (context is PsiIdentifier && context.parent is PsiVariable) return context
+    if (context is PsiKeyword && context.text == JavaKeywords.VAR && context.parent is PsiTypeElement) return context
     return null
   }
 }
