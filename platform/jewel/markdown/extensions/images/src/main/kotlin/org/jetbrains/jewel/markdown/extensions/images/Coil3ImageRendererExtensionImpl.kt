@@ -36,7 +36,7 @@ import org.jetbrains.jewel.ui.component.Tooltip
  */
 internal class Coil3ImageRendererExtensionImpl(private val imageLoader: ImageLoader) : ImageRendererExtension {
     @Composable
-    override fun renderImagesContent(image: InlineMarkdown.Image): InlineTextContent {
+    override fun renderImageContent(image: InlineMarkdown.Image): InlineTextContent {
         var knownSize by remember(image.source) { mutableStateOf<DpSize?>(null) }
 
         return InlineTextContent(
