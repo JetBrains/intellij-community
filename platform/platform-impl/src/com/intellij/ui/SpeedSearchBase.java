@@ -55,6 +55,7 @@ import java.awt.event.*;
 import java.awt.im.InputMethodRequests;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.text.CharacterIterator;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
@@ -511,7 +512,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   public void processInputMethodEvent(InputMethodEvent e) {
     if (!isSpeedSearchEnabled()) return;
 
-    if (mySearchPopup == null && e.getID() == InputMethodEvent.INPUT_METHOD_TEXT_CHANGED) {
+    if (mySearchPopup == null && e.getID() == InputMethodEvent.INPUT_METHOD_TEXT_CHANGED && e.getText().current() != CharacterIterator.DONE) {
       showPopup();
     }
 
