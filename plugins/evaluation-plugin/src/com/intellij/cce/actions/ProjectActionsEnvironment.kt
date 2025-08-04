@@ -92,7 +92,7 @@ open class ProjectActionsEnvironment(
 
   protected fun generateActions(
     datasetContext: DatasetContext,
-    languageName: String,
+    languageName: String?,
     files: Collection<VirtualFile>,
     evaluationRootInfo: EvaluationRootInfo,
     indicator: Progress,
@@ -132,6 +132,7 @@ open class ProjectActionsEnvironment(
           else -> throw IllegalStateException("Parent psi and offset are null.")
         }
         val codeFragment = codeFragmentBuilder.build(file, rootVisitor, featureName)
+        if (codeFragment == null) continue
         val fileActions = actionsGenerator.generate(codeFragment)
         actionsSummarizer.update(fileActions)
         datasetContext.actionsStorage.saveActions(fileActions)

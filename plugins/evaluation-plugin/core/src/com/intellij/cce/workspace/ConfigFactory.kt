@@ -99,7 +99,7 @@ object ConfigFactory {
       builder.actions = Config.ActionsGeneration(
         resultProjectPath,
         projectName ?: map.getIfExists<String>("projectName")?.handleEnv() ?: resultProjectPath.split('/').last(),
-        language ?: map.getAs("language"),
+        language ?: map.getIfExists("language"),
         map.getAs("evaluationRoots"),
         map.getIfExists<List<String>>("ignoreFileNames")?.toSet() ?: emptySet(),
         map.getIfExists<String?>("sourceFile"),

@@ -60,7 +60,7 @@ data class Config private constructor(
   data class ActionsGeneration internal constructor(
     val projectPath: String,
     val projectName: String,
-    val language: String,
+    val language: String?,
     val evaluationRoots: List<String>,
     val ignoreFileNames: Set<String>,
     val sourceFile: String?,

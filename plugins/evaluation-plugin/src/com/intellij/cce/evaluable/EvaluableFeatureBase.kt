@@ -40,7 +40,7 @@ abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: S
   abstract fun getEvaluationSteps(language: Language, strategy: T): List<EvaluationStep>
 
   override fun getEvaluationSteps(config: Config): List<EvaluationStep> =
-    getEvaluationSteps(Language.resolve(actions(config).language), config.strategy())
+    getEvaluationSteps(actions(config).language?.let { Language.resolve(it) } ?: Language.ANOTHER, config.strategy())
 
   open fun getSetupSteps(project: Project, language: Language, strategy: T): List<EvaluationStep> =
     defaultSetupSteps(project, language, setupSdkPreferences)
@@ -70,6 +70,8 @@ abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: S
   override fun prepareEnvironment(config: Config, outputWorkspace: EvaluationWorkspace): EvaluationEnvironment {
     val actions = actions(config)
     val strategy = config.strategy<T>()
+    val language = actions.language?.let { Language.resolve(it) } ?: Language.ANOTHER
+
     return ProjectActionsEnvironment.open(actions.projectPath) { project ->
       ProjectActionsEnvironment(
         strategy,
@@ -79,9 +81,9 @@ abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: S
         EvaluationRootInfo(true),
         project,
         getGenerateActionsProcessor(strategy, project),
-        getSetupSteps(project, Language.resolve(actions.language), strategy),
+        getSetupSteps(project, language, strategy),
         name,
-        featureInvoker = getFeatureInvoker(project, Language.resolve(actions.language), strategy)
+        featureInvoker = getFeatureInvoker(project, language, strategy)
       )
     }
   }

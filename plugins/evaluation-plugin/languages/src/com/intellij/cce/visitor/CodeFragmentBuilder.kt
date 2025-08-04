@@ -12,8 +12,8 @@ import com.intellij.openapi.vfs.VirtualFile
 
 abstract class CodeFragmentBuilder {
   companion object {
-    fun create(project: Project, languageName: String, featureName: String, strategy: EvaluationStrategy): CodeFragmentBuilder {
-      val language = Language.resolve(languageName)
+    fun create(project: Project, languageName: String?, featureName: String, strategy: EvaluationStrategy): CodeFragmentBuilder {
+      val language = languageName?.let { Language.resolve(languageName) }
 
       return when {
         strategy is CompletionGolfStrategy -> LineCompletionFragmentBuilder(project, language, featureName, strategy.mode, false)
@@ -28,5 +28,5 @@ abstract class CodeFragmentBuilder {
     return rootProcessor.getRoot() ?: throw NullRootException(code.path)
   }
 
-  abstract fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor, featureName: String): CodeFragment
+  abstract fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor, featureName: String): CodeFragment?
 }
