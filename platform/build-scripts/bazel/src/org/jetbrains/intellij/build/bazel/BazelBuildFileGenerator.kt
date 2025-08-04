@@ -1025,7 +1025,7 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
   }
   //x_sam_conversions
   handleArgument(K2JVMCompilerArguments::samConversions) { samConversions ->
-    if (samConversions != null) {
+    if (samConversions != null && samConversions != "indy") {
       options.put("x_sam_conversions", samConversions)
     }
   }
