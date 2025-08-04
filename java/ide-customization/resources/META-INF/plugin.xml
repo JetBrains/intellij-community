@@ -1,15 +1,27 @@
-<idea-plugin>
+<idea-plugin allow-bundled-update="true" package="com.intellij.ide.customization.java">
   <id>com.intellij.java.ide</id>
   <name>Java IDE Customization</name>
   <vendor>JetBrains</vendor>
   <category>IDE Settings</category>
-  <depends>com.intellij.java</depends>
-  <description>Provides customization for IDEs which main language is Java (e.g. IntelliJ IDEA).</description>
-  <resource-bundle>messages.ActionsBundle</resource-bundle>
+  <description>
+    Provides customization for IDEs which main language is Java (e.g., IntelliJ IDEA).
+  </description>
 
   <incompatible-with>com.intellij.modules.appcode.ide</incompatible-with>
+
+  <dependencies>
+    <plugin id="com.intellij.java"/>
+  </dependencies>
 
   <content>
     <module name="intellij.java.ide.customization/training"/>
   </content>
+
+  <resource-bundle>messages.ActionsBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"
+                        serviceImplementation="com.intellij.ide.customization.java.JavaIdeLanguageCustomization"
+                        overrides="true"/>
+  </extensions>
 </idea-plugin>

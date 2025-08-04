@@ -20,6 +20,7 @@ jvm_library(
     "//platform/util:util-ui",
     "//java/java-features-trainer:featuresTrainer",
     "//platform/platform-impl:ide-impl",
+    "//platform/lang-core",
   ],
   runtime_deps = [
     ":ide-customization_resources",
