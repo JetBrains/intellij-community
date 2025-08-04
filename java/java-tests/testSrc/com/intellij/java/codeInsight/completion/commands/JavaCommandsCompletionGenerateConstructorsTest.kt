@@ -35,6 +35,25 @@ class JavaCommandsCompletionGenerateConstructorsTest : LightFixtureCompletionTes
         }""".trimIndent())
   }
 
+  fun testGenerateNoArgsConstructorWithConstructor() {
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A { 
+          int a;
+          generate con<caret>
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("Generate 'No-Args Constructor'", ignoreCase = true) })
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    myFixture.checkResult("""
+        class A { 
+            int a;
+        
+            public A() {
+            }
+        }""".trimIndent())
+  }
+
   fun testGenerateAllArgsConstructor() {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A { 

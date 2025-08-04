@@ -37,12 +37,13 @@ internal class JavaGenerateConstructorCompletionCommandProvider : CommandProvide
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
     val clazz = findContext(context) ?: return emptyList()
     val result = mutableListOf<CompletionCommand>()
+    val actionContext = ActionContext.from(context.editor, context.psiFile)
     if (clazz.constructors.none { it.parameters.isEmpty() }) {
       val fix = AddDefaultConstructorFix(clazz, PsiModifier.PUBLIC)
-      result.add(GenerateConstructorCompletionCommand(fix, CodeInsightBundle.message("command.completion.generate.text", JavaBundle.message("command.completion.generate.no.args.constructor.text"))) {
-        val actionContext = ActionContext.from(context.editor, context.psiFile)
-        return@GenerateConstructorCompletionCommand fix.generatePreview(actionContext)
-      })
+      result.add(GenerateConstructorCompletionCommand(fix,
+                                                      actionContext,
+                                                      CodeInsightBundle.message("command.completion.generate.text", JavaBundle.message("command.completion.generate.no.args.constructor.text")),
+                                                      listOf("generate default constructor", "generate no args constructor")))
     }
 
     val handler = object : GenerateConstructorHandler() {
@@ -77,10 +78,10 @@ internal class JavaGenerateConstructorCompletionCommandProvider : CommandProvide
         val text = (generationInfo?.psiMember as? PsiMethod)?.text ?: return result
         val fix = AddMethodFix(text, clazz)
 
-        result.add(GenerateConstructorCompletionCommand(fix, CodeInsightBundle.message("command.completion.generate.text", JavaBundle.message("command.completion.generate.all.args.constructor.text"))) {
-          val actionContext = ActionContext.from(context.editor, context.psiFile)
-          return@GenerateConstructorCompletionCommand fix.generatePreview(actionContext)
-        })
+        result.add(GenerateConstructorCompletionCommand(fix,
+                                                        actionContext,
+                                                        CodeInsightBundle.message("command.completion.generate.text", JavaBundle.message("command.completion.generate.all.args.constructor.text")),
+                                                        listOf("generate all args constructor")))
       }
     }
 
@@ -103,9 +104,12 @@ internal class JavaGenerateConstructorCompletionCommandProvider : CommandProvide
 
   class GenerateConstructorCompletionCommand(
     val fix: PsiUpdateModCommandAction<*>,
+    val actionContext: ActionContext,
     @param:Nls override val presentableName: String,
-    val preview: () -> IntentionPreviewInfo?,
+    additionalSynonyms: List<String>,
   ) : CompletionCommand() {
+
+    override val synonyms: List<String> = mutableListOf("generate constructor") + additionalSynonyms
 
     override val additionalInfo: String?
       get() {
@@ -124,7 +128,7 @@ internal class JavaGenerateConstructorCompletionCommandProvider : CommandProvide
     }
 
     override fun getPreview(): IntentionPreviewInfo {
-      return preview() ?: IntentionPreviewInfo.EMPTY
+      return fix.generatePreview(actionContext)
     }
   }
 }
