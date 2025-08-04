@@ -25,7 +25,6 @@ jvm_library(
     "//platform/configuration-store-impl:configurationStore-tests",
     "//platform/configuration-store-impl:configurationStore-tests_test_lib",
     "//plugins/terminal",
-    "//plugins/terminal:terminal_test_lib",
     "//plugins/terminal/backend",
     "//plugins/terminal/frontend",
     "//plugins/terminal/completion",

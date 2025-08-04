@@ -116,7 +116,6 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   deps = [
     "//plugins/terminal",
-    "//plugins/terminal:terminal_test_lib",
     "//python:pycharm-community",
     "//python:pycharm-community-customization",
     "//python/pluginCore:community-plugin",

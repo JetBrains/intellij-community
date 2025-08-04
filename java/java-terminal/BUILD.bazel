@@ -48,7 +48,6 @@ jvm_library(
     "//plugins/terminal/completion",
     "//plugins/terminal/completion:completion_test_lib",
     "//plugins/terminal",
-    "//plugins/terminal:terminal_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.terminal.tests` end

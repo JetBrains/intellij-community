@@ -204,7 +204,6 @@ jvm_library(
     "//platform/backend/observation:observation_test_lib",
     "//platform/util/coroutines",
     "//plugins/terminal",
-    "//plugins/terminal:terminal_test_lib",
     "//plugins/terminal/completion",
     "//plugins/terminal/completion:completion_test_lib",
     "@lib//:http-client",
