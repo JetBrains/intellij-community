@@ -34,16 +34,16 @@ private class RemoteManagedCacheManager(private val project: Project, private va
     return storage[cacheId.name]!!
   }
   suspend fun create(cacheId: CacheId, buildParams: RemoteManagedCacheBuildParams): EntriesFlow {
-    val cache = ManagedCacheFactory.getInstance().createCache(
-      project,
-      remoteCacheLocation(),
-      cacheId.name,
-      MyKeyDescriptor(),
-      Externalizer(),
-      buildParams.serdeVersion,
-      coroutineScope
-    )
-    storage[cacheId.name] = cache
+    val cache = storage[cacheId.name]
+                ?: ManagedCacheFactory.getInstance().createCache(
+                  project,
+                  remoteCacheLocation(),
+                  cacheId.name,
+                  MyKeyDescriptor(),
+                  Externalizer(),
+                  buildParams.serdeVersion,
+                  coroutineScope
+                ).also { storage[cacheId.name] = it }
     return cache.entries()
   }
 
