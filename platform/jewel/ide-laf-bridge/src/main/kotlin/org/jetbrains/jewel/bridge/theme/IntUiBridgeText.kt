@@ -70,7 +70,7 @@ public fun retrieveEditorTextStyle(): TextStyle {
             fontFamily = font.asComposeFontFamily(),
             fontSize = editorColorScheme.editorFontSize.sp,
             lineHeight = (computedLineHeight * EDITOR_LINE_HEIGHT_FACTOR).coerceAtLeast(1f).sp,
-            fontFeatureSettings = if (!editorColorScheme.isUseLigatures) "liga 0" else "liga 1",
+            fontFeatureSettings = if (!editorColorScheme.isUseLigatures) "liga 0, calt 0" else "liga 1, calt 1",
         )
 }
 
