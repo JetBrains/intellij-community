@@ -11,6 +11,7 @@ open class CheckboxTree : CheckboxTreeBase {
     protected constructor(opaque: Boolean, usePartialStatusForParentNodes: Boolean) : super(opaque, usePartialStatusForParentNodes)
   }
 
+  @Deprecated("provide `checkPolicy` explicitly, as the default one is defective")
   constructor(cellRenderer: CheckboxTreeCellRenderer, root: CheckedTreeNode?) : super(cellRenderer, root) {
     installSpeedSearch()
   }
@@ -19,7 +20,7 @@ open class CheckboxTree : CheckboxTreeBase {
   constructor()
 
   constructor(cellRenderer: CheckboxTreeCellRenderer, root: CheckedTreeNode?, checkPolicy: CheckPolicy) : super(cellRenderer, root,
-                                                                                                                 checkPolicy) {
+                                                                                                                checkPolicy) {
     installSpeedSearch()
   }
 

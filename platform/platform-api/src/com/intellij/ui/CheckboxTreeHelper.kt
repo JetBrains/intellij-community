@@ -189,6 +189,7 @@ class CheckboxTreeHelper(private val myCheckPolicy: CheckPolicy, private val myE
 
   companion object {
     private val TREE_LISTENERS_REMOVER = Key.create<Runnable?>("TREE_LISTENERS_REMOVER")
+    @Deprecated("This value has been special-cased to retain a defect, and should not be used for new code. See `PROPAGATE_EVERYTHING_POLICY` .see IJPL-199505")
     @JvmField
     val DEFAULT_POLICY: CheckPolicy = CheckPolicy(true, true, false, true)
     @JvmStatic

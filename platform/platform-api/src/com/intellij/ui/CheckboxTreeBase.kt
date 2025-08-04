@@ -18,16 +18,27 @@ import javax.swing.JTree
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeCellRenderer
 
-open class CheckboxTreeBase @JvmOverloads constructor(
+open class CheckboxTreeBase(
   cellRenderer: CheckboxTreeCellRendererBase = CheckboxTreeCellRendererBase(),
   root: CheckedTreeNode? = null,
-  checkPolicy: CheckPolicy = CheckboxTreeHelper.DEFAULT_POLICY,
+  checkPolicy: CheckPolicy,
 ) : Tree() {
-  private val myHelper: CheckboxTreeHelper
+  @JvmOverloads
+  @Deprecated("provide `checkPolicy` explicitly, as the default one is defective")
+  constructor(
+    cellRenderer: CheckboxTreeCellRendererBase = CheckboxTreeCellRendererBase(),
+    root: CheckedTreeNode? = null,
+  ) : this(
+    cellRenderer = cellRenderer,
+    root = root,
+    checkPolicy = CheckboxTreeHelper.DEFAULT_POLICY,
+  )
+
   private val myEventDispatcher = EventDispatcher.create(CheckboxTreeListener::class.java)
+  private val myHelper = CheckboxTreeHelper(checkPolicy, myEventDispatcher)
+  private val myCheckPolicy = checkPolicy
 
   init {
-    myHelper = CheckboxTreeHelper(checkPolicy, myEventDispatcher)
     if (root != null) {
       // override default model ("colors", etc.) ASAP to avoid CCE in renderers
       setModel(DefaultTreeModel(root))
@@ -102,17 +113,21 @@ open class CheckboxTreeBase @JvmOverloads constructor(
       }
     }
 
+    @Deprecated("use `threeStateCheckBox` instead", ReplaceWith("threeStateCheckBox"))
     @JvmField
     val myCheckbox: ThreeStateCheckBox = ThreeStateCheckBox()
+    @Deprecated("use `threeStateCheckBox` instead", ReplaceWith("threeStateCheckBox"))
+    val checkbox: JCheckBox = myCheckbox
+    val threeStateCheckBox: ThreeStateCheckBox = myCheckbox
 
     @JvmField
     protected var myIgnoreInheritance: Boolean = false
 
     init {
-      myCheckbox.isSelected = false
+      checkbox.isSelected = false
       myCheckbox.isThirdStateEnabled = false
       textRenderer.setOpaque(opaque)
-      add(myCheckbox, BorderLayout.WEST)
+      add(checkbox, BorderLayout.WEST)
       add(textRenderer, BorderLayout.CENTER)
     }
 
@@ -127,25 +142,25 @@ open class CheckboxTreeBase @JvmOverloads constructor(
     ): Component {
       invalidate()
       if (value is CheckedTreeNode) {
-        val state = getNodeStatus(value)
-        myCheckbox.isVisible = true
-        myCheckbox.setEnabled(value.isEnabled)
-        myCheckbox.isSelected = state != ThreeStateCheckBox.State.NOT_SELECTED
-        myCheckbox.setState(state)
-        myCheckbox.setOpaque(false)
-        myCheckbox.setBackground(null)
+        val state = getNodeStatus(value, tree as? CheckboxTreeBase)
+        checkbox.isVisible = true
+        checkbox.setEnabled(value.isEnabled)
+        checkbox.isSelected = state != ThreeStateCheckBox.State.NOT_SELECTED
+        threeStateCheckBox.setState(state)
+        checkbox.setOpaque(false)
+        checkbox.setBackground(null)
         setBackground(null)
 
         if (UIUtil.isUnderWin10LookAndFeel()) {
           val hoverValue = getClientProperty(UIUtil.CHECKBOX_ROLLOVER_PROPERTY)
-          myCheckbox.getModel().isRollover = hoverValue === value
+          checkbox.getModel().isRollover = hoverValue === value
 
           val pressedValue = getClientProperty(UIUtil.CHECKBOX_PRESSED_PROPERTY)
-          myCheckbox.getModel().isPressed = pressedValue === value
+          checkbox.getModel().isPressed = pressedValue === value
         }
       }
       else {
-        myCheckbox.isVisible = false
+        checkbox.isVisible = false
       }
       textRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
 
@@ -155,7 +170,7 @@ open class CheckboxTreeBase @JvmOverloads constructor(
       return this
     }
 
-    private fun getNodeStatus(node: CheckedTreeNode): ThreeStateCheckBox.State {
+    private fun getNodeStatus(node: CheckedTreeNode, tree: CheckboxTreeBase?): ThreeStateCheckBox.State {
       val ownState = if (node.isChecked()) ThreeStateCheckBox.State.SELECTED else ThreeStateCheckBox.State.NOT_SELECTED
       if (myIgnoreInheritance || node.childCount == 0 || !myUsePartialStatusForParentNodes) {
         return ownState
@@ -164,7 +179,7 @@ open class CheckboxTreeBase @JvmOverloads constructor(
       var result: ThreeStateCheckBox.State? = null
       for (i in 0..<node.childCount) {
         val child = node.getChildAt(i)
-        val childStatus = if (child is CheckedTreeNode) getNodeStatus(child) else ownState
+        val childStatus = if (child is CheckedTreeNode) getNodeStatus(child, tree) else ownState
         if (childStatus == ThreeStateCheckBox.State.DONT_CARE) return ThreeStateCheckBox.State.DONT_CARE
         if (result == null) {
           result = childStatus
@@ -174,10 +189,12 @@ open class CheckboxTreeBase @JvmOverloads constructor(
         }
       }
 
-
-      // If all children have the same state but it differs from the parent's state,
-      // return DONT_CARE (partial) instead of the children's state
+      // If all children have the same state but it differs from the parent's state
       if (result != null && result != ownState) {
+        // special-case: for DEFAULT_POLICY, return the children's state IJPL-199505
+        if (tree != null && tree.myCheckPolicy === CheckboxTreeHelper.DEFAULT_POLICY) {
+          return result
+        }
         return ThreeStateCheckBox.State.DONT_CARE
       }
 
@@ -199,7 +216,7 @@ open class CheckboxTreeBase @JvmOverloads constructor(
             return AccessibleContextUtil.combineAccessibleStrings(
               textRenderer.getAccessibleContext().getAccessibleName(),
               UIBundle.message(
-                if (myCheckbox.isSelected) "checkbox.tree.accessible.name.checked" else "checkbox.tree.accessible.name.not.checked"))
+                if (checkbox.isSelected) "checkbox.tree.accessible.name.checked" else "checkbox.tree.accessible.name.not.checked"))
           }
         }
       }
@@ -222,16 +239,18 @@ open class CheckboxTreeBase @JvmOverloads constructor(
       hasFocus: Boolean,
     ) {
     }
-
-    val checkbox: JCheckBox
-      get() = myCheckbox
   }
 
   open class CheckPolicy @JvmOverloads constructor(
-    @JvmField val checkChildrenWithCheckedParent: Boolean,
-    @JvmField val uncheckChildrenWithUncheckedParent: Boolean,
-    @JvmField val checkParentWithCheckedChild: Boolean,
-    @JvmField val uncheckParentWithUncheckedChild: Boolean,
-    @JvmField val checkByRowClick: Boolean = false,
-  )
+    val checkChildrenWithCheckedParent: Boolean,
+    val uncheckChildrenWithUncheckedParent: Boolean,
+    val checkParentWithCheckedChild: Boolean,
+    val uncheckParentWithUncheckedChild: Boolean,
+    val checkByRowClick: Boolean = false,
+  ) {
+    companion object {
+      @JvmField
+      val PROPAGATE_EVERYTHING_POLICY: CheckPolicy = CheckPolicy(true, true, true, true)
+    }
+  }
 }

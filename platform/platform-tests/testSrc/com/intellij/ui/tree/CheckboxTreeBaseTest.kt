@@ -4,6 +4,7 @@ package com.intellij.ui.tree
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.ui.CheckboxTreeBase
 import com.intellij.ui.CheckboxTreeBase.CheckboxTreeCellRendererBase
+import com.intellij.ui.CheckboxTreeHelper
 import com.intellij.ui.CheckedTreeNode
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.junit.Assert
@@ -19,7 +20,7 @@ class CheckboxTreeBaseTest : LightPlatformTestCase() {
 
   /**
    * Creates a tree structure with a parent node and three children.
-   * 
+   *
    * @param parentChecked Whether the parent node should be checked
    * @param childrenChecked List of boolean values indicating whether each child should be checked
    * @return Pair of the root node and the parent node
@@ -28,34 +29,39 @@ class CheckboxTreeBaseTest : LightPlatformTestCase() {
     val root = CheckedTreeNode("Root")
     val parent = CheckedTreeNode("Parent")
     parent.setChecked(parentChecked)
-    
+
     for ((i, checked) in childrenChecked.withIndex()) {
       val child = CheckedTreeNode("Child $i")
       child.setChecked(checked)
       parent.add(child)
     }
-    
+
     root.add(parent)
     return Pair(root, parent)
   }
-  
+
   /**
    * Gets the checkbox state for a node in the tree.
-   * 
+   *
    * @param root The root node of the tree
    * @param node The node to check the state for
    * @return The state of the checkbox for the node
    */
-  private fun getNodeCheckboxState(root: CheckedTreeNode, node: CheckedTreeNode): ThreeStateCheckBox.State {
+  private fun getNodeCheckboxState(
+    root: CheckedTreeNode,
+    node: CheckedTreeNode,
+    checkPolicy: CheckboxTreeBase.CheckPolicy = CheckboxTreeBase.CheckPolicy(true, true, true, true),
+  ): ThreeStateCheckBox.State {
     val treeModel = DefaultTreeModel(root)
-    val tree = CheckboxTreeBase(CheckboxTreeCellRendererBase(), root)
+    val tree = CheckboxTreeBase(CheckboxTreeCellRendererBase(), root, checkPolicy)
     tree.setModel(treeModel)
-    
+
     val renderer = tree.getCellRenderer() as CheckboxTreeCellRendererBase
     renderer.getTreeCellRendererComponent(tree, node, false, true, false, 1, false)
-    
+
     return renderer.myCheckbox.state
   }
+
   /**
    * Tests that when all children have the same state, but it differs from the parent's state,
    * the parent node shows a partial state (DONT_CARE).
@@ -63,9 +69,9 @@ class CheckboxTreeBaseTest : LightPlatformTestCase() {
   fun testParentNodeStateWithAllChildrenDifferent() {
     // Create a tree with a parent node that is checked and children that are all unchecked
     val (root, parent) = createTreeStructure(true, listOf(false, false, false))
-    
+
     val state = getNodeCheckboxState(root, parent)
-    
+
     // The parent node should have a partial state (DONT_CARE) because all children are unchecked
     // but the parent itself is checked
     Assert.assertEquals("Parent node should have a partial state when all children have a different state",
@@ -79,9 +85,9 @@ class CheckboxTreeBaseTest : LightPlatformTestCase() {
   fun testParentNodeStateWithAllChildrenSame() {
     // Create a tree with a parent node that is checked and children that are all checked
     val (root, parent) = createTreeStructure(true, listOf(true, true, true))
-    
+
     val state = getNodeCheckboxState(root, parent)
-    
+
     // The parent node should have the same state as its children (SELECTED)
     Assert.assertEquals("Parent node should have the same state as its children",
                         ThreeStateCheckBox.State.SELECTED, state)
@@ -94,11 +100,23 @@ class CheckboxTreeBaseTest : LightPlatformTestCase() {
   fun testParentNodeStateWithMixedChildren() {
     // Create a tree with a parent node that is checked and children with mixed states
     val (root, parent) = createTreeStructure(true, listOf(true, false, true))
-    
+
     val state = getNodeCheckboxState(root, parent)
-    
+
     // The parent node should have a partial state (DONT_CARE) because children have mixed states
     Assert.assertEquals("Parent node should have a partial state when children have mixed states",
                         ThreeStateCheckBox.State.DONT_CARE, state)
+  }
+
+  // IJPL-199505
+  fun testDefaultPolicyIsBroken() {
+    // Create a tree with a parent node that is checked and children that are unchecked
+    val (root, parent) = createTreeStructure(true, listOf(false))
+
+    val state = getNodeCheckboxState(root, parent, CheckboxTreeHelper.DEFAULT_POLICY)
+
+    // The parent node should have a checked state because the default policy is special cased
+    Assert.assertEquals("With default policy, parent node should have an unchecked state when children have unchecked state",
+                        ThreeStateCheckBox.State.NOT_SELECTED, state)
   }
 }
