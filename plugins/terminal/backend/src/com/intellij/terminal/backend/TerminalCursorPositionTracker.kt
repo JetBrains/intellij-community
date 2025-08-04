@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.backend
 
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.terminal.session.TerminalCursorPositionChangedEvent
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.util.CharUtils
@@ -67,6 +69,13 @@ class TerminalCursorPositionTracker(
 
     cursorPositionChanged = false
 
+    LOG.debug {
+      "Terminal cursor position changed: line = $logicalLine, " +
+      "column = $column, " +
+      "discarded lines = ${discardedHistoryTracker.getDiscardedLogicalLinesCount()}"
+    }
     return TerminalCursorPositionChangedEvent(logicalLine, column)
   }
 }
+
+private val LOG = logger<TerminalCursorPositionTracker>()
