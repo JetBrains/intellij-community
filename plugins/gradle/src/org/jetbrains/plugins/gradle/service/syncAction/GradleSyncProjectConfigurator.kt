@@ -33,35 +33,35 @@ object GradleSyncProjectConfigurator {
       performSyncContributors(context, "RESOLVE_PROJECT_INFO_STARTED") {
         onResolveProjectInfoStarted(context, it)
       }
+      application.messageBus.syncPublisher(GradleSyncListener.TOPIC)
+        .onResolveProjectInfoStarted(context)
     }
   }
 
   @JvmStatic
   fun createModelFetchResultHandler(context: DefaultProjectResolverContext): GradleModelFetchActionListener {
     return object : GradleModelFetchActionListener {
-
       override suspend fun onModelFetchPhaseCompleted(phase: GradleModelFetchPhase) {
         performSyncContributors(context, phase.name) {
           onModelFetchPhaseCompleted(context, it, phase)
         }
-      }
-
-      override suspend fun onModelFetchCompleted() {
-        performSyncContributors(context, "MODEL_FETCH_COMPLETED") {
-          onModelFetchCompleted(context, it)
-        }
-      }
-
-      override suspend fun onModelFetchFailed(exception: Throwable) {
-        performSyncContributors(context, "MODEL_FETCH_FAILED") {
-          onModelFetchFailed(context, it, exception)
-        }
+        application.messageBus.syncPublisher(GradleSyncListener.TOPIC)
+          .onModelFetchPhaseCompleted(context, phase)
       }
 
       override suspend fun onProjectLoadedActionCompleted() {
-        performSyncContributors(context, "PROJECT_LOADED_ACTION") {
-          onProjectLoadedActionCompleted(context, it)
-        }
+        application.messageBus.syncPublisher(GradleSyncListener.TOPIC)
+          .onProjectLoadedActionCompleted(context)
+      }
+
+      override suspend fun onModelFetchCompleted() {
+        application.messageBus.syncPublisher(GradleSyncListener.TOPIC)
+          .onModelFetchCompleted(context)
+      }
+
+      override suspend fun onModelFetchFailed(exception: Throwable) {
+        application.messageBus.syncPublisher(GradleSyncListener.TOPIC)
+          .onModelFetchFailed(context, exception)
       }
     }
   }

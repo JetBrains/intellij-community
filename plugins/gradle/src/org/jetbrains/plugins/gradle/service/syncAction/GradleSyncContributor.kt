@@ -50,48 +50,6 @@ interface GradleSyncContributor {
     phase: GradleModelFetchPhase
   ) = Unit
 
-  /**
-   * Called once Gradle has finished executing everything, including any tasks that might need to be run.
-   * The models are obtained separately and in some cases before this method is called.
-   *
-   * @param context contain all information about the current state of the Gradle sync.
-   * Use this context to access to the fetched Gradle models.
-   */
-  suspend fun onModelFetchCompleted(
-    context: ProjectResolverContext,
-    storage: MutableEntityStorage
-  ) = Unit
-
-  /**
-   * Called once Gradle has failed to execute everything.
-   * The models are obtained separately and in some cases before this method is called.
-   *
-   * @param context contain all information about the current state of the Gradle sync.
-   * Use this context to access to the fetched Gradle models.
-   * @param exception the exception thrown by Gradle, if everything completes successfully, then this will be null.
-   */
-  suspend fun onModelFetchFailed(
-    context: ProjectResolverContext,
-    storage: MutableEntityStorage,
-    exception: Throwable
-  ) = Unit
-
-  /**
-   * Called once Gradle has loaded projects but before any task execution.
-   * These models do not contain those models that are created when the build finished.
-   *
-   * @param context contain all information about the current state of the Gradle sync.
-   * Use this context to access to the fetched Gradle models.
-   *
-   * @see org.gradle.tooling.BuildActionExecuter.Builder.projectsLoaded
-   * @see org.gradle.tooling.IntermediateResultHandler
-   */
-  @ApiStatus.Internal
-  suspend fun onProjectLoadedActionCompleted(
-    context: ProjectResolverContext,
-    storage: MutableEntityStorage
-  ) = Unit
-
   companion object {
     @JvmField
     val EP_NAME: ExtensionPointName<GradleSyncContributor> = create("org.jetbrains.plugins.gradle.syncContributor")

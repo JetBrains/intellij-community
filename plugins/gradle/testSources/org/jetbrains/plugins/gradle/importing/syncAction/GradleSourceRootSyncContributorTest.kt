@@ -6,7 +6,6 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
-import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.externalSystem.testFramework.utils.module.assertNoSourceRoots
 import com.intellij.platform.externalSystem.testFramework.utils.module.assertSourceRoots
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions.assertContentRoots
@@ -21,31 +20,28 @@ class GradleSourceRootSyncContributorTest : GradlePhasedSyncTestCase() {
   fun `test source root creation in the multi-module Gradle project`() {
 
     val projectRoot = myProjectRoot.toNioPath()
-    val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     Disposer.newDisposable().use { disposable ->
 
       val contentRootContributorAssertion = ListenerAssertion()
 
-      whenPhaseCompleted(disposable) { _, storage, phase ->
-        if (phase == GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE) {
-          contentRootContributorAssertion.trace {
-            assertModules(storage, "project", "project.main", "project.test")
+      whenModelFetchPhaseCompleted(GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE, disposable) {
+        contentRootContributorAssertion.trace {
+          assertModules(myProject, "project", "project.main", "project.test")
 
-            assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
-            assertNoSourceRoots(virtualFileUrlManager, storage, "project")
+          assertContentRoots(myProject, "project", projectRoot)
+          assertNoSourceRoots(myProject, "project")
 
-            assertContentRoots(virtualFileUrlManager, storage, "project.main", projectRoot.resolve("src/main"))
-            assertSourceRoots(virtualFileUrlManager, storage, "project.main") {
-              sourceRoots(ExternalSystemSourceType.SOURCE, projectRoot.resolve("src/main/java"))
-              sourceRoots(ExternalSystemSourceType.RESOURCE, projectRoot.resolve("src/main/resources"))
-            }
+          assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
+          assertSourceRoots(myProject, "project.main") {
+            sourceRoots(ExternalSystemSourceType.SOURCE, projectRoot.resolve("src/main/java"))
+            sourceRoots(ExternalSystemSourceType.RESOURCE, projectRoot.resolve("src/main/resources"))
+          }
 
-            assertContentRoots(virtualFileUrlManager, storage, "project.test", projectRoot.resolve("src/test"))
-            assertSourceRoots(virtualFileUrlManager, storage, "project.test") {
-              sourceRoots(ExternalSystemSourceType.TEST, projectRoot.resolve("src/test/java"))
-              sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, projectRoot.resolve("src/test/resources"))
-            }
+          assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
+          assertSourceRoots(myProject, "project.test") {
+            sourceRoots(ExternalSystemSourceType.TEST, projectRoot.resolve("src/test/java"))
+            sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, projectRoot.resolve("src/test/resources"))
           }
         }
       }
@@ -90,44 +86,42 @@ class GradleSourceRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       val contentRootContributorAssertion = ListenerAssertion()
 
-      whenPhaseCompleted(disposable) { _, storage, phase ->
-        if (phase == GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE) {
-          contentRootContributorAssertion.trace {
-            assertModules(
-              storage,
-              "project", "project.main", "project.test",
-              "project.module", "project.module.main", "project.module.test"
-            )
+      whenModelFetchPhaseCompleted(GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE, disposable) {
+        contentRootContributorAssertion.trace {
+          assertModules(
+            myProject,
+            "project", "project.main", "project.test",
+            "project.module", "project.module.main", "project.module.test"
+          )
 
-            assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
-            assertNoSourceRoots(virtualFileUrlManager, storage, "project")
+          assertContentRoots(myProject, "project", projectRoot)
+          assertNoSourceRoots(myProject, "project")
 
-            assertContentRoots(virtualFileUrlManager, storage, "project.main", projectRoot.resolve("src/main"))
-            assertSourceRoots(virtualFileUrlManager, storage, "project.main") {
-              sourceRoots(ExternalSystemSourceType.SOURCE, projectRoot.resolve("src/main/java"))
-              sourceRoots(ExternalSystemSourceType.RESOURCE, projectRoot.resolve("src/main/resources"))
-            }
+          assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
+          assertSourceRoots(myProject, "project.main") {
+            sourceRoots(ExternalSystemSourceType.SOURCE, projectRoot.resolve("src/main/java"))
+            sourceRoots(ExternalSystemSourceType.RESOURCE, projectRoot.resolve("src/main/resources"))
+          }
 
-            assertContentRoots(virtualFileUrlManager, storage, "project.test", projectRoot.resolve("src/test"))
-            assertSourceRoots(virtualFileUrlManager, storage, "project.test") {
-              sourceRoots(ExternalSystemSourceType.TEST, projectRoot.resolve("src/test/java"))
-              sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, projectRoot.resolve("src/test/resources"))
-            }
+          assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
+          assertSourceRoots(myProject, "project.test") {
+            sourceRoots(ExternalSystemSourceType.TEST, projectRoot.resolve("src/test/java"))
+            sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, projectRoot.resolve("src/test/resources"))
+          }
 
-            assertContentRoots(virtualFileUrlManager, storage, "project.module", projectRoot.resolve("module"))
-            assertNoSourceRoots(virtualFileUrlManager, storage, "project.module")
+          assertContentRoots(myProject, "project.module", projectRoot.resolve("module"))
+          assertNoSourceRoots(myProject, "project.module")
 
-            assertContentRoots(virtualFileUrlManager, storage, "project.module.main", projectRoot.resolve("module/src/main"))
-            assertSourceRoots(virtualFileUrlManager, storage, "project.module.main") {
-              sourceRoots(ExternalSystemSourceType.SOURCE, projectRoot.resolve("module/src/main/java"))
-              sourceRoots(ExternalSystemSourceType.RESOURCE, projectRoot.resolve("module/src/main/resources"))
-            }
+          assertContentRoots(myProject, "project.module.main", projectRoot.resolve("module/src/main"))
+          assertSourceRoots(myProject, "project.module.main") {
+            sourceRoots(ExternalSystemSourceType.SOURCE, projectRoot.resolve("module/src/main/java"))
+            sourceRoots(ExternalSystemSourceType.RESOURCE, projectRoot.resolve("module/src/main/resources"))
+          }
 
-            assertContentRoots(virtualFileUrlManager, storage, "project.module.test", projectRoot.resolve("module/src/test"))
-            assertSourceRoots(virtualFileUrlManager, storage, "project.module.test") {
-              sourceRoots(ExternalSystemSourceType.TEST, projectRoot.resolve("module/src/test/java"))
-              sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, projectRoot.resolve("module/src/test/resources"))
-            }
+          assertContentRoots(myProject, "project.module.test", projectRoot.resolve("module/src/test"))
+          assertSourceRoots(myProject, "project.module.test") {
+            sourceRoots(ExternalSystemSourceType.TEST, projectRoot.resolve("module/src/test/java"))
+            sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, projectRoot.resolve("module/src/test/resources"))
           }
         }
       }

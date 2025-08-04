@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.importing.syncAction
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
-import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions.assertContentRoots
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
@@ -20,18 +19,15 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
   fun `test content root creation in the multi-module Gradle project`() {
 
     val projectRoot = myProjectRoot.toNioPath()
-    val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     Disposer.newDisposable().use { disposable ->
 
       val contentRootContributorAssertion = ListenerAssertion()
 
-      whenPhaseCompleted(disposable) { _, storage, phase ->
-        if (phase == GradleModelFetchPhase.PROJECT_MODEL_PHASE) {
-          contentRootContributorAssertion.trace {
-            assertModules(storage, "project")
-            assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
-          }
+      whenModelFetchPhaseCompleted(GradleModelFetchPhase.PROJECT_MODEL_PHASE, disposable) {
+        contentRootContributorAssertion.trace {
+          assertModules(myProject, "project")
+          assertContentRoots(myProject, "project", projectRoot)
         }
       }
 
@@ -59,15 +55,13 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       val contentRootContributorAssertion = ListenerAssertion()
 
-      whenPhaseCompleted(disposable) { _, storage, phase ->
-        if (phase == GradleModelFetchPhase.PROJECT_MODEL_PHASE) {
-          contentRootContributorAssertion.trace {
-            assertModules(storage, "project", "project.main", "project.test", "project.module")
-            assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
-            assertContentRoots(virtualFileUrlManager, storage, "project.main", projectRoot.resolve("src/main"))
-            assertContentRoots(virtualFileUrlManager, storage, "project.test", projectRoot.resolve("src/test"))
-            assertContentRoots(virtualFileUrlManager, storage, "project.module", projectRoot.resolve("module"))
-          }
+      whenModelFetchPhaseCompleted(GradleModelFetchPhase.PROJECT_MODEL_PHASE, disposable) {
+        contentRootContributorAssertion.trace {
+          assertModules(myProject, "project", "project.main", "project.test", "project.module")
+          assertContentRoots(myProject, "project", projectRoot)
+          assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
+          assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
+          assertContentRoots(myProject, "project.module", projectRoot.resolve("module"))
         }
       }
 
@@ -107,19 +101,16 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
   fun `test content root creation in the Gradle project with included build`() {
 
     val projectRoot = myProjectRoot.toNioPath()
-    val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     Disposer.newDisposable().use { disposable ->
 
       val contentRootContributorAssertion = ListenerAssertion()
 
-      whenPhaseCompleted(disposable) { _, storage, phase ->
-        if (phase == GradleModelFetchPhase.PROJECT_MODEL_PHASE) {
-          contentRootContributorAssertion.trace {
-            assertModules(storage, "project", "includedProject1")
-            assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
-            assertContentRoots(virtualFileUrlManager, storage, "includedProject1", projectRoot.resolve("../includedProject1"))
-          }
+      whenModelFetchPhaseCompleted(GradleModelFetchPhase.PROJECT_MODEL_PHASE, disposable) {
+        contentRootContributorAssertion.trace {
+          assertModules(myProject, "project", "includedProject1")
+          assertContentRoots(myProject, "project", projectRoot)
+          assertContentRoots(myProject, "includedProject1", projectRoot.resolve("../includedProject1"))
         }
       }
 
@@ -161,23 +152,21 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       val contentRootContributorAssertion = ListenerAssertion()
 
-      whenPhaseCompleted(disposable) { _, storage, phase ->
-        if (phase == GradleModelFetchPhase.PROJECT_MODEL_PHASE) {
-          contentRootContributorAssertion.trace {
-            assertModules(
-              storage,
-              "project", "project.main", "project.test",
-              "includedProject1", "includedProject1.main", "includedProject1.test",
-              "includedProject2"
-            )
-            assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
-            assertContentRoots(virtualFileUrlManager, storage, "project.main", projectRoot.resolve("src/main"))
-            assertContentRoots(virtualFileUrlManager, storage, "project.test", projectRoot.resolve("src/test"))
-            assertContentRoots(virtualFileUrlManager, storage, "includedProject1", projectRoot.resolve("../includedProject1"))
-            assertContentRoots(virtualFileUrlManager, storage, "includedProject1.main", projectRoot.resolve("../includedProject1/src/main"))
-            assertContentRoots(virtualFileUrlManager, storage, "includedProject1.test", projectRoot.resolve("../includedProject1/src/test"))
-            assertContentRoots(virtualFileUrlManager, storage, "includedProject2", projectRoot.resolve("../includedProject2"))
-          }
+      whenModelFetchPhaseCompleted(GradleModelFetchPhase.PROJECT_MODEL_PHASE, disposable) {
+        contentRootContributorAssertion.trace {
+          assertModules(
+            myProject,
+            "project", "project.main", "project.test",
+            "includedProject1", "includedProject1.main", "includedProject1.test",
+            "includedProject2"
+          )
+          assertContentRoots(myProject, "project", projectRoot)
+          assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
+          assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
+          assertContentRoots(myProject, "includedProject1", projectRoot.resolve("../includedProject1"))
+          assertContentRoots(myProject, "includedProject1.main", projectRoot.resolve("../includedProject1/src/main"))
+          assertContentRoots(myProject, "includedProject1.test", projectRoot.resolve("../includedProject1/src/test"))
+          assertContentRoots(myProject, "includedProject2", projectRoot.resolve("../includedProject2"))
         }
       }
 
@@ -235,7 +224,6 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
     val isBuildSrcResolvedOnSecondCall = isGradleOlderThan("8.0")
 
     val projectRoot = myProjectRoot.toNioPath()
-    val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     Disposer.newDisposable().use { disposable ->
 
@@ -243,26 +231,24 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       val isBuildSrcShouldBeResolved = AtomicBoolean(!isBuildSrcResolvedOnSecondCall)
 
-      whenPhaseCompleted(disposable) { _, storage, phase ->
-        if (phase == GradleModelFetchPhase.PROJECT_MODEL_PHASE) {
-          contentRootContributorAssertion.trace {
-            when {
-              !isBuildSrcShouldBeResolved.getAndSet(true) -> {
-                assertModules(storage, "project")
-                assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
-              }
-              isBuildSrcResolvedOnSecondCall -> {
-                assertModules(storage, "project", "project.main", "project.test", "project.buildSrc")
-                assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
-                assertContentRoots(virtualFileUrlManager, storage, "project.main", projectRoot.resolve("src/main"))
-                assertContentRoots(virtualFileUrlManager, storage, "project.test", projectRoot.resolve("src/test"))
-                assertContentRoots(virtualFileUrlManager, storage, "project.buildSrc", projectRoot.resolve("buildSrc"))
-              }
-              else -> {
-                assertModules(storage, "project", "project.buildSrc")
-                assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
-                assertContentRoots(virtualFileUrlManager, storage, "project.buildSrc", projectRoot.resolve("buildSrc"))
-              }
+      whenModelFetchPhaseCompleted(GradleModelFetchPhase.PROJECT_MODEL_PHASE, disposable) {
+        contentRootContributorAssertion.trace {
+          when {
+            !isBuildSrcShouldBeResolved.getAndSet(true) -> {
+              assertModules(myProject, "project")
+              assertContentRoots(myProject, "project", projectRoot)
+            }
+            isBuildSrcResolvedOnSecondCall -> {
+              assertModules(myProject, "project", "project.main", "project.test", "project.buildSrc")
+              assertContentRoots(myProject, "project", projectRoot)
+              assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
+              assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
+              assertContentRoots(myProject, "project.buildSrc", projectRoot.resolve("buildSrc"))
+            }
+            else -> {
+              assertModules(myProject, "project", "project.buildSrc")
+              assertContentRoots(myProject, "project", projectRoot)
+              assertContentRoots(myProject, "project.buildSrc", projectRoot.resolve("buildSrc"))
             }
           }
         }
@@ -312,21 +298,19 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       val contentRootContributorAssertion = ListenerAssertion()
 
-      whenPhaseCompleted(disposable) { _, storage, phase ->
-        if (phase == GradleModelFetchPhase.PROJECT_MODEL_PHASE) {
-          contentRootContributorAssertion.trace {
-            assertModules(
-              storage,
-              "project", "project.main", "project.test",
-              "project.buildSrc", "project.buildSrc.main", "project.buildSrc.test"
-            )
-            assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
-            assertContentRoots(virtualFileUrlManager, storage, "project.main", projectRoot.resolve("src/main"))
-            assertContentRoots(virtualFileUrlManager, storage, "project.test", projectRoot.resolve("src/test"))
-            assertContentRoots(virtualFileUrlManager, storage, "project.buildSrc", projectRoot.resolve("buildSrc"))
-            assertContentRoots(virtualFileUrlManager, storage, "project.buildSrc.main", projectRoot.resolve("buildSrc/src/main"))
-            assertContentRoots(virtualFileUrlManager, storage, "project.buildSrc.test", projectRoot.resolve("buildSrc/src/test"))
-          }
+      whenModelFetchPhaseCompleted(GradleModelFetchPhase.PROJECT_MODEL_PHASE, disposable) {
+        contentRootContributorAssertion.trace {
+          assertModules(
+            myProject,
+            "project", "project.main", "project.test",
+            "project.buildSrc", "project.buildSrc.main", "project.buildSrc.test"
+          )
+          assertContentRoots(myProject, "project", projectRoot)
+          assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
+          assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
+          assertContentRoots(myProject, "project.buildSrc", projectRoot.resolve("buildSrc"))
+          assertContentRoots(myProject, "project.buildSrc.main", projectRoot.resolve("buildSrc/src/main"))
+          assertContentRoots(myProject, "project.buildSrc.test", projectRoot.resolve("buildSrc/src/test"))
         }
       }
 
@@ -375,7 +359,6 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
     val projectRoot = myProjectRoot.toNioPath()
     val externalProjectRoot = myTestDir.toPath().resolve("external/project/root")
-    val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     Assertions.assertFalse(projectRoot.startsWith(externalProjectRoot)) {
       """
@@ -389,14 +372,12 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       val contentRootContributorAssertion = ListenerAssertion()
 
-      whenPhaseCompleted(disposable) { _, storage, phase ->
-        if (phase == GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE) {
-          contentRootContributorAssertion.trace {
-            assertModules(storage, "project", "project.main", "project.test")
-            assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
-            assertContentRoots(virtualFileUrlManager, storage, "project.main", projectRoot.resolve("src/main"), externalProjectRoot.resolve("src/main"))
-            assertContentRoots(virtualFileUrlManager, storage, "project.test", projectRoot.resolve("src/test"))
-          }
+      whenModelFetchPhaseCompleted(GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE, disposable) {
+        contentRootContributorAssertion.trace {
+          assertModules(myProject, "project", "project.main", "project.test")
+          assertContentRoots(myProject, "project", projectRoot)
+          assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"), externalProjectRoot.resolve("src/main"))
+          assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
         }
       }
 
@@ -428,20 +409,17 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
   fun `test content root configuration with single source root`() {
 
     val projectRoot = myProjectRoot.toNioPath()
-    val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     Disposer.newDisposable().use { disposable ->
 
       val contentRootContributorAssertion = ListenerAssertion()
 
-      whenPhaseCompleted(disposable) { _, storage, phase ->
-        if (phase == GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE) {
-          contentRootContributorAssertion.trace {
-            assertModules(storage, "project", "project.main", "project.test")
-            assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
-            assertContentRoots(virtualFileUrlManager, storage, "project.main", projectRoot.resolve("src"))
-            assertContentRoots(virtualFileUrlManager, storage, "project.test")
-          }
+      whenModelFetchPhaseCompleted(GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE, disposable) {
+        contentRootContributorAssertion.trace {
+          assertModules(myProject, "project", "project.main", "project.test")
+          assertContentRoots(myProject, "project", projectRoot)
+          assertContentRoots(myProject, "project.main", projectRoot.resolve("src"))
+          assertContentRoots(myProject, "project.test")
         }
       }
 

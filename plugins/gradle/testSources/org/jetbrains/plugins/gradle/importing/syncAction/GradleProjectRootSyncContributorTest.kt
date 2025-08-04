@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.use
-import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions.assertContentRoots
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
@@ -23,16 +22,15 @@ class GradleProjectRootSyncContributorTest : GradlePhasedSyncTestCase() {
   fun `test project root creation in the simple Gradle project`() {
     val projectRoot = myProjectRoot.toNioPath()
     val linkedProjectRoot = projectRoot.getResolvedPath("../linked-project")
-    val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     Disposer.newDisposable().use { disposable ->
 
       val projectRootContributorAssertion = ListenerAssertion()
 
-      whenResolveProjectInfoStarted(disposable) { _, storage ->
+      whenResolveProjectInfoStarted(disposable) {
         projectRootContributorAssertion.trace {
-          assertModules(storage, "project")
-          assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
+          assertModules(myProject, "project")
+          assertContentRoots(myProject, "project", projectRoot)
         }
       }
 
@@ -64,13 +62,13 @@ class GradleProjectRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       val projectRootContributorAssertion = ListenerAssertion()
 
-      whenResolveProjectInfoStarted(disposable) { _, storage ->
+      whenResolveProjectInfoStarted(disposable) {
         projectRootContributorAssertion.trace {
-          assertModules(storage, "project", "project.main", "project.test", "linked-project")
-          assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
-          assertContentRoots(virtualFileUrlManager, storage, "project.main", projectRoot.resolve("src/main"))
-          assertContentRoots(virtualFileUrlManager, storage, "project.test", projectRoot.resolve("src/test"))
-          assertContentRoots(virtualFileUrlManager, storage, "linked-project", linkedProjectRoot)
+          assertModules(myProject, "project", "project.main", "project.test", "linked-project")
+          assertContentRoots(myProject, "project", projectRoot)
+          assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
+          assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
+          assertContentRoots(myProject, "linked-project", linkedProjectRoot)
         }
       }
 
