@@ -127,8 +127,12 @@ class SettingsSyncBridge(
   private fun startQueue() {
     LOG.info("Starting settings sync queue")
     queueJob = coroutineScope.launch {
-      while (SettingsSyncSettings.getInstance().syncEnabled) {
+      while (true) {
         processPendingEvents()
+        if (!SettingsSyncSettings.getInstance().syncEnabled && pendingEvents.isEmpty() && pendingExclusiveEvents.isEmpty()) {
+          LOG.info("Sync disabled and no pending events. Stopping queue.")
+          break
+        }
         try {
           delay(1000)
         }

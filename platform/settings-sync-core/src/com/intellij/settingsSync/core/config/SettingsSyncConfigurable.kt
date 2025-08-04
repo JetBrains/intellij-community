@@ -59,8 +59,6 @@ import com.intellij.util.ui.StartupUiUtil.labelFont
 import kotlinx.coroutines.*
 import java.awt.event.ItemEvent
 import java.util.concurrent.CancellationException
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 
@@ -89,6 +87,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   private val userAccountListIsNotEmpty = AtomicBooleanProperty(false)
   private val syncPanelHolder = SettingsSyncPanelHolder()
   private val hasMultipleProviders = AtomicBooleanProperty(RemoteCommunicatorHolder.getExternalProviders().isNotEmpty())
+  private var lastRemoveRemoteDataError: String? = null
 
   private val actionRequired = AtomicBooleanProperty(false)
   private lateinit var actionRequiredLabel: JLabel
@@ -429,25 +428,41 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   }
 
   private fun disableAndRemoveData() {
-    runWithModalProgressBlocking(ModalTaskOwner.component(configPanel), message("disable.remove.data.title"), TaskCancellation.cancellable()) {
-      val cdl = CountDownLatch(1)
-      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.DeleteServerData { result ->
-        cdl.countDown()
-
-        when (result) {
-          is DeleteServerDataResult.Error -> {
-            //statusLabel.icon = AllIcons.General.Error
-            @Suppress("HardCodedStringLiteral")
-            cellDropDownLink.comment?.text = message("sync.status.failed", "${message("disable.remove.data.failure")}: ${result.error}")
-          }
-          DeleteServerDataResult.Success -> {
-            syncStatusChanged()
-          }
+    try {
+      val result = runWithModalProgressBlocking(ModalTaskOwner.component(configPanel), message("disable.remove.data.title"), TaskCancellation.cancellable()) {
+        removeRemoteData()
+      }
+      when (result) {
+        is DeleteServerDataResult.Error -> {
+          LOG.warn("Failed to remove server data: ${result.error}")
+          lastRemoveRemoteDataError = result.error
+          syncStatusChanged()
         }
-      })
-      cdl.await(1, TimeUnit.MINUTES)
+        DeleteServerDataResult.Success -> {
+          syncStatusChanged()
+        }
+      }
+    } catch (ex: CancellationException) {
+      LOG.info("Remote data removal was cancelled")
+      throw ex
+    } catch (ex: Exception) {
+      LOG.warn("Unexpected error during server data removal: ${ex.message}", ex)
+      lastRemoveRemoteDataError = ex.message
+      syncStatusChanged()
     }
   }
+
+  private suspend fun removeRemoteData(): DeleteServerDataResult {
+    val result = suspendCancellableCoroutine<DeleteServerDataResult> { continuation ->
+      SettingsSyncEvents.getInstance().fireSettingsChanged(
+        SyncSettingsEvent.DeleteServerData { deleteResult ->
+          continuation.resume(deleteResult) { cause, _, _ -> }
+        }
+      )
+    }
+    return result
+  }
+
 
   @Suppress("HardCodedStringLiteral")
   private fun updateSyncOptionText() {
@@ -640,8 +655,12 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     updateUserAccountsList()
     refreshActionRequired()
     if (!enableCheckbox.isSelected) {
-      //statusLabel.icon = icons.SettingsSyncIcons.StatusDisabled
-      cellDropDownLink.comment?.text = "" //message("sync.status.disabled.message")
+      if (lastRemoveRemoteDataError != null) {
+        cellDropDownLink.comment?.text =  "<icon src='AllIcons.General.Error'>&nbsp;" +
+          message("disable.remove.data.failure", lastRemoveRemoteDataError!!)
+      } else {
+        cellDropDownLink.comment?.text = ""
+      }
       return
     }
     if (SettingsSyncSettings.getInstance().syncEnabled) {
