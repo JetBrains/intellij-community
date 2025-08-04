@@ -403,10 +403,6 @@ internal class ReworkedTerminalView(
 
     BackgroundHighlightingUtil.disableBackgroundHighlightingForeverIn(editor)
     TextEditorProvider.putTextEditor(editor, TerminalOutputTextEditor(editor))
-
-    Disposer.register(parentDisposable) {
-      EditorFactory.getInstance().releaseEditor(editor)
-    }
     return editor
   }
 
@@ -416,10 +412,6 @@ internal class ReworkedTerminalView(
     editor.putUserData(TerminalDataContextUtils.IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY, true)
     editor.scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_NEVER
     editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
-
-    Disposer.register(parentDisposable) {
-      EditorFactory.getInstance().releaseEditor(editor)
-    }
     return editor
   }
 
@@ -440,6 +432,9 @@ internal class ReworkedTerminalView(
 
     CopyOnSelectionHandler.install(result, settings)
 
+    Disposer.register(parentDisposable) {
+      EditorFactory.getInstance().releaseEditor(result)
+    }
     return result
   }
 
