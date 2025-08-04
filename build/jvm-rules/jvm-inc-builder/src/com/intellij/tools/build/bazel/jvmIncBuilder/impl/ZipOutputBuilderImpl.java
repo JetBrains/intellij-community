@@ -278,7 +278,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
 
   private EntryData createEntryData(String entryName, byte[] content) {
     return new EntryData() {
-      private final ZipEntry entry = createZipEntry(entryName, content);
+      private ZipEntry entry;
       @Override
       public byte[] getContent() {
         return content;
@@ -286,15 +286,15 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
 
       @Override
       public ZipEntry getZipEntry() {
-          return entry;
+        return entry != null? entry : (entry = createZipEntry(entryName, content));
       }
     };
   }
 
   private EntryData createEntryData(Map<String, byte[]> swap, String entryName, byte[] content) {
     swap.put(entryName, content);
-    ZipEntry entry = createZipEntry(entryName, content);
     return new CachingDataEntry(content) {
+      private ZipEntry entry;
       @Override
       protected byte[] loadData() {
         return swap.get(entryName);
@@ -302,12 +302,19 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
 
       @Override
       public ZipEntry getZipEntry() {
-          return entry;
+        try {
+          return entry != null? entry : (entry = createZipEntry(entryName, getContent()));
+        }
+        catch (IOException e) {
+          // should not happen, since loadData() in this implementation won't throw anything
+          throw new RuntimeException();
+        }
       }
 
       @Override
       public void cleanup() {
         super.cleanup();
+        entry = null;
         swap.remove(entryName);
       }
     };
