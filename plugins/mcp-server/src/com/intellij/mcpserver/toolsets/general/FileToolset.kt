@@ -20,10 +20,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.isFile
-import com.intellij.openapi.vfs.toNioPathOrNull
+import com.intellij.openapi.vfs.*
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
@@ -254,24 +251,27 @@ class FileToolset : McpToolset {
     pathInProject: String,
     @McpDescription("Content to write into the new file")
     text: String? = null,
+    @McpDescription("Whether to overwrite an existing file if exists. If false, an exception is thrown in case of a conflict.")
+    overwrite: Boolean = false,
   ) {
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.creating.file", pathInProject))
     val project = currentCoroutineContext().project
 
     val path = project.resolveInProject(pathInProject)
-    val newFile = try {
-      LocalFileSystem.getInstance().createChildFile(null, VfsUtil.createDirectories(path.parent.pathString), path.name)
+    try {
+      writeAction {
+        val parent = VfsUtil.createDirectories(path.parent.pathString)
+        val existing = parent.findChild(path.name)
+        if (existing != null && !overwrite) mcpFail("File already exists: $pathInProject. Specify 'overwrite=true' to overwrite it")
+        val createdFile = parent.findOrCreateFile(path.name)
+        if (text != null) {
+          val document = FileDocumentManager.getInstance().getDocument(createdFile) ?: mcpFail("Can't get document for created file: $pathInProject")
+          document.setText(text)
+        }
+      }
     }
     catch (io: IOException) {
       mcpFail("Can't create file: $path: ${io.message}")
-    }
-    // newFile point to a fake file, so we need to refresh it to get a real one
-    val createdFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path) ?: mcpFail("File $path wasn't created")
-    writeAction {
-      val document = FileDocumentManager.getInstance().getDocument(createdFile) ?: mcpFail("Can't get document for created file: $newFile")
-      if (text != null) {
-        document.setText(text)
-      }
     }
   }
 }
