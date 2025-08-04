@@ -1,38 +1,29 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui;
+package com.intellij.ui
 
-public class CheckboxTree extends CheckboxTreeBase {
+open class CheckboxTree : CheckboxTreeBase {
+  abstract class CheckboxTreeCellRenderer : CheckboxTreeCellRendererBase {
+    // This is 6.0 compatibility layer
+    protected constructor()
 
-  public abstract static class CheckboxTreeCellRenderer extends CheckboxTreeCellRendererBase { // This is 6.0 compatibility layer
-    protected CheckboxTreeCellRenderer() {
-    }
+    protected constructor(opaque: Boolean) : super(opaque)
 
-    protected CheckboxTreeCellRenderer(final boolean opaque) {
-      super(opaque);
-    }
-
-    protected CheckboxTreeCellRenderer(boolean opaque, boolean usePartialStatusForParentNodes) {
-      super(opaque, usePartialStatusForParentNodes);
-    }
+    protected constructor(opaque: Boolean, usePartialStatusForParentNodes: Boolean) : super(opaque, usePartialStatusForParentNodes)
   }
 
-  public CheckboxTree(final CheckboxTreeCellRenderer cellRenderer, CheckedTreeNode root) {
-    super(cellRenderer, root);
-
-    installSpeedSearch();
+  constructor(cellRenderer: CheckboxTreeCellRenderer, root: CheckedTreeNode?) : super(cellRenderer, root) {
+    installSpeedSearch()
   }
 
   // for designer
-  public CheckboxTree() {
+  constructor()
+
+  constructor(cellRenderer: CheckboxTreeCellRenderer, root: CheckedTreeNode?, checkPolicy: CheckPolicy) : super(cellRenderer, root,
+                                                                                                                 checkPolicy) {
+    installSpeedSearch()
   }
 
-  public CheckboxTree(final CheckboxTreeCellRenderer cellRenderer, CheckedTreeNode root, final CheckPolicy checkPolicy) {
-    super(cellRenderer, root, checkPolicy);
-
-    installSpeedSearch();
-  }
-
-  protected void installSpeedSearch() {
-    TreeUIHelper.getInstance().installTreeSpeedSearch(this);
+  protected open fun installSpeedSearch() {
+    TreeUIHelper.getInstance().installTreeSpeedSearch(this)
   }
 }

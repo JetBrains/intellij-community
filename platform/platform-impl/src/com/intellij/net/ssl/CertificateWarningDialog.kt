@@ -185,7 +185,7 @@ internal class CertificateWarningDialog(
             myIgnoreInheritance = true
           }
 
-          override fun customizeRenderer(tree: JTree?, value: Any?, selected: Boolean, expanded: Boolean, leaf: Boolean, row: Int, hasFocus: Boolean) {
+          override fun customizeRenderer(tree: JTree, value: Any, selected: Boolean, expanded: Boolean, leaf: Boolean, row: Int, hasFocus: Boolean) {
             super.customizeRenderer(tree, value, selected, expanded, leaf, row, hasFocus)
             val textAndColor = getTreeCellTextAndColor(value)
             textRenderer.append(textAndColor.first, SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, textAndColor.second))

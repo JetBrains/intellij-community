@@ -8,8 +8,8 @@ import com.intellij.util.ui.UIUtil
 import javax.swing.JTree
 
 class GrazieRulesTreeCellRenderer : CheckboxTree.CheckboxTreeCellRenderer(true) {
-  override fun customizeRenderer(tree: JTree?,
-                                 node: Any?,
+  override fun customizeRenderer(tree: JTree,
+                                 node: Any,
                                  selected: Boolean,
                                  expanded: Boolean,
                                  leaf: Boolean,

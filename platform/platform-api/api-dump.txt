@@ -751,9 +751,11 @@ c:com.intellij.ui.CellRendererPanel
 c:com.intellij.ui.CheckboxTreeBase
 - com.intellij.ui.treeStructure.Tree
 - <init>():V
+- <init>(com.intellij.ui.CheckboxTreeBase$CheckboxTreeCellRendererBase):V
 - <init>(com.intellij.ui.CheckboxTreeBase$CheckboxTreeCellRendererBase,com.intellij.ui.CheckedTreeNode):V
 - <init>(com.intellij.ui.CheckboxTreeBase$CheckboxTreeCellRendererBase,com.intellij.ui.CheckedTreeNode,com.intellij.ui.CheckboxTreeBase$CheckPolicy):V
-- addCheckboxTreeListener(com.intellij.ui.CheckboxTreeListener):V
+- b:<init>(com.intellij.ui.CheckboxTreeBase$CheckboxTreeCellRendererBase,com.intellij.ui.CheckedTreeNode,com.intellij.ui.CheckboxTreeBase$CheckPolicy,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:addCheckboxTreeListener(com.intellij.ui.CheckboxTreeListener):V
 - getCheckedNodes(java.lang.Class,com.intellij.ui.treeStructure.Tree$NodeFilter):java.lang.Object[]
 - getToggleClickCount():I
 - p:nodeStateWillChange(com.intellij.ui.CheckedTreeNode):V
@@ -761,8 +763,14 @@ c:com.intellij.ui.CheckboxTreeBase
 - p:onNodeStateChanged(com.intellij.ui.CheckedTreeNode):V
 - setNodeState(com.intellij.ui.CheckedTreeNode,Z):V
 c:com.intellij.ui.CheckboxTreeBase$CheckPolicy
+- f:checkByRowClick:Z
+- f:checkChildrenWithCheckedParent:Z
+- f:checkParentWithCheckedChild:Z
+- f:uncheckChildrenWithUncheckedParent:Z
+- f:uncheckParentWithUncheckedChild:Z
 - <init>(Z,Z,Z,Z):V
 - <init>(Z,Z,Z,Z,Z):V
+- b:<init>(Z,Z,Z,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 c:com.intellij.ui.CheckboxTreeBase$CheckboxTreeCellRendererBase
 - javax.swing.JPanel
 - javax.swing.tree.TreeCellRenderer
@@ -771,18 +779,23 @@ c:com.intellij.ui.CheckboxTreeBase$CheckboxTreeCellRendererBase
 - <init>():V
 - <init>(Z):V
 - <init>(Z,Z):V
+- b:<init>(Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - customizeRenderer(javax.swing.JTree,java.lang.Object,Z,Z,Z,I,Z):V
 - getAccessibleContext():javax.accessibility.AccessibleContext
-- getCheckbox():javax.swing.JCheckBox
+- f:getCheckbox():javax.swing.JCheckBox
 - getTextRenderer():com.intellij.ui.ColoredTreeCellRenderer
-- f:getTreeCellRendererComponent(javax.swing.JTree,java.lang.Object,Z,Z,Z,I,Z):java.awt.Component
-c:com.intellij.ui.CheckboxTreeHelper
+- getTreeCellRendererComponent(javax.swing.JTree,java.lang.Object,Z,Z,Z,I,Z):java.awt.Component
+f:com.intellij.ui.CheckboxTreeHelper
+- sf:Companion:com.intellij.ui.CheckboxTreeHelper$Companion
 - sf:DEFAULT_POLICY:com.intellij.ui.CheckboxTreeBase$CheckPolicy
 - <init>(com.intellij.ui.CheckboxTreeBase$CheckPolicy,com.intellij.util.EventDispatcher):V
-- s:getCheckedNodes(java.lang.Class,com.intellij.ui.treeStructure.Tree$NodeFilter,javax.swing.tree.TreeModel):java.lang.Object[]
-- initTree(com.intellij.ui.treeStructure.Tree,javax.swing.JComponent,com.intellij.ui.CheckboxTreeBase$CheckboxTreeCellRendererBase):V
-- s:isToggleEvent(java.awt.event.KeyEvent,javax.swing.JComponent):Z
-- setNodeState(com.intellij.ui.treeStructure.Tree,com.intellij.ui.CheckedTreeNode,Z):V
+- sf:getCheckedNodes(java.lang.Class,com.intellij.ui.treeStructure.Tree$NodeFilter,javax.swing.tree.TreeModel):java.lang.Object[]
+- f:initTree(com.intellij.ui.treeStructure.Tree,javax.swing.JComponent,com.intellij.ui.CheckboxTreeBase$CheckboxTreeCellRendererBase):V
+- sf:isToggleEvent(java.awt.event.KeyEvent,javax.swing.JComponent):Z
+- f:setNodeState(com.intellij.ui.treeStructure.Tree,com.intellij.ui.CheckedTreeNode,Z):V
+f:com.intellij.ui.CheckboxTreeHelper$Companion
+- f:getCheckedNodes(java.lang.Class,com.intellij.ui.treeStructure.Tree$NodeFilter,javax.swing.tree.TreeModel):java.lang.Object[]
+- f:isToggleEvent(java.awt.event.KeyEvent,javax.swing.JComponent):Z
 com.intellij.ui.ColorPickerListener
 - a:closed(java.awt.Color):V
 - a:colorChanged(java.awt.Color):V
