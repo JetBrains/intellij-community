@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile
 abstract class AbstractQuickDocumentationCompletionCommand :
   ActionCommandProvider(actionId = "QuickJavaDoc",
                         presentableName = ActionsBundle.message("action.QuickJavaDoc.text"),
+                        synonyms = listOf("documentation", "quick documentation"),
                         icon = null,
                         priority = -100,
                         previewText = ActionsBundle.message("action.QuickJavaDoc.description")) {

@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile
 abstract class AbstractTypeHierarchyCompletionCommandProvider :
   ActionCommandProvider(actionId = "TypeHierarchy",
                         presentableName = ActionsBundle.message("action.TypeHierarchy.text"),
+                        synonyms = listOf("type hierarchy"),
                         icon = null,
                         priority = -100,
                         previewText = ActionsBundle.message("action.TypeHierarchy.description")) {

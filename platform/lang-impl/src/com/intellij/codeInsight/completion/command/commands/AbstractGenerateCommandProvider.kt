@@ -81,6 +81,9 @@ abstract class AbstractGenerateCommandProvider : CommandProvider, DumbAware {
     var customI18nName: @Nls String? = null,
   ) : CompletionCommand() {
 
+    override val synonyms: List<String>
+      get() = listOf("generate")
+
     override val additionalInfo: String?
       get() {
         val shortcutText = KeymapUtil.getFirstKeyboardShortcutText("Generate")

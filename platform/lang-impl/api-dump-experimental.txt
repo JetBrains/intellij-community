@@ -213,6 +213,7 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - f:getCustomI18nName():java.lang.String
 - f:getCustomName():java.lang.String
 - getPresentableName():java.lang.String
+- getSynonyms():java.util.List
 - f:setCustomI18nName(java.lang.String):V
 - f:setCustomName(java.lang.String):V
 *a:com.intellij.codeInsight.completion.command.commands.AbstractGoToDeclarationCompletionCommandProvider

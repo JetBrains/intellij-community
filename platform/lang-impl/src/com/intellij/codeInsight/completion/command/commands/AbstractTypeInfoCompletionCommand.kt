@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFile
 abstract class AbstractTypeInfoCompletionCommandProvider :
   ActionCommandProvider(actionId = "ExpressionTypeInfo",
                         presentableName = ActionsBundle.message("action.ExpressionTypeInfo.text"),
+                        synonyms = listOf("type info"),
                         icon = null,
                         priority = -100,
                         previewText = ActionsBundle.message("action.ExpressionTypeInfo.description")) {

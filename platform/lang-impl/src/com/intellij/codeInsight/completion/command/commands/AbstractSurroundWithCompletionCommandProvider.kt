@@ -36,6 +36,10 @@ abstract class AbstractSurroundWithCompletionCommandProvider : CommandProvider {
       val elements = action.elements
       if (elements.size == 1 && elements[0].textRange.endOffset != context.offset) continue
       commands.add(object : CompletionCommand() {
+
+        override val synonyms: List<String>
+          get() = listOf("surround with")
+
         override val highlightInfo: HighlightInfoLookup?
           get() = if (elements.size == 1) {
             HighlightInfoLookup(elements[0].textRange, EditorColors.SEARCH_RESULT_ATTRIBUTES, 0)
@@ -52,6 +56,7 @@ abstract class AbstractSurroundWithCompletionCommandProvider : CommandProvider {
             }
             return null
           }
+
 
         override val presentableName: @Nls String
           get() = CodeInsightBundle.message("command.completion.surround.with.text", surrounder.templateDescription)
