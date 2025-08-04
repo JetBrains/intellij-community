@@ -2,7 +2,9 @@
 package com.intellij.openapi.module
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
+import com.intellij.openapi.module.ModuleManager.Companion.getInstanceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -23,7 +25,7 @@ abstract class ModuleManager : SimpleModificationTracker() {
   companion object {
     /**
      * Returns the module manager instance for the current project.
-     * In coroutines, use [com.intellij.openapi.components.serviceAsync] instead.
+     * In coroutines, use [getInstanceAsync] instead.
      *
      * @param project the project for which the module manager is requested.
      * @return the module manager instance.
@@ -31,6 +33,8 @@ abstract class ModuleManager : SimpleModificationTracker() {
     @JvmStatic
     @RequiresBlockingContext
     fun getInstance(project: Project): ModuleManager = project.service()
+
+    suspend fun getInstanceAsync(project: Project): ModuleManager = project.serviceAsync()
 
     fun getInstanceIfDefined(project: Project): ModuleManager? = project.serviceOrNull()
   }

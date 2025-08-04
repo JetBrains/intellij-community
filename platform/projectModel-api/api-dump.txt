@@ -246,6 +246,7 @@ Fa:com.intellij.openapi.module.ModuleManager
 - a:setUnloadedModulesSync(java.util.List):V
 f:com.intellij.openapi.module.ModuleManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.module.ModuleManager
+- f:getInstanceAsync(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - f:getInstanceIfDefined(com.intellij.openapi.project.Project):com.intellij.openapi.module.ModuleManager
 com.intellij.openapi.module.ModulePointer
 - a:getModule():com.intellij.openapi.module.Module
