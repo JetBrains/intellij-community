@@ -6,6 +6,7 @@ import com.intellij.notebooks.visualization.ui.cellsDnD.EditorCellDragAssistant
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
 import com.intellij.notebooks.visualization.use
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.paint.LinePainter2D
@@ -83,9 +84,11 @@ class EditorCellFoldingBar(
   }
 
   fun updateBounds() {
-    val panel = panel ?: return
-    val (y,height) = yAndHeightSupplier.invoke()
-    panel.setBounds(editor.gutterComponentEx.annotationsAreaOffset - 2, y, 6, height)
+    runInEdt {
+      val panel = panel ?: return@runInEdt
+      val (y, height) = yAndHeightSupplier.invoke()
+      panel.setBounds(editor.gutterComponentEx.annotationsAreaOffset - 2, y, 6, height)
+    }
   }
 
   private fun createFoldingBar() = EditorCellFoldingBarComponent().apply {

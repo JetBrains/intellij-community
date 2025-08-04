@@ -15,7 +15,6 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.util.EventDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import java.beans.PropertyChangeListener
-import javax.swing.SwingUtilities
 
 /**
  * Per-editor service on which can one subscribe.
@@ -56,7 +55,7 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
         if (ApplicationManager.getApplication().isWriteAccessAllowed)
           boundsChanged()
         else
-          schedulePerformPostponed()
+          performPostponed()
       }
     })
 
@@ -145,14 +144,6 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
 
   fun performPostponed() {
     finishDelayAndDoIfShouldBeRecalculated { notifyBoundsChanged() }
-  }
-
-  fun schedulePerformPostponed() {
-    finishDelayAndDoIfShouldBeRecalculated {
-      SwingUtilities.invokeLater {
-        notifyBoundsChanged()
-      }
-    }
   }
 
   private fun finishDelayAndDoIfShouldBeRecalculated(block: () -> Unit) {

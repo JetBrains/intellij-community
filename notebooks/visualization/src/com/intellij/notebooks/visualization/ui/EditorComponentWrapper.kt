@@ -125,7 +125,7 @@ class EditorComponentWrapper private constructor(private val editor: EditorImpl)
     editor.notebookEditor.editorPositionKeeper.keepScrollingPositionWhile {
       JupyterBoundsChangeHandler.get(editor).postponeUpdates()
       super.validateTree()
-      JupyterBoundsChangeHandler.get(editor).schedulePerformPostponed()
+      JupyterBoundsChangeHandler.get(editor).performPostponed()
     }
   }
 
