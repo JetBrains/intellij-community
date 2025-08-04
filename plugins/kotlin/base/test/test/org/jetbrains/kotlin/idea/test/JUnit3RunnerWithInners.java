@@ -74,7 +74,9 @@ public class JUnit3RunnerWithInners extends Runner implements Filterable, Sortab
                 isFakeTest = true;
                 return new JUnit3RunnerWithInners.FakeEmptyClassTest(testClass);
             } else {
-                return new TestSuite(testClass.asSubclass(TestCase.class));
+                TestSuite testSuite = new TestSuite(testClass.asSubclass(TestCase.class));
+                processIndexingMode(testClass, testSuite);
+                return testSuite;
             }
         } else if (unprocessedInnerClasses.size() == innerClasses.size()) {
             return createTreeTestSuite(testClass);
