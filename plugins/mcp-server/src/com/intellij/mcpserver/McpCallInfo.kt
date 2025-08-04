@@ -1,5 +1,6 @@
 package com.intellij.mcpserver
 
+import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.openapi.project.Project
 import kotlinx.serialization.json.JsonObject
 import org.jetbrains.ide.RestService.Companion.getLastFocusedOrOpenedProject
@@ -21,7 +22,7 @@ class McpCallInfo(
 
 class ClientInfo(val name: String, val version: String)
 
-class McpCallAdditionalDataElement(val additionalData: McpCallInfo) : AbstractCoroutineContextElement(Key) {
+class McpCallAdditionalDataElement(val additionalData: McpCallInfo) : AbstractCoroutineContextElement(Key), IntelliJContextElement {
   companion object Key : CoroutineContext.Key<McpCallAdditionalDataElement>
 }
 
