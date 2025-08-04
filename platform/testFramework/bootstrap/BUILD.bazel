@@ -8,6 +8,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:junit4",
+    "@lib//:hamcrest",
     "@lib//:junit5Launcher-provided",
     "@lib//:junit5-provided",
     "@lib//:junit5Vintage-provided",

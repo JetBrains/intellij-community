@@ -23,6 +23,7 @@ private val LIBRARY_MODULE_NAMES: Set<String> = setOf(
   "intellij.libraries.compose.foundation.desktop.junit",
   "intellij.libraries.grpc",
   "intellij.libraries.grpc.netty.shaded",
+  "intellij.libraries.hamcrest",
   "intellij.libraries.junit4",
   "intellij.libraries.junit5",
   "intellij.libraries.kotlinTest",

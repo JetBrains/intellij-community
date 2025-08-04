@@ -33,6 +33,7 @@ jvm_library(
     "@lib//:http-client",
     "@lib//:kotlinx-collections-immutable",
     "//platform/testFramework/teamCity",
+    "@lib//:hamcrest",
     ":libraries_junit4_provided",
   ],
   runtime_deps = [":core_resources"]

@@ -24,5 +24,6 @@
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.teamCity" />
+    <orderEntry type="library" name="hamcrest" level="project" />
   </component>
 </module>

@@ -4382,24 +4382,10 @@ http_file(
 )
 
 http_file(
-  name = "hamcrest-core-1_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar",
-  sha256 = "66fdef91e9739348df7a096aa384a5685f4e875584cce89386a7a47251c4d8e9",
-  downloaded_file_path = "hamcrest-core-1.3.jar"
-)
-
-http_file(
   name = "junit-4_13_2-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2-sources.jar",
   sha256 = "34181df6482d40ea4c046b063cb53c7ffae94bdf1b1d62695bdf3adf9dea7e3a",
   downloaded_file_path = "junit-4.13.2-sources.jar"
-)
-
-http_file(
-  name = "hamcrest-core-1_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3-sources.jar",
-  sha256 = "e223d2d8fbafd66057a8848cc94222d63c3cedd652cc48eddc0ab5c39c0f84df",
-  downloaded_file_path = "hamcrest-core-1.3-sources.jar"
 )
 
 http_file(
@@ -6626,6 +6612,20 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/atomicfu-jvm/0.23.2/atomicfu-jvm-0.23.2-sources.jar",
   sha256 = "5cbc18e1ffd1160ed9d027fab9d81c5909fc4b7a0bb0492770d27cc018805a60",
   downloaded_file_path = "atomicfu-jvm-0.23.2-sources.jar"
+)
+
+http_file(
+  name = "hamcrest-core-1_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar",
+  sha256 = "66fdef91e9739348df7a096aa384a5685f4e875584cce89386a7a47251c4d8e9",
+  downloaded_file_path = "hamcrest-core-1.3.jar"
+)
+
+http_file(
+  name = "hamcrest-core-1_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3-sources.jar",
+  sha256 = "e223d2d8fbafd66057a8848cc94222d63c3cedd652cc48eddc0ab5c39c0f84df",
+  downloaded_file_path = "hamcrest-core-1.3-sources.jar"
 )
 
 http_file(

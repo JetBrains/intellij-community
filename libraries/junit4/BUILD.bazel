@@ -11,10 +11,14 @@ jvm_library(
   name = "junit4",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  exports = ["@lib//:junit4"],
+  exports = [
+    "@lib//:junit4",
+    "//libraries/hamcrest",
+  ],
   runtime_deps = [
     ":junit4_resources",
     "@lib//:junit4",
+    "//libraries/hamcrest",
   ]
 )
 ### auto-generated section `build intellij.libraries.junit4` end

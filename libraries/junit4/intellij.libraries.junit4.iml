@@ -8,5 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.hamcrest" exported="" />
   </component>
 </module>

@@ -3141,25 +3141,11 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
+jvm_import(
   name = "junit4",
-  exports = [
-    ":junit-4_13_2_http_import",
-    ":hamcrest-core-1_3_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "junit-4_13_2_http_import",
   jar = "@junit-4_13_2_http//file",
-  source_jar = "@junit-4_13_2-sources_http//file"
-)
-
-jvm_import(
-  name = "hamcrest-core-1_3_http_import",
-  jar = "@hamcrest-core-1_3_http//file",
-  source_jar = "@hamcrest-core-1_3-sources_http//file"
+  source_jar = "@junit-4_13_2-sources_http//file",
+  visibility = ["//visibility:public"]
 )
 
 java_library(
@@ -8788,6 +8774,12 @@ jvm_import(
   name = "junit-4_12_http_import",
   jar = "@junit-4_12_http//file",
   source_jar = "@junit-4_12-sources_http//file"
+)
+
+jvm_import(
+  name = "hamcrest-core-1_3_http_import",
+  jar = "@hamcrest-core-1_3_http//file",
+  source_jar = "@hamcrest-core-1_3-sources_http//file"
 )
 
 jvm_import(
