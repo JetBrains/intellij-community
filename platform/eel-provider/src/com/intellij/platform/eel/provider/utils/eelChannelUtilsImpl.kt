@@ -191,3 +191,21 @@ internal fun EelReceiveChannel.linesImpl(charset: Charset): Flow<String> = flow 
     }
   }
 }
+
+internal fun ByteBuffer.putPartially(src: ByteBuffer): Int {
+  val dst = this
+  val bytesBeforeRead = src.remaining()
+  // Choose the best approach:
+  if (src.remaining() <= dst.remaining()) {
+    // Bulk put the whole buffer
+    dst.put(src)
+  }
+  else {
+    // Slice, put, and set size back
+    val l = src.limit()
+    dst.put(src.limit(src.position() + dst.remaining()))
+    src.limit(l)
+  }
+  val bytesRead = bytesBeforeRead - src.remaining()
+  return bytesRead
+}
