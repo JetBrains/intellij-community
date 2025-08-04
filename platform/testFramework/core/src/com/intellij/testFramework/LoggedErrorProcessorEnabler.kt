@@ -7,7 +7,7 @@ import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import java.lang.reflect.Method
 
-abstract class LoggedErrorProcessorEnabler : InvocationInterceptor {
+interface LoggedErrorProcessorEnabler : InvocationInterceptor {
   override fun interceptTestTemplateMethod(
     invocation: InvocationInterceptor.Invocation<Void>,
     invocationContext: ReflectiveInvocationContext<Method>,
@@ -40,9 +40,9 @@ abstract class LoggedErrorProcessorEnabler : InvocationInterceptor {
     }
   }
 
-  protected abstract fun createErrorProcessor(): LoggedErrorProcessor
+  fun createErrorProcessor(): LoggedErrorProcessor
 
-  class DoNoRethrowErrors : LoggedErrorProcessorEnabler() {
+  class DoNoRethrowErrors : LoggedErrorProcessorEnabler {
     override fun createErrorProcessor(): LoggedErrorProcessor {
       return object : LoggedErrorProcessor() {
         override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {

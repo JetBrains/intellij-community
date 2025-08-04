@@ -95,7 +95,7 @@ class EventDispatcherTest {
   }
 }
 
-private class DoNoRethrowEventDispatcherErrors : LoggedErrorProcessorEnabler() {
+private class DoNoRethrowEventDispatcherErrors : LoggedErrorProcessorEnabler {
   override fun createErrorProcessor(): LoggedErrorProcessor {
     return object : LoggedErrorProcessor() {
       override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
