@@ -23,7 +23,7 @@ suspend fun <K, V> withCache(
   cacheFn: () -> TextMateCache<K, V>,
   cleanupInterval: Duration,
   ttl: Duration = Duration.ZERO,
-  body: CoroutineScope.(TextMateCache<K, V>) -> Unit,
+  body: suspend CoroutineScope.(TextMateCache<K, V>) -> Unit,
 ) {
   coroutineScope {
     cacheFn().use { cache ->
