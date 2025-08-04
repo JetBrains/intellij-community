@@ -446,6 +446,7 @@ private class EditorDecorationApplierImpl(private val editor: EditorEx, parentDi
       val highlightedLink = findDecoration(e)
       if (highlightedLink?.link?.action == null) {
         editor.setCustomCursor(EditorDecorationApplierImpl::class.java, null)
+        effectSupport.linkHovered(null)
       }
       else {
         editor.setCustomCursor(EditorDecorationApplierImpl::class.java, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
