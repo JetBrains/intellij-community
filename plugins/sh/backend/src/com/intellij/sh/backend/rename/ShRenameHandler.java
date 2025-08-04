@@ -12,7 +12,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.sh.highlighting.ShOccurrencesHighlightingSuppressor;
-import com.intellij.sh.highlighting.ShTextOccurrencesUtil;
+import com.intellij.sh.backend.highlighting.ShTextOccurrencesUtil;
 import com.intellij.sh.lexer.ShTokenTypes;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.sh.psi.ShFunctionDefinition;

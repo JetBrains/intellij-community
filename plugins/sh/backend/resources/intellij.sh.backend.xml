@@ -35,6 +35,7 @@
     <spellchecker.support language="Shell Script" implementationClass="com.intellij.sh.backend.spellchecker.ShSpellcheckingStrategy"/>
     <editorNotificationProvider implementation="com.intellij.sh.backend.shellcheck.ShellcheckSetupNotificationProvider"/>
     <formattingService implementation="com.intellij.sh.backend.formatter.ShExternalFormatter"/>
+    <highlightUsagesHandlerFactory implementation="com.intellij.sh.backend.highlighting.ShOccurrencesHighlightingFactory"/>
     <fileDocumentManagerListener implementation="com.intellij.sh.backend.formatter.ShLineEndingsAdapter"/>
     <externalAnnotator language="Shell Script" implementationClass="com.intellij.sh.backend.shellcheck.ShShellcheckExternalAnnotator"/>
     <localInspection language="Shell Script" shortName="ShellCheck" enabledByDefault="true"
