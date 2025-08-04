@@ -32,9 +32,9 @@ public class VersionMatcherRule extends TestWatcher {
     "6.0", /* "6.0.1",  "6.1", "6.2", "6.3", "6.4", "6.8.3",*/ "6.9",
     "7.0.2", /* "7.1", "7.2", "7.4", "7.5.1",*/ "7.6",
     "8.0", /*"8.2", "8.3", "8.4", "8.5", "8.6", "8.7", "8.8", "8.9", "8.10", "8.11", "8.12", "8.13",*/ "8.14.1",
-    "9.0.0-rc-3"
+    "9.0.0"
   };
-  public static final String BASE_GRADLE_VERSION = "9.0.0-rc-3";
+  public static final String BASE_GRADLE_VERSION = "9.0.0";
 
   @Nullable
   private CustomMatcher<String> myMatcher;
