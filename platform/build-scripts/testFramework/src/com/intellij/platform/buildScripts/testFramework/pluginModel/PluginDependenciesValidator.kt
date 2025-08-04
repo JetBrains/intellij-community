@@ -46,8 +46,7 @@ class PluginDependenciesValidator private constructor(
   private val project: JpsProject,
   private val productMode: ProductMode,
   pluginLayoutProvider: PluginLayoutProvider,
-  private val missingDependenciesToIgnore: List<Pair<String, String>>,
-  private val pathsIncludedFromLibrariesViaXiInclude: Set<String>,
+  private val options: PluginDependenciesValidationOptions,
 ) {
   companion object {
     fun validatePluginDependencies(
@@ -55,10 +54,9 @@ class PluginDependenciesValidator private constructor(
       productMode: ProductMode,
       pluginLayoutProvider: PluginLayoutProvider,
       tempDir: Path,
-      missingDependenciesToIgnore: List<Pair<String, String>>,
-      pathsIncludedFromLibrariesViaXiInclude: Set<String>,
+      options: PluginDependenciesValidationOptions,
     ): List<PluginModuleConfigurationError> {
-      val validator = PluginDependenciesValidator(tempDir, project, productMode, pluginLayoutProvider, missingDependenciesToIgnore, pathsIncludedFromLibrariesViaXiInclude)
+      val validator = PluginDependenciesValidator(tempDir, project, productMode, pluginLayoutProvider, options)
       validator.verifyClassLoaderConfigurations()
       return validator.errors
     }
@@ -105,7 +103,7 @@ class PluginDependenciesValidator private constructor(
       }, { descriptor })
     }
 
-    val unusedIgnoredDependenciesPatterns = missingDependenciesToIgnore.toMutableSet()
+    val unusedIgnoredDependenciesPatterns = options.missingDependenciesToIgnore.toMutableSet()
 
     checkSourceModule@ for ((sourceModuleName, sourceDescriptors) in jpsModuleToRuntimeDescriptors) {
       val sourceModule = project.findModuleByName(sourceModuleName) ?: error("Cannot find module $sourceModuleName")
@@ -252,7 +250,7 @@ class PluginDependenciesValidator private constructor(
         return this == pattern
       }
     }
-    return missingDependenciesToIgnore.find { (fromPattern, toPattern) -> fromModule.matches(fromPattern) && toModule.matches(toPattern) }
+    return options.missingDependenciesToIgnore.find { (fromPattern, toPattern) -> fromModule.matches(fromPattern) && toModule.matches(toPattern) }
   }
 
   private val IdeaPluginDescriptorImpl.shortPresentation: String
@@ -318,7 +316,7 @@ class PluginDependenciesValidator private constructor(
   
   private inner class PluginMainModuleFromSourceXIncludeLoader(private val layout: PluginLayoutDescription): XIncludeLoader {
     override fun loadXIncludeReference(path: String): XIncludeLoader.LoadedXIncludeReference? {
-      if (path in pathsIncludedFromLibrariesViaXiInclude || path.startsWith("META-INF/tips-")) {
+      if (path in options.pathsIncludedFromLibrariesViaXiInclude || path.startsWith("META-INF/tips-")) {
         //todo: support loading from libraries
         return XIncludeLoader.LoadedXIncludeReference("<idea-plugin/>".byteInputStream(), "dummy tag for external $path")
 
