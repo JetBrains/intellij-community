@@ -4,16 +4,19 @@ package com.intellij.compiler.server
 import com.intellij.compiler.YourKitProfilerService
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCacheFileName
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelTunnelsApi
+import com.intellij.platform.eel.LocalEelApi
+import com.intellij.platform.eel.pathSeparator
 import com.intellij.platform.eel.provider.*
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.forwardLocalServer
+import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.asCompletableFuture
 import java.nio.charset.Charset
@@ -21,7 +24,7 @@ import java.nio.file.FileSystems
 import java.nio.file.Path
 import kotlin.io.path.name
 
-class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCommandLineBuilder {
+internal class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCommandLineBuilder {
   companion object {
     private val logger = logger<EelBuildCommandLineBuilder>()
   }
@@ -31,6 +34,10 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
 
   private val workingDirectory: Path = getSystemSubfolder(BuildManager.SYSTEM_ROOT)
   private val cacheDirectory: Path = getSystemSubfolder("jps-${ApplicationInfo.getInstance().getBuild()}")
+
+  init {
+    workingDirectory.createDirectories() // Ijent doesn't support running anything in non-existing directory
+  }
 
   override fun addParameter(parameter: String) {
     commandLine.addParameter(parameter)

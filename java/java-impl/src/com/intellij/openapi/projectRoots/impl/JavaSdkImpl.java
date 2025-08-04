@@ -57,9 +57,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.intellij.openapi.projectRoots.impl.JdkPathUtilKt.getJavaPath;
 
 public final class JavaSdkImpl extends JavaSdk {
   private static final Logger LOG = Logger.getInstance(JavaSdkImpl.class);
@@ -157,6 +160,7 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
+  @NotNull
   public String getBinPath(@NotNull Sdk sdk) {
     return getConvertedHomePath(sdk) + "bin";
   }
@@ -171,11 +175,18 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public String getVMExecutablePath(@NotNull Sdk sdk) {
-    String binPath = getBinPath(sdk);
-    if (WslPath.isWslUncPath(binPath)) {
-      return binPath + "/java";
+    var binPathStr = getBinPath(sdk);
+    if (WslPath.isWslUncPath(binPathStr)) {
+      return binPathStr + "/java";
     }
-    return binPath + File.separator + VM_EXE_NAME;
+    try {
+      var binPath = Path.of(binPathStr);
+      return getJavaPath(binPath).toString();
+    }
+    catch (InvalidPathException invalidPathException) {
+      LOG.warn(String.format("Path %s isn't valid", binPathStr), invalidPathException);
+    }
+    return binPathStr + File.separator + VM_EXE_NAME;
   }
 
   private static @NotNull String getConvertedHomePath(@NotNull Sdk sdk) {

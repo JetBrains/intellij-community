@@ -325,6 +325,7 @@ public final class BuildManager implements Disposable {
     final Application application = ApplicationManager.getApplication();
     IS_UNIT_TEST_MODE = application.isUnitTestMode();
 
+
     String fallbackSdkHome = System.getProperty(GlobalOptions.FALLBACK_JDK_HOME, null);
     String fallbackSdkVersion = System.getProperty(GlobalOptions.FALLBACK_JDK_VERSION, null);
     if (fallbackSdkHome == null || fallbackSdkVersion == null) {
@@ -1342,7 +1343,7 @@ public final class BuildManager implements Disposable {
                                               @NotNull UUID sessionId,
                                               boolean requestProjectPreload,
                                               @Nullable WSLDistribution projectWslDistribution,
-                                              @Nullable ProgressIndicator progressIndicator) throws ExecutionException {
+                                              @Nullable ProgressIndicator progressIndicator) throws ExecutionException, IOException {
     String compilerPath = null;
     final String vmExecutablePath;
     JavaSdkVersion sdkVersion = null;
@@ -1411,7 +1412,8 @@ public final class BuildManager implements Disposable {
 
     BuildCommandLineBuilder cmdLine;
     WslPath wslPath;
-    if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
+    boolean localProject = EelPathUtils.isProjectLocal(project);
+    if (canUseEel() && !localProject) {
       wslPath = null;
       EelBuildCommandLineBuilder eelBuilder = new EelBuildCommandLineBuilder(project, Path.of(vmExecutablePath));
       cmdLine = eelBuilder;
@@ -1538,7 +1540,7 @@ public final class BuildManager implements Disposable {
 
     if (ProjectUtilCore.isExternalStorageEnabled(project)) {
       Path externalProjectConfig = ProjectUtil.getExternalConfigurationDir(project);
-      if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
+      if (canUseEel() && !localProject) {
         try {
           cmdLine.addPathParameter(
             "-D" + GlobalOptions.EXTERNAL_PROJECT_CONFIG + '=',
@@ -1680,7 +1682,7 @@ public final class BuildManager implements Disposable {
         cmdLine.addParameter("-D" + GlobalOptions.LANGUAGE_BUNDLE + '=' + FileUtil.toSystemIndependentName(bundlePath));
       }
     }
-    if (canUseEel() && EelPathUtils.isProjectLocal(project)) {
+    if (canUseEel() && localProject) {
       cmdLine.addPathParameter("-D" + PathManager.PROPERTY_HOME_PATH + '=', FileUtil.toSystemIndependentName(PathManager.getHomePath()));
       cmdLine.addPathParameter("-D" + PathManager.PROPERTY_CONFIG_PATH + '=',
                                FileUtil.toSystemIndependentName(PathManager.getConfigPath()));
@@ -1688,7 +1690,11 @@ public final class BuildManager implements Disposable {
                                FileUtil.toSystemIndependentName(PathManager.getPluginsPath()));
     }
 
-    Path logPath = Path.of(FileUtil.toSystemIndependentName(getBuildLogDirectory().getAbsolutePath()));
+    // TODO: Copy logs back as soon as eel provides API for that
+    Path logPath = localProject
+                   ? Path.of(FileUtil.toSystemIndependentName(getBuildLogDirectory().getAbsolutePath()))
+                   : EelPathUtils.getSystemFolder(project).resolve("logs");
+
     cmdLine.addPathParameter("-D" + GlobalOptions.LOG_DIR_OPTION + '=', logPath);
     if (AdvancedSettings.getBoolean(IN_MEMORY_LOGGER_ADVANCED_SETTINGS_NAME)) {
       cmdLine.addParameter("-D" + GlobalOptions.USE_IN_MEMORY_FAILED_BUILD_LOGGER + "=true");
@@ -1705,10 +1711,10 @@ public final class BuildManager implements Disposable {
     cmdLine.addParameter("-Dio.netty.noUnsafe=true");
 
 
-    final File projectSystemRoot = getProjectSystemDirectory(project);
-    File projectTempDir = new File(projectSystemRoot.getPath(), TEMP_DIR_NAME);
-    projectTempDir.mkdirs();
-    cmdLine.addPathParameter("-Djava.io.tmpdir=", FileUtil.toSystemIndependentName(projectTempDir.getPath()));
+    final var projectSystemRoot = EelPathUtils.getSystemFolder(project);
+    var projectTempDir = projectSystemRoot.resolve(TEMP_DIR_NAME);
+    Files.createDirectories(projectTempDir);
+    cmdLine.addPathParameter("-Djava.io.tmpdir=", projectSystemRoot);
 
     for (BuildProcessParametersProvider provider : BuildProcessParametersProvider.EP_NAME.getExtensions(project)) {
       for (String arg : provider.getVMArguments()) {
@@ -1805,10 +1811,10 @@ public final class BuildManager implements Disposable {
     cmdLine.addParameter(cmdLine.getWorkingDirectory());
 
     boolean lowPriority = AdvancedSettings.getBoolean("compiler.lower.process.priority");
-    if (SystemInfo.isUnix && lowPriority) {
+    if (localProject && SystemInfo.isUnix && lowPriority) {
       cmdLine.setUnixProcessPriority(10);
     }
-    if (SystemInfo.isLinux && Registry.is("compiler.process.new.session", true)) {
+    if (localProject && SystemInfo.isLinux && Registry.is("compiler.process.new.session", true)) {
       cmdLine.setStartNewSession();
     }
 
@@ -1852,7 +1858,7 @@ public final class BuildManager implements Disposable {
       processHandler.putUserData(COMPILER_PROCESS_DEBUG_HOST_PORT, debugPort);
     }
 
-    if (SystemInfo.isWindows && lowPriority) {
+    if (localProject && SystemInfo.isWindows && lowPriority) {
       try {
         WinProcess winProcess = new WinProcess((int)processHandler.getProcess().pid());
         winProcess.setPriority(Priority.IDLE);
