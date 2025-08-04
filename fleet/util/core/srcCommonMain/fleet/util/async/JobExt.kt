@@ -24,8 +24,10 @@ suspend fun <T> useAll(vararg jobs: Job, body: suspend CoroutineScope.() -> T): 
   }
 }
 
-suspend fun <T> withSupervisor(coroutineContext: CoroutineContext = EmptyCoroutineContext,
-                               body: suspend CoroutineScope.(scope: CoroutineScope) -> T): T {
+suspend fun <T> withSupervisor(
+  coroutineContext: CoroutineContext = EmptyCoroutineContext,
+  body: suspend CoroutineScope.(scope: CoroutineScope) -> T,
+): T {
   require(coroutineContext[Job] == null) { "Don't pass job to supervisor" }
   val context = currentCoroutineContext() + coroutineContext
   val supervisorJob = SupervisorJob(context.job)
@@ -35,7 +37,9 @@ suspend fun <T> withSupervisor(coroutineContext: CoroutineContext = EmptyCorouti
     }
   }
   finally {
-    supervisorJob.cancelAndJoin()
+    withContext(NonCancellable) {
+      supervisorJob.cancelAndJoin()
+    }
   }
 }
 
@@ -49,7 +53,10 @@ suspend fun <T> withCoroutineScope(
     coroutineScope { body(CoroutineScope(context + coroutineContext + job)) }
   }
   finally {
-    job.cancelAndJoin()
+    // any potential `finally` block surrounging `withCoroutineScope` must be executed only after all coroutines running on [scope] are joined, even if the tree is cancelling
+    withContext(NonCancellable) {
+      job.cancelAndJoin()
+    }
   }
 }
 
@@ -63,7 +70,8 @@ fun <T> Deferred<T>.toJob(): Job {
   this.invokeOnCompletion { cause ->
     if (cause != null) {
       job.completeExceptionally(cause)
-    } else {
+    }
+    else {
       job.complete()
     }
   }
