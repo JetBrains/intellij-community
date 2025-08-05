@@ -35,9 +35,9 @@ import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.semantics.CollectionInfo
 import androidx.compose.ui.semantics.collectionInfo
-import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.util.fastRoundToInt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask
@@ -186,14 +186,14 @@ public fun TabStrip(
             visible = tabStripState.isHovered,
             enter = fadeIn(tween(durationMillis = 125, delayMillis = 0, easing = LinearEasing)),
             exit = fadeOut(tween(durationMillis = 125, delayMillis = 700, easing = LinearEasing)),
-            modifier = Modifier.semantics { hideFromAccessibility() },
         ) {
             HorizontalScrollbar(scrollState, style = style.scrollbarStyle, modifier = Modifier.fillMaxWidth())
         }
     }
 }
 
-/** Only used to keep compatibility. **DON'T USE IT.** */
+@Deprecated("Use the TabStrip function with a interactionSource parameter")
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun TabStrip(tabs: List<TabData>, style: TabStyle, modifier: Modifier = Modifier, enabled: Boolean = true) {
