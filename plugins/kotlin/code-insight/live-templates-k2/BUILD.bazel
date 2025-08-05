@@ -8,7 +8,7 @@ create_kotlinc_options(
     "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
   ],
-  x_context_receivers = True
+  x_context_parameters = True
 )
 
 jvm_resources(
