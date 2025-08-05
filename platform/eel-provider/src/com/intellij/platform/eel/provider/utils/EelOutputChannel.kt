@@ -33,6 +33,8 @@ class EelChannelClosedException(cause: Throwable) : RuntimeException(cause)
 interface EelOutputChannel {
   val exposedSource: EelReceiveChannel
   val available: Flow<Int>
+  fun available(): Int
+  fun receiveAvailable(dst: ByteBuffer): ReadResult
 
   @Throws(EelChannelClosedException::class)
   suspend fun updateBuffer(update: (ByteBuffer) -> ByteBuffer)
@@ -63,6 +65,7 @@ class EelOutputChannelImpl : EelOutputChannel, EelReceiveChannel {
     val copyInProgress: Boolean,
     val buffer: ByteBuffer,
   ) {
+    val available: Int = buffer.remaining()
 
     override fun equals(other: Any?): Boolean {
       // it's important all instances to be unique because the buffer has mutable position.
@@ -97,6 +100,7 @@ class EelOutputChannelImpl : EelOutputChannel, EelReceiveChannel {
     get() = this
 
   override val available: Flow<Int> get() = state.filter { !it.copyInProgress }.map { it.buffer.remaining() }.distinctUntilChanged()
+  override fun available(): Int = state.value.available
 
   override suspend fun updateBuffer(update: (ByteBuffer) -> ByteBuffer) {
     val prevState = state.waitThenGetAndUpdate({ !it.copyInProgress }) { prevState ->
@@ -149,7 +153,7 @@ class EelOutputChannelImpl : EelOutputChannel, EelReceiveChannel {
   }
 
   @Throws(EelChannelClosedException::class)
-  fun receiveAvailable(dst: ByteBuffer): ReadResult {
+  override fun receiveAvailable(dst: ByteBuffer): ReadResult {
     val wasCopyInProgress = state.getAndUpdate { it.copy(copyInProgress = true) }.copyInProgress
     check(!wasCopyInProgress) {
       "concurrent receive is not supported"

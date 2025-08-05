@@ -81,7 +81,19 @@ internal class InputStreamAdapterImpl(
   // Pipe is a special case we can tell how much bytes are available.
   // In other cases, we do not know.
   // Unblocking read in IJ depends on it, so we can't simply return 0 here not to break unblocking read
-  override fun available(): Int = (receiveChannel as? EelPipeImpl)?.bytesInQueue ?: 0
+  override fun available(): Int {
+    return when (receiveChannel) {
+      is EelPipeImpl -> {
+        receiveChannel.bytesInQueue
+      }
+      is EelOutputChannel -> {
+        receiveChannel.available()
+      }
+      else -> {
+        0
+      }
+    }
+  }
 
   override fun read(b: ByteArray, off: Int, len: Int): Int = read(ByteBuffer.wrap(b, off, len), len)
 
@@ -89,8 +101,13 @@ internal class InputStreamAdapterImpl(
   private fun read(dst: ByteBuffer, len: Int): Int {
     if (!dst.hasRemaining() || len == 0) return 0
     while (true) { // InputStream.read never returns 0 unless closed or dst has size 0
-      val r = runBlocking(blockingContext) {
-        receiveChannel.receive(dst)
+      val r = if (receiveChannel is EelOutputChannel && receiveChannel.available() > 0) {
+        receiveChannel.receiveAvailable(dst)
+      }
+      else {
+        runBlocking(blockingContext) {
+          receiveChannel.receive(dst)
+        }
       }
       when (r) {
         ReadResult.EOF -> {
