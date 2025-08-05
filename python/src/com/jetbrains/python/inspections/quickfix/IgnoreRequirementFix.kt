@@ -16,6 +16,7 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection
+import com.jetbrains.python.statistics.PackageRequirementsIdsHolder.Companion.REQUIREMENTS_HAVE_BEEN_IGNORED
 import org.jetbrains.annotations.Nls
 
 internal class IgnoreRequirementFix(private val packagesToIgnore: Set<String>) : LocalQuickFix {
@@ -38,7 +39,9 @@ internal class IgnoreRequirementFix(private val packagesToIgnore: Set<String>) :
       else -> PyPsiBundle.message("INSP.package.requirements.requirements.have.been.ignored")
     }
 
-    val notification = BALLOON_NOTIFICATIONS.createNotification(notificationMessage, NotificationType.INFORMATION)
+    val notification = BALLOON_NOTIFICATIONS
+      .createNotification(notificationMessage, NotificationType.INFORMATION)
+      .setDisplayId(REQUIREMENTS_HAVE_BEEN_IGNORED)
     notification.addAction(createUndoAction(inspection, packagesToIgnore, profileManager))
     notification.addAction(createEditSettingsAction(project))
     notification.notify(project)

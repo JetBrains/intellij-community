@@ -37,6 +37,7 @@ import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.sdk.*
+import com.jetbrains.python.statistics.PipfileWatcherIdsHolder.Companion.RUN_PIPENV_LOCK_SUGGESTION
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -111,7 +112,13 @@ internal class PipEnvPipFileWatcher : EditorFactoryListener {
       else -> PyBundle.message("python.sdk.pipenv.pip.file.lock.out.of.date")
     }
     val content = PyBundle.message("python.sdk.pipenv.pip.file.notification.content")
-    val notification = withContext(Dispatchers.EDT) { LOCK_NOTIFICATION_GROUP.createNotification(title, content, NotificationType.INFORMATION) }
+    val notification = withContext(Dispatchers.EDT) {
+      LOCK_NOTIFICATION_GROUP.createNotification(
+        title = title,
+        content = content,
+        type = NotificationType.INFORMATION,
+      ).setDisplayId(RUN_PIPENV_LOCK_SUGGESTION)
+    }
       .setListener(NotificationListener { notification, event ->
         notification.expire()
         module.putUserData(notificationActive, null)

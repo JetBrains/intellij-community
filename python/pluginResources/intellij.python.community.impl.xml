@@ -556,27 +556,44 @@
                  description="Use project location as a working directory for the packaging tool execution."/>
     <registryKey key="python.packaging.tool.upload.project" defaultValue="false"
                  description="Upload project files and use this location as a working directory for the packaging tool execution."/>
+
     <notificationGroup id="Python Debugger" displayType="TOOL_WINDOW" toolWindowId="Debug" bundle="messages.PyBundle"
                        key="debug.notification.group"/>
+    <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.PythonDebuggerIdsHolder"/>
+
     <notificationGroup id="Python SDK Updater" displayType="BALLOON" bundle="messages.PyBundle"
                        key="python.sdk.updater.notifications.group.title"/>
+    <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder"/>
+
     <notificationGroup id="Sync Python requirements" displayType="BALLOON" bundle="messages.PyBundle" key="python.requirements.balloon"/>
+    <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder"/>
+
     <notificationGroup id="CythonWarning" displayType="BALLOON" bundle="messages.PyBundle" key="notification.group.cython"/>
+    <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.CythonWarningIdsHolder"/>
+
     <notificationGroup id="Python Compatibility Inspection Advertiser" displayType="STICKY_BALLOON" isLogByDefault="false"
                        bundle="messages.PyBundle" key="python.compatibility.inspection.advertiser.notifications.group.title"/>
+    <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.PythonCompatibilityInspectionAdvertiserIdsHolder"/>
+
     <notificationGroup id="Package requirements" displayType="BALLOON" isLogByDefault="false" bundle="messages.PyBundle"
                        key="notification.group.package.requirements"/>
+    <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.PackageRequirementsIdsHolder"/>
+
     <notificationGroup id="Pipfile Watcher" displayType="STICKY_BALLOON" isLogByDefault="false" bundle="messages.PyBundle"
                        key="python.sdk.pipenv.pip.file.watcher"/>
+    <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.PipfileWatcherIdsHolder"/>
+
     <notificationGroup id="ConfiguredPythonInterpreter" displayType="BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="sdk.has.been.configured.notification.name"/>
-    <notificationGroup id="Packaging" displayType="BALLOON" bundle="messages.PyBundle" key="notification.group.packaging"/>
+    <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.ConfiguredPythonInterpreterIdsHolder"/>
+
     <notificationGroup id="PythonPackages" displayType="TOOL_WINDOW" toolWindowId="Python Packages"
                        bundle="messages.PyBundle" key="notification.group.packaging.toolwindow"/>
-    <notificationGroup id="pyproject.toml Watcher" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
-                       key="python.sdk.poetry.pip.file.watcher"/>
+    <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.PythonPackagesIdsHolder"/>
+
     <notificationGroup id="Python interpreter installation" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="python.sdk.installation.notification.group"/>
+    <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.PythonInterpreterInstallationIdsHolder"/>
 
     <toolWindow id="Python Packages" anchor="bottom"
                 icon="com.jetbrains.python.icons.PythonIcons.Python.PythonPackages"
@@ -622,6 +639,7 @@
 
     <notificationGroup id="Black Formatter Integration" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="black.configurable.name"/>
+    <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.BlackFormatterIntegrationIdsHolder"/>
 
     <dependencyCollector kind="python" implementation="com.jetbrains.python.packaging.PyDependencyCollector"/>
     <lookup.usageDetails implementation="com.jetbrains.python.statistics.PyCompletionStatisticLogger"/>

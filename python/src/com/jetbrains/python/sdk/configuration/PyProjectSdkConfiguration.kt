@@ -30,6 +30,7 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.uv.isUv
+import com.jetbrains.python.statistics.ConfiguredPythonInterpreterIdsHolder.Companion.SDK_HAS_BEEN_CONFIGURED_AS_THE_PROJECT_INTERPRETER
 
 object PyProjectSdkConfiguration {
 
@@ -60,7 +61,7 @@ object PyProjectSdkConfiguration {
         val ws = UvProjectModelService.findWorkspace(module)
         if (ws != null) {
           for (wsModule in ws.members + ws.root) {
-            setReadyToUseSdk(wsModule.project, wsModule, sdk)    
+            setReadyToUseSdk(wsModule.project, wsModule, sdk)
           }
           return
         }
@@ -98,17 +99,20 @@ object PyProjectSdkConfiguration {
 
   private fun notifyAboutConfiguredSdk(project: Project, module: Module, sdk: Sdk) {
     if (isNotificationSilentMode(project)) return
-    NotificationGroupManager.getInstance().getNotificationGroup("ConfiguredPythonInterpreter").createNotification(
-      PyBundle.message("sdk.has.been.configured.as.the.project.interpreter", sdk.name),
-      NotificationType.INFORMATION
-    ).apply {
-      val configureSdkAction = NotificationAction.createSimpleExpiring(PySdkBundle.message("python.configure.interpreter.action")) {
-        PySdkPopupFactory.createAndShow(module)
-      }
+    NotificationGroupManager.getInstance().getNotificationGroup("ConfiguredPythonInterpreter")
+      .createNotification(
+        content = PyBundle.message("sdk.has.been.configured.as.the.project.interpreter", sdk.name),
+        type = NotificationType.INFORMATION
+      )
+      .setDisplayId(SDK_HAS_BEEN_CONFIGURED_AS_THE_PROJECT_INTERPRETER)
+      .apply {
+        val configureSdkAction = NotificationAction.createSimpleExpiring(PySdkBundle.message("python.configure.interpreter.action")) {
+          PySdkPopupFactory.createAndShow(module)
+        }
 
-      addAction(configureSdkAction)
-      notify(project)
-    }
+        addAction(configureSdkAction)
+        notify(project)
+      }
   }
 }
 
