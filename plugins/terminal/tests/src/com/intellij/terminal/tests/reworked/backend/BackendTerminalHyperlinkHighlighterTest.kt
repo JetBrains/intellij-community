@@ -318,6 +318,50 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     }
   }
 
+  @Test
+  fun `link trimming, slow filter, two updates in the middle of a task, the second one is below the first one`() {
+    withFixture {
+      updateModel(0L, generateLines(0, 999, links = (0..999).toList()))
+      delay(200.milliseconds) // now the task is definitely somewhere in the middle
+      updateModel(998L, generateLines(1000, 1001, links = (1000..1001).toList()))
+      updateModel(999L, generateLines(1002, 1005, links = (1002..1005).toList()))
+      assertLinks(
+        *(
+          (0 until 764).map { link(at(it, "link${it + 235}")) } +
+          listOf(
+            link(at(764, "link1001")),
+            link(at(765, "link1003")),
+            link(at(766, "link1004")),
+            link(at(767, "link1005")),
+            link(at(768, "link1006")),
+          )
+        ).toTypedArray(),
+      )
+      assertHighlightings()
+    }
+  }
+
+  @Test
+  fun `link trimming, slow filter, two updates in the middle of a task, the second one is above the first one`() {
+    withFixture {
+      updateModel(0L, generateLines(0, 999, links = (0..999).toList()))
+      delay(200.milliseconds) // now the task is definitely somewhere in the middle
+      updateModel(998L, generateLines(1000, 1001, links = (1000..1001).toList()))
+      updateModel(997L, generateLines(1002, 1004, links = (1002..1004).toList()))
+      assertLinks(
+        *(
+          (0 until 766).map { link(at(it, "link${it + 232}")) } +
+          listOf(
+            link(at(766, "link1003")),
+            link(at(767, "link1004")),
+            link(at(768, "link1005")),
+          )
+        ).toTypedArray(),
+      )
+      assertHighlightings()
+    }
+  }
+
   private fun generateLines(from: Int, toInclusive: Int, links: List<Int>): String {
     val linksAt = links.toSet()
     return (from..toInclusive).joinToString("\n") { line ->
@@ -400,10 +444,11 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       for (i in actualLinks.indices) {
         val actual = actualLinks[i]
         val expected = expectedLinks[i]
-        val expectedStartOffset = expected.locator.locateOffset(document)
-        val expectedEndOffset = expectedStartOffset + expected.locator.length
-        val actualStartOffset = outputModel.absoluteOffset(actual.absoluteStartOffset).toRelative()
-        val actualEndOffset = outputModel.absoluteOffset(actual.absoluteEndOffset).toRelative()
+        val actualStartOffset = outputModel.absoluteOffset(actual.absoluteStartOffset)
+        val actualEndOffset = outputModel.absoluteOffset(actual.absoluteEndOffset)
+        if (i == 0 && actualStartOffset.toRelative() < 0) continue // partially trimmed link, we may not be able to locate it
+        val expectedStartOffset = outputModel.relativeOffset(expected.locator.locateOffset(document))
+        val expectedEndOffset = outputModel.relativeOffset(expectedStartOffset.toRelative() + expected.locator.length)
         val expectedLayer = HighlighterLayer.HYPERLINK
         
         val description = "at $i actual link $actual expected link $expected"
