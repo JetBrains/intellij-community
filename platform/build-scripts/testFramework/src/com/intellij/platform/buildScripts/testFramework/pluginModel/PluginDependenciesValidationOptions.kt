@@ -6,8 +6,8 @@ package com.intellij.platform.buildScripts.testFramework.pluginModel
  */
 class PluginDependenciesValidationOptions(
   /**
-   * Mapping from a module name to the list of missing dependencies on this module which shouldn't be reported by the validator.
-   * This can be used to temporarily suppress some errors while they are being fixed in plugins or while a false-positives are being fixed in the validator. 
+   * List of a module name and a name of a missing dependency in this module which shouldn't be reported by the validator.
+   * This can be used to temporarily suppress some errors while they are being fixed in plugins or while a false-positive is being fixed in the validator. 
    */
   val missingDependenciesToIgnore: List<Pair<String, String>>,
 
