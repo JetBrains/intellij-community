@@ -25,9 +25,11 @@ import java.lang.reflect.Method;
  * See {@link #updateEdt()} usage for the details
  */
 public final class EDT {
-  private static Thread myEventDispatchThread;
+  private static volatile Thread ourThread;
 
   private static boolean disableEdtChecks = false;
+
+  private EDT() { }
 
   @ApiStatus.Internal
   public static void disableEdtChecks() {
@@ -39,39 +41,30 @@ public final class EDT {
     return disableEdtChecks;
   }
 
-  private EDT() { }
-
   /**
    * Updates cached EDT thread.
    * <strong>Do not use it unless you know what you are doing!</strong>
    */
   @ApiStatus.Internal
   public static void updateEdt() {
-    if (myEventDispatchThread != Thread.currentThread()) {
-      myEventDispatchThread = Thread.currentThread();
-    }
-  }
-
-  @ApiStatus.Internal
-  public static boolean isEdt(@NotNull Thread thread) {
-    return thread == myEventDispatchThread;
+    ourThread = Thread.currentThread();
   }
 
   @ApiStatus.Internal
   public static @NotNull Thread getEventDispatchThread() {
-    return myEventDispatchThread;
+    return ourThread;
   }
 
   @ApiStatus.Internal
   public static @Nullable Thread getEventDispatchThreadOrNull() {
-    return myEventDispatchThread;
+    return ourThread;
   }
 
   /**
    * Checks whether the current thread is EDT.
    *
    * @return {@code true} if the current thread is EDT, {@code false} otherwise
-   * @implNote The {@link #myEventDispatchThread} field is a "thread-local" storage for the current EDT.
+   * @implNote The {@link #ourThread} field is a "thread-local" storage for the current EDT.
    * The value is updated on each Swing event by {@link com.intellij.ide.IdeEventQueue}, so it should be actual value at any time.
    * A {@code null} value observed by any thread leads to honest slow {@code EventQueue.isDispatchThread()} check.
    * Non-null values can point either to the current EDT or one of the previous EDT.
@@ -79,8 +72,9 @@ public final class EDT {
    */
   public static boolean isCurrentThreadEdt() {
     // actually, this `if` is not required, but it makes the class work correctly before `IdeEventQueue` initialization
-    Thread thread = myEventDispatchThread;
-    return thread == null ? EventQueue.isDispatchThread() : Thread.currentThread() == thread;
+    Thread thread = ourThread;
+    return thread != null ? Thread.currentThread() == thread :
+           !disableEdtChecks && EventQueue.isDispatchThread();
   }
 
   public static void assertIsEdt() {
