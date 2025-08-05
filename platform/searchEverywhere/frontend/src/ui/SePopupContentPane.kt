@@ -234,7 +234,11 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
         filterEditor?.let { filterEditor ->
           withContext(Dispatchers.EDT) {
             headerPane.setFilterActions(filterEditor.getHeaderActions())
-            hintHelper.setRightExtensions(filterEditor.getSearchFieldActions())
+            hintHelper.removeRightExtensions()
+            val rightActions = filterEditor.getSearchFieldActions()
+            if (rightActions.isNotEmpty()) {
+              hintHelper.setRightExtensions(rightActions)
+            }
           }
         }
       }
