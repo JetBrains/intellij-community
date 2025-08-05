@@ -3,9 +3,11 @@
 package org.jetbrains.kotlin.idea.k2.injection
 
 import com.intellij.patterns.StandardPatterns
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -31,8 +33,8 @@ internal object KotlinPatterns : StandardPatterns() {
     fun receiver() = KotlinReceiverPattern()
 }
 
-context(KaSession)
-@OptIn(KaExperimentalApi::class)
+context(_: KaSession)
+@OptIn(KaExperimentalApi::class, KaContextParameterApi::class)
 private fun KaType.renderFullyQualifiedName() = render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
 
 // Methods in this class are used through reflection during pattern construction

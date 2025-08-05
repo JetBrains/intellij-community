@@ -79,7 +79,7 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun injectionInfoByAnnotation(injectAnnotation: KaAnnotation): InjectionInfo? {
         val languageId = injectAnnotation.getStringValueOfArgument(LanguageAnnotation::value.name) ?: return null
         val prefix = injectAnnotation.getStringValueOfArgument(LanguageAnnotation::prefix.name)
@@ -94,7 +94,7 @@ private val languageAnnotationClassId =
 private inline fun KaAnnotatedSymbol.findAnnotation(annotationClassId: ClassId = languageAnnotationClassId): KaAnnotation? =
     annotations.firstOrNull { it.classId == annotationClassId }
 
-context(KaSession)
+context(_: KaSession)
 private fun KaAnnotation.getStringValueOfArgument(argumentName: String): String? {
     val argumentValueExpression =
         arguments.firstOrNull { it.name.asString() == argumentName }?.expression as? KaAnnotationValue.ConstantValue ?: return null
