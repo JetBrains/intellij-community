@@ -17,7 +17,6 @@ import com.intellij.psi.XmlElementVisitor
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.xml.XmlFile
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
@@ -27,7 +26,7 @@ internal class ModuleNotRegisteredAsPluginContentInspection : LocalInspectionToo
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return object : XmlElementVisitor() {
       override fun visitXmlFile(file: XmlFile) {
-        if (isPluginModuleFile(file) && isNotReferencedAsContentModule(file)) {
+        if (DescriptorUtil.isPluginModuleFile(file) && isNotReferencedAsContentModule(file)) {
           val moduleName = getModuleName(file)
           holder.registerProblem(
             file,
@@ -41,12 +40,6 @@ internal class ModuleNotRegisteredAsPluginContentInspection : LocalInspectionToo
 
   private fun getModuleName(xmlFile: XmlFile): String {
     return xmlFile.virtualFile.nameWithoutExtension
-  }
-
-  private fun isPluginModuleFile(xmlFile: XmlFile): Boolean {
-    if (xmlFile.rootTag?.name != IdeaPlugin.TAG_NAME) return false
-    val parentDirName = xmlFile.parent?.name ?: return false
-    return parentDirName != "META-INF"
   }
 
   private fun isNotReferencedAsContentModule(xmlFile: XmlFile): Boolean {

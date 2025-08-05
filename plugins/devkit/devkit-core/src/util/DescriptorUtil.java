@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.application.WriteAction;
@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
@@ -120,4 +121,14 @@ public final class DescriptorUtil {
     return ContainerUtil.map(files, ideaPluginDomFileElement -> ideaPluginDomFileElement.getRootElement());
   }
 
+  public static boolean isPluginModuleFile(@NotNull PsiFile file) {
+    if (!(file instanceof XmlFile xmlFile)) return false;
+    XmlTag rootTag = xmlFile.getRootTag();
+    if (rootTag == null) return false;
+    if (!rootTag.getName().equals("idea-plugin")) return false;
+    PsiDirectory parent = file.getParent();
+    if (parent == null) return false;
+    String parentDirName = parent.getName();
+    return !parentDirName.equals("META-INF");
+  }
 }
