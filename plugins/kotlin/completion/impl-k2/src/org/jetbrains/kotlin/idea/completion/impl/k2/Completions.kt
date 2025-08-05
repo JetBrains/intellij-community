@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirAnnotationCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassReferenceCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirKDocParameterNameContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierReferenceCompletionContributor
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
@@ -37,6 +38,7 @@ internal object Completions {
     private val contributors: List<K2CompletionContributor<*>> = listOf(
         K2ClassifierCompletionContributor(),
         K2ClassReferenceCompletionContributor(),
+        K2KDocParameterNameContributor(),
     )
 
     // Note: this function will be renamed and replace the complete method below!
@@ -306,12 +308,12 @@ internal object Completions {
             }
 
             is KDocParameterNamePositionContext -> {
-                K2KDocParameterNameContributor(sink)
+                FirKDocParameterNameContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
             is KDocLinkNamePositionContext -> {
-                K2KDocParameterNameContributor(sink)
+                FirKDocParameterNameContributor(sink)
                     .complete(positionContext, weighingContext)
                 FirKDocCallableCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
