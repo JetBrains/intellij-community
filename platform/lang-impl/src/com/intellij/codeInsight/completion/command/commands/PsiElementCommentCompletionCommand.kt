@@ -5,8 +5,12 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
 import com.intellij.codeInsight.completion.command.HighlightInfoLookup
 import com.intellij.codeInsight.completion.command.getCommandContext
+import com.intellij.codeInsight.generation.CommentByBlockCommentHandler
+import com.intellij.codeInsight.generation.CommentByLineCommentHandler
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
@@ -41,13 +45,29 @@ internal class PsiElementCommentByBlockCompletionCommandProvider : ActionCommand
       override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
         if (editor == null) return
         val selectionModel = editor.selectionModel
-        val highLevelContext = getHighLevelContext(offset, psiFile) ?: return
+        if (!highlight(offset, psiFile, selectionModel)) return
+        super.execute(offset, psiFile, editor)
+        selectionModel.removeSelection()
+      }
+
+      private fun highlight(
+        offset: Int,
+        psiFile: PsiFile,
+        selectionModel: SelectionModel,
+      ): Boolean {
+        val highLevelContext = getHighLevelContext(offset, psiFile) ?: return false
         val textRange = highLevelContext.textRange
         val startOffset = textRange.startOffset
         val endOffset = textRange.endOffset
         selectionModel.setSelection(startOffset, endOffset)
-        super.execute(offset, psiFile, editor)
-        selectionModel.removeSelection()
+        return true
+      }
+
+      override fun getPreview(): IntentionPreviewInfo {
+        val commentByBlockCommentHandler = CommentByBlockCommentHandler()
+        return tryToCalculateCommandCompletionPreview(commentByBlockCommentHandler, context,
+                                                      highlight = ({ offset, psiFile, selectionModel -> highlight(offset, psiFile, selectionModel) }),
+                                                      fallback = { super.getPreview() })
       }
     }
   }
@@ -88,7 +108,17 @@ internal class PsiElementCommentByLineCompletionCommandProvider : ActionCommandP
       override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
         if (editor == null) return
         val selectionModel = editor.selectionModel
-        val highLevelContext = getHighLevelContext(offset, psiFile) ?: return
+        if (!highlight(offset, psiFile, selectionModel)) return
+        super.execute(offset, psiFile, editor)
+        selectionModel.removeSelection()
+      }
+
+      private fun highlight(
+        offset: Int,
+        psiFile: PsiFile,
+        selectionModel: SelectionModel,
+      ): Boolean {
+        val highLevelContext = getHighLevelContext(offset, psiFile) ?: return false
         val textRange = highLevelContext.textRange
         var startOffset = textRange.startOffset
         val endOffset = textRange.endOffset
@@ -98,8 +128,14 @@ internal class PsiElementCommentByLineCompletionCommandProvider : ActionCommandP
           current = PsiTreeUtil.skipWhitespacesBackward(current)
         }
         selectionModel.setSelection(startOffset, endOffset)
-        super.execute(offset, psiFile, editor)
-        selectionModel.removeSelection()
+        return true
+      }
+
+      override fun getPreview(): IntentionPreviewInfo {
+        val handler = CommentByLineCommentHandler()
+        return tryToCalculateCommandCompletionPreview(handler, context,
+                                                      highlight = ({ offset, psiFile, selectionModel -> highlight(offset, psiFile, selectionModel) }),
+                                                      fallback = { super.getPreview() })
       }
     }
   }

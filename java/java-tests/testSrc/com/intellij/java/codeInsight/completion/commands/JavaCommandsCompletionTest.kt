@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.command.CommandCompletionDocumentatio
 import com.intellij.codeInsight.completion.command.CommandCompletionLookupElement
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.ide.highlighter.JavaFileType
@@ -70,6 +71,39 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
         } 
       }
     """.trimIndent())
+  }
+
+  fun testFormatPreview() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A { 
+        void foo() {
+          int y = 10;
+          int x =                           y.<caret>;
+        } 
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    val item = elements.first { element -> element.lookupString.contains("format", ignoreCase = true) }
+      .`as`(CommandCompletionLookupElement::class.java)
+    if (item == null) {
+      fail()
+      return
+    }
+    val preview = item.command.getPreview()
+    if (preview !is IntentionPreviewInfo.CustomDiff) {
+      fail()
+      return
+    }
+    val expected = """
+      class A { 
+        void foo() {
+          int y = 10;
+            int x = y;
+        } 
+      }
+    """.trimIndent()
+    assertEquals(preview.modifiedText(), expected)
   }
 
   fun testFormatWholeMethod() {
@@ -407,13 +441,26 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
           }
       }.<caret>""".trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Comment with line comment", ignoreCase = true) })
-    myFixture.checkResult("""
+    val item = elements.first { element -> element.lookupString.contains("Comment with line comment", ignoreCase = true) }
+    selectItem(item)
+    val expectedText = """
       //class A {
       //    public String getY() {
       //        return "y";
       //    }
-      //}""".trimIndent())
+      //}""".trimIndent()
+    myFixture.checkResult(expectedText)
+    val lookupElement = item.`as`(CommandCompletionLookupElement::class.java)
+    if (lookupElement == null) {
+      fail()
+      return
+    }
+    val preview = lookupElement.command.getPreview()
+    if (preview !is IntentionPreviewInfo.CustomDiff) {
+      fail()
+      return
+    }
+    assertEquals(preview.modifiedText(), expectedText)
   }
 
   fun testCommentElementByBlock() {

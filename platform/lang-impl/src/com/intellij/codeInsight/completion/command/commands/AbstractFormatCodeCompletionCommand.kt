@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.annotations.Nls
 import java.util.Locale.getDefault
 
@@ -33,7 +34,7 @@ abstract class AbstractFormatCodeCompletionCommandProvider :
   abstract fun createCommand(context: CommandCompletionProviderContext): CompletionCommand?
 }
 
-abstract class AbstractFormatCodeCompletionCommand : CompletionCommand() {
+abstract class AbstractFormatCodeCompletionCommand(private val context: CommandCompletionProviderContext) : CompletionCommand() {
   final override val synonyms: List<String>
     get() = listOf("Format")
 
@@ -54,7 +55,16 @@ abstract class AbstractFormatCodeCompletionCommand : CompletionCommand() {
       .replaceFirstChar { if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() }
 
   override fun getPreview(): IntentionPreviewInfo {
-    return IntentionPreviewInfo.Html(ActionsBundle.message("action.ReformatCode.description"))
+    return tryToCalculateCommandCompletionPreview(
+      previewGenerator = { _, psiFile, offset ->
+        val element = getCommandContext(offset, psiFile) ?: return@tryToCalculateCommandCompletionPreview null
+        val target = findTargetToRefactor(element)
+        CodeStyleManager.getInstance(psiFile.getProject()).reformat(target)
+        IntentionPreviewInfo.CustomDiff(context.psiFile.fileType, null, context.psiFile.text, psiFile.text, true)
+      },
+      context = context,
+      highlight = { _, _, _ -> true },
+      fallback = { IntentionPreviewInfo.Html(ActionsBundle.message("action.ReformatCode.description")) })
   }
 
   final override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {

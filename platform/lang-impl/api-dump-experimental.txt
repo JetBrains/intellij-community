@@ -184,7 +184,7 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 *a:com.intellij.codeInsight.completion.command.commands.AbstractFormatCodeCompletionCommand
 - com.intellij.codeInsight.completion.command.CompletionCommand
-- <init>():V
+- <init>(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):V
 - f:execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
 - a:findTargetToRefactor(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - getAdditionalInfo():java.lang.String

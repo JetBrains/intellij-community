@@ -341,6 +341,19 @@ internal class CommandCompletionUnsupportedOperationException
 
 internal class MyEditor(psiFileCopy: PsiFile, private val settings: EditorSettings) : ImaginaryEditor(psiFileCopy.project,
                                                                                                       psiFileCopy.viewProvider.document!!) {
+
+  override fun getFoldingModel(): FoldingModel {
+    return object : FoldingModel{
+      override fun addFoldRegion(startOffset: Int, endOffset: Int, placeholderText: String): FoldRegion? = null
+      override fun removeFoldRegion(region: FoldRegion) = Unit
+      override fun getAllFoldRegions(): Array<out FoldRegion?> = emptyArray()
+      override fun isOffsetCollapsed(offset: Int): Boolean = false
+      override fun getCollapsedRegionAtOffset(offset: Int): FoldRegion? = null
+      override fun getFoldRegion(startOffset: Int, endOffset: Int): FoldRegion? = null
+      override fun runBatchFoldingOperation(operation: Runnable, allowMovingCaret: Boolean, keepRelativeCaretPosition: Boolean) {}
+    }
+  }
+
   override fun notImplemented(): RuntimeException = throw CommandCompletionUnsupportedOperationException()
 
   override fun isViewer(): Boolean = false

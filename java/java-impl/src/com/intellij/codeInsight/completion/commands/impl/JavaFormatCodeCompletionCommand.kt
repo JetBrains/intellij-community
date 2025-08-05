@@ -16,7 +16,7 @@ internal class JavaFormatCodeCompletionCommandProvider : AbstractFormatCodeCompl
     val element = getCommandContext(context.offset, context.psiFile) ?: return null
     val targetElement = findTargetToRefactorInner(element)
     val highlightInfoLookup = HighlightInfoLookup(targetElement.textRange, EditorColors.SEARCH_RESULT_ATTRIBUTES, 0)
-    val command = object : JavaFormatCodeCompletionCommand(){
+    val command = object : JavaFormatCodeCompletionCommand(context){
       override val highlightInfo: HighlightInfoLookup
         get() {
           return highlightInfoLookup
@@ -34,7 +34,7 @@ private fun findTargetToRefactorInner(element: PsiElement): PsiElement {
   return parentElement
 }
 
-internal abstract class JavaFormatCodeCompletionCommand : AbstractFormatCodeCompletionCommand() {
+internal abstract class JavaFormatCodeCompletionCommand(context: CommandCompletionProviderContext) : AbstractFormatCodeCompletionCommand(context) {
   override fun findTargetToRefactor(element: PsiElement): PsiElement {
     return findTargetToRefactorInner(element)
   }
