@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
@@ -83,7 +85,7 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun registerLocalReferences(elements: List<PsiElement>) {
         val registerDeclarationAccessVisitor = object : KtVisitorVoid() {
@@ -180,7 +182,7 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun handleDeclaration(declaration: KtNamedDeclaration,
                                   deadCodeInspection: LocalInspectionTool,
                                   deadCodeInfoType: HighlightInfoType.HighlightInfoTypeImpl,

@@ -22,6 +22,12 @@ import com.siyeh.ig.psiutils.SerializationUtils
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.importableFqName
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
@@ -140,7 +146,7 @@ object K2UnusedSymbolUtil {
             // Kotlin Notebook injections do check references
             && containingFile.virtualFile !is VirtualFileWindow
 
-    context(KaSession)
+    context(_: KaSession)
     fun isHiddenFromResolution(declaration: KtNamedDeclaration): Boolean {
         val anno = declaration.findAnnotation(
             StandardClassIds.Annotations.Deprecated,
@@ -158,7 +164,7 @@ object K2UnusedSymbolUtil {
         return declaration is KtParameter && !(declaration.parent.parent is KtPrimaryConstructor && declaration.hasValOrVar())
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getPsiToReportProblem(declaration: KtNamedDeclaration, isJavaEntryPointInspection: UnusedDeclarationInspectionBase): PsiElement? {
         if (((declaration as? KtParameter)?.parent?.parent as? KtModifierListOwner)?.hasModifier(KtTokens.EXTERNAL_KEYWORD) == true) {
@@ -201,7 +207,7 @@ object K2UnusedSymbolUtil {
         return declaration.nameIdentifier ?: (declaration as? KtConstructor<*>)?.getConstructorKeyword()
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtDeclaration.hasKotlinAdditionalAnnotation(): Boolean =
         this is KtNamedDeclaration && checkAnnotatedUsingPatterns(this, KOTLIN_ADDITIONAL_ANNOTATIONS)
 
@@ -225,7 +231,7 @@ object K2UnusedSymbolUtil {
     }
 
     // variation of IDEA's AnnotationUtil.checkAnnotatedUsingPatterns()
-    context(KaSession)
+    context(_: KaSession)
     fun checkAnnotatedUsingPatterns(declaration: KtNamedDeclaration, annotationPatterns: Collection<String>): Boolean {
         if (declaration.annotationEntries.isEmpty()) return false
         val annotationsPresent = declaration.annotationEntries.mapNotNull {
@@ -248,14 +254,14 @@ object K2UnusedSymbolUtil {
         return false
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun checkDeclaration(declaration: KtNamedDeclaration, importedDeclaration: KtNamedDeclaration): Boolean =
         declaration !in importedDeclaration.parentsWithSelf && !hasNonTrivialUsages(
             importedDeclaration,
             declarationContainingClass = importedDeclaration.containingClass()
         )
 
-    context(KaSession)
+    context(_: KaSession)
     private fun hasNonTrivialUsages(
         declaration: KtNamedDeclaration,
         declarationContainingClass: KtClass?,
@@ -265,7 +271,7 @@ object K2UnusedSymbolUtil {
         return hasNonTrivialUsages(declaration, declarationContainingClass, isCheapEnough, symbol)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun hasNonTrivialUsages(
         declaration: KtNamedDeclaration,
         declarationContainingClass: KtClass?,
@@ -339,7 +345,7 @@ object K2UnusedSymbolUtil {
 
     private val KtNamedDeclaration.isObjectOrEnum: Boolean get() = this is KtObjectDeclaration || this is KtClass && isEnum()
 
-    context(KaSession)
+    context(_: KaSession)
     private fun checkReference(refElement: PsiElement, declaration: KtNamedDeclaration, originalDeclaration: KtNamedDeclaration?): Boolean {
         if (declaration.isAncestor(refElement)) return true // usages inside element's declaration are not counted
 
@@ -381,7 +387,7 @@ object K2UnusedSymbolUtil {
         return true
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun hasReferences(
         project: Project,
         declaration: KtNamedDeclaration,
@@ -473,7 +479,7 @@ object K2UnusedSymbolUtil {
      * In the above code, CC is not referenced by any expressions other than `import C.CC.value`,
      * but `C.CC.value` is used by `fun value() = value`, so we cannot delete `import C.CC.value`, and we have to keep CC.
      */
-    context(KaSession)
+    context(_: KaSession)
     private fun checkPrivateDeclaration(
         declaration: KtNamedDeclaration,
         symbol: KaDeclarationSymbol?,
@@ -497,7 +503,7 @@ object K2UnusedSymbolUtil {
             .forEach(Processor { !predicate.invoke(it) })
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun hasBuiltInEnumFunctionReference(enumClass: KtClass?, useScope: SearchScope): Boolean {
         if (enumClass == null) return false
         val isFoundEnumFunctionReferenceViaSearch = referenceExists(enumClass, useScope) {
@@ -510,14 +516,14 @@ object K2UnusedSymbolUtil {
         return isFoundEnumFunctionReferenceViaSearch || hasEnumFunctionReferenceInEnumClass(enumClass)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtSimpleNameExpression.isReferenceToBuiltInEnumEntries(): Boolean =
         isEnumValuesSoftDeprecateEnabled() && this.getReferencedNameAsName() == StandardNames.ENUM_ENTRIES && isSynthesizedFunction()
 
     /**
      * Checks calls inside the enum class without receiver expression. Example: `values()`, `::values`
      */
-    context(KaSession)
+    context(_: KaSession)
     private fun hasEnumFunctionReferenceInEnumClass(enumClass: KtClass): Boolean {
         val isFoundCallableReference = enumClass.anyDescendantOfType<KtCallableReferenceExpression> {
             it.receiverExpression == null && it.containingClass() == enumClass && it.isReferenceToBuiltInEnumFunction()
@@ -539,7 +545,7 @@ object K2UnusedSymbolUtil {
      * Checks calls in enum class with explicit receiver expression. Example: EnumClass.values(), EnumClass::values.
      * Also includes search by imports and kotlin.enumValues, kotlin.enumValueOf functions
      */
-    context(KaSession)
+    context(_: KaSession)
     private fun hasBuiltInEnumFunctionReference(reference: PsiReference, enumClass: KtClass): Boolean {
         val parent = reference.element.parent
         if (parent is KtQualifiedExpression) {
@@ -590,13 +596,13 @@ object K2UnusedSymbolUtil {
         return containingFile.anyDescendantOfType(PsiReferenceExpression::isQualifiedNameInEnumStaticMethods)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtImportDirective.resolveReferenceToSymbol(): KaSymbol? = when (importedReference) {
         is KtReferenceExpression -> importedReference as KtReferenceExpression
         else -> importedReference?.getChildOfType<KtReferenceExpression>()
     }?.mainReference?.resolveToSymbol()
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtImportDirective.isUsedStarImportOfEnumStaticFunctions(): Boolean {
         if (importPath?.isAllUnder != true) return false
         val importedEnumFqName = this.importedFqName ?: return false
@@ -633,7 +639,7 @@ object K2UnusedSymbolUtil {
         return reference.containingClass.name == enumClass.name && reference is SyntheticElement && reference.name in ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES_IN_JAVA.map { it.asString() }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtCallableDeclaration.canBeHandledByLightMethods(symbol: KaDeclarationSymbol?): Boolean {
         return when {
             symbol is KaConstructorSymbol -> {
@@ -646,7 +652,7 @@ object K2UnusedSymbolUtil {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaNamedFunctionSymbol.hasInlineClassParameters(): Boolean {
         val receiverParameterClassSymbol = receiverType?.expandedSymbol as? KaNamedClassSymbol
         return receiverParameterClassSymbol?.isInline == true || valueParameters.any {
@@ -753,7 +759,7 @@ object K2UnusedSymbolUtil {
         return arrayOf(SafeDeleteFix(declaration))
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun isEntryPoint(
         declaration: KtNamedDeclaration,
         isCheapEnough: Lazy<PsiSearchHelper.SearchCostResult>,
