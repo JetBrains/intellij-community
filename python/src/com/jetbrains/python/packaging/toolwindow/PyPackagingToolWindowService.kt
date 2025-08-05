@@ -37,6 +37,8 @@ import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatist
 import com.jetbrains.python.packaging.toolwindow.model.*
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.statistics.PythonPackagesIdsHolder.Companion.PYTHON_PACKAGE_DELETED
+import com.jetbrains.python.statistics.PythonPackagesIdsHolder.Companion.PYTHON_PACKAGE_INSTALLED
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -192,7 +194,10 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   suspend fun installPackage(installRequest: PythonPackageInstallRequest, options: List<String> = emptyList()) {
     PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
     managerUI.installPackagesRequestBackground(installRequest, options)?.let {
-      handleActionCompleted(message("python.packaging.notification.installed", installRequest.title))
+      handleActionCompleted(
+        text = message("python.packaging.notification.installed", installRequest.title),
+        displayId = PYTHON_PACKAGE_INSTALLED
+      )
     }
   }
 
@@ -200,14 +205,20 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     val installRequest = manager?.findPackageSpecification(pkg.name, pkg.version)?.toInstallRequest() ?: return
     PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
     managerUI.installPackagesRequestBackground(installRequest, options)?.let {
-      handleActionCompleted(message("python.packaging.notification.installed", installRequest.title))
+      handleActionCompleted(
+        text = message("python.packaging.notification.installed", installRequest.title),
+        displayId = PYTHON_PACKAGE_INSTALLED
+      )
     }
   }
 
   suspend fun deletePackage(vararg selectedPackages: InstalledPackage) {
     PythonPackagesToolwindowStatisticsCollector.uninstallPackageEvent.log(project)
     managerUI.uninstallPackagesBackground(selectedPackages.map { it.instance.name }) ?: return
-    handleActionCompleted(message("python.packaging.notification.deleted", selectedPackages.joinToString(", ") { it.name }))
+    handleActionCompleted(
+      text = message("python.packaging.notification.deleted", selectedPackages.joinToString(", ") { it.name }),
+      displayId = PYTHON_PACKAGE_DELETED
+    )
   }
 
   @ApiStatus.Internal
@@ -379,15 +390,16 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       }
   }
 
-  private suspend fun handleActionCompleted(text: @Nls String) {
+  private suspend fun handleActionCompleted(text: @Nls String, displayId: String) {
     VirtualFileManager.getInstance().asyncRefresh()
-    showPackagingNotification(text)
+    showPackagingNotification(text, displayId)
   }
 
-  private suspend fun showPackagingNotification(text: @Nls String) {
+  private suspend fun showPackagingNotification(text: @Nls String, displayId: String) {
     val notification = NotificationGroupManager.getInstance()
       .getNotificationGroup("PythonPackages")
       .createNotification(text, NotificationType.INFORMATION)
+      .setDisplayId(displayId)
 
     withContext(Dispatchers.Main) {
       notification.notify(project)

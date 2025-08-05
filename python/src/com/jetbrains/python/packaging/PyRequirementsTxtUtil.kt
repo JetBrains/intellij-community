@@ -36,6 +36,10 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder.Companion.ANALYZE_ENTRIES_IN_REQUIREMENTS_FILE_FAILED
+import com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder.Companion.CREATE_REQUIREMENTS_FILE_FAILED
+import com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder.Companion.NO_INTERPRETER_CONFIGURED
+import com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder.Companion.SOME_REQUIREMENTS_FROM_BASE_FILES_WERE_NOT_UPDATED
 import com.jetbrains.python.util.runWithModalBlockingOrInBackground
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -101,11 +105,14 @@ internal fun syncWithImports(module: Module) {
     val configureSdkAction = NotificationAction.createSimpleExpiring(PySdkBundle.message("python.configure.interpreter.action")) {
       PySdkPopupFactory.createAndShow(module)
     }
-    showNotification(notificationGroup,
-                     NotificationType.ERROR,
-                     PyBundle.message("python.requirements.error.no.interpreter"),
-                     module.project,
-                     configureSdkAction)
+    showNotification(
+      notificationGroup = notificationGroup,
+      type = NotificationType.ERROR,
+      text = PyBundle.message("python.requirements.error.no.interpreter"),
+      project = module.project,
+      action = configureSdkAction,
+      displayId = NO_INTERPRETER_CONFIGURED
+    )
     return
   }
   val settings = PyPackageRequirementsSettings.getInstance(module)
@@ -121,7 +128,13 @@ internal fun syncWithImports(module: Module) {
 
   if (requirementsFile == null) {
     val text = PyBundle.message("python.requirements.error.create.requirements.file")
-    showNotification(notificationGroup, NotificationType.WARNING, text, module.project)
+    showNotification(
+      notificationGroup = notificationGroup,
+      type = NotificationType.WARNING,
+      text = text,
+      project = module.project,
+      displayId = CREATE_REQUIREMENTS_FILE_FAILED
+    )
     return
   }
 
@@ -139,11 +152,23 @@ internal fun syncWithImports(module: Module) {
 
   if (matchResult.unhandledLines.isNotEmpty()) {
     val text = PyBundle.message("python.requirements.warning.unhandled.lines", matchResult.unhandledLines.joinToString(", "))
-    showNotification(notificationGroup, NotificationType.WARNING, text, module.project)
+    showNotification(
+      notificationGroup = notificationGroup,
+      type = NotificationType.WARNING,
+      text = text,
+      project = module.project,
+      displayId = ANALYZE_ENTRIES_IN_REQUIREMENTS_FILE_FAILED
+    )
   }
   if (matchResult.unchangedInBaseFiles.isNotEmpty()) {
     val text = PyBundle.message("python.requirements.info.file.ref.dropped", matchResult.unchangedInBaseFiles.joinToString(", "))
-    showNotification(notificationGroup, NotificationType.INFORMATION, text, module.project)
+    showNotification(
+      notificationGroup = notificationGroup,
+      type = NotificationType.INFORMATION,
+      text = text,
+      project = module.project,
+      displayId = SOME_REQUIREMENTS_FROM_BASE_FILES_WERE_NOT_UPDATED
+    )
   }
 }
 
@@ -153,8 +178,9 @@ private fun showNotification(
   @NlsContexts.NotificationContent text: String,
   project: Project,
   action: NotificationAction? = null,
+  displayId: String,
 ) {
-  val notification = notificationGroup.createNotification(PyBundle.message("python.requirements.balloon"), text, type)
+  val notification = notificationGroup.createNotification(PyBundle.message("python.requirements.balloon"), text, type).setDisplayId(displayId)
   if (action != null) notification.addAction(action)
   notification.notify(project)
 }

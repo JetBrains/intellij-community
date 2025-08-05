@@ -25,6 +25,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.*
+import com.jetbrains.python.statistics.PipfileWatcherIdsHolder.Companion.RUN_PIPENV_LOCK_SUGGESTION
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -77,7 +78,11 @@ internal class PipEnvPipFileWatcher : EditorFactoryListener {
     }
     val content = PyBundle.message("python.sdk.pipenv.pip.file.notification.content")
     val notification = withContext(Dispatchers.EDT) {
-      LOCK_NOTIFICATION_GROUP.createNotification(title, content, NotificationType.INFORMATION)
+      LOCK_NOTIFICATION_GROUP.createNotification(
+        title = title,
+        content = content,
+        type = NotificationType.INFORMATION,
+      ).setDisplayId(RUN_PIPENV_LOCK_SUGGESTION)
     }
       .setListener(NotificationListener { notification, event ->
         notification.expire()

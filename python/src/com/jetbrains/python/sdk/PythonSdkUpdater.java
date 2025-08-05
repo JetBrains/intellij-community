@@ -64,6 +64,9 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Function;
 
+import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REFRESH_SKELETONS_FOR_REMOTE_INTERPRETER_FAILED;
+import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REMOTE_INTERPRETER_SUPPORT_IS_NOT_AVAILABLE;
+
 /**
  * Refreshes all project's Python SDKs.
  */
@@ -403,6 +406,7 @@ public final class PythonSdkUpdater {
           .createNotification(PyBundle.message("sdk.gen.failed.notification.title"),
                               PyBundle.message("remote.interpreter.support.is.not.available", sdk.getName()),
                               NotificationType.WARNING)
+          .setDisplayId(REMOTE_INTERPRETER_SUPPORT_IS_NOT_AVAILABLE)
           .notify(myProject);
       }
       else if (exception instanceof InvalidSdkException) {

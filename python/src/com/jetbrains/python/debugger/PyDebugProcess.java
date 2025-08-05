@@ -86,6 +86,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.getTypeRenderer;
 import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.loadTypeRendererChildren;
+import static com.jetbrains.python.statistics.PythonDebuggerIdsHolder.CONNECTION_FAILED;
 
 
 public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener {
@@ -366,6 +367,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           if (shouldLogConnectionException(e)) {
             getNotificationGroup()
               .createNotification(PyBundle.message("debug.notification.title.connection.failed"), e.getMessage(), NotificationType.ERROR)
+              .setDisplayId(CONNECTION_FAILED)
               .notify(myProject);
           }
         }

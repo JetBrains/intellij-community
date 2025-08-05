@@ -37,6 +37,7 @@ import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
 import com.jetbrains.python.sdk.poetry.POETRY_ICON
 import com.jetbrains.python.sdk.uv.UV_ICON
 import com.jetbrains.python.statistics.InterpreterTarget
+import com.jetbrains.python.statistics.PythonInterpreterInstallationIdsHolder.Companion.PYTHON_INSTALLATION_INTERRUPTED
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -157,6 +158,7 @@ internal fun installBaseSdk(sdk: Sdk, existingSdks: List<Sdk>): Sdk? {
     val notification = NotificationGroupManager.getInstance()
       .getNotificationGroup("Python interpreter installation")
       .createNotification(message("python.sdk.installation.balloon.error.message"), NotificationType.ERROR)
+      .setDisplayId(PYTHON_INSTALLATION_INTERRUPTED)
     notification.collapseDirection
 
     notification.addAction(NotificationAction.createSimple(message("python.sdk.installation.balloon.error.action")) {

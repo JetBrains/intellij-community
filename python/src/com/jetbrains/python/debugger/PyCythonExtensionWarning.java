@@ -42,6 +42,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static com.jetbrains.python.statistics.CythonWarningIdsHolder.CYTHON_EXTENSION_SPEEDS_UP_PYTHON_DEBUGGING;
+
 public final class PyCythonExtensionWarning {
   private static final Logger LOG = Logger.getInstance(PyCythonExtensionWarning.class);
 
@@ -56,7 +58,7 @@ public final class PyCythonExtensionWarning {
     Notification notification =
       new Notification(CYTHON_WARNING_GROUP_ID, PyBundle.message("compile.cython.extensions.notification"),
                        PyBundle.message("debugger.cython.extension.speeds.up.python.debugging"),
-                       NotificationType.INFORMATION);
+                       NotificationType.INFORMATION).setDisplayId(CYTHON_EXTENSION_SPEEDS_UP_PYTHON_DEBUGGING);
     notification.setSuggestionType(true);
     notification.setListener(NotificationListener.URL_OPENING_LISTENER);
 

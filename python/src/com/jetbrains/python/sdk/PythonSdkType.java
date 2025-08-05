@@ -62,6 +62,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.execution.target.TargetBasedSdks.loadTargetConfiguration;
+import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REFRESH_SKELETONS_FOR_REMOTE_INTERPRETER_FAILED;
 
 /**
  * Class should be final and singleton since some code checks its instance by ref.
@@ -384,7 +385,7 @@ public final class PythonSdkType extends SdkType {
 
     Notification notification =
       new Notification("Python SDK Updater", PyBundle.message("sdk.gen.failed.notification.title"), notificationMessage,
-                       NotificationType.WARNING);
+                       NotificationType.WARNING).setDisplayId(REFRESH_SKELETONS_FOR_REMOTE_INTERPRETER_FAILED);
     if (notificationListener != null) notification.setListener(notificationListener);
     notification.notify(null);
   }
