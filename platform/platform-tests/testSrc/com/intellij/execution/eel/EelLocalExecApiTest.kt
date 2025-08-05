@@ -194,34 +194,25 @@ class EelLocalExecApiTest {
       }
     }
 
-    coroutineScope { // TODO Remove this reading after IJPL-186154 is fixed.
-      launch {
-        process.stdout.readAllBytesAsync(this)
-      }
-      launch {
-        process.stderr.readAllBytesAsync(this)
-      }
+    if (ptyManagement == PTYManagement.PTY_RESIZE_LATER && (exitType == ExitType.INTERRUPT || exitType == ExitType.EXIT_WITH_COMMAND) && process.isWinConPtyProcess) {
+      delay(10.seconds) // workaround: wait a bit to let ConPTY apply the resize
+    }
 
-      if (ptyManagement == PTYManagement.PTY_RESIZE_LATER && (exitType == ExitType.INTERRUPT || exitType == ExitType.EXIT_WITH_COMMAND) && process.isWinConPtyProcess) {
-        delay(10.seconds) // workaround: wait a bit to let ConPTY apply the resize
+    // Test kill api
+    when (exitType) {
+      ExitType.KILL -> process.kill()
+      ExitType.TERMINATE -> {
+        when (process) {
+          is EelPosixProcess -> process.terminate()
+          is EelWindowsProcess -> error("No SIGTERM analog for Windows processes")
+        }
       }
-
-      // Test kill api
-      when (exitType) {
-        ExitType.KILL -> process.kill()
-        ExitType.TERMINATE -> {
-          when (process) {
-            is EelPosixProcess -> process.terminate()
-            is EelWindowsProcess -> error("No SIGTERM analog for Windows processes")
-          }
-        }
-        ExitType.INTERRUPT -> { // Terminate sleep with interrupt/CTRL+C signal
-          process.sendCommand(Command.SLEEP)
-          process.interrupt()
-        }
-        ExitType.EXIT_WITH_COMMAND -> { // Just command to ask script return gracefully
-          process.sendCommand(Command.EXIT)
-        }
+      ExitType.INTERRUPT -> { // Terminate sleep with interrupt/CTRL+C signal
+        process.sendCommand(Command.SLEEP)
+        process.interrupt()
+      }
+      ExitType.EXIT_WITH_COMMAND -> { // Just command to ask script return gracefully
+        process.sendCommand(Command.EXIT)
       }
     }
 
