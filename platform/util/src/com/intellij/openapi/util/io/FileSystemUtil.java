@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -33,10 +34,7 @@ public final class FileSystemUtil {
   /** Please use NIO API instead ({@link Files}, etc.) */
   @ApiStatus.Obsolete
   public static @Nullable FileAttributes getAttributes(@NotNull String path) {
-    if (SystemInfo.isWindows && path.length() == 2 && path.charAt(1) == ':') {
-      LOG.error("Incomplete Windows path: " + path);
-      path += '\\';
-    }
+    path = normalizePath(path);
     try {
       return getAttributes(Paths.get(path));
     }
@@ -44,6 +42,13 @@ public final class FileSystemUtil {
       LOG.debug(e);
       return null;
     }
+  }
+
+  private static String normalizePath(@NotNull String path) {
+    if (SystemInfo.isWindows && path.length() == 2 && path.charAt(1) == ':') {
+      path += '\\';
+    }
+    return path;
   }
 
   /** Please use NIO API instead ({@link Files}, etc.) */
@@ -92,8 +97,7 @@ public final class FileSystemUtil {
 
   private static @Nullable FileAttributes getAttributes(Path path) {
     try {
-      BasicFileAttributes attributes = NioFiles.readAttributes(path);
-      return attributes == NioFiles.BROKEN_SYMLINK ? com.intellij.openapi.util.io.FileAttributes.BROKEN_SYMLINK : com.intellij.openapi.util.io.FileAttributes.fromNio(path, attributes);
+      return getAttributesNotNull(path);
     }
     catch (NoSuchFileException e) {
       LOG.trace(e.getClass().getName() + ": " + path);
@@ -103,6 +107,13 @@ public final class FileSystemUtil {
       LOG.debug(path.toString(), e);
       return null;
     }
+  }
+
+  private static @NotNull FileAttributes getAttributesNotNull(Path path) throws IOException {
+    BasicFileAttributes attributes = NioFiles.readAttributes(path);
+    return attributes == NioFiles.BROKEN_SYMLINK
+           ? com.intellij.openapi.util.io.FileAttributes.BROKEN_SYMLINK
+           : com.intellij.openapi.util.io.FileAttributes.fromNio(path, attributes);
   }
 
   private static @Nullable String resolveSymLink(Path path) {
@@ -138,13 +149,6 @@ public final class FileSystemUtil {
   @ApiStatus.Internal
   public static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivityByJavaIO(@NotNull java.io.File anyChild) {
     // try to query this path by different-case strings and deduce case sensitivity from the answers
-    if (!anyChild.exists()) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + "): does not exist");
-      }
-      return FileAttributes.CaseSensitivity.UNKNOWN;
-    }
-
     java.io.File parent = anyChild.getParentFile();
     if (parent == null) {
       String probe = findCaseToggleableChild(anyChild);
@@ -184,10 +188,32 @@ public final class FileSystemUtil {
       altName = toggleCase(name);
     }
 
-    String altPath = parent.getPath() + '/' + altName;
-    FileAttributes newAttributes = getAttributes(altPath);
-
     try {
+      String altPath = normalizePath(parent.getPath() + '/' + altName);
+      FileAttributes newAttributes;
+
+      try {
+        newAttributes = getAttributesNotNull(Paths.get(altPath));
+      }
+      catch (FileNotFoundException e) {
+        if (!anyChild.exists()) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + "): does not exist");
+          }
+          return FileAttributes.CaseSensitivity.UNKNOWN;
+        }
+        LOG.trace(e.getClass().getName() + ": " + altPath);
+        newAttributes = null;
+      }
+      catch (IOException e) {
+        LOG.debug(altPath, e);
+        newAttributes = null;
+      }
+      catch (InvalidPathException e) {
+        LOG.debug(e);
+        newAttributes = null;
+      }
+
       if (newAttributes == null) {
         // couldn't find this file by other-cased name, so deduce FS is sensitive
         return FileAttributes.CaseSensitivity.SENSITIVE;
