@@ -10,6 +10,8 @@ import com.intellij.execution.target.TargetEnvironmentWizard
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -61,6 +63,9 @@ private class AddLocalInterpreterAction(
   private val onSdkCreated: Consumer<Sdk>,
 ) : AnAction(PyBundle.messagePointer("python.sdk.action.add.local.interpreter.text"), AllIcons.Nodes.HomeFolder), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
+    runInEdt {
+      FileDocumentManager.getInstance().saveAllDocuments()
+    }
     addLocalInterpreter(moduleOrProject, onSdkCreated)
   }
 }

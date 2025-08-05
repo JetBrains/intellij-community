@@ -7,6 +7,7 @@ import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
+import io.github.z4kn4fein.semver.Version
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -17,9 +18,10 @@ interface UvCli {
 
 @ApiStatus.Internal
 interface UvLowLevel {
-  suspend fun initializeEnvironment(init: Boolean, python: Path?): PyResult<Path>
+  suspend fun initializeEnvironment(init: Boolean, version: Version?): PyResult<Path>
 
   suspend fun listUvPythons(): PyResult<Set<Path>>
+  suspend fun listSupportedPythonVersions(versionRequest: String? = null): PyResult<Set<Version>>
 
   /**
   * Manage project dependencies by adding/removing them to the project along side installation
