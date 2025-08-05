@@ -7,6 +7,15 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
+import org.jetbrains.kotlin.analysis.api.components.directlyOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
+import org.jetbrains.kotlin.analysis.api.components.getImplementationStatus
+import org.jetbrains.kotlin.analysis.api.components.intersectionOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.isAnyType
+import org.jetbrains.kotlin.analysis.api.components.isVisibleInClass
+import org.jetbrains.kotlin.analysis.api.components.memberScope
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.validityAsserted
@@ -26,7 +35,7 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
         }
     }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> {
     if (classOrObject is KtClass && classOrObject.isAnnotation()) return emptyList()
@@ -53,7 +62,7 @@ private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> 
 }
 
 
-    context(KaSession)
+    context(_: KaSession)
     fun noConcreteDirectOverriddenSymbol(symbol: KaCallableSymbol): Boolean {
         fun isConcreteFunction(superSymbol: KaCallableSymbol): Boolean {
             if (superSymbol.modality == KaSymbolModality.ABSTRACT) return false
@@ -64,7 +73,7 @@ private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> 
         return symbol.directlyOverriddenSymbols.none { isConcreteFunction(it) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun getOverridableMembers(classOrObjectSymbol: KaClassSymbol): List<OverrideMember> {
         return buildList {

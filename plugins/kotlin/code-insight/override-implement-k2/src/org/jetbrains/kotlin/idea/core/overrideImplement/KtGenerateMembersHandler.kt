@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
+import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordsRenderer
@@ -29,6 +31,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.rendere
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.insertMembersAfter
@@ -99,7 +102,7 @@ abstract class KtGenerateMembersHandler(
         }
     }
 
-    context(KaSession)
+    context(session: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun createMemberEntries(
         editor: Editor,
@@ -108,7 +111,7 @@ abstract class KtGenerateMembersHandler(
         copyDoc: Boolean
     ): List<MemberEntry> {
         val selectedMemberSymbolsAndGeneratedPsi = selectedElements.mapNotNull { member ->
-            member.memberInfo.symbolPointer.restoreSymbol()?.let { it to member }
+            with (session) { member.memberInfo.symbolPointer.restoreSymbol() }?.let { it to member }
         }.associate { (symbol, member) ->
             symbol to generateMember(currentClass.project, member, symbol, currentClass, copyDoc)
         }
@@ -178,7 +181,7 @@ abstract class KtGenerateMembersHandler(
      * callable symbol for an overridable member that the user has picked to override (or implement), and the value is the stub
      * implementation for the chosen symbol.
      */
-    context(KaSession)
+    context(_: KaSession)
 private fun getMembersOrderedByRelativePositionsInSuperTypes(
         currentClass: KtClassOrObject,
         newMemberSymbolsAndGeneratedPsi: Map<KaCallableSymbol, KtCallableDeclaration>

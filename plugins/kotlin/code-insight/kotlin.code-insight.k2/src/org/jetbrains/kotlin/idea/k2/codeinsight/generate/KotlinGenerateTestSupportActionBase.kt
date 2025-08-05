@@ -100,10 +100,11 @@ abstract class KotlinGenerateTestSupportActionBase(
 
                                 when (overriddenSymbols.size) {
                                     0 -> if (isDefaultTemplate()) generateUnsupportedOrSuperCall(
-                                        project,
-                                        functionSymbol,
-                                        BodyType.FromTemplate
-                                    ) else null
+                                      project,
+                                      functionSymbol,
+                                      BodyType.FromTemplate
+                                    )
+                                    else null
 
                                     1 -> generateUnsupportedOrSuperCall(project, overriddenSymbols.single(), BodyType.Super)
                                     else -> generateUnsupportedOrSuperCall(project, overriddenSymbols.first(), BodyType.QualifiedSuper)

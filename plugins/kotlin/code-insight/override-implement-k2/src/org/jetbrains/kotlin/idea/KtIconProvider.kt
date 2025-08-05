@@ -17,7 +17,7 @@ import javax.swing.Icon
 object KtIconProvider {
     private val LOG = Logger.getInstance(KtIconProvider::class.java)
 
-    context(KaSession)
+    context(_: KaSession)
     fun getIcon(ktSymbol: KaSymbol): Icon? {
         // logic copied from org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
         val declaration = ktSymbol.psi
@@ -37,7 +37,7 @@ object KtIconProvider {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getIcon(symbol: KaSymbol, flags: Int): Icon? {
         var result: Icon = getBaseIcon(symbol) ?: return null
 
@@ -50,7 +50,7 @@ object KtIconProvider {
         return result
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun getBaseIcon(symbol: KaSymbol): Icon? {
         val isAbstract = (symbol as? KaDeclarationSymbol)?.modality == KaSymbolModality.ABSTRACT
         return when (symbol) {
@@ -101,7 +101,7 @@ object KtIconProvider {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getVisibilityIcon(symbol: KaSymbol): Icon? = when ((symbol as? KaDeclarationSymbol)?.visibility) {
         KaSymbolVisibility.PUBLIC -> PlatformIcons.PUBLIC_ICON
         KaSymbolVisibility.PROTECTED,
