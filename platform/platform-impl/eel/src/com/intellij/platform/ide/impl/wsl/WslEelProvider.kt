@@ -4,18 +4,13 @@ package com.intellij.platform.ide.impl.wsl
 import com.intellij.execution.eel.MultiRoutingFileSystemUtils
 import com.intellij.execution.ijent.nio.IjentEphemeralRootAwareFileSystemProvider
 import com.intellij.execution.wsl.*
-import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
-import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelMachine
-import com.intellij.platform.eel.EelOsFamily
-import com.intellij.platform.eel.EelPathBoundDescriptor
+import com.intellij.platform.eel.*
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.impl.fs.EelEarlyAccessChecker
 import com.intellij.platform.eel.provider.EelProvider
@@ -151,7 +146,7 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
     // The disadvantage is that `Path.of("""\\wsl$\Ubuntu\home").root` is not in `getRootDirectories()`,
     // but the default Windows file system behaves exactly the same:
     // its `getRootDirectories()` never returns WSL roots at all.
-    return WslDistributionManager.getInstance().installedDistributions.map { wsl ->
+    return WslDistributionManager.getInstance().installedDistributionsFuture.getNow(listOf()).map { wsl ->
       wsl.roots.first { root ->
         root.contains("wsl.localhost")
       }
@@ -159,8 +154,7 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
   }
 
   override fun getCustomFileStores(localFS: FileSystem): Collection<FileStore> {
-    // TODO Speed up.
-    return WslDistributionManager.getInstance().installedDistributions
+    return WslDistributionManager.getInstance().installedDistributionsFuture.getNow(listOf())
       .flatMap { it.roots }
       .flatMap { compute(localFS, it)!!.fileStores }
   }

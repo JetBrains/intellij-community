@@ -38,6 +38,12 @@ interface MultiRoutingFileSystemBackend {
    */
   fun compute(localFS: FileSystem, sanitizedPath: String): FileSystem?
 
+  /**
+   * This function is used in [java.nio.file.FileSystem.getRootDirectories].
+   *
+   * The implementation SHOULD avoid I/O operations
+   * because [getRootDirectories](java.nio.file.FileSystem.getRootDirectories) can be called from inside a read action.
+   */
   fun getCustomRoots(): Collection<@MultiRoutingFileSystemPath String>
 
   fun getCustomFileStores(localFS: FileSystem): Collection<FileStore>
