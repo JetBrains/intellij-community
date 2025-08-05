@@ -566,9 +566,6 @@ public final class PyExtractMethodUtil {
     final PyFunction method = builder.buildFunction();
     final PyStatementList statementList = method.getStatementList();
     for (PsiElement element : elementsRange) {
-      if (element instanceof PsiWhiteSpace) {
-        continue;
-      }
       statementList.add(element);
     }
     final PsiElement child = statementList.getFirstChild();

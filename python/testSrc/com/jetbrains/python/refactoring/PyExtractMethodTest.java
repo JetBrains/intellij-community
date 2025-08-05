@@ -348,4 +348,8 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testTypedStatements() {
     doTest("greeting");
   }
+
+  public void testPreserveWhitespaceBetweenStatements() {
+    doTest("extracted");
+  }
 }
