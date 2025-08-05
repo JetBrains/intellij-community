@@ -29,6 +29,7 @@ class SeTextFilterEditor(
   private val scopesInfo: SearchScopesInfo?,
   initialTextSearchOptions: SeTextSearchOptions?,
   private val disposable: Disposable,
+  registerShortcut: (AnAction) -> Unit,
 ) : SeFilterEditorBase<SeTextFilter>(
   SeTextFilter(selectedScopeId = scopesInfo?.selectedScopeId,
                selectedType = null,
@@ -48,13 +49,13 @@ class SeTextFilterEditor(
   }
   private val caseSensitiveAction = CaseSensitiveAction(AtomicBooleanProperty(initialTextSearchOptions?.isCaseSensitive ?: false).apply {
     afterChange { filterValue = filterValue.cloneWithCase(it) }
-  }, { }, {})
+  }, registerShortcut) { }
   private val wordAction = WordAction(AtomicBooleanProperty(initialTextSearchOptions?.isWholeWordsOnly ?: false).apply {
     afterChange { filterValue = filterValue.cloneWithWords(it) }
-  }, { }, { })
+  }, registerShortcut) { }
   private val regexpAction = RegexpAction(AtomicBooleanProperty(initialTextSearchOptions?.isRegex ?: false).apply {
     afterChange { filterValue = filterValue.cloneWithRegex(it) }
-  }, { }, { })
+  }, registerShortcut) { }
 
   override fun getHeaderActions(): List<AnAction> = listOfNotNull(scopeFilterAction, typesFilterAction)
 

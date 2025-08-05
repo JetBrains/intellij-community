@@ -125,7 +125,9 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     val tabsOrDeferredTabs = tabFactories.map {
       it.id to initAsync(popupScope) {
         computeCatchingOrNull({ e -> "Error while getting tab from ${it.id} tab factory: ${e.message}" }) {
-          it.getTab(popupScope, project, sessionRef, initEvent)
+          it.getTab(popupScope, project, sessionRef, initEvent) { action ->
+            popupInstance?.registerShortcut?.invoke(action)
+          }
         }
       }
     }.map { (loadingTabId, tabLoadingProperty) ->

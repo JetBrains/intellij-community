@@ -6,6 +6,8 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereToggleAction
 import com.intellij.ide.actions.searcheverywhere.SearchListener
 import com.intellij.ide.actions.searcheverywhere.SplitSearchListener
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupContentPane
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
 import com.intellij.platform.searchEverywhere.providers.SeLog
@@ -18,6 +20,14 @@ import javax.swing.text.Document
 class SePopupInstance(private val popupVm: SePopupVm,
                       private val popupContentPane: SePopupContentPane,
                       private val combinedListener: SeSearchStatePublisher): SearchEverywherePopupInstance {
+  val registerShortcut: (AnAction) -> Unit = { action ->
+    val shortcut = ActionUtil.getMnemonicAsShortcut(action)
+    if (shortcut != null) {
+      action.shortcutSet = shortcut
+      action.registerCustomShortcutSet(shortcut, popupContentPane)
+    }
+  }
+
   override fun getSearchText(): String = popupVm.searchPattern.value
 
   override fun setSearchText(searchText: String?) {

@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.frontend.tabs.text
 
 import com.intellij.find.FindBundle
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Disposer
@@ -23,14 +24,14 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SeTextTab(private val delegate: SeTabDelegate) : SeTab {
+class SeTextTab(private val delegate: SeTabDelegate, registerShortcut: (AnAction) -> Unit) : SeTab {
   override val name: String get() = FindBundle.message("search.everywhere.group.name")
   override val shortName: String get() = name
   override val id: String get() = ID
   private val filterEditorDisposable = Disposer.newDisposable()
   private val filterEditor: SuspendLazyProperty<SeTextFilterEditor> = initAsync(delegate.scope) {
     SeTextFilterEditor(delegate.project, delegate.getSearchScopesInfos().firstOrNull(),
-                       getTextSearchOptions(), filterEditorDisposable)
+                       getTextSearchOptions(), filterEditorDisposable, registerShortcut)
   }
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> = delegate.getItems(params)
