@@ -5,6 +5,7 @@ package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
@@ -333,6 +334,7 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
   fun <E : WorkspaceEntity> registerEntitiesFromContributor(contributor: WorkspaceFileIndexContributor<E>,
                                                             entityStorage: EntityStorage) {
     entityStorage.entities(contributor.entityClass).forEach { entity ->
+      Cancellation.checkCancelled()
       registerAddedEntity(entity, contributor, entityStorage)
     }
   }
