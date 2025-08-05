@@ -10,7 +10,7 @@ create_kotlinc_options(
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
   ],
-  x_context_receivers = True
+  x_context_parameters = True
 )
 
 jvm_resources(
