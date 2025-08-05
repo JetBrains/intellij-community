@@ -3,7 +3,11 @@ package fleet.multiplatform.shims
 
 import fleet.util.multiplatform.linkToActual
 
-
+/**
+ * On JVM, this is a wrapper for [java.util.concurrent.ConcurrentHashMap]
+ *
+ * @see [ConcurrentHashMapJvm] and [ConcurrentHashMapWasmJs] actual implementations
+ */
 fun <K, V> ConcurrentHashMap(): ConcurrentHashMap<K, V> = linkToActual()
 
 interface ConcurrentHashMap<K, V>: MutableMap<K, V> {
