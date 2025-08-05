@@ -94,6 +94,7 @@ internal abstract class CustomNewEnvironmentCreator(
       if (!model.state.makeAvailableForAllProjects.get()) {
         newSdk.setAssociationToModule(module)
       }
+      module.baseDir?.refresh(true, false)
     }
 
     model.addInterpreter(newSdk)
