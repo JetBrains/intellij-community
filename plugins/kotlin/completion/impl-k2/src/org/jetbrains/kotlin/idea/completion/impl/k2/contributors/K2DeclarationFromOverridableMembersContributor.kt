@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.OverrideKeywordHandler
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinValueParameterPositionContext
@@ -30,16 +30,11 @@ import org.jetbrains.kotlin.psi.KtTypeReference
  *
  * @see OverrideKeywordHandler
  */
-internal class K2DeclarationFromOverridableMembersContributor(
-    sink: LookupElementSink,
-    priority: Int = 0,
-) : FirCompletionContributorBase<KotlinRawPositionContext>(sink, priority) {
-
-    context(KaSession)
-    override fun complete(
-        positionContext: KotlinRawPositionContext,
-        weighingContext: WeighingContext,
-    ) {
+internal class K2DeclarationFromOverridableMembersContributor : K2SimpleCompletionContributor<KotlinRawPositionContext>(
+    KotlinRawPositionContext::class
+) {
+    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinRawPositionContext>) {
+        val positionContext = context.positionContext
         val declaration = when (positionContext) {
             is KotlinValueParameterPositionContext -> positionContext.ktParameter
             // In a fake file a callable declaration under construction is appended with "X.f$", which is parsed as a type reference.
@@ -48,12 +43,18 @@ internal class K2DeclarationFromOverridableMembersContributor(
         } ?: return
 
         if (declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-            val elements = OverrideKeywordHandler(importStrategyDetector).createOverrideMemberLookups(parameters, declaration, project)
-            sink.addAllElements(elements)
+            val elements = OverrideKeywordHandler(context.importStrategyDetector)
+                .createOverrideMemberLookups(context.parameters, declaration, context.project)
+            context.addElements(elements)
         }
     }
 
     private fun getDeclarationFromReceiverTypeReference(typeReference: KtTypeReference): KtCallableDeclaration? {
         return (typeReference.parent as? KtCallableDeclaration)?.takeIf { it.receiverTypeReference == typeReference }
+    }
+
+    override fun K2CompletionSectionContext<KotlinRawPositionContext>.getGroupPriority(): Int = when(positionContext) {
+        is KotlinTypeNameReferencePositionContext -> 1
+        else -> 0
     }
 }

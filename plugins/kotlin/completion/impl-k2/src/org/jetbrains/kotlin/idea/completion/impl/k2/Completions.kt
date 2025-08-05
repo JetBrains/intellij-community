@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirAnnotationCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassReferenceCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirDeclarationFromOverridableMembersContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirKDocParameterNameContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierReferenceCompletionContributor
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
@@ -39,6 +40,7 @@ internal object Completions {
         K2ClassifierCompletionContributor(),
         K2ClassReferenceCompletionContributor(),
         K2KDocParameterNameContributor(),
+        K2DeclarationFromOverridableMembersContributor(),
     )
 
     // Note: this function will be renamed and replace the complete method below!
@@ -189,7 +191,7 @@ internal object Completions {
                 // FirTypeNameReferencePositionContext is created because `iX` is parsed as a type reference.
                 K2DeclarationFromUnresolvedNameContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
-                K2DeclarationFromOverridableMembersContributor(sink, priority = 1)
+                FirDeclarationFromOverridableMembersContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
                 K2ActualDeclarationContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
@@ -299,7 +301,7 @@ internal object Completions {
                 // for parameter declaration
                 K2DeclarationFromUnresolvedNameContributor(sink)
                     .complete(positionContext, weighingContext)
-                K2DeclarationFromOverridableMembersContributor(sink)
+                FirDeclarationFromOverridableMembersContributor(sink)
                     .complete(positionContext, weighingContext)
                 K2KeywordCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
