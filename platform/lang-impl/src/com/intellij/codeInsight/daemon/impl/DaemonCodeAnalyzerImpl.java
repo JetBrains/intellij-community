@@ -571,7 +571,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     // previous passes can be canceled but still in flight. wait for them to avoid interference
     myPassExecutorService.cancelAll(false, "DaemonCodeAnalyzerImpl.runPasses");
 
-    CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile); // todo IJPL-339 ???
+    CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile);
 
     waitForUpdateFileStatusBackgroundQueueInTests(); // update the file status map before prohibiting its modifications
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();

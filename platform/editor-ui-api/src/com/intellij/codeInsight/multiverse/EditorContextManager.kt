@@ -87,7 +87,6 @@ interface EditorSelectedContexts {
   operator fun contains(context: CodeInsightContext): Boolean
 }
 
-// todo IJPL-339 get rid of???
 class SingleEditorContext(override val mainContext: CodeInsightContext) : EditorSelectedContexts {
   override val additionalContexts: Set<CodeInsightContext>
     get() = emptySet()

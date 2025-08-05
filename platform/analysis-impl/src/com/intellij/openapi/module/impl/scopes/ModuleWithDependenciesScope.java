@@ -69,7 +69,6 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     myOptions = options;
     myProjectFileIndex = (ProjectFileIndexImpl)ProjectRootManager.getInstance(module.getProject()).getFileIndex();
     if (isSharedSourceSupportEnabled()) {
-      // todo IJPL-339
       myRoots = new MultiverseRootContainer(calcRootsMultiverse());
     }
     else {
