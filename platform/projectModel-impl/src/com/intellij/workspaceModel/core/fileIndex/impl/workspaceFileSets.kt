@@ -384,22 +384,18 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
 
 private fun Int.unsetAcceptedKinds(excludedKinds: Int) = this and (excludedKinds shl ACCEPTED_KINDS_MASK_SHIFT).inv() 
 
-internal fun <K : Any> MutableMap<K, StoredFileSetCollection>.putValue(key: K, fileSet: StoredFileSet): StoredFileSetCollection? {
-  return merge(key, fileSet) { oldValue, newValue -> oldValue.add(newValue as StoredFileSet) }
+internal fun <K : Any> MutableMap<K, StoredFileSetCollection>.putValue(key: K, fileSet: StoredFileSet) {
+  merge(key, fileSet) { oldValue, newValue -> oldValue.add(newValue as StoredFileSet) }
 }
 
-internal fun <K> MutableMap<K, StoredFileSetCollection>.removeValueIf(key: K, valuePredicate: (StoredFileSet) -> Boolean): StoredFileSetCollection? {
-  val old = this[key] ?: return null
+internal fun <K> MutableMap<K, StoredFileSetCollection>.removeValueIf(key: K, valuePredicate: (StoredFileSet) -> Boolean) {
+  val old = this[key] ?: return
   val updated = old.removeIf(valuePredicate)
-  return if (updated == null) {
+  if (updated == null) {
     remove(key)
   }
   else if (updated !== old) {
     this[key] = updated
-    updated
-  }
-  else {
-    updated
   }
 }
 

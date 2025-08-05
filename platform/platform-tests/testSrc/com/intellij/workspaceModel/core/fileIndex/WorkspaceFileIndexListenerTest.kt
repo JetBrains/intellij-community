@@ -64,10 +64,10 @@ class WorkspaceFileIndexListenerTest {
     }
 
     assertEquals(0, listener.removedRoots.size)
-    assertEquals(1, listener.storedRoots.size)
+    assertEquals(1, listener.registeredFileSets.size)
 
     assertEquals(parentEntityRoot,
-                 listener.storedRoots.first().root.toVirtualFileUrl(model.getVirtualFileUrlManager()))
+                 listener.registeredFileSets.first().first().root.toVirtualFileUrl(model.getVirtualFileUrlManager()))
   }
 
 
@@ -87,7 +87,7 @@ class WorkspaceFileIndexListenerTest {
       it.addEntity(parent)
     }
     assertEquals(0, listener.removedRoots.size)
-    assertEquals(1, listener.storedRoots.size)
+    assertEquals(1, listener.registeredFileSets.size)
 
     val parentEntity = model.currentSnapshot.entities(ParentTestEntity::class.java).first()
 
@@ -96,19 +96,23 @@ class WorkspaceFileIndexListenerTest {
     }
 
     assertEquals(1, listener.removedRoots.size)
-    assertEquals(1, listener.storedRoots.size)
+    assertEquals(1, listener.registeredFileSets.size)
     assertEquals(parentEntityRoot,
-                 listener.removedRoots.first().root.toVirtualFileUrl(model.getVirtualFileUrlManager()))
+                 listener.removedRoots.first().first().root.toVirtualFileUrl(model.getVirtualFileUrlManager()))
 
   }
 
   private class MyWorkspaceFileIndexListener : WorkspaceFileIndexListener {
-    val storedRoots = ConcurrentCollectionFactory.createConcurrentSet<WorkspaceFileSet>()
-    val removedRoots = ConcurrentCollectionFactory.createConcurrentSet<WorkspaceFileSet>()
+    val registeredFileSets = ConcurrentCollectionFactory.createConcurrentSet<Set<WorkspaceFileSet>>()
+    val removedRoots = ConcurrentCollectionFactory.createConcurrentSet<Set<WorkspaceFileSet>>()
 
     override fun workspaceFileIndexChanged(event: WorkspaceFileIndexChangedEvent) {
-      storedRoots.addAll(event.getStoredFileSets())
-      removedRoots.addAll(event.getRemovedFileSets())
+      event.registeredFileSets.forEach {
+        registeredFileSets.add(it)
+      }
+      event.removedFileSets.forEach {
+        removedRoots.add(it)
+      }
     }
   }
 
