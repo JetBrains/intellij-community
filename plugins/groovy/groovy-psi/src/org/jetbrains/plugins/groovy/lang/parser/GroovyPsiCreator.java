@@ -180,6 +180,7 @@ public final class GroovyPsiCreator {
     if (elem == ELVIS_EXPRESSION) return new GrElvisExprImpl(node);
     if (elem == LOR_EXPRESSION) return new GrLogicalExpressionImpl(node);
     if (elem == LAND_EXPRESSION) return new GrLogicalExpressionImpl(node);
+    if (elem == IMPL_EXPRESSION) return new GrLogicalExpressionImpl(node);
     if (elem == XOR_EXPRESSION) return new GrBitwiseExpressionImpl(node);
     if (elem == BOR_EXPRESSION) return new GrBitwiseExpressionImpl(node);
     if (elem == BAND_EXPRESSION) return new GrBitwiseExpressionImpl(node);

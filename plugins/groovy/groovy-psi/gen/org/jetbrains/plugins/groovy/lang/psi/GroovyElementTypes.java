@@ -106,6 +106,7 @@ public interface GroovyElementTypes {
   GroovyElementType GSTRING = new GroovyElementType("GSTRING");
   GroovyElementType IF_STATEMENT = new GroovyElementType("IF_STATEMENT");
   GrImplementsClauseElementType IMPLEMENTS_CLAUSE = new GrImplementsClauseElementType("IMPLEMENTS_CLAUSE");
+  GroovyElementType IMPL_EXPRESSION = new GroovyElementType("IMPL_EXPRESSION");
   GrImportStatementElementType IMPORT = new GrImportStatementElementType("IMPORT");
   GroovyElementType IMPORT_ALIAS = new GroovyElementType("IMPORT_ALIAS");
   GroovyElementType INDEX_EXPRESSION = new GroovyElementType("INDEX_EXPRESSION");
@@ -285,6 +286,7 @@ public interface GroovyElementTypes {
   IElementType T_GE = new GroovyElementType(">=");
   IElementType T_GT = new GroovyElementType(">");
   IElementType T_ID = new GroovyElementType("===");
+  IElementType T_IMPL = new GroovyElementType("==>");
   IElementType T_INC = new GroovyElementType("++");
   IElementType T_LAND = new GroovyElementType("&&");
   IElementType T_LBRACE = new GroovyElementType("{");

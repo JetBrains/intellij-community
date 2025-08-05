@@ -46,6 +46,7 @@
     T_NID = '!=='
     T_LAND = '&&'
     T_LOR = '||'
+    T_IMPL = '==>'
     T_NOT = '!'
     T_NOT_IN = '!in'
     T_NOT_INSTANCEOF = '!instanceof'
@@ -877,6 +878,7 @@ private expression_start ::= weak_keyword
 }
 expression ::= priority15
              | conditionals               // 14
+             | impl_expression            // 13.5
              | lor_expression             // 13
              | land_expression            // 12
              | bor_expression             // 11
@@ -1175,6 +1177,8 @@ xor_expression ::= expression mb_nl ('^') mb_nl <<disableNlBeforeClosure>> expre
 bor_expression ::= expression mb_nl ('|') mb_nl <<disableNlBeforeClosure>> expression
 land_expression ::= expression mb_nl ('&&') mb_nl <<disableNlBeforeClosure>> expression
 lor_expression ::= expression mb_nl ('||') mb_nl <<disableNlBeforeClosure>> expression
+impl_expression ::= expression mb_nl ('==>') mb_nl <<disableNlBeforeClosure>> expression { rightAssociative = true }
+
 
 private conditionals ::= ternary_expression | elvis_expression | switch_expression
 ternary_expression ::= expression mb_nl (ternary_tail_pin | ternary_tail)

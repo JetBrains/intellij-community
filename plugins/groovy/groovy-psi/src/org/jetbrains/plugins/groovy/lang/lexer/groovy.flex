@@ -469,6 +469,7 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
 "|"                                       { return storeToken(T_BOR); }
 "|="                                      { return storeToken(T_BOR_ASSIGN); }
 "||"                                      { return storeToken(T_LOR); }
+"==>"                                     { return storeToken(T_IMPL); }
 "&"                                       { return storeToken(T_BAND); }
 "&="                                      { return storeToken(T_BAND_ASSIGN); }
 "&&"                                      { return storeToken(T_LAND); }

@@ -111,6 +111,7 @@ public interface GroovyTokenTypes {
   IElementType mBOR = T_BOR;
   IElementType mBOR_ASSIGN = T_BOR_ASSIGN;
   IElementType mLOR = T_LOR;
+  IElementType mIMPL = T_IMPL;
   IElementType mBAND = T_BAND;
   IElementType mBAND_ASSIGN = T_BAND_ASSIGN;
   IElementType mLAND = T_LAND;

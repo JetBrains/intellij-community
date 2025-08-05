@@ -685,6 +685,16 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   public void testsuper$super() { doTest(); }
 
+  public void testbinary$implicationSimple() { doTest(); }
+
+  public void testbinary$implicationWithNewLineAfter() { doTest(); }
+
+  public void testbinary$implicationWithNewLineBefore() { doTest(); }
+
+  public void testbinary$implicationRightAssociativity() { doTest(); }
+
+  public void testbinary$implicationLowPriority() { doTest(); }
+
   public void testbinary$identity() { doTest(); }
 
   public void testbinary$elvisAssign() { doTest(); }
