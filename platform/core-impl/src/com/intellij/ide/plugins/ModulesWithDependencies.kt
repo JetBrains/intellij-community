@@ -67,7 +67,7 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
       }
     }
 
-    collectDirectDependenciesInOldFormat(module, moduleMap, dependenciesCollector)
+    collectDirectDependenciesInOldFormat(module, moduleMap, dependenciesCollector, additionalEdgesForCurrentModule)
     collectDirectDependenciesInNewFormat(module, moduleMap, dependenciesCollector, additionalEdgesForCurrentModule)
 
     // Check modules as well, for example, intellij.diagram.impl.vcs.
@@ -190,9 +190,12 @@ private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins
   "intellij.spellchecker",
 )
 
-private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescriptorImpl,
-                                                 idMap: Map<String, PluginModuleDescriptor>,
-                                                 dependenciesCollector: MutableSet<PluginModuleDescriptor>) {
+private fun collectDirectDependenciesInOldFormat(
+  rootDescriptor: IdeaPluginDescriptorImpl,
+  idMap: Map<String, PluginModuleDescriptor>,
+  dependenciesCollector: MutableSet<PluginModuleDescriptor>,
+  additionalEdges: MutableSet<PluginModuleDescriptor>,
+) {
   for (dependency in rootDescriptor.dependencies) {
     // check for missing optional dependency
     val dependencyPluginId = dependency.pluginId.idString
@@ -219,13 +222,20 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
         }
       }
     }
+    if (dep is ContentModuleDescriptor && dep.moduleLoadingRule.required) {
+      val dependencyPluginDescriptor = idMap.get(dep.pluginId.idString)
+      if (dependencyPluginDescriptor != null && dependencyPluginDescriptor !== rootDescriptor) {
+        // Add an edge to the main module of the plugin. This is needed to ensure that this plugin is processed after it's decided whether to enable the referenced plugin or not.
+        additionalEdges.add(dependencyPluginDescriptor)
+      }
+    }
 
     if (knownNotFullyMigratedPluginIds.contains(rootDescriptor.pluginId.idString)) {
       dependenciesCollector.addAll(idMap.get(PluginManagerCore.CORE_ID.idString)!!.contentModules)
     }
 
     dependency.subDescriptor?.let {
-      collectDirectDependenciesInOldFormat(it, idMap, dependenciesCollector)
+      collectDirectDependenciesInOldFormat(it, idMap, dependenciesCollector, additionalEdges)
     }
   }
 
