@@ -16,6 +16,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -102,10 +104,11 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         private const val SINGLE_LINE_PARAMETERS_COUNT = 3
 
         private val ANNOTATION_TARGET_TYPE = CallableId(StandardClassIds.AnnotationTarget, Name.identifier(AnnotationTarget.TYPE.name))
-        private val ANNOTATION_TARGET_VALUE_PARAMETER = CallableId(StandardClassIds.AnnotationTarget, Name.identifier(AnnotationTarget.VALUE_PARAMETER.name))
+        private val ANNOTATION_TARGET_VALUE_PARAMETER =
+            CallableId(StandardClassIds.AnnotationTarget, Name.identifier(AnnotationTarget.VALUE_PARAMETER.name))
 
-       @OptIn(KaExperimentalApi::class)
-       private val typeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES
+        @OptIn(KaExperimentalApi::class)
+        private val typeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES
     }
 
     override fun getActualParameterDelimiterType(): KtSingleValueToken = KtTokens.COMMA
@@ -256,15 +259,15 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                             append(it.render(typeRenderer, position = Variance.IN_VARIANCE))
                             append(".")
                         }
-                        val name = when(val symbol = candidateSignature.symbol) {
+                        val name = when (val symbol = candidateSignature.symbol) {
                             is KaConstructorSymbol -> (symbol.containingDeclaration as? KaClassSymbol)?.name
                             else -> symbol.name
                         }
                         append(name?.render())
                     },
                     buildString {
-                        when(val symbol = candidateSignature.symbol) {
-                            is KaConstructorSymbol ->{}
+                        when (val symbol = candidateSignature.symbol) {
+                            is KaConstructorSymbol -> {}
                             else -> {
                                 append(": ")
                                 append(candidateSignature.returnType.render(typeRenderer, position = Variance.OUT_VARIANCE))
@@ -300,7 +303,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             .count { it.node.elementType == KtTokens.COMMA }
     }
 
-    context(KaSession)
+    context(session: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun renderParameter(
         parameter: KaVariableSignature<KaValueParameterSymbol>,
@@ -345,7 +348,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaAnnotation.isAnnotatedWithTypeUseOnly(): Boolean =
         (constructorSymbol?.containingSymbol as? KaClassSymbol)
             ?.hasApplicableAllowedTarget {
@@ -373,6 +376,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     null
                 }
             }
+
             else -> null
         }
         return highlightParameterIndex
@@ -451,8 +455,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 }
             }
         }
-        val highlightedRange  =run {
-            val index= signature.parts.withIndex()
+        val highlightedRange = run {
+            val index = signature.parts.withIndex()
                 .firstOrNull { (it.value as? SignaturePart.Parameter)?.isHighlighted == true }?.index
                 ?: return@run Pair(-1, -1)
             signature.getRange(index)
@@ -631,7 +635,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             isDisabledBeforeHighlight,
         )
     }
-    
+
 
     data class CallInfo(
         val target: PsiElement?,
