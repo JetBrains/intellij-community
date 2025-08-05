@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirActualDeclarationContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirAnnotationCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassReferenceCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierCompletionContributor
@@ -41,6 +42,7 @@ internal object Completions {
         K2ClassReferenceCompletionContributor(),
         K2KDocParameterNameContributor(),
         K2DeclarationFromOverridableMembersContributor(),
+        K2ActualDeclarationContributor(),
     )
 
     // Note: this function will be renamed and replace the complete method below!
@@ -193,7 +195,7 @@ internal object Completions {
                     .complete(positionContext, weighingContext)
                 FirDeclarationFromOverridableMembersContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
-                K2ActualDeclarationContributor(sink, priority = 1)
+                FirActualDeclarationContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
                 K2VariableOrParameterNameWithTypeCompletionContributor(sink)
                     .complete(positionContext, weighingContext)

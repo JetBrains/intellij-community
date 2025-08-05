@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.psi.KtTypeReference
  *
  * @see ActualKeywordHandler
  */
-internal class K2ActualDeclarationContributor(
+internal class FirActualDeclarationContributor(
     sink: LookupElementSink,
     priority: Int,
 ) : FirCompletionContributorBase<KotlinRawPositionContext>(sink, priority) {
