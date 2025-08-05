@@ -33,8 +33,7 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
   private final List<String> myUrls = new ArrayList<>();
 
   public static final List<String> DEFAULT_SERVICES =
-    List.of("https://oss.sonatype.org/service/local/", "https://repo.jfrog.org/artifactory/api/",
-            "https://repository.jboss.org/nexus/service/local/");
+    List.of("https://oss.sonatype.org/service/local/", "https://repository.jboss.org/nexus/service/local/");
 
   public MavenRepositoryServicesManager() {
     myUrls.addAll(DEFAULT_SERVICES);
