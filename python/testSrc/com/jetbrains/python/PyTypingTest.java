@@ -3611,6 +3611,52 @@ public class PyTypingTest extends PyTestCase {
             expr = receiver.get()""");
   }
 
+  // PY-24834
+  // It works incorrectly due to PY-83119 (the information about unresolved union member attributes
+  // being lost during type inference).
+  public void testGenericUnionMemberMethodCallSomeMembersDoNotOwnIt() {
+    doTest("str",  // Should be `str | Any`
+           """
+            class Box[T]:
+                def get(self) -> T:
+                    pass
+            r: int | Box[str] = ...
+            expr = r.get()
+            """);
+  }
+
+  // PY-24834
+  // This version doesn't work now properly because of lacking constraint solving.
+  // We can't match `Box[T]` for `self` with `Box[int] | Box[str]`.
+  public void testGenericUnionMemberCallAllMembersAreSameClassParameterizations() {
+    doTest("Any",  // Should be `int | str`
+           """
+            class Box[T]:
+                def get(self) -> T:
+                    pass
+
+            r: Box[int] | Box[str] = ...
+            expr = r.get()
+            """);
+  }
+
+  // PY-24834
+  public void testGenericUnionMemberCallAllMembersOwnIt() {
+    doTest("int | str",
+           """
+            class Box1[T]:
+                def get(self) -> T:
+                    pass
+
+            class Box2[T]:
+                def get(self) -> T:
+                    pass
+            
+            r: Box1[int] | Box2[str] = ...
+            expr = r.get()
+            """);
+  }
+
   public void testGenericClassTypeHintedInDocstrings() {
     doTest("int",
            """
