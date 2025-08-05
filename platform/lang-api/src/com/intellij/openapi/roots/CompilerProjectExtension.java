@@ -19,9 +19,17 @@ public abstract class CompilerProjectExtension {
 
   public abstract @Nullable String getCompilerOutputUrl();
 
-  public abstract VirtualFilePointer getCompilerOutputPointer();
+  /**
+   * @deprecated Consider using {@link CompilerProjectExtension#getCompilerOutputUrl()} or {@link CompilerProjectExtension#getCompilerOutput()}
+   */
+  @Deprecated
+  public abstract @Nullable VirtualFilePointer getCompilerOutputPointer();
 
-  public abstract void setCompilerOutputPointer(VirtualFilePointer pointer);
+  /**
+   * @deprecated Consider using {@link CompilerProjectExtension#setCompilerOutputUrl(String)}
+   */
+  @Deprecated
+  public abstract void setCompilerOutputPointer(@Nullable VirtualFilePointer pointer);
 
-  public abstract void setCompilerOutputUrl(String compilerOutputUrl);
+  public abstract void setCompilerOutputUrl(@Nullable String compilerOutputUrl);
 }

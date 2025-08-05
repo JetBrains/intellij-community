@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -71,21 +72,28 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
   }
 
   @Override
-  public VirtualFilePointer getCompilerOutputPointer() {
+  public @Nullable VirtualFilePointer getCompilerOutputPointer() {
     return myCompilerOutput;
   }
 
   @Override
-  public void setCompilerOutputPointer(VirtualFilePointer pointer) {
+  public void setCompilerOutputPointer(@Nullable VirtualFilePointer pointer) {
     myCompilerOutput = pointer;
   }
 
   @Override
-  public void setCompilerOutputUrl(String compilerOutputUrl) {
-    VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, this, null);
-    setCompilerOutputPointer(pointer);
-    String path = VfsUtilCore.urlToPath(compilerOutputUrl);
-    myCompilerOutputWatchRequest = LocalFileSystem.getInstance().replaceWatchedRoot(myCompilerOutputWatchRequest, path, true);
+  public void setCompilerOutputUrl(@Nullable String compilerOutputUrl) {
+    if (compilerOutputUrl == null) {
+      setCompilerOutputPointer(null);
+    }
+    else {
+      // TODO ANK (Maybe): maybe we should remove old compilerOutputUrl from watched roots? (keep in mind that there might be
+      //  some other code which has added exactly the same root to the watch roots)
+      VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, this, null);
+      setCompilerOutputPointer(pointer);
+      String path = VfsUtilCore.urlToPath(compilerOutputUrl);
+      myCompilerOutputWatchRequest = LocalFileSystem.getInstance().replaceWatchedRoot(myCompilerOutputWatchRequest, path, true);
+    }
   }
 
   private static Set<String> getRootsToWatch(Project project) {
