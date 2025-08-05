@@ -26,7 +26,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
   private final @NotNull CodeInsightContext myContext;
   private volatile Identikit myIdentikit;
-  private final VirtualFile myFile;
+  private final VirtualFile myVirtualFile;
   private final boolean myForInjected;
   private int myStartOffset;
   private int myEndOffset;
@@ -35,13 +35,13 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   SelfElementInfo(@Nullable ProperTextRange range,
                   @NotNull Identikit identikit,
-                  @NotNull PsiFile containingFile,
+                  @NotNull PsiFile containingPsiFile,
                   boolean forInjected) {
     myForInjected = forInjected;
     myIdentikit = identikit;
 
-    myFile = containingFile.getViewProvider().getVirtualFile();
-    myContext = FileViewProviderUtil.getCodeInsightContext(containingFile);
+    myVirtualFile = containingPsiFile.getViewProvider().getVirtualFile();
+    myContext = FileViewProviderUtil.getCodeInsightContext(containingPsiFile);
     setRange(range);
   }
 
@@ -225,7 +225,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Override
   final @NotNull VirtualFile getVirtualFile() {
-    return myFile;
+    return myVirtualFile;
   }
 
   @Override
