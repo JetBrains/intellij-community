@@ -69,6 +69,13 @@ public class MarkdownProcessor(
         MarkdownParserFactory.create(optimizeEdits = markdownMode is MarkdownMode.EditorPreview, extensions),
     private val languageRecognizer: (String) -> MimeType? = { MimeType.Known.fromMarkdownLanguageName(it) },
 ) {
+    public constructor(
+        extensions: List<MarkdownProcessorExtension> = emptyList(),
+        markdownMode: MarkdownMode = MarkdownMode.Standalone,
+        commonMarkParser: Parser =
+            MarkdownParserFactory.create(optimizeEdits = markdownMode is MarkdownMode.EditorPreview, extensions),
+    ) : this(extensions, markdownMode, commonMarkParser, { MimeType.Known.fromMarkdownLanguageName(it) })
+
     /** The [block-level processor extensions][MarkdownBlockProcessorExtension]s used by this processor. */
     public val blockExtensions: List<MarkdownBlockProcessorExtension> =
         extensions.mapNotNull { it.blockProcessorExtension }

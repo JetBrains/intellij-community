@@ -1,5 +1,6 @@
 f:org.jetbrains.jewel.intui.markdown.bridge.BridgeMarkdownBlockRendererExtensionsKt
 f:org.jetbrains.jewel.intui.markdown.bridge.BridgeProvideMarkdownStylingKt
+- sf:ProvideMarkdownStyling(java.lang.String,org.jetbrains.jewel.markdown.rendering.MarkdownStyling,org.jetbrains.jewel.markdown.MarkdownMode,org.jetbrains.jewel.markdown.processing.MarkdownProcessor,org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer,org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.intui.markdown.bridge.styling.BridgeMarkdownStylingKt
 f:org.jetbrains.jewel.intui.markdown.bridge.styling.extensions.github.alerts.BridgeGitHubAlertStylingKt
 f:org.jetbrains.jewel.intui.markdown.bridge.styling.extensions.github.tables.BridgeGitHubTableStylingKt

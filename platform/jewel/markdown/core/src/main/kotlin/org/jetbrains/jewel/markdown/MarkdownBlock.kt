@@ -224,6 +224,8 @@ public sealed interface MarkdownBlock {
         MarkdownBlock, WithChildBlocks {
         public constructor(vararg children: MarkdownBlock, level: Int) : this(children.toList(), level)
 
+        public constructor(vararg children: MarkdownBlock) : this(children.toList(), 0)
+
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (javaClass != other?.javaClass) return false

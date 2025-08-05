@@ -23,6 +23,32 @@ public class ThemeDefinition(
     public val iconData: ThemeIconData,
     public val disabledAppearanceValues: DisabledAppearanceValues,
 ) {
+    @Deprecated("Use the primary constructor and provide DisabledAppearanceValues.")
+    public constructor(
+        name: String,
+        isDark: Boolean,
+        globalColors: GlobalColors,
+        globalMetrics: GlobalMetrics,
+        defaultTextStyle: TextStyle,
+        editorTextStyle: TextStyle,
+        consoleTextStyle: TextStyle,
+        contentColor: Color,
+        colorPalette: ThemeColorPalette,
+        iconData: ThemeIconData,
+    ) : this(
+        name,
+        isDark,
+        globalColors,
+        globalMetrics,
+        defaultTextStyle,
+        editorTextStyle,
+        consoleTextStyle,
+        contentColor,
+        colorPalette,
+        iconData,
+        DisabledAppearanceValues(0, 0, 0),
+    )
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
