@@ -2,13 +2,19 @@
 package git4idea.rebase.log.squash
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.ui.table.size
+import git4idea.GitDisposable
 import git4idea.i18n.GitBundle
+import git4idea.inMemory.GitObjectRepository
+import git4idea.inMemory.rebase.log.squash.GitInMemorySquashConsecutiveOperation
+import git4idea.rebase.GitRebaseUtils
 import git4idea.rebase.GitSquashedCommitsMessage
 import git4idea.rebase.log.*
+import kotlinx.coroutines.launch
 
 internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
   override fun update(e: AnActionEvent, commitEditingData: MultipleCommitEditingData) {
@@ -25,6 +31,7 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
       title = GitBundle.message("rebase.log.squash.new.message.dialog.title"),
       dialogLabel = GitBundle.message("rebase.log.squash.new.message.dialog.label")
     )
+
     dialog.show { newMessage ->
       squashInBackground(commitEditingData, selectedCommitDetails, newMessage)
     }
@@ -33,22 +40,33 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
   private fun squashInBackground(
     commitEditingData: MultipleCommitEditingData,
     selectedCommitsDetails: List<VcsCommitMetadata>,
-    newMessage: String
+    newMessage: String,
   ) {
-    object : Task.Backgroundable(commitEditingData.project, GitBundle.message("rebase.log.squash.progress.indicator.title")) {
-      override fun run(indicator: ProgressIndicator) {
-        val operationResult = GitSquashOperation(commitEditingData.repository).execute(selectedCommitsDetails, newMessage)
-        if (operationResult is GitCommitEditingOperationResult.Complete) {
-          operationResult.notifySuccess(
-            GitBundle.message("rebase.log.squash.success.notification.title"),
-            null,
-            GitBundle.message("rebase.log.squash.undo.progress.title"),
-            GitBundle.message("rebase.log.squash.undo.impossible.title"),
-            GitBundle.message("rebase.log.squash.undo.failed.title")
-          )
+    GitDisposable.getInstance(commitEditingData.project).coroutineScope.launch {
+      val operationResult = withBackgroundProgress(commitEditingData.project, GitBundle.message("rebase.log.squash.progress.indicator.title")) {
+        if (Registry.`is`("git.in.memory.squash.consecutive.enabled") && GitRebaseUtils.areConsecutiveCommits(selectedCommitsDetails)) {
+          GitInMemorySquashConsecutiveOperation(GitObjectRepository(commitEditingData.repository),
+                                                selectedCommitsDetails,
+                                                newMessage).execute()
+        }
+        else {
+          coroutineToIndicator {
+            GitSquashOperation(commitEditingData.repository).execute(selectedCommitsDetails, newMessage)
+          }
         }
       }
-    }.queue()
+
+      if (operationResult is GitCommitEditingOperationResult.Complete) {
+        commitEditingData.logUiEx?.focusCommitAfterLogUpdate(commitEditingData.repository, operationResult.commitToFocus)
+        operationResult.notifySuccess(
+          GitBundle.message("rebase.log.squash.success.notification.title"),
+          null,
+          GitBundle.message("rebase.log.squash.undo.progress.title"),
+          GitBundle.message("rebase.log.squash.undo.impossible.title"),
+          GitBundle.message("rebase.log.squash.undo.failed.title")
+        )
+      }
+    }
   }
 
   override fun getFailureTitle() = GitBundle.message("rebase.log.squash.action.failure.title")

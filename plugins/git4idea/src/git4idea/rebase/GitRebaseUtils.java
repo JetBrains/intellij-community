@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -310,6 +311,25 @@ public final class GitRebaseUtils {
     else {
       throw new IllegalArgumentException("Unsupported rebase upstream: " + baseBranch);
     }
+  }
+
+  public static boolean areConsecutiveCommits(@NotNull Collection<@NotNull VcsCommitMetadata> commits) {
+    if (commits.isEmpty()) {
+      return true;
+    }
+
+    var iterator = commits.iterator();
+    VcsCommitMetadata prevCommit = iterator.next();
+
+    while (iterator.hasNext()) {
+      VcsCommitMetadata currentCommit = iterator.next();
+      if (prevCommit.getParents().isEmpty() || !prevCommit.getParents().get(0).equals(currentCommit.getId())) {
+        return false;
+      }
+      prevCommit = currentCommit;
+    }
+
+    return true;
   }
 
   private static @NotNull Hash readHashFromFile(
