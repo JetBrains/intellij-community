@@ -189,6 +189,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    */
   public abstract boolean isInProject(@NotNull PsiElement element);
 
+  // todo ijpl-339 do we need context here?
   @ApiStatus.Internal
   public abstract @Nullable FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile);
 }
