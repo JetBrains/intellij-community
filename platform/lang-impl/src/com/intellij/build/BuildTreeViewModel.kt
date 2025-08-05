@@ -57,7 +57,7 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
         }
         else {
           LOG.debug { "Sending snapshot: ${toSend.map { it.id }}" }
-          emit(BuildNodesUpdate(toSend))
+          emit(BuildNodesUpdate(System.currentTimeMillis(), toSend))
         }
       }.collect(this)
     }.flowOn(sequentialDispatcher)
@@ -92,7 +92,7 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
       }
       if (toSend.isNotEmpty()) {
         LOG.debug { "Sending updates: ${toSend.map { it.id }}" }
-        nodesFlow.emit(BuildNodesUpdate(toSend))
+        nodesFlow.emit(BuildNodesUpdate(System.currentTimeMillis(), toSend))
       }
     }
   }
@@ -103,7 +103,7 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
       id2Node.clear()
       nodeStates.clear()
       LOG.debug("Clearing nodes")
-      nodesFlow.emit(BuildNodesUpdate(emptyList()))
+      nodesFlow.emit(BuildNodesUpdate(System.currentTimeMillis(), emptyList()))
     }
   }
 
@@ -167,13 +167,31 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
                          title,
                          name,
                          currentHint,
-                         duration,
+                         getBuildDuration(),
                          navigatables.mapNotNull { it.weakRpcId() },
                          isAutoExpandNode,
                          hasWarnings() || isFailed,
                          isAlwaysVisible || consoleView.isAlwaysVisible(this),
                          SUCCESSFUL_STEPS_FILTER.test(this),
                          WARNINGS_FILTER.test(this))
+  }
+
+  private fun ExecutionNode.getBuildDuration(): BuildDuration? {
+    val start = startTime
+    val end = endTime
+    if (start == end) return null
+    return if (isRunning) {
+      if (start == 0L)
+        BuildDuration.Fixed(0)
+      else
+        BuildDuration.InProgress(start)
+    }
+    else {
+      if (ExecutionNode.isSkipped(result))
+        null
+      else
+        BuildDuration.Fixed(end - start)
+    }
   }
 
   fun onSelectionChange(selectedNodeId: Int?) {

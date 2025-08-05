@@ -11,9 +11,14 @@ import org.jetbrains.annotations.Nls
 @Internal
 @Serializable
 sealed interface BuildTreeEvent
+
 @Internal
 @Serializable
-data class BuildNodesUpdate(val nodes: List<BuildTreeNode>) : BuildTreeEvent // empty list requests clearing all nodes
+data class BuildNodesUpdate(
+  val currentTimestamp: Long,
+  val nodes: List<BuildTreeNode> // empty list requests clearing all nodes
+) : BuildTreeEvent
+
 @Internal
 @Serializable
 data class BuildTreeExposeRequest(val nodeId: Int?, val alsoSelect: Boolean) : BuildTreeEvent
@@ -27,7 +32,7 @@ data class BuildTreeNode(
   val title: @Nls String?,
   val name: @Nls String?,
   val hint: @Nls String?,
-  val duration: @Nls String?,
+  val duration: BuildDuration?,
   val navigatables: List<NavigatableId>,
   val autoExpand: Boolean,
   val hasProblems: Boolean,
@@ -40,6 +45,18 @@ data class BuildTreeNode(
     const val ROOT_ID: Int = 0
     const val BUILD_PROGRESS_ROOT_ID: Int = 1
   }
+}
+
+@Internal
+@Serializable
+sealed interface BuildDuration {
+  @Internal
+  @Serializable
+  data class Fixed(val durationMs: Long) : BuildDuration
+
+  @Internal
+  @Serializable
+  data class InProgress(val startTimestamp: Long) : BuildDuration
 }
 
 @Internal

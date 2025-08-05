@@ -23,6 +23,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/util/coroutines",
     "//platform/platform-impl/rpc",
+    "//platform/ide-core-impl",
   ],
   runtime_deps = [":frontend_resources"]
 )

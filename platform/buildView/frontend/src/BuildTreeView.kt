@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.OccurenceNavigatorSupport
 import com.intellij.ide.actions.OccurenceNavigatorActionBase
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.nls.NlsMessages
 import com.intellij.ide.rpc.NavigatableId
 import com.intellij.ide.rpc.navigatable
 import com.intellij.ide.ui.UISettings
@@ -13,6 +14,7 @@ import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.util.treeView.NodeRenderer
 import com.intellij.ide.util.treeView.TreeState
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -48,6 +50,7 @@ import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JTree
+import javax.swing.Timer
 import javax.swing.event.TreeSelectionEvent
 import javax.swing.tree.*
 
@@ -75,6 +78,15 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
   private val navigationContext = MutableStateFlow(BuildTreeNavigationContext(false, false, false))
 
   private val occurenceNavigatorSupport = MyOccurenceNavigatorSupport(tree)
+
+  // A factor which can correct for the difference between frontend's and backend's clocks,
+  // in case we need to display a duration of a process, for which we know the start timestamp on the backend.
+  // It doesn't include the connection latency, but that seems acceptable in our case.
+  private var timeDiff = 0L
+
+  private val durationUpdater = DurationUpdater().also {
+    Disposer.register(this, it)
+  }
 
   init {
     LOG.debug { "Creating BuildTreeView(id=$buildViewId)" }
@@ -170,9 +182,11 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
   private fun handleTreeEvent(event: BuildTreeEvent, nodeMap: MutableMap<Int, MyNode>) {
     when (event) {
       is BuildNodesUpdate -> {
+        timeDiff = event.currentTimestamp - System.currentTimeMillis()
         val nodeInfos = event.nodes
         if (nodeInfos.isEmpty()) {
           LOG.debug("Clearing nodes")
+          durationUpdater.reset()
           nodeMap.clear()
           rootNode.removeChildren()
         }
@@ -187,6 +201,7 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
               }
               assert(nodeInfo.id > 0)
               LOG.debug { "Creating new node (id=${nodeInfo.id}, parentId=${nodeInfo.parentId})" }
+              durationUpdater.onNodeAdded(nodeInfo)
               val newNode = MyNode(nodeInfo)
               nodeMap[nodeInfo.id] = newNode
               if (parentNode.addChild(newNode)) {
@@ -195,6 +210,7 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
             }
             else {
               LOG.debug { "Updating node (id=${nodeInfo.id})" }
+              durationUpdater.onNodeUpdated(node.content, nodeInfo)
               node.content = nodeInfo
             }
           }
@@ -489,7 +505,7 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
     }
   }
 
-  private class MyNodeRenderer : ColoredTreeCellRenderer() {
+  private inner class MyNodeRenderer : ColoredTreeCellRenderer() {
     private var myDurationText: String? = null
     private var myDurationColor: Color? = null
     private var myDurationWidth = 0
@@ -527,7 +543,7 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
       }
 
       if (Registry.`is`("build.toolwindow.show.inline.statistics")) {
-        val duration = node.duration
+        val duration = node.duration?.getPresentation()
         if (duration != null) {
           myDurationText = duration
           val metrics = getFontMetrics(RelativeFont.SMALL.derive(getFont()))
@@ -576,6 +592,60 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
       }
       super.paintComponent(clippedGraphics ?: g)
       clippedGraphics?.dispose()
+    }
+
+    private fun BuildDuration.getPresentation() =
+      when(this) {
+        is BuildDuration.Fixed -> NlsMessages.formatDuration(durationMs)
+        is BuildDuration.InProgress -> {
+          var duration = System.currentTimeMillis() - startTimestamp + timeDiff
+          if (duration > 1000) {
+            duration -= duration % 1000
+          }
+          NlsMessages.formatDurationApproximate(duration)
+        }
+      }
+  }
+
+  private inner class DurationUpdater : Disposable {
+    private var nodesInProgress = 0
+
+    private val repaintTimer = Timer(1000) {
+      tree.repaint()
+    }
+
+    fun reset() {
+      nodesInProgress = 0
+      repaintTimer.stop()
+    }
+
+    fun onNodeAdded(node: BuildTreeNode) {
+      if (node.isInProgress()) {
+        if (nodesInProgress++ == 0) {
+          repaintTimer.start()
+        }
+      }
+    }
+
+    fun onNodeUpdated(before: BuildTreeNode, after: BuildTreeNode) {
+      if (before.isInProgress() != after.isInProgress()) {
+        if (before.isInProgress()) {
+          if (--nodesInProgress == 0) {
+            repaintTimer.stop()
+          }
+        }
+        else {
+          if (nodesInProgress++ == 0) {
+            repaintTimer.start()
+          }
+        }
+      }
+    }
+
+    private fun BuildTreeNode.isInProgress() = duration is BuildDuration.InProgress
+
+    override fun dispose() {
+      repaintTimer.stop()
     }
   }
 }
