@@ -18,6 +18,9 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirAnnotationCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierReferenceCompletionContributor
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -31,7 +34,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 internal object Completions {
     private val contributors: List<K2CompletionContributor<*>> = listOf(
-        // todo
+        K2ClassifierCompletionContributor()
     )
 
     // Note: this function will be renamed and replace the complete method below!
@@ -386,7 +389,8 @@ private fun KotlinUnknownPositionContext.isAfterRangeToken(): Boolean {
  *         otherwise `false`.
  */
 context(KaSession)
-private fun KotlinExpressionNameReferencePositionContext.isAfterRangeOperator(): Boolean {
+internal fun KotlinRawPositionContext.isAfterRangeOperator(): Boolean {
+    if (this !is KotlinExpressionNameReferencePositionContext) return false
     val binaryExpression = nameExpression.parent as? KtBinaryExpression
         ?: return false
 
@@ -403,7 +407,8 @@ private fun KotlinExpressionNameReferencePositionContext.isAfterRangeOperator():
 }
 
 context(KaSession)
-private fun KotlinExpressionNameReferencePositionContext.allowsOnlyNamedArguments(): Boolean {
+internal fun KotlinRawPositionContext.allowsOnlyNamedArguments(): Boolean {
+    if (this !is KotlinExpressionNameReferencePositionContext) return false
     if (explicitReceiver != null) return false
 
     val valueArgument = findValueArgument(nameExpression) ?: return false
