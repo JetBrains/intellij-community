@@ -7,6 +7,15 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.isBooleanType
+import org.jetbrains.kotlin.analysis.api.components.isByteType
+import org.jetbrains.kotlin.analysis.api.components.isCharType
+import org.jetbrains.kotlin.analysis.api.components.isDoubleType
+import org.jetbrains.kotlin.analysis.api.components.isFloatType
+import org.jetbrains.kotlin.analysis.api.components.isIntType
+import org.jetbrains.kotlin.analysis.api.components.isLongType
+import org.jetbrains.kotlin.analysis.api.components.isShortType
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
@@ -301,7 +310,7 @@ class CodeInliner(
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun arrayOfFunctionName(elementType: KaType): String {
         return when {
@@ -399,7 +408,7 @@ class CodeInliner(
     }
 
     @OptIn(KaExperimentalApi::class)
-    context(KaSession)
+    context(_: KaSession)
     private fun createTypeDescription(type: KaType?): TypeDescription? {
         if (type == null) return null
         return TypeDescription(

@@ -26,6 +26,10 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -81,7 +85,7 @@ import java.util.*
 
 open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduceParameterHelper<KtNamedDeclaration> = KotlinIntroduceParameterHelper.Default()) : RefactoringActionHandler {
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     protected fun findInternalUsagesOfParametersAndReceiver(
         targetParent: KtNamedDeclaration
@@ -128,7 +132,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
     }
 
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getExpressionType(
         physicalExpression: KtExpression,
         expression: KtExpression
@@ -566,7 +570,7 @@ open class KotlinFirIntroduceLambdaParameterHandler(
                                                   lambdaExtractionDescriptor)
         }
 
-        context(KaSession)
+        context(_: KaSession)
         fun calculateFunctionalType(
             oldDescriptor: ExtractableCodeDescriptor,
         ): String {

@@ -7,6 +7,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.approximateToSuperPublicDenotableOrSelf
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -54,7 +59,7 @@ object ChangeParameterTypeFixFactory {
         createTypeMismatchFixes(psi, diagnostic.expectedType.withNullability(KaTypeNullability.NULLABLE))
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun createTypeMismatchFixes(psi: KtExpression, targetType: KaType): List<KotlinQuickFixAction<*>> {
         val outermostExpression = psi.getOutermostParenthesizedExpressionOrThis()
@@ -76,7 +81,7 @@ object ChangeParameterTypeFixFactory {
         return listOfNotNull(createChangeParameterTypeFix(parameter, targetType, functionLikeSymbol))
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createTypeMismatchFixesForDefinitelyNonNullable(
         psi: KtExpression,
         targetType: KaDefinitelyNotNullType
@@ -107,13 +112,15 @@ object ChangeParameterTypeFixFactory {
         return valueArgument to argumentExpression
     }
 
-    context(KaSession)
+    context(session: KaSession)
     private fun getValueParameterSymbolForPropertySymbol(propertySymbol: KaPropertySymbol): KaValueParameterSymbol? {
-        val probableConstructorParameterPsi = propertySymbol.psi as? KtParameter
-        return probableConstructorParameterPsi?.symbol as? KaValueParameterSymbol
+        with(session) {
+            val probableConstructorParameterPsi = propertySymbol.psi as? KtParameter
+            return probableConstructorParameterPsi?.symbol as? KaValueParameterSymbol
+        }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun createChangeParameterTypeFix(
         parameter: KtParameter,

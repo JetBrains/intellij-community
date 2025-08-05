@@ -8,6 +8,10 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
+import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
+import org.jetbrains.kotlin.analysis.api.components.callableSymbol
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.createInheritanceTypeSubstitutor
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -16,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaErrorTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -103,7 +108,7 @@ internal fun KtPsiFactory.createType(
     return createType(typeText)
 }
 
-context(KaSession)
+context(_: KaSession)
 @KaExperimentalApi
 private fun createSubstitutor(inheritorDeclaration: KtDeclaration, baseFunction: PsiElement): KaSubstitutor? {
     val inheritorCallable = inheritorDeclaration.symbol

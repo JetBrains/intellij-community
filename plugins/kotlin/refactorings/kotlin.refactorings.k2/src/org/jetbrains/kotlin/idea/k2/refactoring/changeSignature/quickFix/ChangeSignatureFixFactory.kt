@@ -11,6 +11,15 @@ import com.intellij.refactoring.changeSignature.*
 import com.intellij.refactoring.util.CanonicalTypes
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.asPsiType
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.functionTypeKind
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
@@ -152,7 +161,7 @@ object ChangeSignatureFixFactory {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun prepareChangeInfo(psi: PsiElement, input: Input): ChangeInfo? {
         if (input.type == ChangeType.CHANGE_FUNCTIONAL) {
@@ -283,7 +292,7 @@ object ChangeSignatureFixFactory {
         return changeInfo
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun prepareFunctionalLiteralChangeInfo(psi: KtLambdaExpression, input: Input): KotlinChangeInfo? {
         val callable = psi.functionLiteral
         val descriptor = KotlinMethodDescriptor(callable)
@@ -317,7 +326,7 @@ object ChangeSignatureFixFactory {
         return changeInfo
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getNameValidator(
         callable: KtNamedDeclaration, usedNames: MutableSet<String> = mutableSetOf<String>()
     ): (String) -> Boolean {
@@ -330,7 +339,7 @@ object ChangeSignatureFixFactory {
         return { name -> usedNames.add(name) && nameValidator.validate(name) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun getKtType(argumentExpression: KtExpression?): KaType? {
         val ktType = argumentExpression?.expressionType
@@ -339,7 +348,7 @@ object ChangeSignatureFixFactory {
 
 
     @OptIn(KaExperimentalApi::class)
-    context(KaSession)
+    context(_: KaSession)
     fun KaType.toFunctionType(): KaType? {
         val typeKind = functionTypeKind
         when (typeKind) {
@@ -358,7 +367,7 @@ object ChangeSignatureFixFactory {
         return null
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getNewArgumentName(argument: ValueArgument, validator: (String) -> Boolean): String {
         val expression = KtPsiUtil.deparenthesize(argument.getArgumentExpression())
         val argumentName = argument.getArgumentName()?.asName?.asString() ?: (expression as? KtNameReferenceExpression)?.getReferencedName()
@@ -390,7 +399,7 @@ object ChangeSignatureFixFactory {
         return name == IMPLICIT_LAMBDA_PARAMETER_NAME.identifier || name == "field"
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createAddParameterFix(
         ktCallableSymbol: KaCallableSymbol,
         element: PsiElement,
@@ -417,7 +426,7 @@ object ChangeSignatureFixFactory {
         )
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createRemoveParameterFix(
         element: KtElement,
         parameterName: String,
@@ -447,7 +456,7 @@ object ChangeSignatureFixFactory {
         )
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun createMismatchParameterTypeFix(
         element: PsiElement,
@@ -493,7 +502,7 @@ object ChangeSignatureFixFactory {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 internal fun getDeclarationName(functionLikeSymbol: KaFunctionSymbol): String? {
     return when(functionLikeSymbol) {
         is KaConstructorSymbol -> {

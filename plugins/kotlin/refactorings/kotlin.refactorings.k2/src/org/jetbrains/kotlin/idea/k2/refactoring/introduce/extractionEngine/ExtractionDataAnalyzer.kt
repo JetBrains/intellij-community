@@ -13,12 +13,17 @@ import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.components.KaDataFlowExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.diagnostics
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
@@ -249,7 +254,7 @@ private data class ExperimentalMarkers(
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
     fun KaAnnotation.isExperimentalMarker(): Boolean {
         val id = classId
@@ -341,7 +346,7 @@ fun ExtractableCodeDescriptor.validate(target: ExtractionTarget = ExtractionTarg
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun ExtractableCodeDescriptor.validateTempResult(
     result: ExtractionResult,

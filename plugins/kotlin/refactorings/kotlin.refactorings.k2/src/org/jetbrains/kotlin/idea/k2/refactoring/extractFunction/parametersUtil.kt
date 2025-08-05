@@ -20,7 +20,16 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
+import org.jetbrains.kotlin.analysis.api.components.builtinTypes
+import org.jetbrains.kotlin.analysis.api.components.callableSymbol
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.expectedType
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.type
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
@@ -107,7 +116,7 @@ private class ParameterWithReference(val parameterOrigin: PsiNamedElement, val r
 }
 
 @OptIn(KaExperimentalApi::class)
-context(KaSession)
+context(session: KaSession)
 internal fun ExtractionData.inferParametersInfo(
     virtualBlock: KtBlockExpression,
     modifiedVariables: Set<String>,
@@ -213,7 +222,7 @@ internal fun ExtractionData.inferParametersInfo(
             name,
             contextParam.ownerDeclaration as KtNamedDeclaration,
             false,
-            type.restore() ?: builtinTypes.any,
+            with(session) { type.restore() } ?: builtinTypes.any,
             targetSibling as KtElement,
             contextParameter = true
         )
@@ -235,7 +244,7 @@ internal fun ExtractionData.inferParametersInfo(
     return info
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun ExtractionData.registerParameter(
     info: ParametersInfo<KaType, MutableParameter>,
     refInfo: ResolvedReferenceInfo<PsiNamedElement, KtReferenceExpression, KaType>,
@@ -396,7 +405,7 @@ private fun ExtractionData.calculateArgumentText(
 /**
  * Register replacements which expand locally available types to FQ names if possible.
  */
-context(KaSession)
+context(_: KaSession)
 private fun ExtractionData.registerQualifierReplacements(
     referencedClassifierSymbol: KaClassifierSymbol,
     parametersInfo: ParametersInfo<KaType, MutableParameter>,
@@ -426,7 +435,7 @@ private fun ExtractionData.registerQualifierReplacements(
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun getReferencedClassifierSymbol(
     thisSymbol: KaSymbol?,
     originalDeclaration: PsiNamedElement,
@@ -454,7 +463,7 @@ private fun getReferencedClassifierSymbol(
     }
 }
 
-context(KaSession)
+context(session: KaSession)
 @OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
 private fun createOriginalType(
     extractFunctionRef: Boolean,
@@ -485,7 +494,7 @@ private fun createOriginalType(
     val contentElement =
         KtPsiFactory(originalDeclaration.project).createTypeCodeFragment(typeString, originalDeclaration).getContentElement()
     if (contentElement != null) {
-        analyze(contentElement) { contentElement.type.createPointer() }.restore(this@KaSession)
+        analyze(contentElement) { contentElement.type.createPointer() }.restore(session)
     } else null
 
 } else {

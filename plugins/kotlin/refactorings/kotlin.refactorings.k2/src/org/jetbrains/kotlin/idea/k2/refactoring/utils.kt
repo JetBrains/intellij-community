@@ -18,6 +18,10 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
+import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
@@ -135,7 +139,7 @@ fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
     val symbol = receiverValue.symbol
@@ -166,7 +170,7 @@ fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
  *
  * @return The matching callable symbol if found, null otherwise.
  */
-context(KaSession)
+context(_: KaSession)
 fun KaDeclarationContainerSymbol.findCallableMemberBySignature(
     callableSignature: KaCallableSignature<KaCallableSymbol>,
     ignoreReturnType: Boolean = false,
@@ -181,7 +185,7 @@ fun KaDeclarationContainerSymbol.findCallableMemberBySignature(
  *
  * @return The matching callable symbol if found, null otherwise.
  */
-context(KaSession)
+context(_: KaSession)
 fun KaScope.findCallableMemberBySignature(
     callableSignature: KaCallableSignature<KaCallableSymbol>,
     ignoreReturnType: Boolean = false,
@@ -212,7 +216,7 @@ fun KaScope.findCallableMemberBySignature(
 /**
  * Returns the owner symbol of the given receiver value, or null if no owner could be found.
  */
-context(KaSession)
+context(_: KaSession)
 fun KaReceiverValue.getThisReceiverOwner(): KaSymbol? {
     val symbol = when (this) {
         is KaExplicitReceiverValue -> {

@@ -5,10 +5,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.psi.childrenDfsSequence
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -28,7 +31,7 @@ object ReorderParametersFixFactory {
         createQuickFix(diagnostic)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createQuickFix(diagnostic: KaFirDiagnostic<*>): List<ReorderParametersFix> {
         val function: KtNamedFunction = diagnostic.psi.parentOfType(withSelf = true) ?: return emptyList()
         val functionSymbol = function.symbol

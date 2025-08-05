@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.analysisContextModule
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.contextParameters
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
@@ -61,7 +63,7 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaType.toTypeInfo(): TypeInfo = TypeInfo(fqText(), this is KaErrorType)
 
     private data class TypeInfo(val typeFQN: String, val typeError: Boolean)
@@ -69,7 +71,7 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
 
 
     @OptIn(KaExperimentalApi::class)
-    context(KaSession)
+    context(_: KaSession)
     private fun signatureTypes(declaration: KtCallableDeclaration): SignatureTypes? {
         val symbol = declaration.symbol as? KaFunctionSymbol
         return if (symbol == null) {
@@ -166,7 +168,7 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
         return oldTypeInCode to newTypeInCode
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun KaType.fqText() = render(position = Variance.INVARIANT)
 

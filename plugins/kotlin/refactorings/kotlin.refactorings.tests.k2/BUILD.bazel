@@ -5,7 +5,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 create_kotlinc_options(
   name = "custom_kotlin-refactorings-tests-k2",
   opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
-  x_context_receivers = True
+  x_context_parameters = True
 )
 
 jvm_library(

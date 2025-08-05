@@ -332,7 +332,7 @@ private fun reportShadowing(
     result += BasicUnresolvableCollisionUsageInfo(refElement, declaration, message)
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun retargetExternalDeclarations(declaration: KtNamedDeclaration, name: String, retargetJob: (KaDeclarationSymbol) -> Unit) {
     val declarationSymbol = declaration.symbol
     registerRetargetJobOnPotentialCandidates(declaration, name, { filterCandidates(declarationSymbol, it) }, retargetJob)

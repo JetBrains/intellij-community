@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -145,7 +146,7 @@ internal class KotlinFunctionCallUsage(
     @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     private val onReceiver  = allowAnalysisFromWriteAction { allowAnalysisOnEdt { analyze(element) { onReceiver(element) } } }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun onReceiver(element: KtElement): Boolean {
         val partiallyAppliedSymbol = element.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
         val receiverValue = (partiallyAppliedSymbol?.dispatchReceiver ?: partiallyAppliedSymbol?.extensionReceiver)?.let { (it as? KaSmartCastedReceiverValue)?.original ?: it }

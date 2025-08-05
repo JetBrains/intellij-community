@@ -10,7 +10,12 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.compositeScope
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
+import org.jetbrains.kotlin.analysis.api.components.type
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -74,7 +79,7 @@ fun analyzeResult(aliasData: IntroduceTypeAliasData): IntroduceTypeAliasAnalysis
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun findReferencesToReplaceWithTypeParameters(
     aliasData: IntroduceTypeAliasData,
     newTypeReference: KtTypeReference,
@@ -150,7 +155,7 @@ fun IntroduceTypeAliasDescriptor.validate(): IntroduceTypeAliasDescriptorWithCon
     return IntroduceTypeAliasDescriptorWithConflicts(this, conflicts)
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun findClassifierByName(
     targetSibling: KtElement, descriptor: IntroduceTypeAliasDescriptor
 ): KaClassifierSymbol? {
@@ -158,7 +163,7 @@ private fun findClassifierByName(
     return ktFile.scopeContext(targetSibling).compositeScope().classifiers { it.asString() == descriptor.name }.firstOrNull()
 }
 
-context(KaSession)
+context(_: KaSession)
 fun findDuplicates(typeAlias: KtTypeAlias): Map<KotlinPsiRange, () -> Unit> {
     val aliasName = typeAlias.name?.quoteIfNeeded() ?: return emptyMap()
     val aliasRange = typeAlias.textRange

@@ -14,6 +14,10 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.isFunctionType
+import org.jetbrains.kotlin.analysis.api.components.isFunctionalInterface
+import org.jetbrains.kotlin.analysis.api.components.isSuspendFunctionType
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
@@ -210,7 +214,7 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
     return originalList
 }
 
-context(KaSession)
+context(_: KaSession)
 @ApiStatus.Internal
 fun KtCallExpression.canMoveLambdaOutsideParentheses(
     skipComplexCalls: Boolean = true

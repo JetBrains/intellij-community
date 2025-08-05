@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.computeMissingCases
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.KaDynamicType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
@@ -87,7 +88,7 @@ private fun KtFunctionLiteral.findLambdaReturnType(): KaType? {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KtExpression.canBeUsedAsValue(): Boolean {
     return when (this) {
         is KtIfExpression -> {
