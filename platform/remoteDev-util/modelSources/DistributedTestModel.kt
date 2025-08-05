@@ -46,6 +46,21 @@ object DistributedTestModel : Ext(TestRoot) {
     field("stacktrace", immutableList(RdTestSessionStackTraceElement))
   }
 
+  private val RdAllureStartStepInfo = structdef {
+    field("uuid", string)
+    field("name", string)
+  }
+
+  private val RdAllureStopStepInfo = structdef {
+    field("uuid", string)
+    field("status", string)
+  }
+
+  private val RdAllureUpdateStepInfo = structdef {
+    field("uuid", string)
+    field("status", string)
+  }
+
   private val RdTestSessionException = structdef {
     field("type", string)
     field("originalType", string.nullable)
@@ -73,6 +88,9 @@ object DistributedTestModel : Ext(TestRoot) {
     field("debugCategories", immutableList(string))
     property("ready", bool.nullable)
     signal("sendException", RdTestSessionException).async
+    signal("startAllureStep", RdAllureStartStepInfo).async
+    signal("updateAllureStep", RdAllureUpdateStepInfo).async
+    signal("stopAllureStep", RdAllureStopStepInfo).async
     signal("exitApp", void).async
     signal("showNotification", string)
     call("forceLeaveAllModals", bool, void).async
