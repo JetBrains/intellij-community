@@ -7,7 +7,7 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManagerEx;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.serialization.ObjectSerializer;
 import com.intellij.serialization.SerializationException;
@@ -420,8 +419,8 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
       return true;
     }
 
-    File brokenMarkerFile = getBrokenMarkerFile();
-    if (brokenMarkerFile.exists() && lastModified < brokenMarkerFile.lastModified()) {
+    var brokenMarkerFile = getBrokenMarkerFile();
+    if (Files.exists(brokenMarkerFile) && lastModified < Files.getLastModifiedTime(brokenMarkerFile).toMillis()) {
       Files.delete(configurationFile);
       return true;
     }
@@ -476,17 +475,17 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
   public static synchronized void invalidateCaches() {
     if (!Registry.is("external.system.invalidate.storage", true)) return;
 
-    File markerFile = getBrokenMarkerFile();
+    var markerFile = getBrokenMarkerFile();
     try {
-      FileUtil.writeToFile(markerFile, String.valueOf(System.currentTimeMillis()));
+      Files.writeString(markerFile, String.valueOf(System.currentTimeMillis()));
     }
     catch (IOException e) {
       LOG.warn("Cannot update the invalidation marker file", e);
     }
   }
 
-  private static @NotNull File getBrokenMarkerFile() {
-    return PathManagerEx.getAppSystemDir().resolve("external_build_system").resolve(".broken").toFile();
+  private static @NotNull Path getBrokenMarkerFile() {
+    return PathManager.getSystemDir().resolve("external_build_system").resolve(".broken");
   }
 
   static final class State {

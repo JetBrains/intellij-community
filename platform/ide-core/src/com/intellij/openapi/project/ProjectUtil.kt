@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ProjectUtil")
 package com.intellij.openapi.project
 
@@ -6,7 +6,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.appSystemDir
+import com.intellij.openapi.application.PathManager.getSystemDir
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -210,7 +210,7 @@ fun getProjectCacheFileName(presentableUrl: String?,
  */
 @JvmOverloads
 fun Project.getProjectCachePath(@NonNls cacheDirName: String, isForceNameUse: Boolean = false, extensionWithDot: String = ""): Path {
-  return appSystemDir.resolve(cacheDirName).resolve(getProjectCacheFileName(isForceNameUse, extensionWithDot = extensionWithDot))
+  return getSystemDir().resolve(cacheDirName).resolve(getProjectCacheFileName(isForceNameUse, extensionWithDot = extensionWithDot))
 }
 
 /**
@@ -230,7 +230,7 @@ fun Project.getProjectDataPath(@NonNls name: String): Path {
  * Root directory for all project-specific caches.
  */
 val projectsDataDir: Path
-  get() = appSystemDir.resolve("projects")
+  get() = getSystemDir().resolve("projects")
 
 /**
  * Asynchronously deletes caches directories obtained via [getProjectDataPath] for all projects.

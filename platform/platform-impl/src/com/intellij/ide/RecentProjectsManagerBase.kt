@@ -16,7 +16,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.appSystemDir
+import com.intellij.openapi.application.PathManager.getSystemDir
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
@@ -1001,7 +1001,7 @@ private fun readProjectName(path: String): String {
   return JpsPathUtil.readProjectName(storePath) ?: PathUtilRt.getFileName(path)
 }
 
-private fun getLastProjectFrameInfoFile() = appSystemDir.resolve("lastProjectFrameInfo")
+private fun getLastProjectFrameInfoFile() = getSystemDir().resolve("lastProjectFrameInfo")
 
 private fun convertToSystemIndependentPaths(list: MutableList<String>) {
   list.replaceAll {

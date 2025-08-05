@@ -4,7 +4,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.appSystemDir
+import com.intellij.openapi.application.PathManager.getSystemDir
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.createParentDirectories
@@ -82,7 +82,7 @@ class PackageSearchApiClientService(val coroutineScope: CoroutineScope) : Dispos
   }
 
   private val cacheFilePath
-    get() = appSystemDir / "caches" / "packagesearch" / "${PackageSearchApiClientObject.version}.db"
+    get() = getSystemDir() / "caches" / "packagesearch" / "${PackageSearchApiClientObject.version}.db"
 
 
   private val mvDataStore = MVDataStore.open(
