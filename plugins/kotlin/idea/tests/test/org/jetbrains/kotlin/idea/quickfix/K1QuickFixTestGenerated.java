@@ -13690,6 +13690,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/override/implemenAsConstructorParameter.kt");
             }
 
+            @TestMetadata("implemenAsConstructorParameterDisabledWithContextParameters.kt")
+            public void testImplemenAsConstructorParameterDisabledWithContextParameters() throws Exception {
+                runTest("testData/quickfix/override/implemenAsConstructorParameterDisabledWithContextParameters.kt");
+            }
+
+            @TestMetadata("implemenAsConstructorParameterDisabledWithReceiver.kt")
+            public void testImplemenAsConstructorParameterDisabledWithReceiver() throws Exception {
+                runTest("testData/quickfix/override/implemenAsConstructorParameterDisabledWithReceiver.kt");
+            }
+
             @TestMetadata("implemenAsConstructorParameterFunction.kt")
             public void testImplemenAsConstructorParameterFunction() throws Exception {
                 runTest("testData/quickfix/override/implemenAsConstructorParameterFunction.kt");

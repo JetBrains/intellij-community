@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.contextParameters
 import org.jetbrains.kotlin.fir.extensions.FirAnalysisHandlerExtension.Companion.analyze
 import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -146,6 +147,7 @@ object MemberNotImplementedQuickfixFactories {
             listOf(KtImplementMembersQuickfix(missingDeclarations.mapToKtClassMemberInfo()))
         }
 
+    @OptIn(KaExperimentalApi::class)
     context(KaSession)
     private fun getUnimplementedMemberFixes(
         classWithUnimplementedMembers: KtClassOrObject,
@@ -163,7 +165,7 @@ object MemberNotImplementedQuickfixFactories {
                 !(classWithUnimplementedMembers.hasActualModifier() && (ExpectActualSupport.getInstance(classWithUnimplementedMembers.project)
                     .expectDeclarationIfAny(classWithUnimplementedMembers) as? KtClass)?.primaryConstructor != null)
             ) {
-                val unimplementedProperties = unimplementedMembers.filter { it.isProperty }
+                val unimplementedProperties = unimplementedMembers.filter { memberInfo -> memberInfo.isProperty && memberInfo.symbolPointer.restoreSymbol()?.let { symbol -> symbol.contextParameters.isEmpty() && symbol.receiverParameter == null } != false }
                 if (unimplementedProperties.isNotEmpty()) {
                     add(KtImplementAsConstructorParameterQuickfix(unimplementedProperties))
                 }

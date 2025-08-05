@@ -10712,6 +10712,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/override/implemenAsConstructorParameter.kt");
             }
 
+            @TestMetadata("implemenAsConstructorParameterDisabledWithContextParameters.kt")
+            public void testImplemenAsConstructorParameterDisabledWithContextParameters() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/implemenAsConstructorParameterDisabledWithContextParameters.kt");
+            }
+
+            @TestMetadata("implemenAsConstructorParameterDisabledWithReceiver.kt")
+            public void testImplemenAsConstructorParameterDisabledWithReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/implemenAsConstructorParameterDisabledWithReceiver.kt");
+            }
+
             @TestMetadata("implemenAsConstructorParameterFunction.kt")
             public void testImplemenAsConstructorParameterFunction() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/override/implemenAsConstructorParameterFunction.kt");
