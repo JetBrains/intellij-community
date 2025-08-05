@@ -114,6 +114,7 @@ internal class CompareJpsWithBazel {
 
     private fun isKnownFileToExclude(path: String): Boolean = when {
       path.startsWith("META-INF") && path.endsWith(".kotlin_module") -> true
+      path.startsWith("META-INF/com.jetbrains.rhizomedb.impl.EntityTypeProvider.") -> true  // https://youtrack.jetbrains.com/issue/FL-34023
       else -> false
     }
   }
