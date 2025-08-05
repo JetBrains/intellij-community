@@ -10,6 +10,8 @@ import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
 import com.intellij.settingsSync.core.statistics.SettingsSyncEventsStatistics
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -53,7 +55,7 @@ class SettingsSyncBridge(
     get() = queueJob != null
 
 
-  private val eventsLock = AtomicBoolean()
+  private val eventsMutex = Mutex()
 
   private val settingsChangeListener = object : SettingsSyncEventListener {
     override fun settingChanged(event: SyncSettingsEvent) {
@@ -61,31 +63,20 @@ class SettingsSyncBridge(
       if (event is SyncSettingsEvent.ExclusiveEvent) { // such events will be processed separately from all others
         pendingExclusiveEvents.add(event)
         coroutineScope.launch {
-          var locked = false
-          val lockAcquireStartTime = System.currentTimeMillis()
           try {
-            do {
-              locked = eventsLock.compareAndSet(false, true)
-              yield()
-              if (System.currentTimeMillis() - lockAcquireStartTime > 60*1000) {
-                LOG.error("Give up waiting for events lock (exclusive event)", Throwable())
-                return@launch
+            withTimeoutOrNull(60_000) {
+              eventsMutex.withLock {
+                LOG.debug("Lock obtained for exclusive event")
+                processExclusiveEvent(event)
               }
+            } ?: run {
+              LOG.error("Could not acquire lock for exclusive event within 60 seconds", Throwable())
             }
-            while (!locked)
-            LOG.debug("Lock obtained for exclusive event")
-            processExclusiveEvent(event)
           }
           catch (th: Throwable) {
             LOG.warn("An error occurred while obtaining lock for exclusive event", th)
           }
           finally {
-            if (locked) {
-              if (!eventsLock.compareAndSet(true, false)) {
-                LOG.warn("eventsLock already unlocked by someone else!!!")
-              }
-              LOG.debug("Lock released for exclusive event")
-            }
             pendingExclusiveEvents.remove(event)
           }
         }
@@ -293,25 +284,30 @@ class SettingsSyncBridge(
   }
 
   private suspend fun processPendingEvents(force: Boolean = false) {
-    var locked = false
+    if (pendingEvents.isEmpty()) {
+      LOG.debug("Pending events is empty")
+      return
+    }
+    if (force) {
+      withTimeoutOrNull(60_000) {
+        eventsMutex.withLock {
+          processPendingEventsUnderLock()
+        }
+      } ?: run {
+        LOG.error("Could not acquire lock for exclusive event within 60 seconds", Throwable())
+      }
+    } else {
+      if (eventsMutex.tryLock()) {
+        processPendingEventsUnderLock()
+        eventsMutex.unlock()
+      } else {
+        LOG.debug("Events are being processed by another coroutine, will retry later")
+      }
+    }
+  }
+
+  private suspend fun processPendingEventsUnderLock() {
     try {
-      val lockAcquireStartTime = System.currentTimeMillis()
-      while (!eventsLock.compareAndSet(false, true)) {
-        if (!force) {
-          LOG.info("Couldn't obtain event lock. Will retry later")
-          return
-        }
-        yield()
-        if (System.currentTimeMillis() - lockAcquireStartTime > 60*1000) {
-          LOG.error("Give up waiting for events lock (exclusive event)", Throwable())
-          return
-        }
-      }
-      locked = true
-      if (pendingEvents.isEmpty()) {
-        LOG.debug("Pending events is empty")
-        return
-      }
       while (pendingEvents.isNotEmpty()) {
         var pushRequestMode: PushRequestMode = PUSH_IF_NEEDED
         var mergeAndPushAfterProcessingEvents = true
@@ -360,13 +356,6 @@ class SettingsSyncBridge(
     }
     catch (th: Throwable) {
       LOG.error("Error occurred while processing pending events", th)
-    }
-    finally {
-      if (locked) {
-        if (!eventsLock.compareAndSet(true, false)) {
-          LOG.error("Lock is already unlocked by someone else?!")
-        }
-      }
     }
   }
 
