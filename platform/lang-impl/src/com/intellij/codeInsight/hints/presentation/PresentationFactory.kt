@@ -477,7 +477,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
   }
 
   @ApiStatus.Internal
-  fun highlighted(text: String, highlighter: SyntaxHighlighter): InlayPresentation {
+  fun highlighted(text: String, smallText: Boolean, highlighter: SyntaxHighlighter): InlayPresentation {
     val lexer = highlighter.highlightingLexer
     lexer.start(text)
     val tokenPresentations = mutableListOf<InlayPresentation>()
@@ -486,11 +486,11 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
       val tokenType = lexer.tokenType
       val textKeys = highlighter.getTokenHighlights(tokenType)
       if (textKeys.isEmpty() || textKeys.firstOrNull()?.defaultAttributes == null || textKeys.firstOrNull()?.defaultAttributes?.fontType == 0) {
-        tokenPresentations.add(smallText(tokenText))
+        tokenPresentations.add(if (smallText) smallText(tokenText) else text(tokenText))
       }
       else {
         val textKey = textKeys.first()
-        val textWithoutBox = InsetPresentation(TextInlayPresentation(textMetricsStorage, true, tokenText), top = 1, down = 1)
+        val textWithoutBox = InsetPresentation(TextInlayPresentation(textMetricsStorage, smallText, tokenText), top = 1, down = 1)
         tokenPresentations.add(attributes(textWithoutBox, textKey))
       }
       lexer.advance()
