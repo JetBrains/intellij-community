@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class AssignmentExpressionUnfoldingConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         val unfolded = when (element) {
             is JKBlock -> element.convertAssignments()

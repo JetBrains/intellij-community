@@ -34,7 +34,7 @@ class JKResolver(val project: Project, module: Module?, private val contextEleme
         resolveFqNameOfKtFunctionByIndex(fqName)
             ?: resolveFqName(fqName)
 
-    context(KaSession)
+    context(_: KaSession)
     fun resolveMethodWithExactSignature(methodFqName: FqName, parameterTypesFqNames: List<FqName>): PsiElement? =
         resolveFqNameOfKtFunctionByIndex(methodFqName, filter = fun(function: KtNamedFunction): Boolean {
             if (function.valueParameters.size != parameterTypesFqNames.size) return false

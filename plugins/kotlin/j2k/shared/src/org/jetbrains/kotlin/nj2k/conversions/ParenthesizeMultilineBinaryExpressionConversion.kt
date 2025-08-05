@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.nj2k.tree.JKBinaryExpression
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 
 class ParenthesizeMultilineBinaryExpressionConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKBinaryExpression) return recurse(element)
 

@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.nj2k.tree.JKClass
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 
 class NonCodeElementsConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKClass -> {

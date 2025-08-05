@@ -41,7 +41,7 @@ class JKSymbolProvider(private val resolver: JKResolver) {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun provideDirectSymbol(symbol: KaDeclarationSymbol): JKSymbol {
         val psi = symbol.psi ?: return JKUnresolvedClassSymbol(NO_NAME_PROVIDED, typeFactory)
         return provideDirectSymbol(psi)
@@ -144,7 +144,7 @@ class JKSymbolProvider(private val resolver: JKResolver) {
     fun provideMethodSymbol(fqName: String): JKMethodSymbol =
         provideMethodSymbol(fqName.asSafeFqName())
 
-    context(KaSession)
+    context(_: KaSession)
     fun provideMethodSymbolWithExactSignature(methodFqName: String, parameterTypesFqNames: List<String>): JKMethodSymbol {
         return symbolsByFqNameWithExactSignature.getOrPutIfNotNull(listOf(methodFqName) + parameterTypesFqNames) {
             resolver.resolveMethodWithExactSignature(

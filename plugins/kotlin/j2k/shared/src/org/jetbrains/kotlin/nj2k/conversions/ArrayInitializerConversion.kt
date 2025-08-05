@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 
 class ArrayInitializerConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         val newElement = when (element) {
             is JKJavaNewArray -> {

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
 class ArrayOperationsConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKQualifiedExpression) return recurse(element)
         val selector = element.selector as? JKFieldAccessExpression ?: return recurse(element)

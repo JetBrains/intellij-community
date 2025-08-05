@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class AddElementsInfoConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKTypeElement -> addInfoForTypeElement(element)

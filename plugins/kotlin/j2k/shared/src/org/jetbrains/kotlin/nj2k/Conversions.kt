@@ -17,14 +17,14 @@ abstract class Conversion(val context: ConverterContext) {
     val typeFactory: JKTypeFactory
         get() = context.typeFactory
 
-    context(KaSession)
+    context(_: KaSession)
     fun runForEach(treeRoots: Sequence<JKTreeElement>, context: ConverterContext) {
         for (root in treeRoots) {
             run(root, context)
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     abstract fun run(treeRoot: JKTreeElement, context: ConverterContext)
 
     open fun isEnabledInBasicMode(): Boolean = true
@@ -46,21 +46,21 @@ val Conversion.moduleApiVersion: ApiVersion
     get() = languageVersionSettings.apiVersion
 
 abstract class RecursiveConversion(context: ConverterContext) : Conversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun run(treeRoot: JKTreeElement, context: ConverterContext) {
         val root = applyToElement(treeRoot)
         assert(root === treeRoot)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     abstract fun applyToElement(element: JKTreeElement): JKTreeElement
 
-    context(KaSession)
+    context(_: KaSession)
     protected fun <E : JKTreeElement> recurse(element: E): E = applyRecursive(element) { applyToElement(it) }
 }
 
 abstract class RecursiveConversionWithData<D>(context: ConverterContext, private val initialData: D) : Conversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun run(treeRoot: JKTreeElement, context: ConverterContext) {
         val root = applyToElement(treeRoot, initialData)
         assert(root === treeRoot)

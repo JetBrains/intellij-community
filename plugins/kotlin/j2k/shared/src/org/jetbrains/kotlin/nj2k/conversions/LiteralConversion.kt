@@ -12,7 +12,7 @@ import java.math.BigInteger
 import java.util.*
 
 class LiteralConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKLiteralExpression) return recurse(element)
         return try {

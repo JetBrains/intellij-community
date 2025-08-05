@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
 
 class PrimaryConstructorDetectConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element is JKClass && (element.classKind == CLASS || element.classKind == ENUM || element.classKind == RECORD)) {
             processClass(element)

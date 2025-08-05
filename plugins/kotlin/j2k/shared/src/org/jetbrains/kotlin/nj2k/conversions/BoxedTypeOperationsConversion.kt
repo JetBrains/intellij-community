@@ -18,7 +18,7 @@ import java.util.*
  *   2. Change type conversion calls: `double.longValue()` -> `double.toLong()`
  */
 class BoxedTypeOperationsConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         return recurse(
             when (element) {

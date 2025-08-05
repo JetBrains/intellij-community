@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.nj2k.tree.JKTreeRoot
 
 object ConversionsRunner {
-    context(KaSession)
+    context(_: KaSession)
     fun doApply(
         trees: List<JKTreeRoot>,
         context: ConverterContext,

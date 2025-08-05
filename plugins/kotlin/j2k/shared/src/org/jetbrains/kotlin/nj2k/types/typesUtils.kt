@@ -6,6 +6,8 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.compiled.ClsMethodImpl
 import com.intellij.psi.impl.source.PsiAnnotationMethodImpl
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.type
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -41,7 +43,7 @@ val PsiType.isKotlinFunctionalType: Boolean
         return functionalTypeRegex.matches(fqName.asString())
     }
 
-context(KaSession) // TODO: currently unused, will be used in the K2 implementation
+context(_: KaSession) // TODO: currently unused, will be used in the K2 implementation
 fun PsiParameter.typeFqNamePossiblyMappedToKotlin(): FqName {
     // TODO: support (nested) array types: KTIJ-28739
     // TODO: use `asKtType` function in the K2 implementation (it doesn't work in K1 yet: KT-65545)
@@ -79,7 +81,7 @@ private val primitiveTypeMapping: Map<String, String> = mapOf(
     "${PsiTypes.doubleType().name}[]" to "kotlin.DoubleArray"
 )
 
-context(KaSession)
+context(_: KaSession)
 fun KtParameter.typeFqName(): FqName? {
     val type = symbol.returnType as? KaClassType
     return type?.classId?.asSingleFqName()
@@ -87,7 +89,7 @@ fun KtParameter.typeFqName(): FqName? {
 
 private val functionalTypeRegex = """(kotlin\.jvm\.functions|kotlin)\.Function[\d+]""".toRegex()
 
-context(KaSession)
+context(_: KaSession)
 fun KtTypeReference.toJK(typeFactory: JKTypeFactory): JKType =
     typeFactory.fromKaType(type)
 

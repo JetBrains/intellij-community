@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.nj2k.types.JKType
  * with default parameters and `JvmOverloads` annotation.
  */
 class DefaultArgumentsConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKClassBody) return recurse(element)
         val methods = element.declarations.filterIsInstance<JKMethod>().sortedBy { it.parameters.size }

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.nj2k.symbols.isStaticMember
 import org.jetbrains.kotlin.nj2k.tree.*
 
 class RemoveRedundantQualifiersForCallsConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKQualifiedExpression) return recurse(element)
         val needRemoveQualifier = when (val receiver = element.receiver.receiverExpression()) {

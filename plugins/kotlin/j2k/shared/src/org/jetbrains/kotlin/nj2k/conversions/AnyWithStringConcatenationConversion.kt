@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.isStringType
 
 class AnyWithStringConcatenationConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKBinaryExpression) return recurse(element)
         if (element.operator.token == JKOperatorToken.PLUS

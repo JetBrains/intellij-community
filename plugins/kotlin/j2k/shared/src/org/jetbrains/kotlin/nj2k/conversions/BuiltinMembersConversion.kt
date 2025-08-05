@@ -32,13 +32,13 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
     private val conversions: Map<String, List<Conversion>> =
         ConversionsHolder(symbolProvider, typeFactory).getConversions()
 
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKExpression) return recurse(element)
         return recurse(element.convert() ?: element)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun JKExpression.convert(): JKExpression? {
         val selector = when (this) {
             is JKQualifiedExpression -> selector
@@ -107,7 +107,7 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
     }
 
     private interface ResultBuilder {
-        context(KaSession)
+        context(_: KaSession)
         fun build(from: JKExpression): JKExpression
     }
 
@@ -117,7 +117,7 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
         private val argumentsProvider: (JKArgumentList) -> JKArgumentList,
         private val canMoveLambdaOutsideParentheses: Boolean = false
     ) : ResultBuilder {
-        context(KaSession)
+        context(_: KaSession)
         override fun build(from: JKExpression): JKExpression {
             val methodSymbol = provideMethodSymbol(fqName, parameterTypesFqNames)
             val type = determineNewExpressionType(methodSymbol, from)
@@ -157,7 +157,7 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
     }
 
     private inner class FieldBuilder(private val fqName: String) : ResultBuilder {
-        context(KaSession)
+        context(_: KaSession)
         override fun build(from: JKExpression): JKExpression {
             if (from !is JKCallExpression && from !is JKFieldAccessExpression) error("Bad conversion")
             val symbol = symbolProvider.provideFieldSymbol(fqName)
@@ -170,7 +170,7 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
         private val fqName: String,
         private val parameterTypesFqNames: List<String>?,
     ) : ResultBuilder {
-        context(KaSession)
+        context(_: KaSession)
         override fun build(from: JKExpression): JKExpression {
             if (from !is JKCallExpression) error("Bad conversion")
 
@@ -198,7 +198,7 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
     }
 
     private inner class CustomExpressionBuilder(val builder: (JKExpression) -> JKExpression) : ResultBuilder {
-        context(KaSession)
+        context(_: KaSession)
         override fun build(from: JKExpression): JKExpression = builder(from)
     }
 
@@ -212,7 +212,7 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
 
     // Usually, the types of original and replacement expressions should be semantically the same,
     // but this is not always the case with number types (ex. with java.lang.Math vs. kotlin.math methods)
-    context(KaSession)
+    context(_: KaSession)
     private fun determineNewExpressionType(newSymbol: JKSymbol, originalExpression: JKExpression): JKType? {
         val symbolType = when (newSymbol) {
             is JKMethodSymbol -> newSymbol.returnType
@@ -222,7 +222,7 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
         return symbolType ?: originalExpression.calculateType(typeFactory)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun provideMethodSymbol(fqName: String, parameterTypesFqNames: List<String>?): JKMethodSymbol {
         return if (parameterTypesFqNames == null) {
             symbolProvider.provideMethodSymbol(fqName)

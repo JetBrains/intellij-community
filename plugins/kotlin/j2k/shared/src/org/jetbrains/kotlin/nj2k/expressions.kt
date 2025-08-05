@@ -38,7 +38,7 @@ private val equalsOperators: TokenSet =
         KtTokens.EXCLEQ
     )
 
-context(KaSession)
+context(_: KaSession)
 fun untilToExpression(
     from: JKExpression,
     to: JKExpression,
@@ -53,7 +53,7 @@ fun untilToExpression(
     )
 }
 
-context(KaSession)
+context(_: KaSession)
 fun downToExpression(
     from: JKExpression,
     to: JKExpression,
@@ -78,7 +78,7 @@ fun JKBinaryExpression.parenthesizedWithFormatting(): JKParenthesizedExpression 
         JKBinaryExpression(::left.detached(), ::right.detached(), operator)
     ).withFormattingFrom(this)
 
-context(KaSession)
+context(_: KaSession)
 fun rangeExpression(
     from: JKExpression,
     to: JKExpression,
@@ -143,12 +143,12 @@ fun annotationArgumentStringLiteral(content: String): JKExpression {
     return JKLiteralExpression(string, LiteralType.STRING)
 }
 
-context(KaSession)
+context(_: KaSession)
 fun JKVariable.findUsages(scope: JKTreeElement, context: ConverterContext): List<JKFieldAccessExpression> {
     val symbol = context.symbolProvider.provideUniverseSymbol(this)
     val usages = mutableListOf<JKFieldAccessExpression>()
     val searcher = object : RecursiveConversion(context) {
-        context(KaSession)
+        context(_: KaSession)
         override fun applyToElement(element: JKTreeElement): JKTreeElement {
             if (element is JKExpression) {
                 element.unboxFieldReference()?.also {
@@ -185,7 +185,7 @@ fun JKFieldAccessExpression.isInDecrementOrIncrement(): Boolean =
         else -> false
     }
 
-context(KaSession)
+context(_: KaSession)
 fun JKVariable.hasUsages(scope: JKTreeElement, context: ConverterContext): Boolean =
     findUsages(scope, context).isNotEmpty()
 

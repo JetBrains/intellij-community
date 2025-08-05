@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType.Companion.SHORT
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class PrimitiveTypeCastsConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         return recurse(convertTypeCastExpression(element) ?: element)
     }

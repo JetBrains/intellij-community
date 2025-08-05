@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
  * TODO is this conversion still needed?
  */
 class EnumFieldAccessConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKFieldAccessExpression) return recurse(element)
         if ((element.parent as? JKQualifiedExpression)?.selector == element) return recurse(element)

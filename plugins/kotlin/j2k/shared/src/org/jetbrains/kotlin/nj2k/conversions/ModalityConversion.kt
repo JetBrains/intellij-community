@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.nj2k.tree.Visibility.PRIVATE
  * Also, adds the "override" modifier to applicable methods.
  */
 class ModalityConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKClass -> element.process()

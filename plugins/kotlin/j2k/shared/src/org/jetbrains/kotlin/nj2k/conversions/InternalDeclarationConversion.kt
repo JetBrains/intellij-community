@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
 import org.jetbrains.kotlin.nj2k.tree.Visibility.*
 
 class InternalDeclarationConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKVisibilityOwner || element !is JKModalityOwner) return recurse(element)
         if (element.visibility != INTERNAL) return recurse(element)

@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.nj2k.types.isStringType
 import org.jetbrains.kotlin.nj2k.types.updateNullabilityRecursively
 
 class ClassMemberConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKMethodImpl -> element.convert()
@@ -30,7 +30,7 @@ class ClassMemberConversion(context: ConverterContext) : RecursiveConversion(con
         return recurse(element)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun JKMethodImpl.convert() {
         removeStaticModifierFromAnonymousClassMember()
 
@@ -80,7 +80,7 @@ class ClassMemberConversion(context: ConverterContext) : RecursiveConversion(con
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun JKField.convert() {
         removeStaticModifierFromAnonymousClassMember()
         val hasMutableAnnotation = annotationList.annotations.any { MUTABLE_ANNOTATIONS.contains(it.classSymbol.fqName) }

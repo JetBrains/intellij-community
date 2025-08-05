@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.nj2k.tree.OtherModifier.STATIC
 import org.jetbrains.kotlin.nj2k.tree.elementByModifier
 
 class InnerClassConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement =
         if (element is JKClass) recurseArmed(element, outerClass = element) else recurse(element)
 

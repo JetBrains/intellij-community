@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.nj2k.types.isFloatingPoint
 class SimplifyNegatedBinaryExpressionConversion(context: ConverterContext) : RecursiveConversion(context) {
     override fun isEnabledInBasicMode(): Boolean = false
 
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKPrefixExpression || element.operator.token != JKOperatorToken.EXCL) return recurse(element)
 

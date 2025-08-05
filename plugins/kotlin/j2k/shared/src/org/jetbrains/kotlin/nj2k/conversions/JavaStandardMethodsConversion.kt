@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.nj2k.types.fqName
 import org.jetbrains.kotlin.nj2k.types.updateNullability
 
 class JavaStandardMethodsConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element is JKClass) {
             element.classBody.declarations.forEach {

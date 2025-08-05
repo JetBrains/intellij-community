@@ -165,7 +165,7 @@ class OldJavaToKotlinConverter(
                 return { processUsages(refs) }
             }
 
-            context(KaSession)
+            context(_: KaSession)
             override fun bindJavaDeclarationsToConvertedKotlinOnes(files: List<KtFile>) {
                 // Do nothing in Old J2K
             }

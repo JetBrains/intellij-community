@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtPsiUtil
  */
 class RemoveUnnecessaryParenthesesConversion(context: ConverterContext) : RecursiveConversion(context) {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKParenthesizedExpression) return recurse(element)
         if (areParenthesesNecessary(element)) return recurse(element)

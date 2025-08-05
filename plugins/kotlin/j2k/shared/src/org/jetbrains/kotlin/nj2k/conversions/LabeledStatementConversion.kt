@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class LabeledStatementConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKExpressionStatement) return recurse(element)
         val labeledStatement = element.expression as? JKLabeledExpression ?: return recurse(element)

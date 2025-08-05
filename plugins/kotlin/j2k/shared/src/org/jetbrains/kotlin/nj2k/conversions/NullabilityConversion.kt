@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.nj2k.types.updateNullability
  * See also [org.jetbrains.kotlin.nj2k.JavaToJKTreeBuilder.collectNullabilityInfo]
  */
 class NullabilityConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKTypeCastExpression -> element.updateNullability()

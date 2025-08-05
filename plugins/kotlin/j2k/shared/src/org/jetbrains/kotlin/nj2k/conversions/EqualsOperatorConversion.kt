@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.nj2k.types.isFloatingPoint
  * Tries to convert `equals` method calls to `==` operator binary expressions, where applicable.
  */
 class EqualsOperatorConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKQualifiedExpression) return recurse(element)
         if (element.receiver is JKSuperExpression) return recurse(element)

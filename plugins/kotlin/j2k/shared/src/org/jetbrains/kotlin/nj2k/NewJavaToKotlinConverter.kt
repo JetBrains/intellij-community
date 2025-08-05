@@ -11,6 +11,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.useSiteModule
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModuleOfTypeSafe
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -113,7 +114,7 @@ class NewJavaToKotlinConverter(
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun doConvertElementsToKotlin(
         contextElement: PsiElement,
         inputElements: List<PsiElement>,

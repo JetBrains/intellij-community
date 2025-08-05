@@ -16,7 +16,7 @@ class ReturnStatementInLambdaExpressionConversion(context: ConverterContext) : R
         const val DEFAULT_LABEL_NAME = "label"
     }
 
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKLambdaExpression) return recurse(element)
         val statement = element.statement

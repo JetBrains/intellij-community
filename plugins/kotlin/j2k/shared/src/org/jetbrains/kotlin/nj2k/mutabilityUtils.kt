@@ -273,7 +273,7 @@ private fun JKFieldAccessExpression.asQualifiedAssignmentFromTarget(): JKQualifi
                 (it.parent is JKKtAssignmentStatement || operatorToken == PLUSPLUS || operatorToken == MINUSMINUS)
     }
 
-context(KaSession)
+context(_: KaSession)
 private fun JKVariable.findWritableUsages(scope: JKTreeElement, context: ConverterContext): List<JKFieldAccessExpression> =
     findUsages(scope, context).filter {
         it.asAssignmentFromTarget() != null
@@ -281,7 +281,7 @@ private fun JKVariable.findWritableUsages(scope: JKTreeElement, context: Convert
                 || it.asParenthesizedAssignmentFromTarget() != null
     }.distinct()
 
-context(KaSession)
+context(_: KaSession)
 fun JKVariable.hasWritableUsages(scope: JKTreeElement, context: ConverterContext): Boolean =
     findWritableUsages(scope, context).isNotEmpty()
 

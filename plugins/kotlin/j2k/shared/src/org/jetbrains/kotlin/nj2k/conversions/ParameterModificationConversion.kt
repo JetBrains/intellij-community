@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.nj2k.types.determineType
  * because in Kotlin parameters are not mutable.
  */
 class ParameterModificationConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKMethod -> convertMethod(element)
@@ -25,13 +25,13 @@ class ParameterModificationConversion(context: ConverterContext) : RecursiveConv
         return recurse(element)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun convertMethod(element: JKMethod) {
         val newVariables = createVariables(element.parameters, element.block).ifEmpty { return }
         element.block.statements = listOf(JKDeclarationStatement(newVariables)) + element.block.statements
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun convertLambda(element: JKLambdaExpression) {
         val newVariables = createVariables(element.parameters, element.statement).ifEmpty { return }
         val declaration = JKDeclarationStatement(newVariables)
@@ -46,7 +46,7 @@ class ParameterModificationConversion(context: ConverterContext) : RecursiveConv
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun convertForInStatement(element: JKForInStatement) {
         val newVariables = createVariables(listOf(element.parameter), element.body).ifEmpty { return }
         val declaration = JKDeclarationStatement(newVariables)
@@ -61,7 +61,7 @@ class ParameterModificationConversion(context: ConverterContext) : RecursiveConv
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createVariables(parameters: List<JKParameter>, scope: JKTreeElement): List<JKLocalVariable> =
         parameters.mapNotNull { parameter ->
             if (parameter.hasWritableUsages(scope, context)) {

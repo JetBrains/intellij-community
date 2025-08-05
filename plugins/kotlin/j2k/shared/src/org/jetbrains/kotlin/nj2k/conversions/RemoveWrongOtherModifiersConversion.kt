@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.nj2k.tree.OtherModifier.INNER
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.STATIC
 
 class RemoveWrongOtherModifiersConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKOtherModifiersOwner) return recurse(element)
 

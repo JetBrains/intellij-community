@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.nj2k.types.asPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.fqName
 
 class AddConstModifierConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKField) return recurse(element)
         if (element.mutability != IMMUTABLE) return recurse(element)

@@ -20,7 +20,7 @@ class TypeMappingConversion(
     context: ConverterContext,
     val filter: (typeElement: JKTypeElement) -> Boolean = { true }
 ) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKTypeElement -> {

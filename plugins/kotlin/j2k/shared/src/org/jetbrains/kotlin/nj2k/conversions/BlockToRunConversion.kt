@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.nj2k.runExpression
 import org.jetbrains.kotlin.nj2k.tree.*
 
 class BlockToRunConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKBlockStatement) return recurse(element)
         if (element.parent !is JKBlock) return recurse(element)

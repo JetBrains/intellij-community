@@ -19,7 +19,7 @@ private const val ENUM_VALUES_METHOD_NAME = "values"
 private const val ENUM_ENTRIES_PROPERTY_NAME = "entries"
 
 class EnumSyntheticValuesMethodConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKQualifiedExpression && element !is JKCallExpression) return recurse(element)
         if (!languageVersionSettings.supportsFeature(EnumEntries)) return recurse(element)
@@ -33,7 +33,7 @@ class EnumSyntheticValuesMethodConversion(context: ConverterContext) : Recursive
     private fun JKTreeElement.selector(): JKTreeElement =
         if (this is JKQualifiedExpression) selector else this
 
-    context(KaSession)
+    context(_: KaSession)
     private fun JKTreeElement.isReceiverEnumType(): Boolean =
         when (this) {
             is JKQualifiedExpression ->

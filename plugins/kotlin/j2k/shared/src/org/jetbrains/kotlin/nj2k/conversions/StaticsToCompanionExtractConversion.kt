@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.OBJECT
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 
 class StaticsToCompanionExtractConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKClass) return recurse(element)
         if (element.classKind == COMPANION || element.classKind == OBJECT) return element

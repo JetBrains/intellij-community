@@ -25,7 +25,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
 
     fun fromPsiType(type: PsiType): JKType = createFromPsiType(type)
 
-    context(KaSession)
+    context(_: KaSession)
     fun fromKaType(type: KaType): JKType = createFromKaType(type)
 
     inner class DefaultTypes {
@@ -153,7 +153,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
         return nullability
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createFromKaType(type: KaType): JKType {
         return when (type) {
             is KaTypeParameterType -> {

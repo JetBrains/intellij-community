@@ -17,11 +17,20 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue.ArrayValue
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue.EnumEntryValue
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
+import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.components.directlyOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.isAnyType
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
@@ -126,7 +135,7 @@ internal class K2ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPos
         return Applier(infos)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun List<KtClassOrObject>.sortedByInheritance(): List<KtClassOrObject> {
         val sorted = mutableListOf<KtClassOrObject>()
         val visited = Array(size) { false }
@@ -184,7 +193,7 @@ private class PropertiesDataCollector(private val searcher: JKInMemoryFilesSearc
         return propertyDataList
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun collectPropertyData(klass: KtClassOrObject, propertyInfoGroup: List<PropertyInfo>): PropertyData? {
         val property = propertyInfoGroup.firstIsInstanceOrNull<RealProperty>()
@@ -196,7 +205,7 @@ private class PropertiesDataCollector(private val searcher: JKInMemoryFilesSearc
 
             // The inferred nullability of accessors may be different due to semi-random reasons,
             // so we check types compatibility ignoring nullability. Anyway, the final property type will be nullable if necessary.
-            getterType.isSubtypeOf(setterType.withNullability(KaTypeNullability.NULLABLE))
+            getterType.isSubtypeOf(setterType.withNullability(true))
         }
 
         val accessor = getter ?: setter ?: return null
@@ -285,7 +294,7 @@ private class PropertiesDataCollector(private val searcher: JKInMemoryFilesSearc
         else -> this
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtClassOrObject.isSamSymbol(functionSymbol: KaNamedFunctionSymbol): Boolean {
         if (functionSymbol.modality != KaSymbolModality.ABSTRACT) return false
         val classSymbol = classSymbol as? KaNamedClassSymbol ?: return false
@@ -294,13 +303,13 @@ private class PropertiesDataCollector(private val searcher: JKInMemoryFilesSearc
         return classSymbol.findSamSymbolOrNull() != null
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaFunctionSymbol.getSuperDeclarationOwner(): KtClassOrObject? {
         val overriddenDeclaration = directlyOverriddenSymbols.firstOrNull()?.psi as? KtDeclaration
         return overriddenDeclaration?.containingClassOrObject
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun calculatePropertyType(getter: KtNamedFunction?, setter: KtNamedFunction?): KaType? {
         val getterType = getter?.symbol?.returnType
         val setterType = setter?.symbol?.valueParameters?.singleOrNull()?.returnType
@@ -320,7 +329,7 @@ private class PropertiesDataFilter(
     private val searcher: JKInMemoryFilesSearcher,
     private val psiFactory: KtPsiFactory
 ) {
-    context(KaSession)
+    context(_: KaSession)
     fun filter(klass: KtClassOrObject, propertiesData: List<PropertyData>): List<PropertyWithAccessors> {
         val classSymbol = klass.classSymbol ?: return emptyList()
         val superSymbols = classSymbol.superClassAndSuperInterfaces()
@@ -341,7 +350,7 @@ private class PropertiesDataFilter(
         return propertiesData.mapNotNull { getPropertyWithAccessors(it, klass, classSymbol, superVariableNameToSymbol) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getPropertyWithAccessors(
         propertyData: PropertyData,
         klass: KtClassOrObject,
@@ -502,7 +511,7 @@ private class PropertiesDataFilter(
         return PropertyWithAccessors(property, getter, setter)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtProperty.overridesVarProperty(): Boolean =
         symbol.directlyOverriddenSymbols.any { it.safeAs<KaVariableSymbol>()?.isVal == false }
 
@@ -515,11 +524,11 @@ private class PropertiesDataFilter(
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtNamedFunction.hasSuperFunction(): Boolean =
         symbol.directlyOverriddenSymbols.toList().isNotEmpty()
 
-    context(KaSession)
+    context(_: KaSession)
     private fun isNameShadowed(name: String, parent: KaSymbol?): Boolean {
         if (parent !is KaClassSymbol) return false
         val parentHasSameNamedVariable = parent.declaredMemberScope
@@ -550,14 +559,14 @@ private val redundantGetterModifiers: Set<KtModifierKeywordToken> = redundantSet
 )
 
 private class ExternalProcessingUpdater(private val processing: NewExternalCodeProcessing) {
-    context(KaSession)
+    context(_: KaSession)
     fun update(klass: KtClassOrObject, propertiesWithAccessors: List<PropertyWithAccessors>) {
         for (propertyWithAccessors in propertiesWithAccessors) {
             updateExternalProcessingInfo(klass, propertyWithAccessors)
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun updateExternalProcessingInfo(klass: KtClassOrObject, propertyWithAccessors: PropertyWithAccessors) {
         val (property, getter, setter) = propertyWithAccessors
 
@@ -919,7 +928,7 @@ private class ClassConverter(
 private fun KtElement.usages(searcher: JKInMemoryFilesSearcher, scope: PsiElement? = null): Iterable<PsiReference> =
     searcher.search(element = this, scope)
 
-context(KaSession)
+context(_: KaSession)
 private fun KaClassSymbol.superClassAndSuperInterfaces(): List<KaClassSymbol> {
     return superTypes.filter { !it.isAnyType }.mapNotNull { it.expandedSymbol }
 }
@@ -1044,6 +1053,6 @@ private data class FakeSetter(
 private fun String.fixSetterParameterName(): String =
     if (this == FIELD_KEYWORD.value) "value" else this
 
-context(KaSession)
+context(_: KaSession)
 private fun KtDeclaration.type(): KaType? =
     (symbol as? KaCallableSymbol)?.returnType

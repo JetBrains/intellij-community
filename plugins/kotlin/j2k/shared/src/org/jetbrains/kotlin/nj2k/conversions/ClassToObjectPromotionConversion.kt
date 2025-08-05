@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.CLASS
 
 class ClassToObjectPromotionConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(KaSession)
+    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKClass || element.classKind != CLASS) return recurse(element)
         val companion = element.getCompanion() ?: return recurse(element)

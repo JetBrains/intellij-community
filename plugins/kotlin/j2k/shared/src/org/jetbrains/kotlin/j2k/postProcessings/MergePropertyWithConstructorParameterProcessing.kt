@@ -11,8 +11,11 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.childrenOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.FIELD
@@ -80,7 +83,7 @@ class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcess
         return context
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun collectPropertyInitializations(klass: KtClass): List<Initialization<*>> {
         val usedParameters = mutableSetOf<KtParameter>()
         val usedProperties = mutableSetOf<KtProperty>()
