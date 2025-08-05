@@ -35,12 +35,12 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   @Test
   fun `no links`() = withFixture {
     updateModel(0L, """
-      0: line1
-      1: line2
+      0: line0
+      1: line1
     """.trimIndent())
     assertText("""
-      0: line1
-      1: line2
+      0: line0
+      1: line1
     """.trimIndent())
     assertLinks()
     assertHighlightings()
@@ -49,16 +49,16 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   @Test
   fun `some links`() = withFixture {
     updateModel(0L, """
-      0: line1 link1
-      1: line2 link2
+      0: line0 link0
+      1: line1 link1
     """.trimIndent())
     assertText("""
-      0: line1 link1
-      1: line2 link2
+      0: line0 link0
+      1: line1 link1
     """.trimIndent())
     assertLinks(
-      link(at(0, "link1")),
-      link(at(1, "link2")),
+      link(at(0, "link0")),
+      link(at(1, "link1")),
     )
     assertHighlightings()
   }
@@ -66,13 +66,13 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   @Test
   fun `remove line before processing`() = withFixture {
     updateModel(0L, """
-      0: line1 link1
-      1: line2 link2
+      0: line0 link0
+      1: line1 link1
     """.trimIndent())
     updateModel(1L, "")
-    assertText("0: line1 link1\n")
+    assertText("0: line0 link0\n")
     assertLinks(
-      link(at(0, "link1")),
+      link(at(0, "link0")),
     )
     assertHighlightings()
   }
@@ -80,17 +80,17 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   @Test
   fun `remove line after processing`() = withFixture {
     updateModel(0L, """
-      0: line1 link1
-      1: line2 link2
+      0: line0 link0
+      1: line1 link1
     """.trimIndent())
     assertLinks(
-      link(at(0, "link1")),
-      link(at(1, "link2")),
+      link(at(0, "link0")),
+      link(at(1, "link1")),
     )
     updateModel(1L, "")
-    assertText("0: line1 link1\n")
+    assertText("0: line0 link0\n")
     assertLinks(
-      link(at(0, "link1")),
+      link(at(0, "link0")),
     )
     assertHighlightings()
   }
@@ -98,40 +98,40 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   @Test
   fun `one click`() = withFixture {
     updateModel(0L, """
-      0: line1 link1
-      1: line2 link2
+      0: line0 link0
+      1: line1 link1
     """.trimIndent())
     assertClicks(
-      at(0, "link1"),
+      at(0, "link0"),
     )
   }
 
   @Test
   fun `several clicks`() = withFixture {
     updateModel(0L, """
-      0: line1 link1
-      1: line2 link2
+      0: line0 link0
+      1: line1 link1
     """.trimIndent())
     assertClicks(
-      at(0, "link1"),
-      at(1, "link2"),
+      at(0, "link0"),
+      at(1, "link1"),
     )
   }
 
   @Test
   fun `several links per line`() = withFixture {
     updateModel(0L, """
-      0: line1 link11 link12
-      1: line2 link2
+      0: line0 link01 link02
+      1: line1 link1
     """.trimIndent())
     assertText("""
-      0: line1 link11 link12
-      1: line2 link2
+      0: line0 link01 link02
+      1: line1 link1
     """.trimIndent())
     assertLinks(
-      link(at(0, "link11")),
-      link(at(0, "link12")),
-      link(at(1, "link2")),
+      link(at(0, "link01")),
+      link(at(0, "link02")),
+      link(at(1, "link1")),
     )
     assertHighlightings()
   }
@@ -142,24 +142,24 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     filter.followedHighlight = HIGHLIGHT2
     filter.hoveredHighlight = HIGHLIGHT3
     updateModel(0L, """
-      0: line1 link1
+      0: line0 link0
     """.trimIndent())
     assertLinks(
-      link(at(0, "link1")),
+      link(at(0, "link0")),
     )
     filter.highlight = HIGHLIGHT2
     filter.followedHighlight = HIGHLIGHT3
     filter.hoveredHighlight = HIGHLIGHT4
     updateModel(1L, """
-      1: line2 link2
+      1: line1 link1
     """.trimIndent())
     assertText("""
-      0: line1 link1
-      1: line2 link2
+      0: line0 link0
+      1: line1 link1
     """.trimIndent())
     assertLinks(
-      link(at(0, "link1"), highlight = HIGHLIGHT1, followedHighlight = HIGHLIGHT2, hoveredHighlight = HIGHLIGHT3),
-      link(at(1, "link2"), highlight = HIGHLIGHT2, followedHighlight = HIGHLIGHT3, hoveredHighlight = HIGHLIGHT4),
+      link(at(0, "link0"), highlight = HIGHLIGHT1, followedHighlight = HIGHLIGHT2, hoveredHighlight = HIGHLIGHT3),
+      link(at(1, "link1"), highlight = HIGHLIGHT2, followedHighlight = HIGHLIGHT3, hoveredHighlight = HIGHLIGHT4),
     )
     assertHighlightings()
   }
@@ -168,23 +168,23 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   fun `some highlighting`() = withFixture {
     filter.highlight = HIGHLIGHT1
     updateModel(0L, """
-      0: line1 highlight1
+      0: line0 highlight0
     """.trimIndent())
     assertHighlightings(
-      highlight(at(0, "highlight1")),
+      highlight(at(0, "highlight0")),
     )
     filter.highlight = HIGHLIGHT2
     updateModel(1L, """
-      1: line2 highlight2
+      1: line1 highlight1
     """.trimIndent())
     assertText("""
-      0: line1 highlight1
-      1: line2 highlight2
+      0: line0 highlight0
+      1: line1 highlight1
     """.trimIndent())
     assertLinks()
     assertHighlightings(
-      highlight(at(0, "highlight1"), highlight = HIGHLIGHT1),
-      highlight(at(1, "highlight2"), highlight = HIGHLIGHT2),
+      highlight(at(0, "highlight0"), highlight = HIGHLIGHT1),
+      highlight(at(1, "highlight1"), highlight = HIGHLIGHT2),
     )
   }
 
@@ -192,49 +192,49 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   fun `some links and some highlightings`() = withFixture {
     filter.highlight = HIGHLIGHT1
     updateModel(0L, """
-      0: line1 highlight1
+      0: line0 highlight0
     """.trimIndent())
     assertLinks()
     assertHighlightings(
-      highlight(at(0, "highlight1")),
+      highlight(at(0, "highlight0")),
     )
     filter.highlight = HIGHLIGHT2
     updateModel(1L, """
-      1: line2 link2
+      1: line1 link1
     """.trimIndent())
     assertText("""
-      0: line1 highlight1
-      1: line2 link2
+      0: line0 highlight0
+      1: line1 link1
     """.trimIndent())
     assertLinks(
-      link(at(1, "link2"), highlight = HIGHLIGHT2)
+      link(at(1, "link1"), highlight = HIGHLIGHT2)
     )
     assertHighlightings(
-      highlight(at(0, "highlight1"), highlight = HIGHLIGHT1),
+      highlight(at(0, "highlight0"), highlight = HIGHLIGHT1),
     )
   }
 
   @Test
   fun `links update`() = withFixture {
     updateModel(0L, """
-      0: line1 link1
-      1: line2 link2
+      0: line0 link0
+      1: line1 link1
     """.trimIndent())
     assertLinks(
-      link(at(0, "link1")),
-      link(at(1, "link2")),
+      link(at(0, "link0")),
+      link(at(1, "link1")),
     )
     assertHighlightings()
     updateModel(1L, """
-      1: line3 link3
+      1: line2 link2
     """.trimIndent())
     assertText("""
-      0: line1 link1
-      1: line3 link3
+      0: line0 link0
+      1: line2 link2
     """.trimIndent())
     assertLinks(
-      link(at(0, "link1")),
-      link(at(1, "link3")),
+      link(at(0, "link0")),
+      link(at(1, "link2")),
     )
     assertHighlightings()
   }
@@ -243,7 +243,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   fun `many links, fast filter`() = withFixture {
     updateModel(0L, generateLines(0, 499, links = (0..499).toList()))
     assertLinks(
-      *(0..499).map { link(at(it, "link${it + 1}")) }.toTypedArray(),
+      *(0..499).map { link(at(it, "link${it}")) }.toTypedArray(),
     )
   }
 
@@ -260,7 +260,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     delay(50.milliseconds)
     updateModel(400L, generateLines(400, 499, links = (400..499).toList()))
     assertLinks(
-      *(0..499).map { link(at(it, "link${it + 1}")) }.toTypedArray(),
+      *(0..499).map { link(at(it, "link${it}")) }.toTypedArray(),
     )
     assertHighlightings()
   }
@@ -269,9 +269,9 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   fun `sparse links, fast filter`() = withFixture {
     updateModel(0L, generateLines(0, 499, links = listOf(1, 100, 400)))
     assertLinks(
-      link(at(1, "link2")),
-      link(at(100, "link101")),
-      link(at(400, "link401")),
+      link(at(1, "link1")),
+      link(at(100, "link100")),
+      link(at(400, "link400")),
     )
     assertHighlightings()
   }
@@ -282,7 +282,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       updateModel(0L, generateLines(0, 499, links = (0..499).toList()))
       updateModel(500L, generateLines(500, 3999, links = (500..3999).toList()))
       assertLinks(
-        *(0 until 667).map { link(at(it, "link${it + 3334}")) }.toTypedArray(),
+        *(0 until 667).map { link(at(it, "link${it + 3333}")) }.toTypedArray(),
       )
       assertHighlightings()
     }
@@ -297,7 +297,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       // now the filter is still in progress
       updateModel(500L, generateLines(500, 3999, links = (500..3999).toList()))
       assertLinks(
-        *(0 until 667).map { link(at(it, "link${it + 3334}")) }.toTypedArray(),
+        *(0 until 667).map { link(at(it, "link${it + 3333}")) }.toTypedArray(),
       )
       assertHighlightings()
     }
@@ -312,7 +312,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       // now the filter is still in progress, but should have emitted some links
       updateModel(500L, generateLines(500, 3999, links = (500..3999).toList()))
       assertLinks(
-        *(0 until 667).map { link(at(it, "link${it + 3334}")) }.toTypedArray(),
+        *(0 until 667).map { link(at(it, "link${it + 3333}")) }.toTypedArray(),
       )
       assertHighlightings()
     }
@@ -327,13 +327,13 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       updateModel(999L, generateLines(1002, 1005, links = (1002..1005).toList()))
       assertLinks(
         *(
-          (0 until 764).map { link(at(it, "link${it + 235}")) } +
+          (0 until 764).map { link(at(it, "link${it + 234}")) } +
           listOf(
-            link(at(764, "link1001")),
-            link(at(765, "link1003")),
-            link(at(766, "link1004")),
-            link(at(767, "link1005")),
-            link(at(768, "link1006")),
+            link(at(764, "link1000")),
+            link(at(765, "link1002")),
+            link(at(766, "link1003")),
+            link(at(767, "link1004")),
+            link(at(768, "link1005")),
           )
         ).toTypedArray(),
       )
@@ -350,11 +350,11 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       updateModel(997L, generateLines(1002, 1004, links = (1002..1004).toList()))
       assertLinks(
         *(
-          (0 until 766).map { link(at(it, "link${it + 232}")) } +
+          (0 until 766).map { link(at(it, "link${it + 231}")) } +
           listOf(
-            link(at(766, "link1003")),
-            link(at(767, "link1004")),
-            link(at(768, "link1005")),
+            link(at(766, "link1002")),
+            link(at(767, "link1003")),
+            link(at(768, "link1004")),
           )
         ).toTypedArray(),
       )
@@ -365,7 +365,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   private fun generateLines(from: Int, toInclusive: Int, links: List<Int>): String {
     val linksAt = links.toSet()
     return (from..toInclusive).joinToString("\n") { line ->
-      "$line: ${if (line in linksAt) "link" else "line"}${line + 1}"
+      "$line: ${if (line in linksAt) "link" else "line"}${line}"
     }
   }
 
