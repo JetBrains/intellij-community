@@ -6,7 +6,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.isUsedAsExpression
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -58,7 +60,7 @@ internal class OperatorToFunctionIntention :
         else -> false
     }).asUnit
 
-    context(KaSession)
+    context(_: KaSession)
     private fun isApplicableUnary(element: KtUnaryExpression): Boolean {
         if (element.baseExpression == null) return false
         val opRef = element.operationReference
@@ -70,14 +72,15 @@ internal class OperatorToFunctionIntention :
     }
 
     // TODO: replace to `element.isUsedAsExpression(element.analyze(BodyResolveMode.PARTIAL_WITH_CFA))` after fix KT-25682
-    context(KaSession)
+    context(_: KaSession)
     private fun isUsedAsExpression(element: KtExpression): Boolean {
         val parent = element.parent
         return if (parent is KtBlockExpression) parent.lastBlockStatementOrThis() == element && parentIsUsedAsExpression(parent.parent)
         else parentIsUsedAsExpression(parent)
     }
 
-    context(KaSession)
+    @OptIn(KaContextParameterApi::class)
+    context(_: KaSession)
     private fun parentIsUsedAsExpression(element: PsiElement): Boolean =
         when (val parent = element.parent) {
             is KtLoopExpression, is KtFile -> false
@@ -105,7 +108,7 @@ internal class OperatorToFunctionIntention :
         return access != ReferenceAccess.READ_WRITE // currently not supported
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun isApplicableCall(element: KtCallExpression): Boolean {
         if (element.isImplicitInvokeCall() == true) {
             return element.valueArgumentList != null || element.lambdaArguments.isNotEmpty()
