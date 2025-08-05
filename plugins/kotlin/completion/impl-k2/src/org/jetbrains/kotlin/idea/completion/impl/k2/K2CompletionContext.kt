@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2
 
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.impl.BetterPrefixMatcher
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.name.Name
@@ -36,4 +37,6 @@ internal class K2CompletionContext<P: KotlinRawPositionContext>(
             startOnlyNameFilter
         }
     }
+
+    internal val targetPlatform = parameters.originalFile.platform
 }

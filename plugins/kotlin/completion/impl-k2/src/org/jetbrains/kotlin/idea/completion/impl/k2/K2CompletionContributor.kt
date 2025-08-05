@@ -47,6 +47,8 @@ internal class K2CompletionSectionContext<P : KotlinRawPositionContext>(
     val positionContext: P = completionContext.positionContext
 
     val parameters: KotlinFirCompletionParameters = completionContext.parameters
+
+    val project = parameters.completionFile.project
 }
 
 private typealias K2CompletionSectionRunnable<P> = KaSession.(context: K2CompletionSectionContext<P>) -> Unit
