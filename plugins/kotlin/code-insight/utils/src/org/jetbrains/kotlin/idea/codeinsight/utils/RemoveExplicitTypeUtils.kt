@@ -13,7 +13,7 @@ fun KtDeclaration.removeDeclarationTypeReference() {
         typeReference = null
     } else if (this is KtPropertyAccessor) {
         val first = parameterList?.nextSibling ?: return
-        val last = returnTypeReference ?: return
+        val last = typeReference ?: return
         deleteChildRange(first, last)
     }
 }

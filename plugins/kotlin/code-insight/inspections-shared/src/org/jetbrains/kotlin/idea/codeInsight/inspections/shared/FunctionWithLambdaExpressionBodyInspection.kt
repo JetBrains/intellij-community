@@ -33,7 +33,7 @@ internal class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspec
 
         override fun visitPropertyAccessor(accessor: KtPropertyAccessor) {
             if (accessor.isSetter) return
-            if (accessor.returnTypeReference != null) return
+            if (accessor.typeReference != null) return
             visitAndRegisterProblem(accessor)
         }
 
