@@ -188,8 +188,11 @@ open class EditorComposite internal constructor(
   protected open suspend fun beforeFileOpen(scope: CoroutineScope, model: EditorCompositeModel) {}
   @Internal
   protected open suspend fun afterFileOpen(scope: CoroutineScope, model: EditorCompositeModel) {}
+  @Internal
+  protected open suspend fun onHandleModel(model: EditorCompositeModel) {}
 
   private suspend fun handleModel(model: EditorCompositeModel) {
+    onHandleModel(model)
     val fileEditorWithProviders = model.fileEditorAndProviderList
     fileEditorWithProviders.assignEditorProperties()
 
