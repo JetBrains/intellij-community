@@ -22,9 +22,20 @@ import com.intellij.psi.util.endOffset
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.approximateToSuperPublicDenotableOrSelf
+import org.jetbrains.kotlin.analysis.api.components.directSupertypes
+import org.jetbrains.kotlin.analysis.api.components.directlyOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.hasFlexibleNullability
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.components.isNothingType
+import org.jetbrains.kotlin.analysis.api.components.isNullable
+import org.jetbrains.kotlin.analysis.api.components.isUnitType
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -220,7 +231,7 @@ object CallableReturnTypeUpdaterUtils {
         override fun getResult(element: TypeInfo.Type): String = element.longTypeRepresentation
     }
 
-    context(KaSession)
+    context(session: KaSession)
     @OptIn(KaExperimentalApi::class)
     @ApiStatus.Internal
     fun <T> calculateAllTypes(declaration: KtCallableDeclaration, allTypesConsumer: (KaType, Sequence<KaType>, Boolean) -> T?): T? {
@@ -230,20 +241,20 @@ object CallableReturnTypeUpdaterUtils {
             ?.distinctBy { createTypeByKtType(it) }
             ?.toList()
             ?: emptyList()
-        val cannotBeNull = overriddenTypes.any { !it.canBeNull }
+        val cannotBeNull = overriddenTypes.any { !it.isNullable }
         val allTypes = (listOf(declarationType) + overriddenTypes)
             // Here we do BFS manually rather than invoke `getAllSuperTypes` because we have multiple starting points. Simply calling
             // `getAllSuperTypes` does not work because it would BFS traverse each starting point and put the result together, in which
             // case, for example, calling `getAllSuperTypes` would put `Any` at middle if one of the super type in the hierarchy has
             // multiple super types.
             .bfs { it.directSupertypes(shouldApproximate = true).iterator() }
-            .map { it.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true) }
+            .map { with(session) { it.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true) } }
             .distinctBy { createTypeByKtType(it) }
             .let { types ->
                 when {
-                    cannotBeNull -> types.map { it.withNullability(KaTypeNullability.NON_NULLABLE) }.distinctBy { createTypeByKtType(it) }
+                    cannotBeNull -> types.map { it.withNullability(false) }.distinctBy { createTypeByKtType(it) }
                     declarationType.hasFlexibleNullability -> types.flatMap { type ->
-                        listOf(type.withNullability(KaTypeNullability.NON_NULLABLE), type.withNullability(KaTypeNullability.NULLABLE))
+                        listOf(type.withNullability(false), type.withNullability(true))
                     }
 
                     else -> types
@@ -255,7 +266,7 @@ object CallableReturnTypeUpdaterUtils {
     private fun KaClassType.isLocal(): Boolean =
         classId.isLocal
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getTypeInfo(declaration: KtCallableDeclaration, useTemplate: Boolean = true): TypeInfo {
 
@@ -279,7 +290,7 @@ object CallableReturnTypeUpdaterUtils {
             }
 
             val approximatedDefaultType = declarationType.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = approximateLocalTypes).let {
-                if (cannotBeNull) it.withNullability(KaTypeNullability.NON_NULLABLE)
+                if (cannotBeNull) it.withNullability(false)
                 else it
             }
             createByKtTypes(
@@ -293,7 +304,7 @@ object CallableReturnTypeUpdaterUtils {
 
     // The following logic is copied from FE1.0 at
     // org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention.Companion#createTypeExpressionForTemplate
-    context(KaSession)
+    context(_: KaSession)
     private fun selectForUnitTest(
         declaration: KtCallableDeclaration,
         allTypes: List<KaType>
@@ -325,14 +336,14 @@ object CallableReturnTypeUpdaterUtils {
         data class Type(val isUnit: Boolean, val isError: Boolean, val longTypeRepresentation: String, val shortTypeRepresentation: String)
 
         companion object {
-            context(KaSession)
+            context(_: KaSession)
             fun createByKtTypes(
                 ktType: KaType,
                 otherTypes: Sequence<KaType> = emptySequence(),
                 useTemplate: Boolean = false
             ): TypeInfo = TypeInfo(createTypeByKtType(ktType), otherTypes.map { createTypeByKtType(it) }.toList(), useTemplate)
 
-            context(KaSession)
+            context(_: KaSession)
             @OptIn(KaExperimentalApi::class)
             internal fun createTypeByKtType(ktType: KaType): Type = Type(
                 isUnit = ktType.isUnitType,

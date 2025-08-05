@@ -6,11 +6,19 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.annotationApplicableTargets
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.components.type
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
@@ -62,7 +70,7 @@ sealed interface MovePropertyToConstructorInfo {
             }
         }
 
-        context(KaSession)
+        context(_: KaSession)
         @OptIn(KaExperimentalApi::class)
         fun create(element: KtProperty, initializer: KtExpression? = element.initializer): MovePropertyToConstructorInfo? {
             if (initializer != null && !initializer.isValidInConstructor()) return null
@@ -88,7 +96,7 @@ sealed interface MovePropertyToConstructorInfo {
             }
         }
 
-        context(KaSession)
+        context(_: KaSession)
         private fun KtExpression.isValidInConstructor(): Boolean {
             val parentClassSymbol = getStrictParentOfType<KtClass>()?.classSymbol ?: return false
             var isValid = true
@@ -107,12 +115,12 @@ sealed interface MovePropertyToConstructorInfo {
             return isValid
         }
 
-        context(KaSession)
+        context(_: KaSession)
         private fun KtProperty.collectAnnotationsAsText(): String? = modifierList?.annotationEntries?.joinToString(separator = " ") {
             it.getTextWithUseSite()
         }
 
-        context(KaSession)
+        context(_: KaSession)
         @OptIn(KaExperimentalApi::class)
         private fun KtAnnotationEntry.getTextWithUseSite(): String {
             if (useSiteTarget != null) return text
@@ -137,7 +145,7 @@ sealed interface MovePropertyToConstructorInfo {
             }
         }
 
-        context(KaSession)
+        context(_: KaSession)
         private fun KtExpression.findConstructorParameter(): KtParameter? {
             val constructorParam = mainReference?.resolveToSymbol() as? KaValueParameterSymbol ?: return null
             return constructorParam.psi as? KtParameter

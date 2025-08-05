@@ -16,6 +16,13 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.diagnostics
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isUnitType
+import org.jetbrains.kotlin.analysis.api.components.isUsedAsExpression
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
@@ -128,7 +135,7 @@ object IfThenTransformationUtils {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun prepareIfThenTransformationStrategy(element: KtIfExpression, acceptUnstableSmartCasts: Boolean): IfThenTransformationStrategy? {
         val data = buildTransformationData(element) ?: return null
 
@@ -147,7 +154,7 @@ object IfThenTransformationUtils {
         return IfThenTransformationStrategy.create(data)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtExpression.doesNotHaveStableSmartCast(): Boolean {
         val expressionToCheck = when (this) {
             is KtThisExpression -> instanceReference
@@ -157,7 +164,7 @@ object IfThenTransformationUtils {
     }
 
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun conditionIsSenseless(data: IfThenTransformationData): Boolean = data.condition
         .diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
@@ -210,13 +217,13 @@ object IfThenTransformationUtils {
     }
 
 
-    context(KaSession)
+    context(session: KaSession)
     fun prepareIfThenToElvisInspectionData(element: KtIfExpression): IfThenToElvisInspectionData? {
         val transformationData = buildTransformationData(element) ?: return null
         val transformationStrategy = IfThenTransformationStrategy.create(transformationData) ?: return null
 
         if (element.expressionType?.isUnitType != false) return null
-        if (!clausesReplaceableByElvis(transformationData)) return null
+        if (!session.clausesReplaceableByElvis(transformationData)) return null
         val checkedExpressions = listOfNotNull(
             transformationData.checkedExpression,
             transformationData.baseClause,
@@ -230,7 +237,7 @@ object IfThenTransformationUtils {
         )
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtExpression.hasUnstableSmartCast(): Boolean {
         val expressionToCheck = when (this) {
             is KtThisExpression -> instanceReference
@@ -342,7 +349,7 @@ sealed class IfThenTransformationStrategy {
     }
 
     companion object {
-        context(KaSession)
+        context(_: KaSession)
         fun create(data: IfThenTransformationData): IfThenTransformationStrategy? {
             val newReceiverIsSafeCast = data.condition is KtIsExpression
 
@@ -363,7 +370,7 @@ sealed class IfThenTransformationStrategy {
             }
         }
 
-        context(KaSession)
+        context(_: KaSession)
         private fun KtExpression.hasImplicitReceiverMatchingThisExpression(thisExpression: KtThisExpression): Boolean {
             val thisExpressionSymbol = thisExpression.instanceReference.mainReference.resolveToSymbol() ?: return false
             // we need to resolve callee instead of call, because in case of variable call, call is resolved to `invoke`
@@ -372,10 +379,10 @@ sealed class IfThenTransformationStrategy {
             return callableMemberCall.getImplicitReceivers().any { it.symbol == thisExpressionSymbol }
         }
 
-        context(KaSession)
+        context(_: KaSession)
         private fun KtExpression.resolveCallableMemberCall(): KaCallableMemberCall<*, *>? = this.resolveToCall()?.successfulCallOrNull()
 
-        context(KaSession)
+        context(_: KaSession)
         private fun KtExpression.collectVariableCalls(): Set<KtCallExpression> = this
             .parentsOfType<KtExpression>(withSelf = true)
             .mapNotNull { it.getSelectorOrThis() as? KtCallExpression }
