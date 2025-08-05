@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runUndoTransparentWriteAction
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -21,7 +22,7 @@ class KotlinInBlockModificationsContractsTest : KotlinLightCodeInsightFixtureTes
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtFile.diagnostics() = collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
 
     fun `test isolated`() {
