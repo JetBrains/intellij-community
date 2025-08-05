@@ -6,6 +6,11 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -16,7 +21,7 @@ import org.jetbrains.kotlin.types.Variance
 
 class ExpectedExpressionMatcher(val types: List<KaType>? = null, val nullability: KaTypeNullability? = null) {
 
-    context(KaSession)
+    context(_: KaSession)
     fun match(candidateType: KaType): Boolean {
         if (types != null && types.none { candidateType.isSubtypeOf(it) }) {
             return false
@@ -29,7 +34,7 @@ class ExpectedExpressionMatcher(val types: List<KaType>? = null, val nullability
 }
 
 object ExpectedExpressionMatcherProvider {
-    context(KaSession)
+    context(_: KaSession)
     operator fun get(target: KtElement): ExpectedExpressionMatcher? {
         return getForElvis(target)
             ?: getForValueArgument(target)
@@ -40,7 +45,7 @@ object ExpectedExpressionMatcherProvider {
             ?: getForLoopRange(target)
     }
 
-    context(KaSession)
+    context(_: KaSession)
 private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
         val elvisExpression = (target.parent as? KtBinaryExpression)
             ?.takeIf { it.operationToken == KtTokens.ELVIS }
@@ -61,7 +66,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
         return null
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getForValueArgument(target: KtElement): ExpectedExpressionMatcher? {
         val valueArgument = when (val parent = target.parent) {
             is KtValueArgument -> parent
@@ -79,7 +84,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
         return null
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getForLambdaArgument(target: KtElement): ExpectedExpressionMatcher? {
         val lambdaArgument = target.parent as? KtLambdaArgument ?: return null
         val callExpression = lambdaArgument.parent as? KtCallExpression ?: return null
@@ -91,7 +96,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
         return null
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getForArrayAccessArgument(target: KtElement): ExpectedExpressionMatcher? {
         val containerNode = target.parent as? KtContainerNode ?: return null
         val arrayAccessExpression = (containerNode.parent as? KtArrayAccessExpression) ?: return null
@@ -117,7 +122,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
         return null
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getForArgument(callElement: KtCallElement, argument: ValueArgument): ExpectedExpressionMatcher? {
         for (call in callElement.resolveToCall()?.calls.orEmpty()) {
             if (call is KaFunctionCall<*>) {
@@ -134,7 +139,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
 
     private val comparisonOperators = setOf(KtTokens.EQEQ, KtTokens.EXCLEQ, KtTokens.EQEQEQ, KtTokens.EXCLEQEQEQ)
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getForComparison(target: KtElement): ExpectedExpressionMatcher? {
         val binaryOperation = (target.parent as? KtBinaryExpression)
             ?.takeIf { it.operationToken in comparisonOperators }
@@ -155,7 +160,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
         return null
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getForIf(target: KtElement): ExpectedExpressionMatcher? {
         val containerNode = target.parent as? KtContainerNode ?: return null
         val ifExpression = containerNode.parent as? KtIfExpression ?: return null
@@ -178,7 +183,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
     private val KOTLIN_SEQUENCE_CLASS_ID = ClassId.fromString("kotlin/sequences/Sequence")
     private val JAVA_STREAM_CLASS_ID = ClassId.fromString("java/util/stream/Stream")
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getForLoopRange(target: KtElement): ExpectedExpressionMatcher? {
         val containerNode = target.parent as? KtContainerNode ?: return null
         val forExpression = containerNode.parent as? KtForExpression ?: return null
