@@ -3,6 +3,14 @@ package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.components.buildStarTypeProjection
+import org.jetbrains.kotlin.analysis.api.components.defaultType
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.hasCommonSubtypeWith
+import org.jetbrains.kotlin.analysis.api.components.isNullable
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
@@ -19,24 +27,24 @@ import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
  * This check only approximates the possibility of the subtyping relation.
  * An accurate estimation requires the use of the constraint system, which can lead to a loss in performance.
  */
-context(KaSession)
+context(_: KaSession)
 infix fun KaType.isPossiblySubTypeOf(superType: KaType): Boolean {
     if (this is KaTypeParameterType) return this.hasCommonSubtypeWith(superType)
 
     if (superType is KaTypeParameterType) return superType.symbol.upperBounds.all { this isPossiblySubTypeOf it }
 
     val superTypeWithReplacedTypeArguments = superType.expandedSymbol?.let { symbol ->
-        buildClassTypeWithStarProjections(symbol, superType.nullability)
+        buildClassTypeWithStarProjections(symbol, superType.isNullable)
     }
     return superTypeWithReplacedTypeArguments != null && isSubtypeOf(superTypeWithReplacedTypeArguments)
 }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
-private fun buildClassTypeWithStarProjections(symbol: KaClassSymbol, nullability: KaTypeNullability): KaType =
+private fun buildClassTypeWithStarProjections(symbol: KaClassSymbol, nullability: Boolean): KaType =
     buildClassTypeWithStarProjections(symbol).withNullability(nullability)
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 fun buildClassTypeWithStarProjections(symbol: KaClassLikeSymbol): KaType =
     buildClassType(symbol) {
