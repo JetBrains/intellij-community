@@ -24,6 +24,7 @@ import com.jetbrains.python.newProjectWizard.impl.PyV3UIServicesProd
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.validatePath
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
+import com.jetbrains.python.sdk.refreshPaths
 import com.jetbrains.python.statistics.version
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -97,6 +98,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
         typeSpecificSettings.generateProject(module, baseDir, sdk).onFailure {
           uiServices.errorSink.emit(it)
         }
+        refreshPaths(project, sdk)
       }
       uiServices.expandProjectTreeView(project)
     }
