@@ -1188,7 +1188,7 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
 
           companion object {
               @JvmField
-              const val parameters: MutableCollection<Any> = 0L
+              const val parameters: MutableCollection<Any> = TODO("initialize me")
           }
       }
     """.trimIndent(), "Add 'const val' property 'parameters' to 'Test'")

@@ -14,7 +14,7 @@ import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.util.createSmartPointer
 
-public class CreateFieldFromJavaUsageRequest(
+public open class CreateFieldFromJavaUsageRequest(
   reference: PsiReferenceExpression,
   private val modifiers: Collection<JvmModifier>,
   private val isConstant: Boolean,

@@ -1395,7 +1395,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       import java.util.Collection;
 
       class Test {
-          public static final Collection<Object> list = 0L;
+          public static final Collection<Object> list = ;
 
           @FieldSource("list")
         @ParameterizedTest

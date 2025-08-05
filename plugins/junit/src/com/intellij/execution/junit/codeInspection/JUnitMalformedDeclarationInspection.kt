@@ -21,10 +21,10 @@ import com.intellij.execution.junit.references.PsiSourceResolveResult
 import com.intellij.jvm.analysis.quickFix.CompositeModCommandQuickFix
 import com.intellij.jvm.analysis.quickFix.createModifierQuickfixes
 import com.intellij.lang.Language
+import com.intellij.lang.java.request.CreateFieldFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
-import com.intellij.lang.jvm.JvmValue
 import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.lang.jvm.types.JvmType
@@ -45,7 +45,6 @@ import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.util.asSafely
-import com.siyeh.ig.fixes.SerialVersionUIDBuilder
 import com.siyeh.ig.junit.JUnitCommonClassNames.*
 import com.siyeh.ig.psiutils.TestUtils
 import com.siyeh.ig.psiutils.TypeUtils
@@ -716,19 +715,23 @@ private class JUnitMalformedSignatureVisitor(
     return if (isOnTheFly && className.isEmpty()) {
       val modifiers = mutableListOf(JvmModifier.PUBLIC)
       if (!TestUtils.testInstancePerClass(containingClass)) modifiers.add(JvmModifier.STATIC)
-      val typeFromText = JavaPsiFacade.getElementFactory(containingClass.project).createTypeFromText(
-        FIELD_SOURCE_TYPE, containingClass
-      )
-      val request = fieldRequest(
-        fieldName = sourceProviderName,
-        annotations = emptyList(),
+      val elementFactory = JavaPsiFacade.getElementFactory(containingClass.project)
+      val sourceFieldType = elementFactory.createTypeFromText(FIELD_SOURCE_TYPE, containingClass)
+      val sourceField = elementFactory.createField(sourceProviderName, sourceFieldType).apply {
+        modifierList?.setModifierProperty(PsiModifier.PUBLIC, true)
+        modifierList?.setModifierProperty(PsiModifier.STATIC, true)
+      }
+
+      val sourceFieldReference = elementFactory.createExpressionFromText(sourceProviderName, sourceField) as PsiReferenceExpression
+      val createFieldRequest = object : CreateFieldFromJavaUsageRequest(
+        reference = sourceFieldReference,
         modifiers = modifiers,
-        fieldType = expectedTypes(typeFromText),
-        targetSubstitutor = PsiJvmSubstitutor(containingClass.project, PsiSubstitutor.EMPTY),
-        initializer = JvmValue.createLongValue(SerialVersionUIDBuilder.computeDefaultSUID(containingClass)),
-        isConstant = true
-      )
-      val actions = createAddFieldActions(containingClass, request)
+        isConstant = true,
+        useAnchor = false
+      ) {
+        override fun getFieldType() = listOf(expectedType(sourceFieldType))
+      }
+      val actions = createAddFieldActions(containingClass, createFieldRequest)
       val quickFixes = IntentionWrapper.wrapToQuickFixes(actions, containingClass.containingFile).toTypedArray()
 
       holder.registerProblem(anchor.navigationElement, message, *quickFixes)
