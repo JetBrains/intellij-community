@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk.uv.impl
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.intellij.util.io.delete
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.*
 import com.jetbrains.python.errorProcessing.PyExecResult
@@ -22,7 +21,9 @@ import com.jetbrains.python.venvReader.tryResolvePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
+import kotlin.io.path.notExists
 import kotlin.io.path.pathString
 
 private const val NO_METADATA_MESSAGE = "does not contain a PEP 723 metadata tag"
@@ -46,16 +47,12 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
       initArgs.add("none")
       initArgs.add("--no-project")
 
+      val notExistingFiles = listOf("hello.py", "main.py").filter { cwd.resolve(it).notExists() }
+
       uvCli.runUv(cwd, *initArgs.toTypedArray())
         .getOr { return it }
 
-      // TODO: ask for an uv option not to create
-      val hello = cwd.resolve("hello.py").takeIf { it.exists() }
-      hello?.delete()
-
-      // called main.py in later versions
-      val main = cwd.resolve("main.py").takeIf { it.exists() }
-      main?.delete()
+      notExistingFiles.forEach { cwd.resolve(it).deleteIfExists() }
     }
 
     val venvArgs = mutableListOf("venv")
