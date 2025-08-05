@@ -48,7 +48,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     fun isSupportedFile(file: KtFile): Boolean = true
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaAnnotation.toFakeDeserializedSymbol(
         parent: KtDeclaration,
         symbol: KaDeclarationSymbol
