@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationInfo;
@@ -50,7 +50,7 @@ public final class PlatformUtils {
   public static final String FLEET_PREFIX = "FleetBackend";
   public static final String RUSTROVER_PREFIX = "RustRover";
   public static final String WRITERSIDE_PREFIX = "Writerside";
-  public static final String GITCLIENT_PREFIX = "GitClient";
+  public static final String GIT_CLIENT_PREFIX = "GitClient";
   public static final String MPS_PREFIX = "MPS";
 
   /**
@@ -195,7 +195,7 @@ public final class PlatformUtils {
   }
 
   public static boolean isGitClient() {
-    return is(GITCLIENT_PREFIX);
+    return is(GIT_CLIENT_PREFIX);
   }
 
   public static boolean isJetBrainsClient() { return is(JETBRAINS_CLIENT_PREFIX); }

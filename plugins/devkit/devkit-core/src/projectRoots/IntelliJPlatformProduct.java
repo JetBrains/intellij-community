@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.util.PlatformUtils;
@@ -32,7 +32,7 @@ public enum IntelliJPlatformProduct {
   AQUA("QA", "Aqua", PlatformUtils.AQUA_PREFIX, null, "aqua:aqua"),
   RUSTROVER("RR", "RustRover", PlatformUtils.RUSTROVER_PREFIX, "com.jetbrains.intellij.rustrover:RustRover", "rustrover:RustRover"),
   WRITERSIDE("WRS", "Writerside", PlatformUtils.WRITERSIDE_PREFIX, "com.jetbrains.intellij.idea:writerside", "writerside:writerside"),
-  GIT_CLIENT("GIG", "GitClient", PlatformUtils.GITCLIENT_PREFIX, null, null);
+  GIT_CLIENT("GIG", "GitClient", PlatformUtils.GIT_CLIENT_PREFIX, null, null);
 
   private final String myProductCode;
   private final String myName;

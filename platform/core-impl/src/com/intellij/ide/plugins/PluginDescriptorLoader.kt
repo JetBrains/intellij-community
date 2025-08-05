@@ -905,13 +905,12 @@ fun CoroutineScope.loadCorePlugin(
 }
 
 // should be the only plugin in lib
-fun isProductWithTheOnlyDescriptor(platformPrefix: String): Boolean {
-  return platformPrefix == PlatformUtils.IDEA_PREFIX ||
-         platformPrefix == PlatformUtils.WEB_PREFIX ||
-         platformPrefix == PlatformUtils.DBE_PREFIX ||
-         platformPrefix == PlatformUtils.GATEWAY_PREFIX ||
-         platformPrefix == PlatformUtils.GITCLIENT_PREFIX
-}
+fun isProductWithTheOnlyDescriptor(platformPrefix: String): Boolean =
+  platformPrefix == PlatformUtils.IDEA_PREFIX ||
+  platformPrefix == PlatformUtils.WEB_PREFIX ||
+  platformPrefix == PlatformUtils.DBE_PREFIX ||
+  platformPrefix == PlatformUtils.GATEWAY_PREFIX ||
+  platformPrefix == PlatformUtils.GIT_CLIENT_PREFIX
 
 private fun getResourceReader(path: String, classLoader: ClassLoader): XMLStreamReader2? {
   if (classLoader is UrlClassLoader) {

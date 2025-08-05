@@ -24,7 +24,6 @@ public final class AppMode {
   public static final String REMOTE_DEV_HOST_COMMAND = "remoteDevHost";
   public static final String REMOTE_DEV_MODE_COMMAND = "serverMode";
 
-  static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
   public static final String HELP_OPTION = "--help";
   public static final String VERSION_OPTION = "--version";
 
