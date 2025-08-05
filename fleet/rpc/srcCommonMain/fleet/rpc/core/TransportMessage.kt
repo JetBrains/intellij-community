@@ -21,7 +21,7 @@ sealed class TransportMessage {
 
   @Serializable
   @SerialName("envelope")
-  data class Envelope(val destination: UID, val origin: UID, val otelData: String? = null, val payload: String) : TransportMessage() 
+  data class Envelope(val destination: UID, val origin: UID, val otelData: String? = null, val payload: String) : TransportMessage()
 
   fun serialize(): String {
     return Json.encodeToString(serializer, this)

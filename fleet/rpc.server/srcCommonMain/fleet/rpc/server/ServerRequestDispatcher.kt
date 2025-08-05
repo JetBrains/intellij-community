@@ -59,7 +59,7 @@ class ServerRequestDispatcher(private val connectionListener: ConnectionListener
             broadcastSafely(TransportMessage.RouteOpened(route))
             connectionListener?.onConnect(endpoint, route, socketId, presentableName)
             coroutineScope {
-              val connectionJob = launch {
+              val connectionJob = launch(Dispatchers.Unconfined) {
                 receive.consumeEach { message ->
                   when (message) {
                     is TransportMessage.Envelope -> {
