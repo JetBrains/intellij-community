@@ -7,7 +7,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
 
 internal class KotlinInlineMethodCompletionCommandProvider : AbstractInlineMethodCompletionCommandProvider() {
     override fun findOffsetToCall(offset: Int, psiFile: PsiFile): Int? {
@@ -18,6 +20,13 @@ internal class KotlinInlineMethodCompletionCommandProvider : AbstractInlineMetho
             element = PsiTreeUtil.skipWhitespacesBackward(element) ?: return null
         }
         currentOffset = element.textRange?.endOffset ?: currentOffset
+
+        val parent = element.parentOfType<KtNamedFunction>()
+        if (parent != null && parent.nameIdentifier?.textRange?.endOffset == currentOffset) return currentOffset
+        if (parent != null &&
+            parent.textRange.endOffset == currentOffset
+        ) return parent.nameIdentifier?.textRange?.endOffset
+
         val callExpression = element.findParentOfType<KtCallExpression>() ?: return null
         val valueArgumentList = callExpression.valueArgumentList
         if (valueArgumentList != null && (callExpression.textRange.endOffset == currentOffset ||

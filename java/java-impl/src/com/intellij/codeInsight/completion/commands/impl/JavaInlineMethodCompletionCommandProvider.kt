@@ -3,9 +3,7 @@ package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.completion.command.commands.AbstractInlineMethodCompletionCommandProvider
 import com.intellij.codeInsight.completion.command.getCommandContext
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiMethodCallExpression
-import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
 
@@ -18,9 +16,12 @@ internal class JavaInlineMethodCompletionCommandProvider : AbstractInlineMethodC
       element = PsiTreeUtil.skipWhitespacesBackward(element) ?: return null
     }
     currentOffset = element.textRange?.endOffset ?: currentOffset
+    if (element is PsiIdentifier && element.parent is PsiMethod) return currentOffset
+    if (element is PsiJavaToken && element.tokenType == JavaTokenType.RBRACE &&
+        element.parent is PsiCodeBlock && element.parent.parent is PsiMethod) return (element.parent.parent as? PsiMethod)?.nameIdentifier?.textRange?.endOffset
     val callExpression = element.findParentOfType<PsiMethodCallExpression>() ?: return null
     val referenceNameElement = callExpression.methodExpression.referenceNameElement
-    if (referenceNameElement!=null &&
+    if (referenceNameElement != null &&
         (callExpression.textRange.endOffset == currentOffset ||
          referenceNameElement.textRange?.endOffset == currentOffset)) {
       return referenceNameElement.textRange?.endOffset

@@ -472,6 +472,54 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
+    fun testInlineMethodOnIdentifier() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo.<caret>() {
+            
+                val a = "1"
+            }
+            
+            fun bar(){
+                foo()
+            }
+            """.trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        selectItem(elements.first { element -> element.lookupString.contains("Inline", ignoreCase = true) })
+        myFixture.checkResult(
+            """
+            fun bar() {
+                val a = "1"
+            }""".trimIndent()
+        )
+    }
+
+    fun testInlineMethodOnRBracket() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo() {
+            
+                val a = "1"
+            }.<caret>
+            
+            fun bar(){
+                foo()
+            }
+            """.trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        selectItem(elements.first { element -> element.lookupString.contains("Inline", ignoreCase = true) })
+        myFixture.checkResult(
+            """
+            fun bar() {
+                val a = "1"
+            }""".trimIndent()
+        )
+    }
+
     fun testMoveMethod() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(
