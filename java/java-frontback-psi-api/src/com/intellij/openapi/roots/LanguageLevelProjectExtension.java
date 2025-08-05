@@ -26,22 +26,17 @@ public abstract class LanguageLevelProjectExtension {
 
   public abstract void setLanguageLevel(@NotNull LanguageLevel languageLevel);
 
-  private Boolean myDefault;
-
   /**
    * Auto-detect language level from project JDK maximum possible level.
    * @return null if the property is not set yet (e.g. after migration).
    */
-  public @Nullable Boolean getDefault() {
-    return myDefault;
-  }
+  public abstract @Nullable Boolean getDefault();
 
-  public void setDefault(@Nullable Boolean value) {
-    myDefault = value;
-  }
+  public abstract void setDefault(@Nullable Boolean value);
 
   public boolean isDefault() {
-    return myDefault != null && myDefault;
+    Boolean currentValue = getDefault();
+    return currentValue != null && currentValue;
   }
 
   public void languageLevelsChanged() {

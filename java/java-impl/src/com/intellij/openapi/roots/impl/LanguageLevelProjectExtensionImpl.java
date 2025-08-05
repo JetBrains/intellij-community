@@ -26,7 +26,8 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
   private static final String DEFAULT_ATTRIBUTE = "default";
 
   private final Project myProject;
-  private LanguageLevel myLanguageLevel;
+  private @Nullable LanguageLevel myLanguageLevel;
+  private @Nullable Boolean myDefault;
   private LanguageLevel myCurrentLevel;
 
   public LanguageLevelProjectExtensionImpl(final Project project) {
@@ -96,6 +97,16 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
       setDefault(false);
       languageLevelsChanged();
     }
+  }
+
+  @Override
+  public @Nullable Boolean getDefault() {
+    return myDefault;
+  }
+
+  @Override
+  public void setDefault(@Nullable Boolean newDefault) {
+    myDefault = newDefault;
   }
 
   @Override
