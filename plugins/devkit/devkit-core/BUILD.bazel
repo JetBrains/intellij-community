@@ -94,6 +94,7 @@ jvm_library(
     "@lib//:snakeyaml",
     "//platform/eel-provider",
     "//libraries/xerces",
+    "//platform/usageView-impl",
   ],
   runtime_deps = [":core_resources"]
 )
