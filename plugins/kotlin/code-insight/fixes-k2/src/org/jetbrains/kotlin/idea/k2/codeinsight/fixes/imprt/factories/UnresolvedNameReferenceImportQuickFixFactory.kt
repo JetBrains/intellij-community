@@ -40,7 +40,7 @@ internal object UnresolvedNameReferenceImportQuickFixFactory : AbstractImportQui
         return providers.flatMap { it.collectCandidates(unresolvedName, indexProvider) }.toList()
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getCandidateProvidersForUnresolvedNameReference(
         importContext: ImportContext,
     ): Sequence<AbstractImportCandidatesProvider> = when (importContext.positionType) {

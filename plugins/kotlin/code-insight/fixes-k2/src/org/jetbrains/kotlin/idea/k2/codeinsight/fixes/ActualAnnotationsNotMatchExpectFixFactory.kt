@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ModCommandAction
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -15,10 +16,9 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 internal object ActualAnnotationsNotMatchExpectFixFactory {
 
-    val factory = KotlinQuickFixFactory.ModCommandBased(::createQuickFixes)
+    val factory = KotlinQuickFixFactory.ModCommandBased { diagnostics: KaFirDiagnostic.ActualAnnotationsNotMatchExpect -> createQuickFixes(diagnostics) }
 
-    context (KaSession)
-    private fun createQuickFixes(diagnostic: KaFirDiagnostic.ActualAnnotationsNotMatchExpect): List<ModCommandAction> {
+    private fun KaSession.createQuickFixes(diagnostic: KaFirDiagnostic.ActualAnnotationsNotMatchExpect): List<ModCommandAction> {
         val expectAnnotationEntry = diagnostic.incompatibilityType.expectAnnotation.psi as? KtAnnotationEntry
             ?: return emptyList()
 
@@ -28,7 +28,7 @@ internal object ActualAnnotationsNotMatchExpectFixFactory {
         return listOfNotNull(removeAnnotationFix) + createCopyAndReplaceAnnotationFixes(diagnostic, expectAnnotationEntry)
     }
 
-    context (KaSession)
+    context (_: KaSession)
     private fun createCopyAndReplaceAnnotationFixes(
         diagnostic: KaFirDiagnostic.ActualAnnotationsNotMatchExpect,
         expectAnnotationEntry: KtAnnotationEntry,
@@ -48,7 +48,7 @@ internal object ActualAnnotationsNotMatchExpectFixFactory {
         )
     }
 
-    context (KaSession)
+    context (_: KaSession)
     private fun KtAnnotationEntry.getAnnotationClassId(): ClassId? {
         val resolvedExpectAnnotationCall = resolveToCall()?.singleConstructorCallOrNull() ?: return null
         return resolvedExpectAnnotationCall.symbol.containingClassId

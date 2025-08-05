@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
@@ -104,18 +105,18 @@ internal object ChangeMemberFunctionSignatureFixFactory {
     }
 
     private interface ParameterChooser {
-        context(KaSession)
+        context(_: KaSession)
         fun accept(parameter: KaValueParameterSymbol, superParameter: KaValueParameterSymbol, newType: KaType): Boolean
 
         object MatchNames : ParameterChooser {
-            context(KaSession)
+            context(_: KaSession)
             override fun accept(parameter: KaValueParameterSymbol, superParameter: KaValueParameterSymbol, newType: KaType): Boolean {
                 return parameter.name == superParameter.name
             }
         }
 
         object MatchTypes : ParameterChooser {
-            context(KaSession)
+            context(_: KaSession)
             override fun accept(parameter: KaValueParameterSymbol, superParameter: KaValueParameterSymbol, newType: KaType): Boolean {
                 return parameter.returnType.semanticallyEquals(newType)
             }

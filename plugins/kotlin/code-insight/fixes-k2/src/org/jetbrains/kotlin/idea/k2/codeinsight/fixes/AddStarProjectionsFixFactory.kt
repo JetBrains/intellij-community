@@ -5,6 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -77,7 +78,7 @@ private fun KaSession.getTargetClasses(
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private val KaDeclarationSymbol.parentsWithSelf: Sequence<KaDeclarationSymbol>
     get() = generateSequence(this) { it.containingDeclaration }
 

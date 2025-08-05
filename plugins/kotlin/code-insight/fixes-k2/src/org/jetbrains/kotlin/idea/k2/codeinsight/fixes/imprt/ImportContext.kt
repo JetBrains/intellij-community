@@ -25,7 +25,7 @@ internal interface ImportContext {
      */
     val isExplicitReceiver: Boolean
 
-    context(KaSession)
+    context(_: KaSession)
     fun receiverTypes(): List<KaType>
 }
 
@@ -36,7 +36,7 @@ internal class DefaultImportContext(
     override val positionType: ImportPositionType get() = positionTypeAndReceiver.positionType
     override val isExplicitReceiver: Boolean get() = positionTypeAndReceiver.receiver != null
 
-    context(KaSession)
+    context(_: KaSession)
     override fun receiverTypes(): List<KaType> =
         collectReceiverTypesForElement(position, positionTypeAndReceiver.receiver as? KtExpression)
 }
@@ -54,7 +54,7 @@ internal class ImportContextWithFixedReceiverType(
 
     override val isExplicitReceiver: Boolean = true
 
-    context(KaSession)
+    context(_: KaSession)
     override fun receiverTypes(): List<KaType> = withValidityAssertion {
         listOf(explicitReceiverType)
     }

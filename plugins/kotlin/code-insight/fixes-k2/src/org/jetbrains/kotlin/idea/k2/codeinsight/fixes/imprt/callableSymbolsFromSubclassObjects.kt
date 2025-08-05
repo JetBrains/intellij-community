@@ -5,6 +5,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.analysisScope
+import org.jetbrains.kotlin.analysis.api.components.memberScope
+import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
@@ -32,13 +35,13 @@ import java.util.concurrent.ConcurrentMap
 private val SUBCLASS_OBJECTS_SYMBOLS_CACHE: ConcurrentMap<KaSession, List<KaClassSymbol>> =
     CollectionFactory.createConcurrentWeakKeyWeakValueIdentityMap()
 
-context(KaSession)
+context(session: KaSession)
 private fun KtSymbolFromIndexProvider.getKotlinSubclassObjectsSymbolsCached(): List<KaClassSymbol> {
     if (!Registry.`is`("kotlin.k2.auto.import.from.subclass.objects.enabled")) {
         return emptyList()
     }
 
-    return SUBCLASS_OBJECTS_SYMBOLS_CACHE.getOrPut(this@KaSession) {
+    return SUBCLASS_OBJECTS_SYMBOLS_CACHE.getOrPut(session) {
         getKotlinSubclassObjectsByNameFilter(
             scope = analysisScope,
             nameFilter = { true },
@@ -49,7 +52,7 @@ private fun KtSymbolFromIndexProvider.getKotlinSubclassObjectsSymbolsCached(): L
 /**
  * Consider moving this to [KtSymbolFromIndexProvider] when there is a good API to represent inherited callables.
  */
-context(KaSession)
+context(_: KaSession)
 internal fun KtSymbolFromIndexProvider.getCallableSymbolsFromSubclassObjects(name: Name): Sequence<Pair<KaClassSymbol, KaCallableSymbol>> {
     val allObjects = getKotlinSubclassObjectsSymbolsCached()
 
@@ -66,7 +69,7 @@ internal fun KtSymbolFromIndexProvider.getCallableSymbolsFromSubclassObjects(nam
 /**
  * Consider moving this to [KtSymbolFromIndexProvider] when there is a good API to represent inherited callables.
  */
-context(KaSession)
+context(_: KaSession)
 internal fun KtSymbolFromIndexProvider.getExtensionCallableSymbolsFromSubclassObjects(
     name: Name,
     receiverTypes: List<KaType>,
@@ -76,11 +79,11 @@ internal fun KtSymbolFromIndexProvider.getExtensionCallableSymbolsFromSubclassOb
 /**
  * Mostly a copy of [KtSymbolFromIndexProvider.filterExtensionsByReceiverTypes]; should be unified in the future.
  */
-context(KaSession)
+context(_: KaSession)
 private fun Sequence<Pair<KaClassSymbol, KaCallableSymbol>>.filterExtensionsByReceiverTypes(
     receiverTypes: List<KaType>
 ): Sequence<Pair<KaClassSymbol, KaCallableSymbol>> {
-    val nonNullableReceiverTypes = receiverTypes.map { it.withNullability(KaTypeNullability.NON_NULLABLE) }
+    val nonNullableReceiverTypes = receiverTypes.map { it.withNullability(false) }
 
     return filter { (_, symbol) ->
         if (!symbol.isExtension) return@filter false

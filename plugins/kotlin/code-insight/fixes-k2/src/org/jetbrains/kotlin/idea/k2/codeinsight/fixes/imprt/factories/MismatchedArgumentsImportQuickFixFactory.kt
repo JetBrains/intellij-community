@@ -64,7 +64,7 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
             .toList()
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getCandidateProvidersForUnresolvedNameReference(
         importContext: ImportContext,
     ): Sequence<AbstractImportCandidatesProvider> = when (importContext.positionType) {
@@ -89,7 +89,7 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
      * 
      * Does in-the-air resolution with [KtFileWithReplacedImports], so can be expensive.
      */    
-    context(KaSession)
+    context(_: KaSession)
     private fun resolvesWithoutErrors(originalCallExpression: KtElement, candidate: ImportCandidate): Boolean {
         if (!Registry.`is`("kotlin.k2.auto.import.mismatched.arguments.factory.applicability.filter.enabled")) {
             // do not do any filtering, let all candidates pass

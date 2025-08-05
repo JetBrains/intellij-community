@@ -9,6 +9,11 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.commonSupertype
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isUnitType
+import org.jetbrains.kotlin.analysis.api.components.targetSymbol
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
@@ -72,13 +77,13 @@ internal object ChangeTypeQuickFixFactories {
         getSuperCallableSymbol = { it.superVariable as KaPropertySymbol },
     )
 
-    context(KaSession)
+    context(session: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun getActualType(ktType: KaType, position: KtElement): KaType {
-        return ktType.toFunctionType() ?: ktType.approximateToDenotableSupertypeOrSelf(position) ?: ktType
+        return ktType.toFunctionType() ?: with(session) { ktType.approximateToDenotableSupertypeOrSelf(position) } ?: ktType
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtElement.returnType(candidateType: KaType): KaType {
         val (initializers, functionOrGetter) = when (this) {
             is KtNamedFunction -> listOfNotNull(this.initializer) to this
@@ -113,7 +118,8 @@ internal object ChangeTypeQuickFixFactories {
         return if (returnTypes.isNotEmpty()) returnTypes.commonSupertype else candidateType
     }
 
-    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    context(session: KaSession)
     private fun KtProperty.getPropertyInitializerType(): KaType? {
         val initializer = initializer
         return if (typeReference != null && initializer != null) {
@@ -122,8 +128,11 @@ internal object ChangeTypeQuickFixFactories {
 
             // A new expression has to be analyzed in the context of the newly created file. To go back to the outer session, a workaround with
             // converting a type to a pointer and back can be used
-            @OptIn(KaExperimentalApi::class)
-            analyze(newExpression) { newExpression.expressionType?.createPointer() }?.restore()
+
+            val typePointer = analyze(newExpression) { newExpression.expressionType?.createPointer() }
+            with(session) {
+                typePointer?.restore()
+            }
         } else null
     }
 
@@ -172,7 +181,7 @@ internal object ChangeTypeQuickFixFactories {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaCallableSymbol.isSafeForChangeTypeFix(): Boolean {
         // It's not safe to create a fix if the symbol has more than one overridden declaration
         return this.allOverriddenSymbols.toSet().size <= 1
