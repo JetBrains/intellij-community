@@ -3,6 +3,7 @@ package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -123,8 +124,10 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
 
   public void testMigrateFromOldDefaults() throws Exception {
     LanguageLevelProjectExtension defaultExt = LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject());
-    defaultExt.setLanguageLevel(LanguageLevel.JDK_1_4);
-    defaultExt.setDefault(null); // emulate migration from previous build
+    WriteAction.run(() -> {
+      defaultExt.setLanguageLevel(LanguageLevel.JDK_1_4);
+      defaultExt.setDefault(null); // emulate migration from previous build
+    });
 
     Project project = createProjectFromTemplate(JAVA, step -> {});
     LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(project);
@@ -164,17 +167,22 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
     ProjectManager projectManager = ProjectManager.getInstance();
     Project defaultProject = projectManager.getDefaultProject();
 
-    LanguageLevel old = LanguageLevelProjectExtension.getInstance(defaultProject).getLanguageLevel();
+    LanguageLevelProjectExtension languageLevelProjectExtension = LanguageLevelProjectExtension.getInstance(defaultProject);
+    LanguageLevel old = languageLevelProjectExtension.getLanguageLevel();
     try {
-      LanguageLevelProjectExtension.getInstance(defaultProject).setLanguageLevel(languageLevel);
-      LanguageLevelProjectExtension.getInstance(defaultProject).setDefault(detect);
+      WriteAction.run(() -> {
+        languageLevelProjectExtension.setLanguageLevel(languageLevel);
+        languageLevelProjectExtension.setDefault(detect);
+      });
       Project project = createProjectFromTemplate(JAVA, step -> {});
       assertEquals(languageLevel, LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
       return project;
     }
     finally {
-      LanguageLevelProjectExtension.getInstance(defaultProject).setLanguageLevel(old);
-      LanguageLevelProjectExtension.getInstance(defaultProject).setDefault(true);
+      WriteAction.run(() -> {
+        languageLevelProjectExtension.setLanguageLevel(old);
+        languageLevelProjectExtension.setDefault(true);
+      });
     }
   }
 

@@ -3,6 +3,7 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,7 @@ public abstract class LanguageLevelProjectExtension {
    */
   public abstract @NotNull LanguageLevel getLanguageLevel();
 
+  @RequiresWriteLock
   public abstract void setLanguageLevel(@NotNull LanguageLevel languageLevel);
 
   /**
@@ -32,6 +34,7 @@ public abstract class LanguageLevelProjectExtension {
    */
   public abstract @Nullable Boolean getDefault();
 
+  @RequiresWriteLock
   public abstract void setDefault(@Nullable Boolean value);
 
   public boolean isDefault() {

@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -11,6 +13,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.pom.java.JavaRelease;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +27,7 @@ import java.util.Objects;
 public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExtension {
   private static final String LANGUAGE_LEVEL = "languageLevel";
   private static final String DEFAULT_ATTRIBUTE = "default";
+  private static final Logger LOG = Logger.getInstance(LanguageLevelProjectExtensionImpl.class);
 
   private final Project myProject;
   private @Nullable LanguageLevel myLanguageLevel;
@@ -32,7 +36,6 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
 
   public LanguageLevelProjectExtensionImpl(final Project project) {
     myProject = project;
-    setDefault(project.isDefault() ? true : null);
   }
 
   public static LanguageLevelProjectExtensionImpl getInstanceImpl(Project project) {
@@ -54,7 +57,7 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
     String aDefault = element.getAttributeValue(DEFAULT_ATTRIBUTE);
     Boolean defaultOldValue = getDefault();
     if (aDefault != null) {
-      setDefault(Boolean.parseBoolean(aDefault));
+      myDefault = Boolean.parseBoolean(aDefault);
     }
     return !Objects.equals(defaultOldValue, getDefault()) || languageLevelOldValue != myLanguageLevel;
   }
@@ -89,7 +92,12 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
   }
 
   @Override
+  @RequiresWriteLock(generateAssertion = false)
   public void setLanguageLevel(@NotNull LanguageLevel languageLevel) {
+    LOG.assertTrue(ApplicationManager.getApplication().isWriteAccessAllowed(),
+                   "Language level may only be updated under write action. " +
+                   "Please acquire write action before invoking setLanguageLevel.");
+
     // we don't use here getLanguageLevelOrDefault() - if null, just set to provided value because our default (JavaRelease.getHighest())
     // is changed every java release
     if (myLanguageLevel != languageLevel) {
@@ -105,7 +113,12 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
   }
 
   @Override
+  @RequiresWriteLock(generateAssertion = false)
   public void setDefault(@Nullable Boolean newDefault) {
+    LOG.assertTrue(ApplicationManager.getApplication().isWriteAccessAllowed(),
+                   "Language level may only be updated under write action. " +
+                   "Please acquire write action before invoking setDefault.");
+
     myDefault = newDefault;
   }
 
