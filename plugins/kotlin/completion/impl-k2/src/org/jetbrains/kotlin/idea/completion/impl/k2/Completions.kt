@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirAnnotationCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassReferenceCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierReferenceCompletionContributor
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
@@ -34,7 +35,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 internal object Completions {
     private val contributors: List<K2CompletionContributor<*>> = listOf(
-        K2ClassifierCompletionContributor()
+        K2ClassifierCompletionContributor(),
+        K2ClassReferenceCompletionContributor(),
     )
 
     // Note: this function will be renamed and replace the complete method below!
@@ -259,7 +261,7 @@ internal object Completions {
             }
 
             is KotlinCallableReferencePositionContext -> {
-                K2ClassReferenceCompletionContributor(sink)
+                FirClassReferenceCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
                 FirCallableReferenceCompletionContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)

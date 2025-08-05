@@ -3,25 +3,19 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
-internal class K2ClassReferenceCompletionContributor(
-    sink: LookupElementSink,
-    priority: Int = 0,
-) : FirCompletionContributorBase<KotlinCallableReferencePositionContext>(sink, priority) {
-
-    context(KaSession)
-    override fun complete(
-        positionContext: KotlinCallableReferencePositionContext,
-        weighingContext: WeighingContext,
-    ) {
-        if (positionContext.explicitReceiver == null) return
-        sink.addElement(createKeywordElement("class"))
-        if (targetPlatform.isJvm()) {
-            sink.addElement(createKeywordElement("class", tail = ".java"))
+internal class K2ClassReferenceCompletionContributor : K2SimpleCompletionContributor<KotlinCallableReferencePositionContext>(
+    KotlinCallableReferencePositionContext::class
+) {
+    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinCallableReferencePositionContext>) {
+        if (context.positionContext.explicitReceiver == null) return
+        context.addElement(createKeywordElement("class"))
+        if (context.completionContext.targetPlatform.isJvm()) {
+            context.addElement(createKeywordElement("class", tail = ".java"))
         }
     }
 }
