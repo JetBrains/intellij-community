@@ -16,24 +16,26 @@
 package com.jetbrains.python.codeInsight.codeFragment;
 
 import com.intellij.codeInsight.codeFragment.CodeFragment;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
 
 public class PyCodeFragment extends CodeFragment {
-  private final Map<String, String> myInputTypes;
-  private final String myOutputType;
-  private final Set<String> myGlobalWrites;
-  private final Set<String> myNonlocalWrites;
+  private final @NotNull Map<@NotNull String, @NotNull String> myInputTypes;
+  private final @Nullable String myOutputType;
+  private final @NotNull Set<@NotNull String> myGlobalWrites;
+  private final @NotNull Set<@NotNull String> myNonlocalWrites;
   private final boolean myYieldInside;
   private final boolean myAsync;
 
-  public PyCodeFragment(final Set<String> input,
-                        final Set<String> output,
-                        final Map<String, String> inputTypes,
-                        final String outputType,
-                        final Set<String> globalWrites,
-                        final Set<String> nonlocalWrites,
+  public PyCodeFragment(final @NotNull Set<@NotNull String> input,
+                        final @NotNull Set<@NotNull String> output,
+                        final @NotNull Map<@NotNull String, @NotNull String> inputTypes,
+                        final @Nullable String outputType,
+                        final @NotNull Set<@NotNull String> globalWrites,
+                        final @NotNull Set<@NotNull String> nonlocalWrites,
                         final boolean returnInside,
                         final boolean yieldInside,
                         final boolean isAsync) {
@@ -46,19 +48,19 @@ public class PyCodeFragment extends CodeFragment {
     myAsync = isAsync;
   }
 
-  public Map<String, String> getInputTypes() {
+  public @NotNull Map<@NotNull String, @NotNull String> getInputTypes() {
     return myInputTypes;
   }
 
-  public String getOutputType() {
+  public @Nullable String getOutputType() {
     return myOutputType;
   }
 
-  public Set<String> getGlobalWrites() {
+  public @NotNull Set<@NotNull String> getGlobalWrites() {
     return myGlobalWrites;
   }
 
-  public Set<String> getNonlocalWrites() {
+  public @NotNull Set<@NotNull String> getNonlocalWrites() {
     return myNonlocalWrites;
   }
 

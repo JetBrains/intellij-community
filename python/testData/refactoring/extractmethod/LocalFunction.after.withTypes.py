@@ -5,5 +5,5 @@ def foo():
     return bar(f)
 
 
-def bar(f_new: Callable[..., Any]):
+def bar(f_new: Callable[..., Any]) -> Any:
     return f_new(1)
