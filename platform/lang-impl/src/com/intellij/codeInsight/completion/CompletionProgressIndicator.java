@@ -76,6 +76,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import static com.intellij.codeInsight.completion.CompletionPhase.CUSTOM_CODE_COMPLETION_ACTION_ID;
+
 @ApiStatus.Internal
 public final class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcessEx, Disposable {
   private static final int TEST_COMPLETION_TIMEOUT = 100 * 1000;
@@ -843,7 +845,12 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     if (handler.isTestingMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       closeAndFinish(false);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      new CodeCompletionHandlerBase(myCompletionType, false, false, true).invokeCompletion(getProject(), myEditor, myInvocationCount);
+      String customId = myEditor.getUserData(CUSTOM_CODE_COMPLETION_ACTION_ID);
+      if (customId == null) {
+        customId = "CodeCompletion";
+      }
+      CodeCompletionHandlerBase handler = CodeCompletionHandlerBase.createHandler(myCompletionType, false, false, true, customId);
+      handler.invokeCompletion(getProject(), myEditor, myInvocationCount);
       return;
     }
 

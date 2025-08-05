@@ -82,6 +82,28 @@ class TerminalCompletionFixture(val project: Project, testRootDisposable: Dispos
     runActionById("Terminal.UpCommandCompletion")
   }
 
+  /**
+   * Simulates a key press in the active completion popup.
+   * @param keyCode (VK_LEFT or VK_ENTER)
+   */
+  fun pressKey(keycode: Int) {
+    if (keycode != KeyEvent.VK_LEFT && keycode != KeyEvent.VK_RIGHT) {
+      throw IllegalArgumentException("keycode must be VK_LEFT or VK_RIGHT")
+    }
+    val keyPressEvent = KeyEvent(
+      view.outputEditor.component,
+      KeyEvent.KEY_PRESSED,
+      System.currentTimeMillis(),
+      0,
+      keycode,
+      KeyEvent.CHAR_UNDEFINED,
+      KeyEvent.KEY_LOCATION_STANDARD
+    )
+    view.outputEditorEventsHandler.keyPressed(TimedKeyEvent(keyPressEvent, TimeSource.Monotonic.markNow()))
+    val commonOffset = view.outputEditor.getCaretModel().offset
+    view.outputModel.updateCursorPosition(view.outputModel.relativeOffset(commonOffset))
+  }
+
   private fun runActionById(actionId: String) {
     val action = ActionManager.getInstance().getAction(actionId)
     val context = SimpleDataContext.builder()
