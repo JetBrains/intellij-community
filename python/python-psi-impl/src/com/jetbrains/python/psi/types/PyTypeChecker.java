@@ -475,7 +475,7 @@ public final class PyTypeChecker {
       }
     }
 
-    if (!Registry.is("python.typing.strict.unions", true)) {// checking strictly separately until PY-24834 gets implemented
+    if (!PyUnionType.isStrictSemanticsEnabled()) {// checking strictly separately until PY-24834 gets implemented
       if (ContainerUtil.exists(actual.getMembers(), x -> x instanceof PyLiteralStringType || x instanceof PyLiteralType)) {
         return ContainerUtil.and(actual.getMembers(), type -> match(expected, type, context).orElse(false));
       }
@@ -1060,7 +1060,7 @@ public final class PyTypeChecker {
       }
     }
     if (type instanceof PyUnionType union) {
-      if (!Registry.is("python.typing.strict.unions", true)) {
+      if (!PyUnionType.isStrictSemanticsEnabled()) {
         return ContainerUtil.exists(union.getMembers(), member -> isUnknown(member, genericsAreUnknown, context));
       }
       return ContainerUtil.all(union.getMembers(), member -> isUnknown(member, genericsAreUnknown, context));
@@ -1461,13 +1461,13 @@ public final class PyTypeChecker {
         .foldLeft(PyUnionType::union)
         .orElse(actualType);
     }
-    if (Registry.is("python.typing.strict.unions", true)) {
+    if (PyUnionType.isStrictSemanticsEnabled()) {
       PyClass pyClass = function.getContainingClass();
       assert pyClass != null;
       PyClassLikeType classType = as(context.getType(pyClass), PyClassLikeType.class);
       assert classType != null;
       PyClassLikeType superType =
-        function.getModifier() == PyAstFunction.Modifier.CLASSMETHOD || PyUtil.isNewMethod(function) ? classType : classType.toInstance();
+        function.getModifier() == PyAstFunction.Modifier.CLASSMETHOD || isNewMethod(function) ? classType : classType.toInstance();
       // In a union receiver type, leave only members that actually have this function
       // TODO how does it work with qualified calls, e.g. SomeClass.method(receiver, arg1, arg2)
       // TODO how does it work with @classmethods?

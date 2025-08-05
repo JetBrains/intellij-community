@@ -118,7 +118,7 @@ class PyUnsafeUnionType private constructor(members: Collection<PyType?>) : PyTy
   companion object {
     @JvmStatic
     fun unsafeUnion(vararg types: PyType?): PyType? {
-      if (!Registry.`is`("python.typing.strict.unions", true)) {
+      if (!PyUnionType.isStrictSemanticsEnabled()) {
         return PyUnionType.union(types.toList())
       }
       return unsafeUnion(types.toList())
@@ -126,7 +126,7 @@ class PyUnsafeUnionType private constructor(members: Collection<PyType?>) : PyTy
 
     @JvmStatic
     fun unsafeUnion(types: Collection<PyType?>): PyType? {
-      if (!Registry.`is`("python.typing.strict.unions", true)) {
+      if (!PyUnionType.isStrictSemanticsEnabled()) {
         return PyUnionType.union(types)
       }
       val newMembers = buildSet {

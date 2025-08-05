@@ -207,7 +207,7 @@ class PyTypedDictType @JvmOverloads constructor(
     }
 
     private fun strictUnionMatch(expected: PyType?, actual: PyType?, context: TypeEvalContext): Boolean {
-      if (!Registry.`is`("python.typing.strict.unions", true)) {
+      if (!PyUnionType.isStrictSemanticsEnabled()) {
         return PyTypeUtil.toStream(actual).allMatch { type -> PyTypeChecker.match(expected, type, context) }
       }
       return PyTypeChecker.match(expected, actual, context)

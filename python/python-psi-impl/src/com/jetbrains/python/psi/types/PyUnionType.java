@@ -12,6 +12,7 @@ import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,11 @@ import java.util.function.Function;
 
 
 public class PyUnionType implements PyType {
+
+  @ApiStatus.Internal
+  public static boolean isStrictSemanticsEnabled() {
+    return Registry.is("python.typing.strict.unions", true);
+  }
 
   private final @NotNull LinkedHashSet<@Nullable PyType> myMembers;
 
@@ -146,7 +152,7 @@ public class PyUnionType implements PyType {
         return unionType;
       }
     }
-    if (Registry.is("python.typing.strict.unions", true)) {
+    if (isStrictSemanticsEnabled()) {
       return PyUnsafeUnionType.unsafeUnion(type, null);
     }
     return union(type, null);

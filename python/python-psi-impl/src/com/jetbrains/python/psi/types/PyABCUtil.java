@@ -125,7 +125,7 @@ public final class PyABCUtil {
       }
     }
     if (type instanceof PyUnionType) {
-      if (!Registry.is("python.typing.strict.unions", true)) {
+      if (!PyUnionType.isStrictSemanticsEnabled()) {
         return PyTypeUtil.toStream(type).nonNull().anyMatch(it -> isSubtype(it, superClassName, context));
       }
       return PyTypeUtil.toStream(type).nonNull().allMatch(it -> isSubtype(it, superClassName, context));

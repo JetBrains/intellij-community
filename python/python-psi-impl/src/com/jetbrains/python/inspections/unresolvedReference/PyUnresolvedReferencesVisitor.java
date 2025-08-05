@@ -154,7 +154,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
              !isContainingFileImportAllowed(node, (PsiFile)target)) {
       registerProblem(node, PyPsiBundle.message("INSP.unresolved.refs.import.resolves.to.its.containing.file"));
     }
-    else if (Registry.is("python.typing.strict.unions", true) && node instanceof PyQualifiedExpression qualifiedExpression) {
+    else if (PyUnionType.isStrictSemanticsEnabled() && node instanceof PyQualifiedExpression qualifiedExpression) {
       String referencedName = qualifiedExpression.getReferencedName();
       PyExpression qualifier = qualifiedExpression.getQualifier();
       if (referencedName != null && qualifier != null) {
