@@ -187,7 +187,8 @@ suspend fun EelOutputChannel.sendWholeBuffer(src: ByteBuffer) {
 }
 
 @ApiStatus.Internal
-suspend fun EelOutputChannel.sendUntilEnd(flow: Flow<ByteArray>, end: Deferred<Unit>) {
+@Throws(EelChannelClosedException::class)
+suspend fun EelOutputChannel.sendUntilEnd(flow: Flow<ByteArray>, end: Deferred<*>) {
   val finished: Flow<Boolean> = flow { emit(false); end.await(); emit(true) }
   flow.collect { byteArray ->
     available.combineTransform(finished) { a, finished ->
