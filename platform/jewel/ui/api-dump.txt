@@ -2195,6 +2195,8 @@ f:org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 - f:getShowDelay-UwyO8pc():J
 - hashCode():I
 f:org.jetbrains.jewel.ui.component.styling.TooltipMetrics$Companion
+- f:defaults-8qf-r9M(androidx.compose.foundation.layout.PaddingValues,J,androidx.compose.foundation.shape.CornerSize,F,F,androidx.compose.foundation.TooltipPlacement):org.jetbrains.jewel.ui.component.styling.TooltipMetrics
+- bs:defaults-8qf-r9M$default(org.jetbrains.jewel.ui.component.styling.TooltipMetrics$Companion,androidx.compose.foundation.layout.PaddingValues,J,androidx.compose.foundation.shape.CornerSize,F,F,androidx.compose.foundation.TooltipPlacement,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 - f:defaults-L5TaK9c(androidx.compose.foundation.layout.PaddingValues,J,J,J,androidx.compose.foundation.shape.CornerSize,F,F,androidx.compose.foundation.TooltipPlacement):org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 - bs:defaults-L5TaK9c$default(org.jetbrains.jewel.ui.component.styling.TooltipMetrics$Companion,androidx.compose.foundation.layout.PaddingValues,J,J,J,androidx.compose.foundation.shape.CornerSize,F,F,androidx.compose.foundation.TooltipPlacement,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 f:org.jetbrains.jewel.ui.component.styling.TooltipStyle
