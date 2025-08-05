@@ -12,6 +12,8 @@ import org.jetbrains.plugins.gradle.importing.TestModelProvider
 import org.jetbrains.plugins.gradle.importing.TestPhasedModel
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic.Companion.asSyncPhase
 import org.jetbrains.plugins.gradle.util.whenExternalSystemTaskFinished
 import org.jetbrains.plugins.gradle.util.whenExternalSystemTaskStarted
 import org.junit.Test
@@ -29,35 +31,37 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val modelFetchCompletionAssertion = ListenerAssertion()
       val modelFetchPhaseCompletionAssertion = ListenerAssertion()
 
-      val allPhases = DEFAULT_MODEL_FETCH_PHASES
-      val completedPhases = CopyOnWriteArrayList<GradleModelFetchPhase>()
+      val allPhases = DEFAULT_SYNC_PHASES
+      val completedPhases = CopyOnWriteArrayList<GradleSyncPhase>()
 
       addProjectResolverExtension(TestProjectResolverExtension::class.java, disposable) {
         addModelProviders(DEFAULT_MODEL_FETCH_PHASES.map(::TestModelProvider))
       }
-      addSyncContributor(disposable) { resolverContext, _, phase ->
-        modelFetchPhaseCompletionAssertion.trace {
-          for (completedPhase in completedPhases) {
-            Assertions.assertTrue(completedPhase < phase) {
-              "The $phase should be completed before the $completedPhase.\n" +
+      for (phase in allPhases) {
+        addSyncContributor(phase, disposable) { resolverContext, _ ->
+          modelFetchPhaseCompletionAssertion.trace {
+            for (completedPhase in completedPhases) {
+              Assertions.assertTrue(completedPhase < phase) {
+                "The $phase should be completed before the $completedPhase.\n" +
+                "Requested phases = $allPhases\n" +
+                "Completed phases = $completedPhases"
+              }
+            }
+            Assertions.assertTrue(completedPhases.add(phase)) {
+              "The $phase should be finished only once.\n" +
               "Requested phases = $allPhases\n" +
               "Completed phases = $completedPhases"
             }
-          }
-          Assertions.assertTrue(completedPhases.add(phase)) {
-            "The $phase should be finished only once.\n" +
-            "Requested phases = $allPhases\n" +
-            "Completed phases = $completedPhases"
-          }
-          for (buildModel in resolverContext.allBuilds) {
-            for (projectModel in buildModel.projects) {
-              for (completedPhase in completedPhases) {
-                val phasedModelClass = TestPhasedModel.getModelClass(completedPhase)
-                val phasedModel = resolverContext.getProjectModel(projectModel, phasedModelClass)
-                Assertions.assertNotNull(phasedModel) {
-                  "Expected model for the $completedPhase on the $phase completion.\n" +
-                  "Requested phases = $allPhases\n" +
-                  "Completed phases = $completedPhases"
+            for (completedPhase in completedPhases.filterIsInstance<GradleSyncPhase.Dynamic>()) {
+              for (buildModel in resolverContext.allBuilds) {
+                for (projectModel in buildModel.projects) {
+                  val phasedModelClass = TestPhasedModel.getModelClass(completedPhase.modelFetchPhase)
+                  val phasedModel = resolverContext.getProjectModel(projectModel, phasedModelClass)
+                  Assertions.assertNotNull(phasedModel) {
+                    "Expected model for the $completedPhase on the $phase completion.\n" +
+                    "Requested phases = $allPhases\n" +
+                    "Completed phases = $completedPhases"
+                  }
                 }
               }
             }
@@ -66,8 +70,10 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       }
       whenProjectLoaded(disposable) {
         projectLoadingAssertion.trace {
-          val projectLoadedPhases = allPhases.filterIsInstance<GradleModelFetchPhase.ProjectLoaded>()
-          Assertions.assertEquals(projectLoadedPhases.toList(), completedPhases.toList()) {
+          val staticPhases = allPhases.filterIsInstance<GradleSyncPhase.Static>()
+          val projectLoadedPhases = allPhases.filterIsInstance<GradleSyncPhase.Dynamic>()
+            .filter { it.modelFetchPhase is GradleModelFetchPhase.ProjectLoaded }
+          Assertions.assertEquals(staticPhases + projectLoadedPhases, completedPhases.toList()) {
             "All project loaded phases should be completed before finishing the project loaded action"
           }
         }
@@ -107,33 +113,48 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
   }
 
   @Test
+  fun `test phased Gradle sync for custom static phase without model provider`() {
+    `test phased Gradle sync for custom phase without model provider`(
+      GradleSyncPhase.Static(10_000, "CUSTOM_PHASE")
+    )
+  }
+
+  @Test
   fun `test phased Gradle sync for custom project loaded phase without model provider`() {
-    `test phased Gradle sync for custom phase without model provider`(GradleModelFetchPhase.ProjectLoaded(10_000, "CUSTOM_PHASE"))
+    `test phased Gradle sync for custom phase without model provider`(
+      GradleModelFetchPhase.ProjectLoaded(10_000, "CUSTOM_PHASE").asSyncPhase()
+    )
   }
 
   @Test
   fun `test phased Gradle sync for custom build finished phase without model provider`() {
-    `test phased Gradle sync for custom phase without model provider`(GradleModelFetchPhase.BuildFinished(10_000, "CUSTOM_PHASE"))
+    `test phased Gradle sync for custom phase without model provider`(
+      GradleModelFetchPhase.BuildFinished(10_000, "CUSTOM_PHASE").asSyncPhase()
+    )
   }
 
-  fun `test phased Gradle sync for custom phase without model provider`(customPhase: GradleModelFetchPhase) {
+  fun `test phased Gradle sync for custom phase without model provider`(customPhase: GradleSyncPhase) {
     Disposer.newDisposable().use { disposable ->
       val projectLoadingAssertion = ListenerAssertion()
       val modelFetchCompletionAssertion = ListenerAssertion()
       val modelFetchPhaseCompletionAssertion = ListenerAssertion()
 
-      val allPhases = (DEFAULT_MODEL_FETCH_PHASES + customPhase).sorted()
-      val completedPhases = CopyOnWriteArrayList<GradleModelFetchPhase>()
+      val allPhases = (DEFAULT_SYNC_PHASES + customPhase).sorted()
+      val completedPhases = CopyOnWriteArrayList<GradleSyncPhase>()
 
-      addSyncContributor(disposable) { _, _, phase ->
-        modelFetchPhaseCompletionAssertion.trace {
-          completedPhases.add(phase)
+      for (phase in allPhases) {
+        addSyncContributor(phase, disposable) { _, _ ->
+          modelFetchPhaseCompletionAssertion.trace {
+            completedPhases.add(phase)
+          }
         }
       }
       whenProjectLoaded(disposable) {
         projectLoadingAssertion.trace {
-          val projectLoadedPhases = allPhases.filterIsInstance<GradleModelFetchPhase.ProjectLoaded>()
-          Assertions.assertEquals(projectLoadedPhases.toList(), completedPhases.toList()) {
+          val staticPhases = allPhases.filterIsInstance<GradleSyncPhase.Static>()
+          val projectLoadedPhases = allPhases.filterIsInstance<GradleSyncPhase.Dynamic>()
+            .filter { it.modelFetchPhase is GradleModelFetchPhase.ProjectLoaded }
+          Assertions.assertEquals(staticPhases + projectLoadedPhases, completedPhases.toList()) {
             "All project loaded phases should be completed before finishing the project loaded action"
           }
         }
@@ -173,32 +194,42 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
   }
 
   @Test
+  fun `test phased Gradle sync cancellation by exception during initialisation`() {
+    `test phased Gradle sync cancellation by exception`(GradleSyncPhase.INITIAL_PHASE)
+  }
+
+  @Test
   fun `test phased Gradle sync cancellation by exception during project loaded action`() {
-    `test phased Gradle sync cancellation by exception`(GradleModelFetchPhase.PROJECT_LOADED_PHASE)
+    `test phased Gradle sync cancellation by exception`(GradleModelFetchPhase.PROJECT_LOADED_PHASE.asSyncPhase())
   }
 
   @Test
   fun `test phased Gradle sync cancellation by exception during build finished action`() {
-    `test phased Gradle sync cancellation by exception`(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE)
+    `test phased Gradle sync cancellation by exception`(GradleSyncPhase.ADDITIONAL_MODEL_PHASE)
   }
 
-  private fun `test phased Gradle sync cancellation by exception`(cancellationPhase: GradleModelFetchPhase) {
+  private fun `test phased Gradle sync cancellation by exception`(cancellationPhase: GradleSyncPhase) {
     `test phased Gradle sync cancellation`(cancellationPhase) {
       throw CancellationException()
     }
   }
 
   @Test
+  fun `test phased Gradle sync cancellation by indicator during initialisation`() {
+    `test phased Gradle sync cancellation by indicator`(GradleSyncPhase.INITIAL_PHASE)
+  }
+
+  @Test
   fun `test phased Gradle sync cancellation by indicator during project loaded action`() {
-    `test phased Gradle sync cancellation by indicator`(GradleModelFetchPhase.PROJECT_LOADED_PHASE)
+    `test phased Gradle sync cancellation by indicator`(GradleModelFetchPhase.PROJECT_LOADED_PHASE.asSyncPhase())
   }
 
   @Test
   fun `test phased Gradle sync cancellation by indicator during build finished action`() {
-    `test phased Gradle sync cancellation by indicator`(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE)
+    `test phased Gradle sync cancellation by indicator`(GradleSyncPhase.ADDITIONAL_MODEL_PHASE)
   }
 
-  private fun `test phased Gradle sync cancellation by indicator`(cancellationPhase: GradleModelFetchPhase) {
+  private fun `test phased Gradle sync cancellation by indicator`(cancellationPhase: GradleSyncPhase) {
     `test phased Gradle sync cancellation`(cancellationPhase) { resolverContext ->
       resolverContext as DefaultProjectResolverContext
       resolverContext.progressIndicator.cancel()
@@ -218,7 +249,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
   }
 
   private fun `test phased Gradle sync cancellation`(
-    cancellationPhase: GradleModelFetchPhase,
+    cancellationPhase: GradleSyncPhase,
     cancellation: suspend (ProjectResolverContext) -> Unit,
   ) {
     Disposer.newDisposable().use { disposable ->
@@ -229,14 +260,15 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val executionStartAssertion = ListenerAssertion()
       val executionFinishAssertion = ListenerAssertion()
 
-      val allPhases = DEFAULT_MODEL_FETCH_PHASES
+      val allPhases = DEFAULT_SYNC_PHASES
       val expectedCompletedPhases = allPhases.filter { it <= cancellationPhase }
-      val actualCompletedPhases = CopyOnWriteArrayList<GradleModelFetchPhase>()
+      val actualCompletedPhases = CopyOnWriteArrayList<GradleSyncPhase>()
 
       addProjectResolverExtension(TestProjectResolverExtension::class.java, disposable) {
         addModelProviders(DEFAULT_MODEL_FETCH_PHASES.map(::TestModelProvider))
       }
-      addSyncContributor(disposable) { resolverContext, _, phase ->
+      for (phase in allPhases)
+        addSyncContributor(phase, disposable) { resolverContext, _ ->
         modelFetchPhaseCompletionAssertion.trace {
           actualCompletedPhases.add(phase)
           if (phase == cancellationPhase) {
@@ -275,7 +307,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         syncCancellationAssertion.touch()
       })
 
-      if (cancellationPhase <= GradleModelFetchPhase.PROJECT_LOADED_PHASE) {
+      if (cancellationPhase <= GradleModelFetchPhase.PROJECT_LOADED_PHASE.asSyncPhase()) {
         projectLoadingAssertion.assertListenerFailures()
         projectLoadingAssertion.assertListenerState(0) {
           "Gradle sync should be cancelled during the $cancellationPhase.\n" +
@@ -341,7 +373,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
       val projectInfoResolutionStartAssertion = ListenerAssertion()
 
-      whenResolveProjectInfoStarted(disposable) {
+      whenSyncPhaseCompleted(GradleSyncPhase.INITIAL_PHASE, disposable) {
         projectInfoResolutionStartAssertion.touch()
       }
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing.syncAction
 
-import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.Disposable
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.testFramework.registerOrReplaceServiceInstance
@@ -13,26 +12,18 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtensi
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncListener
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import java.util.concurrent.CopyOnWriteArrayList
 
 abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
-  fun whenResolveProjectInfoStarted(parentDisposable: Disposable, action: (ProjectResolverContext) -> Unit) {
-    application.messageBus.connect(parentDisposable)
-      .subscribe(GradleSyncListener.TOPIC, object : GradleSyncListener {
-        override fun onResolveProjectInfoStarted(context: ProjectResolverContext) {
-          action(context)
-        }
-      })
-  }
-
-  fun whenModelFetchPhaseCompleted(phase: GradleModelFetchPhase, parentDisposable: Disposable, action: (ProjectResolverContext) -> Unit) {
+  fun whenSyncPhaseCompleted(phase: GradleSyncPhase, parentDisposable: Disposable, action: (ProjectResolverContext) -> Unit) {
     val thisPhase = phase
     application.messageBus.connect(parentDisposable)
       .subscribe(GradleSyncListener.TOPIC, object : GradleSyncListener {
-        override fun onModelFetchPhaseCompleted(context: ProjectResolverContext, phase: GradleModelFetchPhase) {
+        override fun onSyncPhaseCompleted(context: ProjectResolverContext, phase: GradleSyncPhase) {
           if (thisPhase == phase) {
             action(context)
           }
@@ -58,15 +49,12 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
       })
   }
 
-  fun addSyncContributor(parentDisposable: Disposable, action: suspend (ProjectResolverContext, MutableEntityStorage, GradleModelFetchPhase) -> Unit) {
+  fun addSyncContributor(phase: GradleSyncPhase, parentDisposable: Disposable, action: suspend (ProjectResolverContext, MutableEntityStorage) -> Unit) {
     GradleSyncContributor.EP_NAME.point.registerExtension(
       object : GradleSyncContributor {
-        override suspend fun onModelFetchPhaseCompleted(
-          context: ProjectResolverContext,
-          storage: MutableEntityStorage,
-          phase: GradleModelFetchPhase,
-        ) {
-          action(context, storage, phase)
+        override val phase: GradleSyncPhase = phase
+        override suspend fun configureProjectModel(context: ProjectResolverContext, storage: MutableEntityStorage) {
+          action(context, storage)
         }
       }, parentDisposable)
   }

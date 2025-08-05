@@ -1,12 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.syncAction
 
-import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor.Order.CONTENT_ROOT_CONTRIBUTOR
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor.Order.PROJECT_ROOT_CONTRIBUTOR
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor.Order.SOURCE_ROOT_CONTRIBUTOR
 
 /**
  * The [GradleSyncContributor] is used for the IDE project configuration in the [com.intellij.platform.backend.workspace.WorkspaceModel].
@@ -22,37 +23,27 @@ interface GradleSyncContributor {
   val name: String
     get() = javaClass.simpleName
 
-  /**
-   * Called when Gradle project info resolution is started.
-   * No models are available in the context because the Gradle model fetching isn't started.
-   * Guaranteed that this function will be called only once during the synchronization process.
-   *
-   * @param context contain all information about the current state of the Gradle sync.
-   */
-  suspend fun onResolveProjectInfoStarted(
-    context: ProjectResolverContext,
-    storage: MutableEntityStorage
-  ) = Unit
+  val phase: GradleSyncPhase
 
   /**
-   * Called when Gradle model building phase is completed.
-   * Guaranteed that all phases will be handled for the successful execution in the strict order.
+   * Configures a project entities based on the Gradle project models.
    *
-   * @param context contain all information about the current state of the Gradle sync.
-   * Use this context to access to the fetched Gradle models.
-   * @param phase current phase of the model fetching action.
+   * Note: It is guaranteed that all phases will be handled in the strict order.
    *
-   * @see GradleModelFetchPhase
+   * @param context the unified container for sync settings, parameters, models, etc.
+   * @param storage the project model state that was built based on the project model snapshot.
+   *
+   * @see ProjectResolverContext.getAllBuilds
+   * @see ProjectResolverContext.getProjectModel
    */
-  suspend fun onModelFetchPhaseCompleted(
+  suspend fun configureProjectModel(
     context: ProjectResolverContext,
     storage: MutableEntityStorage,
-    phase: GradleModelFetchPhase
-  ) = Unit
+  )
 
   companion object {
     @JvmField
-    val EP_NAME: ExtensionPointName<GradleSyncContributor> = create("org.jetbrains.plugins.gradle.syncContributor")
+    val EP_NAME: ExtensionPointName<GradleSyncContributor> = ExtensionPointName.create("org.jetbrains.plugins.gradle.syncContributor")
   }
 
   object Order {

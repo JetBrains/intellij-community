@@ -8,7 +8,6 @@ import com.android.tools.idea.gradle.dsl.model.BuildModelContext
 import com.android.tools.idea.gradle.dsl.model.ProjectBuildModelImpl
 import com.android.tools.idea.gradle.feature.flags.DeclarativeStudioSupport
 import com.intellij.gradle.declarativeSync.GradleLibrariesResolver.LibDepData
-import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.service.project.nameGenerator.ModuleNameGenerator
 import com.intellij.openapi.externalSystem.util.Order
@@ -25,6 +24,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.service.syncAction.virtualFileUrl
 import org.jetbrains.plugins.gradle.service.syncContributor.bridge.GradleBridgeEntitySource
 import org.jetbrains.plugins.gradle.service.syncContributor.hasNonPreviewEntities
@@ -40,7 +40,9 @@ private val LOG = logger<GradleDeclarativeSyncContributor>()
 @Order(GradleSyncContributor.Order.DECLARATIVE_CONTRIBUTOR)
 class GradleDeclarativeSyncContributor : GradleSyncContributor {
 
-  override suspend fun onResolveProjectInfoStarted(
+  override val phase: GradleSyncPhase = GradleSyncPhase.DECLARATIVE_PHASE
+
+  override suspend fun configureProjectModel(
     context: ProjectResolverContext,
     storage: MutableEntityStorage,
   ) {
@@ -63,18 +65,6 @@ class GradleDeclarativeSyncContributor : GradleSyncContributor {
     LOG.debug("Starting Declarative Gradle static import")
     configureProject(context, storage)
     LOG.debug("Finished Declarative Gradle static import")
-  }
-
-  override suspend fun onModelFetchPhaseCompleted(
-    context: ProjectResolverContext,
-    storage: MutableEntityStorage,
-    phase: GradleModelFetchPhase,
-  ) {
-    if (!context.isPhasedSyncEnabled) return
-
-    if (phase == GradleModelFetchPhase.PROJECT_MODEL_PHASE) {
-      removeDeclarativeModel(context, storage)
-    }
   }
 
   private fun configureProject(
@@ -337,18 +327,32 @@ class GradleDeclarativeSyncContributor : GradleSyncContributor {
     }
   }
 
-  private fun removeDeclarativeModel(
-    context: ProjectResolverContext,
-    storage: MutableEntityStorage,
-  ) {
-    val entitySource = GradleDeclarativeEntitySource(context.projectPath)
-    val projectEntities = storage.entitiesBySource { it == entitySource }
-    for (projectEntity in projectEntities.toList()) {
-      storage.removeEntity(projectEntity)
-    }
-  }
-
   private data class GradleDeclarativeEntitySource(
     override val projectPath: String,
   ) : GradleBridgeEntitySource
+
+  class Bridge : GradleSyncContributor {
+
+    override val phase: GradleSyncPhase = GradleSyncPhase.PROJECT_MODEL_PHASE
+
+    override suspend fun configureProjectModel(
+      context: ProjectResolverContext,
+      storage: MutableEntityStorage,
+    ) {
+      if (!context.isPhasedSyncEnabled) return
+
+      removeDeclarativeModel(context, storage)
+    }
+
+    private fun removeDeclarativeModel(
+      context: ProjectResolverContext,
+      storage: MutableEntityStorage,
+    ) {
+      val entitySource = GradleDeclarativeEntitySource(context.projectPath)
+      val projectEntities = storage.entitiesBySource { it == entitySource }
+      for (projectEntity in projectEntities.toList()) {
+        storage.removeEntity(projectEntity)
+      }
+    }
+  }
 }

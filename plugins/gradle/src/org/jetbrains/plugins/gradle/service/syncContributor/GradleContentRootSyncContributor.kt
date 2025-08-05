@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.syncContributor
 
-import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.externalSystem.service.project.nameGenerator.ModuleNameGenerator
 import com.intellij.openapi.externalSystem.util.Order
@@ -18,6 +17,7 @@ import org.jetbrains.plugins.gradle.model.GradleLightProject
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.service.syncAction.virtualFileUrl
 import org.jetbrains.plugins.gradle.service.syncContributor.bridge.GradleBridgeEntitySource
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -27,22 +27,14 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
 
   override val name: String = "Gradle Content Root"
 
-  override suspend fun onModelFetchPhaseCompleted(
-    context: ProjectResolverContext,
-    storage: MutableEntityStorage,
-    phase: GradleModelFetchPhase,
-  ) {
-    if (context.isPhasedSyncEnabled) {
-      if (phase == GradleModelFetchPhase.PROJECT_MODEL_PHASE) {
-        configureProjectContentRoots(context, storage)
-      }
-    }
-  }
+  override val phase: GradleSyncPhase = GradleSyncPhase.PROJECT_MODEL_PHASE
 
-  private suspend fun configureProjectContentRoots(
+  override suspend fun configureProjectModel(
     context: ProjectResolverContext,
     storage: MutableEntityStorage,
   ) {
+    if (!context.isPhasedSyncEnabled) return
+
     val contentRoots = storage.entities<ContentRootEntity>()
       .mapTo(LinkedHashSet()) { it.url }
 

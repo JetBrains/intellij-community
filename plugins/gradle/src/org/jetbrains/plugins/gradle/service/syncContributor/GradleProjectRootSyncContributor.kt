@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.syncContributor
 
-import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.externalSystem.service.project.nameGenerator.ModuleNameGenerator
 import com.intellij.openapi.externalSystem.util.Order
@@ -14,6 +13,7 @@ import com.intellij.platform.workspace.storage.entities
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.service.syncAction.virtualFileUrl
 import org.jetbrains.plugins.gradle.service.syncContributor.bridge.GradleBridgeEntitySource
 import java.nio.file.Path
@@ -23,19 +23,11 @@ import kotlin.io.path.name
 @Order(GradleSyncContributor.Order.PROJECT_ROOT_CONTRIBUTOR)
 class GradleProjectRootSyncContributor : GradleSyncContributor {
 
-  override suspend fun onResolveProjectInfoStarted(context: ProjectResolverContext, storage: MutableEntityStorage) {
-    if (context.isPhasedSyncEnabled) {
-      if (!hasNonPreviewEntities(context, storage)) {
-        configureProjectRoot(context, storage)
-      }
-    }
-  }
+  override val phase: GradleSyncPhase = GradleSyncPhase.INITIAL_PHASE
 
-  override suspend fun onModelFetchPhaseCompleted(context: ProjectResolverContext, storage: MutableEntityStorage, phase: GradleModelFetchPhase) {
-    if (context.isPhasedSyncEnabled) {
-      if (phase == GradleModelFetchPhase.PROJECT_MODEL_PHASE) {
-        removeProjectRoot(context, storage)
-      }
+  override suspend fun configureProjectModel(context: ProjectResolverContext, storage: MutableEntityStorage) {
+    if (!hasNonPreviewEntities(context, storage)) {
+      configureProjectRoot(context, storage)
     }
   }
 
@@ -125,6 +117,17 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
     val projectRoot: Path,
     val entitySource: EntitySource,
   )
+
+  class Bridge : GradleSyncContributor {
+
+    override val phase: GradleSyncPhase = GradleSyncPhase.PROJECT_MODEL_PHASE
+
+    override suspend fun configureProjectModel(context: ProjectResolverContext, storage: MutableEntityStorage) {
+      if (!context.isPhasedSyncEnabled) return
+
+      removeProjectRoot(context, storage)
+    }
+  }
 }
 
 private data class GradleProjectRootEntitySource(

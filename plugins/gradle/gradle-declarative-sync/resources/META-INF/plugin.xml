@@ -15,6 +15,7 @@
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
     <syncContributor implementation="com.intellij.gradle.declarativeSync.GradleDeclarativeSyncContributor"/>
+    <syncContributor implementation="com.intellij.gradle.declarativeSync.GradleDeclarativeSyncContributor$Bridge"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

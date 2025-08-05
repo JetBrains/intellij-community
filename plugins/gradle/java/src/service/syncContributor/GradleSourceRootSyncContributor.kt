@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.syncContributor
 
-import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaResourceRoots
@@ -32,6 +31,7 @@ import org.jetbrains.plugins.gradle.service.project.GradleContentRootIndex
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.service.syncAction.virtualFileUrl
 import org.jetbrains.plugins.gradle.service.syncContributor.bridge.GradleBridgeEntitySource
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -42,16 +42,15 @@ import kotlin.io.path.exists
 @Order(GradleSyncContributor.Order.SOURCE_ROOT_CONTRIBUTOR)
 class GradleSourceRootSyncContributor : GradleSyncContributor {
 
-  override suspend fun onModelFetchPhaseCompleted(
+  override val phase: GradleSyncPhase = GradleSyncPhase.SOURCE_SET_MODEL_PHASE
+
+  override suspend fun configureProjectModel(
     context: ProjectResolverContext,
     storage: MutableEntityStorage,
-    phase: GradleModelFetchPhase,
   ) {
-    if (context.isPhasedSyncEnabled) {
-      if (phase == GradleModelFetchPhase.SOURCE_SET_MODEL_PHASE) {
-        configureProjectSourceRoots(context, storage)
-      }
-    }
+    if (!context.isPhasedSyncEnabled) return
+
+    configureProjectSourceRoots(context, storage)
   }
 
   private suspend fun configureProjectSourceRoots(

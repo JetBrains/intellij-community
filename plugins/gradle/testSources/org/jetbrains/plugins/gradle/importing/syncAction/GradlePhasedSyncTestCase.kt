@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.gradle.importing.syncAction
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic.Companion.asSyncPhase
 import java.util.concurrent.atomic.AtomicReference
 
 abstract class GradlePhasedSyncTestCase : GradleProjectResolverTestCase() {
@@ -39,6 +41,16 @@ abstract class GradlePhasedSyncTestCase : GradleProjectResolverTestCase() {
       GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE,
       GradleModelFetchPhase.PROJECT_SOURCE_SET_DEPENDENCY_PHASE,
       GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE
+    )
+
+    val DEFAULT_SYNC_PHASES: List<GradleSyncPhase> = listOf(
+      GradleSyncPhase.INITIAL_PHASE,
+      GradleSyncPhase.DECLARATIVE_PHASE,
+      GradleModelFetchPhase.PROJECT_LOADED_PHASE.asSyncPhase(),
+      GradleSyncPhase.PROJECT_MODEL_PHASE,
+      GradleSyncPhase.SOURCE_SET_MODEL_PHASE,
+      GradleSyncPhase.DEPENDENCY_MODEL_PHASE,
+      GradleSyncPhase.ADDITIONAL_MODEL_PHASE
     )
   }
 }

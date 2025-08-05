@@ -11,6 +11,7 @@ import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRoot
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
 import org.jetbrains.plugins.gradle.importing.syncAction.GradlePhasedSyncTestCase
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
@@ -103,7 +104,7 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
 
       val projectRootContributorAssertion = ListenerAssertion()
 
-      whenResolveProjectInfoStarted(disposable) {
+      whenSyncPhaseCompleted(GradleSyncPhase.DECLARATIVE_PHASE, disposable) {
         projectRootContributorAssertion.trace {
           // this should contain more stuff
           ModuleAssertions.assertModules(myProject, "project", "project.main", "project.test")
@@ -273,7 +274,7 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
 
       val declarativeContributorAssertion = ListenerAssertion()
 
-      whenResolveProjectInfoStarted(disposable) {
+      whenSyncPhaseCompleted(GradleSyncPhase.DECLARATIVE_PHASE, disposable) {
         declarativeContributorAssertion.trace {
           ModuleAssertions.assertModules(myProject, "project", "project.app", "project.app.main", "project.app.test", "project.list",
                         "project.list.main", "project.list.test", "project.utilities", "project.utilities.main", "project.utilities.test")

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.syncAction
 
-import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
@@ -10,24 +9,14 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 interface GradleSyncListener {
 
   /**
-   * Called when Gradle project info resolution is started.
-   * No models are available in the context because the Gradle model fetching isn't started.
-   *
-   * @param context contain all information about the current state of the Gradle sync.
-   */
-  fun onResolveProjectInfoStarted(
-    context: ProjectResolverContext,
-  ): Unit = Unit
-
-  /**
-   * Called when Gradle model building phase is completed.
+   * Called when Gradle sync phase is completed.
    *
    * @param context contain all information about the current state of the Gradle sync.
    * @param phase current phase of the model fetching action.
    */
-  fun onModelFetchPhaseCompleted(
+  fun onSyncPhaseCompleted(
     context: ProjectResolverContext,
-    phase: GradleModelFetchPhase,
+    phase: GradleSyncPhase,
   ): Unit = Unit
 
   /**

@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing.syncAction
 
-import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions.assertContentRoots
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.junit.Test
@@ -24,7 +24,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       val contentRootContributorAssertion = ListenerAssertion()
 
-      whenModelFetchPhaseCompleted(GradleModelFetchPhase.PROJECT_MODEL_PHASE, disposable) {
+      whenSyncPhaseCompleted(GradleSyncPhase.PROJECT_MODEL_PHASE, disposable) {
         contentRootContributorAssertion.trace {
           assertModules(myProject, "project")
           assertContentRoots(myProject, "project", projectRoot)
@@ -55,7 +55,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       val contentRootContributorAssertion = ListenerAssertion()
 
-      whenModelFetchPhaseCompleted(GradleModelFetchPhase.PROJECT_MODEL_PHASE, disposable) {
+      whenSyncPhaseCompleted(GradleSyncPhase.PROJECT_MODEL_PHASE, disposable) {
         contentRootContributorAssertion.trace {
           assertModules(myProject, "project", "project.main", "project.test", "project.module")
           assertContentRoots(myProject, "project", projectRoot)
@@ -106,7 +106,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       val contentRootContributorAssertion = ListenerAssertion()
 
-      whenModelFetchPhaseCompleted(GradleModelFetchPhase.PROJECT_MODEL_PHASE, disposable) {
+      whenSyncPhaseCompleted(GradleSyncPhase.PROJECT_MODEL_PHASE, disposable) {
         contentRootContributorAssertion.trace {
           assertModules(myProject, "project", "includedProject1")
           assertContentRoots(myProject, "project", projectRoot)
@@ -152,7 +152,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       val contentRootContributorAssertion = ListenerAssertion()
 
-      whenModelFetchPhaseCompleted(GradleModelFetchPhase.PROJECT_MODEL_PHASE, disposable) {
+      whenSyncPhaseCompleted(GradleSyncPhase.PROJECT_MODEL_PHASE, disposable) {
         contentRootContributorAssertion.trace {
           assertModules(
             myProject,
@@ -231,7 +231,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       val isBuildSrcShouldBeResolved = AtomicBoolean(!isBuildSrcResolvedOnSecondCall)
 
-      whenModelFetchPhaseCompleted(GradleModelFetchPhase.PROJECT_MODEL_PHASE, disposable) {
+      whenSyncPhaseCompleted(GradleSyncPhase.PROJECT_MODEL_PHASE, disposable) {
         contentRootContributorAssertion.trace {
           when {
             !isBuildSrcShouldBeResolved.getAndSet(true) -> {
@@ -298,7 +298,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       val contentRootContributorAssertion = ListenerAssertion()
 
-      whenModelFetchPhaseCompleted(GradleModelFetchPhase.PROJECT_MODEL_PHASE, disposable) {
+      whenSyncPhaseCompleted(GradleSyncPhase.PROJECT_MODEL_PHASE, disposable) {
         contentRootContributorAssertion.trace {
           assertModules(
             myProject,
@@ -372,7 +372,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       val contentRootContributorAssertion = ListenerAssertion()
 
-      whenModelFetchPhaseCompleted(GradleModelFetchPhase.SOURCE_SET_MODEL_PHASE, disposable) {
+      whenSyncPhaseCompleted(GradleSyncPhase.SOURCE_SET_MODEL_PHASE, disposable) {
         contentRootContributorAssertion.trace {
           assertModules(myProject, "project", "project.main", "project.test")
           assertContentRoots(myProject, "project", projectRoot)
@@ -414,7 +414,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       val contentRootContributorAssertion = ListenerAssertion()
 
-      whenModelFetchPhaseCompleted(GradleModelFetchPhase.SOURCE_SET_MODEL_PHASE, disposable) {
+      whenSyncPhaseCompleted(GradleSyncPhase.SOURCE_SET_MODEL_PHASE, disposable) {
         contentRootContributorAssertion.trace {
           assertModules(myProject, "project", "project.main", "project.test")
           assertContentRoots(myProject, "project", projectRoot)

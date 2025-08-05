@@ -9,6 +9,7 @@ import com.intellij.openapi.util.use
 import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions.assertContentRoots
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
@@ -27,7 +28,7 @@ class GradleProjectRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       val projectRootContributorAssertion = ListenerAssertion()
 
-      whenResolveProjectInfoStarted(disposable) {
+      whenSyncPhaseCompleted(GradleSyncPhase.INITIAL_PHASE, disposable) {
         projectRootContributorAssertion.trace {
           assertModules(myProject, "project")
           assertContentRoots(myProject, "project", projectRoot)
@@ -62,7 +63,7 @@ class GradleProjectRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       val projectRootContributorAssertion = ListenerAssertion()
 
-      whenResolveProjectInfoStarted(disposable) {
+      whenSyncPhaseCompleted(GradleSyncPhase.INITIAL_PHASE, disposable) {
         projectRootContributorAssertion.trace {
           assertModules(myProject, "project", "project.main", "project.test", "linked-project")
           assertContentRoots(myProject, "project", projectRoot)
