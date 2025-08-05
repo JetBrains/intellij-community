@@ -166,7 +166,7 @@ private fun tryLoadIcon(zipFile: IntelliJZipFile, light: Boolean): PluginLogoIco
 private fun getIdForKey(descriptor: IdeaPluginDescriptor): String {
   return descriptor.pluginId.idString +
          if (descriptor.pluginPath == null ||
-             MyPluginModel.getInstallingPlugins().any { it.pluginId == descriptor.pluginId } ||
+             MyPluginModel.installingPlugins.any { it.pluginId == descriptor.pluginId } ||
              InstalledPluginsState.getInstance().wasInstalled(descriptor.pluginId)) {
            ""
          }

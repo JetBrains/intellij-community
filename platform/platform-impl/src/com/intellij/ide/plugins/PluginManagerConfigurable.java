@@ -1431,7 +1431,7 @@ public final class PluginManagerConfigurable
 
     myPluginModelFacade.getModel().setCancelInstallCallback(descriptor -> {
       if (myInstalledSearchPanel == null) {
-        return;
+        return null;
       }
 
       PluginsGroup group = myInstalledSearchPanel.getGroup();
@@ -1445,6 +1445,7 @@ public final class PluginManagerConfigurable
           myInstalledSearchPanel.removeGroup();
         }
       }
+      return null;
     });
   }
 

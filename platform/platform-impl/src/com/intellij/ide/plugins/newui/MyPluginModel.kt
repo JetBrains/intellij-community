@@ -6,7 +6,6 @@ import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil.getActiveFrameOrWelcomeScreen
 import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.api.PluginDto.Companion.fromModel
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.InstallPluginResult
@@ -30,7 +29,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.okCancel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
@@ -41,20 +39,13 @@ import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.SystemProperties
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.Unmodifiable
 import java.awt.Component
 import java.awt.Window
 import java.util.*
-import java.util.List
-import java.util.Map
-import java.util.function.Consumer
-import java.util.function.Function
-import java.util.stream.Collectors
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -65,10 +56,11 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     private set
   private var myInstalling: PluginsGroup? = null
   private var myTopController: TopComponentController? = null
-  private var myVendors: SortedSet<String?>? = null
-  private var myTags: SortedSet<String?>? = null
+  private var myVendors: SortedSet<String>? = null
+  private var myTags: SortedSet<String>? = null
 
   var needRestart: Boolean = false
+
   @JvmField
   var createShutdownCallback: Boolean = true
 
@@ -77,10 +69,10 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   private var myPluginUpdatesService: PluginUpdatesService? = null
 
   private var myInvalidFixCallback: Runnable? = null
-  private var myCancelInstallCallback: Consumer<PluginUiModel?>? = null
+  private var myCancelInstallCallback: ((PluginUiModel?) -> Unit)? = null
 
-  private val myRequiredPluginsForProject: MutableMap<PluginId?, Boolean?> = HashMap<PluginId?, Boolean?>()
-  private val myUninstalled: MutableSet<PluginId?> = HashSet<PluginId?>()
+  private val myRequiredPluginsForProject: MutableMap<PluginId, Boolean> = HashMap()
+  private val myUninstalled: MutableSet<PluginId> = HashSet()
   private val myPluginManagerCustomizer: PluginManagerCustomizer?
 
   private var myInstallSource: FUSEventSource? = null
@@ -90,8 +82,8 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     this.myInstallSource = source
   }
 
-  public override fun isModified(): Boolean {
-    return needRestart || !myInstallingInfos.isEmpty() || super.isModified()
+  override fun isModified(): Boolean {
+    return needRestart || myInstallingInfos.isNotEmpty() || super.isModified()
   }
 
   /**
@@ -104,7 +96,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     if (error != null) {
       throw ConfigurationException(XmlStringUtil.wrapInHtml(error)).withHtmlMessage()
     }
-    applyResult.pluginsToEnable.forEach(Consumer { id: PluginId? -> super.setEnabled(id!!, PluginEnabledState.ENABLED) })
+    applyResult.pluginsToEnable.forEach { id -> super.setEnabled(id, PluginEnabledState.ENABLED) }
     myUninstalled.clear()
     updateButtons()
     return !applyResult.needRestart
@@ -112,8 +104,8 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   fun clear(parentComponent: JComponent?) {
     UiPluginManager.getInstance().resetSession(mySessionId.toString(), false,
-                                               parentComponent) { newState: MutableMap<PluginId?, Boolean?>? ->
-      applyChangedStates(newState!!)
+                                               parentComponent) {
+      applyChangedStates(it)
       updateAfterEnableDisable()
       null
     }
@@ -121,21 +113,21 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   fun cancel(parentComponent: JComponent?, removeSession: Boolean) {
     UiPluginManager.getInstance().resetSession(mySessionId.toString(), removeSession,
-                                               parentComponent) { newState: MutableMap<PluginId?, Boolean?>? ->
-      applyChangedStates(newState!!)
+                                               parentComponent) {
+      applyChangedStates(it)
       null
     }
   }
 
-  fun pluginInstalledFromDisk(callbackData: PluginInstallCallbackData, errors: MutableList<HtmlChunk?>?) {
+  fun pluginInstalledFromDisk(callbackData: PluginInstallCallbackData, errors: MutableList<HtmlChunk>) {
     val descriptor = callbackData.pluginDescriptor
     appendOrUpdateDescriptor(PluginUiModelAdapter(descriptor), callbackData.restartNeeded, errors)
   }
 
   fun addComponent(component: ListPluginComponent) {
-    val descriptor = component.getPluginModel()
+    val descriptor = component.pluginModel
     val pluginId = descriptor.pluginId
-    if (!component.isMarketplace()) {
+    if (!component.isMarketplace) {
       if (installingPlugins.contains(descriptor) &&
           (myInstalling == null || myInstalling!!.ui == null || myInstalling!!.ui.findComponent(pluginId) == null)
       ) {
@@ -144,23 +136,21 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
       myInstalledPluginComponents.add(component)
 
-      val components: MutableList<ListPluginComponent?> =
-        myInstalledPluginComponentMap.computeIfAbsent(pluginId) { `__`: PluginId? -> ArrayList<ListPluginComponent?>() }
+      val components = myInstalledPluginComponentMap.computeIfAbsent(pluginId) { ArrayList<ListPluginComponent>() }
       components.add(component)
     }
     else {
-      val components: MutableList<ListPluginComponent?> =
-        myMarketplacePluginComponentMap.computeIfAbsent(pluginId) { `__`: PluginId? -> ArrayList<ListPluginComponent?>() }
+      val components = myMarketplacePluginComponentMap.computeIfAbsent(pluginId) { ArrayList<ListPluginComponent>() }
       components.add(component)
     }
   }
 
   fun removeComponent(component: ListPluginComponent) {
-    val pluginId = component.getPluginDescriptor().getPluginId()
-    if (!component.isMarketplace()) {
+    val pluginId = component.pluginDescriptor.getPluginId()
+    if (!component.isMarketplace) {
       myInstalledPluginComponents.remove(component)
 
-      val components: MutableList<ListPluginComponent?>? = myInstalledPluginComponentMap.get(pluginId)
+      val components = myInstalledPluginComponentMap[pluginId]
       if (components != null) {
         components.remove(component)
         if (components.isEmpty()) {
@@ -169,7 +159,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       }
     }
     else {
-      val components: MutableList<ListPluginComponent?>? = myMarketplacePluginComponentMap.get(pluginId)
+      val components = myMarketplacePluginComponentMap[pluginId]
       if (components != null) {
         components.remove(component)
         if (components.isEmpty()) {
@@ -181,13 +171,13 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   fun setTopController(topController: TopComponentController) {
     myTopController = topController
-    myTopController!!.showProject(false)
+    topController.showProject(false)
 
     for (info in myInstallingInfos.values) {
       info.fromBackground(this)
     }
     if (!myInstallingInfos.isEmpty()) {
-      myTopController!!.showProgress(true)
+      topController.showProgress(true)
     }
   }
 
@@ -206,29 +196,25 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     updateDescriptor: PluginUiModel?,
     modalityState: ModalityState,
     controller: UiPluginManagerController,
-    callback: Consumer<Boolean?>
+    callback: (Boolean) -> Unit,
   ) {
     val isUpdate = updateDescriptor != null
     val actionDescriptor: PluginUiModel = if (isUpdate) updateDescriptor else descriptor
-    if (!PluginManagerMain.checkThirdPartyPluginsAllowed(List.of<IdeaPluginDescriptor?>(actionDescriptor.getDescriptor()))) {
+    if (!PluginManagerMain.checkThirdPartyPluginsAllowed(listOf(actionDescriptor.getDescriptor()))) {
       return
     }
 
     val customization = findPluginInstallationCustomization(descriptor.pluginId)
-    if (customization != null) {
-      customization.beforeInstallOrUpdate(isUpdate)
-    }
+    customization?.beforeInstallOrUpdate(isUpdate)
 
     if (myInstallSource != null) {
       val pluginId = descriptor.pluginId.idString
-      myInstallSource!!.logInstallPlugins(mutableListOf<String>(pluginId))
+      myInstallSource!!.logInstallPlugins(mutableListOf(pluginId))
     }
 
     if (descriptor.isFromMarketplace) {
       val installSource = descriptor.installSource
-      if (installSource != null) {
-        installSource.logInstallPlugins(List.of<String>(descriptor.pluginId.idString))
-      }
+      installSource?.logInstallPlugins(listOf(descriptor.pluginId.idString))
     }
 
     val allowInstallWithoutRestart = Ref.create<Boolean?>(true)
@@ -269,7 +255,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
             return
           }
 
-          val pluginsToInstall = List.of<IdeaPluginDescriptor?>(pluginUiModel.getDescriptor())
+          val pluginsToInstall = listOf(pluginUiModel.getDescriptor())
           ApplicationManager.getApplication().invokeAndWait(
             Runnable {
               PluginManagerMain.suggestToEnableInstalledDependantPlugins(this@MyPluginModel, pluginsToInstall, updateDescriptor != null)
@@ -283,7 +269,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
           prepareToInstall(info)
           val installPluginRequest = InstallPluginRequest(mySessionId.toString(),
                                                           descriptor.pluginId,
-                                                          List.of<PluginDto>(fromModel(pluginUiModel)),
+                                                          listOf(fromModel(pluginUiModel)),
                                                           allowInstallWithoutRestart.get()!!,
                                                           FINISH_DYNAMIC_INSTALLATION_WITHOUT_UI,
                                                           needRestart)
@@ -293,13 +279,13 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
                                              modalityState,
                                              indicator,
                                              this@MyPluginModel
-          ) { result: InstallPluginResult? ->
-            applyInstallResult(result!!, info, callback)
+          ) { result: InstallPluginResult ->
+            applyInstallResult(result, info, callback)
             null
           }
         }
 
-        fun applyInstallResult(result: InstallPluginResult, info: InstallPluginInfo, callback: Consumer<Boolean?>) {
+        fun applyInstallResult(result: InstallPluginResult, info: InstallPluginInfo, callback: (Boolean) -> Unit) {
           val installedDescriptor = result.installedDescriptor
           if (result.success) {
             descriptor.addInstalledSource(controller.getTarget())
@@ -312,18 +298,18 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
           if (myPluginManagerCustomizer != null) {
             myPluginManagerCustomizer.updateAfterModification {
               info.finish(result.success, result.cancel, result.showErrors, result.restartRequired, getErrors(result))
-              callback.accept(result.success)
+              callback(result.success)
               null
             }
           }
           else {
             info.finish(result.success, result.cancel, result.showErrors, result.restartRequired, getErrors(result))
-            callback.accept(result.success)
+            callback(result.success)
           }
         }
 
-        fun getErrors(result: InstallPluginResult): MutableMap<PluginId?, MutableList<HtmlChunk?>?> {
-          return Companion.getErrors(result.errors)
+        fun getErrors(result: InstallPluginResult): Map<PluginId, List<HtmlChunk>> {
+          return result.errors.mapValues { getErrors(it.value) }
         }
 
 
@@ -359,7 +345,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
 
     if (FINISH_DYNAMIC_INSTALLATION_WITHOUT_UI) {
-      return !myInstallingInfos.isEmpty()
+      return myInstallingInfos.isNotEmpty()
     }
     else {
       // FIXME(vadim.salavatov) idk what that does and it's not clear from the surrounding code :(
@@ -372,9 +358,9 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   }
 
   private fun prepareToInstall(info: InstallPluginInfo) {
-    val descriptor = info.getDescriptor()
+    val descriptor = info.descriptor
     val pluginId = descriptor.pluginId
-    myInstallingInfos.put(pluginId, info)
+    myInstallingInfos[pluginId] = info
 
     if (myInstallingWithUpdatesPlugins.isEmpty()) {
       myTopController!!.showProgress(true)
@@ -397,13 +383,13 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       myInstalledPanel!!.doLayout()
     }
 
-    val gridComponents = myMarketplacePluginComponentMap.get(pluginId)
+    val gridComponents = myMarketplacePluginComponentMap[pluginId]
     if (gridComponents != null) {
       for (gridComponent in gridComponents) {
         gridComponent.showProgress()
       }
     }
-    val listComponents = myInstalledPluginComponentMap.get(pluginId)
+    val listComponents = myInstalledPluginComponentMap[pluginId]
     if (listComponents != null) {
       for (listComponent in listComponents) {
         listComponent.showProgress()
@@ -423,9 +409,10 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   fun finishInstall(
     descriptor: PluginUiModel,
     installedDescriptor: PluginUiModel?,
-    errors: MutableMap<PluginId?, MutableList<HtmlChunk?>>, success: Boolean,
+    errors: Map<PluginId, List<HtmlChunk>>,
+    success: Boolean,
     showErrors: Boolean,
-    restartRequired: Boolean
+    restartRequired: Boolean,
   ) {
     val info: InstallPluginInfo = finishInstall(descriptor)
 
@@ -434,12 +421,12 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
 
     val pluginId = descriptor.pluginId
-    val marketplaceComponents = myMarketplacePluginComponentMap.get(pluginId)
-    val errorList = errors.getOrDefault(pluginId, mutableListOf<HtmlChunk?>())
+    val marketplaceComponents = myMarketplacePluginComponentMap[pluginId]
+    val errorList = errors[pluginId] ?: emptyList()
     if (marketplaceComponents != null) {
       for (gridComponent in marketplaceComponents) {
         if (installedDescriptor != null) {
-          gridComponent.setPluginModel(installedDescriptor)
+          gridComponent.pluginModel = installedDescriptor
         }
         gridComponent.hideProgress(success, restartRequired, installedDescriptor)
         if (gridComponent.myInstalledDescriptorForMarketplace != null) {
@@ -447,11 +434,11 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
         }
       }
     }
-    val installedComponents = myInstalledPluginComponentMap.get(pluginId)
+    val installedComponents = myInstalledPluginComponentMap[pluginId]
     if (installedComponents != null) {
       for (listComponent in installedComponents) {
         if (installedDescriptor != null) {
-          listComponent.setPluginModel(installedDescriptor)
+          listComponent.pluginModel = installedDescriptor
         }
         listComponent.hideProgress(success, restartRequired, installedDescriptor)
         listComponent.updateErrors(errorList)
@@ -464,38 +451,33 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       }
     }
 
+    val installing = myInstalling
     if (info.install) {
-      if (myInstalling != null && myInstalling!!.ui != null) {
+      if (installing != null && installing.ui != null) {
         clearInstallingProgress(descriptor)
         if (installingPlugins.isEmpty()) {
-          myInstalledPanel!!.removeGroup(myInstalling!!)
+          myInstalledPanel!!.removeGroup(installing)
         }
         else {
-          myInstalledPanel!!.removeFromGroup(myInstalling!!, descriptor)
-          myInstalling!!.titleWithCount()
+          myInstalledPanel!!.removeFromGroup(installing, descriptor)
+          installing.titleWithCount()
         }
         myInstalledPanel!!.doLayout()
       }
       if (success) {
-        appendOrUpdateDescriptor(if (installedDescriptor != null) installedDescriptor else descriptor, restartRequired, errorList)
+        appendOrUpdateDescriptor(installedDescriptor ?: descriptor, restartRequired, errorList)
         appendDependsAfterInstall(success, restartRequired, errors, installedDescriptor)
         if (installedDescriptor == null && descriptor.isFromMarketplace && this.downloadedGroup != null && downloadedGroup!!.ui != null) {
           val component = downloadedGroup!!.ui.findComponent(descriptor.pluginId)
-          if (component != null) {
-            component.setInstalledPluginMarketplaceModel(descriptor)
-          }
+          component?.setInstalledPluginMarketplaceModel(descriptor)
         }
       }
-      else if (myCancelInstallCallback != null) {
-        myCancelInstallCallback!!.accept(descriptor)
-      }
+      myCancelInstallCallback?.invoke(descriptor)
     }
     else if (success) {
       if (this.downloadedGroup != null && downloadedGroup!!.ui != null && restartRequired) {
         val component = downloadedGroup!!.ui.findComponent(pluginId)
-        if (component != null) {
-          component.enableRestart()
-        }
+        component?.enableRestart()
       }
     }
     else {
@@ -528,7 +510,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
     else {
       for (listComponent in myInstalling!!.ui.plugins) {
-        if (listComponent.getPluginModel() === descriptor) {
+        if (listComponent.pluginModel === descriptor) {
           listComponent.clearProgress()
           return
         }
@@ -543,7 +525,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   fun setDownloadedGroup(
     panel: PluginsGroupComponent,
     downloaded: PluginsGroup,
-    installing: PluginsGroup
+    installing: PluginsGroup,
   ) {
     myInstalledPanel = panel
     this.downloadedGroup = downloaded
@@ -553,24 +535,25 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   private fun appendDependsAfterInstall(
     success: Boolean,
     restartRequired: Boolean,
-    errors: MutableMap<PluginId?, MutableList<HtmlChunk?>>,
-    installedDescriptor: PluginUiModel?
+    errors: Map<PluginId, List<HtmlChunk>>,
+    installedDescriptor: PluginUiModel?,
   ) {
     if (this.downloadedGroup == null || downloadedGroup!!.ui == null) {
       return
     }
-    for (descriptor in InstalledPluginsState.getInstance().getInstalledPlugins()) {
+    for (descriptor in InstalledPluginsState.getInstance().installedPlugins) {
       val pluginId = descriptor.getPluginId()
       if (downloadedGroup!!.ui.findComponent(pluginId) != null) {
         continue
       }
 
-      appendOrUpdateDescriptor(PluginUiModelAdapter(descriptor), restartRequired, errors.get(pluginId))
+      val pluginErrors = errors[pluginId] ?: emptyList()
+      appendOrUpdateDescriptor(PluginUiModelAdapter(descriptor), restartRequired, pluginErrors)
 
       val id = pluginId.idString
 
       for (entry in myMarketplacePluginComponentMap.entries) {
-        if (id == entry.key!!.idString) {
+        if (id == entry.key.idString) {
           for (component in entry.value) {
             component.hideProgress(success, restartRequired, installedDescriptor)
           }
@@ -590,11 +573,11 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       view.add(descriptor)
     }
     else {
-      view.set(index, descriptor)
+      view[index] = descriptor
     }
   }
 
-  fun appendOrUpdateDescriptor(descriptor: PluginUiModel, restartNeeded: Boolean, errors: MutableList<HtmlChunk?>?) {
+  fun appendOrUpdateDescriptor(descriptor: PluginUiModel, restartNeeded: Boolean, errors: List<HtmlChunk>) {
     val id = descriptor.pluginId
     if (!UiPluginManager.getInstance().isPluginInstalled(id)) {
       appendOrUpdateDescriptor(descriptor)
@@ -615,7 +598,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       downloadedGroup!!.titleWithEnabled(PluginModelFacade(this))
 
       myInstalledPanel!!.addGroup(this.downloadedGroup!!, if (myInstalling == null || myInstalling!!.ui == null) 0 else 1)
-      myInstalledPanel!!.setSelection(downloadedGroup!!.ui.plugins.get(0))
+      myInstalledPanel!!.setSelection(downloadedGroup!!.ui.plugins[0])
       myInstalledPanel!!.doLayout()
 
       addEnabledGroup(this.downloadedGroup!!)
@@ -638,30 +621,28 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   val vendors: SortedSet<String?>
     get() {
-      if (ContainerUtil.isEmpty<String?>(myVendors)) {
-        val vendorsCount: MutableMap<String?, Int?> = getVendorsCount(
-          this.installedDescriptors)
-        myVendors = TreeSet<String?>(Comparator { v1: String?, v2: String? ->
-          val result = vendorsCount.get(v2)!! - vendorsCount.get(v1)!!
-          if (result == 0) v2!!.compareTo(v1!!, ignoreCase = true) else result
-        })
+      if (myVendors.isNullOrEmpty()) {
+        val vendorsCount = getVendorsCount(installedDescriptors)
+        myVendors = TreeSet { v1, v2 ->
+          val result = vendorsCount[v2]!! - vendorsCount[v1]!!
+          if (result == 0) v2.compareTo(v1, ignoreCase = true) else result
+        }
         myVendors!!.addAll(vendorsCount.keys)
       }
-      return Collections.unmodifiableSortedSet<String?>(myVendors)
+      return myVendors?.let { Collections.unmodifiableSortedSet(it) } ?: TreeSet()
     }
 
   val tags: SortedSet<String?>
     get() {
-      if (ContainerUtil.isEmpty<String?>(myTags)) {
-        myTags = TreeSet<String?>(
-          Comparator { obj: String?, str: String? -> obj!!.compareTo(str!!, ignoreCase = true) })
+      if (myTags.isNullOrEmpty()) {
+        myTags = TreeSet(String.CASE_INSENSITIVE_ORDER)
         val sessionId = this.sessionId
 
         for (descriptor in this.installedDescriptors) {
           myTags!!.addAll(descriptor.calculateTags(sessionId))
         }
       }
-      return Collections.unmodifiableSortedSet<String?>(myTags)
+      return myTags?.let { Collections.unmodifiableSortedSet(it) } ?: TreeSet()
     }
 
   val installedDescriptors: MutableList<PluginUiModel>
@@ -669,12 +650,11 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       checkNotNull(myInstalledPanel)
 
       return myInstalledPanel!!
-        .getGroups()
-        .stream()
-        .filter { group: UIPluginGroup? -> !group!!.excluded }
-        .flatMap<ListPluginComponent?> { group: UIPluginGroup? -> group!!.plugins.stream() }
-        .map<PluginUiModel?> { obj: ListPluginComponent? -> obj!!.getPluginModel() }
-        .collect(Collectors.toList())
+        .groups
+        .filterNot { it.excluded }
+        .flatMap { it.plugins }
+        .map { it.pluginModel }
+        .toMutableList()
     }
 
   fun isEnabled(descriptor: IdeaPluginDescriptor): Boolean {
@@ -689,18 +669,15 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
    * @see .isEnabled
    */
   fun getState(pluginId: PluginId): PluginEnabledState {
-    val state = enabledMap.get(pluginId)
-    return if (state != null) state else PluginEnabledState.ENABLED
+    return enabledMap[pluginId] ?: PluginEnabledState.ENABLED
   }
 
   fun isRequiredPluginForProject(pluginId: PluginId): Boolean {
     val project = project
     return project != null &&
            myRequiredPluginsForProject
-             .computeIfAbsent(pluginId
-             ) { id: PluginId? ->
-               ContainerUtil.exists<String?>(getDependenciesOnPlugins(project),
-                                             Condition { anObject: String? -> id!!.idString.equals(anObject) })
+             .computeIfAbsent(pluginId) { id ->
+               getDependenciesOnPlugins(project).any { it == id.idString }
              }
   }
 
@@ -714,17 +691,17 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   override fun setEnabled(pluginId: PluginId, enabled: PluginEnabledState?) {
     super.setEnabled(pluginId, enabled)
-    val isEnabled = enabled == null || enabled.isEnabled()
-    UiPluginManager.getInstance().setPluginStatus(mySessionId.toString(), List.of<PluginId>(pluginId), isEnabled)
+    val isEnabled = enabled == null || enabled.isEnabled
+    UiPluginManager.getInstance().setPluginStatus(mySessionId.toString(), listOf(pluginId), isEnabled)
   }
 
   fun setEnabledState(
-    descriptors: MutableCollection<out IdeaPluginDescriptor?>,
-    action: PluginEnableDisableAction
+    descriptors: Collection<IdeaPluginDescriptor>,
+    action: PluginEnableDisableAction,
   ): Boolean {
-    val pluginIds = ContainerUtil.map(descriptors, { it: IdeaPluginDescriptor? -> it!!.getPluginId() })
+    val pluginIds = descriptors.map { it.pluginId }
     val result =
-      UiPluginManager.getInstance().enablePlugins(mySessionId.toString(), pluginIds, action.isEnable(), project)
+      UiPluginManager.getInstance().enablePlugins(mySessionId.toString(), pluginIds, action.isEnable, project)
     if (result.pluginNamesToSwitch.isEmpty()) {
       applyChangedStates(result.changedStates)
       updateEnabledStateInUi()
@@ -736,18 +713,18 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   }
 
   fun setEnabledStateAsync(
-    descriptors: MutableCollection<out IdeaPluginDescriptor?>,
-    action: PluginEnableDisableAction
+    descriptors: Collection<IdeaPluginDescriptor>,
+    action: PluginEnableDisableAction,
   ): Boolean {
-    val pluginIds = ContainerUtil.map(descriptors, { it: IdeaPluginDescriptor? -> it!!.getPluginId() })
-    PluginModelAsyncOperationsExecutor.enablePlugins(coroutineScope, mySessionId.toString(), pluginIds, action.isEnable(),
-                                                     project) { result: SetEnabledStateResult? ->
-      if (result!!.pluginNamesToSwitch.isEmpty()) {
-        applyChangedStates(result.changedStates)
+    val pluginIds = descriptors.map { it.pluginId }
+    PluginModelAsyncOperationsExecutor.enablePlugins(coroutineScope, mySessionId.toString(), pluginIds, action.isEnable,
+                                                     project) {
+      if (it.pluginNamesToSwitch.isEmpty()) {
+        applyChangedStates(it.changedStates)
         updateEnabledStateInUi()
       }
       else {
-        askToUpdateDependencies(action, result.pluginNamesToSwitch, result.pluginsIdsToSwitch)
+        askToUpdateDependencies(action, it.pluginNamesToSwitch, it.pluginsIdsToSwitch)
       }
       null
     }
@@ -756,23 +733,23 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   private fun askToUpdateDependencies(
     action: PluginEnableDisableAction,
-    pluginNames: MutableSet<String>,
-    pluginIds: MutableSet<PluginId?>
+    pluginNames: Set<String>,
+    pluginIds: Set<PluginId>,
   ) {
     if (!createUpdateDependenciesDialog(pluginNames, action)) {
       return
     }
     val result =
-      UiPluginManager.getInstance().setEnableStateForDependencies(mySessionId.toString(), pluginIds, action.isEnable())
-    if (!result.changedStates.isEmpty()) {
+      UiPluginManager.getInstance().setEnableStateForDependencies(mySessionId.toString(), pluginIds, action.isEnable)
+    if (result.changedStates.isNotEmpty()) {
       applyChangedStates(result.changedStates)
       updateEnabledStateInUi()
     }
   }
 
   private fun createUpdateDependenciesDialog(
-    dependencies: MutableCollection<String>,
-    action: PluginEnableDisableAction
+    dependencies: Collection<String>,
+    action: PluginEnableDisableAction,
   ): Boolean {
     val size = dependencies.size
     if (size == 0) {
@@ -786,11 +763,9 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
 
     val dependenciesText = if (hasOnlyOneDependency) dependencies.iterator().next()
-    else dependencies.stream()
-      .map<String?> { str: String? -> "&nbsp;".repeat(5) + str }
-      .collect(Collectors.joining("<br>"))
+    else dependencies.joinToString("<br>") { "&nbsp;".repeat(5) + it }
 
-    val enabled = action.isEnable()
+    val enabled = action.isEnable
     return okCancel(IdeBundle.message(if (enabled) "dialog.title.enable.required.plugins" else "dialog.title.disable.dependent.plugins"),
                     IdeBundle.message(key, dependenciesText))
       .yesText(IdeBundle.message(if (enabled) "plugins.configurable.enable" else "plugins.configurable.disable"))
@@ -812,17 +787,17 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     return !isEnabled(pluginId, enabledMap)
   }
 
-  override fun enable(descriptors: MutableCollection<out IdeaPluginDescriptor?>): Boolean {
+  override fun enable(descriptors: Collection<IdeaPluginDescriptor>): Boolean {
     return setEnabledState(descriptors, PluginEnableDisableAction.ENABLE_GLOBALLY)
   }
 
-  override fun disable(descriptors: MutableCollection<out IdeaPluginDescriptor?>): Boolean {
+  override fun disable(descriptors: Collection<IdeaPluginDescriptor>): Boolean {
     return setEnabledState(descriptors, PluginEnableDisableAction.DISABLE_GLOBALLY)
   }
 
   fun enableRequiredPlugins(descriptor: IdeaPluginDescriptor) {
-    val pluginsToEnable: MutableSet<PluginId?> = UiPluginManager.getInstance().enableRequiredPlugins(mySessionId.toString(),
-                                                                                                     descriptor.getPluginId())
+    val pluginsToEnable = UiPluginManager.getInstance().enableRequiredPlugins(mySessionId.toString(),
+                                                                              descriptor.pluginId)
     setStatesByIds(pluginsToEnable, true)
   }
 
@@ -836,7 +811,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     myInvalidFixCallback = invalidFixCallback
   }
 
-  fun setCancelInstallCallback(callback: Consumer<PluginUiModel?>) {
+  fun setCancelInstallCallback(callback: (PluginUiModel?) -> Unit) {
     myCancelInstallCallback = callback
   }
 
@@ -847,9 +822,9 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
                                                      myDetailPanels)
   }
 
-  private fun applyChangedStates(changedStates: MutableMap<PluginId?, Boolean?>) {
-    changedStates.forEach { (pluginId: PluginId?, enabled: Boolean?) ->
-      super.setEnabled(pluginId!!, if (enabled) PluginEnabledState.ENABLED else PluginEnabledState.DISABLED)
+  private fun applyChangedStates(changedStates: Map<PluginId, Boolean>) {
+    changedStates.forEach { (pluginId: PluginId, enabled: Boolean) ->
+      super.setEnabled(pluginId, if (enabled) PluginEnabledState.ENABLED else PluginEnabledState.DISABLED)
     }
   }
 
@@ -887,9 +862,9 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   fun uninstallAndUpdateUi(
     descriptor: PluginUiModel,
     controller: UiPluginManagerController,
-    callback: Runnable?
+    callback: Runnable?,
   ) {
-    val scope = coroutineScope.childScope(javaClass.getName(), getIO.getIO(), true)
+    val scope = coroutineScope.childScope(javaClass.name, kotlinx.coroutines.Dispatchers.IO, true)
     myTopController!!.showProgress(true)
     for (panel in myDetailPanels) {
       if (panel.descriptorForActions === descriptor) {
@@ -899,19 +874,19 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     try {
       PluginModelAsyncOperationsExecutor
         .performUninstall(scope, descriptor, mySessionId.toString(),
-                          controller) { needRestartForUninstall: Boolean?, errorCheckResult: MutableMap<PluginId?, CheckErrorsResult?>? ->
+                          controller) { needRestartForUninstall, errorCheckResult ->
           needRestart = needRestart or (descriptor.isEnabled && needRestartForUninstall)
-          val errors: MutableMap<PluginId?, MutableList<HtmlChunk?>?> = Companion.getErrors(errorCheckResult!!)
+          val errors = getErrors(errorCheckResult)
           if (myPluginManagerCustomizer != null) {
             myPluginManagerCustomizer.updateAfterModification {
-              updateUiAfterUninstall(descriptor, needRestartForUninstall!!, errors)
-              callback!!.run()
+              updateUiAfterUninstall(descriptor, needRestartForUninstall, errors)
+              callback?.run()
               null
             }
           }
           else {
-            updateUiAfterUninstall(descriptor, needRestartForUninstall!!, errors)
-            callback!!.run()
+            updateUiAfterUninstall(descriptor, needRestartForUninstall, errors)
+            callback?.run()
           }
           null
         }
@@ -927,18 +902,18 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   private fun updateUiAfterUninstall(
     descriptor: PluginUiModel, needRestartForUninstall: Boolean,
-    errors: MutableMap<PluginId?, MutableList<HtmlChunk?>?>
+    errors: Map<PluginId, List<HtmlChunk>>,
   ) {
     val pluginId = descriptor.pluginId
     myTopController!!.showProgress(false)
-    val listComponents = myInstalledPluginComponentMap.get(pluginId)
+    val listComponents = myInstalledPluginComponentMap[pluginId]
     if (listComponents != null) {
       for (listComponent in listComponents) {
         listComponent.updateAfterUninstall(needRestartForUninstall)
       }
     }
 
-    val marketplaceComponents = myMarketplacePluginComponentMap.get(pluginId)
+    val marketplaceComponents = myMarketplacePluginComponentMap[pluginId]
     if (marketplaceComponents != null) {
       for (component in marketplaceComponents) {
         if (component.myInstalledDescriptorForMarketplace != null) {
@@ -947,12 +922,12 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       }
     }
     for (component in myInstalledPluginComponents) {
-      component.updateErrors(errors.getOrDefault(component.getPluginModel().pluginId, mutableListOf<HtmlChunk?>()))
+      component.updateErrors(errors[component.pluginModel.pluginId] ?: emptyList())
     }
     for (plugins in myMarketplacePluginComponentMap.values) {
       for (plugin in plugins) {
         if (plugin.myInstalledDescriptorForMarketplace != null) {
-          plugin.updateErrors(errors.get(plugin.getPluginModel().pluginId))
+          plugin.updateErrors(errors[plugin.pluginModel.pluginId])
         }
       }
     }
@@ -965,13 +940,13 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   }
 
   fun hasErrors(descriptor: IdeaPluginDescriptor): Boolean {
-    return !getErrors(descriptor).isEmpty()
+    return getErrors(descriptor).isNotEmpty()
   }
 
-  fun getErrors(descriptor: IdeaPluginDescriptor): MutableList<out HtmlChunk?> {
+  fun getErrors(descriptor: IdeaPluginDescriptor): List<HtmlChunk> {
     val pluginId = descriptor.getPluginId()
     if (isDeleted(descriptor)) {
-      return mutableListOf<HtmlChunk?>()
+      return emptyList()
     }
     val response = UiPluginManager.getInstance().getErrorsSync(mySessionId.toString(), pluginId)
     return getErrors(response)
@@ -985,17 +960,17 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   init {
     val window = getActiveFrameOrWelcomeScreen()
     val statusBar: StatusBarEx? = getStatusBar(window)
-    myStatusBar = if (statusBar != null || window == null) statusBar else getStatusBar(window.getOwner())
+    myStatusBar = if (statusBar != null || window == null) statusBar else getStatusBar(window.owner)
     myPluginManagerCustomizer = PluginManagerCustomizer.getInstance()
   }
 
   fun getIcon(descriptor: IdeaPluginDescriptor, big: Boolean, error: Boolean, disabled: Boolean): Icon {
     val key = descriptor.getPluginId().idString + big + error + disabled
-    var icon = myIcons.get(key)
+    var icon = myIcons[key]
     if (icon == null) {
       icon = PluginLogo.getIcon(descriptor, big, error, disabled)
       if (icon !== getDefault().getIcon(big, error, disabled)) {
-        myIcons.put(key, icon)
+        myIcons[key] = icon
       }
     }
     return icon
@@ -1006,10 +981,12 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     private val FINISH_DYNAMIC_INSTALLATION_WITHOUT_UI = SystemProperties.getBooleanProperty(
       "plugins.finish-dynamic-plugin-installation-without-ui", true)
 
-    val installingPlugins: MutableSet<PluginUiModel?> = HashSet<PluginUiModel?>()
+    @JvmStatic
+    val installingPlugins: MutableSet<PluginUiModel> = mutableSetOf()
     private val myInstallingWithUpdatesPlugins: MutableSet<PluginId?> = HashSet<PluginId?>()
+
     @JvmField
-    val myInstallingInfos: MutableMap<PluginId?, InstallPluginInfo> = HashMap<PluginId?, InstallPluginInfo>()
+    internal val myInstallingInfos: MutableMap<PluginId, InstallPluginInfo> = mutableMapOf()
 
     private fun getStatusBar(frame: Window?): StatusBarEx? {
       return if (frame is IdeFrame && frame !is WelcomeFrame) (frame as IdeFrame).getStatusBar() as StatusBarEx? else null
@@ -1020,8 +997,8 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
 
     @JvmStatic
-    fun finishInstall(descriptor: PluginUiModel): InstallPluginInfo {
-      val info: InstallPluginInfo = myInstallingInfos.remove(descriptor.pluginId)!!
+    private fun finishInstall(descriptor: PluginUiModel): InstallPluginInfo {
+      val info = myInstallingInfos.remove(descriptor.pluginId)!!
       info.close()
       myInstallingWithUpdatesPlugins.remove(descriptor.pluginId)
       if (info.install) {
@@ -1030,32 +1007,39 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       return info
     }
 
+    //overload to avoid exposing InstallPluginInfo and to allow Java code to use it
+    @JvmStatic
+    fun finishInstallation(descriptor: PluginUiModel) {
+      finishInstall(descriptor)
+    }
+
     fun addProgress(descriptor: IdeaPluginDescriptor, indicator: ProgressIndicatorEx) {
-      val info: InstallPluginInfo? = myInstallingInfos.get(descriptor.getPluginId())
+      val info = myInstallingInfos[descriptor.pluginId]
       if (info == null) return
       info.indicator.addStateDelegate(indicator)
     }
 
     fun removeProgress(descriptor: IdeaPluginDescriptor, indicator: ProgressIndicatorEx) {
-      val info: InstallPluginInfo? = myInstallingInfos.get(descriptor.getPluginId())
+      val info = myInstallingInfos[descriptor.pluginId]
       if (info == null) return
       info.indicator.removeStateDelegate(indicator)
     }
 
-    private fun getVendorsCount(descriptors: MutableCollection<PluginUiModel>): MutableMap<String?, Int?> {
-      val vendors: MutableMap<String?, Int?> = HashMap<String?, Int?>()
+    private fun getVendorsCount(descriptors: Collection<PluginUiModel>): Map<String, Int> {
+      val vendors = mutableMapOf<String, Int>()
 
       for (descriptor in descriptors) {
         val vendor = StringUtil.trim(descriptor.vendor)
-        if (!StringUtil.isEmptyOrSpaces(vendor)) {
-          vendors.compute(vendor) { `__`: String?, old: Int? -> (if (old != null) old else 0) + 1 }
+        if (!vendor.isNullOrBlank()) {
+          vendors[vendor] = (vendors[vendor] ?: 0) + 1
         }
       }
 
       return vendors
     }
 
-    fun isVendor(descriptor: PluginUiModel, vendors: MutableSet<String>): Boolean {
+    @JvmStatic
+    fun isVendor(descriptor: PluginUiModel, vendors: Set<String>): Boolean {
       val vendor = StringUtil.trim(descriptor.vendor)
       if (StringUtil.isEmpty(vendor)) {
         return false
@@ -1070,23 +1054,19 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       return false
     }
 
-    fun getErrors(errorCheckResults: MutableMap<PluginId?, CheckErrorsResult?>): MutableMap<PluginId?, MutableList<HtmlChunk?>?> {
-      return errorCheckResults.entries.stream()
-        .collect(Collectors.toMap(
-          Function { Map.Entry.key },
-          Function { entry: MutableMap.MutableEntry<PluginId?, CheckErrorsResult?>? -> Companion.getErrors(entry!!.value!!) }
-        ))
+    fun getErrors(errorCheckResults: Map<PluginId, CheckErrorsResult>): Map<PluginId, List<HtmlChunk>> {
+      return errorCheckResults.mapValues { (_, checkResult) -> getErrors(checkResult) }
     }
 
-    fun getErrors(checkErrorsResult: CheckErrorsResult): MutableList<HtmlChunk?> {
+    fun getErrors(checkErrorsResult: CheckErrorsResult): List<HtmlChunk> {
       if (checkErrorsResult.isDisabledDependencyError) {
         val loadingError = checkErrorsResult.loadingError
-        return if (loadingError != null) List.of<HtmlChunk?>(createTextChunk(loadingError)) else mutableListOf<HtmlChunk?>()
+        return if (loadingError != null) listOf<HtmlChunk>(createTextChunk(loadingError)) else emptyList()
       }
 
-      val errors = ArrayList<HtmlChunk?>()
+      val errors = mutableListOf<HtmlChunk>()
 
-      val requiredPluginNames: MutableSet<String?> = checkErrorsResult.requiredPluginNames
+      val requiredPluginNames = checkErrorsResult.requiredPluginNames
       if (requiredPluginNames.isEmpty()) {
         return errors
       }
@@ -1100,24 +1080,23 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
         errors.add(HtmlChunk.link("link", action))
       }
 
-      return Collections.unmodifiableList<HtmlChunk?>(errors)
+      return errors.toList()
     }
 
-    fun getPluginNames(descriptors: MutableCollection<out IdeaPluginDescriptor?>): @Unmodifiable MutableSet<String?> {
-      return ContainerUtil.map2Set(descriptors,
-                                   { obj: IdeaPluginDescriptor? -> obj!!.getName() })
+    @JvmStatic
+    fun getPluginNames(descriptors: Collection<IdeaPluginDescriptor?>): Set<String> {
+      return descriptors.mapNotNull { it?.name }.toSet()
     }
 
-    fun joinPluginNamesOrIds(pluginNames: MutableSet<String?>): String {
-      return StringUtil.join<String?>(pluginNames,
-                                      com.intellij.util.Function { str: String? -> StringUtil.wrapWithDoubleQuote(str!!) },
-                                      ", ")
+    @JvmStatic
+    fun joinPluginNamesOrIds(pluginNames: Set<String?>): String {
+      return pluginNames.filterNotNull().joinToString(", ") { StringUtil.wrapWithDoubleQuote(it) }
     }
 
-    private fun getDependenciesOnPlugins(project: Project): @Unmodifiable MutableList<String?> {
-      return ContainerUtil.map<DependencyOnPlugin?, String?>(
-        ExternalDependenciesManager.getInstance(project).getDependencies<DependencyOnPlugin?>(DependencyOnPlugin::class.java),
-        com.intellij.util.Function { obj: DependencyOnPlugin? -> obj!!.getPluginId() })
+    private fun getDependenciesOnPlugins(project: Project): List<String> {
+      return ExternalDependenciesManager.getInstance(project)
+        .getDependencies(DependencyOnPlugin::class.java)
+        .map { it.pluginId }
     }
 
     private fun createTextChunk(message: @Nls String): HtmlChunk.Element {

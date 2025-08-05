@@ -71,7 +71,7 @@ final class InstallPluginInfo {
       return;
     }
     if (myPluginModel == null) {
-      MyPluginModel.finishInstall(myDescriptor);
+      MyPluginModel.finishInstallation(myDescriptor);
       closeStatusBarIndicator();
       if (success && !cancel && restartRequired) {
         ourShowRestart = true;
