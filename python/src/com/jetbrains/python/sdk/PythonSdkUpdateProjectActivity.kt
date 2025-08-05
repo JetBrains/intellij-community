@@ -46,23 +46,24 @@ class PythonSdkUpdateProjectActivity : ProjectActivity, DumbAware {
       PythonSdkUpdater.scheduleUpdate(sdk, project)
     }
   }
+}
 
-  private suspend fun refreshPaths(project: Project, sdk: Sdk) = edtWriteAction {
-    // Background refreshing breaks structured concurrency: there is a some activity in background that locks files.
-    // Temporary folders can't be deleted on Windows due to that.
-    // That breaks tests.
-    // This code should be deleted, but disabled temporary to fix tests
-    if (!(ApplicationManager.getApplication().isUnitTestMode && SystemInfoRt.isWindows)) {
-      VfsUtil.markDirtyAndRefresh(true, true, true, *sdk.rootProvider.getFiles(OrderRootType.CLASSES))
-    }
-
-    getSitePackagesDirectory(sdk)?.refresh(true, true)
-    sdk.associatedModuleDir?.refresh(true, false)
-
-    //Restart all inspections because packages are changed
-    DaemonCodeAnalyzer.getInstance(project).restart()
-    PythonSdkUpdater.scheduleUpdate(sdk, project, false)
+@ApiStatus.Internal
+suspend fun refreshPaths(project: Project, sdk: Sdk): Unit = edtWriteAction {
+  // Background refreshing breaks structured concurrency: there is a some activity in background that locks files.
+  // Temporary folders can't be deleted on Windows due to that.
+  // That breaks tests.
+  // This code should be deleted, but disabled temporary to fix tests
+  if (!(ApplicationManager.getApplication().isUnitTestMode && SystemInfoRt.isWindows)) {
+    VfsUtil.markDirtyAndRefresh(true, true, true, *sdk.rootProvider.getFiles(OrderRootType.CLASSES))
   }
+
+  getSitePackagesDirectory(sdk)?.refresh(true, true)
+  sdk.associatedModuleDir?.refresh(true, false)
+
+  //Restart all inspections because packages are changed
+  DaemonCodeAnalyzer.getInstance(project).restart()
+  PythonSdkUpdater.scheduleUpdate(sdk, project, false)
 }
 
 internal fun dropUpdaterInHeadless(): Boolean {
