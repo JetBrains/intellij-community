@@ -4,7 +4,6 @@ package com.intellij.ui.dsl.listCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.awt.Color
 import java.awt.Font
 import java.awt.RenderingHints
@@ -25,6 +24,7 @@ abstract class LcrTextInitParams(foreground: Color) : LcrInitParams() {
    *
    * See also [greyForeground]
    */
+  @Suppress("CanBePrimaryConstructorProperty")
   var foreground: Color = foreground
 
   /**
@@ -33,13 +33,6 @@ abstract class LcrTextInitParams(foreground: Color) : LcrInitParams() {
   var attributes: SimpleTextAttributes? = null
 
   var font: Font? = UIManager.getFont("Label.font")
-
-  /**
-   * true if the text is used by speed search and therefore should be highlighted while searching
-   */
-  @Deprecated("Use speedSearch() instead")
-  @ScheduledForRemoval
-  var speedSearchHighlighting: Boolean = false
 
   @ApiStatus.Internal
   @ApiStatus.Experimental

@@ -686,11 +686,9 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - f:getFont():java.awt.Font
 - f:getForeground():java.awt.Color
 - f:getGreyForeground():java.awt.Color
-- f:getSpeedSearchHighlighting():Z
 - f:setAttributes(com.intellij.ui.SimpleTextAttributes):V
 - f:setFont(java.awt.Font):V
 - f:setForeground(java.awt.Color):V
-- f:setSpeedSearchHighlighting(Z):V
 - a:speedSearch(kotlin.jvm.functions.Function1):V
 *f:com.intellij.ui.dsl.listCellRenderer.LcrTextSpeedSearchParams
 - <init>():V
