@@ -87,10 +87,12 @@ class K2ContributorSectionPriority private constructor(private val value: Double
  * in the [K2CompletionSection]s that might use a different analysis session.
  */
 internal class K2CompletionSetupScope<P : KotlinRawPositionContext> internal constructor(
-    val position: P,
+    val completionContext: K2CompletionContext<P>,
     private val contributor: K2CompletionContributor<P>,
     private val registeredCompletions: MutableList<K2CompletionSection<*>>
 ) {
+    val position: P = completionContext.positionContext
+
     fun complete(
         name: String,
         priority: K2ContributorSectionPriority = K2ContributorSectionPriority.DEFAULT,

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiJavaPatterns
@@ -93,11 +94,19 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
             .withRelevanceSorter(parameters, positionContext)
             .withPrefixMatcher(parameters)
 
-        val addedResults = Completions.complete(
-            parameters = parameters,
-            positionContext = positionContext,
-            resultSet = resultSet,
-        )
+        val addedResults = if (Registry.`is`("kotlin.k2.parallel.completion.enabled", false)) {
+            Completions.completeInParallel(
+                parameters = parameters,
+                positionContext = positionContext,
+                resultSet = resultSet,
+            )
+        } else {
+            Completions.complete(
+                parameters = parameters,
+                positionContext = positionContext,
+                resultSet = resultSet,
+            )
+        }
 
         // If we have not found any results and we have an invocation count 1, we want to re-run completion because
         // it will also start looking in nested objects etc.

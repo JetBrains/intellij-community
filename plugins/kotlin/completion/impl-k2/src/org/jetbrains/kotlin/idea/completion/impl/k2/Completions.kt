@@ -30,6 +30,46 @@ import org.jetbrains.kotlin.renderer.render
 import java.util.concurrent.CopyOnWriteArrayList
 
 internal object Completions {
+    private val contributors: List<K2CompletionContributor<*>> = listOf(
+        // todo
+    )
+
+    // Note: this function will be renamed and replace the complete method below!
+    fun completeInParallel(
+        parameters: KotlinFirCompletionParameters,
+        positionContext: KotlinRawPositionContext,
+        resultSet: CompletionResultSet,
+    ): Boolean {
+        val matchingContributors = contributors.filter { it.positionContextClass.isInstance(positionContext) }
+
+        val sections = mutableListOf<K2CompletionSection<*>>()
+        val completionContext = K2CompletionContext(parameters, resultSet, positionContext)
+        for (contributor in matchingContributors) {
+            // We make sure the type parameters match before, so this cast is safe.
+            @Suppress("UNCHECKED_CAST")
+            val castContributor = contributor as K2CompletionContributor<KotlinRawPositionContext>
+
+            val setupScope = K2CompletionSetupScope(completionContext, castContributor, sections)
+            with(castContributor) {
+                setupScope.registerCompletions()
+            }
+        }
+
+        // Sort by priority in a _stable_ way to preserve determinism.
+        sections.sortBy { it.priority }
+
+        val completionRunner = K2CompletionRunner.getInstance(sections.size)
+
+        // TODO: Add chain completion
+
+        // We make sure the type parameters match before, so this cast is safe.
+        @Suppress("UNCHECKED_CAST")
+        val addedElements =
+            completionRunner.runCompletion(completionContext, sections as List<K2CompletionSection<KotlinRawPositionContext>>)
+        return addedElements > 0
+    }
+
+
     /**
      * Returns whether any elements were added to the [resultSet].
      */
@@ -76,7 +116,8 @@ internal object Completions {
 
             if (positionContext is KotlinNameReferencePositionContext
                 && contributors.isNotEmpty()
-                && RegistryManager.getInstance().`is`("kotlin.k2.chain.completion.enabled")) {
+                && RegistryManager.getInstance().`is`("kotlin.k2.chain.completion.enabled")
+            ) {
                 runChainCompletion(positionContext, sink, contributors)
             }
 
@@ -390,7 +431,7 @@ private fun KotlinExpressionNameReferencePositionContext.allowsOnlyNamedArgument
     return with(valueArgumentList.arguments) { indexOf(valueArgument) >= indexOf(firstArgumentInNamedMode) }
 }
 
-private fun KotlinTypeNameReferencePositionContext.hasNoExplicitReceiver(): Boolean {
+internal fun KotlinTypeNameReferencePositionContext.hasNoExplicitReceiver(): Boolean {
     val declaration = typeReference?.parent
         ?: return false
 

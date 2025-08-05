@@ -12,7 +12,7 @@ internal class K2CompletionContext<P: KotlinRawPositionContext>(
     val resultSet: CompletionResultSet,
     val positionContext: P,
 ) {
-    private val prefixMatcher = resultSet.prefixMatcher
+    internal val prefixMatcher = resultSet.prefixMatcher
 
     internal val scopeNameFilter: (Name) -> Boolean =
         { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }
