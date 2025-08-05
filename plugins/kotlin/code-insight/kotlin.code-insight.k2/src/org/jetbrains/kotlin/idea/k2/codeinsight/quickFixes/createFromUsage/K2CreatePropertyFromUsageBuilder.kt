@@ -29,6 +29,9 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -92,7 +95,7 @@ object K2CreatePropertyFromUsageBuilder {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun buildRequests(ref: KtNameReferenceExpression): List<Pair<JvmClass, CreateFieldRequest>> {
         val requests = mutableListOf<Pair<JvmClass, CreateFieldRequest>>()
         val qualifiedElement = ref.getQualifiedElement()

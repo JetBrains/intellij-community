@@ -22,10 +22,28 @@ import org.jetbrains.java.generate.element.MethodElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
+import org.jetbrains.kotlin.analysis.api.components.allSupertypes
+import org.jetbrains.kotlin.analysis.api.components.isAnyType
+import org.jetbrains.kotlin.analysis.api.components.isArrayOrPrimitiveArray
+import org.jetbrains.kotlin.analysis.api.components.isBooleanType
+import org.jetbrains.kotlin.analysis.api.components.isByteType
+import org.jetbrains.kotlin.analysis.api.components.isCharType
+import org.jetbrains.kotlin.analysis.api.components.isDoubleType
+import org.jetbrains.kotlin.analysis.api.components.isFloatType
+import org.jetbrains.kotlin.analysis.api.components.isIntType
+import org.jetbrains.kotlin.analysis.api.components.isLongType
+import org.jetbrains.kotlin.analysis.api.components.isNestedArray
+import org.jetbrains.kotlin.analysis.api.components.isNullable
+import org.jetbrains.kotlin.analysis.api.components.isPrimitive
+import org.jetbrains.kotlin.analysis.api.components.isShortType
+import org.jetbrains.kotlin.analysis.api.components.isStringType
+import org.jetbrains.kotlin.analysis.api.components.isUnitType
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
@@ -46,7 +64,7 @@ private const val _NO_NAME_PROVIDED_ = "`<no name provided>`"
  * Kotlin factory for creating [FieldElement] or [ClassElement] objects.
  */
 object KotlinElementFactory {
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun newClassElement(clazz: KtClassOrObject): ClassElement {
         val ce = ClassElement()
@@ -81,7 +99,7 @@ object KotlinElementFactory {
 
     private fun KaAnnotated.isDeprecated(): Boolean = annotations.contains(StandardClassIds.Annotations.Deprecated)
 
-    context(KaSession)
+    context(_: KaSession)
     fun newFieldElement(property: KtProperty): FieldElement {
         val fe = FieldElement()
         fe.name = property.nameIdentifier?.text ?: _NO_NAME_PROVIDED_
@@ -99,7 +117,7 @@ object KotlinElementFactory {
         return fe
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun newFieldElement(parameter: KtParameter): FieldElement {
         val fe = FieldElement()
         fe.name = parameter.nameIdentifier?.text ?: _NO_NAME_PROVIDED_
@@ -107,7 +125,7 @@ object KotlinElementFactory {
         return fe
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun newMethodElement(method: KtNamedFunction): MethodElement {
         val me = MethodElement()
         me.name = method.nameIdentifier?.text ?: _NO_NAME_PROVIDED_
@@ -129,14 +147,14 @@ object KotlinElementFactory {
         return me
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun setElementInfo(element: AbstractElement, type: KaType, modifiersList: KtModifierList?) {
         val typeSymbol = type.symbol
         element.typeName = typeSymbol?.classId?.shortClassName?.asString()
         element.typeQualifiedName = typeSymbol?.classId?.asFqNameString()
         element.type = type.render(position = Variance.INVARIANT)
-        element.isNotNull = !type.canBeNull
+        element.isNotNull = !type.isNullable
 
         element.isArray = type.isArrayOrPrimitiveArray
 

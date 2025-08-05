@@ -8,6 +8,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
@@ -20,7 +22,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 @ApiStatus.Internal
 internal fun PresentationTreeBuilder.printKtType(type: KaType) {
@@ -47,7 +49,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
                 text("(")
                 printClassId((lower as KaClassType).classId, "Mutable")
                 text(")")
-                printKtType(upper.withNullability(KaTypeNullability.NON_NULLABLE))
+                printKtType(upper.withNullability(false))
             } else {
                 if (isNullabilityFlexibleType(lower, upper)) {
                     printKtType(lower)
@@ -113,7 +115,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
     if (markedNullable) text("?")
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun PresentationTreeBuilder.printNonErrorClassType(type: KaClassType, anotherType: KaClassType? = null) {
     val truncatedName = truncatedName(type)
     if (truncatedName.isNotEmpty()) {
@@ -145,7 +147,7 @@ private fun PresentationTreeBuilder.printNonErrorClassType(type: KaClassType, an
 }
 
 
-context(KaSession)
+context(_: KaSession)
 private fun PresentationTreeBuilder.printProjection(projection: KaTypeProjection, optionalProjection: Boolean) {
     fun String.asOptional(optional: Boolean): String =
         if (optional) "($this)" else this

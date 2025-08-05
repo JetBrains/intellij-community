@@ -77,7 +77,7 @@ internal object KotlinReferenceRestoringHelper {
     /**
      * Note that the contents of [sourceFile] are expected to be the same as they were at the moment of [sourceReferenceInfos]' collection.
      */
-    context(KaSession)
+    context(_: KaSession)
     fun getResolvedSourceReferencesThatMightRequireRestoring(
         sourceFile: KtFile,
         sourceReferenceInfos: List<KotlinSourceReferenceInfo>,
@@ -127,7 +127,7 @@ internal object KotlinReferenceRestoringHelper {
         override fun toString(): String = fqName.asString()
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun getTargetReferencesToRestore(
         sourceReferencesInTargetFile: List<KotlinSourceReferenceInTargetFile>,
         resolvedSourceReferences: List<KotlinResolvedSourceReference>,
@@ -155,7 +155,7 @@ internal object KotlinReferenceRestoringHelper {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun symbolMightRequireRestoring(
         symbol: KaSymbol,
         receiverExpression: KtExpression?,
@@ -170,7 +170,7 @@ internal object KotlinReferenceRestoringHelper {
         return true
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun buildTargetReferenceToRestore(
         sourceFqName: FqName,
         isReferenceQualifiable: Boolean,

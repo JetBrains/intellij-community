@@ -12,6 +12,8 @@ import com.intellij.psi.util.findParentOfType
 import com.intellij.util.text.UniqueNameGenerator
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.isAnyType
+import org.jetbrains.kotlin.analysis.api.components.isUnitType
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -109,7 +111,7 @@ object K2CreateClassFromUsageBuilder {
     }
 
     internal class ParamListRenderResult(val renderedParamList: String, val candidateList: List<CreateKotlinCallableAction.ParamCandidate>, val primaryConstructorVisibilityModifier: String?)
-    context(KaSession)
+    context(_: KaSession)
     private fun renderParamList(isAnnotation:Boolean, refExpr: KtNameReferenceExpression): ParamListRenderResult {
         val renderedParameters: String
         val shouldParenthesize: Boolean
@@ -142,7 +144,7 @@ object K2CreateClassFromUsageBuilder {
 
     data class PossibleParentClass(val classKinds: List<ClassKind>, val targetParents: List<PsiElement>, val inner:Boolean)
 
-    context (KaSession)
+    context(_: KaSession)
     private fun getPossibleClassKindsAndParents(element: KtSimpleNameExpression): PossibleParentClass? {
         val name = element.getReferencedName()
 
@@ -231,7 +233,7 @@ object K2CreateClassFromUsageBuilder {
     }
 
     // return list of parents, inner=true if should create inner class
-    context (KaSession)
+    context(_: KaSession)
     private fun getTargetParentsByQualifier(
         element: KtElement,
         receiverExpression: KtExpression?
@@ -266,7 +268,7 @@ object K2CreateClassFromUsageBuilder {
         return Pair(targetParents.filter { it.canRefactorElement() }, inner)
     }
 
-    context (KaSession)
+    context (_: KaSession)
     private fun isClassKindAccepted(expectedType: KaType?, containingDeclaration: PsiElement, classKind: ClassKind): Boolean {
         if (expectedType == null || expectedType.isAnyType) {
             return true
@@ -283,7 +285,7 @@ object K2CreateClassFromUsageBuilder {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun isInheritable(type: KaType): Boolean {
         return type.convertToClass()?.isInheritable() == true
     }

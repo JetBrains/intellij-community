@@ -17,12 +17,26 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.asKaType
+import org.jetbrains.kotlin.analysis.api.components.asPsiType
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
+import org.jetbrains.kotlin.analysis.api.components.builtinTypes
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.defaultType
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.expectedType
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.analysis.api.useSiteSession
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -51,7 +65,7 @@ object K2CreateFunctionFromUsageUtil {
 
     fun KtModifierList?.hasAbstractModifier(): Boolean = this?.hasModifier(KtTokens.ABSTRACT_KEYWORD) == true
 
-    context (KaSession)
+    context(_: KaSession)
     internal fun KaType.hasAbstractDeclaration(): Boolean {
         val classSymbol = expandedSymbol ?: return false
         if (classSymbol.classKind == KaClassKind.INTERFACE) return true
@@ -59,13 +73,13 @@ object K2CreateFunctionFromUsageUtil {
         return declaration.modifierList.hasAbstractModifier()
     }
 
-    context (KaSession)
+    context(_: KaSession)
     internal fun KaType.canRefactor(): Boolean = expandedSymbol?.psi?.canRefactorElement() == true
 
-    context (KaSession)
+    context(_: KaSession)
     internal fun KaType.convertToClass(): KtClass? = expandedSymbol?.psi as? KtClass
 
-    context (KaSession)
+    context(_: KaSession)
     internal fun KtElement.getExpectedKotlinType(): ExpectedKotlinType? {
         var expectedType = expectedType
         if (expectedType == null) {
@@ -121,7 +135,7 @@ object K2CreateFunctionFromUsageUtil {
 
     // Given: `println("a = ${A().foo()}")`
     // Expected type of `foo()` is `String`
-    context (KaSession)
+    context(_: KaSession)
     private fun getExpectedTypeByStringTemplateEntry(expression: KtExpression): KaType? {
         var e:PsiElement = expression
         while (e is KtExpression && e !is KtStringTemplateEntry) {
@@ -130,14 +144,14 @@ object K2CreateFunctionFromUsageUtil {
             e = parent
         }
         if (e is KtStringTemplateEntry) {
-            return withValidityAssertion { useSiteSession.builtinTypes.string }
+            return useSiteSession.builtinTypes.string
         }
         return null
     }
 
     // Given: `fun f(): T = expression`
     // Expected type of `expression` is `T`
-    context (KaSession)
+    context(_: KaSession)
     private fun getExpectedTypeByFunctionExpressionBody(expression: KtExpression): KaType? {
         var e:PsiElement = expression
         while (e is KtExpression && e !is KtFunction) {
@@ -146,25 +160,24 @@ object K2CreateFunctionFromUsageUtil {
         if (e is KtFunction && e.bodyBlockExpression == null && e.bodyExpression?.isAncestor(expression) == true) {
             // workaround of the bug when KtFunction.expectedType is always null
             val expectedType = e.expectedType ?:
-                e.returnType.let { if (it is KaErrorType) null else it } ?:
-                withValidityAssertion { useSiteSession.builtinTypes.any }
+                e.returnType.let { if (it is KaErrorType) null else it } ?: useSiteSession.builtinTypes.any
             return expectedType
         }
         return null
     }
 
-    context (KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun KaType.convertToJvmType(useSitePosition: PsiElement): JvmType? = asPsiType(useSitePosition, allowErrorTypes = false)
 
-    context (KaSession)
+    context(_: KaSession)
     fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val symbol = resolveExpression()) {
         //is KaCallableSymbol -> symbol.returnType.expandedClassSymbol // When the receiver is a function call or access to a variable
         is KaClassLikeSymbol -> symbol // When the receiver is an object
         else -> expressionType?.expandedSymbol
     }?.psi
 
-    context (KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     internal fun ValueArgument.getExpectedParameterInfo(
         defaultParameterName: String,
@@ -185,8 +198,8 @@ object K2CreateFunctionFromUsageUtil {
         return expectedParameter(expectedType, *nameArray)
     }
 
-    @OptIn(KaExperimentalApi::class)
-    private fun KaSession.guessAccessibleTypeByArguments(
+    context(_: KaSession) @OptIn(KaExperimentalApi::class)
+    private fun guessAccessibleTypeByArguments(
         receiverType: KaClassType, expectedArgumentType: KaType
     ): KaType {
         val classLikeSymbol = receiverType.symbol
@@ -210,7 +223,7 @@ object K2CreateFunctionFromUsageUtil {
         return expectedArgumentType
     }
 
-    context (KaSession)
+    context(_: KaSession)
     internal fun KtSimpleNameExpression.getReceiverOrContainerClass(containerPsi: PsiElement?): JvmClass? {
         return when(containerPsi) {
             is PsiClass -> containerPsi
@@ -220,7 +233,7 @@ object K2CreateFunctionFromUsageUtil {
         }
     }
 
-    context (KaSession)
+    context(_: KaSession)
     internal fun KtSimpleNameExpression.getReceiverOrContainerClassPackageName(): FqName? =
         when (val ktClassOrPsiClass = getReceiverExpression()?.getClassOfExpressionType()) {
             is PsiClass -> ktClassOrPsiClass.getNonStrictParentOfType<PsiPackage>()?.kotlinFqName
@@ -297,7 +310,7 @@ object K2CreateFunctionFromUsageUtil {
 
     }
 
-    context (KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun JvmType.toKtType(useSitePosition: PsiElement): KaType? = when (this) {
         is PsiType -> if (isValid) {
@@ -318,13 +331,12 @@ object K2CreateFunctionFromUsageUtil {
         else -> null
     }
 
-    context (KaSession)
+    context(_: KaSession)
     fun ExpectedType.toKtTypeWithNullability(useSitePosition: PsiElement): KaType? {
         val nullability = if (this is ExpectedTypeWithNullability) this.nullability else null
         val ktTypeNullability = when (nullability) {
-            Nullability.NOT_NULL -> KaTypeNullability.NON_NULLABLE
-            Nullability.NULLABLE -> KaTypeNullability.NULLABLE
-            Nullability.UNKNOWN -> KaTypeNullability.UNKNOWN
+            Nullability.NOT_NULL, Nullability.UNKNOWN -> false
+            Nullability.NULLABLE -> true
             null -> null
         }
         return theType.toKtType(useSitePosition)?.let { if (ktTypeNullability == null) it else it.withNullability(ktTypeNullability) }
@@ -339,7 +351,7 @@ object K2CreateFunctionFromUsageUtil {
     }
 
     // inspect `type` recursively and call `predicate` on all types inside, return true if all calls returned true
-    context (KaSession)
+    context(_: KaSession)
     private fun accept(type: KaType?, visited: MutableSet<KaType>, predicate: (KaType) -> Boolean) : Boolean {
         if (type == null || !visited.add(type)) return true
         if (!predicate.invoke(type)) return false
@@ -357,14 +369,14 @@ object K2CreateFunctionFromUsageUtil {
         }
     }
 
-    context (KaSession)
+    context(_: KaSession)
     private fun acceptTypeQualifiers(qualifiers: List<KaClassTypeQualifier>, visited: MutableSet<KaType>, predicate: (KaType) -> Boolean) =
         qualifiers.flatMap { it.typeArguments }.map { it.type }.all { accept(it, visited, predicate) }
 
     /**
      * return [ktType] if it's accessible in the newly created method, or some other sensible type that is (e.g. super type), or null, if can't figure out which type to use
      */
-    context (KaSession)
+    context(_: KaSession)
     private fun makeAccessibleInCreationPlace(ktType: KaType, call: KtElement): KaType? {
         var type = ktType
         do {
@@ -374,7 +386,7 @@ object K2CreateFunctionFromUsageUtil {
         while(true)
     }
 
-    context (KaSession)
+    context(_: KaSession)
     private fun allTypesInsideAreAccessible(ktType: KaType, call: KtElement) : Boolean {
         fun KtTypeParameter.getOwningTypeParameterOwner(): KtTypeParameterListOwner? {
             val parameterList = parent as? KtTypeParameterList ?: return null
@@ -407,7 +419,7 @@ object K2CreateFunctionFromUsageUtil {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun computeExpectedParams(call: KtCallElement, isAnnotation:Boolean=false): List<ExpectedParameter> {
         val receiverExpression = (call.parent as? KtDotQualifiedExpression)?.receiverExpression

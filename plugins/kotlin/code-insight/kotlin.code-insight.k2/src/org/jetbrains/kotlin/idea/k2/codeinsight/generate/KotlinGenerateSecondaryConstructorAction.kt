@@ -15,9 +15,19 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
+import org.jetbrains.kotlin.analysis.api.components.createInheritanceTypeSubstitutor
+import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.components.isVisibleInClass
+import org.jetbrains.kotlin.analysis.api.components.namedClassSymbol
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
@@ -54,7 +64,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
 
     private fun shouldPreselect(element: PsiElement) = element is KtProperty && !element.isVar
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun chooseSuperConstructors(classSymbol: KaClassSymbol): List<ClassMember> {
         val superClassSymbol = getSuperClassSymbolNoAny(classSymbol) ?: return emptyList()
@@ -66,13 +76,13 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
         return candidates
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getSuperClassSymbolNoAny(classSymbol: KaClassSymbol): KaClassSymbol? =
         classSymbol.superTypes.mapNotNull { it.symbol as? KaClassSymbol }.find { superClassSymbol ->
             superClassSymbol.classKind == KaClassKind.CLASS && superClassSymbol.classId != StandardClassIds.Any && superClassSymbol.classId != StandardClassIds.Enum
         }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun KtProperty.isPropertyNotInitialized(): Boolean {
         // TODO: when KT-63221 is fixed use `diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)` instead
@@ -81,7 +91,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
             .any { it is KaFirDiagnostic.MustBeInitializedOrBeAbstract }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun choosePropertiesToInitialize(klass: KtClassOrObject): List<KotlinPsiElementMemberChooserObject> {
         return klass.declarations
             .asSequence()
@@ -142,7 +152,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
             return firstNonProperty.siblings(forward = false).firstIsInstanceOrNull<KtProperty>() ?: targetClass.getOrCreateBody().lBrace
         }
 
-        return with(info) {
+        with(info) {
             val prototypes =
                 analyzeInModalWindow(klass, KotlinBundle.message("fix.change.signature.prepare")) {
                     if (superConstructors.isNotEmpty()) {
@@ -167,7 +177,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun generateConstructor(
         klass: KtClass,

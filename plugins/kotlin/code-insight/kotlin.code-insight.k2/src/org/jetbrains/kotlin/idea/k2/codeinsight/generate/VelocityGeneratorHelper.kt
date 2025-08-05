@@ -23,7 +23,7 @@ import java.io.StringWriter
 
 
 object VelocityGeneratorHelper {
-    context(KaSession)
+    context(_: KaSession)
     fun velocityGenerateCode(
         clazz: KtClassOrObject,
         selectedMembers: List<KtNamedDeclaration>,
@@ -51,7 +51,7 @@ object VelocityGeneratorHelper {
         return StringUtil.convertLineSeparators(sw.buffer.toString())
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun prepareContext(
         selectedMembers: List<KtNamedDeclaration>,
         clazz: KtClassOrObject,

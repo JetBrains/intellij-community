@@ -183,7 +183,7 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 internal fun KaFunctionSymbol.isExcludeListed(excludeListMatchers: List<Matcher>): Boolean {
     val callableFqName = callableId?.asSingleFqName()?.asString() ?: return false
     val parameterNames = valueParameters.map { it.name.asString() }
