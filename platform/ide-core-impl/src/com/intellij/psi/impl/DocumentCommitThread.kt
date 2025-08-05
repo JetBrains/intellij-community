@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
+import java.util.Objects
 import java.util.concurrent.Callable
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -121,12 +122,10 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
       // todo IJPL-339 check if this is correct
       for (psiFile in viewProvider.getAllFiles()) {
         val oldFileNode = psiFile.getNode()
-        if (oldFileNode == null) {
-          throw AssertionError("No node for " + psiFile.javaClass + " in " + psiFile.getViewProvider().javaClass +
-                               " of size " + StringUtil.formatFileSize(document.textLength.toLong()) +
-                               " (is too large = " + SingleRootFileViewProvider
-                                 .isTooLargeForIntelligence(viewProvider.getVirtualFile(), document.textLength.toLong()) + ")")
-        }
+            ?: throw AssertionError("No node for " + psiFile.javaClass + " in " + psiFile.getViewProvider().javaClass +
+                                    " of size " + StringUtil.formatFileSize(document.textLength.toLong()) +
+                                    " (is too large = " + SingleRootFileViewProvider
+                                      .isTooLargeForIntelligence(viewProvider.getVirtualFile(), document.textLength.toLong()) + ")")
         val changedPsiRange = ChangedPsiRangeUtil.getChangedPsiRange(
           psiFile,
           document,
@@ -225,7 +224,10 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
       return myDocumentRef.get() == other.myDocumentRef.get() && myProject == other.myProject
     }
 
-    override fun hashCode(): Int = 31 * myLastCommittedText.hashCode() + myProject.hashCode()
+    override fun hashCode(): Int {
+      return 31 * Objects.hashCode(myDocumentRef.get()) + myProject.hashCode()
+    }
+    
     // return null if the document is changed or gced
     fun stillValidDocument(): Document? {
       val document = myDocumentRef.get()
