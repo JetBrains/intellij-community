@@ -74,7 +74,7 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
       val allContents: MutableSet<TextContent> = HashSet()
       for (root in vp.allFiles) {
         for (element in SyntaxTraverser.psiTraverser(root)) {
-          allContents.addAll(TextExtractor.findTextExactlyAt(element, domains))
+          allContents.addAll(TextExtractor.findTextsExactlyAt(element, domains))
         }
       }
       return allContents

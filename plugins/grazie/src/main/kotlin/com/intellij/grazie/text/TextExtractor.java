@@ -86,7 +86,7 @@ public abstract class TextExtractor {
    * <p>
    * Same as {@link #findTextsAt}, but the extensions are queried only for the given {@code psi}. The results are cached and reused.
    */
-  public static @NotNull List<TextContent> findTextExactlyAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
+  public static @NotNull List<TextContent> findTextsExactlyAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     PsiFile file = psi.getContainingFile();
     return ContainerUtil.filter(
       obtainContents(allowedDomains, file.getLanguage(), psi),

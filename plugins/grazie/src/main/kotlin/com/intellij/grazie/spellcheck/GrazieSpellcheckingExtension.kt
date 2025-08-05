@@ -18,14 +18,22 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
 import com.intellij.spellchecker.inspections.IdentifierSplitter.MINIMAL_TYPO_LENGTH
+import com.intellij.spellchecker.inspections.SpellCheckingInspection.SpellCheckingScope.Comments
+import com.intellij.spellchecker.inspections.SpellCheckingInspection.SpellCheckingScope.Literals
+import com.intellij.spellchecker.inspections.SpellCheckingInspection.getSpellcheckingStrategy
 import com.intellij.spellchecker.inspections.SpellcheckingExtension
 import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellCheckingResult
 import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellingTypo
+import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy
+import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy.EMPTY_TOKENIZER
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.function.Consumer
+
+private val DOMAINS = TextContent.TextDomain.ALL
 
 class GrazieSpellcheckingExtension : SpellcheckingExtension {
 
@@ -34,15 +42,20 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
     if (element is PsiWhiteSpace) return SpellCheckingResult.Checked
     ProgressManager.checkCanceled()
 
-    val texts = sortByPriority(TextExtractor.findTextsAt(element, allDomains()), session.priorityRange)
-    if (texts.isEmpty()) return SpellCheckingResult.Ignored
+    val texts = sortByPriority(TextExtractor.findTextsExactlyAt(element, DOMAINS), session.priorityRange)
+    if (texts.isEmpty()) {
+      val strategy = getSpellcheckingStrategy(element)
+      if (strategy.getTokenizer(element) == EMPTY_TOKENIZER) return SpellCheckingResult.Ignored
+      if (hasTextAround(element, strategy)) return SpellCheckingResult.Checked
+      return SpellCheckingResult.Ignored
+    }
 
     val textSpeller = getTextSpeller(element.project) ?: return SpellCheckingResult.Ignored
     texts.asSequence()
       .map { it to findTypos(it, session, textSpeller) }
       .flatMap { mapTypo(it.first, it.second) }
-      .filterNot { shouldBeIgnored(it, element) }
       .filterNot { it.word.length < MINIMAL_TYPO_LENGTH }
+      .filterNot { shouldBeIgnored(it, element) }
       .forEach { consumer.accept(it) }
     return SpellCheckingResult.Checked
   }
@@ -54,12 +67,9 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
     }))
   }
 
-  private fun allDomains(): Set<TextContent.TextDomain> = TextContent.TextDomain.entries.toSet()
-
   private fun shouldBeIgnored(typo: SimpleTypo, element: PsiElement): Boolean {
-    if (element.getFirstChild() != null) return true
     val psiRange = element.getTextRange()
-    return !psiRange.intersectsStrict(typo.range.shiftRight(typo.text.commonParent.textRange.startOffset))
+    return !psiRange.intersectsStrict(typo.range.shiftRight(typo.element.textRange.startOffset))
   }
 
   private fun mapTypo(text: TextContent, typos: List<Typo>): List<SimpleTypo> {
@@ -88,6 +98,24 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
         }
       })
     }
+  }
+
+  private fun hasTextAround(element: PsiElement, strategy: SpellcheckingStrategy): Boolean =
+    parentHasText(element) ||
+    (strategy.elementFitsScope(element, setOf(Literals, Comments)) && childHasText(element))
+
+  private fun childHasText(root: PsiElement): Boolean {
+    if (root.firstChild == null) return false
+    for (element in SyntaxTraverser.psiTraverser(root)) {
+      if (TextExtractor.findTextsExactlyAt(element, DOMAINS).isNotEmpty()) {
+        return true
+      }
+    }
+    return false
+  }
+
+  private fun parentHasText(element: PsiElement): Boolean {
+    return TextExtractor.findTextsAt(element, DOMAINS).isNotEmpty()
   }
 }
 
