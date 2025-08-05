@@ -488,6 +488,26 @@ internal class PluginDependenciesTest {
       .hasDirectParentClassloaders(bazModule)
       .doesNotHaveTransitiveParentClassloaders(baz)
   }
+  
+  @Test
+  fun `plugin is loaded if it has a depends dependency on plugin alias that is placed in required v2 module and other modules affects sorting`() {
+    plugin("baz") {
+      content {
+        module("baz.module", ModuleLoadingRule.REQUIRED) {
+          packagePrefix = "baz.module"
+          pluginAlias("bar")
+        }
+      }
+      depends("additional")
+    }.buildDir(pluginDirPath.resolve("baz"))
+    `foo depends bar`()
+    /* an additional module is used to ensure that in the sorted modules list the main module of 'baz' plugin is moved to the end of the 
+       list if no explicit edge from 'foo' plugin to it is added */
+    plugin("additional") {}.buildDir(pluginDirPath.resolve("additional"))
+    
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "baz", "additional")
+  }
 
   @Test
   fun `plugin is loaded if it has a plugin dependency on plugin alias that is placed in required v2 module, only the v2 module is a classloader parent`() {
