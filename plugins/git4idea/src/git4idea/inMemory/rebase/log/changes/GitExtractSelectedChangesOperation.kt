@@ -32,7 +32,7 @@ internal class GitExtractSelectedChangesOperation(
   override val failureTitle: String = GitBundle.message("in.memory.rebase.log.changes.extract.failed.title")
 
   override suspend fun editCommits(): CommitEditingResult {
-    val targetCommit = commits.first()
+    val targetCommit = baseToHeadCommitsRange.first()
     LOG.info("Start computing new head for extract operation of $targetCommit")
     val originalTree = objectRepo.findTree(targetCommit.treeOid)
     val includedPaths = changes.map { change ->
@@ -60,7 +60,7 @@ internal class GitExtractSelectedChangesOperation(
     val secondCommit = objectRepo.commitTreeWithOverrides(targetCommit,
                                                           parentsOids = listOf(firstCommit),
                                                           message = newMessage.toByteArray())
-    val newHead = objectRepo.chainCommits(secondCommit, commits.drop(1))
+    val newHead = objectRepo.chainCommits(secondCommit, baseToHeadCommitsRange.drop(1))
     LOG.info("Finish computing new head for extract operation")
     return CommitEditingResult(newHead, secondCommit)
   }

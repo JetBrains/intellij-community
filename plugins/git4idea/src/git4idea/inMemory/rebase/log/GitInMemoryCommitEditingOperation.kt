@@ -27,7 +27,7 @@ internal abstract class GitInMemoryCommitEditingOperation(
 
   protected lateinit var initialHeadPosition: String
 
-  protected val commits: List<GitObject.Commit> by lazy {
+  protected val baseToHeadCommitsRange: List<GitObject.Commit> by lazy {
     objectRepo.findCommitsRange(baseCommitMetadata, initialHeadPosition)
   }
 
