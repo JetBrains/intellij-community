@@ -22,7 +22,6 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
   private val view
     get() = editorCell.view
 
-
   private val isSelected
     get() = editorCell.isSelected.get()
   private val isHovered
