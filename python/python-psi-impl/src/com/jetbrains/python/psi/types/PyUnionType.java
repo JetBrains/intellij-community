@@ -126,6 +126,17 @@ public class PyUnionType implements PyType {
     return newMembers.size() < 2 ? ContainerUtil.getFirstItem(newMembers, defaultResult) : new PyUnionType(newMembers);
   }
 
+  /**
+   * A "weak" type is an unsafe union of some type with {@code Any}.
+   * <p>
+   * Such a type can be passed anywhere where any other type is expected, not triggering type errors, but it still provides
+   * completion and navigation of the original type. It allows keeping the gradual guarantee in cases where we are not able
+   * to infer the exact type and still provide IDE assistance, such as code completion, navigation and documentation.
+   *
+   * @param type a type to "weaken"
+   * @return a weak type for the type with the described behavior
+   * @see PyUnsafeUnionType
+   */
   public static @Nullable PyType createWeakType(@Nullable PyType type) {
     if (type == null) {
       return null;
@@ -141,6 +152,13 @@ public class PyUnionType implements PyType {
     return union(type, null);
   }
 
+  /**
+   * Unwrap a "weak" type to its original type. Otherwise, return the {@code type} unchanged.
+   *
+   * @param type a potentially "weak" type to unwrap
+   * @return the original material type combined with {@code Any} if {@code type} is a "weak" type, or {@code type} itself otherwise
+   * @see #createWeakType(PyType)
+   */
   public static @Nullable PyType toNonWeakType(@Nullable PyType type) {
     return type instanceof PyUnionType unionType ? unionType.excludeNull() :
            type instanceof PyUnsafeUnionType weakUnionType ? PyUnsafeUnionType.unsafeUnion(ContainerUtil.skipNulls(weakUnionType.getMembers()))
