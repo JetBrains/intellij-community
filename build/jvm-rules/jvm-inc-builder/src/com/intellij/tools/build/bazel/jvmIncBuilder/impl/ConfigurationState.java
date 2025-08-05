@@ -39,6 +39,7 @@ public class ConfigurationState {
     CLFlags.PLUGIN_CLASSPATH,
     CLFlags.PLUGIN_OPTIONS,
     CLFlags.API_VERSION,
+    CLFlags.KOTLIN_MODULE_NAME,
     CLFlags.LANGUAGE_VERSION,
     CLFlags.JVM_TARGET,
     CLFlags.OPT_IN,
