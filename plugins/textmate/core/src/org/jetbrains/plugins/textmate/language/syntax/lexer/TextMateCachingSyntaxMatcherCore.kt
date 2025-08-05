@@ -16,7 +16,15 @@ fun TextMateSyntaxMatcher.caching(): TextMateCachingSyntaxMatcherCore {
   val delegate = this
   return TextMateCachingSyntaxMatcherCore(delegate, SLRUTextMateCache(
     computeFn = { key ->
-      delegate.matchRule(key.syntaxNodeDescriptor, key.string, key.byteOffset, key.matchBeginString, key.matchBeginString, key.priority, key.currentScope, key.injections, key.checkCancelledCallback)
+      delegate.matchRule(syntaxNodeDescriptor = key.syntaxNodeDescriptor,
+                         string = key.string,
+                         byteOffset = key.byteOffset,
+                         matchBeginPosition = key.matchBeginPosition,
+                         matchBeginString = key.matchBeginString,
+                         priority = key.priority,
+                         currentScope = key.currentScope,
+                         injections = key.injections,
+                         checkCancelledCallback = key.checkCancelledCallback)
     },
     disposeFn = { },
     capacity = 1000,
