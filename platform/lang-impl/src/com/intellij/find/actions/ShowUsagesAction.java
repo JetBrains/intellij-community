@@ -77,7 +77,6 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.*;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
-import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduler;
@@ -149,31 +148,29 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     return ActionUpdateThread.BGT;
   }
 
-  private static final class UsageNodeComparator implements Comparator<UsageNode> {
-    private final ShowUsagesTable myTable;
-
-    private UsageNodeComparator(@NotNull ShowUsagesTable table) {
-      this.myTable = table;
-    }
-
-    @Override
-    public int compare(UsageNode c1, UsageNode c2) {
-      if (c1 instanceof StringNode || c2 instanceof StringNode) {
-        if (c1 instanceof StringNode && c2 instanceof StringNode) {
-          return Comparing.compare(c1.toString(), c2.toString());
+  private record UsageNodeComparator(@NotNull ShowUsagesTable table) implements Comparator<UsageNode> {
+      @Override
+      public int compare(UsageNode c1, UsageNode c2) {
+        if (c1 instanceof StringNode sc1) {
+          return sc1.compareTo(c2);
         }
-        return c1 instanceof StringNode ? 1 : -1;
+        if (c2 instanceof StringNode sc2) {
+          return -sc2.compareTo(c1);
+        }
+
+        Usage o1 = c1.getUsage();
+        Usage o2 = c2.getUsage();
+        int weight1 = o1 == table.USAGES_FILTERED_OUT_SEPARATOR ? 3
+                      : o1 == table.USAGES_OUTSIDE_SCOPE_SEPARATOR ? 2 : o1 == table.MORE_USAGES_SEPARATOR ? 1 : 0;
+        int weight2 = o2 == table.USAGES_FILTERED_OUT_SEPARATOR ? 3
+                      : o2 == table.USAGES_OUTSIDE_SCOPE_SEPARATOR ? 2 : o2 == table.MORE_USAGES_SEPARATOR ? 1 : 0;
+        if (weight1 != weight2 || weight1 != 0) {
+          return weight1 - weight2;
+        }
+
+        return UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET.compare(o1, o2);
       }
-
-      Usage o1 = c1.getUsage();
-      Usage o2 = c2.getUsage();
-      int weight1 = o1 == myTable.USAGES_FILTERED_OUT_SEPARATOR ? 3 : o1 == myTable.USAGES_OUTSIDE_SCOPE_SEPARATOR ? 2 : o1 == myTable.MORE_USAGES_SEPARATOR ? 1 : 0;
-      int weight2 = o2 == myTable.USAGES_FILTERED_OUT_SEPARATOR ? 3 : o2 == myTable.USAGES_OUTSIDE_SCOPE_SEPARATOR ? 2 : o2 == myTable.MORE_USAGES_SEPARATOR ? 1 : 0;
-      if (weight1 != weight2) return weight1 - weight2;
-
-      return UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET.compare(o1, o2);
     }
-  }
 
   public static int getUsagesPageSize() {
     return Math.max(1, AdvancedSettings.getInt("ide.usages.page.size"));
@@ -1558,7 +1555,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     }
   }
 
-  static final class StringNode extends UsageNode {
+  static final class StringNode extends UsageNode implements Comparable<UsageNode> {
     private final @Nls @NotNull String myString;
 
     private StringNode(@Nls @NotNull String string) {
@@ -1573,6 +1570,14 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     @Override
     public String toString() {
       return myString;
+    }
+
+    @Override
+    public int compareTo(@NotNull UsageNode otherNode) {
+      if (otherNode instanceof StringNode otherString) {
+        return Comparing.compare(myString, otherString.myString);
+      }
+      return 1;
     }
   }
 
