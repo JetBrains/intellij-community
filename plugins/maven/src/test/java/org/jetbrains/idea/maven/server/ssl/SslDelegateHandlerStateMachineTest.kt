@@ -6,13 +6,21 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ResourceUtil
 import java.io.ByteArrayOutputStream
+import java.security.cert.X509Certificate
 import java.util.*
 
 class SslDelegateHandlerStateMachineTest : UsefulTestCase() {
 
+  private val CheckTrue = object : MavenTLSCertificateChecker {
+    override fun checkCertificates(chain: Array<X509Certificate>, authType: String) = true
+  }
+
+  private val CheckFalse = object : MavenTLSCertificateChecker {
+    override fun checkCertificates(chain: Array<X509Certificate>, authType: String) = false
+  }
   fun testResultOk() {
     val data = fromFile("ssl_remote_query.txt");
-    val machine = SslDelegateHandlerStateMachine { _, _ -> true }
+    val machine = SslDelegateHandlerStateMachine(CheckTrue)
     val out = ByteArrayOutputStream()
     machine.output = out
     data.forEach { machine.addLine(it) }
@@ -23,7 +31,7 @@ class SslDelegateHandlerStateMachineTest : UsefulTestCase() {
 
   fun testResultFail() {
     val data = fromFile("ssl_remote_query.txt");
-    val machine = SslDelegateHandlerStateMachine { _, _ -> false }
+    val machine = SslDelegateHandlerStateMachine(CheckFalse)
     val out = ByteArrayOutputStream()
     machine.output = out
     data.forEach { machine.addLine(it) }

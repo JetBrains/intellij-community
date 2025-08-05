@@ -5,9 +5,8 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.sun.net.httpserver.HttpsConfigurator
 import com.sun.net.httpserver.HttpsParameters
 import com.sun.net.httpserver.HttpsServer
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-import java.io.File
+import org.jetbrains.idea.maven.server.ssl.MavenTLSCertificateChecker
+import org.jetbrains.idea.maven.utils.MavenLog
 import java.net.InetSocketAddress
 import java.security.KeyStore
 import java.security.PrivateKey
@@ -16,7 +15,7 @@ import java.security.cert.X509Certificate
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
-import kotlin.time.Duration.Companion.seconds
+import javax.net.ssl.X509TrustManager
 
 private const val LOCALHOST = "127.0.0.1"
 private const val SERVER_KS_PASSWORD = "password"
@@ -25,10 +24,12 @@ class MavenHttpsRepositoryServerFixture(
   val myServerCertificate: X509Certificate,
   val sslHostname: String,
   val myPrivateKey: PrivateKey,
+  val clientCertificateChecker: MavenTLSCertificateChecker? = null,
+  val myRootCA: X509Certificate? = null
 ) : AbstractMavenRepositoryServerFixture() {
 
   override fun url(): String {
-    return "https://$LOCALHOST:${myServer.address.port}"
+    return "https://localhost:${myServer.address.port}"
   }
 
   override fun startServer(): HttpsServer {
@@ -39,7 +40,7 @@ class MavenHttpsRepositoryServerFixture(
     server.httpsConfigurator = object : HttpsConfigurator(sslContext) {
       override fun configure(params: HttpsParameters) {
         val engine = sslContext.createSSLEngine()
-        params.needClientAuth = false
+        params.needClientAuth = clientCertificateChecker != null
         params.cipherSuites = engine.enabledCipherSuites
         params.protocols = engine.enabledProtocols
         params.setSSLParameters(sslContext.defaultSSLParameters)
@@ -67,12 +68,33 @@ class MavenHttpsRepositoryServerFixture(
     val kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
     kmf.init(keyStore, SERVER_KS_PASSWORD.toCharArray())
 
-    // TrustManagerFactory to trust our own cert
-    val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-    tmf.init(keyStore)
+    val trustManagers = if (clientCertificateChecker == null) {
+      val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+      tmf.init(keyStore)
+      tmf.trustManagers
+    }
+    else {
+      arrayOf(object : X509TrustManager {
+        override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {
+          if (!clientCertificateChecker.checkCertificates(chain, authType)) {
+            throw SecurityException("Invalid client certificate")
+          }
+        }
+
+        override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {
+          if (!clientCertificateChecker.checkCertificates(chain, authType)) {
+            throw SecurityException("Invalid client certificate")
+          }
+        }
+
+        override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf(myRootCA!!)
+      })
+    }
+
+
 
     return SSLContext.getInstance("TLS").apply {
-      init(kmf.keyManagers, tmf.trustManagers, SecureRandom())
+      init(kmf.keyManagers, trustManagers, SecureRandom())
     }
   }
 }

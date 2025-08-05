@@ -1,41 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server.ssl
 
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.util.net.ssl.CertificateManager
-import com.intellij.util.net.ssl.ConfirmingTrustManager
-import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.server.security.ssl.SslIDEConfirmingTrustStore
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.io.PrintStream
-import java.security.cert.CertificateException
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.util.*
 
 
-class SslDelegateHandlerConfirmingTrustManager : SslDelegateHandlerStateMachine(::confirmServerTrust)
-
-private fun confirmServerTrust(arr: Array<X509Certificate>, authType: String): Boolean {
-  try {
-    val confirmationParameters = ConfirmingTrustManager.CertificateConfirmationParameters
-      .askConfirmation(false,
-                       MavenProjectBundle.message("maven.server.ask.trust"),
-                       null)
-    CertificateManager
-      .getInstance()
-      .trustManager
-      .checkServerTrusted(arr, authType, confirmationParameters)
-    return true
-  }
-  catch (e: CertificateException) {
-    return false
-  }
-}
+class SslDelegateHandlerConfirmingTrustManager(project: Project)
+  : SslDelegateHandlerStateMachine(project.service<MavenTLSCertificateChecker>())
 
 
-open class SslDelegateHandlerStateMachine(val checkTrusted: (Array<X509Certificate>, String) -> Boolean) {
+open class SslDelegateHandlerStateMachine(val checker: MavenTLSCertificateChecker) {
   private var currentState: State
   lateinit var output: OutputStream
 
@@ -136,7 +118,7 @@ class ReadNextCertificate(
 class WaitEndAndExecute(val machine: SslDelegateHandlerStateMachine, val key: Int, val authType: String, val certificates: ArrayList<X509Certificate>) : State() {
   override fun addLine(text: String): State {
     if (text == SslIDEConfirmingTrustStore.CHECK_SERVER_TRUSTED) {
-      val trusted = machine.checkTrusted(certificates.toTypedArray(), authType)
+      val trusted = machine.checker.checkCertificates(certificates.toTypedArray(), authType)
       val os = ByteArrayOutputStream()
       PrintStream(os, true, "UTF-8").use { ps ->
         ps.println(SslIDEConfirmingTrustStore.IDE_DELEGATE_TRUST_MANAGER)
