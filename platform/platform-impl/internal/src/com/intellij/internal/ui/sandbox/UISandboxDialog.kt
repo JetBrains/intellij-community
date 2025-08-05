@@ -19,6 +19,7 @@ import com.intellij.internal.ui.sandbox.dsl.validation.ValidationRefactoringPane
 import com.intellij.internal.ui.sandbox.tests.accessibility.AccessibilityFailedInspectionsPanel
 import com.intellij.internal.ui.sandbox.tests.components.JBTextAreaTestPanel
 import com.intellij.internal.ui.sandbox.tests.dsl.CommentRightTestPanel
+import com.intellij.internal.ui.sandbox.tests.dsl.listCellRenderer.LcrPerformanceTestPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -114,6 +115,9 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
         JBTextAreaTestPanel()
       )),
       Group("Kotlin UI DSL", children = listOf(
+        Group("ListCellRenderer", children = listOf(
+          LcrPerformanceTestPanel(),
+        )),
         CommentRightTestPanel()
       )),
     ))
@@ -432,13 +436,15 @@ private class SandboxTreeLeaf(parent: SimpleNode?, disposable: Disposable, val s
 
 private class SandboxTreeRenderer : NodeRenderer() {
 
-  override fun customizeCellRenderer(tree: JTree,
-                                     value: Any?,
-                                     selected: Boolean,
-                                     expanded: Boolean,
-                                     leaf: Boolean,
-                                     row: Int,
-                                     hasFocus: Boolean) {
+  override fun customizeCellRenderer(
+    tree: JTree,
+    value: Any?,
+    selected: Boolean,
+    expanded: Boolean,
+    leaf: Boolean,
+    row: Int,
+    hasFocus: Boolean,
+  ) {
     super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus)
   }
 }
