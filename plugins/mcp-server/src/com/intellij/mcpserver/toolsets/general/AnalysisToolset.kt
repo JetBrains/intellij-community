@@ -102,7 +102,8 @@ class AnalysisToolset : McpToolset {
     )
   }
 
-  @McpTool
+  // IJPL-200264 Sometimes `build_project` tool reports as success=true and no errors, while Build toolwindow contains errors
+  //@McpTool
   @McpDescription("""
       |Triggers building of the project, waits for completion, and returns build errors.
       |Use this tool to build the project and get detailed information about compilation errors and warnings.
