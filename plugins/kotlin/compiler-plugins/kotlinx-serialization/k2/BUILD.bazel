@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom_k2",
-  x_context_receivers = True
+  x_context_parameters = True
 )
 
 jvm_resources(

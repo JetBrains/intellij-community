@@ -7,6 +7,15 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
+import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.components.buildStarTypeProjection
+import org.jetbrains.kotlin.analysis.api.components.defaultType
+import org.jetbrains.kotlin.analysis.api.components.evaluate
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.type
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.successfulConstructorCallOrNull
@@ -40,23 +49,23 @@ internal class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotl
     }
 
     private object Resolver : ParcelMigrateToParcelizeResolver<KaSession> {
-        context(KaSession)
+        context(_: KaSession)
         private val KaType.classId: ClassId?
             get() = expandedSymbol?.classId
 
-        context(KaSession)
+        context(_: KaSession)
         override val KtCallableDeclaration.returnTypeClassId: ClassId?
             get() = (symbol as KaCallableSymbol).returnType.classId
 
-        context(KaSession)
+        context(_: KaSession)
         override val KtCallableDeclaration.receiverTypeClassId: ClassId?
             get() = (symbol as KaCallableSymbol).receiverType?.classId
 
-        context(KaSession)
+        context(_: KaSession)
         override val KtCallableDeclaration.overrideCount: Int
             get() = (symbol as KaCallableSymbol).allOverriddenSymbols.count()
 
-        context(KaSession)
+        context(_: KaSession)
         override val KtProperty.isJvmField: Boolean
             get() {
                 val symbol = symbol as? KaPropertySymbol ?: return false
@@ -64,7 +73,7 @@ internal class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotl
                         && (symbol.backingFieldSymbol?.annotations?.contains(JvmAbi.JVM_FIELD_ANNOTATION_CLASS_ID) == true)
             }
 
-        context(KaSession)
+        context(_: KaSession)
         @OptIn(KaExperimentalApi::class)
         private fun KaClassLikeSymbol.buildStarProjectedType(): KaType =
             buildClassType(this@buildStarProjectedType) {
@@ -74,23 +83,23 @@ internal class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotl
                 }
             }
 
-        context(KaSession)
+        context(_: KaSession)
         private fun KaType.hasSuperTypeClassId(superTypeClassId: ClassId): Boolean {
             val superClassSymbol = findClass(superTypeClassId) ?: return false
             return isSubtypeOf(superClassSymbol.buildStarProjectedType())
         }
 
-        context(KaSession)
+        context(_: KaSession)
         override fun KtClassOrObject.hasSuperClass(superTypeClassId: ClassId): Boolean {
             val subClassSymbol = classSymbol ?: return false
             return subClassSymbol.buildStarProjectedType().hasSuperTypeClassId(superTypeClassId)
         }
 
-        context(KaSession)
+        context(_: KaSession)
         override fun KtTypeReference.hasSuperClass(superTypeClassId: ClassId): Boolean =
             type.hasSuperTypeClassId(superTypeClassId)
 
-        context(KaSession)
+        context(_: KaSession)
         override fun KtCallExpression.resolveToConstructedClass(): KtClassOrObject? =
             resolveToCall()
                 ?.successfulConstructorCallOrNull()
@@ -99,7 +108,7 @@ internal class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotl
                 ?.let { findClass(it) }
                 ?.psi as? KtClassOrObject
 
-        context(KaSession)
+        context(_: KaSession)
         override fun KtExpression.evaluateAsConstantInt(): Int? =
             (evaluate() as? KaConstantValue.IntValue)?.value
     }
