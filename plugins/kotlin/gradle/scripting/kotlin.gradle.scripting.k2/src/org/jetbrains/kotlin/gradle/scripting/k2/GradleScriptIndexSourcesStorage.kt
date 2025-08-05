@@ -23,9 +23,12 @@ class GradleScriptIndexSourcesStorage(val project: Project) :
         }
     }
 
-    fun sourcesShouldBeIndexed(): Boolean = state.indexed
+    private val isIndexed: Boolean
+        get() = state.indexed
 
     companion object {
         fun getInstance(project: Project): GradleScriptIndexSourcesStorage = project.service<GradleScriptIndexSourcesStorage>()
+
+        fun isIndexed(project: Project): Boolean = getInstance(project).isIndexed
     }
 }

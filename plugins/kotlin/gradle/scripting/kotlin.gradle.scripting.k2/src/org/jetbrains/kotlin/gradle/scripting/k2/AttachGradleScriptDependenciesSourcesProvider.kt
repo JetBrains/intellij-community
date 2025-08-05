@@ -7,7 +7,6 @@ import com.intellij.codeInsight.AttachSourcesProvider.AttachSourcesAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.util.ActionCallback
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.psi.PsiFile
@@ -15,17 +14,19 @@ import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptEntitySour
 import org.jetbrains.kotlin.idea.core.script.v1.indexSourceRootsEagerly
 
 class AttachGradleScriptDependenciesSourcesProvider() : AttachSourcesProvider {
+    override fun isApplicable(orderEntries: List<LibraryOrderEntry?>, psiFile: PsiFile): Boolean {
+        val project = psiFile.project
+        val virtualFile = psiFile.virtualFile
+
+        if (GradleScriptIndexSourcesStorage.isIndexed(project) || indexSourceRootsEagerly()) return false
+        return virtualFile.isGradleScriptDependency(project)
+    }
+
     override fun getActions(
         orderEntries: List<LibraryOrderEntry>,
         psiFile: PsiFile
     ): Collection<AttachSourcesAction> {
         val project = psiFile.project
-        val virtualFile = psiFile.virtualFile
-
-        if (GradleScriptIndexSourcesStorage.getInstance(project).sourcesShouldBeIndexed()
-            || indexSourceRootsEagerly()
-            || !virtualFile.isGradleScriptDependency(project)
-        ) return emptyList()
 
         val action = object : AttachSourcesAction {
             override fun getName(): String = KotlinGradleScriptingBundle.message("attach.dependencies.sources")

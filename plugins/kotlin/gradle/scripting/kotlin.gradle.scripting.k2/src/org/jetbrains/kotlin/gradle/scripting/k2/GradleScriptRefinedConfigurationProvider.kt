@@ -148,7 +148,7 @@ class GradleScriptRefinedConfigurationProvider(
                     }
                 )
 
-                if (indexSourceRootsEagerly() || GradleScriptIndexSourcesStorage.getInstance(project).sourcesShouldBeIndexed()) {
+                if (indexSourceRootsEagerly() || GradleScriptIndexSourcesStorage.isIndexed(project)) {
                     addAll(
                         classes.map {
                             getOrCreateScriptLibrary(it, sources)
