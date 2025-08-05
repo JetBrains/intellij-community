@@ -247,9 +247,7 @@ private fun collectDirectDependenciesInNewFormat(
     if (dependency != null) {
       dependenciesCollector.add(dependency)
       if (dependency.isRequiredContentModule) {
-        /* Add edges to all required plugin modules.
-           This is needed to ensure that modules depending on a required content module are processed after all required content modules, because if a required module cannot be 
-           loaded, the whole plugin will be disabled. */
+        // Add an edge to the main module of the plugin. This is needed to ensure that this module is processed after it's decided whether to enable the referenced plugin or not.
         val dependencyPluginDescriptor = idMap.get(dependency.pluginId.idString)
         val currentPluginDescriptor = idMap.get(module.pluginId.idString)
         if (dependencyPluginDescriptor != null && dependencyPluginDescriptor !== currentPluginDescriptor) {
