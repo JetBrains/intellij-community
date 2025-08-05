@@ -166,13 +166,19 @@ public class PyUnionType implements PyType {
    * @see #createWeakType(PyType)
    */
   public static @Nullable PyType toNonWeakType(@Nullable PyType type) {
-    return type instanceof PyUnionType unionType ? unionType.excludeNull() :
-           type instanceof PyUnsafeUnionType weakUnionType ? PyUnsafeUnionType.unsafeUnion(ContainerUtil.skipNulls(weakUnionType.getMembers()))
-                                                           : type;
+    if (isStrictSemanticsEnabled()) {
+      if (type instanceof PyUnsafeUnionType unsafeUnionType) {
+        return PyUnsafeUnionType.unsafeUnion(ContainerUtil.skipNulls(unsafeUnionType.getMembers()));
+      }
+    }
+    else if (type instanceof PyUnionType unionType) {
+      return unionType.excludeNull();
+    }
+    return type;
   }
 
   public boolean isWeak() {
-    return myMembers.contains(null);
+    return !isStrictSemanticsEnabled() && myMembers.contains(null);
   }
 
   /**
@@ -212,7 +218,10 @@ public class PyUnionType implements PyType {
    * @see PyUnionType#toNonWeakType(PyType)
    */
   public @Nullable PyType excludeNull() {
-    return !isWeak() ? this : union(ContainerUtil.skipNulls(getMembers()));
+    if (!isStrictSemanticsEnabled()) {
+      return !isWeak() ? this : union(ContainerUtil.skipNulls(getMembers()));
+    }
+    return union(ContainerUtil.skipNulls(getMembers()));
   }
 
   @Override
