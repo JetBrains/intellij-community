@@ -47,7 +47,7 @@ internal sealed class RedundantLetInspection :
         ).asUnit
     }
 
-    context(KaSession)
+    context(_: KaSession)
     protected abstract fun isApplicable(
         element: KtCallExpression,
         bodyExpression: PsiElement,
@@ -84,7 +84,7 @@ internal sealed class RedundantLetInspection :
 
 internal class SimpleRedundantLetInspection : RedundantLetInspection() {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun isApplicable(
         element: KtCallExpression,
         bodyExpression: PsiElement,
@@ -99,7 +99,7 @@ internal class SimpleRedundantLetInspection : RedundantLetInspection() {
 
 internal class ComplexRedundantLetInspection : RedundantLetInspection() {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun isApplicable(
         element: KtCallExpression,
         bodyExpression: PsiElement,

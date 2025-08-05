@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.isDefinitelyNotNull
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
@@ -33,7 +34,7 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
 
     override val uselessNames = uselessFqNames.keys.toShortNames()
 
-    context(KaSession)
+    context(_: KaSession)
     override fun QualifiedExpressionVisitor.suggestConversionIfNeeded(
         expression: KtQualifiedExpression,
         calleeExpression: KtExpression,
@@ -79,7 +80,7 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createRenameUselessCallFix(
         expression: KtQualifiedExpression,
         newFunctionName: String

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.diagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -56,7 +57,7 @@ private fun KtEnumEntry.valueArgumentListIfEmptyAndHasNoErrors(): KtValueArgumen
     return valueArgumentList
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KtSuperTypeCallEntry.hasAnyErrors(): Boolean {
     val elementsToCheck = listOfNotNull(
         this, // K2 Mode diagnostics

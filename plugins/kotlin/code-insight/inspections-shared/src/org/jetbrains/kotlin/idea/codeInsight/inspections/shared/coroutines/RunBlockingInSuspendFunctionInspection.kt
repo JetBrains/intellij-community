@@ -89,7 +89,7 @@ internal class RunBlockingInSuspendFunctionInspection : KotlinApplicableInspecti
             else -> return null
         }
 
-        val function = element.resolveToFunctionSymbol(this@KaSession) ?: return null
+        val function = element.resolveToFunctionSymbol(this) ?: return null
 
         if (!isRunBlocking(function)) return null
         val lambdaArgument = element.lambdaArguments.singleOrNull() ?: return null

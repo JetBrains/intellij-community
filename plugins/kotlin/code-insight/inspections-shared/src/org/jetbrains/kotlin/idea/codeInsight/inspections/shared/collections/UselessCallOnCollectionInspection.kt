@@ -5,6 +5,13 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.fullyExpandedType
+import org.jetbrains.kotlin.analysis.api.components.isClassType
+import org.jetbrains.kotlin.analysis.api.components.isNullable
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.targetSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
@@ -39,7 +46,7 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
 
     override val uselessNames = uselessFqNames.keys.toShortNames()
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtExpression.isLambdaReturningNotNull(): Boolean {
         val expression = if (this is KtLabeledExpression) this.baseExpression else this
         if (expression !is KtLambdaExpression) return false
@@ -48,19 +55,19 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
             val targetExpression = returnExpression.targetSymbol?.psi?.parent
             if (targetExpression == expression) {
                 labelledReturnReturnsNullable = labelledReturnReturnsNullable ||
-                        returnExpression.returnedExpression?.expressionType?.canBeNull == true
+                        returnExpression.returnedExpression?.expressionType?.isNullable == true
             }
         }
-        return !labelledReturnReturnsNullable && expression.bodyExpression?.expressionType?.canBeNull == false
+        return !labelledReturnReturnsNullable && expression.bodyExpression?.expressionType?.isNullable == false
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtExpression.isMethodReferenceReturningNotNull(): Boolean {
         val type = expressionType as? KaFunctionType ?: return false
-        return !type.returnType.canBeNull
+        return !type.returnType.isNullable
     }
 
-    context(KaSession)
+    context(_: KaSession)
     override fun QualifiedExpressionVisitor.suggestConversionIfNeeded(
         expression: KtQualifiedExpression,
         calleeExpression: KtExpression,
@@ -79,7 +86,7 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
             if (receiverTypeArgumentType is KaFlexibleType || !receiverTypeArgumentType.isSubtypeOf(argumentType)) return
         } else {
             // xxxNotNull
-            if (receiverTypeArgumentType.canBeNull) return
+            if (receiverTypeArgumentType.isNullable) return
             if (callableName != "filterNotNull") {
                 // Check if there is a function argument
                 resolvedCall.argumentMapping.toList().lastOrNull()?.first?.let { lastArgument ->
@@ -129,6 +136,6 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaType.isList() = this.fullyExpandedType.isClassType(StandardClassIds.List)
 }

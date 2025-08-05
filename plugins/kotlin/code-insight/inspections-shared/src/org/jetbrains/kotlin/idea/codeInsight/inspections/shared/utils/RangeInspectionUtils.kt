@@ -2,6 +2,17 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.utils
 
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.isByteType
+import org.jetbrains.kotlin.analysis.api.components.isDoubleType
+import org.jetbrains.kotlin.analysis.api.components.isFloatType
+import org.jetbrains.kotlin.analysis.api.components.isIntType
+import org.jetbrains.kotlin.analysis.api.components.isLongType
+import org.jetbrains.kotlin.analysis.api.components.isShortType
+import org.jetbrains.kotlin.analysis.api.components.isUByteType
+import org.jetbrains.kotlin.analysis.api.components.isUIntType
+import org.jetbrains.kotlin.analysis.api.components.isULongType
+import org.jetbrains.kotlin.analysis.api.components.isUShortType
+import org.jetbrains.kotlin.analysis.api.symbols.findClassLike
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
@@ -13,7 +24,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtElement
 
-context(KaSession)
+context(_: KaSession)
 fun KtElement.canUseRangeUntil(): Boolean {
     if (!compilerVersionIsSufficientToUseRangeUntil(this)) return false
     if (!languageVersionSettings.supportsFeature(LanguageFeature.RangeUntilOperator)) return false
@@ -34,19 +45,19 @@ private fun compilerVersionIsSufficientToUseRangeUntil(element: KtElement): Bool
 
 private val COMPILER_VERSION_WITH_RANGEUNTIL_SUPPORT = IdeKotlinVersion.get("1.7.20-Beta")
 
-context(KaSession)
+context(_: KaSession)
 val KaType.isSignedIntegralType: Boolean
     get() = isIntType || isLongType || isShortType || isByteType
 
-context(KaSession)
+context(_: KaSession)
 val KaType.isUnsignedIntegralType: Boolean
     get() = isUIntType || isULongType || isUShortType || isUByteType
 
-context(KaSession)
+context(_: KaSession)
 val KaType.isIntegralType: Boolean
     get() = isSignedIntegralType || isUnsignedIntegralType
 
-context(KaSession)
+context(_: KaSession)
 val KaType.isFloatingPointType: Boolean
     get() = isFloatType || isDoubleType
 

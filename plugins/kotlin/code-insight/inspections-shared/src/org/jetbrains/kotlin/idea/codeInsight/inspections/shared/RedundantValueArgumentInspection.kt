@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -71,7 +72,7 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection(), Cl
         }
     })
 
-    context(KaSession)
+    context(_: KaSession)
     private fun findTargetParameter(argumentExpression: KtExpression, call: KaFunctionCall<*>): KaValueParameterSymbol? {
         val targetParameterSymbol = call.argumentMapping[argumentExpression]?.symbol ?: return null
 
