@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.useSiteModule
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.name.ClassId
@@ -120,7 +121,7 @@ class KtClassDef(
     }
 
     companion object {
-        context(KaSession)
+        context(_: KaSession)
         fun KaClassSymbol.classDef(): KtClassDef = KtClassDef(
             useSiteModule, classId?.hashCode() ?: name.hashCode(), createPointer(),
             classKind, modality, this is KaNamedClassSymbol && this.isInline

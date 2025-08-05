@@ -7,6 +7,12 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.diagnostics
+import org.jetbrains.kotlin.analysis.api.components.evaluate
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.components.isPrimitive
+import org.jetbrains.kotlin.analysis.api.components.isStringType
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.codeinsight.utils.JVM_FIELD_CLASS_ID
 import org.jetbrains.kotlin.idea.codeinsight.utils.checkMayBeConstantByFields
@@ -50,19 +56,19 @@ internal class MayBeConstantInspection : MayBeConstantInspectionBase() {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtProperty.hasNonNullablePrimitiveOrStringType(): Boolean {
         val type = this.returnType
         if (type.isMarkedNullable) return false
         return type.isPrimitive || type.isStringType
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtExpression.getConstantValue(): KaConstantValue? {
         return evaluate()
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun KtExpression.usesNonConstValAsConstant(): Boolean {
         val diagnostics = diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)

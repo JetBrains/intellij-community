@@ -157,7 +157,7 @@ internal class LiftReturnOrAssignmentInspection @JvmOverloads constructor(privat
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getStateForWhenOrTry(expression: KtExpression, keyword: PsiElement): List<LiftState>? {
         if (skipLongExpressions && expression.getLineCount() > LINES_LIMIT) return null
         if (expression.parent.node.elementType == KtNodeTypes.ELSE) return null

@@ -108,7 +108,7 @@ internal class ReplaceGetOrSetInspection :
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaNamedFunctionSymbol.isExplicitOperator(): Boolean {
         fun KaCallableSymbol.hasOperatorKeyword() = psiSafe<KtNamedFunction>()?.hasModifier(KtTokens.OPERATOR_KEYWORD) == true
         return allOverriddenSymbolsWithSelf.any { it.hasOperatorKeyword() }

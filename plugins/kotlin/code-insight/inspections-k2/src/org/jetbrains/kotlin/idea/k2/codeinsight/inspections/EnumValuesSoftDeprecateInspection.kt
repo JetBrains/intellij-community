@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.*
 
 internal class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspectionBase() {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean =
         element.isOptInAllowed(annotationClassId)
 

@@ -4,6 +4,15 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa
 import com.intellij.psi.SyntaxTraverser
 import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.expectedType
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.implicitReceiverSmartCasts
+import org.jetbrains.kotlin.analysis.api.components.isNothingType
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.components.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
@@ -14,7 +23,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaNonPublicApi::class)
 internal fun isSmartCastNecessary(expr: KtExpression, value: Boolean): Boolean {
     val values = getValuesInExpression(expr)
@@ -53,7 +62,7 @@ internal fun isSmartCastNecessary(expr: KtExpression, value: Boolean): Boolean {
         }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun getValuesInExpression(expr: KtExpression): Map<KaSymbol, KaType> {
     val map = hashMapOf<KaSymbol, KaType>()
     SyntaxTraverser.psiTraverser(expr)
@@ -73,7 +82,7 @@ private fun getValuesInExpression(expr: KtExpression): Map<KaSymbol, KaType> {
 }
 
 
-context(KaSession)
+context(_: KaSession)
 private fun getConditionScopes(expr: KtExpression, value: Boolean?): List<KtElement> {
     // TODO: reuse more standard utility to collect scopes
     return when (val parent = expr.parent) {

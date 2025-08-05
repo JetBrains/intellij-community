@@ -22,11 +22,18 @@ import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
+import org.jetbrains.kotlin.analysis.api.components.namedClassSymbol
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.components.type
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -107,7 +114,7 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtNameReferenceExpression.isReferenceToOuterClass(
         innerClass: KtClass,
         outerClasses: Set<KtClass>,
@@ -150,7 +157,7 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
         return outerClassSymbols.any { outer -> outer.isSubClassOf(referenceClassDescriptor) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtQualifiedExpression.hasThisReceiverOfOuterClass(outerClassSymbols: List<KaClassSymbol>): Boolean {
         return parent !is KtQualifiedExpression
                 && receiverExpression is KtThisExpression

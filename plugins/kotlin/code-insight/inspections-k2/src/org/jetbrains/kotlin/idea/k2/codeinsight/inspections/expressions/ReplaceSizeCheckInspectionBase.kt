@@ -7,6 +7,8 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.allSupertypes
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -102,7 +104,7 @@ internal sealed class ReplaceSizeCheckInspectionBase :
         append("()")
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaCallableMemberCall<*, *>.findReplaceableOverride(): ReplaceableCall? {
         val partiallyAppliedSymbol = this.partiallyAppliedSymbol
         val receiverType = (partiallyAppliedSymbol.extensionReceiver ?: partiallyAppliedSymbol.dispatchReceiver)

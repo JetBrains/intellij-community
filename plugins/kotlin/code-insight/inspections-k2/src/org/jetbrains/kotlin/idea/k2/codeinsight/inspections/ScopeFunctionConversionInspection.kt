@@ -503,14 +503,14 @@ class ConvertScopeFunctionToReceiver(counterpartName: String) : ConvertScopeFunc
             /**
              * Determines the appropriate qualifier for 'this' expressions based on the receiver value.
              */
-            context(KaSession)
+            context(session: KaSession)
             @OptIn(KaExperimentalApi::class)
             fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String? {
                 val symbol = receiverValue.symbol
                 return when {
                     // For companion objects, use ContainingClass.CompanionName
                     (symbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT -> {
-                        val containingClassName = (symbol.containingSymbol as KaClassifierSymbol).name?.asString() ?: ""
+                        val containingClassName = (with (session) { symbol.containingSymbol } as KaClassifierSymbol).name?.asString() ?: ""
                         val companionName = symbol.name?.asString() ?: ""
                         "$containingClassName.$companionName"
                     }

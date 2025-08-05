@@ -107,14 +107,14 @@ internal class NestedLambdaShadowedImplicitParameterInspection :
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtLambdaExpression.isAllowedScopeFunctionLambdaArgument(): Boolean {
         val qualifiedExpression = getStrictParentOfType<KtQualifiedExpression>() ?: return false
         if (qualifiedExpression.receiverExpression.text != StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier) return false
         return qualifiedExpression.callExpression?.isCallingAnyOf(*scopeFunctionsList) == true
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun isShadowedImplicitItOfAnotherLambda(
         refExpression: KtNameReferenceExpression,
         primaryLambda: KtLambdaExpression,

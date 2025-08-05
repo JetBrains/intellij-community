@@ -25,6 +25,13 @@ import org.jdom.Element
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.declarationScope
+import org.jetbrains.kotlin.analysis.api.components.directlyOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.expectedType
+import org.jetbrains.kotlin.analysis.api.components.lowerBoundIfFlexible
+import org.jetbrains.kotlin.analysis.api.components.scope
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.components.syntheticJavaPropertiesScope
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
@@ -403,7 +410,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     /**
      * Several checks.
      */
-    context(KaSession)
+    context(_: KaSession)
     private fun canConvert(
         symbol: KaCallableSymbol,
         callExpression: KtExpression,
@@ -431,7 +438,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     /**
      * Fixes the case from KTIJ-21051
      */
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun receiverOrItsAncestorsContainVisibleFieldWithSameName(receiverType: KaType, propertyName: String): Boolean {
         val fieldWithSameName = receiverType.scope?.declarationScope?.callables(Name.identifier(propertyName))
@@ -441,7 +448,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         return fieldWithSameName != null
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun getSyntheticProperty(
         propertyNames: List<String>,
@@ -473,7 +480,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         return null
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun syntheticPropertyTypeEqualsToExpected(
         syntheticProperty: KaSyntheticJavaPropertySymbol,
         callReturnType: KaType,
@@ -489,7 +496,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         return syntheticPropertyReturnType.semanticallyEquals(propertyExpectedType)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun propertyResolvesToSyntheticProperty(
         callExpression: KtExpression,
@@ -571,7 +578,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         return false
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun functionOriginateFromJava(allOverriddenSymbols: List<KaCallableSymbol>): Boolean {
         // Calling `.reversed()` – small optimization because the last Java symbol in the list more probable doesn't have overrides
         val javaSymbols = allOverriddenSymbols.filter { it.origin.isJavaSourceOrLibrary() }.reversed()

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.isNonNullableBooleanType
@@ -40,7 +41,7 @@ class KotlinCovariantEqualsInspection : AbstractKotlinInspection() {
         }
     })
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtNamedFunction.isEquals(): Boolean {
         if (!hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
         if (nameAsName != OperatorNameConventions.EQUALS) return false

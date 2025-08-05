@@ -20,6 +20,8 @@ import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.contracts.description.*
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractReturnsContractEffectDeclaration.*
 import org.jetbrains.kotlin.analysis.api.contracts.description.booleans.*
@@ -72,7 +74,7 @@ class KotlinFunctionCallInstruction(
         return result.toTypedArray()
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun processContracts(
         interpreter: DataFlowInterpreter,
@@ -111,7 +113,7 @@ class KotlinFunctionCallInstruction(
         return resultValue
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun KaContractBooleanExpression.toCondition(
         factory: DfaValueFactory,
@@ -135,7 +137,7 @@ class KotlinFunctionCallInstruction(
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun KaContractParameterValue.findDfaValue(
         callDescriptor: KaFunctionCall<*>,
@@ -176,7 +178,7 @@ class KotlinFunctionCallInstruction(
 
     data class MethodEffect(val dfaValue: DfaValue, val pure: Boolean)
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getMethodReturnValue(
         factory: DfaValueFactory,
         stateBefore: DfaMemoryState,
@@ -271,12 +273,12 @@ class KotlinFunctionCallInstruction(
         return DfaCallArguments(qualifier, args.toTypedArray(), MutationSignature.unknown())
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getPsiMethod(): PsiMethod? {
         return call.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.psi?.toLightMethods()?.singleOrNull()
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getExpressionDfType(expr: KtExpression): DfType {
         val constructedClass = (((expr.resolveToCall() as? KaSuccessCallInfo)
             ?.call as? KaCallableMemberCall<*, *>)

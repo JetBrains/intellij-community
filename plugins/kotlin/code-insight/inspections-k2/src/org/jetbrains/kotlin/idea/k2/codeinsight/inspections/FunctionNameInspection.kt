@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AbstractFunctionNameInspection
 import org.jetbrains.kotlin.name.FqName
@@ -17,7 +18,7 @@ class FunctionNameInspection : AbstractFunctionNameInspection() {
                 || returnType.allSupertypes.any { it.hasShortName(functionName) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaType.hasShortName(shortName: String): Boolean {
         val typeShortName =
             expandedSymbol

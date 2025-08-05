@@ -16,6 +16,19 @@ import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
+import org.jetbrains.kotlin.analysis.api.components.arrayElementType
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.defaultType
+import org.jetbrains.kotlin.analysis.api.components.evaluate
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.hasFlexibleNullability
+import org.jetbrains.kotlin.analysis.api.components.isArrayOrPrimitiveArray
+import org.jetbrains.kotlin.analysis.api.components.isClassType
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.components.isPrimitive
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -25,11 +38,11 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 
-context(KaSession)
+context(_: KaSession)
 internal fun KaType?.toDfType(): DfType {
     if (this == null) return DfType.TOP
     if (canBeNull()) {
-        var notNullableType = this.withNullability(KaTypeNullability.NON_NULLABLE).toDfTypeNotNullable()
+        var notNullableType = this.withNullability(false).toDfTypeNotNullable()
         if (notNullableType is DfPrimitiveType) {
             val cls = (this as? KaClassType)?.expandedSymbol
             val boxedType = if (cls != null) {
@@ -48,7 +61,7 @@ internal fun KaType?.toDfType(): DfType {
     return toDfTypeNotNullable()
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KaType.toDfTypeNotNullable(): DfType {
     return when (this) {
         is KaClassType -> {
@@ -104,7 +117,7 @@ private fun KaType.toDfTypeNotNullable(): DfType {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 internal fun KaVariableSymbol.toSpecialField(): SpecialField? {
     if (this !is KaPropertySymbol) return null
     val name = name.asString()
@@ -116,7 +129,7 @@ internal fun KaVariableSymbol.toSpecialField(): SpecialField? {
     return field
 }
 
-context(KaSession)
+context(_: KaSession)
 internal fun KtExpression.getKotlinType(): KaType? {
     var parent = this.parent
     if (parent is KtDotQualifiedExpression && parent.selectorExpression == this) {
@@ -145,12 +158,12 @@ internal fun KtExpression.getKotlinType(): KaType? {
     return expressionType
 }
 
-context(KaSession)
+context(_: KaSession)
 internal fun KaType.getJvmAwareArrayElementType(): KaType? {
     if (!isArrayOrPrimitiveArray) return null
     val type = arrayElementType ?: return null
     if (this.isClassType(StandardClassIds.Array) && type.isPrimitive) {
-        return type.withNullability(KaTypeNullability.NULLABLE)
+        return type.withNullability(true)
     }
     return type
 }
@@ -192,10 +205,10 @@ internal fun mathOpFromAssignmentToken(token: IElementType): LongRangeBinOp? = w
     else -> null
 }
 
-context(KaSession)
+context(_: KaSession)
 internal fun KaType.canBeNull() = isMarkedNullable || hasFlexibleNullability
 
-context(KaSession)
+context(_: KaSession)
 internal fun getConstant(expr: KtConstantExpression): DfType {
     val type = expr.expressionType
     val constant: KaConstantValue? = if (type == null) null else expr.evaluate()
@@ -213,7 +226,7 @@ internal fun getConstant(expr: KtConstantExpression): DfType {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 internal fun getInlineableLambda(expr: KtCallExpression): LambdaAndParameter? {
     val lambdaArgument = expr.lambdaArguments.singleOrNull() ?: return null
     val lambdaExpression = lambdaArgument.getLambdaExpression() ?: return null

@@ -14,6 +14,13 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.defaultType
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -147,7 +154,7 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 fun isReceiverUsedInside(
     callableDeclaration: KtCallableDeclaration,
     usedTypeParametersInReceiver: Set<KaTypeParameterSymbol>
@@ -221,7 +228,7 @@ private fun removeUnusedTypeParameters(typeParameters: List<KtTypeParameter>) {
  * We use this function to check if the callable symbol has a receiver that might potentially be used as a context receiver of this symbol.
  * This is needed because the analysis API does not expose passed context receivers yet: KT-73709
  */
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun KaCallableMemberCall<*, *>.hasContextReceiverOfType(type: KaType): Boolean {
     val substitutor = buildSubstitutor {
@@ -234,7 +241,7 @@ private fun KaCallableMemberCall<*, *>.hasContextReceiverOfType(type: KaType): B
  * Returns whether the [element] makes use of one of the [reifiedTypes].
  * This will only return true if the [element] is inside a function body or function expression.
  */
-context(KaSession)
+context(_: KaSession)
 private fun isUsageOfReifiedType(reifiedTypes: Set<KaTypeParameterSymbol>, element: KtElement): Boolean {
     val parentFunction = element.parentOfType<KtFunction>() ?: return false
     if (element !is KtExpression) return false
@@ -246,7 +253,7 @@ private fun isUsageOfReifiedType(reifiedTypes: Set<KaTypeParameterSymbol>, eleme
 /**
  * Returns whether the [symbol] is being used by the [element] by referencing it.
  */
-context(KaSession)
+context(_: KaSession)
 private fun isUsageOfSymbol(symbol: KaDeclarationSymbol, element: KtElement): Boolean {
     if (element !is KtExpression) return false
 
