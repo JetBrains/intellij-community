@@ -132,6 +132,10 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
         val title = JBLabel(group)
         val groupRow = group(title = title) {
           for (extension in extensions) {
+            if (!extension.isVisible()) {
+              continue
+            }
+
             val label = if (extension.type() == AdvancedSettingType.Bool) null else JLabel(extension.title() + ":")
             lateinit var advancedSetting: AdvancedSettingControl
             val settingRow = row(label) {
@@ -168,7 +172,6 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
               label?.text ?: extension.title(),
               advancedSetting.isDefault
             )
-            row.setVisible(extension.isVisible())
             settingsRows.add(row)
           }
         }
