@@ -6,6 +6,10 @@ import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
@@ -27,7 +31,7 @@ internal fun getCommentText(comment: PsiComment): String {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 internal fun KaType.renderNames(): Array<String> = arrayOf(
     render(KaTypeRendererForSource.WITH_SHORT_NAMES.with {
@@ -45,7 +49,7 @@ internal fun String.removeTypeParameters(): String {
 internal val MatchingHandler.withinHierarchyTextFilterSet: Boolean
     get() = this is SubstitutionHandler && (this.isSubtype || this.isStrictSubtype)
 
-context(KaSession)
+context(_: KaSession)
 fun KtExpression.findDispatchReceiver(): KaType? {
     val symbol = resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: return null
     val containingClass = symbol.containingDeclaration as? KaClassSymbol ?: return null

@@ -3,8 +3,11 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -14,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -25,7 +29,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
 @ApiStatus.Internal
-context(KaSession)
+context(_: KaSession)
 fun isLetCallRedundant(element: KtCallExpression): Boolean {
     if (!element.isCallingAnyOf(StandardKotlinNames.let)) return false
     val lambdaExpression = element.lambdaArguments.firstOrNull()?.getLambdaExpression() ?: return false
@@ -36,7 +40,7 @@ fun isLetCallRedundant(element: KtCallExpression): Boolean {
 }
 
 @ApiStatus.Internal
-context(KaSession)
+context(_: KaSession)
 fun isLetCallRedundant(
     element: KtCallExpression,
     bodyExpression: PsiElement,
@@ -67,8 +71,9 @@ fun isLetCallRedundant(
     return singleReferenceNotInsideInnerLambda != null
 }
 
+@OptIn(KaContextParameterApi::class)
 @ApiStatus.Internal
-context(KaSession)
+context(_: KaSession)
 fun KtDotQualifiedExpression.isLetCallRedundant(parameterName: String): Boolean {
     return !hasLambdaExpression() && getLeftMostReceiverExpression().let { receiver ->
         receiver is KtNameReferenceExpression && receiver.getReferencedName() == parameterName && !nameUsed(
@@ -182,7 +187,8 @@ private fun KtDotQualifiedExpression.deleteFirstReceiver(): KtExpression {
     return this
 }
 
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 private fun KtFunctionLiteral.valueParameterReferences(callExpression: KtCallExpression): List<KtNameReferenceExpression> {
     val valueParameterSymbol = symbol.valueParameters.singleOrNull() ?: return emptyList()
 
@@ -205,7 +211,7 @@ private fun KtFunctionLiteral.valueParameterReferences(callExpression: KtCallExp
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KtBinaryExpression.isApplicable(parameterName: String, isTopLevel: Boolean = true): Boolean {
     val left = left ?: return false
     if (isTopLevel) {
@@ -222,7 +228,7 @@ private fun KtBinaryExpression.isApplicable(parameterName: String, isTopLevel: B
     return right.isApplicable(parameterName)
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KtExpression.isApplicable(parameterName: String): Boolean = when (this) {
     is KtNameReferenceExpression -> text != parameterName
     is KtDotQualifiedExpression -> !hasLambdaExpression() && !nameUsed(parameterName)
@@ -232,7 +238,7 @@ private fun KtExpression.isApplicable(parameterName: String): Boolean = when (th
     else -> false
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KtCallExpression.isApplicable(parameterName: String): Boolean {
     if (valueArguments.isEmpty()) return false
     return valueArguments.all {
@@ -246,7 +252,8 @@ private fun KtExpression.nameUsed(name: String, except: KtNameReferenceExpressio
     anyDescendantOfType<KtNameReferenceExpression> { it != except && it.getReferencedName() == name }
 
 
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 private fun KtDotQualifiedExpression.getHasNullableReceiverExtensionCall(): Boolean {
     val hasNullableType = selectorExpression?.resolveToCall()
         ?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.extensionReceiver?.type?.isNullableAnyType()

@@ -4,8 +4,16 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.approximateToSuperPublicDenotableOrSelf
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.components.isNothingType
+import org.jetbrains.kotlin.analysis.api.components.isUnitType
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -26,8 +34,8 @@ object ConvertToBlockBodyUtils {
     fun isConvertibleByPsi(element: KtDeclarationWithBody): Boolean =
         (element is KtNamedFunction || element is KtPropertyAccessor) && !element.hasBlockBody() && element.hasBody()
 
-    context(KaSession)
-    @OptIn(KaExperimentalApi::class)
+    context(_: KaSession)
+    @OptIn(KaExperimentalApi::class, KaContextParameterApi::class)
     fun createContext(
         declaration: KtDeclarationWithBody,
         reformat: Boolean,

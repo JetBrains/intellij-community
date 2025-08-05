@@ -1,8 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
@@ -33,14 +36,16 @@ fun KtNameReferenceExpression.getFunctionLiteralByImplicitLambdaParameter(): KtF
 }
 
 
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 fun KtNameReferenceExpression.getImplicitLambdaParameterSymbol(): KaValueParameterSymbol? {
     val parameterSymbol = mainReference.resolveToSymbol() as? KaValueParameterSymbol ?: return null
     if (!parameterSymbol.isImplicitLambdaParameter) return null
     return parameterSymbol
 }
 
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 fun KaValueParameterSymbol.getFunctionLiteralByImplicitLambdaParameterSymbol(): KtFunctionLiteral? {
     if (!isImplicitLambdaParameter) return null
     val lambda = containingDeclaration as? KaAnonymousFunctionSymbol ?: return null

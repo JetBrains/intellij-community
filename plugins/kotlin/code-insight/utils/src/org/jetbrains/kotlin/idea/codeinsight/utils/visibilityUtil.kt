@@ -1,9 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
@@ -43,7 +46,8 @@ fun KtModifierKeywordToken.toVisibility(): Visibility = when (this) {
  *
  * Do we need something like @PublicApiFile to disable (or invert) this inspection per-file?
  */
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 private fun explicitVisibilityRequired(symbol: KaDeclarationSymbol): Boolean {
     if ((symbol as? KaConstructorSymbol)?.isPrimary == true) return false // 1
     if (symbol is KaPropertySymbol && (symbol.containingDeclaration as? KaNamedClassSymbol)?.isData == true) return false // 2

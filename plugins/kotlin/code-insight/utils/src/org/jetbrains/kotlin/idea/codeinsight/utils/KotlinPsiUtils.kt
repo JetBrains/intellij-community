@@ -9,7 +9,11 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.isUsedAsExpression
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
@@ -321,16 +325,18 @@ tailrec fun KtDotQualifiedExpression.expressionWithoutClassInstanceAsReceiver():
 fun KtClass.isOpen(): Boolean = hasModifier(KtTokens.OPEN_KEYWORD)
 fun KtClass.isInheritable(): Boolean = isOpen() || isAbstract() || isSealed()
 
+@OptIn(KaContextParameterApi::class)
 @ApiStatus.Internal
-context(KaSession)
+context(_: KaSession)
 fun KtExpression.isSynthesizedFunction(): Boolean {
     val symbol =
         resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: mainReference?.resolveToSymbol() ?: return false
     return symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED
 }
 
+@OptIn(KaContextParameterApi::class)
 @ApiStatus.Internal
-context(KaSession)
+context(_: KaSession)
 fun KtCallExpression.isCallingAnyOf(vararg fqNames: FqName): Boolean {
     val calleeText = calleeExpression?.text ?: return false
     val targetFqNames = fqNames.filter { it.shortName().asString() == calleeText }
@@ -358,7 +364,8 @@ private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES = arrayOf(
     StandardKotlinNames.Enum.enumValueOf
 )
 
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 fun KtTypeReference.isReferenceToBuiltInEnumFunction(): Boolean {
     val target = (parent.getStrictParentOfType<KtTypeArgumentList>() ?: this)
         .getParentOfTypes(true, KtCallExpression::class.java, KtCallableDeclaration::class.java)
@@ -374,13 +381,13 @@ fun KtTypeReference.isReferenceToBuiltInEnumFunction(): Boolean {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 fun KtCallExpression.isReferenceToBuiltInEnumFunction(): Boolean {
     val calleeExpression = this.calleeExpression ?: return false
     return (calleeExpression as? KtSimpleNameExpression)?.getReferencedNameAsName() in ENUM_STATIC_METHOD_NAMES && calleeExpression.isSynthesizedFunction()
 }
 
-context(KaSession)
+context(_: KaSession)
 fun KtCallableReferenceExpression.isReferenceToBuiltInEnumFunction(): Boolean {
     return this.canBeReferenceToBuiltInEnumFunction() && this.callableReference.isSynthesizedFunction()
 }

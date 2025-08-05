@@ -1,9 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isAnyType
+import org.jetbrains.kotlin.analysis.api.components.isBooleanType
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -20,20 +26,23 @@ import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 fun KaType.isNullableAnyType(): Boolean = isAnyType && isMarkedNullable
 
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 fun KaType.isNonNullableBooleanType(): Boolean = isBooleanType && !isMarkedNullable
 
-context(KaSession)
+context(_: KaSession)
 fun KaType.isEnum(): Boolean {
     if (this !is KaClassType) return false
     val classSymbol = symbol
     return classSymbol is KaClassSymbol && classSymbol.classKind == KaClassKind.ENUM_CLASS
 }
 
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 fun KtExpression.expressionOrReturnType(): KaType? {
     return if (this is KtDeclaration) returnType else expressionType
 }
