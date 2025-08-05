@@ -17,7 +17,6 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.JBCardLayout
-import com.intellij.ui.components.DialogPanel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
 import com.intellij.util.ExceptionUtil
@@ -49,7 +48,7 @@ class PyAddSdkDialog private constructor(
   /**
    * This is the main panel that supplies sliding effect for the wizard states.
    */
-  private val mainPanel: JPanel = DialogPanel(null, JBCardLayout())
+  private val mainPanel: JPanel = JPanel(JBCardLayout())
 
   private var selectedPanel: PyAddSdkView? = null
   private val context = UserDataHolderBase()
@@ -166,8 +165,6 @@ class PyAddSdkDialog private constructor(
           // Only last even must be processed. Other events may leave UI in inconsistent state
           if (it.valueIsAdjusting) return@addListSelectionListener
           selectedPanel = selectedValue
-          isOKActionEnabled = false
-
           cardLayout.show(cardPanel, selectedValue.panelName)
 
           southPanel?.let {
