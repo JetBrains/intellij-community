@@ -18,6 +18,7 @@ import com.jetbrains.python.sdk.uv.UvCli
 import com.jetbrains.python.sdk.uv.UvLowLevel
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.venvReader.tryResolvePath
+import io.github.z4kn4fein.semver.Version
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
@@ -28,13 +29,14 @@ import kotlin.io.path.pathString
 
 private const val NO_METADATA_MESSAGE = "does not contain a PEP 723 metadata tag"
 private const val OUTDATED_ENV_MESSAGE = "The environment is outdated"
+private val versionRegex = Regex("(\\d+\\.\\d+)\\.\\d+-.+\\s")
 
 private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLevel {
-  override suspend fun initializeEnvironment(init: Boolean, python: Path?): PyResult<Path> {
+  override suspend fun initializeEnvironment(init: Boolean, version: Version?): PyResult<Path> {
     val addPythonArg: (MutableList<String>) -> Unit = { args ->
-      python?.let {
+      version?.let {
         args.add("--python")
-        args.add(python.pathString)
+        args.add("${version.major}.${version.minor}")
       }
     }
 
@@ -88,6 +90,26 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
 
     val pythons = parseUvPythonList(uvDir, out)
     return PyResult.success(pythons)
+  }
+
+  override suspend fun listSupportedPythonVersions(versionRequest: String?): PyResult<Set<Version>> {
+    val args = mutableListOf("python", "list")
+
+    if (versionRequest != null) {
+      args += versionRequest
+    }
+
+    val out = uvCli.runUv(cwd, *args.toTypedArray()).getOr { return it }
+    val matches = versionRegex.findAll(out)
+
+    return PyResult.success(
+      matches.map {
+        Version.parse(
+          it.groupValues[1],
+          strict = false
+        )
+      }.toSet()
+    )
   }
 
   override suspend fun listPackages(): PyResult<List<PythonPackage>> {

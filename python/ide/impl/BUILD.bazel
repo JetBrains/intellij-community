@@ -53,6 +53,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//python/python-pyproject:pyproject",
     "//python/python-hatch:hatch",
+    "@lib//:io-github-z4kn4fein-semver-jvm",
   ],
   runtime_deps = [":impl_resources"]
 )
@@ -115,6 +116,7 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:junit5",
+    "@lib//:io-github-z4kn4fein-semver-jvm",
   ],
   runtime_deps = [":impl_resources"]
 )
