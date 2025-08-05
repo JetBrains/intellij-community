@@ -170,6 +170,7 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                 when (val result =
                     compile(codeFragment, compilerConfiguration, compilerTarget, allowedErrorFilter)) {
                     is KaCompilationResult.Success -> {
+                        reportMutedExceptions(result, context, codeFragment)
                         logCompilation(codeFragment)
 
                         val classes: List<ClassToLoad> = result.output
@@ -184,6 +185,7 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                         createCompiledDataDescriptor(ideCompilationResult, result.canBeCached)
                     }
                     is KaCompilationResult.Failure -> {
+                        reportMutedExceptions(result, context, codeFragment)
                         val firstError = result.errors.first()
                         throw IncorrectCodeFragmentException(firstError.defaultMessage)
                     }
@@ -244,6 +246,22 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                 CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.COROUTINE_CONTEXT, "")
             else -> null
         }
+    }
+}
+
+@OptIn(KaExperimentalApi::class)
+private fun reportMutedExceptions(
+    result: KaCompilationResult,
+    context: ExecutionContext,
+    codeFragment: KtCodeFragment
+) {
+    for (throwable in result.mutedExceptions) {
+        reportErrorWithAttachments(
+            context,
+            codeFragment,
+            throwable,
+            headerMessage = "Muted exception in evaluator compiler: ${throwable.message}"
+        )
     }
 }
 
