@@ -3,9 +3,9 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
-import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -74,7 +74,7 @@ public final class FileStatusMap implements Disposable {
   public static @Nullable("null means the file is clean") TextRange getDirtyTextRange(@NotNull Document document,
                                                                                       @NotNull PsiFile psiFile,
                                                                                       int passId) {
-    CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(psiFile);
+    CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile);
     return getDirtyTextRange(document, context, psiFile, passId);
   }
 
@@ -196,7 +196,7 @@ public final class FileStatusMap implements Disposable {
    * @return null for up-to-date file, whole file for untouched or entirely dirty file, range(usually code block) for the dirty region (optimization)
    */
   public @Nullable TextRange getFileDirtyScope(@NotNull Document document, @NotNull PsiFile psiFile, int passId) {
-    CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(psiFile);
+    CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile);
     return getFileDirtyScope(document, context, psiFile, passId);
   }
 

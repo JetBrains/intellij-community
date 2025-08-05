@@ -176,7 +176,7 @@ public class ModuleUtilCore {
         return originalFile.getUserData(KEY_MODULE);
       }
 
-      CodeInsightContext codeInsightContext = FileViewProviderUtil.getCodeInsightContext(originalFile);
+      CodeInsightContext codeInsightContext = CodeInsightContextUtil.getCodeInsightContext(originalFile);
       if (codeInsightContext instanceof ModuleContext) {
         Module module = ((ModuleContext)codeInsightContext).getModule();
         if (module != null) {

@@ -1,6 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
-@file:JvmName("FileViewProviderUtil")
+@file:JvmName("CodeInsightContextUtil")
 package com.intellij.codeInsight.multiverse
 
 import com.intellij.concurrency.currentThreadContext

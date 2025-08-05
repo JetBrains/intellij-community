@@ -4,7 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.options.OptPane;
@@ -128,7 +128,7 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
     DaemonProgressIndicator daemonProgressIndicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
     // in case the inspection is running in batch mode
     // todo IJPL-339 figure out what is the correct context here
-    CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(psiFile);
+    CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile);
     HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, context, daemonProgressIndicator, visibleRange,
                                                            TextRange.EMPTY_RANGE);
     GeneralHighlightingPass ghp =

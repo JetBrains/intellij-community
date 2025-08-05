@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
@@ -154,7 +154,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     if (document == null) return false;
 
-    CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(psiFile);
+    CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile);
 
     AtomicReference<HighlightInfo> error = new AtomicReference<>();
     boolean hasErrorElement = false;

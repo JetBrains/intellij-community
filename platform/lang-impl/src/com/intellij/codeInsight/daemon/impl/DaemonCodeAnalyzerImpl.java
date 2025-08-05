@@ -571,7 +571,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     // previous passes can be canceled but still in flight. wait for them to avoid interference
     myPassExecutorService.cancelAll(false, "DaemonCodeAnalyzerImpl.runPasses");
 
-    CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(psiFile); // todo IJPL-339 ???
+    CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile); // todo IJPL-339 ???
 
     waitForUpdateFileStatusBackgroundQueueInTests(); // update the file status map before prohibiting its modifications
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -903,7 +903,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     assertFileFromMyProject(psiFile.getProject(), psiFile);
     Document document = psiFile.getViewProvider().getDocument();
-    CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(psiFile);
+    CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile);
     return document != null &&
            PsiDocumentManager.getInstance(myProject).isCommitted(document) &&
            document.getModificationStamp() == psiFile.getViewProvider().getModificationStamp() &&
@@ -916,7 +916,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       return false;
     }
     assertFileFromMyProject(psiFile.getProject(), psiFile);
-    CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(psiFile);
+    CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile);
     Document document = psiFile.getViewProvider().getDocument();
     return document != null &&
            document.getModificationStamp() == psiFile.getViewProvider().getModificationStamp() &&

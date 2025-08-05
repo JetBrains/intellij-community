@@ -146,7 +146,7 @@ public final class FileManagerImpl implements FileManagerEx {
     if (viewProviders.isEmpty()) {
       return;
     }
-    if (!FileViewProviderUtil.isEventSystemEnabled(viewProviders)) {
+    if (!CodeInsightContextUtil.isEventSystemEnabled(viewProviders)) {
       setViewProvider(vFile, null);
       return;
     }

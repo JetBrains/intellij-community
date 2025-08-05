@@ -2,8 +2,8 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
-import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -41,7 +41,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     myIdentikit = identikit;
 
     myVirtualFile = containingPsiFile.getViewProvider().getVirtualFile();
-    myContext = FileViewProviderUtil.getCodeInsightContext(containingPsiFile);
+    myContext = CodeInsightContextUtil.getCodeInsightContext(containingPsiFile);
     setRange(range);
   }
 

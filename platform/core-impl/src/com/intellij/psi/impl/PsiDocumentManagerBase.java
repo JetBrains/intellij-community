@@ -2,8 +2,8 @@
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
-import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.core.CoreBundle;
@@ -423,7 +423,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   public boolean isEventSystemEnabled(@NotNull Document document) {
     return ReadAction.compute(() -> {
       List<FileViewProvider> viewProviders = getCachedViewProviders(document);
-      return FileViewProviderUtil.isEventSystemEnabled(viewProviders);
+      return CodeInsightContextUtil.isEventSystemEnabled(viewProviders);
     });
   }
 
@@ -1127,7 +1127,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
                            @NotNull Object reason,
                            @NotNull ModalityState modality) {
     List<FileViewProvider> viewProviders = getCachedViewProviders(document);
-    if (FileViewProviderUtil.isEventSystemEnabled(viewProviders)) {
+    if (CodeInsightContextUtil.isEventSystemEnabled(viewProviders)) {
       ThreadingAssertions.assertEventDispatchThread();
       // make cached provider non-gcable temporarily (until commit end) to avoid surprising getCachedProvider()==null
       myDocumentCommitProcessor.commitAsynchronously(myProject, this, document, reason, modality);

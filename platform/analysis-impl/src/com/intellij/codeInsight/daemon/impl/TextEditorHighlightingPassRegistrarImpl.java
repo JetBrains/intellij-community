@@ -4,8 +4,8 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
-import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.application.AccessToken;
@@ -186,7 +186,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
       assert documentFromFile == document : "Documents are different. Doc: " + document + "; Doc from file: " + documentFromFile +"; File: "+psiFile +"; Virtual file: "+
                                             PsiUtilCore.getVirtualFile(psiFile);
     }
-    CodeInsightContext psiFileContext = FileViewProviderUtil.getCodeInsightContext(psiFile);
+    CodeInsightContext psiFileContext = CodeInsightContextUtil.getCodeInsightContext(psiFile);
     if (!psiFileContext.equals(context)) {
       LOG.error("PsiFile's context does not match the context of the editor. File's context= " + psiFileContext + "; Editor's context = " + context);
     }
@@ -254,7 +254,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     Set<TextEditorHighlightingPass> ids = new HashSet<>();
     PassConfig[] frozenPassConfigs = freezeRegisteredPassFactories();
-    CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(psiFile);
+    CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile);
     for (int passId = 0; passId < frozenPassConfigs.length; passId++) {
       PassConfig passConfig = frozenPassConfigs[passId];
       if (passConfig == null) continue;

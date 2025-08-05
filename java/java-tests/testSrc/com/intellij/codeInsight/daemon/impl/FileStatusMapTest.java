@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
@@ -7,7 +7,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.configurationStore.StoreUtilKt;
@@ -404,10 +404,10 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
     document.set(getDocument(file));
     psiFile.set(PsiDocumentManager.getInstance(myProject).getPsiFile(document.get()));
     for (int pass = 1; pass<=Pass.LAST_PASS; pass++) {
-      fileStatusMap.markFileUpToDate(document.get(), FileViewProviderUtil.getCodeInsightContext(psiFile.get()), pass, new DaemonProgressIndicator());
+      fileStatusMap.markFileUpToDate(document.get(), CodeInsightContextUtil.getCodeInsightContext(psiFile.get()), pass, new DaemonProgressIndicator());
     }
     for (int pass=1; pass<=Pass.LAST_PASS; pass++) {
-      fileStatusMap.assertFileStatusScopeIsNull(document.get(), FileViewProviderUtil.getCodeInsightContext(psiFile.get()), pass);
+      fileStatusMap.assertFileStatusScopeIsNull(document.get(), CodeInsightContextUtil.getCodeInsightContext(psiFile.get()), pass);
     }
     TextRange range = new TextRange(1, 2);
     AppExecutorUtil.getAppExecutorService().submit(() -> ReadAction.run(()->fileStatusMap.markScopeDirty(document.get(), range, getTestName(false)))).get();
