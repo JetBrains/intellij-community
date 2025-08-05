@@ -34,7 +34,6 @@ abstract class AbstractSurroundWithCompletionCommandProvider : CommandProvider {
       val surrounder = action.surrounder
       if (!isApplicable(context.offset, context.psiFile, context.editor, surrounder)) continue
       val elements = action.elements
-      if (elements.size == 1 && elements[0].textRange.endOffset != context.offset) continue
       commands.add(object : CompletionCommand() {
 
         override val synonyms: List<String>

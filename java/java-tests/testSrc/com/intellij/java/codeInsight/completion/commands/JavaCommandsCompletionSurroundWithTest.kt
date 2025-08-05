@@ -37,6 +37,27 @@ class JavaCommandsCompletionSurroundWithTest : LightFixtureCompletionTestCase() 
         }""".trimIndent())
   }
 
+  fun testSurroundWithIfExpression() {
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A { 
+          void a(){
+              int a = 1.<caret>;         
+          }
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("Surround with 'If'", ignoreCase = true) })
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    myFixture.checkResult("""
+        class A { 
+            void a(){
+                if () {
+                    int a = 1;
+                }
+            }
+        }""".trimIndent())
+  }
+
   fun testNoSurroundWithIf() {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A { 

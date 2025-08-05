@@ -10,6 +10,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.findTopmostParentInFile
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinStatementsSurrounderMarker
 import org.jetbrains.kotlin.psi.KtExpression
 
@@ -25,8 +26,12 @@ internal class KotlinSurroundWithCompletionCommandProvider : AbstractSurroundWit
             currentCommandContext = PsiTreeUtil.skipWhitespacesBackward(currentCommandContext) ?: return false
             currentOffset = currentCommandContext.endOffset
         }
-        return currentCommandContext.findTopmostParentInFile(withSelf = true) {
+        val expression = currentCommandContext.findTopmostParentInFile(withSelf = true) {
             it is KtExpression && it.textRange.endOffset == currentOffset
-        } != null
+        } ?: return false
+        val parentExpression = expression.parentOfType<KtExpression>() ?: return true
+        val fileDocument = psiFile.fileDocument
+        return fileDocument.getLineNumber(expression.textRange.endOffset) !=
+                fileDocument.getLineNumber(parentExpression.textRange.endOffset)
     }
 }

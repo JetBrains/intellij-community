@@ -6,9 +6,7 @@ import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.codeInsight.generation.surroundWith.JavaStatementsModCommandSurrounder
 import com.intellij.lang.surroundWith.Surrounder
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiStatement
-import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.parentOfType
@@ -26,6 +24,19 @@ internal class JavaSurroundWithCompletionCommandProvider : AbstractSurroundWithC
       currentOffset = currentCommandContext.endOffset
     }
     val statement = currentCommandContext.parentOfType<PsiStatement>(withSelf = true) ?: return false
-    return statement.textRange.endOffset == currentOffset
+    if (statement.textRange.endOffset == currentOffset) {
+      return true
+    }
+    var currentElement = psiFile.findElementAt(currentOffset) ?: return false
+    if (!PsiTreeUtil.isAncestor(statement, currentElement, true)) {
+      return false
+    }
+    if (currentElement is PsiWhiteSpace) {
+      currentElement = PsiTreeUtil.skipWhitespacesForward(currentElement) ?: return false
+    }
+    if (currentElement is PsiJavaToken && currentElement.tokenType == JavaTokenType.SEMICOLON) {
+      return true
+    }
+    return false
   }
 }
