@@ -44,10 +44,22 @@ internal class BackendTerminalHyperlinkHighlighter(
   private val hyperlinkId = AtomicLong()
   private val filterWrapper = CompositeFilterWrapper(project, coroutineScope)
 
-  // These two are only modified from the model coroutine,
-  // but can be read from other coroutines concurrently.
-  private val currentTaskRunner = MutableStateFlow<HighlightTaskRunner?>(null)
-  private val pendingTask = MutableStateFlow<HighlightTask?>(null)
+  // The state is only modified from the model coroutine but can be read concurrently.
+  private val currentTaskState = MutableStateFlow(TaskState(null, null))
+  
+  // Could've used update { ... } for flows, but let's use plain assignment to highlight that there are no concurrent updates.
+  
+  private var currentTaskRunner: HighlightTaskRunner?
+    get() = currentTaskState.value.currentTaskRunner
+    set(value) {
+      currentTaskState.value = currentTaskState.value.copy(currentTaskRunner = value)
+    }
+
+  private var pendingTask: HighlightTask?
+    get() = currentTaskState.value.pendingTask
+    set(value) {
+      currentTaskState.value = currentTaskState.value.copy(pendingTask = value)
+    }
 
   // Only ever accessed from the model coroutine.
   private var lastUsedFilter: CompositeFilter? = null
@@ -82,13 +94,13 @@ internal class BackendTerminalHyperlinkHighlighter(
   // If we have nothing to do, then both of these will be null.
   // If either is not null, it's possible that there will be no results,
   // but we may have to do some cleanup nevertheless or start a new task.
-  private fun mayHaveWorkToDo(): Boolean = currentTaskRunner.value != null || pendingTask.value != null
+  private fun mayHaveWorkToDo(): Boolean = currentTaskState.value.mayHaveWorkToDo()
 
   init {
     filterWrapper.getFilter() // kickstart computation
     outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
       override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int, isTypeAhead: Boolean) {
-        val existingPendingTask = pendingTask.value
+        val existingPendingTask = pendingTask
         val startLine = model.relativeLine(model.document.getLineNumber(startOffset))
         val dirtyRegionStart = if (existingPendingTask == null) {
           startLine
@@ -98,29 +110,29 @@ internal class BackendTerminalHyperlinkHighlighter(
         }
         val newPendingTask = newHighlightTask(model, dirtyRegionStart)
         LOG.debug { "The model updated from offset $startOffset (line $startLine), the new task is $newPendingTask" }
-        pendingTask.value = newPendingTask
+        pendingTask = newPendingTask
       }
     })
     coroutineScope.launch(CoroutineName("running filters")) {
       fakeMouseEventJob.await() // must complete before any attempt to show a context menu for a HyperlinkWithPopupMenuInfo
-      currentTaskRunner.collect { runner ->
-        runner?.run()
+      currentTaskState.mapNotNull { it.currentTaskRunner }.collect { runner ->
+        runner.run()
       }
     }
   }
 
   fun collectResultsAndMaybeStartNewTask(): TerminalHyperlinksChangedEvent? {
-    val result = currentTaskRunner.value?.getNextOutputEvent { isValid(it) }
+    val result = currentTaskRunner?.getNextOutputEvent { isValid(it) }
     maybeStartNewTask()
     return result
   }
 
   private fun isValid(taskResult: TaskResult): Boolean {
     val currentFilter = filterWrapper.getFilter()
-    val currentTaskRunner = checkNotNull(currentTaskRunner.value) { "The task runner must be present since we have results" }
+    val currentTaskRunner = checkNotNull(currentTaskRunner) { "The task runner must be present since we have results" }
     if (currentTaskRunner.filter !== currentFilter) return false
     if (taskResult.absoluteStartOffset < outputModel.relativeOffset(0).toAbsolute()) return false // trimmed
-    val pendingTask = pendingTask.value
+    val pendingTask = pendingTask
     return if (pendingTask == null) {
       true // No updates since the current task started, therefore, all results are valid
     }
@@ -130,8 +142,8 @@ internal class BackendTerminalHyperlinkHighlighter(
   }
 
   private fun maybeStartNewTask() {
-    val currentTaskRunner = currentTaskRunner.value
-    var pendingTask = pendingTask.value
+    val currentTaskRunner = currentTaskRunner
+    var pendingTask = pendingTask
     val currentFilter = filterWrapper.getFilter()
     if (currentTaskRunner?.isRunning() == true) {
       LOG.debug { "Can't start a new task because ${currentTaskRunner.task} is still running" }
@@ -148,7 +160,7 @@ internal class BackendTerminalHyperlinkHighlighter(
           "Finished ${currentTaskRunner.task}, " +
           "but can't start a new one because pendingTask = $pendingTask, currentFilter = $currentFilter"
         }
-        this.currentTaskRunner.value = null
+        this.currentTaskRunner = null
       }
       return
     }
@@ -156,7 +168,6 @@ internal class BackendTerminalHyperlinkHighlighter(
       LOG.debug { "The new task will process everything because of a filter change: $lastUsedFilter -> $currentFilter" }
       pendingTask = newHighlightTask(outputModel, outputModel.relativeLine(0))
     }
-    this.pendingTask.value = null
     val newTaskRunner = HighlightTaskRunner(
       hyperlinkId = hyperlinkId,
       isInAlternateBuffer = isInAlternateBuffer,
@@ -165,7 +176,7 @@ internal class BackendTerminalHyperlinkHighlighter(
       outputModel = outputModel.freeze(),
       continueCondition = { makesSenseToContinue(it) },
     )
-    this.currentTaskRunner.value = newTaskRunner
+    currentTaskState.value = TaskState(currentTaskRunner = newTaskRunner, pendingTask = null)
     lastUsedFilter = currentFilter
   }
 
@@ -176,7 +187,7 @@ internal class BackendTerminalHyperlinkHighlighter(
       LOG.debug { "Stopping the task because the filter has changed from $oldFilter to $newFilter" }
       return false
     }
-    val pendingTask = pendingTask.value
+    val pendingTask = pendingTask
     if (pendingTask == null) {
       return true
     }
@@ -196,10 +207,16 @@ internal class BackendTerminalHyperlinkHighlighter(
 
   @TestOnly
   internal suspend fun awaitTaskCompletion() {
-    merge(currentTaskRunner, pendingTask)
-      .first { !mayHaveWorkToDo() }
+    currentTaskState.first { !it.mayHaveWorkToDo() }
   }
 
+}
+
+private data class TaskState(
+  val currentTaskRunner: HighlightTaskRunner?,
+  val pendingTask: HighlightTask?,
+) {
+  fun mayHaveWorkToDo(): Boolean = currentTaskRunner != null || pendingTask != null
 }
 
 private fun newHighlightTask(
