@@ -15,6 +15,19 @@ import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 
 fun pyRequirement(
   name: String,
+  versionSpecs: List<PyRequirementVersionSpec>,
+  extras: List<String>,
+): PyRequirement {
+  val extrasString = extras.joinToString(prefix = "[", postfix = "]", separator = ",") { it }
+  return PyRequirementImpl(name,
+                           versionSpecs,
+                           listOf(name),
+                           extrasString)
+}
+
+
+fun pyRequirement(
+  name: String,
   versionSpec: PyRequirementVersionSpec? = null,
 ): PyRequirement = PyRequirementImpl(name,
                                      listOfNotNull(versionSpec),
