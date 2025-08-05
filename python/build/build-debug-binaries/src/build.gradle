@@ -1,7 +1,7 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-  id "com.jetbrains.python.envs" version "0.0.31"
+  id "com.jetbrains.python.envs" version "0.0.33"
 }
 
 ext {
@@ -12,31 +12,20 @@ boolean isWindows = Os.isFamily(Os.FAMILY_WINDOWS)
 boolean isMac = Os.isFamily(Os.FAMILY_MAC)
 
 envs {
-  String python27version = "2.7.18"
-  String python36version = (isWindows) ? "3.6.8" : "3.6.15" // 3.6.8 is broken on modern libc and clang, but latest version for Windows
-  String python37version = "3.7.9"
   String python38version = "3.8.10"
   String python39version = "3.9.13"
   String python310version = "3.10.8"
   String python311version = "3.11.6"
   String python312version = "3.12.0"
+  String python313version = "3.13.0"
 
   def customBuildDir = System.getenv().get("PYCHARM_BUILD_DIR")
   project.buildDir = customBuildDir? new File(customBuildDir): buildDir
   bootstrapDirectory = new File(buildDir, 'pythons')
   envsDirectory = new File(buildDir, 'envs')
 
-  zipRepository = new URL("https://repo.labs.intellij.net/pycharm/python-archives-windows/")
+  zipRepository = new URL("https://packages.jetbrains.team/files/p/py/python-archives-windows/")
   shouldUseZipsFromRepository = isWindows
-
-  python "python27_64", python27version, "64"
-  virtualenv "py27_64", "python27_64", ["cython"]
-
-  python "python36_64", python36version, "64"
-  virtualenv "py36_64", "python36_64", ["cython"]
-
-  python "python37_64", python37version, "64"
-  virtualenv "py37_64", "python37_64", ["cython"]
 
   python "python38_64", python38version, "64"
   virtualenv "py38_64", "python38_64", ["cython"]
@@ -53,16 +42,10 @@ envs {
   python "python312_64", python312version, "64"
   virtualenv "py312_64", "python312_64", ["cython", "setuptools"]
 
+  python "python313_64", python313version, "64"
+  virtualenv "py313_64", "python313_64", ["cython", "setuptools"]
+
   if (isWindows) {
-    python "python27_32", python27version, "32"
-    virtualenv "py27_32", "python27_32", ["cython"]
-
-    python "python36_32", python36version, "32"
-    virtualenv "py36_32", "python36_32", ["cython"]
-
-    python "python37_32", python37version, "32"
-    virtualenv "py37_32", "python37_32", ["cython"]
-
     python "python38_32", python38version, "32"
     virtualenv "py38_32", "python38_32", ["cython"]
 
@@ -77,6 +60,9 @@ envs {
 
     python "python312_32", python312version, "32"
     virtualenv "py312_32", "python312_32", ["cython", "setuptools"]
+
+    python "python313_32", python313version, "32"
+    virtualenv "py313_32", "python313_32", ["cython", "setuptools"]
   }
 }
 
