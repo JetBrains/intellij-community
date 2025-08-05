@@ -4,6 +4,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +30,9 @@ public abstract class CompilerProjectExtension {
    * @deprecated Consider using {@link CompilerProjectExtension#setCompilerOutputUrl(String)}
    */
   @Deprecated
+  @RequiresWriteLock
   public abstract void setCompilerOutputPointer(@Nullable VirtualFilePointer pointer);
 
+  @RequiresWriteLock
   public abstract void setCompilerOutputUrl(@Nullable String compilerOutputUrl);
 }

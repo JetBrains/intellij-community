@@ -2,6 +2,7 @@
 package com.intellij.ide.util.projectWizard;
 
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -159,6 +160,11 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
 
   @Override
   public @Nullable List<Module> commit(@NotNull Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
+    ApplicationManager.getApplication().runWriteAction(() -> setProjectLanguageLevel(project));
+    return super.commit(project, model, modulesProvider);
+  }
+
+  private static void setProjectLanguageLevel(@NotNull Project project) {
     LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject());
     Boolean aDefault = extension.getDefault();
     LOG.debug("commit: aDefault=" + aDefault);
@@ -179,7 +185,6 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
         }
       }
     }
-    return super.commit(project, model, modulesProvider);
   }
 
   private static String getUrlByPath(final String path) {

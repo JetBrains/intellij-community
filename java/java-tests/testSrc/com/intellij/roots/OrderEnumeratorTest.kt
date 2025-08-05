@@ -2,6 +2,7 @@
 package com.intellij.roots
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
@@ -277,7 +278,11 @@ class OrderEnumeratorTest {
   private fun addModuleRoots(addSources: Boolean, addTests: Boolean) {
     val contentRoot = projectModel.baseProjectDir.newVirtualDirectory("content")
     val outDir = projectModel.baseProjectDir.newVirtualDirectory("out")
-    CompilerProjectExtension.getInstance(projectModel.project)!!.compilerOutputUrl = outDir.url
+    CompilerProjectExtension.getInstance(projectModel.project)!!.apply {
+      runWriteActionAndWait {
+        compilerOutputUrl = outDir.url
+      }
+    }
     ModuleRootModificationUtil.updateModel(module) { model: ModifiableRootModel ->
       val content = model.addContentEntry(contentRoot)
       if (addSources) {

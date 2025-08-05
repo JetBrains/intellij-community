@@ -75,8 +75,12 @@ class JavaModuleExtensionsTest {
   fun `change module output`() {
     val module = projectModel.createModule("foo")
     val outputRoot = projectModel.baseProjectDir.rootPath.resolve("out")
-    CompilerProjectExtension.getInstance(projectModel.project)!!.compilerOutputUrl = VfsUtilCore.pathToUrl(
-      outputRoot.invariantSeparatorsPathString)
+    val outputRootUrl = VfsUtilCore.pathToUrl(outputRoot.invariantSeparatorsPathString)
+    CompilerProjectExtension.getInstance(projectModel.project)!!.apply {
+      runWriteActionAndWait {
+        compilerOutputUrl = outputRootUrl
+      }
+    }
     assertThat(CompilerModuleExtension.getInstance(module)!!.compilerOutputUrl).isEqualTo(VfsUtilCore.pathToUrl(
       outputRoot.resolve("production/foo").invariantSeparatorsPathString))
     assertThat(CompilerModuleExtension.getInstance(module)!!.compilerOutputUrlForTests).isEqualTo(VfsUtilCore.pathToUrl(
@@ -99,14 +103,19 @@ class JavaModuleExtensionsTest {
   fun `change project output`() {
     val module = projectModel.createModule("foo")
     val outputRoot = projectModel.baseProjectDir.rootPath.resolve("out")
-    CompilerProjectExtension.getInstance(projectModel.project)!!.compilerOutputUrl = VfsUtilCore.pathToUrl(
-      outputRoot.invariantSeparatorsPathString)
+    val compilerProjectExtension = CompilerProjectExtension.getInstance(projectModel.project)!!
+    val outputRootUrl = VfsUtilCore.pathToUrl(outputRoot.invariantSeparatorsPathString)
+    runWriteActionAndWait {
+      compilerProjectExtension.compilerOutputUrl = outputRootUrl
+    }
     assertThat(CompilerModuleExtension.getInstance(module)!!.compilerOutputUrl).isEqualTo(VfsUtilCore.pathToUrl(
       outputRoot.resolve("production/foo").invariantSeparatorsPathString))
 
     val newOutputRoot = projectModel.baseProjectDir.rootPath.resolve("out")
     val newOutputUrl = VfsUtilCore.pathToUrl(newOutputRoot.invariantSeparatorsPathString)
-    CompilerProjectExtension.getInstance(projectModel.project)!!.compilerOutputUrl = newOutputUrl
+    runWriteActionAndWait {
+      compilerProjectExtension.compilerOutputUrl = newOutputUrl
+    }
     assertThat(CompilerModuleExtension.getInstance(module)!!.compilerOutputUrl).isEqualTo(VfsUtilCore.pathToUrl(
       newOutputRoot.resolve("production/foo").invariantSeparatorsPathString))
   }

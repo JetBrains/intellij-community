@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.build
 import com.intellij.compiler.server.impl.BuildProcessCustomPluginsConfiguration
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RawDescriptorListBuilder
 import com.intellij.devkit.runtimeModuleRepository.jps.build.checkRuntimeModuleRepository
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.CompilerProjectExtension
@@ -42,7 +43,11 @@ class RuntimeModuleRepositoryCompilationTest {
     }
     
     outputUrl = "${projectModel.baseProjectDir.virtualFileRoot.url}/out"
-    CompilerProjectExtension.getInstance(projectModel.project)!!.compilerOutputUrl = outputUrl
+    CompilerProjectExtension.getInstance(projectModel.project)!!.apply {
+      runWriteActionAndWait {
+        compilerOutputUrl = outputUrl
+      }
+    }
     BuildProcessCustomPluginsConfiguration.getInstance(projectModel.project).addProjectLibrary(libraryName)
   }
 

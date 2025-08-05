@@ -3,6 +3,7 @@ package git4idea.ignore
 
 import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.roots.CompilerProjectExtension
@@ -15,6 +16,7 @@ import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -78,10 +80,14 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     assertTrue(changeListManager.isIgnoredFile(output))
   }
 
-  fun testProjectOutput() {
+  fun testProjectOutput() = runBlocking {
     val output = createChildDirectory(projectRoot, "projectOutput")
     createChildData(output, "out.class")
-    CompilerProjectExtension.getInstance(project)!!.compilerOutputUrl = output.url
+    CompilerProjectExtension.getInstance(project)!!.apply {
+      writeAction {
+        compilerOutputUrl = output.url
+      }
+    }
 
     generateIgnoreFileAndWaitHoldersUpdate()
     assertGitignoreValid(gitIgnore, """
@@ -92,10 +98,14 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     assertTrue(changeListManager.isIgnoredFile(output))
   }
 
-  fun testModuleOutputUnderProjectOutput() {
+  fun testModuleOutputUnderProjectOutput() = runBlocking {
     val output = createChildDirectory(projectRoot, "projectOutput")
     createChildData(output, "out.class")
-    CompilerProjectExtension.getInstance(project)!!.compilerOutputUrl = output.url
+    CompilerProjectExtension.getInstance(project)!!.apply {
+      writeAction {
+        compilerOutputUrl = output.url
+      }
+    }
     val moduleOutput = createChildDirectory(output, "module")
     PsiTestUtil.setCompilerOutputPath(myModule, moduleOutput.url, false)
 

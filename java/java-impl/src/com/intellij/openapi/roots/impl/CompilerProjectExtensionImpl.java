@@ -2,6 +2,8 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -15,6 +17,8 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +30,7 @@ import java.util.Set;
 final class CompilerProjectExtensionImpl extends CompilerProjectExtension implements Disposable {
   private static final String OUTPUT_TAG = "output";
   private static final String URL = "url";
+  private static final Logger LOG = Logger.getInstance(CompilerProjectExtensionImpl.class);
 
   private VirtualFilePointer myCompilerOutput;
   private LocalFileSystem.WatchRequest myCompilerOutputWatchRequest;
@@ -77,12 +82,23 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
   }
 
   @Override
+  @RequiresWriteLock(generateAssertion = false)
   public void setCompilerOutputPointer(@Nullable VirtualFilePointer pointer) {
+    LOG.assertTrue(ApplicationManager.getApplication().isWriteAccessAllowed(),
+                   "Compiler outputs may only be updated under write action. " +
+                   "This method is deprecated. Please consider using `setCompilerOutputUrl` instead.");
+
+    ThreadingAssertions.assertWriteAccess(); // TODO: check usages
     myCompilerOutput = pointer;
   }
 
   @Override
+  @RequiresWriteLock(generateAssertion = false)
   public void setCompilerOutputUrl(@Nullable String compilerOutputUrl) {
+    LOG.assertTrue(ApplicationManager.getApplication().isWriteAccessAllowed(),
+                   "Compiler outputs may only be updated under write action. " +
+                   "Please acquire write action before invoking setCompilerOutputUrl.");
+
     if (compilerOutputUrl == null) {
       setCompilerOutputPointer(null);
     }

@@ -315,7 +315,10 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
   protected void setUpProject() throws Exception {
     super.setUpProject();
 
-    CompilerProjectExtension.getInstance(myProject).setCompilerOutputUrl("file://" + myProject.getBasePath() + "/out");
+    var compilerProjectExtension = CompilerProjectExtension.getInstance(myProject);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      compilerProjectExtension.setCompilerOutputUrl("file://" + myProject.getBasePath() + "/out");
+    });
   }
 
   @NotNull
