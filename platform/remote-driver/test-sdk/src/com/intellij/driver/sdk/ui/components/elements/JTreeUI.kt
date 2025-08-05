@@ -188,7 +188,12 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   fun pathExists(vararg path: String): Boolean {
-    expandPath(*path, fullMatch = false)
+    try {
+      expandPath(*path, fullMatch = false)
+    }
+    catch (e: PathNotFoundException) {
+      return false
+    }
     return findExpandedPath(*path, fullMatch = false) != null
   }
 
