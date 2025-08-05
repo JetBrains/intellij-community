@@ -24,9 +24,9 @@ import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 
-/** @obsolete Only used to keep compatibility. **DON'T USE IT.** */
+@Deprecated("Please use the MarkdownStyling without a themeName")
 @ExperimentalJewelApi
-@ApiStatus.Obsolete
+@ApiStatus.Experimental
 @Composable
 public fun ProvideMarkdownStyling(
     themeName: String = JewelTheme.name,
