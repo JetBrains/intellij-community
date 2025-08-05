@@ -121,6 +121,11 @@ internal abstract class K2CompletionContributor<P : KotlinRawPositionContext>(
 ) {
     abstract fun K2CompletionSetupScope<P>.registerCompletions()
 
+    /**
+     * Can be changed to not run in certain specific positions that are of type [P] but should still not execute.
+     */
+    open fun K2CompletionSetupScope<P>.shouldExecute(): Boolean = true
+
     protected fun K2CompletionSectionContext<P>.addElement(element: LookupElement) {
         sink.addElement(decorateLookupElement(element))
     }

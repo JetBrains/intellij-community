@@ -62,7 +62,9 @@ internal object Completions {
 
             val setupScope = K2CompletionSetupScope(completionContext, castContributor, sections)
             with(castContributor) {
-                setupScope.registerCompletions()
+                if (setupScope.shouldExecute()) {
+                    setupScope.registerCompletions()
+                }
             }
         }
 
