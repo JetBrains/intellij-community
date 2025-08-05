@@ -7,10 +7,9 @@ import com.intellij.ui.content.Content
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 
 internal class XCombinedDebugTabLayouter(
-  val tabLayouters: MutableList<XDebugTabLayouter>,
+  val tabLayouters: List<XDebugTabLayouter>,
   val consoleLayouter: XDebugTabLayouter
 ) : XDebugTabLayouter() {
-
   override fun registerConsoleContent(ui: RunnerLayoutUi, console: ExecutionConsole): Content {
     return consoleLayouter.registerConsoleContent(ui, console)
   }

@@ -58,7 +58,7 @@ class XMixedModeCombinedDebugProcess(
   val session: XDebugSessionImpl,
   val config: XMixedModeProcessesConfiguration,
 ) : XDebugProcess(session), XDebugSessionTabCustomizer {
-  private val processes get() = listOf(low, high)
+  private val processes = listOf(low, high)
   private var myProcessHandler: XMixedModeProcessHandler? = null
   private var editorsProvider: XMixedModeDebuggersEditorProvider? = null
   private val coroutineScope get() = session.coroutineScope
@@ -217,13 +217,10 @@ class XMixedModeCombinedDebugProcess(
 
   override fun getCurrentStateHyperlinkListener(): HyperlinkListener? = getIfOnlyOneExists { it.currentStateHyperlinkListener }
 
-  private var layouter: XCombinedDebugTabLayouter? = null
-
   override fun createTabLayouter(): XDebugTabLayouter {
-    layouter =  XCombinedDebugTabLayouter(
-      mutableListOf(low.createTabLayouter(), high.createTabLayouter()),
+    return XCombinedDebugTabLayouter(
+      listOf(low.createTabLayouter(), high.createTabLayouter()),
       (if (config.useLowDebugProcessConsole) low else high).createTabLayouter())
-    return layouter!!
   }
 
 

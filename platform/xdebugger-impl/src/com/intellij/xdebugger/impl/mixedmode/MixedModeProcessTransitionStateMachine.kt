@@ -23,10 +23,9 @@ private val logger = logger<MixedModeProcessTransitionStateMachine>()
  * Start state is OnlyLowStarted, finish state is Exited
  */
 internal class MixedModeProcessTransitionStateMachine(
-  var low: XDebugProcess,
+  val low: XDebugProcess,
   private val high: XDebugProcess,
   private val coroutineScope: CoroutineScope,
-  private val highLevelDebuggerManagesStopEvents : Boolean = true
 ) {
   interface State
   open class WithHighLevelDebugSuspendContextState(val high: XSuspendContext) : State
@@ -127,10 +126,10 @@ internal class MixedModeProcessTransitionStateMachine(
           is WaitingForHighProcessPositionReached, is BothRunning -> {
             val stopThreadId = (currentState as? WaitingForHighProcessPositionReached)?.threadInitiatedStopId
                                ?: highExtension.getStoppedThreadId(event.suspendContext)
-            //lowExtension.pauseMixedModeSession(stopThreadId)
+            lowExtension.pauseMixedModeSession(stopThreadId)
 
-            //logger.info("Low level process has been stopped")
-            //changeState(HighStoppedWaitingForLowProcessToStop(event.suspendContext))
+            logger.info("Low level process has been stopped")
+            changeState(HighStoppedWaitingForLowProcessToStop(event.suspendContext))
             changeState(BothStopped(event.suspendContext, event.suspendContext))
           }
           is HighLevelSetStatementHighRunning -> {
