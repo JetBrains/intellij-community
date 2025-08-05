@@ -16,13 +16,17 @@ import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.util.*
+import javax.net.ssl.TrustManagerFactory
+import javax.net.ssl.X509TrustManager
+
 
 class MavenCertificateFixture() : IdeaTestFixture {
   private val rootCaKeyPair: KeyPair = generateKeyPair()
-  private val rootCaCert: X509Certificate = generateRootCaCertificate()
+  val rootCaCert: X509Certificate = generateRootCaCertificate()
 
   override fun setUp() {
   }
+
 
   private fun generateKeyPair(): KeyPair {
     val keyGen = KeyPairGenerator.getInstance("RSA")
@@ -91,17 +95,51 @@ class MavenCertificateFixture() : IdeaTestFixture {
     }
   }
 
-  fun saveCertificates(cert: X509Certificate, store: Path, password: String, type: String = "pkcs12") {
+  fun saveCertificate(
+    cert: X509Certificate, store: Path,
+    password: String,
+    alias: String,
+    type: String = "pkcs12",
+    copyDefault: Boolean,
+  ) {
     val keyStore = KeyStore.getInstance(type)
     keyStore.load(null, null)
-    keyStore.setCertificateEntry("cert-${UUID.randomUUID()}", cert)
+    if (copyDefault) {
+      addDefaultCertificates(keyStore)
+    }
+    keyStore.setCertificateEntry(alias, cert)
     saveKeyStore(keyStore, store, password)
+  }
+
+  private fun addDefaultCertificates(trustStore: KeyStore) {
+    val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+    trustManagerFactory.init(null as KeyStore?)
+    for (trustManager in trustManagerFactory.getTrustManagers()) {
+      if (trustManager is X509TrustManager) {
+        for (acceptedIssuer in trustManager.getAcceptedIssuers()) {
+          trustStore.setCertificateEntry(acceptedIssuer.subjectX500Principal.name, acceptedIssuer)
+        }
+      }
+    }
   }
 
   private fun saveKeyStore(keyStore: KeyStore, storePath: Path, password: String) {
     storePath.toFile().outputStream().use { os ->
       keyStore.store(os, password.toCharArray())
     }
+  }
+
+  fun savePrivateKey(
+    cert: X509Certificate, privateKey: PrivateKey, store: Path,
+    password: String,
+    type: String = "pkcs12",
+  ): Path {
+    val keyStore = KeyStore.getInstance(type)
+    keyStore.load(null, null)
+    keyStore.setCertificateEntry("cert", cert)
+    keyStore.setKeyEntry("key", privateKey, password.toCharArray(), arrayOf(cert, rootCaCert))
+    saveKeyStore(keyStore, store, password)
+    return store
   }
 
   override fun tearDown() {

@@ -116,6 +116,8 @@
                     serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManagerEx"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.MavenProjectsNavigator"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenShortcutsManager"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.server.ssl.IdeCertificateManagerMavenTLSCertificateChecker"
+                    serviceInterface="org.jetbrains.idea.maven.server.ssl.MavenTLSCertificateChecker"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider"
                         serviceImplementation="org.jetbrains.idea.maven.project.actions.MavenModuleDeleteProvider" overrides="true"/>

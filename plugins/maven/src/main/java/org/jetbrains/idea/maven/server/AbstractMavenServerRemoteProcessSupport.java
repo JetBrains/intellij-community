@@ -49,7 +49,7 @@ public abstract class AbstractMavenServerRemoteProcessSupport extends MavenRemot
 
     myImportEventProcessor = new MavenImportEventProcessor(project);
     AnsiEscapeDecoder myDecoder = new AnsiEscapeDecoder();
-    mySslDelegateHandlerStateMachine = new SslDelegateHandlerConfirmingTrustManager();
+    mySslDelegateHandlerStateMachine = new SslDelegateHandlerConfirmingTrustManager(project);
 
     myMavenSpyEventsBuffer = new MavenSpyEventsBuffer((l, k) -> {
       mySslDelegateHandlerStateMachine.addLine(l);

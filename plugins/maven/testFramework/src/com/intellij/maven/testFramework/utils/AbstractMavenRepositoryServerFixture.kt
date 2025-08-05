@@ -6,6 +6,7 @@ import com.intellij.testFramework.fixtures.IdeaTestFixture
 import com.sun.net.httpserver.Authenticator
 import com.sun.net.httpserver.BasicAuthenticator
 import com.sun.net.httpserver.HttpServer
+import org.jetbrains.idea.maven.utils.MavenLog
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -21,6 +22,7 @@ abstract class AbstractMavenRepositoryServerFixture : IdeaTestFixture {
 
   override fun setUp() {
     myServer = startServer()
+    MavenLog.LOG.debug("Starting Maven repository server for tests on ${url()}")
   }
 
   override fun tearDown() {

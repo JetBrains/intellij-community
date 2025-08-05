@@ -144,7 +144,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
     val remoteRepoPath = helper.getTestData("remote")
     val localRepoPath = helper.getTestData("local1")
-    httpServerFixture.startRepositoryFor(remoteRepoPath.toFile(), USERNAME, PASSWORD)
+    httpServerFixture.startRepositoryFor(remoteRepoPath, USERNAME, PASSWORD)
     repositoryPath = localRepoPath
     val settingsXml = createProjectSubFile(
       "settings.xml",
@@ -174,7 +174,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
     val remoteRepoPath = helper.getTestData("remote")
     val localRepoPath = helper.getTestData("local1")
-    httpServerFixture.startRepositoryFor(remoteRepoPath.toFile(), USERNAME, PASSWORD)
+    httpServerFixture.startRepositoryFor(remoteRepoPath, USERNAME, PASSWORD)
     repositoryPath = localRepoPath
     val settingsXml = createProjectSubFile(
       "settings.xml",
@@ -213,7 +213,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
     val remoteRepoPath = helper.getTestData("remote")
     val localRepoPath = helper.getTestData("local1")
-    httpServerFixture.startRepositoryFor(remoteRepoPath.toFile(), USERNAME, PASSWORD)
+    httpServerFixture.startRepositoryFor(remoteRepoPath, USERNAME, PASSWORD)
     repositoryPath = localRepoPath
     @Language(value = "XML") val settingsXmlText = """
        <settings>
