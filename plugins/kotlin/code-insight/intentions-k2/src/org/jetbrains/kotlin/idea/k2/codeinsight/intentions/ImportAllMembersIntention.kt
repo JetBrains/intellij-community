@@ -9,6 +9,9 @@ import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -147,7 +150,7 @@ private val KtExpression.actualReference: KtReference?
         else -> mainReference
     }
 
-context(KaSession)
+context(_: KaSession)
 private fun isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression): Boolean {
     val selectorExpression: KtExpression? = qualifiedAccess.getQualifiedExpressionForReceiver()?.selectorExpression
     val referencedSymbol = when (selectorExpression) {
@@ -167,7 +170,7 @@ private fun KaCallableSymbol.isEnumSyntheticMethodCall(target: KaNamedClassSymbo
 private fun KtQualifiedExpression.isEnumSyntheticMethodCall(target: KaNamedClassSymbol): Boolean =
     target.isEnum() && canBeReferenceToBuiltInEnumFunction()
 
-context(KaSession)
+context(_: KaSession)
 private fun KtFile.hasImportedEnumSyntheticMethodCall(): Boolean = importDirectives.any { importDirective ->
     if (importDirective.importPath?.isAllUnder != true) return false
     val importedEnumFqName = importDirective.importedFqName ?: return false

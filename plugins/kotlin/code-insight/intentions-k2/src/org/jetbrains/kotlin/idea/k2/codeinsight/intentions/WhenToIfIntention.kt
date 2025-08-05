@@ -6,6 +6,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.isUsedAsExpression
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -41,7 +42,7 @@ internal class WhenToIfIntention :
         val nameCandidatesForWhenSubject: List<String> = emptyList(),
     )
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtWhenExpression.hasNoElseButUsedAsExpression(): Boolean {
         val lastEntry = entries.last()
         return !lastEntry.isElse && isUsedAsExpression
@@ -171,7 +172,7 @@ internal class WhenToIfIntention :
     /**
      * Note that [KotlinNameSuggester.suggestExpressionNames] has [KaSession] as a receiver.
      */
-    context(KaSession)
+    context(_: KaSession)
     private fun getNewNameForExpression(expression: KtExpression): List<String> {
         return with(KotlinNameSuggester()) {
             suggestExpressionNames(expression).toList()

@@ -9,6 +9,9 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -101,14 +104,14 @@ class CollectionConcatenationToBuildCollectionIntention :
         return Context(collectionType, operations, rebinderContext)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createInitialOperation(element: KtBinaryExpression): Context.Operation? {
         val expression = nestedBinaryExpressionSequence(element).lastOrNull()?.left ?: return null
         val type = expression.expressionType ?: return null
         return expression.toOperationForPlus(isIterableOrSequence(type))
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtBinaryExpression.toOperation(): Context.Operation? {
         if (!operationReference.isDefaultStdlibCollectionOperation()) return null
         val rhs = right ?: return null
@@ -134,12 +137,12 @@ class CollectionConcatenationToBuildCollectionIntention :
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun isIterableOrSequence(rhsType: KaType): Boolean {
         return rhsType.isSubtypeOf(StandardClassIds.Iterable) || rhsType.isSubtypeOf(sequenceClassId)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtExpression.toOperationForPlus(isCollectionOrSequence: Boolean): Context.Operation {
         toTransformingOperation()?.let { return it }
         return when {
@@ -151,7 +154,7 @@ class CollectionConcatenationToBuildCollectionIntention :
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtExpression.toTransformingOperation(): Context.Operation.TransformingOperation? {
         if (this !is KtDotQualifiedExpression) return null
         val callExpression = selectorExpression as? KtCallExpression ?: return null
@@ -165,7 +168,7 @@ class CollectionConcatenationToBuildCollectionIntention :
     /**
      * The `+`/`-` operators may be overridden by the user, so we ensure that these operations are from the standard library.
      */
-    context(KaSession)
+    context(_: KaSession)
     private fun KtOperationReferenceExpression.isDefaultStdlibCollectionOperation(): Boolean {
         val resolvedTo = mainReference.resolveToSymbol() as? KaCallableSymbol ?: return false
         return resolvedTo.callableId?.packageName == StandardNames.COLLECTIONS_PACKAGE_FQ_NAME

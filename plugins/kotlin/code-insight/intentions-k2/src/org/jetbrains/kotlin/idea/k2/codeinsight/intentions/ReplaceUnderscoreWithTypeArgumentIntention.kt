@@ -8,6 +8,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -47,7 +48,7 @@ internal class ReplaceUnderscoreWithTypeArgumentIntention :
     override fun isApplicableByPsi(element: KtTypeProjection): Boolean =
         isUnderscoreTypeArgument(element)
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtTypeProjection.resolveType(): KaType? {
         val typeArgumentList = parent as KtTypeArgumentList
         val call = (typeArgumentList.parent as? KtCallExpression)?.resolveToCall()?.singleFunctionCallOrNull() ?: return null

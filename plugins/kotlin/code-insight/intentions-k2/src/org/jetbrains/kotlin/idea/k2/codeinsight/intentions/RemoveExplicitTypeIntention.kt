@@ -6,7 +6,16 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.components.evaluate
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isPublicApi
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.components.type
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.config.AnalysisFlags
@@ -52,7 +61,7 @@ internal class RemoveExplicitTypeIntention :
         else -> !element.isExplicitTypeReferenceNeededForTypeInferenceByAnalyze()
     }.asUnit
 
-    context(KaSession)
+    context(_: KaSession)
     private fun publicReturnTypeShouldBePresentInApiMode(declaration: KtCallableDeclaration): Boolean {
         if (declaration.languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode) == ExplicitApiMode.DISABLED) return false
 
@@ -63,7 +72,7 @@ internal class RemoveExplicitTypeIntention :
         return isPublicApi(declaration.symbol)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtDeclaration.isExplicitTypeReferenceNeededForTypeInferenceByAnalyze(): Boolean {
         val typeReference = typeReference ?: return false
         val initializer = getInitializerOrGetterInitializer() ?: return true
@@ -92,7 +101,7 @@ internal class RemoveExplicitTypeIntention :
      * Currently we don't use on-air resolve in the implementation, therefore the function might return false negative results
      * for expressions that are not covered.
      */
-    context(KaSession)
+    context(_: KaSession)
     private fun isInitializerTypeContextIndependent(
         initializer: KtExpression,
         typeReference: KtTypeReference,
@@ -132,7 +141,7 @@ internal class RemoveExplicitTypeIntention :
         else -> initializer.evaluate() != null
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun isLambdaExpressionTypeContextIndependent(lambdaExpression: KtLambdaExpression, typeReference: KtTypeReference): Boolean {
         val lastStatement = lambdaExpression.bodyExpression?.statements?.lastOrNull() ?: return false
 
@@ -140,7 +149,7 @@ internal class RemoveExplicitTypeIntention :
         return isInitializerTypeContextIndependent(lastStatement, returnTypeReference)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun isAnonymousFunctionTypeContextIndependent(anonymousFunction: KtNamedFunction, typeReference: KtTypeReference): Boolean {
         if (anonymousFunction.hasDeclaredReturnType() || anonymousFunction.hasBlockBody()) return true
 
@@ -148,7 +157,7 @@ internal class RemoveExplicitTypeIntention :
         return anonymousFunction.initializer?.let { isInitializerTypeContextIndependent(it, returnTypeReference) } == true
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun isCallableReferenceExpressionTypeContextIndependent(callableReferenceExpression: KtCallableReferenceExpression): Boolean {
         val resolved = callableReferenceExpression.callableReference.references.firstNotNullOfOrNull { it.resolve() } ?: return false
         if (resolved !is KtNamedFunction) return true

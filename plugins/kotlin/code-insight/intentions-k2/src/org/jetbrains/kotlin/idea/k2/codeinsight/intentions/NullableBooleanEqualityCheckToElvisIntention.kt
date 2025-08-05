@@ -7,7 +7,10 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.enhancedTypeOrSelf
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isBooleanType
+import org.jetbrains.kotlin.analysis.api.components.isNullable
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -45,15 +48,13 @@ class NullableBooleanEqualityCheckToElvisIntention : KotlinApplicableModCommandA
         return if (isApplicable(lhs, rhs) || isApplicable(rhs, lhs)) Unit else null
     }
 
-    context(KaSession@KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun isApplicable(lhs: KtExpression, rhs: KtExpression): Boolean {
         if (!KtPsiUtil.isBooleanConstant(rhs)) return false
 
-        analyze(lhs) {
-            val expressionType = lhs.expressionType ?: return false
+        val expressionType = lhs.expressionType ?: return false
 
-            return expressionType.canBeNull && (expressionType.enhancedTypeOrSelf?.isBooleanType == true)
-        }
+        return expressionType.isNullable && (expressionType.enhancedTypeOrSelf?.isBooleanType == true)
     }
 }
