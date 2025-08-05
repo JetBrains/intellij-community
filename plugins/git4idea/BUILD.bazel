@@ -79,6 +79,7 @@ jvm_library(
     "//platform/external-process-auth-helper",
     "//platform/external-process-auth-helper/rt",
     "//platform/util/progress",
+    "//platform/util/jdom",
     "//platform/diagnostic/telemetry",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
