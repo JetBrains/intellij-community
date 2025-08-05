@@ -24,6 +24,7 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.uast.UastVisitorAdapter
+import com.intellij.util.asSafely
 import com.siyeh.ig.callMatcher.CallMatcher
 import org.jdom.Element
 import org.jetbrains.uast.*
@@ -149,6 +150,21 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
 
     private inline val ignored6ClassesApi get() = setOf("java.awt.geom.GeneralPath")
     private inline val generifiedClasses get() = setOf("javax.swing.JComboBox", "javax.swing.ListModel", "javax.swing.JList")
+
+    override fun processImportReference(sourceNode: UElement, target: PsiModifierListOwner) {
+      if (target !is PsiClass) return
+      var parent = sourceNode.uastParent ?: return
+      while (parent is UReferenceExpression) {
+        val uastParent = parent.uastParent
+        if (uastParent is UImportStatement || uastParent !is UReferenceExpression) break
+        parent = uastParent
+      }
+      if (sourceNode.uastParent == parent) return
+      val expression = parent.asSafely<UReferenceExpression>() ?: return
+      val psiMember = expression.resolve().asSafely<PsiMember>() ?: return
+      if (!psiMember.hasModifierProperty(PsiModifier.STATIC)) return
+      processReference(sourceNode, target, null)
+    }
 
     override fun processConstructorInvocation(
       sourceNode: UElement, instantiatedClass: PsiClass, constructor: PsiMethod?, subclassDeclaration: UClass?,

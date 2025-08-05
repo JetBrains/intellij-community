@@ -287,4 +287,26 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
       }
     """.trimIndent())
   }
+
+  fun `test import for static methods`() {
+    myFixture.addClass("""
+      package java.lang;
+      public class IO {
+        public static void println() {}
+      }
+    """.trimIndent())
+    myFixture.setLanguageLevel(LanguageLevel.JDK_1_8)
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import static java.lang.<error descr="Usage of API documented as @since 25+">IO</error>.println;
+
+      class SimpleClass {
+          public static void main(String[] args) {
+          }
+          void foo() {
+              String s = "";
+              println();
+          }
+      }
+    """.trimIndent())
+  }
 }
