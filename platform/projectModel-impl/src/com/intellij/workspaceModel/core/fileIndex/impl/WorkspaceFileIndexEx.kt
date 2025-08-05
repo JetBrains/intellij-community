@@ -179,9 +179,8 @@ sealed interface WorkspaceFileInternalInfo {
 
   /**
    * Returns file sets stored in this instance which satisfies the given [condition]
-   * todo IJPL-339 mark experimental
    */
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   fun findFileSets(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): List<WorkspaceFileSetWithCustomData<*>>
   
   abstract override fun toString(): String

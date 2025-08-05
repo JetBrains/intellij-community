@@ -33,6 +33,9 @@ Fa:com.intellij.openapi.module.ModuleManager
 - a:inferProjectTypes(com.intellij.openapi.project.Project):java.util.Collection
 Fa:com.intellij.openapi.projectRoots.ProjectJdkTable
 - *s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.projectRoots.ProjectJdkTable
+*:com.intellij.openapi.projectRoots.SdkContext
+- com.intellij.codeInsight.multiverse.CodeInsightContext
+- a:getSdk():com.intellij.openapi.projectRoots.Sdk
 *:com.intellij.openapi.roots.AdditionalLibraryRootsListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - s:fireAdditionalLibraryChanged(com.intellij.openapi.project.Project,java.lang.String,java.util.Collection,java.util.Collection,java.lang.String):V
@@ -42,14 +45,24 @@ Fa:com.intellij.openapi.projectRoots.ProjectJdkTable
 - a:getExternalSource(com.intellij.openapi.module.Module):com.intellij.openapi.roots.ProjectModelExternalSource
 - s:getInstance():com.intellij.openapi.roots.ExternalProjectSystemRegistry
 - a:getSourceById(java.lang.String):com.intellij.openapi.roots.ProjectModelExternalSource
+com.intellij.openapi.roots.OrderRootsEnumerator
+- *a:getRootEntries():java.util.Collection
 com.intellij.openapi.roots.ProjectFileIndex
 - com.intellij.openapi.roots.FileIndex
 - *a:findContainingLibraries(com.intellij.openapi.vfs.VirtualFile):java.util.Collection
+- *a:getModulesForFile(com.intellij.openapi.vfs.VirtualFile,Z):java.util.Set
 *:com.intellij.openapi.roots.ProjectModelElement
 - *a:getExternalSource():com.intellij.openapi.roots.ProjectModelExternalSource
 *:com.intellij.openapi.roots.ProjectModelExternalSource
 - a:getDisplayName():java.lang.String
 - a:getId():java.lang.String
+*f:com.intellij.openapi.roots.RootEntry
+- java.lang.Record
+- <init>(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.roots.OrderEntry):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- orderEntry():com.intellij.openapi.roots.OrderEntry
+- root():com.intellij.openapi.vfs.VirtualFile
 *:com.intellij.openapi.roots.impl.FilePropertyPusher
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:acceptsDirectory(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
@@ -63,3 +76,6 @@ com.intellij.openapi.roots.ProjectFileIndex
 - initExtra(com.intellij.openapi.project.Project):V
 - a:persistAttribute(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.Object):V
 - a:pushDirectoriesOnly():Z
+*:com.intellij.openapi.roots.libraries.LibraryContext
+- com.intellij.codeInsight.multiverse.CodeInsightContext
+- a:getLibrary():com.intellij.openapi.roots.libraries.Library

@@ -79,18 +79,34 @@ a:com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 - <init>():V
 - getLanguage():com.intellij.lang.Language
 - getReferences():com.intellij.psi.PsiReference[]
+a:com.intellij.psi.impl.PsiDocumentManagerBase
+- com.intellij.psi.PsiDocumentManager
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.editor.event.DocumentListener
+- *:getPsiFile(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
 com.intellij.psi.impl.PsiFileEx
 - com.intellij.psi.PsiFile
 - *s:isBatchReferenceProcessingEnabled(com.intellij.psi.PsiFile):Z
 *:com.intellij.psi.impl.PsiFileEx$BatchReferenceProcessingSuppressor
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:isSuppressed(com.intellij.psi.PsiFile):Z
+f:com.intellij.psi.impl.PsiManagerImpl
+- com.intellij.psi.impl.PsiManagerEx
+- com.intellij.openapi.Disposable
+- *:findFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
 f:com.intellij.psi.impl.PsiModificationTrackerImpl
 - com.intellij.psi.impl.PsiTreeChangePreprocessor
 - com.intellij.psi.util.PsiModificationTracker
 - *:incLanguageModificationCount(com.intellij.lang.Language):V
 f:com.intellij.psi.impl.file.PsiFileImplUtil
 - *s:setNonPhysicalFileDeleteHandler(com.intellij.psi.PsiFile,java.util.function.Consumer):V
+com.intellij.psi.impl.file.impl.FileManager
+- *a:createFileViewProvider(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext,Z):com.intellij.psi.FileViewProvider
+- *a:findCachedViewProvider(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.FileViewProvider
+- *a:findCachedViewProviders(com.intellij.openapi.vfs.VirtualFile):java.util.List
+- *a:findFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
+- *a:findViewProvider(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.FileViewProvider
+- *a:getCachedPsiFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
 a:com.intellij.psi.impl.source.PsiFileImpl
 - com.intellij.psi.impl.ElementBase
 - com.intellij.openapi.ui.Queryable

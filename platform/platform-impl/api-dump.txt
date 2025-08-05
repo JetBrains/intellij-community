@@ -572,6 +572,7 @@ com.intellij.openapi.editor.impl.HighlighterListener
 - a:highlighterChanged(I,I):V
 com.intellij.openapi.editor.impl.TextDrawingCallback
 - a:drawChars(java.awt.Graphics,C[],I,I,I,I,java.awt.Color,com.intellij.openapi.editor.impl.FontInfo):V
+f:com.intellij.openapi.editor.impl.multiverse.CodeInsightContextPresentationKt
 com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager$VisibleAreaWidthProvider
 - a:getVisibleAreaWidth():I
 com.intellij.openapi.editor.markup.LineMarkerRendererEx

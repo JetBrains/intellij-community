@@ -163,7 +163,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     myContext = context;
   }
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   protected @NotNull CodeInsightContext getContext() {
     if (myContext == null) {
       // todo IJPL-339 report an error here once all the highlighting passes are ready

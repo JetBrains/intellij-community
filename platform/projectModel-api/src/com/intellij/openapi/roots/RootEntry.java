@@ -5,8 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-// todo IJPL-339 mark experimental
-@ApiStatus.Internal
+@ApiStatus.Experimental
 public record RootEntry(
   @NotNull VirtualFile root,
   @NotNull OrderEntry orderEntry

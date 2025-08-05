@@ -60,7 +60,7 @@ public class ModulesScope extends GlobalSearchScope implements CodeInsightContex
     }
   }
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @Override
   public boolean contains(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
     if (!CodeInsightContexts.isSharedSourceSupportEnabled(Objects.requireNonNull(getProject()))) {

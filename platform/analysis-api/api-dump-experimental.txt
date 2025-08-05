@@ -307,6 +307,10 @@ a:com.intellij.openapi.fileEditor.FileEditorManager
 e:com.intellij.openapi.fileEditor.FileEditorPolicy
 - java.lang.Enum
 - *sf:HIDE_OTHER_EDITORS:com.intellij.openapi.fileEditor.FileEditorPolicy
+c:com.intellij.openapi.fileEditor.OpenFileDescriptor
+- com.intellij.openapi.fileEditor.FileEditorNavigatable
+- java.lang.Comparable
+- *:<init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext,I):V
 *f:com.intellij.openapi.vfs.newvfs.AttributeInputStream
 - java.io.DataInputStream
 - readEnumeratedString():java.lang.String

@@ -184,6 +184,20 @@ f:com.intellij.openapi.editor.impl.EditorImpl
 - java.util.EventObject
 - <init>(com.intellij.openapi.editor.ex.EditorGutterComponentEx,com.intellij.openapi.editor.markup.GutterIconRenderer):V
 - getGutterIconRenderer():com.intellij.openapi.editor.markup.GutterIconRenderer
+*f:com.intellij.openapi.editor.impl.multiverse.CodeInsightContextPresentation
+- <init>(com.intellij.codeInsight.multiverse.CodeInsightContext,java.lang.String,javax.swing.Icon):V
+- f:component1():com.intellij.codeInsight.multiverse.CodeInsightContext
+- f:component2():java.lang.String
+- f:component3():javax.swing.Icon
+- f:copy(com.intellij.codeInsight.multiverse.CodeInsightContext,java.lang.String,javax.swing.Icon):com.intellij.openapi.editor.impl.multiverse.CodeInsightContextPresentation
+- bs:copy$default(com.intellij.openapi.editor.impl.multiverse.CodeInsightContextPresentation,com.intellij.codeInsight.multiverse.CodeInsightContext,java.lang.String,javax.swing.Icon,I,java.lang.Object):com.intellij.openapi.editor.impl.multiverse.CodeInsightContextPresentation
+- equals(java.lang.Object):Z
+- f:getContext():com.intellij.codeInsight.multiverse.CodeInsightContext
+- f:getIcon():javax.swing.Icon
+- f:getText():java.lang.String
+- hashCode():I
+f:com.intellij.openapi.editor.impl.multiverse.CodeInsightContextPresentationKt
+- *sf:createCodeInsightContextPresentation(com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.openapi.project.Project):com.intellij.openapi.editor.impl.multiverse.CodeInsightContextPresentation
 *:com.intellij.openapi.editor.markup.FillingLineMarkerRenderer
 - com.intellij.openapi.editor.markup.LineMarkerRendererEx
 - getIcon():javax.swing.Icon

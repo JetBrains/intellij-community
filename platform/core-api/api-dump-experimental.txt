@@ -420,12 +420,18 @@ com.intellij.pom.Navigatable
 *:com.intellij.psi.ParsingDiagnostics$ParserDiagnosticsHandler
 - a:registerParse(com.intellij.lang.PsiBuilder,com.intellij.lang.Language,J):V
 a:com.intellij.psi.PsiDocumentManager
+- *a:getCachedPsiFile(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
+- *a:getPsiFile(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
 - *:hasEventSystemEnabledUncommittedDocuments():Z
 com.intellij.psi.PsiElement
 - com.intellij.openapi.util.Iconable
 - com.intellij.openapi.util.UserDataHolder
 - *:getOwnDeclarations():java.util.Collection
 - *:getOwnReferences():java.util.Collection
+a:com.intellij.psi.PsiManager
+- com.intellij.openapi.util.UserDataHolderBase
+- *a:findFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
+- *a:findViewProvider(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.FileViewProvider
 *:com.intellij.psi.PsiNamedElementWithCustomPresentation
 - com.intellij.psi.PsiNamedElement
 - getPresentationName():java.lang.String
@@ -450,10 +456,12 @@ com.intellij.psi.SyntheticElement
 - *sf:DoesNotContainFileInfo():com.intellij.psi.search.DoesNotContainFileInfo
 - *sf:NoContextFileInfo():com.intellij.psi.search.NoContextFileInfo
 - *sf:NoContextInformation():com.intellij.psi.search.NoContextInformation
+- *sf:contains(com.intellij.psi.search.SearchScope,com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):Z
 - *sf:createContainingContextFileInfo(java.util.Collection):com.intellij.psi.search.CodeInsightContextFileInfo
 - *sf:getAnyCorrespondingContext(com.intellij.psi.search.SearchScope,com.intellij.openapi.vfs.VirtualFile):com.intellij.codeInsight.multiverse.CodeInsightContext
 - *sf:getCodeInsightContextInfo(com.intellij.psi.search.SearchScope):com.intellij.psi.search.CodeInsightContextInfo
 - *sf:getCorrespondingContexts(com.intellij.psi.search.SearchScope,com.intellij.openapi.vfs.VirtualFile):java.util.Collection
+- *sf:getFileContextInfo(com.intellij.psi.search.SearchScope,com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.search.CodeInsightContextFileInfo
 *:com.intellij.psi.search.CodeInsightContextFileInfo
 *:com.intellij.psi.search.CodeInsightContextInfo
 c:com.intellij.psi.search.DelegatingGlobalSearchScope

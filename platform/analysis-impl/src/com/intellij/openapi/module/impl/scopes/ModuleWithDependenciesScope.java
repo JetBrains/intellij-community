@@ -179,7 +179,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     return this;
   }
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @Override
   public @NotNull CodeInsightContextFileInfo getFileInfo(@NotNull VirtualFile file) {
      //in case of single file source
@@ -219,7 +219,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     }
   }
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @Override
   public boolean contains(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
     if (!isSharedSourceSupportEnabled()) {

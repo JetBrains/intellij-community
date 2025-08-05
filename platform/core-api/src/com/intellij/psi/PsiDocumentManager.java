@@ -49,7 +49,7 @@ public abstract class PsiDocumentManager {
   @RequiresBackgroundThread(generateAssertion = false)
   public abstract @Nullable PsiFile getPsiFile(@NotNull Document document);
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @RequiresBackgroundThread(generateAssertion = false)
   public abstract @Nullable PsiFile getPsiFile(@NotNull Document document, @NotNull CodeInsightContext context);
 
@@ -61,11 +61,7 @@ public abstract class PsiDocumentManager {
    */
   public abstract @Nullable PsiFile getCachedPsiFile(@NotNull Document document) ;
 
-  /**
-   * @deprecated please don't use at the moment
-   */
-  @Deprecated
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public abstract @Nullable PsiFile getCachedPsiFile(@NotNull Document document, @NotNull CodeInsightContext context);
 
   /**

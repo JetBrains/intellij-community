@@ -49,8 +49,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return processHighlights(document, project, minSeverity, startOffset, endOffset, CodeInsightContexts.anyContext(), processor);
   }
 
-  // todo IJPL-339 mark experimental
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public static boolean processHighlights(@NotNull Document document,
                                           @NotNull Project project,
                                           @Nullable("null means all") HighlightSeverity minSeverity,
@@ -62,8 +61,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return processHighlights(model, project, minSeverity, startOffset, endOffset, context, processor);
   }
 
-  // todo IJPL-339 mark experimental
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public static boolean processHighlights(@NotNull MarkupModelEx model,
                                           @NotNull Project project,
                                           @Nullable("null means all") HighlightSeverity minSeverity,

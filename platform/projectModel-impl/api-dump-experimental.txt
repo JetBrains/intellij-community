@@ -54,6 +54,8 @@
 - *sf:Companion:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex$Companion
 - a:findFileSet(com.intellij.openapi.vfs.VirtualFile,Z,Z,Z,Z,Z,Z):com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 - a:findFileSetWithCustomData(com.intellij.openapi.vfs.VirtualFile,Z,Z,Z,Z,Z,Z,java.lang.Class):com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
+- *a:findFileSets(com.intellij.openapi.vfs.VirtualFile,Z,Z,Z,Z,Z,Z):java.util.List
+- *a:findFileSetsWithCustomData(com.intellij.openapi.vfs.VirtualFile,Z,Z,Z,Z,Z,Z,java.lang.Class):java.util.List
 - a:getContentFileSetRoot(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.vfs.VirtualFile
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 - a:isInContent(com.intellij.openapi.vfs.VirtualFile):Z

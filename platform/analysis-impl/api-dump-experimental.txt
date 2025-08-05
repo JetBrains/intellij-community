@@ -1,3 +1,6 @@
+a:com.intellij.codeHighlighting.TextEditorHighlightingPass
+- com.intellij.codeHighlighting.HighlightingPass
+- *p:getContext():com.intellij.codeInsight.multiverse.CodeInsightContext
 *f:com.intellij.codeInsight.completion.EmptyDeclarativeInsertHandler
 - com.intellij.codeInsight.completion.DeclarativeInsertHandler
 - sf:INSTANCE:com.intellij.codeInsight.completion.EmptyDeclarativeInsertHandler
@@ -10,9 +13,22 @@ com.intellij.codeInsight.daemon.ReferenceImporter
 *f:com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
 - <init>():V
 - s:setHighlightersToEditor(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,I,I,java.util.Collection,I):V
+a:com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
+- com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+- *s:processHighlights(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project,com.intellij.lang.annotation.HighlightSeverity,I,I,com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.util.Processor):Z
+- *s:processHighlights(com.intellij.openapi.editor.ex.MarkupModelEx,com.intellij.openapi.project.Project,com.intellij.lang.annotation.HighlightSeverity,I,I,com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.util.Processor):Z
+f:com.intellij.codeInsight.daemon.impl.FileStatusMap
+- com.intellij.openapi.Disposable
+- *:allDirtyScopesAreNull(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext):Z
+- *s:getDirtyTextRange(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.psi.PsiFile,I):com.intellij.openapi.util.TextRange
+- *:getFileDirtyScope(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.psi.PsiFile,I):com.intellij.openapi.util.TextRange
+- *:markFileUpToDate(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext,I,com.intellij.openapi.progress.ProgressIndicator):V
+- *:setErrorFoundFlag(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext,Z):V
 com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - *:registerFix(com.intellij.modcommand.ModCommandAction,java.util.List,java.lang.String,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.daemon.HighlightDisplayKey):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - *a:registerLazyFixes(java.util.function.Consumer):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
+com.intellij.codeInsight.daemon.impl.HighlightingSession
+- *a:getCodeInsightContext():com.intellij.codeInsight.multiverse.CodeInsightContext
 *:com.intellij.codeInsight.daemon.impl.InjectedLanguageHighlightingRangeReducer
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:reduceRange(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):java.util.List
@@ -40,17 +56,28 @@ com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - p:replaceSuppressionComments(com.intellij.psi.PsiElement):Z
 - setShouldBeAppliedToInjectionHost(com.intellij.util.ThreeState):V
 - p:setText(java.lang.String):V
+*f:com.intellij.codeInsight.multiverse.CodeInsightContextHighlightingUtil
+- *sf:acceptRangeHighlighter(com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.openapi.editor.markup.RangeHighlighter):Z
+- *sf:getCodeInsightContext(com.intellij.openapi.editor.markup.RangeHighlighter):com.intellij.codeInsight.multiverse.CodeInsightContext
+- *sf:installCodeInsightContext(com.intellij.openapi.editor.markup.RangeHighlighter,com.intellij.openapi.project.Project,com.intellij.codeInsight.multiverse.CodeInsightContext):V
 f:com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 - com.intellij.psi.search.ActualCodeInsightContextInfo
 - com.intellij.psi.search.CodeInsightContextAwareSearchScope
 - com.intellij.psi.search.GlobalSearchScope
+- *:contains(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):Z
 - *:getCodeInsightContextInfo():com.intellij.psi.search.CodeInsightContextInfo
+- *:getFileInfo(com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.search.CodeInsightContextFileInfo
 c:com.intellij.openapi.module.impl.scopes.ModulesScope
 - com.intellij.psi.search.GlobalSearchScope
 - com.intellij.psi.search.ActualCodeInsightContextInfo
 - com.intellij.psi.search.CodeInsightContextAwareSearchScope
+- *:contains(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):Z
 - *:getCodeInsightContextInfo():com.intellij.psi.search.CodeInsightContextInfo
 - *:getFileInfo(com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.search.CodeInsightContextFileInfo
+a:com.intellij.psi.ResolveScopeEnlarger
+- *:getAdditionalResolveScope(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.openapi.project.Project):com.intellij.psi.search.SearchScope
+a:com.intellij.psi.ResolveScopeProvider
+- *:getResolveScope(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
 a:com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper
 - *:isMine(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):Z
 - *:processContexts(com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSetParameters,com.intellij.openapi.vfs.VirtualFile,Z,com.intellij.util.Processor):Z

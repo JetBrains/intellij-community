@@ -48,24 +48,14 @@ public abstract class PsiManager extends UserDataHolderBase {
   public abstract @Nullable PsiFile findFile(@NotNull VirtualFile file);
 
 
-  /**
-   * @deprecated very-internal api, please don't use
-   * todo IJPL-339 remove this method
-   */
-  @Deprecated
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @RequiresReadLock
   @RequiresBackgroundThread(generateAssertion = false)
   public abstract @Nullable PsiFile findFile(@NotNull VirtualFile file, @NotNull CodeInsightContext context);
 
   public abstract @Nullable FileViewProvider findViewProvider(@NotNull VirtualFile file);
 
-  /**
-   * @deprecated very-internal api, please don't use
-   * todo IJPL-339 remove this method
-   */
-  @Deprecated
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @RequiresReadLock
   @RequiresBackgroundThread(generateAssertion = false)
   public abstract @Nullable FileViewProvider findViewProvider(@NotNull VirtualFile file, @NotNull CodeInsightContext context);

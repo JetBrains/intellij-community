@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -63,6 +63,7 @@ public interface ProjectFileIndex extends FileIndex {
 
   /**
    * Returns module to which content the specified file belongs or null if the file does not belong to content of any module.
+   * todo IJPL-339 deprecate?
    *
    * @param honorExclusion if {@code false} the containing module will be returned even if the file is located under a folder marked as excluded
    */
@@ -75,7 +76,7 @@ public interface ProjectFileIndex extends FileIndex {
    *
    * @param honorExclusion if {@code false} the containing module will be returned even if the file is located under a folder marked as excluded
    */
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @RequiresReadLock
   @NotNull
   @Unmodifiable Set<Module> getModulesForFile(@NotNull VirtualFile file, boolean honorExclusion);

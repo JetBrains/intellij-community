@@ -8,7 +8,6 @@ import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.anyContext
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Implement this interface in your [SearchScope] if you want to associate information about [CodeInsightContext]s and [VirtualFile]s
@@ -26,7 +25,7 @@ interface CodeInsightContextAwareSearchScope {
   val codeInsightContextInfo: CodeInsightContextInfo
 }
 
-@Internal
+@ApiStatus.Experimental
 fun SearchScope.contains(file: VirtualFile, context: CodeInsightContext): Boolean {
   val info = this.codeInsightContextInfo
   return when (info) {
@@ -35,7 +34,7 @@ fun SearchScope.contains(file: VirtualFile, context: CodeInsightContext): Boolea
   }
 }
 
-@Internal
+@ApiStatus.Experimental
 fun SearchScope.getFileContextInfo(file: VirtualFile): CodeInsightContextFileInfo {
   val info = this.codeInsightContextInfo
   return when (info) {

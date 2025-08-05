@@ -78,8 +78,7 @@ public final class FileStatusMap implements Disposable {
     return getDirtyTextRange(document, context, psiFile, passId);
   }
 
-  // todo IJPL-339 mark experimental
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public static @Nullable("null means the file is clean") TextRange getDirtyTextRange(@NotNull Document document,
                                                                                       @NotNull CodeInsightContext context,
                                                                                       @NotNull PsiFile psiFile,
@@ -97,8 +96,7 @@ public final class FileStatusMap implements Disposable {
     setErrorFoundFlag(document, CodeInsightContexts.anyContext(), errorFound);
   }
 
-  // todo IJPL-339 mark experimental
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public void setErrorFoundFlag(@NotNull Document document, @NotNull CodeInsightContext context, boolean errorFound) {
     //GHP has found error. Flag is used by ExternalToolPass to decide whether to run or not
     synchronized(myDocumentToStatusMap) {
@@ -147,8 +145,7 @@ public final class FileStatusMap implements Disposable {
     markFileUpToDate(document, CodeInsightContexts.anyContext(), passId, null);
   }
 
-  // todo IJPL-339 mark experimental
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public void markFileUpToDate(@NotNull Document document, @NotNull CodeInsightContext context, int passId, ProgressIndicator indicator) {
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.getOrCreateStatus(document, context);
@@ -203,8 +200,7 @@ public final class FileStatusMap implements Disposable {
   /**
    * @return null for up-to-date file, whole file for untouched or entirely dirty file, range(usually code block) for the dirty region (optimization)
    */
-  // todo IJPL-339 mark experimental
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public @Nullable TextRange getFileDirtyScope(@NotNull Document document,
                                                @NotNull CodeInsightContext context,
                                                @NotNull PsiFile psiFile,
@@ -287,8 +283,7 @@ public final class FileStatusMap implements Disposable {
   }
 
   // todo IJPL-339 do we need context here?
-  // todo IJPL-339 mark experimental
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public boolean allDirtyScopesAreNull(@NotNull Document document, @NotNull CodeInsightContext context) {
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.getStatusOrNull(document, context);

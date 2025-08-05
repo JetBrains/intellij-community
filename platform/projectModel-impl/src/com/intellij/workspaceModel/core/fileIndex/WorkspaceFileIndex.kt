@@ -98,10 +98,8 @@ interface WorkspaceFileIndex {
    * @param includeExternalSets if `true` file sets of [WorkspaceFileKind.EXTERNAL] kind will be processed
    * @param includeExternalSourceSets if `true` file sets of [WorkspaceFileKind.EXTERNAL_SOURCE] kind will be processed
    * @param includeCustomKindSets if `true` file sets of [WorkspaceFileKind.CUSTOM] kind will be processed
-   *
-   * todo IJPL-339 mark experimental
    */
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   fun findFileSets(
     file: VirtualFile,
     honorExclusion: Boolean,
@@ -131,7 +129,7 @@ interface WorkspaceFileIndex {
    * The same as [findFileSets], but returns file sets which have custom data of type [customDataClass] associated with the found file or
    * `null` if no such file set is found.
    */
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   fun <D: WorkspaceFileSetData> findFileSetsWithCustomData(
     file: VirtualFile,
     honorExclusion: Boolean,

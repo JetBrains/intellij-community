@@ -106,12 +106,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     });
   }
 
+  // dodo IJPL-339: deprecate this method?
   @Override
   public @Nullable PsiFile getPsiFile(@NotNull Document document) {
     return getPsiFile(document, CodeInsightContexts.anyContext());
   }
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @Override
   public @Nullable PsiFile getPsiFile(@NotNull Document document, @NotNull CodeInsightContext context) {
     if (document instanceof DocumentWindow && !((DocumentWindow)document).isValid()) {

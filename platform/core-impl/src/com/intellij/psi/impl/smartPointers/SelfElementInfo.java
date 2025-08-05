@@ -45,7 +45,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     setRange(range);
   }
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public @NotNull CodeInsightContext getContext() {
     return myContext;
   }
