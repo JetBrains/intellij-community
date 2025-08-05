@@ -28,6 +28,8 @@ f:org.jetbrains.jewel.ui.component.PopupKt
 - *sf:Companion:org.jetbrains.jewel.ui.component.PopupRenderer$Companion
 - a:Popup(androidx.compose.ui.window.PopupPositionProvider,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
 *f:org.jetbrains.jewel.ui.component.PopupRenderer$Companion
+f:org.jetbrains.jewel.ui.component.TabStripKt
+- *sf:TabStrip(java.util.List,org.jetbrains.jewel.ui.component.styling.TabStyle,androidx.compose.ui.Modifier,Z,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.TextAreaKt
 - *sf:TextArea(androidx.compose.ui.text.input.TextFieldValue,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,Z,Z,kotlin.jvm.functions.Function2,Z,org.jetbrains.jewel.ui.Outline,androidx.compose.ui.text.input.VisualTransformation,androidx.compose.foundation.text.KeyboardOptions,androidx.compose.foundation.text.KeyboardActions,I,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.TextAreaStyle,androidx.compose.ui.text.TextStyle,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I,I):V
 f:org.jetbrains.jewel.ui.component.TextFieldKt

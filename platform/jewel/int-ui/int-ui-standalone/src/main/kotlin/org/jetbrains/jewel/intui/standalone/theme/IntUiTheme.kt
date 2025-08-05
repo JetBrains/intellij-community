@@ -106,6 +106,80 @@ public fun JewelTheme.Companion.lightThemeDefinition(
     )
 
 /**
+ * Create a light theme definition.
+ *
+ * @param colors The [GlobalColors] for this theme definition.
+ * @param metrics The [GlobalMetrics] for this theme definition.
+ * @param palette The [ThemeColorPalette] for this theme definition.
+ * @param iconData The [ThemeIconData] for this theme definition.
+ * @param defaultTextStyle The default text style for this theme definition.
+ * @param editorTextStyle The editor text style for this theme definition.
+ * @param consoleTextStyle The console text style for this theme definition. Same as [editorTextStyle] by default.
+ * @param contentColor The default content (text) color for this theme definition.
+ */
+@Deprecated("Please, use the overload with disabledAppearanceValues.")
+public fun JewelTheme.Companion.lightThemeDefinition(
+    colors: GlobalColors = GlobalColors.light(),
+    metrics: GlobalMetrics = GlobalMetrics.defaults(),
+    palette: ThemeColorPalette = IntUiLightTheme.colors,
+    iconData: ThemeIconData = IntUiLightTheme.iconData,
+    defaultTextStyle: TextStyle = JewelTheme.createDefaultTextStyle(),
+    editorTextStyle: TextStyle = JewelTheme.createEditorTextStyle(),
+    consoleTextStyle: TextStyle = editorTextStyle,
+    contentColor: Color = colors.text.normal,
+): ThemeDefinition =
+    ThemeDefinition(
+        name = "IntUI Light",
+        isDark = false,
+        colors,
+        metrics,
+        defaultTextStyle,
+        editorTextStyle,
+        consoleTextStyle,
+        contentColor,
+        palette,
+        iconData,
+        DisabledAppearanceValues.light(),
+    )
+
+/**
+ * Create a dark theme definition.
+ *
+ * @param colors The [GlobalColors] for this theme definition.
+ * @param metrics The [GlobalMetrics] for this theme definition.
+ * @param palette The [ThemeColorPalette] for this theme definition.
+ * @param iconData The [ThemeIconData] for this theme definition.
+ * @param defaultTextStyle The default text style for this theme definition.
+ * @param editorTextStyle The editor text style for this theme definition.
+ * @param consoleTextStyle The console text style for this theme definition. Same as [editorTextStyle] by default.
+ * @param contentColor The default content (text) color for this theme definition.
+ */
+@Deprecated("Please, use the overload with disabledAppearanceValues.")
+public fun JewelTheme.Companion.darkThemeDefinition(
+    colors: GlobalColors = GlobalColors.dark(),
+    metrics: GlobalMetrics = GlobalMetrics.defaults(),
+    palette: ThemeColorPalette = IntUiDarkTheme.colors,
+    iconData: ThemeIconData = IntUiDarkTheme.iconData,
+    defaultTextStyle: TextStyle = JewelTheme.createDefaultTextStyle(),
+    editorTextStyle: TextStyle = JewelTheme.createEditorTextStyle(),
+    consoleTextStyle: TextStyle = editorTextStyle,
+    contentColor: Color = colors.text.normal,
+): ThemeDefinition =
+    ThemeDefinition(
+        name = "IntUI Dark",
+        isDark = true,
+        colors,
+        metrics,
+        defaultTextStyle,
+        editorTextStyle,
+        consoleTextStyle,
+        contentColor,
+        palette,
+        iconData,
+        DisabledAppearanceValues.dark(),
+    )
+
+/**
  * Create a dark theme definition.
  *
  * @param colors The [GlobalColors] for this theme definition.

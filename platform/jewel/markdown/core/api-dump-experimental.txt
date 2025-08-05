@@ -160,6 +160,7 @@
 - org.jetbrains.jewel.markdown.WithChildBlocks
 - sf:$stable:I
 - <init>(java.util.List,I):V
+- <init>(org.jetbrains.jewel.markdown.MarkdownBlock[]):V
 - <init>(org.jetbrains.jewel.markdown.MarkdownBlock[],I):V
 - equals(java.lang.Object):Z
 - getChildren():java.util.List
@@ -245,6 +246,8 @@ f:org.jetbrains.jewel.markdown.extensions.MarkdownKt
 *f:org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 - sf:$stable:I
 - <init>():V
+- <init>(java.util.List,org.jetbrains.jewel.markdown.MarkdownMode,org.commonmark.parser.Parser):V
+- b:<init>(java.util.List,org.jetbrains.jewel.markdown.MarkdownMode,org.commonmark.parser.Parser,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(java.util.List,org.jetbrains.jewel.markdown.MarkdownMode,org.commonmark.parser.Parser,kotlin.jvm.functions.Function1):V
 - b:<init>(java.util.List,org.jetbrains.jewel.markdown.MarkdownMode,org.commonmark.parser.Parser,kotlin.jvm.functions.Function1,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getBlockExtensions():java.util.List

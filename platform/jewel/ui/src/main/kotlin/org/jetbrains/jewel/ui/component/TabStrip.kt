@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.CollectionInfo
 import androidx.compose.ui.semantics.collectionInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.util.fastRoundToInt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask
@@ -191,11 +192,9 @@ public fun TabStrip(
     }
 }
 
+@Deprecated("Use the TabStrip function with a interactionSource parameter")
+@ApiStatus.Experimental
 @ExperimentalJewelApi
-@Deprecated(
-    "Use the version with explicit MutableInteractionSource",
-    ReplaceWith("TabStrip(tabs, style, modifier, enabled, interactionSource)"),
-)
 @Composable
 public fun TabStrip(tabs: List<TabData>, style: TabStyle, modifier: Modifier = Modifier, enabled: Boolean = true) {
     TabStrip(tabs, style, modifier, enabled, remember { MutableInteractionSource() })
