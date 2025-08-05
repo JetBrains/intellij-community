@@ -13,11 +13,6 @@
   files:
   - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-serialization/2/schema-kenerator-serialization-2.jar
   reason: <- intellij.mcpserver
-- name: lib/io.ktor.utils.jar
-  library: io.ktor.utils
-  files:
-  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3/ktor-utils-jvm-3.jar
-  reason: <- intellij.mcpserver
 - name: lib/ktor-server-cio-internal.jar
   library: ktor-server-cio-internal
   module: intellij.mcpserver
