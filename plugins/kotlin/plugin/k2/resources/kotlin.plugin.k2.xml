@@ -133,6 +133,11 @@
                  defaultValue="true"
                  restartRequired="true"/>
 
+    <registryKey key="kotlin.k2.parallel.completion.enabled"
+                 description="Allow Kotlin contributors to run in parallel"
+                 defaultValue="false"
+                 restartRequired="false"/>
+
     <weigher key="proximity" implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinxLibrariesWeigher"
              id="kotlin.preferKotlinx"
              order="after sameModule, before knownElement"/>
