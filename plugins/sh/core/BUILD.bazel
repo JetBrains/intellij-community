@@ -62,8 +62,7 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/testRunner",
     "//platform/testRunner:testRunner_test_lib",
-  ],
-  runtime_deps = ["//plugins/sh"]
+  ]
 )
 ### auto-generated section `build intellij.sh.tests` end
 

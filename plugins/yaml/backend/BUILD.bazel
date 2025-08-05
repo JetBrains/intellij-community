@@ -90,7 +90,6 @@ jvm_library(
     "//platform/statistics:statistics_test_lib",
     "//RegExpSupport:regexp",
     "//RegExpSupport:regexp_test_lib",
-    "//plugins/sh",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//plugins/yaml",
