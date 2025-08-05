@@ -969,7 +969,7 @@ public class PsiTreeUtil {
   }
 
   /**
-   * Recursively process children elements, including the root root.
+   * Recursively process children elements, including the {@code root}.
    *
    * @param root root element to process
    * @param processor processor to consume elements

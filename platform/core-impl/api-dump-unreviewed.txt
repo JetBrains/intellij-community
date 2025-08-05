@@ -209,7 +209,6 @@ a:com.intellij.extapi.psi.ASTDelegatePsiElement
 - delete():V
 - deleteChildInternal(com.intellij.lang.ASTNode):V
 - deleteChildRange(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):V
-- s:deleteElementFromParent(com.intellij.psi.PsiElement):V
 - p:findChildByFilter(com.intellij.psi.tree.TokenSet):com.intellij.psi.PsiElement
 - p:findChildByType(com.intellij.psi.tree.IElementType):com.intellij.psi.PsiElement
 - p:findChildByType(com.intellij.psi.tree.TokenSet):com.intellij.psi.PsiElement
@@ -230,6 +229,7 @@ a:com.intellij.extapi.psi.ASTDelegatePsiElement
 - getManager():com.intellij.psi.impl.PsiManagerEx
 - getNextSibling():com.intellij.psi.PsiElement
 - a:getNode():com.intellij.lang.ASTNode
+- getParent():com.intellij.psi.PsiElement
 - getPrevSibling():com.intellij.psi.PsiElement
 - getStartOffsetInParent():I
 - getText():java.lang.String

@@ -157,8 +157,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param checkCaret if true, it will be verified that file contains at least one caret or selection marker
    */
   protected @NotNull Document configureFromFileText(@NonNls @NotNull String fileName,
-                                           @NonNls @NotNull String fileText,
-                                           boolean checkCaret) {
+                                                    @NonNls @NotNull String fileText,
+                                                    boolean checkCaret) {
     return WriteCommandAction.writeCommandAction(null).compute(() -> {
       Document fakeDocument = new DocumentImpl(fileText);
 
