@@ -3,32 +3,27 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinClassifierNamePositionContext
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.renderer.render
 
-internal class K2SameAsFileClassifierNameCompletionContributor(
-    sink: LookupElementSink,
-    priority: Int = 0,
-) : FirCompletionContributorBase<KotlinClassifierNamePositionContext>(sink, priority) {
+internal class K2SameAsFileClassifierNameCompletionContributor : K2SimpleCompletionContributor<KotlinClassifierNamePositionContext>(
+    KotlinClassifierNamePositionContext::class
+) {
 
-    context(KaSession)
-    override fun complete(
-        positionContext: KotlinClassifierNamePositionContext,
-        weighingContext: WeighingContext,
-    ) {
-        (positionContext.classLikeDeclaration as? KtClassOrObject)?.let { completeTopLevelClassName(it) }
+    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinClassifierNamePositionContext>) {
+        (context.positionContext.classLikeDeclaration as? KtClassOrObject)?.let { context.completeTopLevelClassName(it) }
     }
 
-    private fun completeTopLevelClassName(classOrObject: KtClassOrObject) {
+    private fun K2CompletionSectionContext<KotlinClassifierNamePositionContext>.completeTopLevelClassName(classOrObject: KtClassOrObject) {
         if (!classOrObject.isTopLevel()) return
-        val name = originalKtFile.virtualFile.nameWithoutExtension
+        val name = completionContext.originalFile.virtualFile.nameWithoutExtension
         if (!isValidUpperCapitalizedClassName(name)) return
-        if (originalKtFile.declarations.any { it is KtClassOrObject && it.name == name }) return
-        sink.addElement(LookupElementBuilder.create(name))
+        if (completionContext.originalFile.declarations.any { it is KtClassOrObject && it.name == name }) return
+        addElement(LookupElementBuilder.create(name))
     }
 
     private fun isValidUpperCapitalizedClassName(name: String) =

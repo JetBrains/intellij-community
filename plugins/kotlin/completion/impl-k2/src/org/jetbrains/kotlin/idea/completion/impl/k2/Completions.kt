@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirOperator
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirWhenWithSubjectConditionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirSuperEntryContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirTypeParameterConstraintNameInWhereClauseCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirSameAsFileClassifierNameCompletionContributor
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -51,6 +52,7 @@ internal object Completions {
         K2SuperEntryContributor(),
         K2OperatorNameCompletionContributor(),
         K2TypeParameterConstraintNameInWhereClauseCompletionContributor(),
+        K2SameAsFileClassifierNameCompletionContributor(),
     )
 
     // Note: this function will be renamed and replace the complete method below!
@@ -259,7 +261,7 @@ internal object Completions {
             }
 
             is KotlinClassifierNamePositionContext -> {
-                K2SameAsFileClassifierNameCompletionContributor(sink)
+                FirSameAsFileClassifierNameCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
                 K2DeclarationFromUnresolvedNameContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
