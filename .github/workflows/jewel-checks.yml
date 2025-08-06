@@ -92,13 +92,32 @@ jobs:
 
       - name: Validate PR has single commit
         env:
+          GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./scripts/validate-pr-commits.sh
 
       - name: Validate commit message
         env:
+          GH_TOKEN: ${{ github.token }}
           JEWEL_YT_TOKEN: ${{ secrets.JEWEL_YT_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./scripts/validate-commit-message.sh
+
+  breaking_api_changes:
+    name: Check for breaking API changes
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '2'
+        name: Check out repository
+
+      - name: Grant execute permission for validation script
+        run: chmod +x ./scripts/validate-api-dump-changes.main.kts
+
+      - name: Annotate breaking API changes
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/validate-api-dump-changes.main.kts
