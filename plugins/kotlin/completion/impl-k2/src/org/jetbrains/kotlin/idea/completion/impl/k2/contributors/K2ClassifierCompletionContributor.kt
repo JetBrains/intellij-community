@@ -24,25 +24,15 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierPr
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.getAliasNameIfExists
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
-import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
-import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionContext
-import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
-import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSetupScope
+import org.jetbrains.kotlin.idea.completion.impl.k2.*
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority.Companion.INDEX
-import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.factories.shortenCommand
 import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinAnnotationTypeNameReferencePositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinWithSubjectEntryPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -331,6 +321,14 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
     override fun K2CompletionSectionContext<KotlinNameReferencePositionContext>.getGroupPriority(): Int = when(positionContext) {
         is KotlinWithSubjectEntryPositionContext, is KotlinCallableReferencePositionContext -> 1
         else -> 0
+    }
+
+    override fun K2CompletionSetupScope<KotlinNameReferencePositionContext>.shouldExecute(): Boolean {
+        if (position !is KotlinTypeNameReferencePositionContext) return true
+        return position.allowsClassifiersAndPackagesForPossibleExtensionCallables(
+            parameters = completionContext.parameters,
+            prefixMatcher = completionContext.prefixMatcher,
+        )
     }
 }
 
