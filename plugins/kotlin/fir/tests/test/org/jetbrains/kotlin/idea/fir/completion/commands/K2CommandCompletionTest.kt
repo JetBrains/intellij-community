@@ -396,11 +396,13 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
                 }
             }
         }
-      """.trimIndent())
+      """.trimIndent()
+        )
         val elements = myFixture.completeBasic()
         selectItem(elements.first { element -> element.lookupString.contains("Go to impl", ignoreCase = true) })
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-        myFixture.checkResult("""
+        myFixture.checkResult(
+            """
         interface A{
         
             fun a()
@@ -412,7 +414,8 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
                 }
             }
         }
-      """.trimIndent())
+      """.trimIndent()
+        )
     }
 
     fun testCommandsOnlyGoToImplementationNotFound() {
@@ -422,7 +425,8 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         interface A{
             fun a..<caret>()
         }
-      """.trimIndent())
+      """.trimIndent()
+        )
         val elements = myFixture.completeBasic()
         assertFalse(elements.any { element -> element.lookupString.contains("Go to impl", ignoreCase = true) })
     }
@@ -516,6 +520,27 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
             """
             fun bar() {
                 val a = "1"
+            }""".trimIndent()
+        )
+    }
+
+    fun testInlineMethodExpression() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo() = 1.<caret>
+            
+            fun bar(): Int {
+                return foo()
+            }
+            """.trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        selectItem(elements.first { element -> element.lookupString.contains("Inline", ignoreCase = true) })
+        myFixture.checkResult(
+            """
+            fun bar(): Int {
+                return 1
             }""".trimIndent()
         )
     }

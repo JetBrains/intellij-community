@@ -15,6 +15,7 @@ internal class JavaInlineMethodCompletionCommandProvider : AbstractInlineMethodC
     if (element is PsiWhiteSpace) {
       element = PsiTreeUtil.skipWhitespacesBackward(element) ?: return null
     }
+    if(!element.isWritable) return null
     currentOffset = element.textRange?.endOffset ?: currentOffset
     if (element is PsiIdentifier && element.parent is PsiMethod) return currentOffset
     if (element is PsiJavaToken && element.tokenType == JavaTokenType.RBRACE &&

@@ -20,7 +20,7 @@ internal class KotlinInlineMethodCompletionCommandProvider : AbstractInlineMetho
             element = PsiTreeUtil.skipWhitespacesBackward(element) ?: return null
         }
         currentOffset = element.textRange?.endOffset ?: currentOffset
-
+        if (!element.isWritable) return null
         val parent = element.parentOfType<KtNamedFunction>()
         if (parent != null && parent.nameIdentifier?.textRange?.endOffset == currentOffset) return currentOffset
         if (parent != null &&

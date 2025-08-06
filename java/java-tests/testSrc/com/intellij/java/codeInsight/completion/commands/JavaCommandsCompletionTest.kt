@@ -386,6 +386,32 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
         }""".trimIndent())
   }
 
+  fun testInlineMethodEnd() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A {
+          public String getY() {
+              String y = getX();
+              return y;
+          }
+          
+          public String getX(){
+            return "1";
+          }.<caret>
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("Inline", ignoreCase = true) })
+    myFixture.checkResult("""
+        class A {
+            public String getY() {
+                String y = "1";
+                return y;
+            }
+        
+        }""".trimIndent())
+  }
+
   fun testInlineFieldWithNoInitializerNoCommand() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """

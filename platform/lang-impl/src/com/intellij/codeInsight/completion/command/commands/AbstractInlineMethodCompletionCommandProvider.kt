@@ -14,8 +14,10 @@ abstract class AbstractInlineMethodCompletionCommandProvider :
                         priority = -150,
                         previewText = ActionsBundle.message("action.Inline.description")) {
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
+    val offsetToCall = findOffsetToCall(offset, psiFile)
+    if (offsetToCall != null && offsetToCall != offset) return true
     if (!super.isApplicable(offset, psiFile, editor)) return false
-    return findOffsetToCall(offset, psiFile) != null
+    return offsetToCall != null
   }
 
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
