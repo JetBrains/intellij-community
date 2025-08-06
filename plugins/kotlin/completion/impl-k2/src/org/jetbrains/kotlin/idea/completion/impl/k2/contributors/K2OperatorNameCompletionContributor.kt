@@ -2,34 +2,30 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalElementOfSelf
 import org.jetbrains.kotlin.idea.completion.implCommon.OperatorNameCompletion
 import org.jetbrains.kotlin.idea.completion.lookups.factories.OperatorNameLookupElementFactory
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
 
-internal class K2OperatorNameCompletionContributor(
-    sink: LookupElementSink,
-    priority: Int = 0,
-) : FirCompletionContributorBase<KotlinTypeNameReferencePositionContext>(sink, priority) {
-    context(KaSession)
-    override fun complete(
-        positionContext: KotlinTypeNameReferencePositionContext,
-        weighingContext: WeighingContext
-    ) {
+internal class K2OperatorNameCompletionContributor : K2SimpleCompletionContributor<KotlinTypeNameReferencePositionContext>(
+    KotlinTypeNameReferencePositionContext::class
+) {
+    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinTypeNameReferencePositionContext>) {
+        val positionContext = context.positionContext
         val isApplicable = OperatorNameCompletion.isPositionApplicable(
             nameExpression = positionContext.nameExpression,
             expression = positionContext.nameExpression,
             position = positionContext.position
         ) {
-            getOriginalElementOfSelf(it, parameters.originalFile)
+            getOriginalElementOfSelf(it, context.parameters.originalFile)
         }
         if (!isApplicable) return
 
         OperatorNameCompletion.getApplicableOperators {
-            prefixMatcher.prefixMatches(it)
+            context.prefixMatcher.prefixMatches(it)
         }.map(OperatorNameLookupElementFactory::createLookup)
-            .forEach(sink::addElement)
+            .forEach { context.addElement(it) }
     }
 }

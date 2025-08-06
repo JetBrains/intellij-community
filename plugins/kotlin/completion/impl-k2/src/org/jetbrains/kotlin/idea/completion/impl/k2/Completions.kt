@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifi
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirDeclarationFromOverridableMembersContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirKDocParameterNameContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierReferenceCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirOperatorNameCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirWhenWithSubjectConditionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirSuperEntryContributor
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
@@ -47,6 +48,7 @@ internal object Completions {
         K2ActualDeclarationContributor(),
         K2WhenWithSubjectConditionContributor(),
         K2SuperEntryContributor(),
+        K2OperatorNameCompletionContributor(),
     )
 
     // Note: this function will be renamed and replace the complete method below!
@@ -178,7 +180,7 @@ internal object Completions {
             }
 
             is KotlinTypeNameReferencePositionContext -> {
-                K2OperatorNameCompletionContributor(sink)
+                FirOperatorNameCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
                 val allowClassifiersAndPackagesForPossibleExtensionCallables =
                     !positionContext.hasNoExplicitReceiver()
