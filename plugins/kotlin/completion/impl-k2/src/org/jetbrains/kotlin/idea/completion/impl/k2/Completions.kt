@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirDeclarat
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirKDocParameterNameContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierReferenceCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirDeclarationFromUnresolvedNameContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirImportDirectivePackageMembersCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirKeywordCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirNamedArgumentCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirOperatorNameCompletionContributor
@@ -61,6 +62,7 @@ internal object Completions {
         K2NamedArgumentCompletionContributor(),
         K2DeclarationFromUnresolvedNameContributor(),
         K2KeywordCompletionContributor(),
+        K2ImportDirectivePackageMembersCompletionContributor(),
     )
 
     // Note: this function will be renamed and replace the complete method below!
@@ -238,7 +240,7 @@ internal object Completions {
             is KotlinImportDirectivePositionContext -> {
                 FirPackageCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
-                K2ImportDirectivePackageMembersCompletionContributor(sink)
+                FirImportDirectivePackageMembersCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
