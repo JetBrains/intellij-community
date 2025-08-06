@@ -60,13 +60,11 @@ abstract class NotebookCellSelfHighlighterController(
     highlighter = null
   }
 
-
   private fun createNewHighlighter() {
     val startOffset = interval.getCellStartOffset(editor)
     val endOffset = interval.getCellEndOffset(editor)
     val changeAction = Consumer { rangeHighlighter: RangeHighlighterEx ->
       rangeHighlighter.lineMarkerRenderer = createLineMarkerRender(rangeHighlighter)
-
     }
 
     @Suppress("DEPRECATION")
