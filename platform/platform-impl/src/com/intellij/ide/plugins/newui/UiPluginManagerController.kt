@@ -23,7 +23,7 @@ interface UiPluginManagerController {
   fun isEnabled(): Boolean
   fun getTarget(): PluginSource
   suspend fun getPlugins(): List<PluginUiModel>
-  fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel>
+  suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel>
   suspend fun initSession(sessionId: String): InitSessionResult
   fun getInstalledPlugins(): List<PluginUiModel>
   fun getUpdates(): List<PluginUiModel>

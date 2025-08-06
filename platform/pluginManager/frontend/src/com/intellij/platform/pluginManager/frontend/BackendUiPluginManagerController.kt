@@ -54,8 +54,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().getPlugins().withSource()
   }
 
-  override fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel> {
-    return awaitForResult { PluginManagerApi.getInstance().getVisiblePlugins(showImplementationDetails).withSource() }
+  override suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel> {
+    return PluginManagerApi.getInstance().getVisiblePlugins(showImplementationDetails).withSource()
   }
 
   override suspend fun initSession(sessionId: String): InitSessionResult {

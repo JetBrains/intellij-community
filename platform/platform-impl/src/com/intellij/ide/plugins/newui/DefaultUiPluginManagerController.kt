@@ -85,7 +85,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return InitSessionResult(visiblePlugins, session.pluginStates.mapValues { it.value?.isEnabled })
   }
 
-  override fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel> {
+  override suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel> {
     return PluginManager.getVisiblePlugins(showImplementationDetails).map { PluginUiModelAdapter(it) }.toList().withSource()
   }
 

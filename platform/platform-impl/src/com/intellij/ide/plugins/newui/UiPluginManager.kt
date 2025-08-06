@@ -57,7 +57,7 @@ class UiPluginManager {
     return getController().executePluginsSearch(query, count, includeUpgradeToCommercialIde)
   }
 
-  fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel> {
+  suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel> {
     return getController().getVisiblePlugins(showImplementationDetails)
   }
 
