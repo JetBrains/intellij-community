@@ -5,6 +5,7 @@ import com.intellij.execution.process.AnsiEscapeDecoder
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.getShell
@@ -43,13 +44,15 @@ sealed interface BinaryToExec
  * [workDir] is pwd. As it should be on the same eel as [path] for most cases (except WSL), it is better not to set it at all.
  * Prefer full [path] over relative.
  */
-data class BinOnEel(val path: Path, val workDir: Path? = null) : BinaryToExec
+data class BinOnEel(val path: Path, internal val workDir: Path? = null) : BinaryToExec
 
 /**
  * Legacy Targets-based approach. Do not use it, unless you know what you are doing
  * if [target] "local" target is used
  */
-data class BinOnTarget(val path: FullPathOnTarget, val target: TargetEnvironmentConfiguration?) : BinaryToExec
+data class BinOnTarget(internal val configureTargetCmdLine: (TargetedCommandLineBuilder) -> Unit, val target: TargetEnvironmentConfiguration?) : BinaryToExec {
+  constructor(exePath: FullPathOnTarget, target: TargetEnvironmentConfiguration?) : this({ it.setExePath(exePath) }, target)
+}
 
 
 /**

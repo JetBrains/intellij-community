@@ -49,16 +49,24 @@ internal suspend fun createProcessLauncherOnTarget(binOnTarget: BinOnTarget, lau
   val args = launchRequest.args.getArgs { localFile ->
     targetEnv.getTargetPaths(localFile.pathString).first()
   }
-  return@withContext Result.success(ProcessLauncher(exeForError = Exe.OnTarget(binOnTarget.path), args = args, processCommands = TargetProcessCommands(launchRequest.scopeToBind, binOnTarget.path, request, targetEnv, args, launchRequest.env)))
+  val exePath: FullPathOnTarget
+  val cmdLine = TargetedCommandLineBuilder(request).also {
+    binOnTarget.configureTargetCmdLine(it)
+    // exe path is always fixed (pre-presolved) promise. It can't be obtained directly because of Targets API limitation
+    exePath = it.exePath.localValue.blockingGet(1000) ?: error("Exe path not set: $binOnTarget is broken")
+    it.addParameters(args)
+    for ((k, v) in launchRequest.env) {
+      it.addEnvironmentVariable(k, v)
+    }
+  }.build()
+  return@withContext Result.success(ProcessLauncher(exeForError = Exe.OnTarget(exePath), args = args, processCommands = TargetProcessCommands(launchRequest.scopeToBind, exePath, targetEnv, cmdLine)))
 }
 
 private class TargetProcessCommands(
   private val scopeToBind: CoroutineScope,
   private val exePath: FullPathOnTarget,
-  private val request: TargetEnvironmentRequest,
   private val targetEnv: TargetEnvironment,
-  private val args: List<String>,
-  private val env: Map<String, String>,
+  private val cmdLine: TargetedCommandLine,
 ) : ProcessCommands {
 
   private var process: Process? = null
@@ -70,13 +78,7 @@ private class TargetProcessCommands(
   }, killProcess = { process?.destroyForcibly() })
 
   override suspend fun start(): Result<Process, ExecErrorReason.CantStart> {
-    val cmdLine = TargetedCommandLineBuilder(request).also {
-      it.setExePath(exePath)
-      it.addParameters(args)
-      for ((k, v) in env) {
-        it.addEnvironmentVariable(k, v)
-      }
-    }.build()
+
     try {
       val process = targetEnv.createProcess(cmdLine)
       this.process = process
