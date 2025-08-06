@@ -116,6 +116,7 @@ fun api(index: ApiIndex, root: Path): API {
   val signatures: List<ClassBinarySignature> = classFilePaths
     .map { it.inputStream() }
     .loadApiFromJvmClasses()
+    .filter { !it.isComposableSingleton() }
     .map { it.removeSyntheticBridges() }
     .map { it.removeToString() }
     .map { signature ->
@@ -388,6 +389,19 @@ private fun List<AnnotationNode>?.isNonExtendable(): Boolean {
 }
 
 private typealias ClassResolver = (String) -> ClassBinarySignature?
+
+/**
+ * Due to the issues in Kotlin's BCV and the Compose compiler plugin, the generated classes by Compose leak to API dumps
+ * Such classes are not really a part of the API, so we filter them here.
+ * This should be removed once CMP-7715 is fixed
+ */
+private fun ClassBinarySignature.isComposableSingleton(): Boolean {
+  return access.isFinal &&
+         // see `androidx.compose.compiler.plugins.kotlin.lower.ComposerLambdaMemoization#getOrCreateComposableSingletonsClass`
+         name.contains("ComposableSingletons$") &&
+         // check if it is really a kotlin object singleton
+         memberSignatures.any { it.name == "INSTANCE" && it.access.isFinal && it.access.isStatic }
+}
 
 private fun ClassBinarySignature.removeSyntheticBridges(): ClassBinarySignature {
   val withoutBridges = memberSignatures.filterNot {
