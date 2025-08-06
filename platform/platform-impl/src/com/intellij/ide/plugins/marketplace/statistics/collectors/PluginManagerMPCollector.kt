@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace.statistics.collectors
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerLocalSearchFeatureProvider
 import com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerMarketplaceSearchFeatureProvider
 import com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerSearchResultsFeatureProvider
@@ -13,6 +12,7 @@ import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.internal.statistic.eventLog.mp.MP_RECORDER_ID
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 
 private const val PM_MP_GROUP_ID = "mp.$PM_FUS_GROUP_ID"
@@ -25,6 +25,7 @@ private val EVENT_GROUP = EventLogGroup(
 )
 
 @ApiStatus.Internal
+@IntellijInternalApi
 class PluginManagerMPCollector : PluginManagerFUSCollector() {
   override fun getGroup(): EventLogGroup = EVENT_GROUP
 

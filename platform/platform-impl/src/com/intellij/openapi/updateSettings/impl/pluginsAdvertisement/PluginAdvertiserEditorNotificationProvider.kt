@@ -25,6 +25,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdver
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService.ExtensionDataProvider
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.getSuggestedCommercialIdeCode
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.isCommunityIde
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
@@ -48,6 +49,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 @ApiStatus.Internal
+@IntellijInternalApi
 class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, DumbAware {
 
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
@@ -335,6 +337,7 @@ private fun getSuggestionDataByDetector(project: Project, suggestion: PluginAdve
 }
 
 @ApiStatus.Internal
+@IntellijInternalApi
 @TestOnly
 fun getSuggestionData(
   project: Project,

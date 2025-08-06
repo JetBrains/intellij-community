@@ -23,10 +23,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.ActionCallback
-import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
@@ -95,7 +92,6 @@ private class UpdateCheckerHelper(private val coroutineScope: CoroutineScope) {
  */
 object UpdateChecker {
   internal const val MACHINE_ID_DISABLED_PROPERTY: String = "machine.id.disabled"
-  internal const val MACHINE_ID_PARAMETER: String = "mid"
 
   private val productDataLock = ReentrantLock()
   private var productDataUrl: Url? = null
@@ -128,6 +124,7 @@ object UpdateChecker {
     service<UpdateCheckerHelper>().updateAndShowResult(showResults = true)
 
   @ApiStatus.Internal
+  @IntellijInternalApi
   fun getUpdates(): ActionCallback =
     service<UpdateCheckerHelper>().updateAndShowResult(showResults = false)
 
@@ -162,6 +159,8 @@ object UpdateChecker {
   @JvmOverloads
   @JvmStatic
   @JvmName("getPlatformUpdates")
+  @ApiStatus.Internal
+  @IntellijInternalApi
   internal fun getPlatformUpdates(
     settings: UpdateSettings = UpdateSettings.getInstance(),
     indicator: ProgressIndicator? = null,
@@ -236,6 +235,39 @@ object UpdateChecker {
     }
   }
 
+  @RequiresBackgroundThread
+  @RequiresReadLockAbsence
+  @JvmOverloads
+  @JvmStatic
+  @ApiStatus.Experimental
+  fun getPluginUpdates(
+    pluginId: PluginId,
+    buildNumber: BuildNumber? = null,
+    indicator: ProgressIndicator? = null,
+  ): PluginUpdatesInfo {
+    val updateablePluginsMap = mutableMapOf<PluginId, IdeaPluginDescriptor?>(pluginId to null)
+    val result = getInternalPluginUpdates(buildNumber, indicator, updateablePluginsMap)
+    val updates = result.pluginUpdates
+    return PluginUpdatesInfo(
+      updates.allEnabled,
+      updates.allDisabled,
+      updates.incompatible,
+      result.errors
+    )
+  }
+
+  @ApiStatus.Experimental
+  data class PluginUpdatesInfo(
+    val allEnabled: Collection<PluginDownloader> = emptyList(),
+    val allDisabled: Collection<PluginDownloader> = emptyList(),
+    val incompatible: Collection<IdeaPluginDescriptor> = emptyList(),
+    val errors: Map<String?, Exception> = emptyMap()
+  ) {
+    val all: List<PluginDownloader> by lazy {
+      allEnabled + allDisabled
+    }
+  }
+
   /**
    * When [buildNumber] is null, returns new versions of plugins compatible with the current IDE version,
    * otherwise, returns versions compatible with the specified build.
@@ -244,6 +276,9 @@ object UpdateChecker {
   @RequiresReadLockAbsence
   @JvmOverloads
   @JvmStatic
+  @IntellijInternalApi
+  @ApiStatus.Internal
+  @Deprecated("Use [getPluginUpdates] instead", ReplaceWith("getPluginUpdates(pluginId, buildNumber, indicator)"))
   fun getInternalPluginUpdates(
     buildNumber: BuildNumber? = null,
     indicator: ProgressIndicator? = null,
@@ -420,6 +455,8 @@ object UpdateChecker {
 
   @JvmOverloads
   @JvmStatic
+  @IntellijInternalApi
+  @ApiStatus.Internal
   fun getExternalPluginUpdates(
     updateSettings: UpdateSettings,
     indicator: ProgressIndicator? = null,
@@ -534,6 +571,7 @@ object UpdateChecker {
 
   /** A helper method for manually testing platform updates (see [com.intellij.internal.ShowUpdateInfoDialogAction]). */
   @ApiStatus.Internal
+  @IntellijInternalApi
   fun testPlatformUpdate(
     project: Project?,
     updateDataText: String,

@@ -12,6 +12,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -20,6 +21,7 @@ import java.util.*
 import java.util.function.Consumer
 
 @ApiStatus.Internal
+@IntellijInternalApi
 open class InstalledPluginsTableModel @JvmOverloads constructor(
   protected val project: Project?,
   initSessionResult: InitSessionResult? = null,
@@ -225,7 +227,7 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
   }
 
   class SyncSessionModificationTracker(private val sessionId: String) : SessionModificationTracker {
-    @Suppress("RAW_RUN_BLOCKING") //will take little time for old implementation, it was always blocking before
+    @Suppress("RAW_RUN_BLOCKING") //will take little time for the old implementation, it was always blocking before
     override fun isModified(): Boolean {
       return runBlocking { UiPluginManager.getInstance().isModified(sessionId) }
     }

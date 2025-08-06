@@ -4,13 +4,14 @@ package com.intellij.ide.plugins.marketplace
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.IntellijInternalApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
-import kotlin.collections.ifEmpty
 
 @Serializable
 @ApiStatus.Internal
+@IntellijInternalApi
 data class InitSessionResult(
   @Transient val visiblePlugins: List<PluginUiModel> = emptyList(),
   val pluginStates: Map<PluginId, Boolean?> = emptyMap(),

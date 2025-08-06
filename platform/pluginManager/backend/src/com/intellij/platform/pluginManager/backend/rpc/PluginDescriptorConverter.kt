@@ -3,15 +3,17 @@ package com.intellij.platform.pluginManager.backend.rpc
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.getTags
 import com.intellij.ide.plugins.newui.PluginSource
-import com.intellij.ide.plugins.api.PluginDto
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 
 /**
  * Converts [com.intellij.ide.plugins.IdeaPluginDescriptor] to [PluginDto] for compatibility purposes
  */
 @ApiStatus.Internal
+@IntellijInternalApi
 object PluginDescriptorConverter {
 
   fun toPluginDto(descriptor: IdeaPluginDescriptor): PluginDto {

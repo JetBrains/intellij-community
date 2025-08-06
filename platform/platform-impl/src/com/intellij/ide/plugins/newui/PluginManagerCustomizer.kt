@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.newui
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
@@ -12,6 +13,7 @@ import javax.swing.Action
 import javax.swing.JComponent
 
 @ApiStatus.Internal
+@IntellijInternalApi
 interface PluginManagerCustomizer {
   fun initCustomizer(parentComponent: JComponent)
 

@@ -4,21 +4,8 @@ package com.intellij.platform.pluginManager.frontend
 import com.intellij.ide.plugins.InstallPluginRequest
 import com.intellij.ide.plugins.PluginEnabler
 import com.intellij.ide.plugins.api.PluginDto
-import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
-import com.intellij.ide.plugins.marketplace.CheckErrorsResult
-import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
-import com.intellij.ide.plugins.marketplace.InitSessionResult
-import com.intellij.ide.plugins.marketplace.InstallPluginResult
-import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
-import com.intellij.ide.plugins.marketplace.PluginReviewComment
-import com.intellij.ide.plugins.marketplace.PluginSearchResult
-import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
-import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
-import com.intellij.ide.plugins.newui.PluginInstallationState
-import com.intellij.ide.plugins.newui.PluginSource
-import com.intellij.ide.plugins.newui.PluginUiModel
-import com.intellij.ide.plugins.newui.PluginUpdatesService
-import com.intellij.ide.plugins.newui.UiPluginManagerController
+import com.intellij.ide.plugins.marketplace.*
+import com.intellij.ide.plugins.newui.*
 import com.intellij.ide.ui.search.TraverseUIMode
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
@@ -26,21 +13,18 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginInstallerApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.platform.project.projectId
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 @ApiStatus.Internal
+@IntellijInternalApi
 class BackendUiPluginManagerController() : UiPluginManagerController {
   override fun isEnabled(): Boolean {
     return !TraverseUIMode.getInstance().isActive()

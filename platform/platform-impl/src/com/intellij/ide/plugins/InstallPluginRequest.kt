@@ -3,10 +3,12 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.IntellijInternalApi
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@IntellijInternalApi
 @Serializable
 class InstallPluginRequest(
   val sessionId: String,

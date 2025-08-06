@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nls
 import kotlin.coroutines.coroutineContext
 
 @ApiStatus.Internal
+@IntellijInternalApi
 sealed interface PluginAdvertiserService {
 
   companion object {
@@ -147,6 +148,7 @@ sealed interface PluginAdvertiserService {
 }
 
 @OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
+@IntellijInternalApi
 open class PluginAdvertiserServiceImpl(
   private val project: Project,
   private val cs: CoroutineScope,
@@ -606,6 +608,7 @@ open class PluginAdvertiserServiceImpl(
 }
 
 @ApiStatus.Internal
+@IntellijInternalApi
 open class HeadlessPluginAdvertiserServiceImpl : PluginAdvertiserService {
 
   final override suspend fun run(

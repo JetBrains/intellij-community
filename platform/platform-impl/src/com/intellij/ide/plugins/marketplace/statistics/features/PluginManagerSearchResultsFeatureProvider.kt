@@ -1,12 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace.statistics.features
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@IntellijInternalApi
 object PluginManagerSearchResultsFeatureProvider {
   private const val RESULTS_REPORT_COUNT = 30
 

@@ -1,13 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.pluginManager.backend.rpc
 
-import com.intellij.ide.plugins.DynamicPlugins
-import com.intellij.ide.plugins.InstallFromDiskAction
-import com.intellij.ide.plugins.InstallPluginRequest
-import com.intellij.ide.plugins.InstalledPluginsTableModel
-import com.intellij.ide.plugins.PluginEnabler
-import com.intellij.ide.plugins.PluginInstaller
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.*
 import com.intellij.ide.plugins.newui.BgProgressIndicator
 import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
@@ -15,6 +9,7 @@ import com.intellij.ide.plugins.newui.PluginManagerSessionService
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.pluginManager.shared.rpc.PluginInstallerApi
 import com.intellij.platform.project.ProjectId
@@ -22,11 +17,9 @@ import com.intellij.platform.project.findProjectOrNull
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
-@ApiStatus.Internal
-class BackendPluginInstallerApi : PluginInstallerApi {
+internal class BackendPluginInstallerApi : PluginInstallerApi {
 
   override suspend fun unloadDynamicPlugin(pluginId: PluginId, isUpdate: Boolean): Boolean {
     val pluginDescriptor = PluginManagerCore.findPlugin(pluginId) ?: return false

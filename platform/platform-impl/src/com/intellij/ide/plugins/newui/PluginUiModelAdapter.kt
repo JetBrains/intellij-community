@@ -6,12 +6,14 @@ import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledOsRequirement
 import com.intellij.ide.plugins.api.ReviewsPageContainer
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 
 /**
  * A temporary class used to eliminate "runtime" PluginDescriptor usages in the UI. It will later be replaced with frontend and backend implementations.
  */
 @ApiStatus.Internal
+@IntellijInternalApi
 class PluginUiModelAdapter(
   val pluginDescriptor: IdeaPluginDescriptor,
 ) : PluginUiModel {

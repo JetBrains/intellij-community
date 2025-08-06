@@ -11,9 +11,11 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import java.util.Locale.ROOT
 
+@IntellijInternalApi
 internal object PluginAdvertiserUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -37,7 +39,7 @@ internal object PluginAdvertiserUsageCollector : CounterUsagesCollector() {
   )
 
   val PLUGIN_FIELD = EventFields.StringValidatedByCustomRule(
-    "pluginId",  // "plugin" is reserved platform key in FeatureUsageData.platformDataKeys
+    "pluginId",  // "plugin" is a reserved platform key in FeatureUsageData.platformDataKeys
     PluginIdRuleValidator::class.java,
   )
 
@@ -103,6 +105,7 @@ internal object PluginAdvertiserUsageCollector : CounterUsagesCollector() {
 }
 
 @ApiStatus.Internal
+@IntellijInternalApi
 enum class FUSEventSource {
   EDITOR,
   NOTIFICATION,

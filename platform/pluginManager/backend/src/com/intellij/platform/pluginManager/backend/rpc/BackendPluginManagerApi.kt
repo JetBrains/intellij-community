@@ -4,21 +4,15 @@ package com.intellij.platform.pluginManager.backend.rpc
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
-import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.ide.plugins.api.PluginDto
-import com.intellij.ide.plugins.marketplace.CheckErrorsResult
-import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
-import com.intellij.ide.plugins.marketplace.InitSessionResult
-import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
-import com.intellij.ide.plugins.marketplace.PluginReviewComment
-import com.intellij.ide.plugins.marketplace.PluginSearchResult
-import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
+import com.intellij.ide.plugins.marketplace.*
+import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginManagerSessionService
-import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +23,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@IntellijInternalApi
 class BackendPluginManagerApi : PluginManagerApi {
   override suspend fun getPlugins(): List<PluginDto> {
     return PluginManagerCore.plugins.map(PluginDescriptorConverter::toPluginDto)

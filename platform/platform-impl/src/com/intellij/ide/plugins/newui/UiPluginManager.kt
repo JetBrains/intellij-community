@@ -1,29 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
-import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
-import com.intellij.ide.plugins.marketplace.CheckErrorsResult
-import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
-import com.intellij.ide.plugins.marketplace.InitSessionResult
-import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
-import com.intellij.ide.plugins.marketplace.PluginReviewComment
-import com.intellij.ide.plugins.marketplace.PluginSearchResult
-import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
-import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
+import com.intellij.ide.plugins.marketplace.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
-import java.util.UUID
+import java.util.*
 import javax.swing.JComponent
 
 /*
@@ -32,6 +24,7 @@ import javax.swing.JComponent
  */
 @Service
 @ApiStatus.Internal
+@IntellijInternalApi
 class UiPluginManager {
   suspend fun getPlugins(): List<PluginUiModel> {
     return getController().getPlugins()

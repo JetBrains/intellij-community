@@ -8,6 +8,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
+import com.intellij.openapi.util.IntellijInternalApi
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.sdk.PythonSdkUtil
@@ -26,6 +27,7 @@ internal class PyDependencyCollector : DependencyCollector {
   }
 }
 
+@OptIn(IntellijInternalApi::class)
 private class PyDependencyCollectorListener(private val project: Project) : PythonPackageManagementListener {
   override fun packagesChanged(sdk: Sdk) {
     PluginAdvertiserService.getInstance(project).rescanDependencies()

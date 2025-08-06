@@ -2,13 +2,9 @@
 package com.intellij.platform.pluginManager.shared.rpc
 
 import com.intellij.ide.plugins.InstallPluginRequest
-import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
-import com.intellij.ide.plugins.marketplace.CheckErrorsResult
+import com.intellij.ide.plugins.marketplace.*
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.ide.plugins.marketplace.InstallPluginResult
-import com.intellij.ide.plugins.marketplace.PluginInstalledFromDiskResult
-import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
-import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
@@ -18,6 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @Rpc
 @ApiStatus.Internal
+@IntellijInternalApi
 interface PluginInstallerApi : RemoteApi<Unit> {
   suspend fun unloadDynamicPlugin(pluginId: PluginId, isUpdate: Boolean): Boolean
   suspend fun uninstallDynamicPlugin(sessionId: String, pluginId: PluginId, isUpdate: Boolean): Boolean

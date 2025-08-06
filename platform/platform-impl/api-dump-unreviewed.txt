@@ -9427,19 +9427,9 @@ f:com.intellij.openapi.updateSettings.impl.UpdateChecker
 - sf:getDisabledToUpdate():java.util.Set
 - sf:getDisabledToUpdatePlugins():java.util.Set
 - f:getExcludedFromUpdateCheckPlugins():java.util.HashSet
-- sf:getExternalPluginUpdates(com.intellij.openapi.updateSettings.impl.UpdateSettings):com.intellij.openapi.updateSettings.impl.ExternalPluginResults
-- sf:getExternalPluginUpdates(com.intellij.openapi.updateSettings.impl.UpdateSettings,com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.updateSettings.impl.ExternalPluginResults
-- bs:getExternalPluginUpdates$default(com.intellij.openapi.updateSettings.impl.UpdateSettings,com.intellij.openapi.progress.ProgressIndicator,I,java.lang.Object):com.intellij.openapi.updateSettings.impl.ExternalPluginResults
-- sf:getInternalPluginUpdates():com.intellij.openapi.updateSettings.impl.InternalPluginResults
-- sf:getInternalPluginUpdates(com.intellij.openapi.util.BuildNumber):com.intellij.openapi.updateSettings.impl.InternalPluginResults
-- sf:getInternalPluginUpdates(com.intellij.openapi.util.BuildNumber,com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.updateSettings.impl.InternalPluginResults
-- sf:getInternalPluginUpdates(com.intellij.openapi.util.BuildNumber,com.intellij.openapi.progress.ProgressIndicator,java.util.Map):com.intellij.openapi.updateSettings.impl.InternalPluginResults
-- bs:getInternalPluginUpdates$default(com.intellij.openapi.util.BuildNumber,com.intellij.openapi.progress.ProgressIndicator,java.util.Map,I,java.lang.Object):com.intellij.openapi.updateSettings.impl.InternalPluginResults
 - sf:getNotificationGroup():com.intellij.notification.NotificationGroup
 - sf:getNotificationGroupForIdeUpdateResults():com.intellij.notification.NotificationGroup
 - sf:getNotificationGroupForPluginUpdateResults():com.intellij.notification.NotificationGroup
-- sf:getPlatformUpdates():com.intellij.openapi.updateSettings.impl.PlatformUpdates
-- sf:getPlatformUpdates(com.intellij.openapi.updateSettings.impl.UpdateSettings):com.intellij.openapi.updateSettings.impl.PlatformUpdates
 - sf:getPluginUpdates():java.util.Collection
 - sf:loadProductData(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.updateSettings.impl.Product
 - sf:saveDisabledToUpdatePlugins():V
@@ -9509,13 +9499,6 @@ c:com.intellij.openapi.updateSettings.impl.UpdateSettings
 - setThirdPartyPluginsAllowed(Z):V
 - setWhatsNewShownFor(I):V
 f:com.intellij.openapi.updateSettings.impl.UpdateSettingsUIProvider$Companion
-f:com.intellij.openapi.updateSettings.impl.UpdateStrategy
-- <init>(com.intellij.openapi.util.BuildNumber):V
-- <init>(com.intellij.openapi.util.BuildNumber,com.intellij.openapi.updateSettings.impl.Product):V
-- <init>(com.intellij.openapi.util.BuildNumber,com.intellij.openapi.updateSettings.impl.Product,com.intellij.openapi.updateSettings.impl.UpdateSettings):V
-- <init>(com.intellij.openapi.util.BuildNumber,com.intellij.openapi.updateSettings.impl.Product,com.intellij.openapi.updateSettings.impl.UpdateSettings,com.intellij.openapi.updateSettings.UpdateStrategyCustomization):V
-- b:<init>(com.intellij.openapi.util.BuildNumber,com.intellij.openapi.updateSettings.impl.Product,com.intellij.openapi.updateSettings.impl.UpdateSettings,com.intellij.openapi.updateSettings.UpdateStrategyCustomization,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:checkForUpdates():com.intellij.openapi.updateSettings.impl.PlatformUpdates
 c:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserServiceImpl
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - collectDependencyUnknownFeatures(Z,kotlin.coroutines.Continuation):java.lang.Object
@@ -9538,11 +9521,6 @@ f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertise
 - sf:installAndEnable(java.util.Set,java.lang.Runnable):V
 - bs:installAndEnable$default(com.intellij.openapi.project.Project,java.util.Set,Z,Z,com.intellij.openapi.application.ModalityState,java.lang.Runnable,I,java.lang.Object):V
 - sf:installAndEnablePlugins(java.util.Set,java.lang.Runnable):V
-f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserDialog
-- com.intellij.openapi.ui.DialogWrapper
-- <init>(com.intellij.openapi.project.Project,java.util.Collection,java.util.List):V
-- doInstallPlugins(Z,com.intellij.openapi.application.ModalityState):V
-- getPreferredFocusedComponent():javax.swing.JComponent
 c:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserDialogPluginInstaller
 - <init>(com.intellij.openapi.project.Project,java.util.Collection,java.util.List,java.util.function.Consumer):V
 - doInstallPlugins(java.util.function.Predicate,com.intellij.openapi.application.ModalityState):Z

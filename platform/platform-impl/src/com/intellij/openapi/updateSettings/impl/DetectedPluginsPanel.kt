@@ -20,13 +20,11 @@ import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JTable
 
-@ApiStatus.Internal
-class DetectedPluginsPanel(project: Project?) : OrderPanel<PluginDownloader>(PluginDownloader::class.java) {
+internal class DetectedPluginsPanel(project: Project?) : OrderPanel<PluginDownloader>(PluginDownloader::class.java) {
   private val myDetailsComponent: PluginDetailsPageComponent
   private val myHeader = PluginHeaderPanel()
   private val mySkippedPlugins = HashSet<PluginId>()

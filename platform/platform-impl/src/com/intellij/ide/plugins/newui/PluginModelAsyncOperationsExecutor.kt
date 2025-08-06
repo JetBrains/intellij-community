@@ -18,8 +18,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
-@ApiStatus.Internal
-object PluginModelAsyncOperationsExecutor {
+internal object PluginModelAsyncOperationsExecutor {
   fun performUninstall(
     cs: CoroutineScope,
     descriptor: PluginUiModel,

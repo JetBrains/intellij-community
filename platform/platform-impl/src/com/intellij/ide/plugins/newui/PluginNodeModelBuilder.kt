@@ -3,9 +3,11 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@IntellijInternalApi
 class PluginNodeModelBuilder(private val pluginId: PluginId) : PluginUiModelBuilder {
   private val pluginNode = PluginNode(pluginId)
   
@@ -169,7 +171,7 @@ class PluginNodeModelBuilder(private val pluginId: PluginId) : PluginUiModelBuil
   }
 }
 
-@ApiStatus.Internal
-object PluginNodeModelBuilderFactory : PluginUiModelBuilderFactory {
+@IntellijInternalApi
+internal object PluginNodeModelBuilderFactory : PluginUiModelBuilderFactory {
   override fun createBuilder(id: PluginId): PluginUiModelBuilder = PluginNodeModelBuilder(id)
 }

@@ -29,12 +29,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
-import fleet.util.associateNotNull
-import fleet.util.associateWithNotNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.io.File
@@ -322,7 +321,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       showErrors = !operation.isShownErrors
       restartRequired = operation.isRestartRequired
     }
-    catch (e: ProcessCanceledException) {
+    catch (@Suppress("IncorrectCancellationExceptionHandling") _: ProcessCanceledException) {
       cancel = true
     }
     catch (e: Throwable) {
