@@ -60,7 +60,7 @@ fun MutableEntityStorage.modifyKotlinScriptLibraryEntity(
 
 data class KotlinScriptLibraryEntityId(val classes: List<VirtualFileUrl>, val sources: List<VirtualFileUrl> = emptyList()) :
     SymbolicEntityId<KotlinScriptLibraryEntity> {
-    constructor(url: VirtualFileUrl) : this(listOf(url), emptyList())
+    constructor(classUrl: VirtualFileUrl) : this(listOf(classUrl), emptyList())
 
     override val presentableName: @NlsSafe String
         get() = "classes=${classes.joinToString(prefix = "[", postfix = "]")}, sources=${sources.joinToString(prefix = "[", postfix = "]")}"

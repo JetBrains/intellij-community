@@ -13,18 +13,15 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.util.containers.addIfNotNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptModelData
 import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptEntitySource
-import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
-import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
-import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationWithSdk
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.toVirtualFileUrl
-import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptRefinedConfigurationResolver
-import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptWorkspaceModelManager
+import org.jetbrains.kotlin.idea.core.script.k2.modules.*
 import org.jetbrains.kotlin.idea.core.script.v1.indexSourceRootsEagerly
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingWarnLog
@@ -136,19 +133,29 @@ class GradleScriptRefinedConfigurationProvider(
             val sources = configuration.dependenciesSources.sorted().map { it.path.toVirtualFileUrl(fileUrlManager) }.toMutableSet()
 
             val dependencies = buildList {
-                add(
+                addIfNotNull(
                     extractRootsByPredicate(classes, sources) {
                         it.url.contains("kotlin-stdlib")
                     }
                 )
 
-                add(
+                addIfNotNull(
                     extractRootsByPredicate(classes, sources) {
                         it.url.contains("accessors")
                     }
                 )
 
                 if (indexSourceRootsEagerly() || GradleScriptIndexSourcesStorage.isIndexed(project)) {
+                    addIfNotNull(
+                        extractRootsByPredicate(classes, sources) {
+                            it.url.contains("kotlin-gradle-plugin")
+                        }
+                    )
+
+                    addAll(extractDependenciesWithSources(classes, sources))
+
+                    groupSourcesByParent(sources)
+
                     addAll(
                         classes.map {
                             getOrCreateScriptLibrary(it, sources)
@@ -200,12 +207,63 @@ class GradleScriptRefinedConfigurationProvider(
         return id
     }
 
+    /**
+     * Extracts and registers Kotlin Script library dependencies by pairing class JAR files with their corresponding source JAR files.
+     * This method searches for matching `-sources.jar` files in the given `sources` set based on the file names of files in `classes`.
+     *
+     * @param classes a mutable set of [VirtualFileUrl]s pointing to class JAR files
+     * @param sources a mutable set of [VirtualFileUrl]s pointing to source JAR files
+     * @return a list of [KotlinScriptLibraryEntityId]s that were successfully created and registered
+     */
+    private fun MutableEntityStorage.extractDependenciesWithSources(
+        classes: MutableSet<VirtualFileUrl>, sources: MutableSet<VirtualFileUrl>
+    ): List<KotlinScriptLibraryEntityId> {
+        val result: MutableList<KotlinScriptLibraryEntityId> = mutableListOf()
+        val jar = ".jar!/"
+        val sourcesJar = "-sources.jar!/"
+
+        val sourcesNames = sources.filter { it.url.endsWith(sourcesJar) }.associateBy {
+            it.url.removeSuffix(sourcesJar).substringAfterLast("/")
+        }
+
+        sequence {
+            classes.filter { it.url.endsWith(jar) }.forEach { classUrl ->
+                val matchingSourceUrl = sourcesNames[classUrl.url.removeSuffix(jar).substringAfterLast("/")]
+                if (matchingSourceUrl != null && matchingSourceUrl != classUrl) {
+                    yield(classUrl to matchingSourceUrl)
+                }
+            }
+        }.forEach { (classUrl, sourceUrl) ->
+            val id = KotlinScriptLibraryEntityId(listOf(classUrl), listOf(sourceUrl))
+            if (!this.contains(id)) {
+                this addEntity KotlinScriptLibraryEntity(id.classes, id.sources, KotlinGradleScriptEntitySource)
+            }
+
+            classes.remove(classUrl)
+            sources.remove(sourceUrl)
+            result.add(id)
+        }
+
+        return result
+    }
+
+    private fun groupSourcesByParent(sources: MutableSet<VirtualFileUrl>) {
+        sources.groupBy { it.parent }.forEach { (parent, sourcesToRemove) ->
+            if (parent != null) {
+                sources.add(parent)
+                sources.removeAll(sourcesToRemove.toSet())
+            }
+        }
+    }
+
     private fun MutableEntityStorage.extractRootsByPredicate(
         classes: MutableSet<VirtualFileUrl>,
         sources: MutableSet<VirtualFileUrl>,
         predicate: Predicate<VirtualFileUrl>
-    ): KotlinScriptLibraryEntityId {
+    ): KotlinScriptLibraryEntityId? {
         val groupedClasses = classes.removeOnMatch(predicate)
+        if (groupedClasses.isEmpty()) return null
+
         val groupedSources = sources.removeOnMatch(predicate)
 
         val id = KotlinScriptLibraryEntityId(groupedClasses, groupedSources)
