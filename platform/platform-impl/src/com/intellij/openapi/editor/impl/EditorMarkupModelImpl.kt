@@ -38,7 +38,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.editor.ex.*
 import com.intellij.openapi.editor.impl.inspector.InspectionsGroup
-import com.intellij.openapi.editor.impl.inspector.RedesignedInspectionsManager.isAvailable
+import com.intellij.openapi.editor.impl.inspector.RedesignedInspectionsManager
 import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.editor.markup.AnalyzerStatus.Companion.EMPTY
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -64,7 +64,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.Alarm
 import com.intellij.util.Processor
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -89,7 +88,6 @@ import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 import java.util.*
 import java.util.Queue
-import java.util.function.BooleanSupplier
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.border.Border
@@ -145,8 +143,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   // query daemon status in BGT (because it's rather expensive and PSI-related) and then update the icon in EDT later
   private val trafficLightIconUpdateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  @JvmField
-  internal val errorStripeMarkersModel: ErrorStripeMarkersModel
+  private val errorStripeMarkersModel: ErrorStripeMarkersModel
 
   private var dimensionsAreValid = false
   private var myEditorScrollbarTop = -1
@@ -224,7 +221,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
     /*    if(RedesignedInspectionsManager.isAvailable()) {
       GotItTooltip tooltip = new GotItTooltip("redesigned.inspections.tooltip",
-                                              "The perfect companion for on the go, training and sports education. Through an integrated straw, the bottle sends thirst quickly without beating. Thanks to the screw cap, the bottle is quickly filled and it stays in place", resourcesDisposable);
+                                              "The perfect companion for on the go, training and sports education. Through an integrated straw, the bottle sends thirst quickly without beating. Thanks to the screw cap, the bottle is quickly filled, and it stays in place", resourcesDisposable);
       tooltip.withShowCount(1);
       tooltip.withHeader("Paw Patrol");
       tooltip.withIcon(AllIcons.General.BalloonInformation);
@@ -343,7 +340,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
   private fun doUpdateTrafficLightVisibility() {
     if (trafficLightVisible) {
-      if (isAvailable()) {
+      if (RedesignedInspectionsManager.isAvailable()) {
         statusToolbar.updateActionsAsync()
       }
 
@@ -432,7 +429,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     val delegate = ActionManager.getInstance().getAction(id)
     val result = object : MarkupModelDelegateAction(delegate) {
       override fun update(e: AnActionEvent) {
-        if (isAvailable()) {
+        if (RedesignedInspectionsManager.isAvailable()) {
           e.presentation.setEnabledAndVisible(false)
           return
         }
@@ -514,7 +511,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
       showNavigation = analyzerStatus.showNavigation
     }
     else {
-      statusTimer.addRequest(Runnable {
+      statusTimer.addRequest({
         hasAnalyzed = false
         ActivityTracker.getInstance().inc()
       }, QUICK_ANALYSIS_TIMEOUT_MS)
@@ -591,7 +588,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     }
 
     ReadAction.nonBlocking<TooltipRenderer?> { tooltipRendererProvider.calcTooltipRenderer(highlighters) }
-      .expireWhen(BooleanSupplier { editor.isDisposed })
+      .expireWhen { editor.isDisposed }
       .finishOnUiThread(ModalityState.nonModal()) { bigRenderer ->
         if (bigRenderer != null) {
           val hint = showTooltip(bigRenderer, createHint(e.component, Point(0, y + 1)).setForcePopup(true))
@@ -620,7 +617,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   private fun collectRangeHighlighters(
     markupModel: MarkupModelEx,
     visualLine: Int,
-    highlighters: MutableList<RangeHighlighterEx>
+    highlighters: MutableList<RangeHighlighterEx>,
   ) {
     val startOffset = getOffset(fitLineToEditor(editor, visualLine - EditorFragmentRenderer.PREVIEW_LINES), true)
     val endOffset = getOffset(fitLineToEditor(editor, visualLine + EditorFragmentRenderer.PREVIEW_LINES), false)
@@ -661,7 +658,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   private fun addNearestHighlighters(
     markupModel: MarkupModelEx,
     scrollBarY: Int,
-    result: MutableCollection<in RangeHighlighter>
+    result: MutableCollection<in RangeHighlighter>,
   ) {
     val startOffset = yPositionToOffset(scrollBarY - getMinMarkHeight(), true)
     val endOffset = yPositionToOffset(scrollBarY + getMinMarkHeight(), false)
@@ -913,7 +910,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
         return
       }
       if (transparent()) {
-        ReadAction.run<RuntimeException?>(ThrowableRunnable { doPaintTrack(g, c, trackBounds) })
+        ReadAction.run<RuntimeException?> { doPaintTrack(g, c, trackBounds) }
       }
       else {
         super.paintTrack(g, c, trackBounds)
@@ -1077,7 +1074,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
       ys: Int,
       ends: Queue<out PositionedStripe?>,
       stripes: MutableList<PositionedStripe>,
-      g: Graphics, yStart: Int
+      g: Graphics, yStart: Int,
     ): Int {
       var yStart = yStart
       while (!ends.isEmpty()) {
@@ -1122,7 +1119,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     override fun mouseClicked(e: MouseEvent) {
       CommandProcessor.getInstance().executeCommand(
         editor.project,
-        Runnable { doMouseClicked(e) },
+        { doMouseClicked(e) },
         EditorBundle.message("move.caret.command.name"),
         DocCommandGroupId.noneGroupId(document),
         UndoConfirmationPolicy.DEFAULT,
@@ -1208,7 +1205,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
     fun closeHintOnMovingMouseAway(hint: LightweightHint) {
       val disposable = Disposer.newDisposable()
-      IdeEventQueue.getInstance().addDispatcher(IdeEventQueue.EventDispatcher { e: AWTEvent? ->
+      IdeEventQueue.getInstance().addDispatcher({ e: AWTEvent? ->
         if (e!!.getID() == MouseEvent.MOUSE_PRESSED) {
           myKeepHint = true
           Disposer.dispose(disposable)
@@ -1394,6 +1391,11 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     }
   }
 
+  @ApiStatus.Internal
+  fun errorStripeMarkersModelAttributesChanged(highlighter: RangeHighlighterEx) {
+    errorStripeMarkersModel.attributesChanged(highlighter, true)
+  }
+
   private inner class TrafficLightAction : DumbAwareAction(), CustomComponentAction, ActionRemoteBehaviorSpecification.Frontend {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -1413,7 +1415,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     override fun update(e: AnActionEvent) {
       val presentation = e.presentation
 
-      if (isAvailable()) {
+      if (RedesignedInspectionsManager.isAvailable()) {
         presentation.setEnabledAndVisible(false)
         return
       }
@@ -1438,7 +1440,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     presentation: Presentation,
     buttonLook: ActionButtonLook,
     place: String,
-    colorsScheme: EditorColorsScheme
+    colorsScheme: EditorColorsScheme,
   ) : JPanel() {
     private var mousePressed = false
     private var mouseHover = false
@@ -1809,10 +1811,10 @@ open class EditorInspectionsActionToolbar(
   private val editor: EditorImpl,
   private val editorButtonLook: ActionButtonLook,
   private val nextErrorAction: AnAction?,
-  private val prevErrorAction: AnAction?
+  private val prevErrorAction: AnAction?,
 ) : ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
   init {
-    ClientProperty.put(this, ActionToolbarImpl.SUPPRESS_FAST_TRACK, true)
+    ClientProperty.put(this, SUPPRESS_FAST_TRACK, true)
   }
 
   override fun addNotify() {
@@ -1830,9 +1832,9 @@ open class EditorInspectionsActionToolbar(
     action: AnAction,
     place: String,
     presentation: Presentation,
-    minimumSize: Supplier<out Dimension>
+    minimumSize: Supplier<out Dimension>,
   ): ActionButtonWithText {
-    if (isAvailable()) {
+    if (RedesignedInspectionsManager.isAvailable()) {
       return super.createTextButton(action, place, presentation, minimumSize)
     }
 
@@ -1846,9 +1848,9 @@ open class EditorInspectionsActionToolbar(
     action: AnAction,
     place: String,
     presentation: Presentation,
-    minimumSize: Supplier<out Dimension>
+    minimumSize: Supplier<out Dimension>,
   ): ActionButton {
-    if (isAvailable()) {
+    if (RedesignedInspectionsManager.isAvailable()) {
       return super.createIconButton(action, place, presentation, minimumSize)
     }
     return ToolbarActionButton(action, presentation, place, minimumSize)
@@ -1869,7 +1871,7 @@ open class EditorInspectionsActionToolbar(
     action: AnAction,
     presentation: Presentation,
     place: String,
-    minimumSize: Supplier<out Dimension>
+    minimumSize: Supplier<out Dimension>,
   ) : ActionButton(action, presentation, place, minimumSize) {
     override fun updateIcon() {
       super.updateIcon()

@@ -96,7 +96,7 @@ public interface EditorEx extends Editor {
   /**
    * This method doesn't set the scheme itself, but the delegate
    * @param scheme - original scheme
-   * @see EditorImpl.MyColorSchemeDelegate
+   * @see com.intellij.openapi.editor.impl.EditorColorSchemeDelegate
    */
   void setColorsScheme(@NotNull EditorColorsScheme scheme);
 

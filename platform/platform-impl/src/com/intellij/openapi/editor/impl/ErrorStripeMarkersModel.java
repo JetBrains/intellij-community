@@ -133,14 +133,14 @@ final class ErrorStripeMarkersModel {
   }
 
   private void afterAdded(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
-    if (isAvailable(highlighter, documentMarkupModel)) {
+    if (isErrorStripeHighlighter(highlighter, documentMarkupModel, myEditor)) {
       createErrorStripeMarker(highlighter);
     }
   }
 
   private ErrorStripeMarkerImpl errorStripeForRemovedMarker(@NotNull RangeHighlighterEx originalHighlighter, boolean documentMarkupModel) {
     ErrorStripeMarkerImpl errorStripeMarker = findErrorStripeMarker(originalHighlighter, false);
-    if (errorStripeMarker == null && isAvailable(originalHighlighter, documentMarkupModel)) {
+    if (errorStripeMarker == null && isErrorStripeHighlighter(originalHighlighter, documentMarkupModel, myEditor)) {
       errorStripeMarker = findErrorStripeMarker(originalHighlighter, true);
     }
     return errorStripeMarker;
@@ -148,7 +148,7 @@ final class ErrorStripeMarkersModel {
 
   void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
     ErrorStripeMarkerImpl existingErrorStripeMarker = findErrorStripeMarker(highlighter, false);
-    boolean hasErrorStripe = isAvailable(highlighter, documentMarkupModel);
+    boolean hasErrorStripe = isErrorStripeHighlighter(highlighter, documentMarkupModel, myEditor);
 
     if (existingErrorStripeMarker == null) {
       if (hasErrorStripe) {
@@ -174,11 +174,11 @@ final class ErrorStripeMarkersModel {
     });
   }
 
-  private boolean isAvailable(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
+  static boolean isErrorStripeHighlighter(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel, @NotNull EditorImpl editor) {
     if (documentMarkupModel) {
-      if (!highlighter.getEditorFilter().avaliableIn(myEditor) || !myEditor.isHighlighterAvailable(highlighter)) return false;
+      if (!highlighter.getEditorFilter().avaliableIn(editor) || !editor.isHighlighterAvailable(highlighter)) return false;
     }
-    return highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme()) != null;
+    return highlighter.getErrorStripeMarkColor(editor.getColorsScheme()) != null;
   }
 
   private void createErrorStripeMarker(@NotNull RangeHighlighterEx h) {
@@ -250,7 +250,7 @@ final class ErrorStripeMarkersModel {
   private int countStripeMarkers(@NotNull ErrorStripeRangeMarkerTree tree) {
     AtomicInteger counter = new AtomicInteger();
     tree.processAll(marker -> {
-      if (isAvailable(marker.getHighlighter(), true)) {
+      if (isErrorStripeHighlighter(marker.getHighlighter(), true, myEditor)) {
         counter.incrementAndGet();
       }
       return true;

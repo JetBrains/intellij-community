@@ -301,7 +301,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private List<CaretState> myCaretStateBeforeLastPress;
   LogicalPosition myLastMousePressedLocation;
 
-  Point myLastMousePressedPoint;
+  private Point myLastMousePressedPoint;
   private boolean myLastPressedOnGutter;
   private boolean myLastPressedOnGutterIcon;
   private VisualPosition myTargetMultiSelectionPosition;
@@ -373,7 +373,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     final EditorColorsScheme boundColorScheme = createBoundColorSchemeDelegate(null);
     if (boundColorScheme instanceof EditorColorSchemeDelegate) {
       myScheme = (EditorColorSchemeDelegate)boundColorScheme;
-    } else {
+    }
+    else {
       LOG.warn("createBoundColorSchemeDelegate created delegate of type '%s'. Will wrap it with MyColorSchemeDelegate".formatted(boundColorScheme.getClass()),
                 new Throwable());
       myScheme = new EditorColorSchemeDelegate(this, boundColorScheme);
@@ -1474,8 +1475,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Document document = getDocument();
       Disposer.dispose(myHighlighterDisposable);
 
-      document.addDocumentListener(highlighter);
-      myHighlighterDisposable = () -> document.removeDocumentListener(highlighter);
+      myHighlighterDisposable = Disposer.newDisposable();
+      document.addDocumentListener(highlighter, myHighlighterDisposable);
       Disposer.register(myDisposable, myHighlighterDisposable);
       highlighter.setEditor(this);
 
@@ -3607,7 +3608,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setColorsScheme(final @NotNull EditorColorsScheme scheme) {
     assertIsDispatchThread();
-    final EditorImpl finalEditor = this;
     EditorThreading.run(() -> {
       final EditorColorsManager colorsManager = ApplicationManager.getApplication().getServiceIfCreated(EditorColorsManager.class);
       if (colorsManager == null) {
@@ -3616,7 +3616,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       if (scheme instanceof EditorColorSchemeDelegate) {
         myScheme = (EditorColorSchemeDelegate)scheme;
-      } else {
+      }
+      else {
         myScheme = new EditorColorSchemeDelegate(this, scheme);
       }
       reinitSettings();
@@ -3815,7 +3816,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   /**
-   * @deprecated Use {@link #addHighlightingPredicate(EditorHighlightingPredicate)} and {@link #removeHighlightingPredicate(EditorHighlightingPredicate)} instead.
+   * @deprecated Use {@link #addHighlightingPredicate} and {@link #removeHighlightingPredicate} instead.
    */
   @Deprecated
   public void setHighlightingPredicate(@Nullable Predicate<? super RangeHighlighter> filter) {
@@ -3885,7 +3886,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true,
                                                 EditorUtil.attributesImpactFontStyle(attributes),
                                                 EditorUtil.attributesImpactForegroundColor(attributes));
-        myMarkupModel.errorStripeMarkersModel.attributesChanged((RangeHighlighterEx)highlighter, true);
+        myMarkupModel.errorStripeMarkersModelAttributesChanged((RangeHighlighterEx)highlighter);
       }
     }
   }
@@ -5248,7 +5249,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         if (statusComponent != null) {
           myLayeredPane.add(statusComponent, STATUS_COMPONENT_LAYER);
-        } else if (myStatusComponent != null) {
+        }
+        else if (myStatusComponent != null) {
           myLayeredPane.remove(myStatusComponent);
         }
         firePropertyChange("statusComponent", myStatusComponent, statusComponent);
@@ -5292,10 +5294,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           Dimension d = c.getPreferredSize();
           int rightInsets = getVerticalScrollBar().getWidth() + (isMirrored() ? myGutterComponent.getWidth() : 0);
           c.setBounds(r.width - d.width - rightInsets - 20, 20, d.width, d.height);
-        } else if (c instanceof JScrollBar) {
+        }
+        else if (c instanceof JScrollBar) {
           // Vertical scroll bar: JScrollBar
           // do nothing here, MyScrollPaneLayout manages vsb
-        } else if (!(c instanceof StickyLinesPanel)) {
+        }
+        else if (!(c instanceof StickyLinesPanel)) {
           // Status component: NonOpaquePanel
           Dimension d = c.getPreferredSize();
           c.setBounds(r.width - d.width, 0, d.width, d.height);
@@ -5403,9 +5407,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myLayeredPane.add(myVerticalScrollBar, VERTICAL_SCROLLBAR_LAYER);
       ((MyScrollPaneLayout) myScrollPane.getLayout()).setVerticalScrollBar(myVerticalScrollBar);
       return stickyManager;
-    } else {
-      return null;
     }
+    return null;
   }
 
   @ApiStatus.Experimental
