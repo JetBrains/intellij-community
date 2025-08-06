@@ -1,15 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.codeInspection
 
-import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement
-import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.lang.properties.psi.Property
 import com.intellij.lang.properties.psi.PropertyKeyValueFormat
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
@@ -30,8 +29,9 @@ class GradleLatestMinorVersionInspection : LocalInspectionTool() {
 
         // extract the current Gradle version from the wrapper properties file
         val regex = "gradle-(.+)-bin\\.zip$".toRegex()
-        val url = element.value ?: return
-        val currentVersion = regex.find(url)?.groupValues?.get(1) ?: return
+        val group = regex.find(element.text)?.groups[1] ?: return
+        val currentVersion = group.value
+        val versionTextRange = TextRange(group.range.first, group.range.last + 1)
         val currentGradleVersion = try {
           GradleVersion.version(currentVersion)
         }
@@ -57,11 +57,12 @@ class GradleLatestMinorVersionInspection : LocalInspectionTool() {
             return "Gradle"
           }
         }
+
         holder.registerProblem(
           element,
           "Outdated Gradle minor version",
           ProblemHighlightType.WARNING,
-          null,
+          versionTextRange,
           localFix
         )
       }
