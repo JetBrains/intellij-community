@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirSuperEnt
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirTypeParameterConstraintNameInWhereClauseCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirSameAsFileClassifierNameCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirSuperMemberCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirTrailingFunctionParameterNameCompletionContributorBase
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -65,6 +66,8 @@ internal object Completions {
         K2KeywordCompletionContributor(),
         K2ImportDirectivePackageMembersCompletionContributor(),
         K2SuperMemberCompletionContributor(),
+        K2TrailingFunctionParameterNameCompletionContributorBase.All(),
+        K2TrailingFunctionParameterNameCompletionContributorBase.Missing(),
     )
 
     // Note: this function will be renamed and replace the complete method below!

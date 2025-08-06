@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2
 
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import org.jetbrains.annotations.ApiStatus
@@ -17,6 +16,7 @@ import org.jetbrains.kotlin.idea.completion.handlers.KeywordConstructorInsertion
 import org.jetbrains.kotlin.idea.completion.handlers.LineAdjusterInsertionHandler
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirTrailingFunctionParameterNameCompletionContributorBase
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.BracketOperatorInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.TrailingLambdaInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
@@ -81,6 +81,7 @@ val serializableInsertionHandlerSerializersModule: SerializersModule = Serialize
         subclass(UpdateLookupElementBuilderToInsertTypeQualifierOnSuperInsertionHandler::class, UpdateLookupElementBuilderToInsertTypeQualifierOnSuperInsertionHandler.serializer())
         subclass(FirCompletionContributorBase.AdaptToExplicitReceiverInsertionHandler::class, FirCompletionContributorBase.AdaptToExplicitReceiverInsertionHandler.serializer())
         subclass(FirTrailingFunctionParameterNameCompletionContributorBase.WithImportInsertionHandler::class, FirTrailingFunctionParameterNameCompletionContributorBase.WithImportInsertionHandler.serializer())
+        subclass(K2TrailingFunctionParameterNameCompletionContributorBase.WithImportInsertionHandler::class, K2TrailingFunctionParameterNameCompletionContributorBase.WithImportInsertionHandler.serializer())
         subclass(NameWithTypeLookupElementDecoratorInsertHandler::class, NameWithTypeLookupElementDecoratorInsertHandler.serializer())
         subclass(NamedArgumentWithValueInsertionHandler::class, NamedArgumentWithValueInsertionHandler.serializer())
         subclass(TrailingLambdaInsertionHandler::class, serializer = TrailingLambdaInsertionHandler.serializer())

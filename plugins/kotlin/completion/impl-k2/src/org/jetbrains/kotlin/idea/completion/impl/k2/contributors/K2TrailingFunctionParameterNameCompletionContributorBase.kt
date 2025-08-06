@@ -35,15 +35,16 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.singleReturnExpressionOrNull
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.api.serialization.ensureSerializable
 import org.jetbrains.kotlin.idea.completion.doPostponedOperationsAndUnblockDocument
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensionCandidateChecker
+import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaParameterNameWeigher.isTrailingLambdaParameter
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.addImportIfRequired
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.factories.TrailingFunctionDescriptor
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleParameterPositionContext
@@ -54,22 +55,21 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.yieldIfNotNull
+import kotlin.reflect.KClass
 
-internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<C : KotlinRawPositionContext>(
-    sink: LookupElementSink,
-    priority: Int = 0,
-) : FirCompletionContributorBase<C>(sink, priority) {
-
-    class All(
-        sink: LookupElementSink,
-        priority: Int = 0,
-    ) : FirTrailingFunctionParameterNameCompletionContributorBase<KotlinExpressionNameReferencePositionContext>(sink, priority) {
-
-        context(KaSession)
-        override fun complete(
-            positionContext: KotlinExpressionNameReferencePositionContext,
-            weighingContext: WeighingContext,
+internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P : KotlinRawPositionContext>(
+    positionContextClass: KClass<P>
+) : K2SimpleCompletionContributor<P>(
+    positionContextClass
+) {
+    class All : K2TrailingFunctionParameterNameCompletionContributorBase<KotlinExpressionNameReferencePositionContext>(
+        KotlinExpressionNameReferencePositionContext::class
+    ) {
+        override fun KaSession.complete(
+            context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>,
         ) {
+            val positionContext = context.positionContext
+            if (positionContext.isAfterRangeOperator()) return
             if (positionContext.explicitReceiver != null) return
 
             val nameExpression = positionContext.nameExpression
@@ -79,24 +79,20 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
             if (functionLiteral.bodyExpression?.firstStatement != nameExpression) return
 
             super.complete(
+                context = context,
                 position = nameExpression,
                 existingParameterNames = emptySet(),
-                weighingContext = weighingContext,
             )
         }
     }
 
-    class Missing(
-        sink: LookupElementSink,
-        priority: Int = 0,
-    ) : FirTrailingFunctionParameterNameCompletionContributorBase<KotlinSimpleParameterPositionContext>(sink, priority) {
-
-        context(KaSession)
-        override fun complete(
-            positionContext: KotlinSimpleParameterPositionContext,
-            weighingContext: WeighingContext,
+    class Missing : K2TrailingFunctionParameterNameCompletionContributorBase<KotlinSimpleParameterPositionContext>(
+        KotlinSimpleParameterPositionContext::class
+    ) {
+        override fun KaSession.complete(
+            context: K2CompletionSectionContext<KotlinSimpleParameterPositionContext>,
         ) {
-            val parameter = positionContext.ktParameter
+            val parameter = context.positionContext.ktParameter
 
             val parameterList = parameter.parent
             if (parameterList !is KtParameterList) return
@@ -108,9 +104,9 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
                 .toSet()
 
             super.complete(
+                context = context,
                 position = parameter,
                 existingParameterNames = existingParameterNames,
-                weighingContext = weighingContext,
             )
         }
     }
@@ -118,10 +114,10 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
     context(KaSession)
     protected fun complete(
         position: KtElement,
+        context: K2CompletionSectionContext<P>,
         existingParameterNames: Set<String>,
-        weighingContext: WeighingContext,
     ) {
-        val functionLiteral = originalKtFile.findElementAt(position.startOffset)
+        val functionLiteral = context.completionContext.originalFile.findElementAt(position.startOffset)
             ?.parentOfType<KtFunctionLiteral>()
             ?: return
 
@@ -145,16 +141,17 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
             .mapNotNull { FunctionLookupElementFactory.getTrailingFunctionSignature(it, checkDefaultValues = false) }
             .mapNotNull { FunctionLookupElementFactory.createTrailingFunctionDescriptor(it) }
             .filterNot { it.functionType.hasReceiver }
-            .flatMap { createLookupElements(it, candidateChecker, existingParameterNames) }
+            .flatMap { createLookupElements(context, it, candidateChecker, existingParameterNames) }
             .map { elementBuilder ->
                 elementBuilder
                     .apply { isTrailingLambdaParameter = true }
-                    .applyWeighs(weighingContext)
-            }.forEach(sink::addElement)
+                    .applyWeighs(context.weighingContext)
+            }.forEach { context.addElement(it) }
     }
 
     context(KaSession)
     private fun createLookupElements(
+        context: K2CompletionSectionContext<*>,
         trailingFunctionDescriptor: TrailingFunctionDescriptor,
         candidateChecker: KaCompletionExtensionCandidateChecker,
         existingParameterNames: Set<String>,
@@ -163,6 +160,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
         val typeNames = mutableMapOf<KaType, MutableSet<String>>()
 
         return createLookupElements(
+            context = context,
             trailingFunctionDescriptor = trailingFunctionDescriptor,
             candidateChecker = candidateChecker,
             fromIndex = existingParameterNames.size,
@@ -182,6 +180,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
 
     context(KaSession)
     private fun createLookupElements(
+        context: K2CompletionSectionContext<*>,
         trailingFunctionDescriptor: TrailingFunctionDescriptor,
         candidateChecker: KaCompletionExtensionCandidateChecker,
         fromIndex: Int = 0,
@@ -216,7 +215,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
                 val classSymbol = parameterType.expandedSymbol as? KaNamedClassSymbol
                     ?: return@sequence
 
-                val signatures = classSymbol.getSignatures(candidateChecker, parameterType)
+                val signatures = classSymbol.getSignatures(context, candidateChecker, parameterType)
                 val suggestedNames = signatures.map { functionSignature ->
                     val name = when (val member = functionSignature.symbol.psi?.navigationElement) {
                         is KtNamedFunction -> {
@@ -238,7 +237,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
 
                 val fqNames = signatures.mapNotNull { signature ->
                     val addImport =
-                        importStrategyDetector.detectImportStrategyForCallableSymbol(signature.symbol) as? ImportStrategy.AddImport
+                        context.importStrategyDetector.detectImportStrategyForCallableSymbol(signature.symbol) as? ImportStrategy.AddImport
                             ?: return@mapNotNull null
                     addImport.nameToImport
                 }
@@ -286,11 +285,12 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun KaNamedClassSymbol.getSignatures(
+        context: K2CompletionSectionContext<*>,
         candidateChecker: KaCompletionExtensionCandidateChecker,
         parameterType: KaClassType,
         receiverTypes: List<KaClassType> = listOf(parameterType), // todo all receiver types
     ): List<KaFunctionSignature<KaNamedFunctionSymbol>> {
-        val components = getComponents(receiverTypes)
+        val components = getComponents(context, receiverTypes)
         if (components.isEmpty()) return emptyList()
 
         val defaultSubstitutor = typeParameters
@@ -317,6 +317,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
 
     context(KaSession)
     private fun KaNamedClassSymbol.getComponents(
+        context: K2CompletionSectionContext<*>,
         receiverTypes: List<KaClassType>,
     ): Collection<KaNamedFunctionSymbol> {
         if (receiverTypes.isEmpty()) return emptyList()
@@ -329,8 +330,8 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
         val nameFilter: (Name) -> Boolean = DataClassResolver::isComponentLike
         val candidateSymbols = memberScope.callables(nameFilter)
             .ifEmpty {
-                symbolFromIndexProvider.getExtensionCallableSymbolsByNameFilter(nameFilter, receiverTypes) { declaration ->
-                    visibilityChecker.canBeVisible(declaration)
+                context.symbolFromIndexProvider.getExtensionCallableSymbolsByNameFilter(nameFilter, receiverTypes) { declaration ->
+                    context.visibilityChecker.canBeVisible(declaration)
                             && declaration.canBeAnalysed()
                 }
             }.filterIsInstance<KaNamedFunctionSymbol>()
