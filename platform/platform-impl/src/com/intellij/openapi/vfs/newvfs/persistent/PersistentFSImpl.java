@@ -1596,7 +1596,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     runSuppressing(
       () -> publisherBackgroundable.before(toSend),
       () -> runActionOnEdtRegardlessOfCurrentThread(() -> publisherEdt.before(toSend)),
-      () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend),
+      () -> runActionOnEdtRegardlessOfCurrentThread(() -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend)),
       EmptyRunnable.INSTANCE
     );
   }
@@ -1606,7 +1606,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                       @NotNull List<? extends VFileEvent> toSend) {
     runSuppressing(
       () -> CachedFileType.clearCache(),
-      () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend),
+      () -> runActionOnEdtRegardlessOfCurrentThread(() -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend)),
       () -> runActionOnEdtRegardlessOfCurrentThread(() -> publisherEdt.after(toSend)),
       () -> publisherBackgroundable.after(toSend)
     );
