@@ -70,13 +70,13 @@ class ComposeResourcesPsiChangesTest : ComposeResourcesTestCase() {
 
   private fun doTest(body: suspend TestScope.(List<VirtualFile>, FileManager, List<ComposeResourcesDir>) -> Unit) = runTest {
     val files = importProjectFromTestData()
-    val psiManager = PsiManagerEx.getInstanceEx(project)
+    val psiManager = PsiManagerEx.getInstanceEx(myProject)
     val fileManager = psiManager.fileManager
 
-    psiManager.addPsiTreeChangeListener(ComposeResourcesPsiChangesListener(project), getTestRootDisposable())
+    psiManager.addPsiTreeChangeListener(ComposeResourcesPsiChangesListener(myProject), getTestRootDisposable())
 
     val values: MutableList<ComposeResourcesDir> = mutableListOf()
-    val service = project.service<ComposeResourcesGenerationService>()
+    val service = myProject.service<ComposeResourcesGenerationService>()
     backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
       service.composeResourcesPsiChanges.toList(values)
     }

@@ -51,7 +51,7 @@ class ComposeResourcesGotoDeclarationTest : ComposeResourcesTestCase() {
   private fun doTestNavigation(qualifiedName: String, expectedSize: Int, expectedType: ResourceType) {
     codeInsightTestFixture.editor.caretModel.moveToOffset(codeInsightTestFixture.file.text.indexOf(qualifiedName) + qualifiedName.length)
 
-    val targetElements = GotoDeclarationAction.findAllTargetElements(project, codeInsightTestFixture.editor, codeInsightTestFixture.caretOffset)
+    val targetElements = GotoDeclarationAction.findAllTargetElements(myProject, codeInsightTestFixture.editor, codeInsightTestFixture.caretOffset)
 
     assertSize(expectedSize, targetElements)
     targetElements.forEach {

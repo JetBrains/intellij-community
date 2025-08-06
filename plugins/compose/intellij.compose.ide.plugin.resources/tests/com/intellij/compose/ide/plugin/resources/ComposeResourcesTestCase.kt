@@ -36,7 +36,7 @@ abstract class ComposeResourcesTestCase : KotlinGradleImportingTestCase() {
   }
 
   protected fun <R> runWriteAction(update: () -> R): R =
-    WriteCommandAction.runWriteCommandAction(project, Computable { update() })
+    WriteCommandAction.runWriteCommandAction(myProject, Computable { update() })
 
   protected var _codeInsightTestFixture: CodeInsightTestFixture? = null
 

@@ -68,7 +68,7 @@ class ComposeResourcesGradleImportTest : ComposeResourcesTestCase() {
   private fun doTestWithComposeResourcesModel(config: String = "", block: (ComposeResourcesModel) -> Unit) {
     importProjectFromTestData(config)
 
-    val module = ModuleManager.getInstance(project).findModuleByName("ComposeResources.composeApp.commonMain")
+    val module = ModuleManager.getInstance(myProject).findModuleByName("ComposeResources.composeApp.commonMain")
     kAssertNotNull(module)
 
     val moduleData = GradleUtil.findGradleModuleData(module)

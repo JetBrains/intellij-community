@@ -386,7 +386,7 @@ abstract class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
       }
     }
 
-    val countExpectedProviders = LineMarkersPass.getMarkerProviders(KotlinLanguage.INSTANCE, project).count {
+    val countExpectedProviders = LineMarkersPass.getMarkerProviders(KotlinLanguage.INSTANCE, myProject).count {
       expectedComposeColorLineMarkerProviderDescriptorClass.isInstance(it)
     }
     kAssertEquals(1, countExpectedProviders, "Expected single ${expectedComposeColorLineMarkerProviderDescriptorClass.java.name} provider")
@@ -408,7 +408,7 @@ abstract class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
     codeInsightTestFixture.doHighlighting()
 
     val highlightInfos = runReadAction {
-      DaemonCodeAnalyzerImpl.getLineMarkers(codeInsightTestFixture.editor.document, project)
+      DaemonCodeAnalyzerImpl.getLineMarkers(codeInsightTestFixture.editor.document, myProject)
         .filter { lineMarkerInfo -> lineMarkerInfo.navigationHandler is ColorIconRenderer }
         .sortedBy { it.startOffset }
     }
@@ -427,7 +427,7 @@ abstract class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
 
     codeInsightTestFixture.doHighlighting()
     val highlightInfo = runReadAction {
-      DaemonCodeAnalyzerImpl.getLineMarkers(codeInsightTestFixture.editor.document, project)
+      DaemonCodeAnalyzerImpl.getLineMarkers(codeInsightTestFixture.editor.document, myProject)
         .single { lineMarkerInfo ->
           lineMarkerInfo.navigationHandler is ColorIconRenderer && lineMarkerInfo.element == element
         }
@@ -438,7 +438,7 @@ abstract class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
         (highlightInfo.navigationHandler as ColorIconRenderer).getSetColorTask()
         ?: return@runInEdtAndWait
       WriteCommandAction.runWriteCommandAction(
-        project,
+        myProject,
         ComposeIdeBundle.message("compose.color.picker.action.name"),
         null,
         { setColorTask.invoke(newColor) },
