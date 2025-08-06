@@ -211,14 +211,14 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
           }
         }
         else {
-          builder addEntity order
+          builder.addEntity(order)
         }
       }
     }
     newEntities.forEach { (key, value) ->
       if (key == ArtifactsOrderEntity::class.java) return@forEach
 
-      value.forEach { builder addEntity it }
+      value.forEach { builder.addEntity(it) }
     }
   }
 
