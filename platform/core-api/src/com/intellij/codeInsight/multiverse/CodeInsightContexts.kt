@@ -9,7 +9,6 @@ import com.intellij.openapi.util.registry.Registry
  * Represents a context in which a code insight session runs for a given file or a set of files.
  * Is guaranteed to exist during one read action (to keep consistent PSI)
  *
- * @see CodeInsightSession
  * @see CodeInsightContextManager
  */
 interface CodeInsightContext

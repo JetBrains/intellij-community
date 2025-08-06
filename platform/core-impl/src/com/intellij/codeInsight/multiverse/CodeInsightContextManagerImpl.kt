@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.multiverse
 
-import com.intellij.concurrency.currentThreadContext
-import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.edtWriteAction
@@ -83,16 +81,6 @@ class CodeInsightContextManagerImpl(
       }
     }
   }
-
-  override fun <Result> performCodeInsightSession(context: CodeInsightContext, block: CodeInsightSession.() -> Result): Result {
-    val session = CodeInsightSessionImpl(context)
-    return installThreadContext(currentThreadContext() + CodeInsightSessionElement(session)) {
-      block(session)
-    }
-  }
-
-  override val currentCodeInsightSession: CodeInsightSession?
-    get() = com.intellij.codeInsight.multiverse.currentCodeInsightSession
 
   @RequiresReadLock
   @RequiresBackgroundThread
@@ -261,10 +249,6 @@ class CodeInsightContextManagerImpl(
     return result
   }
 }
-
-private class CodeInsightSessionImpl(
-  override val context: CodeInsightContext
-) : CodeInsightSession
 
 private val EP_NAME = ExtensionPointName.create<CodeInsightContextProvider>("com.intellij.multiverse.codeInsightContextProvider")
 

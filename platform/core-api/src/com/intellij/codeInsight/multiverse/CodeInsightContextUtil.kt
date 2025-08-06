@@ -3,14 +3,11 @@
 @file:JvmName("CodeInsightContextUtil")
 package com.intellij.codeInsight.multiverse
 
-import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
-import kotlin.coroutines.AbstractCoroutineContextElement
-import kotlin.coroutines.CoroutineContext
 
 val FileViewProvider.codeInsightContext: CodeInsightContext
   get() {
@@ -53,19 +50,6 @@ fun List<FileViewProvider>.isEventSystemEnabled(): Boolean {
   return value
 }
 
-val currentCodeInsightSession: CodeInsightSession?
-  @ApiStatus.Internal
-  get() = currentThreadContext()[CodeInsightSessionElement]?.codeInsightSession
-
-val currentCodeInsightContext: CodeInsightContext
-  @ApiStatus.Internal
-  get() = currentCodeInsightSession?.context ?: anyContext()
-
-
-@ApiStatus.Internal
-class CodeInsightSessionElement(val codeInsightSession: CodeInsightSession) : AbstractCoroutineContextElement(CodeInsightSessionElement) {
-  companion object : CoroutineContext.Key<CodeInsightSessionElement>
-}
 
 private val log = fileLogger()
 

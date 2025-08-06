@@ -28,20 +28,6 @@ interface CodeInsightContextManager {
   }
 
   /**
-   * A code insight context is fixed within a single code insight session.
-   *
-   * Code insight session does not support coroutines because the project state can change while a coroutine is suspended.
-   */
-  @RequiresReadLock
-  @RequiresBackgroundThread
-  fun <Result> performCodeInsightSession(context: CodeInsightContext, block: CodeInsightSession.() -> Result): Result
-
-  val currentCodeInsightSession: CodeInsightSession?
-
-  val currentCodeInsightContext: CodeInsightContext
-    get() = currentCodeInsightSession?.context ?: defaultContext()
-
-  /**
    * Returns all registered contexts for [file]
    *
    * @see CodeInsightContextProvider
