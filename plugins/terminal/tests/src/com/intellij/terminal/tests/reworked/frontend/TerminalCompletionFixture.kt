@@ -12,20 +12,26 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.terminal.frontend.ReworkedTerminalView
 import com.intellij.terminal.frontend.TimedKeyEvent
 import com.intellij.terminal.session.TerminalBlocksModelState
 import com.intellij.terminal.session.TerminalOutputBlock
 import com.intellij.terminal.session.TerminalSession
+import com.intellij.terminal.tests.block.util.TestCommandSpecsProvider
+import com.intellij.testFramework.ExtensionTestUtil
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.Companion.REWORKED_TERMINAL_COMPLETION_POPUP
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.VK_UNDEFINED
 import java.util.concurrent.CompletableFuture
 import kotlin.time.TimeSource
 
-class TerminalCompletionFixture(val project: Project, testRootDisposable: Disposable) {
+class TerminalCompletionFixture(val project: Project, val testRootDisposable: Disposable) {
 
   private val view: ReworkedTerminalView
 
@@ -84,12 +90,8 @@ class TerminalCompletionFixture(val project: Project, testRootDisposable: Dispos
 
   /**
    * Simulates a key press in the active completion popup.
-   * @param keyCode (VK_LEFT or VK_ENTER)
    */
   fun pressKey(keycode: Int) {
-    if (keycode != KeyEvent.VK_LEFT && keycode != KeyEvent.VK_RIGHT) {
-      throw IllegalArgumentException("keycode must be VK_LEFT or VK_RIGHT")
-    }
     val keyPressEvent = KeyEvent(
       view.outputEditor.component,
       KeyEvent.KEY_PRESSED,
@@ -100,8 +102,14 @@ class TerminalCompletionFixture(val project: Project, testRootDisposable: Dispos
       KeyEvent.KEY_LOCATION_STANDARD
     )
     view.outputEditorEventsHandler.keyPressed(TimedKeyEvent(keyPressEvent, TimeSource.Monotonic.markNow()))
-    val commonOffset = view.outputEditor.getCaretModel().offset
-    view.outputModel.updateCursorPosition(view.outputModel.relativeOffset(commonOffset))
+    val offset = view.outputModel.cursorOffsetState.value
+    val newOffset = when (keycode) {
+      KeyEvent.VK_LEFT -> offset - 1
+      KeyEvent.VK_RIGHT -> offset + 1
+      KeyEvent.VK_BACK_SPACE -> offset - 1
+      else -> offset
+    }
+    view.outputModel.updateCursorPosition(view.outputModel.relativeOffset(newOffset))
   }
 
   private fun runActionById(actionId: String) {
@@ -117,5 +125,12 @@ class TerminalCompletionFixture(val project: Project, testRootDisposable: Dispos
     if (event.presentation.isEnabledAndVisible) {
       ActionUtil.performAction(action, event)
     }
+  }
+
+  fun mockTestShellCommand(testCommandSpec: ShellCommandSpec) {
+    val specsProvider: ShellCommandSpecsProvider = TestCommandSpecsProvider(
+      ShellCommandSpecInfo.create(testCommandSpec, ShellCommandSpecConflictStrategy.DEFAULT)
+    )
+    ExtensionTestUtil.maskExtensions(ShellCommandSpecsProvider.EP_NAME, listOf(specsProvider), testRootDisposable)
   }
 }
