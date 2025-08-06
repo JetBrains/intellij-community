@@ -18,23 +18,22 @@ import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtOutsideTowerScopeKinds
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.collectNonExtensionsForType
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
+import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.priority
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSuperReceiverNameReferencePositionContext
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtSuperExpression
 
-internal class K2SuperMemberCompletionContributor(
-    sink: LookupElementSink,
-    priority: Int = 0,
-) : FirCompletionContributorBase<KotlinSuperReceiverNameReferencePositionContext>(sink, priority) {
+internal class K2SuperMemberCompletionContributor : K2SimpleCompletionContributor<KotlinSuperReceiverNameReferencePositionContext>(
+    KotlinSuperReceiverNameReferencePositionContext::class
+) {
 
     private data class CallableInfo(
         private val _type: KaType,
@@ -54,47 +53,45 @@ internal class K2SuperMemberCompletionContributor(
             get() = withValidityAssertion { _signature }
     }
 
-    context(KaSession)
-    override fun complete(
-        positionContext: KotlinSuperReceiverNameReferencePositionContext,
-        weighingContext: WeighingContext,
-    ) {
+    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>) {
+        val positionContext = context.positionContext
         val superReceiver = positionContext.explicitReceiver
         val superType = superReceiver.expressionType ?: return
 
         val (nonExtensionMembers: Iterable<CallableInfo>, namesNeedDisambiguation: Set<Name>) =
             if (superType !is KaIntersectionType) {
-                getNonExtensionsMemberSymbols(positionContext, superType).asIterable() to emptySet()
+                getNonExtensionsMemberSymbols(context, superType).asIterable() to emptySet()
             } else {
-                getSymbolsAndNamesNeedDisambiguation(positionContext, superType.conjuncts)
+                getSymbolsAndNamesNeedDisambiguation(context, superType.conjuncts)
             }
 
         nonExtensionMembers.flatMap {
             collectCallToSuperMember(
                 callableInfo = it,
-                context = weighingContext,
+                context = context,
                 namesNeedDisambiguation = namesNeedDisambiguation,
+                importStrategyDetector = context.importStrategyDetector,
             )
-        }.forEach(sink::addElement)
+        }.forEach { context.addElement(it) }
 
         collectDelegateCallToSuperMember(
-            context = weighingContext,
+            context = context,
             superReceiver = superReceiver,
             nonExtensionMembers = nonExtensionMembers,
             namesNeedDisambiguation = namesNeedDisambiguation,
-        ).forEach(sink::addElement)
+        ).forEach { context.addElement(it) }
     }
 
     context(KaSession)
     private fun getSymbolsAndNamesNeedDisambiguation(
-        positionContext: KotlinNameReferencePositionContext,
+        context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>,
         superTypes: List<KaType>,
     ): Pair<List<CallableInfo>, Set<Name>> {
         val allSymbols = mutableListOf<CallableInfo>()
         val symbolsInAny = mutableSetOf<KaCallableSymbol>()
         val symbolCountsByName = mutableMapOf<Name, Int>()
         for (superType in superTypes) {
-            for (callableInfo in getNonExtensionsMemberSymbols(positionContext, superType)) {
+            for (callableInfo in getNonExtensionsMemberSymbols(context, superType)) {
                 val symbol = callableInfo.signature.symbol
 
                 // Abstract symbol does not participate completion.
@@ -123,14 +120,14 @@ internal class K2SuperMemberCompletionContributor(
 
     context(KaSession)
     private fun getNonExtensionsMemberSymbols(
-        positionContext: KotlinNameReferencePositionContext,
+        context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>,
         receiverType: KaType,
     ): Sequence<CallableInfo> = collectNonExtensionsForType(
-        parameters = parameters,
-        positionContext = positionContext,
+        parameters = context.parameters,
+        positionContext = context.positionContext,
         receiverType = receiverType,
-        visibilityChecker = visibilityChecker,
-        scopeNameFilter = scopeNameFilter,
+        visibilityChecker = context.visibilityChecker,
+        scopeNameFilter = context.completionContext.scopeNameFilter,
     ).map {
         CallableInfo(
             _type = receiverType,
@@ -140,13 +137,15 @@ internal class K2SuperMemberCompletionContributor(
 
     context(KaSession)
     private fun collectCallToSuperMember(
+        context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>,
         callableInfo: CallableInfo,
-        context: WeighingContext,
-        namesNeedDisambiguation: Set<Name>
+        namesNeedDisambiguation: Set<Name>,
+        importStrategyDetector: ImportStrategyDetector,
     ): Sequence<LookupElement> {
         val signature = callableInfo.signature
         return createCallableLookupElements(
-            context = context,
+            context = context.weighingContext,
+            parameters = context.parameters,
             signature = signature,
             options = CallableInsertionOptions(
                 importStrategyDetector.detectImportStrategyForCallableSymbol(signature.symbol),
@@ -170,7 +169,7 @@ internal class K2SuperMemberCompletionContributor(
 
     context(KaSession)
     private fun collectDelegateCallToSuperMember(
-        context: WeighingContext,
+        context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>,
         superReceiver: KtSuperExpression,
         nonExtensionMembers: Iterable<CallableInfo>,
         namesNeedDisambiguation: Set<Name>
@@ -194,7 +193,7 @@ internal class K2SuperMemberCompletionContributor(
         // * Callable.call -> <anonymous object>.call
         val superFunctionToContainingFunction = superReceiver
             .parentsOfType<KtNamedFunction>(withSelf = false)
-            .map { getOriginalDeclarationOrSelf(it, originalKtFile) }
+            .map { getOriginalDeclarationOrSelf(it, context.completionContext.originalFile) }
             .flatMap { containingFunction ->
                 containingFunction
                     .symbol
@@ -223,10 +222,11 @@ internal class K2SuperMemberCompletionContributor(
                 if (args.size < matchedContainingFunction.valueParameters.size) continue
 
                 val elements = createCallableLookupElements(
-                    context = context,
+                    context = context.weighingContext,
+                    parameters = context.parameters,
                     signature = signature,
                     options = CallableInsertionOptions(
-                        importStrategyDetector.detectImportStrategyForCallableSymbol(callableInfo.signature.symbol),
+                        context.importStrategyDetector.detectImportStrategyForCallableSymbol(callableInfo.signature.symbol),
                         wrapWithDisambiguationIfNeeded(
                             CallableInsertionStrategy.WithCallArgs(args),
                             callableInfo.type,
