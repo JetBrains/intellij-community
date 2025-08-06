@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -235,6 +235,32 @@ abstract class PatchApplyingRevertingTest {
       target.remove("opt/file.txt");
       target.remove("opt/another.txt");
     });
+  }
+
+  @Test void applyingWithAbsentOptionalCriticalFile() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    Files.writeString(dirs.oldDir.resolve("bin/idea.bat"), "old content");
+    Files.writeString(dirs.newDir.resolve("bin/idea.bat"), "new content");
+    var files = List.of("bin/idea.bat");
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setOptionalFiles(files).setCriticalFiles(files));
+    Files.delete(dirs.oldDir.resolve("bin/idea.bat"));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
+
+    assertThat(preparationResult.validationResults).isEmpty();
+    assertAppliedAndReverted(dirs, preparationResult);
+  }
+
+  @Test void applyingWithModifiedOptionalCriticalFile() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    Files.writeString(dirs.oldDir.resolve("bin/idea.bat"), "old content");
+    Files.writeString(dirs.newDir.resolve("bin/idea.bat"), "new content");
+    var files = List.of("bin/idea.bat");
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setOptionalFiles(files).setCriticalFiles(files));
+    Files.writeString(dirs.oldDir.resolve("bin/idea.bat"), "unexpected content");
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
+
+    assertThat(preparationResult.validationResults).isEmpty();
+    assertAppliedAndReverted(dirs, preparationResult);
   }
 
   @Test void revertingWithAbsentFileToDelete() throws Exception {
