@@ -1,19 +1,33 @@
-package com.intellij.driver.sdk.ui.components.kotlin
+package com.intellij.driver.sdk.ui.components.notebooks
 
+import com.intellij.driver.client.Driver
 import com.intellij.driver.client.service
-import com.intellij.driver.sdk.*
+import com.intellij.driver.sdk.PsiFile
+import com.intellij.driver.sdk.PsiManager
+import com.intellij.driver.sdk.invokeAction
+import com.intellij.driver.sdk.invokeActionWithRetries
+import com.intellij.driver.sdk.singleProject
+import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.EditorComponentImpl
 import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
 import com.intellij.driver.sdk.ui.components.common.editor
+import com.intellij.driver.sdk.ui.components.common.ideFrame
+import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowRightToolbarUi
+import com.intellij.driver.sdk.ui.components.common.toolwindows.projectView
 import com.intellij.driver.sdk.ui.components.elements.JLabelUiComponent
+import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
 import com.intellij.driver.sdk.ui.components.elements.JcefOffScreenViewComponent
 import com.intellij.driver.sdk.ui.components.elements.LetsPlotComponent
 import com.intellij.driver.sdk.ui.components.elements.NotebookTableOutputUi
+import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.pasteText
+import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.ui.ui
+import com.intellij.driver.sdk.waitFor
+import com.intellij.driver.sdk.waitForCodeAnalysis
 import org.intellij.lang.annotations.Language
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -57,6 +71,20 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     get() = x("//div[@myicon='restartKernel.svg']")
   private val interruptKernel
     get() = x("//div[@myicon='stop.svg']")
+  val notebookCellOutputs: List<UiComponent>
+    get() = xx("//div[@class='FullEditorWidthRenderer']//div[@class='EditorComponentImpl']").list()
+  val jcefOffScreens: List<JcefOffScreenViewComponent>
+    get() = xx("//div[@class='JcefOffScreenViewComponent']", JcefOffScreenViewComponent::class.java).list()
+  val notebookCellExecutionInfos: List<JLabelUiComponent>
+    get() = xx("//div[@accessiblename='ExecutionLabel']", JLabelUiComponent::class.java).list()
+  val notebookTables: List<NotebookTableOutputUi>
+    get() = xx("//div[@class='LoadingDecoratorLayeredPaneImpl']/div[@class='JPanel'][descendant::div[@class='TableResultView']][descendant::div[@class='TwoSideComponent']]", NotebookTableOutputUi::class.java).list()
+  val notebookPlots: List<LetsPlotComponent>
+    get() = xx("//div[@class='LetsPlotComponent']", LetsPlotComponent::class.java).list()
+  val toolbar: UiComponent
+    get() = x("//div[@class='JupyterFileEditorToolbar']")
+  val imagePanel: List<UiComponent>
+    get() = xx("//div[@class='FullEditorWidthRenderer']//div[@class='ImagePanel']").list()
 
   override val editorComponent: EditorComponentImpl
     get() = when {
@@ -161,30 +189,65 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     """.trimIndent()
     ).list()
 
-  val notebookCellOutputs: List<UiComponent>
-    get() = xx("//div[@class='FullEditorWidthRenderer']//div[@class='EditorComponentImpl']").list()
-
-  val notebookMdCellsAsHtml: List<JcefOffScreenViewComponent>
-    get() = xx("//div[@class='JcefOffScreenViewComponent']", JcefOffScreenViewComponent::class.java).list()
-
-  val notebookCellExecutionInfos: List<JLabelUiComponent>
-    get() = xx("//div[@accessiblename='ExecutionLabel']", JLabelUiComponent::class.java).list()
-
-  val notebookTables: List<NotebookTableOutputUi>
-    get() = xx("//div[@class='LoadingDecoratorLayeredPaneImpl']/div[@class='JPanel'][descendant::div[@class='TableResultView']][descendant::div[@class='TwoSideComponent']]", NotebookTableOutputUi::class.java).list()
-
-  val notebookPlots: List<LetsPlotComponent>
-    get() = xx("//div[@class='LetsPlotComponent']", LetsPlotComponent::class.java).list()
-
-  val toolbar: UiComponent
-    get() = x("//div[@class='JupyterFileEditorToolbar']")
-
   fun JLabelUiComponent.getExecutionTimeInMs(): Long = step("Get cell execution time") {
     this.getText().run {
       val matchSeconds = Regex("\\d+s").find(this)?.value?.substringBefore("s")?.toLong() ?: 0
       val matchMs = Regex("\\d+ms").find(this)?.value?.substringBefore("ms")?.toLong() ?: 0
 
       matchSeconds * 1000 + matchMs
+    }
+  }
+}
+
+enum class NotebookType(val typeName: String, val newNotebookActionId: String) {
+  KOTLIN("Kotlin", "NewKotlinNotebookAction"),
+  JUPYTER("Jupyter", "NewJupyterNotebookAction");
+}
+
+/**
+ * Creates a new Kotlin or Jupyter notebook in the IDE.
+ *
+ * @param name The name for the new notebook. Defaults to "New Notebook".
+ * @param type The type of notebook to create.
+ */
+fun Driver.createNewNotebook(name: String = "New Notebook", type: NotebookType) {
+  ideFrame {
+    projectView {
+      projectViewTree.run {
+        waitFor("wait for project tree to load", 30.seconds) {
+          getAllTexts().isNotEmpty()
+        }
+        getAllTexts().first().click()
+      }
+    }
+
+    invokeAction(type.newNotebookActionId, false)
+
+    popup().run {
+      x("//div[@accessiblename='Name']", JTextFieldUI::class.java).click()
+
+      keyboard {
+        driver.ui.pasteText(name)
+        should("expect $name in the popup") {
+          getAllTexts().any { it.text == name }
+        }
+        enter() // submit the popup
+      }
+    }
+
+    waitFor("the editor is present") {
+      notebookEditor().present()
+    }
+  }
+}
+
+fun Driver.closeJupyterVariablesToolwindow() {
+  ideFrame {
+    val rightToolbar = xx(ToolWindowRightToolbarUi::class.java) { byClass("ToolWindowRightToolbar") }.list().firstOrNull()
+                      ?: return@ideFrame
+    val varsButton = rightToolbar.stripeButton("Jupyter Variables")
+    if (varsButton.present()) {
+      varsButton.close()
     }
   }
 }

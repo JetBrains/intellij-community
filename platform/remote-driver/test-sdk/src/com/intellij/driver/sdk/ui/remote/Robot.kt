@@ -38,6 +38,14 @@ interface Robot {
   fun rightClick(component: Component)
   fun focus(component: Component)
   fun doubleClick(component: Component)
+  /**
+   * Performs a left mouse triple-click on the given component.
+   *
+   * Triple-click is commonly used to select a whole line or statement.
+
+   * @param c the target component to receive the triple-click
+   */
+  fun tripleClick(component: Component)
   fun cleanUpWithoutDisposingWindows()
   fun isReadyForInput(component: Component): Boolean
   fun focusAndWaitForFocusGain(component: Component)
