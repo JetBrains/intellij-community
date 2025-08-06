@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.gradle.scripting.k2
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.ActionCallback
@@ -105,20 +106,6 @@ class GradleScriptRefinedConfigurationProvider(
         }
     }
 
-    fun updateWorkspaceModel(callback: ActionCallback? = null) {
-        val updatedStorage = project.workspaceModel.currentSnapshot.toBuilder().apply {
-            enrichStorage(data.get())
-        }
-
-        coroutineScope.launch {
-            project.workspaceModel.update("updating .gradle.kts scripts") { storage ->
-                storage.replaceBySource({ it is KotlinGradleScriptEntitySource }, updatedStorage)
-            }
-            callback?.setDone()
-        }
-    }
-
-
     private fun MutableEntityStorage.enrichStorage(
         configurations: Map<VirtualFile, ScriptConfigurationWithSdk>,
     ) {
@@ -145,13 +132,13 @@ class GradleScriptRefinedConfigurationProvider(
                     }
                 )
 
-                if (indexSourceRootsEagerly() || GradleScriptIndexSourcesStorage.isIndexed(project)) {
-                    addIfNotNull(
-                        extractRootsByPredicate(classes, sources) {
-                            it.url.contains("kotlin-gradle-plugin")
-                        }
-                    )
+                addIfNotNull(
+                    extractRootsByPredicate(classes, sources) {
+                        it.url.contains("kotlin-gradle-plugin")
+                    }
+                )
 
+                if (indexSourceRootsEagerly() || AdvancedSettings.getBoolean("gradle.attach.scripts.dependencies.sources")) {
                     addAll(extractDependenciesWithSources(classes, sources))
 
                     groupSourcesByParent(sources)

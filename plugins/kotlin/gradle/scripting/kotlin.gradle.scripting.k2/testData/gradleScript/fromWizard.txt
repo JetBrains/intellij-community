@@ -13,13 +13,6 @@ KaScriptModule:
     KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-runner/2.0.20/b7298471a2af50b32b7c460775c23759edb5bb70/kotlin-compiler-runner-2.0.20.jar, scriptDependency)
     KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-daemon-client/2.0.20/910b2107f6a7cc02366687b6e835ae0beaadb59b/kotlin-daemon-client-2.0.20.jar, scriptDependency)
     KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-daemon-embeddable/2.0.20/9eb02dce62f058efe6a121cf00cf5da9779e2746/kotlin-daemon-embeddable-2.0.20.jar, scriptDependency)
-    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-annotations/2.0.20/a68df0dc58b9bf664e96de49d673f30f24148224/kotlin-gradle-plugin-annotations-2.0.20.jar, scriptDependency)
-    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20-gradle85.jar, scriptDependency)
-    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20.jar, scriptDependency)
-    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea-proto/2.0.20/71e7e908bab748c5b035e551c8efd19a5215c0ca/kotlin-gradle-plugin-idea-proto-2.0.20.jar, scriptDependency)
-    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea/2.0.20/dc54973fe68b0bb9b816bd04ef39648ca29526a6/kotlin-gradle-plugin-idea-2.0.20.jar, scriptDependency)
-    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-model/2.0.20/a23be6a5119ded89279f2bf9a095cddec6145614/kotlin-gradle-plugin-model-2.0.20.jar, scriptDependency)
-    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin/2.0.20/5ca90c0173fffe0f4e9b73aca425fd99213cc43a/kotlin-gradle-plugin-2.0.20-gradle85.jar, scriptDependency)
     KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-klib-commonizer-api/2.0.20/c3f877ed653b2d5afc74e9ed8b44bee8856807b1/kotlin-klib-commonizer-api-2.0.20.jar, scriptDependency)
     KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-native-utils/2.0.20/9041e552da8fe20f7835123822f9ee273655e34b/kotlin-native-utils-2.0.20.jar, scriptDependency)
     KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-sam-with-receiver/2.0.20/f53a1b6144691b0fc3c47032e8aa4695a5f59a01/kotlin-sam-with-receiver-2.0.20-gradle85.jar, scriptDependency)
@@ -54,6 +47,7 @@ KaScriptModule:
     KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-reflect-2.0.20.jar, scriptDependency)
     KaLibraryModule(SDK)
     KaLibraryModule(classes=[file://GRADLE_REPOSITORY/caches/8.11/dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/classes, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/classes, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/classes], sources=[file://GRADLE_REPOSITORY/caches/8.11/dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/sources, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/sources, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/sources], scriptDependency)
+    KaLibraryModule(classes=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-annotations/2.0.20/a68df0dc58b9bf664e96de49d673f30f24148224/kotlin-gradle-plugin-annotations-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20-gradle85.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea-proto/2.0.20/71e7e908bab748c5b035e551c8efd19a5215c0ca/kotlin-gradle-plugin-idea-proto-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea/2.0.20/dc54973fe68b0bb9b816bd04ef39648ca29526a6/kotlin-gradle-plugin-idea-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-model/2.0.20/a23be6a5119ded89279f2bf9a095cddec6145614/kotlin-gradle-plugin-model-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin/2.0.20/5ca90c0173fffe0f4e9b73aca425fd99213cc43a/kotlin-gradle-plugin-2.0.20-gradle85.jar!/], sources=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-annotations/2.0.20/3f6f45573f006285b4e59d162c7f410855b8bef6/kotlin-gradle-plugin-annotations-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d15196031072ecf00993e203149376d79e34a66e/kotlin-gradle-plugin-api-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea-proto/2.0.20/caa8b3be9bb97c22df14139749f646a69af8c057/kotlin-gradle-plugin-idea-proto-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea/2.0.20/703b885378c1e2c6a4ceddbac037850cde77ecf8/kotlin-gradle-plugin-idea-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-model/2.0.20/727acf04a3f280604db07a1c6d2374369eeb7b88/kotlin-gradle-plugin-model-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin/2.0.20/f65f4fd987dd80f9cd192ba9f9e1ba82f36d39a4/kotlin-gradle-plugin-2.0.20-sources.jar!/], scriptDependency)
     KaLibraryModule(classes=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.0.20/7388d355f7cceb002cd387ccb7ab3850e4e0a07f/kotlin-stdlib-2.0.20.jar!/, jar://GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-stdlib-2.0.20.jar!/], sources=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.0.20/a6abf4122d686e67c307f45a1d056cd2d6ae57b5/kotlin-stdlib-2.0.20-sources.jar!/], scriptDependency)
     KaSourceModule(GradleKotlinFixture, production)
     KaSourceModule(GradleKotlinFixture, test)
@@ -117,6 +111,18 @@ KaLibraryModule:
   description: Library classes=[file://GRADLE_REPOSITORY/caches/8.11/dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/classes, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/classes, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/classes], sources=[file://GRADLE_REPOSITORY/caches/8.11/dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/sources, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/sources, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/sources]
   targetPlatform: JVM (1.8)
   libraryName: classes=[file://GRADLE_REPOSITORY/caches/8.11/dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/classes, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/classes, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/classes], sources=[file://GRADLE_REPOSITORY/caches/8.11/dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/sources, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/sources, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/sources]
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library classes=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-annotations/2.0.20/a68df0dc58b9bf664e96de49d673f30f24148224/kotlin-gradle-plugin-annotations-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20-gradle85.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea-proto/2.0.20/71e7e908bab748c5b035e551c8efd19a5215c0ca/kotlin-gradle-plugin-idea-proto-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea/2.0.20/dc54973fe68b0bb9b816bd04ef39648ca29526a6/kotlin-gradle-plugin-idea-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-model/2.0.20/a23be6a5119ded89279f2bf9a095cddec6145614/kotlin-gradle-plugin-model-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin/2.0.20/5ca90c0173fffe0f4e9b73aca425fd99213cc43a/kotlin-gradle-plugin-2.0.20-gradle85.jar!/], sources=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-annotations/2.0.20/3f6f45573f006285b4e59d162c7f410855b8bef6/kotlin-gradle-plugin-annotations-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d15196031072ecf00993e203149376d79e34a66e/kotlin-gradle-plugin-api-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea-proto/2.0.20/caa8b3be9bb97c22df14139749f646a69af8c057/kotlin-gradle-plugin-idea-proto-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea/2.0.20/703b885378c1e2c6a4ceddbac037850cde77ecf8/kotlin-gradle-plugin-idea-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-model/2.0.20/727acf04a3f280604db07a1c6d2374369eeb7b88/kotlin-gradle-plugin-model-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin/2.0.20/f65f4fd987dd80f9cd192ba9f9e1ba82f36d39a4/kotlin-gradle-plugin-2.0.20-sources.jar!/]
+  targetPlatform: JVM (1.8)
+  libraryName: classes=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-annotations/2.0.20/a68df0dc58b9bf664e96de49d673f30f24148224/kotlin-gradle-plugin-annotations-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20-gradle85.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea-proto/2.0.20/71e7e908bab748c5b035e551c8efd19a5215c0ca/kotlin-gradle-plugin-idea-proto-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea/2.0.20/dc54973fe68b0bb9b816bd04ef39648ca29526a6/kotlin-gradle-plugin-idea-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-model/2.0.20/a23be6a5119ded89279f2bf9a095cddec6145614/kotlin-gradle-plugin-model-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin/2.0.20/5ca90c0173fffe0f4e9b73aca425fd99213cc43a/kotlin-gradle-plugin-2.0.20-gradle85.jar!/], sources=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-annotations/2.0.20/3f6f45573f006285b4e59d162c7f410855b8bef6/kotlin-gradle-plugin-annotations-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d15196031072ecf00993e203149376d79e34a66e/kotlin-gradle-plugin-api-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea-proto/2.0.20/caa8b3be9bb97c22df14139749f646a69af8c057/kotlin-gradle-plugin-idea-proto-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea/2.0.20/703b885378c1e2c6a4ceddbac037850cde77ecf8/kotlin-gradle-plugin-idea-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-model/2.0.20/727acf04a3f280604db07a1c6d2374369eeb7b88/kotlin-gradle-plugin-model-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin/2.0.20/f65f4fd987dd80f9cd192ba9f9e1ba82f36d39a4/kotlin-gradle-plugin-2.0.20-sources.jar!/]
   isSdk: false
   regularDependencies:
     <empty>
@@ -249,90 +255,6 @@ KaLibraryModule:
   description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-daemon-embeddable/2.0.20/9eb02dce62f058efe6a121cf00cf5da9779e2746/kotlin-daemon-embeddable-2.0.20.jar
   targetPlatform: JVM (1.8)
   libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-daemon-embeddable/2.0.20/9eb02dce62f058efe6a121cf00cf5da9779e2746/kotlin-daemon-embeddable-2.0.20.jar
-  isSdk: false
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-annotations/2.0.20/a68df0dc58b9bf664e96de49d673f30f24148224/kotlin-gradle-plugin-annotations-2.0.20.jar
-  targetPlatform: JVM (1.8)
-  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-annotations/2.0.20/a68df0dc58b9bf664e96de49d673f30f24148224/kotlin-gradle-plugin-annotations-2.0.20.jar
-  isSdk: false
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20-gradle85.jar
-  targetPlatform: JVM (1.8)
-  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20-gradle85.jar
-  isSdk: false
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20.jar
-  targetPlatform: JVM (1.8)
-  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20.jar
-  isSdk: false
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea-proto/2.0.20/71e7e908bab748c5b035e551c8efd19a5215c0ca/kotlin-gradle-plugin-idea-proto-2.0.20.jar
-  targetPlatform: JVM (1.8)
-  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea-proto/2.0.20/71e7e908bab748c5b035e551c8efd19a5215c0ca/kotlin-gradle-plugin-idea-proto-2.0.20.jar
-  isSdk: false
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea/2.0.20/dc54973fe68b0bb9b816bd04ef39648ca29526a6/kotlin-gradle-plugin-idea-2.0.20.jar
-  targetPlatform: JVM (1.8)
-  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea/2.0.20/dc54973fe68b0bb9b816bd04ef39648ca29526a6/kotlin-gradle-plugin-idea-2.0.20.jar
-  isSdk: false
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-model/2.0.20/a23be6a5119ded89279f2bf9a095cddec6145614/kotlin-gradle-plugin-model-2.0.20.jar
-  targetPlatform: JVM (1.8)
-  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-model/2.0.20/a23be6a5119ded89279f2bf9a095cddec6145614/kotlin-gradle-plugin-model-2.0.20.jar
-  isSdk: false
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin/2.0.20/5ca90c0173fffe0f4e9b73aca425fd99213cc43a/kotlin-gradle-plugin-2.0.20-gradle85.jar
-  targetPlatform: JVM (1.8)
-  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin/2.0.20/5ca90c0173fffe0f4e9b73aca425fd99213cc43a/kotlin-gradle-plugin-2.0.20-gradle85.jar
   isSdk: false
   regularDependencies:
     <empty>

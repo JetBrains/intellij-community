@@ -79,5 +79,6 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.scripting.shared" />
     <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
   </component>
 </module>
