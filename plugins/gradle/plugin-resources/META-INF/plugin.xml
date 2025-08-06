@@ -62,7 +62,6 @@
 
     <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncContributor.GradleProjectRootSyncContributor"/>
     <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncContributor.GradleContentRootSyncContributor"/>
-    <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncContributor.bridge.GradleBridgeSyncContributor"/>
 
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseResolverExtension"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.CommonGradleProjectResolverExtension"/>

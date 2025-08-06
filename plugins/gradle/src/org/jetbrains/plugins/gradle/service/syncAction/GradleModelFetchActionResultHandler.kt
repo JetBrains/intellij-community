@@ -2,16 +2,21 @@
 package org.jetbrains.plugins.gradle.service.syncAction
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionListener
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
 
 @ApiStatus.Internal
 class GradleModelFetchActionResultHandler(
-  private val context: ProjectResolverContext
+  private val context: DefaultProjectResolverContext,
 ) : GradleModelFetchActionListener {
 
   override suspend fun onModelFetchPhaseCompleted(phase: GradleModelFetchPhase) {
+    // With older Gradle versions, buildSrc has its own separate resolve (as opposed to being a composite build) and this causes issues.
+    // As of now, it's simpler to just skip the sync contributors in these cases.
+    if (Registry.`is`("gradle.phased.sync.bridge.disabled") && context.isBuildSrcProject) return
+
     GradleSyncProjectConfigurator.performSyncContributors(context, phase.name) {
       onModelFetchPhaseCompleted(context, it, phase)
     }
