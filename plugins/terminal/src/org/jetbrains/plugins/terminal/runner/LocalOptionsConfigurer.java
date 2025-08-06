@@ -45,8 +45,8 @@ public final class LocalOptionsConfigurer {
   private static final Logger LOG = Logger.getInstance(LocalOptionsConfigurer.class);
 
   public static @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions, @NotNull Project project) {
-    List<String> initialCommand = getInitialCommand(baseOptions, project);
     String workingDir = getWorkingDirectory(baseOptions.getWorkingDirectory(), project);
+    List<String> initialCommand = getInitialCommand(baseOptions, project, workingDir);
     var eelDescriptor = findEelDescriptor(workingDir, initialCommand);
     Map<String, String> envs = getTerminalEnvironment(baseOptions.getEnvVariables(), workingDir, project, eelDescriptor);
 
@@ -158,9 +158,16 @@ public final class LocalOptionsConfigurer {
     return envs;
   }
 
-  private static @NotNull List<String> getInitialCommand(@NotNull ShellStartupOptions options, @NotNull Project project) {
+  private static @NotNull List<String> getInitialCommand(
+    @NotNull ShellStartupOptions options,
+    @NotNull Project project,
+    @NotNull String workingDir
+  ) {
     List<String> shellCommand = options.getShellCommand();
-    return shellCommand != null ? shellCommand : LocalTerminalStartCommandBuilder.convertShellPathToCommand(getShellPath(project));
+    if (shellCommand != null) {
+      return shellCommand;
+    }
+    return LocalTerminalStartCommandBuilder.convertShellPathToCommand(getShellPath(project), workingDir);
   }
 
   private static @NotNull String getShellPath(@NotNull Project project) {
