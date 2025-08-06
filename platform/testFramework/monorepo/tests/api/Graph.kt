@@ -5,10 +5,6 @@ internal class Graph<T>(
   val nodes: Iterable<T>,
   val deps: (T) -> List<T>,
 ) {
-  private val depCache = mutableMapOf<T, List<T>>()
-
-  private fun cachedDependencies(item: T): List<T> =
-    depCache.getOrPut(item) { deps(item) }
 
   fun sortedTopologically(): List<T> {
     val visited = mutableSetOf<T>()
@@ -18,7 +14,7 @@ internal class Graph<T>(
       if (!visited.add(item)) {
         return
       }
-      cachedDependencies(item).forEach(::dfs)
+      deps(item).forEach(::dfs)
       result += item
     }
 
@@ -42,7 +38,7 @@ internal class Graph<T>(
       visiting.add(node)
       pathStack.addLast(node)
 
-      for (dependent in cachedDependencies(node)) {
+      for (dependent in deps(node)) {
         val cycle = dfs(dependent)
         if (cycle != null) return cycle
       }
