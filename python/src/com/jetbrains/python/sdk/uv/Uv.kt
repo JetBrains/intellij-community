@@ -21,7 +21,7 @@ interface UvLowLevel {
   suspend fun initializeEnvironment(init: Boolean, version: Version?): PyResult<Path>
 
   suspend fun listUvPythons(): PyResult<Set<Path>>
-  suspend fun listSupportedPythonVersions(versionRequest: String? = null): PyResult<Set<Version>>
+  suspend fun listSupportedPythonVersions(versionRequest: String? = null): PyResult<List<Version>>
 
   /**
   * Manage project dependencies by adding/removing them to the project along side installation
