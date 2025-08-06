@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.diff
 
 import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
 import com.intellij.collaboration.ui.codereview.diff.viewer.EditorModelFactory
 import com.intellij.collaboration.ui.codereview.diff.viewer.showCodeReview
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
@@ -36,7 +37,6 @@ import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRInlayUtils
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewUnifiedPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.lineLocation
 import org.jetbrains.plugins.github.pullrequest.ui.diff.util.LineRangeUtil
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPREditorMappedComponentModel
@@ -98,7 +98,7 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
         val cs = this
         DiffEditorModel(this, reviewVm, changeVm, locationToLine, lineToLocation) {
           val (leftLine, rightLine) = lineToUnified(it)
-          GHPRReviewUnifiedPosition(change, leftLine, rightLine)
+          UnifiedCodeReviewItemPosition(change, leftLine, rightLine)
         }.apply {
           editor.putUserData(GHPRReviewDiffEditorModel.KEY, this)
           cs.launchNow {
@@ -132,7 +132,7 @@ private class DiffEditorModel(
   private val diffVm: GHPRDiffReviewViewModel,
   private val locationToLine: (DiffLineLocation) -> Int?,
   private val lineToLocation: (Int) -> DiffLineLocation?,
-  @RequiresEdt private val lineToUnified: (Int) -> GHPRReviewUnifiedPosition,
+  @RequiresEdt private val lineToUnified: (Int) -> UnifiedCodeReviewItemPosition,
 ) : GHPRReviewDiffEditorModel {
 
   private val threads = diffVm.threads.mapStatefulToStateful { MappedThread(cs, it) }.stateInNow(cs, emptyList())

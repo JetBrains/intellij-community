@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.diff
 
 import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
+import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
 import com.intellij.collaboration.ui.codereview.diff.model.*
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.ComputedResult
@@ -27,7 +28,6 @@ import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProject
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewUnifiedPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 import org.jetbrains.plugins.github.pullrequest.ui.review.DelegatingGHPRReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModel
@@ -58,7 +58,7 @@ interface GHPRDiffViewModel : CodeReviewDiffProcessorViewModel<GHPRDiffChangeVie
    *
    * @return The ID of the next comment to move to, or `null` if no next comment could be found.
    */
-  fun nextComment(cursorLocation: GHPRReviewUnifiedPosition): String?
+  fun nextComment(cursorLocation: UnifiedCodeReviewItemPosition): String?
 
   /**
    * Tries to find the previous comment, given that a comment is currently focused.
@@ -72,7 +72,7 @@ interface GHPRDiffViewModel : CodeReviewDiffProcessorViewModel<GHPRDiffChangeVie
    *
    * @return The ID of the previous comment to move to, or `null` if no previous comment could be found.
    */
-  fun previousComment(cursorLocation: GHPRReviewUnifiedPosition): String?
+  fun previousComment(cursorLocation: UnifiedCodeReviewItemPosition): String?
 
   fun showDiffFor(changes: ChangesSelection)
   fun showDiffAtComment(commentId: String)
@@ -208,13 +208,13 @@ internal class GHPRDiffViewModelImpl(
   override fun nextComment(focused: String): String? =
     threadsVm.lookupNextComment(focused, this::threadIsVisible)
 
-  override fun nextComment(cursorLocation: GHPRReviewUnifiedPosition): String? =
+  override fun nextComment(cursorLocation: UnifiedCodeReviewItemPosition): String? =
     threadsVm.lookupNextComment(cursorLocation, this::threadIsVisible)
 
   override fun previousComment(focused: String): String? =
     threadsVm.lookupPreviousComment(focused, this::threadIsVisible)
 
-  override fun previousComment(cursorLocation: GHPRReviewUnifiedPosition): String? =
+  override fun previousComment(cursorLocation: UnifiedCodeReviewItemPosition): String? =
     threadsVm.lookupPreviousComment(cursorLocation, this::threadIsVisible)
 
   override fun showDiffAtComment(commentId: String) {

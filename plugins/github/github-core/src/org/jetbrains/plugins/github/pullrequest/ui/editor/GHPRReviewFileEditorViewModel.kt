@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
 import com.intellij.collaboration.async.*
+import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
 import com.intellij.collaboration.util.*
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
@@ -29,7 +30,6 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.viewedStateComputationState
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewUnifiedPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 
@@ -179,8 +179,8 @@ internal class GHPRReviewFileEditorViewModelImpl(
    * We don't really care about the left-sided line number. It needs to be at the beginning to make sure
    * the first comment on the line is picked though.
    */
-  private fun lineToUnified(line: Int): GHPRReviewUnifiedPosition =
-    GHPRReviewUnifiedPosition(change, leftLine = -1, rightLine = line)
+  private fun lineToUnified(line: Int): UnifiedCodeReviewItemPosition =
+    UnifiedCodeReviewItemPosition(change, leftLine = -1, rightLine = line)
 
   private fun threadIsVisible(threadId: String): Boolean =
     allMappedThreads.value[threadId]?.let { it.isVisible && it.line != null && it.change?.filePathAfter != null } ?: false

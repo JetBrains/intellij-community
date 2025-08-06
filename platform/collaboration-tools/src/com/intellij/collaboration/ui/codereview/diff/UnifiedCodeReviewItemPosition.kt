@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.github.pullrequest.ui.comment
+package com.intellij.collaboration.ui.codereview.diff
 
 import com.intellij.collaboration.util.RefComparisonChange
 import org.jetbrains.annotations.ApiStatus
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
  * Line numbers are supposed to be 0-indexed.
  */
 @ApiStatus.Internal
-data class GHPRReviewUnifiedPosition(
+data class UnifiedCodeReviewItemPosition(
   val change: RefComparisonChange,
   val leftLine: Int,
   val rightLine: Int,
