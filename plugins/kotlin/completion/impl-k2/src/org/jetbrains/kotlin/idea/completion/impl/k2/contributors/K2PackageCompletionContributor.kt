@@ -8,40 +8,63 @@ import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtOutsideTowerScopeKinds
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveReceiverToSymbols
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSetupScope
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.allowsOnlyNamedArguments
+import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.*
 
-internal class K2PackageCompletionContributor(
-    sink: LookupElementSink,
-    priority: Int = 0,
-) : FirCompletionContributorBase<KotlinRawPositionContext>(sink, priority) {
-
-    context(KaSession)
+internal class K2PackageCompletionContributor : K2SimpleCompletionContributor<KotlinRawPositionContext>(
+    KotlinRawPositionContext::class
+) {
     @OptIn(KaExperimentalApi::class)
-    override fun complete(
-        positionContext: KotlinRawPositionContext,
-        weighingContext: WeighingContext,
-    ) {
-        val rootSymbol = positionContext.resolveReceiverToSymbols()
+    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinRawPositionContext>) {
+        if (context.positionContext.isAfterRangeOperator() || context.positionContext.allowsOnlyNamedArguments()) return
+        val rootSymbol = context.positionContext.resolveReceiverToSymbols()
             .filterIsInstance<KaPackageSymbol>()
             .singleOrNull()
             ?: return
 
         rootSymbol.packageScope
-            .getPackageSymbols(scopeNameFilter)
-            .filterNot { it.fqName.isExcludedFromAutoImport(project, originalKtFile) }
+            .getPackageSymbols(context.completionContext.scopeNameFilter)
+            .filterNot { it.fqName.isExcludedFromAutoImport(context.project, context.parameters.originalFile) }
             .map { packageSymbol ->
                 KotlinFirLookupElementFactory.createPackagePartLookupElement(packageSymbol.fqName)
                     .applyWeighs(
-                        context = weighingContext,
+                        context = context.weighingContext,
                         symbolWithOrigin = KtSymbolWithOrigin(
                             _symbol = packageSymbol,
                             scopeKind = KtOutsideTowerScopeKinds.PackageMemberScope,
                         ),
                     )
-            }.forEach(sink::addElement)
+            }.forEach { context.addElement(it) }
+    }
+
+    override fun K2CompletionSetupScope<KotlinRawPositionContext>.shouldExecute(): Boolean = when (position) {
+        is KotlinTypeNameReferencePositionContext -> {
+            position.allowsClassifiersAndPackagesForPossibleExtensionCallables(
+                parameters = completionContext.parameters,
+                prefixMatcher = completionContext.prefixMatcher,
+            )
+        }
+
+        is KotlinWithSubjectEntryPositionContext,
+        is KotlinAnnotationTypeNameReferencePositionContext,
+        is KotlinExpressionNameReferencePositionContext,
+        is KotlinImportDirectivePositionContext,
+        is KotlinPackageDirectivePositionContext,
+        is KDocLinkNamePositionContext -> true
+
+        else -> false
+    }
+
+    override fun K2CompletionSectionContext<KotlinRawPositionContext>.getGroupPriority(): Int = when (positionContext) {
+        is KotlinWithSubjectEntryPositionContext -> 3
+        is KotlinTypeNameReferencePositionContext, is KotlinAnnotationTypeNameReferencePositionContext -> 2
+        is KotlinExpressionNameReferencePositionContext, is KDocLinkNamePositionContext -> 1
+        else -> 0
     }
 }

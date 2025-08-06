@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirDeclarat
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirKDocParameterNameContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierReferenceCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirOperatorNameCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirPackageCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirWhenWithSubjectConditionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirSuperEntryContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirTypeParameterConstraintNameInWhereClauseCompletionContributor
@@ -53,6 +54,7 @@ internal object Completions {
         K2OperatorNameCompletionContributor(),
         K2TypeParameterConstraintNameInWhereClauseCompletionContributor(),
         K2SameAsFileClassifierNameCompletionContributor(),
+        K2PackageCompletionContributor(),
     )
 
     // Note: this function will be renamed and replace the complete method below!
@@ -173,7 +175,7 @@ internal object Completions {
                         .complete(positionContext, weighingContext)
                     FirClassifierCompletionContributor(sink)
                         .complete(positionContext, weighingContext)
-                    K2PackageCompletionContributor(sink, priority = 1)
+                    FirPackageCompletionContributor(sink, priority = 1)
                         .complete(positionContext, weighingContext)
                 }
             }
@@ -198,7 +200,7 @@ internal object Completions {
                 K2KeywordCompletionContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
                 if (allowClassifiersAndPackagesForPossibleExtensionCallables) {
-                    K2PackageCompletionContributor(sink, priority = 2)
+                    FirPackageCompletionContributor(sink, priority = 2)
                         .complete(positionContext, weighingContext)
                 }
                 // For `val` and `fun` completion. For example, with `val i<caret>`, the fake file contains `val iX.f`. Hence a
@@ -218,7 +220,7 @@ internal object Completions {
                     .complete(positionContext, weighingContext)
                 K2KeywordCompletionContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
-                K2PackageCompletionContributor(sink, priority = 2)
+                FirPackageCompletionContributor(sink, priority = 2)
                     .complete(positionContext, weighingContext)
             }
 
@@ -228,14 +230,14 @@ internal object Completions {
             }
 
             is KotlinImportDirectivePositionContext -> {
-                K2PackageCompletionContributor(sink)
+                FirPackageCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
                 K2ImportDirectivePackageMembersCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
             is KotlinPackageDirectivePositionContext -> {
-                K2PackageCompletionContributor(sink)
+                FirPackageCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
@@ -274,7 +276,7 @@ internal object Completions {
                     .complete(positionContext, weighingContext)
                 FirCallableCompletionContributor(sink, priority = 2)
                     .complete(positionContext, weighingContext)
-                K2PackageCompletionContributor(sink, priority = 3)
+                FirPackageCompletionContributor(sink, priority = 3)
                     .complete(positionContext, weighingContext)
             }
 
@@ -335,7 +337,7 @@ internal object Completions {
                     .complete(positionContext, weighingContext)
                 FirClassifierCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
-                K2PackageCompletionContributor(sink, priority = 1)
+                FirPackageCompletionContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
             }
         }
