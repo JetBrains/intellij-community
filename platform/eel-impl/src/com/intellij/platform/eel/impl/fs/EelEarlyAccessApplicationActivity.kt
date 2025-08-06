@@ -3,8 +3,11 @@ package com.intellij.platform.eel.impl.fs
 
 import com.intellij.ide.ApplicationActivity
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
+import com.intellij.platform.eel.provider.EelProvider
+import com.intellij.util.containers.forEachGuaranteed
 import org.jetbrains.annotations.VisibleForTesting
 import java.lang.invoke.MethodHandles
 import java.nio.file.FileSystems
@@ -44,6 +47,17 @@ internal class EelEarlyAccessApplicationActivity : ApplicationActivity {
         }
       }
     })
+
+    // How it works:
+    // * tryInitialize is called in `WslEelProvider`.
+    // * `WslEelProvider` calls `IjentWslNioFsToggler.`enableForAllWslDistributions`.
+    // * `enableForAllWslDistributions` assigns IJent WSL file systems for every distribution.
+    // These file systems are lazy, they start IJent on WSL distros only at the first request.
+    if (SystemInfoRt.isWindows) {
+      EelProvider.EP_NAME.extensionList.forEachGuaranteed { provider ->
+        provider.tryInitialize("\\\\wsl.localhost\\black-magic-hack-for-IJPL-188102\\")
+      }
+    }
   }
 }
 
