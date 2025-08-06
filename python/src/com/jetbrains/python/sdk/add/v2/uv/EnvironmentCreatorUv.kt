@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
@@ -75,7 +76,7 @@ internal class EnvironmentCreatorUv(
       row(message("sdk.create.python.version")) {
         pythonVersion = propertyGraph.property(null)
         versionComboBox = comboBox(listOf<Version?>(null), textListCellRenderer {
-          it?.let { "${it.major}.${it.minor}" } ?: "Default"
+          it?.let { "${it.major}.${it.minor}" } ?: message("python.sdk.uv.default.version")
         })
           .bindItem(pythonVersion)
           .enabledIf(loading.not())
@@ -131,7 +132,7 @@ internal class EnvironmentCreatorUv(
         try {
           loading.set(true)
 
-          val pyProjectTomlPath = projectPath.resolve("pyproject.toml")
+          val pyProjectTomlPath = projectPath.resolve(PY_PROJECT_TOML)
 
           val pythonVersions = withContext(Dispatchers.IO) {
             val versionRequest = if (pyProjectTomlPath.exists()) {
@@ -144,8 +145,6 @@ internal class EnvironmentCreatorUv(
             val uvLowLevel = createUvLowLevel(Path.of(""), cli)
             uvLowLevel.listSupportedPythonVersions(versionRequest)
               .getOr { return@withContext emptyList() }
-              .toList()
-              .sortedDescending()
           }
 
           pythonVersions.forEach {

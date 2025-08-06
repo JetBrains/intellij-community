@@ -92,7 +92,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     return PyResult.success(pythons)
   }
 
-  override suspend fun listSupportedPythonVersions(versionRequest: String?): PyResult<Set<Version>> {
+  override suspend fun listSupportedPythonVersions(versionRequest: String?): PyResult<List<Version>> {
     val args = mutableListOf("python", "list")
 
     if (versionRequest != null) {
@@ -108,7 +108,10 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
           it.groupValues[1],
           strict = false
         )
-      }.toSet()
+      }
+        .toSet()
+        .toList()
+        .sortedDescending()
     )
   }
 
