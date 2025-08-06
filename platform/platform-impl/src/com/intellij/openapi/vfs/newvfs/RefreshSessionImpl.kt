@@ -38,7 +38,7 @@ import kotlin.concurrent.Volatile
 import kotlin.math.min
 
 @ApiStatus.Internal
-class RefreshSessionImpl internal constructor(
+internal class RefreshSessionImpl internal constructor(
   val isAsynchronous: Boolean,
   private val myIsRecursive: Boolean,
   private val myIsBackground: Boolean,

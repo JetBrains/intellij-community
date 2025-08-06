@@ -68,7 +68,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
   private var myActivityCounter = 0
   private val parallelizationCache = ConcurrentHashMap<ModalityState, Pair<Semaphore, Int>>()
 
-  fun execute(session: RefreshSessionImpl) {
+  internal fun execute(session: RefreshSessionImpl) {
     if (session.isAsynchronous) {
       if (isVfsRefreshInBackgroundWriteActionAllowed() && session.modality == ModalityState.nonModal()) {
         queueAsyncSessionWithCoroutines(session)
@@ -140,7 +140,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     myEventCounter.eventHappened(session)
   }
 
-  suspend fun executeSuspending(session: RefreshSessionImpl) {
+  internal suspend fun executeSuspending(session: RefreshSessionImpl) {
     // suspending vfs refresh works in the context of the caller
     // however, we must maintain an invariant that no more than one scanning part of refresh is running
     // hence we limit ourselves with a semaphore
