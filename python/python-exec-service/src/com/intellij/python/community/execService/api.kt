@@ -47,8 +47,9 @@ data class BinOnEel(val path: Path, val workDir: Path? = null) : BinaryToExec
 
 /**
  * Legacy Targets-based approach. Do not use it, unless you know what you are doing
+ * if [target] "local" target is used
  */
-data class BinOnTarget(val path: FullPathOnTarget, val target: TargetEnvironmentConfiguration) : BinaryToExec
+data class BinOnTarget(val path: FullPathOnTarget, val target: TargetEnvironmentConfiguration?) : BinaryToExec
 
 
 /**

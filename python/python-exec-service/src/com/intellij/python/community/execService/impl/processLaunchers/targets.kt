@@ -5,6 +5,7 @@ package com.intellij.python.community.execService.impl.processLaunchers
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.*
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.eel.provider.utils.ProcessFunctions
@@ -26,9 +27,13 @@ private val logger = fileLogger()
 
 internal suspend fun createProcessLauncherOnTarget(binOnTarget: BinOnTarget, launchRequest: LaunchRequest): PyResult<ProcessLauncher> = withContext(Dispatchers.IO) {
   val target = binOnTarget.target
-  val projectMan = ProjectManager.getInstance()
-  // Broken Targets API doesn't work without project
-  val request = target.createEnvironmentRequest(projectMan.openProjects.firstOrNull() ?: projectMan.defaultProject)
+
+  val request = if (target != null) {
+    val projectMan = ProjectManager.getInstance() // Broken Targets API doesn't work without project
+    target.createEnvironmentRequest(projectMan.openProjects.firstOrNull() ?: projectMan.defaultProject)
+  }
+  else LocalTargetEnvironmentRequest()
+
   // Broken Targets API can only upload the whole directory
   val dirsToMap = launchRequest.args.localFiles.map { it.parent }.toSet()
   for (localDir in dirsToMap) {
@@ -38,20 +43,13 @@ internal suspend fun createProcessLauncherOnTarget(binOnTarget: BinOnTarget, lau
     request.prepareEnvironment(TargetProgressIndicator.EMPTY)
   }
   catch (e: ExecutionException) {
-    fileLogger().warn("Failed to start $target", e)
-    // TODO: i18n
+    fileLogger().warn("Failed to start $target", e) // TODO: i18n
     return@withContext Result.failure(MessageError("Failed to start environment due to ${e.localizedMessage}"))
   }
   val args = launchRequest.args.getArgs { localFile ->
     targetEnv.getTargetPaths(localFile.pathString).first()
   }
-  return@withContext Result.success(
-    ProcessLauncher(
-      exeForError = Exe.OnTarget(binOnTarget.path),
-      args = args,
-      processCommands = TargetProcessCommands(launchRequest.scopeToBind, binOnTarget.path, request, targetEnv, args, launchRequest.env)
-    )
-  )
+  return@withContext Result.success(ProcessLauncher(exeForError = Exe.OnTarget(binOnTarget.path), args = args, processCommands = TargetProcessCommands(launchRequest.scopeToBind, binOnTarget.path, request, targetEnv, args, launchRequest.env)))
 }
 
 private class TargetProcessCommands(
@@ -65,15 +63,11 @@ private class TargetProcessCommands(
 
   private var process: Process? = null
 
-  override val processFunctions: ProcessFunctions = ProcessFunctions(
-    waitForExit = {
-      // `waitForExit` seems to be broken in Targets API, hence polling
-      while (process?.isAlive == true) {
-        delay(100.milliseconds)
-      }
-    },
-    killProcess = { process?.destroyForcibly() }
-  )
+  override val processFunctions: ProcessFunctions = ProcessFunctions(waitForExit = { // `waitForExit` seems to be broken in Targets API, hence polling
+    while (process?.isAlive == true) {
+      delay(100.milliseconds)
+    }
+  }, killProcess = { process?.destroyForcibly() })
 
   override suspend fun start(): Result<Process, ExecErrorReason.CantStart> {
     val cmdLine = TargetedCommandLineBuilder(request).also {
@@ -86,11 +80,7 @@ private class TargetProcessCommands(
     try {
       val process = targetEnv.createProcess(cmdLine)
       this.process = process
-      scopeToBind.bindProcessToScopeImpl(
-        logger = logger,
-        processNameForDebug = exePath,
-        processFunctions = processFunctions
-      )
+      scopeToBind.bindProcessToScopeImpl(logger = logger, processNameForDebug = exePath, processFunctions = processFunctions)
       return Result.success(process)
     }
     catch (e: ExecutionException) {
