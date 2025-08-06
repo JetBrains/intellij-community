@@ -62,11 +62,11 @@ internal class GitExtractSelectedChangesAction : GitSingleCommitEditingAction() 
         if (operationResult is GitCommitEditingOperationResult.Complete) {
           ui?.focusCommitAfterLogUpdate(repository, operationResult.commitToFocus)
           operationResult.notifySuccess(
-            GitBundle.message("rebase.in.memory.log.changes.extract.action.notification.successful.title"),
+            GitBundle.message("in.memory.rebase.log.changes.extract.action.notification.successful.title"),
             null,
-            GitBundle.message("rebase.in.memory.log.changes.extract.action.progress.indicator.undo.title"),
-            GitBundle.message("rebase.in.memory.log.changes.extract.action.notification.undo.not.allowed.title"),
-            GitBundle.message("rebase.in.memory.log.changes.extract.action.notification.undo.failed.title")
+            GitBundle.message("in.memory.rebase.log.changes.extract.action.progress.indicator.undo.title"),
+            GitBundle.message("in.memory.rebase.log.changes.extract.action.notification.undo.not.allowed.title"),
+            GitBundle.message("in.memory.rebase.log.changes.extract.action.notification.undo.failed.title")
           )
         }
       }
