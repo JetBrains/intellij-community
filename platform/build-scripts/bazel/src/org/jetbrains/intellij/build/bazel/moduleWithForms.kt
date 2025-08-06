@@ -77,7 +77,7 @@ internal val moduleWithForm: Set<String> = setOf(
   "intellij.javaee.jpa.impl",
   "intellij.xml.duplicates",
   "intellij.devkit.core",
-  "intellij.sass",
+  "intellij.sass.plugin",
   "intellij.javascript.langInjection",
   "intellij.flex",
   "intellij.gwt",
