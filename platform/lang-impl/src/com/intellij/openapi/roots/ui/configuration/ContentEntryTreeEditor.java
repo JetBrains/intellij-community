@@ -192,8 +192,8 @@ public class ContentEntryTreeEditor {
       myFileSystemTree.select(file, null);
     };
 
+    myDescriptor.withShowHiddenFiles(true);
     myFileSystemTree = new FileSystemTreeImpl(myProject, myDescriptor, myTree, getContentEntryCellRenderer(entry), init, null);
-    myFileSystemTree.showHiddens(true);
     Disposer.register(myProject, myFileSystemTree);
 
     final NewFolderAction newFolderAction = new MyNewFolderAction();
