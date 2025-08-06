@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirDeclarat
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirKDocParameterNameContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierReferenceCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirWhenWithSubjectConditionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirSuperEntryContributor
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -45,6 +46,7 @@ internal object Completions {
         K2DeclarationFromOverridableMembersContributor(),
         K2ActualDeclarationContributor(),
         K2WhenWithSubjectConditionContributor(),
+        K2SuperEntryContributor(),
     )
 
     // Note: this function will be renamed and replace the complete method below!
