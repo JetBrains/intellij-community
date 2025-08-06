@@ -34,7 +34,7 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
   static final Logger LOG = Logger.getInstance(IntervalTreeImpl.class);
   static final boolean DEBUG = LOG.isDebugEnabled() || ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isUnitTestMode();
   private int keySize; // number of all intervals, counting all duplicates, some of them maybe gced
-  final ReadWriteLock l = new ReentrantReadWriteLock();
+  private final ReadWriteLock l = new ReentrantReadWriteLock();
 
   protected abstract int compareEqualStartIntervals(@NotNull IntervalNode<T> i1, @NotNull IntervalNode<T> i2);
   private final ReferenceQueue<T> myReferenceQueue = new ReferenceQueue<>();
@@ -287,17 +287,6 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
       return myTree;
     }
 
-    @ApiStatus.Internal
-    protected void runUnderWriteLock(@NotNull Runnable runnable) {
-      myTree.l.writeLock().lock();
-      try {
-        runnable.run();
-      }
-      finally {
-        myTree.l.writeLock().unlock();
-      }
-    }
-
     /**
      * packing/unpacking cachedDeltaUpToRoot field parts
      * Bits layout:
@@ -375,6 +364,17 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
     @Override
     public @NonNls String toString() {
       return "Node "+TextRangeScalarUtil.create(myRange) + ": "+intervals;
+    }
+  }
+
+  @ApiStatus.Internal
+  protected List<T> runUnderWriteLock(@NotNull Supplier<? extends List<T>> runnable) {
+    l.writeLock().lock();
+    try {
+      return runnable.get();
+    }
+    finally {
+      l.writeLock().unlock();
     }
   }
 
@@ -944,7 +944,6 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
     assert maxRightStart == Integer.MIN_VALUE || maxRightStart >= myStartOffset;
     int minStart = Math.min(minLeftStart, myStartOffset);
     int maxStart = Math.max(myStartOffset, Math.max(maxLeftStart, maxRightStart));
-    assert minStart <= maxStart;
     return new IntTrinity(minStart, maxStart, root.maxEnd + delta);
   }
 
@@ -1352,7 +1351,7 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
   public void fireAfterRemoved(@NotNull T marker) {
   }
 
-  public void fireAfterRemoved(@NotNull List<? extends T> markers) {
+  void fireAfterRemoved(@NotNull List<? extends T> markers) {
     for (T marker : markers) {
       fireAfterRemoved(marker);
     }

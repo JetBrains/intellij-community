@@ -99,7 +99,7 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
     }
 
     private void recalculateRenderFlagsUp() {
-      runUnderWriteLock(()->{
+      getTree().runUnderWriteLock(()->{
         RHNode n = this;
         while (n != null) {
           boolean prevInGutter = n.isRenderedInGutter();
@@ -107,6 +107,7 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
           if (n.isRenderedInGutter() == prevInGutter) break;
           n = (RHNode)n.getParent();
         }
+        return null;
       });
     }
 
