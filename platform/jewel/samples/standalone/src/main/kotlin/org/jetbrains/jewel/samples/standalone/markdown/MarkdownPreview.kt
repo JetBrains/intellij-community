@@ -1,6 +1,7 @@
 package org.jetbrains.jewel.samples.standalone.markdown
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
@@ -113,7 +114,7 @@ internal fun MarkdownPreview(rawMarkdown: CharSequence, modifier: Modifier = Mod
 
     ProvideMarkdownStyling(markdownStyling, blockRenderer, NoOpCodeHighlighter) {
         val lazyListState = rememberLazyListState()
-        VerticallyScrollableContainer(lazyListState, modifier.background(background)) {
+        VerticallyScrollableContainer(lazyListState as ScrollableState, modifier.background(background)) {
             LazyMarkdown(
                 markdownBlocks = markdownBlocks,
                 modifier = Modifier.background(background),

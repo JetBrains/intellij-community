@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.ui.component
 
+import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -493,7 +494,7 @@ public fun EditableListComboBox(
                 onSelectedItemChange = ::setSelectedItem,
                 itemKeys = itemKeys,
                 itemContent = { item, isSelected, isActive ->
-                    SimpleListItem(text = item, iconContentDescription = item, selected = isSelected, active = isActive)
+                    SimpleListItem(text = item, selected = isSelected, active = isActive, iconContentDescription = item)
                 },
             )
         },
@@ -553,7 +554,7 @@ private fun <T : Any> PopupContent(
     itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
     VerticallyScrollableContainer(
-        scrollState = listState.lazyListState,
+        scrollState = listState.lazyListState as ScrollableState,
         modifier = Modifier.heightIn(max = popupMaxHeight),
     ) {
         SelectableLazyColumn(
