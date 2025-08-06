@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifi
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirDeclarationFromOverridableMembersContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirKDocParameterNameContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierReferenceCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirDeclarationFromUnresolvedNameContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirNamedArgumentCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirOperatorNameCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirPackageCompletionContributor
@@ -57,6 +58,7 @@ internal object Completions {
         K2SameAsFileClassifierNameCompletionContributor(),
         K2PackageCompletionContributor(),
         K2NamedArgumentCompletionContributor(),
+        K2DeclarationFromUnresolvedNameContributor(),
     )
 
     // Note: this function will be renamed and replace the complete method below!
@@ -207,7 +209,7 @@ internal object Completions {
                 }
                 // For `val` and `fun` completion. For example, with `val i<caret>`, the fake file contains `val iX.f`. Hence a
                 // FirTypeNameReferencePositionContext is created because `iX` is parsed as a type reference.
-                K2DeclarationFromUnresolvedNameContributor(sink, priority = 1)
+                FirDeclarationFromUnresolvedNameContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
                 FirDeclarationFromOverridableMembersContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
@@ -267,7 +269,7 @@ internal object Completions {
             is KotlinClassifierNamePositionContext -> {
                 FirSameAsFileClassifierNameCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
-                K2DeclarationFromUnresolvedNameContributor(sink, priority = 1)
+                FirDeclarationFromUnresolvedNameContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
             }
 
@@ -307,7 +309,7 @@ internal object Completions {
                 FirTrailingFunctionParameterNameCompletionContributorBase.Missing(sink)
                     .complete(positionContext, weighingContext)
                 // for parameter declaration
-                K2DeclarationFromUnresolvedNameContributor(sink)
+                FirDeclarationFromUnresolvedNameContributor(sink)
                     .complete(positionContext, weighingContext)
                 K2KeywordCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
@@ -317,7 +319,7 @@ internal object Completions {
 
             is KotlinPrimaryConstructorParameterPositionContext -> {
                 // for parameter declaration
-                K2DeclarationFromUnresolvedNameContributor(sink)
+                FirDeclarationFromUnresolvedNameContributor(sink)
                     .complete(positionContext, weighingContext)
                 FirDeclarationFromOverridableMembersContributor(sink)
                     .complete(positionContext, weighingContext)

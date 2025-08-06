@@ -8,13 +8,14 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.ItemPriority
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSetupScope
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.completion.referenceScope
 import org.jetbrains.kotlin.idea.completion.suppressAutoInsertion
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -27,48 +28,43 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
  * ```
  * This contributor would contribute `unresolvedVar` at caret position above.
  */
-internal class K2DeclarationFromUnresolvedNameContributor(
-    sink: LookupElementSink,
-    priority: Int = 0,
-) : FirCompletionContributorBase<KotlinRawPositionContext>(sink, priority) {
-
-    context(KaSession)
-    override fun complete(
-        positionContext: KotlinRawPositionContext,
-        weighingContext: WeighingContext,
-    ) {
-        val declaration = positionContext.position.getCurrentDeclarationAtCaret() ?: return
+internal class K2DeclarationFromUnresolvedNameContributor : K2SimpleCompletionContributor<KotlinRawPositionContext>(
+    KotlinRawPositionContext::class
+) {
+    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinRawPositionContext>) {
+        val declaration = context.positionContext.position.getCurrentDeclarationAtCaret() ?: return
         val referenceScope = referenceScope(declaration) ?: return
 
         referenceScope.forEachDescendantOfType<KtNameReferenceExpression>(
             canGoInside = { it !is KtPackageDirective && it !is KtImportDirective }
         ) { refExpr ->
             ProgressManager.checkCanceled()
-            processReference(referenceScope, declaration, refExpr)
+            processReference(context, referenceScope, declaration, refExpr)
         }
     }
 
     context(KaSession)
     private fun processReference(
+        context: K2CompletionSectionContext<KotlinRawPositionContext>,
         referenceScope: KtElement,
         currentDeclarationInFakeFile: KtNamedDeclaration,
         unresolvedRef: KtNameReferenceExpression
     ) {
         // In a block, references must be after the declaration. Therefore, we only offer completion for unresolved names that appear after
         // the current cursor position.
-        if (referenceScope is KtBlockExpression && unresolvedRef.startOffset < parameters.offset) {
+        if (referenceScope is KtBlockExpression && unresolvedRef.startOffset < context.parameters.offset) {
             return
         }
         val name = unresolvedRef.getReferencedName()
-        if (!prefixMatcher.prefixMatches(name)) return
+        if (!context.prefixMatcher.prefixMatches(name)) return
 
-        val originalCurrentDeclaration = getOriginalDeclarationOrSelf(currentDeclarationInFakeFile, originalKtFile)
+        val originalCurrentDeclaration = getOriginalDeclarationOrSelf(currentDeclarationInFakeFile, context.completionContext.originalFile)
         if (!shouldOfferCompletion(unresolvedRef, originalCurrentDeclaration)) return
 
         if (unresolvedRef.reference?.resolve() == null) {
             val lookupElement = LookupElementBuilder.create(name).suppressAutoInsertion()
                 .also { it.priority = ItemPriority.FROM_UNRESOLVED_NAME_SUGGESTION }
-            sink.addElement(lookupElement)
+            context.addElement(lookupElement)
         }
     }
 
@@ -95,6 +91,7 @@ internal class K2DeclarationFromUnresolvedNameContributor(
                     // FIXME: this check does not work with generic types (i.e. List<String> and List<T>)
                     actualReceiverType.isSubtypeOf(expectedReceiverType)
                 }
+
                 else -> {
                     // If there is no explicit receiver at call-site, we check if any implicit receiver at call-site matches the extension
                     // receiver type for the current declared symbol
@@ -102,12 +99,14 @@ internal class K2DeclarationFromUnresolvedNameContributor(
                     collectImplicitReceiverTypes(unresolvedRef).any { it.isSubtypeOf(extensionReceiverType) }
                 }
             }
+
             is KaClassSymbol -> when {
                 receiver != null -> false
                 refExprParent is KtUserType -> true
                 refExprParent is KtCallExpression -> symbol.classKind == KaClassKind.CLASS
                 else -> symbol.classKind == KaClassKind.OBJECT
             }
+
             else -> false
         }
     }
@@ -147,7 +146,23 @@ internal class K2DeclarationFromUnresolvedNameContributor(
                 val callable = (typeRef.parent as? KtCallableDeclaration)?.takeIf { it.receiverTypeReference == typeRef } ?: return null
                 callable
             }
+
             else -> null
         }
     }
+
+    override fun K2CompletionSetupScope<KotlinRawPositionContext>.shouldExecute(): Boolean = when (position) {
+        is KotlinTypeNameReferencePositionContext,
+        is KotlinClassifierNamePositionContext,
+        is KotlinSimpleParameterPositionContext,
+        is KotlinPrimaryConstructorParameterPositionContext -> true
+
+        else -> false
+    }
+
+    override fun K2CompletionSectionContext<KotlinRawPositionContext>.getGroupPriority(): Int = when (positionContext) {
+        is KotlinTypeNameReferencePositionContext, is KotlinClassifierNamePositionContext -> 1
+        else -> 0
+    }
+
 }
