@@ -253,11 +253,7 @@ public abstract class PatchAction {
     if (o == null || getClass() != o.getClass()) return false;
 
     PatchAction that = (PatchAction)o;
-
-    if (myChecksum != that.myChecksum) return false;
-    if (!Objects.equals(myPath, that.myPath)) return false;
-
-    return true;
+    return myChecksum == that.myChecksum && Objects.equals(myPath, that.myPath);
   }
 
   @Override
