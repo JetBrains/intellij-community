@@ -39,4 +39,6 @@ internal class K2CompletionContext<P: KotlinRawPositionContext>(
     }
 
     internal val targetPlatform = parameters.originalFile.platform
+
+    internal val originalFile = parameters.originalFile
 }
