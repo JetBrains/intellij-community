@@ -46,7 +46,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
     virtualFile
   }
 
-  private val initializationTimeoutMs = 3000L
+  private val initializationTimeoutMs = 4000L
   private var cachedPsiFile: PsiFile? = null
   private var document: Document? = null
   private var cachedSmartRange: SmartPsiFileRange? = null
@@ -80,12 +80,10 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
       try {
         if (project.isDisposed) {
           LOG.warn("Project is disposed for ${model.presentablePath}")
-          initializationCompleted.complete(Unit)
           return@launch
         }
         if (virtualFile?.isValid == false) {
           LOG.warn("VirtualFile is invalid for ${model.presentablePath}")
-          initializationCompleted.complete(Unit)
           return@launch
         }
 
