@@ -14,7 +14,6 @@ import com.intellij.notebooks.visualization.ui.notebookEditor
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
@@ -125,13 +124,8 @@ internal class EditorCellActionsToolbarController(
 
   private fun getActionGroup(cellType: NotebookCellLines.CellType): ActionGroup? = when (cellType) {
     NotebookCellLines.CellType.CODE -> {
-      val customToolbarActionGroup = DefaultActionGroup()
-      val customActionsGroup = CustomActionsSchema.getInstance().getCorrectedAction(ADDITIONAL_CODE_ACTION_GROUP_ID)
-      if (customActionsGroup != null) {
-        customToolbarActionGroup.add(customActionsGroup)
-      }
       hideDropdownIcon(ADDITIONAL_CODE_ELLIPSIS_ACTION_GROUP_ID)
-      customToolbarActionGroup
+      CustomActionsSchema.getInstance().getCorrectedAction(ADDITIONAL_CODE_ACTION_GROUP_ID) as? ActionGroup
     }
     NotebookCellLines.CellType.MARKDOWN -> {
       hideDropdownIcon(ADDITIONAL_MARKDOWN_ELLIPSIS_ACTION_GROUP_ID)

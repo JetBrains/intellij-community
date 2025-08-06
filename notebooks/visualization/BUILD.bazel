@@ -41,6 +41,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "//plugins/markdown/core:markdown",
     "//platform/util",
+    "//platform/util/jdom",
   ],
   runtime_deps = [":visualization_resources"]
 )
@@ -73,6 +74,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "//plugins/markdown/core:markdown",
     "//platform/util",
+    "//platform/util/jdom",
   ],
   runtime_deps = [":visualization_resources"]
 )
