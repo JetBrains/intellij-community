@@ -108,6 +108,10 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "icons",
         iconDirectory = "icons",
       )
+      "intellij.javascript.debugger.common" -> IntellijIconClassGeneratorModuleConfig(
+        className = "JavaScriptDebuggerIcons",
+        packageName = "com.intellij.javascript.debugger.common",
+      )
       "intellij.toml.core" -> IntellijIconClassGeneratorModuleConfig(className = "TomlIcons", packageName = "org.toml")
       "intellij.markdown" -> IntellijIconClassGeneratorModuleConfig(
         className = "MarkdownIcons",
