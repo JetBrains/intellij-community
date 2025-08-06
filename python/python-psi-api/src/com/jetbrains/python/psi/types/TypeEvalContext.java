@@ -243,7 +243,8 @@ public sealed class TypeEvalContext {
   }
 
   private static boolean isLibraryElement(@NotNull PsiElement element) {
-    VirtualFile vFile = element.getContainingFile().getOriginalFile().getVirtualFile();
+    PsiFile containingFile = element.getContainingFile();
+    VirtualFile vFile = containingFile == null ? null : containingFile.getOriginalFile().getVirtualFile();
     return vFile != null && ("pyi".equals(vFile.getExtension()) || ProjectFileIndex.getInstance(element.getProject()).isInLibrary(vFile));
   }
 
