@@ -5,7 +5,10 @@
   "outputDir": "bin/ml-eval-code-generation-swe-java-output",
   "strategy": {
     "instanceId": "fasterxml__jackson-core-1142",
-    "runner": "CLAUDE_CODE"
+    "runner": "CLAUDE_CODE",
+    "invocationParams": {
+      "runFeatureTimeoutMin": 20
+    }
   },
   "fileDataset": {
     "url": "remote:https://huggingface.co/datasets/JetBrains/eval_plugin/resolve/main/code-generation-swe/java/java_swe_bench.json"
