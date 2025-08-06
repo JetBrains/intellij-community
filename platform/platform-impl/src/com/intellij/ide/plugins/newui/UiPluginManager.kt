@@ -1,6 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
+import com.intellij.ide.plugins.PluginEnabler
+import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
+import com.intellij.ide.plugins.marketplace.CheckErrorsResult
+import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
+import com.intellij.ide.plugins.marketplace.InitSessionResult
+import com.intellij.ide.plugins.marketplace.InstallPluginResult
+import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
+import com.intellij.ide.plugins.marketplace.PluginReviewComment
+import com.intellij.ide.plugins.marketplace.PluginSearchResult
+import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
+import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
+import com.intellij.openapi.application.ModalityState
 import com.intellij.ide.plugins.marketplace.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -9,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
@@ -69,7 +82,7 @@ class UiPluginManager {
   }
 
   fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent? = null, callback: (Map<PluginId, Boolean>) -> Unit = {}) {
-    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO)  {
+    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
       callback(getController().resetSession(sessionId, removeSession, parentComponent))
     }
   }
@@ -178,6 +191,14 @@ class UiPluginManager {
 
   suspend fun findPlugin(pluginId: PluginId): PluginUiModel? {
     return getController().findPlugin(pluginId)
+  }
+
+  suspend fun installOrUpdatePlugin(sessionId: String, project: Project, parentComponent: JComponent?, descriptor: PluginUiModel, updateDescriptor: PluginUiModel?, installSource: FUSEventSource?, modalityState: ModalityState?, pluginEnabler: PluginEnabler?): InstallPluginResult {
+    return getController().installOrUpdatePlugin(sessionId, project, parentComponent, descriptor, updateDescriptor, installSource, modalityState, pluginEnabler)
+  }
+
+  suspend fun continueInstallation(sessionId: String, pluginId: PluginId, project: Project, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, pluginEnabler: PluginEnabler?, modalityState: ModalityState?, parentComponent: JComponent?): InstallPluginResult {
+    return getController().continueInstallation(sessionId, pluginId, project, enableRequiredPlugins, allowInstallWithoutRestart, pluginEnabler, modalityState, parentComponent)
   }
 
   fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String? = null, indicator: ProgressIndicator? = null): PluginUiModel? {

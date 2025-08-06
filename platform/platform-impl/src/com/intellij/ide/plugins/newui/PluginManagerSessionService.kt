@@ -53,6 +53,8 @@ class PluginManagerSession {
   val pluginsToRemoveOnCancel: MutableSet<IdeaPluginDescriptorImpl> = ConcurrentCollectionFactory.createConcurrentSet()
   val dynamicPluginsToUninstall: MutableSet<IdeaPluginDescriptor> = ConcurrentCollectionFactory.createConcurrentSet()
   val dependentToRequiredListMap: MutableMap<PluginId, MutableSet<PluginId>> = ConcurrentHashMap()
+  val installsInProgress:  MutableMap<PluginId, PluginUiModel> = ConcurrentHashMap()
+  val updatesInProgress:  MutableMap<PluginId, PluginUiModel> = ConcurrentHashMap()
   var isUiDisposedWithApply: Boolean = false
 
   val errorPluginsToDisable: MutableSet<PluginId> = ConcurrentCollectionFactory.createConcurrentSet()

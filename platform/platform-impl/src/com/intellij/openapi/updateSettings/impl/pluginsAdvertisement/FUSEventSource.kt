@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import kotlinx.serialization.Serializable
 import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import java.util.Locale.ROOT
@@ -104,6 +105,7 @@ internal object PluginAdvertiserUsageCollector : CounterUsagesCollector() {
   )
 }
 
+@Serializable
 @ApiStatus.Internal
 @IntellijInternalApi
 enum class FUSEventSource {

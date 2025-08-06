@@ -6,30 +6,27 @@ import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil.getActiveFrameOrWelcomeScreen
 import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.api.PluginDto.Companion.fromModel
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.InstallPluginResult
-import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
-import com.intellij.ide.plugins.newui.PluginInstallationCustomization.Companion.findPluginInstallationCustomization
 import com.intellij.ide.plugins.newui.PluginLogo.getDefault
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.Configurable.TopComponentController
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.newEditor.SettingsDialog
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.jobToIndicator
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.okCancel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFrame
@@ -37,10 +34,15 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.SystemProperties
+import com.intellij.util.progress.sleepCancellable
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil
 import com.intellij.xml.util.XmlStringUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.job
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Component
@@ -190,152 +192,67 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   val sessionId: String
     get() = mySessionId.toString()
 
-  fun installOrUpdatePlugin(
+  suspend fun installOrUpdatePlugin(
     parentComponent: JComponent?,
     descriptor: PluginUiModel,
     updateDescriptor: PluginUiModel?,
     modalityState: ModalityState,
     controller: UiPluginManagerController,
-    callback: (Boolean) -> Unit,
-  ) {
-    val isUpdate = updateDescriptor != null
-    val actionDescriptor: PluginUiModel = if (isUpdate) updateDescriptor else descriptor
-    if (!PluginManagerMain.checkThirdPartyPluginsAllowed(listOf(actionDescriptor.getDescriptor()))) {
-      return
-    }
-
-    val customization = findPluginInstallationCustomization(descriptor.pluginId)
-    customization?.beforeInstallOrUpdate(isUpdate)
-
-    if (myInstallSource != null) {
-      val pluginId = descriptor.pluginId.idString
-      myInstallSource!!.logInstallPlugins(mutableListOf(pluginId))
-    }
-
-    if (descriptor.isFromMarketplace) {
-      val installSource = descriptor.installSource
-      installSource?.logInstallPlugins(listOf(descriptor.pluginId.idString))
-    }
-
-    val allowInstallWithoutRestart = Ref.create<Boolean?>(true)
-    val uninstallPlugin = Ref.create<Boolean?>(false)
-    if (isUpdate) {
-      if (descriptor.isBundled) {
-        allowInstallWithoutRestart.set(false)
+  ): InstallPluginResult? {
+    return withContext(Dispatchers.EDT + modalityState.asContextElement()) {
+      val actionDescriptor: PluginUiModel = updateDescriptor ?: descriptor
+      if (!PluginManagerMain.checkThirdPartyPluginsAllowed(listOf(actionDescriptor.getDescriptor()))) {
+        return@withContext null
       }
-      else if (!controller.allowLoadUnloadWithoutRestart(descriptor.pluginId)) {
-        allowInstallWithoutRestart.set(false)
-      }
-      else if (!descriptor.isEnabled) {
-        controller.deletePluginFiles(descriptor.pluginId)
-      }
-      else if (controller.allowLoadUnloadSynchronously(descriptor.pluginId)) {
-        allowInstallWithoutRestart.set(controller.uninstallDynamicPlugin(parentComponent,
-                                                                         mySessionId.toString(),
-                                                                         descriptor.pluginId,
-                                                                         true))
-      }
-      else {
-        uninstallPlugin.set(true)
-      }
-    }
-
-    ProgressManager.getInstance()
-      .runProcessWithProgressAsynchronously(object : Task.Backgroundable(project,
-                                                                         parentComponent,
-                                                                         IdeBundle.message("progress.title.loading.plugin.details"),
-                                                                         true,
-                                                                         null) {
-        override fun run(indicator: ProgressIndicator) {
-          if (uninstallPlugin.get()) {
-            controller.performUninstall(mySessionId.toString(), descriptor.pluginId)
-          }
-          val pluginUiModel = loadDetails(actionDescriptor, indicator)
-          if (pluginUiModel == null) {
-            return
-          }
-
-          val pluginsToInstall = listOf(pluginUiModel.getDescriptor())
-          ApplicationManager.getApplication().invokeAndWait(
-            Runnable {
-              PluginManagerMain.suggestToEnableInstalledDependantPlugins(this@MyPluginModel, pluginsToInstall, updateDescriptor != null)
-            }, modalityState)
-
-
-          val info = InstallPluginInfo(indicator as BgProgressIndicator,
-                                       descriptor,
-                                       this@MyPluginModel,
-                                       !isUpdate)
-          prepareToInstall(info)
-          val installPluginRequest = InstallPluginRequest(mySessionId.toString(),
-                                                          descriptor.pluginId,
-                                                          listOf(fromModel(pluginUiModel)),
-                                                          allowInstallWithoutRestart.get()!!,
-                                                          FINISH_DYNAMIC_INSTALLATION_WITHOUT_UI,
-                                                          needRestart)
-
-          controller.performInstallOperation(installPluginRequest,
-                                             parentComponent,
-                                             modalityState,
-                                             indicator,
-                                             this@MyPluginModel
-          ) { result: InstallPluginResult ->
-            applyInstallResult(result, info, callback)
-            null
-          }
-        }
-
-        fun applyInstallResult(result: InstallPluginResult, info: InstallPluginInfo, callback: (Boolean) -> Unit) {
-          val installedDescriptor = result.installedDescriptor
-          if (result.success) {
-            descriptor.addInstalledSource(controller.getTarget())
-            if (installedDescriptor != null) {
-              installedDescriptor.installSource = descriptor.installSource
-              info.setInstalledModel(installedDescriptor)
-            }
-          }
-          disableById(result.pluginsToDisable)
-          if (myPluginManagerCustomizer != null) {
-            myPluginManagerCustomizer.updateAfterModification {
-              info.finish(result.success, result.cancel, result.showErrors, result.restartRequired, getErrors(result))
-              callback(result.success)
-              null
-            }
-          }
-          else {
-            info.finish(result.success, result.cancel, result.showErrors, result.restartRequired, getErrors(result))
-            callback(result.success)
-          }
-        }
-
-        fun getErrors(result: InstallPluginResult): Map<PluginId, List<HtmlChunk>> {
-          return result.errors.mapValues { getErrors(it.value) }
-        }
-
-
-        fun loadDetails(descriptor: PluginUiModel, indicator: ProgressIndicator): PluginUiModel? {
-          if (descriptor.isFromMarketplace) {
-            if (descriptor.detailsLoaded) {
-              return descriptor
-            }
-            else {
-              val model = MarketplaceRequests.getInstance().loadPluginDetails(descriptor, indicator)
-              if (model != null) {
-                return model
+      val bgProgressIndicator = BgProgressIndicator()
+      val projectNotNull = tryToFindProject() ?: return@withContext null
+      val (installResult, info) = withContext(Dispatchers.IO) {
+        withBackgroundProgress(projectNotNull, IdeBundle.message("progress.title.loading.plugin.details")) {
+          jobToIndicator(coroutineContext.job, bgProgressIndicator) {
+            val installPluginInfo = InstallPluginInfo(bgProgressIndicator, descriptor, this@MyPluginModel, updateDescriptor != null)
+            prepareToInstall(installPluginInfo)
+            return@jobToIndicator runBlockingCancellable {
+              val result = controller.installOrUpdatePlugin(sessionId, projectNotNull, parentComponent, descriptor, updateDescriptor, myInstallSource, modalityState, null)
+              if (result.disabledPlugins.isEmpty() || result.disabledDependants.isEmpty()) {
+                return@runBlockingCancellable result
               }
-              return null
-            }
-          }
-          else {
-            val builder = PluginUiModelBuilderFactory.getInstance().createBuilder(descriptor.pluginId)
-            builder.setName(descriptor.name)
-            builder.setDependencies(descriptor.dependencies)
-            builder.setRepositoryName(PluginInstaller.UNKNOWN_HOST_MARKER)
-            builder.setDisableAllowed(descriptor.isDisableAllowed())
-            return builder.build()
+              val enableDependencies = PluginManagerMain.askToEnableDependencies(1, result.disabledPlugins, result.disabledDependants)
+              return@runBlockingCancellable controller.continueInstallation(sessionId, actionDescriptor.pluginId, projectNotNull, enableDependencies, result.allowInstallWithoutRestart, null, modalityState, parentComponent)
+            } to installPluginInfo
           }
         }
-      }, BgProgressIndicator())
+      }
+      applyInstallResult(installResult, info, actionDescriptor, controller)
+    }
+  }
+
+  fun applyInstallResult(result: InstallPluginResult, info: InstallPluginInfo, descriptor: PluginUiModel, controller: UiPluginManagerController): InstallPluginResult {
+    val installedDescriptor = result.installedDescriptor
+    if (result.success) {
+      descriptor.addInstalledSource(controller.getTarget())
+      if (installedDescriptor != null) {
+        installedDescriptor.installSource = descriptor.installSource
+        info.setInstalledModel(installedDescriptor)
+      }
+    }
+    val changedStates = mutableMapOf<PluginId, Boolean>()
+    result.pluginsToDisable.forEach { id -> changedStates[id] = false }
+    result.pluginsToEnable.forEach { id -> changedStates[id] = true }
+    applyChangedStates(changedStates)
+    if (myPluginManagerCustomizer != null) {
+      myPluginManagerCustomizer.updateAfterModification {
+        info.finish(result.success, result.cancel, result.showErrors, result.restartRequired, getErrors(result))
+        null
+      }
+    }
+    else {
+      info.finish(result.success, result.cancel, result.showErrors, result.restartRequired, getErrors(result))
+    }
+    return result
+  }
+
+  fun getErrors(result: InstallPluginResult): Map<PluginId, List<HtmlChunk>> {
+    return result.errors.mapValues { getErrors(it.value) }
   }
 
 
@@ -355,6 +272,10 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       }
       return result
     }
+  }
+
+  private fun tryToFindProject(): Project? {
+    return project ?: ProjectManager.getInstance().openProjects.firstOrNull()
   }
 
   private fun prepareToInstall(info: InstallPluginInfo) {
@@ -864,7 +785,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     controller: UiPluginManagerController,
     callback: Runnable?,
   ) {
-    val scope = coroutineScope.childScope(javaClass.name, kotlinx.coroutines.Dispatchers.IO, true)
+    val scope = coroutineScope.childScope(javaClass.name, Dispatchers.IO, true)
     myTopController!!.showProgress(true)
     for (panel in myDetailPanels) {
       if (panel.descriptorForActions === descriptor) {
@@ -927,7 +848,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     for (plugins in myMarketplacePluginComponentMap.values) {
       for (plugin in plugins) {
         if (plugin.myInstalledDescriptorForMarketplace != null) {
-          plugin.updateErrors(errors[plugin.pluginModel.pluginId])
+          plugin.updateErrors(errors[plugin.pluginModel.pluginId] ?: emptyList())
         }
       }
     }
@@ -978,7 +899,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   companion object {
     private val LOG = Logger.getInstance(MyPluginModel::class.java)
-    private val FINISH_DYNAMIC_INSTALLATION_WITHOUT_UI = SystemProperties.getBooleanProperty(
+    val FINISH_DYNAMIC_INSTALLATION_WITHOUT_UI: Boolean = SystemProperties.getBooleanProperty(
       "plugins.finish-dynamic-plugin-installation-without-ui", true)
 
     @JvmStatic

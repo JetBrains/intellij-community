@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
+import com.intellij.ide.plugins.marketplace.InstallPluginResult
 import javax.swing.JComponent
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.PluginId
@@ -44,8 +45,8 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
   }
 
   @JvmOverloads
-  fun installOrUpdatePlugin(component: JComponent?, model: PluginUiModel, updateDescriptor: PluginUiModel?, modalityState: ModalityState, controller: UiPluginManagerController = UiPluginManager.getInstance().getController(), callback: (Boolean) -> Unit = {}) {
-    pluginModel.installOrUpdatePlugin(component, model, updateDescriptor, modalityState, controller, callback)
+  suspend fun installOrUpdatePlugin(component: JComponent?, model: PluginUiModel, updateDescriptor: PluginUiModel?, modalityState: ModalityState, controller: UiPluginManagerController = UiPluginManager.getInstance().getController()): InstallPluginResult? {
+    return pluginModel.installOrUpdatePlugin(component, model, updateDescriptor, modalityState, controller)
   }
 
   fun addUninstalled(pluginId: PluginId) {

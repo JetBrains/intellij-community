@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
@@ -38,7 +39,8 @@ interface UiPluginManagerController {
   fun getPlugin(id: PluginId): PluginUiModel?
   fun allowLoadUnloadSynchronously(pluginId: PluginId): Boolean
   fun performUninstall(sessionId: String, pluginId: PluginId): Boolean
-  fun performInstallOperation(installPluginRequest: InstallPluginRequest, parentComponent: JComponent?, modalityState: ModalityState?, progressIndicator: ProgressIndicator?, pluginEnabler: PluginEnabler, installCallback: (InstallPluginResult) -> Unit)
+  suspend fun installOrUpdatePlugin(sessionId: String, project: Project, parentComponent: JComponent?, descriptor: PluginUiModel, updateDescriptor: PluginUiModel?, installSource: FUSEventSource?, modalityState: ModalityState?, pluginEnabler: PluginEnabler?): InstallPluginResult
+  suspend fun continueInstallation(sessionId: String, pluginId: PluginId, project: Project, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, pluginEnabler: PluginEnabler?, modalityState: ModalityState?, parentComponent: JComponent?): InstallPluginResult
   fun applySession(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult
   suspend fun updatePluginDependencies(sessionId: String): Set<PluginId>
   fun enablePlugins(sessionId: String, descriptorIds: List<PluginId>, enable: Boolean, project: Project?): SetEnabledStateResult

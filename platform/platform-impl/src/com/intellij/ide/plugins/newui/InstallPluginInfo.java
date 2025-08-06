@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,8 +18,9 @@ import java.util.Map;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "FieldAccessedSynchronizedAndUnsynchronized"})
-final class InstallPluginInfo {
+public final class InstallPluginInfo {
 
   public final @NotNull BgProgressIndicator indicator;
   private final @NotNull PluginUiModel myDescriptor;
@@ -33,7 +35,7 @@ final class InstallPluginInfo {
    */
   private PluginUiModel myInstalledDescriptor;
 
-  InstallPluginInfo(@NotNull BgProgressIndicator indicator,
+  public InstallPluginInfo(@NotNull BgProgressIndicator indicator,
                     @NotNull PluginUiModel descriptor,
                     @NotNull MyPluginModel pluginModel,
                     boolean install) {

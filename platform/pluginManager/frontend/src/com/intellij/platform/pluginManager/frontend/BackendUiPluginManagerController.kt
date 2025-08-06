@@ -27,6 +27,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginInstallerApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
@@ -93,10 +94,12 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return runBlockingCancellable { PluginInstallerApi.getInstance().performUninstall(sessionId, pluginId) }
   }
 
-  override fun performInstallOperation(installPluginRequest: InstallPluginRequest, parentComponent: JComponent?, modalityState: ModalityState?, progressIndicator: ProgressIndicator?, pluginEnabler: PluginEnabler, installCallback: (InstallPluginResult) -> Unit) {
-    service<BackendRpcCoroutineContext>().coroutineScope.launch {
-      installCallback(PluginInstallerApi.getInstance().performInstallOperation(installPluginRequest))
-    }
+  override suspend fun installOrUpdatePlugin(sessionId: String, project: Project, parentComponent: JComponent?, descriptor: PluginUiModel, updateDescriptor: PluginUiModel?, installSource: FUSEventSource?, modalityState: ModalityState?, pluginEnabler: PluginEnabler?): InstallPluginResult {
+    return PluginInstallerApi.getInstance().installOrUpdatePlugin(sessionId, project.projectId(), PluginDto.fromModel(descriptor), updateDescriptor?.let { PluginDto.fromModel(it) }, installSource)
+  }
+
+  override suspend fun continueInstallation(sessionId: String, pluginId: PluginId, project: Project, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, pluginEnabler: PluginEnabler?, modalityState: ModalityState?, parentComponent: JComponent?): InstallPluginResult {
+    return PluginInstallerApi.getInstance().continueInstallation(sessionId, pluginId, project.projectId(), enableRequiredPlugins, allowInstallWithoutRestart)
   }
 
   override suspend fun isModified(sessionId: String): Boolean {

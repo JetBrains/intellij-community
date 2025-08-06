@@ -144,9 +144,7 @@ internal object PluginModelAsyncOperationsExecutor {
         UiPluginManager.getInstance().getPlugin(pluginId)
       }
       else null
-      println("scheduling swithc to edt for ${pluginId.idString}")
       withContext(Dispatchers.EDT + ModalityState.stateForComponent(component).asContextElement()) {
-        println("switched to edt for ${pluginId.idString}")
         callback(installationState, installedDescriptor)
       }
     }

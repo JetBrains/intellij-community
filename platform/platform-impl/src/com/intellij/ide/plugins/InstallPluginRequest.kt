@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.api.PluginDto
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
 import kotlinx.serialization.Serializable
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 class InstallPluginRequest(
   val sessionId: String,
   val pluginId: PluginId,
-  val pluginsToInstall: List<PluginDto>,
+  val pluginsToInstall: List<PluginUiModel>,
   val allowInstallWithoutRestart: Boolean,
   val finishDynamicInstallationWithoutUi: Boolean,
   val needRestart: Boolean,

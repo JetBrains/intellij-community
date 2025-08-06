@@ -1436,29 +1436,29 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     repaint()
   }
 
-  private fun applyCustomization() {
-    coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
-      if (plugin == null || pluginManagerCustomizer == null) return@launch
-      customizeEnableDisableButton()
-      customizeInstallButton()
-      updateAdditionalText()
-      if (updateDescriptor != null) {
-        nameAndButtons!!.setProgressDisabledButton(updateButton!!)
+  private suspend fun applyCustomization() {
+    if (plugin == null || pluginManagerCustomizer == null) return
+    customizeEnableDisableButton()
+    customizeInstallButton()
+    updateAdditionalText()
+    if (updateDescriptor != null) {
+      nameAndButtons!!.setProgressDisabledButton(updateButton!!)
+    }
+    else {
+      if (installButton!!.isVisible()) {
+        nameAndButtons!!.setProgressDisabledButton(installButton!!.getComponent())
       }
       else {
-        if (installButton!!.isVisible()) {
-          nameAndButtons!!.setProgressDisabledButton(installButton!!.getComponent())
-        }
-        else {
-          nameAndButtons!!.setProgressDisabledButton(gearButton!!)
-        }
+        nameAndButtons!!.setProgressDisabledButton(gearButton!!)
       }
     }
   }
 
   private fun updateButtonsAndApplyCustomization() {
-    updateButtons()
-    applyCustomization()
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
+      updateButtons()
+      applyCustomization()
+    }
   }
 
   fun hideProgress() {
@@ -1530,8 +1530,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun installOrUpdatePlugin() {
-    val modalityState = ModalityState.stateForComponent(installButton!!.getComponent())
-    pluginModel.installOrUpdatePlugin(this, plugin!!, null, modalityState)
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
+      val modalityState = ModalityState.stateForComponent(installButton!!.getComponent())
+      pluginModel.installOrUpdatePlugin(this@PluginDetailsPageComponent, plugin!!, null, modalityState)
+    }
   }
 
   private fun updateEnableForNameAndIcon() {

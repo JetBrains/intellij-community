@@ -250,6 +250,10 @@ f:com.intellij.ide.plugins.PluginInstallCallbackData
 - bs:copy$default(com.intellij.ide.plugins.PluginInstallCallbackData,java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptor,Z,I,java.lang.Object):com.intellij.ide.plugins.PluginInstallCallbackData
 - f:getPluginDescriptor():com.intellij.ide.plugins.IdeaPluginDescriptor
 f:com.intellij.ide.plugins.PluginManagerMain
+- s:askToEnableDependencies(I,java.util.List,java.util.List):Z
+- s:enablePlugins(Z,java.util.Set,java.util.Set,com.intellij.ide.plugins.PluginEnabler):V
+- s:getDisabledDependants(com.intellij.ide.plugins.PluginEnabler,java.util.List):java.util.Set
+- s:getDisabledPlugins(com.intellij.ide.plugins.PluginEnabler,java.util.List,java.lang.Boolean):java.util.Set
 - s:suggestToEnableInstalledDependantPlugins(com.intellij.ide.plugins.PluginEnabler,java.util.List,java.lang.Boolean):Z
 com.intellij.ide.plugins.PluginManagerMain$PluginEnabler
 - com.intellij.ide.plugins.PluginEnabler
