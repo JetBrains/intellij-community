@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.analysisScope
@@ -37,10 +36,6 @@ private val SUBCLASS_OBJECTS_SYMBOLS_CACHE: ConcurrentMap<KaSession, List<KaClas
 
 context(session: KaSession)
 private fun KtSymbolFromIndexProvider.getKotlinSubclassObjectsSymbolsCached(): List<KaClassSymbol> {
-    if (!Registry.`is`("kotlin.k2.auto.import.from.subclass.objects.enabled")) {
-        return emptyList()
-    }
-
     return SUBCLASS_OBJECTS_SYMBOLS_CACHE.getOrPut(session) {
         getKotlinSubclassObjectsByNameFilter(
             scope = analysisScope,

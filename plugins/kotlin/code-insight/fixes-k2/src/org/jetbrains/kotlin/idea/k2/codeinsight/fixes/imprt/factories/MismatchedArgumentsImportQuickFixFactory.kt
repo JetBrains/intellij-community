@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories
 
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.ReadActionCachedValue
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -91,11 +90,6 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
      */    
     context(_: KaSession)
     private fun resolvesWithoutErrors(originalCallExpression: KtElement, candidate: ImportCandidate): Boolean {
-        if (!Registry.`is`("kotlin.k2.auto.import.mismatched.arguments.factory.applicability.filter.enabled")) {
-            // do not do any filtering, let all candidates pass
-            return true
-        }
-
         val containingFile = originalCallExpression.containingKtFile
 
         if (containingFile is KtCodeFragment) {
