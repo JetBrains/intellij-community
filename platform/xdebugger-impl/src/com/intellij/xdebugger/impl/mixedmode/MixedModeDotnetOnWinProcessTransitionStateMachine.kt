@@ -340,16 +340,16 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
           is BothStopped -> {
             // Can firstly run to position in a low-level debug process and resume the high-level process afterward
             low.runToPosition(event.sourcePosition, event.low)
-            changeState(LowLevelRunToAddressStarted(currentState.high))
+            changeState(WaitingForBothDebuggersRunning(false))
           }
         }
       }
       is HighLevelRunToAddress -> {
         when (currentState) {
           is BothStopped -> {
-            // As we do for resume, first let the low-level debug process run and secondly do runToPosition for a high-debug process
-            changeState(HighLevelRunToAddressStarted(event.sourcePosition, event.high))
-            lowExtension.continueAllThreads(emptySet(), silent = false)
+            withContext(Dispatchers.EDT) { high.runToPosition(event.sourcePosition, currentState.high) }
+            low.resume(currentState.low)
+            changeState(WaitingForBothDebuggersRunning())
           }
         }
       }
