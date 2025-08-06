@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.syncContributor.bridge
 
-import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -11,7 +10,6 @@ import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContex
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleEntitySource
-import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleProjectEntitySource
 
 
 /**
@@ -23,23 +21,6 @@ import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleProj
  */
 @Order(GradleSyncContributor.Order.CONTENT_ROOT_CONTRIBUTOR + 1)
 class GradleBridgeSyncContributor : GradleSyncContributor {
-
-  override suspend fun onModelFetchPhaseCompleted(
-    context: ProjectResolverContext,
-    storage: MutableEntityStorage,
-    phase: GradleModelFetchPhase,
-  ) {
-    if (!context.isPhasedSyncEnabled || !Registry.`is`("gradle.phased.sync.bridge.disabled")) {
-      // If data bridge is not disabled, everything that was set up by phased sync will be removed, so no need to do anything.
-      return
-    }
-
-    if (phase == GradleModelFetchPhase.PROJECT_MODEL_PHASE) {
-
-      // Keep the root module as an iml based entity, because many things go wrong if there isn't at least one .iml based module
-      removeGradleBasedEntitiesForRootModule(storage)
-    }
-  }
 
   // Invoked after all the phases are complete
   override suspend fun onModelFetchCompleted(
@@ -73,26 +54,6 @@ class GradleBridgeSyncContributor : GradleSyncContributor {
       storage.entities<ModuleEntity>()
         .filter { it.entitySource is GradleEntitySource }
         .forEach { storage.removeEntity(it) }
-    }
-  }
-
-  /**
-   * We keep the root module as an iml based entity, because a lot of things go wrong if we don't.
-   * Specifically [com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeLoaderService] currently disregards
-   * the entire workspace model if there are no iml based entities at all.
-   *
-   * Also see for more context:
-   * [com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer.hasNoSerializedJpsModules]
-   *
-   * TODO(b/384022658): We should aim to delete this in the long term, but for now it should be fine to keep.
-   */
-  private fun removeGradleBasedEntitiesForRootModule(storage: MutableEntityStorage) {
-    storage.entities<ModuleEntity>().filter {
-      it.entitySource is GradleProjectEntitySource
-      && (it.entitySource as GradleProjectEntitySource).buildEntitySource.linkedProjectEntitySource.projectRootUrl ==
-      (it.entitySource as GradleProjectEntitySource).projectRootUrl
-    }.forEach {
-      storage.removeEntity(it)
     }
   }
 }
