@@ -57,6 +57,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.StartupUiUtil.labelFont
 import kotlinx.coroutines.*
+import kotlinx.coroutines.time.withTimeout
+import kotlinx.coroutines.time.withTimeoutOrNull
 import java.awt.event.ItemEvent
 import java.util.concurrent.CancellationException
 import javax.swing.*
@@ -430,9 +432,17 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   private fun disableAndRemoveData() {
     try {
       val result = runWithModalProgressBlocking(ModalTaskOwner.component(configPanel), message("disable.remove.data.title"), TaskCancellation.cancellable()) {
-        removeRemoteData()
+        withTimeoutOrNull(60_000) {
+          removeRemoteData()
+        }
       }
       when (result) {
+        null -> {
+          val timeoutMessage = "Remote data removal timed out after 60 seconds"
+          LOG.warn(timeoutMessage)
+          lastRemoveRemoteDataError = timeoutMessage
+          syncStatusChanged()
+        }
         is DeleteServerDataResult.Error -> {
           LOG.warn("Failed to remove server data: ${result.error}")
           lastRemoveRemoteDataError = result.error
