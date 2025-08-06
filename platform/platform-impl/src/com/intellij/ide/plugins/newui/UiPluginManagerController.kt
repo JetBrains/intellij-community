@@ -29,7 +29,7 @@ interface UiPluginManagerController {
   fun getUpdates(): List<PluginUiModel>
   fun isPluginDisabled(pluginId: PluginId): Boolean
   fun executePluginsSearch(query: String, count: Int, includeIncompatible: Boolean): PluginSearchResult
-  fun loadPluginDetails(model: PluginUiModel): PluginUiModel?
+  suspend fun loadPluginDetails(model: PluginUiModel): PluginUiModel?
   fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>?
   fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata?
   suspend fun closeSession(sessionId: String)

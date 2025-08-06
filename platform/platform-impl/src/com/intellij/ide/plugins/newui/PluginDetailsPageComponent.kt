@@ -1661,7 +1661,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
 @ApiStatus.Internal
 @IntellijInternalApi
-fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
+suspend fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
   return UiPluginManager.getInstance().loadPluginDetails(model)
 }
 

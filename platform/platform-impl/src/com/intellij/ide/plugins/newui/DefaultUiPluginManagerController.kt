@@ -705,7 +705,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     }
   }
 
-  override fun loadPluginDetails(
+  override suspend fun loadPluginDetails(
     model: PluginUiModel,
   ): PluginUiModel? {
     return MarketplaceRequests.getInstance().loadPluginDetails(model)

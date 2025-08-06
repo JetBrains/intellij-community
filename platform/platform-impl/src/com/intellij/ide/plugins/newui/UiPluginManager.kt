@@ -69,7 +69,7 @@ class UiPluginManager {
     return getController().getUpdates()
   }
 
-  fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
+  suspend fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
     return getController().loadPluginDetails(model)
   }
 

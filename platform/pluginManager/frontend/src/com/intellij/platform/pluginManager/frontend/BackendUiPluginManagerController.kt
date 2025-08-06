@@ -235,8 +235,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().executeMarketplaceQuery(query, count, includeIncompatible) }
   }
 
-  override fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
-    return awaitForResult { PluginManagerApi.getInstance().loadMetadata(PluginDto.fromModel(model)) }
+  override suspend fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
+    return PluginManagerApi.getInstance().loadMetadata(PluginDto.fromModel(model))
   }
 
   override fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
