@@ -1143,13 +1143,9 @@ object MavenUtil {
     val m2DirPath = api.resolveM2Dir()
     val settingsPath: Path = m2DirPath.resolve(SETTINGS_XML)
     val defaultRepo = m2DirPath.resolve(REPOSITORY_DIR)
-    if (!settingsPath.exists()) {
-      return defaultRepo
-    }
-    else {
-      val repoPath = getRepositoryFromSettings(settingsPath) ?: return defaultRepo
-      return api.fs.getPath(repoPath).asNioPath()
-    }
+
+    val repoPath = getRepositoryFromSettings(settingsPath) ?: return defaultRepo
+    return api.fs.getPath(repoPath).asNioPath()
   }
 
   @JvmStatic
