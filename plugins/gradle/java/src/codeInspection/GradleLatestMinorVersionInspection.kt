@@ -56,6 +56,14 @@ class GradleLatestMinorVersionInspection : LocalInspectionTool() {
           override fun getFamilyName(): @IntentionFamilyName String {
             return "Gradle"
           }
+
+          override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+            return IntentionPreviewInfo.CustomDiff(
+              previewDescriptor.psiElement.containingFile.fileType,
+              previewDescriptor.startElement.text,
+              "distributionUrl=" + getWrapperDistributionUri(newestMinorGradleVersion).toString()
+            )
+          }
         }
 
         holder.registerProblem(
