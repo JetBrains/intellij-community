@@ -27,10 +27,7 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class PyStructuralType implements PyType {
   private final @NotNull Set<String> myAttributes;
@@ -86,5 +83,17 @@ public class PyStructuralType implements PyType {
 
   public Set<String> getAttributeNames() {
     return myAttributes;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    PyStructuralType type = (PyStructuralType)o;
+    return myInferredFromUsages == type.myInferredFromUsages && Objects.equals(myAttributes, type.myAttributes);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myAttributes, myInferredFromUsages);
   }
 }

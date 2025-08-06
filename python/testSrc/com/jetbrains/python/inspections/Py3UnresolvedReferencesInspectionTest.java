@@ -486,4 +486,9 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
   public void testStrictUnionMemberOperatorAccess() {
     doTest();
   }
+
+  // PY-24834
+  public void testStrictUnionMemberExtendingAny() {
+    doTest();
+  }
 }
