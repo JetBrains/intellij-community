@@ -157,12 +157,6 @@ private class RpcClient(
             }
           }
           mergedIncomingAndTransport.collect { event ->
-            // TODO do I need to modify telemetryContext here?
-            //message.otelData()?.let { telemetryData ->
-            //  OpenTelemetry.getGlobalPropagators().textMapPropagator.extract(Context.current(), telemetryData, TelemetryData.otelGetter).makeCurrent().use {
-            //  }
-            //}
-
             try {
               when (event) {
                 is Event.Message -> {
