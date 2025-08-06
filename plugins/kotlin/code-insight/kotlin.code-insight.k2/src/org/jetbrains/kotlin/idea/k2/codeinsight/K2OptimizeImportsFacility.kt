@@ -44,7 +44,7 @@ internal class K2OptimizeImportsFacility : KotlinOptimizeImportsFacility {
 
         val importAnalysis = analyzeForImportOptimization(file) {
             val referenceCollector = UsedReferencesCollector(file)
-            referenceCollector.run { collectUsedReferences() }
+            referenceCollector.collectUsedReferences()
         }
 
         val unusedImports = computeUnusedImports(file, importAnalysis)

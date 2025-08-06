@@ -27,7 +27,7 @@ internal fun buildOptimizedImports(
     file: KtFile,
     data: UsedReferencesCollector.Result,
 ): List<ImportPath>? {
-    return OptimizedImportsBuilder(file, data, file.kotlinCustomSettings).run { buildOptimizedImports() }
+    return OptimizedImportsBuilder(file, data, file.kotlinCustomSettings).buildOptimizedImports()
 }
 
 internal class OptimizedImportsBuilder(
@@ -130,7 +130,7 @@ internal class OptimizedImportsBuilder(
         }
 
         val importingScopes = buildImportingScopes(file, importsToGenerate.filter { it.isAllUnder })
-        val hierarchicalScope = HierarchicalScope.run { createFrom(importingScopes) }
+        val hierarchicalScope = HierarchicalScope.createFrom(importingScopes)
 
         for (fqName in classNamesToCheck) {
             val foundClassifiers = hierarchicalScope.findClassifiers(fqName.shortName()).firstOrNull()
@@ -210,9 +210,9 @@ internal class OptimizedImportsBuilder(
 
     context(_: KaSession)
     private fun resolveToSymbolInfo(originalReference: KtReference): List<SymbolInfo> {
-        val usedReference = UsedReference.run { createFrom(originalReference) } ?: return emptyList()
-        val referencedSymbols = usedReference.run { resolveToReferencedSymbols() }
-        return referencedSymbols.map { it.run { toSymbolInfo() } }
+        val usedReference = UsedReference.createFrom(originalReference) ?: return emptyList()
+        val referencedSymbols = usedReference.resolveToReferencedSymbols()
+        return referencedSymbols.map { it.toSymbolInfo() }
     }
 
     private fun areTargetsEqual(

@@ -53,12 +53,12 @@ internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol
                 val dispatcherReceiver = resolveDispatchReceiver(reference.element) as? KaImplicitReceiverValue
                 val containingClassSymbol = dispatcherReceiver?.symbol as? KaClassLikeSymbol
 
-                SymbolInfo.run { create(symbol, containingClassSymbol) }
+                SymbolInfo.create(symbol, containingClassSymbol)
             }
 
-            is KaClassLikeSymbol -> SymbolInfo.run { create(symbol) }
+            is KaClassLikeSymbol -> SymbolInfo.create(symbol)
 
-            else -> SymbolInfo.run { create(symbol) }
+            else -> SymbolInfo.create(symbol)
         }
     }
 }
