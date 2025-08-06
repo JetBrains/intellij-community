@@ -35,10 +35,6 @@ com.jetbrains.WindowDecorations$CustomTitleBar
 - a:setHeight(F):V
 com.jetbrains.WindowMove
 - a:startMovingTogetherWithMouse(java.awt.Window,I):V
-f:org.jetbrains.jewel.window.ComposableSingletons$TitleBarKt
-- sf:INSTANCE:org.jetbrains.jewel.window.ComposableSingletons$TitleBarKt
-- <init>():V
-- f:getLambda$-1645946951$intellij_platform_jewel_decoratedWindow():kotlin.jvm.functions.Function2
 f:org.jetbrains.jewel.window.DecoratedWindowKt
 - sf:DecoratedWindow(kotlin.jvm.functions.Function0,androidx.compose.ui.window.WindowState,Z,java.lang.String,androidx.compose.ui.graphics.painter.Painter,Z,Z,Z,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.window.styling.DecoratedWindowStyle,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I,I):V
 org.jetbrains.jewel.window.DecoratedWindowScope
