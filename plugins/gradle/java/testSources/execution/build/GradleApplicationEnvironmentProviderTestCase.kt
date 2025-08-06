@@ -43,7 +43,7 @@ abstract class GradleApplicationEnvironmentProviderTestCase : GradleSettingsImpo
 
     withThreadDumpEvery(1.minutes) {
       waitForGradleEventDispatcherClosing {
-        waitForAnyExecution(project) {
+        waitForAnyExecution(myProject) {
           waitForAnyGradleTaskExecution {
             ProgramRunnerUtil.executeConfiguration(environment, false, true)
           }

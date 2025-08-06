@@ -28,7 +28,7 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
   @TargetVersions("8.9+")
   fun `test declarative model creation in a simple Gradle project`() {
     val projectRoot = projectRoot.toNioPath()
-    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
+    val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     createProjectSubFile("settings.gradle.dcl", """
       pluginManagement {
@@ -124,22 +124,22 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
         }
       }
 
-      val settings = GradleSettings.getInstance(project)
+      val settings = GradleSettings.getInstance(myProject)
       val projectSettings = GradleProjectSettings(projectRoot.toCanonicalPath())
       settings.linkProject(projectSettings)
 
       ExternalSystemUtil.refreshProject(projectRoot.toCanonicalPath(), createImportSpec())
 
-      ModuleAssertions.assertModules(project, "test-dcl", "test-dcl.main", "test-dcl.test")
+      ModuleAssertions.assertModules(myProject, "test-dcl", "test-dcl.main", "test-dcl.test")
 
       assertModuleLibDep("test-dcl.main", "Gradle: com.google.guava:guava:32.1.3-jre")
       assertModuleModuleDeps("test-dcl.test", "test-dcl.main")
       assertModuleLibDep("test-dcl.test", "Gradle: com.google.guava:guava:32.1.3-jre")
       assertModuleLibDep("test-dcl.test", "Gradle: org.junit.jupiter:junit-jupiter:5.10.2")
 
-      ContentRootAssertions.assertContentRoots(project, "test-dcl", projectRoot)
-      ContentRootAssertions.assertContentRoots(project, "test-dcl.main", projectRoot.resolve("src/main"))
-      ContentRootAssertions.assertContentRoots(project, "test-dcl.test", projectRoot.resolve("src/test"))
+      ContentRootAssertions.assertContentRoots(myProject, "test-dcl", projectRoot)
+      ContentRootAssertions.assertContentRoots(myProject, "test-dcl.main", projectRoot.resolve("src/main"))
+      ContentRootAssertions.assertContentRoots(myProject, "test-dcl.test", projectRoot.resolve("src/test"))
 
       projectRootContributorAssertion.assertListenerFailures()
       projectRootContributorAssertion.assertListenerState(1) {
@@ -152,7 +152,7 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
   @TargetVersions("8.9+")
   fun `test declarative model creation in multi-module Gradle project`() {
     val projectRoot = projectRoot.toNioPath()
-    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
+    val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     Disposer.newDisposable().use { disposable ->
       createProjectSubFile("settings.gradle.dcl", """
@@ -321,7 +321,7 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
         }
       }
 
-      val settings = GradleSettings.getInstance(project)
+      val settings = GradleSettings.getInstance(myProject)
       val projectSettings = GradleProjectSettings(projectRoot.toCanonicalPath())
       settings.linkProject(projectSettings)
 

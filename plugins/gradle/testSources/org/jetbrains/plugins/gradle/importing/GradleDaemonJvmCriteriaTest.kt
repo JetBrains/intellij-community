@@ -22,7 +22,7 @@ class GradleDaemonJvmCriteriaTest : GradleImportingTestCase() {
     importProject()
 
     val daemonJvmCriteria = GradleDaemonJvmCriteria("17", JETBRAINS.asJvmVendor())
-    GradleDaemonJvmHelper.updateProjectDaemonJvmCriteria(project, projectRoot.path, daemonJvmCriteria)
+    GradleDaemonJvmHelper.updateProjectDaemonJvmCriteria(myProject, projectRoot.path, daemonJvmCriteria)
       .get(1, TimeUnit.MINUTES)
 
     assertEquals(daemonJvmCriteria, GradleDaemonJvmPropertiesFile.getProperties(projectRoot.toNioPath()).criteria)

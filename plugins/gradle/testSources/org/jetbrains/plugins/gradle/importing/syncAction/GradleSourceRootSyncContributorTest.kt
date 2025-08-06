@@ -21,7 +21,7 @@ class GradleSourceRootSyncContributorTest : GradlePhasedSyncTestCase() {
   fun `test source root creation in the multi-module Gradle project`() {
 
     val projectRoot = projectRoot.toNioPath()
-    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
+    val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     Disposer.newDisposable().use { disposable ->
 
@@ -63,19 +63,19 @@ class GradleSourceRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       importProject()
 
-      assertModules(project, "project", "project.main", "project.test")
+      assertModules(myProject, "project", "project.main", "project.test")
 
-      assertContentRoots(project, "project", projectRoot)
-      assertNoSourceRoots(project, "project")
+      assertContentRoots(myProject, "project", projectRoot)
+      assertNoSourceRoots(myProject, "project")
 
-      assertContentRoots(project, "project.main", projectRoot.resolve("src/main"))
-      assertSourceRoots(project, "project.main") {
+      assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
+      assertSourceRoots(myProject, "project.main") {
         sourceRoots(ExternalSystemSourceType.SOURCE, projectRoot.resolve("src/main/java"))
         sourceRoots(ExternalSystemSourceType.RESOURCE, projectRoot.resolve("src/main/resources"))
       }
 
-      assertContentRoots(project, "project.test", projectRoot.resolve("src/test"))
-      assertSourceRoots(project, "project.test") {
+      assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
+      assertSourceRoots(myProject, "project.test") {
         sourceRoots(ExternalSystemSourceType.TEST, projectRoot.resolve("src/test/java"))
         sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, projectRoot.resolve("src/test/resources"))
       }
@@ -154,37 +154,37 @@ class GradleSourceRootSyncContributorTest : GradlePhasedSyncTestCase() {
       importProject()
 
       assertModules(
-        project,
+        myProject,
         "project", "project.main", "project.test",
         "project.module", "project.module.main", "project.module.test"
       )
 
-      assertContentRoots(project, "project", projectRoot)
-      assertNoSourceRoots(project, "project")
+      assertContentRoots(myProject, "project", projectRoot)
+      assertNoSourceRoots(myProject, "project")
 
-      assertContentRoots(project, "project.main", projectRoot.resolve("src/main"))
-      assertSourceRoots(project, "project.main") {
+      assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
+      assertSourceRoots(myProject, "project.main") {
         sourceRoots(ExternalSystemSourceType.SOURCE, projectRoot.resolve("src/main/java"))
         sourceRoots(ExternalSystemSourceType.RESOURCE, projectRoot.resolve("src/main/resources"))
       }
 
-      assertContentRoots(project, "project.test", projectRoot.resolve("src/test"))
-      assertSourceRoots(project, "project.test") {
+      assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
+      assertSourceRoots(myProject, "project.test") {
         sourceRoots(ExternalSystemSourceType.TEST, projectRoot.resolve("src/test/java"))
         sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, projectRoot.resolve("src/test/resources"))
       }
 
-      assertContentRoots(project, "project.module", projectRoot.resolve("module"))
-      assertNoSourceRoots(project, "project.module")
+      assertContentRoots(myProject, "project.module", projectRoot.resolve("module"))
+      assertNoSourceRoots(myProject, "project.module")
 
-      assertContentRoots(project, "project.module.main", projectRoot.resolve("module/src/main"))
-      assertSourceRoots(project, "project.module.main") {
+      assertContentRoots(myProject, "project.module.main", projectRoot.resolve("module/src/main"))
+      assertSourceRoots(myProject, "project.module.main") {
         sourceRoots(ExternalSystemSourceType.SOURCE, projectRoot.resolve("module/src/main/java"))
         sourceRoots(ExternalSystemSourceType.RESOURCE, projectRoot.resolve("module/src/main/resources"))
       }
 
-      assertContentRoots(project, "project.module.test", projectRoot.resolve("module/src/test"))
-      assertSourceRoots(project, "project.module.test") {
+      assertContentRoots(myProject, "project.module.test", projectRoot.resolve("module/src/test"))
+      assertSourceRoots(myProject, "project.module.test") {
         sourceRoots(ExternalSystemSourceType.TEST, projectRoot.resolve("module/src/test/java"))
         sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, projectRoot.resolve("module/src/test/resources"))
       }

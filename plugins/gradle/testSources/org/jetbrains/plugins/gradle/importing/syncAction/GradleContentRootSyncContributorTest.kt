@@ -2,10 +2,10 @@
 package org.jetbrains.plugins.gradle.importing.syncAction
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
-import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions.assertContentRoots
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
@@ -20,7 +20,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
   fun `test content root creation in the multi-module Gradle project`() {
 
     val projectRoot = projectRoot.toNioPath()
-    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
+    val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     Disposer.newDisposable().use { disposable ->
 
@@ -44,10 +44,10 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       importProject()
 
-      assertModules(project, "project", "project.main", "project.test")
-      assertContentRoots(project, "project", projectRoot)
-      assertContentRoots(project, "project.main", projectRoot.resolve("src/main"))
-      assertContentRoots(project, "project.test", projectRoot.resolve("src/test"))
+      assertModules(myProject, "project", "project.main", "project.test")
+      assertContentRoots(myProject, "project", projectRoot)
+      assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
+      assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
 
       contentRootContributorAssertion.assertListenerFailures()
       contentRootContributorAssertion.assertListenerState(1) {
@@ -85,16 +85,16 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
       importProject()
 
       assertModules(
-        project,
+        myProject,
         "project", "project.main", "project.test",
         "project.module", "project.module.main", "project.module.test"
       )
-      assertContentRoots(project, "project", projectRoot)
-      assertContentRoots(project, "project.main", projectRoot.resolve("src/main"))
-      assertContentRoots(project, "project.test", projectRoot.resolve("src/test"))
-      assertContentRoots(project, "project.module", projectRoot.resolve("module"))
-      assertContentRoots(project, "project.module.main", projectRoot.resolve("module/src/main"))
-      assertContentRoots(project, "project.module.test", projectRoot.resolve("module/src/test"))
+      assertContentRoots(myProject, "project", projectRoot)
+      assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
+      assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
+      assertContentRoots(myProject, "project.module", projectRoot.resolve("module"))
+      assertContentRoots(myProject, "project.module.main", projectRoot.resolve("module/src/main"))
+      assertContentRoots(myProject, "project.module.test", projectRoot.resolve("module/src/test"))
 
       contentRootContributorAssertion.assertListenerFailures()
       contentRootContributorAssertion.assertListenerState(1) {
@@ -140,16 +140,16 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
       importProject()
 
       assertModules(
-        project,
+        myProject,
         "project", "project.main", "project.test",
         "includedProject1", "includedProject1.main", "includedProject1.test",
       )
-      assertContentRoots(project, "project", projectRoot)
-      assertContentRoots(project, "project.main", projectRoot.resolve("src/main"))
-      assertContentRoots(project, "project.test", projectRoot.resolve("src/test"))
-      assertContentRoots(project, "includedProject1", projectRoot.resolve("../includedProject1"))
-      assertContentRoots(project, "includedProject1.main", projectRoot.resolve("../includedProject1/src/main"))
-      assertContentRoots(project, "includedProject1.test", projectRoot.resolve("../includedProject1/src/test"))
+      assertContentRoots(myProject, "project", projectRoot)
+      assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
+      assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
+      assertContentRoots(myProject, "includedProject1", projectRoot.resolve("../includedProject1"))
+      assertContentRoots(myProject, "includedProject1.main", projectRoot.resolve("../includedProject1/src/main"))
+      assertContentRoots(myProject, "includedProject1.test", projectRoot.resolve("../includedProject1/src/test"))
 
       contentRootContributorAssertion.assertListenerFailures()
       contentRootContributorAssertion.assertListenerState(1) {
@@ -205,20 +205,20 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
       importProject()
 
       assertModules(
-        project,
+        myProject,
         "project", "project.main", "project.test",
         "includedProject1", "includedProject1.main", "includedProject1.test",
         "includedProject2", "includedProject2.main", "includedProject2.test",
       )
-      assertContentRoots(project, "project", projectRoot)
-      assertContentRoots(project, "project.main", projectRoot.resolve("src/main"))
-      assertContentRoots(project, "project.test", projectRoot.resolve("src/test"))
-      assertContentRoots(project, "includedProject1", projectRoot.resolve("../includedProject1"))
-      assertContentRoots(project, "includedProject1.main", projectRoot.resolve("../includedProject1/src/main"))
-      assertContentRoots(project, "includedProject1.test", projectRoot.resolve("../includedProject1/src/test"))
-      assertContentRoots(project, "includedProject2", projectRoot.resolve("../includedProject2"))
-      assertContentRoots(project, "includedProject2.main", projectRoot.resolve("../includedProject2/src/main"))
-      assertContentRoots(project, "includedProject2.test", projectRoot.resolve("../includedProject2/src/test"))
+      assertContentRoots(myProject, "project", projectRoot)
+      assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
+      assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
+      assertContentRoots(myProject, "includedProject1", projectRoot.resolve("../includedProject1"))
+      assertContentRoots(myProject, "includedProject1.main", projectRoot.resolve("../includedProject1/src/main"))
+      assertContentRoots(myProject, "includedProject1.test", projectRoot.resolve("../includedProject1/src/test"))
+      assertContentRoots(myProject, "includedProject2", projectRoot.resolve("../includedProject2"))
+      assertContentRoots(myProject, "includedProject2.main", projectRoot.resolve("../includedProject2/src/main"))
+      assertContentRoots(myProject, "includedProject2.test", projectRoot.resolve("../includedProject2/src/test"))
 
       contentRootContributorAssertion.assertListenerFailures()
       contentRootContributorAssertion.assertListenerState(1) {
@@ -283,16 +283,16 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
       importProject()
 
       assertModules(
-        project,
+        myProject,
         "project", "project.main", "project.test",
         "project.buildSrc", "project.buildSrc.main", "project.buildSrc.test"
       )
-      assertContentRoots(project, "project", projectRoot)
-      assertContentRoots(project, "project.main", projectRoot.resolve("src/main"))
-      assertContentRoots(project, "project.test", projectRoot.resolve("src/test"))
-      assertContentRoots(project, "project.buildSrc", projectRoot.resolve("buildSrc"))
-      assertContentRoots(project, "project.buildSrc.main", projectRoot.resolve("buildSrc/src/main"))
-      assertContentRoots(project, "project.buildSrc.test", projectRoot.resolve("buildSrc/src/test"))
+      assertContentRoots(myProject, "project", projectRoot)
+      assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
+      assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
+      assertContentRoots(myProject, "project.buildSrc", projectRoot.resolve("buildSrc"))
+      assertContentRoots(myProject, "project.buildSrc.main", projectRoot.resolve("buildSrc/src/main"))
+      assertContentRoots(myProject, "project.buildSrc.test", projectRoot.resolve("buildSrc/src/test"))
 
       contentRootContributorAssertion.assertListenerFailures()
       if (isBuildSrcResolvedOnSecondCall) {
@@ -348,12 +348,12 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
         "project", "project.main", "project.test",
         "project.buildSrc", "project.buildSrc.main", "project.buildSrc.test"
       )
-      assertContentRoots(project, "project", projectRoot)
-      assertContentRoots(project, "project.main", projectRoot.resolve("src/main"))
-      assertContentRoots(project, "project.test", projectRoot.resolve("src/test"))
-      assertContentRoots(project, "project.buildSrc", projectRoot.resolve("buildSrc"))
-      assertContentRoots(project, "project.buildSrc.main", projectRoot.resolve("buildSrc/src/main"))
-      assertContentRoots(project, "project.buildSrc.test", projectRoot.resolve("buildSrc/src/test"))
+      assertContentRoots(myProject, "project", projectRoot)
+      assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
+      assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
+      assertContentRoots(myProject, "project.buildSrc", projectRoot.resolve("buildSrc"))
+      assertContentRoots(myProject, "project.buildSrc.main", projectRoot.resolve("buildSrc/src/main"))
+      assertContentRoots(myProject, "project.buildSrc.test", projectRoot.resolve("buildSrc/src/test"))
 
       contentRootContributorAssertion.assertListenerFailures()
       if (isBuildSrcResolvedOnSecondCall) {
@@ -375,7 +375,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
     val projectRoot = projectRoot.toNioPath()
     val externalProjectRoot = myTestDir.toPath().resolve("external/project/root")
-    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
+    val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     Assertions.assertFalse(projectRoot.startsWith(externalProjectRoot)) {
       """
@@ -412,10 +412,10 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       importProject()
 
-      assertModules(project, "project", "project.main", "project.test")
-      assertContentRoots(project, "project", projectRoot)
-      assertContentRoots(project, "project.main", projectRoot.resolve("src/main"), externalProjectRoot.resolve("src/main"))
-      assertContentRoots(project, "project.test", projectRoot.resolve("src/test"))
+      assertModules(myProject, "project", "project.main", "project.test")
+      assertContentRoots(myProject, "project", projectRoot)
+      assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"), externalProjectRoot.resolve("src/main"))
+      assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
 
       contentRootContributorAssertion.assertListenerFailures()
       contentRootContributorAssertion.assertListenerState(1) {
@@ -428,7 +428,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
   fun `test content root configuration with single source root`() {
 
     val projectRoot = projectRoot.toNioPath()
-    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
+    val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     Disposer.newDisposable().use { disposable ->
 
@@ -460,10 +460,10 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       importProject()
 
-      assertModules(project, "project", "project.main", "project.test")
-      assertContentRoots(project, "project", projectRoot)
-      assertContentRoots(project, "project.main", projectRoot.resolve("src"))
-      assertContentRoots(project, "project.test")
+      assertModules(myProject, "project", "project.main", "project.test")
+      assertContentRoots(myProject, "project", projectRoot)
+      assertContentRoots(myProject, "project.main", projectRoot.resolve("src"))
+      assertContentRoots(myProject, "project.test")
 
       contentRootContributorAssertion.assertListenerFailures()
       contentRootContributorAssertion.assertListenerState(1) {

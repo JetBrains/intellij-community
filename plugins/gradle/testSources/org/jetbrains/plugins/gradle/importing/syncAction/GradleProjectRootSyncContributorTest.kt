@@ -23,7 +23,7 @@ class GradleProjectRootSyncContributorTest : GradlePhasedSyncTestCase() {
   fun `test project root creation in the simple Gradle project`() {
     val projectRoot = projectRoot.toNioPath()
     val linkedProjectRoot = projectRoot.getResolvedPath("../linked-project")
-    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
+    val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     Disposer.newDisposable().use { disposable ->
 
@@ -43,16 +43,16 @@ class GradleProjectRootSyncContributorTest : GradlePhasedSyncTestCase() {
         withJavaPlugin()
       }
 
-      val settings = GradleSettings.getInstance(project)
+      val settings = GradleSettings.getInstance(myProject)
       val projectSettings = GradleProjectSettings(projectRoot.toCanonicalPath())
       settings.linkProject(projectSettings)
 
       ExternalSystemUtil.refreshProject(projectRoot.toCanonicalPath(), createImportSpec())
 
-      assertModules(project, "project", "project.main", "project.test")
-      assertContentRoots(project, "project", projectRoot)
-      assertContentRoots(project, "project.main", projectRoot.resolve("src/main"))
-      assertContentRoots(project, "project.test", projectRoot.resolve("src/test"))
+      assertModules(myProject, "project", "project.main", "project.test")
+      assertContentRoots(myProject, "project", projectRoot)
+      assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
+      assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
 
       projectRootContributorAssertion.assertListenerFailures()
       projectRootContributorAssertion.assertListenerState(1) {
@@ -88,23 +88,23 @@ class GradleProjectRootSyncContributorTest : GradlePhasedSyncTestCase() {
       }
       createGradleWrapper("../linked-project")
 
-      val settings = GradleSettings.getInstance(project)
+      val settings = GradleSettings.getInstance(myProject)
       val projectSettings = GradleProjectSettings(linkedProjectRoot.toCanonicalPath())
       settings.linkProject(projectSettings)
 
       ExternalSystemUtil.refreshProject(linkedProjectRoot.toCanonicalPath(), createImportSpec())
 
       assertModules(
-        project,
+        myProject,
         "project", "project.main", "project.test",
         "linked-project", "linked-project.main", "linked-project.test"
       )
-      assertContentRoots(project, "project", projectRoot)
-      assertContentRoots(project, "project.main", projectRoot.resolve("src/main"))
-      assertContentRoots(project, "project.test", projectRoot.resolve("src/test"))
-      assertContentRoots(project, "linked-project", linkedProjectRoot)
-      assertContentRoots(project, "linked-project.main", linkedProjectRoot.resolve("src/main"))
-      assertContentRoots(project, "linked-project.test", linkedProjectRoot.resolve("src/test"))
+      assertContentRoots(myProject, "project", projectRoot)
+      assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
+      assertContentRoots(myProject, "project.test", projectRoot.resolve("src/test"))
+      assertContentRoots(myProject, "linked-project", linkedProjectRoot)
+      assertContentRoots(myProject, "linked-project.main", linkedProjectRoot.resolve("src/main"))
+      assertContentRoots(myProject, "linked-project.test", linkedProjectRoot.resolve("src/test"))
 
       projectRootContributorAssertion.assertListenerFailures()
       projectRootContributorAssertion.assertListenerState(1) {
