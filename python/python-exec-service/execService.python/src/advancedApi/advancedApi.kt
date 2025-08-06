@@ -6,7 +6,6 @@ import com.intellij.python.community.execService.impl.transformerToHandler
 import com.intellij.python.community.execService.python.HelperName
 import com.intellij.python.community.execService.python.impl.validatePythonAndGetVersionImpl
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
-import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.psi.LanguageLevel
 import org.jetbrains.annotations.ApiStatus
@@ -18,15 +17,15 @@ import org.jetbrains.annotations.ApiStatus
  */
 suspend fun <T> ExecService.executePythonAdvanced(
   python: ExecutablePython,
-  argsBuilder: suspend ArgsBuilder.() -> Unit = {},
+  args: Args,
   options: ExecOptions = ExecOptions(),
   processInteractiveHandler: ProcessInteractiveHandler<T>,
-): PyExecResult<T> =
-  executeAdvanced(python.binary, {
-    addArgs(*python.args.toTypedArray())
-    argsBuilder()
+): PyResult<T> =
+  executeAdvanced(
+    binary = BinOnEel(python.binary),
+    args = Args(*python.args.toTypedArray()) + args,
     // TODO: Merge PATH
-  }, options.copy(env = options.env + python.env), processInteractiveHandler)
+    options = options.copy(env = options.env + python.env), processInteractiveHandler)
 
 
 /**
@@ -39,11 +38,13 @@ suspend fun <T> ExecService.executeHelperAdvanced(
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
   processOutputTransformer: ProcessOutputTransformer<T>,
-): PyExecResult<T> = executePythonAdvanced(python, {
-  addLocalFile(PythonHelpersLocator.findPathInHelpers(helper))
-  addArgs(*args.toTypedArray())
-
-}, options, transformerToHandler(procListener, processOutputTransformer))
+): PyResult<T> = executePythonAdvanced(
+  python,
+  Args().apply {
+    addLocalFile(PythonHelpersLocator.findPathInHelpers(helper))
+    addArgs(*args.toTypedArray())
+  },
+  options, transformerToHandler(procListener, processOutputTransformer))
 
 /**
  * Ensures that this python is executable and returns its version. Error if python is broken.

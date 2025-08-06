@@ -4,9 +4,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.getShell
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.utils.readWholeText
-import com.intellij.platform.eel.provider.utils.sendWholeText
-import com.intellij.platform.eel.provider.utils.stdoutString
+import com.intellij.platform.eel.provider.utils.*
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelSource
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
@@ -15,6 +13,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.Exe
 import com.jetbrains.python.errorProcessing.ExecError
+import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.getOrThrow
 import kotlinx.coroutines.*
 import org.hamcrest.CoreMatchers
@@ -109,7 +108,7 @@ class ExecServiceShowCaseTest {
     val (shell, execArg) = eel.exec.getShell()
     val args = listOf(execArg, "echo Alice,25 && echo Bob,48")
 
-    val records = ExecService().execute((shell.asNioPath()), args) { output ->
+    val records = ExecService().execute((BinOnEel(shell.asNioPath())), args) { output ->
       val stdout = output.stdoutString.trim()
       when {
         output.exitCode == 123 -> {
@@ -159,17 +158,36 @@ class ExecServiceShowCaseTest {
     assertThat("Command doesn't have expected output", output, CoreMatchers.containsString(expectedPhrase))
   }
 
-  @ParameterizedTest
-  @EelSource
-  fun testInteractive(eelHolder: EelHolder): Unit = timeoutRunBlocking {
+  @CartesianTest
+  fun testInteractive(
+    @EelSource eelHolder: EelHolder,
+    @CartesianTest.Values(booleans = [true, false]) useEelChannels: Boolean,
+  ): Unit = timeoutRunBlocking(13.minutes, context = Dispatchers.IO) {
     val string = "abc123"
     val shell = eelHolder.eel.exec.getShell().first.asNioPath()
-    val output = ExecService().executeAdvanced(shell, {}, processInteractiveHandler = ProcessInteractiveHandler<String> { _, _, process ->
-      val stdout = async {
-        process.stdout.readWholeText()
+    val output = ExecService().executeAdvanced(BinOnEel(shell), Args(), processInteractiveHandler = ProcessInteractiveHandler<String> { _, _, process ->
+      val stdout = this@timeoutRunBlocking.async {
+        if (useEelChannels) {
+          process.inputStream.consumeAsEelChannel().readWholeText()
+        }
+        else {
+          process.inputStream.bufferedReader().readText()
+        }
       }
-      process.stdin.sendWholeText("echo $string\n")
-      process.stdin.sendWholeText("exit\n")
+      val commands = arrayOf("echo $string\n", "exit\n")
+      if (useEelChannels) {
+        val eelChannel = process.outputStream.asEelChannel()
+        for (cmd in commands) {
+          eelChannel.sendWholeText(cmd)
+        }
+      }
+      else {
+        val writer = process.outputStream.bufferedWriter()
+        for (cmd in commands) {
+          writer.write(cmd)
+          writer.flush()
+        }
+      }
       Result.success(stdout.await())
     }).orThrow()
     assertThat("No expected output", output, CoreMatchers.containsString(string))
@@ -182,7 +200,7 @@ class ExecServiceShowCaseTest {
   ): Unit = timeoutRunBlocking {
     val messageToUser = "abc123"
     val shell = eelHolder.eel.exec.getShell().first.asNioPath()
-    val result = ExecService().executeAdvanced(shell, {}, processInteractiveHandler = processSemiInteractiveHandler<Unit> { channel, exitCode ->
+    val result = ExecService().executeAdvanced(BinOnEel(shell), Args(), processInteractiveHandler = processSemiInteractiveHandler<Unit> { channel, exitCode ->
       channel.sendWholeText("exit\n")
       assertEquals(0, exitCode.await().exitCode, "Wrong exit code")
       if (sunny) {
@@ -194,9 +212,17 @@ class ExecServiceShowCaseTest {
     })
     when (result) {
       is Result.Failure -> {
-        assertFalse(sunny, "Unexpected failure ${result.error}")
-        assertThat("Wrong message to user", result.error.message, CoreMatchers.containsString(messageToUser))
-        assertEquals(shell, (result.error.exe as Exe.OnEel).eelPath.asNioPath(), "Wrong exe")
+        when (val err = result.error) {
+          is ExecError -> {
+            assertFalse(sunny, "Unexpected failure ${result.error}")
+            assertThat("Wrong message to user",
+                       result.error.message, CoreMatchers.containsString(messageToUser))
+            assertEquals(shell, (err.exe as Exe.OnEel).eelPath.asNioPath(), "Wrong exe")
+          }
+          is MessageError -> {
+            fail("Unexpected error $err")
+          }
+        }
       }
       is Result.Success -> {
         assertTrue(sunny, "Unexpected success")
@@ -236,7 +262,7 @@ class ExecServiceShowCaseTest {
     val progressCapturer = PyProcessListener { event ->
       when (event) {
         is ProcessEvent.ProcessStarted -> {
-          assertEquals(shell, event.binary, "Wrong args for start event")
+          assertEquals(shell, (event.binary as BinOnEel).path, "Wrong args for start event")
           processStartEvent = true
         }
         is ProcessEvent.ProcessOutput -> {
@@ -248,7 +274,7 @@ class ExecServiceShowCaseTest {
       }
     }
 
-    ExecService().executeAdvanced(shell, argsBuilder = {}, processInteractiveHandler = processSemiInteractiveHandler<Unit>(progressCapturer) { stdin, _ ->
+    ExecService().executeAdvanced(BinOnEel(shell), args = Args(), processInteractiveHandler = processSemiInteractiveHandler<Unit>(progressCapturer) { stdin, _ ->
       for (string in text) {
         stdin.sendWholeText("echo $string\n")
         delay(500)

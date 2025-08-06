@@ -8,10 +8,20 @@ import kotlin.coroutines.cancellation.CancellationException
 
 
 @ApiStatus.Internal
-data class ProcessFunctions(
+class ProcessFunctions(
   val waitForExit: suspend () -> Unit,
-  val killProcess: suspend () -> Unit,
-)
+  private val killProcess: suspend () -> Unit,
+) {
+  suspend fun killAndJoin(logger: Logger, processNameForDebug: String) {
+    withContext(NonCancellable) {
+      logger.warn("Sending kill to $processNameForDebug")
+      killProcess()
+      logger.warn("Kill send to $processNameForDebug, waiting")
+      waitForExit()
+      logger.warn("Process $processNameForDebug died")
+    }
+  }
+}
 
 /**
  * This is an implementation detail to be reused by other parts of a system.
@@ -26,13 +36,7 @@ fun CoroutineScope.bindProcessToScopeImpl(
   val context = CoroutineName("Waiting for process $processNameForDebug") + Dispatchers.IO
 
   suspend fun killAndJoin() {
-    withContext(NonCancellable) {
-      logger.warn("Sending kill to $processNameForDebug")
-      processFunctions.killProcess()
-      logger.warn("Kill send to $processNameForDebug, waiting")
-      processFunctions.waitForExit()
-      logger.warn("Process $processNameForDebug died")
-    }
+    processFunctions.killAndJoin(logger, processNameForDebug)
   }
 
   if (!isActive) {

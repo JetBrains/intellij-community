@@ -7,7 +7,6 @@ import com.intellij.python.community.execService.python.advancedApi.executeHelpe
 import com.intellij.python.community.execService.python.advancedApi.executePythonAdvanced
 import com.intellij.python.community.execService.python.advancedApi.validatePythonAndGetVersion
 import com.intellij.python.community.interpreters.ValidInterpreter
-import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.psi.LanguageLevel
 import org.jetbrains.annotations.ApiStatus
@@ -19,11 +18,11 @@ import org.jetbrains.annotations.ApiStatus
  */
 suspend fun <T> ExecService.executePythonAdvanced(
   python: ValidInterpreter,
-  argsBuilder: suspend ArgsBuilder.() -> Unit = {},
+  args: Args,
   options: ExecOptions = ExecOptions(),
   processInteractiveHandler: ProcessInteractiveHandler<T>,
 ): PyResult<T> =
-  executePythonAdvanced(python.asExecutablePython, argsBuilder, options, processInteractiveHandler)
+  executePythonAdvanced(python.asExecutablePython, args, options, processInteractiveHandler)
 
 
 /**

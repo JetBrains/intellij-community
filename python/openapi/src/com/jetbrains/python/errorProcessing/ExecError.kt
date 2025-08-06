@@ -17,7 +17,7 @@ import kotlin.io.path.Path
 /**
  * Exe might sit on eel (new one) or on target (legacy)
  */
-interface Exe {
+sealed interface Exe {
   companion object {
     fun fromString(path: String): Exe {
       try {

@@ -2,10 +2,7 @@
 package com.intellij.python.community.interpreters
 
 import com.intellij.openapi.module.Module
-import com.intellij.python.community.execService.ExecOptions
-import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.PyProcessListener
-import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
+import com.intellij.python.community.execService.*
 import com.intellij.python.community.execService.impl.transformerToHandler
 import com.intellij.python.community.execService.python.HelperName
 import com.intellij.python.community.execService.python.advancedApi.executeHelperAdvanced
@@ -91,4 +88,4 @@ suspend fun ExecService.executeGetStdout(
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
 ): PyResult<String> =
-  executePythonAdvanced(python.asExecutablePython, { addArgs(*args.toTypedArray()) }, options, transformerToHandler(procListener, ZeroCodeStdoutTransformer))
+  executePythonAdvanced(python.asExecutablePython, Args(*args.toTypedArray()), options, transformerToHandler(procListener, ZeroCodeStdoutTransformer))

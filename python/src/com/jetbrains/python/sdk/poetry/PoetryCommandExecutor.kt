@@ -9,7 +9,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.python.community.execService.ExecOptions
+import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.impl.poetry.poetryPath
@@ -119,7 +119,7 @@ suspend fun setupPoetry(projectPath: Path, python: String?, installPackages: Boo
       .getOr { return it }
 
     if (python != null) { // Replace a python version in toml
-      ExecService().execGetStdout(Path.of(python), listOf("-c", REPLACE_PYTHON_VERSION), ExecOptions(workingDirectory = projectPath))
+      ExecService().execGetStdout(BinOnEel(Path.of(python), workDir = projectPath), listOf("-c", REPLACE_PYTHON_VERSION))
         .getOr { return it }
     }
   }

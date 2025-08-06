@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
+import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
@@ -28,12 +29,12 @@ import kotlin.time.Duration.Companion.minutes
 internal suspend fun ExecService.validatePythonAndGetVersionImpl(python: ExecutablePython): PyResult<LanguageLevel> = withContext(Dispatchers.IO) {
   val options = ExecOptions(timeout = 1.minutes)
 
-  val smokeTestOutput = executePythonAdvanced(python, { addArgs("-c", "print(1)") }, processInteractiveHandler = transformerToHandler(null, ZeroCodeStdoutTransformer), options = options).getOr(message("python.cannot.exec", python.userReadableName)) { return@withContext it }.trim()
+  val smokeTestOutput = executePythonAdvanced(python, Args("-c", "print(1)"), processInteractiveHandler = transformerToHandler(null, ZeroCodeStdoutTransformer), options = options).getOr(message("python.cannot.exec", python.userReadableName)) { return@withContext it }.trim()
   if (smokeTestOutput != "1") {
     return@withContext PyResult.localizedError(message("python.get.version.error", python.userReadableName, smokeTestOutput))
   }
 
-  val versionOutput: EelProcessExecutionResult = executePythonAdvanced(python, options = options, argsBuilder = { addArgs(PYTHON_VERSION_ARG) }, processInteractiveHandler = transformerToHandler<EelProcessExecutionResult>(null, { r ->
+  val versionOutput: EelProcessExecutionResult = executePythonAdvanced(python, options = options, args = Args(PYTHON_VERSION_ARG), processInteractiveHandler = transformerToHandler<EelProcessExecutionResult>(null, { r ->
     if (r.exitCode == 0) Result.success(r) else Result.failure(message("python.get.version.error", python.userReadableName, r.exitCode))
   })).getOr { return@withContext it }
   // Python 2 might return version as stderr, see https://bugs.python.org/issue18338

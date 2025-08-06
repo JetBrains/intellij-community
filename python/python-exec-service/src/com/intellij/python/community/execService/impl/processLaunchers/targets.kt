@@ -1,0 +1,102 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("UsePlatformProcessAwaitExit")
+
+package com.intellij.python.community.execService.impl.processLaunchers
+
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.target.*
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.platform.eel.provider.utils.ProcessFunctions
+import com.intellij.platform.eel.provider.utils.bindProcessToScopeImpl
+import com.intellij.python.community.execService.BinOnTarget
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.Exe
+import com.jetbrains.python.errorProcessing.ExecErrorReason
+import com.jetbrains.python.errorProcessing.MessageError
+import com.jetbrains.python.errorProcessing.PyResult
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlin.io.path.pathString
+import kotlin.time.Duration.Companion.milliseconds
+
+private val logger = fileLogger()
+
+internal suspend fun createProcessLauncherOnTarget(binOnTarget: BinOnTarget, launchRequest: LaunchRequest): PyResult<ProcessLauncher> = withContext(Dispatchers.IO) {
+  val target = binOnTarget.target
+  val projectMan = ProjectManager.getInstance()
+  // Broken Targets API doesn't work without project
+  val request = target.createEnvironmentRequest(projectMan.openProjects.firstOrNull() ?: projectMan.defaultProject)
+  // Broken Targets API can only upload the whole directory
+  val dirsToMap = launchRequest.args.localFiles.map { it.parent }.toSet()
+  for (localDir in dirsToMap) {
+    request.uploadVolumes.add(TargetEnvironment.UploadRoot(localDir, TargetEnvironment.TargetPath.Temporary(), removeAtShutdown = true))
+  }
+  val targetEnv = try {
+    request.prepareEnvironment(TargetProgressIndicator.EMPTY)
+  }
+  catch (e: ExecutionException) {
+    fileLogger().warn("Failed to start $target", e)
+    // TODO: i18n
+    return@withContext Result.failure(MessageError("Failed to start environment due to ${e.localizedMessage}"))
+  }
+  val args = launchRequest.args.getArgs { localFile ->
+    targetEnv.getTargetPaths(localFile.pathString).first()
+  }
+  return@withContext Result.success(
+    ProcessLauncher(
+      exeForError = Exe.OnTarget(binOnTarget.path),
+      args = args,
+      processCommands = TargetProcessCommands(launchRequest.scopeToBind, binOnTarget.path, request, targetEnv, args, launchRequest.env)
+    )
+  )
+}
+
+private class TargetProcessCommands(
+  private val scopeToBind: CoroutineScope,
+  private val exePath: FullPathOnTarget,
+  private val request: TargetEnvironmentRequest,
+  private val targetEnv: TargetEnvironment,
+  private val args: List<String>,
+  private val env: Map<String, String>,
+) : ProcessCommands {
+
+  private var process: Process? = null
+
+  override val processFunctions: ProcessFunctions = ProcessFunctions(
+    waitForExit = {
+      // `waitForExit` seems to be broken in Targets API, hence polling
+      while (process?.isAlive == true) {
+        delay(100.milliseconds)
+      }
+    },
+    killProcess = { process?.destroyForcibly() }
+  )
+
+  override suspend fun start(): Result<Process, ExecErrorReason.CantStart> {
+    val cmdLine = TargetedCommandLineBuilder(request).also {
+      it.setExePath(exePath)
+      it.addParameters(args)
+      for ((k, v) in env) {
+        it.addEnvironmentVariable(k, v)
+      }
+    }.build()
+    try {
+      val process = targetEnv.createProcess(cmdLine)
+      this.process = process
+      scopeToBind.bindProcessToScopeImpl(
+        logger = logger,
+        processNameForDebug = exePath,
+        processFunctions = processFunctions
+      )
+      return Result.success(process)
+    }
+    catch (e: ExecutionException) {
+      return e.asCantStart()
+    }
+  }
+}
+
+private fun ExecutionException.asCantStart(): Result.Failure<ExecErrorReason.CantStart> = Result.failure(ExecErrorReason.CantStart(null, localizedMessage))
