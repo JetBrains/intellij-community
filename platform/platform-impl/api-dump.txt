@@ -1311,6 +1311,8 @@ com.intellij.ui.popup.PopupComponent
 - a:hide(Z):V
 - a:setRequestFocus(Z):V
 - a:show():V
+f:com.intellij.ui.popup.PopupFactoryImpl$ActionItem
+- getAccessibleIconDescription():java.lang.String
 com.intellij.ui.popup.list.ComboBoxPopup$Context
 - configureList(javax.swing.JList):V
 - customizeListRendererComponent(javax.swing.JComponent):V

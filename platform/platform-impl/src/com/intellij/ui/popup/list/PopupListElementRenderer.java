@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBBox;
 import com.intellij.ui.popup.NumericMnemonicItem;
+import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
@@ -414,6 +415,10 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       selectablePanel.setSelectionColor(isSelected && isSelectable ? UIUtil.getListSelectionBackground(true) : null);
       setSelected(myMainPane, isSelected && isSelectable);
     }
+
+    if (value instanceof PopupFactoryImpl.ActionItem actionItem) {
+      myIconLabel.getAccessibleContext().setAccessibleName(actionItem.getAccessibleIconDescription());
+    }
   }
 
   protected boolean isShowSecondaryText() {
@@ -511,7 +516,9 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     if (shortcutLabelAccessibleName != null) {
       shortcutLabelAccessibleName = shortcutLabelAccessibleName.trim();
     }
-    return AccessibleContextUtil.combineAccessibleStrings(textLabelAccessibleName, shortcutLabelAccessibleName);
+    String iconAccessibleName = myIconLabel == null ? null : myIconLabel.getAccessibleContext().getAccessibleName();
+    return AccessibleContextUtil.combineAccessibleStrings(textLabelAccessibleName, " ", shortcutLabelAccessibleName, ", ",
+                                                          iconAccessibleName);
   }
 
   @TestOnly

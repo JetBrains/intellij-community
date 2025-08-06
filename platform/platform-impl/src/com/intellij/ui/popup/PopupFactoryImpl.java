@@ -2,6 +2,7 @@
 package com.intellij.ui.popup;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.internal.inspector.UiInspectorActionUtil;
@@ -42,6 +43,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -780,6 +782,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     private @NotNull List<ActionItem> myInlineActions;
 
+    private @Nls @Nullable String myAccessibleIconDescription;
+
     ActionItem(@NotNull AnAction action,
                @Nullable Character mnemonicChar,
                boolean mnemonicsEnabled,
@@ -873,6 +877,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
       myIcon = disableIcon ? null : icon;
       mySelectedIcon = selectedIcon;
+
+      if (myAction instanceof Toggleable) {
+        myAccessibleIconDescription = Toggleable.isSelected(presentation)
+                                      ? IdeBundle.message("popup.action.item.toggleable.checked.accessible.description")
+                                      : IdeBundle.message("popup.action.item.toggleable.not.checked.accessible.description");
+      }
     }
 
     private @NotNull List<ActionItem> createInlineItems(@NotNull PresentationFactory presentationFactory,
@@ -923,6 +933,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     public @NlsContexts.Separator String getSeparatorText() {
       return mySeparatorText;
+    }
+
+    public @Nls @Nullable String getAccessibleIconDescription() {
+      return myAccessibleIconDescription;
     }
 
     public void setSeparatorText(@NlsContexts.Separator String separatorText) {
