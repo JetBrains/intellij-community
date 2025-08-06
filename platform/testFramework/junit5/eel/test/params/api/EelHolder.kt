@@ -21,4 +21,9 @@ sealed interface EelHolder {
    * Consider using [eel] in a new code.
    */
   val target: TargetEnvironmentConfiguration?
+
+  /**
+   * For those rare cases when you need to test something WSL or Docker-specific. Do not use unless absolutely necessary.
+   */
+  val type: EelType
 }

@@ -3,6 +3,7 @@ package com.intellij.platform.testFramework.junit5.eel.params.spi
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.platform.ijent.IjentApi
+import com.intellij.platform.testFramework.junit5.eel.params.api.EelType
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.TestOnly
 import java.io.Closeable
@@ -14,6 +15,7 @@ import kotlin.reflect.KClass
  */
 @TestOnly
 interface EelIjentTestProvider<T : Annotation> {
+  val eelType: EelType
   val name: String
   val mandatoryAnnotationClass: KClass<T>
 
