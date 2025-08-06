@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.runner;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -9,7 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
 import org.jetbrains.plugins.terminal.util.ShellNameUtil;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,8 +42,8 @@ public final class LocalTerminalStartCommandBuilder {
   }
 
   private static boolean isAbsoluteFilePathAndExists(@NotNull String path) {
-    File file = new File(path);
-    return file.isAbsolute() && file.isFile();
+    Path file = NioFiles.toPath(path);
+    return file != null && file.isAbsolute() && Files.isRegularFile(file);
   }
 
   private static boolean containsLoginOrInteractiveOption(List<String> command) {
