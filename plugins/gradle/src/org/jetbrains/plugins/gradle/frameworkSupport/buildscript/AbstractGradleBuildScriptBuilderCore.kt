@@ -28,6 +28,7 @@ abstract class AbstractGradleBuildScriptBuilderCore<Self : GradleBuildScriptBuil
   private val dependencies = GradleScriptTreeBuilder.create()
   private val repositories = GradleScriptTreeBuilder.create()
   private val postfixes = GradleScriptTreeBuilder.create()
+  private val kotlin = GradleScriptTreeBuilder.create()
 
   protected abstract fun apply(action: Self.() -> Unit): Self
 
@@ -74,6 +75,9 @@ abstract class AbstractGradleBuildScriptBuilderCore<Self : GradleBuildScriptBuil
   override fun withJava(configure: GradleScriptTreeBuilder.() -> Unit): Self = applyAndMerge(java, configure)
   override fun withJava(configure: Consumer<GradleScriptTreeBuilder>): Self = withPostfix(configure::accept)
 
+  override fun withKotlin(configure: GradleScriptTreeBuilder.() -> Unit): Self = applyAndMerge(kotlin, configure)
+  override fun withKotlin(configure: Consumer<GradleScriptTreeBuilder>): Self = withPostfix(configure::accept)
+
   override fun generateTree(): BlockElement = GradleScriptTreeBuilder.tree {
     join(imports).ln()
     callIfNotEmpty("buildscript") {
@@ -87,6 +91,7 @@ abstract class AbstractGradleBuildScriptBuilderCore<Self : GradleBuildScriptBuil
     callIfNotEmpty("repositories", repositories).ln()
     callIfNotEmpty("dependencies", dependencies).ln()
     callIfNotEmpty("java", java).ln()
+    callIfNotEmpty("kotlin", kotlin).ln()
     join(postfixes).ln()
   }
 

@@ -182,11 +182,9 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
     withPlugin("org.jetbrains.kotlin.multiplatform", kotlinVersion)
 
   override fun withKotlinJvmToolchain(jvmTarget: Int): Self =
-    withPostfix {
-      call("kotlin") {
-        // We use a code here to force the generator to use parenthesis in Groovy, to be in-line with the documentation
-        code("jvmToolchain($jvmTarget)")
-      }
+    withKotlin {
+      // We use a code here to force the generator to use parenthesis in Groovy, to be in-line with the documentation
+      code("jvmToolchain($jvmTarget)")
     }
 
   override fun withKotlinDsl(): Self = apply {

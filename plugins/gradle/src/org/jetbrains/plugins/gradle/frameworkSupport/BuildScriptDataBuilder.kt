@@ -131,6 +131,8 @@ class BuildScriptDataBuilder(
   override fun withJava(configure: Consumer<GradleScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withJava(configure) }
   override fun targetCompatibility(level: String): BuildScriptDataBuilder = apply { backend.targetCompatibility(level) }
   override fun sourceCompatibility(level: String): BuildScriptDataBuilder = apply { backend.sourceCompatibility(level) }
+  override fun withKotlin(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withKotlin(configure) }
+  override fun withKotlin(configure: Consumer<GradleScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withKotlin(configure) }
 
   override fun project(name: String): Expression = backend.project(name)
   override fun project(name: String, configuration: String): Expression = backend.project(name, configuration)
