@@ -57,6 +57,9 @@ c:com.intellij.execution.wsl.WSLDistribution
 - com.intellij.ide.CommandLineInspectionProjectConfigurator
 - configureProject(com.intellij.openapi.project.Project,com.intellij.ide.CommandLineInspectionProjectConfigurator$ConfiguratorContext):V
 - a:configureProjectAsync(com.intellij.openapi.project.Project,com.intellij.ide.CommandLineInspectionProjectConfigurator$ConfiguratorContext,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.ide.CustomDataContextSerializer
+- a:getKey():com.intellij.openapi.actionSystem.DataKey
+- a:getSerializer():kotlinx.serialization.KSerializer
 f:com.intellij.ide.IdeTooltipManager
 - com.intellij.openapi.Disposable
 - *f:isProcessing(java.awt.Component):Z
