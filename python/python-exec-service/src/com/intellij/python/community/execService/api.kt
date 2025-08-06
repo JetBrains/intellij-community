@@ -60,18 +60,17 @@ data class BinOnTarget(internal val configureTargetCmdLine: (TargetedCommandLine
  */
 suspend fun ExecService.execGetStdout(
   binary: Path,
-  args: List<String> = emptyList(),
+  args: Args = Args(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
 ): PyResult<String> = execGetStdout(BinOnEel(binary), args, options, procListener)
-
 
 /**
  * Execute [binary] right directly where it sits
  */
 suspend fun ExecService.execGetStdout(
   binary: BinaryToExec,
-  args: List<String> = emptyList(),
+  args: Args = Args(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
 ): PyResult<String> = execute(
@@ -90,7 +89,7 @@ suspend fun ExecService.execGetStdout(
 suspend fun ExecService.execGetStdout(
   eelApi: EelApi,
   binaryName: String,
-  args: List<String> = emptyList(),
+  args: Args = Args(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
 ): PyResult<String> {
@@ -107,12 +106,12 @@ suspend fun ExecService.execGetStdout(
 suspend fun ExecService.execGetStdoutInShell(
   eelApi: EelApi,
   commandForShell: String,
-  args: List<String> = emptyList(),
+  args: Args = Args(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
 ): PyResult<String> {
   val (shell, arg) = eelApi.exec.getShell()
-  return execGetStdout(BinOnEel(shell.asNioPath()), listOf(arg, commandForShell) + args, options, procListener)
+  return execGetStdout(BinOnEel(shell.asNioPath()), Args(arg, commandForShell).add(args), options, procListener)
 }
 
 /**
@@ -126,7 +125,7 @@ suspend fun ExecService.execGetStdoutInShell(
 @CheckReturnValue
 suspend fun <T> ExecService.execute(
   binary: BinaryToExec,
-  args: List<String> = emptyList(),
+  args: Args = Args(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
   processOutputTransformer: ProcessOutputTransformer<T>,
@@ -148,8 +147,8 @@ suspend fun <T> ExecService.execute(
         }
       }
     }
-    executeAdvanced(binary, Args(*args.toTypedArray()), options, transformerToHandler(procListener
-                                                                                      ?: listener, processOutputTransformer))
+    executeAdvanced(binary, args, options, transformerToHandler(procListener
+                                                                ?: listener, processOutputTransformer))
   }
 
 }
@@ -194,23 +193,23 @@ fun interface FileArgGenerator {
  */
 class Args(vararg initialArgs: String) {
   private val _args = CopyOnWriteArrayList<Arg>(initialArgs.map { Arg.StringArg(it) })
-  fun addArgs(vararg args: String) {
+  fun addArgs(vararg args: String): Args {
     _args.addAll(args.map { Arg.StringArg(it) })
+    return this
   }
 
   /**
    * This file will be copied to remote machine and its remote name will be added to the list of arguments.
    * Use [argGenerator] to modify name
    */
-  fun addLocalFile(localFile: Path, argGenerator: FileArgGenerator = FileArgGenerator { it }) {
+  fun addLocalFile(localFile: Path, argGenerator: FileArgGenerator = FileArgGenerator { it }): Args {
     _args.add(Arg.FileArg(localFile, argGenerator))
+    return this
   }
 
-  operator fun plus(second: Args): Args {
-    val new = Args()
-    new._args.addAll(_args)
-    new._args.addAll(second._args)
-    return new
+  fun add(another: Args): Args {
+    _args.addAll(another._args)
+    return this
   }
 
   internal val localFiles: List<Path>
@@ -229,3 +228,5 @@ class Args(vararg initialArgs: String) {
       }
     }
 }
+
+fun Args.addArgs(args: List<String>): Args = addArgs(*args.toTypedArray())

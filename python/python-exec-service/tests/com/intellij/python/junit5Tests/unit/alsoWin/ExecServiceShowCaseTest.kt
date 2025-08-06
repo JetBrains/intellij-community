@@ -73,7 +73,7 @@ class ExecServiceShowCaseTest {
         sut.execGetStdoutInShell(eel, if (rainyDay) "abc123" else "echo $hello")
       }
       SimpleApiExecType.RELATIVE -> {
-        sut.execGetStdout(eel, if (rainyDay) "abc123" else binary, args.toList())
+        sut.execGetStdout(eel, if (rainyDay) "abc123" else binary, Args(*args))
       }
       SimpleApiExecType.FULL_PATH -> {
         var fullPath = eel.exec.findExeFilesInPath(binary).firstOrNull()
@@ -82,7 +82,7 @@ class ExecServiceShowCaseTest {
           fullPath = fullPath.resolve("junk")
         }
 
-        sut.execGetStdout(fullPath.asNioPath(), args.toList())
+        sut.execGetStdout(fullPath.asNioPath(), Args(*args))
       }
     }
 
@@ -106,7 +106,7 @@ class ExecServiceShowCaseTest {
     data class Record(val name: String, val age: Int)
 
     val (shell, execArg) = eel.exec.getShell()
-    val args = listOf(execArg, "echo Alice,25 && echo Bob,48")
+    val args = Args(execArg, "echo Alice,25 && echo Bob,48")
 
     val records = ExecService().execute((BinOnEel(shell.asNioPath())), args) { output ->
       val stdout = output.stdoutString.trim()
@@ -145,16 +145,16 @@ class ExecServiceShowCaseTest {
     val expectedPhrase = "Usage"
     val (binaryName, args) = when (eel.platform) {
       is EelPlatform.Windows -> {
-        Pair("ping.exe", arrayOf("/?"))
+        Pair("ping.exe", Args("/?"))
       }
       is EelPlatform.Posix -> {
-        Pair("sh", arrayOf("-c", "echo $expectedPhrase"))
+        Pair("sh", Args("-c", "echo $expectedPhrase"))
       }
     }
 
     val whatToExec = eel.exec.findExeFilesInPath(binaryName).firstOrNull() ?: error("Can't find $binaryName")
 
-    val output = execService.execGetStdout(whatToExec.asNioPath(), args.toList()).getOrThrow()
+    val output = execService.execGetStdout(whatToExec.asNioPath(), args).getOrThrow()
     assertThat("Command doesn't have expected output", output, CoreMatchers.containsString(expectedPhrase))
   }
 
@@ -236,7 +236,7 @@ class ExecServiceShowCaseTest {
     val eel = eelHolder.eel
     val binary = eel.fs.user.home.asNioPath().resolve("Some_command_that_never_exists_on_any_machine${Math.random()}")
     val arg = "foo"
-    when (val output = ExecService().execGetStdout(binary, listOf(arg))) {
+    when (val output = ExecService().execGetStdout(binary, Args(arg))) {
       is Result.Success -> fail("Execution of bad command should lead to an error")
       is Result.Failure -> {
         val err = (output.error as ExecError)
@@ -310,7 +310,7 @@ class ExecServiceShowCaseTest {
         is ProcessEvent.ProcessEnded, is ProcessEvent.ProcessStarted -> Unit
       }
     }
-    val output = ExecService().execGetStdout(shell.asNioPath(), listOf(arg, "echo $text"), procListener = listener).getOrThrow()
+    val output = ExecService().execGetStdout(shell.asNioPath(), Args(arg, "echo $text"), procListener = listener).getOrThrow()
     assertTrue(stdoutReported, "No stdout reported")
     assertEquals(text, output.trim(), "Wrong result")
 

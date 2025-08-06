@@ -55,7 +55,7 @@ class HatchRuntime(
    * Doesn't make any validation of stdout/stderr content.
    */
   internal suspend fun <T> execute(vararg arguments: String, processOutputTransformer: ProcessOutputTransformer<T>): PyResult<T> {
-    return execService.execute(hatchBinary, arguments.toList(), execOptions, processOutputTransformer = processOutputTransformer)
+    return execService.execute(hatchBinary, Args(*arguments), execOptions, processOutputTransformer = processOutputTransformer)
   }
 
   internal suspend fun <T> executeInteractive(vararg arguments: String, processSemiInteractiveFun: ProcessSemiInteractiveFun<T>): PyResult<T> {
@@ -64,7 +64,7 @@ class HatchRuntime(
 
   internal suspend fun resolvePythonVirtualEnvironment(pythonHomePath: PythonHomePath): PyResult<PythonVirtualEnvironment> {
     val pythonVersion = pythonHomePath.takeIf { it.isDirectory() }?.resolvePythonBinary()?.let { pythonBinaryPath ->
-      execService.execGetStdout(pythonBinaryPath, listOf("--version"),
+      execService.execGetStdout(pythonBinaryPath, Args("--version"),
                                 ExecOptions(timeout = 20.minutes),
                                 procListener = null).getOr { return it }.trim()
     }

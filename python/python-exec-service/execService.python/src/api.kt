@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.execService.python
 
+import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.PyProcessListener
@@ -8,6 +9,7 @@ import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.execService.python.advancedApi.executeHelperAdvanced
 import com.intellij.python.community.execService.python.advancedApi.validatePythonAndGetVersion
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.psi.LanguageLevel
@@ -37,3 +39,10 @@ suspend fun ExecService.validatePythonAndGetVersion(python: PythonBinary): PyRes
   validatePythonAndGetVersion(ExecutablePython.vanillaExecutablePython(python))
 
 suspend fun PythonBinary.validatePythonAndGetVersion(): PyResult<LanguageLevel> = ExecService().validatePythonAndGetVersion(this)
+
+
+/**
+ * Adds helper by copying it to the remote system (if needed)
+ */
+fun Args.addHelper(helper: HelperName): Args =
+  addLocalFile(PythonHelpersLocator.findPathInHelpers(helper))

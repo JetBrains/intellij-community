@@ -4,8 +4,8 @@ package com.intellij.python.community.execService.python.advancedApi
 import com.intellij.python.community.execService.*
 import com.intellij.python.community.execService.impl.transformerToHandler
 import com.intellij.python.community.execService.python.HelperName
+import com.intellij.python.community.execService.python.addHelper
 import com.intellij.python.community.execService.python.impl.validatePythonAndGetVersionImpl
-import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.psi.LanguageLevel
 import org.jetbrains.annotations.ApiStatus
@@ -23,7 +23,7 @@ suspend fun <T> ExecService.executePythonAdvanced(
 ): PyResult<T> =
   executeAdvanced(
     binary = BinOnEel(python.binary),
-    args = Args(*python.args.toTypedArray()) + args,
+    args = Args(*python.args.toTypedArray()).add(args),
     // TODO: Merge PATH
     options = options.copy(env = options.env + python.env), processInteractiveHandler)
 
@@ -40,10 +40,7 @@ suspend fun <T> ExecService.executeHelperAdvanced(
   processOutputTransformer: ProcessOutputTransformer<T>,
 ): PyResult<T> = executePythonAdvanced(
   python,
-  Args().apply {
-    addLocalFile(PythonHelpersLocator.findPathInHelpers(helper))
-    addArgs(*args.toTypedArray())
-  },
+  Args().addHelper(helper).addArgs(args),
   options, transformerToHandler(procListener, processOutputTransformer))
 
 /**
