@@ -58,9 +58,11 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
                     printNonErrorClassType(upper as KaClassType, lower as KaClassType)
                 } else {
                     // fallback case
+                    text("(")
                     printKtType(lower)
                     text("..")
                     printKtType(upper)
+                    text(")")
                 }
             }
         }
