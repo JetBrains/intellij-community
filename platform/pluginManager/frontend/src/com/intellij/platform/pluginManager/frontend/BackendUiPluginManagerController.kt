@@ -62,8 +62,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().initSession(sessionId)
   }
 
-  override fun getInstalledPlugins(): List<PluginUiModel> {
-    return awaitForResult { PluginManagerApi.getInstance().getInstalledPlugins().withSource() }
+  override suspend fun getInstalledPlugins(): List<PluginUiModel> {
+    return PluginManagerApi.getInstance().getInstalledPlugins().withSource()
   }
 
   override fun getUpdates(): List<PluginUiModel> {

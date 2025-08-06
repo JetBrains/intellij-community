@@ -89,7 +89,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return PluginManager.getVisiblePlugins(showImplementationDetails).map { PluginUiModelAdapter(it) }.toList().withSource()
   }
 
-  override fun getInstalledPlugins(): List<PluginUiModel> {
+  override suspend fun getInstalledPlugins(): List<PluginUiModel> {
     return InstalledPluginsState.getInstance().installedPlugins.map { PluginUiModelAdapter(it) }.withSource()
   }
 

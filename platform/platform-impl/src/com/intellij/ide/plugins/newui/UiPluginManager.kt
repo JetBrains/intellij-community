@@ -61,7 +61,7 @@ class UiPluginManager {
     return getController().getVisiblePlugins(showImplementationDetails)
   }
 
-  fun getInstalledPlugins(): List<PluginUiModel> {
+  suspend fun getInstalledPlugins(): List<PluginUiModel> {
     return getController().getInstalledPlugins()
   }
 
