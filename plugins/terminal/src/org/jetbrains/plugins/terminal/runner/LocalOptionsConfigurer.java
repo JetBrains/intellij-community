@@ -169,7 +169,7 @@ public final class LocalOptionsConfigurer {
       return shellCommand;
     }
     String shellPath = fixShellPath(getShellPath(project), workingDir);
-    return LocalTerminalStartCommandBuilder.convertShellPathToCommand(shellPath);
+    return LocalTerminalStartCommandBuilder.convertShellPathToCommand(shellPath, workingDir);
   }
 
   private static @Nullable List<String> fixShellCommand(@Nullable List<String> shellCommand) {
