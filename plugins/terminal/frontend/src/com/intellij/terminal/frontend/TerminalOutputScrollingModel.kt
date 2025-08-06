@@ -3,11 +3,13 @@ package com.intellij.terminal.frontend
 
 import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Should manage the vertical scroll offset of the terminal output.
  */
-internal interface TerminalOutputScrollingModel {
+@ApiStatus.Internal
+interface TerminalOutputScrollingModel {
   /**
    * If [force] is true, the vertical scroll offset will be unconditionally adjusted to make cursor visible on the screen.
    * [force] option should be used only in response to explicit user action.

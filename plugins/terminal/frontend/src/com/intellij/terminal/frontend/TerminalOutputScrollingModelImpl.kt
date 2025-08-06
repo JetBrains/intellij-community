@@ -14,7 +14,11 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
@@ -30,13 +34,17 @@ import kotlin.math.max
  *
  * Lifecycle is bound to the provided Coroutine Scope.
  */
-internal class TerminalOutputScrollingModelImpl(
+@ApiStatus.Internal
+class TerminalOutputScrollingModelImpl(
   private val editor: EditorEx,
   private val outputModel: TerminalOutputModel,
   private val sessionModel: TerminalSessionModel,
   coroutineScope: CoroutineScope,
 ) : TerminalOutputScrollingModel {
   private var shouldScrollToCursor: Boolean = true
+
+  /** The state of the output model for which scroll position was adjusted */
+  private val appliedOutputModelState = MutableStateFlow<OutputModelState>(getCurrentOutputModelState())
 
   init {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
@@ -143,6 +151,8 @@ internal class TerminalOutputScrollingModelImpl(
         }
       }
     }
+
+    appliedOutputModelState.value = OutputModelState(cursorOffset, outputModel.document.modificationStamp)
   }
 
   private fun findLastNotBlankVisualLine(startVisualLine: Int): Int {
@@ -177,4 +187,16 @@ internal class TerminalOutputScrollingModelImpl(
     }
     else 0
   }
+
+  @TestOnly
+  suspend fun awaitEventProcessing() {
+    val expectedState = getCurrentOutputModelState()
+    appliedOutputModelState.first { it == expectedState }
+  }
+
+  private fun getCurrentOutputModelState(): OutputModelState {
+    return OutputModelState(outputModel.cursorOffsetState.value, outputModel.document.modificationStamp)
+  }
+
+  private data class OutputModelState(val cursorOffset: Int, val docStamp: Long)
 }

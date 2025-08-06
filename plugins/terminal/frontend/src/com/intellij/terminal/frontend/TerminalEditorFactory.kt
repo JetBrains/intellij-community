@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalFontSizeProvider
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalFontSettingsListener
 import org.jetbrains.plugins.terminal.TerminalFontSettingsService
 import org.jetbrains.plugins.terminal.TerminalFontSizeProviderImpl
@@ -23,7 +24,8 @@ import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBack
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
 import javax.swing.JScrollPane
 
-internal object TerminalEditorFactory {
+@ApiStatus.Internal
+object TerminalEditorFactory {
   fun createOutputEditor(
     project: Project,
     settings: JBTerminalSystemSettingsProviderBase,

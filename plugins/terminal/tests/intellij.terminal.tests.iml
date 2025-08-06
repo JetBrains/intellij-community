@@ -28,11 +28,12 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.ide.internal" />
-    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="library" name="assertJ" level="project" />
     <orderEntry type="library" name="jediterm-core" level="project" />
     <orderEntry type="library" name="jediterm-ui" level="project" />
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="library" name="JUnit4" level="project" />
   </component>
 </module>

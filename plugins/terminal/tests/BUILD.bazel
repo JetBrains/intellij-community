@@ -42,12 +42,13 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util/coroutines",
     "//platform/platform-impl/internal",
-    "@lib//:junit4",
+    "//platform/code-style-api:codeStyle",
     "@lib//:assert_j",
     "@lib//:jediterm-core",
     "@lib//:jediterm-ui",
     "@lib//:pty4j",
     "@lib//:guava",
+    "@lib//:junit4",
   ],
   runtime_deps = [":tests_test_resources"]
 )
