@@ -3,14 +3,13 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
-import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
-import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKindImpl
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.findPackage
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.psi.KtBlockCodeFragment
@@ -18,7 +17,8 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.ImportPath
 
-internal fun KaSession.buildImportingScopes(originalFile: KtFile, imports: Collection<ImportPath>): List<KaScopeWithKind> {
+context(_: KaSession)
+internal fun buildImportingScopes(originalFile: KtFile, imports: Collection<ImportPath>): List<KaScopeWithKind> {
     val fileWithImports = buildFileWithImports(originalFile, imports)
 
     // FIXME: KTIJ-34274
@@ -36,7 +36,8 @@ internal fun KaSession.buildImportingScopes(originalFile: KtFile, imports: Colle
     }
 }
 
-private fun KaSession.findPackageScope(file: KtFile): KaScope? =
+context(_: KaSession)
+private fun findPackageScope(file: KtFile): KaScope? =
     findPackage(file.packageFqName)?.packageScope
 
 /**
@@ -60,7 +61,8 @@ private fun buildFileWithImports(
     return fileWithImports
 }
 
-private fun KaSession.nonImportingScopesForPosition(element: KtElement): List<KaScope> {
+context(_: KaSession)
+private fun nonImportingScopesForPosition(element: KtElement): List<KaScope> {
     val scopeContext = element.containingKtFile.scopeContext(element)
 
     // we have to filter scopes created by implicit receivers (like companion objects, for example); see KT-70108
@@ -76,7 +78,8 @@ private fun KaSession.nonImportingScopesForPosition(element: KtElement): List<Ka
     return nonImportingScopes
 }
 
-internal fun KaSession.typeIsPresentAsImplicitReceiver(
+context(_: KaSession)
+internal fun typeIsPresentAsImplicitReceiver(
     type: KaType,
     contextPosition: KtElement,
 ): Boolean {
@@ -86,7 +89,8 @@ internal fun KaSession.typeIsPresentAsImplicitReceiver(
     return implicitReceivers.any { it.type.semanticallyEquals(type) }
 }
 
-internal fun KaSession.isAccessibleAsMemberCallableDeclaration(
+context(_: KaSession)
+internal fun isAccessibleAsMemberCallableDeclaration(
     symbol: KaCallableSymbol,
     contextPosition: KtElement,
 ): Boolean {
@@ -99,7 +103,8 @@ internal fun KaSession.isAccessibleAsMemberCallableDeclaration(
     return nonImportingScopes.callables(symbol.name).any { it == symbol }
 }
 
-internal fun KaSession.isAccessibleAsMemberClassifier(symbol: KaSymbol, element: KtElement): Boolean {
+context(_: KaSession)
+internal fun isAccessibleAsMemberClassifier(symbol: KaSymbol, element: KtElement): Boolean {
     if (symbol !is KaClassLikeSymbol || containingDeclarationPatched(symbol) !is KaClassLikeSymbol) return false
 
     val name = symbol.name ?: return false

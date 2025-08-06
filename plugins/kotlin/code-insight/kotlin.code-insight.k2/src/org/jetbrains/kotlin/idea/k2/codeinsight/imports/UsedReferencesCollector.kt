@@ -26,7 +26,8 @@ internal class UsedReferencesCollector(private val file: KtFile) {
 
     private val aliases: Map<FqName, List<Name>> = collectImportAliases(file)
 
-    fun KaSession.collectUsedReferences(): Result {
+    context(_: KaSession)
+    fun collectUsedReferences(): Result {
         file.accept(object : KtVisitorVoid(),PsiRecursiveVisitor {
             override fun visitElement(element: PsiElement) {
                 ProgressIndicatorProvider.checkCanceled()
@@ -49,7 +50,8 @@ internal class UsedReferencesCollector(private val file: KtFile) {
         return Result(usedDeclarations, unresolvedNames, importableSymbolPointers, references)
     }
 
-    private fun KaSession.collectReferencesFrom(element: KtElement) {
+    private context(_: KaSession)
+    fun collectReferencesFrom(element: KtElement) {
         if (element.ignoreReferencesDuringImportOptimization) return
 
         if (element is KtLabelReferenceExpression) return

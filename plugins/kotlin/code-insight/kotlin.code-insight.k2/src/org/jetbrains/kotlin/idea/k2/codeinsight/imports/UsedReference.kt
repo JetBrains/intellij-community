@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -14,7 +15,8 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 
 internal class UsedReference private constructor(val reference: KtReference) {
-    fun KaSession.resolvesByNames(): Collection<Name> {
+    context(_: KaSession)
+    fun resolvesByNames(): Collection<Name> {
         if (reference is KDocReference && !isResolved()) {
             // if KDoc reference is unresolved, do not consider it to be an unresolved symbol (see KT-61785)
             return emptyList()
@@ -23,7 +25,8 @@ internal class UsedReference private constructor(val reference: KtReference) {
         return reference.resolvesByNames
     }
 
-    fun KaSession.isResolved(): Boolean {
+    context(_: KaSession)
+    fun isResolved(): Boolean {
         if (isEmptyInvokeReference(reference)) {
             // we consider "empty" invoke references to be resolved,
             // but they will yield no symbols from `resolveToReferencedSymbols()`
@@ -43,13 +46,15 @@ internal class UsedReference private constructor(val reference: KtReference) {
         return resolvedSymbols.isNotEmpty()
     }
 
-    fun KaSession.resolveToReferencedSymbols(): Collection<ReferencedSymbol> {
+    context(_: KaSession)
+    fun resolveToReferencedSymbols(): Collection<ReferencedSymbol> {
         val symbols = reference.resolveToSymbols()
         return symbols.mapNotNull { adjustSymbolIfNeeded(it, reference) }.map { ReferencedSymbol(reference, it) }
     }
 
     companion object {
-        fun KaSession.createFrom(reference: KtReference): UsedReference? {
+        context(_: KaSession)
+        fun createFrom(reference: KtReference): UsedReference? {
             return when {
                 isDefaultJavaAnnotationArgumentReference(reference) -> null
                 isUnaryOperatorOnIntLiteralReference(reference) -> null
@@ -74,7 +79,8 @@ private fun isDefaultJavaAnnotationArgumentReference(reference: KtReference): Bo
  * In the cases when `foo()` call is not actually an `invoke` call, we do not want to process such references,
  * since they are not supposed to resolve anywhere.
  */
-private fun KaSession.isEmptyInvokeReference(reference: KtReference): Boolean {
+context(_: KaSession)
+private fun isEmptyInvokeReference(reference: KtReference): Boolean {
     if (reference !is KtInvokeFunctionReference) return false
 
     val callInfo = reference.element.resolveToCall()
@@ -86,7 +92,8 @@ private fun KaSession.isEmptyInvokeReference(reference: KtReference): Boolean {
 /**
  * Provides a better, more precise alternative to [target] symbol if necessary.
  */
-private fun KaSession.adjustSymbolIfNeeded(
+context(_: KaSession)
+private fun adjustSymbolIfNeeded(
     target: KaSymbol,
     reference: KtReference,
     containingFile: KtFile = reference.element.containingKtFile,

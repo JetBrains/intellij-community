@@ -5,6 +5,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassErrorType
@@ -18,7 +19,8 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 /**
  * A patched version of [KaSession.containingDeclaration]; works as a workaround for KT-70949.
  */
-internal fun KaSession.containingDeclarationPatched(symbol: KaSymbol): KaDeclarationSymbol? {
+context(_: KaSession)
+internal fun containingDeclarationPatched(symbol: KaSymbol): KaDeclarationSymbol? {
     symbol.containingDeclaration?.let { return it }
 
     val declarationPsi = symbol.psi
@@ -39,7 +41,8 @@ internal fun KaSession.containingDeclarationPatched(symbol: KaSymbol): KaDeclara
  *
  * This is a workaround function until KTIJ-26098 and KT-73546 are fixed.
  */
-internal fun KaSession.resolveTypeAliasedConstructorReference(
+context(_: KaSession)
+internal fun resolveTypeAliasedConstructorReference(
     reference: KtReference,
     expandedClassSymbol: KaClassLikeSymbol,
     containingFile: KtFile,
@@ -66,14 +69,16 @@ internal fun KaSession.resolveTypeAliasedConstructorReference(
     }
 }
 
-private fun KaSession.typeAliasIsAvailable(name: Name, containingFile: KtFile): Boolean {
+context(_: KaSession)
+private fun typeAliasIsAvailable(name: Name, containingFile: KtFile): Boolean {
     val importingScope = containingFile.importingScopeContext
     val foundClassifiers = importingScope.compositeScope().classifiers(name)
 
     return foundClassifiers.any { it is KaTypeAliasSymbol }
 }
 
-private fun KaSession.resolveReferencedType(reference: KtReference): KaType? {
+context(_: KaSession)
+private fun resolveReferencedType(reference: KtReference): KaType? {
     val originalReferenceName = reference.resolvesByNames.singleOrNull() ?: return null
 
     val psiFactory = KtPsiFactory.contextual(reference.element)

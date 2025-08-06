@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.name.CallableId
@@ -13,20 +14,23 @@ internal sealed interface SymbolInfo {
     val importableName: FqName?
 
     companion object {
-        fun KaSession.create(symbol: KaClassLikeSymbol): SymbolInfo {
+        context(_: KaSession)
+        fun create(symbol: KaClassLikeSymbol): SymbolInfo {
             val classImportableName = symbol.classId ?: return UnsupportedSymbolInfo
 
             return ClassLikeSymbolInfo(classImportableName)
         }
 
-        fun KaSession.create(symbol: KaCallableSymbol, containingClassSymbol: KaClassLikeSymbol?): SymbolInfo {
+        context(_: KaSession)
+        fun create(symbol: KaCallableSymbol, containingClassSymbol: KaClassLikeSymbol?): SymbolInfo {
             val symbolImportableName = computeImportableName(symbol, containingClassSymbol) 
                 ?: return UnsupportedSymbolInfo
 
             return CallableSymbolInfo(symbolImportableName)
         }
 
-        fun KaSession.create(symbol: KaSymbol): SymbolInfo {
+        context(_: KaSession)
+        fun create(symbol: KaSymbol): SymbolInfo {
             require(symbol !is KaClassLikeSymbol && symbol !is KaCallableSymbol)
 
             return UnsupportedSymbolInfo
@@ -57,10 +61,11 @@ internal data object UnsupportedSymbolInfo : SymbolInfo {
     override val importableName: FqName? get() = null
 }
 
-internal fun KaSession.containingClassSymbol(symbolInfo: SymbolInfo): KaClassLikeSymbol? =
+context(_: KaSession)
+internal fun containingClassSymbol(symbolInfo: SymbolInfo): KaClassLikeSymbol? =
     when (symbolInfo) {
-        is CallableSymbolInfo -> symbolInfo.importableCallableId.classId?.let(::findClassLike)
-        is ClassLikeSymbolInfo -> symbolInfo.importableClassId.outerClassId?.let(::findClassLike)
+        is CallableSymbolInfo -> symbolInfo.importableCallableId.classId?.let { findClassLike(it) }
+        is ClassLikeSymbolInfo -> symbolInfo.importableClassId.outerClassId?.let { findClassLike(it) }
         UnsupportedSymbolInfo -> null
     }
 
@@ -74,7 +79,8 @@ internal fun KaSession.containingClassSymbol(symbolInfo: SymbolInfo): KaClassLik
  * 
  * Does not handle [org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol]s (yet).
  */
-private fun KaSession.computeImportableName(
+context(_: KaSession)
+private fun computeImportableName(
     target: KaCallableSymbol,
     substitutedContainingClass: KaClassLikeSymbol?
 ): CallableId? {
