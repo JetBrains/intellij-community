@@ -444,8 +444,10 @@ public final class CustomizationUtil {
     var globalSchema = CustomActionsSchema.getInstance();
     var tmpSchema = new CustomActionsSchema(null);
     tmpSchema.copyFrom(globalSchema);
-    tmpSchema.getActions().removeIf(url -> Objects.equals(groupPath, url.getGroupPath()));
-    tmpSchema.getActions().addAll(diff);
+    var tmpActions = new ArrayList<>(tmpSchema.getActions());
+    tmpActions.removeIf(url -> Objects.equals(groupPath, url.getGroupPath()));
+    tmpActions.addAll(diff);
+    tmpSchema.setActions(tmpActions);
 
     globalSchema.copyFrom(tmpSchema);
     CustomActionsListener.fireSchemaChanged();
