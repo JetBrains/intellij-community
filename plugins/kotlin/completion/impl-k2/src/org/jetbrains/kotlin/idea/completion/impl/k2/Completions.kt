@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifi
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirDeclarationFromOverridableMembersContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirKDocParameterNameContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierReferenceCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirNamedArgumentCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirOperatorNameCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirPackageCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirWhenWithSubjectConditionContributor
@@ -55,6 +56,7 @@ internal object Completions {
         K2TypeParameterConstraintNameInWhereClauseCompletionContributor(),
         K2SameAsFileClassifierNameCompletionContributor(),
         K2PackageCompletionContributor(),
+        K2NamedArgumentCompletionContributor(),
     )
 
     // Note: this function will be renamed and replace the complete method below!
@@ -164,12 +166,12 @@ internal object Completions {
                 FirTrailingFunctionParameterNameCompletionContributorBase.All(sink)
                     .complete(positionContext, weighingContext)
                 if (positionContext.allowsOnlyNamedArguments()) {
-                    K2NamedArgumentCompletionContributor(sink)
+                    FirNamedArgumentCompletionContributor(sink)
                         .complete(positionContext, weighingContext)
                 } else {
                     K2KeywordCompletionContributor(sink)
                         .complete(positionContext, weighingContext)
-                    K2NamedArgumentCompletionContributor(sink)
+                    FirNamedArgumentCompletionContributor(sink)
                         .complete(positionContext, weighingContext)
                     FirCallableCompletionContributor(sink, withTrailingLambda = true)
                         .complete(positionContext, weighingContext)

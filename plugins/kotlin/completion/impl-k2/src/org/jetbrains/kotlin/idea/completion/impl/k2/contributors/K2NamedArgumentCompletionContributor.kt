@@ -16,10 +16,10 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
 import org.jetbrains.kotlin.idea.completion.findValueArgument
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -27,19 +27,14 @@ import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
-internal class K2NamedArgumentCompletionContributor(
-    sink: LookupElementSink,
-    priority: Int = 0,
-) : FirCompletionContributorBase<KotlinExpressionNameReferencePositionContext>(sink, priority) {
+internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContributor<KotlinExpressionNameReferencePositionContext>(
+    KotlinExpressionNameReferencePositionContext::class
+) {
 
-    context(KaSession)
-    override fun complete(
-        positionContext: KotlinExpressionNameReferencePositionContext,
-        weighingContext: WeighingContext,
-    ) {
-        if (positionContext.explicitReceiver != null) return
+    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>) {
+        if (context.positionContext.explicitReceiver != null) return
 
-        val valueArgument = findValueArgument(positionContext.nameExpression) ?: return
+        val valueArgument = findValueArgument(context.positionContext.nameExpression) ?: return
         val valueArgumentList = valueArgument.parent as? KtValueArgumentList ?: return
         val currentArgumentIndex = valueArgumentList.arguments.indexOf(valueArgument)
         val callElement = valueArgumentList.parent as? KtCallElement ?: return
@@ -87,8 +82,8 @@ internal class K2NamedArgumentCompletionContributor(
                     }
                 }
             }
-        }.map { it.applyWeighs(weighingContext) }
-            .forEach(sink::addElement)
+        }.map { it.applyWeighs(context.weighingContext) }
+            .forEach { context.addElement(it) }
     }
 
     /**
