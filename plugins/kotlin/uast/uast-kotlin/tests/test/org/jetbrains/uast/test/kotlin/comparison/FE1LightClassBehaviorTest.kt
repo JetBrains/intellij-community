@@ -41,6 +41,12 @@ class FE1LightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
         }
     }
 
+    fun testAnnotationsOnClassCaching() {
+        assertFails("If KTIJ-35138 is fixed, unmute this test") {
+            annotationsOnClassCaching(myFixture)
+        }
+    }
+
     fun testFinalModifierOnEnumMembers() {
         checkFinalModifierOnEnumMembers(myFixture)
     }
