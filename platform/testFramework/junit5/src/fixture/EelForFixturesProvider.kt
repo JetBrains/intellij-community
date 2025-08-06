@@ -22,7 +22,7 @@ fun interface EelForFixturesProvider {
   /**
    * @return eel for the certain [invocationContext] of parametrized test)
    */
-  fun getEel(invocationContext: ReflectiveInvocationContext<*>): EelApi
+  fun getEel(invocationContext: ReflectiveInvocationContext<*>): EelApi?
 
   companion object {
 

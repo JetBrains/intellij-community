@@ -32,7 +32,7 @@ internal class EelInterceptor : InvocationInterceptor, BeforeAllCallback, Before
         arguments.filterIsInstance<EelHolder>()
 
     val eelForFixturesProvider = EelForFixturesProvider { invocationContext ->
-      invocationContext.eelHolderArgs.first().eel
+      invocationContext.eelHolderArgs.firstOrNull()?.eel
     }
 
     /**

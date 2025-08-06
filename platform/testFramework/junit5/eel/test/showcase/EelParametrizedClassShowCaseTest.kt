@@ -3,12 +3,12 @@ package com.intellij.platform.testFramework.junit5.eel.showcase
 
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
-import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.params.ParameterizedClass
+import org.junitpioneer.jupiter.cartesian.CartesianTest
 
 /**
  * You need 3 things: [TestApplicationWithEel],[ParameterizedClass] and [EelHolder].
@@ -29,8 +29,10 @@ class EelParametrizedClassShowCaseTest(val eelProvider: EelHolder) {
     println(eelProvider.eel.userInfo)
   }
 
-  @Test
-  fun testProject() {
+  @CartesianTest
+  fun testProject(
+    @CartesianTest.Values(ints = [1, 2, 3]) i: Int,
+  ) {
     println(tempDir.get())
   }
 }
