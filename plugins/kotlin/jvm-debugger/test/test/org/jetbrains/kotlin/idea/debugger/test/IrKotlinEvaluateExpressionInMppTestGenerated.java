@@ -1783,6 +1783,16 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
                 runTest("testData/evaluation/singleBreakpoint/callableBug.kt");
             }
 
+            @TestMetadata("captureContextFileWithValueClass.kt")
+            public void testCaptureContextFileWithValueClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/captureContextFileWithValueClass.kt");
+            }
+
+            @TestMetadata("captureLocalDataClass.kt")
+            public void testCaptureLocalDataClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/captureLocalDataClass.kt");
+            }
+
             @TestMetadata("capturedVariablesInSamLambda.kt")
             public void testCapturedVariablesInSamLambda() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/capturedVariablesInSamLambda.kt");
