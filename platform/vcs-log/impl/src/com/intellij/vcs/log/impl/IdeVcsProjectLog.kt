@@ -43,6 +43,10 @@ internal class IdeVcsProjectLog(
   @Deprecated("Use VcsProjectLog.runInMainLog or get the ui from DataContext via VcsLogDataKeys.VCS_LOG_UI. As a last resort - VcsProjectLog.mainUi")
   override val mainLogUi: VcsLogUiImpl? = logManager?.mainUi as? VcsLogUiImpl
 
+  init {
+    initListeners()
+  }
+
   override suspend fun createLogManager(logProviders: Map<VirtualFile, VcsLogProvider>): IdeVcsLogManager {
     val uiProperties = project.serviceAsync<VcsLogProjectTabsProperties>()
     return IdeVcsLogManager(project, coroutineScope, mainUiHolderState, uiProperties, logProviders) { s, t ->

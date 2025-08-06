@@ -73,6 +73,28 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
   private val listenersDisposable = Disposer.newDisposable()
 
   init {
+    @Suppress("SSBasedInspection")
+    val shutdownTask = object : Runnable {
+      override fun run() {
+        if (shutDownStarted.get()) {
+          LOG.warn("unregisterShutdownTask should be called")
+          return
+        }
+
+        runBlocking {
+          shutDown(useRawSwingDispatcher = true)
+        }
+      }
+    }
+
+    ShutDownTracker.getInstance().registerShutdownTask(shutdownTask)
+    coroutineScope.awaitCancellationAndInvoke(CoroutineName("Close VCS log")) {
+      ShutDownTracker.getInstance().unregisterShutdownTask(shutdownTask)
+      shutDown(useRawSwingDispatcher = false)
+    }
+  }
+
+  protected fun initListeners() {
     val busConnection = project.messageBus.connect(listenersDisposable)
     busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
       LOG.debug("Recreating Vcs Log after roots changed")
@@ -95,26 +117,6 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
         reinitAsync(invalidateCaches = true)
       }
     }, listenersDisposable)
-
-    @Suppress("SSBasedInspection")
-    val shutdownTask = object : Runnable {
-      override fun run() {
-        if (shutDownStarted.get()) {
-          LOG.warn("unregisterShutdownTask should be called")
-          return
-        }
-
-        runBlocking {
-          shutDown(useRawSwingDispatcher = true)
-        }
-      }
-    }
-
-    ShutDownTracker.getInstance().registerShutdownTask(shutdownTask)
-    coroutineScope.awaitCancellationAndInvoke(CoroutineName("Close VCS log")) {
-      ShutDownTracker.getInstance().unregisterShutdownTask(shutdownTask)
-      shutDown(useRawSwingDispatcher = false)
-    }
   }
 
   private suspend fun shutDown(useRawSwingDispatcher: Boolean) {
