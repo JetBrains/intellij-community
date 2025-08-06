@@ -1146,7 +1146,7 @@ open class JBTabsImpl internal constructor(
               val tabInfo = ClientProperty.get(renderer, TAB_INFO_KEY) ?: return
 
               // The last one is expected to be 'CloseTab'
-              val tabAction = tabInfo.tabLabelActions?.getChildren(null)?.lastOrNull()
+              val tabAction = (tabInfo.tabLabelActions as? DefaultActionGroup)?.childActionsOrStubs?.lastOrNull()
               if (tabAction == null && !tabInfo.isPinned) {
                 return
               }
