@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirDeclarat
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirKDocParameterNameContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierReferenceCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirDeclarationFromUnresolvedNameContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirKeywordCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirNamedArgumentCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirOperatorNameCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirPackageCompletionContributor
@@ -59,6 +60,7 @@ internal object Completions {
         K2PackageCompletionContributor(),
         K2NamedArgumentCompletionContributor(),
         K2DeclarationFromUnresolvedNameContributor(),
+        K2KeywordCompletionContributor(),
     )
 
     // Note: this function will be renamed and replace the complete method below!
@@ -171,7 +173,7 @@ internal object Completions {
                     FirNamedArgumentCompletionContributor(sink)
                         .complete(positionContext, weighingContext)
                 } else {
-                    K2KeywordCompletionContributor(sink)
+                    FirKeywordCompletionContributor(sink)
                         .complete(positionContext, weighingContext)
                     FirNamedArgumentCompletionContributor(sink)
                         .complete(positionContext, weighingContext)
@@ -201,7 +203,7 @@ internal object Completions {
                     FirClassifierCompletionContributor(sink)
                         .complete(positionContext, weighingContext)
                 }
-                K2KeywordCompletionContributor(sink, priority = 1)
+                FirKeywordCompletionContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
                 if (allowClassifiersAndPackagesForPossibleExtensionCallables) {
                     FirPackageCompletionContributor(sink, priority = 2)
@@ -222,7 +224,7 @@ internal object Completions {
             is KotlinAnnotationTypeNameReferencePositionContext -> {
                 FirAnnotationCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
-                K2KeywordCompletionContributor(sink, priority = 1)
+                FirKeywordCompletionContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
                 FirPackageCompletionContributor(sink, priority = 2)
                     .complete(positionContext, weighingContext)
@@ -251,18 +253,18 @@ internal object Completions {
             }
 
             is KotlinMemberDeclarationExpectedPositionContext -> {
-                K2KeywordCompletionContributor(sink)
+                FirKeywordCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
             is KotlinLabelReferencePositionContext -> {
-                K2KeywordCompletionContributor(sink)
+                FirKeywordCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
             is KotlinUnknownPositionContext -> {
                 if (positionContext.isAfterRangeToken()) return
-                K2KeywordCompletionContributor(sink)
+                FirKeywordCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
@@ -294,7 +296,7 @@ internal object Completions {
             }
 
             is KotlinInfixCallPositionContext -> {
-                K2KeywordCompletionContributor(sink)
+                FirKeywordCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
                 FirInfixCallableCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
@@ -311,7 +313,7 @@ internal object Completions {
                 // for parameter declaration
                 FirDeclarationFromUnresolvedNameContributor(sink)
                     .complete(positionContext, weighingContext)
-                K2KeywordCompletionContributor(sink)
+                FirKeywordCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
                 K2VariableOrParameterNameWithTypeCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
@@ -323,7 +325,7 @@ internal object Completions {
                     .complete(positionContext, weighingContext)
                 FirDeclarationFromOverridableMembersContributor(sink)
                     .complete(positionContext, weighingContext)
-                K2KeywordCompletionContributor(sink)
+                FirKeywordCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
                 K2VariableOrParameterNameWithTypeCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
@@ -396,7 +398,7 @@ internal object Completions {
     }
 }
 
-private fun KotlinUnknownPositionContext.isAfterRangeToken(): Boolean {
+internal fun KotlinUnknownPositionContext.isAfterRangeToken(): Boolean {
     val errorParent = position.parent as? PsiErrorElement
         ?: return false
 

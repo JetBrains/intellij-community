@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.completion.contributors.keywords.OverrideKeywor
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.ReturnKeywordHandler
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.SuperKeywordHandler
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.ThisKeywordHandler
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
+import org.jetbrains.kotlin.idea.completion.impl.k2.*
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.keywords.ActualKeywordHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.keywords.BreakContinueKeywordHandler
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandlerProvider
@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandlers
 import org.jetbrains.kotlin.idea.completion.keywords.DefaultCompletionKeywordHandlerProvider
 import org.jetbrains.kotlin.idea.completion.keywords.createLookups
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -25,31 +24,30 @@ import org.jetbrains.kotlin.psi.KtExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
 import org.jetbrains.kotlin.util.match
 
-internal class K2KeywordCompletionContributor(
-    sink: LookupElementSink,
-    priority: Int = 0,
-) : FirCompletionContributorBase<KotlinRawPositionContext>(sink, priority) {
+internal class K2KeywordCompletionContributor : K2SimpleCompletionContributor<KotlinRawPositionContext>(
+    KotlinRawPositionContext::class
+) {
 
     private val keywordCompletion = KeywordCompletion()
 
-    private val resolveDependentCompletionKeywordHandlers = object : CompletionKeywordHandlerProvider<KaSession>() {
+    private fun createResolveDependentCompletionKeywordHandlers(context: K2CompletionSectionContext<KotlinRawPositionContext>) =
+        object : CompletionKeywordHandlerProvider<KaSession>() {
+            override val handlers = CompletionKeywordHandlers(
+                ReturnKeywordHandler,
+                BreakContinueKeywordHandler(KtTokens.CONTINUE_KEYWORD),
+                BreakContinueKeywordHandler(KtTokens.BREAK_KEYWORD),
+                ActualKeywordHandler(context.importStrategyDetector),
+                OverrideKeywordHandler(context.importStrategyDetector),
+                ThisKeywordHandler(context.prefixMatcher),
+                SuperKeywordHandler,
+            )
+        }
 
-        override val handlers = CompletionKeywordHandlers(
-            ReturnKeywordHandler,
-            BreakContinueKeywordHandler(KtTokens.CONTINUE_KEYWORD),
-            BreakContinueKeywordHandler(KtTokens.BREAK_KEYWORD),
-            ActualKeywordHandler(importStrategyDetector),
-            OverrideKeywordHandler(importStrategyDetector),
-            ThisKeywordHandler(prefixMatcher),
-            SuperKeywordHandler,
-        )
-    }
 
-    context(KaSession)
-    override fun complete(
-        positionContext: KotlinRawPositionContext,
-        weighingContext: WeighingContext,
-    ) {
+    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinRawPositionContext>) {
+        if (context.positionContext.isAfterRangeOperator() || context.positionContext.allowsOnlyNamedArguments()) return
+
+        val positionContext = context.positionContext
         val expression = when (positionContext) {
             is KotlinLabelReferencePositionContext -> positionContext.nameExpression.let { label -> getExpressionWithLabel(label) ?: label }
 
@@ -66,23 +64,43 @@ internal class K2KeywordCompletionContributor(
 
         keywordCompletion.complete(
             position = expression ?: positionContext.position,
-            prefixMatcher = prefixMatcher,
-            isJvmModule = targetPlatform.isJvm(),
+            prefixMatcher = context.prefixMatcher,
+            isJvmModule = context.completionContext.targetPlatform.isJvm(),
         ) { lookupElement ->
             val keyword = lookupElement.lookupString
 
-            val parameters = parameters.delegate
+            val parameters = context.parameters.delegate
             val lookups = DefaultCompletionKeywordHandlerProvider.getHandlerForKeyword(keyword)
-                ?.createLookups(parameters, expression, lookupElement, project)
-                ?: resolveDependentCompletionKeywordHandlers.getHandlerForKeyword(keyword)
-                    ?.createLookups(parameters, expression, lookupElement, project)
+                ?.createLookups(parameters, expression, lookupElement, context.project)
+                ?: createResolveDependentCompletionKeywordHandlers(context).getHandlerForKeyword(keyword)
+                    ?.createLookups(parameters, expression, lookupElement, context.project)
                 ?: listOf(lookupElement)
 
-            lookups.map { it.applyWeighs(weighingContext) }
-                .forEach(sink::addElement)
+            lookups.map { it.applyWeighs(context.weighingContext) }
+                .forEach { context.addElement(it) }
         }
     }
 
     private fun getExpressionWithLabel(label: KtLabelReferenceExpression): KtExpressionWithLabel? =
         label.parents(withSelf = false).match(KtContainerNode::class, last = KtExpressionWithLabel::class)
+
+    override fun K2CompletionSetupScope<KotlinRawPositionContext>.shouldExecute(): Boolean = when (position) {
+        is KotlinUnknownPositionContext -> !position.isAfterRangeToken()
+
+        is KotlinExpressionNameReferencePositionContext,
+        is KotlinMemberDeclarationExpectedPositionContext,
+        is KotlinLabelReferencePositionContext,
+        is KotlinInfixCallPositionContext,
+        is KotlinSimpleParameterPositionContext,
+        is KotlinPrimaryConstructorParameterPositionContext,
+        is KotlinTypeNameReferencePositionContext,
+        is KotlinAnnotationTypeNameReferencePositionContext -> true
+
+        else -> false
+    }
+
+    override fun K2CompletionSectionContext<KotlinRawPositionContext>.getGroupPriority(): Int = when (positionContext) {
+        is KotlinTypeNameReferencePositionContext, is KotlinAnnotationTypeNameReferencePositionContext -> 1
+        else -> 0
+    }
 }
