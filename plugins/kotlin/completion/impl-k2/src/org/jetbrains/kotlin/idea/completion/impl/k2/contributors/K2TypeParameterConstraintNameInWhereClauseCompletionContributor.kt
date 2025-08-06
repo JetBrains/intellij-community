@@ -12,24 +12,21 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertStringAndInvokeCompletion
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeConstraintNameInWhereClausePositionContext
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.renderer.render
 
-internal class FirTypeParameterConstraintNameInWhereClauseCompletionContributor(
-    sink: LookupElementSink,
-    priority: Int = 0,
-) : FirCompletionContributorBase<KotlinTypeConstraintNameInWhereClausePositionContext>(sink, priority) {
-
-    context(KaSession)
-    override fun complete(
-        positionContext: KotlinTypeConstraintNameInWhereClausePositionContext,
-        weighingContext: WeighingContext,
+internal class K2TypeParameterConstraintNameInWhereClauseCompletionContributor :
+    K2SimpleCompletionContributor<KotlinTypeConstraintNameInWhereClausePositionContext>(
+        KotlinTypeConstraintNameInWhereClausePositionContext::class
     ) {
-        val ownerSymbol = positionContext.typeParametersOwner.symbol
+
+    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinTypeConstraintNameInWhereClausePositionContext>) {
+        val ownerSymbol = context.positionContext.typeParametersOwner.symbol
 
         @OptIn(KaExperimentalApi::class)
         ownerSymbol.typeParameters.forEach { typeParameter ->
@@ -40,7 +37,7 @@ internal class FirTypeParameterConstraintNameInWhereClauseCompletionContributor(
                 .withInsertHandler(TypeParameterInWhenClauseInsertionHandler)
                 .withPsiElement(typeParameter.psi)
                 .withIcon(icon)
-                .let(sink::addElement)
+                .let { context.addElement(it) }
         }
     }
 }
