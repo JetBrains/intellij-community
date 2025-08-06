@@ -19,8 +19,10 @@ internal data class LibOwnerDescriptor(
 )
 
 internal data class Library(
+  @JvmField val jpsName: String,
   @JvmField val targetName: String,
   @JvmField val owner: LibOwnerDescriptor,
+  @JvmField val isModuleLibrary: Boolean,
 )
 
 internal sealed interface LibOwner {
@@ -222,7 +224,7 @@ private fun fileToHttpRuleRepoName(jar: Path): String = bazelLabelBadCharsPatter
 
 private fun fileToHttpRuleFile(jar: Path): String = fileToHttpRuleRepoName(jar) + "//file"
 
-internal fun generateLocalLibs(libs: Set<LocalLibrary>, providedRequested: Set<LibOwner>, fileToUpdater: MutableMap<Path, BazelFileUpdater>) {
+internal fun generateLocalLibs(libs: Collection<LocalLibrary>, providedRequested: Set<LibOwner>, fileToUpdater: MutableMap<Path, BazelFileUpdater>) {
   for ((dir, libs) in libs.asSequence().sortedBy { it.lib.targetName }.groupBy { it.files.first().parent }) {
     val bazelFileUpdater = fileToUpdater.computeIfAbsent(dir.resolve("BUILD.bazel")) { BazelFileUpdater(it) }
     bazelFileUpdater.removeSections("local-libraries")

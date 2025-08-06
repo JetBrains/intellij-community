@@ -4,7 +4,7 @@
 package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.util.NlsSafe
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaResourceRootProperties
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.nio.file.Path
 import java.util.IdentityHashMap
 import java.util.TreeMap
-import kotlin.io.path.absolutePathString
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeTo
 import kotlin.reflect.KProperty1
@@ -148,9 +147,17 @@ internal class BazelBuildFileGenerator(
     return moduleContent
   }
 
-  val libs: ObjectOpenHashSet<MavenLibrary> = ObjectOpenHashSet<MavenLibrary>()
+  data class LibraryKey(
+    @JvmField
+    val owner: LibOwnerDescriptor,
+    @JvmField
+    val targetName: String
+  )
+
+  val libs: Object2ObjectOpenHashMap<LibraryKey, MavenLibrary> = Object2ObjectOpenHashMap()
+  val localLibs: Object2ObjectOpenHashMap<LibraryKey, LocalLibrary> = Object2ObjectOpenHashMap()
+
   private val providedRequested = HashSet<LibOwner>()
-  val localLibs: ObjectOpenHashSet<LocalLibrary> = ObjectOpenHashSet<LocalLibrary>()
 
   private val generated = IdentityHashMap<ModuleDescriptor, Boolean>()
 
@@ -186,7 +193,9 @@ internal class BazelBuildFileGenerator(
   ) {
     val fileToLabelTracker = LinkedHashMap<Path, MutableSet<String>>()
     val fileToUpdater = LinkedHashMap<Path, BazelFileUpdater>()
-    for ((owner, list) in libs.groupByTo(
+    for ((owner, list) in libs
+      .values
+      .groupByTo(
       destination = TreeMap(
         compareBy(
           { it.sectionName },
@@ -230,7 +239,7 @@ internal class BazelBuildFileGenerator(
       )
     }
 
-    generateLocalLibs(libs = localLibs, providedRequested = providedRequested, fileToUpdater = fileToUpdater)
+    generateLocalLibs(libs = localLibs.values, providedRequested = providedRequested, fileToUpdater = fileToUpdater)
 
     for (updater in fileToUpdater.values) {
       updater.save()
@@ -239,15 +248,16 @@ internal class BazelBuildFileGenerator(
 
   fun addMavenLibrary(lib: MavenLibrary, isProvided: Boolean): MavenLibrary {
     if (lib.lib.owner == ultimateLibOwner) {
-      libs.firstOrNull { it.lib.owner == communityLibOwner && it.lib.targetName == lib.lib.targetName }?.let {
+      val communityLib = libs[LibraryKey(communityLibOwner, lib.lib.targetName)]
+      if (communityLib != null) {
         if (isProvided) {
-          providedRequested.add(it)
+          providedRequested.add(communityLib)
         }
-        return it
+        return communityLib
       }
     }
 
-    val internedLib = libs.addOrGet(lib)
+    val internedLib = libs.computeIfAbsent(LibraryKey(lib.lib.owner, lib.lib.targetName)) { lib }
     if (isProvided) {
       providedRequested.add(internedLib)
     }
@@ -255,7 +265,7 @@ internal class BazelBuildFileGenerator(
   }
 
   fun addLocalLibrary(lib: LocalLibrary, isProvided: Boolean): LocalLibrary {
-    val internedLib = localLibs.addOrGet(lib)
+    val internedLib = localLibs.computeIfAbsent(LibraryKey(lib.lib.owner, lib.lib.targetName)) { lib }
     if (isProvided) {
       providedRequested.add(internedLib)
     }

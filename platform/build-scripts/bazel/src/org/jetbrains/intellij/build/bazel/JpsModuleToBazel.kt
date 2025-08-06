@@ -93,7 +93,7 @@ internal class JpsModuleToBazel {
 
       if (ultimateRoot != null) {
         val targetsFile = ultimateRoot.resolve("build/bazel-targets.json")
-        saveTargets(targetsFile, communityResult.moduleTargets + ultimateResult.moduleTargets, moduleList)
+        saveTargets(targetsFile, communityResult.moduleTargets + ultimateResult.moduleTargets, moduleList, generator.libs.values + generator.localLibs.values)
       }
     }
 
@@ -134,7 +134,7 @@ internal class JpsModuleToBazel {
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    fun saveTargets(file: Path, targets: List<BazelBuildFileGenerator.ModuleTargets>, moduleList: ModuleList) {
+    fun saveTargets(file: Path, targets: List<BazelBuildFileGenerator.ModuleTargets>, moduleList: ModuleList, libs: Collection<LibOwner>) {
       @Serializable
       data class TargetsFileModuleDescription(
         val productionTargets: List<String>,
@@ -147,12 +147,15 @@ internal class JpsModuleToBazel {
       @Serializable
       data class TargetsFile(
         val modules: Map<String, TargetsFileModuleDescription>,
+        val projectLibraries: Map<String, String>
       )
 
       val skippedModules = moduleList.skippedModules
 
       val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".tmp")
       try {
+        val emptyModule = TargetsFileModuleDescription(emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
+
         Files.writeString(
           tempFile, jsonSerializer.encodeToString<TargetsFile>(
           serializer = jsonSerializer.serializersModule.serializer(),
@@ -165,7 +168,11 @@ internal class JpsModuleToBazel {
                 testJars = moduleTarget.testJars,
                 exports = moduleList.deps[moduleTarget.moduleDescriptor]?.exports ?: emptyList(),
               )
-            } + skippedModules.associateWith { moduleName -> TargetsFileModuleDescription(emptyList(), emptyList(), emptyList(), emptyList(), emptyList()) }
+            } + skippedModules.associateWith { emptyModule },
+            projectLibraries = libs.asSequence().mapNotNull {
+              if (it.lib.isModuleLibrary) return@mapNotNull null
+              return@mapNotNull it.lib.jpsName to "${it.lib.owner.repoLabel}//:${it.lib.targetName}"
+            }.sortedBy { it.first }.toMap()
           )))
         tempFile.moveTo(file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
       } finally {

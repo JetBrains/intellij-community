@@ -88,6 +88,9 @@ internal fun generateDeps(
     else if (element is JpsLibraryDependency) {
       val untypedLib = element.library ?: error("library dependency '$element' from module ${module.module.name} is not resolved")
       val lib = untypedLib.asTyped(JpsRepositoryLibraryType.INSTANCE)
+
+      val isModuleLibrary = element.libraryReference.parentReference is JpsModuleReference
+
       // non-repository library, meaning library files are under VCS
       if (lib == null) {
         val files = untypedLib.getPaths(JpsOrderRootType.COMPILED)
@@ -99,7 +102,7 @@ internal fun generateDeps(
         val communityOrUltimateRoot = owner.moduleFile.parent.parent
         val libBuildFileDir = firstFile.relativeTo(communityOrUltimateRoot).parent.invariantSeparatorsPathString
         context.addLocalLibrary(
-          lib = LocalLibrary(files = files, lib = Library(targetName = targetName, owner = owner)),
+          lib = LocalLibrary(files = files, lib = Library(jpsName = untypedLib.name, targetName = targetName, owner = owner, isModuleLibrary = isModuleLibrary)),
           isProvided = isProvided,
         )
 
@@ -133,7 +136,6 @@ internal fun generateDeps(
       }
 
       val data = lib.properties.data
-      val isModuleLibrary = element.libraryReference.parentReference is JpsModuleReference
 
       //val storeLibInProject = isModuleLibrary && isExported
       val storeLibInProject = false
@@ -163,7 +165,7 @@ internal fun generateDeps(
 
       var owner = context.getLibOwner(module.isCommunity)
       val communityOwner = context.getLibOwner(module.isCommunity)
-      if (isProvided && owner != communityOwner && context.libs.any { it.lib.owner == communityOwner && it.lib.targetName == targetName }) {
+      if (isProvided && owner != communityOwner && context.libs.containsKey(BazelBuildFileGenerator.LibraryKey(communityOwner, targetName))) {
         owner = communityOwner
       }
 
@@ -184,7 +186,7 @@ internal fun generateDeps(
           jars = lib.getPaths(JpsOrderRootType.COMPILED).map { getFileMavenFileDescription(lib, it) },
           sourceJars = lib.getPaths(JpsOrderRootType.SOURCES).map { getFileMavenFileDescription(lib, it) },
           javadocJars = lib.getPaths(JpsOrderRootType.DOCUMENTATION).map { getFileMavenFileDescription(lib, it) },
-          lib = Library(targetName = targetName, owner = owner),
+          lib = Library(jpsName = lib.name, targetName = targetName, owner = owner, isModuleLibrary = isModuleLibrary),
         ),
         isProvided = isProvided,
       ).lib.owner
