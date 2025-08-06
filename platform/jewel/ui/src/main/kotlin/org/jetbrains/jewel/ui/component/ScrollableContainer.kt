@@ -1,4 +1,4 @@
-@file:Suppress("DuplicatedCode") // Lots of identical-looking but not deduplicable code
+@file:Suppress("DuplicatedCode", "KDocUnresolvedReference") // Lots of identical-looking but not deduplicable code
 
 package org.jetbrains.jewel.ui.component
 
@@ -73,7 +73,8 @@ private const val ID_HORIZONTAL_SCROLLBAR = "VerticallyScrollableContainer_horiz
  * @param style The visual styling for the scrollbar
  * @param reverseLayout Reverse the direction of scrolling, when `true`, 0 [ScrollState.value] will mean bottom, when
  *   `false`, 0 [ScrollState.value] will mean top
- * @param scrollbarEnabled Whether scrolling is enabled or not
+ * @param scrollbarEnabled Whether the scrollbar is enabled or not. Note that this does not prevent the actual scrolling
+ *   but only disables the scrollbars. To disable the scroll, use the overload with a `userScrollEnabled` parameter.
  * @param scrollbarInteractionSource The interaction source used for the scrollbar
  * @param content The main content of the scrollable container
  * @see com.intellij.ui.components.JBScrollBar
@@ -86,6 +87,61 @@ public fun VerticallyScrollableContainer(
     style: ScrollbarStyle = JewelTheme.scrollbarStyle,
     reverseLayout: Boolean = false,
     scrollbarEnabled: Boolean = true,
+    scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    content: @Composable BoxScope.() -> Unit,
+) {
+    VerticallyScrollableContainer(
+        modifier,
+        scrollbarModifier,
+        scrollState,
+        style,
+        reverseLayout,
+        userScrollEnabled = true,
+        scrollbarEnabled,
+        scrollbarInteractionSource,
+        content,
+    )
+}
+
+/**
+ * A vertically scrollable container that follows the standard visual styling.
+ *
+ * This version of the container owns the scrollable modifier, and you must not apply one to the [content]. If you wish
+ * to retain control over the scroll modifier and own the scroll, use the overload with a [ScrollableState] parameter.
+ *
+ * Provides a container with a vertical scrollbar that matches the platform's native appearance. On macOS, the scrollbar
+ * appears next to the content, while on Windows/Linux it overlays the content. The scrollbar's visibility and behavior
+ * adapts to the platform conventions.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/scrollbar.html)
+ *
+ * **Usage example:**
+ * [`Scrollbars.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Scrollbars.kt)
+ *
+ * **Swing equivalent:**
+ * [`JBScrollBar`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/JBScrollBar.java)
+ *
+ * @param modifier Modifier to be applied to the container
+ * @param scrollbarModifier Modifier to be applied to the scrollbar
+ * @param scrollState The state of the scroll
+ * @param style The visual styling for the scrollbar
+ * @param reverseLayout Reverse the direction of scrolling, when `true`, 0 [ScrollState.value] will mean bottom, when
+ *   `false`, 0 [ScrollState.value] will mean top
+ * @param userScrollEnabled Whether scrolling is enabled or not
+ * @param scrollbarEnabled Whether the scrollbar is enabled or not; usually matches [userScrollEnabled]
+ * @param scrollbarInteractionSource The interaction source used for the scrollbar
+ * @param content The main content of the scrollable container
+ * @see com.intellij.ui.components.JBScrollBar
+ */
+@Composable
+public fun VerticallyScrollableContainer(
+    modifier: Modifier = Modifier,
+    scrollbarModifier: Modifier = Modifier,
+    scrollState: ScrollState = rememberScrollState(),
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    reverseLayout: Boolean = false,
+    userScrollEnabled: Boolean = true,
+    scrollbarEnabled: Boolean = userScrollEnabled,
     scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable BoxScope.() -> Unit,
 ) {
@@ -110,7 +166,12 @@ public fun VerticallyScrollableContainer(
         scrollbarStyle = style,
         modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
     ) {
-        Box(Modifier.layoutId(ID_CONTENT).verticalScroll(scrollState, reverseScrolling = reverseLayout)) { content() }
+        Box(
+            Modifier.layoutId(ID_CONTENT)
+                .verticalScroll(scrollState, reverseScrolling = reverseLayout, enabled = userScrollEnabled)
+        ) {
+            content()
+        }
     }
 }
 
@@ -168,7 +229,9 @@ internal fun TextAreaScrollableContainer(
  * @param style The visual styling for the scrollbar
  * @param reverseLayout Reverse the direction of scrolling, when `true`, 0 [ScrollState.value] will mean bottom, when
  *   `false`, 0 [ScrollState.value] will mean top
- * @param scrollbarEnabled Whether scrolling is enabled or not
+ * @param scrollbarEnabled Whether the scrollbar is enabled or not. Note that this does not impact the user's ability to
+ *   scroll the container, which is controlled by the component that owns the [scrollState] (e.g., via a
+ *   `userScrollEnabled` parameter)
  * @param scrollbarInteractionSource The interaction source used for the scrollbar
  * @param content The main content of the scrollable container
  * @see com.intellij.ui.components.JBScrollBar
@@ -227,7 +290,9 @@ public fun VerticallyScrollableContainer(
  * @param style The visual styling for the scrollbar
  * @param reverseLayout Reverse the direction of scrolling, when `true`, 0 [ScrollState.value] will mean bottom, when
  *   `false`, 0 [ScrollState.value] will mean top
- * @param scrollbarEnabled Whether scrolling is enabled or not
+ * @param scrollbarEnabled Whether the scrollbar is enabled or not. Note that this does not impact the user's ability to
+ *   scroll the container, which is controlled by the component that owns the [scrollState] (e.g., via a
+ *   `userScrollEnabled` parameter)
  * @param scrollbarInteractionSource The interaction source used for the scrollbar
  * @param content The main content of the scrollable container
  * @see com.intellij.ui.components.JBScrollBar
@@ -287,7 +352,9 @@ public fun VerticallyScrollableContainer(
  * @param style The visual styling for the scrollbar
  * @param reverseLayout Reverse the direction of scrolling, when `true`, 0 [ScrollState.value] will mean bottom, when
  *   `false`, 0 [ScrollState.value] will mean top
- * @param scrollbarEnabled Whether scrolling is enabled or not
+ * @param scrollbarEnabled Whether the scrollbar is enabled or not. Note that this does not impact the user's ability to
+ *   scroll the container, which is controlled by the component that owns the [scrollState] (e.g., via a
+ *   `userScrollEnabled` parameter)
  * @param scrollbarInteractionSource The interaction source used for the scrollbar
  * @param content The main content of the scrollable container
  * @see com.intellij.ui.components.JBScrollBar
@@ -351,7 +418,8 @@ public fun VerticallyScrollableContainer(
  * @param scrollState The state object to control and observe scrolling
  * @param style The visual styling configuration for the scrollbar
  * @param reverseLayout Whether the scrollbar should be displayed on the opposite side
- * @param scrollbarEnabled Controls whether the scrollbar is enabled
+ * @param scrollbarEnabled Whether the scrollbar is enabled or not. Note that this does not prevent the actual scrolling
+ *   but only disables the scrollbars. To disable the scroll, use the overload with a `userScrollEnabled` parameter.
  * @param scrollbarInteractionSource Source of interactions for the scrollbar
  * @param content The content to be displayed in the scrollable container
  * @see com.intellij.ui.components.JBScrollBar
@@ -364,6 +432,60 @@ public fun HorizontallyScrollableContainer(
     style: ScrollbarStyle = JewelTheme.scrollbarStyle,
     reverseLayout: Boolean = false,
     scrollbarEnabled: Boolean = true,
+    scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    content: @Composable BoxScope.() -> Unit,
+) {
+    HorizontallyScrollableContainer(
+        modifier = modifier,
+        scrollbarModifier = scrollbarModifier,
+        scrollState = scrollState,
+        style = style,
+        reverseLayout = reverseLayout,
+        userScrollEnabled = true,
+        scrollbarEnabled = scrollbarEnabled,
+        scrollbarInteractionSource = scrollbarInteractionSource,
+        content = content,
+    )
+}
+
+/**
+ * A horizontally scrollable container that follows the standard visual styling.
+ *
+ * This version of the container owns the scrollable modifier, and you must not apply one to the [content]. If you wish
+ * to retain control over the scroll modifier and own the scroll, use the overload with a [ScrollableState] parameter.
+ *
+ * Provides a container with a horizontal scrollbar that matches the platform's native appearance. On macOS, the
+ * scrollbar appears below the content, while on Windows/Linux it overlays the content. The scrollbar's visibility and
+ * behavior adapts to the platform conventions.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/scrollbar.html)
+ *
+ * **Usage example:**
+ * [`Scrollbars.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Scrollbars.kt)
+ *
+ * **Swing equivalent:**
+ * [`JBScrollBar`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/JBScrollBar.java)
+ *
+ * @param modifier Modifier to be applied to the container
+ * @param scrollbarModifier Modifier to be applied to the scrollbar
+ * @param scrollState The state object to control and observe scrolling
+ * @param style The visual styling configuration for the scrollbar
+ * @param reverseLayout Whether the scrollbar should be displayed on the opposite sidean bottom, when
+ * @param userScrollEnabled Whether scrolling is enabled or not
+ * @param scrollbarEnabled Whether scrollbars are enabled or not; usually matches [userScrollEnabled]
+ * @param scrollbarInteractionSource Source of interactions for the scrollbar
+ * @param content The content to be displayed in the scrollable container
+ * @see com.intellij.ui.components.JBScrollBar
+ */
+@Composable
+public fun HorizontallyScrollableContainer(
+    modifier: Modifier = Modifier,
+    scrollbarModifier: Modifier = Modifier,
+    scrollState: ScrollState = rememberScrollState(),
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    reverseLayout: Boolean = false,
+    userScrollEnabled: Boolean = true,
+    scrollbarEnabled: Boolean = userScrollEnabled,
     scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable BoxScope.() -> Unit,
 ) {
@@ -388,7 +510,12 @@ public fun HorizontallyScrollableContainer(
         scrollbarStyle = style,
         modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
     ) {
-        Box(Modifier.layoutId(ID_CONTENT).horizontalScroll(scrollState, reverseScrolling = reverseLayout)) { content() }
+        Box(
+            Modifier.layoutId(ID_CONTENT)
+                .horizontalScroll(scrollState, reverseScrolling = reverseLayout, enabled = userScrollEnabled)
+        ) {
+            content()
+        }
     }
 }
 
@@ -416,7 +543,9 @@ public fun HorizontallyScrollableContainer(
  * @param style The visual styling for the scrollbar
  * @param reverseLayout Reverse the direction of scrolling, when `true`, 0 [ScrollState.value] will mean bottom, when
  *   `false`, 0 [ScrollState.value] will mean top
- * @param scrollbarEnabled Whether scrolling is enabled or not
+ * @param scrollbarEnabled Whether the scrollbar is enabled or not. Note that this does not impact the user's ability to
+ *   scroll the container, which is controlled by the component that owns the [scrollState] (e.g., via a
+ *   `userScrollEnabled` parameter)
  * @param scrollbarInteractionSource The interaction source used for the scrollbar
  * @param content The main content of the scrollable container
  * @see com.intellij.ui.components.JBScrollBar
@@ -475,7 +604,9 @@ public fun HorizontallyScrollableContainer(
  * @param style The visual styling for the scrollbar
  * @param reverseLayout Reverse the direction of scrolling, when `true`, 0 [ScrollState.value] will mean bottom, when
  *   `false`, 0 [ScrollState.value] will mean top
- * @param scrollbarEnabled Whether scrolling is enabled or not
+ * @param scrollbarEnabled Whether the scrollbar is enabled or not. Note that this does not impact the user's ability to
+ *   scroll the container, which is controlled by the component that owns the [scrollState] (e.g., via a
+ *   `userScrollEnabled` parameter)
  * @param scrollbarInteractionSource The interaction source used for the scrollbar
  * @param content The main content of the scrollable container
  * @see com.intellij.ui.components.JBScrollBar
@@ -535,7 +666,9 @@ public fun HorizontallyScrollableContainer(
  * @param style The visual styling for the scrollbar
  * @param reverseLayout Reverse the direction of scrolling, when `true`, 0 [ScrollState.value] will mean bottom, when
  *   `false`, 0 [ScrollState.value] will mean top
- * @param scrollbarEnabled Whether scrolling is enabled or not
+ * @param scrollbarEnabled Whether the scrollbar is enabled or not. Note that this does not impact the user's ability to
+ *   scroll the container, which is controlled by the component that owns the [scrollState] (e.g., via a
+ *   `userScrollEnabled` parameter)
  * @param scrollbarInteractionSource The interaction source used for the scrollbar
  * @param content The main content of the scrollable container
  * @see com.intellij.ui.components.JBScrollBar

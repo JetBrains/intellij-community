@@ -6,6 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.interaction.HoverInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -58,8 +59,6 @@ import icons.JewelIcons
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import kotlinx.datetime.toJavaLocalDate
-import org.jetbrains.jewel.bridge.medium
-import org.jetbrains.jewel.bridge.regular
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
@@ -74,7 +73,6 @@ import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.PopupMenu
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
-import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.component.items
 import org.jetbrains.jewel.ui.component.rememberSplitLayoutState
@@ -82,6 +80,7 @@ import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.iconButtonStyle
+import org.jetbrains.jewel.ui.typography
 
 @Composable
 internal fun ReleasesSampleCompose(project: Project) {
@@ -124,7 +123,7 @@ private fun LeftColumn(project: Project, modifier: Modifier = Modifier, onSelect
         }
 
         val listState = rememberSelectableLazyListState()
-        VerticallyScrollableContainer(listState.lazyListState, modifier) {
+        VerticallyScrollableContainer(listState.lazyListState as ScrollableState, Modifier) {
             SelectableLazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 selectionMode = SelectionMode.Single,
@@ -211,7 +210,7 @@ private fun ItemTag(
 ) {
     Text(
         text = text,
-        style = Typography.medium(),
+        style = JewelTheme.typography.medium,
         color = foregroundColor,
         modifier = modifier.background(backgroundColor, shape).padding(padding),
     )
@@ -413,14 +412,14 @@ private fun ReleaseImage(imagePath: String) {
 @Composable
 private fun ItemDetailsText(selectedItem: ContentItem) {
     Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(selectedItem.displayText, style = Typography.h1TextStyle())
+        Text(selectedItem.displayText, style = JewelTheme.typography.h1TextStyle)
 
         val formatter = remember(Locale.current) { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM) }
         val releaseDate = selectedItem.releaseDate
         if (releaseDate != null) {
             Text(
                 text = "Released on ${formatter.format(releaseDate.toJavaLocalDate())}",
-                style = Typography.medium(),
+                style = JewelTheme.typography.medium,
                 color = JewelTheme.globalColors.text.info,
             )
         }
@@ -454,6 +453,6 @@ private fun AndroidStudioReleaseDetails(item: ContentItem.AndroidStudio) {
 private fun TextWithLabel(labelText: String, valueText: String) {
     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(labelText)
-        Text(valueText, style = Typography.regular().copy(fontWeight = FontWeight.Bold))
+        Text(valueText, style = JewelTheme.typography.regular.copy(fontWeight = FontWeight.Bold))
     }
 }
