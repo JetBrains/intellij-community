@@ -2041,6 +2041,9 @@
     <openAnotherToolHandler implementation="com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.TryUltimateActionHandler"/>
 
 
+    <aboutPopupDescriptionProvider implementation="com.intellij.diagnostic.ReporterIdForEAAutoReporters"/>
+    <backgroundPostStartupActivity implementation="com.intellij.diagnostic.ReporterIdLoggerActivity"/>
+
     <!--<editor.rd.localSupport filetype="PLAIN_TEXT"/> IJPL-189393 -->
 
     <remote.customDataContextSerializer implementation="com.intellij.openapi.editor.impl.HonorCamelWordsDataContextSerializer"/>
