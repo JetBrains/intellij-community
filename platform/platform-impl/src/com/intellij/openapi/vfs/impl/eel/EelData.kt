@@ -22,4 +22,24 @@ internal class EelData(val descriptor: EelDescriptor) {
       .plus(flat.map { eelPath -> WatchedPath.from(eelPath) })
       .toSet()
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as EelData
+
+    if (descriptor != other.descriptor) return false
+    if (recursive != other.recursive) return false
+    if (flat != other.flat) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = descriptor.hashCode()
+    result = 31 * result + recursive.hashCode()
+    result = 31 * result + flat.hashCode()
+    return result
+  }
 }
