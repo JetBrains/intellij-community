@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../testData/stepping/compose")
-public class K2ComposeSteppingTestGenerated extends AbstractK2ComposeSteppingTest {
+public class K2IdeK2CodeComposeSteppingTestGenerated extends AbstractK2IdeK2CodeComposeSteppingTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {
@@ -33,5 +33,20 @@ public class K2ComposeSteppingTestGenerated extends AbstractK2ComposeSteppingTes
     @TestMetadata("composableLambda.kt")
     public void testComposableLambda() throws Exception {
         runTest("../testData/stepping/compose/composableLambda.kt");
+    }
+
+    @TestMetadata("composeCompositionLocal.kt")
+    public void testComposeCompositionLocal() throws Exception {
+        runTest("../testData/stepping/compose/composeCompositionLocal.kt");
+    }
+
+    @TestMetadata("composeSideEffects.kt")
+    public void testComposeSideEffects() throws Exception {
+        runTest("../testData/stepping/compose/composeSideEffects.kt");
+    }
+
+    @TestMetadata("composeStatefulComponent.kt")
+    public void testComposeStatefulComponent() throws Exception {
+        runTest("../testData/stepping/compose/composeStatefulComponent.kt");
     }
 }

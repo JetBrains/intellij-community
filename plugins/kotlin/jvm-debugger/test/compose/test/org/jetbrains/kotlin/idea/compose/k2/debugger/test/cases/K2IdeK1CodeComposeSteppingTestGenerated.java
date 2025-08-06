@@ -18,8 +18,8 @@ import org.junit.runner.RunWith;
 @TestRoot("jvm-debugger/test/compose")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../testData/evaluation/compose")
-public class K2ComposeDebuggerEvaluationTestGenerated extends AbstractK2ComposeDebuggerEvaluationTest {
+@TestMetadata("../testData/stepping/compose")
+public class K2IdeK1CodeComposeSteppingTestGenerated extends AbstractK2IdeK1CodeComposeSteppingTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {
@@ -32,21 +32,21 @@ public class K2ComposeDebuggerEvaluationTestGenerated extends AbstractK2ComposeD
 
     @TestMetadata("composableLambda.kt")
     public void testComposableLambda() throws Exception {
-        runTest("../testData/evaluation/compose/composableLambda.kt");
+        runTest("../testData/stepping/compose/composableLambda.kt");
     }
 
     @TestMetadata("composeCompositionLocal.kt")
     public void testComposeCompositionLocal() throws Exception {
-        runTest("../testData/evaluation/compose/composeCompositionLocal.kt");
+        runTest("../testData/stepping/compose/composeCompositionLocal.kt");
     }
 
     @TestMetadata("composeSideEffects.kt")
     public void testComposeSideEffects() throws Exception {
-        runTest("../testData/evaluation/compose/composeSideEffects.kt");
+        runTest("../testData/stepping/compose/composeSideEffects.kt");
     }
 
     @TestMetadata("composeStatefulComponent.kt")
     public void testComposeStatefulComponent() throws Exception {
-        runTest("../testData/evaluation/compose/composeStatefulComponent.kt");
+        runTest("../testData/stepping/compose/composeStatefulComponent.kt");
     }
 }
