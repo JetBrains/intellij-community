@@ -94,6 +94,7 @@ class TerminalOutputModelImpl(
       "Updating the cursor position to absolute line = $absoluteLineIndex (relative $documentLineIndex), " +
       "column = $columnIndex"
     }
+    ensureDocumentHasLine(documentLineIndex)
     val lineStartOffset = document.getLineStartOffset(documentLineIndex)
     val lineEndOffset = document.getLineEndOffset(documentLineIndex)
     val trimmedCharsInLine = if (documentLineIndex == 0) firstLineTrimmedCharsCount else 0
@@ -131,12 +132,7 @@ class TerminalOutputModelImpl(
       "current length = ${document.textLength} chars, ${document.lineCount} lines, " +
       "currently trimmed = $trimmedCharsCount chars, $trimmedLinesCount lines"
     }
-    if (documentLineIndex > 0 && documentLineIndex >= document.lineCount) {
-      val newLinesToAdd = documentLineIndex - document.lineCount + 1
-      val newLines = "\n".repeat(newLinesToAdd)
-      document.insertString(document.textLength, newLines)
-      LOG.debug { "Added $newLinesToAdd lines to make the line valid" }
-    }
+    ensureDocumentHasLine(documentLineIndex)
 
     val replaceStartOffset = document.getLineStartOffset(documentLineIndex)
     document.replaceString(replaceStartOffset, document.textLength, text)
@@ -154,6 +150,15 @@ class TerminalOutputModelImpl(
     }
 
     return max(0, replaceStartOffset - trimmedCount)
+  }
+
+  private fun ensureDocumentHasLine(documentLineIndex: Int) {
+    if (documentLineIndex > 0 && documentLineIndex >= document.lineCount) {
+      val newLinesToAdd = documentLineIndex - document.lineCount + 1
+      val newLines = "\n".repeat(newLinesToAdd)
+      document.insertString(document.textLength, newLines)
+      LOG.debug { "Added $newLinesToAdd lines to make the line valid" }
+    }
   }
 
   /** Returns offset from which document was updated */

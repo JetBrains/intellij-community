@@ -271,6 +271,24 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `check that lines are added if cursor is beyond the last line`() = runBlocking(Dispatchers.EDT) {
+    val model = TerminalTestUtil.createOutputModel()
+
+    // Prepare
+    model.update(0, "abcde", listOf(styleRange(0, 3), styleRange(3, 5)))
+
+    // Test
+    model.updateCursor(1, 0)
+
+    val expectedText = "abcde\n"
+    val expectedHighlightings = listOf(highlighting(0, 3), highlighting(3, 5))
+    val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(model.document, expectedHighlightings)
+
+    assertEquals(expectedText, model.document.text)
+    assertEquals(expectedHighlightingsSnapshot, model.getHighlightings())
+  }
+
+  @Test
   fun `check state is dumped correctly`() = runBlocking(Dispatchers.EDT) {
     val model = TerminalTestUtil.createOutputModel(maxLength = 10)
 
