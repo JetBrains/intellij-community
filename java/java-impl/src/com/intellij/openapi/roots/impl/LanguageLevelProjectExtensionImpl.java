@@ -25,14 +25,20 @@ import java.util.Objects;
  * @author anna
  */
 public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExtension {
+  private record LanguageLevelExtensionState(
+    @Nullable LanguageLevel myLanguageLevel,
+    @Nullable Boolean myDefault
+  ) {
+  }
+
   private static final String LANGUAGE_LEVEL = "languageLevel";
   private static final String DEFAULT_ATTRIBUTE = "default";
   private static final Logger LOG = Logger.getInstance(LanguageLevelProjectExtensionImpl.class);
 
   private final Project myProject;
-  private @Nullable LanguageLevel myLanguageLevel;
-  private @Nullable Boolean myDefault;
   private LanguageLevel myCurrentLevel;
+
+  private @NotNull LanguageLevelExtensionState myLanguageLevelState = new LanguageLevelExtensionState(null, null);
 
   public LanguageLevelProjectExtensionImpl(final Project project) {
     myProject = project;
@@ -47,19 +53,19 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
    */
   private boolean readExternal(final Element element) {
     String level = element.getAttributeValue(LANGUAGE_LEVEL);
-    LanguageLevel languageLevelOldValue = myLanguageLevel;
+    LanguageLevel languageLevelOldValue = myLanguageLevelState.myLanguageLevel;
+    LanguageLevel languageLevelNewValue;
     if (level == null) {
-      myLanguageLevel = null;
+      languageLevelNewValue = null;
     }
     else {
-      myLanguageLevel = readLanguageLevel(level);
+      languageLevelNewValue = readLanguageLevel(level);
     }
-    String aDefault = element.getAttributeValue(DEFAULT_ATTRIBUTE);
-    Boolean defaultOldValue = getDefault();
-    if (aDefault != null) {
-      myDefault = Boolean.parseBoolean(aDefault);
-    }
-    return !Objects.equals(defaultOldValue, getDefault()) || languageLevelOldValue != myLanguageLevel;
+    String defaultNewValueStr = element.getAttributeValue(DEFAULT_ATTRIBUTE);
+    Boolean defaultOldValue = myLanguageLevelState.myDefault;
+    Boolean defaultNewValue = defaultNewValueStr != null ? Boolean.parseBoolean(defaultNewValueStr) : null;
+    myLanguageLevelState = new LanguageLevelExtensionState(languageLevelNewValue, defaultNewValue);
+    return !Objects.equals(defaultOldValue, defaultNewValue) || languageLevelOldValue != languageLevelNewValue;
   }
 
   private static LanguageLevel readLanguageLevel(String level) {
@@ -72,11 +78,11 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
   }
 
   private void writeExternal(final Element element) {
-    if (myLanguageLevel != null) {
-      element.setAttribute(LANGUAGE_LEVEL, myLanguageLevel.name());
+    if (myLanguageLevelState.myLanguageLevel != null) {
+      element.setAttribute(LANGUAGE_LEVEL, myLanguageLevelState.myLanguageLevel.name());
     }
 
-    Boolean aBoolean = getDefault();
+    Boolean aBoolean = myLanguageLevelState.myDefault;
     if (aBoolean != null && aBoolean != myProject.isDefault()) { // do not write default 'true' for default project
       element.setAttribute(DEFAULT_ATTRIBUTE, Boolean.toString(aBoolean));
     }
@@ -88,7 +94,8 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
   }
 
   private @NotNull LanguageLevel getLanguageLevelOrDefault() {
-    return ObjectUtils.chooseNotNull(myLanguageLevel, JavaRelease.getHighest());
+    LanguageLevelExtensionState ll = getLanguageLevelInternal();
+    return ObjectUtils.chooseNotNull(ll.myLanguageLevel, JavaRelease.getHighest());
   }
 
   @Override
@@ -100,16 +107,24 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
 
     // we don't use here getLanguageLevelOrDefault() - if null, just set to provided value because our default (JavaRelease.getHighest())
     // is changed every java release
-    if (myLanguageLevel != languageLevel) {
-      myLanguageLevel = languageLevel;
-      setDefault(false);
+    LanguageLevelExtensionState currentLevel = getLanguageLevelInternal();
+    if (currentLevel.myLanguageLevel != languageLevel) {
+      setLanguageLevelInternal(languageLevel, false);
       languageLevelsChanged();
     }
   }
 
+  private void setLanguageLevelInternal(@Nullable LanguageLevel languageLevel, @Nullable Boolean isDefault) {
+    myLanguageLevelState = new LanguageLevelExtensionState(languageLevel, isDefault);
+  }
+
+  private @NotNull LanguageLevelExtensionState getLanguageLevelInternal() {
+    return myLanguageLevelState;
+  }
+
   @Override
   public @Nullable Boolean getDefault() {
-    return myDefault;
+    return getLanguageLevelInternal().myDefault;
   }
 
   @Override
@@ -118,8 +133,10 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
     LOG.assertTrue(ApplicationManager.getApplication().isWriteAccessAllowed(),
                    "Language level may only be updated under write action. " +
                    "Please acquire write action before invoking setDefault.");
-
-    myDefault = newDefault;
+    LanguageLevelExtensionState current = getLanguageLevelInternal();
+    if (current.myDefault != newDefault) {
+      setLanguageLevelInternal(current.myLanguageLevel, newDefault);
+    }
   }
 
   @Override
@@ -155,8 +172,7 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
 
   @TestOnly
   public void resetDefaults() {
-    myLanguageLevel = null;
-    setDefault(null);
+    setLanguageLevelInternal(null, null);
   }
 
   static final class MyProjectExtension extends ProjectExtension {
