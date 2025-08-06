@@ -268,6 +268,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     addSettingParameters(args)
     args.addAll(myConfiguration.runnerParameters.options)
     args.addAll(myConfiguration.runnerParameters.goals)
+    myConfiguration.runnerParameters.pomFileName?.let { args.addAll("-f", it) }
     return args
   }
 

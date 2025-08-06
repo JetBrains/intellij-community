@@ -135,6 +135,37 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
 
   }
 
+  @Test
+  fun testShouldExecuteMavenScriptWithPomFile() = runBlocking {
+
+    createModulePom("m1",
+                    """
+                      <parent>
+                          <groupId>test</groupId>
+                          <artifactId>project<</artifactId>
+                          <version>1</version>
+                      </parent>
+                      <artifactId>m1</artifactId>
+                      """.trimIndent())
+    importProjectAsync("""
+         <groupId>test</groupId>
+         <artifactId>project</artifactId>
+         <version>1</version>
+         <packaging>pom</packaging>
+         <modules>
+            <module>m1</module>
+         </modules>
+         """
+    )
+
+    createFakeProjectWrapper()
+    mavenGeneralSettings.mavenHomeType = MavenWrapper
+    val executionInfo = execute(MavenRunnerParameters(true, projectPath.toCanonicalPath(), "m1", mutableListOf("verify"), emptyList()))
+    assertTrue("Should run wrapper", executionInfo.stdout.contains(wrapperOutput))
+    assertTrue("Should run build for specified pom", executionInfo.system.contains("-f m1"))
+
+  }
+
   companion object {
     const val wrapperOutput = "WRAPPER REPLACEMENT in Intellij tests"
   }
