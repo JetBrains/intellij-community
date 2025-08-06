@@ -177,6 +177,13 @@ public class PyUnionType implements PyType {
     return type;
   }
 
+  /**
+   * @see #isStrictSemanticsEnabled()
+   * @deprecated When the strict union semantics of union types is enabled, a regular union type cannot be "weak",
+   * (e.g. {@code int | Any} is not considered compatible with {@code str}), only {@link PyUnsafeUnionType} can exhibit this behavior.
+   * Use {@link PyTypeChecker#isUnknown(PyType, boolean, TypeEvalContext)} instead.
+   */
+  @Deprecated
   public boolean isWeak() {
     return !isStrictSemanticsEnabled() && myMembers.contains(null);
   }
