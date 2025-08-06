@@ -53,7 +53,7 @@ class UiPluginManager {
     return getController().initSession(uuid.toString())
   }
 
-  fun executeMarketplaceQuery(query: String, count: Int, includeUpgradeToCommercialIde: Boolean): PluginSearchResult {
+  suspend fun executeMarketplaceQuery(query: String, count: Int, includeUpgradeToCommercialIde: Boolean): PluginSearchResult {
     return getController().executePluginsSearch(query, count, includeUpgradeToCommercialIde)
   }
 
@@ -65,7 +65,7 @@ class UiPluginManager {
     return getController().getInstalledPlugins()
   }
 
-  fun getUpdateModels(): List<PluginUiModel> {
+  suspend fun getUpdateModels(): List<PluginUiModel> {
     return getController().getUpdates()
   }
 

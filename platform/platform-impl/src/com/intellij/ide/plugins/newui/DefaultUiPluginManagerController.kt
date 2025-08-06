@@ -93,7 +93,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return InstalledPluginsState.getInstance().installedPlugins.map { PluginUiModelAdapter(it) }.withSource()
   }
 
-  override fun getUpdates(): List<PluginUiModel> {
+  override suspend fun getUpdates(): List<PluginUiModel> {
     return PluginUpdatesService.getUpdates()?.map { PluginUiModelAdapter(it) }?.withSource() ?: emptyList()
   }
 
@@ -694,7 +694,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return updatePluginDependencies(session, null, null)
   }
 
-  override fun executePluginsSearch(query: String, count: Int, includeIncompatible: Boolean): PluginSearchResult {
+  override suspend fun executePluginsSearch(query: String, count: Int, includeIncompatible: Boolean): PluginSearchResult {
     try {
       val plugins = MarketplaceRequests.getInstance().executePluginSearch(query, count, includeIncompatible)
       return PluginSearchResult(plugins)

@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
+import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -54,6 +55,32 @@ internal object PluginModelAsyncOperationsExecutor {
           return@withContext
         }
         modelFacade.installOrUpdatePlugin(component, descriptor, null, stateForComponent)
+      }
+    }
+  }
+
+  fun performMarketplaceSearch(
+    cs: CoroutineScope,
+    query: String,
+    loadUpdates: Boolean,
+    callback: (PluginSearchResult, List<PluginUiModel>) -> Unit,
+  ) {
+    cs.launch(Dispatchers.IO) {
+      val pluginManager = UiPluginManager.getInstance()
+      val result = pluginManager.executeMarketplaceQuery(query, 10000, true)
+      val updates = mutableListOf<PluginUiModel>()
+      if (loadUpdates) {
+        updates.addAll(pluginManager.getUpdateModels())
+      }
+      callback(result, updates)
+    }
+  }
+
+  fun loadUpdates(cs: CoroutineScope, callback: (List<PluginUiModel>) -> Unit) {
+    cs.launch(Dispatchers.IO) {
+      val updates = UiPluginManager.getInstance().getUpdateModels()
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        callback(updates)
       }
     }
   }

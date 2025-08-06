@@ -66,8 +66,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().getInstalledPlugins().withSource()
   }
 
-  override fun getUpdates(): List<PluginUiModel> {
-    return awaitForResult { PluginManagerApi.getInstance().getUpdates().withSource() }
+  override suspend fun getUpdates(): List<PluginUiModel> {
+    return PluginManagerApi.getInstance().getUpdates().withSource()
   }
 
   override fun getPlugin(id: PluginId): PluginUiModel? {
@@ -231,8 +231,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().isPluginDisabled(pluginId) }
   }
 
-  override fun executePluginsSearch(query: String, count: Int, includeIncompatible: Boolean): PluginSearchResult {
-    return awaitForResult { PluginManagerApi.getInstance().executeMarketplaceQuery(query, count, includeIncompatible) }
+  override suspend fun executePluginsSearch(query: String, count: Int, includeIncompatible: Boolean): PluginSearchResult {
+    return  PluginManagerApi.getInstance().executeMarketplaceQuery(query, count, includeIncompatible)
   }
 
   override suspend fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {

@@ -26,9 +26,9 @@ interface UiPluginManagerController {
   suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel>
   suspend fun initSession(sessionId: String): InitSessionResult
   suspend fun getInstalledPlugins(): List<PluginUiModel>
-  fun getUpdates(): List<PluginUiModel>
+  suspend fun getUpdates(): List<PluginUiModel>
   fun isPluginDisabled(pluginId: PluginId): Boolean
-  fun executePluginsSearch(query: String, count: Int, includeIncompatible: Boolean): PluginSearchResult
+  suspend fun executePluginsSearch(query: String, count: Int, includeIncompatible: Boolean): PluginSearchResult
   suspend fun loadPluginDetails(model: PluginUiModel): PluginUiModel?
   fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>?
   fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata?
