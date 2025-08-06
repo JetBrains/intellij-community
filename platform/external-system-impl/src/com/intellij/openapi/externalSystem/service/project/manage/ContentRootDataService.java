@@ -25,7 +25,10 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
@@ -443,6 +446,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
   private static void filterAndReportDuplicatingContentRoots(@NotNull MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> moduleNodeToRootNodes,
                                                              @NotNull Project project) {
 
+    // TODO IDEA-376062 allow duplicates only for supported build systems
     boolean duplicatesAreAllowed = CodeInsightContexts.isSharedSourceSupportEnabled(project);
 
     Map<String, DuplicateModuleReport> filter = new LinkedHashMap<>();

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetModel;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
@@ -260,9 +261,18 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
   /**
    * Validates roots within a single module.
    */
-  private static void validateModuleRoots(@NotNull ModuleEditor moduleEditor,
-                                          @NotNull Map<VirtualFile, String> contentRootToModuleNameMap,
-                                          @NotNull Map<VirtualFile, VirtualFile> srcRootsToContentRootMap) throws ConfigurationException {
+  private void validateModuleRoots(
+    @NotNull ModuleEditor moduleEditor,
+    @NotNull Map<VirtualFile, String> contentRootToModuleNameMap,
+    @NotNull Map<VirtualFile, VirtualFile> srcRootsToContentRootMap
+  ) throws ConfigurationException {
+
+    // TODO IDEA-376062 allow duplicates only for supported build systems
+    boolean duplicatesAreAllowed = CodeInsightContexts.isSharedSourceSupportEnabled(myProject);
+    if (duplicatesAreAllowed) {
+      return;
+    }
+
     final ModuleRootModel rootModel = moduleEditor.getRootModel();
     final ContentEntry[] contents = rootModel.getContentEntries();
     final String moduleName = moduleEditor.getName();
@@ -272,7 +282,9 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
     for (ContentEntry content : contents) {
       for (VirtualFile root : content.getSourceFolderFiles()) {
         if (!sourceRoots.add(root)) {
-          throw new ConfigurationException(JavaUiBundle.message("module.paths.validation.duplicate.source.root.in.same.module.error", root.getPresentableUrl(), moduleName));
+          throw new ConfigurationException(
+            JavaUiBundle.message("module.paths.validation.duplicate.source.root.in.same.module.error", root.getPresentableUrl(),
+                                 moduleName));
         }
       }
     }
