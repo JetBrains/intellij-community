@@ -4,13 +4,11 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandAction
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtVariableDeclaration
-import org.jetbrains.kotlin.psi.createDeclarationByPattern
+import org.jetbrains.kotlin.psi.*
 
 internal object NoReturnValueFactory {
     val noReturnValue =
@@ -35,9 +33,41 @@ internal object NoReturnValueFactory {
             updater: ModPsiUpdater,
         ) {
             val factory = KtPsiFactory(element.project)
-            val variableDeclaration =
-                factory.createDeclarationByPattern<KtVariableDeclaration>("val $0 = $1", "_", element.text)
-            element.replace(variableDeclaration)
+            val parent = deparenthesized(element)
+            val newExpression = buildNewExpression(factory, element, parent)
+
+            val elementToReplace = when (parent) {
+                is KtParenthesizedExpression -> parent
+                else -> element
+            }.let(updater::getWritable)
+
+            elementToReplace.replace(newExpression)
+        }
+
+        private fun buildNewExpression(
+            factory: KtPsiFactory,
+            element: KtElement,
+            parent: PsiElement?
+        ): KtExpression {
+            val baseExpressionText = "val _ = ${element.text}"
+            val newExpression = when (parent) {
+                is KtBlockExpression -> factory.createDeclaration(baseExpressionText)
+
+                is KtParenthesizedExpression -> factory.createDeclaration("val _ = ${parent.text}")
+
+                else -> factory.createExpression("{$baseExpressionText}")
+            }
+            return newExpression
+        }
+
+        private fun deparenthesized(element: KtElement): PsiElement? {
+            var parent: PsiElement? = element.parent
+            while (parent is KtParenthesizedExpression) {
+                val parentOfParent = parent.parent
+                if (parentOfParent !is KtParenthesizedExpression) break
+                parent = parentOfParent
+            }
+            return parent
         }
     }
 }

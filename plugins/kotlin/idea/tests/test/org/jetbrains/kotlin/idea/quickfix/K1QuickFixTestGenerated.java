@@ -9722,14 +9722,29 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("if.kt")
+        public void testIf() throws Exception {
+            runTest("testData/quickfix/explicitlyIgnoreReturnValue/if.kt");
+        }
+
         @TestMetadata("ignoredWithAnnotation.kt")
         public void testIgnoredWithAnnotation() throws Exception {
             runTest("testData/quickfix/explicitlyIgnoreReturnValue/ignoredWithAnnotation.kt");
         }
 
+        @TestMetadata("parentheses.kt")
+        public void testParentheses() throws Exception {
+            runTest("testData/quickfix/explicitlyIgnoreReturnValue/parentheses.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/quickfix/explicitlyIgnoreReturnValue/simple.kt");
+        }
+
+        @TestMetadata("when.kt")
+        public void testWhen() throws Exception {
+            runTest("testData/quickfix/explicitlyIgnoreReturnValue/when.kt");
         }
     }
 
