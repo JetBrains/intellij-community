@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
@@ -9,7 +9,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -26,7 +25,6 @@ import com.intellij.util.io.write
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -465,7 +463,7 @@ object JdkListParser {
         isPreview = item["preview"]?.let { filters.testPredicate(it) == true } ?: false,
 
         jdkMajorVersion = (item["jdk_version_major"] as? JsonPrimitive)?.intOrNull ?: return emptyList(),
-        jdkVersion = (item["jdk_version"] as? JsonPrimitive)?.contentOrNull ?: return emptyList(),
+        jdkVersion = (pkg["version"] as? JsonPrimitive)?.contentOrNull ?: (item["jdk_version"] as? JsonPrimitive)?.contentOrNull ?: return emptyList(),
         jdkVendorVersion = (item["jdk_vendor_version"] as? JsonPrimitive)?.contentOrNull,
         suggestedSdkName = (item["suggested_sdk_name"] as? JsonPrimitive)?.contentOrNull ?: return emptyList(),
 
