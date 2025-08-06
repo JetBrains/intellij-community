@@ -69,6 +69,9 @@ public class PyFunctionBuilder {
         }
       }
     }
+    if (source.isAsync()) {
+      functionBuilder.makeAsync();
+    }
     functionBuilder.myDocStringGenerator = PyDocstringGenerator.forDocStringOwner(source);
     return functionBuilder;
   }
