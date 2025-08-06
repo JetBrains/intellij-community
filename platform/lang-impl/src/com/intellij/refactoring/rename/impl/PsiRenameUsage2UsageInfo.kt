@@ -6,6 +6,7 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.rename.api.ModifiableRenameUsage
 import com.intellij.refactoring.rename.api.PsiRenameUsage
 import com.intellij.refactoring.rename.api.RenameConflict
 import com.intellij.usageView.UsageInfo
@@ -23,6 +24,8 @@ internal class PsiRenameUsage2UsageInfo(
   private val pointer: Pointer<out PsiRenameUsage> = renameUsage.createPointer()
 
   val renameUsage: PsiRenameUsage get() = requireNotNull(pointer.dereference())
+
+  internal val isReadOnly: Boolean = renameUsage !is ModifiableRenameUsage
 
   override fun getIcon(): Icon? {
     if (renameUsage.conflicts(newName).isEmpty()) {
