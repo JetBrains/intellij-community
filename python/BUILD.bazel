@@ -515,6 +515,7 @@ jvm_library(
     "//python/impl.helperLocator:community-helpersLocator",
     "//python/python-pyproject:pyproject",
     "//python/python-pyproject:pyproject_test_lib",
+    "//python/python-syntax:syntax",
   ],
   runtime_deps = [
     ":python-community-tests_test_resources",

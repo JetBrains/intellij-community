@@ -53,6 +53,8 @@ public abstract class CodeFoldingManager {
    */
   public abstract @Nullable Boolean isCollapsedByDefault(@NotNull FoldRegion region);
 
+  public abstract @Nullable Boolean keepExpandedOnFirstCollapseAll(@NotNull FoldRegion region);
+
   /**
    * Schedules recalculation of foldings in editor (see {@link com.intellij.codeInsight.folding.impl.CodeFoldingPass CodeFoldingPass}),
    * which will happen even if the document (or other dependencies declared by {@link com.intellij.lang.folding.FoldingBuilder FoldingBuilder})

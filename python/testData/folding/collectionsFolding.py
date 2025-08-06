@@ -7,3 +7,7 @@ primes = {<fold text='...'>x for x in range(2, 101)
 
 d = {<fold text='...'>n: n ** 2
      for n in range(5)</fold>}
+
+
+def normal_foldable_element_to_ensure_two_step_folding() :<fold text='...'>
+    pass</fold>

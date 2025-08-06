@@ -173,6 +173,11 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     return region.getUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT);
   }
 
+  @Override
+  public @Nullable Boolean keepExpandedOnFirstCollapseAll(@NotNull FoldRegion region) {
+    return region.getUserData(UpdateFoldRegionsOperation.KEEP_EXPANDED_ON_FIRST_COLLAPSE_ALL);
+  }
+
   public void setCollapsedByDefault(@NotNull FoldRegion region, boolean isCollapsed) {
     region.putUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT, isCollapsed);
   }

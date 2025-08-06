@@ -281,12 +281,16 @@ com.intellij.lang.WhitespacesAndCommentsBinder$RecursiveBinder
 - com.intellij.lang.WhitespacesAndCommentsBinder
 com.intellij.lang.WhitespacesAndCommentsBinder$TokenTextGetter
 - a:get(I):java.lang.CharSequence
+c:com.intellij.lang.folding.CompositeFoldingBuilder
+- keepExpandedOnFirstCollapseAll(com.intellij.lang.folding.FoldingDescriptor):Z
 com.intellij.lang.folding.FoldingBuilder
 - com.intellij.openapi.project.PossiblyDumbAware
 - a:buildFoldRegions(com.intellij.lang.ASTNode,com.intellij.openapi.editor.Document):com.intellij.lang.folding.FoldingDescriptor[]
 - a:getPlaceholderText(com.intellij.lang.ASTNode):java.lang.String
 - a:isCollapsedByDefault(com.intellij.lang.ASTNode):Z
 - isCollapsedByDefault(com.intellij.lang.folding.FoldingDescriptor):Z
+- keepExpandedOnFirstCollapseAll(com.intellij.lang.ASTNode):Z
+- keepExpandedOnFirstCollapseAll(com.intellij.lang.folding.FoldingDescriptor):Z
 com.intellij.lang.injection.MultiHostInjector
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:MULTIHOST_INJECTOR_EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName

@@ -40,6 +40,9 @@ public interface FoldingBuilder extends PossiblyDumbAware {
 
   /**
    * Returns the default collapsed state for the folding region related to the specified node.
+   * <p/>
+   * The expand-all action applies a two-step behavior that - in step one - expands all regions except those
+   * that return {@code true} here. In step two, all regions are expanded.
    *
    * @param node the node for which the collapsed state is requested.
    * @return true if the region is collapsed by default, false otherwise.
@@ -48,5 +51,22 @@ public interface FoldingBuilder extends PossiblyDumbAware {
 
   default boolean isCollapsedByDefault(@NotNull FoldingDescriptor foldingDescriptor) {
     return isCollapsedByDefault(foldingDescriptor.getElement());
+  }
+
+  /**
+   * Returns the behavior of the folding region when performing the collapse-all action.
+   * <p/>
+   * The collapse-all action applies a two-step behavior that - in step one - collapses all regions except those
+   * that return {@code true} here. In step two, all regions are collapsed.
+   *
+   * @param node the node for which the expanded state is requested.
+   * @return true if the region is not collapsed when the collapse-all action is applied the first time.
+   */
+  default boolean keepExpandedOnFirstCollapseAll(@NotNull ASTNode node) {
+    return false;
+  }
+
+  default boolean keepExpandedOnFirstCollapseAll(@NotNull FoldingDescriptor foldingDescriptor) {
+    return keepExpandedOnFirstCollapseAll(foldingDescriptor.getElement());
   }
 }

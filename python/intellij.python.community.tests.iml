@@ -96,5 +96,6 @@
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.helpersLocator" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.pyproject" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.syntax" scope="TEST" />
   </component>
 </module>

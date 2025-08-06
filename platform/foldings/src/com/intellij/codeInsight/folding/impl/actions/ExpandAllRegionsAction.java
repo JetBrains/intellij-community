@@ -17,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
 
 @ApiStatus.Internal
 public final class ExpandAllRegionsAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
@@ -26,37 +28,55 @@ public final class ExpandAllRegionsAction extends EditorAction implements Action
       public void doExecute(final @NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
         Project project = editor.getProject();
         assert project != null;
-        FoldingModel foldingModel = editor.getFoldingModel();
         CodeFoldingManager codeFoldingManager = CodeFoldingManager.getInstance(project);
 
         final List<FoldRegion> regions = getFoldRegionsForSelection(editor, caret);
-        List<FoldRegion> expandedRegions = new ArrayList<>();
-        foldingModel.runBatchFoldingOperation(() -> {
-          for (FoldRegion region : regions) {
-            // try to restore to default state at first
-            Boolean collapsedByDefault = codeFoldingManager.isCollapsedByDefault(region);
-            if (!region.isExpanded() && !region.shouldNeverExpand() && (collapsedByDefault == null || !collapsedByDefault)) {
-              region.setExpanded(true);
-              expandedRegions.add(region);
-            }
-          }
-        });
-
-        for (FoldRegion expandedRegion : expandedRegions) {
-          FoldRegion collapsedRegion = foldingModel.getCollapsedRegionAtOffset(expandedRegion.getStartOffset());
-          if (collapsedRegion == null || !collapsedRegion.shouldNeverExpand()) {
-            // restoring to default state produced visible change
-            return;
-          }
-        }
-
-        foldingModel.runBatchFoldingOperation(() -> {
-          for (FoldRegion region : regions) {
-            region.setExpanded(true);
-          }
-        });
+        twoStepFoldToggling(editor, regions, (region) -> expandInFirstStep(codeFoldingManager, region), true);
       }
     });
   }
 
+  /**
+   * Implements a two-step collapse/expand action behavior:
+   * <ol>
+   *   <li>First, collapses/expands all regions where #toggleFoldingInFirstStep returns true;</li>
+   *   <li>Second, collapses/expands all regions if the first step produced no effects.</li>
+   * </ol>
+   */
+  public static void twoStepFoldToggling(@NotNull Editor editor,
+                                         @NotNull List<@NotNull FoldRegion> regions,
+                                         Function<@NotNull FoldRegion, @NotNull Boolean> toggleFoldingInFirstStep,
+                                         boolean expand) {
+    FoldingModel foldingModel = editor.getFoldingModel();
+    List<FoldRegion> expandedRegions = new ArrayList<>();
+    foldingModel.runBatchFoldingOperation(() -> {
+      for (FoldRegion region : regions) {
+        // apply step 1: (un-)fold those AST elements according to toggleFoldingInFirstStep()
+        if (toggleFoldingInFirstStep.apply(region)) {
+          region.setExpanded(expand);
+          expandedRegions.add(region);
+        }
+      }
+    });
+
+    for (FoldRegion expandedRegion : expandedRegions) {
+      FoldRegion collapsedRegion = foldingModel.getCollapsedRegionAtOffset(expandedRegion.getStartOffset());
+      if (collapsedRegion == null || !collapsedRegion.shouldNeverExpand()) {
+        // step 1 produced visible changes
+        return;
+      }
+    }
+
+    // apply step 2: (un-)fold _all_ AST elements
+    foldingModel.runBatchFoldingOperation(() -> {
+      for (FoldRegion region : regions) {
+        region.setExpanded(expand);
+      }
+    });
+  }
+
+  private static boolean expandInFirstStep(@NotNull CodeFoldingManager codeFoldingManager, @NotNull FoldRegion region) {
+    boolean collapsedByDefault = Objects.requireNonNullElse(codeFoldingManager.isCollapsedByDefault(region), true);
+    return !region.isExpanded() && !region.shouldNeverExpand() && !collapsedByDefault;
+  }
 }

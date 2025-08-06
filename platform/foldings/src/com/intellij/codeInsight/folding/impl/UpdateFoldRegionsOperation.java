@@ -37,6 +37,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
   private static final Logger LOG = Logger.getInstance(UpdateFoldRegionsOperation.class);
   private static final Key<Boolean> CAN_BE_REMOVED_WHEN_COLLAPSED = Key.create("canBeRemovedWhenCollapsed");
   static final Key<Boolean> COLLAPSED_BY_DEFAULT = Key.create("collapsedByDefault");
+  static final Key<Boolean> KEEP_EXPANDED_ON_FIRST_COLLAPSE_ALL = Key.create("keepExpandedOnFirstCollapseAll");
   static final Key<String> SIGNATURE = Key.create("signature");
   static final Key<Boolean> UPDATE_REGION = Key.create("update");
   static final String NO_SIGNATURE = "no signature";
@@ -157,6 +158,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
 
       if (descriptor.canBeRemovedWhenCollapsed()) region.putUserData(CAN_BE_REMOVED_WHEN_COLLAPSED, Boolean.TRUE);
       region.putUserData(COLLAPSED_BY_DEFAULT, regionInfo.collapsedByDefault);
+      region.putUserData(KEEP_EXPANDED_ON_FIRST_COLLAPSE_ALL, regionInfo.keepExpandedOnFirstCollapseAll);
       region.putUserData(SIGNATURE, ObjectUtils.chooseNotNull(regionInfo.signature, NO_SIGNATURE));
 
       info.addRegion(region, smartPointerManager.createSmartPsiElementPointer(psi));

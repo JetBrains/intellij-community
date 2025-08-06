@@ -19,6 +19,7 @@ import com.jetbrains.python.ast.*
 import com.jetbrains.python.psi.PyStringLiteralCoreUtil
 import kotlin.math.max
 
+
 open class PythonFoldingBuilder : CustomFoldingBuilder(), DumbAware {
   override fun buildLanguageFoldRegions(
     descriptors: MutableList<FoldingDescriptor?>,
@@ -81,6 +82,14 @@ open class PythonFoldingBuilder : CustomFoldingBuilder(), DumbAware {
     }
     if (isLanguageSpecificFoldableBlock(elementType)) {
       return CodeFoldingSettings.getInstance().COLLAPSE_METHODS
+    }
+    return false
+  }
+
+  override fun keepExpandedOnFirstCollapseAll(node: ASTNode): Boolean {
+    val elementType = node.getElementType()
+    if (elementType === PyElementTypes.ANNOTATION) {
+      return !PythonFoldingSettings.getInstance().isCollapseTypeAnnotations
     }
     return false
   }
@@ -292,16 +301,17 @@ open class PythonFoldingBuilder : CustomFoldingBuilder(), DumbAware {
   }
 
   companion object {
-    val FOLDABLE_COLLECTIONS_LITERALS: TokenSet = TokenSet.create(
-      PyElementTypes.SET_LITERAL_EXPRESSION,
-      PyElementTypes.DICT_LITERAL_EXPRESSION,
-      PyElementTypes.GENERATOR_EXPRESSION,
-      PyElementTypes.SET_COMP_EXPRESSION,
-      PyElementTypes.DICT_COMP_EXPRESSION,
-      PyElementTypes.LIST_LITERAL_EXPRESSION,
-      PyElementTypes.LIST_COMP_EXPRESSION,
-      PyElementTypes.TUPLE_EXPRESSION)
-
     const val PYTHON_TYPE_ANNOTATION_GROUP_NAME: String = "Python type annotation"
   }
 }
+
+@JvmField
+val FOLDABLE_COLLECTIONS_LITERALS: TokenSet = TokenSet.create(
+  PyElementTypes.SET_LITERAL_EXPRESSION,
+  PyElementTypes.DICT_LITERAL_EXPRESSION,
+  PyElementTypes.GENERATOR_EXPRESSION,
+  PyElementTypes.SET_COMP_EXPRESSION,
+  PyElementTypes.DICT_COMP_EXPRESSION,
+  PyElementTypes.LIST_LITERAL_EXPRESSION,
+  PyElementTypes.LIST_COMP_EXPRESSION,
+  PyElementTypes.TUPLE_EXPRESSION)

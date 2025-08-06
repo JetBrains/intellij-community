@@ -37,7 +37,7 @@ public abstract class BaseFoldingHandler extends EditorActionHandler {
   /**
    * Returns fold regions inside selection, or all regions in editor, if selection doesn't exist or doesn't contain fold regions.
    */
-  protected List<FoldRegion> getFoldRegionsForSelection(@NotNull Editor editor, @Nullable Caret caret) {
+  protected @NotNull List<FoldRegion> getFoldRegionsForSelection(@NotNull Editor editor, @Nullable Caret caret) {
     FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
     if (caret == null) {
       caret = editor.getCaretModel().getPrimaryCaret();
