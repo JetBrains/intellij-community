@@ -321,9 +321,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       icnsPathForEAP = "$projectHome/adt-branding/resources/artwork/preview/AndroidStudio.icns"
     }
 
-    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
-      return if (appInfo.isEAP) "Android Studio Preview.app" else "Android Studio.app"
-    }
+    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "android-studio"
 
     override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
       val archDir = when (arch) {
