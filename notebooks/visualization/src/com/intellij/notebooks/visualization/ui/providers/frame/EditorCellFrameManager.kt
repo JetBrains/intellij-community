@@ -86,22 +86,15 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
     val upperInlayBounds = inlays.firstOrNull {
       it.properties.priority == editor.notebookAppearance.cellInputInlaysPriority && it.properties.isShownAbove
     }?.bounds ?: return null
-
-    val bottomRectHeight = editor.notebookAppearance.cellBorderHeight / 2
-    val delimiterHeight = upperInlayBounds.height - bottomRectHeight
-    val topPosition = upperInlayBounds.y + delimiterHeight
-
     val lowerInlayBounds = inlays.lastOrNull {
       it.properties.priority == editor.notebookAppearance.cellInputInlaysPriority && !it.properties.isShownAbove
     }?.bounds ?: return null
 
-    val lineX = upperInlayBounds.x + upperInlayBounds.width - 0.5
-    val lineStartY = (topPosition).toDouble() + 0.5
-    val lineEndY = (lowerInlayBounds.y + lowerInlayBounds.height).toDouble() - 1
+    val x = upperInlayBounds.x + upperInlayBounds.width - 0.5
+    val startY = (upperInlayBounds.y + upperInlayBounds.height - editor.notebookAppearance.cellBorderHeight / 2).toDouble() + 0.5
+    val endY = (lowerInlayBounds.y + lowerInlayBounds.height).toDouble() - 1
 
-    val line2DDouble = Line2D.Double(lineX, lineStartY, lineX, lineEndY)
-    cachedRightLine = line2DDouble
-    return line2DDouble
+    return Line2D.Double(x, startY, x, endY).also { cachedRightLine = it }
   }
 
   fun updateCellFrameShow() {

@@ -14,6 +14,7 @@ import javax.swing.JLayer
 import javax.swing.JPanel
 import javax.swing.JViewport
 import javax.swing.plaf.LayerUI
+import kotlin.math.abs
 
 /**
  * Performs updating of underlying components within keepScrollingPositionWhile.
@@ -129,21 +130,21 @@ class EditorComponentWrapper private constructor(private val editor: EditorImpl)
     }
   }
 
-  // Used in drawing cell frame for selected and hovered .
+  // Used in drawing cell frame for selected and hovered.
   fun replaceOverlayLine(oldLine: Line2D?, line: Line2D, color: Color) {
     val repaintRect = if (oldLine != null) {
       val oldBounds = Rectangle(
         oldLine.x1.toInt().coerceAtMost(oldLine.x2.toInt()),
         oldLine.y1.toInt().coerceAtMost(oldLine.y2.toInt()),
-        Math.abs(oldLine.x2.toInt() - oldLine.x1.toInt()) + 1,
-        Math.abs(oldLine.y2.toInt() - oldLine.y1.toInt()) + 1
+        abs(oldLine.x2.toInt() - oldLine.x1.toInt()) + 1,
+        abs(oldLine.y2.toInt() - oldLine.y1.toInt()) + 1
       )
 
       val newBounds = Rectangle(
         line.x1.toInt().coerceAtMost(line.x2.toInt()),
         line.y1.toInt().coerceAtMost(line.y2.toInt()),
-        Math.abs(line.x2.toInt() - line.x1.toInt()) + 1,
-        Math.abs(line.y2.toInt() - line.y1.toInt()) + 1
+        abs(line.x2.toInt() - line.x1.toInt()) + 1,
+        abs(line.y2.toInt() - line.y1.toInt()) + 1
       )
 
       oldBounds.union(newBounds)
@@ -152,8 +153,8 @@ class EditorComponentWrapper private constructor(private val editor: EditorImpl)
       Rectangle(
         line.x1.toInt().coerceAtMost(line.x2.toInt()),
         line.y1.toInt().coerceAtMost(line.y2.toInt()),
-        Math.abs(line.x2.toInt() - line.x1.toInt()) + 1,
-        Math.abs(line.y2.toInt() - line.y1.toInt()) + 1
+        abs(line.x2.toInt() - line.x1.toInt()) + 1,
+        abs(line.y2.toInt() - line.y1.toInt()) + 1
       )
     }
     overlayLines.removeIf { it.first == oldLine }
