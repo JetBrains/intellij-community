@@ -3,6 +3,8 @@ package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -11,6 +13,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.ex.PartialCommitHelper;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.ContainerUtil;
@@ -121,7 +124,23 @@ public final class IdeaTextPatchBuilder {
   public static boolean isBinaryRevision(@Nullable ContentRevision cr) {
     if (cr == null) return false;
     if (cr instanceof BinaryContentRevision) return true;
-    return cr.getFile().getFileType().isBinary();
+
+    FilePath file = cr.getFile();
+    FileType type = file.getFileType();
+    if (type instanceof UnknownFileType) {
+      if (cr instanceof ByteBackedContentRevision byteBasedContentRevision) {
+        try {
+          byte[] bytes = byteBasedContentRevision.getContentAsBytes();
+          if (bytes != null) {
+            var encoding = new CharsetToolkit(bytes, Charset.defaultCharset(), false).guessFromContent(bytes.length);
+            return encoding == CharsetToolkit.GuessedEncoding.BINARY || encoding == CharsetToolkit.GuessedEncoding.INVALID_UTF8;
+          }
+        }
+        catch (VcsException ignored) {
+        }
+      }
+    }
+    return type.isBinary();
   }
 
   private static @Nullable AirContentRevision convertRevision(@Nullable ContentRevision cr, @Nullable String actualTextContent) {
