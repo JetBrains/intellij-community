@@ -140,6 +140,13 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleConfigurationAvoidanceInspection"/>
 
+    <localInspection language="Properties" groupPath="Gradle" shortName="LatestMinorVersion"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.latest.minor.version" groupKey="inspection.best.practises"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleLatestMinorVersionInspection"/>
+
     <localInspection language="UAST" groupPath="Gradle" shortName="DependencyNotationArgument"
                      bundle="messages.GradleInspectionBundle"
                      key="inspection.display.name.unrecognized.dependency.notation" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
