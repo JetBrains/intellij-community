@@ -226,7 +226,7 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
   public void apply() throws ConfigurationException {
     validateContentAndSourceRoots();
     validateModuleEditors();
-    
+
     final Map<Sdk, Sdk> modifiedToOriginalMap = createSdkMapping();
 
     ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, ConfigurationException>)() -> {
@@ -237,7 +237,7 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
 
     myModified = false;
   }
-  
+
   /**
    * Validates content and source roots across all modules.
    * Checks for duplicate source roots within the same module,
@@ -247,16 +247,16 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
   private void validateContentAndSourceRoots() throws ConfigurationException {
     final Map<VirtualFile, String> contentRootToModuleNameMap = new HashMap<>();
     final Map<VirtualFile, VirtualFile> srcRootsToContentRootMap = new HashMap<>();
-    
+
     // First pass: validate within each module
     for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
       validateModuleRoots(moduleEditor, contentRootToModuleNameMap, srcRootsToContentRootMap);
     }
-    
+
     // Second pass: validate source roots across modules
     validateSourceRootsAcrossModules(srcRootsToContentRootMap, contentRootToModuleNameMap);
   }
-  
+
   /**
    * Validates roots within a single module.
    */
@@ -266,7 +266,7 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
     final ModuleRootModel rootModel = moduleEditor.getRootModel();
     final ContentEntry[] contents = rootModel.getContentEntries();
     final String moduleName = moduleEditor.getName();
-    
+
     // Check for duplicate source roots within the same module
     Set<VirtualFile> sourceRoots = new HashSet<>();
     for (ContentEntry content : contents) {
@@ -283,7 +283,7 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
       if (contentRoot == null) {
         continue;
       }
-      
+
       // Check for duplicate content roots
       final String previousName = contentRootToModuleNameMap.put(contentRoot, moduleName);
       if (previousName != null && !previousName.equals(moduleName)) {
@@ -291,7 +291,7 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
           JavaUiBundle.message("module.paths.validation.duplicate.content.error", contentRoot.getPresentableUrl(), previousName, moduleName)
         );
       }
-      
+
       // Map source roots to content roots and check for duplicates
       for (VirtualFile srcRoot : contentEntry.getSourceFolderFiles()) {
         final VirtualFile anotherContentRoot = srcRootsToContentRootMap.put(srcRoot, contentRoot);
@@ -301,7 +301,7 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
       }
     }
   }
-  
+
   /**
    * Throws an appropriate error for duplicate source roots.
    */
@@ -323,7 +323,7 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
       JavaUiBundle.message("module.paths.validation.duplicate.source.root.error", problematicModule, srcRoot.getPresentableUrl(), correctModule)
     );
   }
-  
+
   /**
    * Validates that source roots belong to the same module as their corresponding content root.
    */
@@ -334,7 +334,9 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
       final VirtualFile correspondingContent = entry.getValue();
       final String expectedModuleName = contentRootToModuleNameMap.get(correspondingContent);
 
-      for (VirtualFile candidateContent = srcRoot; candidateContent != null && !candidateContent.equals(correspondingContent); candidateContent = candidateContent.getParent()) {
+      for (VirtualFile candidateContent = srcRoot;
+           candidateContent != null && !candidateContent.equals(correspondingContent);
+           candidateContent = candidateContent.getParent()) {
         final String moduleName = contentRootToModuleNameMap.get(candidateContent);
         if (moduleName != null && !moduleName.equals(expectedModuleName)) {
           throw new ConfigurationException(
@@ -344,7 +346,7 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
       }
     }
   }
-  
+
   /**
    * Validates that all module editors can be applied.
    */
@@ -353,7 +355,7 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
       moduleEditor.canApply();
     }
   }
-  
+
   /**
    * Creates a mapping from modified SDKs to original SDKs.
    */
@@ -365,7 +367,7 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
     }
     return modifiedToOriginalMap;
   }
-  
+
   /**
    * Applies changes from module editors and collects modifiable root models.
    * Returns the list of models to commit or an empty list if an exception occurred.
@@ -383,7 +385,7 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
 
     return models;
   }
-  
+
   /**
    * Updates the SDK in the model to use the original SDK from the JDK Table.
    */
@@ -400,7 +402,7 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
       }
     }
   }
-  
+
   /**
    * Commits changes to the module model and facets, then resets the state.
    */
@@ -417,7 +419,7 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
       cleanupAfterCommit();
     }
   }
-  
+
   /**
    * Cleans up after committing changes.
    */
