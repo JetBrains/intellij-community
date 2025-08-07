@@ -117,7 +117,6 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
         cachedPsiFile = file
         if (cachedPsiFile == null) {
           LOG.error("Cannot find psiFile for file ${model.presentablePath}")
-          initializationCompleted.complete(Unit)
           return@launch
         }
 
