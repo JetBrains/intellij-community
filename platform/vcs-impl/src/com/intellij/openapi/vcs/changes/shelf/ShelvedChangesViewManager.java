@@ -47,7 +47,6 @@ import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
@@ -469,7 +468,6 @@ public class ShelvedChangesViewManager implements Disposable {
       super(project, false, false, false);
       myAsyncTreeModel = new ShelfTreeAsyncModel(project, getScope());
 
-      TreeSpeedSearch.installOn(this, true, ChangesBrowserNode.TO_TEXT_CONVERTER);
       setKeepTreeState(true);
     }
 
