@@ -256,7 +256,10 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
 
     val descriptor = if (Files.isDirectory(mainResourceRoot)) {
       val fallbackResolver = PluginXmlPathResolver(allResourceRootsList.filter { it.extension == "jar" }, zipFilePool)
-      val resolver = ModuleBasedPluginXmlPathResolver(includedModules, pluginModuleGroup.optionalModuleIds, fallbackResolver)
+      val resolver = ModuleBasedPluginXmlPathResolver(includedModules,
+                                                      pluginModuleGroup.optionalModuleIds,
+                                                      pluginModuleGroup.notLoadedModuleIds,
+                                                      fallbackResolver)
       loadDescriptorFromDir(mainResourceRoot, context, zipFilePool, resolver, isBundled = isBundled, pluginDir = pluginDir)
         .also { descriptor ->
           descriptor?.contentModules?.forEach { module ->
@@ -269,9 +272,10 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
     else {
       val defaultResolver = PluginXmlPathResolver(allResourceRootsList, zipFilePool)
-      val pathResolver =
-        if (allResourceRootsList.size == 1) defaultResolver
-        else ModuleBasedPluginXmlPathResolver(includedModules, pluginModuleGroup.optionalModuleIds, defaultResolver)
+      val pathResolver = if (allResourceRootsList.size == 1)
+        defaultResolver
+      else
+        ModuleBasedPluginXmlPathResolver(includedModules, pluginModuleGroup.optionalModuleIds, pluginModuleGroup.notLoadedModuleIds, defaultResolver)
       val pluginDir = pluginDir ?: mainResourceRoot.parent.parent
       loadDescriptorFromJar(mainResourceRoot, context, zipFilePool, pathResolver, isBundled = isBundled, pluginDir = pluginDir)
     }
@@ -312,11 +316,14 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   }
 }
 
-private class CustomPluginModuleGroup(moduleDescriptors: List<RuntimeModuleDescriptor>,
-                                      override val mainModule: RuntimeModuleDescriptor) : PluginModuleGroup {
-  private val includedModules = moduleDescriptors.map { IncludedRuntimeModuleImpl(it, RuntimeModuleLoadingRule.REQUIRED) } 
-  override fun getIncludedModules(): List<IncludedRuntimeModule> = includedModules 
+private class CustomPluginModuleGroup(
+  moduleDescriptors: List<RuntimeModuleDescriptor>,
+  override val mainModule: RuntimeModuleDescriptor,
+) : PluginModuleGroup {
+  private val includedModules = moduleDescriptors.map { IncludedRuntimeModuleImpl(it, RuntimeModuleLoadingRule.REQUIRED) }
+  override fun getIncludedModules(): List<IncludedRuntimeModule> = includedModules
   override fun getOptionalModuleIds(): Set<RuntimeModuleId> = emptySet()
+  override fun getNotLoadedModuleIds(): Map<RuntimeModuleId, List<RuntimeModuleId>> = emptyMap()
 }
 
 private const val PLATFORM_ROOT_MODULE_PROPERTY = "intellij.platform.root.module"

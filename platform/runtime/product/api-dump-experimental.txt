@@ -17,6 +17,7 @@
 - a:getMainModuleGroup():com.intellij.platform.runtime.product.RuntimeModuleGroup
 *:com.intellij.platform.runtime.product.RuntimeModuleGroup
 - a:getIncludedModules():java.util.List
+- a:getNotLoadedModuleIds():java.util.Map
 - a:getOptionalModuleIds():java.util.Set
 *e:com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 - java.lang.Enum

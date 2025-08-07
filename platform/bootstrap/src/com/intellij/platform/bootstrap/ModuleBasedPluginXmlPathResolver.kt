@@ -18,6 +18,7 @@ import java.nio.file.Path
 internal class ModuleBasedPluginXmlPathResolver(
   private val includedModules: List<IncludedRuntimeModule>,
   private val optionalModuleIds: Set<RuntimeModuleId>,
+  private val notLoadedModuleIds: Map<RuntimeModuleId, List<RuntimeModuleId>>,
   private val fallbackResolver: PathResolver,
 ) : PathResolver {
 
@@ -37,11 +38,23 @@ internal class ModuleBasedPluginXmlPathResolver(
       reader.consume(input, path)
       return reader.getBuilder()
     }
-    else if (RuntimeModuleId.module(moduleName) in optionalModuleIds) {
-      // TODO here we should restore the actual content module "header" with dependency information
-      return PluginDescriptorBuilder.builder().apply {
-        `package` = "unresolved.$moduleName"
-        addDependency(DependenciesElement.ModuleDependency("incompatible.with.product.mode.or.unresolved"))
+    else {
+      val moduleId = RuntimeModuleId.module(moduleName)
+      if (moduleId in optionalModuleIds) {
+        // TODO here we should restore the actual content module "header" with dependency information
+        return PluginDescriptorBuilder.builder().apply {
+          `package` = "unresolved.$moduleName"
+
+          val reasonsWhyNotLoaded = notLoadedModuleIds[moduleId] ?: emptyList()
+          if (reasonsWhyNotLoaded.isNotEmpty()) {
+            for (reason in reasonsWhyNotLoaded) {
+              addDependency(DependenciesElement.ModuleDependency(reason.stringId))
+            }
+          }
+          else {
+            addDependency(DependenciesElement.ModuleDependency("incompatible.with.product.mode.or.unresolved"))
+          }
+        }
       }
     }
     return fallbackResolver.resolveModuleFile(readContext = readContext, dataLoader = dataLoader, path = path)

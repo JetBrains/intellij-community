@@ -13,10 +13,7 @@ import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Describes a group of modules corresponding to a plugin.
@@ -28,6 +25,7 @@ public final class PluginModuleGroupImpl implements PluginModuleGroup {
   private final ResourceFileResolver myResourceFileResolver;
   private volatile List<IncludedRuntimeModule> myIncludedModules;
   private volatile Set<RuntimeModuleId> myOptionalModuleIds;
+  private volatile Map<RuntimeModuleId, List<RuntimeModuleId>> myNotLoadedModuleIds;
 
   public PluginModuleGroupImpl(@NotNull RuntimeModuleDescriptor mainModule, @NotNull ProductMode currentMode, @NotNull RuntimeModuleRepository repository,
                                @NotNull ResourceFileResolver resourceFileResolver) {
@@ -50,6 +48,14 @@ public final class PluginModuleGroupImpl implements PluginModuleGroup {
     return myIncludedModules;
   }
 
+  @Override
+  public @NotNull Map<@NotNull RuntimeModuleId, @NotNull List<@NotNull RuntimeModuleId>> getNotLoadedModuleIds() {
+    if (myNotLoadedModuleIds == null) {
+      loadIncludedModules();
+    }
+    return myNotLoadedModuleIds;
+  }
+
   private void loadIncludedModules() {
     List<RawIncludedRuntimeModule> rawIncludedModules = PluginXmlReader.loadPluginModules(myMainModule, myRepository,
                                                                                           myResourceFileResolver);
@@ -67,6 +73,7 @@ public final class PluginModuleGroupImpl implements PluginModuleGroup {
     }
     myOptionalModuleIds = optionalModuleIds;
     myIncludedModules = includedModules;
+    myNotLoadedModuleIds = matcher.getUnmatchedModules();
   }
 
   @Override
