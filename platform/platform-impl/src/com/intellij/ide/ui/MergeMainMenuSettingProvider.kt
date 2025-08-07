@@ -47,6 +47,6 @@ internal class MergeMainMenuSettingProvider {
   }
 
   fun isMergeMainMenuVisible(): Boolean {
-    return !(SystemInfoRt.isWindows && IdeFrameDecorator.isCustomDecorationAvailable || CustomWindowHeaderUtil.hideNativeLinuxTitleAvailable)
+    return SystemInfoRt.isWindows && IdeFrameDecorator.isCustomDecorationAvailable || CustomWindowHeaderUtil.hideNativeLinuxTitleAvailable
     }
 }
