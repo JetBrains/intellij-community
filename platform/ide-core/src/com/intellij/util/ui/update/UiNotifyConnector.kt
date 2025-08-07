@@ -10,6 +10,7 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.util.concurrency.createChildContextIgnoreStructuredConcurrency
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.UiNotifyConnector.Companion.doWhenFirstShown
+import com.intellij.util.ui.update.UiNotifyConnector.Companion.forceNotifyIsShown
 import com.intellij.util.ui.update.UiNotifyConnector.ContextActivatable.Companion.wrapIfNeeded
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -23,7 +24,8 @@ import javax.swing.SwingUtilities
 /**
  * ### Obsolescence notice
  *
- * Use [com.intellij.util.ui.launchOnShow]/[com.intellij.util.ui.launchOnceOnShow] instead.
+ * Use [com.intellij.util.ui.launchOnShow]/[com.intellij.util.ui.initOnShow] instead.
+ * Only use this class if you need to support [forceNotifyIsShown] and [com.intellij.ui.ComponentUtil.markAsShowing].
  */
 @Obsolete
 open class UiNotifyConnector : Disposable, HierarchyListener {
@@ -121,7 +123,8 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
     /**
      * ### Obsolescence notice
      *
-     * Use [com.intellij.util.ui.launchOnceOnShow] instead.
+     * Use [com.intellij.util.ui.initOnShow] instead for modern (frontend) UI code.
+     * Only use this function if you need to support [forceNotifyIsShown] and [com.intellij.ui.ComponentUtil.markAsShowing].
      */
     @Obsolete
     @JvmStatic
@@ -132,7 +135,8 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
     /**
      * ### Obsolescence notice
      *
-     * Use [com.intellij.util.ui.launchOnceOnShow] instead.
+     * Use [com.intellij.util.ui.initOnShow] instead for modern (frontend) UI code.
+     * Only use this function if you need to support [forceNotifyIsShown] and [com.intellij.ui.ComponentUtil.markAsShowing].
      */
     @Obsolete
     fun doWhenFirstShown(component: Component, isDeferred: Boolean = true, runnable: () -> Unit) {
@@ -151,7 +155,8 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
     /**
      * ### Obsolescence notice
      *
-     * Use [com.intellij.util.ui.launchOnceOnShow] instead.
+     * Use [com.intellij.util.ui.initOnShow] instead for modern (frontend) UI code.
+     * Only use this function if you need to support [forceNotifyIsShown] and [com.intellij.ui.ComponentUtil.markAsShowing].
      */
     @JvmOverloads
     @JvmStatic
@@ -182,7 +187,7 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
     }
 
     /**
-     * Attention! This does not trigger [com.intellij.util.ui.launchOnShow]/[com.intellij.util.ui.launchOnceOnShow].
+     * Attention! This does not trigger [com.intellij.util.ui.launchOnShow]/[com.intellij.util.ui.initOnShow].
      * See IJPL-175524
      */
     @ApiStatus.Experimental
@@ -272,7 +277,8 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
   /**
    * ### Obsolescence notice
    *
-   * Use [com.intellij.util.ui.launchOnceOnShow] instead.
+   * Use [com.intellij.util.ui.initOnShow] instead for modern (frontend) UI code.
+   * Only use this function if you need to support [forceNotifyIsShown] and [com.intellij.ui.ComponentUtil.markAsShowing].
    */
   @Obsolete
   class Once : UiNotifyConnector {
@@ -291,7 +297,8 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
       /**
        * ### Obsolescence notice
        *
-       * Use [com.intellij.util.ui.launchOnceOnShow] instead.
+       * Use [com.intellij.util.ui.initOnShow] instead for modern (frontend) UI code.
+       * Only use this function if you need to support [forceNotifyIsShown] and [com.intellij.ui.ComponentUtil.markAsShowing].
        */
       @Obsolete
       @JvmStatic

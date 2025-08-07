@@ -1,11 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui
 
-import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UiWithModelAccessImmediate
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.BitUtil
@@ -40,7 +36,7 @@ fun Component.showingScope(
 }
 
 /**
- * This was the first design. It's now deprecated in favor of [launchOnShow]/[launchOnceOnShow].
+ * This was the first design. It's now deprecated in favor of [launchOnShow]/[initOnShow].
  *
  * 1. Exceptions from the [block] also cancel the returned Job.
  * For example, to execute some logic on the first time the component is shown, one can throw a CancellationException:
@@ -49,7 +45,7 @@ fun Component.showingScope(
  *   shownForTheFirstTimeEver(myLabel)
  *   throw CancellationException()
  * ```
- * Instead, [launchOnceOnShow] should be used.
+ * Instead, [initOnShow] should be used.
  * In case of [launchOnShow], the [block] will be restarted even if the previous invocation threw an exception.
  *
  * 2. Synchronous [uiData] is not supported, the logic can be moved to the first line of [block].
