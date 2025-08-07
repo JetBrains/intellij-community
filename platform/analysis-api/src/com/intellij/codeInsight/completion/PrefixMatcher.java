@@ -3,7 +3,9 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -85,5 +87,9 @@ public abstract class PrefixMatcher {
 
     result.addAll(sorted);
     return result;
+  }
+
+  public @Nullable List<@NotNull TextRange> getMatchingFragments(@NotNull String name) {
+    return null;
   }
 }

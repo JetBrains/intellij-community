@@ -17,6 +17,8 @@ com.intellij.codeInsight.completion.LookupElementListPresenter
 - a:getSelectedIndex():I
 - a:isSelectionTouched():Z
 - a:isShown():Z
+a:com.intellij.codeInsight.completion.PrefixMatcher
+- getMatchingFragments(java.lang.String):java.util.List
 com.intellij.codeInsight.daemon.ChangeLocalityDetector
 - a:getChangeHighlightingDirtyScopeFor(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener
