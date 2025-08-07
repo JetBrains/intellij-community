@@ -24,6 +24,50 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 /**
+ * Executes [block] in a coroutine **once** the [UI component][this] becomes [showing][ComponentUtil.isShowing].
+ *
+ * When the component is hidden, the launched coroutine is cancelled.
+ * In particular, the component becomes hidden when it's removed from the hierarchy.
+ * If the component is shown again, then the coroutine is restarted
+ * if it didn't run to completion the first time because it was canceled.
+ *
+ * The [block] is executed with the modality state of the [component][this].
+ * This means that the [block] execution might happen in a different EDT event,
+ * because it has to wait for the proper modality.
+ *
+ * The intended use of this function is to perform some sort of "slow initialization" that needs to be able to invoke suspending code.
+ * Because some Swing containers are designed in such a way that components may be removed and then re-added
+ * during content update, it's important to ensure that the initialization is restarted and allowed to complete.
+ * This means that [block] must be coded in such a way that allows cancellation and restart.
+ * Typically, it follows the compute-and-apply pattern where the "compute" part is idempotent and suspending,
+ * and the "apply" part is pure UI code that is fast and not cancellable.
+ *
+ * It's not recommended to use this function with never-ending coroutines (e.g, `collect`),
+ * as it's then identical to `launchOnShow` and that function should be used instead.
+ *
+ * @param debugName name to use as [CoroutineName]
+ * @param context additional context of the coroutine.
+ * [CoroutineName], [Job], [ContinuationInterceptor] and [ModalityState] are ignored
+ * @see launchOnShow
+ */
+@Experimental
+fun <C : Component> C.initOnShow(
+  debugName: String,
+  context: CoroutineContext = EmptyCoroutineContext,
+  block: suspend CoroutineScope.() -> Unit,
+): Job {
+  ThreadingAssertions.assertEventDispatchThread()
+  val component = this
+  var completed = false
+  return launchUsingIsShowingFlow(component, debugName, context) { parentScope, childScope ->
+    if (completed) return@launchUsingIsShowingFlow // Just in case. Should not happen because we cancel the parent scope.
+    childScope.block()
+    completed = true
+    parentScope.cancel("initOnShow completed")
+  }
+}
+
+/**
  * Launches [block] in a coroutine **once** the [UI component][this] becomes [showing][ComponentUtil.isShowing]
  * and cancels the coroutine when the UI component is hidden.
  * In particular, the component becomes hidden when it's removed from the hierarchy.
@@ -35,14 +79,10 @@ import kotlin.coroutines.EmptyCoroutineContext
  * The [block] may be executed at most **one time**.
  * Once it starts executing, it will not be restarted if canceled by the component becoming hidden,
  * regardless of whether the block completed normally or at all.
- * But if the component is hidden before the block starts executing, it will be restarted
- * the next time the component is shown again.
- * This behavior covers a common case when a component is added to a showing parent,
- * then immediately removed and added again.
- * It often happens when several components are added to a single parent,
- * and that parent is designed to remove everything and rebuild the entire layout on every child addition.
- * All those removals and additions typically happen in a single EDT event, so the block never even gets a chance to start.
- * For such use cases, this function can be thought of as "launch once when it finally shows."
+ * This means that if this function is used for suspending initialization,
+ * and the component is hidden before the initialization completes (quite a common case),
+ * **the initialization will never complete.** That's why this function is deprecated,
+ * and [initOnShow] should be used instead.
  *
  * @param debugName name to use as [CoroutineName]
  * @param context additional context of the coroutine.
@@ -50,6 +90,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  * @see launchOnShow
  */
 @Experimental
+@Deprecated("The given coroutine may never complete, use initOnShow instead", replaceWith = ReplaceWith("initOnShow"))
 fun <C : Component> C.launchOnceOnShow(
   debugName: String,
   context: CoroutineContext = EmptyCoroutineContext,
@@ -107,7 +148,7 @@ fun <C : Component> C.launchOnceOnShow(
  * @param debugName name to use as [CoroutineName]
  * @param context additional context of the coroutine.
  * [CoroutineName], [Job], [ContinuationInterceptor] and [ModalityState] are ignored
- * @see launchOnceOnShow
+ * @see initOnShow
  */
 @Experimental
 fun <C : Component> C.launchOnShow(

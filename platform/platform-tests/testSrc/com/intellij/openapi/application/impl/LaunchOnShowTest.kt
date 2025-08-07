@@ -40,6 +40,20 @@ class LaunchOnShowTest {
   }
 
   @Test
+  fun `init in acceptable modality on already showing component`(): Unit = edtTest {
+    var executed = false
+    val job = container.initOnShow("test") {
+      executed = true
+    }
+    assertFalse(awaitValue(false) { executed })
+
+    yield()
+    assertTrue(awaitValue(true) { executed })
+    assertTrue(awaitValue(true) { job.isCompleted })
+    assertNotReferenced(container, job)
+  }
+
+  @Test
   fun `launch once in acceptable modality on already showing component`(): Unit = edtTest {
     var executed = false
     val job = container.launchOnceOnShow("test") {
@@ -51,6 +65,44 @@ class LaunchOnShowTest {
     assertTrue(awaitValue(true) { executed })
     assertTrue(awaitValue(true) { job.isCompleted })
     assertNotReferenced(container, job)
+  }
+
+  @Test
+  fun `init is restarted if canceled before starting`(): Unit = edtTest {
+    val component = JLabel()
+    var counter = 0
+    val job = component.initOnShow("test") {
+      ++counter
+    }
+
+    withShowingChanged { container.add(component) }
+    withShowingChanged { container.remove(component) }
+    withShowingChanged { container.add(component) }
+    withTimeout(15L.seconds) {
+      job.join()
+    }
+    assertEquals(1, awaitValue(1) { counter })
+    assertTrue(awaitValue(true) { job.isCompleted })
+  }
+
+  @Test
+  fun `init is restarted if canceled before completing`(): Unit = edtTest {
+    val component = JLabel()
+    var counter = 0
+    val job = component.initOnShow("test") {
+      ++counter
+      delay(1.seconds)
+    }
+    withShowingChanged { container.add(component) }
+    delay(500.milliseconds)
+    withShowingChanged { container.remove(component) }
+    delay(10.milliseconds)
+    withShowingChanged { container.add(component) }
+    withTimeout(15L.seconds) {
+      job.join()
+    }
+    assertEquals(2, awaitValue(2) { counter })
+    assertTrue(awaitValue(true) { job.isCompleted })
   }
 
   @Test
@@ -69,6 +121,29 @@ class LaunchOnShowTest {
     }
     assertEquals(1, awaitValue(1) { counter })
     assertTrue(awaitValue(true) { job.isCompleted })
+  }
+
+  @Test
+  fun `init in acceptable modality on fresh component`(): Unit = edtTest {
+    val component = JLabel()
+    var executed = false
+    val job = component.initOnShow("test") {
+      executed = true
+    }
+
+    yield()
+    assertReferenced(component, job)
+    assertFalse(awaitValue(false) { executed })
+    assertFalse(awaitValue(false) { job.isCompleted })
+
+    withShowingChanged {
+      container.add(component)
+    }
+    yield()
+    assertTrue(awaitValue(true) { executed })
+    assertTrue(awaitValue(true) { job.isCompleted })
+
+    assertNotReferenced(component, job)
   }
 
   @Test
@@ -102,6 +177,20 @@ class LaunchOnShowTest {
   }
 
   @Test
+  fun `init is delayed until acceptable modality`(): Unit = edtTest {
+    var executed = false
+    withModalProgress(ModalTaskOwner.guess(), "", TaskCancellation.cancellable()) {
+      container.initOnShow("test") {
+        executed = true
+      }
+      // This is not a bug: we actually wait for "true" here, and expect it to time out and return "false".
+      assertFalse(awaitValue(true) { executed })
+    }
+    yield()
+    assertTrue(awaitValue(true) { executed })
+  }
+
+  @Test
   fun `launch once is delayed until acceptable modality`(): Unit = edtTest {
     var executed = false
     withModalProgress(ModalTaskOwner.guess(), "", TaskCancellation.cancellable()) {
@@ -130,6 +219,22 @@ class LaunchOnShowTest {
         eventuallyExecuted = executed
       }
       assertTrue(eventuallyExecuted)
+    }
+  }
+
+  @Test
+  fun `init without adding it to hierarchy is GCed with component`(): Unit = edtTest {
+    var component: Component? = JLabel()
+    val jobRef = WeakReference(
+      component!!.initOnShow("test") {
+        awaitCancellation()
+      }
+    )
+    assertReferenced(component, assertNotNull(jobRef.get()))
+    component = null // forget it
+    while (jobRef.get() != null) {
+      yield()
+      GCUtil.tryGcSoftlyReachableObjects()
     }
   }
 
