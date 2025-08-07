@@ -58,8 +58,8 @@ class ProjectAware(
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
     val importSpec = ImportSpecBuilder(project, systemId)
     if (!context.isExplicitReload) {
-      importSpec.dontReportRefreshErrors()
-      importSpec.dontNavigateToError()
+      importSpec.withReportRefreshErrors()
+      importSpec.withNavigateToError()
     }
     if (!TrustedProjects.isProjectTrusted(project)) {
       importSpec.usePreviewMode()
