@@ -62,8 +62,6 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun isPluginEnabled(pluginId: PluginId): Boolean
   suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginDto>
 
-  suspend fun isDisableAllowed(pluginId: PluginId): Boolean
-  suspend fun getDisableDisallowedList(): List<PluginId>
 
   companion object {
     suspend fun getInstance(): PluginManagerApi {

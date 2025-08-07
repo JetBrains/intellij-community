@@ -78,9 +78,6 @@ interface UiPluginManagerController {
   suspend fun isPluginEnabled(pluginId: PluginId): Boolean
   suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginUiModel>
 
-  fun isDisableAllowed(pluginId: PluginId): Boolean
-  suspend fun getDisableDisallowedList(): List<PluginId>
-
   companion object {
     val EP_NAME: ExtensionPointName<UiPluginManagerController> = ExtensionPointName<UiPluginManagerController>("com.intellij.uiPluginManagerController")
   }
