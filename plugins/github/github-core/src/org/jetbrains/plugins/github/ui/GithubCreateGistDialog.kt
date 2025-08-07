@@ -5,6 +5,7 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.snippets.PathHandlingMode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
@@ -54,7 +55,7 @@ class GithubCreateGistDialog(
     init()
   }
 
-  override fun createCenterPanel() = panel {
+  override fun createCenterPanel(): DialogPanel = panel {
     fileNameField?.let {
       row(message("create.gist.dialog.filename.field")) {
         cell(it).align(AlignX.FILL)
@@ -66,6 +67,8 @@ class GithubCreateGistDialog(
         .align(AlignY.TOP)
       scrollCell(descriptionField)
         .align(Align.FILL)
+        .columns(COLUMNS_MEDIUM)
+        .resizableColumn()
     }.layout(RowLayout.LABEL_ALIGNED).resizableRow()
 
     row(CollaborationToolsBundle.message("snippet.create.path-mode")) {
