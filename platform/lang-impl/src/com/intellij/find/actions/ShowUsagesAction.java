@@ -1504,19 +1504,21 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
             return;
           }
 
-          JEditorPane label = IdeTooltipManager.initPane(
-            new Html(secondInvocationHintHtml), isWarning ? HintUtil.getWarningHint() : HintUtil.getInformationHint(),
-            null, true);
-
-          label.addHyperlinkListener(new HyperlinkAdapter() {
+          HyperlinkAdapter listener = new HyperlinkAdapter() {
             @Override
             protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
               if (FIND_OPTIONS_HREF_TARGET.equals(e.getDescription())) {
                 showDialogAndRestart(parameters, actionHandler);
               }
             }
-          });
-          label.setEditable(false);
+          };
+
+          JComponent label;
+          if (isWarning) {
+            label = HintUtil.createWarningLabel(secondInvocationHintHtml, listener, null);
+          } else {
+            label = HintUtil.createInformationLabel(secondInvocationHintHtml, listener, null, null);
+          }
 
           Runnable clearContinuation = actionHandler.enableMaximalScopeSearch(parameters);
           // canceling here, as the action handler becomes not fully valid after the cancellation
