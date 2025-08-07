@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
 import com.intellij.collaboration.ui.codereview.list.*
+import com.intellij.collaboration.ui.codereview.list.ReviewListItemPresentation.CommentsCounter
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionListModel
@@ -18,7 +19,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabBundle
 internal object GitLabMergeRequestsListComponentFactory {
   fun create(
     listModel: CollectionListModel<GitLabMergeRequestDetails>,
-    avatarIconsProvider: IconsProvider<GitLabUserDTO>
+    avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   ): JBList<GitLabMergeRequestDetails> {
     return ReviewListComponentFactory(listModel).create { mergeRequest ->
       ReviewListItemPresentation.Simple(
@@ -41,7 +42,9 @@ internal object GitLabMergeRequestsListComponentFactory {
           GitLabBundle.message("merge.request.list.renderer.user.reviewers", mergeRequest.reviewers.size),
           mergeRequest.reviewers.map { reviewer -> userPresentation(reviewer, avatarIconsProvider) }
         ),
-        commentsCounter = null
+        commentsCounter = mergeRequest.userNotesCount?.let {
+          CommentsCounter(it, GitLabBundle.message("merge.request.list.renderer.commentCount.tooltip", it))
+        }
       )
     }
   }
