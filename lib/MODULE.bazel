@@ -560,31 +560,17 @@ http_file(
 )
 
 http_file(
-  name = "assertj-core-3_27_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/assertj/assertj-core/3.27.3/assertj-core-3.27.3.jar",
-  sha256 = "5b8a26205f6d5ea60ad9ce65ce4a40a2afe4c48abeec61bd0740a088c24e89f5",
-  downloaded_file_path = "assertj-core-3.27.3.jar"
+  name = "assertj-core-4_0_0-M1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/assertj/assertj-core/4.0.0-M1/assertj-core-4.0.0-M1.jar",
+  sha256 = "03852ab5b4419c1b0b3689930cdc1ac4f0c437a0c8094a900370dcb170cfbb46",
+  downloaded_file_path = "assertj-core-4.0.0-M1.jar"
 )
 
 http_file(
-  name = "byte-buddy-1_15_11_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.15.11/byte-buddy-1.15.11.jar",
-  sha256 = "fa08998aae1e7bdae83bde0712c50e8444d71c0e0c196bb2247ade8d4ad0eb90",
-  downloaded_file_path = "byte-buddy-1.15.11.jar"
-)
-
-http_file(
-  name = "assertj-core-3_27_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/assertj/assertj-core/3.27.3/assertj-core-3.27.3-sources.jar",
-  sha256 = "1851ae5e28dee185df2fe27ee5c663ebe9700b8a228c790d3863521d2f0a6607",
-  downloaded_file_path = "assertj-core-3.27.3-sources.jar"
-)
-
-http_file(
-  name = "byte-buddy-1_15_11-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.15.11/byte-buddy-1.15.11-sources.jar",
-  sha256 = "f215e745c8c7e62cd02ade3b3a9deec4a98c85a3786e3b8854efa6e83b6da4c3",
-  downloaded_file_path = "byte-buddy-1.15.11-sources.jar"
+  name = "assertj-core-4_0_0-M1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/assertj/assertj-core/4.0.0-M1/assertj-core-4.0.0-M1-sources.jar",
+  sha256 = "ea1d879460edd40ca7b646955a5b39796ed41d2b38998ee97487833f149df44b",
+  downloaded_file_path = "assertj-core-4.0.0-M1-sources.jar"
 )
 
 http_file(

@@ -754,25 +754,11 @@ jvm_import(
   source_jar = "@asm-9_8-sources_http//file"
 )
 
-java_library(
+jvm_import(
   name = "assert_j",
-  exports = [
-    ":assertj-core-3_27_3_http_import",
-    ":byte-buddy-1_15_11_http_import",
-  ],
+  jar = "@assertj-core-4_0_0-M1_http//file",
+  source_jar = "@assertj-core-4_0_0-M1-sources_http//file",
   visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "assertj-core-3_27_3_http_import",
-  jar = "@assertj-core-3_27_3_http//file",
-  source_jar = "@assertj-core-3_27_3-sources_http//file"
-)
-
-jvm_import(
-  name = "byte-buddy-1_15_11_http_import",
-  jar = "@byte-buddy-1_15_11_http//file",
-  source_jar = "@byte-buddy-1_15_11-sources_http//file"
 )
 
 jvm_import(
