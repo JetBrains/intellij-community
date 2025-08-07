@@ -364,6 +364,11 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
             "Modal progresses are allowed only under write-intent lock because they need to prevent background write actions." +
             "Consider moving this modal progress out of `readAction`")
     }
+    if (application.isWriteAccessAllowed) {
+      logger<PlatformTaskSupport>().error("This thread holds write lock while trying to invoke a modal progress." +
+                                          "Write actions should be fast so they do not stall the progress in the IDE." +
+                                          "Consider moving your modal computation outside write action and apply the result of the computation in a different EDT event.")
+    }
     return prepareThreadContext { ctx ->
       val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
       val scope = CoroutineScope(ctx + ClientId.coroutineContext())
