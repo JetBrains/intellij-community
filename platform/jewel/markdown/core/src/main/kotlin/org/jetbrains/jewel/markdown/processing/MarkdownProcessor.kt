@@ -277,7 +277,7 @@ public class MarkdownProcessor(
     }
 
     private fun FencedCodeBlock.toMarkdownCodeBlockOrNull(): CodeBlock.FencedCodeBlock =
-        CodeBlock.FencedCodeBlock(content = literal.removeSuffix("\n"), mimeType = languageRecognizer(info))
+        CodeBlock.FencedCodeBlock(content = literal.removeSuffix("\n"), info = info)
 
     private fun IndentedCodeBlock.toMarkdownCodeBlockOrNull(): CodeBlock.IndentedCodeBlock =
         CodeBlock.IndentedCodeBlock(literal.trimEnd('\n'))

@@ -423,8 +423,58 @@ private fun MarkdownExample(project: Project) {
                 |    * But I'm not!
                 |       * Have fun indenting your lists as your heart pleases!
                 |
-                |```kotlin
-                |fun hello() = "World"
+                |```kt
+                |class CoolClass {
+                |    fun main() {
+                |        println("This is some Kotlin code!")
+                |    }
+                |}
+                |```
+                |
+                |```py
+                |def main():
+                |    print("This is some Python code!")
+                |
+                |if __name__ == "__main__":
+                |    main()
+                |```
+                |
+                |```python
+                |def main():
+                |    print("This is some Python code!")
+                |
+                |if __name__ == "__main__":
+                |    main()
+                |```
+                |
+                |```js
+                |function main() {
+                |    console.log("This is some JavaScript code!")
+                |}
+                |```
+                |
+                |```bat
+                |@echo off
+                |echo Hello, World!
+                |pause
+                |```
+                |
+                |```clj
+                |(print "Hello, World!")
+                |```
+                |
+                |```dockerfile
+                |WORKDIR /app
+                |COPY . /app
+                |RUN pip install --no-cache-dir -r requirements.txt
+                |```
+                |
+                |```html
+                |<h1>This is heading 1</h1>
+                |```
+                |
+                |```RegExp
+                |/```(. *?)```/gs
                 |```
                 |
                 |    Indented code here!

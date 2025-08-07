@@ -1,6 +1,5 @@
 package org.jetbrains.jewel.markdown
 
-import org.jetbrains.jewel.foundation.code.MimeType
 import org.jetbrains.jewel.markdown.MarkdownBlock.BlockQuote
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.FencedCodeBlock
@@ -91,11 +90,11 @@ private fun diffHtmlBlock(actual: HtmlBlock, expected: MarkdownBlock, indent: St
 }
 
 private fun diffFencedCodeBlock(actual: FencedCodeBlock, expected: MarkdownBlock, indent: String) = buildList {
-    if (actual.mimeType != (expected as FencedCodeBlock).mimeType) {
+    if (actual.info != (expected as FencedCodeBlock).info) {
         add(
             "$indent * Fenced code block mime type mismatch.\n\n" +
-                "$indent     Actual:   ${actual.mimeType}\n" +
-                "$indent     Expected: ${expected.mimeType}"
+                "$indent     Actual:   ${actual.info}\n" +
+                "$indent     Expected: ${expected.info}"
         )
     }
 
@@ -177,8 +176,8 @@ public fun heading(level: Int, vararg inlineContent: InlineMarkdown): Heading =
 
 public fun indentedCodeBlock(content: String): IndentedCodeBlock = IndentedCodeBlock(content)
 
-public fun fencedCodeBlock(content: String, mimeType: MimeType? = null): FencedCodeBlock =
-    FencedCodeBlock(content, mimeType)
+public fun fencedCodeBlock(content: String, langName: String? = null): FencedCodeBlock =
+    FencedCodeBlock(content, langName)
 
 public fun blockQuote(vararg contents: MarkdownBlock): BlockQuote = BlockQuote(contents.toList())
 
