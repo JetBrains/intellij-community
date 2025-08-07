@@ -15,10 +15,14 @@ import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone.Platform.Jvm
 import org.junit.Assert.assertEquals
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.IOException
 import java.io.PrintStream
 import java.lang.ref.SoftReference
 import java.net.URLClassLoader
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.nio.file.StandardOpenOption
 import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -51,6 +55,10 @@ class KotlinCompilerStandalone @JvmOverloads constructor(
         @JvmStatic
         fun defaultTargetJar(): File {
             return File.createTempFile("kt-lib", ".jar")
+                .apply {
+                    setWritable(true)
+                    setReadable(true)
+                }
                 // TODO: [VD][to be fixed by Yan] as it affects test runs - jar is deleted while file reference is in use
                 //.also { it.deleteOnExit() }
                 .canonicalFile
@@ -64,21 +72,34 @@ class KotlinCompilerStandalone @JvmOverloads constructor(
         }
 
         fun copyToJar(sources: List<File>, target: File) {
-            target.outputStream().buffered().use { os ->
-                ZipOutputStream(os).use { zos ->
-                    for (source in sources) {
-                        for (file in source.walk()) {
-                            if (file.isFile) {
-                                val path = FileUtil.toSystemIndependentName(file.toRelativeString(source))
-                                zos.putNextEntry(ZipEntry(path))
-                                zos.write(file.readBytes())
-                                zos.closeEntry()
+            val targetPath = target.toPath()
+
+            Files.createDirectories(targetPath.parent)
+            val tempPath = Files.createTempFile(targetPath.parent, "kt-lib", ".jar.tmp")
+
+            try {
+                Files.newOutputStream(tempPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE).buffered().use { os ->
+                    ZipOutputStream(os).use { zos ->
+                        for (source in sources) {
+                            for (file in source.walk()) {
+                                if (file.isFile) {
+                                    val path = FileUtil.toSystemIndependentName(file.toRelativeString(source))
+                                    zos.putNextEntry(ZipEntry(path))
+                                    zos.write(file.readBytes())
+                                    zos.closeEntry()
+                                }
                             }
                         }
                     }
                 }
+
+                Files.move(tempPath, targetPath, StandardCopyOption.REPLACE_EXISTING)
+            } catch (e: Exception) {
+                Files.deleteIfExists(tempPath)
+                throw IOException("Failed to create JAR file: ${target.absolutePath}", e)
             }
         }
+
 
         fun copyToDirectory(sources: List<File>, target: File) {
             target.mkdirs()
