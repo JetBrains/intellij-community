@@ -234,7 +234,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @Test
   public void testJdkName() throws Exception {
     Sdk myJdk = IdeaTestUtil.getMockJdk17("MyJDK");
-    edt(() -> ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(myJdk, myProject)));
+    edt(() -> ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(myJdk, getMyProject())));
     importProject(
       """
         apply plugin: 'java'
@@ -259,7 +259,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     );
     assertModules("project", "project.main", "project.test");
 
-    edt(() -> ModuleManager.getInstance(myProject).setUnloadedModulesSync(List.of("project", "project.main")));
+    edt(() -> ModuleManager.getInstance(getMyProject()).setUnloadedModulesSync(List.of("project", "project.main")));
     assertModules("project.test");
 
     importProject();
@@ -375,7 +375,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
   @Test
   public void testSourceSetModuleNamesForDeduplicatedMainModule() throws Exception {
-    IdeModifiableModelsProvider modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
+    IdeModifiableModelsProvider modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(getMyProject());
     modelsProvider.newModule(getProjectPath() + "/app.iml", JavaModuleType.getModuleType().getId());
     modelsProvider.newModule(getProjectPath() + "/my_group.app.main.iml", JavaModuleType.getModuleType().getId());
     edt(() -> ApplicationManager.getApplication().runWriteAction(modelsProvider::commit));
@@ -398,7 +398,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   public void testImportingTasksWithSpaces() throws IOException {
     importProject("project.tasks.create('descriptive task name') {}");
     ExternalProjectInfo projectData =
-      ProjectDataManager.getInstance().getExternalProjectData(myProject, GradleConstants.SYSTEM_ID, getProjectPath());
+      ProjectDataManager.getInstance().getExternalProjectData(getMyProject(), GradleConstants.SYSTEM_ID, getProjectPath());
     DataNode<ModuleData> moduleNode = ExternalSystemApiUtil.find(projectData.getExternalProjectStructure(), ProjectKeys.MODULE);
     Collection<DataNode<TaskData>> tasksNodes = ExternalSystemApiUtil.findAll(moduleNode, ProjectKeys.TASK);
     List<String> taskNames = ContainerUtil.map(tasksNodes, node -> node.getData().getName());
@@ -410,7 +410,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     // After first opening of the project, IJ creates a fake module at the project root
     edt(() -> {
       ApplicationManager.getApplication().runWriteAction(() -> {
-        Module module = ModuleManager.getInstance(myProject).newModule(
+        Module module = ModuleManager.getInstance(getMyProject()).newModule(
           getProjectPath() + "/" + "project" + ModuleFileType.DOT_DEFAULT_EXTENSION, JavaModuleType.getModuleType().getId());
         ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
         modifiableModel.addContentEntry(myProjectRoot);
@@ -419,12 +419,12 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
       });
     });
 
-    Module module = ModuleManager.getInstance(myProject).findModuleByName("project");
+    Module module = ModuleManager.getInstance(getMyProject()).findModuleByName("project");
     assertFalse(ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module));
 
     importProject("");
 
-    Module moduleAfter = ModuleManager.getInstance(myProject).findModuleByName("project");
+    Module moduleAfter = ModuleManager.getInstance(getMyProject()).findModuleByName("project");
     assertTrue(ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, moduleAfter));
   }
 
@@ -453,7 +453,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
         }"""
     );
 
-    var moduleEntity = WorkspaceModel.getInstance(myProject).getCurrentSnapshot().resolve(new ModuleId("project.main"));
+    var moduleEntity = WorkspaceModel.getInstance(getMyProject()).getCurrentSnapshot().resolve(new ModuleId("project.main"));
     var javaSettings = JavaModuleSettingsKt.getJavaSettings(moduleEntity);
     var automaticModuleName = javaSettings.getManifestAttributes().get(PsiJavaModule.AUTO_MODULE_NAME);
     assertEquals("my.module.name", automaticModuleName);
@@ -469,7 +469,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
   @NotNull
   private Map<String, ExternalProject> getExternalProjectsMap() {
-    ExternalProject rootExternalProject = ExternalProjectDataCache.getInstance(myProject).getRootExternalProject(getProjectPath());
+    ExternalProject rootExternalProject = ExternalProjectDataCache.getInstance(getMyProject()).getRootExternalProject(getProjectPath());
     final Map<String, ExternalProject> externalProjectMap = new HashMap<>();
     if (rootExternalProject == null) return externalProjectMap;
     ArrayDeque<ExternalProject> queue = new ArrayDeque<>();

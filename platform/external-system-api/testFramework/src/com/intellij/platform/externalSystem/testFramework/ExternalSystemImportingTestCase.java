@@ -156,20 +156,20 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   protected void assertModulesContains(String... expectedNames) {
-    ModuleAssertions.assertModulesContains(myProject, expectedNames);
+    ModuleAssertions.assertModulesContains(getMyProject(), expectedNames);
   }
 
   protected void assertModules(String... expectedNames) {
-    ModuleAssertions.assertModules(myProject, expectedNames);
+    ModuleAssertions.assertModules(getMyProject(), expectedNames);
   }
 
   protected void assertModules(List<String> expectedNames) {
-    ModuleAssertions.assertModules(myProject, expectedNames);
+    ModuleAssertions.assertModules(getMyProject(), expectedNames);
   }
 
   protected void assertContentRoots(String moduleName, String... expectedRoots) {
     var expectedRootPaths = ContainerUtil.map(expectedRoots, it -> Path.of(it));
-    ContentRootAssertions.assertContentRoots(myProject, moduleName, expectedRootPaths);
+    ContentRootAssertions.assertContentRoots(getMyProject(), moduleName, expectedRootPaths);
   }
 
   protected void assertNoSourceRoots(String moduleName) {
@@ -184,7 +184,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   protected void assertSourceRoots(String moduleName, ExternalSystemSourceType type, List<String> expectedRoots) {
     var expectedRootPaths = ContainerUtil.map(expectedRoots, it -> Path.of(it));
-    SourceRootAssertions.assertSourceRoots(myProject, moduleName, it -> type.equals(getExType(it)), expectedRootPaths, () ->
+    SourceRootAssertions.assertSourceRoots(getMyProject(), moduleName, it -> type.equals(getExType(it)), expectedRootPaths, () ->
       "%s source root of type %s".formatted(moduleName, type)
     );
   }
@@ -424,7 +424,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   public void assertProjectLibraries(String... expectedNames) {
     List<String> actualNames = new ArrayList<>();
-    for (Library each : LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraries()) {
+    for (Library each : LibraryTablesRegistrar.getInstance().getLibraryTable(getMyProject()).getLibraries()) {
       String name = each.getName();
       actualNames.add(name == null ? "<unnamed>" : name);
     }
@@ -432,7 +432,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   protected void assertModuleGroupPath(String moduleName, String... expected) {
-    String[] path = ModuleManager.getInstance(myProject).getModuleGroupPath(getModule(moduleName));
+    String[] path = ModuleManager.getInstance(getMyProject()).getModuleGroupPath(getModule(moduleName));
 
     if (expected.length == 0) {
       assertNull(path);
@@ -473,7 +473,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   protected void ignoreData(Predicate<? super DataNode<?>> booleanFunction, final boolean ignored) {
     final ExternalProjectInfo externalProjectInfo = ProjectDataManagerImpl.getInstance().getExternalProjectData(
-      myProject, getExternalSystemId(), getCurrentExternalProjectSettings().getExternalProjectPath());
+      getMyProject(), getExternalSystemId(), getCurrentExternalProjectSettings().getExternalProjectPath());
     assertNotNull(externalProjectInfo);
 
     final DataNode<ProjectData> projectDataNode = externalProjectInfo.getExternalProjectStructure();
@@ -484,7 +484,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
       node.visit(dataNode -> dataNode.setIgnored(ignored));
     }
 
-    ExternalSystemTestUtilKt.importData(projectDataNode, myProject);
+    ExternalSystemTestUtilKt.importData(projectDataNode, getMyProject());
   }
 
   protected void importProject(@NotNull String config, @Nullable Boolean skipIndexing) throws IOException {
@@ -502,7 +502,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   protected void importProject() {
-    AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(myProject, getExternalSystemId());
+    AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(getMyProject(), getExternalSystemId());
     final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
     projectSettings.setExternalProjectPath(getProjectPath());
     //noinspection unchecked
@@ -524,7 +524,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
             return;
           }
           try {
-            ProjectDataManager.getInstance().importData(externalProject, myProject);
+            ProjectDataManager.getInstance().importData(externalProject, getMyProject());
           } catch (Throwable ex) {
             ex.printStackTrace(System.err);
             error.set(Couple.of("Exception occurred in `ProjectDataManager.importData` (see output for the details)", null));
@@ -547,7 +547,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     // allow all the invokeLater to pass through the queue, before waiting for indexes to be ready
     // (specifically, all the invokeLater that schedule indexing after language level change performed by import)
     runInEdtAndWait(() -> PlatformTestUtil.dispatchAllEventsInIdeEventQueue());
-    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
+    IndexingTestUtil.waitUntilIndexesAreReady(getMyProject());
   }
 
   protected void handleImportFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
@@ -559,7 +559,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   protected ImportSpec createImportSpec() {
-    ImportSpecBuilder importSpecBuilder = new ImportSpecBuilder(myProject, getExternalSystemId())
+    ImportSpecBuilder importSpecBuilder = new ImportSpecBuilder(getMyProject(), getExternalSystemId())
       .use(ProgressExecutionMode.MODAL_SYNC);
     return importSpecBuilder.build();
   }

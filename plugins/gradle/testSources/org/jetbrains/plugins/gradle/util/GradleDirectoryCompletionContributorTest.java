@@ -46,7 +46,7 @@ public class GradleDirectoryCompletionContributorTest extends GradleImportingTes
 
   private void check(VirtualFile dir, Pair<String, JpsModuleSourceRootType<?>>... expected) {
     Collection<CreateDirectoryCompletionContributor.Variant> variants = ReadAction.compute(() -> 
-      new GradleDirectoryCompletionContributor().getVariants(PsiManager.getInstance(myProject).findDirectory(dir))
+      new GradleDirectoryCompletionContributor().getVariants(PsiManager.getInstance(getMyProject()).findDirectory(dir))
     );
 
     List<Pair<String, JpsModuleSourceRootType<?>>> map = ContainerUtil.map(

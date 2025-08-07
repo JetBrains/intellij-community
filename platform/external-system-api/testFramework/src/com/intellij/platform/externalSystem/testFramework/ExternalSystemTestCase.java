@@ -64,9 +64,9 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   private static final BiPredicate<Object, Object> EQUALS_PREDICATE = (t, u) -> Objects.equals(t, u);
 
   private File ourTempDir;
+  private Project myProject;
 
   protected IdeaProjectTestFixture myTestFixture;
-  protected Project myProject;
   protected File myTestDir;
   protected VirtualFile myProjectRoot;
   protected VirtualFile myProjectConfig;

@@ -72,7 +72,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
           }""")
     );
 
-    final InspectionProfileImpl profile = InspectionProfileManager.getInstance(myProject).getCurrentProfile();
+    final InspectionProfileImpl profile = InspectionProfileManager.getInstance(getMyProject()).getCurrentProfile();
     assertEquals("Gradle Imported", profile.getName());
   }
 
@@ -175,7 +175,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
           }""")
     );
 
-    final RunManager runManager = RunManager.getInstance(myProject);
+    final RunManager runManager = RunManager.getInstance(getMyProject());
     final RunnerAndConfigurationSettings template = runManager.getConfigurationTemplate(appcConfigImporter.getConfigurationFactory());
     final String parameters = ((ApplicationConfiguration)template.getConfiguration()).getVMParameters();
 
@@ -208,7 +208,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
           }""")
     );
 
-    final RunManager runManager = RunManager.getInstance(myProject);
+    final RunManager runManager = RunManager.getInstance(getMyProject());
     final RunnerAndConfigurationSettings template = runManager.getConfigurationTemplate(appcConfigImporter.getConfigurationFactory());
     final String parameters = ((ApplicationConfiguration)template.getConfiguration()).getVMParameters();
 
@@ -248,7 +248,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
           }""")
     );
 
-    final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
+    final RunManagerEx runManager = RunManagerEx.getInstanceEx(getMyProject());
     final ApplicationConfiguration myRun = (ApplicationConfiguration)runManager.findConfigurationByName("My Run").getConfiguration();
     assertNotNull(myRun);
 
@@ -324,7 +324,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
       )
     );
 
-    RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
+    RunManagerEx runManager = RunManagerEx.getInstanceEx(getMyProject());
     RunConfiguration jarApp = runManager.findConfigurationByName("jarApp").getConfiguration();
     assertNotNull(jarApp);
 
@@ -403,12 +403,12 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     );
 
     final List<ExternalProjectsManagerImpl.ExternalProjectsStateProvider.TasksActivation> activations =
-      ExternalProjectsManagerImpl.getInstance(myProject).getStateProvider().getAllTasksActivation();
+      ExternalProjectsManagerImpl.getInstance(getMyProject()).getStateProvider().getAllTasksActivation();
 
     assertSize(1, activations);
 
     final ExternalProjectsManagerImpl.ExternalProjectsStateProvider.TasksActivation activation = activations.get(0);
-    assertEquals(GradleSettings.getInstance(myProject).getLinkedProjectsSettings().iterator().next().getExternalProjectPath(),
+    assertEquals(GradleSettings.getInstance(getMyProject()).getLinkedProjectsSettings().iterator().next().getExternalProjectPath(),
                  activation.projectPath);
     final List<String> beforeSyncTasks = activation.state.getTasks(ExternalSystemTaskActivator.Phase.BEFORE_SYNC);
 
@@ -442,17 +442,17 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
         .generate()
     );
     final List<ExternalProjectsManagerImpl.ExternalProjectsStateProvider.TasksActivation> activations =
-      ExternalProjectsManagerImpl.getInstance(myProject).getStateProvider().getAllTasksActivation();
+      ExternalProjectsManagerImpl.getInstance(getMyProject()).getStateProvider().getAllTasksActivation();
 
     assertThat(activations)
       .extracting("projectPath")
-      .containsExactly(GradleSettings.getInstance(myProject).getLinkedProjectsSettings().iterator().next().getExternalProjectPath());
+      .containsExactly(GradleSettings.getInstance(getMyProject()).getLinkedProjectsSettings().iterator().next().getExternalProjectPath());
 
     final List<String> afterSyncTasks = activations.get(0).state.getTasks(ExternalSystemTaskActivator.Phase.AFTER_SYNC);
 
     assertThat(afterSyncTasks).containsExactly("processIdeaSettings");
 
-    String ideaDir = PathUtil.toSystemIndependentName(((ProjectStoreOwner)myProject).getComponentStore()
+    String ideaDir = PathUtil.toSystemIndependentName(((ProjectStoreOwner)getMyProject()).getComponentStore()
       .getProjectFilePath().getParent().toAbsolutePath().toString());
 
     String moduleFile = getModule("project").getModuleFilePath();
@@ -484,7 +484,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
             "  }",
             "}")
           .generate());
-      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
+      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getMyProject());
       assertEquals("IBM-Thai", encodingManager.getDefaultCharset().name());
       assertEquals("GB2312", encodingManager.getDefaultCharsetForPropertiesFiles(null).name());
       assertTrue(encodingManager.isNative2AsciiForPropertiesFiles());
@@ -511,7 +511,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
             "  }",
             "}")
           .generate());
-      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
+      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getMyProject());
       assertEquals("UTF-8", encodingManager.getDefaultCharset().name());
       assertEquals("UTF-8", encodingManager.getDefaultCharsetForPropertiesFiles(null).name());
       assertFalse(encodingManager.isNative2AsciiForPropertiesFiles());
@@ -551,7 +551,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
             "  }",
             "}")
           .generate());
-      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
+      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getMyProject());
       Map<String, String> allMappings = encodingManager.getAllMappings().entrySet().stream()
         .collect(Collectors.toMap(it -> it.getKey().getCanonicalPath(), it -> it.getValue().name()));
       assertEquals("ISO-8859-9", allMappings.get(aDir.getCanonicalPath()));
@@ -581,7 +581,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
             "  }",
             "}")
           .generate());
-      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
+      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getMyProject());
       Map<String, String> allMappings = encodingManager.getAllMappings().entrySet().stream()
         .collect(Collectors.toMap(it -> it.getKey().getCanonicalPath(), it -> it.getValue().name()));
       assertNull(allMappings.get(aDir.getCanonicalPath()));
@@ -609,8 +609,8 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     );
 
     String projectPath = getCurrentExternalProjectSettings().getExternalProjectPath();
-    assertTrue(GradleProjectSettings.isDelegatedBuildEnabled(myProject, projectPath));
-    assertEquals(TestRunner.CHOOSE_PER_TEST, GradleProjectSettings.getTestRunner(myProject, projectPath));
+    assertTrue(GradleProjectSettings.isDelegatedBuildEnabled(getMyProject(), projectPath));
+    assertEquals(TestRunner.CHOOSE_PER_TEST, GradleProjectSettings.getTestRunner(getMyProject(), projectPath));
   }
 
   @Test
@@ -619,7 +619,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(buildScript);
     Application application = ApplicationManager.getApplication();
-    IdeModifiableModelsProvider modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
+    IdeModifiableModelsProvider modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(getMyProject());
     try {
       Module module = modelsProvider.findIdeModule("project.main");
       ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
@@ -637,7 +637,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
 
   @Test
   public void testRemovingSourceFolderManagerMemLeaking() throws IOException {
-    SourceFolderManagerImpl sourceFolderManager = (SourceFolderManagerImpl)SourceFolderManager.getInstance(myProject);
+    SourceFolderManagerImpl sourceFolderManager = (SourceFolderManagerImpl)SourceFolderManager.getInstance(getMyProject());
     String javaSourcePath = FileUtil.toCanonicalPath(myProjectRoot.getPath() + "/java");
     String javaSourceUrl = VfsUtilCore.pathToUrl(javaSourcePath);
     {
@@ -705,7 +705,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     assertSourceNotExists("project.test", "src/test/java");
     createProjectSubFile("src/main/kotlin/Main.kt", "");
     edt(() -> {
-      ((SourceFolderManagerImpl)SourceFolderManager.getInstance(myProject)).consumeBulkOperationsState(future -> {
+      ((SourceFolderManagerImpl)SourceFolderManager.getInstance(getMyProject())).consumeBulkOperationsState(future -> {
         PlatformTestUtil.waitForFuture(future, 1000);
         return null;
       });

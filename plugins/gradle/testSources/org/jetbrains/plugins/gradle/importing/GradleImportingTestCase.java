@@ -134,7 +134,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   protected void installGradleJvmConfigurator() {
-    ExternalSystemApiUtil.subscribe(myProject, GradleConstants.SYSTEM_ID, new ExternalSystemSettingsListener<GradleProjectSettings>() {
+    ExternalSystemApiUtil.subscribe(getMyProject(), GradleConstants.SYSTEM_ID, new ExternalSystemSettingsListener<GradleProjectSettings>() {
       @Override
       public void onProjectsLinked(@NotNull Collection<GradleProjectSettings> settings) {
         for (var projectSettings : settings) {
@@ -209,7 +209,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   protected Path getGradleUserHome() {
-    String serviceDirectory = GradleSettings.getInstance(myProject).getServiceDirectoryPath();
+    String serviceDirectory = GradleSettings.getInstance(getMyProject()).getServiceDirectoryPath();
     return serviceDirectory != null ? Path.of(serviceDirectory) : GradleUserHomeUtil.gradleUserHomeDir().toPath();
   }
 
@@ -328,7 +328,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
       },
       () -> {
         TestDialogManager.setTestDialog(TestDialog.DEFAULT);
-        CompilerTestUtil.deleteBuildSystemDirectory(myProject);
+        CompilerTestUtil.deleteBuildSystemDirectory(getMyProject());
       },
       () -> deprecationError.set(null),
       () -> tearDownGradleVmOptions(),
@@ -485,7 +485,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
 
   @NotNull
   protected GradleRunConfiguration createEmptyGradleRunConfiguration(@NotNull String name) {
-    final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
+    final RunManagerEx runManager = RunManagerEx.getInstanceEx(getMyProject());
     final RunnerAndConfigurationSettings settings = runManager.createConfiguration(name, GradleExternalTaskConfigurationType.class);
     return (GradleRunConfiguration)settings.getConfiguration();
   }
@@ -590,14 +590,14 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
         .toFile();
       FileUtil.copyDir(cachedGradleDistribution, targetGradleDistribution);
     }
-    GradleSettings.getInstance(myProject).setServiceDirectoryPath(gradleUserHome);
+    GradleSettings.getInstance(getMyProject()).setServiceDirectoryPath(gradleUserHome);
   }
 
   protected void resetGradleUserHomeIfNeeded() {
     if (!originalGradleUserHome.equals(getGradleUserHome())) {
       String normalizedOldGradleUserHome = originalGradleUserHome.normalize().toString();
       String canonicalOldGradleUserHome = FileUtil.toCanonicalPath(normalizedOldGradleUserHome);
-      GradleSettings.getInstance(myProject).setServiceDirectoryPath(canonicalOldGradleUserHome);
+      GradleSettings.getInstance(getMyProject()).setServiceDirectoryPath(canonicalOldGradleUserHome);
     }
   }
 

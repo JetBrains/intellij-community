@@ -171,7 +171,7 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
     assertNotNull(buildSrcModule);
 
     ReadAction.run(() -> {
-      PsiClass clazz = JavaPsiFacade.getInstance(myProject)
+      PsiClass clazz = JavaPsiFacade.getInstance(getMyProject())
         .findClass("testBuildSrcClassesUsages.BuildSrcClass", GlobalSearchScope.moduleScope(buildSrcModule));
 
       PsiMethod[] methods = clazz.findMethodsByName("foo", false);
@@ -271,7 +271,7 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
   }
 
   private void assertUsages(@NotNull String fqn, @Nullable String methodName, GlobalSearchScope scope, int count) throws Exception {
-    PsiClass[] psiClasses = runInEdtAndGet(() -> JavaPsiFacade.getInstance(myProject).findClasses(fqn, scope));
+    PsiClass[] psiClasses = runInEdtAndGet(() -> JavaPsiFacade.getInstance(getMyProject()).findClasses(fqn, scope));
     assertEquals(1, psiClasses.length);
     PsiClass aClass = psiClasses[0];
     if (methodName != null) {
@@ -288,7 +288,7 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
   }
 
   private void assertUsages(String fqn, int count) throws Exception {
-    assertUsages(fqn, GlobalSearchScope.projectScope(myProject), count);
+    assertUsages(fqn, GlobalSearchScope.projectScope(getMyProject()), count);
   }
 
   @SafeVarargs
@@ -301,7 +301,7 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
   @SafeVarargs
   private void assertUsages(Pair<String, Integer>... classUsageCount) throws Exception {
     for (Pair<String, Integer> pair : classUsageCount) {
-      assertUsages(Trinity.create(pair.first, GlobalSearchScope.projectScope(myProject), pair.second));
+      assertUsages(Trinity.create(pair.first, GlobalSearchScope.projectScope(getMyProject()), pair.second));
     }
   }
 

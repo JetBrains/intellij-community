@@ -21,7 +21,7 @@ public class GradleExternalProjectImportingTest extends GradleImportingTestCase 
 
     assertModules("project");
 
-    ExternalProject externalProject = ExternalProjectDataCache.getInstance(myProject).getRootExternalProject(getProjectPath());
+    ExternalProject externalProject = ExternalProjectDataCache.getInstance(getMyProject()).getRootExternalProject(getProjectPath());
     ExternalTask task = externalProject.getTasks().get("myJar");
     assertEquals(":myJar", task.getQName());
 
@@ -42,7 +42,7 @@ public class GradleExternalProjectImportingTest extends GradleImportingTestCase 
                   "root.project", "root.project.main", "root.project.test",
                   "root.another_project", "root.another_project.main", "root.another_project.test");
 
-    ExternalProject externalProject = ExternalProjectDataCache.getInstance(myProject).getRootExternalProject(getProjectPath());
+    ExternalProject externalProject = ExternalProjectDataCache.getInstance(getMyProject()).getRootExternalProject(getProjectPath());
     assertEquals("root", externalProject.getName());
   }
 }

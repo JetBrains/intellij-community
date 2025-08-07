@@ -32,7 +32,7 @@ public abstract class GradleCompilingTestCase extends GradleImportingTestCase {
 
   @Override
   protected void assertArtifactOutputPath(String artifactName, String expected) {
-    final String basePath = getArtifactBaseOutputPath(myProject);
+    final String basePath = getArtifactBaseOutputPath(getMyProject());
     super.assertArtifactOutputPath(artifactName, basePath + expected);
   }
 
@@ -42,12 +42,12 @@ public abstract class GradleCompilingTestCase extends GradleImportingTestCase {
   }
 
   protected void assertArtifactOutputFile(String artifactName, String path, String content) {
-    final String basePath = getArtifactBaseOutputPath(myProject);
+    final String basePath = getArtifactBaseOutputPath(getMyProject());
     assertSameLinesWithFile(basePath + path, content);
   }
 
   protected void assertArtifactOutputFile(String artifactName, String path) {
-    final String basePath = getArtifactBaseOutputPath(myProject);
+    final String basePath = getArtifactBaseOutputPath(getMyProject());
     assertExists(new File(basePath + path));
   }
 

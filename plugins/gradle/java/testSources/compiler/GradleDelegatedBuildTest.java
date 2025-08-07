@@ -242,7 +242,7 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
 
     List<String> dirtyOutputRoots = new ArrayList<>();
 
-    MessageBusConnection connection = myProject.getMessageBus().connect(getTestRootDisposable());
+    MessageBusConnection connection = getMyProject().getMessageBus().connect(getTestRootDisposable());
     connection.subscribe(ProjectTaskListener.TOPIC, new ProjectTaskListener() {
       @Override
       public void started(@NotNull ProjectTaskContext context) {

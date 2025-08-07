@@ -60,7 +60,7 @@ public class GradleEnvironmentTest extends GradleImportingTestCase {
     };
     notificationManager.addNotificationListener(listener);
     try {
-      ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, myProject, GradleConstants.SYSTEM_ID, null,
+      ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, getMyProject(), GradleConstants.SYSTEM_ID, null,
                                  ProgressExecutionMode.NO_PROGRESS_SYNC);
     }
     finally {

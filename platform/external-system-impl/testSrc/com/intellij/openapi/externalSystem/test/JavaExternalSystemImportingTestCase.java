@@ -26,11 +26,11 @@ public abstract class JavaExternalSystemImportingTestCase extends ExternalSystem
   protected boolean useProjectTaskManager;
 
   protected void compileModules(final String... moduleNames) {
-    JavaCompileTestUtil.compileModules(myProject, useProjectTaskManager, moduleNames);
+    JavaCompileTestUtil.compileModules(getMyProject(), useProjectTaskManager, moduleNames);
   }
 
   protected void buildArtifacts(String... artifactNames) {
-    JavaCompileTestUtil.buildArtifacts(myProject, useProjectTaskManager, artifactNames);
+    JavaCompileTestUtil.buildArtifacts(getMyProject(), useProjectTaskManager, artifactNames);
   }
 
   protected Artifact findArtifact(Project project, String artifactName) {
@@ -38,12 +38,12 @@ public abstract class JavaExternalSystemImportingTestCase extends ExternalSystem
   }
 
   protected void assertArtifactOutputPath(final String artifactName, final String expected) {
-    Artifact artifact = findArtifact(myProject, artifactName);
+    Artifact artifact = findArtifact(getMyProject(), artifactName);
     assertThat(toSystemIndependentName(artifact.getOutputPath())).isEqualTo(expected);
   }
 
   protected void assertArtifactOutput(String artifactName, TestFileSystemItem fs) {
-    final Artifact artifact = findArtifact(myProject, artifactName);
+    final Artifact artifact = findArtifact(getMyProject(), artifactName);
     final String outputFile = artifact.getOutputFilePath();
     assert outputFile != null;
     final File file = new File(outputFile);
@@ -83,7 +83,7 @@ public abstract class JavaExternalSystemImportingTestCase extends ExternalSystem
 
   protected void assertArtifacts(String... expectedNames) {
     final List<String> actualNames = ContainerUtil.map(
-      ReadAction.compute(() -> ArtifactManager.getInstance(myProject).getAllArtifactsIncludingInvalid()),
+      ReadAction.compute(() -> ArtifactManager.getInstance(getMyProject()).getAllArtifactsIncludingInvalid()),
       artifact -> artifact.getName());
 
     assertUnorderedElementsAreEqual(actualNames, expectedNames);

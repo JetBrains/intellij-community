@@ -127,7 +127,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     };
     notificationManager.addNotificationListener(listener);
     try {
-      ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, myProject, GradleConstants.SYSTEM_ID, null,
+      ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, getMyProject(), GradleConstants.SYSTEM_ID, null,
                                  ProgressExecutionMode.NO_PROGRESS_SYNC);
     }
     finally {
@@ -224,7 +224,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   public void testSetExternalSourceForExistingLibrary() throws IOException {
     String libraryName = "Gradle: junit:junit:" + GradleBuildScriptBuilderUtil.getJunit4Version();
     WriteAction.runAndWait(() -> {
-      LibraryTable.ModifiableModel model = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getModifiableModel();
+      LibraryTable.ModifiableModel model = LibraryTablesRegistrar.getInstance().getLibraryTable(getMyProject()).getModifiableModel();
       model.createLibrary(libraryName);
       model.commit();
     });
@@ -2386,7 +2386,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                       "}"
                     ).generate());
 
-    VersionCatalogsLocator locator = myProject.getService(VersionCatalogsLocator.class);
+    VersionCatalogsLocator locator = getMyProject().getService(VersionCatalogsLocator.class);
     final Map<String, Path> stringStringMap = locator.getVersionCatalogsForModule(getModule("project.main"));
     assertThat(stringStringMap).containsOnly(entry("fooLibs", Path.of(toml1.getPath())),
                                              entry("barLibs", Path.of(toml2.getPath())));
@@ -2407,7 +2407,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     CompletableFuture<Boolean> taskResult = new CompletableFuture<>();
     TaskExecutionSpec spec = TaskExecutionSpec.create()
-      .withProject(myProject)
+      .withProject(getMyProject())
       .withSystemId(GradleConstants.SYSTEM_ID)
       .withSettings(settings)
       .withCallback(taskResult)
