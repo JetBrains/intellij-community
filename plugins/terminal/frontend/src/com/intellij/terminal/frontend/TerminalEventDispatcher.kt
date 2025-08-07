@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import java.awt.AWTEvent
 import java.awt.event.InputEvent
+import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelListener
@@ -100,6 +101,7 @@ private class TerminalEventDispatcher(
 
   fun registerIfNeeded() {
     ThreadingAssertions.assertEventDispatchThread()
+    if (!settings.overrideIdeShortcuts()) return // handled by the listener instead
     this.allowedActions = getAllowedActions()
     if (!myRegistered) {
       IdeEventQueue.getInstance().addDispatcher(this, parentDisposable)
@@ -140,8 +142,7 @@ private class TerminalEventDispatcher(
 
   private fun getAllowedActions(): List<AnAction> {
     val actionManager = ActionManager.getInstance()
-    val allowedActionIDs = if (settings.overrideIdeShortcuts()) OPTIONAL_ACTIONS + TERMINAL_ACTIONS else TERMINAL_ACTIONS
-    return allowedActionIDs.mapNotNull { actionId -> actionManager.getAction(actionId) }
+    return ALLOWED_ACTION_IDS.mapNotNull { actionId -> actionManager.getAction(actionId) }
   }
 
   companion object {
@@ -150,7 +151,7 @@ private class TerminalEventDispatcher(
      */
     @Language("devkit-action-id")
     @NonNls
-    private val OPTIONAL_ACTIONS = listOf(
+    private val ALLOWED_ACTION_IDS = listOf(
       "ActivateTerminalToolWindow",
       "ActivateProjectToolWindow",
       "ActivateFavoritesToolWindow",
@@ -210,18 +211,11 @@ private class TerminalEventDispatcher(
       "TW.Unsplit",
       "TW.MoveToNextSplitter",
       "TW.MoveToPreviousSplitter",
-      // terminal actions, but included here because they're not essential
+      // non-essential terminal actions
       "TerminalIncreaseFontSize",
       "TerminalDecreaseFontSize",
       "TerminalResetFontSize",
-    )
-
-    /**
-     * The list of actions that can always be invoked by shortcuts in the terminal.
-     */
-    @Language("devkit-action-id")
-    @NonNls
-    private val TERMINAL_ACTIONS = listOf(
+      // essential terminal actions
       "Terminal.Escape",
       "Terminal.CopySelectedText",
       "Terminal.Paste",
@@ -247,6 +241,25 @@ private class TerminalEventDispatcher(
   }
 }
 
+private class TerminalKeyListener(
+  private val settings: JBTerminalSystemSettingsProviderBase,
+  private val eventsHandler: TerminalEventsHandler,
+) : KeyAdapter() {
+  override fun keyTyped(e: KeyEvent) {
+    handleEvent(e)
+  }
+
+  override fun keyPressed(e: KeyEvent) {
+    handleEvent(e)
+  }
+
+  private fun handleEvent(e: KeyEvent) {
+    if (settings.overrideIdeShortcuts()) return // handled by the dispatcher
+    eventsHandler.handleKeyEvent(TimedKeyEvent(e))
+    e.consume()
+  }
+}
+
 internal fun setupKeyEventHandling(
   editor: EditorEx,
   settings: JBTerminalSystemSettingsProviderBase,
@@ -269,6 +282,8 @@ internal fun setupKeyEventHandling(
   if (editor.contentComponent.hasFocus()) {
     eventDispatcher.registerIfNeeded()
   }
+
+  editor.contentComponent.addKeyListener(TerminalKeyListener(settings, eventsHandler))
 }
 
 internal fun setupMouseListener(
