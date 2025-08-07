@@ -1,13 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater
 
-import java.io.File
 import java.io.InputStream
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.file.Files
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.security.MessageDigest
 import kotlin.io.path.*
@@ -37,7 +37,17 @@ object KotlinTestsDependenciesUtil {
         val aClassFilename = "${aClass.getName().replace('.', '/')}.class"
         val aClassLocation = aClass.classLoader.getResource(aClassFilename)?.toString()?.substringAfter("file:")
             ?: error("cannot find class location for class ${aClass.name}")
-        var rootPath: Path? = Path(aClassLocation)
+        var rootPath: Path? = try {
+            Path(aClassLocation)
+        } catch (_: InvalidPathException) {
+            if (aClassLocation.contains(":") &&
+                (aClassLocation.startsWith("/") || aClassLocation.startsWith("\\"))
+            ) {
+                Path(aClassLocation.substring(1))
+            } else {
+                null
+            }
+        }
 
         while (rootPath != null) {
             if (rootPath.resolve(COMMUNITY_MARKER).isRegularFile()) {
