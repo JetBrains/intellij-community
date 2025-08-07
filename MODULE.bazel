@@ -17,6 +17,8 @@ local_path_override(
     path = "build/jvm-rules",
 )
 
+http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
 bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
 
 toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
@@ -86,6 +88,13 @@ use_repo(
     "kotlin_test_deps_kotlin-test-js",
     "kotlin_test_deps_kotlin-test-junit",
     "kotlin_test_deps_parcelize-compiler-plugin-for-ide",
+)
+
+http_file(
+  name = "debugger_test_deps_debugger_agent",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.79/debugger-agent-1.79.jar",
+  sha256 = "ba7a0aa7bbb813acab3b0edf36c0a15449f41896993c97e0d133fa4ea0a3e6d9",
+  downloaded_file_path = "debugger-agent.jar"
 )
 
 # GraalVM

@@ -13,10 +13,12 @@ import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.testFramework.TestDebuggerAgentArtifactsProvider;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.PathManager;
@@ -353,6 +355,13 @@ public final class AsyncStacksUtils {
     }
   }
 
+  /**
+   * returns true if Bazel-test specific env variables are set
+   */
+  private static Boolean isBazelTestRun() {
+    return System.getenv("TEST_SRCDIR") != null && System.getenv("TEST_UNDECLARED_OUTPUTS_DIR") != null;
+  }
+
   @NativePath
   private static @Nullable String getAgentArtifactPath(@Nullable Project project, @Nullable Disposable disposable) {
     String relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
@@ -375,13 +384,37 @@ public final class AsyncStacksUtils {
     try {
       Path agentArtifactPath = createTemporaryAgentPath(project, disposable);
 
-      Path communityRoot = Path.of(PathManager.getCommunityHomePath());
-      Path iml = BuildDependenciesJps.getProjectModule(communityRoot, "intellij.java.debugger.agent.holder");
-      Path downloadedAgent = BuildDependenciesJps.INSTANCE.getModuleLibrarySingleRootSync(
-        iml,
-        "debugger-agent",
-        "https://cache-redirector.jetbrains.com/intellij-dependencies",
-        new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath())));
+      Path downloadedAgent;
+      // In jps runs we resolve the debugger agent via the standard BuildDependenciesJps path below.
+      // However, when tests are executed under Bazel, they run inside a hermetic sandbox. In this environment:
+      // - Network/downloads and access to arbitrary files are restricted.
+      // - All runtime inputs must come from explicit Bazel-declared dependencies (runfiles).
+      // Therefore, in Bazel unit-test mode we must obtain the agent JAR from the test classpath via a test-only
+      // service. The TestDebuggerAgentArtifactsProvider is implemented in test sources and knows how to locate
+      // the agent artifact provided by Bazel via runfiles, so we use ServiceLoader to find that provider
+      // on the tests classpath and resolve the agent from there. Outside Bazel (regular production/dev runs), we
+      // keep using the standard resolution path that downloads the dependency if needed.
+      if (PluginManagerCore.isUnitTestMode && isBazelTestRun()) {
+        ServiceLoader<TestDebuggerAgentArtifactsProvider> providerClasses = ServiceLoader.load(TestDebuggerAgentArtifactsProvider.class);
+        var iterator = providerClasses.iterator();
+        if (!iterator.hasNext()) {
+          throw new IllegalStateException("TestDebuggerAgentArtifactsProvider service provider not found");
+        }
+        TestDebuggerAgentArtifactsProvider provider = iterator.next();
+        if (iterator.hasNext()) {
+          throw new IllegalStateException("more than one TestDebuggerAgentArtifactsProvider service providers found. Only one is expected");
+        }
+
+        downloadedAgent = provider.getDebuggerAgentJar();
+      } else {
+        Path communityRoot = Path.of(PathManager.getCommunityHomePath());
+        Path iml = BuildDependenciesJps.getProjectModule(communityRoot, "intellij.java.debugger.agent.holder");
+        downloadedAgent = BuildDependenciesJps.INSTANCE.getModuleLibrarySingleRootSync(
+          iml,
+          "debugger-agent",
+          "https://cache-redirector.jetbrains.com/intellij-dependencies",
+          new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath())));
+      }
 
       // The agent file must have a fixed name (AGENT_JAR_NAME) which is mentioned in MANIFEST.MF inside.
       // The copy operation is used as the rename operation.

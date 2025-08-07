@@ -1,10 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.common
 
+import com.intellij.testFramework.common.bazel.BazelLabel
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.absolute
 import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.useLines
 
 @ApiStatus.Experimental
@@ -62,6 +64,22 @@ object BazelTestUtil {
       error("Bazel test env '$TEST_UNDECLARED_OUTPUTS_DIR_ENV_NAME' points to non-directory: $path")
     }
     path
+  }
+
+  @JvmStatic
+  fun getFileFromBazelRuntime(label: BazelLabel): Path {
+    val repoEntry = bazelTestRepoMapping.getOrElse(label.repo) {
+      error("Unable to determine dependency path '${label.asLabel}'")
+    }
+    val file = bazelTestRunfilesPath.resolve(
+      repoEntry.runfilesRelativePath + "/${label.packageName}/${label.file}"
+    )
+    return when {
+      file.isRegularFile() || file.isDirectory() -> file.toAbsolutePath()
+      else -> {
+        error("Unable to find test dependency '${label.asLabel}' at $file")
+      }
+    }
   }
 
   /**

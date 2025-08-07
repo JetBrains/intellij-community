@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.base.plugin.artifacts
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.common.BazelTestUtil
+import com.intellij.testFramework.common.bazel.BazelLabel
 import com.intellij.util.io.createParentDirectories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -81,43 +82,6 @@ object TestKotlinArtifacts {
         listOf(getKotlinDepsByLabel("@kotlin_test_deps_kotlin-jps-plugin-classpath//file:kotlin-jps-plugin-classpath.jar").toPath())
     }
 
-    // https://bazel.build/rules/lib/builtins/Label.html
-    data class BazelLabel(
-        val repo: String,
-        val packageName: String,
-        val file: String,
-    ) {
-        companion object {
-            private val regex = Regex("@([a-zA-Z0-9_-]+)//([a-z0-9_/-]+):([a-zA-Z0-9._-]+)")
-            fun fromString(label: String): BazelLabel {
-                val match = regex.matchEntire(label) ?: error("Bazel label must match '${regex.pattern}': $label")
-                return BazelLabel(
-                    repo = match.groupValues[1],
-                    packageName = match.groupValues[2],
-                    file = match.groupValues[3],
-                )
-            }
-        }
-
-        val asLabel: String
-            get() = "@$repo//$packageName:$file"
-    }
-
-    private fun getFileFromBazelRuntime(label: BazelLabel): Path {
-        val repoEntry = BazelTestUtil.bazelTestRepoMapping.getOrElse(label.repo) {
-            error("Unable to determine dependency path '${label.asLabel}'")
-        }
-        val file = BazelTestUtil.bazelTestRunfilesPath.resolve(
-            repoEntry.runfilesRelativePath + "/${label.packageName}/${label.file}"
-        )
-        return when {
-            file.exists() -> file.toAbsolutePath()
-            else -> {
-                error("Unable to find test dependency '${label.asLabel}' at $file")
-            }
-        }
-    }
-
     private data class HttpFile(val downloadFilePath: String, val name: String, val url: String)
 
     private val kotlinTestDependenciesHttpFiles by lazy {
@@ -183,7 +147,7 @@ object TestKotlinArtifacts {
     private fun getKotlinDepsByLabel(label: BazelLabel): File {
         // Why it is different
         val dependency = if (BazelTestUtil.isUnderBazelTest) {
-            getFileFromBazelRuntime(label)
+            BazelTestUtil.getFileFromBazelRuntime(label)
         } else {
             downloadFile(label)
         }
