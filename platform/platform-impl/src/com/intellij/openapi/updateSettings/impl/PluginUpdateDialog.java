@@ -137,7 +137,10 @@ public class PluginUpdateDialog extends DialogWrapper {
         }
         CoroutineScope scope = ApplicationManager.getApplication().getService(CoreUiCoroutineScopeHolder.class).coroutineScope;
         @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(new PluginModelFacade(myPluginModel), model, group, LinkListener.NULL, errors, scope, true);
-        component.setOnlyUpdateMode();
+        PluginModelAsyncOperationsExecutor.INSTANCE.findPlugin(myPluginModel.getCoroutineScope(), model.getPluginId(), foundPlugin -> {
+          component.setOnlyUpdateMode(foundPlugin);
+          return null;
+        });
         component.getChooseUpdateButton().addActionListener(e -> updateButtons());
         return component;
       }

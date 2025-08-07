@@ -70,8 +70,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().getUpdates().withSource()
   }
 
-  override fun getPlugin(id: PluginId): PluginUiModel? {
-    return awaitForResult { PluginManagerApi.getInstance().getPluginById(id)?.withSource() }
+  override suspend fun getPlugin(id: PluginId): PluginUiModel? {
+    return PluginManagerApi.getInstance().getPluginById(id)?.withSource()
   }
 
   override suspend fun findPlugin(pluginId: PluginId): PluginUiModel? {

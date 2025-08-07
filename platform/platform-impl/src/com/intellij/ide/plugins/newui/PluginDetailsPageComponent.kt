@@ -650,10 +650,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     topPanel.border = JBUI.Borders.empty(16, 16, 12, 16)
 
     val newReviewLink = LinkPanel(topPanel, true, false, null, BorderLayout.WEST)
-    val pluginManager = UiPluginManager.getInstance()
     newReviewLink.showWithBrowseUrl(IdeBundle.message("plugins.new.review.action"), false) {
       val pluginUiModel = plugin!!
-      val installedPlugin = pluginManager.getPlugin(pluginUiModel.pluginId)
+      val installedPlugin = if(isMarketplace) installedDescriptorForMarketplace else installedPluginMarketplaceNode
       getPluginWriteReviewUrl(pluginUiModel.pluginId, installedPlugin?.version)
     }
 

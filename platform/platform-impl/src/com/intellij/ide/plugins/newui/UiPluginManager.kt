@@ -87,7 +87,7 @@ class UiPluginManager {
     return getController().loadErrors(sessionId)
   }
 
-  fun getPlugin(pluginId: PluginId): PluginUiModel? {
+  suspend fun getPlugin(pluginId: PluginId): PluginUiModel? {
     return getController().getPlugin(pluginId)
   }
 

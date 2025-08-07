@@ -158,6 +158,15 @@ internal object PluginModelAsyncOperationsExecutor {
     }
   }
 
+  fun findPlugin(cs: CoroutineScope, pluginId: PluginId, callback: (PluginUiModel?) -> Unit) {
+    cs.launch(Dispatchers.IO) {
+      val plugin = UiPluginManager.getInstance().getPlugin(pluginId)
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        callback(plugin)
+      }
+    }
+  }
+
   fun createButtons(
     cs: CoroutineScope,
     component: JComponent,

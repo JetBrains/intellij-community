@@ -97,7 +97,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return PluginUpdatesService.getUpdates()?.map { PluginUiModelAdapter(it) }?.withSource() ?: emptyList()
   }
 
-  override fun getPlugin(id: PluginId): PluginUiModel? {
+  override suspend fun getPlugin(id: PluginId): PluginUiModel? {
     return PluginManagerCore.getPlugin(id)?.let { PluginUiModelAdapter(it) }?.withSource()
   }
 

@@ -32,7 +32,7 @@ interface UiPluginManagerController {
   suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>?
   suspend fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata?
   suspend fun closeSession(sessionId: String)
-  fun getPlugin(id: PluginId): PluginUiModel?
+  suspend fun getPlugin(id: PluginId): PluginUiModel?
   suspend fun performUninstall(sessionId: String, pluginId: PluginId): Boolean
   suspend fun installOrUpdatePlugin(sessionId: String, project: Project, parentComponent: JComponent?, descriptor: PluginUiModel, updateDescriptor: PluginUiModel?, installSource: FUSEventSource?, modalityState: ModalityState?, pluginEnabler: PluginEnabler?): InstallPluginResult
   suspend fun continueInstallation(sessionId: String, pluginId: PluginId, project: Project, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, pluginEnabler: PluginEnabler?, modalityState: ModalityState?, parentComponent: JComponent?): InstallPluginResult

@@ -220,9 +220,9 @@ public final class PluginManagerMain {
           continue;
         }
 
-        PluginUiModel pluginUiModel = UiPluginManager.getInstance().getPlugin(dependantId);
-        if (pluginUiModel != null && pluginEnabler.isDisabled(dependantId)) {
-          disabledDependants.add(pluginUiModel.getDescriptor());
+        IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(dependantId);
+        if (descriptor != null && pluginEnabler.isDisabled(dependantId)) {
+          disabledDependants.add(descriptor);
         }
       }
     }

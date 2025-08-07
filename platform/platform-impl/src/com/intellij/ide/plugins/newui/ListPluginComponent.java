@@ -516,7 +516,7 @@ public final class ListPluginComponent extends JPanel {
     }
   }
 
-  public void setOnlyUpdateMode() {
+  public void setOnlyUpdateMode(@Nullable PluginUiModel installedPlugin) {
     myOnlyUpdateMode = true;
 
     removeButtons(false);
@@ -526,8 +526,7 @@ public final class ListPluginComponent extends JPanel {
     myChooseUpdateButton.getAccessibleContext()
       .setAccessibleName(IdeBundle.message("plugins.configurable.choose.update.checkbox.accessible.name"));
 
-    PluginUiModel installedPluginDescriptor = UiPluginManager.getInstance().getPlugin(myPlugin.getPluginId());
-    if (installedPluginDescriptor != null) {
+    if (installedPlugin != null) {
       if (myDownloads != null) {
         myMetricsPanel.remove(myDownloads);
       }
@@ -541,7 +540,7 @@ public final class ListPluginComponent extends JPanel {
         myMetricsPanel.remove(myVersion);
       }
 
-      String version = NewUiUtil.getUpdateVersionText(installedPluginDescriptor.getVersion(), myPlugin.getVersion());
+      String version = NewUiUtil.getUpdateVersionText(installedPlugin.getVersion(), myPlugin.getVersion());
       String size = PluginUiModelKt.presentableSize(myPlugin);
       myVersion = createRatingLabel(myMetricsPanel,
                                     null,
