@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.Project
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.ui.branch.MergeDirectionComponentFactory
 import git4idea.ui.branch.MergeDirectionModel
@@ -73,7 +72,7 @@ internal object GitLabMergeRequestCreateComponentFactory {
     val titleEditor = CodeReviewTitleDescriptionComponentFactory.createTitleEditorIn(project, cs, createVm, GitLabBundle.message("merge.request.create.title.placeholder"))
     val descriptionEditor = CodeReviewTitleDescriptionComponentFactory.createDescriptionEditorIn(project, cs, createVm, GitLabBundle.message("merge.request.create.description.placeholder"))
     val textPanel = CodeReviewTitleDescriptionComponentFactory.createIn(cs, createVm, titleEditor, descriptionEditor)
-    return Wrapper(textPanel)
+    return wrapTitleEditorWithGenerateActions(createVm, textPanel)
   }
 
   private fun CoroutineScope.wrapTitleEditorWithGenerateActions(
