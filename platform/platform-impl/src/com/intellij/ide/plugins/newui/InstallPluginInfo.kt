@@ -1,109 +1,106 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.plugins.newui;
+package com.intellij.ide.plugins.newui
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.progress.TaskInfo;
-import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.wm.ex.StatusBarEx;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
-import java.util.Map;
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.plugins.newui.MyPluginModel.Companion.finishInstallation
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.wm.ex.StatusBarEx
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * @author Alexander Lobas
  */
 @ApiStatus.Internal
-@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "FieldAccessedSynchronizedAndUnsynchronized"})
-public final class InstallPluginInfo {
-
-  public final @NotNull BgProgressIndicator indicator;
-  private final @NotNull PluginUiModel myDescriptor;
-  private @Nullable MyPluginModel myPluginModel;
-  public final boolean install;
-  private TaskInfo myStatusBarTaskInfo;
-  private boolean myClosed;
-  private static boolean ourShowRestart;
+class InstallPluginInfo(
+  val indicator: BgProgressIndicator,
+  val descriptor: PluginUiModel,
+  pluginModel: MyPluginModel,
+  val install: Boolean
+) {
+  private var myPluginModel: MyPluginModel? = pluginModel
+  private var myStatusBarTaskInfo: TaskInfo? = null
+  private var myClosed = false
 
   /**
    * Descriptor that has been loaded synchronously.
    */
-  private PluginUiModel myInstalledDescriptor;
+  private var myInstalledDescriptor: PluginUiModel? = null
 
-  public InstallPluginInfo(@NotNull BgProgressIndicator indicator,
-                    @NotNull PluginUiModel descriptor,
-                    @NotNull MyPluginModel pluginModel,
-                    boolean install) {
-    this.indicator = indicator;
-    myDescriptor = descriptor;
-    myPluginModel = pluginModel;
-    this.install = install;
-  }
+  @Synchronized
+  fun toBackground(statusBar: StatusBarEx?) {
+    if (myPluginModel == null) return  // IDEA-355719 TODO add lifecycle assertions
 
-  public synchronized void toBackground(@Nullable StatusBarEx statusBar) {
-    if (myPluginModel == null) return; // IDEA-355719 TODO add lifecycle assertions
-    myPluginModel = null;
-    indicator.removeStateDelegates();
-    if (statusBar != null) {
-      String title = install ?
-                     IdeBundle.message("dialog.title.installing.plugin", myDescriptor.getName()) :
-                     IdeBundle.message("dialog.title.updating.plugin", myDescriptor.getName());
-      statusBar.addProgress(indicator, myStatusBarTaskInfo = OneLineProgressIndicator.task(title));
+    myPluginModel = null
+    indicator.removeStateDelegates()
+    
+    statusBar?.let {
+      val title = if (install) {
+        IdeBundle.message("dialog.title.installing.plugin", descriptor.name)
+      } else {
+        IdeBundle.message("dialog.title.updating.plugin", descriptor.name)
+      }
+      val taskInfo = OneLineProgressIndicator.task(title)
+      myStatusBarTaskInfo = taskInfo
+      it.addProgress(indicator, taskInfo)
     }
   }
 
-  public synchronized void fromBackground(@NotNull MyPluginModel pluginModel) {
-    myPluginModel = pluginModel;
-    ourShowRestart = false;
-    closeStatusBarIndicator();
+  @Synchronized
+  fun fromBackground(pluginModel: MyPluginModel) {
+    myPluginModel = pluginModel
+    ourShowRestart = false
+    closeStatusBarIndicator()
   }
 
-  public static void showRestart() {
-    ourShowRestart = true;
-  }
-
-  public synchronized void finish(boolean success, boolean cancel, boolean showErrors, boolean restartRequired,
-                                  @NotNull Map<PluginId, List<HtmlChunk>> errors) {
-    if (myClosed) {
-      return;
-    }
+  @Synchronized
+  fun finish(
+    success: Boolean, cancel: Boolean, showErrors: Boolean, restartRequired: Boolean,
+    errors: Map<PluginId, List<HtmlChunk>>
+  ) {
+    if (myClosed) return
     if (myPluginModel == null) {
-      MyPluginModel.finishInstallation(myDescriptor);
-      closeStatusBarIndicator();
+      finishInstallation(descriptor)
+      closeStatusBarIndicator()
+      
       if (success && !cancel && restartRequired) {
-        ourShowRestart = true;
+        ourShowRestart = true
       }
+      
       if (MyPluginModel.myInstallingInfos.isEmpty() && ourShowRestart) {
-        ourShowRestart = false;
-        ApplicationManager.getApplication().invokeLater(() -> PluginManagerConfigurable.shutdownOrRestartApp());
+        ourShowRestart = false
+        ApplicationManager.getApplication().invokeLater { 
+          PluginManagerConfigurable.shutdownOrRestartApp() 
+        }
       }
-    }
-    else if (!cancel) {
-      myPluginModel.finishInstall(myDescriptor, myInstalledDescriptor, errors, success, showErrors, restartRequired);
-    }
-  }
-
-  private void closeStatusBarIndicator() {
-    if (myStatusBarTaskInfo != null) {
-      indicator.finish(myStatusBarTaskInfo);
-      myStatusBarTaskInfo = null;
+    } else if (!cancel) {
+      myPluginModel?.finishInstall(descriptor, myInstalledDescriptor, errors, success, showErrors, restartRequired)
     }
   }
 
-  public void close() {
-    myClosed = true;
+  private fun closeStatusBarIndicator() {
+    myStatusBarTaskInfo?.let {
+      indicator.finish(it)
+      myStatusBarTaskInfo = null
+    }
   }
 
-  public PluginUiModel getDescriptor() {
-    return myDescriptor;
+  fun close() {
+    myClosed = true
   }
 
-  public void setInstalledModel(PluginUiModel model) {
-    this.myInstalledDescriptor = model;
+  fun setInstalledModel(model: PluginUiModel?) {
+    myInstalledDescriptor = model
+  }
+
+  companion object {
+    private var ourShowRestart = false
+
+    fun showRestart() {
+      ourShowRestart = true
+    }
   }
 }
