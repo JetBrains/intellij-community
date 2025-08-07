@@ -75,6 +75,11 @@ public final class PyCodeFragmentUtil {
       PyType returnType = getType(singleExpression, context);
       outputTypes.add(returnType);
     }
+    else if (PsiTreeUtil.getParentOfType(endInScope, PyStatement.class) instanceof PyReturnStatement returnStatement
+             && returnStatement.getExpression() != null) {
+      PyType returnType = getType(returnStatement.getExpression(), context);
+      outputTypes.add(returnType);
+    }
     final String outputTypeName = getOutputTypeName(startInScope, outputTypes, context);
 
     final boolean yieldsFound = subGraphAnalysis.yieldExpressions > 0;
