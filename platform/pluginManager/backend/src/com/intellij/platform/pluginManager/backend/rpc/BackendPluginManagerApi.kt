@@ -73,8 +73,8 @@ class BackendPluginManagerApi : PluginManagerApi {
     return DefaultUiPluginManagerController.isPluginInstalled(pluginId)
   }
 
-  override suspend fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean {
-    return DefaultUiPluginManagerController.hasPluginsAvailableForEnableDisable(pluginIds)
+  override suspend fun getPluginsRequiresUltimateMap(pluginIds: List<PluginId>): Map<PluginId, Boolean> {
+    return DefaultUiPluginManagerController.getPluginsRequiresUltimateMap(pluginIds)
   }
 
   override suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {

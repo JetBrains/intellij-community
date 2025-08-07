@@ -47,7 +47,6 @@ interface UiPluginManagerController {
   suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean
   suspend fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult
   suspend fun isPluginInstalled(pluginId: PluginId): Boolean
-  fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean
   fun setEnableStateForDependencies(sessionId: String, descriptorIds: Set<PluginId>, enable: Boolean): SetEnabledStateResult
   fun filterPluginsRequiringUltimateButItsDisabled(pluginIds: List<PluginId>): List<PluginId>
   fun findPluginNames(pluginIds: List<PluginId>): List<String>
@@ -76,6 +75,7 @@ interface UiPluginManagerController {
   suspend fun isPluginEnabled(pluginId: PluginId): Boolean
   suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginUiModel>
   suspend fun loadDescriptorById(pluginId: PluginId): PluginUiModel?
+  suspend fun getPluginsRequiresUltimateMap(pluginIds: List<PluginId>): Map<PluginId, Boolean>
 
   companion object {
     val EP_NAME: ExtensionPointName<UiPluginManagerController> = ExtensionPointName<UiPluginManagerController>("com.intellij.uiPluginManagerController")

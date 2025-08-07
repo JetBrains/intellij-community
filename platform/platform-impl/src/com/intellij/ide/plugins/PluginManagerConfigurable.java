@@ -1161,7 +1161,7 @@ public final class PluginManagerConfigurable
               .collect(Collectors.groupingBy(descriptor -> StringUtil.defaultIfEmpty(descriptor.getDisplayCategory(), defaultCategory)))
               .entrySet()
               .stream()
-              .map(entry -> new ComparablePluginsGroup(entry.getKey(), entry.getValue()))
+              .map(entry -> new ComparablePluginsGroup(entry.getKey(), entry.getValue(), model.getVisiblePluginsRequiresUltimate()))
               .sorted((o1, o2) -> defaultCategory.equals(o1.title) ? 1 :
                                   defaultCategory.equals(o2.title) ? -1 :
                                   o1.compareTo(o2))
@@ -1497,7 +1497,8 @@ public final class PluginManagerConfigurable
     private boolean myIsEnable = false;
 
     private ComparablePluginsGroup(@NotNull @NlsSafe String category,
-                                   @NotNull List<PluginUiModel> descriptors) {
+                                   @NotNull List<PluginUiModel> descriptors,
+                                   @NotNull Map<PluginId, Boolean> pluginsRequiresUltimate) {
       super(category, PluginsGroupType.INSTALLED);
 
       this.addModels(descriptors);
@@ -1507,7 +1508,7 @@ public final class PluginManagerConfigurable
                                           null,
                                           (__, ___) -> setEnabledState());
       boolean hasPluginsAvailableForEnableDisable =
-        UiPluginManager.getInstance().hasPluginsAvailableForEnableDisable(ContainerUtil.map(descriptors, PluginUiModel::getPluginId));
+        ContainerUtil.exists(descriptors, it -> !pluginsRequiresUltimate.get(it.getPluginId()));
       rightAction.setVisible(hasPluginsAvailableForEnableDisable);
       titleWithEnabled(myPluginModelFacade);
     }

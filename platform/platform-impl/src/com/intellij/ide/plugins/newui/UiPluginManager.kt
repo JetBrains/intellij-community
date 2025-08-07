@@ -95,8 +95,8 @@ class UiPluginManager {
     return getController().isPluginInstalled(pluginId)
   }
 
-  fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean {
-    return getController().hasPluginsAvailableForEnableDisable(pluginIds)
+  suspend fun getPluginsRequiresUltimateMap(pluginIds: List<PluginId>): Map<PluginId, Boolean> {
+    return getController().getPluginsRequiresUltimateMap(pluginIds)
   }
 
   fun setPluginStatus(sessionId: String, pluginIds: List<PluginId>, enable: Boolean) {

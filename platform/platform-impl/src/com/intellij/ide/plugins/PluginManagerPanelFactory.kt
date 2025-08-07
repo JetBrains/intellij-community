@@ -73,11 +73,12 @@ object PluginManagerPanelFactory {
       val installedPlugins = pluginManager.getInstalledPlugins()
       val visiblePlugins = pluginManager.getVisiblePlugins(Registry.`is`("plugins.show.implementation.details"))
       val errorCheckResults = pluginManager.loadErrors(myPluginModel.mySessionId.toString())
+      val visiblePluginsRequiresUltimate = pluginManager.getPluginsRequiresUltimateMap(visiblePlugins.map { it.pluginId })
       val errors = MyPluginModel.getErrors(errorCheckResults)
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         try {
           PluginLogo.startBatchMode()
-          callback(CreateInstalledPanelModel(installedPlugins, visiblePlugins, errors))
+          callback(CreateInstalledPanelModel(installedPlugins, visiblePlugins, errors, visiblePluginsRequiresUltimate))
         }
         finally {
           PluginLogo.endBatchMode()
@@ -97,6 +98,7 @@ data class CreateInstalledPanelModel(
   val installedPlugins: List<PluginUiModel>,
   val visiblePlugins: List<PluginUiModel>,
   val errors: Map<PluginId, List<HtmlChunk>>,
+  val visiblePluginsRequiresUltimate: Map<PluginId, Boolean>,
 )
 
 @ApiStatus.Internal
