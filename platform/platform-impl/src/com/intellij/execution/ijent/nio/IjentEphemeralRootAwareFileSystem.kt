@@ -36,7 +36,8 @@ private fun Path.toOriginalPath(): Path = toIjentPathOrNull() ?: this
  * The root is used only as an information holder and for computing the `toUri` and `toString`.
  */
 @Suppress("NAME_SHADOWING")
-internal class IjentEphemeralRootAwarePath(
+@ApiStatus.Internal
+class IjentEphemeralRootAwarePath(
   private val fileSystem: IjentEphemeralRootAwareFileSystem,
   val rootPath: Path,
   val originalPath: IjentNioPath,

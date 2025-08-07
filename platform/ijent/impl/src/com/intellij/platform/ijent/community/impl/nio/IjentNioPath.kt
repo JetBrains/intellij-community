@@ -63,7 +63,8 @@ sealed class IjentNioPath protected constructor(
     toString().compareTo(other.toString())
 }
 
-internal class AbsoluteIjentNioPath(val eelPath: EelPath, nioFs: IjentNioFileSystem, cachedAttributes: BasicFileAttributes?) : IjentNioPath(nioFs, cachedAttributes) {
+@ApiStatus.Internal
+class AbsoluteIjentNioPath(val eelPath: EelPath, nioFs: IjentNioFileSystem, cachedAttributes: BasicFileAttributes?) : IjentNioPath(nioFs, cachedAttributes) {
   override fun isAbsolute(): Boolean = true
 
   override fun getRoot(): IjentNioPath? {
