@@ -4,19 +4,19 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.util.PsiUtilBase
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils.withTimeout
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils.withTimeout
+import com.intellij.psi.util.PsiUtilBase
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 
 internal class TerminalCommandCompletion(
   val completionType: CompletionType,
@@ -29,7 +29,7 @@ internal class TerminalCommandCompletion(
     val outputModel = e.terminalOutputModel
                       ?: throw AssertionError("Output model is null during completion")
 
-    val commonEditor = e.getData(CommonDataKeys.EDITOR)
+    val commonEditor = e.editor
                        ?: throw AssertionError("Common editor is null during completion")
 
     val project = commonEditor.project
