@@ -235,6 +235,7 @@ sealed class IdeaPluginDescriptorImpl(
       if (raw.description != null) reporter(PluginXmlConst.DESCRIPTION_ELEM)
 
       if (raw.contentModules.isNotEmpty()) reporter(PluginXmlConst.CONTENT_ELEM)
+      if (raw.incompatibleWith.isNotEmpty()) reporter(PluginXmlConst.INCOMPATIBLE_WITH_ELEM)
     }
   }
 }
