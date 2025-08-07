@@ -44,7 +44,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.system.OS
-import com.intellij.util.ui.launchOnceOnShow
+import com.intellij.util.ui.initOnShow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -405,7 +405,7 @@ private fun Cell<TextFieldWithHistoryWithBrowseButton>.setupShellField(project: 
   }
   val projectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project)
   val defaultShellPathRef = AtomicReference<String>()
-  this.component.launchOnceOnShow("Terminal (default shell path detection)") {
+  this.component.initOnShow("Terminal (default shell path detection)") {
     val defaultShellPath: String? = withContext(Dispatchers.Default) {
       try {
         projectOptionsProvider.defaultShellPath().also {

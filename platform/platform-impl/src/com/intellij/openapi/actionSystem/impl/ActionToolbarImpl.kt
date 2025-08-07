@@ -295,7 +295,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
         return
       }
 
-      launchOnceOnShow("ActionToolbarImpl.updateActionsOnAdd") {
+      initOnShow("ActionToolbarImpl.updateActionsOnAdd") {
         withContext(Dispatchers.UiWithModelAccess) {
           // a first update really
           if (myForcedUpdateRequested && myLastUpdate == null) {
