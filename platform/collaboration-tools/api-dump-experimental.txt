@@ -625,6 +625,17 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - f:createTitleEditor(java.lang.String):com.intellij.ui.components.JBTextArea
 - bs:createTitleEditor$default(com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewUIUtil,com.intellij.openapi.project.Project,java.lang.String,I,java.lang.Object):com.intellij.openapi.editor.Editor
 - bs:createTitleEditor$default(com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewUIUtil,java.lang.String,I,java.lang.Object):com.intellij.ui.components.JBTextArea
+*f:com.intellij.collaboration.ui.codereview.create.CodeReviewTitleDescriptionComponentFactory
+- sf:INSTANCE:com.intellij.collaboration.ui.codereview.create.CodeReviewTitleDescriptionComponentFactory
+- f:createDescriptionEditorIn(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.create.CodeReviewTitleDescriptionViewModel,java.lang.String):com.intellij.openapi.editor.Editor
+- f:createIn(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.create.CodeReviewTitleDescriptionViewModel,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Editor):javax.swing.JPanel
+- f:createTitleEditorIn(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.create.CodeReviewTitleDescriptionViewModel,java.lang.String):com.intellij.openapi.editor.Editor
+*:com.intellij.collaboration.ui.codereview.create.CodeReviewTitleDescriptionViewModel
+- a:getDescriptionText():kotlinx.coroutines.flow.StateFlow
+- a:getTitleText():kotlinx.coroutines.flow.StateFlow
+- a:isTemplateLoading():kotlinx.coroutines.flow.StateFlow
+- a:setDescription(java.lang.String):V
+- a:setTitle(java.lang.String):V
 *f:com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsActionsComponentFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsActionsComponentFactory
 - f:createActionsComponent(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,javax.swing.JComponent,javax.swing.JComponent,javax.swing.JComponent,javax.swing.JComponent):javax.swing.JComponent

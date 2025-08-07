@@ -11,38 +11,44 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil.moveToCenter
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListComponentFactory
 import com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewUIUtil
+import com.intellij.collaboration.ui.codereview.create.CodeReviewTitleDescriptionComponentFactory
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsCommitInfoComponentFactory
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsCommitsComponentFactory
 import com.intellij.collaboration.ui.codereview.details.CommitPresentation
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
-import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
-import com.intellij.collaboration.ui.util.*
+import com.intellij.collaboration.ui.util.bindContentIn
+import com.intellij.collaboration.ui.util.bindEnabledIn
+import com.intellij.collaboration.ui.util.gap
+import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.collaboration.util.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.util.preferredWidth
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JLabelUtil
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcsUtil.showAbove
 import git4idea.ui.branch.MergeDirectionComponentFactory
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -50,6 +56,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateViewModel.BranchesCheckResult
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateViewModel.CreationState
@@ -59,7 +66,6 @@ import org.jetbrains.plugins.github.ui.component.LabeledListPanelViewModel
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.awt.BorderLayout
-import java.awt.Component
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.ContainerEvent
@@ -72,8 +78,6 @@ import javax.swing.SwingConstants
 
 private const val SIDE_GAPS_L = 12
 private const val SIDE_GAPS_M = 8
-private const val EDITOR_MARGINS = SIDE_GAPS_L
-private const val EDITORS_GAP = 8
 private const val BUTTONS_GAP = 10
 private const val STATUS_GAP = 8
 private const val TEXT_LINK_GAP = 8
@@ -152,71 +156,9 @@ internal object GHPRCreateComponentFactory {
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun CoroutineScope.textPanel(vm: GHPRCreateViewModel): JComponent {
     val cs = this
-
-    val titleField = CodeReviewCreateReviewUIUtil.createTitleEditor(vm.project, message("pull.request.create.title")).apply {
-      margins = JBUI.insets(EDITOR_MARGINS, EDITOR_MARGINS, 0, EDITOR_MARGINS)
-      launchNow {
-        try {
-          document.bindTextIn(this, vm.titleText, vm::setTitle)
-          awaitCancellation()
-        }
-        finally {
-          withContext(NonCancellable) {
-            EditorFactory.getInstance().releaseEditor(this@apply)
-          }
-        }
-      }
-    }
-    val descriptionField = CodeReviewCreateReviewUIUtil.createDescriptionEditor(vm.project,
-                                                                                message("pull.request.create.description")).apply {
-      margins = JBUI.insets(0, EDITOR_MARGINS)
-      launchNow {
-        try {
-          document.bindTextIn(this, vm.descriptionText, vm::setDescription)
-          awaitCancellation()
-        }
-        finally {
-          withContext(NonCancellable) {
-            EditorFactory.getInstance().releaseEditor(this@apply)
-          }
-        }
-      }
-    }
-    val textPanel = object : JPanel(null) {
-      override fun addNotify() {
-        super.addNotify()
-        InternalDecoratorImpl.componentWithEditorBackgroundAdded(this)
-      }
-
-      override fun removeNotify() {
-        super.removeNotify()
-        InternalDecoratorImpl.componentWithEditorBackgroundRemoved(this)
-      }
-    }.apply {
-      isOpaque = true
-      background = JBColor.lazy { EditorColorsManager.getInstance().globalScheme.defaultBackground }
-      InternalDecoratorImpl.preventRecursiveBackgroundUpdateOnToolwindow(this)
-    }
-
-    launchNow {
-      vm.templateLoadingState.map { it.isInProgress }.distinctUntilChanged().collect {
-        with(textPanel) {
-          removeAll()
-          if (it) {
-            layout = SingleComponentCenteringLayout()
-            add(LoadingLabel())
-          }
-          else {
-            layout = BorderLayout(0, JBUI.scale(EDITORS_GAP))
-            add(titleField.component.withMinHeightOfEditorLine(titleField), BorderLayout.NORTH)
-            add(descriptionField.component.withMinHeightOfEditorLine(descriptionField, EDITOR_MARGINS), BorderLayout.CENTER)
-          }
-          revalidate()
-          repaint()
-        }
-      }
-    }
-
+    val titleEditor = CodeReviewTitleDescriptionComponentFactory.createTitleEditorIn(vm.project, cs, vm, GithubBundle.message("pull.request.create.title"))
+    val descriptionEditor = CodeReviewTitleDescriptionComponentFactory.createDescriptionEditorIn(vm.project, cs, vm, GithubBundle.message("pull.request.create.description"))
+    val textPanel = CodeReviewTitleDescriptionComponentFactory.createIn(cs, vm, titleEditor, descriptionEditor)
     return Wrapper().apply {
       bindContentIn(cs, GHPRTitleAndDescriptionGeneratorExtension.EP_NAME.extensionListFlow()) { extensions ->
         if (extensions.isEmpty()) {
@@ -251,12 +193,12 @@ internal object GHPRCreateComponentFactory {
 
         cs.launchNow {
           vm.titleAndDescriptionGenerationVm.flatMapLatest { it?.generationFeedbackActivity ?: flowOf() }.collect {
-            extension.onGenerationDone(vm.project, descriptionField, it)
+            extension.onGenerationDone(vm.project, descriptionEditor, it)
           }
         }
 
         CodeReviewCreateReviewUIUtil.createGenerationToolbarOverlay(wrappedTextPanel, toolbar) {
-          (descriptionField as EditorEx).scrollPane.verticalScrollBar.preferredWidth
+          (descriptionEditor as EditorEx).scrollPane.verticalScrollBar.preferredWidth
         }
       }
     }
@@ -564,34 +506,6 @@ private fun ErrorLink(error: Throwable) =
 @Suppress("FunctionName")
 private fun HintPane(message: @Nls String) = SimpleHtmlPane(message).apply {
   foreground = UIUtil.getContextHelpForeground()
-}
-
-private var Editor.margins
-  get() = (this as? EditorEx)?.scrollPane?.viewportBorder?.getBorderInsets(scrollPane.viewport) ?: JBUI.emptyInsets()
-  set(value) {
-    (this as? EditorEx)?.scrollPane?.viewportBorder = JBUI.Borders.empty(value)
-  }
-
-private fun Component.withMinHeightOfEditorLine(editor: Editor, additionalGapBottom: Int = 0): JPanel {
-  val restrictions = object : DimensionRestrictions {
-    override fun getWidth(): Int? = null
-    override fun getHeight(): Int = editor.lineHeight +
-                                    JBUI.scale(additionalGapBottom) +
-                                    editor.insets.run { top + bottom } +
-                                    editor.margins.run { top + bottom }
-  }
-  return withMinSize(restrictions)
-}
-
-private fun Component.withMinSize(restrictions: DimensionRestrictions): JPanel {
-  val component = this
-  return JPanel(null).apply {
-    isOpaque = false
-    layout = SizeRestrictedSingleComponentLayout().apply {
-      minSize = restrictions
-    }
-    add(component)
-  }
 }
 
 private fun JComponent.makeVisibleIfAnyChildIsVisible(): ContainerListener {
