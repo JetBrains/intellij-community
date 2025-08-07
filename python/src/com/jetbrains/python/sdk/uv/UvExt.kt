@@ -40,10 +40,10 @@ suspend fun setupNewUvSdkAndEnvUnderProgress(
   project: Project,
   workingDir: Path,
   existingSdks: List<Sdk>,
-  basePython: Path?,
+  version: Version?,
 ): PyResult<Sdk> {
   return withBackgroundProgress(project, PyBundle.message("python.sdk.dialog.title.setting.up.uv.environment"), true) {
-    setupNewUvSdkAndEnv(workingDir, existingSdks, basePython)
+    setupNewUvSdkAndEnv(workingDir, existingSdks, version)
   }
 }
 
