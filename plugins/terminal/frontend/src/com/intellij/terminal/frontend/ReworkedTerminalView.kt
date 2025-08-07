@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.CompletionPhase
 import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.find.SearchReplaceComponent
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.EDT
@@ -20,6 +19,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.actions.TerminalActionUtil
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
 import com.intellij.terminal.frontend.hyperlinks.FrontendTerminalHyperlinkFacade
@@ -462,7 +462,7 @@ class ReworkedTerminalView(
     }
 
     override fun uiDataSnapshot(sink: DataSink) {
-      sink[CommonDataKeys.EDITOR] = curEditor
+      sink[TerminalActionUtil.EDITOR_KEY] = curEditor
       sink[TerminalInput.DATA_KEY] = terminalInput
       sink[TerminalOutputModel.KEY] = outputModel
       sink[TerminalSearchController.KEY] = terminalSearchController
