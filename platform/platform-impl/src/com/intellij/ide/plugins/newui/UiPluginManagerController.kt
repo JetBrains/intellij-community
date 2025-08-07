@@ -30,7 +30,7 @@ interface UiPluginManagerController {
   suspend fun executePluginsSearch(query: String, count: Int, includeIncompatible: Boolean): PluginSearchResult
   suspend fun loadPluginDetails(model: PluginUiModel): PluginUiModel?
   suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>?
-  fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata?
+  suspend fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata?
   suspend fun closeSession(sessionId: String)
   fun uninstallDynamicPlugin(parentComponent: JComponent?, sessionId: String, pluginId: PluginId, isUpdate: Boolean): Boolean
   fun deletePluginFiles(pluginId: PluginId)

@@ -716,7 +716,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
-  override fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
+  override suspend fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
     return MarketplaceRequests.getInstance().loadPluginMetadata(externalPluginId)
   }
 

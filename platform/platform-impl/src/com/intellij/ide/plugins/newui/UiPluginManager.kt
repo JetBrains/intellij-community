@@ -209,7 +209,7 @@ class UiPluginManager {
     return getController().getLastCompatiblePluginUpdate(allIds, throwExceptions, buildNumber)
   }
 
-  fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
+  suspend fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
     return getController().loadPluginMetadata(externalPluginId)
   }
 

@@ -239,8 +239,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().loadPluginReviews(pluginId, page)
   }
 
-  override fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
-    return awaitForResult { PluginManagerApi.getInstance().loadPluginMetadata(externalPluginId) }
+  override suspend fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
+    return PluginManagerApi.getInstance().loadPluginMetadata(externalPluginId)
   }
 
   override fun getAllPluginsTags(): Set<String> {
