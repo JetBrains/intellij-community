@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
@@ -69,6 +70,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         val excludeListed: Boolean
         val contextMenuPayloads: List<InlayPayload>?
         val callableFqName = functionSymbol.callableId?.asSingleFqName()?.asString()
+            ?: (functionSymbol as? KaConstructorSymbol)?.containingClassId?.asSingleFqName()?.asString()
         if (callableFqName != null) {
             val parameterNames = valueParameters.map { it.name.asString() }
             excludeListed = isExcludeListed(callableFqName, parameterNames)
@@ -231,7 +233,7 @@ class KtParameterHintsExcludeListConfigProvider : ParameterHintsExcludeListConfi
     override fun getDefaultExcludeList(): Set<String> = setOf(
         "*listOf", "*setOf", "*arrayOf", "*ListOf", "*SetOf", "*ArrayOf", "*assert*(*)", "*mapOf", "*MapOf",
         "kotlin.require*(*)", "kotlin.check*(*)", "*contains*(value)", "*containsKey(key)", "kotlin.lazyOf(value)",
-        "*SequenceBuilder.resume(value)", "*SequenceBuilder.yield(value)",
+        "*SequenceBuilder.resume(value)", "*SequenceBuilder.yield(value)", "kotlin.Triple",
 
         /* Gradle DSL especially annoying hints */
         "org.gradle.api.Project.property(propertyName)",
