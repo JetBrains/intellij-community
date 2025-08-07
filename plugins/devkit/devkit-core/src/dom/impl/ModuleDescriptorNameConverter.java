@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
@@ -45,24 +45,22 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
   public String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
     String value = StringUtil.notNullize(s);
 
-    String filePath;
+    String fileName;
     String moduleName;
     if (isSubDescriptor(value)) {
-      filePath = getSubDescriptorFilePath(value);
+      fileName = getSubDescriptorFileName(value);
       moduleName = getSubDescriptorModuleName(value);
     }
     else {
-      filePath = getDescriptorFilePath(value);
+      fileName = getDescriptorFileName(value);
       moduleName = value;
     }
 
-    return DevKitBundle.message("plugin.xml.convert.module.descriptor.name",
-                                filePath, moduleName);
+    return DevKitBundle.message("plugin.xml.convert.module.descriptor.name", fileName, moduleName);
   }
 
   @Override
-  public @Nullable IdeaPlugin fromString(@Nullable String s,
-                                         @NotNull ConvertContext context) {
+  public @Nullable IdeaPlugin fromString(@Nullable String s, @NotNull ConvertContext context) {
     if (StringUtil.isEmpty(s)) return null;
     final Module currentModule = context.getModule();
     if (currentModule == null) return null;
@@ -71,13 +69,13 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
     if (isSubDescriptor(s)) {
       final Module module = moduleManager.findModuleByName(getSubDescriptorModuleName(s));
       if (module == null) return null;
-      return findDescriptorFile(module, getSubDescriptorFilePath(s));
+      return findDescriptorFileInModuleSources(module, getSubDescriptorFileName(s));
     }
 
     final Module module = moduleManager.findModuleByName(s);
     if (module == null) return null;
 
-    return findDescriptorFile(module, getDescriptorFilePath(module.getName()));
+    return findDescriptorFileInModuleSources(module, getDescriptorFileName(module.getName()));
   }
 
   @Override
@@ -139,10 +137,10 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
     return variants;
   }
 
-  private static @Nullable IdeaPlugin findDescriptorFile(@NotNull Module module, @NotNull String filePath) {
+  private static @Nullable IdeaPlugin findDescriptorFileInModuleSources(@NotNull Module module, @NotNull String fileName) {
     Ref<IdeaPlugin> ideaPlugin = Ref.create();
     processModuleSourceRoots(module, root -> {
-      final VirtualFile candidate = root.findChild(filePath);
+      final VirtualFile candidate = root.findChild(fileName);
       if (candidate == null) return true;
       final PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(candidate);
       if (DescriptorUtil.isPluginXml(psiFile)) {
@@ -155,15 +153,16 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
   }
 
   private static void processModuleSourceRoots(@NotNull Module module, Processor<VirtualFile> processor) {
-    for (VirtualFile root : ModuleRootManager.getInstance(module).getSourceRoots(JavaResourceRootType.RESOURCE)) {
+    ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+    for (VirtualFile root : moduleRootManager.getSourceRoots(JavaResourceRootType.RESOURCE)) {
       if (!processor.process(root)) return;
     }
-    for (VirtualFile root : ModuleRootManager.getInstance(module).getSourceRoots(JavaSourceRootType.SOURCE)) {
+    for (VirtualFile root : moduleRootManager.getSourceRoots(JavaSourceRootType.SOURCE)) {
       if (!processor.process(root)) return;
     }
   }
 
-  private static @NotNull String getDescriptorFilePath(@NotNull String fileName) {
+  private static @NotNull String getDescriptorFileName(@NotNull String fileName) {
     return fileName + ".xml";
   }
 
@@ -177,10 +176,10 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
     return moduleName;
   }
 
-  private static @NotNull String getSubDescriptorFilePath(@NotNull String value) {
+  private static @NotNull String getSubDescriptorFileName(@NotNull String value) {
     final String moduleName = getSubDescriptorModuleName(value);
     final String fileName = StringUtil.substringAfter(value, SUB_DESCRIPTOR_DELIMITER);
     assert fileName != null : value;
-    return getDescriptorFilePath(moduleName + SUB_DESCRIPTOR_FILENAME_DELIMITER + fileName);
+    return getDescriptorFileName(moduleName + SUB_DESCRIPTOR_FILENAME_DELIMITER + fileName);
   }
 }
