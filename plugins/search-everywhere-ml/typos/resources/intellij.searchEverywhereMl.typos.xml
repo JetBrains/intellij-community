@@ -2,8 +2,6 @@
 
   <resource-bundle>messages.searchEverywhereMlTyposBundle</resource-bundle>
 
-  <incompatible-with>com.intellij.modules.androidstudio</incompatible-with>
-
   <dependencies>
     <module name="intellij.platform.ml.impl"/>
     <plugin id="tanvd.grazi"/>
