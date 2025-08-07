@@ -12,6 +12,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.isNotInstalledAndCanBeInstalled
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.isReadOnly
 import com.jetbrains.python.sdk.pythonSdk
 import org.jetbrains.annotations.ApiStatus
 
@@ -27,7 +28,7 @@ class PythonInstallPackageFilter(val project: Project, var editor: EditorImpl? =
     val packageManager = PythonPackageManager.forSdk(project, pythonSdk)
 
     val packageName = PyPsiPackageUtil.moduleToPackageName(moduleName)
-    val isCanBeInstalled = packageManager.isNotInstalledAndCanBeInstalled(packageName)
+    val isCanBeInstalled = !pythonSdk.isReadOnly && packageManager.isNotInstalledAndCanBeInstalled(packageName)
     if (!isCanBeInstalled)
       return null
 

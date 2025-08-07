@@ -36,6 +36,7 @@ import com.jetbrains.python.packaging.toolwindow.actions.InstallWithOptionsPacka
 import com.jetbrains.python.packaging.toolwindow.model.*
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import com.jetbrains.python.sdk.isReadOnly
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
@@ -118,6 +119,8 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
         versionSelector.text = packageVersionProperty.get()
         addMouseListener(object : MouseAdapter() {
           override fun mouseClicked(e: MouseEvent?) {
+            if (!isManagement.get())
+              return
             val availableVersions = selectedPackageDetails.get()?.availableVersions ?: emptyList()
             val latestVersion = availableVersions.first()
             val versions = listOf(latestText) + availableVersions
@@ -126,7 +129,8 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
                 override fun onChosen(@NlsContexts.Label selectedValue: String, finalChoice: Boolean): PopupStep<*>? {
                   packageVersionProperty.set(selectedValue)
                   val effectiveVersion = if (selectedValue == latestText) latestVersion else selectedValue
-                  suggestInstallPackage(effectiveVersion)
+                  if (isManagement.get())
+                    suggestInstallPackage(effectiveVersion)
                   return FINAL_CHOICE
                 }
               }, 8).showUnderneathOf(this@apply)
@@ -152,6 +156,7 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
       installActionButton.options = arrayOf(installWithOptionAction)
       cell(installActionButton).visibleIf(selectedPackage.transform { it is InstallablePackage }.and(isManagement).and(progressEnabledProperty.not()))
         .gap(RightGap.SMALL)
+
 
       button(message("action.PyDeletePackage.text")) {
         wrapInvokeOp(progressText = message("python.toolwindow.packages.deleting.text")) {
@@ -182,7 +187,7 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
   fun setPackage(pyPackage: DisplayablePackage) {
     selectedPackage.set(pyPackage)
     packageVersionProperty.set(calculateVersionText())
-    isManagement.set(PyPackageUtil.packageManagementEnabled(service.currentSdk, true, false))
+    isManagement.set(service.currentSdk?.isReadOnly == false && PyPackageUtil.packageManagementEnabled(service.currentSdk, true, false))
   }
 
   fun setPackageDetails(packageDetails: PythonPackageDetails) {

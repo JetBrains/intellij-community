@@ -25,7 +25,8 @@ internal fun installablePackageVersionStrategy(
   val isRowHovered = hoveredRow == row
   val isSelected = tableTree.tree.isRowSelected(row)
 
-  if (isRowHovered || isSelected) {
+
+  if (!tableTree.isReadOnly && (isRowHovered || isSelected)) {
     linkLabel.text = PyBundle.message("action.python.packages.install.text")
     linkLabel.updateUnderline(tableTree, tableTree.table, row)
     versionPanel.add(linkLabel, BorderLayout.WEST)

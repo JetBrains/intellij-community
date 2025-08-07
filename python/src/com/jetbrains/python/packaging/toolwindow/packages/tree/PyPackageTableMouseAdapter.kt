@@ -13,6 +13,7 @@ import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import com.jetbrains.python.sdk.isReadOnly
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.event.MouseAdapter
@@ -34,6 +35,8 @@ private class InstallablePackageHandler : PackageHandler {
   override suspend fun handle(treeTable: PyPackagesTreeTable, pkg: DisplayablePackage, event: MouseEvent) {
     val project: Project = treeTable.project
     val packagingService = project.service<PyPackagingToolWindowService>()
+    if (packagingService.currentSdk?.isReadOnly != false)
+      return
     val details = packagingService.detailsForPackage(pkg) ?: return
 
     withContext(Dispatchers.Main) {
@@ -48,6 +51,8 @@ private class InstalledPackageHandler : PackageHandler {
   override suspend fun handle( treeTable: PyPackagesTreeTable, pkg: DisplayablePackage, event: MouseEvent) {
     val project: Project = treeTable.project
     val packagingService = project.service<PyPackagingToolWindowService>()
+    if (packagingService.currentSdk?.isReadOnly != false)
+      return
     if (pkg !is InstalledPackage || !pkg.canBeUpdated) return
 
     pkg.nextVersion?.let { version ->

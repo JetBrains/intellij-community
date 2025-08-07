@@ -9,6 +9,7 @@ import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.isReadOnly
 
 internal abstract class PyStubVisitor(
   holder: ProblemsHolder,
@@ -17,7 +18,8 @@ internal abstract class PyStubVisitor(
   override fun visitPyFile(file: PyFile) {
     val module = ModuleUtilCore.findModuleForFile(file) ?: return
     val sdk = PythonSdkUtil.findPythonSdk(module) ?: return
-
+    if (sdk.isReadOnly)
+      return
     val importedPackages = loadImportedPackages(file).ifEmpty { null } ?: return
     val packageManager = PythonPackageManager.forSdk(module.project, sdk)
 

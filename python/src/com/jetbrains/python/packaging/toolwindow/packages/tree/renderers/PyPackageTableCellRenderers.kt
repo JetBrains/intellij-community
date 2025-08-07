@@ -93,7 +93,7 @@ internal class PackageVersionCellRenderer : TableCellRenderer {
 
     when (pkg) {
       is InstallablePackage -> installablePackageVersionStrategy(versionPanel, treeTable, row, linkLabel)
-      is InstalledPackage -> if (pkg.nextVersion != null && pkg.canBeUpdated) {
+      is InstalledPackage -> if (!treeTable.isReadOnly && pkg.nextVersion != null && pkg.canBeUpdated) {
         updatableInstalledPackageStrategy(versionPanel, pkg, pkg.nextVersion, treeTable, row, linkLabel)
       }
       else {

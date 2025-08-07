@@ -21,6 +21,7 @@ import com.jetbrains.python.requirements.getPythonSdk
 import com.jetbrains.python.requirements.inspections.quickfixes.InstallAllRequirementsQuickFix
 import com.jetbrains.python.requirements.inspections.quickfixes.InstallRequirementQuickFix
 import com.jetbrains.python.requirements.inspections.quickfixes.PyGenerateRequirementsFileQuickFix
+import com.jetbrains.python.sdk.isReadOnly
 import org.toml.lang.psi.TomlTable
 
 class NotInstalledRequirementInspection : LocalInspectionTool() {
@@ -64,12 +65,15 @@ class NotInstalledRequirementInspection : LocalInspectionTool() {
       val unsatisfiedRequirements = notInstalledRequirementsWithPsi.map { it.second }
 
 
-      val installAllRequirementsQuickFix = InstallAllRequirementsQuickFix(unsatisfiedRequirements).takeIf { unsatisfiedRequirements.size > 1 }
+      val installAllRequirementsQuickFix = InstallAllRequirementsQuickFix(unsatisfiedRequirements).takeIf { !sdk.isReadOnly && unsatisfiedRequirements.size > 1 }
       notInstalledRequirementsWithPsi.forEach { (psiRequirement, pyRequirement) ->
-        val fixes = listOfNotNull(
+        val fixes = if (!sdk.isReadOnly)
+          listOfNotNull(
           InstallRequirementQuickFix(pyRequirement),
           installAllRequirementsQuickFix,
         )
+        else
+          emptyList()
         holder.registerProblem(psiRequirement, PyBundle.message("INSP.requirements.package.not.installed", psiRequirement.requirement),
                                ProblemHighlightType.WARNING,
                                *fixes.toTypedArray())

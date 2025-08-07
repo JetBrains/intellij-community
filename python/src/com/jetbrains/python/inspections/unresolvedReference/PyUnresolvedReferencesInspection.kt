@@ -40,6 +40,7 @@ import com.jetbrains.python.psi.impl.PyImportElementImpl
 import com.jetbrains.python.psi.impl.references.PyImportReference
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.isReadOnly
 
 /**
  * Marks references that fail to resolve.
@@ -99,7 +100,7 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
 
       val packageManager = PythonPackageManager.forSdk(module.project, sdk)
 
-      val shouldBeSuggest = packageManager.isNotInstalledAndCanBeInstalled(packageName)
+      val shouldBeSuggest = !sdk.isReadOnly && packageManager.isNotInstalledAndCanBeInstalled(packageName)
       if (!shouldBeSuggest)
         return emptyList()
       return listOfNotNull(InstallPackageQuickFix(packageName))
@@ -187,7 +188,7 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
 
     private fun createInstallAndImportQuickFix(project: Project, pythonSdk: Sdk, importedModuleName: String, asName: String?): LocalQuickFix? {
       val packageName = PyPsiPackageUtil.moduleToPackageName(importedModuleName)
-      val canBeInstalled = PythonPackageManager.forSdk(project, pythonSdk).isNotInstalledAndCanBeInstalled(packageName)
+      val canBeInstalled = !pythonSdk.isReadOnly && PythonPackageManager.forSdk(project, pythonSdk).isNotInstalledAndCanBeInstalled(packageName)
       return if (canBeInstalled)
         InstallAndImportPackageQuickFix(importedModuleName, asName)
       else

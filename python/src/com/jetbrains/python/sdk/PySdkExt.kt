@@ -42,6 +42,7 @@ import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.createDetectedSdk
 import com.jetbrains.python.util.ShowingMessageErrorSync
@@ -52,9 +53,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.SwingUtilities
+import kotlin.io.path.Path
 import kotlin.io.path.div
 import kotlin.io.path.pathString
-import kotlin.io.path.Path
 
 internal data class TargetAndPath(
   val target: TargetEnvironmentConfiguration?,
@@ -73,6 +74,7 @@ fun findAllPythonSdks(baseDir: Path?): List<Sdk> {
   val existing = PythonSdkUtil.getAllSdks()
   return detectVirtualEnvs(null, existing, context) + findBaseSdks(existing, null, context)
 }
+
 @Internal
 fun findBaseSdks(existingSdks: List<Sdk>, module: Module?, context: UserDataHolder): List<Sdk> {
   val existing = filterSystemWideSdks(existingSdks)
@@ -450,6 +452,14 @@ internal suspend fun suggestAssociatedSdkName(sdkHome: String, associatedPath: S
 internal val Sdk.isSystemWide: Boolean
   get() = !PythonSdkUtil.isRemote(this) && !this.isVirtualEnv && !this.isCondaVirtualEnv
 
+
+@get:Internal
+val Sdk.isReadOnly: Boolean
+  get() = PythonSdkReadOnlyProvider.isReadOnly(this)
+
+@get:Internal
+val Sdk.readOnlyErrorMessage: String
+  get() = PythonSdkReadOnlyProvider.getReadOnlyMessage(this) ?: PyBundle.message("python.sdk.read.only", name)
 
 private val Sdk.associatedPathFromAdditionalData: String?
   get() = (sdkAdditionalData as? PythonSdkAdditionalData)?.associatedModulePath

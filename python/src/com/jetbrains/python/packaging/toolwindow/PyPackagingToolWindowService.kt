@@ -8,6 +8,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.module.ModuleUtilCore
@@ -202,7 +203,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   }
 
   suspend fun installPackage(pkg: PythonPackage, options: List<String> = emptyList()) {
-    val installRequest = manager?.findPackageSpecification(pkg.name, pkg.version)?.toInstallRequest() ?: return
+    val installRequest = manager.findPackageSpecification(pkg.name, pkg.version)?.toInstallRequest() ?: return
     PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
     managerUI.installPackagesRequestBackground(installRequest, options)?.let {
       handleActionCompleted(
@@ -328,7 +329,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     packages: List<PythonPackage>,
     treeExtractor: PythonPackageRequirementsTreeExtractor,
   ): List<InstalledPackage> {
-    return packages.mapNotNull { pkg ->
+    return packages.map { pkg ->
       val tree = treeExtractor.extract(pkg)
       createInstalledPackageFromTree(pkg, tree)
     }
@@ -337,8 +338,8 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   private suspend fun createInstalledPackageFromTree(
     pkg: PythonPackage,
     tree: PackageNode,
-  ): InstalledPackage? {
-    val manager = manager ?: return null
+  ): InstalledPackage {
+    val manager = manager
     val spec = manager.findPackageSpecification(pkg.name, pkg.version)
     val repository = spec?.repository
     val nextVersionRaw = manager.listOutdatedPackagesSnapshot()[pkg.name]?.latestVersion
@@ -352,7 +353,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     nodes: List<PackageNode>,
     repository: PyPackageRepository,
   ): List<RequirementPackage> {
-    val manager = manager ?: return emptyList()
+    val manager = manager
 
     return nodes.mapNotNull { node ->
       val packageName = node.name.name
@@ -375,7 +376,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   private suspend fun findStandalonePackages(
     processedPackages: List<InstalledPackage>,
   ): List<InstalledPackage> {
-    val manager = manager ?: return emptyList()
+    val manager = manager
     val processedPackageNames = processedPackages.flatMap { pkg ->
       collectPackageNamesRecursively(pkg)
     }.toSet()
@@ -396,7 +397,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   }
 
   private suspend fun showPackagingNotification(text: @Nls String, displayId: String) {
-    val notification = NotificationGroupManager.getInstance()
+    val notification = serviceAsync<NotificationGroupManager>()
       .getNotificationGroup("PythonPackages")
       .createNotification(text, NotificationType.INFORMATION)
       .setDisplayId(displayId)
@@ -413,7 +414,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     skipItems: Int = 0,
   ): PyPackagesViewData {
 
-    val comparator = createNameComparator(query, repository.repositoryUrl ?: "")
+    val comparator = createNameComparator(query)
 
     val shownPackages = packageNames.asSequence()
       .sortedWith(comparator)
@@ -464,10 +465,9 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
   }
 
-  fun getMoreResultsForRepo(repository: PyPackageRepository, skipItems: Int): PyPackagesViewData? {
-    val manager = manager ?: return null
+  fun getMoreResultsForRepo(repository: PyPackageRepository, skipItems: Int): PyPackagesViewData {
     if (currentQuery.isNotEmpty()) {
-      return sortPackagesForRepo(manager.repositoryManager.searchPackages(currentQuery, repository), currentQuery, repository, skipItems)
+      return sortPackagesForRepo(this.manager.repositoryManager.searchPackages(currentQuery, repository), currentQuery, repository, skipItems)
     }
     else {
       val packagesFromRepo = repository.getPackages()
@@ -479,7 +479,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   private fun Sequence<String>.limitResultAndFilterOutInstalled(repository: PyPackageRepository, skipItems: Int = 0): List<DisplayablePackage> {
     return drop(skipItems)
       .take(PACKAGES_LIMIT)
-      .filter { pkg -> installedPackages.values.find { it.name.lowercase() == pkg.lowercase() } == null }
+      .filter { pkg -> installedPackages.values.find { it.name.equals(pkg, ignoreCase = true) } == null }
       .map { pkg -> InstallablePackage(pkg, repository) }
       .toList()
   }
@@ -489,7 +489,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
     fun getInstance(project: Project): PyPackagingToolWindowService = project.service<PyPackagingToolWindowService>()
 
-    private fun createNameComparator(query: String, url: String): Comparator<String> {
+    private fun createNameComparator(query: String): Comparator<String> {
       val nameComparator = Comparator<String> { name1, name2 ->
         val queryLowerCase = query.lowercase()
         return@Comparator when {

@@ -18,6 +18,7 @@ import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.*
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PackageNameCellRenderer
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PackageVersionCellRenderer
+import com.jetbrains.python.sdk.isReadOnly
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Point
@@ -58,6 +59,9 @@ class PyPackagesTreeTable(
       treeListener?.onTreeStructureChanged()
     }
 
+
+  internal val isReadOnly
+    get() = packagingService.currentSdk?.isReadOnly == true
   init {
     table.putUserData(TREE_TABLE_KEY, this)
     initializeUI()

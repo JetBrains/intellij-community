@@ -26,6 +26,8 @@ import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecificatio
 import com.jetbrains.python.packaging.dependencies.PythonDependenciesManager
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.isReadOnly
+import com.jetbrains.python.sdk.readOnlyErrorMessage
 import kotlinx.coroutines.CoroutineStart
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
@@ -71,12 +73,18 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
 
   @ApiStatus.Internal
   suspend fun sync(): PyResult<List<PythonPackage>> {
+    if (sdk.isReadOnly) {
+      return PyResult.localizedError(sdk.readOnlyErrorMessage)
+    }
     syncCommand().getOr { return it }
     return reloadPackages()
   }
 
   @ApiStatus.Internal
   suspend fun installPackage(installRequest: PythonPackageInstallRequest, options: List<String> = emptyList()): PyResult<List<PythonPackage>> {
+    if (sdk.isReadOnly) {
+      return PyResult.localizedError(sdk.readOnlyErrorMessage)
+    }
     waitForInit()
     installPackageCommand(installRequest, options).getOr { return it }
 
@@ -85,6 +93,9 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
 
   @ApiStatus.Internal
   suspend fun updatePackages(vararg packages: PythonRepositoryPackageSpecification): PyResult<List<PythonPackage>> {
+    if (sdk.isReadOnly) {
+      return PyResult.localizedError(sdk.readOnlyErrorMessage)
+    }
     waitForInit()
     updatePackageCommand(*packages).getOr { return it }
 
@@ -93,6 +104,9 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
 
   @ApiStatus.Internal
   suspend fun uninstallPackage(vararg packages: String): PyResult<List<PythonPackage>> {
+    if (sdk.isReadOnly) {
+      return PyResult.localizedError(sdk.readOnlyErrorMessage)
+    }
     if (packages.isEmpty()) {
       return PyResult.success(installedPackages)
     }

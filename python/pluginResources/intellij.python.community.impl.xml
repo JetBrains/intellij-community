@@ -771,12 +771,12 @@
                     interface="com.jetbrains.python.run.target.ConnectionCredentialsToTargetConfigurationConverter"
                     dynamic="true"/>
 
-    <extensionPoint qualifiedName="Pythonid.PythonPackagingToolwindowActionProvider"
-                    interface="com.jetbrains.python.packaging.toolwindow.actions.PythonPackagingToolwindowActionProvider"
-                    dynamic="true"/>
-
     <extensionPoint qualifiedName="Pythonid.pythonPackageManagerProvider"
                     interface="com.jetbrains.python.packaging.management.PythonPackageManagerProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="Pythonid.pythonSdkReadOnlyProvider"
+                    interface="com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider"
                     dynamic="true"/>
 
     <extensionPoint qualifiedName="Pythonid.PyProjectDependenciesExtractorProvider"
@@ -880,6 +880,9 @@
     <!-- Experimental packaging extensions-->
     <pySdkProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkProvider"/>
 
+
+    <pythonSdkReadOnlyProvider implementation="com.jetbrains.python.sdk.readOnly.PythonSystemSdkReadOnlyProvider"/>
+
     <pySdkProvider implementation="com.jetbrains.python.sdk.poetry.PoetrySdkProvider"/>
     <packageManagerProvider implementation="com.jetbrains.python.sdk.poetry.PyPoetryPackageManagerProvider"/>
     <pythonPackageManagerProvider implementation="com.jetbrains.python.sdk.poetry.PoetryPackageManagerProvider"/>
@@ -925,9 +928,6 @@
 
     <runConfigurationEditorExtension implementation="com.jetbrains.python.run.PyRunConfigurationTargetOptions"/>
 
-    <PythonPackagingToolwindowActionProvider implementation="com.jetbrains.python.packaging.pip.PipPackagingToolwindowActionProvider"/>
-    <PythonPackagingToolwindowActionProvider
-      implementation="com.jetbrains.python.packaging.conda.CondaPackagingToolwindowActionProvider"/>
   </extensions>
 
   <actions resource-bundle="messages.PyBundle">
