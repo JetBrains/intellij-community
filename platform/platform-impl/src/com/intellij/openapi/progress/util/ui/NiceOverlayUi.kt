@@ -89,7 +89,7 @@ class NiceOverlayUi(
   private val popupOffsetX: Int = rootPane.width / 2 - popupWidth / 2
   private val popupOffsetY: Int = run {
     val frame = SwingUtilities.getAncestorOfClass(IdeFrame::class.java, rootPane) as? IdeFrame
-    frame?.statusBar?.component?.location?.y ?: (rootPane.height / 2 - popupHeight / 2)
+    frame?.statusBar?.component?.location?.y ?: (rootPane.height - 20 - popupHeight)
   }
 
   // regions of the buttons relative to the containing component
