@@ -17721,45 +17721,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/unusedDataClassCopyResult")
-    public static class UnusedDataClassCopyResult extends AbstractK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("basic.kt")
-        public void testBasic() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/unusedDataClassCopyResult/basic.kt");
-        }
-
-        @TestMetadata("basic2.kt")
-        public void testBasic2() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/unusedDataClassCopyResult/basic2.kt");
-        }
-
-        @TestMetadata("extensionFun.kt")
-        public void testExtensionFun() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/unusedDataClassCopyResult/extensionFun.kt");
-        }
-
-        @TestMetadata("used.kt")
-        public void testUsed() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/unusedDataClassCopyResult/used.kt");
-        }
-
-        @TestMetadata("used2.kt")
-        public void testUsed2() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/unusedDataClassCopyResult/used2.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/javaMapForEach")
     public static class JavaMapForEach extends AbstractK2LocalInspectionTest {
         @java.lang.Override
