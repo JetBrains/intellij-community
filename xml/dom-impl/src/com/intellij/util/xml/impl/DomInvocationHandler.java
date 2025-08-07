@@ -12,7 +12,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.XmlElementFactory;
-import com.intellij.psi.impl.source.xml.XmlStubBasedTagBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.util.PsiUtilCore;
@@ -30,6 +29,7 @@ import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.stubs.*;
+import com.intellij.xml.util.InclusionProvider;
 import net.sf.cglib.proxy.AdvancedProxy;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
@@ -752,7 +752,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   public @Unmodifiable List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description) {
-    return getCollectionChildren(description, XmlStubBasedTagBase.shouldProcessIncludesNow());
+    return getCollectionChildren(description, InclusionProvider.getInstance().shouldProcessIncludesNow());
   }
 
   public @Unmodifiable List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description, boolean processIncludes) {

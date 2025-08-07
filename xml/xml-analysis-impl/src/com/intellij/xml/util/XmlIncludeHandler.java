@@ -4,7 +4,6 @@ package com.intellij.xml.util;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.*;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -12,20 +11,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class XmlIncludeHandler {
-  private static final @NonNls String INCLUDE_TAG_NAME = "include";
   public static boolean isXInclude(PsiElement element) {
-    if (element instanceof XmlTag xmlTag) {
-
-      if (xmlTag.getParent() instanceof XmlDocument) return false;
-
-      if (xmlTag.getLocalName().equals(INCLUDE_TAG_NAME) && xmlTag.getAttributeValue("href") != null) {
-        if (xmlTag.getNamespace().equals(XmlPsiUtil.XINCLUDE_URI)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
+    return XmlPsiUtil.isXInclude(element);
   }
 
   public static @Nullable XmlFile resolveXIncludeFile(XmlTag xincludeTag) {

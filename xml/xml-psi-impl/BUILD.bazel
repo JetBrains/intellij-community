@@ -22,7 +22,6 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
     "//platform/editor-ui-api:editor-ui",
-    "//platform/indexing-api:indexing",
     "//jps/model-serialization",
     "//platform/projectModel-api:projectModel",
     "//xml/xml-psi-api:psi",

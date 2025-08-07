@@ -15,9 +15,9 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.util.InclusionProvider;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -151,17 +151,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
 
   @Override
   public XmlTag @NotNull [] getSubTags() {
-    return getSubTags(shouldProcessIncludesNow());
+    return getSubTags(InclusionProvider.getInstance().shouldProcessIncludesNow());
   }
 
   public XmlTag[] getSubTags(boolean processIncludes) {
     return getImpl().getSubTags(processIncludes);
   }
 
-  public static boolean shouldProcessIncludesNow() {
-    return FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null &&
-           !XmlUtil.isStubBuilding(); // todo the first condition should be enough
-  }
 
   @Override
   public XmlTag @NotNull [] findSubTags(String name) {

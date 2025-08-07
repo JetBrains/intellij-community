@@ -30,6 +30,7 @@ import com.intellij.util.xml.stubs.AttributeStub;
 import com.intellij.util.xml.stubs.ElementStub;
 import com.intellij.util.xml.stubs.XIncludeStub;
 import com.intellij.xml.util.XmlIncludeHandler;
+import com.intellij.xml.util.XmlPsiUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +47,7 @@ class DomStubBuilderVisitor {
   
   void visitXmlElement(XmlElement element, ElementStub parent, int index) {
 
-    if (XmlIncludeHandler.isXInclude(element)) {
+    if (XmlPsiUtil.isXInclude(element)) {
       XmlTag tag = (XmlTag)element;
       new XIncludeStub(parent, tag.getAttributeValue("href"), tag.getAttributeValue("xpointer"));
       return;

@@ -200,5 +200,7 @@
     <multiHostInjector implementation="com.intellij.polySymbols.html.HtmlSymbolsTextInjector"
                        order="before JSConfigurationInjector, after TemporaryPlacesInjector"
                        id="PolySymbolsHtmlText"/>
+
+    <applicationService serviceInterface="com.intellij.xml.util.InclusionProvider" serviceImplementation="com.intellij.xml.util.InclusionProviderImpl"/>
   </extensions>
 </idea-plugin>
