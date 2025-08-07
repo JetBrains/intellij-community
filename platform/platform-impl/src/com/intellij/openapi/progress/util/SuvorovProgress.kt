@@ -20,6 +20,8 @@ import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.application
 import com.intellij.util.ui.AsyncProcessIcon
+import com.jetbrains.rd.util.error
+import com.jetbrains.rd.util.getLogger
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.future.asCompletableFuture
@@ -27,9 +29,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
 import java.awt.KeyboardFocusManager
-import java.awt.event.InvocationEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.nio.file.Files
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -147,9 +149,14 @@ object SuvorovProgress {
         }
         if (dumpThreads) {
           ApplicationManager.getApplication().executeOnPooledThread(Runnable {
-            val dumpDir = PerformanceWatcher.getInstance().dumpThreads("freeze-popup", true, false)
-            if (dumpDir != null) {
-              RevealFileAction.openFile(dumpDir)
+            val dumpFile = PerformanceWatcher.getInstance().dumpThreads("freeze-popup", true, false)
+            if (dumpFile != null) {
+              if (Files.exists(dumpFile)) {
+                RevealFileAction.openFile(dumpFile)
+              }
+              else {
+                getLogger<SuvorovProgress>().error { "Failed to dump threads to $dumpFile" }
+              }
             }
           })
         }
