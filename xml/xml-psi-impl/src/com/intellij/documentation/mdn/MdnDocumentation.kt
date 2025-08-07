@@ -325,7 +325,7 @@ class MdnSymbolDocumentationAdapter(
                                         notSupportedEngines.map { it.displayName }.sorted().joinToString(", ")))
       }
       else {
-        (baseline.highDate ?: baseline.lowDate)?.dropWhile { !it.isDigit() }?.let { date ->
+        (baseline.lowDate ?: baseline.highDate )?.dropWhile { !it.isDigit() }?.let { date ->
           result.append("<p class='grayed'>")
           result.append(MdnBundle.message("mdn.documentation.baseline.since", date.takeWhile { it.isDigit() }))
         }
