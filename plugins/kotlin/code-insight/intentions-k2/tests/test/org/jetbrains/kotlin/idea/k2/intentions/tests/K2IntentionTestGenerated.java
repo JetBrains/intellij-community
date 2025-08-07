@@ -8015,8 +8015,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
-
-
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/conventionNameCalls")
     public abstract static class ConventionNameCalls extends AbstractK2IntentionTest {
