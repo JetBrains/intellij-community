@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
+import com.intellij.util.SlowOperations
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -194,7 +195,11 @@ object InternalThreading {
                                      }) {
       try {
         lock.allowTakingLocksInsideAndRun {
-          (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity(runnable)
+          // we can appear here if someone tries to acquire a read action in a forced slow-op section
+          // the users have no control over computations that run inside transferred write action, hence we reset the slow-op section
+          SlowOperations.startSection(SlowOperations.RESET).use {
+            (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity(runnable)
+          }
         }
       } catch (e: Throwable) {
         exceptionRef.set(e)
