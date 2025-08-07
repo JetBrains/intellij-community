@@ -201,6 +201,7 @@ f:org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
 - org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
 - sf:$stable:I
 - sf:INSTANCE:org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
+- highlight(java.lang.String,java.lang.String):kotlinx.coroutines.flow.Flow
 - highlight-zTGadEY(java.lang.String,java.lang.String):kotlinx.coroutines.flow.Flow
 f:org.jetbrains.jewel.foundation.layout.BasicTableLayoutKt
 - sf:BasicTableLayout-yE4rkUQ(I,I,J,androidx.compose.ui.Modifier,F,java.util.List,androidx.compose.runtime.Composer,I,I):V
