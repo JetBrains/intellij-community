@@ -2,12 +2,16 @@
 package git4idea.rebase.log
 
 import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
@@ -30,6 +34,7 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
   private val originalHEAD = commitEditingData.repository.info.currentRevision
   private val commitEditor = createCommitEditor()
   private var onOk: (String) -> Unit = {}
+  private var repositoryValidationResult: ValidationInfo? = null
 
   init {
     Disposer.register(disposable, commitEditor)
@@ -37,6 +42,21 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
     init()
     isModal = false
     this.title = title
+
+    commitEditor.editorField.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(e: DocumentEvent) {
+        updateOkButtonState()
+      }
+    })
+    updateOkButtonState()
+  }
+
+  private fun updateOkButtonState() {
+    if (repositoryValidationResult != null) {
+      return
+    }
+    val isMessageEmpty = commitEditor.comment.isBlank()
+    isOKActionEnabled = !isMessageEmpty
   }
 
   fun show(onOk: (newMessage: String) -> Unit) {
@@ -95,7 +115,8 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
   }
 
   override fun doValidate(): ValidationInfo? {
-    return validate(commitEditingData, originalHEAD)
+    repositoryValidationResult = validate(commitEditingData, originalHEAD)
+    return repositoryValidationResult
   }
 
   override fun doOKAction() {
