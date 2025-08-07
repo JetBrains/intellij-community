@@ -1,6 +1,6 @@
-@file:Suppress("UnusedImports") // Detekt false positive - org.jetbrains.jewel.ui.component.InfoText
-
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("UnusedImports") // False positive on the InfoText import
+
 package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.foundation.layout.Arrangement
