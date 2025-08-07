@@ -16945,6 +16945,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedDataClassCopyResult/basic2.kt");
         }
 
+        @TestMetadata("extensionFun.kt")
+        public void testExtensionFun() throws Exception {
+            runTest("testData/inspectionsLocal/unusedDataClassCopyResult/extensionFun.kt");
+        }
+
         @TestMetadata("used.kt")
         public void testUsed() throws Exception {
             runTest("testData/inspectionsLocal/unusedDataClassCopyResult/used.kt");
