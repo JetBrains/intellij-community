@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.codegen.writer
 
 import com.intellij.application.options.CodeStyle
@@ -10,13 +10,13 @@ import com.intellij.lang.ASTNode
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -58,29 +58,31 @@ object CodeWriter {
   ) {
     val sourceFilePerObjModule = HashMap<String, VirtualFile>()
     val ktClasses = HashMap<String, KtClass>()
-    VfsUtilCore.processFilesRecursively(sourceFolder) {
-      if (it.extension == "kt") {
-        val ktFile = PsiManager.getInstance(project).findFile(it) as? KtFile?
+    readAction {
+      VfsUtilCore.processFilesRecursively(sourceFolder) {
+        if (it.extension == "kt") {
+          val ktFile = PsiManager.getInstance(project).findFile(it) as? KtFile?
 
-        ktFile?.declarations
-          ?.filterIsInstance<KtClass>()
-          ?.filter { it.name != null }
-          ?.forEach { ktClass ->
-            val fqName = ktClass.fqName!!.asString()
-            val objModuleName = fqName
-              .replace(ktClass.name!!, "")
-              .substringBeforeLast(".")
+          ktFile?.declarations
+            ?.filterIsInstance<KtClass>()
+            ?.filter { it.name != null }
+            ?.forEach { ktClass ->
+              val fqName = ktClass.fqName!!.asString()
+              val objModuleName = fqName
+                .replace(ktClass.name!!, "")
+                .substringBeforeLast(".")
 
-            /**
-             *  We find one virtual file for each module.
-             *  This is necessary to find the relative path for the generated GeneratedObjModuleFile.
-             *  See [addGeneratedObjModuleFile] method.
-             */
-            sourceFilePerObjModule[objModuleName] = it
-            ktClasses[fqName] = ktClass
-          }
+              /**
+               *  We find one virtual file for each module.
+               *  This is necessary to find the relative path for the generated GeneratedObjModuleFile.
+               *  See [addGeneratedObjModuleFile] method.
+               */
+              sourceFilePerObjModule[objModuleName] = it
+              ktClasses[fqName] = ktClass
+            }
+        }
+        return@processFilesRecursively true
       }
-      return@processFilesRecursively true
     }
     if (ktClasses.isEmpty()) return
 
