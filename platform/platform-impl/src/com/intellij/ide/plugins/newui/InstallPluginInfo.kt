@@ -9,6 +9,8 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ex.StatusBarEx
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -36,7 +38,7 @@ class InstallPluginInfo(
 
     myPluginModel = null
     indicator.removeStateDelegates()
-    
+
     statusBar?.let {
       val title = if (install) {
         IdeBundle.message("dialog.title.installing.plugin", descriptor.name)
@@ -59,25 +61,29 @@ class InstallPluginInfo(
   @Synchronized
   fun finish(
     success: Boolean, cancel: Boolean, showErrors: Boolean, restartRequired: Boolean,
-    errors: Map<PluginId, List<HtmlChunk>>
+    errors: Map<PluginId, List<HtmlChunk>>,
+    coroutineScope: CoroutineScope
   ) {
     if (myClosed) return
     if (myPluginModel == null) {
       finishInstallation(descriptor)
       closeStatusBarIndicator()
-      
+
       if (success && !cancel && restartRequired) {
         ourShowRestart = true
       }
-      
+
       if (MyPluginModel.myInstallingInfos.isEmpty() && ourShowRestart) {
         ourShowRestart = false
-        ApplicationManager.getApplication().invokeLater { 
-          PluginManagerConfigurable.shutdownOrRestartApp() 
+        ApplicationManager.getApplication().invokeLater {
+          PluginManagerConfigurable.shutdownOrRestartApp()
         }
       }
-    } else if (!cancel) {
-      myPluginModel?.finishInstall(descriptor, myInstalledDescriptor, errors, success, showErrors, restartRequired)
+    }
+    else if (!cancel) {
+      coroutineScope.launch {
+        myPluginModel?.finishInstall(descriptor, myInstalledDescriptor, errors, success, showErrors, restartRequired)
+      }
     }
   }
 

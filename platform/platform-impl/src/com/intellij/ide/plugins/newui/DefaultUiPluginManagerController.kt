@@ -105,7 +105,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return buildPluginIdMap()[pluginId]?.let { PluginUiModelAdapter(it) }?.withSource()
   }
 
-  override fun isPluginInstalled(pluginId: PluginId): Boolean {
+  override suspend fun isPluginInstalled(pluginId: PluginId): Boolean {
     return PluginManagerCore.isPluginInstalled(pluginId)
   }
 

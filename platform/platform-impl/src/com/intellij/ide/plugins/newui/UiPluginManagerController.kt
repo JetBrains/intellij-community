@@ -38,17 +38,15 @@ interface UiPluginManagerController {
   suspend fun continueInstallation(sessionId: String, pluginId: PluginId, project: Project, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, pluginEnabler: PluginEnabler?, modalityState: ModalityState?, parentComponent: JComponent?): InstallPluginResult
   fun applySession(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult
   suspend fun updatePluginDependencies(sessionId: String): Set<PluginId>
-  fun enablePlugins(sessionId: String, descriptorIds: List<PluginId>, enable: Boolean, project: Project?): SetEnabledStateResult
   suspend fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult
   suspend fun isBundledUpdate(pluginIds: List<PluginId>): Boolean
-  fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean
   fun hasPluginRequiresUltimateButItsDisabled(pluginIds: List<PluginId>): Boolean
   fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId>
   fun getCustomRepoPlugins(): List<PluginUiModel>
   suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>>
   suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean
   suspend fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult
-  fun isPluginInstalled(pluginId: PluginId): Boolean
+  suspend fun isPluginInstalled(pluginId: PluginId): Boolean
   fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean
   fun setEnableStateForDependencies(sessionId: String, descriptorIds: Set<PluginId>, enable: Boolean): SetEnabledStateResult
   fun filterPluginsRequiringUltimateButItsDisabled(pluginIds: List<PluginId>): List<PluginId>
@@ -67,6 +65,9 @@ interface UiPluginManagerController {
   suspend fun checkPluginCanBeDownloaded(pluginUiModel: PluginUiModel, progressIndicator: ProgressIndicator?): Boolean
   fun setPluginStatus(sessionId: String, pluginIds: List<PluginId>, enable: Boolean)
   fun getApplyError(sessionId: String): String?
+
+  fun enablePlugins(sessionId: String, descriptorIds: List<PluginId>, enable: Boolean, project: Project?): SetEnabledStateResult
+  fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean
 
   suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult>
   suspend fun isModified(sessionId: String): Boolean

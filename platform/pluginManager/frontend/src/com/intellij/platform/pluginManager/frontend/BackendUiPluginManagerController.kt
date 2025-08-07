@@ -126,8 +126,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().isPluginEnabled(pluginId)
   }
 
-  override fun isPluginInstalled(pluginId: PluginId): Boolean {
-    return awaitForResult { PluginManagerApi.getInstance().isPluginInstalled(pluginId) }
+  override suspend fun isPluginInstalled(pluginId: PluginId): Boolean {
+    return PluginManagerApi.getInstance().isPluginInstalled(pluginId)
   }
 
   override fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {

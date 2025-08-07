@@ -91,7 +91,7 @@ class UiPluginManager {
     return getController().getPlugin(pluginId)
   }
 
-  fun isPluginInstalled(pluginId: PluginId): Boolean {
+  suspend fun isPluginInstalled(pluginId: PluginId): Boolean {
     return getController().isPluginInstalled(pluginId)
   }
 

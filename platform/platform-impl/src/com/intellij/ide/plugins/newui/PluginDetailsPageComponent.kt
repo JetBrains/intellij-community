@@ -652,7 +652,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     val newReviewLink = LinkPanel(topPanel, true, false, null, BorderLayout.WEST)
     newReviewLink.showWithBrowseUrl(IdeBundle.message("plugins.new.review.action"), false) {
       val pluginUiModel = plugin!!
-      val installedPlugin = if(isMarketplace) installedDescriptorForMarketplace else installedPluginMarketplaceNode
+      val installedPlugin = if (isMarketplace) installedDescriptorForMarketplace else installedPluginMarketplaceNode
       getPluginWriteReviewUrl(pluginUiModel.pluginId, installedPlugin?.version)
     }
 
@@ -917,7 +917,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
-  private fun showPlugin(pluginModel: PluginUiModel) {
+  private suspend fun showPlugin(pluginModel: PluginUiModel) {
     val text: @NlsSafe String = "<html><span>" + pluginModel.name + "</span></html>"
     nameComponent.text = text
     nameComponent.foreground = null
@@ -1401,9 +1401,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     fullRepaint()
   }
 
-  fun showProgress(storeIndicator: Boolean, cancelRunnable: () -> Unit) {
-    indicator = OneLineProgressIndicator(false)
-    indicator!!.setCancelRunnable(cancelRunnable)
+  fun showProgress(storeIndicator: Boolean, cancelRunnable: suspend () -> Unit) {
+    indicator = OneLineProgressIndicatorWithAsyncCallback(coroutineScope, false, cancelRunnable)
     nameAndButtons!!.setProgressComponent(null, indicator!!.createBaselineWrapper())
     if (storeIndicator) {
       PluginModelFacade.addProgress(descriptorForActions!!, indicator!!)

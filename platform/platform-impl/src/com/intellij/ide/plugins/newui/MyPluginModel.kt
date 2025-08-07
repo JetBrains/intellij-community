@@ -37,11 +37,11 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.SystemProperties
-import com.intellij.util.progress.sleepCancellable
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -123,7 +123,9 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   fun pluginInstalledFromDisk(callbackData: PluginInstallCallbackData, errors: MutableList<HtmlChunk>) {
     val descriptor = callbackData.pluginDescriptor
-    appendOrUpdateDescriptor(PluginUiModelAdapter(descriptor), callbackData.restartNeeded, errors)
+    coroutineScope.launch {
+      appendOrUpdateDescriptor(PluginUiModelAdapter(descriptor), callbackData.restartNeeded, errors)
+    }
   }
 
   fun addComponent(component: ListPluginComponent) {
@@ -210,8 +212,8 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
         withBackgroundProgress(projectNotNull, IdeBundle.message("progress.title.loading.plugin.details")) {
           jobToIndicator(coroutineContext.job, bgProgressIndicator) {
             val installPluginInfo = InstallPluginInfo(bgProgressIndicator, descriptor, this@MyPluginModel, updateDescriptor != null)
-            prepareToInstall(installPluginInfo)
             return@jobToIndicator runBlockingCancellable {
+              prepareToInstall(installPluginInfo)
               val result = controller.installOrUpdatePlugin(sessionId, projectNotNull, parentComponent, descriptor, updateDescriptor, myInstallSource, modalityState, null)
               if (result.disabledPlugins.isEmpty() || result.disabledDependants.isEmpty()) {
                 return@runBlockingCancellable result
@@ -226,7 +228,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
   }
 
-  fun applyInstallResult(result: InstallPluginResult, info: InstallPluginInfo, descriptor: PluginUiModel, controller: UiPluginManagerController): InstallPluginResult {
+  suspend fun applyInstallResult(result: InstallPluginResult, info: InstallPluginInfo, descriptor: PluginUiModel, controller: UiPluginManagerController): InstallPluginResult {
     val installedDescriptor = result.installedDescriptor
     if (result.success) {
       descriptor.addInstalledSource(controller.getTarget())
@@ -241,12 +243,12 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     applyChangedStates(changedStates)
     if (myPluginManagerCustomizer != null) {
       myPluginManagerCustomizer.updateAfterModification {
-        info.finish(result.success, result.cancel, result.showErrors, result.restartRequired, getErrors(result))
+        info.finish(result.success, result.cancel, result.showErrors, result.restartRequired, getErrors(result), coroutineScope)
         null
       }
     }
     else {
-      info.finish(result.success, result.cancel, result.showErrors, result.restartRequired, getErrors(result))
+      info.finish(result.success, result.cancel, result.showErrors, result.restartRequired, getErrors(result), coroutineScope)
     }
     return result
   }
@@ -327,7 +329,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
    * @param descriptor          Descriptor on which the installation was requested (can be a PluginNode or an IdeaPluginDescriptorImpl)
    * @param installedDescriptor If the plugin was loaded synchronously, the descriptor which has actually been installed; otherwise null.
    */
-  fun finishInstall(
+  suspend fun finishInstall(
     descriptor: PluginUiModel,
     installedDescriptor: PluginUiModel?,
     errors: Map<PluginId, List<HtmlChunk>>,
@@ -453,7 +455,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     myInstalling = installing
   }
 
-  private fun appendDependsAfterInstall(
+  private suspend fun appendDependsAfterInstall(
     success: Boolean,
     restartRequired: Boolean,
     errors: Map<PluginId, List<HtmlChunk>>,
@@ -498,7 +500,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
   }
 
-  fun appendOrUpdateDescriptor(descriptor: PluginUiModel, restartNeeded: Boolean, errors: List<HtmlChunk>) {
+  suspend fun appendOrUpdateDescriptor(descriptor: PluginUiModel, restartNeeded: Boolean, errors: List<HtmlChunk>) {
     val id = descriptor.pluginId
     if (!UiPluginManager.getInstance().isPluginInstalled(id)) {
       appendOrUpdateDescriptor(descriptor)
