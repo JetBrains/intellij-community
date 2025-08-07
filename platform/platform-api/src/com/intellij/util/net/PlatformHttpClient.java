@@ -75,10 +75,13 @@ public final class PlatformHttpClient {
       .executor(ExecutorsKt.asExecutor(Dispatchers.getIO()))
       .connectTimeout(Duration.ofMillis(HttpRequests.CONNECTION_TIMEOUT))
       .followRedirects(HttpClient.Redirect.NORMAL);
-    if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
+    if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred()) {
       var app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
-        builder = builder.sslContext(CertificateManager.getInstance().getSslContext());
+        CertificateManager certificateManager = app.getServiceIfCreated(CertificateManager.class);
+        if (certificateManager != null) {
+          builder = builder.sslContext(certificateManager.getSslContext());
+        }
       }
     }
     return builder;
