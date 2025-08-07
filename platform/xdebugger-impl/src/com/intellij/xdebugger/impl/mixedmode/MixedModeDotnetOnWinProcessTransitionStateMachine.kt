@@ -27,18 +27,13 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
   private val coroutineScope: CoroutineScope,
 ) {
   interface State
-  open class WithHighLevelDebugSuspendContextState(val high: XSuspendContext) : State
   object OnlyLowStarted : State
   class BothRunning(val activeLowLevelStepping: Boolean = false) : State
   object PausingStarted : State
-  object ResumeStartedHighResumed : State
   class WaitingForHighProcessPositionReached(val lowLevelSuspendContext : XSuspendContext) : State
   class HighStoppedWaitingForLowProcessToStop(val highSuspendContext: XSuspendContext?) : State
   class OnlyHighStopped(val highSuspendContext: XSuspendContext?) : State
   class BothStopped(val low: XSuspendContext, val high: XSuspendContext) : State
-  class LowLevelRunToAddressStarted(high: XSuspendContext) : WithHighLevelDebugSuspendContextState(high)
-  class HighLevelRunToAddressStarted(val sourcePosition: XSourcePosition, val high: XSuspendContext) : State
-  class HighLevelRunToAddressStartedLowRun : State
 
   // Set of states for SetNextStatement feature
   // (we need so many states and transactions because low-level process has to refresh its state after high level set next statement completed):
@@ -228,26 +223,14 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
           is WaitingForLowDebuggerRunning -> {
             changeState(BothRunning(currentState.lowLevelSteppingActive))
           }
-          is ResumeStartedHighResumed -> {
-            changeState(BothRunning())
-          }
           is HighDebuggerAlreadyStoppedWaitingForDelayedLowDebuggerRunningEvent -> {
             changeState(HighStoppedWaitingForLowProcessToStop(currentState.highLevelSuspendContext))
           }
           is WaitingForBothDebuggersRunning -> {
             changeState(WaitingForHighDebuggerRunning(currentState.lowLevelSteppingActive))
           }
-          is LowLevelRunToAddressStarted -> {
-            changeState(ResumeStartedHighResumed)
-          }
           is BothStopped -> {
             changeState(OnlyHighStopped(currentState.high))
-          }
-          is HighLevelRunToAddressStarted -> {
-            withContext(Dispatchers.EDT) {
-              high.runToPosition(currentState.sourcePosition, currentState.high)
-            }
-            changeState(HighLevelRunToAddressStartedLowRun())
           }
           is HighLevelSetStatementPreparingLowLevelProcess -> {
             highExtension.setNextStatement(currentState.high, currentState.position)
@@ -321,7 +304,7 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
           is WaitingForHighDebuggerRunning -> {
             changeState(BothRunning(currentState.lowLevelSteppingActive))
           }
-          is OnlyHighStopped, is ResumeStartedHighResumed, is HighLevelRunToAddressStartedLowRun -> {
+          is OnlyHighStopped -> {
             changeState(BothRunning(false))
           }
           is HighLevelSetStatementLowRunningHighRunRequested -> {
