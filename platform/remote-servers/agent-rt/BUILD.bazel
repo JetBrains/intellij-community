@@ -6,6 +6,6 @@ jvm_library(
   module_name = "intellij.platform.remoteServers.agent.rt",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = "@community//:k7"
+  kotlinc_opts = "@community//:k8"
 )
 ### auto-generated section `build intellij.platform.remoteServers.agent.rt` end
