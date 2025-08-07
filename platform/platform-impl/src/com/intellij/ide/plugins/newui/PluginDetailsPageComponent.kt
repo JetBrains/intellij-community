@@ -66,7 +66,6 @@ import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.lang.Runnable
-import java.lang.System
 import java.util.*
 import java.util.function.Consumer
 import java.util.function.Supplier
@@ -1316,7 +1315,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         gearButton!!.isVisible = !uninstalled && !bundled && showComponent?.isNotFreeInFreeMode != true
         myUninstallButton?.isVisible = !uninstalled && !bundled && showComponent?.isNotFreeInFreeMode == true
         myEnableDisableButton!!.isVisible = bundled
-        myEnableDisableButton!!.isEnabled = showComponent?.isNotFreeInFreeMode != true
+        /** FIXME duplicated with [ListPluginComponent] */
+        myEnableDisableButton!!.isEnabled = plugin?.isDisableAllowed != false && showComponent?.isNotFreeInFreeMode != true
         updateButton!!.isVisible = !uninstalled && updateDescriptor != null && !installedWithoutRestart
         updateEnableForNameAndIcon()
         updateErrors()
@@ -1351,11 +1351,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         enableDisableController!!.update()
       }
       val bundled = plugin!!.isBundled
-      /** FIXME duplicated with [ListPluginComponent] */
-      val isDisableAllowed = UiPluginManager.getInstance().isDisableAllowed(plugin!!.pluginId)
       gearButton!!.isVisible = !uninstalled && !bundled && showComponent?.isNotFreeInFreeMode != true
       myEnableDisableButton!!.isVisible = bundled
-      myEnableDisableButton!!.isEnabled = isDisableAllowed && showComponent?.isNotFreeInFreeMode != true
+      /** FIXME duplicated with [ListPluginComponent] */
+      myEnableDisableButton!!.isEnabled = plugin?.isDisableAllowed != false && showComponent?.isNotFreeInFreeMode != true
       myUninstallButton?.isVisible = !uninstalled && !bundled && showComponent?.isNotFreeInFreeMode == true
 
       updateEnableForNameAndIcon()

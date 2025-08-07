@@ -131,7 +131,7 @@ public final class ListPluginComponent extends JPanel {
     UiPluginManager pluginManager = UiPluginManager.getInstance();
     myIsNotFreeInFreeMode = pluginManager
       .isPluginRequiresUltimateButItIsDisabled(pluginModelFacade.getModel().getSessionId(), pluginUiModel.getPluginId());
-    myIsDisableAllowed = UiPluginManager.getInstance().isDisableAllowed(pluginUiModel.getPluginId()) && !myIsNotFreeInFreeMode; // TODO probably myIsNotFree.. should be put inside
+    myIsDisableAllowed = pluginUiModel.isDisableAllowed() && !myIsNotFreeInFreeMode;
     pluginModelFacade.addComponent(this);
     myCustomizer = Registry.is("reworked.plugin.manager.enabled", false) ? PluginManagerCustomizer.getInstance() : null;
     setOpaque(true);
