@@ -45,16 +45,15 @@ class GradleLatestMinorVersionInspection : LocalInspectionTool() {
         if (currentGradleVersion >= latestMinorGradleVersion) return
 
         val fix = object : LocalQuickFixOnPsiElement(element) {
-          val newGradleWrapperDistributionUri = getWrapperDistributionUri(latestMinorGradleVersion)
+          val newGradleWrapperDistributionUri = getWrapperDistributionUri(latestMinorGradleVersion).toString().replace(":", "\\:")
 
           override fun getText(): @IntentionName String {
             return GradleInspectionBundle.message("intention.name.upgrade.gradle.version", latestMinorGradleVersion.version)
           }
 
           override fun invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement) {
-            val uri = newGradleWrapperDistributionUri
             val prop = startElement as Property
-            prop.setValue(uri.toString(), PropertyKeyValueFormat.FILE)
+            prop.setValue(newGradleWrapperDistributionUri, PropertyKeyValueFormat.FILE)
           }
 
           override fun getFamilyName(): @IntentionFamilyName String {
