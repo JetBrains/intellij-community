@@ -1,9 +1,9 @@
 {
-  "name": "Many Islands Dark",
+  "name": "Islands Dark",
   "dark": true,
   "author": "JetBrains",
   "parentTheme": "ExperimentalDark",
-  "editorScheme": "Island Dark",
+  "editorScheme": "Islands Dark",
   "colors": {
     "Gray3": "#393B40",
     "Gray2.5": "#323438",
