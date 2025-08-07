@@ -282,9 +282,6 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     runnerSettings.mavenProperties?.forEach {
       args.addProperty(it.key, it.value)
     }
-    if (runnerSettings.vmOptions.isNotBlank()) {
-      args.add(runnerSettings.vmOptions)
-    }
 
     if (runnerSettings.isSkipTests) {
       args.addProperty("skipTests", "true")
@@ -334,10 +331,18 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     myConfiguration.runnerSettings?.environmentProperties?.let { map.putAll(map) }
     val javaParams = myConfiguration.createJavaParameters(myConfiguration.project)
     map["JAVA_HOME"] = Path(javaParams.jdkPath).asEelPath().toString()
-    if (debug && mavenConnectionWrapper != null) {
-      val maven_opts = map["MAVEN_OPTS"] ?: ""
-      map["MAVEN_OPTS"] = mavenConnectionWrapper!!.enhanceMavenOpts(maven_opts)
+    val optsBuilder = StringBuilder(map["MAVEN_OPTS"] ?: "")
+    myConfiguration.runnerSettings?.vmOptions?.let {
+      if (optsBuilder.isNotEmpty()) optsBuilder.append(" ")
+      optsBuilder.append(it)
     }
+    val mavenOpts = if (debug && mavenConnectionWrapper != null) {
+      mavenConnectionWrapper!!.enhanceMavenOpts(optsBuilder.toString())
+    }
+    else {
+      optsBuilder.toString()
+    }
+    map["MAVEN_OPTS"] = mavenOpts
     myConfiguration.runnerSettings?.environmentProperties?.let { map.putAll(it) }
     return map
   }
