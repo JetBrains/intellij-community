@@ -66,12 +66,12 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   private File ourTempDir;
   private Project myProject;
   private File myTestDir;
+  private VirtualFile myProjectConfig;
+  private List<VirtualFile> myAllConfigs = new ArrayList<>();
+  private @Nullable WSLDistribution myWSLDistribution;
 
   protected IdeaProjectTestFixture myTestFixture;
   protected VirtualFile myProjectRoot;
-  protected VirtualFile myProjectConfig;
-  protected List<VirtualFile> myAllConfigs = new ArrayList<>();
-  protected @Nullable WSLDistribution myWSLDistribution;
 
   @Override
   protected void setUp() throws Exception {
@@ -370,6 +370,14 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
 
   protected @NotNull File getMyTestDir() {
     return myTestDir;
+  }
+
+  protected @NotNull VirtualFile getMyProjectConfig() {
+    return myProjectConfig;
+  }
+
+  public @Nullable WSLDistribution getMyWSLDistribution() {
+    return myWSLDistribution;
   }
 
   protected Module getModule(final String name) {

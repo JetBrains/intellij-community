@@ -269,8 +269,8 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
 
   @NotNull
   private String requireRealJdkHome() {
-    if (myWSLDistribution != null) {
-      return requireWslJdkHome(myWSLDistribution);
+    if (getMyWSLDistribution() != null) {
+      return requireWslJdkHome(getMyWSLDistribution());
     }
     return requireJdkHome();
   }
