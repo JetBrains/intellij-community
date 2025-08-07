@@ -21,8 +21,8 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
 
   constructor(paneId: String) : this(paneId, true)
 
-  private val left = ToolWindowLeftToolbar(paneId, isPrimary)
-  private val right = ToolWindowRightToolbar(paneId, isPrimary)
+  internal val left = ToolWindowLeftToolbar(paneId, isPrimary)
+  internal val right = ToolWindowRightToolbar(paneId, isPrimary)
   private var showButtons = true
   private var isStripesOverlaid = false
 

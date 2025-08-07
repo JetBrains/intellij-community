@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splittable
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
@@ -22,8 +23,11 @@ import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.*
+import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.tabs.impl.JBEditorTabs
+import com.intellij.ui.tabs.impl.JBTabsImpl
+import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -165,6 +169,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
       val project = frame.project
       if (project != null) {
         val manager = ToolWindowManager.getInstance(project) as ToolWindowManagerEx
+        updateToolStripesVisibility(manager)
         for (toolwindow in manager.toolWindows) {
           if (toolwindow is ToolWindowImpl) {
             toolwindow.getNullableDecorator()?.also {
@@ -202,6 +207,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
       val project = frame.project
       if (project != null) {
         val manager = ToolWindowManager.getInstance(project) as ToolWindowManagerEx
+        updateToolStripesVisibility(manager)
         for (toolwindow in manager.toolWindows) {
           if (toolwindow is ToolWindowImpl) {
             toolwindow.getNullableDecorator()?.also {
@@ -247,15 +253,39 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   override fun configureToolWindowPane(toolWindowPaneParent: JComponent, buttonManager: ToolWindowButtonManager) {
-    if (isManyIslandEnabled && buttonManager is ToolWindowPaneNewButtonManager) {
+    if (buttonManager is ToolWindowPaneNewButtonManager) {
       buttonManager.addVisibleToolbarsListener { leftVisible, rightVisible ->
+        val isIslands = isManyIslandEnabled
+        val gap = JBUI.getInt("Islands.emptyGap", JBUI.scale(4))
+
+        if (SystemInfo.isMac) {
+          UIUtil.getRootPane(toolWindowPaneParent)?.let { rootPane ->
+            val tabContainer = rootPane.getClientProperty("WINDOW_TABS_CONTAINER_KEY")
+            if (tabContainer is JComponent) {
+              if (isIslands) {
+                val left = if (leftVisible) buttonManager.left.width + JBUI.scale(1) else gap
+                val right = if (rightVisible) buttonManager.right.width + JBUI.scale(2) else gap + JBUI.scale(1)
+
+                tabContainer.border = JBUI.Borders.empty(0, left, 0, right)
+              }
+              else if (tabContainer.border != null) {
+                tabContainer.border = null
+              }
+            }
+          }
+        }
+
+        if (!isIslands && toolWindowPaneParent.border != null) {
+          toolWindowPaneParent.border = null
+          return@addVisibleToolbarsListener
+        }
+
         if (leftVisible && rightVisible) {
           if (toolWindowPaneParent.border != null) {
             toolWindowPaneParent.border = null
           }
         }
         else {
-          val gap = JBUI.getInt("Islands.emptyGap", JBUI.scale(4))
           val left = if (leftVisible) 0 else gap
           val right = if (rightVisible) 0 else gap
 
@@ -417,6 +447,82 @@ internal class IslandsUICustomization : InternalUICustomization() {
       return IdeBackgroundUtil.getOriginalGraphics(graphics)
     }
     return graphics
+  }
+
+  private fun updateToolStripesVisibility(toolWindowManager: ToolWindowManager) {
+    if (toolWindowManager is ToolWindowManagerImpl) {
+      for (pane in toolWindowManager.getToolWindowPanes()) {
+        val buttonManager = pane.buttonManager
+        if (buttonManager is ToolWindowPaneNewButtonManager) {
+          buttonManager.updateToolStripesVisibility()
+        }
+      }
+    }
+  }
+
+  override fun paintProjectTabsContainer(component: JComponent, g: Graphics): Boolean {
+    if (isManyIslandEnabled) {
+      val gg = IdeBackgroundUtil.withFrameBackground(g, component)
+      gg.color = getMainBackgroundColor()
+      gg.fillRect(0, 0, component.width, component.height)
+      return true
+    }
+    return false
+  }
+
+  private val PROJECT_TAB_SELECTED_BACKGROUND = JBColor.namedColor("MainWindow.Tab.selectedBackground", JBUI.CurrentTheme.ToolWindow.background())
+  private val PROJECT_TAB_HOVER_BACKGROUND = JBColor.namedColor("MainWindow.Tab.hoverBackground", JBColor.namedColor("MainToolbar.Dropdown.transparentHoverBackground"))
+  private val PROJECT_TAB_SEPARATOR_COLOR = JBColor.namedColor("MainWindow.Tab.separatorColor", 0xD3D5DB, 0x43454A)
+
+  override fun paintProjectTab(label: TabLabel, g: Graphics, tabs: JBTabsImpl, selected: Boolean, index: Int, lastIndex: Int): Boolean {
+    if (!isManyIslandEnabled) {
+      return false
+    }
+
+    val parent = tabs.parent
+    if (parent is JComponent && parent.border == null) {
+      val project = ProjectUtil.getProjectForComponent(tabs)
+      if (project != null) {
+        updateToolStripesVisibility(ToolWindowManager.getInstance(project))
+      }
+    }
+
+    val hovered = tabs.isHoveredTab(label)
+    val isGradient = isIslandsGradientEnabled
+    val rect = Rectangle(label.width, label.height)
+
+    if (!isGradient) {
+      g.color = getMainBackgroundColor()
+      g.fillRect(0, 0, rect.width, rect.height)
+    }
+
+    if (selected || hovered) {
+      val gg = if (isGradient) IdeBackgroundUtil.getOriginalGraphics(g) else g
+      val cornerRadius = JBUI.getInt("Island.arc", 10)
+
+      rect.x += JBUI.scale(1)
+      rect.width -= rect.x * 2
+
+      (gg as Graphics2D).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+
+      gg.color = if (selected) PROJECT_TAB_SELECTED_BACKGROUND else PROJECT_TAB_HOVER_BACKGROUND
+      gg.fillRoundRect(rect.x, rect.y, rect.width, rect.height, cornerRadius, cornerRadius)
+    }
+    else if (lastIndex > 1 && index < lastIndex) {
+      val nextTab = tabs.getTabAt(index + 1)
+
+      if (nextTab != tabs.selectedInfo && !tabs.isHoveredTab(tabs.getTabLabel(nextTab))) {
+        val gg = if (isGradient) IdeBackgroundUtil.getOriginalGraphics(g) else g
+        val border = JBUI.scale(1).toDouble()
+        val width = label.width - border
+        val offset = JBUI.scale(5).toDouble()
+
+        g.color = PROJECT_TAB_SEPARATOR_COLOR
+        LinePainter2D.paint(gg as Graphics2D, width, offset, width, rect.height - offset, LinePainter2D.StrokeType.INSIDE, border)
+      }
+    }
+
+    return true
   }
 }
 
