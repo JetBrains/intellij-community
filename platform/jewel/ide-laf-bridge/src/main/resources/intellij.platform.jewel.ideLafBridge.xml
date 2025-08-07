@@ -3,5 +3,11 @@
     <module name="intellij.libraries.skiko" />
     <module name="intellij.platform.jewel.foundation" />
     <module name="intellij.platform.jewel.ui" />
+    <!-- TextMate modules -->
+    <module name="intellij.textmate" />
+    <module name="intellij.textmate.common" />
+    <module name="intellij.textmate.core" />
+    <module name="intellij.textmate.joni" />
+    <module name="intellij.textmate.backend" />
   </dependencies>
 </idea-plugin>
