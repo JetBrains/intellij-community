@@ -175,8 +175,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginInstallerApi.getInstance().getErrors(sessionId, pluginId)
   }
 
-  override fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId> {
-    return awaitForResult { PluginManagerApi.getInstance().enableRequiredPlugins(sessionId, pluginId) }
+  override suspend fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId> {
+    return PluginManagerApi.getInstance().enableRequiredPlugins(sessionId, pluginId)
   }
 
   override fun getCustomRepoPlugins(): List<PluginUiModel> {

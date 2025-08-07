@@ -153,7 +153,7 @@ class UiPluginManager {
     return getController().filterPluginsRequiringUltimateButItsDisabled(pluginIds)
   }
 
-  fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId> {
+  suspend fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId> {
     return getController().enableRequiredPlugins(sessionId, pluginId)
   }
 

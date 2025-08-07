@@ -613,7 +613,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return enableDependencies(session, descriptors, action, buildPluginIdMap(), getPluginSet().buildContentModuleIdMap())
   }
 
-  override fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId> {
+  override suspend fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId> {
     val session = PluginManagerSessionService.getInstance().getSession(sessionId) ?: return emptySet()
     val requiredPluginIds = getRequiredPluginIds(session, pluginId)
     if (requiredPluginIds.isEmpty()) {

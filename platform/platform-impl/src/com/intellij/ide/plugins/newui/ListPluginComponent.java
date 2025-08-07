@@ -710,7 +710,7 @@ public final class ListPluginComponent extends JPanel {
         myErrorPanel.add(myErrorComponent, BorderLayout.CENTER);
       }
 
-      myErrorComponent.setErrors(errors, () -> myModelFacade.enableRequiredPlugins(plugin));
+      myErrorComponent.setErrors(errors, () -> myModelFacade.enableRequiredPluginsAsync(plugin));
 
       if (addListeners) {
         myEventHandler.addAll(myErrorPanel);

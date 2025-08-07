@@ -718,10 +718,12 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     return setEnabledState(descriptors, PluginEnableDisableAction.DISABLE_GLOBALLY)
   }
 
-  fun enableRequiredPlugins(descriptor: IdeaPluginDescriptor) {
+  suspend fun enableRequiredPlugins(descriptor: IdeaPluginDescriptor) {
     val pluginsToEnable = UiPluginManager.getInstance().enableRequiredPlugins(mySessionId.toString(),
                                                                               descriptor.pluginId)
-    setStatesByIds(pluginsToEnable, true)
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      setStatesByIds(pluginsToEnable, true)
+    }
   }
 
   private fun runInvalidFixCallback() {

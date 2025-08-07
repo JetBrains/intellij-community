@@ -41,7 +41,7 @@ interface UiPluginManagerController {
   suspend fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult
   suspend fun isBundledUpdate(pluginIds: List<PluginId>): Boolean
   fun hasPluginRequiresUltimateButItsDisabled(pluginIds: List<PluginId>): Boolean
-  fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId>
+  suspend fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId>
   fun getCustomRepoPlugins(): List<PluginUiModel>
   suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>>
   suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean

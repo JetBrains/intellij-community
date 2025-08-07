@@ -10,6 +10,8 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -61,8 +63,14 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     return pluginModel.getErrors(model.getDescriptor())
   }
 
-  fun enableRequiredPlugins(model: PluginUiModel) {
+  suspend fun enableRequiredPlugins(model: PluginUiModel) {
     pluginModel.enableRequiredPlugins(model.getDescriptor())
+  }
+
+  fun enableRequiredPluginsAsync(model: PluginUiModel) {
+    pluginModel.coroutineScope.launch(Dispatchers.IO) {
+      enableRequiredPlugins(model)
+    }
   }
 
   fun isUninstalled(pluginId: PluginId): Boolean {

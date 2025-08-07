@@ -1394,11 +1394,14 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun handleErrors() {
-    pluginModel.enableRequiredPlugins(descriptorForActions!!)
-
-    updateIcon()
-    updateEnabledState()
-    fullRepaint()
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
+      withContext(Dispatchers.IO) {
+        pluginModel.enableRequiredPlugins(descriptorForActions!!)
+      }
+      updateIcon()
+      updateEnabledState()
+      fullRepaint()
+    }
   }
 
   fun showProgress(storeIndicator: Boolean, cancelRunnable: suspend () -> Unit) {
