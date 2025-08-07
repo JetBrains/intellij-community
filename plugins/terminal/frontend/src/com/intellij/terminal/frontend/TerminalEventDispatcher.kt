@@ -38,7 +38,7 @@ import javax.swing.KeyStroke
  * 1. Sort out other events except KeyEvents in [dispatch]
  * 2. If the key event corresponds to one of the AnActions from our list, we do not process it,
  * allowing the platform to execute the corresponding AnAction.
- * 3. All other key events are handled directly by [handleKeyEvent], and sent to the Terminal process.
+ * 3. All other key events are handled directly by [eventsHandler], and sent to the Terminal process.
  *
  * For the key event sent to the platform at step 2, there are two possibilities:
  *
@@ -46,16 +46,17 @@ import javax.swing.KeyStroke
  * In this case, this action is performed by the platform as usual.
  * 2. Otherwise, the special [SendShortcutToTerminalAction] is performed.
  * This action only enables itself if all the actions from our list corresponding to the same shortcut are disabled.
- * It then sends the received shortcut to the terminal using the same [handleKeyEvent] mentioned above.
+ * It then sends the received shortcut to the terminal using [eventsHandler].
  */
-internal abstract class TerminalEventDispatcher(
+private class TerminalEventDispatcher(
   private val editor: EditorEx,
   private val settings: JBTerminalSystemSettingsProviderBase,
+  private val eventsHandler: TerminalEventsHandler,
   private val parentDisposable: Disposable,
 ) : IdeEventQueue.EventDispatcher {
-  private val sendShortcutAction = SendShortcutToTerminalAction(this)
+  private val sendShortcutAction = SendShortcutToTerminalAction(eventsHandler)
   private var myRegistered = false
-  private var actionsToSkip: List<AnAction> = emptyList()
+  private var allowedActions: List<AnAction> = emptyList()
 
   /**
    * A flag to ignore the key typed event if the key pressed event was handled elsewhere.
@@ -81,49 +82,47 @@ internal abstract class TerminalEventDispatcher(
   private fun dispatchKeyEvent(e: TimedKeyEvent) {
     LOG.trace { "Key event received: ${e.original}" }
 
-    if (!skipAction(e.original)) {
+    if (isAllowedActionShortcut(e.original)) {
+      // KeyEvent will be handled by action system, so we need to remember that the next KeyTyped event is not needed
+      ignoreNextKeyTypedEvent = true
+      LOG.trace { "Key event skipped (there is an action for it): ${e.original}" }
+    }
+    else {
       if (e.original.id != KeyEvent.KEY_TYPED || !ignoreNextKeyTypedEvent) {
         ignoreNextKeyTypedEvent = false
-        handleKeyEvent(e)
+        eventsHandler.handleKeyEvent(e)
       }
       else {
         LOG.trace { "Key event skipped (key typed ignored): ${e.original}" }
       }
     }
-    else {
-      // KeyEvent will be handled by action system, so we need to remember that the next KeyTyped event is not needed
-      ignoreNextKeyTypedEvent = true
-      LOG.trace { "Key event skipped (there is an action for it): ${e.original}" }
-    }
   }
 
-  internal abstract fun handleKeyEvent(e: TimedKeyEvent)
-
-  fun register() {
+  fun registerIfNeeded() {
     ThreadingAssertions.assertEventDispatchThread()
-    this.actionsToSkip = getActionsToSkip()
+    this.allowedActions = getAllowedActions()
     if (!myRegistered) {
       IdeEventQueue.getInstance().addDispatcher(this, parentDisposable)
-      sendShortcutAction.register(editor.contentComponent, getActionsToSkip())
+      sendShortcutAction.register(editor.contentComponent, getAllowedActions())
       myRegistered = true
       LOG.trace { "Dispatcher registered: start capturing key events" }
     }
   }
 
-  fun unregister() {
+  fun unregisterIfRegistered() {
     ThreadingAssertions.assertEventDispatchThread()
     if (myRegistered) {
       IdeEventQueue.getInstance().removeDispatcher(this)
       sendShortcutAction.unregister(editor.contentComponent)
-      actionsToSkip = emptyList()
+      allowedActions = emptyList()
       myRegistered = false
       LOG.trace { "Dispatcher unregistered: finish capturing key events" }
     }
   }
 
-  private fun skipAction(e: KeyEvent): Boolean {
+  private fun isAllowedActionShortcut(e: KeyEvent): Boolean {
     val eventShortcut = KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null)
-    for (action in actionsToSkip) {
+    for (action in allowedActions) {
       for (sc in action.shortcutSet.shortcuts) {
         if (sc.isKeyboard && sc.startsWith(eventShortcut)) {
           if (!Registry.`is`("terminal.Ctrl-E.opens.RecentFiles.popup",
@@ -139,7 +138,7 @@ internal abstract class TerminalEventDispatcher(
     return false
   }
 
-  private fun getActionsToSkip(): List<AnAction> {
+  private fun getAllowedActions(): List<AnAction> {
     val actionManager = ActionManager.getInstance()
     val allowedActionIDs = if (settings.overrideIdeShortcuts()) OPTIONAL_ACTIONS + TERMINAL_ACTIONS else TERMINAL_ACTIONS
     return allowedActionIDs.mapNotNull { actionId -> actionManager.getAction(actionId) }
@@ -248,36 +247,27 @@ internal abstract class TerminalEventDispatcher(
   }
 }
 
-internal fun setupKeyEventDispatcher(
+internal fun setupKeyEventHandling(
   editor: EditorEx,
   settings: JBTerminalSystemSettingsProviderBase,
   eventsHandler: TerminalEventsHandler,
   disposable: Disposable,
 ) {
   // Key events forwarding from the editor to the shell
-  val eventDispatcher: TerminalEventDispatcher = object : TerminalEventDispatcher(editor, settings, disposable) {
-    override fun handleKeyEvent(e: TimedKeyEvent) {
-      if (e.original.id == KeyEvent.KEY_TYPED) {
-        eventsHandler.keyTyped(e)
-      }
-      else if (e.original.id == KeyEvent.KEY_PRESSED) {
-        eventsHandler.keyPressed(e)
-      }
-    }
-  }
+  val eventDispatcher = TerminalEventDispatcher(editor, settings, eventsHandler, disposable)
 
   editor.addFocusListener(object : FocusChangeListener {
     override fun focusGained(editor: Editor) {
-      eventDispatcher.register()
+      eventDispatcher.registerIfNeeded()
     }
 
     override fun focusLost(editor: Editor) {
-      eventDispatcher.unregister()
+      eventDispatcher.unregisterIfRegistered()
     }
   }, disposable)
 
   if (editor.contentComponent.hasFocus()) {
-    eventDispatcher.register()
+    eventDispatcher.registerIfNeeded()
   }
 }
 
