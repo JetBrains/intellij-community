@@ -227,10 +227,6 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginInstallerApi.getInstance().allowLoadUnloadWithoutRestart(pluginId.idString) }
   }
 
-  override fun isPluginDisabled(pluginId: PluginId): Boolean {
-    return awaitForResult { PluginManagerApi.getInstance().isPluginDisabled(pluginId) }
-  }
-
   override suspend fun executePluginsSearch(query: String, count: Int, includeIncompatible: Boolean): PluginSearchResult {
     return  PluginManagerApi.getInstance().executeMarketplaceQuery(query, count, includeIncompatible)
   }
