@@ -66,13 +66,11 @@ object CodeReviewTitleDescriptionComponentFactory {
 
     return textPanel
   }
-  fun createTitleEditorIn(project: Project, cs: CoroutineScope, vm: CodeReviewTitleDescriptionViewModel, titlePlaceholder: String): Editor = cs.createTitleEditor(project, vm, titlePlaceholder)
-  fun createDescriptionEditorIn(project: Project, cs: CoroutineScope, vm: CodeReviewTitleDescriptionViewModel, descriptionPlaceholder: String): Editor = cs.createDescriptionEditor(project, vm, descriptionPlaceholder)
 
-  private fun CoroutineScope.createTitleEditor(project: Project, vm: CodeReviewTitleDescriptionViewModel, titlePlaceholder: String): Editor {
+  fun createTitleEditorIn(project: Project, cs: CoroutineScope, vm: CodeReviewTitleDescriptionViewModel, titlePlaceholder: String): Editor {
     return CodeReviewCreateReviewUIUtil.createTitleEditor(project, titlePlaceholder).apply {
       margins = JBUI.insets(EDITOR_MARGINS, EDITOR_MARGINS, 0, EDITOR_MARGINS)
-      launchNow {
+      cs.launchNow {
         try {
           document.bindTextIn(this, vm.titleText, vm::setTitle)
           awaitCancellation()
@@ -86,10 +84,10 @@ object CodeReviewTitleDescriptionComponentFactory {
     }
   }
 
-  private fun CoroutineScope.createDescriptionEditor(project: Project, vm: CodeReviewTitleDescriptionViewModel, descriptionPlaceholder: String): Editor {
+  fun createDescriptionEditorIn(project: Project, cs: CoroutineScope, vm: CodeReviewTitleDescriptionViewModel, descriptionPlaceholder: String): Editor {
     return CodeReviewCreateReviewUIUtil.createDescriptionEditor(project, descriptionPlaceholder).apply {
       margins = JBUI.insets(0, EDITOR_MARGINS)
-      launchNow {
+      cs.launchNow {
         try {
           document.bindTextIn(this, vm.descriptionText, vm::setDescription)
           awaitCancellation()

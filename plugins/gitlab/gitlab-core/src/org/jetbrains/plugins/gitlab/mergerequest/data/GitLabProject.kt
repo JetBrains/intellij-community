@@ -44,7 +44,7 @@ interface GitLabProject {
    * The reason for this wait is that GitLab might take a few moments to process the merge request
    * before returning one that can be displayed in the IDE in a useful way.
    */
-  suspend fun createMergeRequestAndAwaitCompletion(sourceBranch: String, targetBranch: String, title: String): GitLabMergeRequestDTO
+  suspend fun createMergeRequestAndAwaitCompletion(sourceBranch: String, targetBranch: String, title: String, description: String?): GitLabMergeRequestDTO
   suspend fun adjustReviewers(mrIid: String, reviewers: List<GitLabUserDTO>): GitLabMergeRequestDTO
 
   fun reloadData()
@@ -112,9 +112,9 @@ class GitLabLazyProject(
   }
 
   @Throws(GitLabGraphQLMutationException::class)
-  override suspend fun createMergeRequestAndAwaitCompletion(sourceBranch: String, targetBranch: String, title: String): GitLabMergeRequestDTO {
+  override suspend fun createMergeRequestAndAwaitCompletion(sourceBranch: String, targetBranch: String, title: String, description: String?): GitLabMergeRequestDTO {
     return withContext(cs.coroutineContext + Dispatchers.IO) {
-      var data: GitLabMergeRequestDTO = api.graphQL.createMergeRequest(projectCoordinates, sourceBranch, targetBranch, title).getResultOrThrow()
+      var data: GitLabMergeRequestDTO = api.graphQL.createMergeRequest(projectCoordinates, sourceBranch, targetBranch, title, description).getResultOrThrow()
       val iid = data.iid
       var attempts = 1
       while (attempts++ < GitLabRegistry.getRequestPollingAttempts()) {

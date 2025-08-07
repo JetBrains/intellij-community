@@ -22,7 +22,7 @@ interface GitLabTitleAndDescriptionGeneratorExtension {
 
   sealed interface GenerationState
   data class GenerationError(val e: Exception) : GenerationState
-  data class GenerationStep(val title: String) : GenerationState
+  data class GenerationStep(val title: String, val description: String?) : GenerationState
 
   fun generate(project: Project, commits: List<VcsCommitMetadata>): Flow<GenerationState>
 }
@@ -45,6 +45,7 @@ internal class GitLabMergeRequestCreateTitleGenerationViewModelImpl(
   private val extension: GitLabTitleAndDescriptionGeneratorExtension,
   private val commits: List<VcsCommitMetadata>,
   private val setTitle: (String) -> Unit,
+  private val setDescription: (String) -> Unit,
 ) : GitLabMergeRequestCreateTitleGenerationViewModel {
   private val taskLauncher = SingleCoroutineLauncher(parentCs.childScope("Generate Title"))
   override val isGenerating: StateFlow<Boolean> = taskLauncher.busy
@@ -60,6 +61,7 @@ internal class GitLabMergeRequestCreateTitleGenerationViewModelImpl(
           is GenerationError -> throw it.e
           is GenerationStep -> {
             setTitle(it.title)
+            if (it.description != null) setDescription(it.description)
           }
         }
       }
