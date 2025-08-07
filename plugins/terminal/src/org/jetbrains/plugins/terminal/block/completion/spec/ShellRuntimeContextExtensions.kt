@@ -48,6 +48,7 @@ suspend fun ShellRuntimeContext.getChildFiles(
   }
   val separator = File.separatorChar
   return result.output.splitToSequence("\n")
+    .filter { it.isNotBlank() }
     .filter { !onlyDirectories || it.endsWith(separator) }
     // do not suggest './' and '../' directories if the user already typed some path
     .filter { path.isEmpty() || (it != ".$separator" && it != "..$separator") }
