@@ -13,8 +13,10 @@ import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.RefValueHashMapUtil;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
@@ -39,17 +41,17 @@ public final class DebugReflectionUtil {
     }));
 
   private static final Field[] EMPTY_FIELD_ARRAY = new Field[0];
-  private static final Method Unsafe_shouldBeInitialized;
+  private static final Method ClassLoader_findLoadedClass;
 
   static {
-    Method shouldBeInitialized;
+    Method findLoadedClass;
     try {
-      shouldBeInitialized = ReflectionUtil.getDeclaredMethod(Class.forName("sun.misc.Unsafe"), "shouldBeInitialized", Class.class);
+      findLoadedClass = ReflectionUtil.getDeclaredMethod(Class.forName("java.lang.ClassLoader"), "findLoadedClass", String.class);
     }
     catch (ClassNotFoundException ignored) {
-      shouldBeInitialized = null;
+      findLoadedClass = null;
     }
-    Unsafe_shouldBeInitialized = shouldBeInitialized;
+    ClassLoader_findLoadedClass = findLoadedClass;
   }
 
   private static Field @NotNull [] getAllFields(@NotNull Class<?> aClass) {
@@ -98,11 +100,12 @@ public final class DebugReflectionUtil {
     return type.isPrimitive() || type == String.class || type == Class.class || type.isArray() && isTrivial(type.getComponentType());
   }
 
-  private static boolean isInitialized(@NotNull Class<?> root) {
-    if (Unsafe_shouldBeInitialized == null) return false;
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static boolean isInitialized(ClassLoader classLoader, @NotNull String rootName) {
     boolean isInitialized = false;
     try {
-      isInitialized = !(Boolean)Unsafe_shouldBeInitialized.invoke(ReflectionUtil.getUnsafe(), root);
+      isInitialized = ClassLoader_findLoadedClass.invoke(classLoader, rootName) != null;
     }
     catch (Exception e) {
       //noinspection CallToPrintStackTrace
@@ -199,7 +202,7 @@ public final class DebugReflectionUtil {
       }
     }
     // check for objects leaking via static fields. process initialized classes only
-    if (root instanceof Class && isInitialized((Class<?>)root)) {
+    if (root instanceof Class && isInitialized(((Class<?>)root).getClassLoader(), ((Class<?>)root).getName())) {
         for (Field field : getAllFields((Class<?>)root)) {
           if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
           try {
