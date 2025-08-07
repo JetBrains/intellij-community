@@ -410,17 +410,15 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   override fun <V : FileAttributeView?> getFileAttributeView(path: Path, type: Class<V>?, vararg options: LinkOption): V? {
     ensureAbsoluteIjentNioPath(path)
     if (type == BasicFileAttributeView::class.java) {
-      val basicAttributes = readAttributes<BasicFileAttributes>(path, BasicFileAttributes::class.java, *options)
       @Suppress("UNCHECKED_CAST")
-      return IjentNioBasicFileAttributeView(path.nioFs.ijentFs, path.eelPath, path, basicAttributes) as V
+      return IjentNioBasicFileAttributeView(path.nioFs.ijentFs, path.eelPath, path) as V
     }
     val nioFs = ensureIjentNioPath(path).nioFs
     when (nioFs.ijentFs) {
       is IjentFileSystemPosixApi -> {
         if (type == PosixFileAttributeView::class.java) {
-          val posixAttributes = readAttributes<PosixFileAttributes>(path, PosixFileAttributes::class.java, *options)
           @Suppress("UNCHECKED_CAST")
-          return IjentNioPosixFileAttributeView(path.nioFs.ijentFs, path.eelPath, path, posixAttributes) as V
+          return IjentNioPosixFileAttributeView(path.nioFs.ijentFs, path.eelPath, path) as V
         }
         else {
           return null
