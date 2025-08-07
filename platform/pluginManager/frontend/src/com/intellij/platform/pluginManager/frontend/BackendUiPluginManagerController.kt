@@ -86,12 +86,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().getLastCompatiblePluginUpdate(allIds, throwExceptions, buildNumber) }
   }
 
-  override fun allowLoadUnloadSynchronously(id: PluginId): Boolean {
-    return awaitForResult { PluginInstallerApi.getInstance().allowLoadUnloadSynchronously(id) }
-  }
-
-  override fun performUninstall(sessionId: String, pluginId: PluginId): Boolean {
-    return runBlockingCancellable { PluginInstallerApi.getInstance().performUninstall(sessionId, pluginId) }
+  override suspend fun performUninstall(sessionId: String, pluginId: PluginId): Boolean {
+    return PluginInstallerApi.getInstance().performUninstall(sessionId, pluginId)
   }
 
   override suspend fun installOrUpdatePlugin(sessionId: String, project: Project, parentComponent: JComponent?, descriptor: PluginUiModel, updateDescriptor: PluginUiModel?, installSource: FUSEventSource?, modalityState: ModalityState?, pluginEnabler: PluginEnabler?): InstallPluginResult {
@@ -223,10 +219,6 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginInstallerApi.getInstance().updatePluginDependencies(sessionId)
   }
 
-  override fun allowLoadUnloadWithoutRestart(pluginId: PluginId): Boolean {
-    return awaitForResult { PluginInstallerApi.getInstance().allowLoadUnloadWithoutRestart(pluginId.idString) }
-  }
-
   override suspend fun executePluginsSearch(query: String, count: Int, includeIncompatible: Boolean): PluginSearchResult {
     return  PluginManagerApi.getInstance().executeMarketplaceQuery(query, count, includeIncompatible)
   }
@@ -255,14 +247,6 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     service<BackendRpcCoroutineContext>().coroutineScope.launch {
       PluginManagerApi.getInstance().updateDescriptorsForInstalledPlugins()
     }
-  }
-
-  override fun uninstallDynamicPlugin(parentComponent: JComponent?, sessionId: String, pluginId: PluginId, isUpdate: Boolean): Boolean {
-    return awaitForResult { PluginInstallerApi.getInstance().uninstallDynamicPlugin(sessionId, pluginId, isUpdate) }
-  }
-
-  override fun deletePluginFiles(pluginId: PluginId) {
-    awaitForResult { PluginInstallerApi.getInstance().deletePluginFiles(pluginId) }
   }
 
   override fun isNeedUpdate(pluginId: PluginId): Boolean {

@@ -122,10 +122,6 @@ internal class BackendPluginInstallerApi : PluginInstallerApi {
     }
   }
 
-  override suspend fun uninstallDynamicPlugin(sessionId: String, pluginId: PluginId, isUpdate: Boolean): Boolean {
-    return DefaultUiPluginManagerController.uninstallDynamicPlugin(null, sessionId, pluginId, isUpdate)
-  }
-
   override suspend fun deletePluginFiles(pluginId: PluginId) {
     val pluginDescriptor = PluginManagerCore.findPlugin(pluginId) ?: return
     try {

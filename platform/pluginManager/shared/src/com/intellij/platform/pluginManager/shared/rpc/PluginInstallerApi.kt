@@ -28,7 +28,6 @@ import javax.swing.JComponent
 @IntellijInternalApi
 interface PluginInstallerApi : RemoteApi<Unit> {
   suspend fun unloadDynamicPlugin(pluginId: PluginId, isUpdate: Boolean): Boolean
-  suspend fun uninstallDynamicPlugin(sessionId: String, pluginId: PluginId, isUpdate: Boolean): Boolean
   suspend fun deletePluginFiles(pluginId: PluginId)
   suspend fun performUninstall(sessionId: String, id: PluginId): Boolean
 

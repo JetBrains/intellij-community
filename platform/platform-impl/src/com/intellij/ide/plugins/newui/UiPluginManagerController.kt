@@ -32,12 +32,8 @@ interface UiPluginManagerController {
   suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>?
   suspend fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata?
   suspend fun closeSession(sessionId: String)
-  fun uninstallDynamicPlugin(parentComponent: JComponent?, sessionId: String, pluginId: PluginId, isUpdate: Boolean): Boolean
-  fun deletePluginFiles(pluginId: PluginId)
-  fun allowLoadUnloadWithoutRestart(pluginId: PluginId): Boolean
   fun getPlugin(id: PluginId): PluginUiModel?
-  fun allowLoadUnloadSynchronously(pluginId: PluginId): Boolean
-  fun performUninstall(sessionId: String, pluginId: PluginId): Boolean
+  suspend fun performUninstall(sessionId: String, pluginId: PluginId): Boolean
   suspend fun installOrUpdatePlugin(sessionId: String, project: Project, parentComponent: JComponent?, descriptor: PluginUiModel, updateDescriptor: PluginUiModel?, installSource: FUSEventSource?, modalityState: ModalityState?, pluginEnabler: PluginEnabler?): InstallPluginResult
   suspend fun continueInstallation(sessionId: String, pluginId: PluginId, project: Project, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, pluginEnabler: PluginEnabler?, modalityState: ModalityState?, parentComponent: JComponent?): InstallPluginResult
   fun applySession(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult

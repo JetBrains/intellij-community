@@ -512,7 +512,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     UpdateChecker.updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance())
   }
 
-  override fun performUninstall(sessionId: String, pluginId: PluginId): Boolean {
+  override suspend fun performUninstall(sessionId: String, pluginId: PluginId): Boolean {
     val uninstalledPlugin = uninstallPlugin(pluginId)
     val session = findSession(sessionId) ?: return false
 
@@ -524,7 +524,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return uninstalledPlugin == null
   }
 
-  override fun uninstallDynamicPlugin(parentComponent: JComponent?, sessionId: String, pluginId: PluginId, isUpdate: Boolean): Boolean {
+  private fun uninstallDynamicPlugin(parentComponent: JComponent?, sessionId: String, pluginId: PluginId, isUpdate: Boolean): Boolean {
     val session = findSession(sessionId) ?: return true
     val descriptorImpl = PluginManagerCore.findPlugin(pluginId) ?: return false
     val uninstalledWithoutRestart = PluginInstaller.uninstallDynamicPlugin(parentComponent, descriptorImpl, isUpdate)
@@ -532,7 +532,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return uninstalledWithoutRestart
   }
 
-  override fun deletePluginFiles(pluginId: PluginId) {
+  private fun deletePluginFiles(pluginId: PluginId) {
     val descriptorImpl = PluginManagerCore.findPlugin(pluginId) ?: return
     try {
       FileUtil.delete(descriptorImpl.pluginPath)
@@ -670,12 +670,12 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return pluginIds.filter { pluginRequiresUltimatePluginButItsDisabled(it, idMap, contentModuleIdMap) }
   }
 
-  override fun allowLoadUnloadWithoutRestart(pluginId: PluginId): Boolean {
+  private fun allowLoadUnloadWithoutRestart(pluginId: PluginId): Boolean {
     val descriptorImpl = PluginManagerCore.findPlugin(pluginId) ?: return false
     return allowLoadUnloadWithoutRestart(descriptorImpl)
   }
 
-  override fun allowLoadUnloadSynchronously(pluginId: PluginId): Boolean {
+  private fun allowLoadUnloadSynchronously(pluginId: PluginId): Boolean {
     val descriptorImpl = PluginManagerCore.findPlugin(pluginId) ?: return false
     return DynamicPlugins.allowLoadUnloadSynchronously(descriptorImpl)
   }

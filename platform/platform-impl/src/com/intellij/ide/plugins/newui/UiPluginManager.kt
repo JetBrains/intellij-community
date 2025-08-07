@@ -77,10 +77,6 @@ class UiPluginManager {
     return getController().loadPluginReviews(pluginId, page)
   }
 
-  fun allowLoadUnloadWithoutRestart(pluginId: PluginId): Boolean {
-    return getController().allowLoadUnloadWithoutRestart(pluginId)
-  }
-
   fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent? = null, callback: (Map<PluginId, Boolean>) -> Unit = {}) {
     service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
       callback(getController().resetSession(sessionId, removeSession, parentComponent))
@@ -191,10 +187,6 @@ class UiPluginManager {
 
   suspend fun findPlugin(pluginId: PluginId): PluginUiModel? {
     return getController().findPlugin(pluginId)
-  }
-
-  suspend fun installOrUpdatePlugin(sessionId: String, project: Project, parentComponent: JComponent?, descriptor: PluginUiModel, updateDescriptor: PluginUiModel?, installSource: FUSEventSource?, modalityState: ModalityState?, pluginEnabler: PluginEnabler?): InstallPluginResult {
-    return getController().installOrUpdatePlugin(sessionId, project, parentComponent, descriptor, updateDescriptor, installSource, modalityState, pluginEnabler)
   }
 
   suspend fun continueInstallation(sessionId: String, pluginId: PluginId, project: Project, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, pluginEnabler: PluginEnabler?, modalityState: ModalityState?, parentComponent: JComponent?): InstallPluginResult {
