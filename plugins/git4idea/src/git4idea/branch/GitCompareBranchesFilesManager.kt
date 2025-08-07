@@ -7,13 +7,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import fleet.multiplatform.shims.ConcurrentHashMap
 
 @Service(Service.Level.PROJECT)
 internal class GitCompareBranchesFilesManager(private val project: Project) : Disposable {
-  private val openedFiles = ContainerUtil.createWeakValueMap<GitCompareBranchesVirtualFileSystem.ComplexPath, GitCompareBranchesFile>()
+  private val openedFiles: MutableMap<GitCompareBranchesVirtualFileSystem.ComplexPath, GitCompareBranchesFile> = ConcurrentHashMap()
 
   fun openFile(compareBranchesUi: GitCompareBranchesUi, focus: Boolean) {
     val ranges = compareBranchesUi.rangeFilter.ranges
@@ -21,22 +21,28 @@ internal class GitCompareBranchesFilesManager(private val project: Project) : Di
     val name = getEditorTabName(compareBranchesUi.rangeFilter)
     val path = createPath(project, name.hashCode().toString(), ranges, roots)
     val file = openedFiles.getOrPut(path, {
-      GitCompareBranchesFile(project, name, path) { compareBranchesUi }
+      GitCompareBranchesFile(name, path) { compareBranchesUi }
     })
     FileEditorManager.getInstance(project).openFile(file, focus)
   }
 
-  fun findOrCreateFile(path: GitCompareBranchesVirtualFileSystem.ComplexPath): VirtualFile? {
+  fun findOrCreateFile(path: GitCompareBranchesVirtualFileSystem.ComplexPath): VirtualFile {
     return openedFiles.getOrPut(path, {
       val rangeFilter = VcsLogFilterObject.fromRange(path.ranges)
       val rootFilter = path.roots?.let { VcsLogFilterObject.fromRoots(it) }
       val compareBranchesUiFactory = { GitCompareBranchesUi(project, rangeFilter, rootFilter) }
 
-      GitCompareBranchesFile(project, getEditorTabName(rangeFilter), path, compareBranchesUiFactory)
+      GitCompareBranchesFile(getEditorTabName(rangeFilter), path, compareBranchesUiFactory)
     })
   }
 
-  fun findFile(path: GitCompareBranchesVirtualFileSystem.ComplexPath): VirtualFile? = openedFiles[path]
+  fun closeFile(file: GitCompareBranchesFile) {
+    if (!file.isValid) return
+
+    openedFiles.remove(file.pathId)
+    file.isValid = false
+    FileEditorManager.getInstance(project).closeFile(file)
+  }
 
   override fun dispose() {
     openedFiles.clear()
