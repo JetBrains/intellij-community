@@ -22,12 +22,12 @@ import kotlinx.coroutines.async
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Service(Service.Level.APP)
 internal class GitEelExecutableDetectionHelper private constructor(private val scope: CoroutineScope) {
   private val myCache = mutableMapOf<String, Deferred<String?>>()
   private val myLock = Any()
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   fun getExecutablePathIfReady(eelApi: EelApi, rootDir: String): String? {
     return getExecutablePathPromise(eelApi, rootDir).takeIf { it.isCompleted }?.getCompleted()
   }
@@ -40,9 +40,15 @@ internal class GitEelExecutableDetectionHelper private constructor(private val s
 
   fun getExecutablePathPromise(eelApi: EelApi, rootDir: String): Deferred<String?> {
     return synchronized(myLock) {
-      myCache.computeIfAbsent(rootDir) {
+      val existing = myCache[rootDir]
+      if (existing != null && (!existing.isCompleted || existing.getCompleted() != null)) {
+        existing
+      }
+      else {
         scope.async {
           eelApi.exec.where("git")?.asNioPath()?.pathString
+        }.also {
+          myCache[rootDir] = it
         }
       }
     }
