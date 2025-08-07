@@ -67,7 +67,6 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   private Project myProject;
   private File myTestDir;
   private VirtualFile myProjectConfig;
-  private List<VirtualFile> myAllConfigs = new ArrayList<>();
   private @Nullable WSLDistribution myWSLDistribution;
 
   protected IdeaProjectTestFixture myTestFixture;
@@ -292,7 +291,6 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
           VirtualFile file = dir.findChild(configFileName);
           return file == null ? dir.createChildData(null, configFileName) : file;
         });
-        myAllConfigs.add(configFile);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
