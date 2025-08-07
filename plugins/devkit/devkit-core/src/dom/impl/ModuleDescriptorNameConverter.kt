@@ -1,185 +1,161 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.dom.impl;
+package org.jetbrains.idea.devkit.dom.impl
 
-import com.intellij.codeInsight.completion.PrioritizedLookupElement;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.GlobalSearchScopes;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.ElementPresentationManager;
-import com.intellij.util.xml.ResolvingConverter;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.dom.ContentDescriptor;
-import org.jetbrains.idea.devkit.dom.IdeaPlugin;
-import org.jetbrains.idea.devkit.util.DescriptorUtil;
-import org.jetbrains.jps.model.java.JavaResourceRootType;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.search.GlobalSearchScopes
+import com.intellij.psi.xml.XmlFile
+import com.intellij.util.xml.ConvertContext
+import com.intellij.util.xml.DomUtil
+import com.intellij.util.xml.ElementPresentationManager
+import com.intellij.util.xml.ResolvingConverter
+import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.idea.devkit.dom.ContentDescriptor
+import org.jetbrains.idea.devkit.dom.IdeaPlugin
+import org.jetbrains.idea.devkit.util.DescriptorUtil
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootType
 
-import java.util.*;
+private const val SUB_DESCRIPTOR_DELIMITER = "/"
+private const val SUB_DESCRIPTOR_FILENAME_DELIMITER = "."
+private val LOOKUP_PRIORITY = Key.create<Double>("LOOKUP_PRIORITY")
 
-public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin> {
+class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
+  override fun getErrorMessage(s: String?, context: ConvertContext): String? {
+    val value = s ?: ""
 
-  private static final @NonNls String SUB_DESCRIPTOR_DELIMITER = "/";
-  private static final @NonNls String SUB_DESCRIPTOR_FILENAME_DELIMITER = ".";
-
-  @Override
-  public String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
-    String value = StringUtil.notNullize(s);
-
-    String fileName;
-    String moduleName;
+    val fileName: String?
+    val moduleName: String?
     if (isSubDescriptor(value)) {
-      fileName = getSubDescriptorFileName(value);
-      moduleName = getSubDescriptorModuleName(value);
+      fileName = getSubDescriptorFileName(value)
+      moduleName = getSubDescriptorModuleName(value)
     }
     else {
-      fileName = getDescriptorFileName(value);
-      moduleName = value;
+      fileName = getDescriptorFileName(value)
+      moduleName = value
     }
 
-    return DevKitBundle.message("plugin.xml.convert.module.descriptor.name", fileName, moduleName);
+    return DevKitBundle.message("plugin.xml.convert.module.descriptor.name", fileName, moduleName)
   }
 
-  @Override
-  public @Nullable IdeaPlugin fromString(@Nullable String s, @NotNull ConvertContext context) {
-    if (StringUtil.isEmpty(s)) return null;
-    final Module currentModule = context.getModule();
-    if (currentModule == null) return null;
-    final ModuleManager moduleManager = ModuleManager.getInstance(context.getProject());
+  override fun fromString(s: String?, context: ConvertContext): IdeaPlugin? {
+    if (s == null || s.isEmpty() || context.module == null) return null
+    val moduleManager = ModuleManager.getInstance(context.project)
 
     if (isSubDescriptor(s)) {
-      final Module module = moduleManager.findModuleByName(getSubDescriptorModuleName(s));
-      if (module == null) return null;
-      return findDescriptorFileInModuleSources(module, getSubDescriptorFileName(s));
+      val module = moduleManager.findModuleByName(getSubDescriptorModuleName(s)) ?: return null
+      return findDescriptorFileInModuleSources(module, getSubDescriptorFileName(s))
     }
 
-    final Module module = moduleManager.findModuleByName(s);
-    if (module == null) return null;
-
-    return findDescriptorFileInModuleSources(module, getDescriptorFileName(module.getName()));
+    val module = moduleManager.findModuleByName(s) ?: return null
+    return findDescriptorFileInModuleSources(module, getDescriptorFileName(module.name))
   }
 
-  @Override
-  public @Nullable String toString(@Nullable IdeaPlugin plugin, @NotNull ConvertContext context) {
-    if (plugin == null) return null;
-    return getDisplayName(plugin);
+  override fun toString(plugin: IdeaPlugin?, context: ConvertContext): String? {
+    if (plugin == null) return null
+    return getDisplayName(plugin)
   }
 
-  private static @NotNull String getDisplayName(@NotNull IdeaPlugin plugin) {
-    final Module module = Objects.requireNonNull(plugin.getModule());
-    final String moduleName = module.getName();
-
-    final VirtualFile virtualFile = DomUtil.getFile(plugin).getVirtualFile();
-    final String fileName = virtualFile.getNameWithoutExtension();
-    if (moduleName.equals(fileName)) {
-      return fileName;
-    }
-    return moduleName + SUB_DESCRIPTOR_DELIMITER + StringUtil.substringAfterLast(fileName, SUB_DESCRIPTOR_FILENAME_DELIMITER);
-  }
-
-  @Override
-  public @NotNull LookupElement createLookupElement(IdeaPlugin plugin) {
-    final String displayName = getDisplayName(plugin);
-    LookupElementBuilder builder = LookupElementBuilder.create(Objects.requireNonNull(getPsiElement(plugin)), displayName)
-      .withIcon(ElementPresentationManager.getIconForClass(ContentDescriptor.ModuleDescriptor.class))
+  override fun createLookupElement(plugin: IdeaPlugin): LookupElement {
+    val displayName = getDisplayName(plugin)
+    val obj = getPsiElement(plugin)!!
+    val builder = LookupElementBuilder.create(obj, displayName)
+      .withIcon(ElementPresentationManager.getIconForClass(ContentDescriptor.ModuleDescriptor::class.java))
       .withBoldness(isSubDescriptor(displayName))
-      .withTypeText(plugin.getPackage().getStringValue());
+      .withTypeText(plugin.getPackage().stringValue)
 
-    Double priority = plugin.getUserData(LOOKUP_PRIORITY);
-    return priority != null ? PrioritizedLookupElement.withPriority(builder, priority) : builder;
+    val priority = plugin.getUserData(LOOKUP_PRIORITY)
+    return if (priority != null) PrioritizedLookupElement.withPriority(builder, priority) else builder
   }
 
-  private static final Key<Double> LOOKUP_PRIORITY = Key.create("LOOKUP_PRIORITY");
+  override fun getVariants(context: ConvertContext): Collection<IdeaPlugin> {
+    val currentModule = context.module ?: return emptyList()
+    val project = context.project
+    val variants = mutableListOf<IdeaPlugin>()
 
-  @Override
-  public @NotNull Collection<? extends IdeaPlugin> getVariants(@NotNull ConvertContext context) {
-    final Module currentModule = context.getModule();
-    if (currentModule == null) return Collections.emptyList();
-    final Project project = context.getProject();
-    List<IdeaPlugin> variants = new SmartList<>();
+    val dependencies = mutableSetOf<Module>().apply {
+      ModuleUtilCore.getDependencies(currentModule, this)
+      remove(currentModule)
+    }
 
-    final Set<Module> dependencies = new LinkedHashSet<>();
-    ModuleUtilCore.getDependencies(currentModule, dependencies);
-    dependencies.remove(currentModule);
+    for (module in ModuleManager.getInstance(project).modules) {
+      val prioritize = module === currentModule || dependencies.contains(module)
+      val moduleName = module.name
 
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      boolean prioritize = module == currentModule || dependencies.contains(module);
-      String moduleName = module.getName();
-
-      processModuleSourceRoots(module, root -> {
-        final Collection<IdeaPlugin> plugins = DescriptorUtil.getPlugins(project, GlobalSearchScopes.directoryScope(project, root, false));
+      processModuleSourceRoots(module) { root ->
+        val plugins = DescriptorUtil.getPlugins(project, GlobalSearchScopes.directoryScope(project, root, false))
         if (prioritize) {
-          plugins.forEach(plugin -> plugin.putUserData(LOOKUP_PRIORITY, module == currentModule ? 200.0 : 100.0));
+          plugins.forEach { plugin ->
+            plugin.putUserData(LOOKUP_PRIORITY, if (module === currentModule) 200.0 else 100.0)
+          }
         }
-        variants.addAll(ContainerUtil.filter(plugins, plugin -> DomUtil.getFile(plugin).getName().startsWith(moduleName)));
-        return true;
-      });
-    }
-    return variants;
-  }
-
-  private static @Nullable IdeaPlugin findDescriptorFileInModuleSources(@NotNull Module module, @NotNull String fileName) {
-    Ref<IdeaPlugin> ideaPlugin = Ref.create();
-    processModuleSourceRoots(module, root -> {
-      final VirtualFile candidate = root.findChild(fileName);
-      if (candidate == null) return true;
-      final PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(candidate);
-      if (DescriptorUtil.isPluginXml(psiFile)) {
-        ideaPlugin.set(DescriptorUtil.getIdeaPlugin((XmlFile)psiFile));
-        return false;
+        variants.addAll(plugins.filter { DomUtil.getFile(it).name.startsWith(moduleName) })
+        true
       }
-      return true;
-    });
-    return ideaPlugin.get();
-  }
-
-  private static void processModuleSourceRoots(@NotNull Module module, Processor<VirtualFile> processor) {
-    ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-    for (VirtualFile root : moduleRootManager.getSourceRoots(JavaResourceRootType.RESOURCE)) {
-      if (!processor.process(root)) return;
     }
-    for (VirtualFile root : moduleRootManager.getSourceRoots(JavaSourceRootType.SOURCE)) {
-      if (!processor.process(root)) return;
+    return variants
+  }
+
+  private fun getDisplayName(plugin: IdeaPlugin): String {
+    val module = plugin.module!!
+    val moduleName = module.name
+
+    val virtualFile = DomUtil.getFile(plugin).virtualFile
+    val fileName = virtualFile.nameWithoutExtension
+    if (moduleName == fileName) {
+      return fileName
+    }
+    return moduleName + SUB_DESCRIPTOR_DELIMITER + fileName.substringAfterLast(SUB_DESCRIPTOR_FILENAME_DELIMITER)
+  }
+
+  private fun findDescriptorFileInModuleSources(module: Module, fileName: String): IdeaPlugin? {
+    var ideaPlugin: IdeaPlugin? = null
+    processModuleSourceRoots(module) { root: VirtualFile ->
+      val candidate = root.findChild(fileName) ?: return@processModuleSourceRoots true
+      val psiFile = PsiManager.getInstance(module.project).findFile(candidate)
+      if (DescriptorUtil.isPluginXml(psiFile)) {
+        ideaPlugin = DescriptorUtil.getIdeaPlugin(psiFile as XmlFile)
+        return@processModuleSourceRoots false
+      }
+      true
+    }
+    return ideaPlugin
+  }
+
+  private fun processModuleSourceRoots(module: Module, process: (VirtualFile) -> Boolean) {
+    val moduleRootManager = ModuleRootManager.getInstance(module)
+    for (root in moduleRootManager.getSourceRoots(JavaResourceRootType.RESOURCE)) {
+      if (!process(root)) return
+    }
+    for (root in moduleRootManager.getSourceRoots(JavaSourceRootType.SOURCE)) {
+      if (!process(root)) return
     }
   }
 
-  private static @NotNull String getDescriptorFileName(@NotNull String fileName) {
-    return fileName + ".xml";
+  private fun getDescriptorFileName(fileName: String): String {
+    return "$fileName.xml"
   }
 
-  private static boolean isSubDescriptor(@NotNull String value) {
-    return StringUtil.contains(value, SUB_DESCRIPTOR_DELIMITER);
+  private fun isSubDescriptor(value: String): Boolean {
+    return value.contains(SUB_DESCRIPTOR_DELIMITER)
   }
 
-  private static @NotNull String getSubDescriptorModuleName(@NotNull String value) {
-    final String moduleName = StringUtil.substringBefore(value, SUB_DESCRIPTOR_DELIMITER);
-    assert moduleName != null : value;
-    return moduleName;
+  private fun getSubDescriptorModuleName(value: String): String {
+    return value.substringBefore(SUB_DESCRIPTOR_DELIMITER)
   }
 
-  private static @NotNull String getSubDescriptorFileName(@NotNull String value) {
-    final String moduleName = getSubDescriptorModuleName(value);
-    final String fileName = StringUtil.substringAfter(value, SUB_DESCRIPTOR_DELIMITER);
-    assert fileName != null : value;
-    return getDescriptorFileName(moduleName + SUB_DESCRIPTOR_FILENAME_DELIMITER + fileName);
+  private fun getSubDescriptorFileName(value: String): String {
+    val moduleName = getSubDescriptorModuleName(value)
+    val fileName = value.substringAfter(SUB_DESCRIPTOR_DELIMITER)
+    return getDescriptorFileName(moduleName + SUB_DESCRIPTOR_FILENAME_DELIMITER + fileName)
   }
+
 }
