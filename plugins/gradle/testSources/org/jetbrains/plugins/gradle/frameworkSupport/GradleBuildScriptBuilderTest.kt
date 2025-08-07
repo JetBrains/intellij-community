@@ -153,8 +153,6 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
       }
     """.trimIndent()) {
       withJavaPlugin()
-      withJavaPlugin()
-      withMavenCentral()
       withMavenCentral()
       withPostfix {
         call("block", "name") {
@@ -479,6 +477,45 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
     assertBuildScript("", "") {
       configureTask("myTask", "MyTask") {
         // no configuration
+      }
+    }
+  }
+
+  @Test
+  fun `test build script with kotlin java block`() {
+    assertBuildScript("""
+      group = 'testing'
+      version = '1.0'
+      
+      java {
+          withSourcesJar()
+      }
+      
+      kotlin {
+          jvmToolchain(21)
+          jvm()
+      }
+    """.trimIndent(), """
+      group = "testing"
+      version = "1.0"
+      
+      java {
+          withSourcesJar()
+      }
+      
+      kotlin {
+          jvmToolchain(21)
+          jvm()
+      }
+    """.trimIndent()) {
+      addGroup("testing")
+      addVersion("1.0")
+      withKotlinJvmToolchain(21)
+      withKotlin {
+        call("jvm")
+      }
+      withJava {
+        call("withSourcesJar")
       }
     }
   }
