@@ -69,17 +69,18 @@ import org.jetbrains.jewel.ui.theme.defaultBannerStyle
  */
 @Composable
 @Deprecated(
-    "Replace with the 'DefaultInformationBanner' overload",
+    "Replace with DefaultInformationBanner",
     replaceWith =
         ReplaceWith(
-            "org.jetbrains.jewel.ui.component.DefaultInformationBanner(" +
+            "DefaultInformationBanner(" +
                 "text = text, " +
                 "modifier = modifier, " +
                 "icon = icon, " +
                 "linkActions = actions, " +
                 "style = style, " +
                 "textStyle = textStyle" +
-                ")"
+                ")",
+            "org.jetbrains.jewel.ui.component.DefaultInformationBanner",
         ),
 )
 public fun InformationDefaultBanner(
@@ -261,17 +262,18 @@ public fun DefaultInformationBanner(
  */
 @Composable
 @Deprecated(
-    "Replace with the 'DefaultSuccessBanner' overload",
+    "Replace with DefaultSuccessBanner",
     replaceWith =
         ReplaceWith(
-            "org.jetbrains.jewel.ui.component.DefaultSuccessBanner(" +
+            "DefaultSuccessBanner(" +
                 "text = text, " +
                 "modifier = modifier, " +
                 "icon = icon, " +
                 "linkActions = actions, " +
                 "style = style, " +
                 "textStyle = textStyle" +
-                ")"
+                ")",
+            "org.jetbrains.jewel.ui.component.DefaultSuccessBanner",
         ),
 )
 public fun SuccessDefaultBanner(
@@ -449,17 +451,18 @@ public fun DefaultSuccessBanner(
  */
 @Composable
 @Deprecated(
-    "Replace with the 'DefaultWarningBanner' overload",
+    "Replace with DefaultWarningBanner",
     replaceWith =
         ReplaceWith(
-            "org.jetbrains.jewel.ui.component.DefaultWarningBanner(" +
+            "DefaultWarningBanner(" +
                 "text = text, " +
                 "modifier = modifier, " +
                 "icon = icon, " +
                 "linkActions = actions, " +
                 "style = style, " +
                 "textStyle = textStyle" +
-                ")"
+                ")",
+            "org.jetbrains.jewel.ui.component.DefaultWarningBanner",
         ),
 )
 public fun WarningDefaultBanner(
@@ -634,17 +637,18 @@ public fun DefaultWarningBanner(
  */
 @Composable
 @Deprecated(
-    "Replace with the 'DefaultErrorBanner' overload",
+    "Replace with DefaultErrorBanner",
     replaceWith =
         ReplaceWith(
-            "org.jetbrains.jewel.ui.component.DefaultErrorBanner((" +
+            "DefaultErrorBanner(" +
                 "text = text, " +
                 "modifier = modifier, " +
                 "icon = icon, " +
                 "linkActions = actions, " +
                 "style = style, " +
                 "textStyle = textStyle" +
-                ")"
+                ")",
+            "org.jetbrains.jewel.ui.component.DefaultErrorBanner",
         ),
 )
 public fun ErrorDefaultBanner(

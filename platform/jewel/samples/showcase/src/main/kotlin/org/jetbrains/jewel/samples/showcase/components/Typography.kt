@@ -2,6 +2,7 @@
 package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +21,7 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.Divider
+import org.jetbrains.jewel.ui.component.InfoText
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
@@ -57,6 +59,10 @@ public fun TypographyShowcase(modifier: Modifier = Modifier) {
                 TextShowcase(name = "Small", blurb, typography.small)
                 TextShowcase(name = "Editor", blurb, typography.editorTextStyle)
                 TextShowcase(name = "Console", blurb, typography.consoleTextStyle)
+
+                Divider(Orientation.Horizontal, modifier = Modifier.fillMaxWidth())
+
+                TextShowcase(name = "Info") { InfoText(blurb) }
             }
         }
     }
@@ -64,6 +70,11 @@ public fun TypographyShowcase(modifier: Modifier = Modifier) {
 
 @Composable
 private fun TextShowcase(name: String, blurb: String, textStyle: TextStyle, modifier: Modifier = Modifier) {
+    TextShowcase(name, modifier) { Text(blurb, style = textStyle) }
+}
+
+@Composable
+private fun TextShowcase(name: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             name,
@@ -71,6 +82,6 @@ private fun TextShowcase(name: String, blurb: String, textStyle: TextStyle, modi
             color = JewelTheme.globalColors.text.info,
             textAlign = TextAlign.End,
         )
-        Text(blurb, modifier = Modifier.weight(1f).alignByBaseline(), style = textStyle)
+        Box(Modifier.weight(1f).alignByBaseline()) { content() }
     }
 }
