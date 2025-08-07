@@ -7217,30 +7217,30 @@ java_library(
 java_library(
   name = "mockito",
   exports = [
-    ":mockito-core-5_12_0_http_import",
-    ":byte-buddy-1_14_15_http_import",
-    ":byte-buddy-agent-1_14_15_http_import",
+    ":mockito-core-5_18_0_http_import",
+    ":byte-buddy-1_17_5_http_import",
+    ":byte-buddy-agent-1_17_5_http_import",
     ":objenesis-3_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "mockito-core-5_12_0_http_import",
-  jar = "@mockito-core-5_12_0_http//file",
-  source_jar = "@mockito-core-5_12_0-sources_http//file"
+  name = "mockito-core-5_18_0_http_import",
+  jar = "@mockito-core-5_18_0_http//file",
+  source_jar = "@mockito-core-5_18_0-sources_http//file"
 )
 
 jvm_import(
-  name = "byte-buddy-1_14_15_http_import",
-  jar = "@byte-buddy-1_14_15_http//file",
-  source_jar = "@byte-buddy-1_14_15-sources_http//file"
+  name = "byte-buddy-1_17_5_http_import",
+  jar = "@byte-buddy-1_17_5_http//file",
+  source_jar = "@byte-buddy-1_17_5-sources_http//file"
 )
 
 jvm_import(
-  name = "byte-buddy-agent-1_14_15_http_import",
-  jar = "@byte-buddy-agent-1_14_15_http//file",
-  source_jar = "@byte-buddy-agent-1_14_15-sources_http//file"
+  name = "byte-buddy-agent-1_17_5_http_import",
+  jar = "@byte-buddy-agent-1_17_5_http//file",
+  source_jar = "@byte-buddy-agent-1_17_5-sources_http//file"
 )
 
 jvm_import(

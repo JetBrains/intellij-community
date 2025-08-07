@@ -10073,45 +10073,45 @@ http_file(
 )
 
 http_file(
-  name = "mockito-core-5_12_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/mockito/mockito-core/5.12.0/mockito-core-5.12.0.jar",
-  sha256 = "4a2eb29237050da749e90a46f948bce7e26ec22b671e41f59b1ac6f4b6408229",
-  downloaded_file_path = "mockito-core-5.12.0.jar"
+  name = "mockito-core-5_18_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/mockito/mockito-core/5.18.0/mockito-core-5.18.0.jar",
+  sha256 = "a3d4e40f7fe66016fe42c00de4e343777d74132afc85018e0f03ac6334a60f29",
+  downloaded_file_path = "mockito-core-5.18.0.jar"
 )
 
 http_file(
-  name = "byte-buddy-1_14_15_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.14.15/byte-buddy-1.14.15.jar",
-  sha256 = "7472e3961992c12a9fd4f6d67c21de4280abe18f292704dd49d7338289f8acf5",
-  downloaded_file_path = "byte-buddy-1.14.15.jar"
+  name = "byte-buddy-1_17_5_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.5/byte-buddy-1.17.5.jar",
+  sha256 = "71568c9f8396677219f650268fbf6493ded484edcdbdf2dae6129ca5be81e8db",
+  downloaded_file_path = "byte-buddy-1.17.5.jar"
 )
 
 http_file(
-  name = "byte-buddy-agent-1_14_15_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy-agent/1.14.15/byte-buddy-agent-1.14.15.jar",
-  sha256 = "3ef6ec7175801361170067cc6902969f966d37c72bf9353d9cd282263b184064",
-  downloaded_file_path = "byte-buddy-agent-1.14.15.jar"
+  name = "byte-buddy-agent-1_17_5_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy-agent/1.17.5/byte-buddy-agent-1.17.5.jar",
+  sha256 = "c5b9334ad82e632f6af60df22bbbdbbb62cee04877f4f43c38ba04aed9bd9901",
+  downloaded_file_path = "byte-buddy-agent-1.17.5.jar"
 )
 
 http_file(
-  name = "mockito-core-5_12_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/mockito/mockito-core/5.12.0/mockito-core-5.12.0-sources.jar",
-  sha256 = "8d109e7f4eed8c92f00842554e664060097995fc575a11e57381551182f5432a",
-  downloaded_file_path = "mockito-core-5.12.0-sources.jar"
+  name = "mockito-core-5_18_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/mockito/mockito-core/5.18.0/mockito-core-5.18.0-sources.jar",
+  sha256 = "f966b1ec2b1b41ce4521854c6db1e8bd7d692c33142fa56beb02fbb86ced012a",
+  downloaded_file_path = "mockito-core-5.18.0-sources.jar"
 )
 
 http_file(
-  name = "byte-buddy-1_14_15-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.14.15/byte-buddy-1.14.15-sources.jar",
-  sha256 = "234c4bf7ee7596a7d7b668e41f9c90830fdfbbc86d4c84d01b1db6ce22fb3fe6",
-  downloaded_file_path = "byte-buddy-1.14.15-sources.jar"
+  name = "byte-buddy-1_17_5-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.5/byte-buddy-1.17.5-sources.jar",
+  sha256 = "722eaa17b935a25e994f625b32ec166c53d23770d0659c615e62a0b26ce71615",
+  downloaded_file_path = "byte-buddy-1.17.5-sources.jar"
 )
 
 http_file(
-  name = "byte-buddy-agent-1_14_15-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy-agent/1.14.15/byte-buddy-agent-1.14.15-sources.jar",
-  sha256 = "ba7ead86f342cb392c3a910c4eeffd8f66274481e8a613cd2a9a59c456d08fac",
-  downloaded_file_path = "byte-buddy-agent-1.14.15-sources.jar"
+  name = "byte-buddy-agent-1_17_5-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy-agent/1.17.5/byte-buddy-agent-1.17.5-sources.jar",
+  sha256 = "40497a5ae2d6fb5931b4e00325ce747a6fb253996afb231b404dfadbe2811e68",
+  downloaded_file_path = "byte-buddy-agent-1.17.5-sources.jar"
 )
 
 http_file(
