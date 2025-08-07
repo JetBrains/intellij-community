@@ -356,8 +356,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     getCurrentExternalProjectSettings().setUseQualifiedModuleNames(false);
     importProject();
 
-    String myAppApiModuleName = myTestDir.getName() + "-my-app-api";
-    String myAppApiMainModuleName = myTestDir.getName() + "-my-app-api_main";
+    String myAppApiModuleName = getMyTestDir().getName() + "-my-app-api";
+    String myAppApiMainModuleName = getMyTestDir().getName() + "-my-app-api_main";
     String myUtilsApiMainModuleName = "org.sample-my-utils-api_main";
     assertModules(
       // non-gradle modules

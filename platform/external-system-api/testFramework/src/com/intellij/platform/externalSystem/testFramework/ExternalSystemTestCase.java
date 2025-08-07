@@ -65,9 +65,9 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
 
   private File ourTempDir;
   private Project myProject;
+  private File myTestDir;
 
   protected IdeaProjectTestFixture myTestFixture;
-  protected File myTestDir;
   protected VirtualFile myProjectRoot;
   protected VirtualFile myProjectConfig;
   protected List<VirtualFile> myAllConfigs = new ArrayList<>();
@@ -366,6 +366,10 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
 
   protected @NotNull Project getMyProject() {
     return myProject;
+  }
+
+  protected @NotNull File getMyTestDir() {
+    return myTestDir;
   }
 
   protected Module getModule(final String name) {
