@@ -654,6 +654,7 @@ c:com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer
 - com.intellij.ui.ColoredTreeCellRenderer
 - <init>(com.intellij.execution.testframework.TestConsoleProperties):V
 - customizeCellRenderer(javax.swing.JTree,java.lang.Object,Z,Z,Z,I,Z):V
+- getAccessibleContext():javax.accessibility.AccessibleContext
 - getConsoleProperties():com.intellij.execution.testframework.TestConsoleProperties
 - getPreferredSize():java.awt.Dimension
 - p:paintComponent(java.awt.Graphics):V

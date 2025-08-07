@@ -20,6 +20,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -1217,6 +1218,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   protected class AccessibleSimpleColoredComponent extends JComponent.AccessibleJComponent {
     @Override
     public String getAccessibleName() {
+      return AccessibleContextUtil.combineAccessibleStrings(getCharSequence(false).toString(), ", ", getIconToolTipText());
+    }
+
+    protected @Nullable @Nls String getAccessibleNameWithoutIconTooltip() {
       return getCharSequence(false).toString();
     }
 

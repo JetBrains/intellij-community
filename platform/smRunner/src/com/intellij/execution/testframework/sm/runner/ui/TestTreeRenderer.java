@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
@@ -150,5 +151,18 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
   @ApiStatus.Experimental
   public void setAccessibleStatus(@Nullable Computable<String> accessibleStatus) {
     myAccessibleStatus = accessibleStatus;
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleColoredTreeCellRendererWithContextMenu(new AccessibleColoredTreeCellRenderer() {
+        @Override
+        protected String getOriginalAccessibleName() {
+          return getAccessibleNameWithoutIconTooltip();
+        }
+      });
+    }
+    return accessibleContext;
   }
 }

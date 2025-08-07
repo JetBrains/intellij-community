@@ -751,6 +751,15 @@ c:com.intellij.ui.CellRendererPanel
 com.intellij.ui.ColorPickerListener
 - a:closed(java.awt.Color):V
 - a:colorChanged(java.awt.Color):V
+pc:com.intellij.ui.ColoredTreeCellRenderer$AccessibleColoredTreeCellRenderer
+- getAccessibleName():java.lang.String
+- p:getOriginalAccessibleName():java.lang.String
+pc:com.intellij.ui.ColoredTreeCellRenderer$AccessibleColoredTreeCellRendererWithContextMenu
+- com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
+- <init>(com.intellij.ui.ColoredTreeCellRenderer):V
+- <init>(com.intellij.ui.ColoredTreeCellRenderer,com.intellij.ui.ColoredTreeCellRenderer$AccessibleColoredTreeCellRenderer):V
+- p:doShowContextMenu():V
+- p:getDelegateParent():java.awt.Container
 com.intellij.ui.ComponentWithExpandableItems
 - a:getExpandableItemsHandler():com.intellij.ui.ExpandableItemsHandler
 - a:setExpandableItemsEnabled(Z):V
@@ -787,6 +796,8 @@ com.intellij.ui.RowsDnDSupport$RefinedDropSupport
 - a:canDrop(I,I,com.intellij.ui.RowsDnDSupport$RefinedDropSupport$Position):Z
 - a:drop(I,I,com.intellij.ui.RowsDnDSupport$RefinedDropSupport$Position):V
 - a:isDropInto(javax.swing.JComponent,I,I):Z
+pc:com.intellij.ui.SimpleColoredComponent$AccessibleSimpleColoredComponent
+- p:getAccessibleNameWithoutIconTooltip():java.lang.String
 com.intellij.ui.SimpleColoredComponent$ColoredIterator
 - java.util.Iterator
 - a:getEndOffset():I

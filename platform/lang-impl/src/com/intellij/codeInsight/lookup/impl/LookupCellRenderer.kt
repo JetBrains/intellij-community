@@ -54,6 +54,7 @@ import java.awt.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
+import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.border.EmptyBorder
 import kotlin.math.max
@@ -627,6 +628,15 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
   private class MySimpleColoredComponent : SimpleColoredComponent() {
     init {
       setFocusBorderAroundIcon(true)
+    }
+
+    override fun getAccessibleContext(): AccessibleContext? {
+      if (accessibleContext == null) {
+        accessibleContext = object : AccessibleSimpleColoredComponent() {
+          override fun getAccessibleName() = accessibleNameWithoutIconTooltip
+        }
+      }
+      return accessibleContext
     }
   }
 
