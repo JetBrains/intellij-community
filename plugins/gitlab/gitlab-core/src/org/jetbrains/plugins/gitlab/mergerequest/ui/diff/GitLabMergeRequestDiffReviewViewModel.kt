@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.diff
 
 import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.async.transformConsecutiveSuccesses
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
 import com.intellij.diff.util.Side
@@ -31,8 +33,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.util.toLocations
 interface GitLabMergeRequestDiffReviewViewModel {
   val isCumulativeChange: Boolean
 
-  val discussions: StateFlow<Collection<GitLabMergeRequestDiffDiscussionViewModel>>
-  val draftDiscussions: StateFlow<Collection<GitLabMergeRequestDiffDraftNoteViewModel>>
+  val discussions: StateFlow<ComputedResult<Collection<GitLabMergeRequestDiffDiscussionViewModel>>>
+  val draftDiscussions: StateFlow<ComputedResult<Collection<GitLabMergeRequestDiffDraftNoteViewModel>>>
   val newDiscussions: StateFlow<Collection<GitLabMergeRequestDiffNewDiscussionViewModel>>
 
   val locationsWithDiscussions: StateFlow<Set<DiffLineLocation>>
@@ -63,14 +65,16 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
 
   override val isCumulativeChange: Boolean = diffData.isCumulative
 
-  override val discussions: StateFlow<Collection<GitLabMergeRequestDiffDiscussionViewModel>> =
-    discussionsContainer.discussions.map {
-      it.map { GitLabMergeRequestDiffDiscussionViewModel(it, diffData, discussionsViewOption) }
-    }.stateInNow(cs, emptyList())
-  override val draftDiscussions: StateFlow<Collection<GitLabMergeRequestDiffDraftNoteViewModel>> =
-    discussionsContainer.draftNotes.map {
-      it.map { GitLabMergeRequestDiffDraftNoteViewModel(it, diffData, discussionsViewOption) }
-    }.stateInNow(cs, emptyList())
+  override val discussions: StateFlow<ComputedResult<Collection<GitLabMergeRequestDiffDiscussionViewModel>>> =
+    discussionsContainer.discussions.transformConsecutiveSuccesses {
+      map { it.map { GitLabMergeRequestDiffDiscussionViewModel(it, diffData, discussionsViewOption) } }
+    }.map { ComputedResult.fromResult(it) }
+      .stateInNow(cs, ComputedResult.loading())
+  override val draftDiscussions: StateFlow<ComputedResult<Collection<GitLabMergeRequestDiffDraftNoteViewModel>>> =
+    discussionsContainer.draftNotes.transformConsecutiveSuccesses {
+      map { it.map { GitLabMergeRequestDiffDraftNoteViewModel(it, diffData, discussionsViewOption) } }
+    }.map { ComputedResult.fromResult(it) }
+      .stateInNow(cs, ComputedResult.loading())
   override val locationsWithDiscussions: StateFlow<Set<DiffLineLocation>> = GitLabMergeRequestDiscussionUtil
     .createDiscussionsPositionsFlow(mergeRequest, discussionsViewOption).toLocations {
       it.mapToLocation(diffData, Side.LEFT)

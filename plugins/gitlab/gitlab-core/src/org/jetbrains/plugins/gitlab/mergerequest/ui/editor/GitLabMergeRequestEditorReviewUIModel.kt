@@ -1,13 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
-import com.intellij.collaboration.async.combineState
-import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.async.mapStatefulToStateful
-import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 import com.intellij.collaboration.util.Hideable
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.collaboration.util.syncOrToggleAll
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
@@ -63,11 +61,13 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     }.stateInNow(cs, null)
 
   override val inlays: StateFlow<Collection<GitLabMergeRequestEditorMappedComponentModel>> = combine(
-    fileVm.discussions.mapStatefulToStateful { ShiftedDiscussion(it) },
-    fileVm.draftNotes.mapStatefulToStateful { ShiftedDraftNote(it) },
+    fileVm.discussions.transformConsecutiveSuccesses { mapStatefulToStateful { ShiftedDiscussion(it) } },
+    fileVm.draftNotes.transformConsecutiveSuccesses { mapStatefulToStateful { ShiftedDraftNote(it) } },
     fileVm.newDiscussions.mapStatefulToStateful { ShiftedNewDiscussion(it) }
-  ) { discussions, drafts, new ->
-    discussions + drafts + new
+  ) { discussionsResult, draftsResult, new ->
+    (discussionsResult.getOrNull() ?: emptyList()) +
+    (draftsResult.getOrNull() ?: emptyList()) +
+    new
   }.stateInNow(cs, emptyList())
 
   override fun requestNewComment(lineIdx: Int) {

@@ -10,6 +10,7 @@ import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.Hideable
 import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.collaboration.util.syncOrToggleAll
 import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffExtension
@@ -110,11 +111,13 @@ private class DiffEditorModel(
 ) : CodeReviewEditorModel<GitLabMergeRequestEditorMappedComponentModel> {
 
   override val inlays: StateFlow<Collection<GitLabMergeRequestEditorMappedComponentModel>> = combine(
-    diffVm.discussions.mapStatefulToStateful { MappedDiscussion(it) },
-    diffVm.draftDiscussions.mapStatefulToStateful { MappedDraftNote(it) },
+    diffVm.discussions.transformConsecutiveSuccesses { mapStatefulToStateful { MappedDiscussion(it) } },
+    diffVm.draftDiscussions.transformConsecutiveSuccesses { mapStatefulToStateful { MappedDraftNote(it) } },
     diffVm.newDiscussions.mapStatefulToStateful { MappedNewDiscussion(it) }
   ) { discussions, drafts, new ->
-    discussions + drafts + new
+    (discussionsResult.getOrNull() ?: emptyList()) +
+    (draftsResult.getOrNull() ?: emptyList()) +
+    new
   }.stateInNow(cs, emptyList())
 
   @OptIn(ExperimentalCoroutinesApi::class)

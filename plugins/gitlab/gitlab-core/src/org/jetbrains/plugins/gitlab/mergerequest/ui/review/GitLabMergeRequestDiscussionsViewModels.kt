@@ -19,8 +19,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.ui.comment.*
 
-private typealias DiscussionsFlow = Flow<Collection<GitLabMergeRequestDiscussionViewModel>>
-private typealias DraftNotesFlow = Flow<Collection<GitLabMergeRequestStandaloneDraftNoteViewModelBase>>
+private typealias DiscussionsFlow = Flow<Result<Collection<GitLabMergeRequestDiscussionViewModel>>>
+private typealias DraftNotesFlow = Flow<Result<Collection<GitLabMergeRequestStandaloneDraftNoteViewModelBase>>>
 private typealias NewDiscussionsFlow = Flow<Map<GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition, NewGitLabNoteViewModel>>
 
 interface GitLabMergeRequestDiscussionsViewModels {
@@ -61,14 +61,16 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
   private val cs = parentCs.childScope("GitLab Merge Request Review Discussions", Dispatchers.Default)
 
   override val discussions: DiscussionsFlow = mergeRequest.discussions
-    .throwFailure()
-    .mapStatefulToStateful { GitLabMergeRequestDiscussionViewModelBase(project, this, projectData, currentUser, it) }
+    .transformConsecutiveSuccesses {
+      mapStatefulToStateful { GitLabMergeRequestDiscussionViewModelBase(project, this, projectData, currentUser, it) }
+    }
     .modelFlow(cs, LOG)
 
   override val draftNotes: DraftNotesFlow = mergeRequest.draftNotes
-    .throwFailure()
-    .mapFiltered { it.discussionId == null }
-    .mapStatefulToStateful { GitLabMergeRequestStandaloneDraftNoteViewModelBase(project, this, it, mergeRequest) }
+    .transformConsecutiveSuccesses {
+      mapFiltered { it.discussionId == null }
+        .mapStatefulToStateful { GitLabMergeRequestStandaloneDraftNoteViewModelBase(project, this, it, mergeRequest) }
+    }
     .modelFlow(cs, LOG)
 
 

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.async.transformConsecutiveSuccesses
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.icon.IconsProvider
@@ -38,8 +39,8 @@ interface GitLabMergeRequestEditorReviewFileViewModel {
 
   fun getBaseContent(lines: LineRange): String?
 
-  val discussions: StateFlow<Collection<GitLabMergeRequestEditorDiscussionViewModel>>
-  val draftNotes: StateFlow<Collection<GitLabMergeRequestEditorDraftNoteViewModel>>
+  val discussions: StateFlow<ComputedResult<Collection<GitLabMergeRequestEditorDiscussionViewModel>>>
+  val draftNotes: StateFlow<ComputedResult<Collection<GitLabMergeRequestEditorDraftNoteViewModel>>>
   val linesWithDiscussions: StateFlow<Set<Int>>
   val linesWithNewDiscussions: StateFlow<Set<Int>>
 
@@ -86,14 +87,16 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
     return PatchHunkUtil.getLinesLeft(diffData.patch, lines)
   }
 
-  override val discussions: StateFlow<Collection<GitLabMergeRequestEditorDiscussionViewModel>> =
-    discussionsContainer.discussions.map {
-      it.map { GitLabMergeRequestEditorDiscussionViewModel(it, diffData, discussionsViewOption) }
-    }.stateInNow(cs, emptyList())
-  override val draftNotes: StateFlow<Collection<GitLabMergeRequestEditorDraftNoteViewModel>> =
-    discussionsContainer.draftNotes.map {
-      it.map { GitLabMergeRequestEditorDraftNoteViewModel(it, diffData, discussionsViewOption) }
-    }.stateInNow(cs, emptyList())
+  override val discussions: StateFlow<ComputedResult<Collection<GitLabMergeRequestEditorDiscussionViewModel>>> =
+    discussionsContainer.discussions.transformConsecutiveSuccesses {
+      map { it.map { GitLabMergeRequestEditorDiscussionViewModel(it, diffData, discussionsViewOption) } }
+    }.map { ComputedResult.fromResult(it) }
+      .stateInNow(cs, ComputedResult.loading())
+  override val draftNotes: StateFlow<ComputedResult<Collection<GitLabMergeRequestEditorDraftNoteViewModel>>> =
+    discussionsContainer.draftNotes.transformConsecutiveSuccesses {
+      map { it.map { GitLabMergeRequestEditorDraftNoteViewModel(it, diffData, discussionsViewOption) } }
+    }.map { ComputedResult.fromResult(it) }
+      .stateInNow(cs, ComputedResult.loading())
   override val linesWithDiscussions: StateFlow<Set<Int>> =
     GitLabMergeRequestDiscussionUtil
       .createDiscussionsPositionsFlow(mergeRequest, discussionsViewOption).toLines {
