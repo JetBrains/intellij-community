@@ -283,6 +283,10 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
           applyToolbarLook(look, presentation, button)
           return button
         }
+
+        override fun isDefaultActionButtonImplementation(oldActionButton: ActionButton, newPresentation: Presentation): Boolean {
+          return oldActionButton.javaClass == MyActionButton::class.java
+        }
       }
 
       toolbar.setCustomButtonLook(FieldInplaceActionButtonLook())

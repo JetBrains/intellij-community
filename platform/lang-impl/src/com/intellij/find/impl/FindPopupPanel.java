@@ -1749,6 +1749,15 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
         return result;
       }
+
+      @Override
+      protected boolean isDefaultActionButtonImplementation(@NotNull ActionButton oldActionButton, @NotNull Presentation newPresentation) {
+        if (!ExperimentalUI.isNewUI()) {
+          return super.isDefaultActionButtonImplementation(oldActionButton, newPresentation);
+        }
+
+        return oldActionButton instanceof ActionButtonWithText;
+      }
     };
 
     toolbar.setForceMinimumSize(true);

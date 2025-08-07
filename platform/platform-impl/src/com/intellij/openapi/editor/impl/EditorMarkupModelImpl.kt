@@ -1856,6 +1856,13 @@ open class EditorInspectionsActionToolbar(
     return ToolbarActionButton(action, presentation, place, minimumSize)
   }
 
+  override fun isDefaultActionButtonImplementation(oldActionButton: ActionButton, newPresentation: Presentation): Boolean {
+    if (RedesignedInspectionsManager.isAvailable()) {
+      return super.isDefaultActionButtonImplementation(oldActionButton, newPresentation)
+    }
+    return oldActionButton.javaClass == ToolbarActionButton::class.java
+  }
+
   override fun doLayout() {
     val layoutManager = layout
     if (layoutManager != null) {

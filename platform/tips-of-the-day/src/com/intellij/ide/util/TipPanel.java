@@ -180,6 +180,11 @@ final class TipPanel extends JPanel implements DoNotAskOption {
       }
 
       @Override
+      protected boolean isDefaultActionButtonImplementation(@NotNull ActionButton oldActionButton, @NotNull Presentation newPresentation) {
+        return true;
+      }
+
+      @Override
       public @NotNull Dimension getPreferredSize() {
         Dimension size = getFeedbackButtonSize();
         int buttonsCount = actions.length;

@@ -104,6 +104,13 @@ class BuildSystemTypeSettingComponent(
             presentation: Presentation,
             minimumSize: Supplier<out Dimension>
         ): ActionButton = BuildSystemChooseButton(action as BuildSystemTypeAction, presentation, place, minimumSize)
+
+        override fun isDefaultActionButtonImplementation(
+            oldActionButton: ActionButton,
+            newPresentation: Presentation
+        ): Boolean {
+            return oldActionButton.javaClass == BuildSystemChooseButton::class.java
+        }
     }
 
     private inner class BuildSystemChooseButton(

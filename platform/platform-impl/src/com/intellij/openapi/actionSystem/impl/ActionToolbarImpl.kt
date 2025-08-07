@@ -517,6 +517,9 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     return createToolbarButton(action, look, place, presentation, Supplier { minimumSize })
   }
 
+  /**
+   * Override together with [isDefaultActionButtonImplementation]
+   */
   protected open fun createToolbarButton(
     action: AnAction,
     look: ActionButtonLook?,
@@ -533,6 +536,9 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     return actionButton
   }
 
+  /**
+   * Override together with [isDefaultActionButtonImplementation]
+   */
   protected open fun createIconButton(
     action: AnAction,
     place: String,
@@ -542,6 +548,9 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     return ActionButton(action, presentation, place, minimumSize)
   }
 
+  /**
+   * Override together with [isDefaultActionButtonImplementation]
+   */
   protected open fun createTextButton(
     action: AnAction,
     place: String,
@@ -557,6 +566,20 @@ open class ActionToolbarImpl @JvmOverloads constructor(
         KeyStroke.getKeyStroke(mnemonic, InputEvent.ALT_DOWN_MASK), WHEN_IN_FOCUSED_WINDOW)
     }
     return buttonWithText
+  }
+
+  /**
+   * Return `true` if the [oldActionButton] instance can be reused
+   * Return `false` if the difference with new [newPresentation] from the prior one requres re-creation of the ActionButton
+   */
+  protected open fun isDefaultActionButtonImplementation(oldActionButton: ActionButton, newPresentation: Presentation): Boolean {
+    val shouldHaveText = newPresentation.getClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR) == true
+    if (shouldHaveText) {
+      return oldActionButton.javaClass == ActionButtonWithText::class.java
+    }
+    else {
+      return oldActionButton.javaClass == ActionButton::class.java
+    }
   }
 
   protected fun applyToolbarLook(look: ActionButtonLook?, presentation: Presentation, component: JComponent) {
@@ -1093,16 +1116,8 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       }
       if (actionButton == null) return false
 
-      if (next === prev) {
-        val nextHasText = nextP.getClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR) == true
-        val prevHasText = when (actionButton.javaClass) {
-          ActionButtonWithText::class.java -> true
-          ActionButton::class.java -> false
-          else -> return false // unexpected
-        }
-        if (nextHasText == prevHasText) {
-          continue // keep old component untouched
-        }
+      if (next === prev && isDefaultActionButtonImplementation(actionButton, nextP)) {
+        continue // keep old component untouched
       }
 
       // create a new button and replace it in-place
