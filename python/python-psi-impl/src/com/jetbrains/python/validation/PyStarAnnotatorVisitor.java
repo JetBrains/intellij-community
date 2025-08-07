@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList;
+import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,8 +35,11 @@ final class PyStarAnnotatorVisitor extends PyElementVisitor {
   public void visitPyStarExpression(@NotNull PyStarExpression node) {
     super.visitPyStarExpression(node);
     PsiElement parent = node.getParent();
+    if (parent.getParent() instanceof PyTypeHintFile) {
+      return;
+    }
     if (!node.isAssignmentTarget() &&
-        !allowedUnpacking(node) &&
+        !(allowedUnpacking(node)) &&
         !(parent instanceof PyParameterTypeList) &&
         !(parent instanceof PyTypeParameter) &&
         !(parent instanceof PyAnnotation && isVariadicArg(parent.getParent()))) {
