@@ -1,3 +1,4 @@
+// PROBLEM: Unused result of data class copy
 // FIX: none
 // WITH_STDLIB
 fun main() {
