@@ -421,7 +421,8 @@ public final class DiffContentFactoryImpl extends DiffContentFactoryEx {
     });
   }
 
-  private static boolean isBinaryContent(byte @NotNull [] content, @NotNull FileType fileType) {
+  @ApiStatus.Internal
+  public static boolean isBinaryContent(byte @NotNull [] content, @NotNull FileType fileType) {
     if (fileType instanceof UIBasedFileType) {
       return true; // text file, that should be shown as binary (SVG, UI Forms).
     }

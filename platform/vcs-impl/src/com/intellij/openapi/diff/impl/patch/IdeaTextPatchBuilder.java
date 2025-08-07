@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch;
 
+import com.intellij.diff.DiffContentFactoryImpl;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.ex.PartialCommitHelper;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.ContainerUtil;
@@ -127,17 +126,14 @@ public final class IdeaTextPatchBuilder {
 
     FilePath file = cr.getFile();
     FileType type = file.getFileType();
-    if (type instanceof UnknownFileType) {
-      if (cr instanceof ByteBackedContentRevision byteBasedContentRevision) {
-        try {
-          byte[] bytes = byteBasedContentRevision.getContentAsBytes();
-          if (bytes != null) {
-            var encoding = new CharsetToolkit(bytes, Charset.defaultCharset(), false).guessFromContent(bytes.length);
-            return encoding == CharsetToolkit.GuessedEncoding.BINARY || encoding == CharsetToolkit.GuessedEncoding.INVALID_UTF8;
-          }
+    if (cr instanceof ByteBackedContentRevision byteBasedContentRevision) {
+      try {
+        byte[] bytes = byteBasedContentRevision.getContentAsBytes();
+        if (bytes != null) {
+          return DiffContentFactoryImpl.isBinaryContent(bytes, type);
         }
-        catch (VcsException ignored) {
-        }
+      }
+      catch (VcsException ignored) {
       }
     }
     return type.isBinary();
