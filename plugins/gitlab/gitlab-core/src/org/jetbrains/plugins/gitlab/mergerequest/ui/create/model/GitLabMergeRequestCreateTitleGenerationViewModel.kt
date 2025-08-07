@@ -11,13 +11,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabTitleGeneratorExtension.GenerationError
-import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabTitleGeneratorExtension.GenerationStep
+import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabTitleAndDescriptionGeneratorExtension.GenerationError
+import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabTitleAndDescriptionGeneratorExtension.GenerationStep
 
 @ApiStatus.Internal
-interface GitLabTitleGeneratorExtension {
+interface GitLabTitleAndDescriptionGeneratorExtension {
   companion object {
-    val EP_NAME = ExtensionPointName<GitLabTitleGeneratorExtension>("intellij.vcs.gitlab.titleGenerator")
+    val EP_NAME = ExtensionPointName<GitLabTitleAndDescriptionGeneratorExtension>("intellij.vcs.gitlab.titleGenerator")
   }
 
   sealed interface GenerationState
@@ -42,7 +42,7 @@ interface GitLabMergeRequestCreateTitleGenerationViewModel {
 internal class GitLabMergeRequestCreateTitleGenerationViewModelImpl(
   parentCs: CoroutineScope,
   private val project: Project,
-  private val extension: GitLabTitleGeneratorExtension,
+  private val extension: GitLabTitleAndDescriptionGeneratorExtension,
   private val commits: List<VcsCommitMetadata>,
   private val setTitle: (String) -> Unit,
 ) : GitLabMergeRequestCreateTitleGenerationViewModel {

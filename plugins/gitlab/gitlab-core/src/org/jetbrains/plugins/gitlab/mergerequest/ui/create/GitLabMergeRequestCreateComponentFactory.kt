@@ -82,7 +82,7 @@ internal object GitLabMergeRequestCreateComponentFactory {
     }
 
     return Wrapper().apply {
-      bindContentIn(cs, GitLabTitleGeneratorExtension.EP_NAME.extensionListFlow()) { extensions ->
+      bindContentIn(cs, GitLabTitleAndDescriptionGeneratorExtension.EP_NAME.extensionListFlow()) { extensions ->
         if (extensions.isEmpty()) {
           editor
         }

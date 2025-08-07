@@ -9,7 +9,7 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="intellij.vcs.gitlab.titleGenerator"
-                    interface="org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabTitleGeneratorExtension"
+                    interface="org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabTitleAndDescriptionGeneratorExtension"
                     dynamic="true"/>
   </extensionPoints>
 

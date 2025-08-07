@@ -169,7 +169,7 @@ internal class GitLabMergeRequestCreateViewModelImpl(
   private val _title: MutableStateFlow<String> = MutableStateFlow("")
   override val title: StateFlow<String> = _title.asStateFlow()
   override val titleGenerationVm: StateFlow<GitLabMergeRequestCreateTitleGenerationViewModel?> =
-    commits.combine(GitLabTitleGeneratorExtension.EP_NAME.extensionListFlow()) { commits, extensions ->
+    commits.combine(GitLabTitleAndDescriptionGeneratorExtension.EP_NAME.extensionListFlow()) { commits, extensions ->
       val commits = commits?.getOrNull() ?: return@combine null
       if (commits.isEmpty()) return@combine null
 
