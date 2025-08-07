@@ -364,7 +364,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     return file;
   }
 
-  protected Project getProject() {
+  protected @NotNull Project getMyProject() {
     return myProject;
   }
 
