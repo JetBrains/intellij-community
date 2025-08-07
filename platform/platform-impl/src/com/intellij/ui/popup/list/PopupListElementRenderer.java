@@ -416,7 +416,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       setSelected(myMainPane, isSelected && isSelectable);
     }
 
-    if (value instanceof PopupFactoryImpl.ActionItem actionItem) {
+    if (myIconLabel != null && value instanceof PopupFactoryImpl.ActionItem actionItem) {
       myIconLabel.getAccessibleContext().setAccessibleName(actionItem.getAccessibleIconDescription());
     }
   }
