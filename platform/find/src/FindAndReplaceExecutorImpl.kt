@@ -35,6 +35,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 private val LOG = logger<FindAndReplaceExecutorImpl>()
+
 @Internal
 open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : FindAndReplaceExecutor {
   private var validationJob: Job? = null
@@ -67,10 +68,16 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
           filesToScanInitially = filesToScanInitially.map { it.rpcId() },
           maxUsagesCount = ShowUsagesAction.getUsagesPageSize()
         ).let {
-            if (shouldThrottle) it.throttledWithAccumulation()
-            else it.map { event -> ThrottledOneItem(event) }
-          }.collect { throttledItems ->
-            throttledItems.items.forEach { item ->
+          if (shouldThrottle) it.throttledWithAccumulation()
+          else it.map { event -> ThrottledOneItem(event) }
+        }.collect { throttledItems ->
+          throttledItems.items.forEach { searchResult ->
+            if (searchResult is SearchStopped) {
+              onFinish()
+              return@collect
+            }
+            if (searchResult is SearchResultFound) {
+              val item = searchResult.result
               val usage = UsageInfoModel.createUsageInfoModel(project, item, this.childScope("UsageInfoModel.init"), onDocumentUpdated)
               currentSearchDisposable?.let { parent ->
                 if (parent.isDisposed) return@collect
@@ -79,7 +86,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
               onResult(usage)
             }
           }
-        onFinish()
+        }
       }
     }
     else {
@@ -98,10 +105,12 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
       coroutineScope.launch {
         FindRemoteApi.getInstance().performFindAllOrReplaceAll(findModel, FindSettings.getInstance().isShowResultsInSeparateView, project.projectId())
       }
-    } else {
+    }
+    else {
       if (findModel.isReplaceState) {
         ReplaceInProjectManager.getInstance(project).replaceInPath(findModel)
-      } else {
+      }
+      else {
         FindInProjectManager.getInstance(project).findInPath(findModel)
       }
     }
