@@ -126,7 +126,7 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
     return getAllSupportedJavaVersionsByIdeaImpl().min()
   }
 
-  private fun getNewestMinorGradleVersionImpl(major: Int): GradleVersion {
+  private fun getLatestMinorGradleVersionImpl(major: Int): GradleVersion {
     return getAllSupportedGradleVersionsByIdeaImpl().filter { it.majorVersion == major }.max()
   }
 
@@ -225,8 +225,8 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
       return getInstance().getOldestSupportedJavaVersionByIdeaImpl()
     }
 
-    fun getNewestMinorGradleVersion(major: Int): GradleVersion {
-      return getInstance().getNewestMinorGradleVersionImpl(major)
+    fun getLatestMinorGradleVersion(major: Int): GradleVersion {
+      return getInstance().getLatestMinorGradleVersionImpl(major)
     }
   }
 }
