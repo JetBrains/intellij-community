@@ -6,5 +6,5 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface PluginDependency : IdeaPluginDependency {
   val configFile: String?
-  val subDescriptor: IdeaPluginDescriptorImpl?
+  val subDescriptor: DependsSubDescriptor?
 }
