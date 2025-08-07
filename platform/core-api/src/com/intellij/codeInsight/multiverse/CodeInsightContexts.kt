@@ -17,9 +17,13 @@ fun anyContext(): CodeInsightContext = AnyContext
 
 fun defaultContext(): CodeInsightContext = DefaultContext
 
-private object AnyContext : CodeInsightContext
+private object AnyContext : CodeInsightContext {
+  override fun toString(): String = "AnyContext"
+}
 
-private object DefaultContext : CodeInsightContext
+private object DefaultContext : CodeInsightContext {
+  override fun toString(): String = "DefaultContext"
+}
 
 fun isSharedSourceSupportEnabled(project: Project): Boolean {
   return CodeInsightContextManager.getInstance(project).isSharedSourceSupportEnabled
