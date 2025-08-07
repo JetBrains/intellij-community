@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.teamcity
 
 import com.fasterxml.jackson.databind.JsonNode
@@ -263,6 +263,12 @@ class TeamCityClient(
     }
 
     fun printTcArtifactsPublishMessage(spec: String) {
+      // https://www.jetbrains.com/help/teamcity/2025.07/configuring-general-settings.html#Artifact+Paths
+      // > You can specify exact file paths or patterns, one per line or comma-separated.
+      // Because of that feature, files and directories with a comma in the name can't be mentioned as is.
+      // So, commas are replaced with wildcards.
+      // See also TW-19333.
+      val spec = spec.replace(",", "*")
       println(" ##teamcity[publishArtifacts '$spec'] ")
     }
 
