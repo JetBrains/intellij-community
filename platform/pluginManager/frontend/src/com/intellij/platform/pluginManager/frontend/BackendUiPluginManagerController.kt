@@ -235,8 +235,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().loadMetadata(PluginDto.fromModel(model))
   }
 
-  override fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
-    return awaitForResult { PluginManagerApi.getInstance().loadPluginReviews(pluginId, page) }
+  override suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
+    return PluginManagerApi.getInstance().loadPluginReviews(pluginId, page)
   }
 
   override fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {

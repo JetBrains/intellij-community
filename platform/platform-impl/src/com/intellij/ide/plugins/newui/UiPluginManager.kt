@@ -73,7 +73,7 @@ class UiPluginManager {
     return getController().loadPluginDetails(model)
   }
 
-  fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
+  suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
     return getController().loadPluginReviews(pluginId, page)
   }
 

@@ -26,6 +26,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.IntellijInternalApi
@@ -671,37 +672,37 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     reviewNextPageButton = JButton(IdeBundle.message("plugins.review.panel.next.page.button"))
     reviewNextPageButton!!.isOpaque = false
+    val nextPageButton = reviewNextPageButton
     reviewsPanel.add(Wrapper(FlowLayout(), reviewNextPageButton), BorderLayout.SOUTH)
 
-    reviewNextPageButton!!.addActionListener { e: ActionEvent? ->
-      reviewNextPageButton!!.icon = AnimatedIcon.Default.INSTANCE
-      reviewNextPageButton!!.isEnabled = false
+    nextPageButton?.addActionListener { e: ActionEvent? ->
+      val component = showComponent ?: return@addActionListener
+      coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(component).asContextElement()) {
 
-      val component = showComponent
-      val installedModel = installedPluginMarketplaceNode
-      val node = installedModel ?: component!!.pluginModel
-      val reviewComments = node.reviewComments!!
-      val page = reviewComments.getNextPage()
-      ProcessIOExecutorService.INSTANCE.execute {
-        val items = UiPluginManager.getInstance().loadPluginReviews(node.pluginId, page)
-        if (items == null) return@execute
-        ApplicationManager.getApplication().invokeLater({
-                                                          if (showComponent != component) {
-                                                            return@invokeLater
-                                                          }
-                                                          if (items.isNotEmpty()) {
-                                                            reviewComments.addItems(items)
-                                                            reviewPanel!!.addComments(items)
-                                                            reviewPanel!!.fullRepaint()
-                                                          }
+        nextPageButton.icon = AnimatedIcon.Default.INSTANCE
+        nextPageButton.isEnabled = false
 
-                                                          reviewNextPageButton!!.icon = null
-                                                          reviewNextPageButton!!.isEnabled = true
-                                                          reviewNextPageButton!!.isVisible = reviewComments.isNextPage
-                                                        },
-                                                        ModalityState.stateForComponent(component!!))
+        val installedModel = installedPluginMarketplaceNode
+        val node = installedModel ?: component.pluginModel
+        val reviewComments = node.reviewComments!!
+        val page = reviewComments.getNextPage()
+        val items = withContext(Dispatchers.IO) { UiPluginManager.getInstance().loadPluginReviews(node.pluginId, page) }
+
+        if (items == null || showComponent != component) return@launch
+
+        if (items.isNotEmpty()) {
+          reviewComments.addItems(items)
+          val reviewPanel = reviewPanel ?: return@launch
+          reviewPanel.addComments(items)
+          reviewPanel.fullRepaint()
+        }
+
+        nextPageButton.icon = null
+        nextPageButton.isEnabled = true
+        nextPageButton.isVisible = reviewComments.isNextPage
       }
     }
+
 
     addTabWithoutBorders(pane
     ) {
@@ -1665,9 +1666,13 @@ suspend fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
   return UiPluginManager.getInstance().loadPluginDetails(model)
 }
 
+fun loadAllPluginDetailsSync(existingModel: PluginUiModel, targetModel: PluginUiModel): PluginUiModel? {
+  return runBlockingCancellable { loadAllPluginDetails(existingModel, targetModel) }
+}
+
 @ApiStatus.Internal
 @IntellijInternalApi
-fun loadAllPluginDetails(existingModel: PluginUiModel, targetModel: PluginUiModel): PluginUiModel? {
+suspend fun loadAllPluginDetails(existingModel: PluginUiModel, targetModel: PluginUiModel): PluginUiModel? {
   if (!existingModel.suggestedFeatures.isEmpty()) {
     targetModel.suggestedFeatures = existingModel.suggestedFeatures
   }
@@ -1688,7 +1693,7 @@ fun loadAllPluginDetails(existingModel: PluginUiModel, targetModel: PluginUiMode
 
 @ApiStatus.Internal
 @IntellijInternalApi
-fun loadReviews(existingModel: PluginUiModel): PluginUiModel? {
+suspend fun loadReviews(existingModel: PluginUiModel): PluginUiModel? {
   val reviewComments = ReviewsPageContainer(20, 0)
   val reviews = UiPluginManager.getInstance().loadPluginReviews(existingModel.pluginId, reviewComments.getNextPage()) ?: emptyList()
   reviewComments.addItems(reviews)

@@ -710,7 +710,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   @Throws(IOException::class)
-  override fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
+  override suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
     return MarketplaceRequests.getInstance().loadPluginReviews(pluginId, page)
   }
 
