@@ -1,4 +1,5 @@
 // IS_APPLICABLE: false
+// PROBLEM: none
 // WITH_STDLIB
 
 data class XY(var x: Int, var y: Int)

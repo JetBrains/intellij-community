@@ -817,6 +817,433 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/destructuringInLambda")
+    public static class DestructuringInLambda extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("caret.kt")
+        public void testCaret() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/caret.kt");
+        }
+
+        @TestMetadata("dependentLocal.kt")
+        public void testDependentLocal() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/dependentLocal.kt");
+        }
+
+        @TestMetadata("firstProperties.kt")
+        public void testFirstProperties() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/firstProperties.kt");
+        }
+
+        @TestMetadata("fold.kt")
+        public void testFold() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/fold.kt");
+        }
+
+        @TestMetadata("hasSameNameParameter.kt")
+        public void testHasSameNameParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/hasSameNameParameter.kt");
+        }
+
+        @TestMetadata("hasShadowedVariable.kt")
+        public void testHasShadowedVariable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/hasShadowedVariable.kt");
+        }
+
+        @TestMetadata("hasShadowedVariable2.kt")
+        public void testHasShadowedVariable2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/hasShadowedVariable2.kt");
+        }
+
+        @TestMetadata("hasType.kt")
+        public void testHasType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/hasType.kt");
+        }
+
+        @TestMetadata("invisible.kt")
+        public void testInvisible() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/invisible.kt");
+        }
+
+        @TestMetadata("last.kt")
+        public void testLast() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/last.kt");
+        }
+
+        @TestMetadata("list.kt")
+        public void testList() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/list.kt");
+        }
+
+        @TestMetadata("mapEntry.kt")
+        public void testMapEntry() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/mapEntry.kt");
+        }
+
+        @TestMetadata("mapEntry2.kt")
+        public void testMapEntry2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/mapEntry2.kt");
+        }
+
+        @TestMetadata("mapIndexedExceptFirst.kt")
+        public void testMapIndexedExceptFirst() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/mapIndexedExceptFirst.kt");
+        }
+
+        @TestMetadata("mapIndexedLast.kt")
+        public void testMapIndexedLast() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/mapIndexedLast.kt");
+        }
+
+        @TestMetadata("noIt.kt")
+        public void testNoIt() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/noIt.kt");
+        }
+
+        @TestMetadata("noItVariables.kt")
+        public void testNoItVariables() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/noItVariables.kt");
+        }
+
+        @TestMetadata("noItWithDestructuring.kt")
+        public void testNoItWithDestructuring() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/noItWithDestructuring.kt");
+        }
+
+        @TestMetadata("nullable.kt")
+        public void testNullable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/nullable.kt");
+        }
+
+        @TestMetadata("pair.kt")
+        public void testPair() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/pair.kt");
+        }
+
+        @TestMetadata("sameNameReferences.kt")
+        public void testSameNameReferences() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/sameNameReferences.kt");
+        }
+
+        @TestMetadata("sameNameReferences2.kt")
+        public void testSameNameReferences2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/sameNameReferences2.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/simple.kt");
+        }
+
+        @TestMetadata("twoOfThree.kt")
+        public void testTwoOfThree() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/twoOfThree.kt");
+        }
+
+        @TestMetadata("variables.kt")
+        public void testVariables() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/variables.kt");
+        }
+
+        @TestMetadata("visible.kt")
+        public void testVisible() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/visible.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/destructuringVariables")
+    public static class DestructuringVariables extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("caret.kt")
+        public void testCaret() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringVariables/caret.kt");
+        }
+
+        @TestMetadata("changingVar.kt")
+        public void testChangingVar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringVariables/changingVar.kt");
+        }
+
+        @TestMetadata("classProperty.kt")
+        public void testClassProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringVariables/classProperty.kt");
+        }
+
+        @TestMetadata("hasShadowedVariable.kt")
+        public void testHasShadowedVariable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringVariables/hasShadowedVariable.kt");
+        }
+
+        @TestMetadata("mapEntry.kt")
+        public void testMapEntry() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringVariables/mapEntry.kt");
+        }
+
+        @TestMetadata("noInitializer.kt")
+        public void testNoInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringVariables/noInitializer.kt");
+        }
+
+        @TestMetadata("sameNameReferences.kt")
+        public void testSameNameReferences() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringVariables/sameNameReferences.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringVariables/simple.kt");
+        }
+
+        @TestMetadata("toplevel.kt")
+        public void testToplevel() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringVariables/toplevel.kt");
+        }
+
+        @TestMetadata("var.kt")
+        public void testVar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringVariables/var.kt");
+        }
+
+        @TestMetadata("withModifiers.kt")
+        public void testWithModifiers() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringVariables/withModifiers.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/iterationOverMap")
+    public static class IterationOverMap extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("AlreadyDestructing.kt")
+        public void testAlreadyDestructing() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/AlreadyDestructing.kt");
+        }
+
+        @TestMetadata("CaretOffset.kt")
+        public void testCaretOffset() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/CaretOffset.kt");
+        }
+
+        @TestMetadata("DataClass.kt")
+        public void testDataClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClass.kt");
+        }
+
+        @TestMetadata("DataClassDependentLocal.kt")
+        public void testDataClassDependentLocal() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassDependentLocal.kt");
+        }
+
+        @TestMetadata("DataClassFirstNPropertiesUsed.kt")
+        public void testDataClassFirstNPropertiesUsed() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassFirstNPropertiesUsed.kt");
+        }
+
+        @TestMetadata("DataClassFirstVariable.kt")
+        public void testDataClassFirstVariable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassFirstVariable.kt");
+        }
+
+        @TestMetadata("DataClassLast.kt")
+        public void testDataClassLast() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassLast.kt");
+        }
+
+        @TestMetadata("DataClassNameConflict.kt")
+        public void testDataClassNameConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassNameConflict.kt");
+        }
+
+        @TestMetadata("DataClassNoVariablesInside.kt")
+        public void testDataClassNoVariablesInside() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassNoVariablesInside.kt");
+        }
+
+        @TestMetadata("DataClassNoVariablesMultiUsages.kt")
+        public void testDataClassNoVariablesMultiUsages() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassNoVariablesMultiUsages.kt");
+        }
+
+        @TestMetadata("DataClassNotAllPropertiesUsed.kt")
+        public void testDataClassNotAllPropertiesUsed() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassNotAllPropertiesUsed.kt");
+        }
+
+        @TestMetadata("DataClassNullable.kt")
+        public void testDataClassNullable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassNullable.kt");
+        }
+
+        @TestMetadata("DataClassParametersOrder.kt")
+        public void testDataClassParametersOrder() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassParametersOrder.kt");
+        }
+
+        @TestMetadata("DataClassPropertyBetweenUsages.kt")
+        public void testDataClassPropertyBetweenUsages() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassPropertyBetweenUsages.kt");
+        }
+
+        @TestMetadata("DataClassSecondVariable.kt")
+        public void testDataClassSecondVariable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassSecondVariable.kt");
+        }
+
+        @TestMetadata("DataClassTwoDifferentLocals.kt")
+        public void testDataClassTwoDifferentLocals() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassTwoDifferentLocals.kt");
+        }
+
+        @TestMetadata("DataClassUnused.kt")
+        public void testDataClassUnused() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassUnused.kt");
+        }
+
+        @TestMetadata("DataClassWithAssignmentInside.kt")
+        public void testDataClassWithAssignmentInside() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassWithAssignmentInside.kt");
+        }
+
+        @TestMetadata("DataClassWithDestructuring.kt")
+        public void testDataClassWithDestructuring() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassWithDestructuring.kt");
+        }
+
+        @TestMetadata("DataClassWithDestructuringConflict.kt")
+        public void testDataClassWithDestructuringConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassWithDestructuringConflict.kt");
+        }
+
+        @TestMetadata("DataClassWithDestructuringFakeConflict.kt")
+        public void testDataClassWithDestructuringFakeConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassWithDestructuringFakeConflict.kt");
+        }
+
+        @TestMetadata("DataClassWithDestructuringPartial.kt")
+        public void testDataClassWithDestructuringPartial() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassWithDestructuringPartial.kt");
+        }
+
+        @TestMetadata("DataClassWithExternalUsage.kt")
+        public void testDataClassWithExternalUsage() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassWithExternalUsage.kt");
+        }
+
+        @TestMetadata("DataClassWithIncrementInside.kt")
+        public void testDataClassWithIncrementInside() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassWithIncrementInside.kt");
+        }
+
+        @TestMetadata("DataClassWithLocalPropertyModified.kt")
+        public void testDataClassWithLocalPropertyModified() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassWithLocalPropertyModified.kt");
+        }
+
+        @TestMetadata("EntriesCallIsMissing.kt")
+        public void testEntriesCallIsMissing() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/EntriesCallIsMissing.kt");
+        }
+
+        @TestMetadata("FakeEntries.kt")
+        public void testFakeEntries() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/FakeEntries.kt");
+        }
+
+        @TestMetadata("Getters.kt")
+        public void testGetters() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/Getters.kt");
+        }
+
+        @TestMetadata("KeyOnly.kt")
+        public void testKeyOnly() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/KeyOnly.kt");
+        }
+
+        @TestMetadata("KeyOnlyWithDestructuring.kt")
+        public void testKeyOnlyWithDestructuring() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/KeyOnlyWithDestructuring.kt");
+        }
+
+        @TestMetadata("KeyValueWithDestructuring.kt")
+        public void testKeyValueWithDestructuring() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/KeyValueWithDestructuring.kt");
+        }
+
+        @TestMetadata("MapNoProperties.kt")
+        public void testMapNoProperties() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/MapNoProperties.kt");
+        }
+
+        @TestMetadata("NoKeyOrValue.kt")
+        public void testNoKeyOrValue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/NoKeyOrValue.kt");
+        }
+
+        @TestMetadata("OnlyKeyUsed.kt")
+        public void testOnlyKeyUsed() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/OnlyKeyUsed.kt");
+        }
+
+        @TestMetadata("OtherUsages.kt")
+        public void testOtherUsages() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/OtherUsages.kt");
+        }
+
+        @TestMetadata("OtherUsages2.kt")
+        public void testOtherUsages2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/OtherUsages2.kt");
+        }
+
+        @TestMetadata("PropertiesNames.kt")
+        public void testPropertiesNames() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/PropertiesNames.kt");
+        }
+
+        @TestMetadata("Simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/Simple.kt");
+        }
+
+        @TestMetadata("SomeQualifiedExpressionInRange.kt")
+        public void testSomeQualifiedExpressionInRange() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/SomeQualifiedExpressionInRange.kt");
+        }
+
+        @TestMetadata("ValueOnly.kt")
+        public void testValueOnly() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/ValueOnly.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate")
     public static class EnumValuesSoftDeprecate extends AbstractK2LocalInspectionTest {
         @java.lang.Override
