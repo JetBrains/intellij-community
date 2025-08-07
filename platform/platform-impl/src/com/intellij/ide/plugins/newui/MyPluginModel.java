@@ -368,6 +368,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
             builder.setName(descriptor.getName());
             builder.setDependencies(descriptor.getDependencies());
             builder.setRepositoryName(PluginInstaller.UNKNOWN_HOST_MARKER);
+            builder.setDisableAllowed(descriptor.isDisableAllowed());
             return builder.build();
           }
         }

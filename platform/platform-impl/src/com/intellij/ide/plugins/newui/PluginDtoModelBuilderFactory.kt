@@ -181,6 +181,11 @@ class PluginDtoModelBuilder(pluginId: PluginId) : PluginUiModelBuilder {
     return this
   }
 
+  override fun setDisableAllowed(disabledAllowed: Boolean): PluginUiModelBuilder {
+    resultDto.isDisableAllowed = disabledAllowed
+    return this
+  }
+
   override fun build(): PluginUiModel {
     return resultDto
   }

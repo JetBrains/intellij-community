@@ -3,6 +3,7 @@ package com.intellij.platform.pluginManager.backend.rpc
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.getTags
 import com.intellij.ide.plugins.newui.PluginSource
@@ -47,6 +48,7 @@ object PluginDescriptorConverter {
 
       source = PluginSource.REMOTE
       allowBundledUpdate = descriptor.allowBundledUpdate()
+      isDisableAllowed = PluginManagerCore.isDisableAllowed(descriptor)
     }
 
     return pluginDto

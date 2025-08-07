@@ -86,6 +86,10 @@ class PluginNodeModelBuilder(private val pluginId: PluginId) : PluginUiModelBuil
     return this
   }
 
+  override fun setDisableAllowed(disabledAllowed: Boolean): PluginUiModelBuilder {
+    return this
+  }
+
   override fun setSize(size: String?): PluginUiModelBuilder {
     if (size != null) pluginNode.size = size
     return this

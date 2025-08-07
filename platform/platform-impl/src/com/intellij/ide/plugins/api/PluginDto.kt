@@ -80,6 +80,8 @@ class PluginDto(
   override var isBundledUpdate: Boolean = false
   override var untilBuild: String? = null
 
+  override var isDisableAllowed: Boolean = true
+
   override fun getDescriptor(): IdeaPluginDescriptor {
     return PluginDtoDescriptorWrapper(this)
   }
@@ -164,6 +166,7 @@ class PluginDto(
         releaseDate = model.releaseDate
         isBundledUpdate = model.isBundledUpdate
         isImplementationDetail = model.isImplementationDetail
+        isDisableAllowed = model.isDisableAllowed
       }
     }
   }

@@ -140,6 +140,7 @@ interface PluginUiModel {
   @get:NlsSafe
   val untilBuild: String?
 
+  val isDisableAllowed: Boolean
 
   fun addDependency(id: PluginId, optional: Boolean)
 

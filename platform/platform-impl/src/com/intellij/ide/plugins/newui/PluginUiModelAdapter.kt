@@ -307,6 +307,8 @@ class PluginUiModelAdapter(
 
   override val untilBuild: String?
     get() = pluginDescriptor.untilBuild
+  override val isDisableAllowed: Boolean
+    get() = PluginManagerCore.isDisableAllowed(pluginDescriptor)
 
   override fun getDescriptor(): IdeaPluginDescriptor = pluginDescriptor
 

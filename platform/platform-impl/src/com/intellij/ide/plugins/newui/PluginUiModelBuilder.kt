@@ -44,6 +44,7 @@ interface PluginUiModelBuilder {
   fun setDate(date: Long): PluginUiModelBuilder
   fun setRepositoryName(repositoryName: String): PluginUiModelBuilder
   fun setVendorDetails(organization: String?): PluginUiModelBuilder
+  fun setDisableAllowed(disabledAllowed: Boolean): PluginUiModelBuilder
 
   fun build(): PluginUiModel
 }
