@@ -56,9 +56,6 @@ import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
  *   provided by the [MarkdownParserFactory], but you can provide your own if you need to customize the parser — e.g.,
  *   to ignore certain tags. If [markdownMode] is `MarkdownMode.WithEditor`, make sure you set
  *   `includeSourceSpans(IncludeSourceSpans.BLOCKS)` on the parser.
- * @param languageRecognizer A lambda that can recognize code language names (e.g., when used for fenced code blocks)
- *   and convert them into a [MimeType]. By default, this uses [MimeType.Known.fromMarkdownLanguageName], but you can
- *   provide your own implementation to, for example, support languages that Jewel doesn't recognize yet.
  */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
@@ -67,14 +64,19 @@ public class MarkdownProcessor(
     private val markdownMode: MarkdownMode = MarkdownMode.Standalone,
     private val commonMarkParser: Parser =
         MarkdownParserFactory.create(optimizeEdits = markdownMode is MarkdownMode.EditorPreview, extensions),
-    private val languageRecognizer: (String) -> MimeType? = { MimeType.Known.fromMarkdownLanguageName(it) },
 ) {
+    @Suppress("UnusedPrivateProperty") // languageRecognizer is only here for binary compat reasons
+    @Deprecated(
+        "`languageRecognizer` is not necessary anymore. Use the constructor without it.",
+        replaceWith = ReplaceWith("MarkdownProcessor(extensions, markdownMode, commonMarkParser)"),
+    )
     public constructor(
         extensions: List<MarkdownProcessorExtension> = emptyList(),
         markdownMode: MarkdownMode = MarkdownMode.Standalone,
         commonMarkParser: Parser =
             MarkdownParserFactory.create(optimizeEdits = markdownMode is MarkdownMode.EditorPreview, extensions),
-    ) : this(extensions, markdownMode, commonMarkParser, { MimeType.Known.fromMarkdownLanguageName(it) })
+        languageRecognizer: (String) -> MimeType? = { MimeType.Known.fromMarkdownLanguageName(it) },
+    ) : this(extensions, markdownMode, commonMarkParser)
 
     /** The [block-level processor extensions][MarkdownBlockProcessorExtension]s used by this processor. */
     public val blockExtensions: List<MarkdownBlockProcessorExtension> =
@@ -284,7 +286,7 @@ public class MarkdownProcessor(
     }
 
     private fun FencedCodeBlock.toMarkdownCodeBlockOrNull(): CodeBlock.FencedCodeBlock =
-        CodeBlock.FencedCodeBlock(content = literal.removeSuffix("\n"), mimeType = languageRecognizer(info))
+        CodeBlock.FencedCodeBlock(content = literal.removeSuffix("\n"), language = info)
 
     private fun IndentedCodeBlock.toMarkdownCodeBlockOrNull(): CodeBlock.IndentedCodeBlock =
         CodeBlock.IndentedCodeBlock(literal.trimEnd('\n'))
