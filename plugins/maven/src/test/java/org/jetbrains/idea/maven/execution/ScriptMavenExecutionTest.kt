@@ -131,7 +131,7 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
                                   it.environmentProperties = mapOf("FOOOOO" to "BAAAAAAR")
                                 })
     assertTrue("Should run wrapper", executionInfo.stdout.contains(wrapperOutput))
-    assertTrue("Should pass env variables in run configuration", executionInfo.stdout.contains("FOOOOO=BAAAAAAR"))
+    assertTrue("Should pass env variables in run configuration  but stdout: ${executionInfo.stdout}", executionInfo.stdout.contains("FOOOOO=BAAAAAAR"))
 
   }
 
@@ -162,7 +162,33 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
     mavenGeneralSettings.mavenHomeType = MavenWrapper
     val executionInfo = execute(MavenRunnerParameters(true, projectPath.toCanonicalPath(), "m1", mutableListOf("verify"), emptyList()))
     assertTrue("Should run wrapper", executionInfo.stdout.contains(wrapperOutput))
-    assertTrue("Should run build for specified pom", executionInfo.system.contains("-f m1"))
+    assertTrue("Should run build for specified pom but system: ${executionInfo.system}", executionInfo.system.contains("-f m1"))
+
+  }
+
+  @Test
+  fun testShouldExecuteMavenScriptWithVmOptions() = runBlocking {
+    importProjectAsync("""
+         <groupId>test</groupId>
+         <artifactId>project</artifactId>
+         <version>1</version>
+         """
+    )
+    createFakeProjectWrapper()
+    mavenGeneralSettings.mavenHomeType = MavenWrapper
+    val executionInfo = execute(params = MavenRunnerParameters(
+      true, projectPath.toCanonicalPath(),
+      null as String?,
+      mutableListOf("verify"), emptyList()),
+                                settings = MavenRunnerSettings().also {
+                                  it.setVmOptions("-XMyJavaParameter")
+                                })
+    assertTrue("Should run wrapper", executionInfo.stdout.contains(wrapperOutput))
+    val mavenOptsLineStarts = executionInfo.stdout.indexOf("MAVEN_OPTS=")
+    assertTrue("Should pass env variables in run configuration, but stdout: ${executionInfo.stdout}", mavenOptsLineStarts != -1)
+    val mavenOptsLineEnd = executionInfo.stdout.indexOf("\n", mavenOptsLineStarts)
+    val mavenOptsLine = executionInfo.stdout.substring(mavenOptsLineStarts, mavenOptsLineEnd)
+    assertTrue("MAVEN_OPTS should contain parameters, but was ${mavenOptsLine}", mavenOptsLine.contains("-XMyJavaParameter"))
 
   }
 
