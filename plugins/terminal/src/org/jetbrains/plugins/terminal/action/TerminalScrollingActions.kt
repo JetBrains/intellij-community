@@ -1,36 +1,49 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.action
 
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.editor.Caret
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actions.EditorActionUtil
-import org.jetbrains.plugins.terminal.block.TerminalFrontendEditorAction
+import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 
-internal class TerminalLineUpAction : TerminalFrontendEditorAction(LineUpHandler())
+internal class TerminalLineUpAction : TerminalScrollingAction(LineUpHandler())
 
-internal class TerminalLineDownAction : TerminalFrontendEditorAction(LineDownHandler())
+internal class TerminalLineDownAction : TerminalScrollingAction(LineDownHandler())
 
-internal class TerminalPageUpAction : TerminalFrontendEditorAction(PageUpHandler())
+internal class TerminalPageUpAction : TerminalScrollingAction(PageUpHandler())
 
-internal class TerminalPageDownAction : TerminalFrontendEditorAction(PageDownHandler())
+internal class TerminalPageDownAction : TerminalScrollingAction(PageDownHandler())
 
-private class PageUpHandler : ScrollingHandler(Unit.PAGE, -1)
+internal interface ScrollingHandler {
+  fun doExecute(editor: Editor)
+}
 
-private class PageDownHandler : ScrollingHandler(Unit.PAGE, +1)
+internal abstract class TerminalScrollingAction(private val handler: ScrollingHandler) : TerminalPromotedDumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-private class LineUpHandler : ScrollingHandler(Unit.LINE, -1)
-
-private class LineDownHandler : ScrollingHandler(Unit.LINE, +1)
-
-private abstract class ScrollingHandler(private val unit: Unit, private val direction: Int) : EditorActionHandler() {
-  override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
-    return editor.isOutputModelEditor
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabled = e.editor?.isOutputModelEditor == true
   }
 
-  override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
+  override fun actionPerformed(e: AnActionEvent) {
+    val editor = e.editor ?: return
+    handler.doExecute(editor)
+  }
+}
+
+private class PageUpHandler : ScrollingHandlerImpl(Unit.PAGE, -1)
+
+private class PageDownHandler : ScrollingHandlerImpl(Unit.PAGE, +1)
+
+private class LineUpHandler : ScrollingHandlerImpl(Unit.LINE, -1)
+
+private class LineDownHandler : ScrollingHandlerImpl(Unit.LINE, +1)
+
+private abstract class ScrollingHandlerImpl(private val unit: Unit, private val direction: Int) : ScrollingHandler {
+  override fun doExecute(editor: Editor) {
     val amount = when (unit) {
       Unit.LINE -> 1
       Unit.PAGE -> editor.scrollingModel.visibleArea.height / editor.lineHeight
