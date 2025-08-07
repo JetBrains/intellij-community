@@ -1,4 +1,5 @@
 import java.net.URI
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
     jewel
@@ -32,10 +33,24 @@ repositories {
 
 dependencies {
     api(projects.ui) { exclude(group = "org.jetbrains.kotlinx") }
-    intellijPlatform { intellijIdeaCommunity(libs.versions.idea) }
+    intellijPlatform {
+        intellijIdea(libs.versions.idea)
+        testFramework(TestFrameworkType.Platform)
 
-    testImplementation(compose.desktop.uiTestJUnit4)
-    testImplementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
+        bundledPlugin("org.jetbrains.plugins.textmate")
+    }
+
+    testImplementation(compose.desktop.uiTestJUnit4) { excludeCoroutines() }
+    testImplementation(libs.mockk) { excludeCoroutines() }
+    testImplementation(compose.desktop.currentOs) {
+        exclude(group = "org.jetbrains.compose.material")
+        excludeCoroutines()
+    }
+}
+
+fun ModuleDependency.excludeCoroutines() {
+    exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+    exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
 }
 
 sourceSets { test { kotlin { srcDirs("ide-laf-bridge-tests/src/test/kotlin") } } }
