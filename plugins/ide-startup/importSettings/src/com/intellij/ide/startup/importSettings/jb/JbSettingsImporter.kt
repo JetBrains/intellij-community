@@ -9,6 +9,7 @@ import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.fileTemplates.FileTemplatesScheme
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginInstaller
+import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
@@ -406,7 +407,7 @@ class JbSettingsImporter(private val configDirPath: Path,
   suspend fun installPlugins(
     coroutineScope: CoroutineScope,
     progressIndicator: ProgressIndicator,
-    pluginsMap: Map<PluginId, IdeaPluginDescriptor?>,
+    pluginsMap: Map<PluginId, PluginMainDescriptor?>,
   ) {
     if (!SettingsService.getInstance().pluginIdsPreloaded) {
       LOG.warn("Couldn't preload plugin ids, which indicates problems with connection. Will use old import")
@@ -423,7 +424,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     }
     ImportSettingsEventsCollector.jbPluginsNewImport()
     RepositoryHelper.updatePluginHostsFromConfigDir(configDirPath, LOG)
-    val updateableMap = HashMap(pluginsMap)
+    val updateableMap = HashMap<PluginId, IdeaPluginDescriptor?>(pluginsMap)
     progressIndicator.text2 = ImportSettingsBundle.message("progress.details.checking.for.plugin.updates")
     val internalPluginUpdates = UpdateChecker.getInternalPluginUpdates(
       buildNumber = null,
