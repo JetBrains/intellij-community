@@ -28,3 +28,36 @@ jvm_library(
   runtime_deps = [":vcs-github-tracker_resources"]
 )
 ### auto-generated section `build intellij.vcs.github.tracker` end
+
+### auto-generated section `test intellij.vcs.github.tracker` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jvm_library(
+  name = "vcs-github-tracker_test_lib",
+  srcs = glob(
+    [
+      "src/**/*.kt",
+      "src/**/*.java",
+      "test/**/*.kt",
+      "test/**/*.java",
+    ],
+    allow_empty = True,
+  ),
+  associates = [":vcs-github-tracker"],
+  visibility = ["//visibility:private"],
+  deps = [
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:assert_j",
+    "@lib//:junit5",
+  ],
+)
+
+jps_test(
+  name = "vcs-github-tracker_test",
+  runtime_deps = [
+    ":vcs-github-tracker",
+    ":vcs-github-tracker_test_lib",
+  ],
+)
+### auto-generated section `test intellij.vcs.github.tracker` end
