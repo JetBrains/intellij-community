@@ -1,13 +1,24 @@
 ### auto-generated section `build intellij.gradle.toolingExtension` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_toolingExtension",
+  jvm_target = "8",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+  ]
+)
 
 jvm_library(
   name = "toolingExtension",
   module_name = "intellij.gradle.toolingExtension",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
+  kotlinc_opts = ":custom_toolingExtension",
   deps = [
+    "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
     "//platform/external-system-rt:externalSystem-rt",
     "//platform/util-rt",
