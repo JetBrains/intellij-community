@@ -742,7 +742,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       protected void textChanged(@NotNull DocumentEvent e) {
         if (myDialog == null) return;
         if (e.getDocument() == mySearchComponent.getDocument()) {
-          scheduleResultsUpdate();
+          scheduleResultsUpdate(true);
         }
         if (e.getDocument() == myReplaceComponent.getDocument()) {
           applyTo(myHelper.getModel());
@@ -1126,11 +1126,15 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
   }
 
   public void scheduleResultsUpdate() {
+    scheduleResultsUpdate(false);
+  }
+
+  public void scheduleResultsUpdate(boolean checkModel) {
     if (myDialog == null || !myDialog.isVisible()) return;
     if (mySearchRescheduleOnCancellationsAlarm == null || mySearchRescheduleOnCancellationsAlarm.isDisposed()) return;
     updateControls();
     mySearchRescheduleOnCancellationsAlarm.cancelAllRequests();
-    mySearchRescheduleOnCancellationsAlarm.addRequest(this::findSettingsChanged, 100);
+    mySearchRescheduleOnCancellationsAlarm.addRequest(() -> findSettingsChanged(checkModel), 100);
   }
 
   private void finishPreviousPreviewSearch() {
@@ -1144,19 +1148,24 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     return mySelectedScope == scopeType;
   }
 
-  private void findSettingsChanged() {
-    if (isShowing()) {
-      ScrollingUtil.ensureSelectionExists(myResultsPreviewTable);
-    }
-    ModalityState state = ModalityState.current();
-    finishPreviousPreviewSearch();
-    mySearchRescheduleOnCancellationsAlarm.cancelAllRequests();
+  private void findSettingsChanged(boolean checkModel) {
+    FindModel previousModel = myHelper.getModel().clone();
     applyTo(myHelper.getModel());
     FindModel findModel = new FindModel();
     findModel.copyFrom(myHelper.getModel());
     if (findModel.getStringToFind().contains("\n")) {
       findModel.setMultiline(true);
     }
+
+    if (checkModel && findModel.noRestartSearchNeeded(previousModel)) {
+      return;
+    }
+
+    if (isShowing()) {
+      ScrollingUtil.ensureSelectionExists(myResultsPreviewTable);
+    }
+    finishPreviousPreviewSearch();
+    mySearchRescheduleOnCancellationsAlarm.cancelAllRequests();
 
     ValidationInfo backendValidation = backendValidator.runBackendValidation();
     ValidationInfo result = backendValidation != null ? backendValidation : getValidationInfo(myHelper.getModel());
@@ -1200,6 +1209,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     AtomicLong startTime = new AtomicLong();
     FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, findModel);
 
+    ModalityState state = ModalityState.current();
     Project project = myProject;
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(
       project, FindBundle.message("find.usages.progress.title")) {
@@ -1951,7 +1961,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       if (myState == myRegexState) {
         mySuggestRegexHintForEmptyResults = false;
       }
-      scheduleResultsUpdate();
+      scheduleResultsUpdate(true);
     }
   }
 
