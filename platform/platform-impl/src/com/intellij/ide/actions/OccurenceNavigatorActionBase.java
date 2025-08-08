@@ -5,6 +5,8 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -22,13 +24,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
-import java.util.LinkedList;
 
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
-public abstract class OccurenceNavigatorActionBase extends DumbAwareAction {
+public abstract class OccurenceNavigatorActionBase extends DumbAwareAction
+  implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+
   private static final Logger LOG = Logger.getInstance(OccurenceNavigatorActionBase.class);
 
   @Override
@@ -70,6 +72,7 @@ public abstract class OccurenceNavigatorActionBase extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
+    presentation.putClientProperty(ActionRemoteBehavior.SKIP_FALLBACK_UPDATE, null);
     Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
@@ -87,6 +90,13 @@ public abstract class OccurenceNavigatorActionBase extends DumbAwareAction {
       return;
     }
     presentation.setVisible(true);
+    if (navigator instanceof DeputyOccurenceNavigator) {
+      // Remote development case, with actual OccurenceNavigator instance present on the backend side.
+      // Action's update and execution will be delegated to the backend by the FrontendOtherwiseBackend mechanism.
+      presentation.setEnabled(false);
+      return;
+    }
+    presentation.putClientProperty(ActionRemoteBehavior.SKIP_FALLBACK_UPDATE, Boolean.TRUE);
     try {
       boolean enabled = Boolean.TRUE.equals(session.compute(
         navigator, "hasOccurenceToGo", navigator.getActionUpdateThread(), () -> hasOccurenceToGo(navigator)));
@@ -114,40 +124,13 @@ public abstract class OccurenceNavigatorActionBase extends DumbAwareAction {
     ContentManager contentManager = ContentManagerUtil.getContentManagerFromContext(dataContext, false);
     if (contentManager != null) {
       Content content = contentManager.getSelectedContent();
-      OccurenceNavigator navigator = content != null ? findNavigator(content.getComponent()) : null;
+      OccurenceNavigator navigator = content != null ? OccurenceNavigatorFinder.findNavigator(content.getComponent()) : null;
       if (navigator != null) {
         return navigator;
       }
     }
 
     return getOccurenceNavigatorFromContext(dataContext);
-  }
-
-  private static @Nullable OccurenceNavigator findNavigator(JComponent parent) {
-    LinkedList<JComponent> queue = new LinkedList<>();
-    queue.addLast(parent);
-    while (!queue.isEmpty()) {
-      JComponent component = queue.removeFirst();
-      if (component instanceof OccurenceNavigator) {
-        return (OccurenceNavigator)component;
-      }
-      if (component instanceof JTabbedPane) {
-        JComponent selectedComponent = (JComponent)((JTabbedPane)component).getSelectedComponent();
-        if (selectedComponent != null) {
-          queue.addLast(selectedComponent);
-        }
-      }
-      else if (component != null){
-        for (int i = 0; i < component.getComponentCount(); i++) {
-          Component child = component.getComponent(i);
-          if (!(child instanceof JComponent)) {
-            continue;
-          }
-          queue.addLast((JComponent)child);
-        }
-      }
-    }
-    return null;
   }
 
   private static @Nullable OccurenceNavigator getOccurenceNavigatorFromContext(@NotNull DataContext dataContext) {
@@ -161,9 +144,20 @@ public abstract class OccurenceNavigatorActionBase extends DumbAwareAction {
     if (project == null) return null;
 
     for (ToolWindow toolWindow : JBIterable.of(PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS.getData(dataContext))) {
-      OccurenceNavigator navigator = findNavigator(toolWindow.getComponent());
+      OccurenceNavigator navigator = OccurenceNavigatorFinder.findNavigator(toolWindow.getComponent());
       if (navigator != null) return navigator;
     }
     return null;
+  }
+
+  @ApiStatus.Internal
+  public interface DeputyOccurenceNavigator extends OccurenceNavigator {
+    @Override @NotNull default ActionUpdateThread getActionUpdateThread() { return OccurenceNavigator.super.getActionUpdateThread(); }
+    @Override default boolean hasNextOccurence() { return false; }
+    @Override default boolean hasPreviousOccurence() { return false; }
+    @Override default OccurenceInfo goNextOccurence() { return null; }
+    @Override default OccurenceInfo goPreviousOccurence() { return null; }
+    @Override @NotNull default String getNextOccurenceActionName() { return ""; }
+    @Override @NotNull default String getPreviousOccurenceActionName() { return ""; }
   }
 }
