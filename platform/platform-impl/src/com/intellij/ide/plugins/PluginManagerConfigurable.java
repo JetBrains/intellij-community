@@ -1072,11 +1072,12 @@ public final class PluginManagerConfigurable
 
             myBundledUpdateGroup.setErrors(model.getErrors());
 
+            // bundled includes bundled plugin updates
             List<PluginUiModel> visibleNonBundledPlugins, visibleBundledPlugins;
             {
               Map<Boolean, List<PluginUiModel>> visiblePlugins = model.getVisiblePlugins()
                 .stream()
-                .collect(Collectors.partitioningBy(PluginUiModel::isBundled));
+                .collect(Collectors.partitioningBy(plugin -> plugin.isBundled() || plugin.isBundledUpdate()));
               visibleNonBundledPlugins = visiblePlugins.get(Boolean.FALSE);
               visibleBundledPlugins = visiblePlugins.get(Boolean.TRUE);
             }
