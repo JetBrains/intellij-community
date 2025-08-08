@@ -48,6 +48,7 @@ class GitUntrackedFilesHolder internal constructor(
   private val repoRoot: VirtualFile = repository.getRoot()
 
   private val dirtyFiles = HashSet<FilePath>()
+  @Volatile
   private var isEverythingDirty = true
 
   @Volatile
@@ -205,27 +206,21 @@ class GitUntrackedFilesHolder internal constructor(
    * Queries Git to check the status of [dirtyFiles] and moves them to [untrackedFiles].
    */
   private suspend fun doUpdate() {
-    val (nothingToDo, dirt) = acquireDirt()
-    if (nothingToDo) {
+    val dirtyScope = acquireDirt()
+    if (dirtyScope == null) {
       BackgroundTaskUtil.syncPublisher(project, VcsManagedFilesHolder.TOPIC).updatingModeChanged()
       return
     }
 
     BackgroundTaskUtil.syncPublisher(project, GitRefreshListener.TOPIC).progressStarted()
     try {
-      val everythingDirty = dirt == null || dirt.contains(VcsUtil.getFilePath(repoRoot))
-      val activity = logUntrackedRefresh(project, everythingDirty)
-      val (untracked, ignored) = refreshFiles(dirt)
+      val activity = logUntrackedRefresh(project, dirtyScope == DirtyScope.Everything)
+      val (untracked, ignored) = refreshFiles(dirtyScope)
       activity.finished()
 
       val filteredUntracked = removePathsUnderOtherRoots(untracked, "unversioned")
       val filteredIgnored = removePathsUnderOtherRoots(ignored, "ignored")
 
-      val dirtyScope = dirt?.let {
-        RecursiveFilePathSet(repoRoot.isCaseSensitive).apply {
-          addAll(it)
-        }
-      }
       val (oldIgnored, newIgnored) = applyRefreshResult(filteredUntracked, filteredIgnored, dirtyScope)
 
       BackgroundTaskUtil.syncPublisher(project, GitRefreshListener.TOPIC).repositoryUpdated(repository)
@@ -239,55 +234,72 @@ class GitUntrackedFilesHolder internal constructor(
     }
   }
 
-  private fun acquireDirt(): Pair<Boolean, List<FilePath>?> {
-    synchronized(LOCK) {
-      val nothingToDo = !isDirty
-      if (nothingToDo) isInUpdateMode = false
-
-      val dirt = if (isEverythingDirty) null else dirtyFiles.toList()
-      dirtyFiles.clear()
-      isEverythingDirty = false
-      return nothingToDo to dirt
+  private fun acquireDirt(): DirtyScope? {
+    return synchronized(LOCK) {
+      try {
+        when {
+          isEverythingDirty || dirtyFiles.contains(VcsUtil.getFilePath(repoRoot)) -> {
+            DirtyScope.Everything
+          }
+          dirtyFiles.isNotEmpty() -> {
+            DirtyScope.Files(dirtyFiles.toList())
+          }
+          else -> {
+            isInUpdateMode = false
+            null
+          }
+        }
+      }
+      finally {
+        dirtyFiles.clear()
+        isEverythingDirty = false
+      }
     }
   }
 
   private fun applyRefreshResult(
     untracked: Set<FilePath>,
     ignored: Set<FilePath>,
-    dirtyScope: RecursiveFilePathSet?,
-  ): Pair<Set<FilePath>, Set<FilePath>> {
+    dirtyScope: DirtyScope,
+  ): UpdatedValue<Set<FilePath>> {
     synchronized(LOCK) {
       val oldIgnored = _ignoredFilesHolder.ignoredFilePaths
 
-      val newIgnored = RecursiveFilePathSet(repoRoot.isCaseSensitive)
-      val newUntracked = RecursiveFilePathSet(repoRoot.isCaseSensitive)
+      val caseSensitive = repoRoot.isCaseSensitive
+      val newIgnored = RecursiveFilePathSet(caseSensitive)
+      val newUntracked = RecursiveFilePathSet(caseSensitive)
 
-      if (dirtyScope != null) {
-        val untrackedSet = untrackedFiles.toSet()
-        untrackedSet.removeIf { dirtyScope.hasAncestor(it) }
-        untrackedSet.addAll(untracked)
-        newUntracked.addAll(untrackedSet)
+      when (dirtyScope) {
+        DirtyScope.Everything -> {
+          newUntracked.addAll(untracked)
+          newIgnored.addAll(ignored)
+        }
+        is DirtyScope.Files -> {
+          val dirtyFiles = RecursiveFilePathSet(caseSensitive).apply {
+            addAll(dirtyScope.files)
+          }
+          val untrackedSet = untrackedFiles.toSet()
+          untrackedSet.removeIf { dirtyFiles.hasAncestor(it) }
+          untrackedSet.addAll(untracked)
+          newUntracked.addAll(untrackedSet)
 
-        for (filePath in oldIgnored) {
-          if (!dirtyScope.hasAncestor(filePath)) {
-            newIgnored.add(filePath)
+          for (filePath in oldIgnored) {
+            if (!dirtyFiles.hasAncestor(filePath)) {
+              newIgnored.add(filePath)
+            }
+          }
+          for (filePath in ignored) {
+            if (!newIgnored.hasAncestor(filePath)) { // prevent storing both parent and child directories
+              newIgnored.add(filePath)
+            }
           }
         }
-        for (filePath in ignored) {
-          if (!newIgnored.hasAncestor(filePath)) { // prevent storing both parent and child directories
-            newIgnored.add(filePath)
-          }
-        }
-      }
-      else {
-        newUntracked.addAll(untracked)
-        newIgnored.addAll(ignored)
       }
 
       _ignoredFilesHolder.ignoredFiles.set(newIgnored)
       untrackedFiles.set(newUntracked)
       isInUpdateMode = isDirty
-      return oldIgnored to _ignoredFilesHolder.ignoredFilePaths
+      return UpdatedValue(oldIgnored, _ignoredFilesHolder.ignoredFilePaths)
     }
   }
 
@@ -322,12 +334,16 @@ class GitUntrackedFilesHolder internal constructor(
   }
 
 
-  private suspend fun refreshFiles(dirty: List<FilePath>?): RefreshResult {
+  private suspend fun refreshFiles(dirtyScope: DirtyScope): RefreshResult {
     try {
       val withIgnored = AdvancedSettings.getBoolean("vcs.process.ignored")
       val fileStatuses = withContext(Dispatchers.IO) {
+        val dirtyFiles = when (dirtyScope) {
+          DirtyScope.Everything -> emptyList()
+          is DirtyScope.Files -> dirtyScope.files
+        }
         coroutineToIndicator {
-          getFileStatus(project, repoRoot, dirty.orEmpty(), false, true, withIgnored)
+          getFileStatus(project, repoRoot, dirtyFiles, false, true, withIgnored)
         }
       }
 
@@ -409,7 +425,14 @@ class GitUntrackedFilesHolder internal constructor(
   }
 }
 
+private sealed interface DirtyScope {
+  class Files(val files: List<FilePath>) : DirtyScope
+  object Everything : DirtyScope
+}
+
 private data class RefreshResult(
   val untracked: Set<FilePath> = emptySet(),
   val ignored: Set<FilePath> = emptySet(),
 )
+
+private data class UpdatedValue<T>(val old: T, val new: T)
