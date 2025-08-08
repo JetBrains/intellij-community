@@ -34,11 +34,11 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
 
   override fun getErrorMessage(s: String?, context: ConvertContext): String? {
     val value = s ?: ""
-    val (jpsModuleName, descriptorFileName) = getModuleNameAndDescriptorFileName(value)
+    val (jpsModuleName, descriptorFileName) = getJpsModuleNameAndDescriptorFileName(value)
     return DevKitBundle.message("plugin.xml.convert.module.descriptor.name", descriptorFileName, jpsModuleName)
   }
 
-  private fun getModuleNameAndDescriptorFileName(moduleName: String): Pair<String, String> {
+  private fun getJpsModuleNameAndDescriptorFileName(moduleName: String): Pair<String, String> {
     return if (isSubDescriptor(moduleName)) {
       getSubDescriptorModuleName(moduleName) to getSubDescriptorFileName(moduleName)
     }
@@ -51,17 +51,17 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
     if (s == null || s.isEmpty()) return null
     val currentModule = context.module ?: return null
     val moduleManager = ModuleManager.getInstance(context.project)
-    val (jpsModuleName, descriptorFileName) = getModuleNameAndDescriptorFileName(s)
+    val (jpsModuleName, descriptorFileName) = getJpsModuleNameAndDescriptorFileName(s)
     return findDescriptor(currentModule, jpsModuleName, descriptorFileName, moduleManager)
   }
 
   private fun findDescriptor(
     currentModule: Module,
-    moduleName: String,
+    jpsModuleName: String,
     descriptorFileName: String,
     moduleManager: ModuleManager,
   ): IdeaPlugin? {
-    val module = moduleManager.findModuleByName(moduleName)
+    val module = moduleManager.findModuleByName(jpsModuleName)
     if (module != null) {
       val plugin = findDescriptorFileInModuleSources(module, descriptorFileName)
       if (plugin != null) {
