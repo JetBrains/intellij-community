@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.intentions.receiverType
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -44,17 +45,17 @@ internal object CoroutineBlockingCallInspectionUtils {
     fun isKotlinxOnClasspath(ktElement: KtElement): Boolean {
         val module = ModuleUtilCore.findModuleForPsiElement(ktElement) ?: return false
         val searchScope = GlobalSearchScope.moduleWithLibrariesScope(module)
-        return JavaPsiFacade.getInstance(module.project).findClass(DISPATCHERS_FQN, searchScope) != null
+        return JavaPsiFacade.getInstance(module.project).findClass(DISPATCHERS_FQN.asString(), searchScope) != null
     }
 
     fun isInsideFlowChain(resolvedCall: ResolvedCall<*>): Boolean {
         val descriptor = resolvedCall.resultingDescriptor
-        val isFlowGenerator = descriptor.fqNameOrNull()?.asString()?.startsWith(FLOW_PACKAGE_FQN) ?: false
-        return descriptor.receiverType()?.fqName?.asString() == FLOW_FQN || (descriptor.receiverType() == null && isFlowGenerator)
+        val isFlowGenerator = descriptor.fqNameOrNull()?.startsWith(FLOW_PACKAGE_FQN) ?: false
+        return descriptor.receiverType()?.fqName == FLOW_FQN || (descriptor.receiverType() == null && isFlowGenerator)
     }
 
     fun isCalledInsideNonIoContext(resolvedCall: ResolvedCall<*>): Boolean {
-        val callFqn = resolvedCall.resultingDescriptor?.fqNameSafe?.asString() ?: return false
+        val callFqn = resolvedCall.resultingDescriptor.fqNameSafe
         if (callFqn != WITH_CONTEXT_FQN) return false
         return isNonBlockingDispatcher(resolvedCall)
     }
@@ -63,7 +64,7 @@ internal object CoroutineBlockingCallInspectionUtils {
         val dispatcherFqnOrNull = call.getFirstArgumentExpression()
             ?.resolveToCall()
             ?.resultingDescriptor
-            ?.fqNameSafe?.asString()
+            ?.fqNameSafe
         return dispatcherFqnOrNull != null && dispatcherFqnOrNull != IO_DISPATCHER_FQN
     }
 
@@ -81,21 +82,21 @@ internal object CoroutineBlockingCallInspectionUtils {
             .asSequence()
             .filterIsInstance<KtCallExpression>()
             .mapNotNull { it.resolveToCall(BodyResolveMode.PARTIAL) }
-            .firstOrNull { it.isCalling(FqName(FLOW_ON_FQN)) }
+            .firstOrNull { it.isCalling(FLOW_ON_FQN) }
         return candidate ?: dotQualifiedExpression.findFlowOnCall()
     }
 
-    const val BLOCKING_EXECUTOR_ANNOTATION = "org.jetbrains.annotations.BlockingExecutor"
-    const val NONBLOCKING_EXECUTOR_ANNOTATION = "org.jetbrains.annotations.NonBlockingExecutor"
-    private const val DISPATCHERS_FQN = "kotlinx.coroutines.Dispatchers"
-    const val IO_DISPATCHER_FQN = "kotlinx.coroutines.Dispatchers.IO"
-    const val MAIN_DISPATCHER_FQN = "kotlinx.coroutines.Dispatchers.Main"
-    const val DEFAULT_DISPATCHER_FQN = "kotlinx.coroutines.Dispatchers.Default"
-    const val COROUTINE_SCOPE = "kotlinx.coroutines.CoroutineScope"
-    const val COROUTINE_CONTEXT = "kotlin.coroutines.CoroutineContext"
-    private const val FLOW_ON_FQN = "kotlinx.coroutines.flow.flowOn"
-    const val FLOW_PACKAGE_FQN = "kotlinx.coroutines.flow"
-    private const val FLOW_FQN = "kotlinx.coroutines.flow.Flow"
-    const val WITH_CONTEXT_FQN = "kotlinx.coroutines.withContext"
-    const val COROUTINE_NAME = "kotlinx.coroutines.CoroutineName"
+    val BLOCKING_EXECUTOR_ANNOTATION = ClassId.topLevel(FqName("org.jetbrains.annotations.BlockingExecutor"))
+    val NONBLOCKING_EXECUTOR_ANNOTATION = ClassId.topLevel(FqName("org.jetbrains.annotations.NonBlockingExecutor"))
+    private val DISPATCHERS_FQN = FqName("kotlinx.coroutines.Dispatchers")
+    val IO_DISPATCHER_FQN = FqName("kotlinx.coroutines.Dispatchers.IO")
+    val MAIN_DISPATCHER_FQN = FqName("kotlinx.coroutines.Dispatchers.Main")
+    val DEFAULT_DISPATCHER_FQN = FqName("kotlinx.coroutines.Dispatchers.Default")
+    val COROUTINE_SCOPE = FqName("kotlinx.coroutines.CoroutineScope")
+    val COROUTINE_CONTEXT = FqName("kotlin.coroutines.CoroutineContext")
+    private val FLOW_ON_FQN = FqName("kotlinx.coroutines.flow.flowOn")
+    val FLOW_PACKAGE_FQN = FqName("kotlinx.coroutines.flow")
+    val FLOW_FQN = FqName("kotlinx.coroutines.flow.Flow")
+    val WITH_CONTEXT_FQN = FqName("kotlinx.coroutines.withContext")
+    val COROUTINE_NAME = FqName("kotlinx.coroutines.CoroutineName")
 }

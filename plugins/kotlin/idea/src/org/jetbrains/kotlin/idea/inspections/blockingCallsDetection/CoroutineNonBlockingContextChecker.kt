@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.idea.intentions.getCallableDescriptor
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
@@ -117,7 +117,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         valueArgumentsByIndex?.firstOrNull()?.arguments?.firstOrNull()?.getArgumentExpression()
 
     private fun KotlinType.isCoroutineContext(): Boolean =
-        (this.constructor.supertypes + this).any { it.fqName?.asString() == COROUTINE_CONTEXT }
+        (this.constructor.supertypes + this).any { it.fqName == COROUTINE_CONTEXT }
 
     private fun checkBlockFriendlyDispatcherParameter(call: ResolvedCall<*>): ContextType {
         val firstArgument = call.getFirstArgument()
@@ -136,13 +136,13 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         if (descriptor.name.asString() != "plus") return false
         return generateSequence(listOf(descriptor)) { d -> d.flatMap { it.overriddenDescriptors }.takeIf { it.isNotEmpty() } }
             .flatten()
-            .any { it.containingDeclaration.fqNameOrNull()?.asString() == COROUTINE_CONTEXT}
+            .any { it.containingDeclaration.fqNameOrNull() == COROUTINE_CONTEXT }
     }
 
     private fun checkFunctionWithDefaultDispatcher(callExpression: KtCallExpression): ContextType {
         val classDescriptor =
             callExpression.receiverValue().asSafely<ImplicitClassReceiver>()?.classDescriptor ?: return Unsure
-        if (classDescriptor.typeConstructor.supertypes.none { it.fqName?.asString() == COROUTINE_SCOPE }) return Unsure
+        if (classDescriptor.typeConstructor.supertypes.none { it.fqName == COROUTINE_SCOPE }) return Unsure
         val propertyDescriptor = classDescriptor
             .unsubstitutedMemberScope
             .getContributedDescriptors(DescriptorKindFilter.VARIABLES)
@@ -158,7 +158,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         call: ResolvedCall<out CallableDescriptor>,
         callExpression: KtCallExpression
     ): ContextType {
-        val isInsideFlow = call.resultingDescriptor.fqNameSafe.asString().startsWith(FLOW_PACKAGE_FQN)
+        val isInsideFlow = call.resultingDescriptor.fqNameSafe.startsWith(FLOW_PACKAGE_FQN)
         if (!isInsideFlow) return Unsure
         val flowOnCall = callExpression.findFlowOnCall() ?: return NonBlocking.INSTANCE
         return checkBlockFriendlyDispatcherParameter(flowOnCall)
@@ -194,9 +194,9 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         if (isTypeOrUsageAnnotatedWith(returnTypeDescriptor, typeConstructor, BLOCKING_EXECUTOR_ANNOTATION)) return Blocking
         if (isTypeOrUsageAnnotatedWith(returnTypeDescriptor, typeConstructor, NONBLOCKING_EXECUTOR_ANNOTATION)) return NonBlocking.INSTANCE
 
-        if (this is ConstructorDescriptor && constructedClass.fqNameOrNull()?.asString() == COROUTINE_NAME) return Unsure
+        if (this is ConstructorDescriptor && constructedClass.fqNameOrNull() == COROUTINE_NAME) return Unsure
 
-        val fqnOrNull = fqNameOrNull()?.asString() ?: return Unsure
+        val fqnOrNull = fqNameOrNull() ?: return Unsure
         return when(fqnOrNull) {
             IO_DISPATCHER_FQN -> Blocking
             MAIN_DISPATCHER_FQN, DEFAULT_DISPATCHER_FQN -> NonBlocking.INSTANCE
@@ -204,8 +204,8 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         }
     }
 
-    private fun isTypeOrUsageAnnotatedWith(type: KotlinType?, typeConstructor: ClassifierDescriptor?, annotationFqn: String): Boolean {
-        val fqName = FqName(annotationFqn)
+    private fun isTypeOrUsageAnnotatedWith(type: KotlinType?, typeConstructor: ClassifierDescriptor?, annotationFqn: ClassId): Boolean {
+        val fqName = annotationFqn.asSingleFqName()
         return when {
             type?.annotations?.hasAnnotation(fqName) == true -> true
             typeConstructor?.annotations?.hasAnnotation(fqName) == true -> true
