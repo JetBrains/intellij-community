@@ -57,7 +57,9 @@ class WideSelectionListCacheTest {
     updateAndCheckCache(list, (0..100).toSet())
 
     filteringModel.setFilter(null)
+    defaultModel.remove(49)
     defaultModel.remove(50)
+    defaultModel.addElement(49) // remove doesn't purge the cache
     val no50 = defaultModel.allItems
     assertEquals(no50, list.cachedItems)
     defaultModel.addElement(999)

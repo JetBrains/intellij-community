@@ -16,6 +16,8 @@ import javax.swing.event.ListDataListener
 @TestOnly
 class WideSelectionListCache(private val list: JList<*>) {
 
+  private var modelChanged = false
+
   /**
    * Key is a value from the [list].
    * Don't cache `null` value because of using [MutableMap.getOrPut]
@@ -25,21 +27,27 @@ class WideSelectionListCache(private val list: JList<*>) {
   val preferredSizeCache: MutableMap<Any, Dimension> = IdentityHashMap()
 
   private val listDataListener = object : ListDataListener {
-    override fun intervalAdded(e: ListDataEvent?) {}
+    override fun intervalAdded(e: ListDataEvent?) {
+      // No need modelChanged, the cache will be filled later when needed
+      purgeIfNeeded()
+    }
 
     override fun intervalRemoved(e: ListDataEvent) {
-      purge()
+      modelChanged = true
+      // No need purgeIfNeeded, because `replaceAll` method does `removeAllItems` and `addAllItems`,
+      // which leads to unnecessary full cache rebuilding.
     }
 
     override fun contentsChanged(e: ListDataEvent) {
-      purge()
+      modelChanged = true
+      purgeIfNeeded()
     }
   }
 
   private val modelChangeListener = PropertyChangeListener { evt ->
     uninstallListDataListener(evt.oldValue as ListModel<*>?)
     installListDataListener(evt.newValue as ListModel<*>?)
-    preferredSizeCache.clear()
+    clear()
   }
 
   fun installListeners() {
@@ -50,17 +58,35 @@ class WideSelectionListCache(private val list: JList<*>) {
   fun uninstallListeners() {
     list.removePropertyChangeListener("model", modelChangeListener)
     uninstallListDataListener(list.model)
-    preferredSizeCache.clear()
+    clear()
   }
 
   fun getCachedPreferredSizeOrCalculate(value: Any?, useCache: Boolean, supplier: () -> Dimension): Dimension {
-    if (!useCache || value == null) {
+    if (!useCache) {
+      clear()
       return supplier()
     }
+
+    purgeIfNeeded()
+
+    if (value == null) {
+      return supplier()
+    }
+
     return preferredSizeCache.getOrPut(value, supplier)
   }
 
-  private fun purge() {
+  private fun clear() {
+    modelChanged = false
+    preferredSizeCache.clear()
+  }
+
+  private fun purgeIfNeeded() {
+    if (!modelChanged) {
+      return
+    }
+
+    modelChanged = false
     val model = list.model.originalModel
 
     if (model == null) {
