@@ -6,12 +6,15 @@ package com.intellij.internal.ui.sandbox.tests.dsl.listCellRenderer
 import com.intellij.icons.AllIcons
 import com.intellij.internal.ui.sandbox.UISandboxPanel
 import com.intellij.openapi.Disposable
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.WideSelectionListUI
 import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.VerticalComponentGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.text
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
@@ -37,6 +40,10 @@ internal class LcrPerformanceTestPanel : UISandboxPanel {
     return panel {
       row {
         cell(ListWithFilter.wrap(list, JBScrollPane(list)) { getMainText(it) })
+          .applyToComponent {
+            putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH)
+          }
+          .comment("Speed search is supported and should work much faster with optimization")
           .align(Align.FILL)
           .resizableColumn()
         applyRenderer(list, RendererType.KOTLIN_UI_DSL)
@@ -68,7 +75,7 @@ internal class LcrPerformanceTestPanel : UISandboxPanel {
             checkBox("ImmutableModelAndRenderer")
               .comment("Turn on performance optimizations")
               .onChanged {
-                list.putClientProperty(JBList.IMMUTABLE_MODEL_AND_RENDERER, it.isSelected)
+                ClientProperty.put(list, JBList.IMMUTABLE_MODEL_AND_RENDERER, it.isSelected)
               }
           }
 

@@ -38,6 +38,7 @@ import com.intellij.platform.ide.navigation.NavigationOptions;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.JBList;
 import com.intellij.usages.UsageView;
@@ -187,7 +188,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     JScrollPane pane;
     if (builder instanceof PopupChooserBuilder<?> popupChooserBuilder) {
-      popupChooserBuilder.getChooserComponent().putClientProperty(JBList.IMMUTABLE_MODEL_AND_RENDERER, true);
+      ClientProperty.put(popupChooserBuilder.getChooserComponent(), JBList.IMMUTABLE_MODEL_AND_RENDERER, true);
       pane = popupChooserBuilder.getScrollPane();
     } else {
       pane = null;

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.speedSearch.FilteringListModel
 import org.junit.Test
 import javax.swing.DefaultListModel
@@ -26,7 +27,7 @@ class WideSelectionListCacheTest {
     val list = JBList((0..100).toList())
     val model = list.model as DefaultListModel<Int>
 
-    list.putClientProperty(JBList.IMMUTABLE_MODEL_AND_RENDERER, true)
+    ClientProperty.put(list, JBList.IMMUTABLE_MODEL_AND_RENDERER, true)
 
     updateAndCheckCacheEqualsModel(list)
     model.remove(10)
@@ -45,7 +46,7 @@ class WideSelectionListCacheTest {
     val filteringModel = FilteringListModel(defaultModel)
     val list = JBList(filteringModel)
 
-    list.putClientProperty(JBList.IMMUTABLE_MODEL_AND_RENDERER, true)
+    ClientProperty.put(list, JBList.IMMUTABLE_MODEL_AND_RENDERER, true)
 
     filteringModel.setFilter { it <= 50 }
     updateAndCheckCache(list, (0..50).toSet())

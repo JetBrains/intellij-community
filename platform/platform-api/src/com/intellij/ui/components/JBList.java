@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -47,7 +48,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
    * the same item is rendered with exactly the same content
    */
   @ApiStatus.Internal
-  public static final String IMMUTABLE_MODEL_AND_RENDERER = "ImmutableModelAndRenderer";
+  public static final Key<Boolean> IMMUTABLE_MODEL_AND_RENDERER = Key.create("ImmutableModelAndRenderer");
 
   private StatusText myEmptyText;
   private ExpandableItemsHandler<Integer> myExpandableItemsHandler;

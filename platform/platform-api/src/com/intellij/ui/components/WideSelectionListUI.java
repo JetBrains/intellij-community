@@ -215,7 +215,7 @@ public final class WideSelectionListUI extends BasicListUI {
       int dataModelSize = dataModel.getSize();
       ListCellRenderer<Object> renderer = list.getCellRenderer();
       if (renderer != null) {
-        boolean immutableRenderer = list.getClientProperty(JBList.IMMUTABLE_MODEL_AND_RENDERER) == Boolean.TRUE;
+        boolean immutableRenderer = ClientProperty.isTrue(list, JBList.IMMUTABLE_MODEL_AND_RENDERER);
         for (int index = 0; index < dataModelSize; index++) {
           Dimension cellSize = getItemPreferredSize(index, dataModel, renderer, immutableRenderer);
           if (fixedCellWidth == -1) {
