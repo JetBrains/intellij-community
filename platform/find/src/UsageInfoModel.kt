@@ -165,7 +165,8 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
   private fun calculateRange(): Segment {
     val range: Segment? = cachedSmartRange?.range
     if (range == null) {
-      LOG.warn("Smart range is null for ${model.presentablePath}. The default range will be used.")
+      val logMessage = "Smart range is null for ${model.presentablePath}. The default range will be used."
+      if (initializationJob?.isActive != true) LOG.warn(logMessage) else LOG.debug(logMessage)
       return defaultRange
     }
     return range
