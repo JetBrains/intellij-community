@@ -41,10 +41,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.jobToIndicator
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.PossiblyDumbAware
@@ -421,77 +418,79 @@ internal class DirectIntentionCommandProvider : CommandProvider {
     offset: Int,
   ): Deferred<List<CompletionCommand>> = async {
     return@async readAction {
-      val result = mutableMapOf<String, CompletionCommand>()
-      try {
-        var language = originalFile.language
-        val injectedElementAt = InjectedLanguageManager.getInstance(psiFile.project).findInjectedElementAt(psiFile, offset)
-        if (injectedElementAt != null) {
-          language = injectedElementAt.language
-        }
-        val offsetProvider = IntentionCommandOffsetProvider.EP_NAME.forLanguage(language)
-        val intentionCommandSkipper = IntentionCommandSkipper.EP_NAME.forLanguage(language)
-
-        val offsets = offsetProvider?.findOffsets(psiFile, offset) ?: mutableListOf(offset)
-
-        val availableIntentions = IntentionManager.getInstance().getAvailableIntentions(mutableListOf(language.id))
-        for (currentOffset in offsets) {
-          val actionsToShow = IntentionsInfo()
-          for (action in availableIntentions) {
-            val intentionAction = IntentionActionDelegate.unwrap(action)
-            val descriptor =
-              IntentionActionDescriptor(action, null, null,
-                                        if (intentionAction is Iconable) {
-                                          intentionAction.getIcon(ICON_FLAG_VISIBILITY)
-                                        }
-                                        else null, null, null, null, null)
-            actionsToShow.intentionsToShow.add(descriptor)
+      blockingContextToIndicator {
+        val result = mutableMapOf<String, CompletionCommand>()
+        try {
+          var language = originalFile.language
+          val injectedElementAt = InjectedLanguageManager.getInstance(psiFile.project).findInjectedElementAt(psiFile, offset)
+          if (injectedElementAt != null) {
+            language = injectedElementAt.language
           }
-          val dumbService = DumbService.getInstance(originalFile.project)
-          editor.caretModel.moveToOffset(currentOffset)
-          val intentionsCache = CachedIntentions(originalFile.project, psiFile, editor)
-          val toRemove = mutableListOf<IntentionActionDescriptor>()
-          val filter = Predicate { action: IntentionAction? ->
-            IntentionActionFilter.EXTENSION_POINT_NAME.extensionList.all { f: IntentionActionFilter -> action != null && f.accept(action, psiFile, editor.caretModel.offset) }
-          }
+          val offsetProvider = IntentionCommandOffsetProvider.EP_NAME.forLanguage(language)
+          val intentionCommandSkipper = IntentionCommandSkipper.EP_NAME.forLanguage(language)
 
-          for (intention in actionsToShow.intentionsToShow) {
-            try {
-              ProgressManager.checkCanceled()
-              if (!dumbService.isUsableInCurrentContext(intention) ||
-                  !intention.action.isAvailable(originalFile.project, editor, psiFile) ||
-                  !filter.test(intention.action)) {
+          val offsets = offsetProvider?.findOffsets(psiFile, offset) ?: mutableListOf(offset)
+
+          val availableIntentions = IntentionManager.getInstance().getAvailableIntentions(mutableListOf(language.id))
+          for (currentOffset in offsets) {
+            val actionsToShow = IntentionsInfo()
+            for (action in availableIntentions) {
+              val intentionAction = IntentionActionDelegate.unwrap(action)
+              val descriptor =
+                IntentionActionDescriptor(action, null, null,
+                                          if (intentionAction is Iconable) {
+                                            intentionAction.getIcon(ICON_FLAG_VISIBILITY)
+                                          }
+                                          else null, null, null, null, null)
+              actionsToShow.intentionsToShow.add(descriptor)
+            }
+            val dumbService = DumbService.getInstance(originalFile.project)
+            editor.caretModel.moveToOffset(currentOffset)
+            val intentionsCache = CachedIntentions(originalFile.project, psiFile, editor)
+            val toRemove = mutableListOf<IntentionActionDescriptor>()
+            val filter = Predicate { action: IntentionAction? ->
+              IntentionActionFilter.EXTENSION_POINT_NAME.extensionList.all { f: IntentionActionFilter -> action != null && f.accept(action, psiFile, editor.caretModel.offset) }
+            }
+
+            for (intention in actionsToShow.intentionsToShow) {
+              try {
+                ProgressManager.checkCanceled()
+                if (!dumbService.isUsableInCurrentContext(intention) ||
+                    !intention.action.isAvailable(originalFile.project, editor, psiFile) ||
+                    !filter.test(intention.action)) {
+                  toRemove.add(intention)
+                }
+              }
+              catch (_: UnsupportedOperationException) {
+                toRemove.add(intention)
+              }
+              catch (_: CommandCompletionUnsupportedOperationException) {
+                toRemove.add(intention)
+              }
+              catch (_: IntentionPreviewUnsupportedOperationException) {
                 toRemove.add(intention)
               }
             }
-            catch (_: UnsupportedOperationException) {
-              toRemove.add(intention)
+            actionsToShow.intentionsToShow.removeAll(toRemove)
+            intentionsCache.wrapAndUpdateActions(actionsToShow, false)
+            for (intention in intentionsCache.intentions) {
+              if (intention.action is EmptyIntentionAction ||
+                  intentionCommandSkipper != null && intentionCommandSkipper.skip(intention.action, psiFile, currentOffset)) continue
+              val intentionCommand =
+                IntentionCompletionCommand(intention, 50, AllIcons.Actions.IntentionBulbGrey, calculateIntentionHighlighting(intention, editor, psiFile, offset), currentOffset) {
+                  editor.caretModel.moveToOffset(currentOffset)
+                  computePreview(psiFile, intention.action, editor, currentOffset)
+                }
+              result[intention.text] = intentionCommand
             }
-            catch (_: CommandCompletionUnsupportedOperationException) {
-              toRemove.add(intention)
-            }
-            catch (_: IntentionPreviewUnsupportedOperationException) {
-              toRemove.add(intention)
-            }
-          }
-          actionsToShow.intentionsToShow.removeAll(toRemove)
-          intentionsCache.wrapAndUpdateActions(actionsToShow, false)
-          for (intention in intentionsCache.intentions) {
-            if (intention.action is EmptyIntentionAction ||
-                intentionCommandSkipper != null && intentionCommandSkipper.skip(intention.action, psiFile, currentOffset)) continue
-            val intentionCommand =
-              IntentionCompletionCommand(intention, 50, AllIcons.Actions.IntentionBulbGrey, calculateIntentionHighlighting(intention, editor, psiFile, offset), currentOffset) {
-                editor.caretModel.moveToOffset(currentOffset)
-                computePreview(psiFile, intention.action, editor, currentOffset)
-              }
-            result[intention.text] = intentionCommand
           }
         }
-      }
-      finally {
-        editor.caretModel.moveToOffset(offset)
-      }
+        finally {
+          editor.caretModel.moveToOffset(offset)
+        }
 
-      return@readAction result.values.toList()
+        return@blockingContextToIndicator result.values.toList()
+      }
     }
   }
 
