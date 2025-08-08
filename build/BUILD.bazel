@@ -40,7 +40,7 @@ jvm_library(
   module_name = "intellij.platform.jps.build.javac.rt",
   visibility = ["//visibility:public"],
   srcs = ["@rules_jvm//jps-builders-6:build-javac-rt_sources"],
-  kotlinc_opts = "@community//:k8",
+  kotlinc_opts = "@community//:k7",
   deps = [
     "@lib//:jetbrains-annotations-java5",
     "@lib//:javax-annotation-api",
