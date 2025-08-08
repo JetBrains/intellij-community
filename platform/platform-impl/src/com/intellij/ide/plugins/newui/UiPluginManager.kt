@@ -181,7 +181,7 @@ class UiPluginManager {
     return getController().setEnableStateForDependencies(sessionId, descriptorIds, enable)
   }
 
-  fun findPluginNames(pluginIds: List<PluginId>): List<String> {
+  suspend fun findPluginNames(pluginIds: List<PluginId>): List<String> {
     return getController().findPluginNames(pluginIds)
   }
 

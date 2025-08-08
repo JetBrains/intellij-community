@@ -47,9 +47,8 @@ interface UiPluginManagerController {
   suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean
   suspend fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult
   suspend fun isPluginInstalled(pluginId: PluginId): Boolean
-  fun setEnableStateForDependencies(sessionId: String, descriptorIds: Set<PluginId>, enable: Boolean): SetEnabledStateResult
   fun filterPluginsRequiringUltimateButItsDisabled(pluginIds: List<PluginId>): List<PluginId>
-  fun findPluginNames(pluginIds: List<PluginId>): List<String>
+  suspend fun findPluginNames(pluginIds: List<PluginId>): List<String>
   suspend fun findPlugin(pluginId: PluginId): PluginUiModel?
 
   fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String? = null, indicator: ProgressIndicator? = null): PluginUiModel?
@@ -66,6 +65,7 @@ interface UiPluginManagerController {
   fun getApplyError(sessionId: String): String?
 
   fun enablePlugins(sessionId: String, descriptorIds: List<PluginId>, enable: Boolean, project: Project?): SetEnabledStateResult
+  fun setEnableStateForDependencies(sessionId: String, descriptorIds: Set<PluginId>, enable: Boolean): SetEnabledStateResult
   fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean
 
   suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult>

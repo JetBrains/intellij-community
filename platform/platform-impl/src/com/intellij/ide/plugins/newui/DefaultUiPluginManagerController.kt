@@ -281,7 +281,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
 
-  override fun findPluginNames(pluginIds: List<PluginId>): List<String> {
+  override suspend fun findPluginNames(pluginIds: List<PluginId>): List<String> {
     val requests = MarketplaceRequests.getInstance()
     return pluginIds.map {
       PluginManagerCore.findPlugin(it)?.name ?: requests.getLastCompatiblePluginUpdate(it)?.name ?: it.idString

@@ -1704,7 +1704,7 @@ suspend fun loadReviews(existingModel: PluginUiModel): PluginUiModel? {
 
 @ApiStatus.Internal
 @IntellijInternalApi
-fun loadDependencyNames(targetModel: PluginUiModel): PluginUiModel? {
+suspend fun loadDependencyNames(targetModel: PluginUiModel): PluginUiModel? {
   val resultNode = targetModel
   val pluginIds = resultNode.dependencies
     .filter { !it.isOptional }
