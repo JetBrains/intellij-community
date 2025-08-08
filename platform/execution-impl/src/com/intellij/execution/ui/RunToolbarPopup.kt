@@ -41,7 +41,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
+import com.intellij.openapi.vfs.projectFilesWrite
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.platform.ide.core.permissions.Permission
+import com.intellij.platform.ide.core.permissions.RequiresPermissions
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.GroupedElementsRenderer
 import com.intellij.ui.components.JBList
@@ -561,7 +564,7 @@ fun runCounterToString(e: AnActionEvent, stopCount: Int): String =
   }
 
 private class PinConfigurationAction(val conf: RunnerAndConfigurationSettings, isPinned: Boolean)
-  : ActionRemotePermissionRequirements.ActionWithWriteAccess() {
+  : AnAction(), RequiresPermissions {
   init {
     templatePresentation.text = getText(isPinned)
   }
@@ -582,10 +585,14 @@ private class PinConfigurationAction(val conf: RunnerAndConfigurationSettings, i
     val project = e.project ?: return
     RunConfigurationStartHistory.getInstance(project).togglePin(conf)
   }
+
+  override fun getRequiredPermissions(): Collection<Permission> {
+    return listOf(projectFilesWrite)
+  }
 }
 
 private class StopConfigurationInlineAction(val executor: Executor, val settings: RunnerAndConfigurationSettings)
-  : AnAction(), ActionRemotePermissionRequirements.RunAccess {
+  : AnAction(), RequiresPermissions {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -617,6 +624,10 @@ private class StopConfigurationInlineAction(val executor: Executor, val settings
     }
 
     return null
+  }
+
+  override fun getRequiredPermissions(): Collection<Permission> {
+    return listOf(fullRunAccess)
   }
 }
 

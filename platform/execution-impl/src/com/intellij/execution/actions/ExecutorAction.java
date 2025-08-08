@@ -31,6 +31,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.ide.core.permissions.Permission;
+import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -50,14 +52,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.execution.PermissionsKt.getFullRunAccess;
 import static java.util.Collections.emptyList;
 
 @ApiStatus.Internal
-public class ExecutorAction extends AnAction
-  implements DumbAware, ActionRemotePermissionRequirements.RunAccess, ActionIdProvider {
+public class ExecutorAction extends AnAction implements DumbAware, RequiresPermissions, ActionIdProvider {
 
   public static final Key<Boolean> WOULD_BE_ENABLED_BUT_STARTING = Key.create("WOULD_BE_ENABLED_BUT_STARTING");
 
@@ -463,6 +466,11 @@ public class ExecutorAction extends AnAction
                                   @NotNull RunnerAndConfigurationSettings runConfig,
                                   @NotNull DataContext dataContext) {
     ExecutionUtil.doRunConfiguration(runConfig, myExecutor, null, null, dataContext, env -> env.setRunningCurrentFile(true));
+  }
+
+  @Override
+  public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
+    return List.of(getFullRunAccess());
   }
 
   private record RunCurrentFileInfo(

@@ -29,6 +29,9 @@ com.intellij.execution.RunConfigurationConverter
 - a:convertRunConfigurationOnDemand(org.jdom.Element):Z
 com.intellij.execution.actions.ExecutorProvider
 - a:getExecutor():com.intellij.execution.Executor
+c:com.intellij.execution.actions.StopAction
+- com.intellij.platform.ide.core.permissions.RequiresPermissions
+- getRequiredPermissions():java.util.Collection
 com.intellij.execution.configuration.CompatibilityAwareRunProfile
 - com.intellij.execution.configurations.RunProfile
 - a:mustBeStoppedToRun(com.intellij.execution.configurations.RunConfiguration):Z
