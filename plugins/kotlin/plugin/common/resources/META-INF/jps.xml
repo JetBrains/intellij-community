@@ -41,7 +41,7 @@
     <workspaceModel.facetContributor implementation="org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetContributor" />
     <registryKey key="workspace.model.kotlin.facet.bridge" defaultValue="true" restartRequired="true"
                  description="Enable Kotlin facet work via own entities at workspace model"/>
-    <registryKey key="kotlin.jps.cache.external.system.id" defaultValue="false"
+    <registryKey key="kotlin.jps.cache.external.system.id" defaultValue="true"
                  description="KTIJ-29020 - cache info about external system id for evaluating the final Kotlin JPS compiler version.
                  It is necessary when the workspace has two projects with different build systems and different versions of the Kotlin compiler"  />
     <registryKey key="kotlin.jps.instrument.bytecode"
