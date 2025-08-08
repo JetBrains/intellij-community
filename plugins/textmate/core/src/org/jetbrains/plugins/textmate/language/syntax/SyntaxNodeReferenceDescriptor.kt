@@ -6,9 +6,6 @@ internal class SyntaxNodeReferenceDescriptor(
   private val ruleId: Int,
   private val syntaxTable: TextMateSyntaxTableCore,
 ) : SyntaxNodeDescriptor {
-  override val scopeName: CharSequence?
-    get() = syntaxTable.getRule(ruleId).scopeName
-
   override val children: List<SyntaxNodeDescriptor>
     get() = syntaxTable.getRule(ruleId).children
 

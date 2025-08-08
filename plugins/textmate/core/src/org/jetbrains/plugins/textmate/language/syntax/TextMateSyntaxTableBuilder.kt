@@ -302,8 +302,7 @@ private class SyntaxRawNodeImpl(
         InjectionNodeDescriptor(selector, compiledRule)
       }
     }.compactList()
-    val result = SyntaxNodeDescriptorImpl(scopeName = scopeName,
-                                          children = children,
+    val result = SyntaxNodeDescriptorImpl(children = children,
                                           injections = injections,
                                           captures = captures,
                                           stringAttributes = stringAttributes)

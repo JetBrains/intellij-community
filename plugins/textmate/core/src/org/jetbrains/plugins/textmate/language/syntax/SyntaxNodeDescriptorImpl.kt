@@ -3,7 +3,6 @@ package org.jetbrains.plugins.textmate.language.syntax
 import org.jetbrains.plugins.textmate.Constants
 
 internal class SyntaxNodeDescriptorImpl(
-  override val scopeName: CharSequence?,
   override val children: List<SyntaxNodeDescriptor>,
   override val injections: List<InjectionNodeDescriptor>,
   private val captures: Array<Array<TextMateCapture?>?>?,

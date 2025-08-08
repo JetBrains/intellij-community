@@ -27,11 +27,6 @@ interface SyntaxNodeDescriptor {
   @Deprecated("node doesn't hold repository anymore")
   fun findInRepository(ruleId: Int): SyntaxNodeDescriptor
 
-  /**
-   * @return scope name if node is root for language or null otherwise
-   */
-  val scopeName: CharSequence?
-
   @get:Deprecated("node doesn't hold parent reference anymore")
   val parentNode: SyntaxNodeDescriptor?
 
@@ -58,8 +53,6 @@ interface SyntaxNodeDescriptor {
       override val injections: List<InjectionNodeDescriptor> = emptyList()
 
       override fun findInRepository(ruleId: Int): SyntaxNodeDescriptor = this
-      override val scopeName: CharSequence?
-        get() = null
       override val parentNode: SyntaxNodeDescriptor?
         get() = null
     }
