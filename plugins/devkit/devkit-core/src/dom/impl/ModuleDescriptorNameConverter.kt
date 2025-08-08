@@ -48,14 +48,19 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
   override fun fromString(s: String?, context: ConvertContext): IdeaPlugin? {
     if (s == null || s.isEmpty() || context.module == null) return null
     val moduleManager = ModuleManager.getInstance(context.project)
+    val (jpsModuleName, descriptorFileName) = getModuleNameAndDescriptorFileName(s)
+    return findDescriptor(jpsModuleName, descriptorFileName, moduleManager)
+  }
 
-    if (isSubDescriptor(s)) {
-      val module = moduleManager.findModuleByName(getSubDescriptorModuleName(s)) ?: return null
-      return findDescriptorFileInModuleSources(module, getSubDescriptorFileName(s))
+  private fun findDescriptor(moduleName: String, descriptorFileName: String, moduleManager: ModuleManager): IdeaPlugin? {
+    val module = moduleManager.findModuleByName(moduleName)
+    if (module != null) {
+      val plugin = findDescriptorFileInModuleSources(module, descriptorFileName)
+      if (plugin != null) {
+        return plugin
+      }
     }
-
-    val module = moduleManager.findModuleByName(s) ?: return null
-    return findDescriptorFileInModuleSources(module, getDescriptorFileName(module.name))
+    return null
   }
 
   override fun toString(plugin: IdeaPlugin?, context: ConvertContext): String? {
