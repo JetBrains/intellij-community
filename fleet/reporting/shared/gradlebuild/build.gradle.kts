@@ -67,8 +67,8 @@ kotlin {
     }
     implementation(jps.io.opentelemetry.opentelemetry.sdk966255575.get())
     implementation(jps.io.opentelemetry.semconv.opentelemetry.semconv489456914.get())
-    implementation(project(":reporting-api"))
-    implementation(project(":multiplatform-shims"))
+    implementation(project(":fleet.reporting.api"))
+    implementation(project(":fleet.multiplatform.shims"))
   }
   // KOTLIN__MARKER_END
 }

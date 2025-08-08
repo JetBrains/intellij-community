@@ -65,8 +65,8 @@ kotlin {
     implementation(jps.org.jetbrains.kotlinx.kotlinx.io.core.jvm479158162.get().let { "${it.group}:kotlinx-io-core:${it.version}" }) {
       exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
-    implementation(project(":util-core"))
-    implementation(project(":ktor-network-tls"))
+    implementation(project(":fleet.util.core"))
+    implementation(project(":fleet.ktor.network.tls"))
   }
   // KOTLIN__MARKER_END
 }

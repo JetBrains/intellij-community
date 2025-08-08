@@ -71,10 +71,10 @@ kotlin {
     implementation(jps.org.jetbrains.kotlinx.kotlinx.datetime.jvm1686009755.get().let { "${it.group}:kotlinx-datetime:${it.version}" }) {
       isTransitive = false
     }
-    implementation(project(":reporting-api"))
-    implementation(project(":reporting-shared"))
-    implementation(project(":multiplatform-shims"))
-    implementation(project(":util-core"))
+    implementation(project(":fleet.reporting.api"))
+    implementation(project(":fleet.reporting.shared"))
+    implementation(project(":fleet.multiplatform.shims"))
+    implementation(project(":fleet.util.core"))
   }
   // KOTLIN__MARKER_END
 }

@@ -77,15 +77,15 @@ kotlin {
     implementation(jps.de.cketti.unicode.kotlin.codepoints.jvm1960123061.get().let { "${it.group}:kotlin-codepoints:${it.version}" }) {
       isTransitive = false
     }
-    api(project(":util-logging-api"))
-    implementation(project(":reporting-api"))
-    implementation(project(":reporting-shared"))
-    api(project(":multiplatform-shims"))
-    api(project(":fastutil"))
-    compileOnly(project(":util-multiplatform"))
+    api(project(":fleet.util.logging.api"))
+    implementation(project(":fleet.reporting.api"))
+    implementation(project(":fleet.reporting.shared"))
+    api(project(":fleet.multiplatform.shims"))
+    api(project(":fleet.fastutil"))
+    compileOnly(project(":fleet.util.multiplatform"))
   }
   sourceSets.wasmJsMain.dependencies {
-    api(project(":util-multiplatform"))
+    api(project(":fleet.util.multiplatform"))
   }
   // KOTLIN__MARKER_END
 }

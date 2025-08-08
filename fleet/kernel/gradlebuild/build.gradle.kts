@@ -72,12 +72,12 @@ kotlin {
     implementation(jps.org.jetbrains.intellij.deps.fastutil.intellij.deps.fastutil1191883795.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
     }
-    api(project(":rhizomedb"))
-    api(project(":util-core"))
-    api(project(":rpc"))
-    implementation(project(":reporting-api"))
-    implementation(project(":reporting-shared"))
-    implementation(project(":multiplatform-shims"))
+    api(project(":fleet.rhizomedb"))
+    api(project(":fleet.util.core"))
+    api(project(":fleet.rpc"))
+    implementation(project(":fleet.reporting.api"))
+    implementation(project(":fleet.reporting.shared"))
+    implementation(project(":fleet.multiplatform.shims"))
   }
   // KOTLIN__MARKER_END
 }

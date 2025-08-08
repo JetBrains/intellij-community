@@ -68,8 +68,8 @@ kotlin {
     implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.json.jvm231489733.get().let { "${it.group}:kotlinx-serialization-json:${it.version}" }) {
       isTransitive = false
     }
-    implementation(project(":util-core"))
-    implementation(project(":multiplatform-shims"))
+    implementation(project(":fleet.util.core"))
+    implementation(project(":fleet.multiplatform.shims"))
   }
   // KOTLIN__MARKER_END
 }

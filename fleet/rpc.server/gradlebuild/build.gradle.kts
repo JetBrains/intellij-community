@@ -64,11 +64,11 @@ kotlin {
     }
     implementation(jps.io.opentelemetry.opentelemetry.sdk966255575.get())
     implementation(jps.io.opentelemetry.semconv.opentelemetry.semconv489456914.get())
-    implementation(project(":rpc"))
-    implementation(project(":reporting-api"))
-    implementation(project(":reporting-shared"))
-    implementation(project(":multiplatform-shims"))
-    implementation(project(":util-core"))
+    implementation(project(":fleet.rpc"))
+    implementation(project(":fleet.reporting.api"))
+    implementation(project(":fleet.reporting.shared"))
+    implementation(project(":fleet.multiplatform.shims"))
+    implementation(project(":fleet.util.core"))
   }
   // KOTLIN__MARKER_END
 }

@@ -53,7 +53,7 @@ kotlin {
       isTransitive = false
       exclude(group = "org.slf4j", module = "slf4j-jdk14")
     }
-    implementation(project(":util-logging-api"))
+    implementation(project(":fleet.util.logging.api"))
   }
   // KOTLIN__MARKER_END
 }
