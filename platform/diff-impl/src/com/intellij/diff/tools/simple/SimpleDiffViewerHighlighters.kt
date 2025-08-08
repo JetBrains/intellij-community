@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.util.containers.addAllIfNotNull
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -23,12 +22,10 @@ class SimpleDiffViewerHighlighters(
   }
 
   override fun installOperations() {
-    operations.addAllIfNotNull(
-      createAcceptOperation(ThreeSide.LEFT, ThreeSide.BASE),
-      createAcceptOperation(ThreeSide.RIGHT, ThreeSide.BASE),
-      createAcceptOperation(ThreeSide.BASE, ThreeSide.LEFT),
-      createAcceptOperation(ThreeSide.BASE, ThreeSide.RIGHT),
-    )
+    addOperation(createAcceptOperation(ThreeSide.LEFT, ThreeSide.BASE))
+    addOperation(createAcceptOperation(ThreeSide.RIGHT, ThreeSide.BASE))
+    addOperation(createAcceptOperation(ThreeSide.BASE, ThreeSide.LEFT))
+    addOperation(createAcceptOperation(ThreeSide.BASE, ThreeSide.RIGHT))
   }
 
   private fun createAcceptOperation(sourceSide: ThreeSide, modifiedSide: ThreeSide): DiffGutterOperation {

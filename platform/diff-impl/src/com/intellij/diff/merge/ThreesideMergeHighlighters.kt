@@ -10,13 +10,12 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.addAllIfNotNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 @ApiStatus.Internal
-internal class ThreesideMergeHighlighters(
+class ThreesideMergeHighlighters(
   override val change: TextMergeChange,
   innerFragments: MergeInnerDifferences? = null,
   private val viewer: MergeThreesideViewer,
@@ -57,14 +56,12 @@ internal class ThreesideMergeHighlighters(
   override fun installOperations() {
     if (viewer.isExternalOperationInProgress) return
 
-    operations.addAllIfNotNull(
-      createResolveOperation(),
-      createAcceptOperation(Side.LEFT, OperationType.APPLY),
-      createAcceptOperation(Side.LEFT, OperationType.IGNORE),
-      createAcceptOperation(Side.RIGHT, OperationType.APPLY),
-      createAcceptOperation(Side.RIGHT, OperationType.IGNORE),
-      createResetOperation()
-    )
+    addOperation(createResolveOperation())
+    addOperation(createAcceptOperation(Side.LEFT, OperationType.APPLY))
+    addOperation(createAcceptOperation(Side.LEFT, OperationType.IGNORE))
+    addOperation(createAcceptOperation(Side.RIGHT, OperationType.APPLY))
+    addOperation(createAcceptOperation(Side.RIGHT, OperationType.IGNORE))
+    addOperation(createResetOperation())
   }
 
   // operations
@@ -107,7 +104,7 @@ internal class ThreesideMergeHighlighters(
       createIconRenderer(DiffBundle.message("action.presentation.diff.revert.text"), AllIcons.Diff.Revert, false, Runnable {
         viewer.executeMergeCommand(DiffBundle.message("merge.dialog.reset.change.command"),
                                    mutableListOf(change),
-                                   Runnable { viewer.resetResolvedChange(change) })
+                                   Runnable { viewer.model.resetResolvedChange(change.index) })
       })
     })
   }
@@ -127,12 +124,12 @@ internal class ThreesideMergeHighlighters(
     return createIconRenderer(DiffBundle.message("action.presentation.merge.ignore.text"), AllIcons.Diff.Remove, change.isConflict, Runnable {
       viewer.executeMergeCommand(DiffBundle.message("merge.dialog.ignore.change.command"),
                                  mutableListOf(change),
-                                 Runnable { viewer.ignoreChange(change, side, modifier) })
+                                 Runnable { viewer.model.ignoreChange(change.index, side, modifier) })
     })
   }
 
   private fun createResolveRenderer(): GutterIconRenderer? {
-    if (!change.isConflict || !viewer.canResolveChangeAutomatically(change, ThreeSide.BASE)) return null
+    if (!change.isConflict || !viewer.model.canResolveChangeAutomatically(change.index, ThreeSide.BASE)) return null
 
     return createIconRenderer(DiffBundle.message("action.presentation.merge.resolve.text"), AllIcons.Diff.MagicResolve, false, Runnable {
       viewer.executeMergeCommand(DiffBundle.message("merge.dialog.resolve.conflict.command"),

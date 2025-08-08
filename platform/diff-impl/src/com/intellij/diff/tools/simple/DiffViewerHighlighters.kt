@@ -6,16 +6,42 @@ import com.intellij.diff.util.*
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class DiffViewerHighlighters(
   protected open val change: ThreesideDiffChangeBase,
-  protected open val innerFragments: MergeInnerDifferences?,
+  protected open var innerFragments: MergeInnerDifferences?,
   protected val editorProvider: (ThreeSide) -> EditorEx,
 ) {
-  protected val highlighters: MutableList<RangeHighlighter> = mutableListOf()
-  protected val innerHighlighters: MutableList<RangeHighlighter> = mutableListOf()
 
-  protected val operations: MutableList<DiffGutterOperation> = mutableListOf()
+  private val _highlighters: MutableList<RangeHighlighter> = mutableListOf()
+  private val _innerHighlighters: MutableList<RangeHighlighter> = mutableListOf()
+  private val _operations: MutableList<DiffGutterOperation> = mutableListOf()
+
+  protected val highlighters: List<RangeHighlighter> get() = _highlighters
+  protected val innerHighlighters: List<RangeHighlighter> get() = _innerHighlighters
+  protected val operations: List<DiffGutterOperation> get() = _operations
+
+  @RequiresEdt
+  protected fun addHighlighters(highlighters: Collection<RangeHighlighter>) {
+    _highlighters.addAll(highlighters)
+  }
+
+  @RequiresEdt
+  protected fun addHighlighter(highlighter: RangeHighlighter) {
+    _highlighters.add(highlighter)
+  }
+
+  @RequiresEdt
+  protected fun addInnerHighlighters(highlighters: Collection<RangeHighlighter>) {
+    _innerHighlighters.addAll(highlighters)
+  }
+
+  @RequiresEdt
+  protected fun addOperation(operation: DiffGutterOperation?) {
+    operation?.let { _operations.add(it) }
+  }
 
   @RequiresEdt
   protected fun installHighlighters() {
@@ -47,17 +73,17 @@ abstract class DiffViewerHighlighters(
 
   @RequiresEdt
   protected fun destroyHighlighters() {
-    disposeAndClear(highlighters, RangeHighlighter::dispose)
+    disposeAndClear(_highlighters, RangeHighlighter::dispose)
   }
 
   @RequiresEdt
   fun destroyInnerHighlighters() {
-    disposeAndClear(innerHighlighters, RangeHighlighter::dispose)
+    disposeAndClear(_innerHighlighters, RangeHighlighter::dispose)
   }
 
   @RequiresEdt
   protected fun destroyOperations() {
-    disposeAndClear(operations, DiffGutterOperation::dispose)
+    disposeAndClear(_operations, DiffGutterOperation::dispose)
   }
 
   @RequiresEdt
@@ -72,23 +98,22 @@ abstract class DiffViewerHighlighters(
     installOperations()
   }
 
-  protected fun createInnerHighlighter(side: ThreeSide) {
+  private fun createInnerHighlighter(side: ThreeSide) {
     if (change.isResolved(side)) return
     val innerFragments = innerFragments ?: return
 
-    val ranges = innerFragments.get(side)
-    if (ranges == null) return
+    val ranges = innerFragments.get(side) ?: return
 
     val editor = editorProvider(side)
     val start = DiffUtil.getLinesRange(editor.getDocument(), change.getStartLine(side), change.getEndLine(side)).startOffset
     for (fragment in ranges) {
       val innerStart = start + fragment.startOffset
       val innerEnd = start + fragment.endOffset
-      innerHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, innerStart, innerEnd, change.diffType))
+      addInnerHighlighters(DiffDrawUtil.createInlineHighlighter(editor, innerStart, innerEnd, change.diffType))
     }
   }
 
-  protected fun createHighlighter(side: ThreeSide) {
+  private fun createHighlighter(side: ThreeSide) {
     val editor = editorProvider(side)
 
     val type = change.diffType
@@ -98,7 +123,7 @@ abstract class DiffViewerHighlighters(
     val resolved = change.isResolved(side)
     val ignored = !resolved && innerFragments != null
     val shouldHideWithoutLineNumbers = side == ThreeSide.BASE && !change.isChange(Side.LEFT) && change.isChange(Side.RIGHT)
-    highlighters.addAll(DiffDrawUtil.LineHighlighterBuilder(editor, startLine, endLine, type)
+    addHighlighters(DiffDrawUtil.LineHighlighterBuilder(editor, startLine, endLine, type)
                           .withIgnored(ignored)
                           .withResolved(resolved)
                           .withHideWithoutLineNumbers(shouldHideWithoutLineNumbers)

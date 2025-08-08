@@ -382,7 +382,7 @@ class ApplyPatchViewer implements Disposable {
     }
 
     @Override
-    protected void reinstallHighlighters(int index) {
+    protected void onChangeUpdated(int index) {
       ApplyPatchChange change = myModelChanges.get(index);
       change.reinstallHighlighters();
     }
@@ -413,7 +413,7 @@ class ApplyPatchViewer implements Disposable {
     if (change.isResolved()) return;
 
     change.setResolved(true);
-    myModel.invalidateHighlighters(change.getIndex());
+    myModel.invalidateChange(change.getIndex());
     onChangeResolved();
   }
 

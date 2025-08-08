@@ -24,8 +24,8 @@ class SimpleThreesideDiffChange(
     }
   }
 
-  override fun getStartLine(side: ThreeSide): Int = side.select(myLineStarts)
-  override fun getEndLine(side: ThreeSide): Int = side.select(myLineEnds)
+  override fun getStartLine(side: ThreeSide): Int = side.select(lineStarts)
+  override fun getEndLine(side: ThreeSide): Int = side.select(lineEnds)
 
   override fun isResolved(side: ThreeSide): Boolean = false
 
