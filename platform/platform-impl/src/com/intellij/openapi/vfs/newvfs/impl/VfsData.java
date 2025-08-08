@@ -224,7 +224,7 @@ public final class VfsData implements Closeable {
    * If the file with given id was 'just deleted' (i.e. in the current WA) -- returns the wrapper what is {@code !isValid()},
    * but if the file was deleted in already finished WA -- throws {@link InvalidVirtualFileAccessException}
    */
-  @Nullable VirtualFileSystemEntry cachedFileById(int id, @NotNull VirtualDirectoryImpl parent, boolean putToMemoryCache) {
+  @Nullable VirtualFileSystemEntry cachedFileById(int id, @NotNull VirtualDirectoryImpl parent) {
     Segment segment = getSegment(id, /*create: */ false);
     if (segment == null) return null;
 
@@ -757,15 +757,11 @@ public final class VfsData implements Closeable {
       return new IntOpenHashSet(ids);
     }
 
-    public VirtualFileSystemEntry @NotNull [] asFiles(@NotNull IntFunction<? extends VirtualFileSystemEntry> fileLoader) {
+    public VirtualFileSystemEntry @NotNull [] asFiles(@NotNull IntFunction<? extends @NotNull VirtualFileSystemEntry> fileLoader) {
       VirtualFileSystemEntry[] children = new VirtualFileSystemEntry[ids.length];
       for (int i = 0; i < ids.length; i++) {
         int id = ids[i];
         VirtualFileSystemEntry child = fileLoader.apply(id);
-        if (child == null) {
-          //TODO RC: actually this may happen -- if the file is deleted concurrently, without WA/RA?
-          throw new AssertionError("Bug: can't load file by id " + id);
-        }
         children[i] = child;
       }
       return children;
@@ -784,7 +780,7 @@ public final class VfsData implements Closeable {
     }
 
     /** @return children sorted with the supplied comparator and fileLoader, regardless of current .sortedByName value */
-    public ChildrenIds sorted(@NotNull IntFunction<? extends VirtualFileSystemEntry> fileLoader,
+    public ChildrenIds sorted(@NotNull IntFunction<? extends @NotNull VirtualFileSystemEntry> fileLoader,
                               @NotNull Comparator<? super VirtualFileSystemEntry> comparator) {
       //Since fileLoader/comparator is supplied externally, we can't rely on .sortedByName  -- it should be checked
       // by this method's caller, and it's up to the caller to decide to trust it or not
