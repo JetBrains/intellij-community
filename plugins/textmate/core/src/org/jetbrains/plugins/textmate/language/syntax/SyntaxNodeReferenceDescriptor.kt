@@ -28,15 +28,6 @@ internal class SyntaxNodeReferenceDescriptor(
     return syntaxTable.getRule(ruleId).getCaptureRules(key)
   }
 
-  @Deprecated("node doesn't hold repository anymore")
-  override fun findInRepository(ruleId: Int): SyntaxNodeDescriptor {
-    return SyntaxNodeDescriptor.EMPTY_NODE
-  }
-
-  @Deprecated("node doesn't hold parent reference anymore")
-  override val parentNode: SyntaxNodeDescriptor?
-    get() = null
-
   override fun toString(): String {
     return "Proxy rule for $ruleId"
   }

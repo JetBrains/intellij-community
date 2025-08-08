@@ -33,15 +33,6 @@ internal class SyntaxNodeDescriptorImpl(
     return true
   }
 
-  @Deprecated("node doesn't hold repository anymore")
-  override fun findInRepository(ruleId: Int): SyntaxNodeDescriptor {
-    return SyntaxNodeDescriptor.EMPTY_NODE
-  }
-
-  @Deprecated("node doesn't hold parent reference anymore")
-  override val parentNode: SyntaxNodeDescriptor?
-    get() = null
-
   override fun toString(): String {
     val name = getStringAttribute(Constants.StringKey.NAME)
     return if (name != null) "Syntax rule: $name" else super.toString()

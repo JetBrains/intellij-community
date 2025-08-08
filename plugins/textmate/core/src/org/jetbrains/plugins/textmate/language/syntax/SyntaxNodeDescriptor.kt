@@ -24,12 +24,6 @@ interface SyntaxNodeDescriptor {
 
   val injections: List<InjectionNodeDescriptor>
 
-  @Deprecated("node doesn't hold repository anymore")
-  fun findInRepository(ruleId: Int): SyntaxNodeDescriptor
-
-  @get:Deprecated("node doesn't hold parent reference anymore")
-  val parentNode: SyntaxNodeDescriptor?
-
   companion object {
     @JvmField
     val EMPTY_NODE: SyntaxNodeDescriptor = object : SyntaxNodeDescriptor {
@@ -51,10 +45,6 @@ interface SyntaxNodeDescriptor {
 
       override val children: List<SyntaxNodeDescriptor> = emptyList()
       override val injections: List<InjectionNodeDescriptor> = emptyList()
-
-      override fun findInRepository(ruleId: Int): SyntaxNodeDescriptor = this
-      override val parentNode: SyntaxNodeDescriptor?
-        get() = null
     }
   }
 }
