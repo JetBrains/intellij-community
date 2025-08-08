@@ -629,6 +629,5 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @TestOnly
   public void cleanupForNextTest() {
     FileDocumentManager.getInstance().saveAllDocuments();
-    PersistentFS.getInstance().clearIdCache();
   }
 }

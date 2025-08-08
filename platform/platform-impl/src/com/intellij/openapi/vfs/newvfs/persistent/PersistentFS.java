@@ -55,6 +55,12 @@ public abstract class PersistentFS extends ManagingFS {
     return new DiskQueryRelay<>(function)::accessDiskWithCheckCanceled;
   }
 
+  /**
+   * @deprecated In the current implementation the method does nothing.
+   * It's uses are likely some sort of abstraction leaks, since the details of VFS caching layers shouldn't be of a concern for clients
+   * MAYBE RC: introduce a more generic method like 'drop unused entries from VFS cache' -- which still makes some sense
+   */
+  @Deprecated(forRemoval = true)
   public abstract void clearIdCache();
 
   public abstract String @NotNull [] listPersisted(@NotNull VirtualFile parent);

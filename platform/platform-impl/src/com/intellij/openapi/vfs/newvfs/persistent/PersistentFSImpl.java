@@ -12,6 +12,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.PingProgress;
@@ -133,42 +134,49 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     app.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        // idToDirCache could retain alien file systems
-        clearIdCache();
+        PluginId pluginId = pluginDescriptor.getPluginId();
+        String requestor = "unloading [" + pluginId + "] plugin";
 
         //Remove unregistered file system references: plugin provides no explicit information about FileSystem(s) it is
-        // registered, so we scan all the FS roots, and check are they still registered in VirtualFileManager
+        // registered, so we scan all the FS roots, and check are they still registered in VirtualFileManager:
 
         var rootsByUrlCopy = new HashMap<>(rootsByUrl);//to prevent concurrent mods while removing roots in loop
         VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-        String requestor = "unloading [" + pluginDescriptor.getPluginId() + "] plugin";
         for (Map.Entry<String, VirtualFileSystemEntry> entry : rootsByUrlCopy.entrySet()) {
           VirtualFileSystemEntry root = entry.getValue();
           String protocol = root.getFileSystem().getProtocol();
-          if (virtualFileManager.getFileSystem(protocol) == null) {// the file system likely have been unregistered
-
-            //We don't use root.delete() since we don't want to delete any actual files (FileSystem could even be read-only),
-            //we want to delete only the VFS structures behind root's subtree:
+          if (virtualFileManager.getFileSystem(protocol) == null) {// the file-system likely has been unregistered
+            LOG.info("Removing [" + root + "] root from VFS: is file system[" + protocol + "] " +
+                     "is not available, (likely) because plugin [" + pluginId + "] is unloaded ");
+            //We don't use root.delete() since we don't want to delete any actual files (the FileSystem could even be read-only),
+            //we want to drop only the VFS structures behind root's subtree:
             executeDelete(new VFileDeleteEvent(requestor, root));
           }
         }
+
+        //MAYBE RC: we should clean the VFS from entries from abandoned FileSystems not only on plugin unload, but just
+        //          on startup? Or regularly?
       }
     });
 
     connect();
 
-    LowMemoryWatcher.register(this::clearIdCache, this);
+    //TODO RC: clearIdCache do nothing now. Are there ways to force some memory to be freed by VFS still?
+    //LowMemoryWatcher.register(this::clearIdCache, this);
 
-    //PersistentFSImpl is an application service, and generally disposed as such, via .dispose(), but to
-    // be on the safe side -- we added a shutdown task also.
+
+    //PersistentFSImpl is an application service, and generally disposed as such, via .dispose().
+    // But to be on the safe side -- we added a shutdown task also.
     //
     //'Eager' vs 'regular' shutdown task priority: there are 2 priorities of shutdown tasks: regular and eager
-    // (_Cache_ShutdownTask) -- and eager is executed before others. If an application is shutting down by
-    // external signal (i.e. OS demands termination because of reboot), it is worth disposing VFS early, and
-    // not waiting for all other services disposed first -- because OS could be impatient, and just kill the
-    // app if the termination request not satisfied in 100-200-500ms, and we don't want to leave VFS in inconsistent
-    // state because of that. It's absolutely important to shutdown VFS after Indexes eagerly otherwise data might be lost.
-    // Services might throw `AlreadyDisposedException`-s after and we have to suppress those exceptions or wrap with PCE-s.
+    // (=_Cache_ShutdownTask) -- and eager is executed before others. If an application is shutting down by external
+    // signal (i.e. OS demands termination because of reboot), it is worth disposing VFS early, and not waiting for
+    // all other services disposed first -- because OS could be impatient, and just kill the app if the termination
+    // request is not satisfied in 100-200-500ms -- and we don't want to leave VFS in inconsistent state because of
+    // that. Now: it's absolutely crucial to shut down VFS _after_ Indexes regardless of the path to shutdown -- or
+    // some data might be lost.
+    // BEWARE: VFS and Indexes might throw `AlreadyDisposedException`-s after such eager shutdowns -- and we have to
+    // deal with such exceptions in other services: by either suppressing them or wrapping them in (P)CE-s.
     ShutDownTracker.getInstance().registerCacheShutdownTask(this::disconnect);
 
     otelMonitoringHandle = setupOTelMonitoring(TelemetryManager.getInstance().getMeter(PlatformScopesKt.VFS));
@@ -1470,7 +1478,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (hasValidEvents) {
       MultiMap<VirtualDirectoryImpl, VFileDeleteEvent> finalGrouped = grouped;
       outApplyActions.add((Runnable)() -> {
-        clearIdCache();
         applyDeletions(finalGrouped);
         incStructuralModificationCount();
       });
@@ -1838,8 +1845,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public void clearIdCache() {
-    // remove all except roots
-    //TODO RC: dirByIdCache.dropNonRootCachedDirs() -- do we need it, if we don't have a dedicated cache now?
+    //It actually does nothing: dirByIdCache was merged with VfsData, there is no 2nd-level-VFS-cache to clear anymore
+    LOG.warn(".clearIdCache() method is doing nothing now -> please, remove it's usage");
   }
 
   @Override
@@ -2139,7 +2146,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         () -> {
           //Check roots and cachedRoots are consistent
           IntOpenHashSet cachedRootsIds = new IntOpenHashSet();
-          //TODO RC:
+          //TODO RC: request FsRoot from vfsData? Or just drop this error message at all?
           //for (VirtualFileSystemEntry cachedRoot : dirByIdCache.getCachedRootDirs()) {
           //  cachedRootsIds.add(cachedRoot.getId());
           //}
@@ -2496,9 +2503,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     VirtualFile parent = file.getParent();
     int parentId = (parent != null) ? fileId(parent) : FSRecords.NULL_FILE_ID;
 
-    //TODO RC: do we need clearIdCache() at all now, as we don't have dedicated cache, but single source of truth?
-    //         it seems like invalidate() will do?
-    clearIdCache();
     if (parentId == FSRecords.NULL_FILE_ID) {
       String rootUrl = UriUtil.trimTrailingSlashes(file.getUrl());
       synchronized (rootsByUrl) {
@@ -2619,8 +2623,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void executeMove(@NotNull VirtualFile file, @NotNull VirtualFile newParent) {
-    clearIdCache();
-
     int childToMoveId = fileId(file);
     int newParentId = fileId(newParent);
     VirtualFile oldParent = file.getParent();
