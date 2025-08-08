@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.xml.XmlFile
+import com.intellij.util.Processor
 import com.intellij.util.xml.ConvertContext
 import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.ElementPresentationManager
@@ -142,13 +143,13 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
     return ideaPlugin
   }
 
-  private fun processModuleSourceRoots(module: Module, process: (VirtualFile) -> Boolean) {
+  private fun processModuleSourceRoots(module: Module, processor: Processor<VirtualFile>) {
     val moduleRootManager = ModuleRootManager.getInstance(module)
     for (root in moduleRootManager.getSourceRoots(JavaResourceRootType.RESOURCE)) {
-      if (!process(root)) return
+      if (!processor.process(root)) return
     }
     for (root in moduleRootManager.getSourceRoots(JavaSourceRootType.SOURCE)) {
-      if (!process(root)) return
+      if (!processor.process(root)) return
     }
   }
 
