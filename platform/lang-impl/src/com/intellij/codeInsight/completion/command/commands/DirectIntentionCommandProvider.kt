@@ -453,8 +453,8 @@ internal class DirectIntentionCommandProvider : CommandProvider {
             }
 
             for (intention in actionsToShow.intentionsToShow) {
+              ProgressManager.checkCanceled()
               try {
-                ProgressManager.checkCanceled()
                 if (!dumbService.isUsableInCurrentContext(intention) ||
                     !intention.action.isAvailable(originalFile.project, editor, psiFile) ||
                     !filter.test(intention.action)) {
@@ -469,6 +469,13 @@ internal class DirectIntentionCommandProvider : CommandProvider {
               }
               catch (_: IntentionPreviewUnsupportedOperationException) {
                 toRemove.add(intention)
+              }
+              catch (e: Exception) {
+                if (e is ControlFlowException || e is CancellationException) {
+                  throw e
+                }
+                toRemove.add(intention)
+                thisLogger().error("Can't check availability of intention", e)
               }
             }
             actionsToShow.intentionsToShow.removeAll(toRemove)
