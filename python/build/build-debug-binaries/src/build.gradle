@@ -1,7 +1,14 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
+  id "java"
   id "com.jetbrains.python.envs" version "0.0.33"
+}
+
+java {
+  toolchain {
+    languageVersion.set(JavaLanguageVersion.of(17))
+  }
 }
 
 ext {
