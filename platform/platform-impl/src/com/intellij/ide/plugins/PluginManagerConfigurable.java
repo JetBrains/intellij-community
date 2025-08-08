@@ -1087,12 +1087,17 @@ public final class PluginManagerConfigurable
 
             myBundledUpdateGroup.setErrors(model.getErrors());
 
-            Map<Boolean, List<PluginUiModel>> visiblePlugins = model.getVisiblePlugins()
-              .stream()
-              .collect(Collectors.partitioningBy(PluginUiModel::isBundled));
+            List<PluginUiModel> visibleNonBundledPlugins, visibleBundledPlugins;
+            {
+              Map<Boolean, List<PluginUiModel>> visiblePlugins = model.getVisiblePlugins()
+                .stream()
+                .collect(Collectors.partitioningBy(PluginUiModel::isBundled));
+              visibleNonBundledPlugins = visiblePlugins.get(Boolean.FALSE);
+              visibleBundledPlugins = visiblePlugins.get(Boolean.TRUE);
+            }
             List<PluginId> installedPluginIds = ContainerUtil.map(model.getInstalledPlugins(), it -> it.getPluginId());
             List<PluginUiModel> nonBundledPlugins =
-              ContainerUtil.filter(visiblePlugins.get(Boolean.FALSE), it -> !installedPluginIds.contains(it.getPluginId()));
+              ContainerUtil.filter(visibleNonBundledPlugins, it -> !installedPluginIds.contains(it.getPluginId()));
             downloaded.addModels(nonBundledPlugins);
 
             LinkListener<Object> updateAllListener = new LinkListener<>() {
@@ -1129,7 +1134,7 @@ public final class PluginManagerConfigurable
             myPluginModelFacade.getModel().setDownloadedGroup(myInstalledPanel, downloaded, installing);
 
             String defaultCategory = IdeBundle.message("plugins.configurable.other.bundled");
-            visiblePlugins.get(Boolean.TRUE)
+            visibleBundledPlugins
               .stream()
               .collect(Collectors.groupingBy(descriptor -> StringUtil.defaultIfEmpty(descriptor.getDisplayCategory(), defaultCategory)))
               .entrySet()
