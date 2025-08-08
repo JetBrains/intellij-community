@@ -10925,7 +10925,74 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertFunctionTypeReceiverToParameter")
+    public static class ConvertFunctionTypeReceiverToParameter extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("Foo.kt")
+        public void testFoo() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeReceiverToParameter/Foo.kt");
+        }
+
+        @TestMetadata("function.kt")
+        public void testFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeReceiverToParameter/function.kt");
+        }
+
+        @TestMetadata("functionReturnType.kt")
+        public void testFunctionReturnType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeReceiverToParameter/functionReturnType.kt");
+        }
+
+        @TestMetadata("notInFunctionParameter.kt")
+        public void testNotInFunctionParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeReceiverToParameter/notInFunctionParameter.kt");
+        }
+
+        @TestMetadata("notOnReceiver.kt")
+        public void testNotOnReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeReceiverToParameter/notOnReceiver.kt");
+        }
+
+        @TestMetadata("onlyLambdaArgument.kt")
+        public void testOnlyLambdaArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeReceiverToParameter/onlyLambdaArgument.kt");
+        }
+
+        @TestMetadata("parameterlessFunction.kt")
+        public void testParameterlessFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeReceiverToParameter/parameterlessFunction.kt");
+        }
+
+        @TestMetadata("primaryConstructor.kt")
+        public void testPrimaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeReceiverToParameter/primaryConstructor.kt");
+        }
+
+        @TestMetadata("property.kt")
+        public void testProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeReceiverToParameter/property.kt");
+        }
+
+        @TestMetadata("secondaryConstructor.kt")
+        public void testSecondaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeReceiverToParameter/secondaryConstructor.kt");
+        }
+
+        @TestMetadata("usagesInLambda.kt")
+        public void testUsagesInLambda() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeReceiverToParameter/usagesInLambda.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/addLabeledReturnInLambda")
