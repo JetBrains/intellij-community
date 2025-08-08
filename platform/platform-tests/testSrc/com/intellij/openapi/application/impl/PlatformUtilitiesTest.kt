@@ -33,6 +33,10 @@ import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
@@ -272,6 +276,26 @@ class PlatformUtilitiesTest {
         }
       }
       assertThat(exception.message).isEqualTo("custom message")
+    }
+  }
+
+  class MyElement : AbstractCoroutineContextElement(MyElement) {
+    companion object Key : CoroutineContext.Key<MyElement>
+  }
+
+  @Test
+  fun `transferred write action captures thread context`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    backgroundWriteAction {
+      val element = MyElement()
+      installThreadContext(currentThreadContext() + element, true) {
+        val currentThread = Thread.currentThread()
+        InternalThreading.invokeAndWaitWithTransferredWriteAction {
+          val transferredThread = Thread.currentThread()
+          assertNotEquals(currentThread, transferredThread)
+          val innerElement = currentThreadContext()[MyElement]
+          assertEquals(element, innerElement)
+        }
+      }
     }
   }
 
