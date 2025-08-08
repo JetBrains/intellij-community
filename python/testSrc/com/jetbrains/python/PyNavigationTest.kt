@@ -402,6 +402,27 @@ class PyNavigationTest : PyTestCase() {
     }
   }
 
+  // PY-82962
+  fun testGoToDeclarationOnNewTypeAliasCall() {
+    myFixture.configureByText(
+      "a.py",
+      """
+      from typing import NewType
+      
+      JobId = NewType("JobId", str)
+      
+      def f():
+          x = Jo<caret>bId("1")
+      """.trimIndent()
+    )
+    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    assertNotNull(target)
+    assertInstanceOf(target, PyTargetExpression::class.java)
+    val targetExpr = target as PyTargetExpression
+    assertEquals("JobId", targetExpr.name)
+  }
+
+
   fun `test multi with pyi`() {
     myFixture.copyDirectoryToProject("test_multi_with_pyi", "")
     val (stubbed, local) = checkMulti(
