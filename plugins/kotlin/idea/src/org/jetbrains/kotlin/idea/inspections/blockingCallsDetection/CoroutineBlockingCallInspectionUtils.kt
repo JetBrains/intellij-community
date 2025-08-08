@@ -9,10 +9,10 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.builtins.isSuspendFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
-import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.intentions.receiverType
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
@@ -69,7 +69,7 @@ internal object CoroutineBlockingCallInspectionUtils {
 
     fun postProcessQuickFix(replacedElement: KtElement, project: Project) {
         val containingKtFile = replacedElement.containingKtFile
-        ShortenReferences.DEFAULT.process(replacedElement.reformatted() as KtElement)
+        ShortenReferencesFacility.getInstance().shorten(replacedElement.reformatted() as KtElement)
         OptimizeImportsProcessor(project, containingKtFile).run()
         containingKtFile.commitAndUnblockDocument()
     }
