@@ -818,8 +818,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return type;
   }
 
-  static final VirtualFileSystemEntry NULL_VIRTUAL_FILE =
-    new VirtualFileSystemEntry() {
+  static final VirtualFileSystemEntry NULL_VIRTUAL_FILE = new VirtualFileSystemEntry() {
       @Override
       public String toString() {
         return "NULL";
@@ -874,5 +873,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       public @NotNull InputStream getInputStream() {
         throw new UnsupportedOperationException();
       }
+
+
     };
 }

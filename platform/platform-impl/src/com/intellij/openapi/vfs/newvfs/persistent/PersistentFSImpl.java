@@ -332,7 +332,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     checkReadAccess();
 
     List<? extends ChildInfo> children = listAll(file);
-    return ContainerUtil.map2Array(children, String.class, id -> id.getName().toString());
+    return ContainerUtil.map2Array(children, String.class, info -> info.getName().toString());
   }
 
   @Override
@@ -2007,7 +2007,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     private @Nullable IntList nonCachedAncestorsIds;
 
     public NewVirtualFile resolve(int fileId) {
-      assert fileId != FSRecords.NULL_FILE_ID : "fileId=NULL_ID(0) must not be passed into find()";
+      assert (fileId != FSRecords.NULL_FILE_ID) : "fileId=NULL_ID(0) must not be passed into resolve()";
       VirtualDirectoryImpl cachedAncestorOrSelf;
       try {
         cachedAncestorOrSelf = lookupCachedAncestorOrSelf(fileId);
