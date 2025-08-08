@@ -22,6 +22,7 @@ import java.util.function.Predicate;
  * @author Mikhail Golubev
  */
 public class JsonSpellcheckerTest extends JsonTestCase {
+
   private void doTest() {
     myFixture.enableInspections(SpellCheckingInspection.class);
     myFixture.configureByFile(getTestName(false) + ".json");

@@ -53,9 +53,8 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
     val textSpeller = getTextSpeller(element.project) ?: return SpellCheckingResult.Ignored
     texts.asSequence()
       .map { it to findTypos(it, session, textSpeller) }
-      .flatMap { mapTypo(it.first, it.second) }
+      .flatMap { mapTypo(it.first, it.second, element) }
       .filterNot { it.word.length < MINIMAL_TYPO_LENGTH }
-      .filterNot { shouldBeIgnored(it, element) }
       .forEach { consumer.accept(it) }
     return SpellCheckingResult.Checked
   }
@@ -67,19 +66,12 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
     }))
   }
 
-  private fun shouldBeIgnored(typo: SimpleTypo, element: PsiElement): Boolean {
-    val psiRange = element.getTextRange()
-    return !psiRange.intersectsStrict(typo.range.shiftRight(typo.element.textRange.startOffset))
-  }
-
-  private fun mapTypo(text: TextContent, typos: List<Typo>): List<SimpleTypo> {
-    val range = text.commonParent.textRange
-    return typos.map {
-      SimpleTypo(
-        it.word,
-        text.textRangeToFile(mapRange(it.range)).shiftLeft(range.startOffset),
-        text
-      )
+  private fun mapTypo(text: TextContent, typos: List<Typo>, element: PsiElement): List<SimpleTypo> {
+    val psiRange = element.textRange
+    return typos.mapNotNull {
+      val range = text.textRangeToFile(mapRange(it.range))
+      if (!psiRange.contains(range)) return@mapNotNull null
+      SimpleTypo(it.word, range.shiftLeft(element.textRange.startOffset), element)
     }
   }
 
@@ -122,10 +114,7 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
 private data class SimpleTypo(
   override val word: String,
   override val range: TextRange,
-  val text: TextContent,
-) : SpellingTypo {
-  override val element: PsiElement
-    get() = text.commonParent
-}
+  override val element: PsiElement,
+) : SpellingTypo
 
 private val KEY_TYPO_CACHE = Key.create<ConcurrentMap<TextContent, List<Typo>>>("KEY_TYPO_CACHE")

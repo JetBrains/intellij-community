@@ -28,6 +28,7 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
   public final List<TokenInfo> tokens;
   private volatile String text;
   private volatile int[] tokenOffsets;
+  private volatile Integer hash;
 
   TextContentImpl(TextDomain domain, List<TokenInfo> _tokens) {
     this.domain = domain;
@@ -95,7 +96,8 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
 
   @Override
   public int hashCode() {
-    return Objects.hash(domain, tokens);
+    if (hash == null) hash = Objects.hash(domain, tokens);
+    return hash;
   }
 
   @Override

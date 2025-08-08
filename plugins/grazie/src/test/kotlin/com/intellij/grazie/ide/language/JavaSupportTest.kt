@@ -11,44 +11,45 @@ import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
 class JavaSupportTest : GrazieTestBase() {
   override val additionalEnabledRules: Set<String> = setOf("LanguageTool.EN.UPPERCASE_SENTENCE_START")
+  override val enableGrazieChecker: Boolean = true
 
   override fun getProjectDescriptor(): LightProjectDescriptor {
     return LightJavaCodeInsightFixtureTestCase.JAVA_LATEST
   }
 
   fun `test spellcheck in constructs`() {
-    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/Constructs.java")
+    runHighlightTestForFile("ide/language/java/Constructs.java")
   }
 
   fun `test grammar check in docs`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
-    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/Docs.java")
+    runHighlightTestForFile("ide/language/java/Docs.java")
   }
 
   fun `test grammar check in string literals`() {
-    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/StringLiterals.java")
+    runHighlightTestForFile("ide/language/java/StringLiterals.java")
   }
 
   fun `test grammar check in comments`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.UKRAINIAN, Lang.BELARUSIAN))
-    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/Comments.java")
+    runHighlightTestForFile("ide/language/java/Comments.java")
   }
 
   fun `test split line quick fix`() {
-    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/SplitLine.java")
+    runHighlightTestForFile("ide/language/java/SplitLine.java")
     myFixture.launchAction(myFixture.findSingleIntention(", but"))
     myFixture.checkResultByFile("ide/language/java/SplitLine_after.java")
   }
 
   fun `test do not merge text with non-text`() {
-    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/AccidentalMerge.java")
+    runHighlightTestForFile("ide/language/java/AccidentalMerge.java")
     myFixture.launchAction(myFixture.findSingleIntention("Remove"))
     myFixture.checkResultByFile("ide/language/java/AccidentalMerge_after.java")
   }
 
   fun `test long comment performance`() {
     Benchmark.newBenchmark("highlighting") {
-      runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/LongCommentPerformance.java")
+      runHighlightTestForFile("ide/language/java/LongCommentPerformance.java")
     }.setup { psiManager.dropPsiCaches() }.start()
   }
 
@@ -61,18 +62,18 @@ class JavaSupportTest : GrazieTestBase() {
   }
 
   fun testCommentIsNotHighlightedIfThereIsReference() {
-    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/VectorablexxClass.java")
+    runHighlightTestForFile("ide/language/java/VectorablexxClass.java")
   }
 
   fun `test spellchecking normalization`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.PORTUGAL_PORTUGUESE))
-    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/Normalization.java")
+    runHighlightTestForFile("ide/language/java/Normalization.java")
   }
 
   fun `test grazie spellchecking in java`() {
     val words = setOf("SSIZE_MAX", "MacTyppoo", "CANopen", "DBtune", "RESTTful", "typpoTypoo")
     ProjectDictionaryLayer(project).dictionary.addToDictionary(words)
-    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/java/CamelCase.java")
+    runHighlightTestForFile("ide/language/java/CamelCase.java")
   }
 
   fun `test multiline compounds`() {
@@ -112,7 +113,7 @@ class JavaSupportTest : GrazieTestBase() {
         }
       """.trimIndent(),
       "Online-Shop"
-      )
+    )
   }
 
   private fun doTest(beforeText: String, afterText: String, hint: String) {

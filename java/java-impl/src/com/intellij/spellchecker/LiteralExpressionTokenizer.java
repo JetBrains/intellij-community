@@ -45,14 +45,7 @@ public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiter
 
     if (InjectedLanguageManager.getInstance(expression.getProject()).getInjectedPsiFiles(expression) != null) return;
 
-    final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(skipParenthesizedExprUp(expression),
-                                                                       PsiModifierListOwner.class);
-    if (listOwner != null && !shouldProcessLiteralExpression(expression, listOwner)) {
-      if (!DumbService.isDumb(listOwner.getProject()) && AnnotationUtil.isAnnotated(listOwner, AnnotationUtil.NON_NLS, AnnotationUtil.CHECK_EXTERNAL) ||
-          DumbAwareAnnotationUtil.hasAnnotation(listOwner, AnnotationUtil.NON_NLS)) {
-        return;
-      }
-    }
+    if (shouldBeIgnored(expression)) return;
 
     if (!text.contains("\\")) {
       consumer.consumeToken(expression, PlainTextSplitter.getInstance());
@@ -60,6 +53,17 @@ public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiter
     else {
       processTextWithEscapeSequences(expression, text, consumer);
     }
+  }
+
+  public static boolean shouldBeIgnored(@NotNull PsiLiteralExpression expression) {
+    PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(skipParenthesizedExprUp(expression), PsiModifierListOwner.class);
+    if (listOwner != null && !shouldProcessLiteralExpression(expression, listOwner)) {
+      if (!DumbService.isDumb(listOwner.getProject()) && AnnotationUtil.isAnnotated(listOwner, AnnotationUtil.NON_NLS, AnnotationUtil.CHECK_EXTERNAL) ||
+          DumbAwareAnnotationUtil.hasAnnotation(listOwner, AnnotationUtil.NON_NLS)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean shouldProcessLiteralExpression(@NotNull PsiLiteralExpression expression, PsiModifierListOwner listOwner) {

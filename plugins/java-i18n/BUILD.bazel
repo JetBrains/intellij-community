@@ -83,6 +83,8 @@ jvm_library(
     "//xml/impl",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
+    "//plugins/grazie",
     "//java/java-impl:impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

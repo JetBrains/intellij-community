@@ -4,6 +4,7 @@ import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy;
 import com.intellij.grazie.ide.language.LanguageGrammarChecking;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.LanguageExtensionPoint;
@@ -19,12 +20,15 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.regex.Pattern;
+
+import static com.intellij.util.containers.ContainerUtil.createConcurrentWeakKeyWeakValueMap;
 
 /**
  * An extension specifying how to extract natural language text from PSI for specific programming languages.
@@ -37,6 +41,7 @@ public abstract class TextExtractor {
   private static final Key<CachedValue<Cache>> COMMON_PARENT_CACHE = Key.create("TextExtractor common parent cache");
   private static final Key<CachedValue<Cache>> QUERY_CACHE = Key.create("TextExtractor query cache");
   private static final Key<Boolean> IGNORED = Key.create("TextExtractor ignored");
+  private static final Key<Map<TextContent, TextContent>> CONTENT_INTERNER = Key.create("TextExtractor interner");
   private static final Pattern SUPPRESSION = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP);
 
   /**
@@ -89,7 +94,7 @@ public abstract class TextExtractor {
   public static @NotNull List<TextContent> findTextsExactlyAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     PsiFile file = psi.getContainingFile();
     return ContainerUtil.filter(
-      obtainContents(allowedDomains, file.getLanguage(), psi),
+      obtainContents(allowedDomains, file, psi),
       c -> c.getUserData(IGNORED) == null && allowedDomains.contains(c.getDomain())
     );
   }
@@ -116,12 +121,10 @@ public abstract class TextExtractor {
       }
     }
 
-    Language fileLanguage = (file != null ? file : psi.getContainingFile()).getLanguage();
-
     for (PsiElement each = psi; each != null; each = each.getParent()) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
-      List<TextContent> contents = obtainContents(allowedDomains, fileLanguage, each);
+      List<TextContent> contents = obtainContents(allowedDomains, file != null ? file : psi.getContainingFile(), each);
       if (stamp.mayCacheNow() && !contents.isEmpty()) {
         StreamEx.of(contents)
           .groupingBy(TextContent::getCommonParent)
@@ -148,7 +151,7 @@ public abstract class TextExtractor {
   }
 
   private static List<TextContent> obtainContents(Set<TextContent.TextDomain> allowedDomains,
-                                                  Language fileLanguage,
+                                                  PsiFile file,
                                                   PsiElement psi) {
     CachedValue<Cache> cv = psi.getUserData(QUERY_CACHE);
     if (cv != null) {
@@ -160,9 +163,15 @@ public abstract class TextExtractor {
 
     Language psiLanguage = psi.getLanguage();
     List<TextContent> contents = doExtract(psi, allowedDomains, psiLanguage);
+    Language fileLanguage = file.getLanguage();
     if (contents.isEmpty() && fileLanguage != psiLanguage) {
       contents = doExtract(psi, allowedDomains, fileLanguage);
     }
+    if (contents.isEmpty()) return Collections.emptyList();
+
+    // deduplicate equal contents created by different threads to avoid O(token_count) 'equals' checks later on
+    var interner = ConcurrencyUtil.computeIfAbsent(file, CONTENT_INTERNER, () -> createConcurrentWeakKeyWeakValueMap());
+    contents = ContainerUtil.map(contents, content -> interner.computeIfAbsent(content, __ -> content));
 
     for (TextContent content : contents) {
       if (shouldIgnore(content)) {
@@ -170,15 +179,36 @@ public abstract class TextExtractor {
       }
     }
 
-    if (!contents.isEmpty() && stamp.mayCacheNow()) {
+    if (stamp.mayCacheNow()) {
       obtainCache(psi, QUERY_CACHE).register(allowedDomains, contents);
+      cacheOnSiblings(allowedDomains, psi, contents);
     }
     return contents;
   }
 
+  private static void cacheOnSiblings(Set<TextContent.TextDomain> allowedDomains,
+                                      PsiElement psi,
+                                      List<TextContent> contents) {
+    contents.forEach(content -> {
+      int startOffset = content.textOffsetToFile(0);
+      int endOffset = content.textOffsetToFile(content.length() - 1);
+      TextRange psiRangeInFile = psi.getTextRange();
+      if (psiRangeInFile.getStartOffset() > startOffset || psiRangeInFile.getEndOffset() < endOffset) {
+        for (ASTNode child : psi.getParent().getNode().getChildren(null)) {
+          PsiElement sibling = child.getPsi();
+          contents.stream()
+            .filter(it -> it.intersectsRange(sibling.getTextRange()))
+            .forEach(it -> {
+              obtainCache(sibling, QUERY_CACHE).register(allowedDomains, List.of(content));
+            });
+        }
+      }
+    });
+  }
+
   private static class Cache {
-    final EnumSet<TextContent.TextDomain> checkedDomains = EnumSet.noneOf(TextContent.TextDomain.class);
-    final LinkedHashSet<TextContent> foundContents = new LinkedHashSet<>();
+    private final EnumSet<TextContent.TextDomain> checkedDomains = EnumSet.noneOf(TextContent.TextDomain.class);
+    private final Set<TextContent> foundContents = new LinkedHashSet<>();
 
     synchronized void register(Set<TextContent.TextDomain> allowedDomains, List<TextContent> contents) {
       checkedDomains.addAll(allowedDomains);

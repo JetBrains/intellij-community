@@ -62,10 +62,10 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy implements D
     return super.getTokenizer(element);
   }
 
-  private static final class JsonSchemaSpellcheckerClientForJson extends JsonSchemaSpellcheckerClient {
+  public static final class JsonSchemaSpellcheckerClientForJson extends JsonSchemaSpellcheckerClient {
     private final @NotNull JsonStringLiteral element;
 
-    private JsonSchemaSpellcheckerClientForJson(@NotNull JsonStringLiteral element) {
+    public JsonSchemaSpellcheckerClientForJson(@NotNull JsonStringLiteral element) {
       this.element = element;
     }
 

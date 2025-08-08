@@ -51,10 +51,13 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
 
   protected open val additionalEnabledContextLanguages: Set<Language> = emptySet()
 
+  protected open val enableGrazieChecker: Boolean = false
+
   override fun getBasePath() = "community/plugins/grazie/src/test/testData"
 
   override fun setUp() {
     super.setUp()
+    if (enableGrazieChecker) Registry.get("spellchecker.grazie.enabled").setValue(true, testRootDisposable)
     myFixture.enableInspections(*inspectionTools)
 
     enableProofreadingFor(enabledLanguages)
@@ -103,11 +106,6 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
   protected open fun runHighlightTestForFile(file: String) {
     myFixture.configureByFile(file)
     myFixture.checkHighlighting(true, false, false)
-  }
-
-  protected fun runHighlightTestForFileUsingGrazieSpellchecker(file: String) {
-    Registry.get("spellchecker.grazie.enabled").setValue(true, testRootDisposable)
-    runHighlightTestForFile(file)
   }
 
   fun plain(vararg texts: String) = plain(texts.toList())

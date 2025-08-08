@@ -1584,6 +1584,7 @@ com.intellij.psi.util.PsiModificationTracker
 - a:getModificationCount():J
 com.intellij.psi.util.PsiModificationTracker$Listener
 - a:modificationCountChanged():V
+Fc:com.intellij.psi.util.PsiTreeUtil
 com.intellij.testIntegration.TestFramework
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EXTENSION_NAME:com.intellij.openapi.extensions.ExtensionPointName

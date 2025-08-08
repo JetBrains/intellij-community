@@ -33,6 +33,7 @@ jvm_library(
     "//json/backend/regexp",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
     "//platform/lang-impl",
     "//platform/testFramework/extensions:testExtensions",
     "@lib//:kotlin-stdlib",

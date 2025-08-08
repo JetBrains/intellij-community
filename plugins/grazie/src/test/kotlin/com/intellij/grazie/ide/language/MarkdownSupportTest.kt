@@ -11,15 +11,16 @@ class MarkdownSupportTest : GrazieTestBase() {
     "LanguageTool.EN.COMMA_COMPOUND_SENTENCE",
     "LanguageTool.EN.EN_QUOTES"
   )
+  override val enableGrazieChecker: Boolean = true
 
   fun `test grammar check in file`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
-    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/markdown/Example.md")
+    runHighlightTestForFile("ide/language/markdown/Example.md")
   }
 
   fun `test grazie spellchecker in file`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
-    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/markdown/Spellcheck.md")
+    runHighlightTestForFile("ide/language/markdown/Spellcheck.md")
   }
 
   fun `test replacement with markup inside`() {

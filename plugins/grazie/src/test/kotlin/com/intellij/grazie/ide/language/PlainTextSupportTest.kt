@@ -9,9 +9,11 @@ import com.intellij.ui.TextFieldWithAutoCompletion
 
 
 class PlainTextSupportTest : GrazieTestBase() {
+  override val enableGrazieChecker: Boolean = true
+
   fun `test grammar check in file`() {
     enableProofreadingFor(setOf(Lang.RUSSIAN))
-    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/plain/Example.txt")
+    runHighlightTestForFile("ide/language/plain/Example.txt")
   }
 
   fun `test no grammar checks in TextFieldWithAutoCompletion`() {

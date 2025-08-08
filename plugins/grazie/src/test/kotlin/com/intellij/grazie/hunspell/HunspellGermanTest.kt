@@ -6,6 +6,8 @@ import com.intellij.spellchecker.SpellCheckerManager.Companion.getInstance
 
 class HunspellGermanTest : GrazieTestBase() {
 
+  override val enableGrazieChecker: Boolean = true
+
   private fun doTestSuggestion(word: String, suggestion: String) {
     val manager = getInstance(project)
     assertTrue("'$word' expected to have a spelling mistake", manager.hasProblem(word))
@@ -15,7 +17,7 @@ class HunspellGermanTest : GrazieTestBase() {
 
   fun `test hunspell de`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
-    runHighlightTestForFileUsingGrazieSpellchecker("hunspell/Hunspell.java")
+    runHighlightTestForFile("hunspell/Hunspell.java")
   }
 
   fun `test swiss german suggestions`() {

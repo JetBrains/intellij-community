@@ -10,9 +10,11 @@ import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
 class YamlSupportTest : GrazieTestBase() {
+  override val enableGrazieChecker: Boolean = true
+
   fun `test grammar check in yaml file`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
-    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/yaml/Example.yaml")
+    runHighlightTestForFile("ide/language/yaml/Example.yaml")
   }
 
   fun `test text extraction`() {
@@ -22,7 +24,7 @@ class YamlSupportTest : GrazieTestBase() {
 
   fun `test yaml typos spellcheck performance`() {
     Benchmark.newBenchmark("Highlight typos in i18n.yaml file") {
-      runHighlightTestForFileUsingGrazieSpellchecker("ide/language/yaml/i18n.yaml")
+      runHighlightTestForFile("ide/language/yaml/i18n.yaml")
     }.setup {
       psiManager.dropPsiCaches()
       project.service<GrazieSpellCheckerEngine>().dropSuggestionCache()

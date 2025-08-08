@@ -12,6 +12,8 @@ import java.nio.charset.StandardCharsets
 
 
 class PropertiesSupportTest : GrazieTestBase() {
+  override val enableGrazieChecker: Boolean = true
+
   fun `test grammar check in file`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
 
@@ -19,12 +21,12 @@ class PropertiesSupportTest : GrazieTestBase() {
     EncodingProjectManager.getInstance(project).setNative2AsciiForPropertiesFiles(null, false)
     
     UIUtil.dispatchAllInvocationEvents()
-    runHighlightTestForFileUsingGrazieSpellchecker("ide/language/properties/Example.properties")
+    runHighlightTestForFile("ide/language/properties/Example.properties")
   }
 
   fun `test properties typos spellcheck performance`() {
     Benchmark.newBenchmark("Highlight typos in i18n.properties file") {
-      runHighlightTestForFileUsingGrazieSpellchecker("ide/language/properties/i18n.properties")
+      runHighlightTestForFile("ide/language/properties/i18n.properties")
     }.setup {
       psiManager.dropPsiCaches()
       project.service<GrazieSpellCheckerEngine>().dropSuggestionCache()
