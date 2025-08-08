@@ -269,7 +269,7 @@ private class ParallelCompletionRunner : K2CompletionRunner {
             resultSet.addElement(element.element)
         }
 
-        is AccumulatingSinkMessage.RegisterChainContributor -> TODO()
+        is AccumulatingSinkMessage.RegisterChainContributor -> {} // TODO()
 
         else -> {}
     }
