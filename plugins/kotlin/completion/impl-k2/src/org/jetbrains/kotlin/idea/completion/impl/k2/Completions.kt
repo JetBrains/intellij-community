@@ -20,6 +20,8 @@ import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirActualDeclarationContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirAnnotationCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirCallableCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirCallableReferenceCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassReferenceCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirDeclarationFromOverridableMembersContributor
@@ -27,6 +29,8 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirKDocPara
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierReferenceCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirDeclarationFromUnresolvedNameContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirImportDirectivePackageMembersCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirInfixCallableCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirKDocCallableCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirKeywordCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirNamedArgumentCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirOperatorNameCompletionContributor
@@ -68,6 +72,10 @@ internal object Completions {
         K2SuperMemberCompletionContributor(),
         K2TrailingFunctionParameterNameCompletionContributorBase.All(),
         K2TrailingFunctionParameterNameCompletionContributorBase.Missing(),
+        K2CallableCompletionContributor(),
+        K2CallableReferenceCompletionContributor(),
+        K2InfixCallableCompletionContributor(),
+        K2KDocCallableCompletionContributor(),
     )
 
     // Note: this function will be renamed and replace the complete method below!
