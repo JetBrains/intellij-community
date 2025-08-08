@@ -7,7 +7,7 @@ import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
 
 /**
- * Renders a sequence of [InlineMarkdown] elements into an [AnnotatedString].
+ * Renders a series of [InlineMarkdown] elements into an [AnnotatedString].
  *
  * This renderer is responsible for handling inline-level Markdown elements like text, emphasis, links, and code spans.
  * It translates these elements into a single, styled `AnnotatedString` that can be displayed in a Compose UI.
@@ -18,7 +18,7 @@ import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
 @ExperimentalJewelApi
 public interface InlineMarkdownRenderer {
     /**
-     * Renders a sequence of [InlineMarkdown] elements into a single [AnnotatedString], applying the provided [styling].
+     * Renders a series of [InlineMarkdown] elements into a single [AnnotatedString], applying the provided [styling].
      *
      * @param inlineMarkdown The sequence of [InlineMarkdown] elements to be rendered.
      * @param styling The [InlinesStyling] that defines the visual appearance of the different inline elements.

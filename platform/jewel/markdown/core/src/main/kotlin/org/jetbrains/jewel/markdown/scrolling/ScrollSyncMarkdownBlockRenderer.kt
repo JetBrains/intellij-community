@@ -36,8 +36,15 @@ import org.jetbrains.jewel.markdown.extensions.markdownMode
 import org.jetbrains.jewel.markdown.rendering.DefaultMarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
+import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer.LocatableMarkdownBlock
 import org.jetbrains.jewel.ui.component.Text
 
+/**
+ * A [DefaultMarkdownBlockRenderer] that emits [AutoScrollableBlock]s, which allows scroll-syncing the rendered content
+ * with another panel, like an editor.
+ *
+ * This is only active when the [JewelTheme.markdownMode] is [MarkdownMode.EditorPreview].
+ */
 @Suppress("unused") // used in intellij
 @ApiStatus.Experimental
 @ExperimentalJewelApi
@@ -47,14 +54,8 @@ public open class ScrollSyncMarkdownBlockRenderer(
     inlineRenderer: InlineMarkdownRenderer,
 ) : DefaultMarkdownBlockRenderer(rootStyling, renderingExtensions, inlineRenderer) {
     @Composable
-    override fun render(
-        block: MarkdownBlock,
-        enabled: Boolean,
-        onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
-        modifier: Modifier,
-    ) {
-        if (block is ScrollingSynchronizer.LocatableMarkdownBlock) {
+    override fun RenderBlock(block: MarkdownBlock, enabled: Boolean, onUrlClick: (String) -> Unit, modifier: Modifier) {
+        if (block is LocatableMarkdownBlock) {
             // Little trick that allows delegating rendering of underlying blocks to the superclass,
             // but using the wrapper in overloaded functions here to pass to AutoScrollableBlock
             val blocks = remember { mutableStateOf(block) }
@@ -62,57 +63,55 @@ public open class ScrollSyncMarkdownBlockRenderer(
             CompositionLocalProvider(localUniqueBlock provides blocks.value) {
                 // Don't recompose unchanged blocks
                 // val ogBlock = remember(block) { block.originalBlock }
-                super.render(block.originalBlock, enabled, onUrlClick, onTextClick, modifier)
+                super.RenderBlock(block.originalBlock, enabled, onUrlClick, modifier)
             }
         } else {
-            super.render(block, enabled, onUrlClick, onTextClick, modifier)
+            super.RenderBlock(block, enabled, onUrlClick, modifier)
         }
     }
 
     @Composable
-    override fun render(
+    override fun RenderParagraph(
         block: MarkdownBlock.Paragraph,
         styling: MarkdownStyling.Paragraph,
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
         modifier: Modifier,
     ) {
         val synchronizer =
             (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
                 ?: run {
-                    super.render(block, styling, enabled, onUrlClick, onTextClick, modifier)
+                    super.RenderParagraph(block, styling, enabled, onUrlClick, modifier)
                     return
                 }
         val uniqueBlock = localUniqueBlock.current?.takeIf { it.originalBlock == block } ?: block
         AutoScrollableBlock(uniqueBlock, synchronizer) {
-            super.render(block, styling, enabled, onUrlClick, onTextClick, modifier)
+            super.RenderParagraph(block, styling, enabled, onUrlClick, modifier)
         }
     }
 
     @Composable
-    override fun render(
+    override fun RenderHeading(
         block: MarkdownBlock.Heading,
-        styling: MarkdownStyling.Heading.HN,
+        styling: MarkdownStyling.Heading,
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
         modifier: Modifier,
     ) {
         val synchronizer =
             (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
                 ?: run {
-                    super.render(block, styling, enabled, onUrlClick, onTextClick, modifier)
+                    super.RenderHeading(block, styling, enabled, onUrlClick, modifier)
                     return
                 }
         val uniqueBlock = localUniqueBlock.current?.takeIf { it.originalBlock == block } ?: block
         AutoScrollableBlock(uniqueBlock, synchronizer) {
-            super.render(block, styling, enabled, onUrlClick, onTextClick, modifier)
+            super.RenderHeading(block, styling, enabled, onUrlClick, modifier)
         }
     }
 
     @Composable
-    override fun renderCodeWithMimeType(
+    override fun RenderCodeWithMimeType(
         block: FencedCodeBlock,
         mimeType: MimeType,
         styling: MarkdownStyling.Code.Fenced,
@@ -121,7 +120,7 @@ public open class ScrollSyncMarkdownBlockRenderer(
         val synchronizer =
             (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
                 ?: run {
-                    super.renderCodeWithMimeType(block, mimeType, styling, enabled)
+                    super.RenderCodeWithMimeType(block, mimeType, styling, enabled)
                     return
                 }
 
@@ -143,7 +142,7 @@ public open class ScrollSyncMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun render(
+    override fun RenderIndentedCodeBlock(
         block: IndentedCodeBlock,
         styling: MarkdownStyling.Code.Indented,
         enabled: Boolean,
@@ -152,7 +151,7 @@ public open class ScrollSyncMarkdownBlockRenderer(
         val scrollingSynchronizer =
             (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
                 ?: run {
-                    super.render(block, styling, enabled, modifier)
+                    super.RenderIndentedCodeBlock(block, styling, enabled, modifier)
                     return
                 }
         MaybeScrollingContainer(
@@ -180,8 +179,7 @@ public open class ScrollSyncMarkdownBlockRenderer(
         }
     }
 
-    private val localUniqueBlock: ProvidableCompositionLocal<ScrollingSynchronizer.LocatableMarkdownBlock?> =
-        staticCompositionLocalOf {
-            null
-        }
+    private val localUniqueBlock: ProvidableCompositionLocal<LocatableMarkdownBlock?> = staticCompositionLocalOf {
+        null
+    }
 }
