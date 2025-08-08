@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import org.jetbrains.kotlin.build.joinToReadableString
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -25,7 +26,9 @@ private val ktProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDe
     }
 }
 
-class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
+abstract class AbstractBlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
+    abstract override val pluginMode: KotlinPluginMode
+    
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return ktProjectDescriptor
     }
@@ -379,4 +382,8 @@ suspend fun unknownContext() {
         Assert.assertNotNull("Inspection should NOT report blocking call with unknown contexts considered blocking," +
                                      " but should have intention to change behaviour instead", info)
     }
+}
+
+internal class BlockingCallRelatedFixesTest : AbstractBlockingCallRelatedFixesTest() {
+    override val pluginMode: KotlinPluginMode get() = KotlinPluginMode.K1
 }
