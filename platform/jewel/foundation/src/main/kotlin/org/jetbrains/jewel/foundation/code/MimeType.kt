@@ -4,17 +4,22 @@ import org.jetbrains.jewel.foundation.code.MimeType.Known.AGSL
 import org.jetbrains.jewel.foundation.code.MimeType.Known.AIDL
 import org.jetbrains.jewel.foundation.code.MimeType.Known.C
 import org.jetbrains.jewel.foundation.code.MimeType.Known.CPP
+import org.jetbrains.jewel.foundation.code.MimeType.Known.CSS
 import org.jetbrains.jewel.foundation.code.MimeType.Known.DART
 import org.jetbrains.jewel.foundation.code.MimeType.Known.DIFF
 import org.jetbrains.jewel.foundation.code.MimeType.Known.GO
 import org.jetbrains.jewel.foundation.code.MimeType.Known.GRADLE
 import org.jetbrains.jewel.foundation.code.MimeType.Known.GRADLE_KTS
 import org.jetbrains.jewel.foundation.code.MimeType.Known.GROOVY
+import org.jetbrains.jewel.foundation.code.MimeType.Known.HTML
 import org.jetbrains.jewel.foundation.code.MimeType.Known.JAVA
 import org.jetbrains.jewel.foundation.code.MimeType.Known.JAVASCRIPT
 import org.jetbrains.jewel.foundation.code.MimeType.Known.JSON
+import org.jetbrains.jewel.foundation.code.MimeType.Known.JSON5
+import org.jetbrains.jewel.foundation.code.MimeType.Known.JSON_LINES
 import org.jetbrains.jewel.foundation.code.MimeType.Known.KOTLIN
 import org.jetbrains.jewel.foundation.code.MimeType.Known.MANIFEST
+import org.jetbrains.jewel.foundation.code.MimeType.Known.OBJECTIVE_C
 import org.jetbrains.jewel.foundation.code.MimeType.Known.PATCH
 import org.jetbrains.jewel.foundation.code.MimeType.Known.PROGUARD
 import org.jetbrains.jewel.foundation.code.MimeType.Known.PROPERTIES
@@ -22,6 +27,7 @@ import org.jetbrains.jewel.foundation.code.MimeType.Known.PROTO
 import org.jetbrains.jewel.foundation.code.MimeType.Known.PYTHON
 import org.jetbrains.jewel.foundation.code.MimeType.Known.REGEX
 import org.jetbrains.jewel.foundation.code.MimeType.Known.RESOURCE
+import org.jetbrains.jewel.foundation.code.MimeType.Known.RUBY
 import org.jetbrains.jewel.foundation.code.MimeType.Known.RUST
 import org.jetbrains.jewel.foundation.code.MimeType.Known.SHELL
 import org.jetbrains.jewel.foundation.code.MimeType.Known.SQL
@@ -31,8 +37,46 @@ import org.jetbrains.jewel.foundation.code.MimeType.Known.TOML
 import org.jetbrains.jewel.foundation.code.MimeType.Known.TYPESCRIPT
 import org.jetbrains.jewel.foundation.code.MimeType.Known.UNKNOWN
 import org.jetbrains.jewel.foundation.code.MimeType.Known.VERSION_CATALOG
+import org.jetbrains.jewel.foundation.code.MimeType.Known.XHTML
 import org.jetbrains.jewel.foundation.code.MimeType.Known.XML
 import org.jetbrains.jewel.foundation.code.MimeType.Known.YAML
+
+private val ALREADY_NORMALIZED_BUILTIN_TYPES =
+    listOf(
+        AGSL,
+        AIDL,
+        C,
+        CPP,
+        DART,
+        DIFF,
+        GO,
+        GRADLE,
+        GRADLE_KTS,
+        GROOVY,
+        JAVA,
+        JAVASCRIPT,
+        JSON,
+        KOTLIN,
+        MANIFEST,
+        PATCH,
+        PROGUARD,
+        PROPERTIES,
+        PROTO,
+        PYTHON,
+        REGEX,
+        RESOURCE,
+        RUST,
+        SHELL,
+        SQL,
+        SVG,
+        TEXT,
+        TOML,
+        TYPESCRIPT,
+        UNKNOWN,
+        VERSION_CATALOG,
+        XML,
+        YAML,
+    )
 
 /**
  * Represents the language and dialect of a source snippet, as an RFC 2046 mime type.
@@ -56,7 +100,7 @@ import org.jetbrains.jewel.foundation.code.MimeType.Known.YAML
 @JvmInline
 public value class MimeType(private val mimeType: String) {
     public fun displayName(): String =
-        when (normalizeString()) {
+        when (getBaseMimeType()) {
             KOTLIN.mimeType -> if (isGradle()) "Gradle DSL" else "Kotlin"
             JAVA.mimeType -> "Java"
             XML.mimeType -> {
@@ -67,12 +111,14 @@ public value class MimeType(private val mimeType: String) {
                         val folderType = getAttribute(ATTR_FOLDER_TYPE)
                         folderType?.capitalizeAsciiOnly() ?: "XML"
                     }
-
                     else -> "XML"
                 }
             }
-
+            HTML.mimeType -> "HTML"
+            XHTML.mimeType -> "XHTML"
             JSON.mimeType -> "JSON"
+            JSON5.mimeType -> "JSON5"
+            JSON_LINES.mimeType -> "JSON Lines"
             TEXT.mimeType -> "Text"
             REGEX.mimeType -> "Regular Expression"
             GROOVY.mimeType -> if (isGradle()) "Gradle" else "Groovy"
@@ -96,92 +142,98 @@ public value class MimeType(private val mimeType: String) {
             else -> mimeType
         }
 
+    public fun toFileExtensionIfKnown(): String? =
+        when (mimeType) {
+            AGSL.mimeType -> "agsl"
+            AIDL.mimeType -> "aidl"
+            C.mimeType -> "c"
+            CPP.mimeType -> "cpp"
+            CSS.mimeType -> "css"
+            DART.mimeType -> "dart"
+            GO.mimeType -> "go"
+            GRADLE.mimeType -> "gradle"
+            GRADLE_KTS.mimeType -> "kts"
+            GROOVY.mimeType -> "groovy"
+            JAVA.mimeType -> "java"
+            JAVASCRIPT.mimeType -> "js"
+            JSON.mimeType -> "json"
+            JSON5.mimeType -> "json5"
+            JSON_LINES.mimeType -> "jsonl"
+            KOTLIN.mimeType -> "kt"
+            MANIFEST.mimeType -> "xml" // Manifest files
+            PROGUARD.mimeType -> "pro"
+            PROPERTIES.mimeType -> "properties"
+            PROTO.mimeType -> "proto"
+            PYTHON.mimeType -> "py"
+            REGEX.mimeType -> "regex"
+            RESOURCE.mimeType -> "xml" // Resource files
+            RUST.mimeType -> "rs"
+            SHELL.mimeType -> "sh"
+            SQL.mimeType -> "sql"
+            SVG.mimeType -> "svg"
+            TEXT.mimeType -> "txt"
+            TOML.mimeType -> "toml"
+            TYPESCRIPT.mimeType -> "ts"
+            VERSION_CATALOG.mimeType -> "toml"
+            XML.mimeType -> "xml"
+            YAML.mimeType -> "yaml"
+            RUBY.mimeType -> "rb"
+            OBJECTIVE_C.mimeType -> "m"
+            "text/x-erlang" -> "erl"
+            else -> null
+        }
+
+    private fun getBaseMimeType(): String {
+        val baseMimeType = base().toString()
+        // Built-ins are already normalized, don't do string and sorting work
+        if (this in ALREADY_NORMALIZED_BUILTIN_TYPES) return baseMimeType
+
+        return when (baseMimeType) {
+            "text/x-java-source",
+            "application/x-java",
+            "text/x-java" -> JAVA.mimeType
+
+            "application/kotlin-source",
+            "text/x-kotlin",
+            "text/x-kotlin-source" -> KOTLIN.mimeType
+
+            "application/xml" -> XML.mimeType
+            "application/json",
+            "application/vnd.api+json",
+            "application/hal+json",
+            "application/ld+json" -> JSON.mimeType
+
+            "image/svg+xml" -> XML.mimeType
+            "text/x-python",
+            "application/x-python-script" -> PYTHON.mimeType
+
+            "text/dart",
+            "text/x-dart",
+            "application/dart",
+            "application/x-dart" -> DART.mimeType
+
+            "application/javascript",
+            "application/x-javascript",
+            "text/ecmascript",
+            "application/ecmascript",
+            "application/x-ecmascript" -> JAVASCRIPT.mimeType
+
+            "application/typescript" + "application/x-typescript" -> TYPESCRIPT.mimeType
+            "text/x-rust",
+            "application/x-rust" -> RUST.mimeType
+
+            "text/x-sksl" -> AGSL.mimeType
+            "application/yaml",
+            "text/x-yaml",
+            "application/x-yaml" -> YAML.mimeType
+            "application/x-patch" -> PATCH.mimeType
+
+            else -> baseMimeType
+        }
+    }
+
     private fun normalizeString(): String {
-        when (this) {
-            // Built-ins are already normalized, don't do string and sorting work
-            AGSL,
-            AIDL,
-            C,
-            CPP,
-            DART,
-            DIFF,
-            GO,
-            GRADLE,
-            GRADLE_KTS,
-            GROOVY,
-            JAVA,
-            JAVASCRIPT,
-            JSON,
-            KOTLIN,
-            MANIFEST,
-            PATCH,
-            PROGUARD,
-            PROPERTIES,
-            PROTO,
-            PYTHON,
-            REGEX,
-            RESOURCE,
-            RUST,
-            SHELL,
-            SQL,
-            SVG,
-            TEXT,
-            TOML,
-            TYPESCRIPT,
-            UNKNOWN,
-            VERSION_CATALOG,
-            XML,
-            YAML -> return this.mimeType
-        }
-
-        val baseEnd = mimeType.indexOf(';')
-        val normalizedBase =
-            when (val base = if (baseEnd == -1) mimeType else mimeType.substring(0, baseEnd)) {
-                "text/x-java-source",
-                "application/x-java",
-                "text/x-java" -> JAVA.mimeType
-
-                "application/kotlin-source",
-                "text/x-kotlin",
-                "text/x-kotlin-source" -> KOTLIN.mimeType
-
-                "application/xml" -> XML.mimeType
-                "application/json",
-                "application/vnd.api+json",
-                "application/hal+json",
-                "application/ld+json" -> JSON.mimeType
-
-                "image/svg+xml" -> XML.mimeType
-                "text/x-python",
-                "application/x-python-script" -> PYTHON.mimeType
-
-                "text/dart",
-                "text/x-dart",
-                "application/dart",
-                "application/x-dart" -> DART.mimeType
-
-                "application/javascript",
-                "application/x-javascript",
-                "text/ecmascript",
-                "application/ecmascript",
-                "application/x-ecmascript" -> JAVASCRIPT.mimeType
-
-                "application/typescript" + "application/x-typescript" -> TYPESCRIPT.mimeType
-                "text/x-rust",
-                "application/x-rust" -> RUST.mimeType
-
-                "text/x-sksl" -> AGSL.mimeType
-                "application/yaml",
-                "text/x-yaml",
-                "application/x-yaml" -> YAML.mimeType
-                "application/x-patch" -> PATCH.mimeType
-
-                else -> base
-            }
-
-        if (baseEnd == -1) {
-            return normalizedBase
-        }
+        val normalizedBase = getBaseMimeType()
 
         val attributes =
             mimeType
@@ -297,7 +349,12 @@ public value class MimeType(private val mimeType: String) {
         public val XML: MimeType = MimeType("text/xml")
         public val PROPERTIES: MimeType = MimeType("text/properties")
         public val TOML: MimeType = MimeType("text/toml")
+        public val HTML: MimeType = MimeType("text/html")
+        public val XHTML: MimeType = MimeType("application/xhtml+xml")
+        public val CSS: MimeType = MimeType("text/css")
         public val JSON: MimeType = MimeType("text/json")
+        public val JSON5: MimeType = MimeType("text/json5")
+        public val JSON_LINES: MimeType = MimeType("application/x-ndjson")
         public val REGEX: MimeType = MimeType("text/x-regex-source")
         public val GROOVY: MimeType = MimeType("text/groovy")
         public val C: MimeType = MimeType("text/c")
@@ -316,6 +373,9 @@ public value class MimeType(private val mimeType: String) {
         public val SHELL: MimeType = MimeType("application/x-sh")
         public val YAML: MimeType = MimeType("text/yaml")
         public val GO: MimeType = MimeType("text/go")
+        public val RUBY: MimeType = MimeType("text/x-ruby")
+        public val CLOJURE: MimeType = MimeType("text/x-clojure")
+        public val OBJECTIVE_C: MimeType = MimeType("text/x-objectivec")
 
         /** Note that most resource files will also have a folder type, so don't use equality on this mime type */
         public val RESOURCE: MimeType = MimeType("$XML; $ATTR_ROLE=resource")
@@ -326,21 +386,27 @@ public value class MimeType(private val mimeType: String) {
         public val DIFF: MimeType = MimeType("text/x-diff")
         public val PATCH: MimeType = MimeType("text/x-patch")
 
-        /** Maps from a markdown language [name] back to a mime type. */
+        /** Maps from a Markdown language [name] back to a mime type. */
         public fun fromMarkdownLanguageName(name: String): MimeType? =
             when (name) {
                 "kotlin",
                 "kt",
                 "kts" -> KOTLIN
-
+                "clj",
+                "cljs",
+                "cljr",
+                "cljc",
+                "cljd" -> CLOJURE
                 "java" -> JAVA
-                "xml" -> XML
-                "json",
-                "json5" -> JSON
-
+                "html" -> HTML
+                "xhtml" -> XHTML
+                "css" -> CSS
+                "json" -> JSON
+                "json5" -> JSON5
+                "json lines",
+                "jsonl" -> JSON_LINES
                 "regex",
                 "regexp" -> REGEX
-
                 "groovy" -> GROOVY
                 "toml" -> TOML
                 "c" -> C
@@ -354,28 +420,23 @@ public value class MimeType(private val mimeType: String) {
                 "python3",
                 "py",
                 "python" -> PYTHON
-
                 "dart" -> DART
                 "rust" -> RUST
                 "js",
                 "javascript" -> JAVASCRIPT
-
+                "ts",
                 "typescript" -> TYPESCRIPT
                 "sksl" -> AGSL
                 "sh",
                 "bash",
                 "zsh",
                 "shell" -> SHELL
-
                 "yaml",
                 "yml" -> YAML
-
                 "go",
-                "golang" -> YAML
-
+                "golang" -> GO
                 "diff" -> DIFF
                 "patch" -> PATCH
-
                 else -> null
             }
     }

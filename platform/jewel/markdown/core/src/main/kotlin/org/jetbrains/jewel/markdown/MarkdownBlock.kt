@@ -3,7 +3,6 @@ package org.jetbrains.jewel.markdown
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
-import org.jetbrains.jewel.foundation.code.MimeType
 
 @ApiStatus.Experimental
 @ExperimentalJewelApi
@@ -54,7 +53,7 @@ public sealed interface MarkdownBlock {
         @ApiStatus.Experimental
         @ExperimentalJewelApi
         @GenerateDataFunctions
-        public class FencedCodeBlock(override val content: String, public val mimeType: MimeType?) : CodeBlock {
+        public class FencedCodeBlock(override val content: String, public val info: String?) : CodeBlock {
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
                 if (javaClass != other?.javaClass) return false
@@ -62,18 +61,18 @@ public sealed interface MarkdownBlock {
                 other as FencedCodeBlock
 
                 if (content != other.content) return false
-                if (mimeType != other.mimeType) return false
+                if (info != other.info) return false
 
                 return true
             }
 
             override fun hashCode(): Int {
                 var result = content.hashCode()
-                result = 31 * result + (mimeType?.hashCode() ?: 0)
+                result = 31 * result + (info?.hashCode() ?: 0)
                 return result
             }
 
-            override fun toString(): String = "FencedCodeBlock(content='$content', mimeType=$mimeType)"
+            override fun toString(): String = "FencedCodeBlock(content='$content', info=$info)"
         }
     }
 

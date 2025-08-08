@@ -23,7 +23,6 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.AnnotatedString
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
-import org.jetbrains.jewel.foundation.code.MimeType
 import org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
@@ -114,20 +113,21 @@ public open class ScrollSyncMarkdownBlockRenderer(
     @Composable
     override fun renderCodeWithMimeType(
         block: FencedCodeBlock,
-        mimeType: MimeType,
+        langName: String?,
         styling: MarkdownStyling.Code.Fenced,
         enabled: Boolean,
     ) {
+        val langName = block.info
         val synchronizer =
             (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
                 ?: run {
-                    super.renderCodeWithMimeType(block, mimeType, styling, enabled)
+                    super.renderCodeWithMimeType(block, langName, styling, enabled)
                     return
                 }
 
         val content = block.content
         val highlightedCode by
-            LocalCodeHighlighter.current.highlight(content, block.mimeType).collectAsState(AnnotatedString(content))
+            LocalCodeHighlighter.current.highlight(content, langName).collectAsState(AnnotatedString(content))
         val uniqueBlock = localUniqueBlock.current?.takeIf { it.originalBlock == block } ?: block
         val actualBlock by rememberUpdatedState(uniqueBlock)
         AutoScrollableBlock(actualBlock, synchronizer) {

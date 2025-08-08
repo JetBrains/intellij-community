@@ -40,7 +40,6 @@ import androidx.compose.ui.unit.LayoutDirection.Ltr
 import androidx.compose.ui.unit.dp
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
-import org.jetbrains.jewel.foundation.code.MimeType
 import org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter
 import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
@@ -435,7 +434,7 @@ public open class DefaultMarkdownBlockRenderer(
         enabled: Boolean,
         modifier: Modifier,
     ) {
-        val mimeType = block.mimeType ?: MimeType.Known.UNKNOWN
+        val langName = block.info
         MaybeScrollingContainer(
             isScrollable = styling.scrollsHorizontally,
             modifier
@@ -447,7 +446,7 @@ public open class DefaultMarkdownBlockRenderer(
             Column(Modifier.padding(styling.padding)) {
                 if (styling.infoPosition.verticalAlignment == Alignment.Top) {
                     FencedBlockInfo(
-                        mimeType.displayName(),
+                        langName,
                         styling.infoPosition.horizontalAlignment
                             ?: error("No horizontal alignment for position ${styling.infoPosition.name}"),
                         styling.infoTextStyle,
@@ -455,11 +454,11 @@ public open class DefaultMarkdownBlockRenderer(
                     )
                 }
 
-                renderCodeWithMimeType(block, mimeType, styling, enabled)
+                renderCodeWithMimeType(block, langName, styling, enabled)
 
                 if (styling.infoPosition.verticalAlignment == Alignment.Bottom) {
                     FencedBlockInfo(
-                        mimeType.displayName(),
+                        langName,
                         styling.infoPosition.horizontalAlignment
                             ?: error("No horizontal alignment for position ${styling.infoPosition.name}"),
                         styling.infoTextStyle,
@@ -473,13 +472,13 @@ public open class DefaultMarkdownBlockRenderer(
     @Composable
     internal open fun renderCodeWithMimeType(
         block: FencedCodeBlock,
-        mimeType: MimeType,
+        langName: String?,
         styling: MarkdownStyling.Code.Fenced,
         enabled: Boolean,
     ) {
         val content = block.content
         val highlighter = LocalCodeHighlighter.current
-        val highlightedCode by highlighter.highlight(content, mimeType).collectAsState(AnnotatedString(content))
+        val highlightedCode by highlighter.highlight(content, langName).collectAsState(AnnotatedString(content))
         Text(
             text = highlightedCode,
             style = styling.editorTextStyle,
@@ -492,7 +491,7 @@ public open class DefaultMarkdownBlockRenderer(
 
     @Composable
     private fun FencedBlockInfo(
-        infoText: String,
+        infoText: String?,
         alignment: Alignment.Horizontal,
         textStyle: TextStyle,
         modifier: Modifier = Modifier,
@@ -500,7 +499,7 @@ public open class DefaultMarkdownBlockRenderer(
         Column(modifier, horizontalAlignment = alignment) {
             DisableSelection {
                 Text(
-                    text = infoText,
+                    text = infoText ?: "",
                     style = textStyle,
                     color = textStyle.color.takeOrElse { LocalContentColor.current },
                     modifier = Modifier.focusProperties { canFocus = false },
