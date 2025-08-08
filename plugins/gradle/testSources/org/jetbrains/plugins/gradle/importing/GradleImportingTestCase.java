@@ -84,6 +84,7 @@ import java.util.function.Consumer;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
+import static com.intellij.openapi.util.io.NioFiles.copyRecursively;
 import static org.junit.Assume.assumeThat;
 
 @RunWith(Parameterized.class)
@@ -579,15 +580,15 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   protected void overrideGradleUserHome(@NotNull String relativeUserHomePath) throws IOException {
-    String gradleUserHome = "%s/%s".formatted(getMyTestDir().getPath(), relativeUserHomePath);
+    Path gradleUserHome = getMyTestDir().toPath().resolve(relativeUserHomePath);
     String gradleCachedFolderName = "gradle-%s-bin".formatted(gradleVersion);
-    File cachedGradleDistribution = findGradleDistributionInCache(gradleCachedFolderName);
+    Path cachedGradleDistribution = findGradleDistributionInCache(gradleCachedFolderName);
     if (cachedGradleDistribution != null) {
-      File targetGradleDistribution = Path.of(gradleUserHome + "/wrapper/dists/" + gradleCachedFolderName)
-        .toFile();
-      FileUtil.copyDir(cachedGradleDistribution, targetGradleDistribution);
+      Path targetGradleDistribution = gradleUserHome.resolve("wrapper/dists/").resolve(gradleCachedFolderName);
+      Files.createDirectories(targetGradleDistribution.getParent());
+      copyRecursively(cachedGradleDistribution, targetGradleDistribution);
     }
-    GradleSettings.getInstance(getMyProject()).setServiceDirectoryPath(gradleUserHome);
+    GradleSettings.getInstance(getMyProject()).setServiceDirectoryPath(gradleUserHome.toString());
   }
 
   protected void resetGradleUserHomeIfNeeded() {
@@ -599,11 +600,10 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   @Nullable
-  private static File findGradleDistributionInCache(String gradleCachedFolderName) {
-    Path pathToGradleWrapper = StartParameter.DEFAULT_GRADLE_USER_HOME.toPath().resolve("wrapper/dists/" + gradleCachedFolderName);
-    File gradleWrapperFile = pathToGradleWrapper.toFile();
-    if (gradleWrapperFile.exists()) {
-      return gradleWrapperFile;
+  private static Path findGradleDistributionInCache(String gradleCachedFolderName) {
+    Path gradleWrapperPath = StartParameter.DEFAULT_GRADLE_USER_HOME.toPath().resolve("wrapper/dists/" + gradleCachedFolderName);
+    if (Files.exists(gradleWrapperPath)) {
+      return gradleWrapperPath;
     }
     return null;
   }
