@@ -1,6 +1,6 @@
 # Jewel Release Notes
 
-## 0.29 (2025-07-22)
+## v0.29 (2025-07-22)
 
 | Supported IJP versions | Compose Multiplatform version |
 |------------------------|-------------------------------|
