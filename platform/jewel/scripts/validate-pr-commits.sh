@@ -4,15 +4,9 @@ set -o pipefail
 
 source "$(dirname "$0")/utils.sh"
 
-if ! command -v gh &> /dev/null; then
-    echo "ERROR: The GitHub CLI (gh) could not be found. Please install it to continue." >&2
-    exit 1
-fi
-
-if [ -z "$PR_NUMBER" ]; then
-  echo "ERROR: The PR_NUMBER environment variable is not set." >&2
-  exit 1
-fi
+# Precondition checks: gh tool on path, and PR_NUMBER env
+check_gh_tool
+check_pr_number
 
 echo "Checking commit count for PR #$PR_NUMBER"
 

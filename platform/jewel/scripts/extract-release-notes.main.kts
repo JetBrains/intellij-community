@@ -1,97 +1,116 @@
 #!/usr/bin/env kotlin
-// Coroutine dependency for KTS scripts
 @file:DependsOn("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+@file:DependsOn("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.9.0")
+@file:Import("utils.main.kts")
+@file:Suppress("RAW_RUN_BLOCKING")
 
+import java.io.File
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.system.exitProcess
+import kotlin.time.TimeSource.Monotonic.markNow
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.io.File
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
-import kotlin.system.exitProcess
-import kotlin.time.TimeSource.Monotonic.markNow
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 // --- Configuration ---
-object Config {
+private object Config {
     const val UPSTREAM_REPO = "JetBrains/intellij-community"
     const val JEWEL_DIR = "."
     const val OUTPUT_FILE = "new_release_notes.md"
-    const val MAX_CONCURRENT_JOBS = 5
+    const val MAX_CONCURRENT_JOBS = 7
     const val RELEASE_NOTES_FILE = "RELEASE NOTES.md"
 }
 
-// --- Data Structures ---
-data class ReleaseNoteItem(val issueId: String?, val description: String, val prId: String, val prUrl: String)
+private val workingDir = File("").absoluteFile
 
-enum class ProcessedPrStatus {
+// --- Data Structures ---
+private data class ReleaseNoteItem(val issueId: String?, val description: String, val prId: String, val prUrl: String)
+
+private enum class PrProcessingStatus {
     Extracted,
     BlankReleaseNotes,
     NoReleaseNotes,
     Error,
 }
 
-data class CommitInfo(val commitHash: String, val prId: String, val issueId: String?)
+private data class CommitInfo(val commitHash: String, val prId: String, val issueId: String?)
 
-data class CommitResult(
+private data class PrProcessingResult(
     val prId: String,
-    val status: ProcessedPrStatus,
+    val prTitle: String,
+    val status: PrProcessingStatus,
     val notes: Map<String, List<ReleaseNoteItem>> = emptyMap(),
     val logMessages: List<String> = emptyList(),
 )
 
 // --- Helper Functions ---
-fun runCommand(vararg command: String, workDir: File = File(".")): String {
-    val process =
-        ProcessBuilder(*command)
-            .directory(workDir)
-            .redirectOutput(ProcessBuilder.Redirect.PIPE)
-            .redirectError(ProcessBuilder.Redirect.PIPE)
-            .start()
+private fun getIndentation(line: String): Int = line.takeWhile { it.isWhitespace() }.length
 
-    if (!process.waitFor(60, TimeUnit.SECONDS)) {
-        process.destroy()
-        throw TimeoutException("Command timed out: ${command.joinToString(" ")}")
-    }
+private fun formatReleaseNotesLine(note: ReleaseNoteItem): String {
+    val lines = note.description.lines()
+    val firstLine = lines.first()
+    val otherLines = lines.drop(1)
 
-    val output = process.inputStream.bufferedReader().readText()
-    if (process.exitValue() != 0) {
-        val error = process.errorStream.bufferedReader().readText()
-        error("Command failed with exit code ${process.exitValue()}: ${command.joinToString(" ")}\n$error")
+    return buildString {
+        append(" *")
+        if (note.issueId != null) {
+            append(" **")
+            append(note.issueId)
+            append("**")
+        }
+        append(" ")
+        append(firstLine.cleanupEntry(note.issueId))
+        append(" ([#")
+        append(note.prId)
+        append("](")
+        append(note.prUrl)
+        append("))")
+
+        if (otherLines.isNotEmpty()) {
+            val otherLinesText = otherLines.joinToString("\n")
+            if (otherLinesText.isNotBlank()) {
+                append("\n")
+                append(otherLinesText)
+            }
+        }
     }
-    return output.trim()
 }
 
-fun formatReleaseNotesLine(note: ReleaseNoteItem): String = buildString {
-    append(" *")
-    if (note.issueId != null) {
-        append(" **")
-        append(note.issueId)
-        append("**")
-    }
-    append(" ")
-    append(note.description)
-    append(" ([#")
-    append(note.prId)
-    append("](")
-    append(note.prUrl)
-    append("))")
+private fun String.cleanupEntry(issueIdText: String?): String {
+    // 1. Remove trailing dot
+    val step1 = removeSuffix(".")
+    // 2. Remove issue ID if present
+    val step2 =
+        if (issueIdText != null) {
+            step1.removePrefix("$issueIdText ").removePrefix("**$issueIdText** ")
+        } else {
+            step1
+        }
+    // 3. Trim
+    return step2.trim()
 }
 
-// --- Core Logic (now collects logs instead of printing them) ---
-fun processPr(commitInfo: CommitInfo, isVerbose: Boolean): CommitResult {
+private suspend fun processPr(commitInfo: CommitInfo, isVerbose: Boolean): PrProcessingResult {
     val (_, prNumber, issueId) = commitInfo
     val logs = mutableListOf<String>()
 
     try {
-        val prUrl =
-            runCommand("gh", "pr", "view", prNumber, "--repo", Config.UPSTREAM_REPO, "--json", "url", "-q", ".url")
-        val prBody =
-            runCommand("gh", "pr", "view", prNumber, "--repo", Config.UPSTREAM_REPO, "--json", "body", "-q", ".body")
+        val prInfo =
+            runCommand("gh pr view $prNumber --repo ${Config.UPSTREAM_REPO} --json url,body,title", workingDir)
+                .output
+                .let { Json.parseToJsonElement(it).jsonObject }
+
+        val prUrl = prInfo["url"]?.jsonPrimitive?.content!!
+        val prBody = prInfo["body"]?.jsonPrimitive?.content!!
+        val prTitle = prInfo["title"]?.jsonPrimitive?.content!!
         if (isVerbose) logs.add("ℹ️  PR body fetched:\n${prBody.prependIndent("      ")}\n")
 
         val lines = prBody.lines()
@@ -99,8 +118,8 @@ fun processPr(commitInfo: CommitInfo, isVerbose: Boolean): CommitResult {
             lines.indexOfFirst { it.trim().matches("""##+\s+release notes""".toRegex(RegexOption.IGNORE_CASE)) }
 
         if (headerIndex == -1) {
-            logs.add("⚠️ No 'Release Notes' section found.")
-            return CommitResult(prNumber, ProcessedPrStatus.NoReleaseNotes, logMessages = logs)
+            logs.add("⚠️ No 'Release Notes' section found.".asWarning())
+            return PrProcessingResult(prNumber, prTitle, PrProcessingStatus.NoReleaseNotes, logMessages = logs)
         }
 
         val subsequentLines = lines.drop(headerIndex + 1)
@@ -111,57 +130,95 @@ fun processPr(commitInfo: CommitInfo, isVerbose: Boolean): CommitResult {
                 .trim()
 
         if (releaseNotesText.isBlank()) {
-            logs.add("⚠️ 'Release Notes' section found but it was empty.")
-            return CommitResult(prNumber, ProcessedPrStatus.BlankReleaseNotes, logMessages = logs)
+            logs.add("⚠️ 'Release Notes' section found but it was empty.".asWarning())
+            return PrProcessingResult(prNumber, prTitle, PrProcessingStatus.BlankReleaseNotes, logMessages = logs)
         }
         if (isVerbose) logs.add("ℹ️  Extracted release notes text:\n$releaseNotesText\n")
 
         val notesInPr = mutableMapOf<String, MutableList<ReleaseNoteItem>>()
-        var currentSection = "Uncategorized"
-        releaseNotesText.lines().forEach { line ->
-            val headerMatch = """^#+\s+(.*)""".toRegex().find(line.trim())
-            if (headerMatch != null) {
-                currentSection =
-                    headerMatch.groupValues[1].trim().lowercase().replaceFirstChar {
-                        if (it.isLowerCase()) it.titlecase() else it.toString()
-                    }
-            } else if (line.isNotBlank()) {
-                val mainText = line.trim().removePrefix("*").removePrefix("-").trim()
-                val noteItem = ReleaseNoteItem(issueId, mainText, prNumber, prUrl)
-                notesInPr.getOrPut(currentSection) { mutableListOf() }.add(noteItem)
-            }
+        var currentSection = "Other"
+        val releaseLines = releaseNotesText.lines()
+
+        var i = 0
+        while (i < releaseLines.size) {
+            val (nextIndex, nextSection) =
+                processLine(i, releaseLines, currentSection, issueId, prNumber, prUrl, notesInPr)
+            i = nextIndex
+            currentSection = nextSection
         }
+
         logs.add("✅ Parsed notes successfully.")
-        return CommitResult(prNumber, ProcessedPrStatus.Extracted, notesInPr, logs)
+        return PrProcessingResult(prNumber, prTitle, PrProcessingStatus.Extracted, notesInPr, logs)
     } catch (e: Exception) {
-        logs.add("❌ Error processing PR: ${e.message?.lines()?.firstOrNull()}")
-        return CommitResult(prNumber, ProcessedPrStatus.Error, logMessages = logs)
+        logs.add("❌ Error processing PR: ${e.message?.lines()?.firstOrNull()}".asError())
+        return PrProcessingResult(prNumber, "[ERROR]", PrProcessingStatus.Error, logMessages = logs)
+    }
+}
+
+private fun processLine(
+    index: Int,
+    releaseLines: List<String>,
+    currentSectionIn: String,
+    issueId: String?,
+    prNumber: String,
+    prUrl: String,
+    notesInPr: MutableMap<String, MutableList<ReleaseNoteItem>>,
+): Pair<Int, String> {
+    var currentSection = currentSectionIn
+    val line = releaseLines[index]
+
+    val headerMatch = """^#+\s+(.*)""".toRegex().find(line.trim())
+    if (headerMatch != null) {
+        currentSection = headerMatch.groupValues[1].trim()
+        return index + 1 to currentSection
+    }
+
+    if (line.isBlank()) {
+        return index + 1 to currentSection
+    }
+
+    val trimmedLine = line.trim()
+    val isListItem = trimmedLine.startsWith("*") || trimmedLine.startsWith("-")
+
+    if (isListItem) {
+        val baseIndentation = getIndentation(line)
+        val mainText = trimmedLine.removePrefix("*").removePrefix("-").trim()
+        val noteLines = mutableListOf(mainText)
+
+        var j = index + 1
+        while (j < releaseLines.size) {
+            val nextLine = releaseLines[j]
+            if (nextLine.isNotBlank()) {
+                if ("""^#+\s+(.*)""".toRegex().find(nextLine.trim()) != null) break // Stop at next header
+                if (getIndentation(nextLine) <= baseIndentation) break // Stop at new top-level item
+            }
+
+            noteLines.add(nextLine)
+            j++
+        }
+
+        val fullDescription = noteLines.joinToString("\n")
+        val noteItem = ReleaseNoteItem(issueId, fullDescription, prNumber, prUrl)
+        notesInPr.getOrPut(currentSection) { mutableListOf() }.add(noteItem)
+        return j to currentSection
+    } else {
+        // This line is not a list item, so we skip it.
+        return index + 1 to currentSection
     }
 }
 
 // --- Main Entry Point ---
-val isVerbose = args.contains("--verbose") || args.contains("-v")
-
-fun getArg(name: String, shortName: String? = null): String? {
-    val nameFlag = "--$name"
-    val shortNameFlag = shortName?.let { "-$it" }
-
-    val values = args.asSequence()
-        .mapIndexedNotNull { index, s ->
-            if (s == nameFlag || s == shortNameFlag) {
-                args.getOrNull(index + 1)
-            } else {
-                null
-            }
-        }
-        .toList()
-    return values.firstOrNull()
+if (workingDir.name != "jewel" || workingDir.parentFile.name != "platform") {
+    printlnErr("This script must be run from the 'jewel' directory.")
+    exitProcess(1)
 }
 
-fun getLatestReleaseDate(): String? {
+private fun getLatestReleaseDate(): String? {
     val releaseNotesFile = File(Config.RELEASE_NOTES_FILE)
     if (!releaseNotesFile.exists()) {
-        println("⚠️ Release notes file not found at '${releaseNotesFile.absolutePath}', can't determine start date.")
+        printlnWarn(
+            "⚠️ Release notes file not found at '${releaseNotesFile.absolutePath}', can't determine start date."
+        )
         return null
     }
 
@@ -174,69 +231,92 @@ fun getLatestReleaseDate(): String? {
             }
         }
     }
-    println("⚠️ Could not find any release date in ${Config.RELEASE_NOTES_FILE}.")
+    printlnWarn("⚠️ Could not find any release date in ${Config.RELEASE_NOTES_FILE}.")
     return null
 }
 
-fun printUsageAndExit() {
+private fun printUsageAndExit() {
     println("Usage: ./extract-release-notes.main.kts --start-date <yyyy-mm-dd> [--end-date <yyyy-mm-dd>] [--verbose]")
     println("If --start-date is omitted, it will be inferred from the latest release in ${Config.RELEASE_NOTES_FILE}.")
     println("Example: ./extract-release-notes.main.kts --start-date 2025-05-01 --end-date 2025-05-31")
     exitProcess(1)
 }
 
-val startDate: String =
+private val startDate: String =
     getArg("start-date", "s")
         ?: getLatestReleaseDate()
         ?: run {
             printUsageAndExit()
             "" // Should be unreachable
         }
-val endDate = getArg("end-date", "e")
+private val endDate = getArg("end-date", "e")
 
 // --- Phase 1: Sequentially parse local git history ---
-val normalizedJewelPath: String = File(Config.JEWEL_DIR).normalize().absolutePath
-val logMessage = buildString {
+private val normalizedJewelPath: String = File(Config.JEWEL_DIR).normalize().canonicalPath
+private val logMessage = buildString {
     append("🔍 Enumerating commits in '$normalizedJewelPath' since $startDate")
     if (endDate != null) {
         append(" until $endDate")
     }
 }
-println("$logMessage...")
 
-val mark = markNow()
-val gitLogCommand = mutableListOf("git", "log", "--since=$startDate", "--pretty=format:%H")
-if (endDate != null) {
-    gitLogCommand.add("--until=$endDate")
+print("$logMessage...")
+
+private val mark = markNow()
+private val gitLogCommand = buildString {
+    append("git log --since=")
+    append(startDate)
+    append(" --pretty=format:%H")
+    if (endDate != null) {
+        append(" --until=$endDate")
+    }
+    append(" -- ")
+    append(Config.JEWEL_DIR)
 }
-gitLogCommand.add("--")
-gitLogCommand.add(Config.JEWEL_DIR)
 
-val allCommitHashes =
-    runCommand(*gitLogCommand.toTypedArray())
-        .lines()
-        .filter { it.isNotBlank() }
+private val allCommitHashes = runBlocking {
+    runCommand(gitLogCommand, workingDir).output.lines().filter { it.isNotBlank() }
+}
 
-val elapsed = mark.elapsedNow()
+private val elapsed = mark.elapsedNow()
 
-println("  Found ${allCommitHashes.size} commits in $elapsed")
+println(" DONE")
 
-val prCommits = mutableListOf<CommitInfo>()
-val issueIdRegex = """\[(JEWEL-\d+)]""".toRegex()
-val prRegex = """closes https://github.com/JetBrains/intellij-community/pull/(\d+)""".toRegex()
+println("  ℹ️ Found ${allCommitHashes.size} commits in $elapsed")
+
+print("🔍 Filtering relevant commits...")
+
+private val prCommits = mutableListOf<CommitInfo>()
+private val jewelCommitsWithoutPr = mutableListOf<Pair<String, String>>()
+private val issueIdRegex = """\[(JEWEL-\d+.*)+]""".toRegex()
+private val prRegex = """closes https://github.com/JetBrains/intellij-community/pull/(\d+)""".toRegex()
 
 for (commitHash in allCommitHashes) {
-    val commitBody = runCommand("git", "show", "-s", "--format=%B", commitHash)
-    prRegex.find(commitBody)?.groups?.get(1)?.value?.let { prNumber ->
+    val commitBody = runBlocking { runCommand("git show -s --format=%B $commitHash", workingDir).output }
+
+    val prNumber = prRegex.find(commitBody)?.groups?.get(1)?.value
+    if (prNumber != null) {
+        if (isVerbose) {
+            println("    Commit $commitHash -> PR #$prNumber")
+        }
         val issueId = issueIdRegex.find(commitBody)?.groups?.get(1)?.value
         prCommits.add(CommitInfo(commitHash, prNumber, issueId))
+    } else {
+        if (commitBody.contains("JEWEL", ignoreCase = true)) {
+            jewelCommitsWithoutPr.add(commitHash to commitBody.lineSequence().first())
+        }
+        if (isVerbose) {
+            println("    Commit $commitHash -> NO PR")
+        }
     }
 }
 
-val uniquePrCommits = prCommits.distinctBy { it.prId }
+private val uniquePrCommits = prCommits.distinctBy { it.prId }.sortedBy { it.issueId }
+
+println(" DONE")
 
 println(
-    "  Found ${uniquePrCommits.size} unique PRs to process. " +
+    "  ℹ️ Found ${uniquePrCommits.size} unique PRs to process. " +
         "(${allCommitHashes.size - uniquePrCommits.size} commits were skipped or were duplicates)"
 )
 
@@ -248,18 +328,20 @@ if (isVerbose) {
 }
 
 // --- Phase 2: Process all PRs in parallel ---
-println("\n🔎 Processing ${uniquePrCommits.size} PRs with up to ${Config.MAX_CONCURRENT_JOBS} parallel jobs...")
+println("🔎 Processing ${uniquePrCommits.size} PRs with up to ${Config.MAX_CONCURRENT_JOBS} parallel jobs...")
 
-@Suppress("RAW_RUN_BLOCKING") // This is not IJP code
-val results = runBlocking {
+@OptIn(ExperimentalCoroutinesApi::class)
+private val results = runBlocking {
     val dispatcher = Dispatchers.IO.limitedParallelism(Config.MAX_CONCURRENT_JOBS)
     val inProgressPrs = ConcurrentHashMap.newKeySet<String>()
 
     // Launch a separate logger coroutine to print progress
     val loggerJob = launch {
         while (isActive) {
-            val currentPrs = inProgressPrs.map { "#$it" }.sorted().joinToString(", ")
-            print("\r  Currently processing: [${currentPrs.padEnd(50)}]")
+            val currentPrs = inProgressPrs.sorted().joinToString(", ") { "#$it" }
+            val terminalWidth = getTerminalWidth()
+            val maxLen = terminalWidth - 20 // Hardcoded to include the "chrome"
+            print("\u001B[2K  ⏳ Processing: [${currentPrs.take(maxLen).padEnd(maxLen)}]\r")
             delay(100)
         }
     }
@@ -278,39 +360,43 @@ val results = runBlocking {
 
     val completedResults = jobs.awaitAll()
     loggerJob.cancel()
-    print("\r".padEnd(80) + "\r") // Clear the progress line completely
-    println("\n✅ All PRs have been processed.")
+    print("\r\u001B[2K") // Clear the progress line completely
+    println("  ✅ All PRs have been processed.")
     completedResults
 }
 
 // 3. Aggregate final results
-val allReleaseNotes = mutableMapOf<String, MutableList<ReleaseNoteItem>>()
-val processedPrs = mutableMapOf<String, ProcessedPrStatus>()
+private val allReleaseNotes = mutableMapOf<String, MutableList<ReleaseNoteItem>>()
+private val processedPrs = mutableMapOf<String, PrProcessingResult>()
 
 results.forEach { result ->
-    processedPrs[result.prId] = result.status
+    processedPrs[result.prId] = result
     result.notes.forEach { (section, items) -> allReleaseNotes.getOrPut(section) { mutableListOf() }.addAll(items) }
 }
 
-// --- NEW: Print collated logs ---
-println("\n--- PROCESSING LOGS ---")
+// --- Print collated logs ---
+if (isVerbose) {
+    println("\n--- PROCESSING LOGS ---")
 
-results
-    .sortedBy { it.prId.toInt() }
-    .forEach { result ->
-        println("\n[PR #${result.prId}]")
-        result.logMessages.forEach { msg -> println("  $msg") }
-    }
+    results
+        .sortedBy { it.prId.toInt() }
+        .forEach { result ->
+            println("\n[PR #${result.prId}]")
+            result.logMessages.forEach { msg -> println("  $msg") }
+        }
 
-// 4. Write grouped release notes to file
-println("\n\n✍️ Writing release notes to ${Config.OUTPUT_FILE}...")
+    println()
+}
 
-val outputFile = File(Config.OUTPUT_FILE)
+// 4. Write grouped release notes to the output file
+println("✍️ Writing release notes to ${Config.OUTPUT_FILE}...")
+
+private val outputFile = File(Config.OUTPUT_FILE)
 
 outputFile.writeText("")
 
-val sectionOrder = listOf("New Features", "Enhancements", "Bug Fixes", "Deprecations", "Uncategorized")
-val sortedSections =
+private val sectionOrder = listOf("⚠️ Important Changes", "New features", "Bug fixes", "Deprecated API", "Other")
+private val sortedSections =
     allReleaseNotes.keys.sortedWith(
         compareBy { sectionKey -> sectionOrder.indexOf(sectionKey).let { if (it == -1) Int.MAX_VALUE else it } }
     )
@@ -330,13 +416,28 @@ println("  ✅ Done.")
 // 5. Final Summary Table
 println("\n--- SUMMARY ---")
 
-val summaryData = processedPrs.entries.groupBy({ it.value }, { it.key })
+private val summaryData: Map<PrProcessingStatus, List<PrProcessingResult>> =
+    processedPrs.entries.groupBy({ it.value.status }, { it.value })
 
-ProcessedPrStatus.entries.forEach { status ->
-    val prs = summaryData[status]?.map { it.toInt() }?.sorted() ?: emptyList()
-    if (prs.isEmpty()) return@forEach
+PrProcessingStatus.entries.forEach { status ->
+    val processingResults = summaryData[status] ?: return@forEach
+    val prs = processingResults.sortedBy { it.prId }
     println("\n[${status.name}] - ${prs.size} PRs")
-    println(prs.joinToString(", ") { "#$it" })
+    for (pr in prs) {
+        print(" * ")
+        val id = pr.prId
+        println("#$id — ${pr.prTitle}".asLink("https://github.com/JetBrains/intellij-community/pull/$id"))
+    }
 }
 
 println("\n\n✅  All tasks complete.")
+
+if (jewelCommitsWithoutPr.isNotEmpty()) {
+    println()
+    printlnWarn("⚠️ Found ${jewelCommitsWithoutPr.size} commits with 'JEWEL' in the message but no PR number:")
+
+    for ((commitHash, headerLine) in jewelCommitsWithoutPr) {
+        println("  * ${commitHash.take(7)} ${headerLine}")
+    }
+    println()
+}
