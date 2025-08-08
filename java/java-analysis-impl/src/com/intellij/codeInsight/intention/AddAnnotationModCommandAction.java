@@ -1,11 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
-import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.ExternalAnnotationsManager.AnnotationPlace;
-import com.intellij.codeInsight.ModCommandAwareExternalAnnotationsManager;
-import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -206,6 +203,7 @@ public class AddAnnotationModCommandAction extends PsiBasedModCommandAction<PsiM
   private static @Nullable ModCommandAction createAddNullableNotNullFix(PsiModifierListOwner owner, String annotationToAdd,
                                                                         List<String> annotationsToRemove) {
     if (!AddAnnotationPsiFix.isNullabilityAnnotationApplicable(owner)) return null;
+    if (!AnnotationUtil.isAnnotatingApplicable(owner, annotationToAdd)) return null;
     return new AddAnnotationModCommandAction(annotationToAdd, owner, ArrayUtilRt.toStringArray(annotationsToRemove));
   }
 }
