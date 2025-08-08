@@ -120,8 +120,8 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return pluginIds.map { pluginIdMap[it] }.all { isBundledUpdate(it) }
   }
 
-  override fun getCustomRepoPlugins(): List<PluginUiModel> {
-    return CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins().toList().withSource()
+  override suspend fun getCustomRepoTags(): Set<String> {
+    return CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins().flatMap { it.tags ?: emptyList() }.toSet()
   }
 
   override suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>> {
@@ -255,6 +255,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     )
 
     return performInstallOperation(installPluginRequest, parentComponent, modalityState, pluginEnabler)
+  }
+
+  private fun getCustomRepoPlugins(): List<PluginUiModel> {
+    return CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins().toList().withSource()
   }
 
   private suspend fun loadDetails(descriptor: PluginUiModel): PluginUiModel? {
@@ -448,7 +452,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return PluginInstallationState(plugin != null, status)
   }
 
-  override fun getPluginInstallationStates(): Map<PluginId, PluginInstallationState> {
+  override suspend fun getPluginInstallationStates(): Map<PluginId, PluginInstallationState> {
     return getAllInstalledPlugins().associateWith { pluginId ->
       return@associateWith getPluginInstallationState(pluginId)
     }

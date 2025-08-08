@@ -157,8 +157,10 @@ class UiPluginManager {
     return getController().enableRequiredPlugins(sessionId, pluginId)
   }
 
-  fun getCustomRepoPlugins(): List<PluginUiModel> {
-    return getController().getCustomRepoPlugins()
+  //Not going to block EDT, because no real IO operations are needed
+  @Suppress("RAW_RUN_BLOCKING")
+  fun getCustomRepoTags(): Set<String> {
+    return runBlocking { getController().getCustomRepoTags() }
   }
 
   suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>> {

@@ -672,11 +672,9 @@ public final class PluginManagerConfigurable
               case TAG -> {
                 if (myTagsSorted == null || myTagsSorted.isEmpty()) {
                   Set<String> allTags = new HashSet<>();
-                  for (PluginUiModel descriptor : UiPluginManager.getInstance().getCustomRepoPlugins()) {
-                    List<String> tags = descriptor.getTags();
-                    if (tags != null && !tags.isEmpty()) {
-                      allTags.addAll(tags);
-                    }
+                  Set<String> customRepoTags = UiPluginManager.getInstance().getCustomRepoTags();
+                  if (!customRepoTags.isEmpty()) {
+                    allTags.addAll(customRepoTags);
                   }
                   try {
                     ProcessIOExecutorService.INSTANCE.submit(() -> {

@@ -47,6 +47,8 @@ interface PluginManagerCustomizer {
 
   fun ensurePluginStatesLoaded()
 
+  fun customRepositoriesUpdated()
+
   companion object {
     @JvmField
     val EP_NAME: ExtensionPointName<PluginManagerCustomizer> = ExtensionPointName("com.intellij.pluginManagerCustomizer")

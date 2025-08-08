@@ -98,6 +98,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginInstallerApi.getInstance().continueInstallation(sessionId, pluginId, project.projectId(), enableRequiredPlugins, allowInstallWithoutRestart)
   }
 
+  override suspend fun getCustomRepoTags(): Set<String> {
+    return PluginManagerApi.getInstance().getCustomRepoTags()
+  }
+
   override suspend fun isModified(sessionId: String): Boolean {
     return PluginInstallerApi.getInstance().isModified(sessionId)
   }
@@ -138,8 +142,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().getPluginInstallationState(pluginId) }
   }
 
-  override fun getPluginInstallationStates(): Map<PluginId, PluginInstallationState> {
-    return awaitForResult { PluginManagerApi.getInstance().getPluginInstallationStates() }
+  override suspend fun getPluginInstallationStates(): Map<PluginId, PluginInstallationState> {
+    return PluginManagerApi.getInstance().getPluginInstallationStates()
   }
 
   override suspend fun checkPluginCanBeDownloaded(pluginUiModel: PluginUiModel, progressIndicator: ProgressIndicator?): Boolean {
@@ -177,10 +181,6 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
 
   override suspend fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId> {
     return PluginManagerApi.getInstance().enableRequiredPlugins(sessionId, pluginId)
-  }
-
-  override fun getCustomRepoPlugins(): List<PluginUiModel> {
-    return awaitForResult { PluginManagerApi.getInstance().getCustomRepoPlugins().withSource() }
   }
 
   override suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>> {

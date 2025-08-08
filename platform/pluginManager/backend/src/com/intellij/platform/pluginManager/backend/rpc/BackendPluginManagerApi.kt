@@ -85,16 +85,16 @@ class BackendPluginManagerApi : PluginManagerApi {
     return DefaultUiPluginManagerController.getPluginInstallationStates()
   }
 
+  override suspend fun getCustomRepoTags(): Set<String> {
+    return DefaultUiPluginManagerController.getCustomRepoTags()
+  }
+
   override suspend fun loadDescriptorById(pluginId: PluginId): PluginDto? {
     return DefaultUiPluginManagerController.loadDescriptorById(pluginId)?.let { PluginDto.fromModel(it) }
   }
 
   override suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginDto> {
     return DefaultUiPluginManagerController.findInstalledPlugins(plugins).mapValues { PluginDto.fromModel(it.value) }
-  }
-
-  override suspend fun getCustomRepoPlugins(): List<PluginDto> {
-    return DefaultUiPluginManagerController.getCustomRepoPlugins().map { PluginDto.fromModel(it) }
   }
 
   override suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginDto>> {
