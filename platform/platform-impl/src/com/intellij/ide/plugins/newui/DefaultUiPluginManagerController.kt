@@ -437,7 +437,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return MarketplaceRequests.getInstance().marketplaceVendorsSupplier.get()
   }
 
-  override fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
+  override suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
     val pluginsState = InstalledPluginsState.getInstance()
     val plugin = PluginManagerCore.getPlugin(pluginId)
     val isDeleted = (plugin as? IdeaPluginDescriptorImpl)?.isDeleted ?: false

@@ -1456,7 +1456,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
-  private fun updateButtonsAndApplyCustomization() {
+  private suspend fun updateButtonsAndApplyCustomization() {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
       updateButtons()
       applyCustomization()
@@ -1468,7 +1468,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     nameAndButtons?.removeProgressComponent()
   }
 
-  fun hideProgress(success: Boolean, restartRequired: Boolean, installedPlugin: PluginUiModel? = null) {
+  suspend fun hideProgress(success: Boolean, restartRequired: Boolean, installedPlugin: PluginUiModel? = null) {
     indicator = null
     nameAndButtons!!.removeProgressComponent()
     if (pluginManagerCustomizer != null) {
@@ -1571,7 +1571,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     fullRepaint()
   }
 
-  fun updateAfterUninstall(showRestart: Boolean) {
+  suspend fun updateAfterUninstall(showRestart: Boolean) {
     if (pluginManagerCustomizer != null) {
       updateButtonsAndApplyCustomization()
       return

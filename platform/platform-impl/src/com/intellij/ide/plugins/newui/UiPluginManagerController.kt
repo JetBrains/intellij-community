@@ -52,7 +52,7 @@ interface UiPluginManagerController {
   suspend fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String? = null): List<IdeCompatibleUpdate>
   suspend fun updateDescriptorsForInstalledPlugins()
   suspend fun isNeedUpdate(pluginId: PluginId): Boolean
-  fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState
+  suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState
   suspend fun getPluginInstallationStates(): Map<PluginId, PluginInstallationState>
   suspend fun checkPluginCanBeDownloaded(pluginUiModel: PluginUiModel, progressIndicator: ProgressIndicator?): Boolean
   fun getApplyError(sessionId: String): String?

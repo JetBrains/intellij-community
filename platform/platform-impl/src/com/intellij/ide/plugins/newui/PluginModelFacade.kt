@@ -102,7 +102,7 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
   }
 
   @JvmOverloads
-  fun uninstallAndUpdateUi(descriptor: PluginUiModel, controller: UiPluginManagerController = UiPluginManager.getInstance().getController(), callback: () -> Unit = {}) {
+  suspend fun uninstallAndUpdateUi(descriptor: PluginUiModel, controller: UiPluginManagerController = UiPluginManager.getInstance().getController(), callback: () -> Unit = {}) {
     pluginModel.uninstallAndUpdateUi(descriptor, controller, callback)
   }
 

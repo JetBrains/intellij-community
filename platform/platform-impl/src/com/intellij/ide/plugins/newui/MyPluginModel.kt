@@ -774,17 +774,17 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
   }
 
-  fun uninstallAndUpdateUi(descriptor: PluginUiModel) {
+  suspend fun uninstallAndUpdateUi(descriptor: PluginUiModel) {
     uninstallAndUpdateUi(descriptor, UiPluginManager.getInstance().getController())
   }
 
   @ApiStatus.Internal
-  fun uninstallAndUpdateUi(descriptor: PluginUiModel, controller: UiPluginManagerController) {
+  suspend fun uninstallAndUpdateUi(descriptor: PluginUiModel, controller: UiPluginManagerController) {
     uninstallAndUpdateUi(descriptor, controller, null)
   }
 
   @ApiStatus.Internal
-  fun uninstallAndUpdateUi(
+  suspend fun uninstallAndUpdateUi(
     descriptor: PluginUiModel,
     controller: UiPluginManagerController,
     callback: Runnable?,
@@ -797,24 +797,22 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       }
     }
     try {
-      PluginModelAsyncOperationsExecutor
-        .performUninstall(scope, descriptor, mySessionId.toString(),
-                          controller) { needRestartForUninstall, errorCheckResult ->
-          needRestart = needRestart or (descriptor.isEnabled && needRestartForUninstall)
-          val errors = getErrors(errorCheckResult)
-          if (myPluginManagerCustomizer != null) {
-            myPluginManagerCustomizer.updateAfterModification {
-              updateUiAfterUninstall(descriptor, needRestartForUninstall, errors)
-              callback?.run()
-              null
-            }
-          }
-          else {
-            updateUiAfterUninstall(descriptor, needRestartForUninstall, errors)
-            callback?.run()
-          }
-          null
+      val needRestartForUninstall = controller.performUninstall(sessionId, descriptor.pluginId)
+      descriptor.isDeleted = true
+      PluginManagerCustomizer.getInstance()?.onPluginDeleted(descriptor, controller.getTarget())
+      val errorCheckResult = UiPluginManager.getInstance().loadErrors(sessionId)
+      needRestart = needRestart or (descriptor.isEnabled && needRestartForUninstall)
+      val errors = getErrors(errorCheckResult)
+      if (myPluginManagerCustomizer != null) {
+        myPluginManagerCustomizer.updateAfterModificationAsync {
+          updateUiAfterUninstall(descriptor, needRestartForUninstall, errors)
+          callback?.run()
         }
+      }
+      else {
+        updateUiAfterUninstall(descriptor, needRestartForUninstall, errors)
+        callback?.run()
+      }
     }
     finally {
       for (panel in myDetailPanels) {
@@ -825,7 +823,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
   }
 
-  private fun updateUiAfterUninstall(
+  private suspend fun updateUiAfterUninstall(
     descriptor: PluginUiModel, needRestartForUninstall: Boolean,
     errors: Map<PluginId, List<HtmlChunk>>,
   ) {

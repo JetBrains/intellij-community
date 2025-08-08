@@ -9,7 +9,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import javax.swing.Action
 import javax.swing.JComponent
 
 @ApiStatus.Internal
@@ -37,6 +36,8 @@ interface PluginManagerCustomizer {
   ): UpdateButtonCustomizationModel?
 
   fun updateAfterModification(updateUi: () -> Unit)
+
+  suspend fun updateAfterModificationAsync(updateUi: suspend () -> Unit)
 
   fun getExtraPluginsActions(): List<AnAction>
 

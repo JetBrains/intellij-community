@@ -88,12 +88,16 @@ internal class UninstallAction<C : JComponent>(
       if (toDeleteWithAsk.isNotEmpty()) {
         val bundledUpdate = toDeleteWithAsk.size == 1 && prepareToUninstallResult.isPluginBundled(toDeleteWithAsk.first().pluginId)
         if (askToUninstall(getUninstallAllMessage(toDeleteWithAsk, bundledUpdate), myUiParent, bundledUpdate)) {
-          toDeleteWithAsk.forEach(myPluginModelFacade::uninstallAndUpdateUi)
+          for (model in toDeleteWithAsk) {
+            myPluginModelFacade.uninstallAndUpdateUi(model)
+          }
           runFinishAction = true
         }
       }
 
-      toDelete.forEach(myPluginModelFacade::uninstallAndUpdateUi)
+      for (model in toDelete) {
+        myPluginModelFacade.uninstallAndUpdateUi(model)
+      }
 
       if (runFinishAction || toDelete.isNotEmpty()) {
         myOnFinishAction.run()

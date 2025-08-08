@@ -138,8 +138,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().isPluginInstalled(pluginId)
   }
 
-  override fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
-    return awaitForResult { PluginManagerApi.getInstance().getPluginInstallationState(pluginId) }
+  override suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
+    return PluginManagerApi.getInstance().getPluginInstallationState(pluginId)
   }
 
   override suspend fun getPluginInstallationStates(): Map<PluginId, PluginInstallationState> {
