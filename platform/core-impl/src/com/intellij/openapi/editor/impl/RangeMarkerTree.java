@@ -25,6 +25,7 @@ import java.util.function.Supplier;
 @ApiStatus.Internal
 public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> implements PrioritizedDocumentListener {
   public RangeMarkerTree(@NotNull Document document) {
+    //noinspection deprecation: no need to unregister because RMT life cycle is the same as document's
     document.addDocumentListener(this);
   }
 
@@ -291,7 +292,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     return null;
   }
 
-  private void findOrInsertWithIntervals(IntervalNode<T> node) {
+  private void findOrInsertWithIntervals(@NotNull IntervalNode<T> node) {
     IntervalNode<T> insertedNode = findOrInsert(node);
     // can change if two ranges become the one
     if (insertedNode != node) {
@@ -332,8 +333,10 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     }
     else {
       if (start <= root.intervalEnd()) {
-        // unlucky enough so that change affects the interval
-        if (hasAliveKeys) affected.add(root); // otherwise, we've already added it
+        // unlucky enough so that the change does affect the interval
+        if (hasAliveKeys) {
+          affected.add(root); // otherwise, we've already added it
+        }
         root.setValid(false);  //make invisible
       }
 

@@ -28,7 +28,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   private final @NotNull Object myDocumentOrFile; // either VirtualFile (if any) or DocumentEx if no file associated
   @ApiStatus.Internal
-  public RangeMarkerTree.RMNode<RangeMarkerEx> myNode;
+  protected RangeMarkerTree.RMNode<RangeMarkerEx> myNode;
 
   private volatile long myId;
   private static final StripedIDGenerator counter = new StripedIDGenerator();
@@ -484,12 +484,13 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   @TestOnly
   public static void runAssertingInternalInvariants(@NotNull ThrowableRunnable<?> runnable) throws Throwable {
+    boolean old = RedBlackTree.VERIFY;
     RedBlackTree.VERIFY = true;
     try {
       runnable.run();
     }
     finally {
-      RedBlackTree.VERIFY = false;
+      RedBlackTree.VERIFY = old;
     }
   }
 }

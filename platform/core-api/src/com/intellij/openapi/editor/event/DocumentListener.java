@@ -14,7 +14,6 @@ import java.util.EventListener;
  * <p>
  * Implement {@link BulkAwareDocumentListener.Simple} instead of this interface whenever possible to improve performance.
  *
- * @see Document#addDocumentListener(DocumentListener)
  * @see Document#addDocumentListener(DocumentListener, Disposable)
  * @see EditorEventMulticaster#addDocumentListener(DocumentListener, Disposable)
  */

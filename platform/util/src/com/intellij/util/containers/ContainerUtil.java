@@ -21,7 +21,6 @@ import java.util.stream.Stream;
  * @see CollectionFactory
  * @see com.intellij.concurrency.ConcurrentCollectionFactory
  */
-@SuppressWarnings("UnstableApiUsage")
 public final class ContainerUtil {
   @ApiStatus.Internal
   public static final class Options {
@@ -2408,8 +2407,9 @@ public final class ContainerUtil {
   /**
    * @return read-only list consisting of the elements from all collections in order
    */
+  @SafeVarargs
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <E> List<E> flatten(Collection<E>... collections) {
+  public static @Unmodifiable @NotNull <E> List<E> flatten(@NotNull Collection<E> @NotNull ... collections) {
     return flatten(Arrays.asList(collections));
   }
 
@@ -2448,7 +2448,7 @@ public final class ContainerUtil {
    * @return read-only list consisting of the elements from all collections in order
    */
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <T> List<T> flatten(@NotNull Iterable<? extends Collection<? extends T>> collections) {
+  public static @Unmodifiable @NotNull <T> List<T> flatten(@NotNull Iterable<? extends @NotNull Collection<? extends T>> collections) {
     int totalSize = 0;
     for (Collection<? extends T> list : collections) {
       totalSize += list.size();
