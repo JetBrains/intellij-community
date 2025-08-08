@@ -27,12 +27,13 @@ import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeUsedAsExtension
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.*
-import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSetupScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
+import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
@@ -55,8 +56,9 @@ private val NOT_PROPERTIES = NotPropertiesService.DEFAULT.toSet()
 
 internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameReferencePositionContext>(
     positionContextClass: KClass<P>,
-) : K2CompletionContributor<P>(
-    positionContextClass
+) : K2SimpleCompletionContributor<P>(
+    positionContextClass = positionContextClass,
+    priority = K2ContributorSectionPriority.HEURISTIC,
 ), K2ChainCompletionContributor<P> {
 
     context(KaSession)
@@ -130,10 +132,11 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
 
     context(KaSession)
     private fun Sequence<CallableWithMetadataForCompletion>.createFilteredLookupElements(
-        context: K2CompletionSectionContext<P>
+        context: K2CompletionSectionContext<P>,
+        shadowedCallablesFilter: ShadowedCallablesFilter
     ): Sequence<LookupElement> =
         filterIfInsideAnnotationEntryArgument(context.positionContext.position, context.weighingContext.expectedType)
-            .mapNotNull(shadowIfNecessary(context))
+            .mapNotNull(shadowIfNecessary(context, shadowedCallablesFilter))
             .filterNot(isUninitializedCallable(context))
             .flatMap { callableWithMetadata ->
                 createCallableLookupElements(
@@ -164,6 +167,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
     context(KaSession)
     fun completeFromLocalScope(
         context: K2CompletionSectionContext<P>,
+        shadowedCallablesFilter: ShadowedCallablesFilter,
     ) {
         val positionContext = context.positionContext
         val weighingContext = context.weighingContext
@@ -172,7 +176,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         val receiver = positionContext.explicitReceiver
         if (receiver == null) return
         val elements = collectDotCompletionFromLocalScope(context, scopeContext, receiver)
-        elements.createFilteredLookupElements(context)
+        elements.createFilteredLookupElements(context, shadowedCallablesFilter)
             .forEach { context.addElement(it) }
     }
 
@@ -228,6 +232,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
     context(KaSession)
     fun completeFromIndex(
         context: K2CompletionSectionContext<P>,
+        shadowedCallablesFilter: ShadowedCallablesFilter,
     ) {
         val positionContext = context.positionContext
 
@@ -237,7 +242,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         } else {
             collectDotCompletionFromIndex(context, receiver)
         }
-        elements.createFilteredLookupElements(context)
+        elements.createFilteredLookupElements(context, shadowedCallablesFilter)
             .forEach { context.addElement(it) }
     }
 
@@ -677,9 +682,8 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
     context(KaSession)
     private fun shadowIfNecessary(
         context: K2CompletionSectionContext<P>,
+        shadowedCallablesFilter: ShadowedCallablesFilter
     ) = object : Function1<CallableWithMetadataForCompletion, CallableWithMetadataForCompletion?> {
-
-        private val shadowedCallablesFilter = ShadowedCallablesFilter()
 
         override fun invoke(callableWithMetadata: CallableWithMetadataForCompletion): CallableWithMetadataForCompletion? {
             val insertionOptions = callableWithMetadata.options
@@ -745,6 +749,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
     context(KaSession)
     fun completeEnumEntriesFromPsi(
         context: K2CompletionSectionContext<P>,
+        shadowedCallablesFilter: ShadowedCallablesFilter,
     ) {
         // If the expected type is an enum, we want to yield the enum entries very early on so they will
         // definitely be available before the elements are frozen.
@@ -768,13 +773,14 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         }
 
         createAndFilterMetadataForMemberCallables(context, enumEntries)
-            .createFilteredLookupElements(context)
+            .createFilteredLookupElements(context, shadowedCallablesFilter)
             .forEach { context.addElement(it) }
     }
 
     context(KaSession)
     fun completeLocalVariables(
-        context: K2CompletionSectionContext<P>
+        context: K2CompletionSectionContext<P>,
+        shadowedCallablesFilter: ShadowedCallablesFilter,
     ) {
         if (context.positionContext.explicitReceiver != null) return
         val availableLocalAndMemberNonExtensions = collectLocalAndMemberNonExtensionsFromScopeContext(
@@ -789,13 +795,14 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
                     .createCallableWithMetadata(context, signatureWithKind.scopeKind)
             }
 
-        availableLocalAndMemberNonExtensions.createFilteredLookupElements(context)
+        availableLocalAndMemberNonExtensions.createFilteredLookupElements(context, shadowedCallablesFilter)
             .forEach { context.addElement(it) }
     }
 
     context(KaSession)
     fun completeLocalExtensions(
         context: K2CompletionSectionContext<P>,
+        shadowedCallablesFilter: ShadowedCallablesFilter,
     ) {
         if (context.positionContext.explicitReceiver != null) return
         val scopeContext = context.weighingContext.scopeContext
@@ -821,13 +828,14 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
             }
 
         (extensionsWhichCanBeCalled + availableStaticAndTopLevelNonExtensions)
-            .createFilteredLookupElements(context)
+            .createFilteredLookupElements(context, shadowedCallablesFilter)
             .forEach { context.addElement(it) }
     }
 
     context(KaSession)
     fun completeEnumEntriesFromIndex(
         context: K2CompletionSectionContext<P>,
+        shadowedCallablesFilter: ShadowedCallablesFilter,
     ) {
         if (context.positionContext.explicitReceiver != null) return
         val prefix = context.prefixMatcher.prefix
@@ -874,28 +882,31 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
             yieldAll(constants)
         }
         createAndFilterMetadataForMemberCallables(context, enumEntries + enumConstants)
-            .createFilteredLookupElements(context)
+            .createFilteredLookupElements(context, shadowedCallablesFilter)
             .forEach { context.addElement(it) }
     }
 
-    override fun K2CompletionSetupScope<P>.registerCompletions() {
-        complete("Enum Entries from PSI", priority = K2ContributorSectionPriority.HEURISTIC) {
-            completeEnumEntriesFromPsi(it)
+    override fun KaSession.complete(context: K2CompletionSectionContext<P>) {
+        // TODO: Apart from de-duplication this an all be done in the separate threads.
+        //  we should consider doing the filtering later in the pipeline and run these all in parallel.
+        val shadowedCallablesFilter = ShadowedCallablesFilter()
+        context.completeLaterInSameSession("Enum Entries from PSI", priority = K2ContributorSectionPriority.HEURISTIC) {
+            completeEnumEntriesFromPsi(it, shadowedCallablesFilter)
         }
-        complete("Local Variables", priority = K2ContributorSectionPriority.HEURISTIC) {
-            completeLocalVariables(it)
+        context.completeLaterInSameSession("Local Variables", priority = K2ContributorSectionPriority.HEURISTIC) {
+            completeLocalVariables(it, shadowedCallablesFilter)
         }
-        complete("Local Extensions") {
-            completeLocalExtensions(it)
+        context.completeLaterInSameSession("Local Extensions") {
+            completeLocalExtensions(it, shadowedCallablesFilter)
         }
-        complete("Local Completion") {
-            completeFromLocalScope(it)
+        context.completeLaterInSameSession("Local Completion") {
+            completeFromLocalScope(it, shadowedCallablesFilter)
         }
-        complete("Enums from Index", K2ContributorSectionPriority.INDEX) {
-            completeEnumEntriesFromIndex(it)
+        context.completeLaterInSameSession("Enums from Index", K2ContributorSectionPriority.INDEX) {
+            completeEnumEntriesFromIndex(it, shadowedCallablesFilter)
         }
-        complete("Index Completion", K2ContributorSectionPriority.INDEX) {
-            completeFromIndex(it)
+        context.completeLaterInSameSession("Index Completion", K2ContributorSectionPriority.INDEX) {
+            completeFromIndex(it, shadowedCallablesFilter)
         }
     }
 }
@@ -903,7 +914,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
 internal class K2CallableCompletionContributor : K2AbstractCallableCompletionContributor<KotlinNameReferencePositionContext>(
     KotlinNameReferencePositionContext::class
 ) {
-    override fun K2CompletionSetupScope<KotlinNameReferencePositionContext>.shouldExecute(): Boolean = when (position) {
+    override fun K2CompletionSetupScope<KotlinNameReferencePositionContext>.isAppropriateContext(): Boolean = when (position) {
         is KotlinExpressionNameReferencePositionContext,
         is KotlinWithSubjectEntryPositionContext -> true
 
