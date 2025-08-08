@@ -78,8 +78,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().findPlugin(pluginId)?.withSource()
   }
 
-  override fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String?, indicator: ProgressIndicator?): PluginUiModel? {
-    return awaitForResult { PluginManagerApi.getInstance().getLastCompatiblePluginUpdateModel(pluginId, buildNumber)?.withSource() }
+  override suspend fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String?, indicator: ProgressIndicator?): PluginUiModel? {
+    return  PluginManagerApi.getInstance().getLastCompatiblePluginUpdateModel(pluginId, buildNumber)?.withSource()
   }
 
   override fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String?): List<IdeCompatibleUpdate> {

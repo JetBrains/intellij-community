@@ -725,7 +725,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return MarketplaceRequests.getInstance().loadPluginMetadata(externalPluginId)
   }
 
-  override fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String?, indicator: ProgressIndicator?): PluginUiModel? {
+  override suspend fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String?, indicator: ProgressIndicator?): PluginUiModel? {
     return MarketplaceRequests.getInstance().getLastCompatiblePluginUpdateModel(pluginId, BuildNumber.fromString(buildNumber), indicator)
   }
 

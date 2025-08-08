@@ -195,7 +195,7 @@ class UiPluginManager {
     return getController().continueInstallation(sessionId, pluginId, project, enableRequiredPlugins, allowInstallWithoutRestart, pluginEnabler, modalityState, parentComponent)
   }
 
-  fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String? = null, indicator: ProgressIndicator? = null): PluginUiModel? {
+  suspend fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String? = null, indicator: ProgressIndicator? = null): PluginUiModel? {
     return getController().getLastCompatiblePluginUpdateModel(pluginId, buildNumber, indicator)
   }
 
