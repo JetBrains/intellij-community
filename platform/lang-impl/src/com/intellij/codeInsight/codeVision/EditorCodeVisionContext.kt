@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorThreading
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.rd.createLifetime
@@ -57,7 +58,7 @@ open class EditorCodeVisionContext(
 
   @RequiresEdt
   fun notifyPendingLenses() {
-    ThreadingAssertions.assertEventDispatchThread()
+    EditorThreading.assertInteractionAllowed()
     if (!hasPendingLenses) {
       LOG.trace("Have pending lenses")
     }
