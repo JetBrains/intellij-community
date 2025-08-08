@@ -25,9 +25,8 @@ private object DefaultContext : CodeInsightContext {
   override fun toString(): String = "DefaultContext"
 }
 
-fun isSharedSourceSupportEnabled(project: Project): Boolean {
-  return CodeInsightContextManager.getInstance(project).isSharedSourceSupportEnabled
-}
+fun isSharedSourceSupportEnabled(project: Project): Boolean =
+  isSharedSourceSupportEnabledImpl(project)
 
 interface MultiverseEnabler {
   fun enableMultiverse(project: Project) : Boolean

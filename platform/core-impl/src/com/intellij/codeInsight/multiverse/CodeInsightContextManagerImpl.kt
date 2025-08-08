@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.multiverse
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
@@ -23,10 +22,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentMap
-import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
 class CodeInsightContextManagerImpl(
@@ -221,33 +218,6 @@ class CodeInsightContextManagerImpl(
     val effectiveContext = context.takeUnless { it == defaultContext() }
     fileViewProvider.putUserData(codeInsightContextKey, effectiveContext)
   }
-
-  override val isSharedSourceSupportEnabled: Boolean
-    get() {
-      project.getUserData(multiverse_enabler_key)?.let { return it }
-
-      synchronized(this) {
-        project.getUserData(multiverse_enabler_key)?.let { return it }
-        val result = computeSharedSourceEnabled()
-        project.putUserData(multiverse_enabler_key, result)
-        if (logMultiverseState) {
-          log.info("multiverse is ${if (result) "enabled" else "disabled"}")
-        }
-        return result
-      }
-    }
-
-  private fun computeSharedSourceEnabled(): Boolean {
-    @Suppress("TestOnlyProblems")
-    if (ApplicationManager.getApplication().isUnitTestMode && MultiverseTestEnabler.getValueAndErase()) {
-      return true
-    }
-
-    val result = MULTIVERSE_ENABLER_EP_NAME.extensionList.any { enabler ->
-      runSafely { enabler.enableMultiverse(project) } == true
-    }
-    return result
-  }
 }
 
 private val EP_NAME = ExtensionPointName.create<CodeInsightContextProvider>("com.intellij.multiverse.codeInsightContextProvider")
@@ -255,16 +225,6 @@ private val EP_NAME = ExtensionPointName.create<CodeInsightContextProvider>("com
 private val codeInsightContextKey = Key.create<CodeInsightContext>("codeInsightContextKey")
 
 private val log = logger<CodeInsightContextManagerImpl>()
-
-/**
- * LSP-202
- */
-@ApiStatus.Internal
-var logMultiverseState: Boolean = true
-
-private val multiverse_enabler_key = Key.create<Boolean>("shared.source.support.enabled")
-
-private val MULTIVERSE_ENABLER_EP_NAME : ExtensionPointName<MultiverseEnabler> = ExtensionPointName.create("com.intellij.multiverseEnabler")
 
 /**
  * appends an item to the sequence if the sequence is empty
@@ -277,24 +237,6 @@ private fun <T> Sequence<T>.appendIfEmpty(item: T) = sequence {
   }
   if (isEmpty) {
     yield(item)
-  }
-}
-
-@TestOnly
-@ApiStatus.Internal
-object MultiverseTestEnabler {
-  private val value = AtomicBoolean()
-
-  fun enableSharedSourcesForTheNextProject() {
-    val prev = value.getAndSet(true)
-    if (prev) {
-      throw IllegalStateException("multiverse is already enabled")
-    }
-  }
-
-  internal fun getValueAndErase(): Boolean {
-    val prev = value.getAndSet(false)
-    return prev
   }
 }
 

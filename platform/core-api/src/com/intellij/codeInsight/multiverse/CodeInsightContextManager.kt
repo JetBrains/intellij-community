@@ -57,12 +57,6 @@ interface CodeInsightContextManager {
    * A new emission means all the contexts are invalidated and will be inferred from scratch.
    */
   val changeFlow: Flow<Unit>
-
-  /**
-   * Use [com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled] instead.
-   */
-  @get: Internal
-  val isSharedSourceSupportEnabled: Boolean
 }
 
 /**
