@@ -28,10 +28,10 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
 ) {
   interface State
   object OnlyLowStarted : State
-  class BothRunning(val activeLowLevelStepping: Boolean = false) : State
+  class BothRunning(val activeLowLevelStepping: Boolean = false, val highLevelSteppingActive: Boolean = false) : State
   object PausingStarted : State
-  class WaitingForHighProcessPositionReached(val lowLevelSuspendContext : XSuspendContext) : State
-  class HighStoppedWaitingForLowProcessToStop(val highSuspendContext: XSuspendContext?) : State
+  class WaitingForHighProcessPositionReached(val lowLevelSuspendContext : XSuspendContext, val highLevelSteppingActive: Boolean) : State
+  class HighStoppedWaitingForLowProcessToStop(val highSuspendContext: XSuspendContext?, val highLevelSteppingActive: Boolean) : State
   class OnlyHighStopped(val highSuspendContext: XSuspendContext?) : State
   class BothStopped(val low: XSuspendContext, val high: XSuspendContext) : State
 
@@ -44,9 +44,9 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
   object HighLevelSetStatementLowRunningHighRunRequested : State
   //
 
-  class WaitingForBothDebuggersRunning(val lowLevelSteppingActive : Boolean = false) : State
-  class WaitingForLowDebuggerRunning(val lowLevelSteppingActive : Boolean) : State
-  class WaitingForHighDebuggerRunning(val lowLevelSteppingActive : Boolean) : State
+  class WaitingForBothDebuggersRunning(val lowLevelSteppingActive: Boolean = false, val highLevelSteppingActive: Boolean = false) : State
+  class WaitingForLowDebuggerRunning(val lowLevelSteppingActive: Boolean, val highLevelSteppingActive: Boolean) : State
+  class WaitingForHighDebuggerRunning(val lowLevelSteppingActive: Boolean, val highLevelSteppingActive: Boolean) : State
 
   // Set of states that manage race conditions between low and high-level debuggers
   // in particular, we expect race conditions between events when a managed step is being performed, we may have such combinations(lowLevelSteppingActive == 1):
@@ -75,8 +75,8 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
   //                                                                                                                                                                                                                                                                                (normal low level step)--> WaitingForHighProcessPositionReached --HighProcessPositionReached-->BothStopped
   //
 
-  class LowDebuggerAlreadyStoppedWaitingForDelayedHighDebuggerRunningEvent(val lowLevelSuspendContext : XSuspendContext, val isLowLevelSteppingActive : Boolean) : State
-  class HighDebuggerAlreadyStoppedWaitingForDelayedLowDebuggerRunningEvent(val highLevelSuspendContext: XSuspendContext) : State
+  class LowDebuggerAlreadyStoppedWaitingForDelayedHighDebuggerRunningEvent(val lowLevelSuspendContext : XSuspendContext, val isLowLevelSteppingActive : Boolean, val highLevelSteppingActive : Boolean) : State
+  class HighDebuggerAlreadyStoppedWaitingForDelayedLowDebuggerRunningEvent(val highLevelSuspendContext: XSuspendContext, val highLevelSteppingActive : Boolean) : State
   //
 
   // We need ExitingInProgress state to not skip to HighRun/LowRun events on detaching
@@ -154,6 +154,9 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
       is PauseRequested -> {
         when (currentState) {
           is BothRunning -> {
+            if (currentState.activeLowLevelStepping || currentState.highLevelSteppingActive)
+              error("We had to ignore pause because we are in the middle of step")
+
             lowExtension.pauseMixedModeSession(null)
             changeState(PausingStarted)
           }
@@ -164,10 +167,13 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
       is HighLevelPositionReached -> {
         when (currentState) {
           is WaitingForHighProcessPositionReached -> {
+            if (currentState.highLevelSteppingActive) {
+              lowExtension.afterManagedStep()
+            }
             changeState(BothStopped(currentState.lowLevelSuspendContext, event.suspendContext))
           }
           is PausingStarted, is BothRunning -> {
-            changeState(HighStoppedWaitingForLowProcessToStop(event.suspendContext))
+            changeState(HighStoppedWaitingForLowProcessToStop(event.suspendContext, (currentState as? BothRunning)?.highLevelSteppingActive == true))
           }
           is HighLevelSetStatementLowRunningHighRunning -> {
             changeState(OnlyHighStopped(event.suspendContext))
@@ -175,7 +181,7 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
           }
           is WaitingForLowDebuggerRunning -> {
             assert(!currentState.lowLevelSteppingActive) { "When native stepping low level debugger stops first" }
-            changeState(HighDebuggerAlreadyStoppedWaitingForDelayedLowDebuggerRunningEvent(event.suspendContext))
+            changeState(HighDebuggerAlreadyStoppedWaitingForDelayedLowDebuggerRunningEvent(event.suspendContext, currentState.highLevelSteppingActive))
           }
           else -> throwTransitionIsNotImplemented(event)
         }
@@ -186,23 +192,22 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
           is HighStoppedWaitingForLowProcessToStop -> {
             val highLevelSuspendContext = currentState.highSuspendContext!!
             val lowLevelContext = event.suspendContext
+            if (currentState.highLevelSteppingActive) {
+              lowExtension.afterManagedStep()
+            }
             changeState(BothStopped(lowLevelContext, highLevelSuspendContext))
           }
           is BothRunning -> {
-            var stateChanged = false
-            if (currentState.activeLowLevelStepping) {
-              stateChanged = handleLowLevelStepWhenActiveStepping(event.suspendContext)
-            }
-
-            if (!stateChanged) {
-              changeState(WaitingForHighProcessPositionReached(event.suspendContext))
+            val lowLevelStepHandled = currentState.activeLowLevelStepping && handleLowLevelActiveStep(event.suspendContext)
+            if (!lowLevelStepHandled) {
+              changeState(WaitingForHighProcessPositionReached(event.suspendContext, currentState.highLevelSteppingActive))
             }
           }
           is OnlyHighStopped -> {
             changeState(BothStopped(event.suspendContext, requireNotNull(currentState.highSuspendContext)))
           }
           is WaitingForHighDebuggerRunning -> {
-            changeState(LowDebuggerAlreadyStoppedWaitingForDelayedHighDebuggerRunningEvent(event.suspendContext, currentState.lowLevelSteppingActive))
+            changeState(LowDebuggerAlreadyStoppedWaitingForDelayedHighDebuggerRunningEvent(event.suspendContext, currentState.lowLevelSteppingActive, currentState.highLevelSteppingActive))
           }
           else -> throwTransitionIsNotImplemented(event)
         }
@@ -221,13 +226,13 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
       is LowRun -> {
         when (currentState) {
           is WaitingForLowDebuggerRunning -> {
-            changeState(BothRunning(currentState.lowLevelSteppingActive))
+            changeState(BothRunning(currentState.lowLevelSteppingActive, currentState.highLevelSteppingActive))
           }
           is HighDebuggerAlreadyStoppedWaitingForDelayedLowDebuggerRunningEvent -> {
-            changeState(HighStoppedWaitingForLowProcessToStop(currentState.highLevelSuspendContext))
+            changeState(HighStoppedWaitingForLowProcessToStop(currentState.highLevelSuspendContext, currentState.highLevelSteppingActive))
           }
           is WaitingForBothDebuggersRunning -> {
-            changeState(WaitingForHighDebuggerRunning(currentState.lowLevelSteppingActive))
+            changeState(WaitingForHighDebuggerRunning(currentState.lowLevelSteppingActive, currentState.highLevelSteppingActive))
           }
           is BothStopped -> {
             changeState(OnlyHighStopped(currentState.high))
@@ -246,12 +251,14 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
       is HighLevelDebuggerStepRequested -> {
         when (currentState) {
           is BothStopped -> {
+            val steppingThreadId = highExtension.getStoppedThreadId(currentState.high)
+            lowExtension.beforeManagedStep(currentState.high, steppingThreadId, event.stepType == StepType.Into)
+
             when (event.stepType) {
               StepType.Over -> {
                 high.startStepOver(currentState.high)
               }
               StepType.Into -> {
-                lowExtension.beforeManagedStepInto()
                 high.startStepInto(currentState.high)
               }
               StepType.Out -> {
@@ -260,7 +267,7 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
             }
 
             low.resume(currentState.low)
-            changeState(WaitingForBothDebuggersRunning())
+            changeState(WaitingForBothDebuggersRunning(highLevelSteppingActive = true))
           }
           else -> throwTransitionIsNotImplemented(event)
         }
@@ -290,19 +297,16 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
       is HighRun -> {
         when (currentState) {
           is WaitingForBothDebuggersRunning -> {
-            changeState(WaitingForLowDebuggerRunning(currentState.lowLevelSteppingActive))
+            changeState(WaitingForLowDebuggerRunning(currentState.lowLevelSteppingActive, currentState.highLevelSteppingActive))
           }
           is LowDebuggerAlreadyStoppedWaitingForDelayedHighDebuggerRunningEvent -> {
-            var stateChanged = false
-            if (currentState.isLowLevelSteppingActive) {
-              stateChanged = handleLowLevelStepWhenActiveStepping(currentState.lowLevelSuspendContext)
-            }
-            if (!stateChanged) {
-              changeState(WaitingForHighProcessPositionReached(currentState.lowLevelSuspendContext))
+            val lowLevelActiveStepHandled = currentState.isLowLevelSteppingActive && handleLowLevelActiveStep(currentState.lowLevelSuspendContext)
+            if (!lowLevelActiveStepHandled) {
+              changeState(WaitingForHighProcessPositionReached(currentState.lowLevelSuspendContext, currentState.highLevelSteppingActive))
             }
           }
           is WaitingForHighDebuggerRunning -> {
-            changeState(BothRunning(currentState.lowLevelSteppingActive))
+            changeState(BothRunning(currentState.lowLevelSteppingActive, currentState.highLevelSteppingActive))
           }
           is OnlyHighStopped -> {
             changeState(BothRunning(false))
@@ -373,13 +377,13 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
     logger.info("state change (${oldState::class.simpleName} -> ${newState::class.simpleName})")
   }
 
-  private suspend fun handleLowLevelStepWhenActiveStepping(lowLevelSuspendContext: XSuspendContext): Boolean {
+  private suspend fun handleLowLevelActiveStep(lowLevelSuspendContext: XSuspendContext): Boolean {
     val threadId = lowExtension.getStoppedThreadId(lowLevelSuspendContext)
 
     if (highExtension.shouldContinueAfterNativeStepCompleted(threadId)) {
       highExtension.afterLowLevelStepCompleted(threadId, false)
       // State machine considers high-level debugger is already running
-      changeState(WaitingForLowDebuggerRunning(false))
+      changeState(WaitingForLowDebuggerRunning(false, false))
       low.resume(lowLevelSuspendContext)
       return true
     }
