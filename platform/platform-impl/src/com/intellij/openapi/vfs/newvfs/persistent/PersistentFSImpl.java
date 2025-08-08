@@ -9,10 +9,6 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.AppImplKt;
-import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.application.impl.InternalThreading;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
@@ -50,7 +46,6 @@ import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.ReplicatorInputStream;
 import io.opentelemetry.api.metrics.BatchCallback;
-import com.intellij.util.ui.EDT;
 import io.opentelemetry.api.metrics.Meter;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.*;
@@ -215,6 +210,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           // more understandable AlreadyDisposedException with additional diagnostic info
         }
       }
+      vfsData.close();//stops monitoring
+      vfsData = null;
+
       LOG.info("VFS dispose completed in " + NANOSECONDS.toMillis(System.nanoTime() - startedAtNs) + " ms.");
     }
   }

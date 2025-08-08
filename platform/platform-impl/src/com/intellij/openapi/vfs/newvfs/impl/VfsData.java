@@ -10,16 +10,24 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.*;
 import com.intellij.util.keyFMap.KeyFMap;
+import io.opentelemetry.api.metrics.BatchCallback;
+import io.opentelemetry.api.metrics.Meter;
+import io.opentelemetry.api.metrics.ObservableDoubleMeasurement;
+import io.opentelemetry.api.metrics.ObservableLongMeasurement;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.*;
 
+import java.io.Closeable;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.IntFunction;
@@ -60,7 +68,7 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
  * </ol>
  */
 @ApiStatus.Internal
-public final class VfsData {
+public final class VfsData implements Closeable {
   private static final Logger LOG = Logger.getInstance(VfsData.class);
 
   /**
@@ -135,6 +143,20 @@ public final class VfsData {
    */
   private final IntObjectMap<VirtualDirectoryImpl> changedParents = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
+  // ====================== monitoring ======================================================================================= //
+
+
+  /**# of {@link Segment} instances created, since the start */
+  private final AtomicInteger segmentsCreated = new AtomicInteger();
+
+  /** # of {@link DirectoryData}/{@link VirtualDirectoryImpl} objects created, since the start */
+  private final AtomicInteger directoriesCreated = new AtomicInteger();
+
+  /** # of {@link VirtualFileImpl} objects created, since the start */
+  private final AtomicInteger filesCreated = new AtomicInteger();
+
+  private final BatchCallback otelHandle;
+
   public VfsData(@NotNull Application app,
                  @NotNull PersistentFSImpl pfs) {
     this.app = app;
@@ -150,6 +172,31 @@ public final class VfsData {
         }
       }
     }, app);
+
+    otelHandle = setupOTelMonitoring();
+  }
+
+  private BatchCallback setupOTelMonitoring() {
+    Meter vfsMeter = TelemetryManager.getInstance().getMeter(PlatformScopesKt.VFS);
+    ObservableDoubleMeasurement cacheSegmentsCount = vfsMeter.gaugeBuilder("VFS.cache.segments").buildObserver();
+    ObservableLongMeasurement cacheSegmentsCreated = vfsMeter.counterBuilder("VFS.cache.segmentsCreated").buildObserver();
+    ObservableLongMeasurement cacheDirectoriesCreated = vfsMeter.counterBuilder("VFS.cache.directoriesCreated").buildObserver();
+    ObservableLongMeasurement cacheFilesCreated = vfsMeter.counterBuilder("VFS.cache.filesLoaded").buildObserver();
+    return vfsMeter.batchCallback(
+      () -> {
+        cacheSegmentsCount.record(segments.size());
+        cacheSegmentsCreated.record(segmentsCreated.get());
+        cacheDirectoriesCreated.record(directoriesCreated.get());
+        cacheFilesCreated.record(filesCreated.get());
+      },
+      cacheSegmentsCount, cacheSegmentsCreated,
+      cacheDirectoriesCreated, cacheFilesCreated
+    );
+  }
+
+  @Override
+  public void close() {
+    otelHandle.close();
   }
 
   @NotNull PersistentFSImpl owningPersistentFS() {
@@ -203,6 +250,8 @@ public final class VfsData {
 
       return directory;
     }
+
+    filesCreated.incrementAndGet();
     return new VirtualFileImpl(id, segment, parent);
   }
 
@@ -360,6 +409,8 @@ public final class VfsData {
       this.objectFieldsArray = objectFieldsArray;
       this.intFieldsArray = intFieldsArray;
       this.owningVfsData = owningVfsData;
+
+      owningVfsData.segmentsCreated.incrementAndGet();
     }
 
     void setUserMap(int fileId, @NotNull KeyFMap map) {
@@ -450,6 +501,9 @@ public final class VfsData {
     //@GuardedBy("parent.directoryData")
     void initFileData(int fileId, @NotNull Object fileData, @Nullable VirtualDirectoryImpl parent) throws FileAlreadyCreatedException {
       int offset = objectOffsetInSegment(fileId);
+      if (fileData instanceof DirectoryData) {
+        owningVfsData.directoriesCreated.incrementAndGet();
+      }
       Object existingData = objectFieldsArray.compareAndExchange(offset, /*expected: */null, fileData);
       if (existingData != null) {
         //RC: it seems like concurrency issue, but I can't find a specific location
@@ -470,11 +524,22 @@ public final class VfsData {
 
         throw new FileAlreadyCreatedException(
           describeAlreadyCreatedFile(fileId)
-          + " data: " + fileData
-          + ", alreadyExistingData: " + existingData
-          + ", parentData: " + parentData
-          + ((parent != null) ? ", parent.data: " + parent.directoryData + " equals: " + (parentData == parent.directoryData) : ", parent = null")
-          + ", synchronized(parentData): " + (parentData != null ? Thread.holdsLock(parentData) : "...")
+          +
+          " data: " +
+          fileData
+          +
+          ", alreadyExistingData: " +
+          existingData
+          +
+          ", parentData: " +
+          parentData
+          +
+          ((parent != null)
+           ? ", parent.data: " + parent.directoryData + " equals: " + (parentData == parent.directoryData)
+           : ", parent = null")
+          +
+          ", synchronized(parentData): " +
+          (parentData != null ? Thread.holdsLock(parentData) : "...")
         );
       }
     }
@@ -537,12 +602,20 @@ public final class VfsData {
     /** assigned under lock(this) only; accessed/modified map contents under lock(adoptedNames) */
     private volatile Set<CharSequence> adoptedNames;
 
+    /**
+     * This field is effectively-final, it should be assigned right after the ctor, and never re-assigned.
+     * TODO RC: probably, we should merge VirtualDirectoryImpl and DirectoryData into a single object, and get rid of this
+     *          indirection and associated initialization mess
+     */
     private VirtualDirectoryImpl directory = null;
 
     public DirectoryData() {
     }
 
     public void assignDirectory(@NotNull VirtualDirectoryImpl directory) {
+      if (this.directory != null) {
+        throw new IllegalStateException(".directory(=" + this.directory + ") must not be re-assigned, but: " + directory);
+      }
       this.directory = directory;
     }
 
