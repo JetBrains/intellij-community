@@ -4,10 +4,8 @@ package com.intellij.psi.impl
 import com.intellij.diagnostic.PluginException
 import com.intellij.lang.FileASTNode
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.*
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
@@ -20,6 +18,7 @@ import com.intellij.openapi.progress.util.StandardProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.text.BlockSupport
@@ -27,16 +26,21 @@ import com.intellij.util.SmartList
 import com.intellij.util.concurrency.BoundedTaskExecutor
 import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
-import java.util.Objects
+import java.util.*
 import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG = logger<DocumentCommitThread>()
 
@@ -46,9 +50,18 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
   private var isDisposed = false
   private val myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Document Commit Pool")
 
+  private val commitInProgressCounter = AtomicInteger()
+
+  // it does not make sense to commit several documents in parallel, as they end in write action, so they'll invalidate each other
+  private val commitDispatcher = Dispatchers.Default.limitedParallelism(1, "Document commit dispatcher")
+
   companion object {
     @JvmStatic
     fun getInstance(): DocumentCommitThread = service<DocumentCommitProcessor>() as DocumentCommitThread
+
+    private fun canUseCoroutinesForDocumentCommit(): Boolean {
+      return useBackgroundWriteAction && Registry.`is`("document.async.commit.with.coroutines")
+    }
   }
 
   override fun dispose() {
@@ -73,12 +86,79 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     TransactionGuard.getInstance().assertWriteSafeContext(modality)
 
     val task = CommitTask(project, document, reason, modality)
-    ReadAction
-      .nonBlocking(Callable { commitUnderProgress(task, synchronously = false, documentManager) })
-      .expireWhen { isDisposed || task.isExpired(documentManager) }
-      .coalesceBy(task)
-      .finishOnUiThread(modality) { it() }
-      .submit(myExecutor)
+
+    if (canUseCoroutinesForDocumentCommit()) {
+      commitDocumentWithCoroutines(document, task, documentManager)
+    }
+    else {
+      ReadAction
+        .nonBlocking(Callable { commitUnderProgress(task, synchronously = false, documentManager) })
+        .expireWhen { isExpired(task, documentManager) }
+        .coalesceBy(task)
+        .finishOnUiThread(modality) { it() }
+        .submit(myExecutor)
+    }
+  }
+
+  /**
+   * Document commit is a per-project activity, i.e., there can be two simultaneous commits for the same document but different projects
+   * So we run all commits on service's scope. In addition, we can now cancel all commits relevant to a particular project
+   * By using a project-bound storage for commit coroutines we also avoid project leaks.
+   */
+  @Service(Service.Level.PROJECT)
+  class PerProjectDocumentCommitRegistry(val scope: CoroutineScope) {
+    val publishedDocumentCommitRequests: ConcurrentMap<Document, Job> = CollectionFactory.createConcurrentWeakMap()
+  }
+
+  private fun commitDocumentWithCoroutines(document: Document, task: CommitTask, documentManager: PsiDocumentManagerBase) {
+    val service = task.myProject.service<PerProjectDocumentCommitRegistry>()
+    val job = service.scope.launch(commitDispatcher, start = CoroutineStart.LAZY) {
+      commitInProgressCounter.incrementAndGet()
+      try {
+        // one needs to treat modalities carefully with background write action
+        // to be safer, we perform commit in background write action only if this is a non-modal commit
+        if (task.myCreationModality == ModalityState.nonModal()) {
+          readAndBackgroundWriteActionUndispatched {
+            doCommitInReadAndWriteScope(task, documentManager)
+          }
+        }
+        else {
+          withContext(task.myCreationModality.asContextElement()) {
+            readAndEdtWriteActionUndispatched {
+              doCommitInReadAndWriteScope(task, documentManager)
+            }
+          }
+        }
+      }
+      finally {
+        commitInProgressCounter.decrementAndGet()
+      }
+    }
+    job.invokeOnCompletion {
+      // since this attempt to commit is over, we unblock the possibility to submit more requests to commit here
+      task.myDocumentRef.get()?.let { service.publishedDocumentCommitRequests.remove(it, job) }
+    }
+    val existingJob = service.publishedDocumentCommitRequests.put(document, job)
+    // following the logic of NBRA, we retain only the latest request to commit
+    existingJob?.cancel()
+    job.start()
+  }
+
+  private fun ReadAndWriteScope.doCommitInReadAndWriteScope(task: CommitTask, documentManager: PsiDocumentManagerBase): ReadResult<Unit> {
+    if (isExpired(task, documentManager)) {
+      return value(Unit)
+    }
+    val writeThreadCallback = commitUnderProgress(task, synchronously = false, documentManager)
+    if (isExpired(task, documentManager)) {
+      return value(Unit)
+    }
+    return writeAction {
+      writeThreadCallback()
+    }
+  }
+
+  private fun isExpired(task: CommitTask, docManager: PsiDocumentManagerBase): Boolean {
+    return isDisposed || task.isExpired(docManager)
   }
 
   override fun commitSynchronously(document: Document, project: Project, psiFile: PsiFile) {
@@ -163,12 +243,21 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
 
   override fun toString(): String = "Document commit thread; application: ${ApplicationManager.getApplication()}; isDisposed: $isDisposed"
 
+
+  fun Pair<Job, AtomicBoolean>.isReadPartInProgress(): Boolean {
+    // the commit is in the read phase if its job is not canceled (by a similar task) or when it did not manage to set the boolean flag of read
+    return !first.isCancelled && second.get()
+  }
+
   // NB: failures applying EDT tasks are not handled - i.e., failed documents are added back to the queue and the method returns
   @TestOnly
   fun waitForAllCommits(timeout: Long, timeUnit: TimeUnit) {
     val boundedTaskExecutor = myExecutor as BoundedTaskExecutor
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       boundedTaskExecutor.waitAllTasksExecuted(timeout, timeUnit)
+      while (commitInProgressCounter.get() > 0) {
+        Thread.sleep(10)
+      }
       return
     }
 
@@ -176,9 +265,10 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
 
     EDT.dispatchAllInvocationEvents()
     val deadLine = System.nanoTime() + timeUnit.toNanos(timeout)
-    while (!boundedTaskExecutor.isEmpty) {
+    while (!boundedTaskExecutor.isEmpty || commitInProgressCounter.get() > 0) {
       try {
         boundedTaskExecutor.waitAllTasksExecuted(10, TimeUnit.MILLISECONDS)
+        Thread.sleep(10)
       }
       catch (e: TimeoutException) {
         if (System.nanoTime() > deadLine) {
@@ -230,7 +320,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     override fun hashCode(): Int {
       return 31 * Objects.hashCode(myDocumentRef.get()) + myProject.hashCode()
     }
-    
+
     // return null if the document is changed or gced
     fun stillValidDocument(): Document? {
       val document = myDocumentRef.get()
