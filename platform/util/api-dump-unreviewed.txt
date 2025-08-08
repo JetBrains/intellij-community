@@ -3775,7 +3775,6 @@ f:com.intellij.util.io.ByteBufferUtil
 - <init>():V
 - s:cleanBuffer(java.nio.ByteBuffer):Z
 - s:copyMemory(java.nio.ByteBuffer,I,B[],I,I):V
-- s:getAddress(java.nio.ByteBuffer):J
 f:com.intellij.util.io.ByteSequenceDataExternalizer
 - com.intellij.util.io.DataExternalizer
 - sf:INSTANCE:com.intellij.util.io.ByteSequenceDataExternalizer

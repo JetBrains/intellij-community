@@ -5,18 +5,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.io.CleanableStorage;
-import com.intellij.util.io.ClosedStorageException;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.Unmappable;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
@@ -568,31 +563,10 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
       if (!buffer.isDirect()) {
         return;
       }
-      //TODO RC: use ByteBufferUtil.cleanBuffer(buffer) ?
-      if (INVOKE_CLEANER_METHOD == null) {
-        throw new IllegalStateException("No access to Unsafe.invokeCleaner() -- explicit mapped buffers unmapping is unavailable");
-      }
-
-      INVOKE_CLEANER_METHOD.invoke(ReflectionUtil.getUnsafe(), buffer);
-      if (LOG_UNMAP_OPERATIONS) {
+      boolean result = ByteBufferUtil.cleanBuffer(buffer);
+      if (LOG_UNMAP_OPERATIONS && result) {
         LOG.info("Buffer unmapped: " + buffer);
       }
-    }
-
-    private static final Method INVOKE_CLEANER_METHOD;
-
-    static {
-      Method cleanerMethod;
-      try {
-        Object unsafe = ReflectionUtil.getUnsafe();
-        Class<?> unsafeClass = unsafe.getClass();
-        cleanerMethod = ReflectionUtil.getDeclaredMethod(unsafeClass, "invokeCleaner", ByteBuffer.class);
-      }
-      catch (Throwable t) {
-        LOG.error("Can't get access to Unsafe.invokeCleaner() -- explicit mapped buffers unmapping will be unavailable", t);
-        cleanerMethod = null;
-      }
-      INVOKE_CLEANER_METHOD = cleanerMethod;
     }
   }
 
