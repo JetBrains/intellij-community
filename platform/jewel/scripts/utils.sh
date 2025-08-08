@@ -17,11 +17,26 @@ fail_check() {
   local message=$1
   echoerr "$message"
 
-  if [[ -n "$PR_NUMBER" && -n "$GITHUB_TOKEN" ]]; then
-    if ! gh pr comment "$PR_NUMBER" --body "$message"; then
-      echowarn "Failed to post comment to PR #$PR_NUMBER. Continuing..."
-    fi
-  else
-    echowarn "PR_NUMBER or GITHUB_TOKEN not set, skipping posting PR comment."
+# TODO figure out how to reliably post comments to PRs from forks
+#  if [[ -n "$PR_NUMBER" && -n "$GITHUB_TOKEN" ]]; then
+#    if ! gh pr comment "$PR_NUMBER" --body "$message"; then
+#      echowarn "Failed to post comment to PR #$PR_NUMBER. Continuing..."
+#    fi
+#  else
+#    echowarn "PR_NUMBER or GITHUB_TOKEN not set, skipping posting PR comment."
+#  fi
+}
+
+check_gh_tool() {
+  if ! command -v gh &>/dev/null; then
+    echoerr "ERROR: The GitHub CLI (gh) is not installed. Please install it to continue."
+    exit 1
+  fi
+}
+
+check_pr_number() {
+  if [ -z "$PR_NUMBER" ]; then
+    echoerr "ERROR: PR_NUMBER environment variable not set."
+    exit 1
   fi
 }
