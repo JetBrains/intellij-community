@@ -256,6 +256,33 @@ public fun List.Companion.create(
 
 @ApiStatus.Experimental
 @ExperimentalJewelApi
+@Deprecated("Please, use the overload with [Ordered.NumberFormatStyles].")
+public fun Ordered.Companion.create(
+    numberStyle: TextStyle = defaultTextStyle,
+    numberContentGap: Dp = 4.dp,
+    numberMinWidth: Dp = 16.dp,
+    numberTextAlign: TextAlign = TextAlign.End,
+    itemVerticalSpacing: Dp = 16.dp,
+    itemVerticalSpacingTight: Dp = 4.dp,
+    padding: PaddingValues = PaddingValues(start = 6.dp),
+): Ordered =
+    Ordered(
+        numberStyle,
+        numberContentGap,
+        numberMinWidth,
+        numberTextAlign,
+        itemVerticalSpacing,
+        itemVerticalSpacingTight,
+        padding,
+        Ordered.NumberFormatStyles(
+            firstLevel = NumberFormatStyle.Decimal,
+            secondLevel = NumberFormatStyle.Roman,
+            thirdLevel = NumberFormatStyle.Alphabetical,
+        ),
+    )
+
+@ApiStatus.Experimental
+@ExperimentalJewelApi
 public fun Ordered.Companion.create(
     numberStyle: TextStyle = defaultTextStyle,
     numberContentGap: Dp = 4.dp,
@@ -280,6 +307,29 @@ public fun Ordered.Companion.create(
         itemVerticalSpacingTight,
         padding,
         numberFormatStyles,
+    )
+
+@ApiStatus.Experimental
+@ExperimentalJewelApi
+@Deprecated("Please, use the overload with [Unordered.BulletCharStyles].")
+public fun Unordered.Companion.create(
+    bullet: Char? = '•',
+    bulletStyle: TextStyle = defaultTextStyle.copy(fontWeight = FontWeight.Black),
+    bulletContentGap: Dp = 4.dp,
+    itemVerticalSpacing: Dp = 16.dp,
+    itemVerticalSpacingTight: Dp = 4.dp,
+    padding: PaddingValues = PaddingValues(start = 6.dp),
+    markerMinWidth: Dp = 16.dp,
+): Unordered =
+    Unordered(
+        bullet,
+        bulletStyle,
+        bulletContentGap,
+        itemVerticalSpacing,
+        itemVerticalSpacingTight,
+        padding,
+        markerMinWidth,
+        Unordered.BulletCharStyles(firstLevel = '•', secondLevel = '◦', thirdLevel = '▪'),
     )
 
 @ApiStatus.Experimental
