@@ -3,11 +3,10 @@
 
 package com.intellij.openapi.roots.impl
 
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
-import com.intellij.util.SmartList
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.DummyWorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.impl.LibrariesAndSdkContributors.Companion.getGlobalLibrary
@@ -16,44 +15,47 @@ import com.intellij.workspaceModel.core.fileIndex.impl.StoredFileSet
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.findSdk
 
-internal fun processFileSet(set: WorkspaceFileSetWithCustomData<*>?, result: SmartList<RootDescriptor?>, snapshot: ImmutableEntityStorage) {
-  if (set is StoredFileSet) {
-    val data: WorkspaceFileSetData = set.data
-    if (data is DummyWorkspaceFileSetData) {
-      result.add(DummyRootDescriptor(set.root))
-    }
-    else {
-      val entity = (set as StoredFileSet).entityPointer.resolve(snapshot)
-      if (entity is LibraryEntity) {
-        val library = entity.findLibraryBridge(snapshot)
-        if (library != null) {
-          result.add(LibraryRootDescriptor(set.root, library))
-        }
-      }
-      else if (data is ModuleSourceRootData) {
-        val module = data.module
-        result.add(ModuleRootDescriptor(set.root, module))
-      }
-      else {
-        val sdk: Sdk? = snapshot.findSdk(set)
-        if (sdk != null) {
-          result.add(SdkRootDescriptor(set.root, sdk))
-        }
-
-        val globalLibrary = getGlobalLibrary(set)
-        if (globalLibrary != null) {
-          result.add(LibraryRootDescriptor(set.root, globalLibrary))
-        }
-
-        if (ProjectFileIndexImpl.LOG.isTraceEnabled()) {
-          ProjectFileIndexImpl.LOG.trace("Unexpected data: " + data)
-        }
-      }
-    }
+internal fun findFileSetDescriptor(
+  set: WorkspaceFileSetWithCustomData<*>,
+  snapshot: ImmutableEntityStorage,
+): RootDescriptor? {
+  if (set !is StoredFileSet) {
+    log.trace { "Unexpected file set: $set" }
+    return null
   }
-  else {
-    if (ProjectFileIndexImpl.LOG.isTraceEnabled()) {
-      ProjectFileIndexImpl.LOG.trace("Unexpected file set: " + set)
-    }
+
+  val data = set.data
+  if (data is DummyWorkspaceFileSetData) {
+    return DummyRootDescriptor(set.root)
   }
+
+  val entity = (set as StoredFileSet).entityPointer.resolve(snapshot)
+  if (entity is LibraryEntity) {
+    val library = entity.findLibraryBridge(snapshot) ?: run {
+      log.trace { "Library is not found for $entity in $snapshot" }
+      return null
+    }
+
+    return LibraryRootDescriptor(set.root, library)
+  }
+
+  if (data is ModuleSourceRootData) {
+    val module = data.module
+    return ModuleRootDescriptor(set.root, module)
+  }
+
+  val sdk = snapshot.findSdk(set)
+  if (sdk != null) {
+    return SdkRootDescriptor(set.root, sdk)
+  }
+
+  val globalLibrary = getGlobalLibrary(set)
+  if (globalLibrary != null) {
+    return LibraryRootDescriptor(set.root, globalLibrary)
+  }
+
+  log.trace { "Unexpected data: $data" }
+  return null
 }
+
+private val log = fileLogger()

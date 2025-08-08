@@ -27,7 +27,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
-import static com.intellij.openapi.roots.impl.FileSet2RootDescriptor.processFileSet;
+import static com.intellij.openapi.roots.impl.FileSet2RootDescriptor.findFileSetDescriptor;
 
 /**
  * This is an internal class, {@link ProjectFileIndex} must be used instead.
@@ -244,7 +244,10 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
     ImmutableEntityStorage snapshot = WorkspaceModel.getInstance(myProject).getCurrentSnapshot();
     for (WorkspaceFileSetWithCustomData<?> set : fileSets) {
-      processFileSet(set, result, snapshot);
+      RootDescriptor descriptor = findFileSetDescriptor(set, snapshot);
+      if (descriptor != null) {
+        result.add(descriptor);
+      }
     }
     if (result.size() != 1) {
       // distinct, sorted
