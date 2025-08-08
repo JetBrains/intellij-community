@@ -33,7 +33,8 @@ import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.IGNORED_TO_EXCLUDE_NOT_FOUND
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
@@ -47,9 +48,11 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.Alarm
+import com.intellij.util.messages.impl.subscribeAsFlow
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -178,7 +181,7 @@ class IgnoredToExcludedSynchronizer(project: Project, private val cs: CoroutineS
 
       try {
         val dirsToExclude = withModalProgress(project, ActionsBundle.message("action.CheckIgnoredAndNotExcludedDirectories.progress")) {
-          VcsIgnoreManagerImpl.getInstanceImpl(project).awaitRefreshQueue()
+          awaitIgnoredFilesUpdate(project)
           val ignoredFilePaths = ChangeListManager.getInstance(project).ignoredFilePaths
           determineIgnoredDirsToExclude(project, ignoredFilePaths)
         }
@@ -227,6 +230,20 @@ private fun getProjectSourceRoots(project: Project): Set<VirtualFile> = runReadA
 private fun containsShelfDirectoryOrUnderIt(filePath: FilePath, shelfPath: String) =
   FileUtil.isAncestor(shelfPath, filePath.path, false) ||
   FileUtil.isAncestor(filePath.path, shelfPath, false)
+
+private suspend fun awaitIgnoredFilesUpdate(project: Project) {
+  withContext(Dispatchers.Default) {
+    project.messageBus.subscribeAsFlow(VcsManagedFilesHolder.TOPIC) {
+      send(Unit)
+      VcsManagedFilesHolder.VcsManagedFilesHolderListener {
+        trySend(Unit)
+      }
+    }.first {
+      val clm = ChangeListManagerImpl.getInstanceImpl(project)
+      !clm.isIgnoredInUpdateMode
+    }
+  }
+}
 
 private fun determineIgnoredDirsToExclude(project: Project, ignoredPaths: Collection<FilePath>): List<VirtualFile> {
   val sourceRoots = getProjectSourceRoots(project)
