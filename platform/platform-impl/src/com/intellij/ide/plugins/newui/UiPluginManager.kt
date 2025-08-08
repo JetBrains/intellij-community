@@ -24,6 +24,7 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -221,8 +222,9 @@ class UiPluginManager {
     }
   }
 
+  @RequiresBackgroundThread(generateAssertion = false)
   fun isNeedUpdate(pluginId: PluginId): Boolean {
-    return getController().isNeedUpdate(pluginId)
+    return runBlockingMaybeCancellable { getController().isNeedUpdate(pluginId) }
   }
 
   fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {

@@ -1253,7 +1253,7 @@ public final class PluginManagerConfigurable
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         installedController.setSearchResultEventHandler(eventHandler);
 
-        PluginsGroupComponent panel = new PluginsGroupComponent(eventHandler) {
+        PluginsGroupComponent panel = new PluginsGroupComponentWithProgress(eventHandler) {
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
                                                                      @NotNull PluginsGroup group,

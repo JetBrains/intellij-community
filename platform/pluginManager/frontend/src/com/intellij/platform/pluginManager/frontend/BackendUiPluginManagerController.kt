@@ -249,8 +249,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     }
   }
 
-  override fun isNeedUpdate(pluginId: PluginId): Boolean {
-    return awaitForResult { PluginManagerApi.getInstance().isNeedUpdate(pluginId) }
+  override suspend fun isNeedUpdate(pluginId: PluginId): Boolean {
+    return PluginManagerApi.getInstance().isNeedUpdate(pluginId)
   }
 
   override suspend fun closeSession(sessionId: String) {

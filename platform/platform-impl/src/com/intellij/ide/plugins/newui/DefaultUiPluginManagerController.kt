@@ -110,7 +110,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return PluginManagerCore.isPluginInstalled(pluginId)
   }
 
-  override fun isNeedUpdate(pluginId: PluginId): Boolean {
+  override suspend fun isNeedUpdate(pluginId: PluginId): Boolean {
     val descriptor = PluginManagerCore.getPlugin(pluginId) ?: return false
     return PluginUpdatesService.isNeedUpdate(descriptor)
   }
