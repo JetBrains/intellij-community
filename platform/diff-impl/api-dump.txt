@@ -886,26 +886,6 @@ a:com.intellij.diff.tools.holders.EditorHolderFactory
 - a:canShowContent(com.intellij.diff.contents.DiffContent,com.intellij.diff.DiffContext):Z
 - a:create(com.intellij.diff.contents.DiffContent,com.intellij.diff.DiffContext):com.intellij.diff.tools.holders.EditorHolder
 - a:wantShowContent(com.intellij.diff.contents.DiffContent,com.intellij.diff.DiffContext):Z
-a:com.intellij.diff.tools.simple.DiffViewerHighlighters
-- sf:Companion:com.intellij.diff.tools.simple.DiffViewerHighlighters$Companion
-- <init>(com.intellij.diff.tools.simple.ThreesideDiffChangeBase,com.intellij.diff.tools.util.text.MergeInnerDifferences,kotlin.jvm.functions.Function1):V
-- pf:createHighlighter(com.intellij.diff.util.ThreeSide):V
-- pf:createInnerHighlighter(com.intellij.diff.util.ThreeSide):V
-- f:destroy():V
-- pf:destroyHighlighters():V
-- f:destroyInnerHighlighters():V
-- pf:destroyOperations():V
-- p:getChange():com.intellij.diff.tools.simple.ThreesideDiffChangeBase
-- pf:getEditorProvider():kotlin.jvm.functions.Function1
-- pf:getHighlighters():java.util.List
-- p:getInnerFragments():com.intellij.diff.tools.util.text.MergeInnerDifferences
-- pf:getInnerHighlighters():java.util.List
-- pf:getOperations():java.util.List
-- pf:installHighlighters():V
-- pf:installInnerHighlighters():V
-- a:installOperations():V
-- reinstallAll():V
-f:com.intellij.diff.tools.simple.DiffViewerHighlighters$Companion
 c:com.intellij.diff.tools.simple.SimpleDiffChange
 - <init>(I,com.intellij.diff.fragments.LineFragment):V
 - <init>(I,com.intellij.diff.fragments.LineFragment,Z,Z):V
@@ -1014,7 +994,6 @@ pa:com.intellij.diff.tools.simple.SimpleDiffViewer$SelectedChangesActionBase
 - pa:isVisible(com.intellij.diff.util.Side):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.diff.tools.simple.SimpleDiffViewerHighlighters
-- com.intellij.diff.tools.simple.DiffViewerHighlighters
 - sf:Companion:com.intellij.diff.tools.simple.SimpleDiffViewerHighlighters$Companion
 - <init>(com.intellij.diff.tools.simple.SimpleThreesideDiffChange,com.intellij.diff.tools.util.text.MergeInnerDifferences,com.intellij.diff.tools.simple.SimpleThreesideDiffViewer):V
 - sf:getApplyActionText(com.intellij.diff.tools.util.base.DiffViewerBase,com.intellij.diff.util.ThreeSide,com.intellij.diff.util.ThreeSide):java.lang.String

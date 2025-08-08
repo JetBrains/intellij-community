@@ -87,12 +87,12 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
   // Repaint
   //
   @RequiresEdt
-  fun invalidateHighlighters(index: Int) {
+  fun invalidateChange(index: Int) {
     if (bulkChangeUpdateDepth > 0) {
       changesToUpdate.add(index)
     }
     else {
-      reinstallHighlighters(index)
+      onChangeUpdated(index)
     }
   }
 
@@ -108,18 +108,19 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
 
     if (bulkChangeUpdateDepth == 0) {
       changesToUpdate.forEach(IntConsumer { index: Int ->
-        reinstallHighlighters(index)
+        onChangeUpdated(index)
       })
       changesToUpdate.clear()
-      postInstallHighlighters()
+      onBulkUpdateFinished()
     }
   }
 
   @RequiresEdt
-  protected abstract fun reinstallHighlighters(index: Int)
+  protected abstract fun onChangeUpdated(index: Int)
 
   @RequiresEdt
-  protected open fun postInstallHighlighters() {
+  protected open fun onBulkUpdateFinished() {
+
   }
 
   //
@@ -176,7 +177,7 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
         val oldState = processDocumentChange(index, lineRange.start, lineRange.end, shift)
         if (oldState == null) continue
 
-        invalidateHighlighters(index)
+        invalidateChange(index)
         if (!isInsideCommand) corruptedStates.add(oldState)
       }
 
@@ -268,7 +269,7 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
         model as MergeModelBase<State>
         for (state in states) {
           model.restoreChangeState(state)
-          model.invalidateHighlighters(state.index)
+          model.invalidateChange(state.index)
         }
       }
       finally {
@@ -322,7 +323,7 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
     if (getLineStart(index) != newOutputStartLine || getLineEnd(index) != newOutputEndLine) {
       setLineStart(index, newOutputStartLine)
       setLineEnd(index, newOutputEndLine)
-      invalidateHighlighters(index)
+      invalidateChange(index)
     }
 
     var beforeChange = true
@@ -341,7 +342,7 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
       if (startLine != newStartLine || endLine != newEndLine) {
         setLineStart(otherIndex, newStartLine)
         setLineEnd(otherIndex, newEndLine)
-        invalidateHighlighters(otherIndex)
+        invalidateChange(otherIndex)
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge
 
 import com.intellij.diff.DiffContentFactoryImpl
@@ -72,7 +72,8 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
 
   inner class TestBuilder(val mergeViewer: TextMergeViewer, private val actions: List<AnAction>) {
     val viewer: MergeThreesideViewer = mergeViewer.viewer
-    val changes: List<TextMergeChange> = viewer.allChanges
+    val changes: List<TextMergeChange>
+      get() = viewer.allChanges
     val editor: EditorEx = viewer.editor
     val document: Document = editor.document
 
@@ -126,25 +127,25 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
 
     fun Int.ignore(side: Side, modifier: Boolean = false) {
       val change = change(this)
-      command(change) { viewer.ignoreChange(change, side, modifier) }
+      command(change) { viewer.model.ignoreChange(change.index, side, modifier) }
     }
 
     fun Int.apply(side: Side, modifier: Boolean = false) {
       val change = change(this)
-      command(change) { viewer.replaceChange(change, side, modifier) }
+      command(change) { viewer.model.replaceChange(change.index, side, modifier) }
     }
 
     fun Int.resolve() {
       val change = change(this)
       command(change) {
-        assertTrue(change.isConflict && viewer.canResolveChangeAutomatically(change, ThreeSide.BASE))
+        assertTrue(change.isConflict && viewer.model.canResolveChangeAutomatically(change.index, ThreeSide.BASE))
         viewer.resolveChangeAutomatically(change, ThreeSide.BASE)
       }
     }
 
     fun Int.canResolveConflict(): Boolean {
       val change = change(this)
-      return viewer.canResolveChangeAutomatically(change, ThreeSide.BASE)
+      return viewer.model.canResolveChangeAutomatically(change.index, ThreeSide.BASE)
     }
 
     //

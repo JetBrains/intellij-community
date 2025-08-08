@@ -58,15 +58,14 @@ internal class ChangeReferenceProcessor(private val project: Project, private va
     rangeMarker: RangeMarker,
     processInnerFragments: Boolean,
   ) {
-    val sourceThreeSide = sourceSide.select(ThreeSide.LEFT, ThreeSide.RIGHT) ?: return
-    val sourceDocument = sourceThreeSide.select(documents) ?: return
-    val psiFile = sourceSide.select(files[0], files[2]) ?: return
+    val sourceThreeSide = sourceSide.select(ThreeSide.LEFT, ThreeSide.RIGHT)
+    val sourceDocument = sourceThreeSide.select(documents)
+    val psiFile = sourceSide.select(files[0], files[2])
     val sourceRange = DiffUtil.getLinesRange(sourceDocument, change.getStartLine(sourceThreeSide), change.getEndLine(sourceThreeSide))
 
     if (change.getStartLine(sourceThreeSide) == change.getEndLine(sourceThreeSide)) return
 
     if (processInnerFragments) {
-      //val innerDifferences = change.innerFragments ?: compareInner(change) ?: return FIXME
       val innerDifferences = compareInner(change) ?: return
 
       innerDifferences.get(sourceThreeSide)?.forEach { textRange ->

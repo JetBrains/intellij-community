@@ -334,7 +334,7 @@ class PropertiesMergeConflictResolverTest : BasePlatformTestCase() {
       )
     }
 
-    override fun reinstallHighlighters(index: Int) = Unit
+    override fun onChangeUpdated(index: Int) = Unit
 
     override fun storeChangeState(index: Int): TextMergeChange.State = TextMergeChange.State(0,0,0, false, false, false, false)
   }

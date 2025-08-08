@@ -105,7 +105,7 @@ internal class IgnoreSelectedChangesSideAction(
 
   override fun apply(side: ThreeSide, changes: List<TextMergeChange>) {
     for (change in changes) {
-      viewer.ignoreChange(change, this@IgnoreSelectedChangesSideAction.side, false)
+      viewer.model.ignoreChange(change.index, this@IgnoreSelectedChangesSideAction.side, false)
     }
   }
 
@@ -131,7 +131,7 @@ internal class IgnoreSelectedChangesAction(viewer: MergeThreesideViewer) : Apply
 
   override fun apply(side: ThreeSide, changes: List<TextMergeChange>) {
     for (change in changes) {
-      viewer.markChangeResolved(change)
+      viewer.model.markChangeResolved(change.index)
     }
   }
 }
@@ -143,7 +143,7 @@ internal class ResetResolvedChangeAction(viewer: MergeThreesideViewer) : ApplySe
 
   override fun apply(side: ThreeSide, changes: List<TextMergeChange>) {
     for (change in changes) {
-      viewer.resetResolvedChange(change)
+      viewer.model.resetResolvedChange(change.index)
     }
   }
 
@@ -222,6 +222,6 @@ internal class ResolveSelectedConflictsAction(viewer: MergeThreesideViewer) : Ap
   override fun isVisible(side: ThreeSide): Boolean = side == ThreeSide.BASE
 
   override fun isEnabled(change: TextMergeChange): Boolean {
-    return viewer.canResolveChangeAutomatically(change, ThreeSide.BASE)
+    return viewer.model.canResolveChangeAutomatically(change.index, ThreeSide.BASE)
   }
 }

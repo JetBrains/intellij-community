@@ -70,7 +70,9 @@ class LangSpecificMergeConflictResolverWrapper(private val project: Project?, co
   }
 
   @RequiresEdt
-  fun updateHighlighting(fileList: List<PsiFile>, mergeChangeList: List<TextMergeChange>, scheduleRediff: Runnable) {
+  fun updateHighlighting(fileList: List<PsiFile>, mergeChangeList: List<TextMergeChange>,
+                         highlighters: Map<TextMergeChange, ThreesideMergeHighlighters>,
+                         scheduleRediff: Runnable) {
     val localMergeChangeList = mergeChangeList.toList()
     if (!isAvailable() || project == null || !hasChunksInitiallyResolved || localMergeChangeList.size != resolvedChanges.size) return
     project.scope.coroutineContext.cancelChildren()
@@ -91,7 +93,7 @@ class LangSpecificMergeConflictResolverWrapper(private val project: Project?, co
 
           type.resolutionStrategy = if (resolveResult != null) MergeConflictResolutionStrategy.SEMANTIC else null
 
-          //textMergeChange.reinstallHighlighters() FIXME
+          highlighters[textMergeChange]?.reinstallAll()
         }
         scheduleRediff.run()
       }

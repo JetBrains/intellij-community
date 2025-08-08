@@ -14,7 +14,7 @@ internal class MagicResolvedConflictsAction(private val viewer: MergeThreesideVi
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.setEnabled(viewer.hasResolvableConflictedChanges() && !viewer.isExternalOperationInProgress)
+    e.presentation.setEnabled(viewer.model.hasAutoResolvableConflictedChanges() && !viewer.isExternalOperationInProgress)
   }
 
   override fun actionPerformed(e: AnActionEvent) {

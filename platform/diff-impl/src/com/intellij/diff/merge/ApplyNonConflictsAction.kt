@@ -28,7 +28,7 @@ internal class ApplyNonConflictsAction(
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.setEnabled(viewer.hasNonConflictedChanges(side) && !viewer.isExternalOperationInProgress)
+    e.presentation.setEnabled(viewer.model.hasNonConflictedChanges(side) && !viewer.isExternalOperationInProgress)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
