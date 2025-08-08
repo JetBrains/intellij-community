@@ -20,8 +20,8 @@ import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.PopupStep
@@ -57,8 +57,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.StartupUiUtil.labelFont
 import kotlinx.coroutines.*
-import kotlinx.coroutines.time.withTimeout
-import kotlinx.coroutines.time.withTimeoutOrNull
 import java.awt.event.ItemEvent
 import java.util.concurrent.CancellationException
 import javax.swing.*
@@ -414,19 +412,16 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   }
 
   private fun disableCurrentSyncDialog() : Boolean {
-    val code = MessagesService.getInstance().showMessageDialog(
-      null, null, message("disable.active.sync.message"), message("disable.active.sync.title"),
-      arrayOf(Messages.getCancelButton(), message("disable.dialog.disable.button")),
-      1, -1, Messages.getInformationIcon(), null, false, null
-    )
-    if (code == 1) {
+    val disableSyncConfirmed = yesNo(message("disable.active.sync.title"), message("disable.active.sync.message"))
+      .yesText(message("disable.dialog.disable.button"))
+      .noText(CommonBundle.getCancelButtonText())
+      .guessWindowAndAsk()
+    if (disableSyncConfirmed) {
       enableCheckbox.isSelected = false
       disableSyncOption.set(DisableSyncType.DISABLE)
       handleDisableSync()
-      return true
-    } else {
-      return false
     }
+    return disableSyncConfirmed
   }
 
   private fun disableAndRemoveData() {
@@ -739,10 +734,11 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
 
 
 
-  private suspend fun checkServerState(syncPanelHolder: SettingsSyncPanelHolder,
-                               communicator: SettingsSyncRemoteCommunicator,
-                               crossSyncAvailable: Boolean,
-                               ) : Boolean {
+  private suspend fun checkServerState(
+    syncPanelHolder: SettingsSyncPanelHolder,
+    communicator: SettingsSyncRemoteCommunicator,
+    crossSyncAvailable: Boolean,
+  ) : Boolean {
     communicator.setTemporary(true)
     val updateResult = try {
       communicator.receiveUpdates()
@@ -838,7 +834,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
               text(message("enable.dialog.source.option.title")).bold()
             }
             row {
-              text(message("enable.dialog.source.option.text", ), 50)
+              text(message("enable.dialog.source.option.text"), 50)
             }
             buttonsGroup ("", false) {
               row {
