@@ -24,12 +24,12 @@ private const val minReconnectDelay = 1L
 private const val maxReconnectDelay = 30_000L
 internal val Exponential = DelayStrategy.exponential(minReconnectDelay, maxReconnectDelay)
 
-fun <T, M> connectionLoop(
-  transportFactory: TransportFactory<M>,
+fun <T> connectionLoop(
+  transportFactory: TransportFactory,
   transportStats: MutableStateFlow<TransportStats>? = null,
   delayStrategy: DelayStrategy = Exponential,
   debugName: String? = null,
-  client: (Transport<M>) -> Resource<T>,
+  client: (Transport) -> Resource<T>,
 ): Resource<StateFlow<ConnectionStatus<T>>> =
   resource { cc ->
     val status = MutableStateFlow<ConnectionStatus<T>>(ConnectionStatus.Connecting())
@@ -68,18 +68,20 @@ fun <T, M> connectionLoop(
     }
   }.onContext(CoroutineName("connectionLoop $debugName"))
 
-suspend fun <M> serviceConnectionLoop(
-  transportFactory: TransportFactory<M>,
+typealias ServiceFn<T> = suspend CoroutineScope.(T) -> Nothing
+
+suspend fun <T> serviceConnectionLoop(
+  transportFactory: suspend (ServiceFn<T>) -> Nothing,
   debugName: String? = null,
   delayStrategy: DelayStrategy = Exponential,
-  service: suspend CoroutineScope.(Transport<M>) -> Nothing,
+  service: ServiceFn<T>,
 ): Nothing {
   var attempt = 0
   var curDelayMs = delayStrategy.nextDelay(0)
   while (true) {
     currentCoroutineContext().ensureActive()
     val ex = try {
-      transportFactory.connect(null) { transport ->
+      transportFactory { transport ->
         curDelayMs = delayStrategy.nextDelay(0)
         service(transport)
       }

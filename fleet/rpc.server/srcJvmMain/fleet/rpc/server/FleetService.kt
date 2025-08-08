@@ -22,7 +22,9 @@ class FleetService private constructor(
     ): T =
       coroutineScope {
         launch {
-          serviceConnectionLoop(transportFactory, debugName = "RpcExecutor for service provider ${providerId}") { transport ->
+          serviceConnectionLoop(
+            transportFactory = { cc -> transportFactory.connect(null) { t -> cc(t) } },
+            debugName = "RpcExecutor for service provider ${providerId}") { transport ->
             RpcExecutor.serve(
               services = services,
               transport = transport,

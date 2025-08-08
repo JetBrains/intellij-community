@@ -43,7 +43,7 @@ class RpcExecutor private constructor(
     suspend fun serve(
       services: RpcServiceLocator,
       route: UID,
-      transport: Transport<TransportMessage>,
+      transport: Transport,
       rpcInterceptor: RpcExecutorMiddleware,
       rpcCallDispatcher: CoroutineDispatcher? = null,
     ) {

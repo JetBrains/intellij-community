@@ -14,16 +14,16 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.selects.select
 import kotlin.time.TimeSource
 
-private val logger = logger<Transport<*>>()
+private val logger = logger<Transport>()
 
-class Transport<T>(
-  val outgoing: SendChannel<T>,
-  val incoming: ReceiveChannel<T>,
+class Transport(
+  val outgoing: SendChannel<TransportMessage>,
+  val incoming: ReceiveChannel<TransportMessage>,
 )
 
-typealias FleetTransportFactory = TransportFactory<TransportMessage>
+typealias FleetTransportFactory = TransportFactory
 
-interface TransportFactory<TMessage> {
+interface TransportFactory {
   /*
    * [body] should be called with fully operational transport, feel free to suspend.
    * If the connection isn't possible, rethrow the cause as [TransportDisconnectedException].
@@ -31,29 +31,24 @@ interface TransportFactory<TMessage> {
    */
   suspend fun <T> connect(
     transportStats: MutableStateFlow<TransportStats>?,
-    body: suspend CoroutineScope.(Transport<TMessage>) -> T,
+    body: suspend CoroutineScope.(Transport) -> T,
   ): T
 }
 
-fun <M> TransportFactory(
-  factory: (MutableStateFlow<TransportStats>?) -> Resource<Transport<M>>,
-): TransportFactory<M> =
-  object : TransportFactory<M> {
-    override suspend fun <T> connect(transportStats: MutableStateFlow<TransportStats>?, body: suspend CoroutineScope.(Transport<M>) -> T): T =
+fun TransportFactory(
+  factory: (MutableStateFlow<TransportStats>?) -> Resource<Transport>,
+): TransportFactory =
+  object : TransportFactory {
+    override suspend fun <T> connect(transportStats: MutableStateFlow<TransportStats>?, body: suspend CoroutineScope.(Transport) -> T): T =
       factory(transportStats).use { body(it) }
   }
-
-fun FleetTransportFactory(
-  factory: (MutableStateFlow<TransportStats>?) -> Resource<Transport<TransportMessage>>,
-): FleetTransportFactory =
-  TransportFactory(factory)
 
 /**
  * Use this function when you want to re-create your factory on each connection attempt.
  */
-fun <M> dynamicTransportFactory(f: suspend () -> TransportFactory<M>): TransportFactory<M> =
-  object : TransportFactory<M> {
-    override suspend fun <T> connect(transportStats: MutableStateFlow<TransportStats>?, body: suspend CoroutineScope.(Transport<M>) -> T): T {
+fun dynamicTransportFactory(f: suspend () -> TransportFactory): TransportFactory =
+  object : TransportFactory {
+    override suspend fun <T> connect(transportStats: MutableStateFlow<TransportStats>?, body: suspend CoroutineScope.(Transport) -> T): T {
       return f().connect(transportStats, body)
     }
   }
@@ -73,7 +68,7 @@ fun DebugConnectionState.toggle(): DebugConnectionState {
 fun FleetTransportFactory.debugDisconnect(control: StateFlow<DebugConnectionState>, debugToken: String? = null): FleetTransportFactory {
   val underlying = this
   return object : FleetTransportFactory {
-    override suspend fun <T> connect(transportStats: MutableStateFlow<TransportStats>?, body: suspend CoroutineScope.(Transport<TransportMessage>) -> T): T {
+    override suspend fun <T> connect(transportStats: MutableStateFlow<TransportStats>?, body: suspend CoroutineScope.(Transport) -> T): T {
       logger.debug { "Waiting for control flow to allow connection $debugToken" }
       val t = TimeSource.Monotonic.markNow()
       control.first { it == DebugConnectionState.Connect }

@@ -42,7 +42,7 @@ private data class OutgoingRequest(
 private data class OngoingRequest(val request: OutgoingRequest)
 
 fun rpcClient(
-  transport: Transport<TransportMessage>,
+  transport: Transport,
   origin: UID,
   requestInterceptor: RpcInterceptor = RpcInterceptor,
   abortOnError: Boolean,
@@ -66,7 +66,7 @@ fun rpcClient(
 
 private class RpcClient(
   private val coroutineScope: CoroutineScope,
-  private val transport: Transport<TransportMessage>,
+  private val transport: Transport,
   private val origin: UID,
   private val requestInterceptor: RpcInterceptor,
 ) : IRpcClient {
