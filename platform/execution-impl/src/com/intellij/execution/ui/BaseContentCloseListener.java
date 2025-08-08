@@ -50,18 +50,18 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
     final ContentManager contentManager = content.getManager();
     if (contentManager != null) {
       contentManager.addContentManagerListener(this);
-      content.addPropertyChangeListener(new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          if (ContentImpl.PROP_CONTENT_MANAGER.equals(evt.getPropertyName())) {
-            ContentManager oldValue = (ContentManager)evt.getOldValue();
-            ContentManager newValue = (ContentManager)evt.getNewValue();
-            if (oldValue != null) oldValue.removeContentManagerListener(BaseContentCloseListener.this);
-            if (newValue != null) newValue.addContentManagerListener(BaseContentCloseListener.this);
-          }
-        }
-      });
     }
+    content.addPropertyChangeListener(new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        if (ContentImpl.PROP_CONTENT_MANAGER.equals(evt.getPropertyName())) {
+          ContentManager oldValue = (ContentManager)evt.getOldValue();
+          ContentManager newValue = (ContentManager)evt.getNewValue();
+          if (oldValue != null) oldValue.removeContentManagerListener(BaseContentCloseListener.this);
+          if (newValue != null) newValue.addContentManagerListener(BaseContentCloseListener.this);
+        }
+      }
+    });
     ProjectManager.getInstance().addProjectManagerListener(myProject, this);
     Disposer.register(parentDisposable, this);
   }
