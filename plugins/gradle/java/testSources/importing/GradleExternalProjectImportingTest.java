@@ -34,7 +34,7 @@ public class GradleExternalProjectImportingTest extends GradleImportingTestCase 
     FileUtil.copyDir(file("gradle"), file("../gradle"));
 
     createProjectSubFile("../settings.gradle", "rootProject.name = 'root'\n" +
-                                               including(myProjectRoot.getParent(), "project", "another_project"));
+                                               including(getMyProjectRoot().getParent(), "project", "another_project"));
     createProjectSubFile("../build.gradle", "allprojects { apply plugin: 'java' }");
     importProject("");
 

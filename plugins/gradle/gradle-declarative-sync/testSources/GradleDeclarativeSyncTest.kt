@@ -27,7 +27,7 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
   @Test
   @TargetVersions("8.9+")
   fun `test declarative model creation in a simple Gradle project`() {
-    val projectRoot = projectRoot.toNioPath()
+    val projectRoot = myProjectRoot.toNioPath()
     val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     createProjectSubFile("settings.gradle.dcl", """
@@ -151,7 +151,7 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
   //TODO @Test
   @TargetVersions("8.9+")
   fun `test declarative model creation in multi-module Gradle project`() {
-    val projectRoot = projectRoot.toNioPath()
+    val projectRoot = myProjectRoot.toNioPath()
     val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     Disposer.newDisposable().use { disposable ->

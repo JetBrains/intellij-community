@@ -25,7 +25,7 @@ fun GradleImportingTestCase.createSettingsFile(
   configure: GradleSettingScriptBuilder<*>.() -> Unit,
 ): VirtualFile {
   return runWriteActionAndGet {
-    projectRoot.findOrCreateDirectory(relativeModulePath)
+    myProjectRoot.findOrCreateDirectory(relativeModulePath)
       .findOrCreateFile(getSettingsScriptName(GradleDsl.GROOVY)).apply {
         writeText(settingsScript(configure))
       }
@@ -37,7 +37,7 @@ fun GradleImportingTestCase.createBuildFile(
   configure: TestGradleBuildScriptBuilder.() -> Unit,
 ): VirtualFile {
   return runWriteActionAndGet {
-    projectRoot.findOrCreateDirectory(relativeModulePath)
+    myProjectRoot.findOrCreateDirectory(relativeModulePath)
       .findOrCreateFile(getBuildScriptName(GradleDsl.GROOVY)).apply {
         writeText(script(configure))
       }
@@ -48,7 +48,7 @@ fun GradleImportingTestCase.createGradleWrapper(
   relativeModulePath: String = ".",
 ) {
   runWriteActionAndGet {
-    projectRoot.findOrCreateDirectory(relativeModulePath)
+    myProjectRoot.findOrCreateDirectory(relativeModulePath)
       .createGradleWrapper(currentGradleVersion)
   }
 }

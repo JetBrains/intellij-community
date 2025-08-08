@@ -21,7 +21,7 @@ class GradleProjectRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
   @Test
   fun `test project root creation in the simple Gradle project`() {
-    val projectRoot = projectRoot.toNioPath()
+    val projectRoot = myProjectRoot.toNioPath()
     val linkedProjectRoot = projectRoot.getResolvedPath("../linked-project")
     val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 

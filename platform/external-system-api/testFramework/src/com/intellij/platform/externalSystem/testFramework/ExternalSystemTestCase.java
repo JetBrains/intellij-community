@@ -68,9 +68,9 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   private File myTestDir;
   private VirtualFile myProjectConfig;
   private @Nullable WSLDistribution myWSLDistribution;
+  private VirtualFile myProjectRoot;
 
   protected IdeaProjectTestFixture myTestFixture;
-  protected VirtualFile myProjectRoot;
 
   @Override
   protected void setUp() throws Exception {
@@ -376,6 +376,10 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
 
   public @Nullable WSLDistribution getMyWSLDistribution() {
     return myWSLDistribution;
+  }
+
+  public @NotNull VirtualFile getMyProjectRoot() {
+    return myProjectRoot;
   }
 
   protected Module getModule(final String name) {

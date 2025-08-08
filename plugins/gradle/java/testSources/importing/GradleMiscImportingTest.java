@@ -413,7 +413,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
         Module module = ModuleManager.getInstance(getMyProject()).newModule(
           getProjectPath() + "/" + "project" + ModuleFileType.DOT_DEFAULT_EXTENSION, JavaModuleType.getModuleType().getId());
         ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
-        modifiableModel.addContentEntry(myProjectRoot);
+        modifiableModel.addContentEntry(getMyProjectRoot());
         modifiableModel.inheritSdk();
         modifiableModel.commit();
       });

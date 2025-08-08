@@ -19,7 +19,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
   @Test
   fun `test content root creation in the multi-module Gradle project`() {
 
-    val projectRoot = projectRoot.toNioPath()
+    val projectRoot = myProjectRoot.toNioPath()
     val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     Disposer.newDisposable().use { disposable ->
@@ -106,7 +106,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
   @Test
   fun `test content root creation in the Gradle project with included build`() {
 
-    val projectRoot = projectRoot.toNioPath()
+    val projectRoot = myProjectRoot.toNioPath()
     val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     Disposer.newDisposable().use { disposable ->
@@ -234,7 +234,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
     // However, IDEA should keep the old buildSrc modules in the next re-syncs.
     val isBuildSrcResolvedOnSecondCall = isGradleOlderThan("8.0")
 
-    val projectRoot = projectRoot.toNioPath()
+    val projectRoot = myProjectRoot.toNioPath()
     val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     Disposer.newDisposable().use { disposable ->
@@ -373,7 +373,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
   @Test
   fun `test content root configuration outside project root`() {
 
-    val projectRoot = projectRoot.toNioPath()
+    val projectRoot = myProjectRoot.toNioPath()
     val externalProjectRoot = myTestDir.toPath().resolve("external/project/root")
     val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
@@ -427,7 +427,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
   @Test
   fun `test content root configuration with single source root`() {
 
-    val projectRoot = projectRoot.toNioPath()
+    val projectRoot = myProjectRoot.toNioPath()
     val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     Disposer.newDisposable().use { disposable ->

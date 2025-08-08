@@ -263,10 +263,6 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return GradleVersion.version(gradleVersion).getBaseVersion();
   }
 
-  public @NotNull VirtualFile getProjectRoot() {
-    return myProjectRoot;
-  }
-
   @NotNull
   private String requireRealJdkHome() {
     if (getMyWSLDistribution() != null) {
@@ -510,7 +506,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
    * @return a block of `include 'project-name'` lines for settings.gradle
    */
   protected String including(@NonNls String... projects) {
-    return including(myProjectRoot, projects);
+    return including(getMyProjectRoot(), projects);
   }
 
   protected String including(VirtualFile root, @NonNls String... projects) {
@@ -525,11 +521,11 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     // Cannot generate Gradle wrapper using virtual files system.
     // Because the K2MppHighlightingIntegrationTest.testJvmMultifileClass test implicitly depends on the VFS cache.
     // Calling the for VFS refresh after Gradle wrapper generation using Java NIO API also fails this KMP test
-    GradleWrapperUtil.generateGradleWrapper(myProjectRoot.toNioPath(), getCurrentGradleVersion());
+    GradleWrapperUtil.generateGradleWrapper(getMyProjectRoot().toNioPath(), getCurrentGradleVersion());
 
     // VfsUtil.markDirtyAndRefresh(false, true, true, myProjectRoot)
 
-    WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(myProjectRoot.toNioPath());
+    WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(getMyProjectRoot().toNioPath());
     PathAssembler pathAssembler = new PathAssembler(StartParameter.DEFAULT_GRADLE_USER_HOME, new File(getProjectPath()));
     PathAssembler.LocalDistribution localDistribution = pathAssembler.getDistribution(wrapperConfiguration);
 

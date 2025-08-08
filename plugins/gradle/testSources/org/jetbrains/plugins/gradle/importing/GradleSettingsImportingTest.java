@@ -145,7 +145,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     assertContain(new ArrayList<>(configs.keySet()), "gr1");
     Map<String, Object> gradleSettings = configs.get("gr1");
 
-    assertEquals(myProjectRoot.getPath(), ((String)gradleSettings.get("projectPath")).replace('\\', '/'));
+    assertEquals(getMyProjectRoot().getPath(), ((String)gradleSettings.get("projectPath")).replace('\\', '/'));
     assertTrue(((List<?>)gradleSettings.get("taskNames")).contains(":cleanTest"));
     assertEquals("-DvmKey=vmVal", gradleSettings.get("jvmArgs"));
     assertTrue(((Map<?, ?>)gradleSettings.get("envs")).containsKey("env_key"));
@@ -638,7 +638,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   @Test
   public void testRemovingSourceFolderManagerMemLeaking() throws IOException {
     SourceFolderManagerImpl sourceFolderManager = (SourceFolderManagerImpl)SourceFolderManager.getInstance(getMyProject());
-    String javaSourcePath = FileUtil.toCanonicalPath(myProjectRoot.getPath() + "/java");
+    String javaSourcePath = FileUtil.toCanonicalPath(getMyProjectRoot().getPath() + "/java");
     String javaSourceUrl = VfsUtilCore.pathToUrl(javaSourcePath);
     {
       importProject(
@@ -667,7 +667,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     importProject(createBuildScriptBuilder().generate());
     Application application = ApplicationManager.getApplication();
     Ref<Project> projectRef = new Ref<>();
-    application.invokeAndWait(() -> projectRef.set(ProjectUtil.openOrImport(myProjectRoot.toNioPath())));
+    application.invokeAndWait(() -> projectRef.set(ProjectUtil.openOrImport(getMyProjectRoot().toNioPath())));
     Project project = projectRef.get();
     SourceFolderManagerImpl sourceFolderManager = (SourceFolderManagerImpl)SourceFolderManager.getInstance(project);
     try {

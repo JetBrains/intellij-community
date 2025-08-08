@@ -20,7 +20,7 @@ class GradleSourceRootSyncContributorTest : GradlePhasedSyncTestCase() {
   @Test
   fun `test source root creation in the multi-module Gradle project`() {
 
-    val projectRoot = projectRoot.toNioPath()
+    val projectRoot = myProjectRoot.toNioPath()
     val virtualFileUrlManager = myProject.workspaceModel.getVirtualFileUrlManager()
 
     Disposer.newDisposable().use { disposable ->

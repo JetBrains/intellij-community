@@ -89,7 +89,7 @@ class KotlinMppRunConfigurationsTest : AbstractKotlinMppGradleImportingTest() {
              * ```
              */
             runAfterTestExecution {
-                val nativeTestFile = projectRoot.findFile("src/nativeTest/kotlin/NativeTest.kt") ?: error("Missing 'NativeTest.kt'")
+                val nativeTestFile = myProjectRoot.findFile("src/nativeTest/kotlin/NativeTest.kt") ?: error("Missing 'NativeTest.kt'")
                 runInEdtAndWait {
                     codeInsightTestFixture.openFileInEditor(nativeTestFile)
                     codeInsightTestFixture.doHighlighting()
@@ -133,7 +133,7 @@ class KotlinMppRunConfigurationsTest : AbstractKotlinMppGradleImportingTest() {
              * ```
              */
             runAfterTestExecution {
-                val nativeTestFile = projectRoot.findFile("src/commonTest/kotlin/CommonTest.kt") ?: error("Missing 'CommonTest.kt'")
+                val nativeTestFile = myProjectRoot.findFile("src/commonTest/kotlin/CommonTest.kt") ?: error("Missing 'CommonTest.kt'")
                 runInEdtAndWait {
                     codeInsightTestFixture.openFileInEditor(nativeTestFile)
                     codeInsightTestFixture.doHighlighting()

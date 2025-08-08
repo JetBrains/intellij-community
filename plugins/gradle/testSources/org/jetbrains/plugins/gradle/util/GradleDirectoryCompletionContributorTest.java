@@ -30,7 +30,7 @@ public class GradleDirectoryCompletionContributorTest extends GradleImportingTes
       "apply plugin: 'java'\n" +
       "sourceSets { main { java { srcDirs 'src/main/java2' } } }");
 
-    check(myProjectRoot,
+    check(getMyProjectRoot(),
           Pair.create("src/main/java", JavaSourceRootType.SOURCE),
           Pair.create("src/main/resources", JavaResourceRootType.RESOURCE),
           Pair.create("src/main/java2", JavaSourceRootType.SOURCE),

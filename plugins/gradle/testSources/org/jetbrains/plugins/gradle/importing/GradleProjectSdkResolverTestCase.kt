@@ -121,6 +121,6 @@ abstract class GradleProjectSdkResolverTestCase : GradleImportingTestCase() {
 
   fun createDaemonJvmPropertiesFile(sdk: Sdk) {
     val version = JavaVersion.tryParse(sdk.versionString!!)
-    VfsTestUtil.createFile(projectRoot, "gradle/gradle-daemon-jvm.properties", "toolchainVersion=$version")
+    VfsTestUtil.createFile(myProjectRoot, "gradle/gradle-daemon-jvm.properties", "toolchainVersion=$version")
   }
 }
