@@ -581,20 +581,20 @@
       </option>
       <option name="INLAY_BUTTON_DEFAULT">
         <value>
-          <option name="FOREGROUND" value="494b57"/>
-          <option name="EFFECT_COLOR" value="000000"/>
+          <option name="FOREGROUND" value="9DA0A8"/>
+          <option name="EFFECT_COLOR" value="ffffff33"/>
         </value>
       </option>
       <option name="INLAY_BUTTON_FOCUSED">
         <value>
-          <option name="FOREGROUND" value="494b57"/>
-          <option name="EFFECT_COLOR" value="000000"/>
+          <option name="FOREGROUND" value="9DA0A8"/>
+          <option name="EFFECT_COLOR" value="ffffff52"/>
         </value>
       </option>
       <option name="INLAY_BUTTON_HOVERED">
         <value>
-          <option name="FOREGROUND" value="494b57"/>
-          <option name="EFFECT_COLOR" value="3574f0"/>
+          <option name="FOREGROUND" value="9DA0A8"/>
+          <option name="EFFECT_COLOR" value="ffffff52"/>
         </value>
       </option>
       <option name="AI_INLAY_BUTTON_DEFAULT">
@@ -2468,20 +2468,20 @@
       </option>
       <option name="INLAY_BUTTON_DEFAULT">
         <value>
-          <option name="FOREGROUND" value="9da0a8"/>
-          <option name="EFFECT_COLOR" value="ffffff"/>
+          <option name="FOREGROUND" value="9DA0A8"/>
+          <option name="EFFECT_COLOR" value="ffffff33"/>
         </value>
       </option>
       <option name="INLAY_BUTTON_FOCUSED">
         <value>
-          <option name="FOREGROUND" value="9da0a8"/>
-          <option name="EFFECT_COLOR" value="ffffff"/>
+          <option name="FOREGROUND" value="9DA0A8"/>
+          <option name="EFFECT_COLOR" value="ffffff52"/>
         </value>
       </option>
       <option name="INLAY_BUTTON_HOVERED">
         <value>
-          <option name="FOREGROUND" value="9da0a8"/>
-          <option name="EFFECT_COLOR" value="3574f0"/>
+          <option name="FOREGROUND" value="9DA0A8"/>
+          <option name="EFFECT_COLOR" value="ffffff52"/>
         </value>
       </option>
       <option name="AI_INLAY_BUTTON_DEFAULT">
