@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
@@ -30,6 +31,10 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContributor<KotlinExpressionNameReferencePositionContext>(
     KotlinExpressionNameReferencePositionContext::class
 ) {
+
+    override fun KaSession.shouldExecute(context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>): Boolean {
+        return !context.positionContext.isAfterRangeOperator()
+    }
 
     override fun KaSession.complete(context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>) {
         if (context.positionContext.explicitReceiver != null) return

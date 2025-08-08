@@ -143,7 +143,7 @@ private fun <P : KotlinRawPositionContext> KaSession.createCommonSectionData(
  * The purpose of this class is to model a priority queue of elements between different threads, where each thread
  * may add elements to its own local queue that should not affect other threads.
  */
-private class SharedPriorityQueue<P, C: Comparable<C>>(
+private class SharedPriorityQueue<P, C : Comparable<C>>(
     initialElements: Collection<P>,
     comparatorSelector: (P) -> Comparable<C>
 ) {
@@ -151,7 +151,7 @@ private class SharedPriorityQueue<P, C: Comparable<C>>(
     private val globalQueue: LinkedList<P> = LinkedList(initialElements)
 
     init {
-      globalQueue.sortWith(comparator)
+        globalQueue.sortWith(comparator)
     }
 
     inner class LocalInstance {
@@ -189,7 +189,15 @@ private class SharedPriorityQueue<P, C: Comparable<C>>(
         }
     }
 
-    fun getLocalInstance() : LocalInstance = LocalInstance()
+    fun getLocalInstance(): LocalInstance = LocalInstance()
+}
+
+context(KaSession)
+private fun <P : KotlinRawPositionContext> K2CompletionSection<P>.executeIfAllowed(context: K2CompletionSectionContext<P>) {
+    with(contributor) {
+        if (!this@KaSession.shouldExecute(context)) return
+    }
+    runnable(this@KaSession, context)
 }
 
 /**
@@ -226,8 +234,9 @@ private class SequentialCompletionRunner : K2CompletionRunner {
                         globalAndLocalQueue.addLocal(section)
                     },
                 )
+
                 // We make sure we have the correct position before running the completion section.
-                section.runnable(this@analyze, sectionContext)
+                section.executeIfAllowed(sectionContext)
             }
         }
 
@@ -285,7 +294,7 @@ private class ParallelCompletionRunner : K2CompletionRunner {
         val sectionsWithSinks = sections.map { it to K2AccumulatingLookupElementSink() }
         // This is the queue of all remaining sections ordered by their priority. Each thread will pick the
         // remaining section with the highest priority when choosing a new section to run.
-        val remainingSectionsQueue = SharedPriorityQueue(sectionsWithSinks) { it.first.priority}
+        val remainingSectionsQueue = SharedPriorityQueue(sectionsWithSinks) { it.first.priority }
 
         // If this block is canceled, so are all the threads launched inside the scope.
         return runBlockingCancellable {
@@ -320,7 +329,7 @@ private class ParallelCompletionRunner : K2CompletionRunner {
                                 )
 
                                 try {
-                                    currentSection.runnable(this@analyze, sectionContext)
+                                    currentSection.executeIfAllowed(sectionContext)
                                 } finally {
                                     sectionSink.close()
                                 }

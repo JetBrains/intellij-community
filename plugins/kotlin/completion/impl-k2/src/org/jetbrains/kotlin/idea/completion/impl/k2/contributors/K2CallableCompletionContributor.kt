@@ -914,6 +914,10 @@ internal class K2CallableCompletionContributor : K2AbstractCallableCompletionCon
         is KotlinWithSubjectEntryPositionContext -> 2
         else -> 0
     }
+
+    override fun KaSession.shouldExecute(context: K2CompletionSectionContext<KotlinNameReferencePositionContext>): Boolean {
+        return !context.positionContext.isAfterRangeOperator()
+    }
 }
 
 internal class K2CallableReferenceCompletionContributor : K2AbstractCallableCompletionContributor<KotlinCallableReferencePositionContext>(

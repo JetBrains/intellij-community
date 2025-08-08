@@ -43,10 +43,11 @@ internal class K2KeywordCompletionContributor : K2SimpleCompletionContributor<Ko
             )
         }
 
+    override fun KaSession.shouldExecute(context: K2CompletionSectionContext<KotlinRawPositionContext>): Boolean {
+        return !context.positionContext.isAfterRangeOperator() && !context.positionContext.allowsOnlyNamedArguments()
+    }
 
     override fun KaSession.complete(context: K2CompletionSectionContext<KotlinRawPositionContext>) {
-        if (context.positionContext.isAfterRangeOperator() || context.positionContext.allowsOnlyNamedArguments()) return
-
         val positionContext = context.positionContext
         val expression = when (positionContext) {
             is KotlinLabelReferencePositionContext -> positionContext.nameExpression.let { label -> getExpressionWithLabel(label) ?: label }
@@ -84,7 +85,7 @@ internal class K2KeywordCompletionContributor : K2SimpleCompletionContributor<Ko
     private fun getExpressionWithLabel(label: KtLabelReferenceExpression): KtExpressionWithLabel? =
         label.parents(withSelf = false).match(KtContainerNode::class, last = KtExpressionWithLabel::class)
 
-    override fun K2CompletionSetupScope<KotlinRawPositionContext>.shouldExecute(): Boolean = when (position) {
+    override fun K2CompletionSetupScope<KotlinRawPositionContext>.isAppropriateContext(): Boolean = when (position) {
         is KotlinUnknownPositionContext -> !position.isAfterRangeToken()
 
         is KotlinExpressionNameReferencePositionContext,

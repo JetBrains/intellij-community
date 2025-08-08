@@ -331,7 +331,7 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor : K2Simple
         else -> false
     }
 
-    override fun K2CompletionSetupScope<KotlinRawPositionContext>.shouldExecute(): Boolean = when (position) {
+    override fun K2CompletionSetupScope<KotlinRawPositionContext>.isAppropriateContext(): Boolean = when (position) {
         is KotlinTypeNameReferencePositionContext,
         is KotlinSimpleParameterPositionContext,
         is KotlinPrimaryConstructorParameterPositionContext -> true

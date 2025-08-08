@@ -88,29 +88,25 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
         }
     }
 
-    context(KaSession)
-    private fun isInvalidPosition(positionContext: KotlinNameReferencePositionContext): Boolean {
-        return positionContext.isAfterRangeOperator() || positionContext.allowsOnlyNamedArguments()
-    }
-
     override fun K2CompletionSetupScope<KotlinNameReferencePositionContext>.registerCompletions() {
         val explicitReceiver = position.explicitReceiver
         if (explicitReceiver != null) {
             complete("With Receiver") {
-                if (isInvalidPosition(position)) return@complete
                 completeWithReceiver(explicitReceiver, it)
             }
         } else {
             complete("Without Receiver") {
-                if (isInvalidPosition(position)) return@complete
                 completeWithoutReceiverFromScopes(it)
             }
 
             complete("Without Receiver From index", priority = INDEX) {
-                if (isInvalidPosition(position)) return@complete
                 completeWithoutReceiverFromIndex(it)
             }
         }
+    }
+
+    override fun KaSession.shouldExecute(context: K2CompletionSectionContext<KotlinNameReferencePositionContext>): Boolean {
+        return !context.positionContext.isAfterRangeOperator() && !context.positionContext.allowsOnlyNamedArguments()
     }
 
     context(KaSession)
@@ -323,7 +319,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
         else -> 0
     }
 
-    override fun K2CompletionSetupScope<KotlinNameReferencePositionContext>.shouldExecute(): Boolean {
+    override fun K2CompletionSetupScope<KotlinNameReferencePositionContext>.isAppropriateContext(): Boolean {
         if (position !is KotlinTypeNameReferencePositionContext) return true
         return position.allowsClassifiersAndPackagesForPossibleExtensionCallables(
             parameters = completionContext.parameters,

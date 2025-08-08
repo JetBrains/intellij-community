@@ -20,9 +20,12 @@ import org.jetbrains.kotlin.idea.util.positionContext.*
 internal class K2PackageCompletionContributor : K2SimpleCompletionContributor<KotlinRawPositionContext>(
     KotlinRawPositionContext::class
 ) {
+    override fun KaSession.shouldExecute(context: K2CompletionSectionContext<KotlinRawPositionContext>): Boolean {
+        return !context.positionContext.isAfterRangeOperator() && !context.positionContext.allowsOnlyNamedArguments()
+    }
+
     @OptIn(KaExperimentalApi::class)
     override fun KaSession.complete(context: K2CompletionSectionContext<KotlinRawPositionContext>) {
-        if (context.positionContext.isAfterRangeOperator() || context.positionContext.allowsOnlyNamedArguments()) return
         val rootSymbol = context.positionContext.resolveReceiverToSymbols()
             .filterIsInstance<KaPackageSymbol>()
             .singleOrNull()
@@ -43,7 +46,7 @@ internal class K2PackageCompletionContributor : K2SimpleCompletionContributor<Ko
             }.forEach { context.addElement(it) }
     }
 
-    override fun K2CompletionSetupScope<KotlinRawPositionContext>.shouldExecute(): Boolean = when (position) {
+    override fun K2CompletionSetupScope<KotlinRawPositionContext>.isAppropriateContext(): Boolean = when (position) {
         is KotlinTypeNameReferencePositionContext -> {
             position.allowsClassifiersAndPackagesForPossibleExtensionCallables(
                 parameters = completionContext.parameters,
