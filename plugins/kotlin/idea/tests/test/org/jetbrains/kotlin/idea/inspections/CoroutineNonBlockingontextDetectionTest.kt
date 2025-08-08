@@ -9,12 +9,8 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.test.TestMetadata
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.runner.RunWith
 
 private val ktProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
     listOf(TestKotlinArtifacts.kotlinStdlib), listOf(TestKotlinArtifacts.kotlinStdlibSources)
@@ -32,8 +28,11 @@ abstract class AbstractCoroutineNonBlockingContextDetectionTest : KotlinLightCod
 
     override fun getProjectDescriptor(): LightProjectDescriptor = ktProjectDescriptor
 
-    protected fun doTest(fileName: String) {
-        val fileText = dataFile(fileName).readText()
+    protected fun doTest(unused: String) {
+        val fileName = fileName()
+
+        val dataFile = dataFile(fileName)
+        val fileText = dataFile.readText()
 
         val considerUnknownAsBlocking = 
             InTextDirectivesUtils.getPrefixedBoolean(fileText, CONSIDER_UNKNOWN_AS_BLOCKING)
@@ -52,60 +51,5 @@ abstract class AbstractCoroutineNonBlockingContextDetectionTest : KotlinLightCod
         } finally {
             myFixture.disableInspections(inspection)
         }
-    }
-}
-
-@TestRoot("idea/tests")
-@TestMetadata("testData/inspections/blockingCallsDetection")
-@RunWith(JUnit38ClassRunner::class)
-class CoroutineNonBlockingContextDetectionTest : AbstractCoroutineNonBlockingContextDetectionTest() {
-    fun testSimpleCoroutineScope() {
-        doTest("InsideCoroutine.kt")
-    }
-
-    fun testCoroutineContextCheck() {
-        doTest("ContextCheck.kt")
-    }
-
-    fun testLambdaReceiverType() {
-        doTest("LambdaReceiverTypeCheck.kt")
-    }
-
-    fun testDispatchersTypeDetection() {
-        doTest("DispatchersTypeCheck.kt")
-    }
-
-    fun testLambdaInSuspendDeclaration() {
-        doTest("LambdaAssignmentCheck.kt")
-    }
-
-    fun testFlowOn() {
-        doTest("FlowOn.kt")
-    }
-}
-
-@TestRoot("idea/tests")
-@TestMetadata("testData/inspections/blockingCallsDetection")
-@RunWith(JUnit38ClassRunner::class)
-class CoroutineNonBlockingContextDetectionWithUnsureAsBlockingTest : AbstractCoroutineNonBlockingContextDetectionTest() {
-    fun testCoroutineScope() {
-        doTest("InsideCoroutineUnsure.kt")
-    }
-
-    fun testLambdaInSuspendDeclaration() {
-        doTest("LambdaAssignmentCheckUnsure.kt")
-    }
-
-    fun testDispatchersTypeDetection() {
-        doTest("DispatchersTypeCheckUnsure.kt")
-    }
-}
-
-@TestRoot("idea/tests")
-@TestMetadata("testData/inspections/blockingCallsDetection")
-@RunWith(JUnit38ClassRunner::class)
-class CoroutineNonBlockingDetectionWithUnsureAsBlockingAndSuspendNonBlocking : AbstractCoroutineNonBlockingContextDetectionTest() {
-    fun testSimpleCoroutineScope() {
-        doTest("InsideCoroutine_unknownAsBlocking.kt")
     }
 }
