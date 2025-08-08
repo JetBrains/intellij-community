@@ -62,7 +62,7 @@ internal fun generateDeps(
 
       // intellij.platform.configurationStore.tests uses internal symbols from intellij.platform.configurationStore.impl
       val dependencyModuleName = dependencyModule.name
-      val effectiveDepContainer = if (isTestFriend(dependentModuleName, dependencyModuleName, testModuleProperties)) associates else deps
+      val effectiveDepContainer = if (isTestFriend(dependencyModuleName, testModuleProperties)) associates else deps
       addDep(
         isTest = isTest,
         scope = scope,
@@ -279,17 +279,13 @@ private fun getFileMavenFileDescription(lib: JpsTypedLibrary<JpsSimpleElement<Jp
 }
 
 private fun isTestFriend(
-  dependentModuleName: @NlsSafe String,
   dependencyModuleName: @NlsSafe String,
   testModuleProperties: JpsTestModuleProperties?,
 ): Boolean {
   if (testModuleProperties != null) {
     return testModuleProperties.productionModuleReference.moduleName == dependencyModuleName
   }
-  return dependentModuleName.endsWith(".tests") &&
-         dependentModuleName != "intellij.platform.core.nio.fs" &&
-         (dependencyModuleName.endsWith(".impl")) &&
-         dependentModuleName.removeSuffix(".tests") == dependencyModuleName.removeSuffix(".impl")
+  return false
 }
 
 private fun addDep(
