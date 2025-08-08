@@ -925,7 +925,9 @@
         <action id="ReportProblem" class="com.intellij.ide.actions.ReportProblemAction"/>
         <action id="SendFeedback" class="com.intellij.ide.actions.SendFeedbackAction"/>
         <separator/>
-        <action id="OpenLog" internal="true" class="com.intellij.internal.OpenLogAction"/>
+        <action id="OpenLog" internal="true" class="com.intellij.internal.OpenLogAction">
+          <synonym key="action.OpenLog.Show.text"/>
+        </action>
         <action id="ShowLog" class="com.intellij.ide.actions.ShowLogAction">
           <synonym key="action.ShowLog.Finder.text"/>
           <synonym key="action.ShowLog.Explorer.text"/>
