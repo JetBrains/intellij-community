@@ -35,12 +35,9 @@ jvm_library(
 
 jvm_library(
   name = "vcs-tests_test_lib",
+  module_name = "intellij.platform.vcs.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  associates = [
-    "//platform/vcs-impl",
-    "//platform/vcs-impl:vcs-impl_test_lib",
-  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -51,6 +48,8 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util/diff",
     "//platform/vcs-tests:vcs-testFramework",
+    "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/lang-impl",
     "//platform/vcs-impl/lang",
     "//platform/vcs-api/vcs-api-core:vcs-core",

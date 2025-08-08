@@ -65,11 +65,12 @@ jvm_library(
 
 jvm_library(
   name = "toolingExtension-tests_test_lib",
+  module_name = "intellij.gradle.toolingExtension.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  associates = ["//plugins/gradle/tooling-extension-impl:toolingExtension-impl"],
   deps = [
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
     "//plugins/gradle:gradle-common",
     "//java/testFramework",
     "@lib//:assert_j",

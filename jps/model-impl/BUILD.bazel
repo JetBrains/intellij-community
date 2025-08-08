@@ -37,11 +37,12 @@ jvm_library(
 
 jvm_library(
   name = "model-tests_test_lib",
+  module_name = "intellij.platform.jps.model.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  associates = ["//jps/model-impl"],
   deps = [
     "//jps/model-api:model",
+    "//jps/model-impl",
     "@lib//:kotlin-stdlib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

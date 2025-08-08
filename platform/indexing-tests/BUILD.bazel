@@ -9,14 +9,15 @@ jvm_library(
 
 jvm_library(
   name = "indexing-tests_test_lib",
+  module_name = "intellij.platform.indexing.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  associates = ["//platform/indexing-impl"],
   deps = [
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
     "//platform/indexing-api:indexing",
+    "//platform/indexing-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ]

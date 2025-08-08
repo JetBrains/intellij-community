@@ -15,9 +15,9 @@ jvm_library(
 
 jvm_library(
   name = "tests_test_lib",
+  module_name = "intellij.platform.diff.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  associates = ["//platform/diff-impl"],
   deps = [
     "//platform/core-api:core",
     "//platform/diff-api:diff",
@@ -29,6 +29,7 @@ jvm_library(
     "//platform/util/diff",
     "//platform/vcs-api/vcs-api-core:vcs-core",
     "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
+    "//platform/diff-impl",
     "@lib//:mockito",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-ex:editor-ex",

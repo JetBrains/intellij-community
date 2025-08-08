@@ -9,12 +9,9 @@ jvm_library(
 
 jvm_library(
   name = "tests_test_lib",
+  module_name = "kotlin.gradle.gradle-tooling.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  associates = [
-    "//plugins/kotlin/gradle/gradle-tooling/impl",
-    "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
-  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-project-model",
@@ -24,6 +21,8 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-tooling",
     "//plugins/kotlin/tests-common",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
     "@lib//:gradle",

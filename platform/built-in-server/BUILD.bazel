@@ -64,9 +64,9 @@ jvm_library(
 
 jvm_library(
   name = "builtInServer-tests_test_lib",
+  module_name = "intellij.platform.builtInServer.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  associates = ["//platform/built-in-server:builtInServer-impl"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
@@ -90,6 +90,7 @@ jvm_library(
     "//platform/vcs-api:vcs",
     "@lib//:kotlin-stdlib",
     "@lib//:assert_j",
+    "//platform/built-in-server:builtInServer-impl",
     "@lib//:netty-codec-http",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:netty-buffer",

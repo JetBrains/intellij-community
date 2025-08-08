@@ -9,10 +9,11 @@ jvm_library(
 
 jvm_library(
   name = "compiler-tests_test_lib",
+  module_name = "intellij.java.compiler.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
-  associates = ["//java/compiler/impl"],
   deps = [
+    "//java/compiler/impl",
     "//java/compiler/openapi:java-compiler",
     "//java/testFramework",
     "//java/openapi:java",

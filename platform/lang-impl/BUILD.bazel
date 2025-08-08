@@ -146,9 +146,9 @@ jvm_library(
 
 jvm_library(
   name = "lang-tests_test_lib",
+  module_name = "intellij.platform.lang.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
-  associates = ["//platform/lang-impl"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/boot",
@@ -170,6 +170,7 @@ jvm_library(
     "@lib//:junit4",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-impl",
     "//platform/usageView",
     "@lib//:cli-parser",
     "//platform/indexing-api:indexing",

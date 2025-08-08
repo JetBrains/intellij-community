@@ -9,9 +9,9 @@ jvm_library(
 
 jvm_library(
   name = "frontback-tests_test_lib",
+  module_name = "intellij.java.frontback.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  associates = ["//java/java-frontback-impl:frontback-impl"],
   deps = [
     "@lib//:easymock",
     "@lib//:mockito",
@@ -30,6 +30,7 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/backend/workspace",
+    "//java/java-frontback-impl:frontback-impl",
     "//platform/platform-tests:tests_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",

@@ -9,9 +9,9 @@ jvm_library(
 
 jvm_library(
   name = "dom-tests_test_lib",
+  module_name = "intellij.xml.dom.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
-  associates = ["//xml/dom-impl"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -19,6 +19,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
+    "//xml/dom-impl",
     "//xml/impl",
     "//java/testFramework",
     "//java/java-psi-impl:psi-impl",

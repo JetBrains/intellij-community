@@ -15,9 +15,9 @@ jvm_library(
 
 jvm_library(
   name = "tests_test_lib",
+  module_name = "intellij.java.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True, exclude = ["testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/precompiledData/**/*"]),
-  associates = ["//java/java-impl:impl"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -37,6 +37,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
+    "//java/java-impl:impl",
     "//java/java-impl-inspections:impl-inspections",
     "//platform/platform-impl/concurrency",
     "//java/idea-ui:ui",

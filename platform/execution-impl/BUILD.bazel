@@ -81,9 +81,9 @@ jvm_library(
 
 jvm_library(
   name = "execution-tests_test_lib",
+  module_name = "intellij.platform.execution.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
-  associates = ["//platform/execution-impl"],
   deps = [
     "//platform/core-api:core",
     "//platform/platform-util-io:ide-util-io",
@@ -91,6 +91,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/execution-impl",
     "//platform/execution",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",

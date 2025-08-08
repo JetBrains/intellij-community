@@ -15,9 +15,9 @@ jvm_library(
 
 jvm_library(
   name = "tests_test_lib",
+  module_name = "intellij.xml.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  associates = ["//xml/impl"],
   deps = [
     "@lib//:junit4",
     "//platform/analysis-api:analysis",
@@ -30,6 +30,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",
+    "//xml/impl",
     "//java/testFramework",
     "//java/idea-ui:ui",
     "//java/java-impl:impl",
