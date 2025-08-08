@@ -383,7 +383,3 @@ suspend fun unknownContext() {
                                      " but should have intention to change behaviour instead", info)
     }
 }
-
-internal class BlockingCallRelatedFixesTest : AbstractBlockingCallRelatedFixesTest() {
-    override val pluginMode: KotlinPluginMode get() = KotlinPluginMode.K1
-}
