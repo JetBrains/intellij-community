@@ -20,33 +20,28 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.completion.*
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSetupScope
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalElementOfSelf
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.VariableOrParameterNameWithTypeWeigher.nameWithTypePriority
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinValueParameterPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 
-internal class K2VariableOrParameterNameWithTypeCompletionContributor(
-    sink: LookupElementSink,
-    priority: Int = 0,
-) : FirCompletionContributorBase<KotlinRawPositionContext>(sink, priority) {
+internal class K2VariableOrParameterNameWithTypeCompletionContributor : K2SimpleCompletionContributor<KotlinRawPositionContext>(
+    positionContextClass = KotlinRawPositionContext::class,
+    priority = K2ContributorSectionPriority.HEURISTIC,
+) {
 
-    private val nameFiltersWithUserPrefixes: List<Pair<NameFilter, String>> = getNameFiltersWithUserPrefixes()
-
-    context(KaSession)
-    override fun complete(
-        positionContext: KotlinRawPositionContext,
-        weighingContext: WeighingContext,
-    ) {
-        val variableOrParameter: KtCallableDeclaration = when (positionContext) {
+    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinRawPositionContext>) {
+        val variableOrParameter: KtCallableDeclaration = when (val positionContext = context.positionContext) {
             is KotlinValueParameterPositionContext -> positionContext.ktParameter.takeIf { NameWithTypeCompletion.shouldCompleteParameter(it) }
             is KotlinTypeNameReferencePositionContext ->
                 positionContext.typeReference?.let { getDeclarationFromReceiverTypeReference(it) } as? KtProperty
@@ -54,39 +49,48 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor(
             else -> null
         } ?: return
 
-        sink.restartCompletionOnPrefixChange(NameWithTypeCompletion.prefixEndsWithUppercaseLetterPattern)
+        context.sink.restartCompletionOnPrefixChange(NameWithTypeCompletion.prefixEndsWithUppercaseLetterPattern)
 
         val lookupNamesAdded = mutableSetOf<String>()
-        val scopeContext = originalKtFile.scopeContext(variableOrParameter)
+        val scopeContext = context.completionContext.originalFile.scopeContext(variableOrParameter)
+        val nameFiltersWithUserPrefixes: List<Pair<NameFilter, String>> = getNameFiltersWithUserPrefixes(context)
 
         completeFromParametersInFile(
-            positionContext = positionContext,
+            context = context,
             variableOrParameter = variableOrParameter,
             lookupNamesAdded = lookupNamesAdded,
             scopeContext = scopeContext,
         )
-        completeClassesFromScopeContext(
-            positionContext = positionContext,
-            variableOrParameter = variableOrParameter,
-            lookupNamesAdded = lookupNamesAdded,
-            scopeContext = scopeContext,
-            weighingContext = weighingContext,
-        )
-        completeClassesFromIndices(
-            positionContext = positionContext,
-            variableOrParameter = variableOrParameter,
-            lookupNamesAdded = lookupNamesAdded,
-            weighingContext = weighingContext,
-        )
+
+        context.completeLaterInSameSession("Classes From Scope Context", priority = K2ContributorSectionPriority.DEFAULT) { innerContext ->
+            completeClassesFromScopeContext(
+                context = innerContext,
+                variableOrParameter = variableOrParameter,
+                lookupNamesAdded = lookupNamesAdded,
+                nameFiltersWithUserPrefixes = nameFiltersWithUserPrefixes,
+                scopeContext = scopeContext,
+            )
+        }
+
+        context.completeLaterInSameSession("Classes From Indices", priority = K2ContributorSectionPriority.INDEX) { innerContext ->
+            completeClassesFromIndices(
+                context = innerContext,
+                variableOrParameter = variableOrParameter,
+                nameFiltersWithUserPrefixes = nameFiltersWithUserPrefixes,
+                lookupNamesAdded = lookupNamesAdded,
+            )
+        }
     }
 
     context(KaSession)
     private fun completeFromParametersInFile(
-        positionContext: KotlinRawPositionContext,
+        context: K2CompletionSectionContext<KotlinRawPositionContext>,
         variableOrParameter: KtCallableDeclaration,
         lookupNamesAdded: MutableSet<String>,
         scopeContext: KaScopeContext,
     ) {
+        val originalKtFile = context.completionContext.originalFile
+        val prefixMatcher = context.prefixMatcher
         val typeParametersScope = scopeContext.compositeScope { it is KaScopeKind.TypeParameterScope }
         val availableTypeParameters = getAvailableTypeParameters(typeParametersScope).toSet()
 
@@ -114,7 +118,7 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor(
             if (name == null || variableOrParameterInOriginal == parameter || !prefixMatcher.isStartMatch(name)) return@mapNotNull null
 
             val type = parameter.returnType
-            if (typeIsVisible(positionContext, type, availableTypeParameters)) {
+            if (typeIsVisible(context, type, availableTypeParameters)) {
 
                 val typeLookupElement = KotlinFirLookupElementFactory.createTypeLookupElement(type) ?: return@mapNotNull null
                 val lookupElement = createLookupElement(variableOrParameter, name, typeLookupElement)
@@ -132,31 +136,32 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor(
             if (!shouldInsertType(variableOrParameter) && lookupNamesAdded.contains(name)) continue
 
             lookupElement.nameWithTypePriority = -count // suggestions that appear more often than others get higher priority
-            sink.addElement(lookupElement)
+            context.addElement(lookupElement)
             lookupNamesAdded.add(name)
         }
     }
 
     context(KaSession)
     private fun completeClassesFromScopeContext(
-        positionContext: KotlinRawPositionContext,
+        context: K2CompletionSectionContext<KotlinRawPositionContext>,
         variableOrParameter: KtCallableDeclaration,
+        nameFiltersWithUserPrefixes: List<Pair<NameFilter, String>>,
         lookupNamesAdded: MutableSet<String>,
         scopeContext: KaScopeContext,
-        weighingContext: WeighingContext
     ) {
         for (scopeWithKind in scopeContext.scopes) {
             for ((nameFilter, userPrefix) in nameFiltersWithUserPrefixes) {
                 scopeWithKind.scope
                     .classifiers(nameFilter)
-                    .filter { visibilityChecker.isVisible(it, positionContext) }
+                    .filter { context.visibilityChecker.isVisible(it, context.positionContext) }
                     .forEach {
                         addSuggestions(
+                            context = context,
                             variableOrParameter = variableOrParameter,
                             symbol = it,
                             userPrefix = userPrefix,
                             lookupNamesAdded = lookupNamesAdded,
-                            weighingContext = weighingContext,
+                            weighingContext = context.weighingContext,
                             scopeKind = scopeWithKind.kind,
                         )
                     }
@@ -166,25 +171,26 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor(
 
     context(KaSession)
     private fun completeClassesFromIndices(
-        positionContext: KotlinRawPositionContext,
+        context: K2CompletionSectionContext<KotlinRawPositionContext>,
         variableOrParameter: KtCallableDeclaration,
+        nameFiltersWithUserPrefixes: List<Pair<NameFilter, String>>,
         lookupNamesAdded: MutableSet<String>,
-        weighingContext: WeighingContext,
     ) {
         for ((nameFilter, userPrefix) in nameFiltersWithUserPrefixes) {
             getAvailableClassifiersFromIndex(
-                positionContext = positionContext,
-                parameters = parameters,
-                symbolProvider = symbolFromIndexProvider,
+                positionContext = context.positionContext,
+                parameters = context.parameters,
+                symbolProvider = context.symbolFromIndexProvider,
                 scopeNameFilter = nameFilter,
-                visibilityChecker = visibilityChecker,
+                visibilityChecker = context.visibilityChecker,
             ).forEach {
                 addSuggestions(
+                    context = context,
                     variableOrParameter = variableOrParameter,
                     symbol = it,
                     userPrefix = userPrefix,
                     lookupNamesAdded = lookupNamesAdded,
-                    weighingContext = weighingContext,
+                    weighingContext = context.weighingContext,
                 )
             }
         }
@@ -192,6 +198,7 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor(
 
     context(KaSession)
     private fun addSuggestions(
+        context: K2CompletionSectionContext<KotlinRawPositionContext>,
         variableOrParameter: KtCallableDeclaration,
         symbol: KaClassifierSymbol,
         userPrefix: String,
@@ -219,7 +226,7 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor(
         for (nameSuggestion in nameSuggestions) {
             val name = userPrefix + nameSuggestion
 
-            if (!prefixMatcher.isStartMatch(name)) continue
+            if (!context.prefixMatcher.isStartMatch(name)) continue
 
             if (!shouldInsertType(variableOrParameter) && !lookupNamesAdded.add(name)) continue
 
@@ -227,7 +234,7 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor(
             lookupElement.nameWithTypePriority = userPrefix.length // suggestions with longer user prefix get lower priority
             lookupElement.applyWeighs(weighingContext, KtSymbolWithOrigin(symbol, scopeKind))
 
-            sink.addElement(lookupElement)
+            context.addElement(lookupElement)
         }
     }
 
@@ -260,8 +267,8 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor(
      * where the first component is a user prefix and the second one is a prefix for matcher.
      * The second prefix is then used to create a matcher.
      */
-    private fun getMatchersWithUserPrefixes(): List<Pair<PrefixMatcher, String>> {
-        val prefix = prefixMatcher.prefix
+    private fun getMatchersWithUserPrefixes(context: K2CompletionSectionContext<KotlinRawPositionContext>): List<Pair<PrefixMatcher, String>> {
+        val prefix = context.prefixMatcher.prefix
         val prefixWords = if (StringUtil.isCapitalized(prefix)) emptyArray() else NameUtil.splitNameIntoWords(prefix)
 
         return prefixWords.indices.map { index ->
@@ -273,8 +280,8 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor(
         }
     }
 
-    private fun getNameFiltersWithUserPrefixes(): List<Pair<NameFilter, String>> {
-        val matchersWithUserPrefixes = getMatchersWithUserPrefixes()
+    private fun getNameFiltersWithUserPrefixes(context: K2CompletionSectionContext<KotlinRawPositionContext>): List<Pair<NameFilter, String>> {
+        val matchersWithUserPrefixes = getMatchersWithUserPrefixes(context)
 
         return matchersWithUserPrefixes.mapIndexed { index, matcherWithUserPrefix ->
             val (matcher, userPrefix) = matcherWithUserPrefix
@@ -300,17 +307,17 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor(
 
     context(KaSession)
     private fun typeIsVisible(
-        positionContext: KotlinRawPositionContext,
+        context: K2CompletionSectionContext<KotlinRawPositionContext>,
         type: KaType,
         availableTypeParameters: Set<KaTypeParameterSymbol> = emptySet(),
     ): Boolean = when (type) {
         is KaTypeParameterType -> type.symbol in availableTypeParameters
 
         is KaUsualClassType -> {
-            visibilityChecker.isVisible(type.symbol, positionContext) && type.typeArguments.all { typeArgument ->
+            context.visibilityChecker.isVisible(type.symbol, context.positionContext) && type.typeArguments.all { typeArgument ->
                 when (typeArgument) {
                     is KaStarTypeProjection -> true
-                    is KaTypeArgumentWithVariance -> typeIsVisible(positionContext, typeArgument.type, availableTypeParameters)
+                    is KaTypeArgumentWithVariance -> typeIsVisible(context, typeArgument.type, availableTypeParameters)
                 }
             }
         }
@@ -318,8 +325,16 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor(
         is KaFunctionType -> {
             val typesInside = listOfNotNull(type.receiverType) + type.returnType + type.parameterTypes
 
-            typesInside.all { typeIsVisible(positionContext, it, availableTypeParameters) }
+            typesInside.all { typeIsVisible(context, it, availableTypeParameters) }
         }
+
+        else -> false
+    }
+
+    override fun K2CompletionSetupScope<KotlinRawPositionContext>.shouldExecute(): Boolean = when (position) {
+        is KotlinTypeNameReferencePositionContext,
+        is KotlinSimpleParameterPositionContext,
+        is KotlinPrimaryConstructorParameterPositionContext -> true
 
         else -> false
     }

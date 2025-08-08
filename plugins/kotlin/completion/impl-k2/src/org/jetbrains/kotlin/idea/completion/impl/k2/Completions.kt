@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirTypePara
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirSameAsFileClassifierNameCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirSuperMemberCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirTrailingFunctionParameterNameCompletionContributorBase
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirVariableOrParameterNameWithTypeCompletionContributor
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -76,6 +77,7 @@ internal object Completions {
         K2CallableReferenceCompletionContributor(),
         K2InfixCallableCompletionContributor(),
         K2KDocCallableCompletionContributor(),
+        K2VariableOrParameterNameWithTypeCompletionContributor(),
     )
 
     // Note: this function will be renamed and replace the complete method below!
@@ -229,7 +231,7 @@ internal object Completions {
                     .complete(positionContext, weighingContext)
                 FirActualDeclarationContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
-                K2VariableOrParameterNameWithTypeCompletionContributor(sink)
+                FirVariableOrParameterNameWithTypeCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
@@ -327,7 +329,7 @@ internal object Completions {
                     .complete(positionContext, weighingContext)
                 FirKeywordCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
-                K2VariableOrParameterNameWithTypeCompletionContributor(sink)
+                FirVariableOrParameterNameWithTypeCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
@@ -339,7 +341,7 @@ internal object Completions {
                     .complete(positionContext, weighingContext)
                 FirKeywordCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
-                K2VariableOrParameterNameWithTypeCompletionContributor(sink)
+                FirVariableOrParameterNameWithTypeCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
