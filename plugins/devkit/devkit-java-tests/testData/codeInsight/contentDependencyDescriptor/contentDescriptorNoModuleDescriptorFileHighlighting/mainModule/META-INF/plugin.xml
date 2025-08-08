@@ -4,7 +4,7 @@
   <version>1.0</version>
 
   <content>
-    <module name="<error descr="Cannot resolve module descriptor 'anotherModule.xml' in source roots of module 'anotherModule'">anotherModule</error>"/>
+    <module name="<error descr="Cannot resolve module descriptor 'anotherModule.xml' in source and library roots">anotherModule</error>"/>
   </content>
 
 </idea-plugin>

@@ -7,12 +7,12 @@
     <module name="anotherModule"/>
 
     <module name="anotherModule/secondary-descriptor"/>
-    <module name="<error descr="Cannot resolve module descriptor 'anotherModule.INVALID_VALUE.xml' in source roots of module 'anotherModule'">anotherModule/INVALID_VALUE</error>"/>
+    <module name="<error descr="Cannot resolve module descriptor 'anotherModule.INVALID_VALUE.xml' in source and library roots">anotherModule/INVALID_VALUE</error>"/>
 
     <module name="mainModule/sub-descriptor"/>
-    <module name="<error descr="Cannot resolve module descriptor 'mainModule.INVALID_VALUE.xml' in source roots of module 'mainModule'">mainModule/INVALID_VALUE</error>"/>
+    <module name="<error descr="Cannot resolve module descriptor 'mainModule.INVALID_VALUE.xml' in source and library roots">mainModule/INVALID_VALUE</error>"/>
 
-    <module name="<error descr="Cannot resolve module descriptor 'invalidModuleName.xml' in source roots of module 'invalidModuleName'">invalidModuleName</error>"/>
+    <module name="<error descr="Cannot resolve module descriptor 'invalidModuleName.xml' in source and library roots">invalidModuleName</error>"/>
   </content>
 
 </idea-plugin>
