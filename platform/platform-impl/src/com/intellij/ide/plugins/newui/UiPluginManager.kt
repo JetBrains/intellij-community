@@ -216,7 +216,9 @@ class UiPluginManager {
   }
 
   fun updateDescriptorsForInstalledPlugins() {
-    getController().updateDescriptorsForInstalledPlugins()
+    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
+      getController().updateDescriptorsForInstalledPlugins()
+    }
   }
 
   fun isNeedUpdate(pluginId: PluginId): Boolean {

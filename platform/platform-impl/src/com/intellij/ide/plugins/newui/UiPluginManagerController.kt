@@ -49,8 +49,8 @@ interface UiPluginManagerController {
   suspend fun findPlugin(pluginId: PluginId): PluginUiModel?
 
   suspend fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String? = null, indicator: ProgressIndicator? = null): PluginUiModel?
-  fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String? = null): List<IdeCompatibleUpdate>
-  fun updateDescriptorsForInstalledPlugins()
+  suspend fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String? = null): List<IdeCompatibleUpdate>
+  suspend fun updateDescriptorsForInstalledPlugins()
   fun isNeedUpdate(pluginId: PluginId): Boolean
   fun connectToUpdateServiceWithCounter(sessionId: String, callback: (Int?) -> Unit): PluginUpdatesService
   fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState

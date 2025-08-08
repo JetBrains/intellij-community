@@ -513,7 +513,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     }
   }
 
-  override fun updateDescriptorsForInstalledPlugins() {
+  override suspend fun updateDescriptorsForInstalledPlugins() {
     UpdateChecker.updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance())
   }
 

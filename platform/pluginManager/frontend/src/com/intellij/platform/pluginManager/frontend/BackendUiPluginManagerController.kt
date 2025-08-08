@@ -243,7 +243,7 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().getAllVendors() }
   }
 
-  override fun updateDescriptorsForInstalledPlugins() {
+  override suspend fun updateDescriptorsForInstalledPlugins() {
     service<BackendRpcCoroutineContext>().coroutineScope.launch {
       PluginManagerApi.getInstance().updateDescriptorsForInstalledPlugins()
     }
