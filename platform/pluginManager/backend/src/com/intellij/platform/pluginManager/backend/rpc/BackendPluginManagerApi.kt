@@ -11,6 +11,8 @@ import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginManagerSessionService
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.UpdateSettings
+import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.platform.project.ProjectId
@@ -87,6 +89,12 @@ class BackendPluginManagerApi : PluginManagerApi {
 
   override suspend fun getCustomRepoTags(): Set<String> {
     return DefaultUiPluginManagerController.getCustomRepoTags()
+  }
+
+  override suspend fun updateCustomRepositories(repositoryUrls: List<String>) {
+    val list = UpdateSettings.getInstance().storedPluginHosts
+    list.clear()
+    list.addAll(repositoryUrls)
   }
 
   override suspend fun loadDescriptorById(pluginId: PluginId): PluginDto? {

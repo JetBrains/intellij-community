@@ -18,6 +18,7 @@ jvm_library(
     "//platform/kernel/shared:kernel",
     "//platform/kernel/rpc.backend",
     "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-api:projectModel",
     "//platform/editor-ui-api:editor-ui",
     "//platform/util",
     "//platform/plugins/parser/impl",

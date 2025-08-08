@@ -47,7 +47,7 @@ interface PluginManagerCustomizer {
 
   fun ensurePluginStatesLoaded()
 
-  fun customRepositoriesUpdated()
+  fun customRepositoriesUpdated(repoUrls: List<String>)
 
   companion object {
     @JvmField
