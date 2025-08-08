@@ -31,14 +31,16 @@ abstract class AbstractCoroutineNonBlockingContextDetectionTest(
 ) : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = ktProjectDescriptor
 
-    override fun setUp() {
-        super.setUp()
-        myFixture.enableInspections(BlockingMethodInNonBlockingContextInspection(considerUnknownAsBlocking, considerSuspendContextNonBlocking))
-    }
+    protected fun doTest(fileName: String) {
+        val inspection = BlockingMethodInNonBlockingContextInspection(considerUnknownAsBlocking, considerSuspendContextNonBlocking)
+        myFixture.enableInspections(inspection)
 
-   protected fun doTest(fileName: String) {
-        myFixture.configureByFile(fileName)
-        myFixture.testHighlighting(true, false, false, fileName)
+        try {
+            myFixture.configureByFile(fileName)
+            myFixture.testHighlighting(true, false, false, fileName)
+        } finally {
+            myFixture.disableInspections(inspection)
+        }
     }
 }
 
