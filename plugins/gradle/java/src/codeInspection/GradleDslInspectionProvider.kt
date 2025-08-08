@@ -38,4 +38,8 @@ interface GradleDslInspectionProvider {
    */
   fun getPluginDslStructureInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) : PsiElementVisitor
 
+  /**
+   * @see GradleAvoidDependencyNamedArgumentsNotationInspection
+   */
+  fun getAvoidDependencyNamedArgumentsNotationInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor
 }

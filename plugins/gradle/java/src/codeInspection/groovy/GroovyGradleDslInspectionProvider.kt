@@ -23,4 +23,5 @@ class GroovyGradleDslInspectionProvider : GradleDslInspectionProvider {
   override fun getPluginDslStructureInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor
     = GroovyPsiElementVisitor(GroovyPluginDslStructureInspectionVisitor(holder))
 
+  override fun getAvoidDependencyNamedArgumentsNotationInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = GroovyPsiElementVisitor(GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(holder))
 }

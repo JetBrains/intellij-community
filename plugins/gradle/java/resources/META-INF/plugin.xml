@@ -147,6 +147,13 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleLatestMinorVersionInspection"/>
 
+    <localInspection language="UAST" groupPath="Gradle" shortName="AvoidDependencyNamedArgumentsNotation"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.avoid.dependency.named.arguments.notation" groupKey="inspection.best.practises"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDependencyNamedArgumentsNotationInspection"/>
+
     <localInspection language="UAST" groupPath="Gradle" shortName="DependencyNotationArgument"
                      bundle="messages.GradleInspectionBundle"
                      key="inspection.display.name.unrecognized.dependency.notation" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
