@@ -130,6 +130,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/FlexibleTypeWithRanges.kt");
     }
 
+    @TestMetadata("FlexibleTypeWithRangesArrayElement.kt")
+    public void testFlexibleTypeWithRangesArrayElement() throws Exception {
+        runTest("testData/codeInsight/hints/types/FlexibleTypeWithRangesArrayElement.kt");
+    }
+
     @TestMetadata("FunctionalType.kt")
     public void testFunctionalType() throws Exception {
         runTest("testData/codeInsight/hints/types/FunctionalType.kt");

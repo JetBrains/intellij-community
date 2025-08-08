@@ -58,6 +58,11 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
                     printNonErrorClassType(upper as KaClassType, lower as KaClassType)
                 } else {
                     // fallback case
+
+                    // to be consistent with kdoc
+                    // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer.AS_SHORT
+                    // KaFlexibleTypeRenderer.kt:79
+
                     text("(")
                     printKtType(lower)
                     text("..")
