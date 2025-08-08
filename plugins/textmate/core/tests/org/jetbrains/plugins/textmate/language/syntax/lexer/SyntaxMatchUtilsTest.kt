@@ -16,10 +16,31 @@ class SyntaxMatchUtilsTest {
   }
 
   @Test
+  fun testReplaceGroupWithUnmatchedMatchData() {
+    val string = fromString("first-second")
+    val data = MatchData(matched = true, byteOffsets = intArrayOf(0, 12, 0, 5, -1, -1))
+    assertEquals("first++first", replaceGroupsWithMatchDataInRegex("\\1+\\2+\\1", string, data))
+  }
+
+  @Test
+  fun testReplaceWithDollarSign() {
+    val string = fromString("first-$")
+    val data = MatchData(matched = true, byteOffsets = intArrayOf(0, 7, 0, 5, 6, 7))
+    assertEquals("first+\\$+first", replaceGroupsWithMatchDataInRegex("\\1+\\2+\\1", string, data))
+  }
+
+  @Test
   fun testReplaceGroupWithMatchDataInCaptures() {
     val string = fromString("first-second")
     val data = MatchData(matched = true, byteOffsets = intArrayOf(0, 12, 0, 5, 6, 12))
     assertEquals("first+second+first", replaceGroupsWithMatchDataInCaptures("$1+$2+$1", string, data))
+  }
+
+  @Test
+  fun testReplaceGroupWithUnmatchedMatchDataInCaptures() {
+    val string = fromString("first-second")
+    val data = MatchData(matched = true, byteOffsets = intArrayOf(0, 12, 0, 5, -1, -1))
+    assertEquals("first++first", replaceGroupsWithMatchDataInCaptures("$1+$2+$1", string, data))
   }
 
   @Test
@@ -34,12 +55,5 @@ class SyntaxMatchUtilsTest {
     val string = fromString("FIRST-second")
     val data = MatchData(matched = true, byteOffsets = intArrayOf(0, 12, 0, 5, 6, 12))
     assertEquals("first+second+FIRST", replaceGroupsWithMatchDataInCaptures("\${1:/downcase}+$2+$1", string, data))
-  }
-
-  @Test
-  fun testReplaceWithDollarSign() {
-    val string = fromString("first-$")
-    val data = MatchData(matched = true, byteOffsets = intArrayOf(0, 7, 0, 5, 6, 7))
-    assertEquals("first+\\$+first", replaceGroupsWithMatchDataInRegex("\\1+\\2+\\1", string, data))
   }
 }
