@@ -11,7 +11,6 @@ import junit.framework.TestCase.assertNotNull
 import org.jetbrains.plugins.textmate.TestUtil.findScopeByFileName
 import org.jetbrains.plugins.textmate.TestUtil.loadBundle
 import org.jetbrains.plugins.textmate.language.TextMateConcurrentMapInterner
-import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateElementType
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateHighlightingLexer
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
@@ -47,9 +46,7 @@ abstract class TextMateLexerTestCase {
 
     TextMateSelectorWeigherImpl().caching().use { weigher ->
       val syntaxMatcher = TextMateSyntaxMatcherImpl(regexProvider, weigher)
-      val lexer: Lexer = TextMateHighlightingLexer(TextMateLanguageDescriptor(rootScope, syntaxTable.getSyntax(rootScope)),
-                                                   syntaxMatcher,
-                                                   -1)
+      val lexer: Lexer = TextMateHighlightingLexer(syntaxTable.getLanguageDescriptor(rootScope), syntaxMatcher, -1)
       val output = buildString {
         lexer.start(text)
         while (lexer.getTokenType() != null) {

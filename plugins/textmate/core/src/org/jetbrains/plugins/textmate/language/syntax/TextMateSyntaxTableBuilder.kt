@@ -3,6 +3,7 @@ package org.jetbrains.plugins.textmate.language.syntax
 import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.language.TextMateInterner
+import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
 import org.jetbrains.plugins.textmate.plist.PListValue
 import org.jetbrains.plugins.textmate.plist.Plist
 import org.jetbrains.plugins.textmate.update
@@ -16,7 +17,7 @@ private typealias ReferenceRuleId = Int
 
 class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
   private val currentRuleId = AtomicInt(0)
-  private val syntaxNodes = AtomicReference(persistentMapOf<CharSequence, SyntaxRawNode>())
+  private val syntaxNodes = AtomicReference(persistentMapOf<CharSequence, RawLanguageDescriptor>())
 
   /**
    * Append a table with new syntax rules to support the new language.
@@ -25,29 +26,24 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
    * @return language scope root name
    */
   fun addSyntax(plist: Plist): CharSequence? {
-    val topLevelNode = loadRealNode(plist, null)
-    val scopeName = topLevelNode.scopeName
-    if (scopeName != null) {
+    return loadLanguageDescriptor(plist)?.let { languageDescriptor ->
       syntaxNodes.update {
-        it.put(scopeName, topLevelNode)
+        it.put(languageDescriptor.scopeName, languageDescriptor)
       }
+      languageDescriptor.scopeName
     }
-    return scopeName
   }
 
   fun build(): TextMateSyntaxTableCore {
     val ruleIdToReferenceRuleId = mutableMapOf<RuleId, ReferenceRuleId>()
     val compiledRules = mutableMapOf<RuleId, SyntaxNodeDescriptor>()
 
-    val rules = mutableMapOf<CharSequence, SyntaxNodeDescriptor>()
-    val syntaxTable = TextMateSyntaxTableCore(rules = rules)
+    val languageDescriptors = mutableMapOf<CharSequence, TextMateLanguageDescriptor>()
+    val syntaxTable = TextMateSyntaxTableCore(languageDescriptors = languageDescriptors)
     val syntaxNodes = syntaxNodes.load()
-    syntaxNodes.forEach { (scopeName, nodeBuilder) ->
-      nodeBuilder.compile(syntaxNodes,
-                          compiledRules,
-                          ruleIdToReferenceRuleId,
-                          syntaxTable)?.let { compiledNode ->
-        rules[scopeName] = compiledNode
+    syntaxNodes.forEach { (scopeName, rawLanguageDescriptor) ->
+      rawLanguageDescriptor.compile(syntaxNodes, compiledRules, ruleIdToReferenceRuleId, syntaxTable)?.let { compiledNode ->
+        languageDescriptors[scopeName] = compiledNode
       }
     }
     val rulesRepository = arrayOfNulls<SyntaxNodeDescriptor?>(ruleIdToReferenceRuleId.size)
@@ -58,13 +54,21 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
     return syntaxTable
   }
 
-  private fun loadRealNode(plist: Plist, parentBuilder: SyntaxRawNode?): SyntaxRawNodeImpl {
+  private fun loadLanguageDescriptor(plist: Plist): RawLanguageDescriptor? {
     val scopeNamePlistValue: PListValue? = plist.getPlistValue(Constants.StringKey.SCOPE_NAME.value)
     val scopeNameValue: String? = scopeNamePlistValue?.string
-    val scopeName: CharSequence? = if (scopeNameValue != null) interner.intern(scopeNameValue) else null
+    return if (scopeNameValue != null) {
+      return RawLanguageDescriptor(scopeName = interner.intern(scopeNameValue),
+                                   rootSyntaxRawNode = loadRealNode(plist, null))
+    }
+    else {
+      null
+    }
+  }
 
+  private fun loadRealNode(plist: Plist, parentBuilder: SyntaxRawNode?): SyntaxRawNodeImpl {
     val ruleId = currentRuleId.fetchAndIncrement()
-    val result = SyntaxRawNodeImpl(ruleId, parentBuilder, scopeName)
+    val result = SyntaxRawNodeImpl(ruleId, parentBuilder)
     for (entry in plist.entries()) {
       val pListValue: PListValue = entry.value
       val key: String = entry.key
@@ -144,14 +148,31 @@ private sealed class TextMateRawCapture {
   class Rule(val node: SyntaxRawNode) : TextMateRawCapture()
 }
 
+private class RawLanguageDescriptor(
+  val scopeName: CharSequence,
+  val rootSyntaxRawNode: SyntaxRawNode,
+) {
+
+  fun compile(
+    topLevelNodes: Map<CharSequence, RawLanguageDescriptor>,
+    compiledNodes: MutableMap<Int, SyntaxNodeDescriptor>,
+    ruleIdToReferenceRuleId: MutableMap<RuleId, ReferenceRuleId>,
+    syntaxTable: TextMateSyntaxTableCore,
+  ): TextMateLanguageDescriptor? {
+    return rootSyntaxRawNode.compile(topLevelNodes, compiledNodes, ruleIdToReferenceRuleId, syntaxTable)?.let { rootNode ->
+      TextMateLanguageDescriptor(scopeName, rootNode)
+    }
+  }
+}
+
 private interface SyntaxRawNode {
   val ruleId: Int
   val parent: SyntaxRawNode?
 
-  fun findInRepository(scopeName: String, topLevelRules: Map<CharSequence, SyntaxRawNode>): SyntaxRawNode?
+  fun findInRepository(scopeName: String, topLevelRules: Map<CharSequence, RawLanguageDescriptor>): SyntaxRawNode?
 
   fun compile(
-    topLevelNodes: Map<CharSequence, SyntaxRawNode>,
+    topLevelNodes: Map<CharSequence, RawLanguageDescriptor>,
     compiledNodes: MutableMap<Int, SyntaxNodeDescriptor>,
     ruleIdToReferenceRuleId: MutableMap<RuleId, ReferenceRuleId>,
     syntaxTable: TextMateSyntaxTableCore,
@@ -163,12 +184,12 @@ private class SyntaxIncludeRawNode(
   override val parent: SyntaxRawNode,
   private val include: String,
 ) : SyntaxRawNode {
-  override fun findInRepository(scopeName: String, topLevelRules: Map<CharSequence, SyntaxRawNode>): SyntaxRawNode? {
+  override fun findInRepository(scopeName: String, topLevelRules: Map<CharSequence, RawLanguageDescriptor>): SyntaxRawNode? {
     return resolveInclude(topLevelRules)?.findInRepository(scopeName, topLevelRules)
   }
 
   override fun compile(
-    topLevelNodes: Map<CharSequence, SyntaxRawNode>,
+    topLevelNodes: Map<CharSequence, RawLanguageDescriptor>,
     compiledNodes: MutableMap<Int, SyntaxNodeDescriptor>,
     ruleIdToReferenceRuleId: MutableMap<RuleId, ReferenceRuleId>,
     syntaxTable: TextMateSyntaxTableCore,
@@ -194,7 +215,7 @@ private class SyntaxIncludeRawNode(
     }
   }
 
-  private fun resolveInclude(topLevelNodes: Map<CharSequence, SyntaxRawNode>): SyntaxRawNode? {
+  private fun resolveInclude(topLevelNodes: Map<CharSequence, RawLanguageDescriptor>): SyntaxRawNode? {
     return when {
       include.startsWith('#') -> {
         parent.findInRepository(include.substring(1), topLevelNodes)
@@ -207,10 +228,10 @@ private class SyntaxIncludeRawNode(
         val topLevelScope = if (i >= 0) include.take(i) else include
         val scopeName = if (i >= 0) include.substring(i + 1) else ""
         if (scopeName.isNotEmpty()) {
-          topLevelNodes[topLevelScope]?.findInRepository(scopeName, topLevelNodes)
+          topLevelNodes[topLevelScope]?.rootSyntaxRawNode?.findInRepository(scopeName, topLevelNodes)
         }
         else {
-          topLevelNodes[topLevelScope]
+          topLevelNodes[topLevelScope]?.rootSyntaxRawNode
         }
       }
     }
@@ -220,7 +241,6 @@ private class SyntaxIncludeRawNode(
 private class SyntaxRawNodeImpl(
   override val ruleId: RuleId,
   override val parent: SyntaxRawNode?,
-  val scopeName: CharSequence?,
 ) : SyntaxRawNode {
   private val rawCaptures: MutableMap<Constants.CaptureKey, Array<TextMateRawCapture?>> = mutableMapOf()
   private val rawStringAttributes: MutableMap<Constants.StringKey, CharSequence> = mutableMapOf()
@@ -228,7 +248,7 @@ private class SyntaxRawNodeImpl(
   private val rawChildren: MutableList<SyntaxRawNode> = mutableListOf()
   val repository: MutableMap<String, SyntaxRawNode> = mutableMapOf()
 
-  override fun findInRepository(scopeName: String, topLevelRules: Map<CharSequence, SyntaxRawNode>): SyntaxRawNode? {
+  override fun findInRepository(scopeName: String, topLevelRules: Map<CharSequence, RawLanguageDescriptor>): SyntaxRawNode? {
     return repository[scopeName] ?: parent?.findInRepository(scopeName, topLevelRules)
   }
 
@@ -253,8 +273,8 @@ private class SyntaxRawNodeImpl(
   }
 
   override fun compile(
-    topLevelNodes: Map<CharSequence, SyntaxRawNode>,
-    compiledNodes: MutableMap<RuleId, SyntaxNodeDescriptor>,
+    topLevelNodes: Map<CharSequence, RawLanguageDescriptor>,
+    compiledNodes: MutableMap<Int, SyntaxNodeDescriptor>,
     ruleIdToReferenceRuleId: MutableMap<RuleId, ReferenceRuleId>,
     syntaxTable: TextMateSyntaxTableCore,
   ): SyntaxNodeDescriptor {

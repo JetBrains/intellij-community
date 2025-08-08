@@ -70,9 +70,7 @@ class TextMateLexerPerformanceTest : UsefulTestCase() {
     val text = StringUtil.convertLineSeparators(FileUtil.loadFile(myFile, StandardCharsets.UTF_8))
 
     Benchmark.newBenchmark(getTestName(true)) {
-      val lexer = TextMateHighlightingLexer(TextMateLanguageDescriptor(scopeName, syntaxTable.getSyntax(scopeName)),
-                                            syntaxMatcher,
-                                            -1)
+      val lexer = TextMateHighlightingLexer(syntaxTable.getLanguageDescriptor(scopeName), syntaxMatcher, -1)
       lexer.start(text)
       while (lexer.tokenType != null) {
         lexer.advance()

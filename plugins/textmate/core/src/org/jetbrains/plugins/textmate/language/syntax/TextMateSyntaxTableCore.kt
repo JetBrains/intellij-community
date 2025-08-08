@@ -1,23 +1,27 @@
 package org.jetbrains.plugins.textmate.language.syntax
 
 import org.jetbrains.plugins.textmate.getLogger
+import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
 import org.jetbrains.plugins.textmate.logging.TextMateLogger
 
 /**
- * Table of textmate syntax rules.
- * Table represents mapping from scopeNames to set of syntax rules {@link SyntaxNodeDescriptor}.
+ * Table of textmate language descriptors {@link TextMateLanguageDescriptor}.
  *
- * To lexing some file with this rule you should retrieve syntax rule
- * by scope name of target language {@link #getSyntax(CharSequence)}.
+ * To lex some file you should retrieve the language descriptor
+ * by scope name of the target language {@link #getLanguageDescriptor(CharSequence)} and use its root syntax node.
  *
  * Scope name of the target language can be found in syntax files of TextMate bundles.
  */
-class TextMateSyntaxTableCore(private val rules: Map<CharSequence, SyntaxNodeDescriptor>) {
+class TextMateSyntaxTableCore(private val languageDescriptors: Map<CharSequence, TextMateLanguageDescriptor>) {
   companion object {
     private val LOG: TextMateLogger = getLogger(TextMateSyntaxTableCore::class)
   }
 
   private var rulesRepository: Array<SyntaxNodeDescriptor?>? = null
+
+  fun getLanguageDescriptor(scopeName: CharSequence): TextMateLanguageDescriptor {
+    return languageDescriptors[scopeName] ?: TextMateLanguageDescriptor(scopeName, SyntaxNodeDescriptor.EMPTY_NODE)
+  }
 
   /**
    * Returns root syntax rule by scope name.
@@ -28,7 +32,7 @@ class TextMateSyntaxTableCore(private val rules: Map<CharSequence, SyntaxNodeDes
    * method returns {@link SyntaxNodeDescriptor#EMPTY_NODE}.
    */
   fun getSyntax(scopeName: CharSequence): SyntaxNodeDescriptor {
-    val syntaxNodeDescriptor = rules[scopeName]
+    val syntaxNodeDescriptor = languageDescriptors[scopeName]?.rootSyntaxNode
     if (syntaxNodeDescriptor == null) {
       LOG.info { "Can't find syntax node for scope: '$scopeName'" }
       return SyntaxNodeDescriptor.EMPTY_NODE
