@@ -380,7 +380,7 @@
       <separator key="separator.Git.Stage.Configure.display.as"/>
       <reference ref="Git.Stage.Enable"/>
       <reference ref="Git.Stage.Disable"/>
-      <add-to-group group-id="CommitView.GearActions"/>
+      <add-to-group group-id="CommitView.GearActions" anchor="after" relative-to-action="CommitView.ShowOnDoubleClick"/>
     </group>
 
     <group id="Git.Stage.Toolbar">
