@@ -2128,6 +2128,11 @@ public abstract class InlineScopesAndK1IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("testData/evaluation/singleBreakpoint/ktij26694.kt");
             }
 
+            @TestMetadata("lambdaCapturingOuterLambdaParam.kt")
+            public void testLambdaCapturingOuterLambdaParam() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdaCapturingOuterLambdaParam.kt");
+            }
+
             @TestMetadata("lambdaRightBrace.kt")
             public void testLambdaRightBrace() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/lambdaRightBrace.kt");
