@@ -642,6 +642,12 @@
       <add-to-group group-id="VcsGeneral.KeymapGroup"/>
     </group>
 
+    <action id="CommitView.CloseWindowedFloatingTwOnCommit"
+            class="com.intellij.openapi.vcs.changes.ui.CloseWindowedFloatingTwOnCommitAction">
+      <override-text place="ToolwindowPopup"/>
+      <add-to-group group-id="CommitView.GearActions" anchor="last"/>
+    </action>
+
     <group id="LocalChangesView.GearActions">
       <group id="LocalChangesView.ShowOnDoubleClick" popup="true" searchable="false" class="com.intellij.ide.actions.NonEmptyActionGroup">
         <reference ref="CommitView.ShowOnDoubleClick.EditorPreview"/>
