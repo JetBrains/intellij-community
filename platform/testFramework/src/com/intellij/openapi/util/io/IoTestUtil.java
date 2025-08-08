@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,7 @@ public final class IoTestUtil {
 
   private IoTestUtil() { }
 
-  @SuppressWarnings("SpellCheckingInspection")
+  @SuppressWarnings({"SpellCheckingInspection", "NonAsciiCharacters"})
   private static final String[] UNICODE_PARTS = {
     "Юникоде",
     Normalizer.normalize("Úñíçødê", Normalizer.Form.NFC),
@@ -419,6 +420,15 @@ public final class IoTestUtil {
       throw new IOException("Can't setCaseSensitivity(" + dir + ", " + caseSensitive + ")." +
                             " 'fsutil.exe setCaseSensitiveInfo' output:" + changeOut + ";" +
                             " 'fsutil.exe getCaseSensitiveInfo' output:" + out);
+    }
+  }
+
+  public static void unchecked(ThrowableRunnable<? extends IOException> operation) {
+    try {
+      operation.run();
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
   }
 }

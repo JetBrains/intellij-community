@@ -598,10 +598,10 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   // the following tests verify the same scenarios with an active file watcher (prevents explicit marking of refreshed paths)
-  @Test fun testPartialRefresh(): Unit = LocalFileSystemTest.doTestPartialRefresh(tempDir.newDirectory("top"))
-  @Test fun testInterruptedRefresh(): Unit = LocalFileSystemTest.doTestInterruptedRefresh(tempDir.newDirectory("top"))
-  @Test fun testRefreshAndFindFile(): Unit = LocalFileSystemTest.doTestRefreshAndFindFile(tempDir.newDirectory("top"))
-  @Test fun testRefreshEquality(): Unit = LocalFileSystemTest.doTestRefreshEquality(tempDir.newDirectory("top"))
+  @Test fun testPartialRefresh(): Unit = LocalFileSystemTest.doTestPartialRefresh(tempDir.newDirectoryPath("top"))
+  @Test fun testInterruptedRefresh(): Unit = LocalFileSystemTest.doTestInterruptedRefresh(tempDir.newDirectoryPath("top"))
+  @Test fun testRefreshAndFindFile(): Unit = LocalFileSystemTest.doTestRefreshAndFindFile(tempDir.newDirectoryPath("top"))
+  @Test fun testRefreshEquality(): Unit = LocalFileSystemTest.doTestRefreshEquality(tempDir.newDirectoryPath("top"))
 
   @Test fun testUnicodePaths() {
     val name = getUnicodeName()
@@ -615,7 +615,6 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertEvents({ file.writeText("abc") }, mapOf(file to 'U'))
   }
 
-  @Suppress("LocalVariableName")
   @Test fun testDisplacementByIsomorphicTree() {
     assumeFalse("macOS-incompatible", OS.CURRENT == OS.macOS)
 

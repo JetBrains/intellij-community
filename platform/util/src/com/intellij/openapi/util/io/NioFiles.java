@@ -4,9 +4,8 @@ package com.intellij.openapi.util.io;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.BitUtil;
+import com.intellij.util.system.OS;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinBase;
 import com.sun.jna.platform.win32.WinNT;
@@ -142,6 +141,17 @@ public final class NioFiles {
   }
 
   /**
+   * Renames a file, with an intermediate step if the existing and the new names differ only in case.
+   */
+  public static @NotNull Path rename(@NotNull Path from, @NotNull String newName) throws IOException {
+    if (newName.equalsIgnoreCase(from.getFileName().toString())) {
+      Path intermediate = Files.createTempFile(from.getParent(), newName, ".tmp");
+      from = Files.move(from, intermediate, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+    }
+    return Files.move(from, from.resolveSibling(newName), StandardCopyOption.ATOMIC_MOVE);
+  }
+
+  /**
    * Like {@link Files#isWritable}, but interprets {@link SecurityException} as a negative result.
    */
   public static boolean isWritable(@NotNull Path path) {
@@ -219,7 +229,7 @@ public final class NioFiles {
     }
     catch (NoSuchFileException | AccessDeniedException e) { throw e; }
     catch (FileSystemException e) {
-      if (SystemInfo.isWindows && JnaLoader.isLoaded() && isNtfsReparsePoint(path)) {
+      if (OS.CURRENT == OS.Windows && JnaLoader.isLoaded() && isNtfsReparsePoint(path)) {
         LOG.debug(e);
         return BROKEN_SYMLINK;
       }
@@ -323,7 +333,7 @@ public final class NioFiles {
     @Override
     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
       countDirectory(dir, attrs);
-      if (attrs.isSymbolicLink() || SystemInfoRt.isWindows && attrs.isOther() /*probably an NTFS reparse point*/) {
+      if (attrs.isSymbolicLink() || OS.CURRENT == OS.Windows && attrs.isOther() /*probably an NTFS reparse point*/) {
         return FileVisitResult.SKIP_SUBTREE;
       }
       else {

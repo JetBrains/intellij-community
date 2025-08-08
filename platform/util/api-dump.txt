@@ -177,6 +177,31 @@ e:com.intellij.openapi.util.io.FileAttributes$CaseSensitivity
 Fc:com.intellij.openapi.util.io.FileUtil
 - s:findFirstPathThatExist(java.lang.String[]):java.nio.file.Path
 - s:findPathsByMask(java.util.regex.Pattern,java.nio.file.Path):java.util.List
+f:com.intellij.openapi.util.io.NioFiles
+- sf:BROKEN_SYMLINK:java.nio.file.attribute.BasicFileAttributes
+- s:createDirectories(java.nio.file.Path):java.nio.file.Path
+- s:createIfNotExists(java.nio.file.Path):java.nio.file.Path
+- s:createParentDirectories(java.nio.file.Path):java.nio.file.Path
+- s:deleteRecursively(java.nio.file.Path):V
+- s:deleteRecursively(java.nio.file.Path,java.util.function.Consumer):V
+- s:getFileName(java.nio.file.Path):java.lang.String
+- s:isWritable(java.nio.file.Path):Z
+- s:list(java.nio.file.Path):java.util.List
+- s:readAttributes(java.nio.file.Path):java.nio.file.attribute.BasicFileAttributes
+- s:rename(java.nio.file.Path,java.lang.String):java.nio.file.Path
+- s:setExecutable(java.nio.file.Path):V
+- s:setReadOnly(java.nio.file.Path,Z):V
+- s:sizeIfExists(java.nio.file.Path):J
+- s:toPath(java.lang.String):java.nio.file.Path
+a:com.intellij.openapi.util.io.NioFiles$StatsCollectingVisitor
+- java.nio.file.SimpleFileVisitor
+- <init>():V
+- pa:countDirectory(java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):V
+- pa:countFile(java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):V
+- postVisitDirectory(java.nio.file.Path,java.io.IOException):java.nio.file.FileVisitResult
+- preVisitDirectory(java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):java.nio.file.FileVisitResult
+- visitFile(java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):java.nio.file.FileVisitResult
+- visitFileFailed(java.nio.file.Path,java.io.IOException):java.nio.file.FileVisitResult
 f:com.intellij.openapi.util.io.NioJarUtilKt
 - sf:getJarAttribute(java.nio.file.Path,java.util.jar.Attributes$Name):java.lang.String
 com.intellij.openapi.util.registry.RegistryValueListener
