@@ -29,21 +29,20 @@ private const val SUB_DESCRIPTOR_FILENAME_DELIMITER = "."
 private val LOOKUP_PRIORITY = Key.create<Double>("LOOKUP_PRIORITY")
 
 class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
+
   override fun getErrorMessage(s: String?, context: ConvertContext): String? {
     val value = s ?: ""
+    val (jpsModuleName, descriptorFileName) = getModuleNameAndDescriptorFileName(value)
+    return DevKitBundle.message("plugin.xml.convert.module.descriptor.name", descriptorFileName, jpsModuleName)
+  }
 
-    val fileName: String?
-    val moduleName: String?
-    if (isSubDescriptor(value)) {
-      fileName = getSubDescriptorFileName(value)
-      moduleName = getSubDescriptorModuleName(value)
+  private fun getModuleNameAndDescriptorFileName(moduleName: String): Pair<String, String> {
+    return if (isSubDescriptor(moduleName)) {
+      getSubDescriptorModuleName(moduleName) to getSubDescriptorFileName(moduleName)
     }
     else {
-      fileName = getDescriptorFileName(value)
-      moduleName = value
+      moduleName to getDescriptorFileName(moduleName)
     }
-
-    return DevKitBundle.message("plugin.xml.convert.module.descriptor.name", fileName, moduleName)
   }
 
   override fun fromString(s: String?, context: ConvertContext): IdeaPlugin? {
