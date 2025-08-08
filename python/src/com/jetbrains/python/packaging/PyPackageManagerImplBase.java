@@ -15,7 +15,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PySdkBundle;
-import com.jetbrains.python.errorProcessing.ExecError;
+import com.jetbrains.python.errorProcessing.ExecErrorImpl;
 import com.jetbrains.python.errorProcessing.ExecErrorReason;
 import com.jetbrains.python.packaging.common.PythonPackage;
 import com.jetbrains.python.packaging.pip.PipParseUtils;
@@ -134,7 +134,7 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
     }
     catch (PyExecutionException e) {
       var pyError = e.getPyError();
-      if (pyError instanceof ExecError error) {
+      if (pyError instanceof ExecErrorImpl<?> error) {
         var errorReason = error.getErrorReason();
         if (errorReason instanceof ExecErrorReason.UnexpectedProcessTermination unexpectedProcessTermination) {
           int exitCode = unexpectedProcessTermination.getExitCode();

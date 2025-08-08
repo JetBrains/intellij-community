@@ -29,7 +29,7 @@ class PyExecutionException private constructor(
       additionalMessageToUser: @NlsContexts.DialogMessage String?,
       command: String,
       args: List<String>,
-    ): PyExecutionException = PyExecutionException(ExecError(Exe.fromString(command), args.toTypedArray(), ExecErrorReason.Timeout, additionalMessageToUser))
+    ): PyExecutionException = PyExecutionException(ExecErrorImpl(Exe.fromString(command), args.toTypedArray(), ExecErrorReason.Timeout, additionalMessageToUser))
   }
 
 
@@ -63,7 +63,7 @@ class PyExecutionException private constructor(
     args: List<String>,
     fixes: List<PyExecutionFix> = listOf<PyExecutionFix>(),
   ) : this(
-    pyError = ExecError(Exe.fromString(command), args.toTypedArray(), ExecErrorReason.CantStart(null, startException.localizedMessage), additionalMessage),
+    pyError = ExecErrorImpl(Exe.fromString(command), args.toTypedArray(), ExecErrorReason.CantStart(null, startException.localizedMessage), additionalMessage),
     fixes = fixes,
     ioException = startException)
 
@@ -82,7 +82,7 @@ class PyExecutionException private constructor(
     output: ProcessOutput,
     fixes: List<PyExecutionFix> = listOf<PyExecutionFix>(),
   ) : this(
-    pyError = ExecError(Exe.fromString(command), args.toTypedArray(), output.asExecutionFailed()),
+    pyError = ExecErrorImpl(Exe.fromString(command), args.toTypedArray(), output.asExecutionFailed()),
     fixes = fixes)
 
   /**

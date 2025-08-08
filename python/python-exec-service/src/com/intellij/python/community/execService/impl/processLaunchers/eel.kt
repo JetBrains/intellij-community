@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.execService.impl.processLaunchers
 
+import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.path.EelPath
@@ -9,6 +10,7 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.ProcessFunctions
 import com.intellij.platform.eel.spawnProcess
 import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.execService.TtySize
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.Exe
 import com.jetbrains.python.errorProcessing.ExecErrorReason
@@ -28,7 +30,7 @@ internal suspend fun createProcessLauncherOnEel(binOnEel: BinOnEel, launchReques
   return ProcessLauncher(
     exeForError = Exe.OnEel(exePath),
     args = args,
-    processCommands = EelProcessCommands(launchRequest.scopeToBind, binOnEel, exePath, args, launchRequest.env)
+    processCommands = EelProcessCommands(launchRequest.scopeToBind, binOnEel, exePath, args, launchRequest.env, launchRequest.usePty)
   )
 }
 
@@ -38,6 +40,7 @@ private class EelProcessCommands(
   private val path: EelPath,
   private val args: List<String>,
   private val env: Map<String, String>,
+  private val tty: TtySize?,
 ) : ProcessCommands {
   private var eelProcess: EelProcess? = null
 
@@ -56,6 +59,7 @@ private class EelProcessCommands(
         .args(args)
         .env(env)
         .workingDirectory(workDir?.asEelPath())
+        .interactionOptions(if (tty != null) EelExecApi.Pty(tty.cols.toInt(), tty.rows.toInt()) else null)
         .eelIt()
       this.eelProcess = eelProcess
       return Result.success(eelProcess.convertToJavaProcess())

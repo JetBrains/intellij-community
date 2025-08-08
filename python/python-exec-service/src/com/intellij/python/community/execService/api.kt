@@ -169,12 +169,27 @@ object ZeroCodeStdoutTransformer : ProcessOutputTransformer<String> {
  * @property[env] Environment variables to be applied with the process run
  * @property[timeout] Process gets killed after this timeout
  * @property[processDescription] optional description to be displayed to user
+ * [tty] Much like [com.intellij.platform.eel.EelExecApi.Pty]
  */
 data class ExecOptions(
-  val env: Map<String, String> = emptyMap(),
-  val processDescription: @Nls String? = null,
+  override val env: Map<String, String> = emptyMap(),
+  override val processDescription: @Nls String? = null,
   val timeout: Duration = 5.minutes,
-)
+  override val tty: TtySize? = null,
+) : ExecOptionsBase
+
+
+/**
+ * Options for [ExecService.executeGetProcess]
+ * See [ExecOptions]
+ */
+data class ExecGetProcessOptions(
+  override val env: Map<String, String> = emptyMap(),
+  override val processDescription: @Nls String? = null,
+  override val tty: TtySize? = null,
+) : ExecOptionsBase
+
+data class TtySize(val rows: UShort, val cols: UShort)
 
 /**
  * See [Args.addLocalFile]

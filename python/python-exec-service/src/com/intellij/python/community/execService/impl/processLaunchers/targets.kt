@@ -4,18 +4,20 @@
 package com.intellij.python.community.execService.impl.processLaunchers
 
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.process.LocalPtyOptions
 import com.intellij.execution.target.*
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
+import com.intellij.execution.target.local.LocalTargetPtyOptions
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.eel.provider.utils.ProcessFunctions
 import com.intellij.platform.eel.provider.utils.bindProcessToScopeImpl
 import com.intellij.python.community.execService.BinOnTarget
+import com.intellij.python.community.execService.ExecuteGetProcessError
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.Exe
 import com.jetbrains.python.errorProcessing.ExecErrorReason
 import com.jetbrains.python.errorProcessing.MessageError
-import com.jetbrains.python.errorProcessing.PyResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -25,7 +27,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = fileLogger()
 
-internal suspend fun createProcessLauncherOnTarget(binOnTarget: BinOnTarget, launchRequest: LaunchRequest): PyResult<ProcessLauncher> = withContext(Dispatchers.IO) {
+internal suspend fun createProcessLauncherOnTarget(binOnTarget: BinOnTarget, launchRequest: LaunchRequest): Result<ProcessLauncher, ExecuteGetProcessError.EnvironmentError> = withContext(Dispatchers.IO) {
   val target = binOnTarget.target
 
   val request = if (target != null) {
@@ -44,19 +46,29 @@ internal suspend fun createProcessLauncherOnTarget(binOnTarget: BinOnTarget, lau
   }
   catch (e: ExecutionException) {
     fileLogger().warn("Failed to start $target", e) // TODO: i18n
-    return@withContext Result.failure(MessageError("Failed to start environment due to ${e.localizedMessage}"))
+    return@withContext Result.failure(ExecuteGetProcessError.EnvironmentError(MessageError("Failed to start environment due to ${e.localizedMessage}")))
   }
   val args = launchRequest.args.getArgs { localFile ->
     targetEnv.getTargetPaths(localFile.pathString).first()
   }
   val exePath: FullPathOnTarget
-  val cmdLine = TargetedCommandLineBuilder(request).also {
-    binOnTarget.configureTargetCmdLine(it)
+  val cmdLine = TargetedCommandLineBuilder(request).also {commandLineBuilder ->
+    binOnTarget.configureTargetCmdLine(commandLineBuilder)
     // exe path is always fixed (pre-presolved) promise. It can't be obtained directly because of Targets API limitation
-    exePath = it.exePath.localValue.blockingGet(1000) ?: error("Exe path not set: $binOnTarget is broken")
-    it.addParameters(args)
+    exePath = commandLineBuilder.exePath.localValue.blockingGet(1000) ?: error("Exe path not set: $binOnTarget is broken")
+    launchRequest.usePty?.let {
+      val ptyOptions = LocalPtyOptions
+        .defaults()
+        .builder()
+        .initialRows(it.rows.toInt())
+        .initialColumns(it.cols.toInt())
+        .build()
+      commandLineBuilder.ptyOptions = LocalTargetPtyOptions(ptyOptions)
+    }
+
+    commandLineBuilder.addParameters(args)
     for ((k, v) in launchRequest.env) {
-      it.addEnvironmentVariable(k, v)
+      commandLineBuilder.addEnvironmentVariable(k, v)
     }
   }.build()
   return@withContext Result.success(ProcessLauncher(exeForError = Exe.OnTarget(exePath), args = args, processCommands = TargetProcessCommands(launchRequest.scopeToBind, exePath, targetEnv, cmdLine)))

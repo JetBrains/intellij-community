@@ -20,7 +20,7 @@ import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.errorProcessing.Exe;
-import com.jetbrains.python.errorProcessing.ExecError;
+import com.jetbrains.python.errorProcessing.ExecErrorImpl;
 import com.jetbrains.python.errorProcessing.ExecErrorReason;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.PyPIPackageUtil.PackageDetails;
@@ -320,7 +320,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
                                                                                   @Nullable Sdk sdk,
                                                                                   @Nullable String packageName) {
     if (e instanceof PyExecutionException pyExecEx &&
-        pyExecEx.getPyError() instanceof ExecError execError &&
+        pyExecEx.getPyError() instanceof ExecErrorImpl<?> execError &&
         execError.getErrorReason() instanceof ExecErrorReason.UnexpectedProcessTermination execFailed) {
       var stdout = getStdoutString(execFailed);
       var stderr = getStderrString(execFailed);
@@ -343,7 +343,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   private static @Nullable @DetailedDescription String findErrorSolution(@NotNull PyExecutionException executionException,
                                                                          @Nullable String cause,
                                                                          @Nullable Sdk sdk) {
-    if (executionException.getPyError() instanceof ExecError e) {
+    if (executionException.getPyError() instanceof ExecErrorImpl<?> e) {
 
       if (cause != null) {
         if (StringUtil.containsIgnoreCase(cause, "SyntaxError")) {

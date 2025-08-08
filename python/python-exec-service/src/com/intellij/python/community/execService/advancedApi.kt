@@ -5,7 +5,8 @@ import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.python.community.execService.impl.ProcessSemiInteractiveHandlerImpl
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
@@ -40,6 +41,18 @@ interface ExecService {
     options: ExecOptions = ExecOptions(),
     processInteractiveHandler: ProcessInteractiveHandler<T>,
   ): PyResult<T>
+
+  /**
+   * Execute process from [binary] with [args]. It is up to you to manage its lifecycle.
+   * When bound to [scopeToBind] process will be destroyed once [scopeToBind] gets cancelled.
+   */
+  @CheckReturnValue
+  suspend fun executeGetProcess(
+    binary: BinaryToExec,
+    args: Args = Args(),
+    scopeToBind: CoroutineScope? = null,
+    options: ExecGetProcessOptions = ExecGetProcessOptions(),
+  ): Result<Process, ExecuteGetProcessError<*>>
 }
 
 /**
@@ -72,3 +85,17 @@ typealias ProcessSemiInteractiveFun<T> = suspend (EelSendChannel, Deferred<EelPr
  * So, you can only *write* something to process.
  */
 fun <T> processSemiInteractiveHandler(pyProcessListener: PyProcessListener? = null, code: ProcessSemiInteractiveFun<T>): ProcessInteractiveHandler<T> = ProcessSemiInteractiveHandlerImpl(pyProcessListener, code)
+
+
+sealed class ExecuteGetProcessError<T : PyError>(val pyError: T) {
+  /**
+   * Failed to create environment for process (i.e. failed to start docker)
+   */
+  class EnvironmentError internal constructor(pyError: MessageError) : ExecuteGetProcessError<MessageError>(pyError)
+
+  /**
+   * Process couldn't be started
+   */
+  class CanStart internal constructor(pyError: ExecErrorImpl<ExecErrorReason.CantStart>) : ExecuteGetProcessError<ExecErrorImpl<ExecErrorReason.CantStart>>(pyError)
+}
+

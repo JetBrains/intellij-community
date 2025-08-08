@@ -5,8 +5,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.execService.*
 import com.intellij.python.community.execService.python.HelperName
 import com.intellij.python.community.execService.python.addHelper
+import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 
@@ -47,6 +49,17 @@ suspend fun ExecService.executeHelper(
   procListener: PyProcessListener? = null,
 ): PyResult<String> =
   execGetStdout(sdk, Args().addHelper(helper).addArgs(helperArgs), options, procListener)
+
+
+// See function it calls for more info
+@ApiStatus.Internal
+@CheckReturnValue
+suspend fun ExecService.executeGetProcess(
+  sdk: Sdk,
+  args: Args = Args(),
+  scopeToBind: CoroutineScope? = null,
+  options: ExecGetProcessOptions = ExecGetProcessOptions(),
+): Result<Process, ExecuteGetProcessError<*>> = executeGetProcess(sdk.asBinToExecute(), args, scopeToBind, options)
 
 /**
  * Converts SDK to [BinOnTarget] to be used by [ExecService]
