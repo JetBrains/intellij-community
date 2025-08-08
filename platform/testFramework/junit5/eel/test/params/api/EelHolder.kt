@@ -16,14 +16,25 @@ sealed interface EelHolder {
   val eel: EelApi
 
   /**
-   * Target is a legacy API which doesn't support local development.
-   * If you do not know what it is, you do not need it.
-   * Consider using [eel] in a new code.
-   */
-  val target: TargetEnvironmentConfiguration?
-
-  /**
    * For those rare cases when you need to test something WSL or Docker-specific. Do not use unless absolutely necessary.
+   * More-or-less legal usage is
+   * ```kotlin
+   * when (val t = type) {
+   *   is Docker -> throw TestAbortedException("skip test for docker")
+   *   is Wsl, Local -> Unit
+   * }
+   * ```
    */
   val type: EelType
 }
+
+/**
+ * Target is a legacy API which doesn't support local development.
+ * If you do not know what it is, you do not need it.
+ * Consider using [EelHolder.eel] in a new code.
+ */
+val EelHolder.target: TargetEnvironmentConfiguration?
+  get() = when (val t = type) {
+    is Docker, is Wsl -> t.target
+    Local -> null
+  }

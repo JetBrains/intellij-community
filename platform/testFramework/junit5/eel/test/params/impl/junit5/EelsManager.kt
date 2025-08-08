@@ -8,6 +8,7 @@ import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolderImpl
 import com.intellij.platform.testFramework.junit5.eel.params.api.LocalEelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
+import com.intellij.platform.testFramework.junit5.eel.params.impl.junit5.EelsManager.Companion.create
 import com.intellij.platform.testFramework.junit5.eel.params.spi.EelIjentTestProvider.StartResult.Skipped
 import com.intellij.platform.testFramework.junit5.eel.params.spi.EelIjentTestProvider.StartResult.Started
 import com.intellij.platform.util.coroutines.childScope
@@ -68,12 +69,12 @@ internal class EelsManager private constructor(private val eelHolders: List<EelH
       for (eelHolder in eelHolders) {
         when (eelHolder) {
           is EelHolderImpl<*> -> {
-            val (eel, target, closable) = eelHolder.startIjentProvider(scope)
+            val (eel, eelType, closable) = eelHolder.startIjentProvider(scope)
             closable?.let {
               closeAfterTest.add(it)
             }
             eelHolder.eel = eel
-            eelHolder.target = target
+            eelHolder.type = eelType
             testContext.store.put(REMOTE_EEL_EXECUTED, true)
           }
           LocalEelHolder -> Unit
@@ -110,10 +111,10 @@ internal class EelsManager private constructor(private val eelHolders: List<EelH
 @TestOnly
 private suspend fun <T : Annotation> EelHolderImpl<T>.startIjentProvider(
   scope: CoroutineScope,
-): Started {
+): Started<*> {
   val provider = this.eelTestProvider
   when (val r = provider.start(scope, annotation)) {
-    is Started -> {
+    is Started<*> -> {
       return r
     }
     is Skipped -> {
