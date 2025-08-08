@@ -171,6 +171,7 @@
 
     <applicationService serviceInterface="com.intellij.codeInsight.folding.CodeFoldingSettings"
                         serviceImplementation="com.intellij.codeInsight.folding.CodeFoldingSettingsImpl"/>
+    <applicationSettings service="com.intellij.codeInsight.folding.CodeFoldingSettingsImpl"/>
     <postStartupActivity implementation="com.intellij.codeInsight.folding.impl.FoldingHintPostStartupActivity"/>
     <projectService serviceInterface="com.intellij.codeInsight.folding.CodeFoldingManager"
                     serviceImplementation="com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl"/>
