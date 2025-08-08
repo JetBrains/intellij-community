@@ -456,3 +456,5 @@ Here is a small selection of projects that use Compose for Desktop and Jewel:
 You can find help on the [`#jewel`](https://app.slack.com/client/T09229ZC6/C05T8U2C31T) channel on the Kotlin Slack.
 If you don't already have access to the Kotlin Slack, you can request it
 [here](https://surveys.jetbrains.com/s3/kotlin-slack-sign-up).
+
+You can find a series of guides on the Jewel processes in the [`docs`](docs) folder.
