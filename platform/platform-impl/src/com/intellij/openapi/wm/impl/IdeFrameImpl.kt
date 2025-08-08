@@ -127,6 +127,9 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
   // which holds its own client properties in a root pane
   fun setFrameHelper(frameHelper: FrameHelper?) {
     this.frameHelper = frameHelper
+    if (frameHelper == null) {
+      fixSwingLeaks()
+    }
   }
 
   override fun getAccessibleContext(): AccessibleContext {
