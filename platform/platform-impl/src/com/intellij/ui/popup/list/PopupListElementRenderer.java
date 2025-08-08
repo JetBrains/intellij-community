@@ -2,6 +2,7 @@
 package com.intellij.ui.popup.list;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionHolder;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
@@ -278,6 +279,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     if (showNextStepLabel) {
       myNextStepLabel.setVisible(isSelectable);
       myNextStepLabel.setIcon(isSelectable && isSelected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
+      myNextStepLabel.getAccessibleContext().setAccessibleName(IdeBundle.message("popup.list.item.renderer.next.step.label.accessible.name"));
       if (ExperimentalUI.isNewUI()) {
         myNextStepLabel.setBorder(JBUI.Borders.emptyLeft(20));
       }
@@ -288,6 +290,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     }
     else {
       myNextStepLabel.setVisible(false);
+      myNextStepLabel.getAccessibleContext().setAccessibleName(null);
     }
 
     boolean hasNextIcon = myNextStepLabel.isVisible();
@@ -516,9 +519,9 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     if (shortcutLabelAccessibleName != null) {
       shortcutLabelAccessibleName = shortcutLabelAccessibleName.trim();
     }
-    String iconAccessibleName = myIconLabel == null ? null : myIconLabel.getAccessibleContext().getAccessibleName();
+    String additionalLabels = AccessibleContextUtil.getCombinedName(", ", mySecondaryTextLabel, myIconLabel, myNextStepLabel);
     return AccessibleContextUtil.combineAccessibleStrings(textLabelAccessibleName, " ", shortcutLabelAccessibleName, ", ",
-                                                          iconAccessibleName);
+                                                          additionalLabels);
   }
 
   @TestOnly
