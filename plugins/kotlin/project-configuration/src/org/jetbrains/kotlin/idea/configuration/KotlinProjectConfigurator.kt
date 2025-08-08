@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.kotlin.config.ApiVersion
@@ -117,7 +118,7 @@ interface KotlinProjectConfigurator {
      * For instance, in KMP we often create IntelliJ modules for each fragment
      * (`my-module.commonMain`) but users only really see `my-module` as a module.
      */
-    fun userVisibleNameFor(module: Module) = module.name
+    fun userVisibleNameFor(module: Module): @NlsSafe String = module.name
 
     fun updateLanguageVersion(
         module: Module,

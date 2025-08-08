@@ -24,10 +24,10 @@ class JSLibraryStdDescription(project: Project?) : CustomLibraryDescriptionWithD
     }
 
     companion object {
-        const val LIBRARY_NAME = "KotlinJavaScript"
+        const val LIBRARY_NAME: String = "KotlinJavaScript"
 
-        val JAVA_SCRIPT_LIBRARY_CREATION get() = KotlinProjectConfigurationBundle.message("javascript.library.creation")
-        val DIALOG_TITLE get() = KotlinProjectConfigurationBundle.message("create.kotlin.javascript.library")
-        val SUITABLE_LIBRARY_KINDS = setOf(KotlinJavaScriptLibraryKind)
+        val JAVA_SCRIPT_LIBRARY_CREATION: String get() = KotlinProjectConfigurationBundle.message("javascript.library.creation")
+        val DIALOG_TITLE: String get() = KotlinProjectConfigurationBundle.message("create.kotlin.javascript.library")
+        val SUITABLE_LIBRARY_KINDS: Set<KotlinJavaScriptLibraryKind> = setOf(KotlinJavaScriptLibraryKind)
     }
 }
