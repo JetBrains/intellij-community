@@ -21,11 +21,10 @@ import java.util.EventListener;
  * For example, events may be triggered by:
  * <ul>
  *   <li>File type changes</li>
+ *   <li>Roots validity changes (e.g., when a JAR file is downloaded and the corresponding VirtualFile becomes valid)</li>
  *   <li>Manual invocations via {@link ProjectRootManagerEx#makeRootsChange(Runnable, RootsChangeRescanningInfo)}</li>
  * </ul>
  *
- * Both {@link com.intellij.platform.backend.workspace.WorkspaceModelChangeListener} and {@link ModuleRootListener} will
- * generate events when roots validity changes (e.g., when a JAR file is downloaded and the corresponding VirtualFile becomes valid)
  */
 @ApiStatus.OverrideOnly
 public interface ModuleRootListener extends EventListener {
