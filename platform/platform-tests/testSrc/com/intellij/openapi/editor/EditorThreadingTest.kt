@@ -3,7 +3,6 @@ package com.intellij.openapi.editor
 
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.editor.impl.EditorThreading
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey

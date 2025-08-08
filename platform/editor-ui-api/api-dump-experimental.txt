@@ -129,6 +129,18 @@ a:com.intellij.openapi.actionSystem.AnAction
 - a:calcWidthInPixels(com.intellij.openapi.editor.CustomFoldRegion):I
 - getContextMenuGroup(com.intellij.openapi.editor.CustomFoldRegion):com.intellij.openapi.actionSystem.ActionGroup
 - a:paint(com.intellij.openapi.editor.CustomFoldRegion,java.awt.Graphics2D,java.awt.geom.Rectangle2D,com.intellij.openapi.editor.markup.TextAttributes):V
+*:com.intellij.openapi.editor.EditorThreading
+- *sf:Companion:com.intellij.openapi.editor.EditorThreading$Companion
+- s:assertInteractionAllowed():V
+- s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- a:doAssertInteractionAllowed():V
+- a:doCompute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- a:doRun(java.lang.Runnable):V
+- s:run(java.lang.Runnable):V
+*f:com.intellij.openapi.editor.EditorThreading$Companion
+- f:assertInteractionAllowed():V
+- f:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- f:run(java.lang.Runnable):V
 com.intellij.openapi.editor.FoldingModel
 - *:addCustomLinesFolding(I,I,com.intellij.openapi.editor.CustomFoldRegionRenderer):com.intellij.openapi.editor.CustomFoldRegion
 *:com.intellij.openapi.editor.ScrollPositionCalculator

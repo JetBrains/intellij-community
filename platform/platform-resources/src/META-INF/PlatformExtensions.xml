@@ -7,6 +7,11 @@
       headlessImplementation="com.intellij.platform.diagnostic.startUpPerformanceReporter.HeadlessStartUpPerformanceService"
     />
 
+    <applicationService
+      serviceInterface="com.intellij.openapi.editor.EditorThreading"
+      serviceImplementation="com.intellij.openapi.editor.impl.EditorThreadingImpl"
+    />
+
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <appStarter id="save" implementation="com.intellij.openapi.application.SaveStarter"/>
     <appStarter id="exit" implementation="com.intellij.openapi.application.ExitStarter"/>
