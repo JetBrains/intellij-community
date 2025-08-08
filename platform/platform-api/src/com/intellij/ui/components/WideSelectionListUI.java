@@ -10,18 +10,17 @@ import com.intellij.ui.hover.ListHoverListener;
 import com.intellij.ui.list.ListCellBackgroundSupplier;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicListUI;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.HashMap;
 
 import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.ui.paint.RectanglePainter.DRAW;
@@ -32,7 +31,10 @@ import static com.intellij.ui.paint.RectanglePainter.DRAW;
 public final class WideSelectionListUI extends BasicListUI {
   private static final Logger LOG = Logger.getInstance(WideSelectionListUI.class);
   private Rectangle myPaintBounds;
-  private HashMap<@NotNull Integer, @NotNull Dimension> preferredSizeCache = new HashMap<>();
+
+  @ApiStatus.Internal
+  @TestOnly
+  public WideSelectionListCache cacheSupport;
 
   @Override
   public void paint(Graphics g, JComponent c) {
@@ -176,39 +178,17 @@ public final class WideSelectionListUI extends BasicListUI {
   }
 
   @Override
-  public void uninstallUI(JComponent c) {
-    preferredSizeCache.clear();
-    super.uninstallUI(c);
+  protected void installListeners() {
+    super.installListeners();
+    cacheSupport = new WideSelectionListCache(list);
+    cacheSupport.installListeners();
   }
 
   @Override
-  protected ListDataListener createListDataListener() {
-    ListDataListener superListener = super.createListDataListener();
-
-    return new ListDataListener() {
-      @Override
-      public void intervalAdded(ListDataEvent e) {
-        superListener.intervalAdded(e);
-      }
-
-      @Override
-      public void intervalRemoved(ListDataEvent e) {
-        removeFromCache(e);
-        superListener.intervalRemoved(e);
-      }
-
-      @Override
-      public void contentsChanged(ListDataEvent e) {
-        removeFromCache(e);
-        superListener.contentsChanged(e);
-      }
-    };
-  }
-
-  private void removeFromCache(ListDataEvent e) {
-    for (int i = e.getIndex0(); i <= e.getIndex1(); i++) {
-      preferredSizeCache.remove(i);
-    }
+  protected void uninstallListeners() {
+    cacheSupport.uninstallListeners();
+    cacheSupport = null;
+    super.uninstallListeners();
   }
 
   @Override
@@ -264,25 +244,17 @@ public final class WideSelectionListUI extends BasicListUI {
                                                   @NotNull ListModel<Object> dataModel,
                                                   @NotNull ListCellRenderer<Object> renderer,
                                                   boolean immutableRenderer) {
-    if (immutableRenderer) {
-      Dimension result = preferredSizeCache.get(index);
-      if (result != null) {
-        return result;
-      }
-    }
-
     Object value = dataModel.getElementAt(index);
-    Component c = renderer.getListCellRendererComponent(list, value, index, false, false);
-    rendererPane.add(c);
-    var result = c.getPreferredSize();
-    if (ClientProperty.get(c, JBList.IGNORE_LIST_ROW_HEIGHT) == null) {
-      result = UIUtil.updateListRowHeight(result);
-    }
 
-    if (immutableRenderer) {
-      preferredSizeCache.put(index, result);
-    }
-    return result;
+    return cacheSupport.getCachedPreferredSizeOrCalculate(value, immutableRenderer, () -> {
+      Component c = renderer.getListCellRendererComponent(list, value, index, false, false);
+      rendererPane.add(c);
+      var result = c.getPreferredSize();
+      if (ClientProperty.get(c, JBList.IGNORE_LIST_ROW_HEIGHT) == null) {
+        result = UIUtil.updateListRowHeight(result);
+      }
+      return result;
+    });
   }
 
   @Override
