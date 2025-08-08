@@ -1593,8 +1593,11 @@ public final class BuildManager implements Disposable {
     cmdLine.setupAdditionalVMOptions();
 
     Path hostWorkingDirectory = cmdLine.getHostWorkingDirectory();
-    if (!FileUtil.createDirectory(hostWorkingDirectory.toFile())) {
-      LOG.warn("Failed to create build working directory " + hostWorkingDirectory);
+    try {
+      Files.createDirectories(hostWorkingDirectory);
+    }
+    catch (IOException e) {
+      LOG.warn("Failed to create build working directory " + hostWorkingDirectory, e);
     }
 
     if (profileWithYourKit) {
@@ -1704,7 +1707,7 @@ public final class BuildManager implements Disposable {
       cmdLine.addParameter("-Djps.report.registered.unexistent.output=true");
     }
 
-    if (myFallbackSdkHome != null && myFallbackSdkVersion != null) {
+    if (localProject && myFallbackSdkHome != null && myFallbackSdkVersion != null) {
       cmdLine.addPathParameter("-D" + GlobalOptions.FALLBACK_JDK_HOME + '=', myFallbackSdkHome);
       cmdLine.addParameter("-D" + GlobalOptions.FALLBACK_JDK_VERSION + '=' + myFallbackSdkVersion);
     }
