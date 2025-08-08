@@ -33,30 +33,63 @@ internal class K2CompletionSection<P : KotlinRawPositionContext>(
     val runnable: K2CompletionSectionRunnable<P>,
 )
 
-/**
- * This is the context used within a [K2CompletionSection] providing common data that might be
- * shared between contributors running in the same analysis session.
- */
-internal class K2CompletionSectionContext<P : KotlinRawPositionContext>(
+internal class K2CompletionSectionCommonData<P: KotlinRawPositionContext>(
     val completionContext: K2CompletionContext<P>,
-    val sink: K2LookupElementSink,
     val weighingContext: WeighingContext,
     val prefixMatcher: PrefixMatcher,
     val visibilityChecker: CompletionVisibilityChecker,
     val importStrategyDetector: ImportStrategyDetector,
     val symbolFromIndexProvider: KtSymbolFromIndexProvider,
-    private val extensionCheckerProvider: () -> KaCompletionExtensionCandidateChecker?,
+    val extensionCheckerProvider: () -> KaCompletionExtensionCandidateChecker?,
+)
+
+/**
+ * This is the context used within a [K2CompletionSection] providing common data that might be
+ * shared between contributors running in the same analysis session.
+ */
+internal class K2CompletionSectionContext<P : KotlinRawPositionContext>(
+    private val commonData: K2CompletionSectionCommonData<P>,
+    private val section: K2CompletionSection<P>,
+    val sink: K2LookupElementSink,
+    private val addLaterSection: (K2CompletionSection<P>) -> Unit,
 ) {
+    val completionContext: K2CompletionContext<P> = commonData.completionContext
+
     val positionContext: P = completionContext.positionContext
 
     val parameters: KotlinFirCompletionParameters = completionContext.parameters
 
     val project: Project = parameters.completionFile.project
 
-    internal val extensionChecker: KaCompletionExtensionCandidateChecker? by lazy { extensionCheckerProvider() }
+    val weighingContext: WeighingContext = commonData.weighingContext
+
+    val prefixMatcher: PrefixMatcher = commonData.prefixMatcher
+
+    val visibilityChecker: CompletionVisibilityChecker = commonData.visibilityChecker
+
+    val importStrategyDetector: ImportStrategyDetector = commonData.importStrategyDetector
+
+    val symbolFromIndexProvider: KtSymbolFromIndexProvider = commonData.symbolFromIndexProvider
+
+    internal val extensionChecker: KaCompletionExtensionCandidateChecker? by lazy { commonData.extensionCheckerProvider() }
+
+    fun completeLaterInSameSession(
+        name: String,
+        priority: K2ContributorSectionPriority = K2ContributorSectionPriority.DEFAULT,
+        runnable: KaSession.(
+            context: K2CompletionSectionContext<P>
+        ) -> Unit
+    ) {
+        addLaterSection(K2CompletionSection(
+            priority = priority,
+            contributor = section.contributor,
+            name = name,
+            runnable = runnable
+        ))
+    }
 }
 
-private typealias K2CompletionSectionRunnable<P> = KaSession.(context: K2CompletionSectionContext<P>) -> Unit
+internal typealias K2CompletionSectionRunnable<P> = KaSession.(context: K2CompletionSectionContext<P>) -> Unit
 
 /**
  * The priority of a completion section determines the order in which the sections are executed.

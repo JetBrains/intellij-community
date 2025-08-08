@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvid
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2AccumulatingLookupElementSink.AccumulatingSinkMessage
+import org.jetbrains.kotlin.idea.completion.impl.k2.ParallelCompletionRunner.Companion.MAX_CONCURRENT_COMPLETION_THREADS
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.getAnnotationLiteralExpectedType
@@ -28,7 +29,7 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferenceP
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
 import org.jetbrains.kotlin.psi.KtFile
-import java.util.concurrent.LinkedBlockingQueue
+import java.util.*
 
 
 /**
@@ -45,7 +46,7 @@ internal interface K2CompletionRunner {
      *
      * Returns the number of elements added to the [CompletionResultSet] in the [completionContext].
      */
-    fun <P: KotlinRawPositionContext> runCompletion(
+    fun <P : KotlinRawPositionContext> runCompletion(
         completionContext: K2CompletionContext<P>,
         sections: List<K2CompletionSection<P>>,
     ): Int
@@ -112,40 +113,119 @@ private fun createExtensionChecker(
     }
 }
 
+private fun <P : KotlinRawPositionContext> KaSession.createCommonSectionData(
+    completionContext: K2CompletionContext<P>,
+): K2CompletionSectionCommonData<P>? {
+    val parameters = completionContext.parameters
+    val positionContext = completionContext.positionContext
+    val weighingContext = createWeighingContext(positionContext, parameters) ?: return null
+    val visibilityChecker = CompletionVisibilityChecker(parameters)
+    val symbolFromIndexProvider = KtSymbolFromIndexProvider(parameters.completionFile)
+    val importStrategyDetector = ImportStrategyDetector(parameters.originalFile, parameters.originalFile.project)
+    val extensionChecker by lazy { createExtensionChecker(positionContext, parameters.originalFile) }
+
+    return K2CompletionSectionCommonData(
+        completionContext = completionContext,
+        weighingContext = weighingContext,
+        prefixMatcher = completionContext.resultSet.prefixMatcher,
+        visibilityChecker = visibilityChecker,
+        symbolFromIndexProvider = symbolFromIndexProvider,
+        importStrategyDetector = importStrategyDetector,
+        extensionCheckerProvider = { extensionChecker },
+    )
+}
+
+/**
+ * A basic priority queue that maintains two internal queues for managing a queue of [initialElements].
+ * - The first queue contains all the [initialElements] and can potentially be shared between multiple elements.
+ * - The second queue contains only elements that have been added to the local instance obtained via [getLocalInstance].
+ *
+ * The purpose of this class is to model a priority queue of elements between different threads, where each thread
+ * may add elements to its own local queue that should not affect other threads.
+ */
+private class SharedPriorityQueue<P, C: Comparable<C>>(
+    initialElements: Collection<P>,
+    comparatorSelector: (P) -> Comparable<C>
+) {
+    private val comparator = compareBy(comparatorSelector)
+    private val globalQueue: LinkedList<P> = LinkedList(initialElements)
+
+    init {
+      globalQueue.sortWith(comparator)
+    }
+
+    inner class LocalInstance {
+        private val localQueue: LinkedList<P> = LinkedList()
+
+        /**
+         * Pops the first element from the global queue or from the local queue.
+         *
+         * The order of elements from this queue is determined by the first element of the corresponding queues.
+         * - If an element from one queue is strictly smaller than the other, then that element is returned first.
+         * - Elements from the local queue are preferred if there is a tie from the comparator.
+         */
+        fun popFirst(): P? = synchronized(globalQueue) {
+            val localFirst = localQueue.peek()
+            val globalFirst = globalQueue.peek()
+            if (localFirst == null && globalFirst == null) return null
+            if (globalFirst != null && (localFirst == null || comparator.compare(globalFirst, localFirst) < 0)) {
+                globalQueue.pop()
+                return globalFirst
+            } else {
+                localQueue.pop()
+                return localFirst
+            }
+        }
+
+        /**
+         * Adds an element to the local queue.
+         * The element will be added according to the [comparator] but added after existing elements in case of a tie from the comparator.
+         */
+        fun addLocal(element: P) {
+            localQueue.addLast(element)
+            // Performance here could be optimized but is unlikely to be a problem in practice because the lists we are dealing
+            // with are very small (<20 elements)
+            localQueue.sortWith(comparator)
+        }
+    }
+
+    fun getLocalInstance() : LocalInstance = LocalInstance()
+}
+
 /**
  * This completion runner executes all sections in sequence all in the same analysis session.
  */
 private class SequentialCompletionRunner : K2CompletionRunner {
-    override fun <P: KotlinRawPositionContext> runCompletion(
+    override fun <P : KotlinRawPositionContext> runCompletion(
         completionContext: K2CompletionContext<P>,
         sections: List<K2CompletionSection<P>>,
     ): Int {
         val parameters = completionContext.parameters
-        val positionContext = completionContext.positionContext
         val resultSet = completionContext.resultSet
         val sink = K2DelegatingLookupElementSink(resultSet)
-        val project = parameters.originalFile.project
-        analyze(parameters.completionFile) {
-            val weighingContext = createWeighingContext(positionContext, parameters) ?: return@analyze
-            val visibilityChecker = CompletionVisibilityChecker(parameters)
-            val symbolFromIndexProvider = KtSymbolFromIndexProvider(parameters.completionFile)
-            val importStrategyDetector = ImportStrategyDetector(parameters.originalFile, project)
-            val extensionChecker by lazy { createExtensionChecker(positionContext, parameters.originalFile) }
 
-            // We can share the same section context between all sections because we are operating in the same analysis session,
-            // and we use the same sink for all sections.
-            val sectionContext = K2CompletionSectionContext(
-                completionContext = completionContext,
-                sink = sink,
-                weighingContext = weighingContext,
-                prefixMatcher = resultSet.prefixMatcher,
-                visibilityChecker = visibilityChecker,
-                symbolFromIndexProvider = symbolFromIndexProvider,
-                importStrategyDetector = importStrategyDetector,
-                extensionCheckerProvider = { extensionChecker }
-            )
-            sections.forEach { section ->
+        val remainingSections = LinkedList(sections.toMutableList())
+        remainingSections.sortBy { it.priority }
+
+        val globalAndLocalQueue = SharedPriorityQueue(remainingSections) { it.priority }.getLocalInstance()
+
+        analyze(parameters.completionFile) {
+            val commonData = createCommonSectionData(completionContext) ?: return@analyze
+
+            while (true) {
+                val section = globalAndLocalQueue.popFirst()
+                if (section == null) break
                 ProgressManager.checkCanceled()
+
+                // We can share the same sink for all sections when running completion sequentially.
+                val sectionContext = K2CompletionSectionContext(
+                    commonData = commonData,
+                    section = section,
+                    sink = sink,
+                    addLaterSection = { section ->
+                        globalAndLocalQueue.addLocal(section)
+                    },
+                )
                 // We make sure we have the correct position before running the completion section.
                 section.runnable(this@analyze, sectionContext)
             }
@@ -173,7 +253,10 @@ private class ParallelCompletionRunner : K2CompletionRunner {
     private val maxCompletionThreads
         get() = Runtime.getRuntime().availableProcessors().coerceIn(1..MAX_CONCURRENT_COMPLETION_THREADS)
 
-    private fun handleElement(resultSet: CompletionResultSet, element: AccumulatingSinkMessage) = when (element) {
+    private fun handleElement(
+        resultSet: CompletionResultSet,
+        element: AccumulatingSinkMessage
+    ) = when (element) {
         is AccumulatingSinkMessage.ElementBatch -> {
             resultSet.addAllElements(element.elements)
         }
@@ -187,53 +270,53 @@ private class ParallelCompletionRunner : K2CompletionRunner {
         }
 
         is AccumulatingSinkMessage.RegisterChainContributor -> TODO()
+
+        else -> {}
     }
 
-    override fun <P: KotlinRawPositionContext> runCompletion(
+    override fun <P : KotlinRawPositionContext> runCompletion(
         completionContext: K2CompletionContext<P>,
         sections: List<K2CompletionSection<P>>,
     ): Int {
         val parameters = completionContext.parameters
-        val positionContext = completionContext.positionContext
         val resultSet = completionContext.resultSet
 
         // Each section gets its own sink which is then later collected by the main thread in the same order as the sections
-        val sectionSinks = sections.map { it to K2AccumulatingLookupElementSink() }
+        val sectionsWithSinks = sections.map { it to K2AccumulatingLookupElementSink() }
         // This is the queue of all remaining sections ordered by their priority. Each thread will pick the
         // remaining section with the highest priority when choosing a new section to run.
-        val remainingSections = LinkedBlockingQueue<Pair<K2CompletionSection<P>, K2AccumulatingLookupElementSink>>()
-        remainingSections.addAll(sectionSinks)
-        val project = parameters.originalFile.project
+        val remainingSectionsQueue = SharedPriorityQueue(sectionsWithSinks) { it.first.priority}
 
         // If this block is canceled, so are all the threads launched inside the scope.
         return runBlockingCancellable {
             try {
-                repeat(maxCompletionThreads.coerceAtMost(remainingSections.size)) {
+                repeat(maxCompletionThreads.coerceAtMost(sectionsWithSinks.size)) { _ ->
                     launch(Dispatchers.Default) {
                         // Each thread gets its own analysis session, which also requires creating
                         // associated utility objects like the visibility checker per thread.
                         analyze(parameters.completionFile) {
-                            // We create one weighing context and visibility checker per thread
-                            val visibilityChecker = CompletionVisibilityChecker(parameters)
-                            val weighingContext = createWeighingContext(positionContext, parameters) ?: return@analyze
-                            val symbolFromIndexProvider = KtSymbolFromIndexProvider(parameters.completionFile)
-                            val importStrategyDetector = ImportStrategyDetector(parameters.originalFile, project)
-                            var entry = remainingSections.poll()
-                            val extensionChecker by lazy { createExtensionChecker(positionContext, parameters.originalFile) }
+                            // We need to create one common data (containing weighing context and similar constructs) per session
+                            val commonData = createCommonSectionData(completionContext) ?: return@analyze
+                            val localQueueInstance = remainingSectionsQueue.getLocalInstance()
 
-                            while (entry != null) {
+                            while (true) {
+                                val entry = localQueueInstance.popFirst()
+                                if (entry == null) break
+                                @Suppress("ForbiddenInSuspectContextMethod")
+                                ProgressManager.checkCanceled()
+
                                 val (currentSection, sectionSink) = entry
 
                                 // We need an individual context for each section because the sink of each section is different.
                                 val sectionContext = K2CompletionSectionContext(
-                                    completionContext = completionContext,
+                                    commonData = commonData,
                                     sink = sectionSink,
-                                    weighingContext = weighingContext,
-                                    prefixMatcher = resultSet.prefixMatcher,
-                                    visibilityChecker = visibilityChecker,
-                                    symbolFromIndexProvider = symbolFromIndexProvider,
-                                    importStrategyDetector = importStrategyDetector,
-                                    extensionCheckerProvider = { extensionChecker }
+                                    section = currentSection,
+                                    addLaterSection = { section ->
+                                        val laterSectionSink = K2AccumulatingLookupElementSink()
+                                        localQueueInstance.addLocal(section to laterSectionSink)
+                                        sectionSink.registerLaterSection(section.priority, laterSectionSink)
+                                    },
                                 )
 
                                 try {
@@ -241,21 +324,33 @@ private class ParallelCompletionRunner : K2CompletionRunner {
                                 } finally {
                                     sectionSink.close()
                                 }
-
-                                entry = remainingSections.poll()
                             }
                         }
                     }
                 }
 
                 var addedElements = 0
-                sectionSinks.forEach { (_, channel) ->
-                    channel.consumeElements { handleElement(resultSet, it) }
-                    addedElements += channel.addedElementCount
+                val initiallyRegisteredSinks = SharedPriorityQueue(sectionsWithSinks) { it.first.priority }.getLocalInstance()
+
+                while (true) {
+                    val entry = initiallyRegisteredSinks.popFirst()
+                    if (entry == null) break
+
+                    val (currentSection, sectionSink) = entry
+
+                    sectionSink.consumeElements { element ->
+                        if (element is AccumulatingSinkMessage.RegisterLaterSectionSink) {
+                            initiallyRegisteredSinks.addLocal(currentSection to element.sink)
+                        } else {
+                            handleElement(resultSet, element)
+                        }
+                    }
+                    addedElements += sectionSink.addedElementCount
                 }
+
                 addedElements
             } finally {
-                sectionSinks.forEach { it.second.cancel() }
+                sectionsWithSinks.forEach { it.second.cancel() }
             }
         }
     }

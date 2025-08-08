@@ -101,9 +101,6 @@ internal object Completions {
             }
         }
 
-        // Sort by priority in a _stable_ way to preserve determinism.
-        sections.sortBy { it.priority }
-
         val completionRunner = K2CompletionRunner.getInstance(sections.size)
 
         // TODO: Add chain completion
