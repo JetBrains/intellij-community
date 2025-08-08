@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.PrefixMatcher
+import com.intellij.codeInsight.completion.impl.BetterPrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
@@ -22,9 +23,9 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinFqNameSerializer
+import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.base.util.letIf
 import org.jetbrains.kotlin.idea.completion.InsertionHandlerBase
-import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiers
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.createStarTypeA
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.idea.completion.reference
@@ -60,6 +62,24 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
     private fun getPrefixMatcher(context: K2CompletionSectionContext<*>): PrefixMatcher =
         context.prefixMatcher.applyIf(isTypingIsKeyword(context)) { cloneWithPrefix("") }
 
+    private fun getScopeNameFilter(prefixMatcher: PrefixMatcher): (Name) -> Boolean {
+        return { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }
+    }
+
+    // Prefix matcher that only matches if the completion item starts with the prefix.
+    private fun getStartOnlyNameFilter(prefixMatcher: PrefixMatcher): (Name) -> Boolean {
+        val startOnlyMatcher = BetterPrefixMatcher(prefixMatcher, Int.MIN_VALUE)
+        return { name -> !name.isSpecial && startOnlyMatcher.prefixMatches(name.identifier) }
+    }
+
+    internal fun getIndexNameFilter(prefixMatcher: PrefixMatcher, context: K2CompletionSectionContext<*>): (Name) -> Boolean {
+        return if (context.parameters.invocationCount >= 2 || prefixMatcher.prefix.length > 3) {
+            getScopeNameFilter(prefixMatcher)
+        } else {
+            getStartOnlyNameFilter(prefixMatcher)
+        }
+    }
+
     override fun KaSession.complete(context: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>) {
         val positionContext = context.positionContext
         val weighingContext = context.weighingContext
@@ -70,6 +90,12 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         val subjectType = subject.expressionType ?: return
         val classSymbol = getClassSymbol(subjectType)
         val isSingleCondition = whenCondition.isSingleConditionInEntry()
+
+        createNullBranchLookupElement(weighingContext, subjectType)
+            ?.let { context.addElement(it) }
+        createElseBranchLookupElement(weighingContext, whenCondition)
+            ?.let { context.addElement(it) }
+
         when {
             classSymbol?.classKind == KaClassKind.ENUM_CLASS -> {
                 completeEnumEntries(
@@ -96,10 +122,6 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
                 isSingleCondition = isSingleCondition,
             )
         }
-        createNullBranchLookupElement(weighingContext, subjectType)
-            ?.let { context.addElement(it) }
-        createElseBranchLookupElement(weighingContext, whenCondition)
-            ?.let { context.addElement(it) }
     }
 
     context(KaSession)
@@ -129,10 +151,11 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         val completionContext = context.completionContext
         val availableFromScope = mutableSetOf<KaClassifierSymbol>()
         val prefixMatcher = getPrefixMatcher(context)
+        val scopeNameFilter = getScopeNameFilter(prefixMatcher)
 
         completionContext.originalFile.scopeContext(whenCondition)
             .scopes
-            .flatMap { it.getAvailableClassifiers(positionContext, completionContext.scopeNameFilter, context.visibilityChecker) }
+            .flatMap { it.getAvailableClassifiers(positionContext, scopeNameFilter, context.visibilityChecker) }
             .mapNotNull { classifierWithScopeKind ->
                 val classifier = classifierWithScopeKind.symbol
                 if (classifier !is KaNamedSymbol) return@mapNotNull null
@@ -149,23 +172,25 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
             }.forEach { context.addElement(it) }
 
         if (prefixMatcher.prefix.isNotEmpty()) {
-            getAvailableClassifiersFromIndex(
-                positionContext = positionContext,
-                parameters = context.parameters,
-                symbolProvider = context.symbolFromIndexProvider,
-                scopeNameFilter = context.completionContext.getIndexNameFilter(),
-                visibilityChecker = context.visibilityChecker,
-            ).filterNot { it in availableFromScope }
-                .filterIsInstance<KaNamedSymbol>()
-                .map { classifier ->
-                    createLookupElement(
-                        context = context,
-                        lookupString = classifier.name.asString(),
-                        symbol = classifier,
-                        fqName = (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
-                        isSingleCondition = isSingleCondition,
-                    )
-                }.forEach { context.addElement(it) }
+            context.completeLaterInSameSession("Index", priority = K2ContributorSectionPriority.INDEX) { innerContext ->
+                getAvailableClassifiersFromIndex(
+                    positionContext = positionContext,
+                    parameters = innerContext.parameters,
+                    symbolProvider = innerContext.symbolFromIndexProvider,
+                    scopeNameFilter = getIndexNameFilter(prefixMatcher, innerContext),
+                    visibilityChecker = innerContext.visibilityChecker,
+                ).filterNot { it in availableFromScope }
+                    .filterIsInstance<KaNamedSymbol>()
+                    .map { classifier ->
+                        createLookupElement(
+                            context = innerContext,
+                            lookupString = classifier.name.asString(),
+                            symbol = classifier,
+                            fqName = (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
+                            isSingleCondition = isSingleCondition,
+                        )
+                    }.forEach { innerContext.addElement(it) }
+            }
         }
     }
 

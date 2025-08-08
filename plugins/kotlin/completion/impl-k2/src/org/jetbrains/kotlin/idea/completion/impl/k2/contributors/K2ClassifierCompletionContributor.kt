@@ -314,12 +314,16 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
         }
     }
 
-    override fun K2CompletionSectionContext<KotlinNameReferencePositionContext>.getGroupPriority(): Int = when(positionContext) {
+    override fun K2CompletionSectionContext<KotlinNameReferencePositionContext>.getGroupPriority(): Int = when (positionContext) {
         is KotlinWithSubjectEntryPositionContext, is KotlinCallableReferencePositionContext -> 1
         else -> 0
     }
 
     override fun K2CompletionSetupScope<KotlinNameReferencePositionContext>.isAppropriateContext(): Boolean {
+        if (position is KotlinPackageDirectivePositionContext ||
+            position is KotlinImportDirectivePositionContext ||
+            position is KotlinSuperTypeCallNameReferencePositionContext
+        ) return false
         if (position !is KotlinTypeNameReferencePositionContext) return true
         return position.allowsClassifiersAndPackagesForPossibleExtensionCallables(
             parameters = completionContext.parameters,

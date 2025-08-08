@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.OverrideKeywordHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSetupScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinPrimaryConstructorParameterPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinValueParameterPositionContext
@@ -53,8 +55,15 @@ internal class K2DeclarationFromOverridableMembersContributor : K2SimpleCompleti
         return (typeReference.parent as? KtCallableDeclaration)?.takeIf { it.receiverTypeReference == typeReference }
     }
 
-    override fun K2CompletionSectionContext<KotlinRawPositionContext>.getGroupPriority(): Int = when(positionContext) {
+    override fun K2CompletionSectionContext<KotlinRawPositionContext>.getGroupPriority(): Int = when (positionContext) {
         is KotlinTypeNameReferencePositionContext -> 1
         else -> 0
+    }
+
+    override fun K2CompletionSetupScope<KotlinRawPositionContext>.isAppropriateContext(): Boolean = when (position) {
+        is KotlinTypeNameReferencePositionContext,
+        is KotlinPrimaryConstructorParameterPositionContext -> true
+
+        else -> false
     }
 }
