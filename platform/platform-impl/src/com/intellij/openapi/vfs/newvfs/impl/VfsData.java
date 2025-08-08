@@ -26,11 +26,12 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.*;
 
 import java.io.Closeable;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicIntegerArray;
-import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.IntFunction;
+import java.util.function.IntUnaryOperator;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 
@@ -146,7 +147,7 @@ public final class VfsData implements Closeable {
   // ====================== monitoring ======================================================================================= //
 
 
-  /**# of {@link Segment} instances created, since the start */
+  /** # of {@link Segment} instances created, since the start */
   private final AtomicInteger segmentsCreated = new AtomicInteger();
 
   /** # of {@link DirectoryData}/{@link VirtualDirectoryImpl} objects created, since the start */
@@ -209,8 +210,7 @@ public final class VfsData implements Closeable {
         for (IntIterator iterator = queueOfFileIdsToBeInvalidated.iterator(); iterator.hasNext(); ) {
           int id = iterator.nextInt();
           Segment segment = Objects.requireNonNull(getSegment(id, /*create: */false));
-          segment.objectFieldsArray.set(objectOffsetInSegment(id), deadMarker);
-          //skip cleaning segment.intFieldsArray since dead marker means slot is _not reusable_ in this session
+          segment.killFileData(id, deadMarker);
           changedParents.remove(id);
         }
         queueOfFileIdsToBeInvalidated = new IntOpenHashSet();
@@ -228,8 +228,7 @@ public final class VfsData implements Closeable {
     Segment segment = getSegment(id, /*create: */ false);
     if (segment == null) return null;
 
-    int offset = objectOffsetInSegment(id);
-    Object entryData = segment.objectFieldsArray.get(offset);
+    Object entryData = segment.fileDataById(id);
     if (entryData == null) return null;
 
     if (entryData == deadMarker) {
@@ -259,8 +258,7 @@ public final class VfsData implements Closeable {
     Segment segment = getSegment(id, /*create: */ false);
     if (segment == null) return null;
 
-    int offset = objectOffsetInSegment(id);
-    Object entryData = segment.objectFieldsArray.get(offset);
+    Object entryData = segment.fileDataById(id);
     if (entryData == null) return null;
 
     if (entryData == deadMarker) {
@@ -280,10 +278,10 @@ public final class VfsData implements Closeable {
   public @NotNull Iterable<? extends VirtualFileSystemEntry> getCachedDirs() {
     List<VirtualFileSystemEntry> cachedDirs = new ArrayList<>();
     for (final Segment segment : segments.values()) {
-      AtomicReferenceArray<Object> fileDataEntries = segment.objectFieldsArray;
-      int length = fileDataEntries.length();
+      Object[] fileDataEntries = segment.objectFieldsArray;
+      int length = fileDataEntries.length;
       for (int i = 0; i < length; i++) {
-        Object entry = fileDataEntries.get(i);
+        Object entry = Segment.OBJECT_FIELDS_HANDLE.getVolatile(fileDataEntries, i);
         if (entry instanceof DirectoryData directoryData) {
           VirtualDirectoryImpl directory = directoryData.directory;
           if (directory != null && directory.isValid()) {
@@ -300,18 +298,13 @@ public final class VfsData implements Closeable {
   }
 
   @Contract("_,true->!null")
-  public Segment getSegment(int id, boolean create) {
-    int segmentIndex = segmentIndex(id);
+  public Segment getSegment(int fileId, boolean create) {
+    int segmentIndex = segmentIndex(fileId);
     Segment segment = segments.get(segmentIndex);
     if (segment != null || !create) {
       return segment;
     }
     return segments.cacheOrGet(segmentIndex, new Segment(segmentIndex, this));
-  }
-
-  public boolean hasLoadedFile(int id) {
-    Segment segment = getSegment(id, false);
-    return segment != null && segment.objectFieldsArray.get(objectOffsetInSegment(id)) != null;
   }
 
   @NotNull String getNameByFileId(int fileId) {
@@ -354,18 +347,29 @@ public final class VfsData implements Closeable {
     private static final int INT_FIELDS_COUNT = 1;
     private static final int FLAGS_AND_MOD_COUNT_FIELD_NO = 0;
 
+    private static final VarHandle OBJECT_FIELDS_HANDLE;
+    private static final VarHandle INT_FIELDS_HANDLE;
+
+    static {
+      try {
+        OBJECT_FIELDS_HANDLE = MethodHandles.arrayElementVarHandle(Object[].class).withInvokeExactBehavior();
+        INT_FIELDS_HANDLE = MethodHandles.arrayElementVarHandle(int[].class).withInvokeExactBehavior();
+      }
+      catch (Throwable t) {
+        throw new ExceptionInInitializerError(t);
+      }
+    }
+
     /** Sequential index of the segment: only for debug/logging */
     private final int segmentIndex;
 
-    final @NotNull VfsData owningVfsData;
-
-    //TODO RC: replace AtomicArrays with int[]/Object[] and access via VarHandle
+    private final VfsData owningVfsData;
 
     /** user data (KeyFMap) for files, {@link DirectoryData} for folders */
-    private final AtomicReferenceArray<Object> objectFieldsArray;
+    private final Object[] objectFieldsArray;
 
     /**
-     * [flags | modCount] per fileId
+     * [flags(:8bits) | modCount(:24bits)] per fileId
      * Currently it is single int32 per fileId: flag bits (highest byte) and modificationCounter (lowest 3 bytes)
      * Flags are from {@link VirtualFileSystemEntry.VfsDataFlags}: they are a subset of underlying {@link PersistentFS.Flags},
      * see {@link VirtualDirectoryImpl#initializeChildData(int, int, int, boolean)} for an assignment.
@@ -373,7 +377,7 @@ public final class VfsData implements Closeable {
      * and incremented only on file _content_ modification, while {@link FSRecordsImpl#getModCount(int)} is incremented on _any_
      * file attribute/content/etc change.
      */
-    private final AtomicIntegerArray intFieldsArray;
+    private final int[] intFieldsArray;
 
 
     /**
@@ -395,16 +399,16 @@ public final class VfsData implements Closeable {
                    @NotNull VfsData owningVfsData) {
       this(segmentIndex,
            owningVfsData,
-           new AtomicReferenceArray<>(SEGMENT_SIZE),
-           new AtomicIntegerArray(SEGMENT_SIZE * INT_FIELDS_COUNT)
+           new Object[SEGMENT_SIZE],
+           new int[SEGMENT_SIZE * INT_FIELDS_COUNT]
       );
     }
 
     /** Copying ctor */
     private Segment(int segmentIndex,
                     @NotNull VfsData owningVfsData,
-                    @NotNull AtomicReferenceArray<Object> objectFieldsArray,
-                    @NotNull AtomicIntegerArray intFieldsArray) {
+                    Object @NotNull [] objectFieldsArray,
+                    int @NotNull [] intFieldsArray) {
       this.segmentIndex = segmentIndex;
       this.objectFieldsArray = objectFieldsArray;
       this.intFieldsArray = intFieldsArray;
@@ -413,9 +417,13 @@ public final class VfsData implements Closeable {
       owningVfsData.segmentsCreated.incrementAndGet();
     }
 
+    @NotNull VfsData owningVfsData(){
+      return owningVfsData;
+    }
+
     void setUserMap(int fileId, @NotNull KeyFMap map) {
       int index = objectOffsetInSegment(fileId);
-      Object oldMap = objectFieldsArray.getAndSet(index, map);
+      Object oldMap = OBJECT_FIELDS_HANDLE.getAndSet(objectFieldsArray, index, (Object)map);
       if (oldMap == null) {
         //Entry in the objectFieldsArray must be initialized first in .initFileData(), during
         // VirtualFile lookup -- only after that VirtualFile could be made publicly available,
@@ -425,7 +433,7 @@ public final class VfsData implements Closeable {
     }
 
     @NotNull KeyFMap getUserMap(@NotNull VirtualFileSystemEntry file, int id) {
-      Object o = objectFieldsArray.get(objectOffsetInSegment(id));
+      Object o = fileDataById(id);
       if (!(o instanceof KeyFMap)) {
         throw reportDeadFileAccess(file);
       }
@@ -440,7 +448,8 @@ public final class VfsData implements Closeable {
         throw new IllegalStateException(
           "file[#" + fileId + "]: cache record wasn't initialized yet, but already used (change -> " + newMap + ")");
       }
-      return objectFieldsArray.compareAndSet(objectOffsetInSegment(fileId), oldMap, newMap);
+      int offset = objectOffsetInSegment(fileId);
+      return OBJECT_FIELDS_HANDLE.compareAndSet(objectFieldsArray, offset, (Object)oldMap, (Object)newMap);
     }
 
     boolean getFlag(int fileId, @VirtualFileSystemEntry.Flags int mask) {
@@ -448,7 +457,8 @@ public final class VfsData implements Closeable {
       assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
 
       int offset = fieldOffset(fileId, FLAGS_AND_MOD_COUNT_FIELD_NO);
-      return (intFieldsArray.get(offset) & mask) != 0;
+      int flags = (int)INT_FIELDS_HANDLE.getVolatile(intFieldsArray, offset);
+      return (flags & mask) != 0;
     }
 
     void setFlag(int fileId, @VirtualFileSystemEntry.Flags int mask, boolean value) {
@@ -457,7 +467,17 @@ public final class VfsData implements Closeable {
       }
       assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
       int offset = fieldOffset(fileId, FLAGS_AND_MOD_COUNT_FIELD_NO);
-      intFieldsArray.updateAndGet(offset, oldInt -> BitUtil.set(oldInt, mask, value));
+      updateFlagsAtomically(offset, oldFlags -> BitUtil.set(oldFlags, mask, value));
+    }
+
+    private void updateFlagsAtomically(int offset, @NotNull IntUnaryOperator op) {
+      while (true) {//CAS loop
+        int oldFlags = (int)INT_FIELDS_HANDLE.getVolatile(intFieldsArray, offset);
+        int newFlags = op.applyAsInt(oldFlags);
+        if (INT_FIELDS_HANDLE.compareAndSet(intFieldsArray, offset, oldFlags, newFlags)) {
+          return;
+        }
+      }
     }
 
     void setFlags(int fileId, @VirtualFileSystemEntry.Flags int combinedMask, @VirtualFileSystemEntry.Flags int combinedValue) {
@@ -468,7 +488,7 @@ public final class VfsData implements Closeable {
       assert (~combinedMask & combinedValue) == 0 : "Value (" + Integer.toHexString(combinedValue) + ") set bits outside mask (" +
                                                     Integer.toHexString(combinedMask) + ")";
       int offset = fieldOffset(fileId, FLAGS_AND_MOD_COUNT_FIELD_NO);
-      intFieldsArray.updateAndGet(offset, oldInt -> oldInt & ~combinedMask | combinedValue);
+      updateFlagsAtomically(offset, oldFlags -> oldFlags & ~combinedMask | combinedValue);
     }
 
     /**
@@ -478,13 +498,14 @@ public final class VfsData implements Closeable {
      */
     long getModificationStamp(int fileId) {
       int offset = fieldOffset(fileId, FLAGS_AND_MOD_COUNT_FIELD_NO);
-      return intFieldsArray.get(offset) & ~VirtualFileSystemEntry.ALL_FLAGS_MASK;
+      int flags = (int)INT_FIELDS_HANDLE.getVolatile(intFieldsArray, offset);
+      return flags & ~VirtualFileSystemEntry.ALL_FLAGS_MASK;
     }
 
     void setModificationStamp(int fileId, long stamp) {
       int offset = fieldOffset(fileId, FLAGS_AND_MOD_COUNT_FIELD_NO);
-      intFieldsArray.updateAndGet(offset, oldInt -> (oldInt & VirtualFileSystemEntry.ALL_FLAGS_MASK) |
-                                                    ((int)stamp & ~VirtualFileSystemEntry.ALL_FLAGS_MASK));
+      updateFlagsAtomically(offset, oldFlags -> (oldFlags & VirtualFileSystemEntry.ALL_FLAGS_MASK) |
+                                                ((int)stamp & ~VirtualFileSystemEntry.ALL_FLAGS_MASK));
     }
 
     void changeParent(int fileId, VirtualDirectoryImpl directory) {
@@ -504,7 +525,7 @@ public final class VfsData implements Closeable {
       if (fileData instanceof DirectoryData) {
         owningVfsData.directoriesCreated.incrementAndGet();
       }
-      Object existingData = objectFieldsArray.compareAndExchange(offset, /*expected: */null, fileData);
+      Object existingData = OBJECT_FIELDS_HANDLE.compareAndExchange(objectFieldsArray, offset, /*expected: */(Object)null, fileData);
       if (existingData != null) {
         //RC: it seems like concurrency issue, but I can't find a specific location
         //MAYBE RC: why it is even an error? It seems, like this could happen if the cached file entry was dropped by GC
@@ -519,7 +540,7 @@ public final class VfsData implements Closeable {
         }
         else {
           Segment parentSegment = owningVfsData.getSegment(parentId, false);
-          parentData = (DirectoryData)parentSegment.objectFieldsArray.get(objectOffsetInSegment(parentId));
+          parentData = (DirectoryData)parentSegment.fileDataById(parentId);
         }
 
         throw new FileAlreadyCreatedException(
@@ -542,6 +563,16 @@ public final class VfsData implements Closeable {
           (parentData != null ? Thread.holdsLock(parentData) : "...")
         );
       }
+    }
+
+    Object fileDataById(int fileId){
+      int offset = objectOffsetInSegment(fileId);
+      return OBJECT_FIELDS_HANDLE.getVolatile(objectFieldsArray, offset);
+    }
+
+    void killFileData(int fileId, Object deadMarker) {
+      OBJECT_FIELDS_HANDLE.setVolatile(objectFieldsArray, objectOffsetInSegment(fileId), deadMarker);
+      //skip cleaning .intFieldsArray since dead marker means slot is _not reusable_ in this session
     }
 
     @Override

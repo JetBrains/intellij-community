@@ -156,7 +156,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @NotNull VfsData getVfsData() {
-    VfsData data = segment.owningVfsData;
+    VfsData data = segment.owningVfsData();
     PersistentFSImpl owningPersistentFS = data.owningPersistentFS();
     if (!owningPersistentFS.isOwnData(data)) {
       //PersistentFSImpl re-creates VfsData on (re-)connect
@@ -183,7 +183,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     while (segment.replacement != null) {
       segment = segment.replacement;
     }
-    VirtualDirectoryImpl changedParent = segment.owningVfsData.getChangedParent(id);
+    VirtualDirectoryImpl changedParent = segment.owningVfsData().getChangedParent(id);
     if (changedParent != null) {
       parent = changedParent;
     }
@@ -581,7 +581,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       //    is the only method that _doesn't_ throw the AssertionError for alien files, but returns false instead.
       //    In other words: we now consider an 'alien' file as 'invalid' file, instead of a primordial sin.
 
-      VfsData data = segment.owningVfsData;
+      VfsData data = segment.owningVfsData();
       PersistentFSImpl owningPersistentFS = data.owningPersistentFS();
       if (!owningPersistentFS.isOwnData(data)) {
         Logger.getInstance(VirtualFileSystemEntry.class).warn(
@@ -595,7 +595,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public @NonNls String toString() {
-    VfsData owningVfsData = getSegment().owningVfsData;
+    VfsData owningVfsData = getSegment().owningVfsData();
     //don't use .owningPersistentFS() since it throws assertion if pFS not own current segment anymore,
     // but here we want to return some string always:
     PersistentFSImpl persistentFs = owningVfsData.owningPersistentFS();
