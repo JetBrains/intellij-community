@@ -1318,7 +1318,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           LOG.debug("Evaluation finished in " + suspendContext);
         }
         myEvaluationContext.setThreadForEvaluation(null);
-        if (DebuggerUtils.isNewThreadSuspendStateTracking() && !mySuspendManager.myExplicitlyResumedThreads.contains(invokeThread)) {
+        if (DebuggerUtils.isNewThreadSuspendStateTracking()) {
           for (SuspendContextImpl anotherContext : mySuspendManager.getEventContexts()) {
             if (anotherContext != suspendContext && !anotherContext.suspends(invokeThread)) {
               boolean shouldSuspendThread = false;
@@ -1332,7 +1332,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                 if (anotherContext.myResumedThreads == null || !anotherContext.myResumedThreads.contains(invokeThread)) {
                   logError("Suspend all context claims not suspending " + invokeThread + " but its resumed threads have no it: " + anotherContext.myResumedThreads);
                 }
-                shouldSuspendThread = true;
+                if (!mySuspendManager.myExplicitlyResumedThreads.contains(invokeThread)) {
+                  // Preserve explicitly resumed thread in the running state
+                  shouldSuspendThread = true;
+                }
               }
               if (shouldSuspendThread) {
                 mySuspendManager.suspendThread(anotherContext, invokeThread);
