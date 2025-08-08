@@ -5,6 +5,7 @@ import com.intellij.diff.DiffContentFactoryImpl;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -126,7 +127,7 @@ public final class IdeaTextPatchBuilder {
 
     FilePath file = cr.getFile();
     FileType type = file.getFileType();
-    if (cr instanceof ByteBackedContentRevision byteBasedContentRevision) {
+    if (type instanceof UnknownFileType && cr instanceof ByteBackedContentRevision byteBasedContentRevision) {
       try {
         byte[] bytes = byteBasedContentRevision.getContentAsBytes();
         if (bytes != null) {
