@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -25,13 +26,23 @@ private val ktProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDe
     }
 }
 
-abstract class AbstractCoroutineNonBlockingContextDetectionTest(
-    private val considerUnknownAsBlocking: Boolean,
-    private val considerSuspendContextNonBlocking: Boolean,
-) : KotlinLightCodeInsightFixtureTestCase() {
+abstract class AbstractCoroutineNonBlockingContextDetectionTest : KotlinLightCodeInsightFixtureTestCase() {
+    private val CONSIDER_UNKNOWN_AS_BLOCKING: String = "CONSIDER_UNKNOWN_AS_BLOCKING:"
+    private val CONSIDER_SUSPEND_CONTEXT_NON_BLOCKING: String = "CONSIDER_SUSPEND_CONTEXT_NON_BLOCKING:"
+
     override fun getProjectDescriptor(): LightProjectDescriptor = ktProjectDescriptor
 
     protected fun doTest(fileName: String) {
+        val fileText = dataFile(fileName).readText()
+
+        val considerUnknownAsBlocking = 
+            InTextDirectivesUtils.getPrefixedBoolean(fileText, CONSIDER_UNKNOWN_AS_BLOCKING)
+                ?: error("No '$CONSIDER_UNKNOWN_AS_BLOCKING' directive found")
+
+        val considerSuspendContextNonBlocking = 
+            InTextDirectivesUtils.getPrefixedBoolean(fileText, CONSIDER_SUSPEND_CONTEXT_NON_BLOCKING)
+                ?: error("No '$CONSIDER_SUSPEND_CONTEXT_NON_BLOCKING' directive found")
+        
         val inspection = BlockingMethodInNonBlockingContextInspection(considerUnknownAsBlocking, considerSuspendContextNonBlocking)
         myFixture.enableInspections(inspection)
 
@@ -47,7 +58,7 @@ abstract class AbstractCoroutineNonBlockingContextDetectionTest(
 @TestRoot("idea/tests")
 @TestMetadata("testData/inspections/blockingCallsDetection")
 @RunWith(JUnit38ClassRunner::class)
-class CoroutineNonBlockingContextDetectionTest : AbstractCoroutineNonBlockingContextDetectionTest(false, true) {
+class CoroutineNonBlockingContextDetectionTest : AbstractCoroutineNonBlockingContextDetectionTest() {
     fun testSimpleCoroutineScope() {
         doTest("InsideCoroutine.kt")
     }
@@ -76,7 +87,7 @@ class CoroutineNonBlockingContextDetectionTest : AbstractCoroutineNonBlockingCon
 @TestRoot("idea/tests")
 @TestMetadata("testData/inspections/blockingCallsDetection")
 @RunWith(JUnit38ClassRunner::class)
-class CoroutineNonBlockingContextDetectionWithUnsureAsBlockingTest : AbstractCoroutineNonBlockingContextDetectionTest(true, false) {
+class CoroutineNonBlockingContextDetectionWithUnsureAsBlockingTest : AbstractCoroutineNonBlockingContextDetectionTest() {
     fun testCoroutineScope() {
         doTest("InsideCoroutineUnsure.kt")
     }
@@ -93,8 +104,8 @@ class CoroutineNonBlockingContextDetectionWithUnsureAsBlockingTest : AbstractCor
 @TestRoot("idea/tests")
 @TestMetadata("testData/inspections/blockingCallsDetection")
 @RunWith(JUnit38ClassRunner::class)
-class CoroutineNonBlockingDetectionWithUnsureAsBlockingAndSuspendNonBlocking : AbstractCoroutineNonBlockingContextDetectionTest(true, true) {
+class CoroutineNonBlockingDetectionWithUnsureAsBlockingAndSuspendNonBlocking : AbstractCoroutineNonBlockingContextDetectionTest() {
     fun testSimpleCoroutineScope() {
-        doTest("InsideCoroutine.kt")
+        doTest("InsideCoroutine_unknownAsBlocking.kt")
     }
 }

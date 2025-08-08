@@ -1,3 +1,5 @@
+// CONSIDER_UNKNOWN_AS_BLOCKING: true
+// CONSIDER_SUSPEND_CONTEXT_NON_BLOCKING: false
 @file:Suppress("UNUSED_VARIABLE")
 
 import kotlin.coroutines.*

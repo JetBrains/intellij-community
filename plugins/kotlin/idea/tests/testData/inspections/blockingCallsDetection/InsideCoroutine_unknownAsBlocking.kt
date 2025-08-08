@@ -1,13 +1,13 @@
 // CONSIDER_UNKNOWN_AS_BLOCKING: true
-// CONSIDER_SUSPEND_CONTEXT_NON_BLOCKING: false
+// CONSIDER_SUSPEND_CONTEXT_NON_BLOCKING: true
 @file:Suppress("UNUSED_PARAMETER")
 
 import kotlin.coroutines.*
 import java.lang.Thread
 
-class InsideCoroutineUnsure {
+class InsideCoroutine {
     suspend fun example1() {
-        Thread.sleep(1)
+        Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(1)
     }
 
     fun example2() {
@@ -22,7 +22,7 @@ class InsideCoroutineUnsure {
 
     suspend fun example4() {
         run(fun() {
-            Thread.sleep(4)
+            Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(4)
         })
     }
 }

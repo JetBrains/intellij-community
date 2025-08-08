@@ -1,3 +1,5 @@
+// CONSIDER_UNKNOWN_AS_BLOCKING: false
+// CONSIDER_SUSPEND_CONTEXT_NON_BLOCKING: true
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import java.lang.Thread

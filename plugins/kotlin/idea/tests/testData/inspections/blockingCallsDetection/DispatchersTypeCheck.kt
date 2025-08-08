@@ -1,3 +1,5 @@
+// CONSIDER_UNKNOWN_AS_BLOCKING: false
+// CONSIDER_SUSPEND_CONTEXT_NON_BLOCKING: true
 @file:Suppress("UNUSED_PARAMETER")
 package kotlinx.coroutines
 
