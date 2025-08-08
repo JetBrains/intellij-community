@@ -873,34 +873,32 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     tempDir.newVirtualFile("c/b/b");
     tempDir.newVirtualFile("c/c/c", "0".getBytes(UTF_8));
 
-    checkAttributesAreEqual(
-      tempDir.getVirtualFileRoot(),
-      (LocalFileSystemImpl)myFS
-    );
+    var root = tempDir.getVirtualFileRoot();
+    root.refresh(false, true);
+    checkAttributesAreEqual(root, (LocalFileSystemImpl)myFS);
   }
 
-  private static void checkAttributesAreEqual(VirtualFile dir, LocalFileSystemImpl localFileSystem) {
-    var childrenWithAttributes = localFileSystem.listWithAttributes(dir, null);
-    var childrenNames = localFileSystem.list(dir);
+  private static void checkAttributesAreEqual(VirtualFile dir, LocalFileSystemImpl lfs) {
+    var childrenWithAttributes = lfs.listWithAttributes(dir, null);
+    var childrenNames = lfs.list(dir);
 
     assertThat(childrenWithAttributes.keySet())
       .containsExactlyInAnyOrder(childrenNames);
 
     for (var childName : childrenNames) {
       var child = dir.findChild(childName);
+      var attributes = lfs.getAttributes(child);
 
-      var attributesFromBatchMethod = childrenWithAttributes.get(childName);
-      var attributesFromSingleMethod = localFileSystem.getAttributes(child);
+      assertThat(attributes)
+        .describedAs(child.getPresentableUrl())
+        .isEqualTo(childrenWithAttributes.get(childName));
 
-      assertThat(attributesFromSingleMethod)
-        .isEqualTo(attributesFromBatchMethod);
-
-      var singleEntryAttributes = localFileSystem.listWithAttributes(dir, Set.of(childName));
-      assertThat(singleEntryAttributes.get(childName))
-        .isEqualTo(attributesFromSingleMethod);
+      assertThat(attributes)
+        .describedAs(child.getPresentableUrl())
+        .isEqualTo(lfs.listWithAttributes(dir, Set.of(childName)).get(childName));
 
       if (child.isDirectory()) {
-        checkAttributesAreEqual(child, localFileSystem);
+        checkAttributesAreEqual(child, lfs);
       }
     }
   }
