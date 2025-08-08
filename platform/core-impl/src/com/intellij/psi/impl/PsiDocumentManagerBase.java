@@ -436,7 +436,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
                               @NotNull Object reason) {
     assert !myProject.isDisposed() : "Already disposed";
     if (isEventSystemEnabled(document)) {
-      ThreadingAssertions.assertEventDispatchThread();
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
     }
     boolean[] ok = {true};
     if (synchronously) {
@@ -463,7 +463,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
                                               @NotNull @Unmodifiable List<? extends BooleanRunnable> reparseInjectedProcessors,
                                               boolean synchronously) {
     if (isEventSystemEnabled(document)) {
-      ThreadingAssertions.assertEventDispatchThread();
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
     }
     if (myProject.isDisposed()) return false;
     assert !(document instanceof DocumentWindow);
