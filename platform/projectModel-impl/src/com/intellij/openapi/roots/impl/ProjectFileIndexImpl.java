@@ -276,15 +276,15 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
               result.add(new LibraryRootDescriptor(set.getRoot(), globalLibrary));
             }
 
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Unexpected data: " + data);
+            if (LOG.isTraceEnabled()) {
+              LOG.trace("Unexpected data: " + data);
             }
           }
         }
       }
       else {
         if (LOG.isTraceEnabled()) {
-          LOG.debug("Unexpected file set: " + set);
+          LOG.trace("Unexpected file set: " + set);
         }
       }
     }
