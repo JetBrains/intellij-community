@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.session.TerminalState
@@ -102,6 +103,8 @@ internal open class TerminalEventsHandlerImpl(
     if (project != null && typeAhead?.isDisabled() == false &&
         (Character.isLetterOrDigit(charTyped) || charTyped == '-' || charTyped == File.separatorChar) &&
         Registry.`is`(REWORKED_TERMINAL_COMPLETION_POPUP)) {
+      // Added guarantee that psiFile is synchronized after type-ahead before autoPopUp
+      PsiDocumentManager.getInstance(project).commitDocument(editor.document)
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor)
     }
   }
