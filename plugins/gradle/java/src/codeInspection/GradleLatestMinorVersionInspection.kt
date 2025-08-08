@@ -7,6 +7,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.lang.properties.psi.Property
 import com.intellij.lang.properties.psi.PropertyKeyValueFormat
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -17,6 +18,8 @@ import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.util.GradleUtil.getWrapperDistributionUri
 
 const val DISTRIBUTION_URL_KEY: String = "distributionUrl"
+
+private val LOG = logger<GradleLatestMinorVersionInspection>()
 
 class GradleLatestMinorVersionInspection : LocalInspectionTool() {
 
@@ -37,7 +40,8 @@ class GradleLatestMinorVersionInspection : LocalInspectionTool() {
         val currentGradleVersion = try {
           GradleVersion.version(currentVersion)
         }
-        catch (_: Throwable) {
+        catch (e: IllegalArgumentException) {
+          LOG.warnWithDebug("Failed to parse the Gradle version", e)
           return
         }
 
