@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -29,6 +30,12 @@ abstract class AbstractCoroutineNonBlockingContextDetectionTest : KotlinLightCod
     override fun getProjectDescriptor(): LightProjectDescriptor = ktProjectDescriptor
 
     protected fun doTest(unused: String) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.of(pluginMode)) {
+            doTest()
+        }
+    }
+    
+    private fun doTest() {
         val fileName = fileName()
 
         val dataFile = dataFile(fileName)
