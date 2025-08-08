@@ -39,10 +39,7 @@ import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.ui.tabs.impl.singleRow.WindowTabsLayout;
 import com.intellij.ui.tabs.impl.themes.DefaultTabTheme;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBFont;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +77,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
       @Override
       public @NotNull UiDecoration getDecoration() {
         //noinspection UseDPIAwareInsets
-        return new UiDecoration(JBFont.medium(), new Insets(-1, getDropInfo() == null ? 0 : -1, -1, -1));
+        return new UiDecoration(JBFont.medium(), new Insets(-1, getDropInfo() == null ? 0 : -1, -1, -1), position -> getContentInsets());
       }
     });
 
@@ -93,6 +90,17 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
     createTabActions();
     installDnD();
+  }
+
+  private static @NotNull Insets getContentInsets() {
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+    if (customization != null) {
+      Insets insets = customization.getProjectTabContentInsets();
+      if (insets != null) {
+        return insets;
+      }
+    }
+    return JBUI.insets(0, 4);
   }
 
   public void selfDispose() {
@@ -280,7 +288,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
         boolean selected = info.getObject() == myNativeWindow;
 
         InternalUICustomization customization = InternalUICustomization.getInstance();
-        if (customization != null && customization.paintProjectTab(label, g, tabs, selected, index, lastIndex)) {
+        if (customization != null && customization.paintProjectTab(myNativeWindow, label, g, tabs, selected, index, lastIndex)) {
           return;
         }
 

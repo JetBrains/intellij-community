@@ -68,8 +68,14 @@
 
     "Borders.color": "BorderDark",
     "Borders.ContrastBorderColor": "BorderDark",
-    "MainWindow.Tab.background": "#131314",
     "MainWindow.FullScreeControl.Background": "#575A5C",
+
+    "MainWindow.Tab": {
+      "background": "#131314",
+      "selectedBackground": "ToolWindowBackground",
+      "hoverBackground": "#FFFFFF12",
+      "separatorColor": "#FFFFFF16"
+    },
 
     "MainToolbar": {
       "background": "BackgroundLight",
