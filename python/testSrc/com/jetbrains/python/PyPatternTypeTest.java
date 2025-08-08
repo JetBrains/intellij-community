@@ -84,6 +84,37 @@ match m:
         """);
   }
 
+  // PY-83197
+  public void testMatchValuePatternExcludeOnlyLiteral() {
+    doTestByText("""
+from typing import assert_type, Literal
+
+class X:
+    v: Literal[1] | str
+
+class Y:
+    a: int | float
+    b: Literal[1]
+
+x: X = X()
+y = Y()
+
+match x.v:
+    case y.a:
+        assert_type(x.v, Literal[1])
+    case _:
+        assert_type(x.v, Literal[1] | str)
+
+assert_type(x.v, Literal[1] | str)
+
+match x.v:
+    case y.b:
+        assert_type(x.v, Literal[1])
+    case _:
+        assert_type(x.v, str)
+                   """);
+  }
+
   public void testMatchSequencePatternCaptures() {
     doTestByText("""
 from typing import assert_type
