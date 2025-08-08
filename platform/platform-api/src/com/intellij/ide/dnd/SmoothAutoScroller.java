@@ -9,6 +9,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import sun.awt.AppContext;
 
 import javax.swing.*;
 import java.awt.*;
@@ -61,6 +62,11 @@ public final class SmoothAutoScroller {
     }
   }
 
+  @ApiStatus.Internal
+  public static void recreateDragListener() {
+    DragListener.SHARED.recreateListener();
+  }
+
   /**
    * This is a replacement for TransferHandler.DropHandler
    * that replaces hardcoded auto-scrolling with the smooth auto-scrolling.
@@ -68,10 +74,22 @@ public final class SmoothAutoScroller {
    */
   private static final class DragListener implements DropTargetListener {
     public static final int ACTION = DnDConstants.ACTION_COPY_OR_MOVE | DnDConstants.ACTION_LINK;
-    private static final DropTargetListener SHARED = new DragListener();
-    private final DropTargetListener listener;
+    private static final DragListener SHARED = new DragListener();
+    private DropTargetListener listener;
 
     private DragListener() {
+      createListener();
+    }
+
+    void recreateListener() {
+      if (listener != null) { // Can be null if an exception was thrown during the creation.
+        // TransferHandler cashes the listener in the data context, need to clear it first.
+        AppContext.getAppContext().remove(listener.getClass());
+      }
+      createListener();
+    }
+
+    private void createListener() {
       try {
         listener = (DropTargetListener)MethodHandles.privateLookupIn(TransferHandler.class, MethodHandles.lookup())
           .findStatic(TransferHandler.class, "getDropTargetListener", MethodType.methodType(DropTargetListener.class))
