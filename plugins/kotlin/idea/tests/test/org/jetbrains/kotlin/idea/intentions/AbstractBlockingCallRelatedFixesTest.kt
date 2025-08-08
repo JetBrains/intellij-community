@@ -65,7 +65,7 @@ abstract class AbstractBlockingCallRelatedFixesTest : KotlinLightCodeInsightFixt
         myFixture.enableInspections(currentInspection)
     }
 
-    fun `test wrap in withContext`() {
+    open fun `test wrap in withContext`() {
         currentInspection.myConsiderUnknownContextBlocking = false
 
         myFixture.configureByText(
@@ -97,7 +97,7 @@ abstract class AbstractBlockingCallRelatedFixesTest : KotlinLightCodeInsightFixt
         )
     }
 
-    fun `test add dispatcher in flow generator`() {
+    open fun `test add dispatcher in flow generator`() {
         myFixture.configureByText(
             "ioDispatcherInFlow.kt",
             """
@@ -127,7 +127,7 @@ abstract class AbstractBlockingCallRelatedFixesTest : KotlinLightCodeInsightFixt
         )
     }
 
-    fun `test add dispatcher in flow`() {
+    open fun `test add dispatcher in flow`() {
         myFixture.configureByText(
             "ioDispatcherInFlow.kt",
             """
@@ -167,7 +167,7 @@ abstract class AbstractBlockingCallRelatedFixesTest : KotlinLightCodeInsightFixt
         )
     }
 
-    fun `test add flowOn to flow generator`() {
+    open fun `test add flowOn to flow generator`() {
         myFixture.configureByText(
             "ioDispatcherInFlow.kt",
             """
@@ -197,7 +197,7 @@ abstract class AbstractBlockingCallRelatedFixesTest : KotlinLightCodeInsightFixt
         )
     }
 
-    fun `test replace unknown dispatcher in flow`() {
+    open fun `test replace unknown dispatcher in flow`() {
         myFixture.configureByText(
             "ioDispatcherInFlow.kt",
             """
@@ -238,7 +238,7 @@ abstract class AbstractBlockingCallRelatedFixesTest : KotlinLightCodeInsightFixt
         )
     }
 
-    fun `test replace unknown dispatcher in withContext`() {
+    open fun `test replace unknown dispatcher in withContext`() {
         myFixture.configureByText(
             "ioDispatcherSwitch.kt",
             """
@@ -270,7 +270,7 @@ abstract class AbstractBlockingCallRelatedFixesTest : KotlinLightCodeInsightFixt
         )
     }
 
-    fun `test wrap dot qualified expression`() {
+    open fun `test wrap dot qualified expression`() {
         currentInspection.myConsiderUnknownContextBlocking = false
 
         myFixture.configureByText(
