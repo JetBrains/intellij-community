@@ -134,7 +134,7 @@ public class DefaultProjectResolverContext extends GradleExecutionContextImpl im
     return myPhasedSyncEnabled;
   }
 
-  private static boolean isPhasedSyncEnabledImpl(@NotNull ProjectResolverContext context) {
+  private static boolean isPhasedSyncEnabledImpl(@NotNull DefaultProjectResolverContext context) {
     if (!Registry.is("gradle.phased.sync.enabled")) {
       LOG.debug("The phased Gradle sync isn't applicable: disabled by registry");
       return false;
@@ -145,6 +145,14 @@ public class DefaultProjectResolverContext extends GradleExecutionContextImpl im
     }
     if (!context.isUseQualifiedModuleNames()) {
       LOG.debug("The phased Gradle sync isn't applicable: unsupported sync mode with isUseQualifiedModuleNames = false");
+      return false;
+    }
+    if (context.isBuildSrcProject() && Registry.is("gradle.phased.sync.bridge.disabled")) {
+      // With older Gradle versions, buildSrc has its own separate resolve (as opposed to being a composite build) and this causes issues.
+      // As of now, it's simpler to just skip the sync contributors in these cases.
+      LOG.debug("The phased Gradle sync isn't applicable:" +
+                " unsupported sync mode with isBuildSrcProject = true" +
+                " and disabled phased sync bridges");
       return false;
     }
     return true;
