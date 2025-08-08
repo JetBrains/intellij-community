@@ -24,7 +24,11 @@ import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
-class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
+class KtLambdasHintsProvider(
+    private val printSeparatingSpace: Boolean,
+) : AbstractKtInlayHintsProvider() {
+
+    constructor() : this(printSeparatingSpace = false)
 
     private val excludeListMatchers: List<Matcher> =
         listOf(
@@ -68,11 +72,12 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
 
             sink.addPresentation(InlineInlayPosition(element.endOffset, true), hintFormat = HintFormat.default) {
                 text("^")
-                text(lambdaName,
-                     InlayActionData(
-                         PsiPointerInlayActionPayload(pointer = lambdaExpression.createSmartPointer()),
-                         PsiPointerInlayActionNavigationHandler.HANDLER_ID
-                     )
+                text(
+                    lambdaName,
+                    InlayActionData(
+                        PsiPointerInlayActionPayload(pointer = lambdaExpression.createSmartPointer()),
+                        PsiPointerInlayActionNavigationHandler.HANDLER_ID
+                    )
                 )
             }
         }
@@ -109,9 +114,10 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
         sink.whenOptionEnabled(SHOW_IMPLICIT_RECEIVERS_AND_PARAMS.name) {
             analyze(functionLiteral) {
                 val anonymousFunctionSymbol = functionLiteral.symbol
-                printContextParameters(lambdaExpression, anonymousFunctionSymbol, sink)
-                printReceiverParameter(lambdaExpression, anonymousFunctionSymbol, sink)
-                printImplicitIt(lambdaExpression, anonymousFunctionSymbol, sink)
+                var isFirstImplicitParam = true
+                isFirstImplicitParam = isFirstImplicitParam && !printContextParameters(lambdaExpression, anonymousFunctionSymbol, sink, isFirstImplicitParam)
+                isFirstImplicitParam = isFirstImplicitParam && !printReceiverParameter(lambdaExpression, anonymousFunctionSymbol, sink, isFirstImplicitParam)
+                printImplicitIt(lambdaExpression, anonymousFunctionSymbol, sink, isFirstImplicitParam)
             }
         }
     }
@@ -121,11 +127,14 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
         lambdaExpression: KtLambdaExpression,
         anonymousFunctionSymbol: KaAnonymousFunctionSymbol,
         sink: InlayTreeSink,
-    ) {
+        printLeadingSpace: Boolean,
+    ): Boolean {
         anonymousFunctionSymbol.contextParameters.ifNotEmpty {
             val contextParameters = this
+            val offset = lambdaExpression.leftCurlyBrace.textRange.endOffset
+            if (printLeadingSpace) printSpace(sink, offset)
             sink.addPresentation(
-                position = InlineInlayPosition(lambdaExpression.leftCurlyBrace.textRange.endOffset, true),
+                position = InlineInlayPosition(offset, true),
                 hintFormat = HintFormat.default,
             ) {
                 text("context(")
@@ -136,14 +145,18 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
                 printKtType(contextParameters.last().returnType)
                 text(")")
             }
+            printSpace(sink, offset)
+            return true
         }
+        return false
     }
 
     private fun KaSession.printReceiverParameter(
         lambdaExpression: KtLambdaExpression,
         anonymousFunctionSymbol: KaAnonymousFunctionSymbol,
         sink: InlayTreeSink,
-    ) {
+        printLeadingSpace: Boolean,
+    ): Boolean {
         anonymousFunctionSymbol.receiverParameter?.let { receiverSymbol ->
             val skipped = lambdaExpression.functionLiteral.getParentOfType<KtCallExpression>(false, KtBlockExpression::class.java)
                 ?.let { callExpression ->
@@ -153,32 +166,53 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
                 }
 
             if (skipped != true) {
+                val offset = lambdaExpression.leftCurlyBrace.textRange.endOffset
+                if (printLeadingSpace) printSpace(sink, offset)
                 sink.addPresentation(
-                    position = InlineInlayPosition(lambdaExpression.leftCurlyBrace.textRange.endOffset, true),
+                    position = InlineInlayPosition(offset, true),
                     hintFormat = HintFormat.default,
                 ) {
                     text("this: ")
                     printKtType(receiverSymbol.returnType)
                 }
+                printSpace(sink, offset)
+                return true
             }
         }
+        return false
     }
 
     private fun KaSession.printImplicitIt(
         lambdaExpression: KtLambdaExpression,
         anonymousFunctionSymbol: KaAnonymousFunctionSymbol,
         sink: InlayTreeSink,
-    ) {
+        printLeadingSpace: Boolean,
+    ): Boolean {
         anonymousFunctionSymbol.valueParameters.singleOrNull()?.let { singleParameterSymbol ->
             val type = singleParameterSymbol.takeIf { it.isImplicitLambdaParameter }
                 ?.returnType?.takeUnless { it.isUnitType } ?: return@let
+            val offset = lambdaExpression.leftCurlyBrace.textRange.endOffset
+            if (printLeadingSpace) printSpace(sink, offset)
             sink.addPresentation(
-                position = InlineInlayPosition(lambdaExpression.leftCurlyBrace.textRange.endOffset, true),
+                position = InlineInlayPosition(offset, true),
                 hintFormat = HintFormat.default
             ) {
                 text("it: ")
                 printKtType(type)
             }
+            printSpace(sink, offset)
+            return true
+        }
+        return false
+    }
+
+    private fun printSpace(sink: InlayTreeSink, offset: Int) {
+        if (!printSeparatingSpace) return
+        sink.addPresentation(
+            InlineInlayPosition(offset, relatedToPrevious = true),
+            hintFormat = HintFormat.default.withColorKind(HintColorKind.TextWithoutBackground),
+        ) {
+            text(" ")
         }
     }
 }
