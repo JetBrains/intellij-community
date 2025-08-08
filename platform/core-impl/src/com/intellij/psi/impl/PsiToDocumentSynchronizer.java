@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl;
 
@@ -7,6 +7,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -127,7 +128,7 @@ public class PsiToDocumentSynchronizer {
     }
   }
 
-  private boolean myIgnorePsiEvents;
+  private volatile boolean myIgnorePsiEvents;
   public void setIgnorePsiEvents(boolean ignorePsiEvents) {
     myIgnorePsiEvents = ignorePsiEvents;
   }
@@ -186,7 +187,9 @@ public class PsiToDocumentSynchronizer {
       checkPsiModificationAllowed(fakeEvent);
       doSync(fakeEvent, (document1, event) -> doCommitTransaction(document1, documentChangeTransaction));
       if (PomModelImpl.shouldFirePhysicalPsiEvents(changeScope)) {
-        myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionCompleted(document, changeScope);
+        PsiManagerImpl.runWriteActionOnEdtRegardlessOfCurrentThread(() -> {
+          myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionCompleted(document, changeScope);
+        });
       }
     }
     catch (Throwable e) {
