@@ -4,7 +4,6 @@ import org.jetbrains.plugins.textmate.Constants
 
 internal class SyntaxNodeDescriptorImpl(
   override val children: List<SyntaxNodeDescriptor>,
-  override val injections: List<InjectionNodeDescriptor>,
   private val captures: Array<Array<TextMateCapture?>?>?,
   private val stringAttributes: Array<CharSequence?>?,
 ) : SyntaxNodeDescriptor {

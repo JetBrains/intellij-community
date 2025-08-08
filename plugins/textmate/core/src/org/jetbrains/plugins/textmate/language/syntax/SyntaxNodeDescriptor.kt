@@ -22,8 +22,6 @@ interface SyntaxNodeDescriptor {
 
   val children: List<SyntaxNodeDescriptor>
 
-  val injections: List<InjectionNodeDescriptor>
-
   companion object {
     @JvmField
     val EMPTY_NODE: SyntaxNodeDescriptor = object : SyntaxNodeDescriptor {
@@ -44,7 +42,6 @@ interface SyntaxNodeDescriptor {
       }
 
       override val children: List<SyntaxNodeDescriptor> = emptyList()
-      override val injections: List<InjectionNodeDescriptor> = emptyList()
     }
   }
 }

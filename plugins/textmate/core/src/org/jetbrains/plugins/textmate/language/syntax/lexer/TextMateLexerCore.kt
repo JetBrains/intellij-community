@@ -63,7 +63,7 @@ class TextMateLexerCore(
                            lineStartOffset = startLineOffset,
                            linePosition = 0.charOffset(),
                            lineByteOffset = 0.byteOffset(),
-                           injections = languageDescriptor.rootSyntaxNode.injections,
+                           injections = languageDescriptor.injections,
                            checkCancelledCallback = checkCancelledCallback)
       addToken(output, endLineOffset)
       output
@@ -76,7 +76,7 @@ class TextMateLexerCore(
                            lineStartOffset = startLineOffset,
                            linePosition = 0.charOffset(),
                            lineByteOffset = 0.byteOffset(),
-                           injections = languageDescriptor.rootSyntaxNode.injections,
+                           injections = languageDescriptor.injections,
                            checkCancelledCallback = checkCancelledCallback)
       output
     }

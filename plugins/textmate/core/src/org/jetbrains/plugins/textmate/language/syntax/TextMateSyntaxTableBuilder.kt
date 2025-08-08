@@ -57,9 +57,15 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
   private fun loadLanguageDescriptor(plist: Plist): RawLanguageDescriptor? {
     val scopeNamePlistValue: PListValue? = plist.getPlistValue(Constants.StringKey.SCOPE_NAME.value)
     val scopeNameValue: String? = scopeNamePlistValue?.string
+
     return if (scopeNameValue != null) {
+      val rootSyntaxRawNode = loadRealNode(plist, null)
+      val rawInjections = plist.getPlistValue(Constants.INJECTIONS_KEY)?.plist?.entries()?.map { (key, value) ->
+        key to loadRealNode(value.plist, rootSyntaxRawNode)
+      } ?: emptyList()
       return RawLanguageDescriptor(scopeName = interner.intern(scopeNameValue),
-                                   rootSyntaxRawNode = loadRealNode(plist, null))
+                                   rootSyntaxRawNode = rootSyntaxRawNode,
+                                   rawInjections = rawInjections)
     }
     else {
       null
@@ -96,11 +102,6 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
         Constants.PATTERNS_KEY.equals(key, ignoreCase = true) -> {
           pListValue.array.forEach { value ->
             result.addChild(loadNestedSyntax(value.plist, result))
-          }
-        }
-        Constants.INJECTIONS_KEY.equals(key, ignoreCase = true) -> {
-          pListValue.plist.entries().forEach { (key, value) ->
-            result.addInjection(key, loadRealNode(value.plist, result))
           }
         }
       }
@@ -151,6 +152,7 @@ private sealed class TextMateRawCapture {
 private class RawLanguageDescriptor(
   val scopeName: CharSequence,
   val rootSyntaxRawNode: SyntaxRawNode,
+  val rawInjections: List<Pair<String, SyntaxRawNode>>
 ) {
 
   fun compile(
@@ -160,7 +162,12 @@ private class RawLanguageDescriptor(
     syntaxTable: TextMateSyntaxTableCore,
   ): TextMateLanguageDescriptor? {
     return rootSyntaxRawNode.compile(topLevelNodes, compiledNodes, ruleIdToReferenceRuleId, syntaxTable)?.let { rootNode ->
-      TextMateLanguageDescriptor(scopeName, rootNode)
+      val injections = rawInjections.mapNotNull { (selector, injection) ->
+        injection.compile(topLevelNodes, compiledNodes, ruleIdToReferenceRuleId, syntaxTable)?.let { compiledRule ->
+          InjectionNodeDescriptor(selector, compiledRule)
+        }
+      }.compactList()
+      TextMateLanguageDescriptor(scopeName, rootNode, injections)
     }
   }
 }
@@ -244,7 +251,6 @@ private class SyntaxRawNodeImpl(
 ) : SyntaxRawNode {
   private val rawCaptures: MutableMap<Constants.CaptureKey, Array<TextMateRawCapture?>> = mutableMapOf()
   private val rawStringAttributes: MutableMap<Constants.StringKey, CharSequence> = mutableMapOf()
-  private val rawInjections: MutableList<Pair<String, SyntaxRawNode>> = mutableListOf()
   private val rawChildren: MutableList<SyntaxRawNode> = mutableListOf()
   val repository: MutableMap<String, SyntaxRawNode> = mutableMapOf()
 
@@ -254,10 +260,6 @@ private class SyntaxRawNodeImpl(
 
   fun addChild(descriptor: SyntaxRawNode) {
     rawChildren.add(descriptor)
-  }
-
-  fun addInjection(selector: String, descriptor: SyntaxRawNode) {
-    rawInjections.add(selector to descriptor)
   }
 
   fun setStringAttribute(key: Constants.StringKey, value: CharSequence) {
@@ -317,29 +319,22 @@ private class SyntaxRawNodeImpl(
     val children = rawChildren.mapNotNull { child ->
       child.compile(topLevelNodes, compiledNodes, ruleIdToReferenceRuleId, syntaxTable)
     }.compactList()
-    val injections = rawInjections.mapNotNull { (selector, injection) ->
-      injection.compile(topLevelNodes, compiledNodes, ruleIdToReferenceRuleId, syntaxTable)?.let { compiledRule ->
-        InjectionNodeDescriptor(selector, compiledRule)
-      }
-    }.compactList()
     val result = SyntaxNodeDescriptorImpl(children = children,
-                                          injections = injections,
                                           captures = captures,
                                           stringAttributes = stringAttributes)
     compiledNodes[ruleId] = result
     return result
   }
-
-  private fun <T> List<T>.compactList(): List<T> {
-    return when {
-      isEmpty() -> emptyList()
-      size == 1 -> listOf(get(0))
-      this is ArrayList -> {
-        this.trimToSize()
-        this
-      }
-      else -> this
-    }
-  }
 }
 
+private fun <T> List<T>.compactList(): List<T> {
+  return when {
+    isEmpty() -> emptyList()
+    size == 1 -> listOf(get(0))
+    this is ArrayList -> {
+      this.trimToSize()
+      this
+    }
+    else -> this
+  }
+}

@@ -9,9 +9,6 @@ internal class SyntaxNodeReferenceDescriptor(
   override val children: List<SyntaxNodeDescriptor>
     get() = syntaxTable.getRule(ruleId).children
 
-  override val injections: List<InjectionNodeDescriptor>
-    get() = syntaxTable.getRule(ruleId).injections
-
   override fun getStringAttribute(key: Constants.StringKey): CharSequence? {
     return syntaxTable.getRule(ruleId).getStringAttribute(key)
   }
