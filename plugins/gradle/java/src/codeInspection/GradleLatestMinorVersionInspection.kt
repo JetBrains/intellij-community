@@ -1,21 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.codeInspection
 
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.codeInspection.*
-import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.codeInspection.util.IntentionName
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.properties.psi.Property
-import com.intellij.lang.properties.psi.PropertyKeyValueFormat
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiFile
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.codeInspection.fix.GradleWrapperVersionFix
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
-import org.jetbrains.plugins.gradle.util.GradleUtil.getWrapperDistributionUri
 
 const val DISTRIBUTION_URL_KEY: String = "distributionUrl"
 
@@ -48,37 +44,12 @@ class GradleLatestMinorVersionInspection : LocalInspectionTool() {
         val latestMinorGradleVersion = GradleJvmSupportMatrix.getLatestMinorGradleVersion(currentGradleVersion.majorVersion)
         if (currentGradleVersion >= latestMinorGradleVersion) return
 
-        val fix = object : LocalQuickFixOnPsiElement(element) {
-          val newGradleWrapperDistributionUri = getWrapperDistributionUri(latestMinorGradleVersion).toString().replace(":", "\\:")
-
-          override fun getText(): @IntentionName String {
-            return GradleInspectionBundle.message("intention.name.upgrade.gradle.version", latestMinorGradleVersion.version)
-          }
-
-          override fun invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement) {
-            val prop = startElement as Property
-            prop.setValue(newGradleWrapperDistributionUri, PropertyKeyValueFormat.FILE)
-          }
-
-          override fun getFamilyName(): @IntentionFamilyName String {
-            return GradleInspectionBundle.message("intention.family.name.upgrade")
-          }
-
-          override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
-            return IntentionPreviewInfo.CustomDiff(
-              previewDescriptor.psiElement.containingFile.fileType,
-              previewDescriptor.startElement.text,
-              "$DISTRIBUTION_URL_KEY=$newGradleWrapperDistributionUri"
-            )
-          }
-        }
-
         holder.registerProblem(
           element,
           GradleInspectionBundle.message("inspection.message.outdated.gradle.minor.version.descriptor"),
           ProblemHighlightType.WARNING,
           versionTextRange,
-          fix
+          GradleWrapperVersionFix(element, latestMinorGradleVersion)
         )
       }
     }
