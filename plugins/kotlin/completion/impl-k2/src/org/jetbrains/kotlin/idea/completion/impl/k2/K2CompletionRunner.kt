@@ -8,20 +8,26 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
+import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2AccumulatingLookupElementSink.AccumulatingSinkMessage
+import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.getAnnotationLiteralExpectedType
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.getEqualityExpectedType
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
+import org.jetbrains.kotlin.psi.KtFile
 import java.util.concurrent.LinkedBlockingQueue
 
 
@@ -89,6 +95,23 @@ private fun createWeighingContext(
     }
 }
 
+context(KaSession)
+private fun createExtensionChecker(
+    positionContext: KotlinRawPositionContext,
+    originalFile: KtFile,
+): KaCompletionExtensionCandidateChecker? {
+    val positionContext = positionContext as? KotlinSimpleNameReferencePositionContext ?: return null
+    // FIXME: KTIJ-34285
+    @OptIn(KaImplementationDetail::class)
+    return KaBaseIllegalPsiException.allowIllegalPsiAccess {
+        KtCompletionExtensionCandidateChecker.create(
+            originalFile = originalFile,
+            nameExpression = positionContext.nameExpression,
+            explicitReceiver = positionContext.explicitReceiver
+        )
+    }
+}
+
 /**
  * This completion runner executes all sections in sequence all in the same analysis session.
  */
@@ -107,6 +130,7 @@ private class SequentialCompletionRunner : K2CompletionRunner {
             val visibilityChecker = CompletionVisibilityChecker(parameters)
             val symbolFromIndexProvider = KtSymbolFromIndexProvider(parameters.completionFile)
             val importStrategyDetector = ImportStrategyDetector(parameters.originalFile, project)
+            val extensionChecker by lazy { createExtensionChecker(positionContext, parameters.originalFile) }
 
             // We can share the same section context between all sections because we are operating in the same analysis session,
             // and we use the same sink for all sections.
@@ -118,6 +142,7 @@ private class SequentialCompletionRunner : K2CompletionRunner {
                 visibilityChecker = visibilityChecker,
                 symbolFromIndexProvider = symbolFromIndexProvider,
                 importStrategyDetector = importStrategyDetector,
+                extensionCheckerProvider = { extensionChecker }
             )
             sections.forEach { section ->
                 ProgressManager.checkCanceled()
@@ -194,6 +219,7 @@ private class ParallelCompletionRunner : K2CompletionRunner {
                             val symbolFromIndexProvider = KtSymbolFromIndexProvider(parameters.completionFile)
                             val importStrategyDetector = ImportStrategyDetector(parameters.originalFile, project)
                             var entry = remainingSections.poll()
+                            val extensionChecker by lazy { createExtensionChecker(positionContext, parameters.originalFile) }
 
                             while (entry != null) {
                                 val (currentSection, sectionSink) = entry
@@ -207,6 +233,7 @@ private class ParallelCompletionRunner : K2CompletionRunner {
                                     visibilityChecker = visibilityChecker,
                                     symbolFromIndexProvider = symbolFromIndexProvider,
                                     importStrategyDetector = importStrategyDetector,
+                                    extensionCheckerProvider = { extensionChecker }
                                 )
 
                                 try {

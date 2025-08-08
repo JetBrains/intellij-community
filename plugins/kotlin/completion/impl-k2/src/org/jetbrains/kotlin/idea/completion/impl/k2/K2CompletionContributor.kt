@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.completion.impl.k2
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
+import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
@@ -43,12 +45,15 @@ internal class K2CompletionSectionContext<P : KotlinRawPositionContext>(
     val visibilityChecker: CompletionVisibilityChecker,
     val importStrategyDetector: ImportStrategyDetector,
     val symbolFromIndexProvider: KtSymbolFromIndexProvider,
+    private val extensionCheckerProvider: () -> KaCompletionExtensionCandidateChecker?,
 ) {
     val positionContext: P = completionContext.positionContext
 
     val parameters: KotlinFirCompletionParameters = completionContext.parameters
 
-    val project = parameters.completionFile.project
+    val project: Project = parameters.completionFile.project
+
+    internal val extensionChecker: KaCompletionExtensionCandidateChecker? by lazy { extensionCheckerProvider() }
 }
 
 private typealias K2CompletionSectionRunnable<P> = KaSession.(context: K2CompletionSectionContext<P>) -> Unit
