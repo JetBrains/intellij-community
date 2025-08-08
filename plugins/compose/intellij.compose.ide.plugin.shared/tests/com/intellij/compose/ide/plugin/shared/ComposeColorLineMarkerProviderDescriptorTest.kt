@@ -458,7 +458,7 @@ abstract class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
     runAll(
       { _codeInsightTestFixture?.tearDown() },
       { _codeInsightTestFixture = null },
-      { myTestFixture = null },
+      { resetTestFixture() },
     )
   }
 

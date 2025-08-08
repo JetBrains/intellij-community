@@ -23,7 +23,7 @@ class ComposeResourcesGotoDeclarationTest : ComposeResourcesTestCase() {
     runAll(
       { _codeInsightTestFixture?.tearDown() },
       { _codeInsightTestFixture = null },
-      { myTestFixture = null },
+      { resetTestFixture() },
     )
   }
 

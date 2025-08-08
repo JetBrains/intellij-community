@@ -69,8 +69,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   private VirtualFile myProjectConfig;
   private @Nullable WSLDistribution myWSLDistribution;
   private VirtualFile myProjectRoot;
-
-  protected IdeaProjectTestFixture myTestFixture;
+  private IdeaProjectTestFixture myTestFixture;
 
   @Override
   protected void setUp() throws Exception {
@@ -380,6 +379,18 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
 
   public @NotNull VirtualFile getMyProjectRoot() {
     return myProjectRoot;
+  }
+
+  protected @NotNull IdeaProjectTestFixture getMyTestFixture() {
+    return myTestFixture;
+  }
+
+  protected void setMyTestFixture(@NotNull IdeaProjectTestFixture fixture) {
+    myTestFixture = fixture;
+  }
+
+  protected void resetTestFixture() {
+    myTestFixture = null;
   }
 
   protected Module getModule(final String name) {

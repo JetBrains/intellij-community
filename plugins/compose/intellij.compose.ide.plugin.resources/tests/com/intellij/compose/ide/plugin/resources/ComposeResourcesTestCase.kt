@@ -54,7 +54,7 @@ abstract class ComposeResourcesTestCase : KotlinGradleImportingTestCase() {
     runAll(
       { _codeInsightTestFixture?.tearDown() },
       { _codeInsightTestFixture = null },
-      { myTestFixture = null },
+      { resetTestFixture() },
     )
   }
 }

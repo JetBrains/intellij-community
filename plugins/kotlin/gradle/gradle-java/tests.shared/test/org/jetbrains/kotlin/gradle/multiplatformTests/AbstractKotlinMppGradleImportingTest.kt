@@ -228,7 +228,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         runAll(
             { context.codeInsightTestFixture.tearDown() },
             { context.mutableCodeInsightTestFixture = null },
-            { myTestFixture = null },
+            { resetTestFixture() },
         )
     }
 
