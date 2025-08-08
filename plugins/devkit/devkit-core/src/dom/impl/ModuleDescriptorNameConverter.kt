@@ -7,7 +7,9 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
@@ -46,13 +48,19 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
   }
 
   override fun fromString(s: String?, context: ConvertContext): IdeaPlugin? {
-    if (s == null || s.isEmpty() || context.module == null) return null
+    if (s == null || s.isEmpty()) return null
+    val currentModule = context.module ?: return null
     val moduleManager = ModuleManager.getInstance(context.project)
     val (jpsModuleName, descriptorFileName) = getModuleNameAndDescriptorFileName(s)
-    return findDescriptor(jpsModuleName, descriptorFileName, moduleManager)
+    return findDescriptor(currentModule, jpsModuleName, descriptorFileName, moduleManager)
   }
 
-  private fun findDescriptor(moduleName: String, descriptorFileName: String, moduleManager: ModuleManager): IdeaPlugin? {
+  private fun findDescriptor(
+    currentModule: Module,
+    moduleName: String,
+    descriptorFileName: String,
+    moduleManager: ModuleManager,
+  ): IdeaPlugin? {
     val module = moduleManager.findModuleByName(moduleName)
     if (module != null) {
       val plugin = findDescriptorFileInModuleSources(module, descriptorFileName)
@@ -60,7 +68,7 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
         return plugin
       }
     }
-    return null
+    return findDescriptorInModuleLibraries(currentModule, descriptorFileName)
   }
 
   override fun toString(plugin: IdeaPlugin?, context: ConvertContext): String? {
@@ -142,6 +150,27 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
     for (root in moduleRootManager.getSourceRoots(JavaSourceRootType.SOURCE)) {
       if (!process(root)) return
     }
+  }
+
+  private fun findDescriptorInModuleLibraries(module: Module, filePath: String): IdeaPlugin? {
+    val moduleRootManager = ModuleRootManager.getInstance(module)
+    val project = module.project
+    for (entry in moduleRootManager.orderEntries) {
+      if (entry is LibraryOrderEntry) {
+        val library = entry.library ?: continue
+        val files = library.getFiles(OrderRootType.CLASSES)
+        for (libraryRoot in files) {
+          val candidate = libraryRoot.findChild(filePath)
+          if (candidate != null) {
+            val psiFile = PsiManager.getInstance(project).findFile(candidate)
+            if (DescriptorUtil.isPluginXml(psiFile)) {
+              return DescriptorUtil.getIdeaPlugin(psiFile as XmlFile)
+            }
+          }
+        }
+      }
+    }
+    return null
   }
 
   private fun getDescriptorFileName(fileName: String): String {
