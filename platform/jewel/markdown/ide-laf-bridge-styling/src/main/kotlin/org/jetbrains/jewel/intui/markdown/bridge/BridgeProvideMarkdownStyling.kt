@@ -20,6 +20,9 @@ import org.jetbrains.jewel.markdown.extensions.LocalMarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownMode
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownProcessor
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownStyling
+import org.jetbrains.jewel.markdown.extensions.images.DefaultImageSourceResolver
+import org.jetbrains.jewel.markdown.extensions.images.ImageSourceResolver
+import org.jetbrains.jewel.markdown.extensions.images.LocalMarkdownImageSourceResolver
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
@@ -41,6 +44,7 @@ public fun ProvideMarkdownStyling(
     markdownBlockRenderer: MarkdownBlockRenderer =
         remember(markdownStyling) { MarkdownBlockRenderer.create(markdownStyling) },
     codeHighlighter: CodeHighlighter = remember { NoOpCodeHighlighter },
+    markdownImageSourceResolver: ImageSourceResolver = DefaultImageSourceResolver(),
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(
@@ -49,6 +53,7 @@ public fun ProvideMarkdownStyling(
         LocalMarkdownProcessor provides markdownProcessor,
         LocalMarkdownBlockRenderer provides markdownBlockRenderer,
         LocalCodeHighlighter provides codeHighlighter,
+        LocalMarkdownImageSourceResolver provides markdownImageSourceResolver,
     ) {
         content()
     }
@@ -70,6 +75,7 @@ public fun ProvideMarkdownStyling(
     markdownProcessor: MarkdownProcessor = remember(markdownMode) { MarkdownProcessor(markdownMode = markdownMode) },
     markdownBlockRenderer: MarkdownBlockRenderer =
         remember(markdownStyling) { MarkdownBlockRenderer.create(markdownStyling) },
+    markdownImageSourceResolver: ImageSourceResolver = DefaultImageSourceResolver(),
     content: @Composable () -> Unit,
 ) {
     val codeHighlighter = remember { project.service<CodeHighlighterFactory>().createHighlighter() }
@@ -80,6 +86,7 @@ public fun ProvideMarkdownStyling(
         markdownProcessor = markdownProcessor,
         markdownBlockRenderer = markdownBlockRenderer,
         codeHighlighter = codeHighlighter,
+        markdownImageSourceResolver = markdownImageSourceResolver,
         content = content,
     )
 }

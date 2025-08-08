@@ -8536,6 +8536,147 @@ jvm_import(
   source_jar = "@coil-svg-jvm-3_2_0-sources_http//file"
 )
 
+java_library(
+  name = "platform-jewel-markdown-extensions-images-io-coil-kt-coil3-test-jvm",
+  exports = [
+    ":coil-test-jvm-3_2_0_http_import",
+    ":coil-core-jvm-3_2_0_http_import",
+    ":skiko-awt-0_9_4_http_import",
+    ":kotlinx-coroutines-core-jvm-1_10_2_http_import",
+    ":okio-jvm-3_11_0_http_import",
+    ":kotlin-stdlib-2_1_20_http_import",
+    ":annotations-13_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "coil-test-jvm-3_2_0_http_import",
+  jar = "@coil-test-jvm-3_2_0_http//file"
+)
+
+jvm_import(
+  name = "skiko-awt-0_9_4_http_import",
+  jar = "@skiko-awt-0_9_4_http//file"
+)
+
+jvm_import(
+  name = "kotlinx-coroutines-core-jvm-1_10_2_http_import",
+  jar = "@kotlinx-coroutines-core-jvm-1_10_2_http//file"
+)
+
+jvm_import(
+  name = "kotlin-stdlib-2_1_20_http_import",
+  jar = "@kotlin-stdlib-2_1_20_http//file"
+)
+
+java_library(
+  name = "platform-jewel-markdown-extensions-images-io-ktor-client-jvm",
+  exports = [
+    ":ktor-client-jvm-3_2_0_http_import",
+    ":slf4j-api-2_0_17_http_import",
+    ":kotlinx-coroutines-core-jvm-1_10_2_http_import",
+    ":annotations-23_0_0_http_import",
+    ":ktor-client-core-jvm-3_2_0_http_import",
+    ":ktor-http-jvm-3_2_0_http_import",
+    ":ktor-utils-jvm-3_2_0_http_import",
+    ":kotlinx-serialization-core-jvm-1_8_1_http_import",
+    ":ktor-http-cio-jvm-3_2_0_http_import",
+    ":ktor-network-jvm-3_2_0_http_import",
+    ":ktor-io-jvm-3_2_0_http_import",
+    ":kotlinx-io-core-jvm-0_7_0_http_import",
+    ":kotlinx-io-bytestring-jvm-0_7_0_http_import",
+    ":ktor-events-jvm-3_2_0_http_import",
+    ":ktor-websocket-serialization-jvm-3_2_0_http_import",
+    ":ktor-serialization-jvm-3_2_0_http_import",
+    ":ktor-websockets-jvm-3_2_0_http_import",
+    ":ktor-sse-jvm-3_2_0_http_import",
+    ":kotlinx-coroutines-slf4j-1_10_2_http_import",
+    ":kotlin-stdlib-2_1_21_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "ktor-client-jvm-3_2_0_http_import",
+  jar = "@ktor-client-jvm-3_2_0_http//file"
+)
+
+jvm_import(
+  name = "annotations-23_0_0_http_import",
+  jar = "@annotations-23_0_0_http//file"
+)
+
+jvm_import(
+  name = "ktor-client-core-jvm-3_2_0_http_import",
+  jar = "@ktor-client-core-jvm-3_2_0_http//file"
+)
+
+jvm_import(
+  name = "ktor-http-jvm-3_2_0_http_import",
+  jar = "@ktor-http-jvm-3_2_0_http//file"
+)
+
+jvm_import(
+  name = "ktor-utils-jvm-3_2_0_http_import",
+  jar = "@ktor-utils-jvm-3_2_0_http//file"
+)
+
+jvm_import(
+  name = "kotlinx-serialization-core-jvm-1_8_1_http_import",
+  jar = "@kotlinx-serialization-core-jvm-1_8_1_http//file"
+)
+
+jvm_import(
+  name = "ktor-http-cio-jvm-3_2_0_http_import",
+  jar = "@ktor-http-cio-jvm-3_2_0_http//file"
+)
+
+jvm_import(
+  name = "ktor-network-jvm-3_2_0_http_import",
+  jar = "@ktor-network-jvm-3_2_0_http//file"
+)
+
+jvm_import(
+  name = "ktor-io-jvm-3_2_0_http_import",
+  jar = "@ktor-io-jvm-3_2_0_http//file"
+)
+
+jvm_import(
+  name = "ktor-events-jvm-3_2_0_http_import",
+  jar = "@ktor-events-jvm-3_2_0_http//file"
+)
+
+jvm_import(
+  name = "ktor-websocket-serialization-jvm-3_2_0_http_import",
+  jar = "@ktor-websocket-serialization-jvm-3_2_0_http//file"
+)
+
+jvm_import(
+  name = "ktor-serialization-jvm-3_2_0_http_import",
+  jar = "@ktor-serialization-jvm-3_2_0_http//file"
+)
+
+jvm_import(
+  name = "ktor-websockets-jvm-3_2_0_http_import",
+  jar = "@ktor-websockets-jvm-3_2_0_http//file"
+)
+
+jvm_import(
+  name = "ktor-sse-jvm-3_2_0_http_import",
+  jar = "@ktor-sse-jvm-3_2_0_http//file"
+)
+
+jvm_import(
+  name = "kotlinx-coroutines-slf4j-1_10_2_http_import",
+  jar = "@kotlinx-coroutines-slf4j-1_10_2_http//file"
+)
+
+jvm_import(
+  name = "kotlin-stdlib-2_1_21_http_import",
+  jar = "@kotlin-stdlib-2_1_21_http//file"
+)
+
 jvm_import(
   name = "platform-jewel-samples-standalone-com-darkrockstudios-mpfilepicker",
   jar = "@mpfilepicker-3_1_0_http//file",
