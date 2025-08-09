@@ -376,6 +376,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         List<HighlightInfo> fileLevelInfos = getOrCreateFileLevelHighlights(fileEditor);
         // do not dispose highlighter if it needs to be reused
         fileLevelInfos.removeIf(fileLevelInfo -> {
+          // todo does this check make any sense?
           if (!fileLevelInfo.attributesEqual(fileLevelInfo)) {
             return false;
           }
