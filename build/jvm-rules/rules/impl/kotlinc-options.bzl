@@ -33,6 +33,11 @@ def _map_api_version_to_flag(version):
         return None
     return ["-api-version=%s" % version]
 
+def _map_language_version_to_flag(version):
+    if not version:
+        return None
+    return ["-language-version=%s" % version]
+
 def _map_opt_in_class_to_flag(values):
     return ["-opt-in=%s" % v for v in values]
 
@@ -76,6 +81,16 @@ _KOPTS = {
         type = attr.string,
         value_to_flag = None,
         map_value_to_flag = _map_api_version_to_flag,
+    ),
+    "language_version": struct(
+        args = dict(
+            default = "",
+            doc = "Provide source compatibility with the specified version of Kotlin",
+            values = ["2.0", "2.1", "2.2"],
+        ),
+        type = attr.string,
+        value_to_flag = None,
+        map_value_to_flag = _map_language_version_to_flag,
     ),
     "opt_in": struct(
         args = dict(
