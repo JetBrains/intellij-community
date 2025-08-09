@@ -368,7 +368,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
   }
 
-  // replace one file-level info with the other, possible reusing the fake highlighter
+  /** replace one file-level info with the other, possible reusing the fake highlighter */
   @Override
   public void replaceFileLevelHighlight(@NotNull HighlightInfo oldInfo,
                                         @NotNull HighlightInfo newInfo,
