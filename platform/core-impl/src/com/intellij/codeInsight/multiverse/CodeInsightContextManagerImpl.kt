@@ -14,6 +14,7 @@ import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.file.impl.FileManagerEx
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.AtomicMapCache
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.CollectionFactory
@@ -82,8 +83,8 @@ class CodeInsightContextManagerImpl(
   @RequiresReadLock
   @RequiresBackgroundThread
   override fun getCodeInsightContexts(file: VirtualFile): List<CodeInsightContext> {
-    //ThreadingAssertions.softAssertBackgroundThread()
-    //ThreadingAssertions.softAssertReadAccess()
+    ThreadingAssertions.softAssertBackgroundThread()
+    ThreadingAssertions.softAssertReadAccess()
 
     if (!isSharedSourceSupportEnabled(project)) return listOf(defaultContext())
 
@@ -108,8 +109,8 @@ class CodeInsightContextManagerImpl(
   override fun getPreferredContext(file: VirtualFile): CodeInsightContext {
     if (!isSharedSourceSupportEnabled(project)) return defaultContext()
 
-    //ThreadingAssertions.softAssertBackgroundThread()
-    //ThreadingAssertions.softAssertReadAccess()
+    ThreadingAssertions.softAssertBackgroundThread()
+    ThreadingAssertions.softAssertReadAccess()
 
     log.trace { "requested preferred context of file ${file.path}" }
 
@@ -122,6 +123,9 @@ class CodeInsightContextManagerImpl(
     if (!isSharedSourceSupportEnabled(project)) return defaultContext()
 
     log.trace { "requested context of FileViewProvider ${fileViewProvider.virtualFile.path}" }
+
+    ThreadingAssertions.softAssertBackgroundThread()
+    ThreadingAssertions.softAssertReadAccess()
 
     val context = getCodeInsightContextRaw(fileViewProvider)
 
