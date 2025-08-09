@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.multiverse
+package com.intellij.psi.impl.file.impl
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.ModuleManager
@@ -11,7 +11,6 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.io.path.Path
-
 
 @TestApplication
 internal class PsiDirectoryTest {
@@ -37,7 +36,7 @@ internal class PsiDirectoryTest {
       val project = projectFixture.get()
       val dirPath = Path(project.basePath!!, "foo/root/src")
       val vDir = VfsUtil.findFile(dirPath, false) ?: error("Can't find virtual directory $dirPath")
-      val modules = ModuleManager.getInstance(project).modules
+      val modules = ModuleManager.Companion.getInstance(project).modules
       assert(modules.size == 2) { modules.contentToString() }
 
       val modulesScope = ModulesScope(modules.toSet(), project)
