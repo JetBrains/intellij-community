@@ -945,6 +945,12 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
       options.put("api_version", apiVersion)
     }
   }
+  //language_version
+  handleArgument(K2JVMCompilerArguments::languageVersion) { languageVersion ->
+    if (languageVersion != null && languageVersion != "2.2") {
+      options.put("language_version", languageVersion)
+    }
+  }
   //optin
   handleArgument(K2JVMCompilerArguments::optIn) {
     // see create_kotlinc_options
@@ -1075,7 +1081,7 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
   checkNoUnhandledKotlincOptions(
     module.module,
     mergedCompilerArguments,
-    handledArguments = handledArguments + setOf("jvmTarget", "languageVersion", "pluginClasspaths"),
+    handledArguments = handledArguments + setOf("jvmTarget", "pluginClasspaths"),
     handledInternalArguments = setOf("-XXLanguage:+InlineClasses"),
     handledUnknownExtraFlags = setOf("-Xallow-result-return-type", "-Xstrict-java-nullability-assertions", "-Xwasm-attach-js-exception"),
   )

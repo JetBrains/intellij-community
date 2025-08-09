@@ -361,12 +361,9 @@ public class KotlinCompilerRunner implements CompilerRunner {
     if (apiVersion != null) {
       arguments.setApiVersion(apiVersion);
     }
-    if (arguments.getLanguageVersion() == null && apiVersion == null) {
-      // defaults
-      arguments.setLanguageVersion("2.2"); // todo: find a way to configure this in input parameters
-    }
-    else if (arguments.getLanguageVersion() == null) {
-      arguments.setLanguageVersion(apiVersion);
+    String languageVersion = CLFlags.LANGUAGE_VERSION.getOptionalScalarValue(flags);
+    if (languageVersion != null) {
+      arguments.setLanguageVersion(languageVersion);
     }
     String explicitApiMode = CLFlags.X_EXPLICIT_API_MODE.getOptionalScalarValue(flags);
     if (explicitApiMode != null) {
