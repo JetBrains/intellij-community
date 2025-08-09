@@ -243,7 +243,9 @@ object FUSProjectHotStartUpMeasurer {
     }
     val projectMarker = currentThreadContext().getProjectMarker()
     if (projectMarker == null) {
-      throw IllegalStateException("No project marker found")
+      // Do not break a project opening of there is no marker
+      thisLogger().error("No project marker found")
+      return
     }
     block.invoke(projectMarker.id)
   }
