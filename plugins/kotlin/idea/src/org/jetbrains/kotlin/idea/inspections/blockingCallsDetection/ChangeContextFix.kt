@@ -6,13 +6,13 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentsOfType
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.resolve.calls.util.getFirstArgumentExpression
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 internal class ChangeContextFix : PsiUpdateModCommandQuickFix() {
     override fun getFamilyName(): String {
@@ -26,9 +26,11 @@ internal class ChangeContextFix : PsiUpdateModCommandQuickFix() {
             ?: return
 
         val ktPsiFactory = KtPsiFactory(project, true)
-        val replacedArgument = callExpression.resolveToCall(BodyResolveMode.PARTIAL)
-            ?.getFirstArgumentExpression()
-            ?.replaced(ktPsiFactory.createExpression("kotlinx.coroutines.Dispatchers.IO")) ?: return
+        val replacedArgument = analyze(callExpression) {
+            callExpression.resolveToCall()?.successfulCallOrNull<KaCall>()
+                ?.getFirstArgumentExpression()
+                ?.replaced(ktPsiFactory.createExpression("kotlinx.coroutines.Dispatchers.IO")) ?: return
+        }
 
         CoroutineBlockingCallInspectionUtils.postProcessQuickFix(replacedArgument, project)
     }

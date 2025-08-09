@@ -8,6 +8,8 @@ create_kotlinc_options(
     "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
     "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
   ],
   x_context_parameters = True

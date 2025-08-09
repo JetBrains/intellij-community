@@ -8,11 +8,13 @@ import com.intellij.codeInspection.blockingCallsDetection.MethodContext
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.isCalledInsideNonIoContext
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.isInSuspendLambdaOrFunction
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.isInsideFlowChain
@@ -21,7 +23,6 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.hasSuspendModifier
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.uast.toUElement
 
 internal class CoroutineBlockingMethodChecker : BlockingMethodChecker {
@@ -41,14 +42,17 @@ internal class CoroutineBlockingMethodChecker : BlockingMethodChecker {
     override fun getQuickFixesFor(elementContext: ElementContext): Array<LocalQuickFix> {
         val element = elementContext.element
         if (element !is KtCallExpression) return emptyArray()
-        val resolvedCall = element.parentOfType<KtCallExpression>()?.resolveToCall(BodyResolveMode.PARTIAL)
 
-        return when {
-            !isApplicable(element.containingFile) || !isKotlinxOnClasspath(element) -> emptyArray()
-            resolvedCall != null && isCalledInsideNonIoContext(resolvedCall) && isInSuspendLambdaOrFunction(element) -> arrayOf(ChangeContextFix(), WrapInWithContextFix())
-            resolvedCall != null && isInsideFlowChain(resolvedCall) -> arrayOf(FlowOnIoContextFix(), WrapInWithContextFix())
-            isInSuspendLambdaOrFunction(element) -> arrayOf(WrapInWithContextFix())
-            else -> emptyArray()
+        analyze(element) {
+            val resolvedCall = element.parentOfType<KtCallExpression>()?.resolveToCall()?.successfulCallOrNull<KaCall>()
+
+            return when {
+                !isApplicable(element.containingFile) || !isKotlinxOnClasspath(element) -> emptyArray()
+                resolvedCall != null && isCalledInsideNonIoContext(resolvedCall) && isInSuspendLambdaOrFunction(element) -> arrayOf(ChangeContextFix(), WrapInWithContextFix())
+                resolvedCall != null && isInsideFlowChain(resolvedCall) -> arrayOf(FlowOnIoContextFix(), WrapInWithContextFix())
+                isInSuspendLambdaOrFunction(element) -> arrayOf(WrapInWithContextFix())
+                else -> emptyArray()
+            }
         }
     }
 
