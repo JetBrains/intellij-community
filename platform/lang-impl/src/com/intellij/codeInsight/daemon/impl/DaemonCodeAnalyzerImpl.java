@@ -379,7 +379,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           if (!fileLevelInfo.attributesEqual(fileLevelInfo)) {
             return false;
           }
-          ThreadingAssertions.assertEventDispatchThread();
           JComponent component = fileLevelInfo.getFileLevelComponent(fileEditor);
           if (component != null) {
             getFileEditorManager().removeTopComponent(fileEditor, component);
