@@ -218,6 +218,7 @@ object ProjectUtil {
       }
     }
     if (processors.isEmpty()) {
+      LOG.info("No processor found for project in $file")
       return null
     }
 
@@ -314,6 +315,8 @@ object ProjectUtil {
         }
       }
     }
+
+    LOG.info("Using processor ${processor.name} to open the project at ${virtualFile.path}")
 
     try {
       return processor.openProjectAsync(virtualFile, options.projectToClose, options.forceOpenInNewFrame)
