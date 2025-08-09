@@ -7,5 +7,3 @@ class Child : Base() {
     override var<caret> foo: Int = 0
         get() = 1
 }
-
-// IGNORE_K1

@@ -80,7 +80,6 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/usePropertyAccessSyntax")
             model("${idea}/inspectionsLocal/redundantUnitReturnType")
             model("${idea}/inspectionsLocal/suspiciousCollectionReassignment")
-            model("${idea}/inspectionsLocal/suspiciousVarProperty")
             model("${idea}/inspectionsLocal/unnecessaryVariable")
             model("${idea}/inspectionsLocal/canBeParameter")
             model("${idea}/inspectionsLocal/arrayInDataClass")
@@ -134,7 +133,6 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/javaMapForEach")
             model("${idea}/inspectionsLocal/functionWithLambdaExpressionBody")
             model("${idea}/inspectionsLocal/replaceUntilWithRangeUntil")
-            model("${idea}/inspectionsLocal/setterBackingFieldAssignment")
 
             // There is no `RemoveExplicitTypeArgumentsIntention` in K2 because `RemoveExplicitTypeArgumentsInspection` is available
             // and the inspection can have the "No highlighting (fix available)" severity.
