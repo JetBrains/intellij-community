@@ -842,7 +842,7 @@ public final class FileManagerImpl implements FileManagerEx {
       return true;
     }
 
-    if (context == CodeInsightContexts.defaultContext() || context == CodeInsightContexts.anyContext()) {
+    if (context == CodeInsightContexts.anyContext()) {
       return true;
     }
 
