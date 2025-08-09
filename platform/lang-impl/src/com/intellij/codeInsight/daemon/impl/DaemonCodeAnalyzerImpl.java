@@ -342,7 +342,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       if (fileEditor instanceof TextEditor textEditor) {
         List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = getActionRanges(info);
         List<HighlightInfo> fileLevelInfos = getOrCreateFileLevelHighlights(fileEditor);
-        if (!ContainerUtil.exists(fileLevelInfos, existing->existing.equalsByActualOffset(info))) {
+        if (!ContainerUtil.exists(fileLevelInfos, existing -> existing.equalsByActualOffset(info))) {
           Document document = textEditor.getEditor().getDocument();
           MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
           // todo do we need to create a new highlighter if toReuse is not-null?
@@ -383,7 +383,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = getActionRanges(newInfo);
         List<HighlightInfo> fileLevelInfos = getOrCreateFileLevelHighlights(fileEditor);
         // do not dispose highlighter if it needs to be reused
-        fileLevelInfos.removeIf(fileLevelInfo-> {
+        fileLevelInfos.removeIf(fileLevelInfo -> {
           if (!fileLevelInfo.attributesEqual(fileLevelInfo)) {
             return false;
           }
