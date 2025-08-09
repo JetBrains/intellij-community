@@ -357,16 +357,16 @@ public class KotlinCompilerRunner implements CompilerRunner {
     arguments.setSkipMetadataVersionCheck(CLFlags.SKIP_METADATA_VERSION_CHECK.isFlagSet(flags));
     arguments.setAllowUnstableDependencies(CLFlags.X_ALLOW_UNSTABLE_DEPENDENCIES.isFlagSet(flags));
     arguments.setDisableStandardScript(true);
-    if (arguments.getLanguageVersion() == null && arguments.getApiVersion() == null) {
+    String apiVersion = CLFlags.API_VERSION.getOptionalScalarValue(flags);
+    if (apiVersion != null) {
+      arguments.setApiVersion(apiVersion);
+    }
+    if (arguments.getLanguageVersion() == null && apiVersion == null) {
       // defaults
-      arguments.setApiVersion("2.2");     // todo: find a way to configure this in input parameters
       arguments.setLanguageVersion("2.2"); // todo: find a way to configure this in input parameters
     }
     else if (arguments.getLanguageVersion() == null) {
-      arguments.setLanguageVersion(arguments.getApiVersion());
-    }
-    else if (arguments.getApiVersion() == null) {
-      arguments.setApiVersion(arguments.getLanguageVersion());
+      arguments.setLanguageVersion(apiVersion);
     }
     String explicitApiMode = CLFlags.X_EXPLICIT_API_MODE.getOptionalScalarValue(flags);
     if (explicitApiMode != null) {

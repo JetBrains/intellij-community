@@ -939,6 +939,12 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
     check(handledArguments.add(property.name))
   }
 
+  //api_version
+  handleArgument(K2JVMCompilerArguments::apiVersion) { apiVersion ->
+    if (apiVersion != null && apiVersion != "2.2") {
+      options.put("api_version", apiVersion)
+    }
+  }
   //optin
   handleArgument(K2JVMCompilerArguments::optIn) {
     // see create_kotlinc_options
@@ -1069,7 +1075,7 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
   checkNoUnhandledKotlincOptions(
     module.module,
     mergedCompilerArguments,
-    handledArguments = handledArguments + setOf("jvmTarget", "apiVersion", "languageVersion", "pluginClasspaths"),  // TODO: check ignored arguments
+    handledArguments = handledArguments + setOf("jvmTarget", "languageVersion", "pluginClasspaths"),
     handledInternalArguments = setOf("-XXLanguage:+InlineClasses"),
     handledUnknownExtraFlags = setOf("-Xallow-result-return-type", "-Xstrict-java-nullability-assertions", "-Xwasm-attach-js-exception"),
   )
