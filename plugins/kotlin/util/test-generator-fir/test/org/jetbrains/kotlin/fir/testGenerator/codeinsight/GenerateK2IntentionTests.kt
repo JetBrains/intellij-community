@@ -160,7 +160,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/replaceAddWithPlusAssign", pattern = pattern)
             model("${idea}intentions/reconstructTypeInCastOrIs", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertParameterToReceiver", pattern = pattern)
-            model("${idea}intentions/convertCollectionConstructorToFunction", pattern = pattern, isIgnored = true)
+            model("${idea}intentions/convertCollectionConstructorToFunction", pattern = pattern)
             model("${idea}intentions/addMissingDestructuring", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertUnsafeCastToUnsafeCastCall", pattern = pattern, isIgnored = true)
             model("${idea}intentions/moveToCompanion", pattern = pattern)
