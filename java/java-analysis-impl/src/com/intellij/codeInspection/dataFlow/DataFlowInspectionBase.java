@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.*;
@@ -799,8 +798,8 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         List<LocalQuickFix> fixes = createNPEFixes(expr, expr, reporter.isOnTheFly(), exactlyNull);
         PsiMethod surroundingMethod = PsiTreeUtil.getParentOfType(anchor, PsiMethod.class, true, PsiLambdaExpression.class);
         if (surroundingMethod != null) {
-          LocalQuickFix fix = LocalQuickFix.from(AddAnnotationModCommandAction.createAddNullableFix(surroundingMethod));
-          fixes = StreamEx.of(fixes).append(fix).toList();
+          ModCommandAction fix = AddAnnotationModCommandAction.createAddNullableFix(surroundingMethod);
+          if (fix != null) fixes = StreamEx.of(fixes).append(LocalQuickFix.from(fix)).toList();
         }
         reporter.registerProblem(expr, text, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
