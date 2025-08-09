@@ -41,7 +41,6 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.*;
@@ -340,7 +339,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     FileEditorManager fileEditorManager = getFileEditorManager();
     for (FileEditor fileEditor : fileEditorManager.getAllEditorList(vFile)) {
       if (fileEditor instanceof TextEditor textEditor) {
-        List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = getActionRanges(info);
         List<HighlightInfo> fileLevelInfos = getOrCreateFileLevelHighlights(fileEditor);
         if (!ContainerUtil.exists(fileLevelInfos, existing -> existing.equalsByActualOffset(info))) {
           Document document = textEditor.getEditor().getDocument();
@@ -355,11 +353,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
             info.setHighlighter(highlighter);
           }
           fileLevelInfos.add(info);
-          FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(),
-                                                                                  info.getGutterIconRenderer(), actionRanges,
-                                                                                  psiFile, textEditor.getEditor(), info.getToolTip());
-          fileEditorManager.addTopComponent(fileEditor, component);
-          info.addFileLevelComponent(fileEditor, component);
+          addFileLevelInfoComponentToEditor(info, psiFile, textEditor);
           if (LOG.isDebugEnabled()) {
             LOG.debug("addFileLevelHighlight [" + info + "]: fileLevelInfos:" + fileLevelInfos);
           }
@@ -405,16 +399,24 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           HighlightInfoUpdaterImpl.createOrReuseFakeFileLevelHighlighter(newInfo.getGroup(), newInfo, null, markupModel);
         }
         fileLevelInfos.add(newInfo);
-        FileLevelIntentionComponent component = new FileLevelIntentionComponent(newInfo.getDescription(), newInfo.getSeverity(),
-                                                                                newInfo.getGutterIconRenderer(), actionRanges,
-                                                                                psiFile, textEditor.getEditor(), newInfo.getToolTip());
-        fileEditorManager.addTopComponent(fileEditor, component);
-        newInfo.addFileLevelComponent(fileEditor, component);
+        addFileLevelInfoComponentToEditor(newInfo, psiFile, textEditor);
         if (LOG.isDebugEnabled()) {
           LOG.debug("replaceFileLevelHighlight [" + newInfo + "]: fileLevelInfos:" + fileLevelInfos);
         }
       }
     }
+  }
+
+  private void addFileLevelInfoComponentToEditor(@NotNull HighlightInfo info,
+                                                 @NotNull PsiFile psiFile,
+                                                 @NotNull TextEditor textEditor) {
+    List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = getActionRanges(info);
+    FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(),
+                                                                            info.getGutterIconRenderer(), actionRanges,
+                                                                            psiFile, textEditor.getEditor(), info.getToolTip());
+    FileEditorManager fileEditorManager = getFileEditorManager();
+    fileEditorManager.addTopComponent(textEditor, component);
+    info.addFileLevelComponent(textEditor, component);
   }
 
   private static @NotNull List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> getActionRanges(@NotNull HighlightInfo info) {
