@@ -2,9 +2,11 @@
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
@@ -144,8 +146,10 @@ public final class VfsData implements Closeable {
    */
   private final IntObjectMap<VirtualDirectoryImpl> changedParents = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
-  // ====================== monitoring ======================================================================================= //
 
+  private final Disposable writeActionListenerDisposer = Disposer.newDisposable();
+
+  // ====================== monitoring ======================================================================================= //
 
   /** # of {@link Segment} instances created, since the start */
   private final AtomicInteger segmentsCreated = new AtomicInteger();
@@ -162,6 +166,9 @@ public final class VfsData implements Closeable {
                  @NotNull PersistentFSImpl pfs) {
     this.app = app;
     this.owningPersistentFS = pfs;
+
+    LOG.info("Use SoftReference in VFS cache: " + USE_SOFT_REFERENCES);
+
     //TODO RC: replace with ((ApplicationEx)app).addWriteActionListener(new WriteActionListener()) ?
     app.addApplicationListener(new ApplicationListener() {
       @Override
@@ -172,7 +179,7 @@ public final class VfsData implements Closeable {
           killInvalidatedFiles();
         }
       }
-    }, app);
+    }, writeActionListenerDisposer);
 
     otelHandle = setupOTelMonitoring();
   }
@@ -198,6 +205,7 @@ public final class VfsData implements Closeable {
   @Override
   public void close() {
     otelHandle.close();
+    Disposer.dispose(writeActionListenerDisposer);
   }
 
   @NotNull PersistentFSImpl owningPersistentFS() {
