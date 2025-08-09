@@ -3,6 +3,8 @@ f:org.jetbrains.jewel.foundation.CompatibilityKt
 f:org.jetbrains.jewel.foundation.JewelFlags
 - *f:getUseCustomPopupRenderer():Z
 - *f:setUseCustomPopupRenderer(Z):V
+f:org.jetbrains.jewel.foundation.LocalComponentKt
+- *sf:getLocalComponent():androidx.compose.runtime.ProvidableCompositionLocal
 *:org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
 - a:highlight-zTGadEY(java.lang.String,java.lang.String):kotlinx.coroutines.flow.Flow
 f:org.jetbrains.jewel.foundation.theme.JewelTheme$Companion

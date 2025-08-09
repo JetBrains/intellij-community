@@ -37,6 +37,7 @@ public fun PopupContainer(
         popupPositionProvider = popupPositionProvider,
         onDismissRequest = onDismissRequest,
         properties = popupProperties,
+        cornerSize = style.metrics.cornerSize,
     ) {
         OverrideDarkMode(style.isDark) {
             val colors = style.colors
