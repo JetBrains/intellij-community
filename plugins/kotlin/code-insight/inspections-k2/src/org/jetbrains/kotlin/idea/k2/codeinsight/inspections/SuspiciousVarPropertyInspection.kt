@@ -70,14 +70,14 @@ internal class SuspiciousVarPropertyInspection : KotlinApplicableInspectionBase<
             isBackingFieldReference(it, accessor.property)
         }
     }
+}
 
-    private fun KaSession.isBackingFieldReference(expression: KtExpression, property: KtProperty): Boolean =
-        expression is KtNameReferenceExpression && isBackingFieldReference(expression, property)
+internal fun KaSession.isBackingFieldReference(expression: KtExpression?, property: KtProperty): Boolean =
+    expression is KtNameReferenceExpression && isBackingFieldReference(expression, property)
 
-    private fun KaSession.isBackingFieldReference(namedReference: KtNameReferenceExpression, property: KtProperty): Boolean {
-        if (namedReference.text != KtTokens.FIELD_KEYWORD.value) return false
-        val fieldSymbol = namedReference.mainReference.resolveToSymbol()
-        if (fieldSymbol !is KaBackingFieldSymbol) return false
-        return fieldSymbol.owningProperty.psi == property
-    }
+private fun KaSession.isBackingFieldReference(namedReference: KtNameReferenceExpression, property: KtProperty): Boolean {
+    if (namedReference.text != KtTokens.FIELD_KEYWORD.value) return false
+    val fieldSymbol = namedReference.mainReference.resolveToSymbol()
+    if (fieldSymbol !is KaBackingFieldSymbol) return false
+    return fieldSymbol.owningProperty.psi == property
 }
