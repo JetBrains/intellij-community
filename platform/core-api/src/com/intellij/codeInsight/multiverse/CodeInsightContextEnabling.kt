@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CancellationException
@@ -19,15 +20,22 @@ internal fun isSharedSourceSupportEnabledImpl(project: Project): Boolean {
     return cachedValue
   }
 
-  val result = computeSharedSourceEnabled(project)
+  val lock = multiverseLockMap.computeIfAbsent(project) { Any() }
+  synchronized(lock) {
+    project.getUserData(multiverse_enabler_key)?.let { cachedValue ->
+      return cachedValue
+    }
 
-  project.putUserData(multiverse_enabler_key, result)
-
-  if (logMultiverseState) {
-    log.info("multiverse is ${if (result) "enabled" else "disabled"}")
+    val result = computeSharedSourceEnabled(project)
+    project.putUserData(multiverse_enabler_key, result)
+    if (logMultiverseState) {
+      log.info("multiverse is ${if (result) "enabled" else "disabled"}")
+    }
+    return result
   }
-  return result
 }
+
+private val multiverseLockMap = CollectionFactory.createConcurrentWeakMap<Project, Any>()
 
 @TestOnly
 @ApiStatus.Internal
