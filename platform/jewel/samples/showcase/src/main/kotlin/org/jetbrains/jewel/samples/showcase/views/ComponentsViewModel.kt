@@ -84,11 +84,16 @@ public class ComponentsViewModel(
                 title = "SplitLayout",
                 iconKey = ShowcaseIcons.Components.splitlayout,
                 content = {
-                    SplitLayouts(outerSplitState, verticalSplitState, innerSplitState) {
-                        outerSplitState = SplitLayoutState(0.5f)
-                        verticalSplitState = SplitLayoutState(0.5f)
-                        innerSplitState = SplitLayoutState(0.5f)
-                    }
+                    SplitLayouts(
+                        outerSplitState,
+                        verticalSplitState,
+                        innerSplitState,
+                        onResetState = {
+                            outerSplitState = SplitLayoutState(0.5f)
+                            verticalSplitState = SplitLayoutState(0.5f)
+                            innerSplitState = SplitLayoutState(0.5f)
+                        },
+                    )
                 },
             ),
             ViewInfo(title = "Banners", iconKey = ShowcaseIcons.Components.banners, content = { Banners() }),

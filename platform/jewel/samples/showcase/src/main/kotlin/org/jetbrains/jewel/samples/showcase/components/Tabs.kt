@@ -39,8 +39,8 @@ import org.jetbrains.jewel.ui.theme.defaultTabStyle
 import org.jetbrains.jewel.ui.theme.editorTabStyle
 
 @Composable
-public fun Tabs() {
-    Column {
+public fun Tabs(modifier: Modifier = Modifier) {
+    Column(modifier) {
         Text("Default tabs", Modifier.fillMaxWidth())
         DefaultTabShowcase()
 

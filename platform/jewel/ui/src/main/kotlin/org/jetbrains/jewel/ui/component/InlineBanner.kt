@@ -108,6 +108,7 @@ public fun InformationInlineBanner(
     style: InlineBannerStyle = JewelTheme.inlineBannerStyle.information,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
 ) {
+    @Suppress("DEPRECATION")
     InformationInlineBanner(
         title = title,
         style = style,
@@ -386,6 +387,7 @@ public fun SuccessInlineBanner(
     style: InlineBannerStyle = JewelTheme.inlineBannerStyle.success,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
 ) {
+    @Suppress("DEPRECATION")
     SuccessInlineBanner(
         title = title,
         style = style,
@@ -666,6 +668,7 @@ public fun WarningInlineBanner(
     style: InlineBannerStyle = JewelTheme.inlineBannerStyle.warning,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
 ) {
+    @Suppress("DEPRECATION")
     WarningInlineBanner(
         title = title,
         style = style,
@@ -946,6 +949,7 @@ public fun ErrorInlineBanner(
     style: InlineBannerStyle = JewelTheme.inlineBannerStyle.error,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
 ) {
+    @Suppress("DEPRECATION")
     ErrorInlineBanner(
         style = style,
         textStyle = textStyle,
@@ -1168,10 +1172,10 @@ private fun InlineBannerImpl(
     style: InlineBannerStyle,
     textStyle: TextStyle,
     title: String?,
-    modifier: Modifier,
     icon: @Composable (() -> Unit)?,
     linkActions: (BannerLinkActionScope.() -> Unit)?,
     iconActions: (BannerIconActionScope.() -> Unit)?,
+    modifier: Modifier = Modifier,
     content: @Composable (() -> Unit),
 ) {
     InlineBannerImpl(
@@ -1205,7 +1209,7 @@ private fun InlineBannerImpl(
     icon: @Composable (() -> Unit)?,
     actions: @Composable (FlowRowScope.() -> Unit)?,
     actionIcons: @Composable (RowScope.() -> Unit)?,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     content: @Composable (() -> Unit),
 ) {
     val borderColor = style.colors.border
@@ -1257,13 +1261,13 @@ private fun InlineBannerImpl(
 
 @Composable
 private fun RoundedCornerBox(
-    modifier: Modifier = Modifier,
     contentColor: Color,
     borderColor: Color,
     borderWidth: Dp,
     cornerSize: CornerSize,
     backgroundColor: Color,
     padding: PaddingValues,
+    modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     val shape = RoundedCornerShape(cornerSize)

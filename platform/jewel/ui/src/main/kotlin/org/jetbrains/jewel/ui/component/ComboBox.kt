@@ -96,150 +96,29 @@ public fun ComboBox(
     popupManager: PopupManager = remember { PopupManager() },
     popupContent: @Composable () -> Unit,
 ) {
-    var chevronHovered by remember { mutableStateOf(false) }
-
-    val popupVisible by popupManager.isPopupVisible
-
-    var comboBoxState by remember { mutableStateOf(ComboBoxState.of(enabled = enabled)) }
-    val comboBoxFocusRequester = remember { FocusRequester() }
-
-    remember(enabled) { comboBoxState = comboBoxState.copy(enabled = enabled) }
-
-    LaunchedEffect(interactionSource) {
-        interactionSource.interactions.collect { interaction ->
-            when (interaction) {
-                is PressInteraction.Press -> comboBoxState = comboBoxState.copy(pressed = true)
-                is PressInteraction.Cancel,
-                is PressInteraction.Release -> comboBoxState = comboBoxState.copy(pressed = false)
-                is HoverInteraction.Enter -> comboBoxState = comboBoxState.copy(hovered = true)
-                is HoverInteraction.Exit -> comboBoxState = comboBoxState.copy(hovered = false)
-            }
-        }
-    }
-
-    val shape = RoundedCornerShape(style.metrics.cornerSize)
-    val borderColor by style.colors.borderFor(comboBoxState)
-    var comboBoxWidth by remember { mutableStateOf(Dp.Unspecified) }
-    val density = LocalDensity.current
-
-    Box(
-        modifier =
-            modifier
-                .focusRequester(comboBoxFocusRequester)
-                .onFocusChanged { focusState ->
-                    comboBoxState = comboBoxState.copy(focused = focusState.isFocused)
-                    if (!focusState.isFocused) {
-                        popupManager.setPopupVisible(false)
-                    }
-                }
-                .thenIf(enabled) {
-                    focusable(true, interactionSource)
-                        .onHover { chevronHovered = it }
-                        .pointerInput(interactionSource) {
-                            detectPressAndCancel(
-                                onPress = {
-                                    popupManager.setPopupVisible(!popupVisible)
-                                    comboBoxFocusRequester.requestFocus()
-                                },
-                                onCancel = { popupManager.setPopupVisible(false) },
-                            )
-                        }
-                        .semantics(mergeDescendants = true) { role = Role.DropdownList }
-                        .onPreviewKeyEvent {
-                            if (it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-
-                            when {
-                                it.key == Key.Spacebar -> {
-                                    popupManager.setPopupVisible(!popupVisible)
-                                    true
-                                }
-
-                                it.key == Key.DirectionDown -> {
-                                    if (popupVisible) {
-                                        onArrowDownPress()
-                                    } else {
-                                        popupManager.setPopupVisible(true)
-                                    }
-                                    true
-                                }
-
-                                it.key == Key.DirectionUp && popupVisible -> {
-                                    onArrowUpPress()
-                                    true
-                                }
-
-                                it.key == Key.Escape && popupVisible -> {
-                                    popupManager.setPopupVisible(false)
-                                    true
-                                }
-
-                                else -> false
-                            }
-                        }
-                }
-                .background(style.colors.backgroundFor(comboBoxState, false).value, shape)
-                .thenIf(outline == Outline.None) {
-                    focusOutline(state = comboBoxState, outlineShape = shape, alignment = Stroke.Alignment.Center)
-                        .border(
-                            alignment = Stroke.Alignment.Inside,
-                            width = style.metrics.borderWidth,
-                            color = borderColor,
-                            shape = shape,
-                        )
-                }
-                .outline(
-                    state = comboBoxState,
-                    outline = outline,
-                    outlineShape = shape,
-                    alignment = Stroke.Alignment.Center,
-                )
-                .widthIn(min = style.metrics.minSize.width)
-                .height(style.metrics.minSize.height)
-                .onSizeChanged { comboBoxWidth = with(density) { it.width.toDp() } },
-        contentAlignment = Alignment.CenterStart,
-    ) {
-        CompositionLocalProvider(LocalContentColor provides style.colors.contentFor(comboBoxState).value) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.focusable(false).focusProperties { canFocus = false },
-            ) {
-                val textColor = if (enabled) Color.Unspecified else style.colors.borderDisabled
-                Text(
-                    text = labelText,
-                    style = textStyle.copy(color = textColor),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier =
-                        Modifier.testTag("Jewel.ComboBox.NonEditableText")
-                            .weight(1f)
-                            .padding(style.metrics.contentPadding),
-                )
-
-                Chevron(style, enabled)
-            }
-        }
-
-        if (popupVisible) {
-            val maxHeight = maxPopupHeight.takeOrElse { style.metrics.maxPopupHeight }
-
-            PopupContainer(
-                onDismissRequest = {
-                    if (!chevronHovered) {
-                        popupManager.setPopupVisible(false)
-                    }
-                },
-                modifier =
-                    popupModifier
-                        .testTag("Jewel.ComboBox.Popup")
-                        .heightIn(max = maxHeight)
-                        .width(comboBoxWidth)
-                        .onClick { popupManager.setPopupVisible(false) },
-                horizontalAlignment = Alignment.Start,
-                popupProperties = PopupProperties(focusable = false),
-                content = popupContent,
+    val textColor = if (enabled) Color.Unspecified else style.colors.borderDisabled
+    ComboBox(
+        labelContent = {
+            Text(
+                text = labelText,
+                style = textStyle.copy(color = textColor),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.testTag("Jewel.ComboBox.NonEditableText").padding(style.metrics.contentPadding),
             )
-        }
-    }
+        },
+        popupContent,
+        modifier,
+        popupModifier,
+        enabled,
+        outline,
+        maxPopupHeight,
+        interactionSource,
+        style,
+        onArrowDownPress,
+        onArrowUpPress,
+        popupManager,
+    )
 }
 
 /**
@@ -250,6 +129,8 @@ public fun ComboBox(
  *
  * This version of ComboBox allows for complete customization of the label area through a composable function.
  *
+ * @param labelContent Composable content for the label area of the combo box
+ * @param popupContent Composable content for the popup
  * @param modifier Modifier to be applied to the combo box
  * @param popupModifier Modifier to be applied to the popup
  * @param enabled Controls whether the combo box can be interacted with
@@ -260,13 +141,13 @@ public fun ComboBox(
  * @param onArrowDownPress Called when the down arrow key is pressed while the popup is visible
  * @param onArrowUpPress Called when the up arrow key is pressed while the popup is visible
  * @param popupManager Manager for controlling the popup visibility state
- * @param labelContent Composable content for the label area of the combo box
- * @param popupContent Composable content for the popup
  */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun ComboBox(
+    labelContent: @Composable (() -> Unit),
+    popupContent: @Composable (() -> Unit),
     modifier: Modifier = Modifier,
     popupModifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -277,8 +158,6 @@ public fun ComboBox(
     onArrowDownPress: () -> Unit = {},
     onArrowUpPress: () -> Unit = {},
     popupManager: PopupManager = remember { PopupManager() },
-    labelContent: @Composable (() -> Unit),
-    popupContent: @Composable (() -> Unit),
 ) {
     var chevronHovered by remember { mutableStateOf(false) }
 
