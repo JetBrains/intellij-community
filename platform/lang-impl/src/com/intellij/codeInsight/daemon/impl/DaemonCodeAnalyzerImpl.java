@@ -370,7 +370,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     ThreadingAssertions.assertEventDispatchThread();
     assertFileFromMyProject(psiFile.getProject(), psiFile);
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
-    for (FileEditor fileEditor : fileEditorManager.getAllEditorList(vFile)) {
+    for (FileEditor fileEditor : getFileEditorManager().getAllEditorList(vFile)) {
       if (fileEditor instanceof TextEditor textEditor) {
         List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = getActionRanges(newInfo);
         List<HighlightInfo> fileLevelInfos = getOrCreateFileLevelHighlights(fileEditor);
