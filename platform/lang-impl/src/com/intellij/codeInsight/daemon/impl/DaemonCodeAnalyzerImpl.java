@@ -340,11 +340,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     FileEditorManager fileEditorManager = getFileEditorManager();
     for (FileEditor fileEditor : fileEditorManager.getAllEditorList(vFile)) {
       if (fileEditor instanceof TextEditor textEditor) {
-        List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = new ArrayList<>();
-        info.findRegisteredQuickFix((descriptor, range) -> {
-          actionRanges.add(Pair.create(descriptor, range));
-          return null;
-        });
+        List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = getActionRanges(info);
         List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
         if (fileLevelInfos == null) {
           fileLevelInfos = ContainerUtil.createConcurrentList(); // must be able to iterate in hasFileLevelHighlights() and concurrently modify in addFileLevelHighlight()
@@ -392,11 +388,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     FileEditorManager fileEditorManager = getFileEditorManager();
     for (FileEditor fileEditor : fileEditorManager.getAllEditorList(vFile)) {
       if (fileEditor instanceof TextEditor textEditor) {
-        List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = new ArrayList<>();
-        newInfo.findRegisteredQuickFix((descriptor, range) -> {
-          actionRanges.add(Pair.create(descriptor, range));
-          return null;
-        });
+        List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = getActionRanges(newInfo);
         List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
         if (fileLevelInfos == null) {
           fileLevelInfos = ContainerUtil.createConcurrentList(); // must be able to iterate in hasFileLevelHighlights() and concurrently modify in addFileLevelHighlight()
@@ -435,6 +427,15 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         }
       }
     }
+  }
+
+  private static @NotNull List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> getActionRanges(@NotNull HighlightInfo info) {
+    List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = new ArrayList<>();
+    info.findRegisteredQuickFix((descriptor, range) -> {
+      actionRanges.add(Pair.create(descriptor, range));
+      return null;
+    });
+    return actionRanges;
   }
 
   @Override
