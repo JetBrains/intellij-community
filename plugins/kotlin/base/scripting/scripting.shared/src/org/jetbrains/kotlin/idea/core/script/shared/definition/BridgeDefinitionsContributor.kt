@@ -14,38 +14,44 @@ import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
 class BridgeScriptDefinitionsContributor(private val project: Project) : ScriptDefinitionsSource {
     override val definitions: Sequence<ScriptDefinition>
-        get() = ScriptDefinitionsProvider.EP_NAME.getExtensionList(project).asSequence().flatMap { provider ->
-            scriptingInfoLog("processing definitions provider ${provider::class.java.name}")
-            val explicitClasses = provider.getDefinitionClasses().toList()
-            val classPath = provider.getDefinitionsClassPath().toList()
-            val baseHostConfiguration = defaultJvmScriptingHostConfiguration
-            // TODO: rewrite load and discovery to return kotlin.script.experimental.host.ScriptDefinition to avoid unnecessary conversions
-            val explicitDefinitions = if (explicitClasses.isEmpty())
-                emptySequence()
-            else
-                loadDefinitionsFromTemplates(explicitClasses, classPath, baseHostConfiguration).asSequence()
+        get() {
+            val extensionsSequence = project.extensionArea
+                .getExtensionPoint(ScriptDefinitionsProvider.EP_NAME)
+                .extensionList.asSequence()
 
-            val discoveredDefinitions = if (provider.useDiscovery())
-                ScriptDefinitionsFromClasspathDiscoverySource(
-                    classPath,
-                    baseHostConfiguration,
-                    ::loggingReporter
-                ).definitions
-            else
-                emptySequence()
+            return extensionsSequence.flatMap { provider ->
+                scriptingInfoLog("processing definitions provider ${provider::class.java.name}")
+                val explicitClasses = provider.getDefinitionClasses().toList()
+                val classPath = provider.getDefinitionsClassPath().toList()
+                val baseHostConfiguration = defaultJvmScriptingHostConfiguration
+                // TODO: rewrite load and discovery to return kotlin.script.experimental.host.ScriptDefinition to avoid unnecessary conversions
+                val explicitDefinitions = if (explicitClasses.isEmpty())
+                    emptySequence()
+                else
+                    loadDefinitionsFromTemplates(explicitClasses, classPath, baseHostConfiguration).asSequence()
 
-            val loadedDefinitions = (explicitDefinitions + discoveredDefinitions).map {
-                kotlin.script.experimental.host.ScriptDefinition(
-                    it.compilationConfiguration,
-                    it.evaluationConfiguration ?: ScriptEvaluationConfiguration.Default,
-                )
-            }.toList()
+                val discoveredDefinitions = if (provider.useDiscovery())
+                    ScriptDefinitionsFromClasspathDiscoverySource(
+                        classPath,
+                        baseHostConfiguration,
+                        ::loggingReporter
+                    ).definitions
+                else
+                    emptySequence()
 
-            provider.provideDefinitions(baseHostConfiguration, loadedDefinitions).map {
-                ScriptDefinition.FromNewDefinition(baseHostConfiguration, it).apply {
-                    order = Int.MIN_VALUE
-                }
-            }.asSequence()
+                val loadedDefinitions = (explicitDefinitions + discoveredDefinitions).map {
+                    kotlin.script.experimental.host.ScriptDefinition(
+                        it.compilationConfiguration,
+                        it.evaluationConfiguration ?: ScriptEvaluationConfiguration.Default,
+                    )
+                }.toList()
+
+                provider.provideDefinitions(baseHostConfiguration, loadedDefinitions).map {
+                    ScriptDefinition.FromNewDefinition(baseHostConfiguration, it).apply {
+                        order = Int.MIN_VALUE
+                    }
+                }.asSequence()
+            }
         }
 }
 
