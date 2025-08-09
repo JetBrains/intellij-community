@@ -61,6 +61,7 @@ import org.jetbrains.jewel.ui.component.ErrorInlineBanner
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconActionButton
 import org.jetbrains.jewel.ui.component.IconButton
+import org.jetbrains.jewel.ui.component.InfoText
 import org.jetbrains.jewel.ui.component.InformationDefaultBanner
 import org.jetbrains.jewel.ui.component.InformationInlineBanner
 import org.jetbrains.jewel.ui.component.LazyTree
@@ -406,7 +407,10 @@ private fun RowScope.ColumnTwo(project: Project) {
 @Composable
 private fun MarkdownExample(project: Project) {
     var enabled by remember { mutableStateOf(true) }
-    CheckboxRow("Enabled", enabled, { enabled = it })
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        CheckboxRow("Enabled", enabled, { enabled = it }, Modifier.alignByBaseline())
+        InfoText("Shows the enabled/disabled styling", Modifier.alignByBaseline())
+    }
 
     val contentColor = if (enabled) JewelTheme.globalColors.text.normal else JewelTheme.globalColors.text.disabled
     CompositionLocalProvider(LocalContentColor provides contentColor) {
