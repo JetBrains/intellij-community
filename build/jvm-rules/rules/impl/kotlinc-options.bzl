@@ -28,6 +28,10 @@ def _map_jvm_target_to_flag(version):
         return None
     return ["-jvm-target=%s" % version]
 
+def _map_api_version_to_flag(version):
+    if not version:
+        return None
+    return ["-api-version=%s" % version]
 
 def _map_opt_in_class_to_flag(values):
     return ["-opt-in=%s" % v for v in values]
@@ -62,6 +66,16 @@ _KOPTS = {
         type = attr.string,
         value_to_flag = None,
         map_value_to_flag = _map_jvm_target_to_flag,
+    ),
+    "api_version": struct(
+        args = dict(
+            default = "",
+            doc = "Allow using declarations only from the specified version of Kotlin bundled libraries",
+            values = ["2.0", "2.1", "2.2"],
+        ),
+        type = attr.string,
+        value_to_flag = None,
+        map_value_to_flag = _map_api_version_to_flag,
     ),
     "opt_in": struct(
         args = dict(
