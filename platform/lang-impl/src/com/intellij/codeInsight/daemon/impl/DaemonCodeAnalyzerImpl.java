@@ -341,11 +341,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     for (FileEditor fileEditor : fileEditorManager.getAllEditorList(vFile)) {
       if (fileEditor instanceof TextEditor textEditor) {
         List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = getActionRanges(info);
-        List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
-        if (fileLevelInfos == null) {
-          fileLevelInfos = ContainerUtil.createConcurrentList(); // must be able to iterate in hasFileLevelHighlights() and concurrently modify in addFileLevelHighlight()
-          fileEditor.putUserData(FILE_LEVEL_HIGHLIGHTS, fileLevelInfos);
-        }
+        List<HighlightInfo> fileLevelInfos = getOrCreateFileLevelHighlights(fileEditor);
         if (!ContainerUtil.exists(fileLevelInfos, existing->existing.equalsByActualOffset(info))) {
           Document document = textEditor.getEditor().getDocument();
           MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
@@ -389,11 +385,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     for (FileEditor fileEditor : fileEditorManager.getAllEditorList(vFile)) {
       if (fileEditor instanceof TextEditor textEditor) {
         List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = getActionRanges(newInfo);
-        List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
-        if (fileLevelInfos == null) {
-          fileLevelInfos = ContainerUtil.createConcurrentList(); // must be able to iterate in hasFileLevelHighlights() and concurrently modify in addFileLevelHighlight()
-          fileEditor.putUserData(FILE_LEVEL_HIGHLIGHTS, fileLevelInfos);
-        }
+        List<HighlightInfo> fileLevelInfos = getOrCreateFileLevelHighlights(fileEditor);
         // do not dispose highlighter if it needs to be reused
         fileLevelInfos.removeIf(fileLevelInfo-> {
           if (!fileLevelInfo.attributesEqual(fileLevelInfo)) {
@@ -436,6 +428,15 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       return null;
     });
     return actionRanges;
+  }
+
+  private static @NotNull List<HighlightInfo> getOrCreateFileLevelHighlights(@NotNull FileEditor fileEditor) {
+    List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
+    if (fileLevelInfos == null) {
+      fileLevelInfos = ContainerUtil.createConcurrentList(); // must be able to iterate in hasFileLevelHighlights() and concurrently modify in addFileLevelHighlight()
+      fileEditor.putUserData(FILE_LEVEL_HIGHLIGHTS, fileLevelInfos);
+    }
+    return fileLevelInfos;
   }
 
   @Override
