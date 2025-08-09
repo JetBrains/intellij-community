@@ -210,7 +210,7 @@ public final class UpdateHighlightersUtil {
           return true;
         }
         if (info.isFileLevelAnnotation()) {
-          codeAnalyzer.addFileLevelHighlight(group, info, psiFile, null);
+          codeAnalyzer.addFileLevelHighlight(group, info, psiFile, null, session.getCodeInsightContext());
           changed[0] = true;
           return true;
         }

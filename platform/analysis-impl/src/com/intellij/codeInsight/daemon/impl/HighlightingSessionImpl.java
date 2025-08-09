@@ -358,7 +358,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
         for (int i = 0; i < fileLevelHighlights.size(); i++) {
           HighlightInfo fileLevelInfo = fileLevelHighlights.get(i);
           RangeHighlighter reused = reusedHighlighters.get(i);
-          codeAnalyzer.addFileLevelHighlight(group, fileLevelInfo, psiFile, reused);
+          codeAnalyzer.addFileLevelHighlight(group, fileLevelInfo, psiFile, reused, getCodeInsightContext());
         }
       });
       pendingFileLevelHighlightRequests.add((RunnableFuture<?>)future);
@@ -373,7 +373,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     Future<?> future = EdtExecutorService.getInstance().submit(() -> {
       if (!project.isDisposed() && !isCanceled()) {
-        codeAnalyzer.replaceFileLevelHighlight( oldFileLevelInfo, newFileLevelInfo, getPsiFile(), toReuse);
+        codeAnalyzer.replaceFileLevelHighlight(oldFileLevelInfo, newFileLevelInfo, getPsiFile(), toReuse, getCodeInsightContext());
       }
     });
     pendingFileLevelHighlightRequests.add((RunnableFuture<?>)future);
@@ -394,7 +394,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     Future<?> future = EdtExecutorService.getInstance().submit(() -> {
       if (!project.isDisposed() && !isCanceled()) {
-        codeAnalyzer.addFileLevelHighlight(fileLevelHighlightInfo.getGroup(), fileLevelHighlightInfo, getPsiFile(), toReuse);
+        codeAnalyzer.addFileLevelHighlight(fileLevelHighlightInfo.getGroup(), fileLevelHighlightInfo, getPsiFile(), toReuse, getCodeInsightContext());
       }
     });
     pendingFileLevelHighlightRequests.add((RunnableFuture<?>)future);

@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -95,6 +96,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.intellij.codeInsight.daemon.impl.FileLevelComponentUtil.doAddFileLevelInfoComponent;
+import static com.intellij.codeInsight.daemon.impl.FileLevelComponentUtil.doRemoveFileLevelInfoComponent;
+
+@SuppressWarnings({"IncorrectCancellationExceptionHandling", "removal", "deprecation", "UsagesOfObsoleteApi"})
 @State(name = "DaemonCodeAnalyzer", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 @ApiStatus.Internal
 public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
@@ -222,10 +227,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
     List<HighlightInfo> list = new ArrayList<>();
     for (FileEditor fileEditor : getFileEditorManager().getAllEditorList(vFile)) {
-      List<HighlightInfo> data = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
-      if (data != null) {
-        list.addAll(data);
-      }
+      list.addAll(getFileLevelHighlights(fileEditor));
     }
     return list;
   }
@@ -255,12 +257,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     assertFileFromMyProject(psiFile.getProject(), psiFile);
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
     for (FileEditor fileEditor : getFileEditorManager().getAllEditorList(vFile)) {
-      List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
-      if (infos != null && !infos.isEmpty()) {
-        for (HighlightInfo info : infos) {
-          if (info.getGroup() == group || group == ANY_GROUP) {
-            return true;
-          }
+      for (HighlightInfo info : getFileLevelHighlights(fileEditor)) {
+        if (info.getGroup() == group || group == ANY_GROUP) {
+          return true;
         }
       }
     }
@@ -276,8 +275,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   private void cleanFileLevelHighlights(@NotNull FileEditor fileEditor, int group) {
     ThreadingAssertions.assertEventDispatchThread();
-    List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
-    if (infos == null || infos.isEmpty()) {
+    List<HighlightInfo> infos = getFileLevelHighlights(fileEditor);
+    if (infos.isEmpty()) {
       return;
     }
 
@@ -301,11 +300,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     assertFileFromMyProject(psiFile.getProject(), psiFile);
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
     for (FileEditor fileEditor : getFileEditorManager().getAllEditorList(vFile)) {
-      List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
-      if (infos == null) {
+      List<HighlightInfo> infos = getFileLevelHighlights(fileEditor);
+      if (infos.isEmpty()) {
         continue;
       }
-      infos.removeIf(fileLevelInfo-> {
+      infos.removeIf(fileLevelInfo -> {
         if (!info.attributesEqual(fileLevelInfo)) {
           return false;
         }
@@ -320,11 +319,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   private void disposeFileLevelInfo(@NotNull FileEditor fileEditor, @NotNull HighlightInfo info) {
     ThreadingAssertions.assertEventDispatchThread();
-    JComponent component = info.getFileLevelComponent(fileEditor);
-    if (component != null) {
-      getFileEditorManager().removeTopComponent(fileEditor, component);
-      info.removeFileLeverComponent(fileEditor);
-    }
+    doRemoveFileLevelInfoComponent(info, fileEditor, getFileEditorManager());
     RangeHighlighterEx highlighter = info.getHighlighter();
     if (highlighter != null) {
       highlighter.dispose();
@@ -332,7 +327,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   @Override
-  public void addFileLevelHighlight(int group, @NotNull HighlightInfo info, @NotNull PsiFile psiFile, @Nullable RangeHighlighter toReuse) {
+  public void addFileLevelHighlight(int group,
+                                    @NotNull HighlightInfo info,
+                                    @NotNull PsiFile psiFile,
+                                    @Nullable RangeHighlighter toReuse,
+                                    @Nullable CodeInsightContext context) {
     ThreadingAssertions.assertEventDispatchThread();
     assertFileFromMyProject(psiFile.getProject(), psiFile);
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
@@ -343,7 +342,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           Document document = textEditor.getEditor().getDocument();
           MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
           // todo do we need to create a new highlighter if toReuse is not-null?
-          RangeHighlighterEx highlighter = HighlightInfoUpdaterImpl.createOrReuseFakeFileLevelHighlighter(group, info, (RangeHighlighterEx)toReuse, markupModel);
+          RangeHighlighterEx highlighter = HighlightInfoUpdaterImpl.createOrReuseFakeFileLevelHighlighter(group,
+                                                                                                          info,
+                                                                                                          (RangeHighlighterEx)toReuse,
+                                                                                                          markupModel,
+                                                                                                          myProject,
+                                                                                                          context);
           // for the condition `existing.equalsByActualOffset(info)` above work correctly,
           // create a fake whole-file highlighter which will track the document size changes
           // and which will make possible to calculate correct `info.getActualEndOffset()`
@@ -366,7 +370,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   public void replaceFileLevelHighlight(@NotNull HighlightInfo oldInfo,
                                         @NotNull HighlightInfo newInfo,
                                         @NotNull PsiFile psiFile,
-                                        @Nullable RangeHighlighter toReuse) {
+                                        @Nullable RangeHighlighter toReuse,
+                                        @Nullable CodeInsightContext context) {
     ThreadingAssertions.assertEventDispatchThread();
     assertFileFromMyProject(psiFile.getProject(), psiFile);
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
@@ -379,11 +384,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           if (!fileLevelInfo.attributesEqual(fileLevelInfo)) {
             return false;
           }
-          JComponent component = fileLevelInfo.getFileLevelComponent(fileEditor);
-          if (component != null) {
-            getFileEditorManager().removeTopComponent(fileEditor, component);
-            fileLevelInfo.removeFileLeverComponent(fileEditor);
-          }
+          doRemoveFileLevelInfoComponent(fileLevelInfo, fileEditor, getFileEditorManager());
           RangeHighlighterEx highlighter = fileLevelInfo.getHighlighter();
           if (highlighter != null && highlighter != toReuse) {
             highlighter.dispose();
@@ -393,7 +394,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         Document document = textEditor.getEditor().getDocument();
         MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
         if (toReuse == null) {
-          HighlightInfoUpdaterImpl.createOrReuseFakeFileLevelHighlighter(newInfo.getGroup(), newInfo, null, markupModel);
+          HighlightInfoUpdaterImpl.createOrReuseFakeFileLevelHighlighter(newInfo.getGroup(), newInfo, null, markupModel, myProject, context);
         }
         fileLevelInfos.add(newInfo);
         addFileLevelInfoComponentToEditor(newInfo, psiFile, textEditor);
@@ -407,22 +408,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   private void addFileLevelInfoComponentToEditor(@NotNull HighlightInfo info,
                                                  @NotNull PsiFile psiFile,
                                                  @NotNull TextEditor textEditor) {
-    List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = getActionRanges(info);
-    FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(),
-                                                                            info.getGutterIconRenderer(), actionRanges,
-                                                                            psiFile, textEditor.getEditor(), info.getToolTip());
-    FileEditorManager fileEditorManager = getFileEditorManager();
-    fileEditorManager.addTopComponent(textEditor, component);
-    info.addFileLevelComponent(textEditor, component);
-  }
+    Editor editor = textEditor.getEditor();
+    boolean isHighlighterAvailableInEditor =
+      !(editor instanceof EditorEx) || ((EditorEx)editor).getFilteredDocumentMarkupModel().containsHighlighter(info.getHighlighter());
 
-  private static @NotNull List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> getActionRanges(@NotNull HighlightInfo info) {
-    List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = new ArrayList<>();
-    info.findRegisteredQuickFix((descriptor, range) -> {
-      actionRanges.add(Pair.create(descriptor, range));
-      return null;
-    });
-    return actionRanges;
+    FileLevelIntentionComponent component = doAddFileLevelInfoComponent(info, psiFile, textEditor, getFileEditorManager());
+    component.setVisible(isHighlighterAvailableInEditor);
   }
 
   private static @NotNull List<HighlightInfo> getOrCreateFileLevelHighlights(@NotNull FileEditor fileEditor) {
@@ -855,6 +846,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   @Override
   public void restart() {
     restart("Global restart");
+  }
+
+  @NotNull
+  private static List<HighlightInfo> getFileLevelHighlights(@NotNull FileEditor textEditor) {
+    List<HighlightInfo> highlights = textEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
+    return highlights == null ? Collections.emptyList() : highlights;
   }
 
   @Override

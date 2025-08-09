@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
@@ -97,7 +97,9 @@ private class FileNotInSourceRootService(
           fileSystem.addVirtualFileListener(listener)
           Disposer.register(fileEditor) { fileSystem.removeVirtualFileListener(listener) }
 
-          DaemonCodeAnalyzerEx.getInstanceEx(project).addFileLevelHighlight(GROUP, infoAndFile.first, infoAndFile.second, null)
+          DaemonCodeAnalyzerEx.getInstanceEx(project).addFileLevelHighlight(
+            GROUP, infoAndFile.first, infoAndFile.second, null, null
+          )
         }
       }
     }

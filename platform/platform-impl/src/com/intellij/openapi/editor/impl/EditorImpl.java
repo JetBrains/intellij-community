@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
@@ -26,7 +27,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.actions.ChangeEditorFontSizeStrategy;
 import com.intellij.openapi.editor.colors.*;
-import com.intellij.openapi.editor.colors.impl.*;
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
@@ -53,7 +54,9 @@ import com.intellij.openapi.editor.rd.LocalEditorSupportUtil;
 import com.intellij.openapi.editor.state.ObservableStateListener;
 import com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbar;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -3878,6 +3881,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
+    TextEditor textEditor = null;
+
     for (RangeHighlighter highlighter : myEditorFilteringMarkupModel.getDelegate().getAllHighlighters()) {
       boolean oldAvailable = oldFilter.shouldRender(highlighter);
       boolean newAvailable = myHighlightingFilter.shouldRender(highlighter);
@@ -3887,6 +3892,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                                 EditorUtil.attributesImpactFontStyle(attributes),
                                                 EditorUtil.attributesImpactForegroundColor(attributes));
         myMarkupModel.errorStripeMarkersModelAttributesChanged((RangeHighlighterEx)highlighter);
+
+        HighlightInfo fileLevelInfo = HighlightInfo.fromRangeHighlighter(highlighter);
+        if (fileLevelInfo != null && fileLevelInfo.isFileLevelAnnotation()) {
+          if (textEditor == null) {
+            textEditor = TextEditorProvider.getInstance().getTextEditor(this);
+          }
+
+          JComponent component = fileLevelInfo.getFileLevelComponent(textEditor);
+          if (component != null) {
+            component.setVisible(newAvailable);
+          }
+        }
       }
     }
   }

@@ -58,6 +58,8 @@ import kotlinx.coroutines.flow.*
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.util.concurrent.TimeUnit
@@ -596,6 +598,18 @@ open class EditorComposite internal constructor(
       }
       val index = calcComponentInsertionIndex(component, container)
       container.add(wrapper, index)
+
+      // editor components can be hidden if they correspond to an inactive context
+      // when we hide the component, we need to hide its border as well which can be achieved by hiding wrapper
+      component.addComponentListener(object : ComponentAdapter() {
+        override fun componentShown(e: ComponentEvent?) {
+          wrapper.isVisible = true
+        }
+
+        override fun componentHidden(e: ComponentEvent?) {
+          wrapper.isVisible = false
+        }
+      })
       if (top) {
         dispatcher.multicaster.topComponentAdded(editor, index, component, container)
       }
