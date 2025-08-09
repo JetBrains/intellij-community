@@ -345,19 +345,15 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         if (!ContainerUtil.exists(fileLevelInfos, existing->existing.equalsByActualOffset(info))) {
           Document document = textEditor.getEditor().getDocument();
           MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
-          RangeHighlighter highlighter = toReuse != null && toReuse.isValid() ? toReuse
-                                         : markupModel.addRangeHighlighter(0, document.getTextLength(), FILE_LEVEL_FAKE_LAYER, null, HighlighterTargetArea.EXACT_RANGE);
-          highlighter.setGreedyToLeft(true);
-          highlighter.setGreedyToRight(true);
-          highlighter.setErrorStripeTooltip(info);
+          // todo do we need to create a new highlighter if toReuse is not-null?
+          RangeHighlighterEx highlighter = HighlightInfoUpdaterImpl.createOrReuseFakeFileLevelHighlighter(group, info, (RangeHighlighterEx)toReuse, markupModel);
           // for the condition `existing.equalsByActualOffset(info)` above work correctly,
           // create a fake whole-file highlighter which will track the document size changes
           // and which will make possible to calculate correct `info.getActualEndOffset()`
           if (toReuse == null) {
             // assign only newly created highlighter here; otherwise the reused highlighter was already set, no need (and can't) to overwrite
-            info.setHighlighter((RangeHighlighterEx)highlighter);
+            info.setHighlighter(highlighter);
           }
-          info.setGroup(group);
           fileLevelInfos.add(info);
           FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(),
                                                                                   info.getGutterIconRenderer(), actionRanges,

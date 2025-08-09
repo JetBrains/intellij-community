@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextHighlightingUtil;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -1319,7 +1318,10 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     range2markerCache.put(finalInfoRange, highlighter);
   }
 
-  public static @NotNull RangeHighlighterEx createOrReuseFakeFileLevelHighlighter(int group, @NotNull HighlightInfo info, @Nullable RangeHighlighterEx toReuse, @NotNull MarkupModel markupModel) {
+  public static @NotNull RangeHighlighterEx createOrReuseFakeFileLevelHighlighter(int group,
+                                                                                  @NotNull HighlightInfo info,
+                                                                                  @Nullable RangeHighlighterEx toReuse,
+                                                                                  @NotNull MarkupModel markupModel) {
     Document document = markupModel.getDocument();
     RangeHighlighterEx highlighter = toReuse != null && toReuse.isValid() ? toReuse
              : (RangeHighlighterEx)markupModel.addRangeHighlighter(0, document.getTextLength(), DaemonCodeAnalyzerEx.FILE_LEVEL_FAKE_LAYER, null, HighlighterTargetArea.EXACT_RANGE);
