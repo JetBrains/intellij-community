@@ -38,6 +38,7 @@ import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
@@ -525,6 +526,18 @@ public final class PyResolveUtil {
     final var context = resolveContext.getTypeEvalContext();
     final var call = context.maySwitchToAST(element) ? PyCallExpressionNavigator.getPyCallExpressionByCallee(element) : null;
     if (call != null && element instanceof PyTypedElement) {
+      // Prefer alias declaration (e.g., NewType, functional factories) when callee type carries a declaration element
+      final var calleeType = context.getType((PyTypedElement)element);
+      for (var t : PyTypeUtil.toStream(calleeType).toList()) {
+        final var classLike = PyUtil.as(t, PyClassLikeType.class);
+        if (classLike != null) {
+          final var decl = classLike.getDeclarationElement();
+          if (decl instanceof PyTargetExpression) {
+            return List.of(decl);
+          }
+        }
+      }
+
       final var type = PyUtil.as(context.getType((PyTypedElement)element), PyClassType.class);
 
       if (type != null && type.isDefinition()) {
