@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
@@ -21,10 +21,10 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 internal class SuspiciousAsDynamicInspection : KotlinApplicableInspectionBase.Simple<KtCallExpression, Unit>() {
 
     override fun buildVisitor(
-        holder: ProblemsHolder,
-        isOnTheFly: Boolean,
+      holder: ProblemsHolder,
+      isOnTheFly: Boolean,
     ) = callExpressionVisitor {
-        visitTargetElement(it, holder, isOnTheFly)
+      visitTargetElement(it, holder, isOnTheFly)
     }
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean {
@@ -39,21 +39,21 @@ internal class SuspiciousAsDynamicInspection : KotlinApplicableInspectionBase.Si
     }
 
     override fun getProblemDescription(
-        element: KtCallExpression,
-        context: Unit,
+      element: KtCallExpression,
+      context: Unit,
     ): @InspectionMessage String = KotlinBundle.message("suspicious.asdynamic.member.invocation")
 
     override fun createQuickFix(
-        element: KtCallExpression,
-        context: Unit
+      element: KtCallExpression,
+      context: Unit
     ): KotlinModCommandQuickFix<KtCallExpression> = object : KotlinModCommandQuickFix<KtCallExpression>() {
 
         override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.as.dynamic.call.fix.text")
 
         override fun applyFix(
-            project: Project,
-            element: KtCallExpression,
-            updater: ModPsiUpdater,
+          project: Project,
+          element: KtCallExpression,
+          updater: ModPsiUpdater,
         ) {
             val qualifiedExpression = element.getQualifiedExpressionForSelector() ?: return
             qualifiedExpression.replace(qualifiedExpression.receiverExpression)
