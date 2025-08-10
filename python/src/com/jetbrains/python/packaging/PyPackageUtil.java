@@ -309,9 +309,6 @@ public final class PyPackageUtil {
       return false;
     }
     try {
-      if (manager instanceof PyPackageManagerImpl) {
-        LOG.info("Refreshing installed packages for SDK " + PyPackageManager.getSdk(manager).getHomePath());
-      }
       manager.refreshAndGetPackages(true);
     }
     catch (ExecutionException ignored) {

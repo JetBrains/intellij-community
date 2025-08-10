@@ -195,10 +195,7 @@ internal class PyAddVirtualEnvPanel(
     }
   }
 
-  /**
-   * Note: there is a careful work with SDK names because of the caching of Python package managers in
-   * [com.jetbrains.python.packaging.PyPackageManagersImpl.forSdk].
-   */
+
   private fun createNewVirtualenvSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk {
     // TODO [targets] Do *not* silently `return null`
     val baseSelectedSdk = baseInterpreterCombobox.selectedSdk
