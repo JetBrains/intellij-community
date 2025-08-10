@@ -13692,7 +13692,44 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/reconstructTypeInCastOrIs")
+    public static class ReconstructTypeInCastOrIs extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("completeGenericType.kt")
+        public void testCompleteGenericType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/reconstructTypeInCastOrIs/completeGenericType.kt");
+        }
+
+        @TestMetadata("completeType.kt")
+        public void testCompleteType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/reconstructTypeInCastOrIs/completeType.kt");
+        }
+
+        @TestMetadata("errorType.kt")
+        public void testErrorType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/reconstructTypeInCastOrIs/errorType.kt");
+        }
+
+        @TestMetadata("reconstructableType.kt")
+        public void testReconstructableType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/reconstructTypeInCastOrIs/reconstructableType.kt");
+        }
+
+        @TestMetadata("typeInDeclaration.kt")
+        public void testTypeInDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/reconstructTypeInCastOrIs/typeInDeclaration.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/convertParameterToReceiver")
