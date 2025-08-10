@@ -55,11 +55,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   /**
    * Use linear (bruteforce) search for sorted children if size <= this threshold, use binary search by-name, if size is larger.
    * <p>
-   * Children ids ({@link VfsData.DirectoryData#children} are either unsorted, or sorted
-   * _by (file)name_. It is natural to use binary-search to search in a sorted array, but really even if children ids _are_
-   * sorted by-name -- it may be still faster to look for given childId with linear scan, because scanning through int[] is
-   * quite fast on modern CPUs, while binary search requires costly (String,String) comparison -- especially costly for
-   * case-insensitive directories.
+   * Children ids ({@link VfsData.DirectoryData#children} are either unsorted, or sorted _by (file)name_. It is natural to use
+   * binary-search to search in a sorted array, but really even if children ids _are_ sorted by-name -- it may be still faster
+   * to look for given childId with linear scan, because scanning through int[] is quite fast on modern CPUs, while binary search
+   * requires costly (String,String) comparison -- especially costly for case-insensitive directories.
    * Value=64 is chosen arbitrary, by my intuition.
    */
   private static final int LINEAR_SEARCH_THRESHOLD = getIntProperty("VirtualDirectoryImpl.LINEAR_SEARCH_THRESHOLD", 64);
@@ -172,7 +171,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   /**
    * @return the child, if there is a child with given name (accounting for isCaseSensitive and ensureCanonicalName).
-   * `null` if is no child with given name, ` NULL_VIRTUAL_FILE` if cached as absent (='adopted').
+   * `null` if is no child with given name, ` NULL_VIRTUAL_FILE` if cached as absent (='adopted').<p/>
    * Lookups among: cached children, VFS-persisted children, and actual children in file-system backed this directory.
    */
   private @Nullable VirtualFileSystemEntry findChildImpl(@NotNull String childName,
@@ -298,7 +297,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (oldCaseSensitivity.isUnknown()
         || oldCaseSensitivity.isSensitive() != newIsCaseSensitive) {
       VfsData vfsData = getVfsData();
-      VfsData.Segment segment = vfsData.getSegment(getId(), false);
+      VfsData.Segment segment = vfsData.segmentForFileId(getId(), false);
       int newFlags = VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED |
                      (newIsCaseSensitive ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0);
       segment.setFlags(getId(), VfsDataFlags.CHILDREN_CASE_SENSITIVE | VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, newFlags);
@@ -354,7 +353,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     FileLoadingTracker.fileLoaded(this, nameId);
 
     VfsData vfsData = getVfsData();
-    VfsData.Segment segment = vfsData.getSegment(childId, /*create: */ true);
+    VfsData.Segment segment = vfsData.segmentForFileId(childId, /*create: */ true);
 
     boolean isDirectory = PersistentFS.isDirectory(attributes);
     segment.setFlags(childId, ALL_FLAGS_MASK, VfsDataFlags.toFlags(attributes, isDirectory));

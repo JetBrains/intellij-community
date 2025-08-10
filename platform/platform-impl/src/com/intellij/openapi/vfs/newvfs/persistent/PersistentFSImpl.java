@@ -1789,7 +1789,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       try {
         String pathBeforeSlash = UriUtil.trimTrailingSlashes(rootPath);
         boolean offlineByDefault = isOfflineByDefault(getFileAttributes(rootId));
-        VfsData.Segment segment = vfsData.getSegment(rootId, /* create: */ true);
+        VfsData.Segment segment = vfsData.segmentForFileId(rootId, /* create: */ true);
         newRoot = FsRoot.create(rootId, segment, fs, pathBeforeSlash, attributes, offlineByDefault, path);
       }
       catch (VfsData.FileAlreadyCreatedException e) {

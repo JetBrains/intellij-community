@@ -98,6 +98,8 @@ public final class FileManagerImpl implements FileManagerEx {
   private @NotNull ConcurrentMap<VirtualFile, PsiDirectory> getVFileToPsiDirMap() {
     ConcurrentMap<VirtualFile, PsiDirectory> map = myVFileToPsiDirMap.get();
     if (map == null) {
+      //TODO RC: This map keeps many VirtualFiles from being collected by GC.
+      //         Could we use softKeys_SoftValues map instead of just softValues?
       map = ConcurrencyUtil.cacheOrGet(myVFileToPsiDirMap, ContainerUtil.createConcurrentSoftValueMap());
     }
     return map;

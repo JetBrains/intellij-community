@@ -209,7 +209,7 @@ public final class VfsData implements Closeable {
       if (!queueOfFileIdsToBeInvalidated.isEmpty()) {
         for (IntIterator iterator = queueOfFileIdsToBeInvalidated.iterator(); iterator.hasNext(); ) {
           int id = iterator.nextInt();
-          Segment segment = Objects.requireNonNull(getSegment(id, /*create: */false));
+          Segment segment = Objects.requireNonNull(segmentForFileId(id, /*create: */false));
           segment.killFileData(id, deadMarker);
           changedParents.remove(id);
         }
@@ -225,7 +225,7 @@ public final class VfsData implements Closeable {
    * but if the file was deleted in already finished WA -- throws {@link InvalidVirtualFileAccessException}
    */
   @Nullable VirtualFileSystemEntry cachedFileById(int id, @NotNull VirtualDirectoryImpl parent) {
-    Segment segment = getSegment(id, /*create: */ false);
+    Segment segment = segmentForFileId(id, /*create: */ false);
     if (segment == null) return null;
 
     Object entryData = segment.fileDataById(id);
@@ -255,7 +255,7 @@ public final class VfsData implements Closeable {
   }
 
   public @Nullable VirtualDirectoryImpl cachedDir(int id) {
-    Segment segment = getSegment(id, /*create: */ false);
+    Segment segment = segmentForFileId(id, /*create: */ false);
     if (segment == null) return null;
 
     Object entryData = segment.fileDataById(id);
@@ -298,7 +298,7 @@ public final class VfsData implements Closeable {
   }
 
   @Contract("_,true->!null")
-  public Segment getSegment(int fileId, boolean create) {
+  public Segment segmentForFileId(int fileId, boolean create) {
     int segmentIndex = segmentIndex(fileId);
     Segment segment = segments.get(segmentIndex);
     if (segment != null || !create) {
@@ -539,7 +539,7 @@ public final class VfsData implements Closeable {
           parentData = null;
         }
         else {
-          Segment parentSegment = owningVfsData.getSegment(parentId, false);
+          Segment parentSegment = owningVfsData.segmentForFileId(parentId, false);
           parentData = (DirectoryData)parentSegment.fileDataById(parentId);
         }
 
@@ -615,7 +615,11 @@ public final class VfsData implements Closeable {
   public static final class DirectoryData {
     private static final AtomicFieldUpdater<DirectoryData, KeyFMap> USER_MAP_UPDATER =
       AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
+
+    //TODO RC: given that we now have a direct link to the VirtualDirectoryImpl, which has it's own .userMap (inherited from
+    //         NewVirtualFile) -- do we need this field here? Maybe just use the field directly from the directory?
     volatile @NotNull KeyFMap userMap = KeyFMap.EMPTY_MAP;
+
     /**
      * assigned under lock(this) only; never modified in-place (=uses copy-on-write)
      *
@@ -637,6 +641,8 @@ public final class VfsData implements Closeable {
      * This field is effectively-final, it should be assigned right after the ctor, and never re-assigned.
      * TODO RC: probably, we should merge VirtualDirectoryImpl and DirectoryData into a single object, and get rid of this
      *          indirection and associated initialization mess
+     * TODO RC: an alternative is to use SoftReference here, and permit GC to collect VirtualDirectoryImpl objects with all
+     *          their ChildrenIds (potentially long)
      */
     private VirtualDirectoryImpl directory = null;
 

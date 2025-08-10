@@ -135,6 +135,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   private volatile CachedFileType cachedFileType;
 
   static {
+    //noinspection ConstantValue
     assert ~ALL_FLAGS_MASK == LocalTimeCounter.TIME_MASK : "ALL_FLAGS_MASK and MOD_COUNTER_MASK must combined into full int32";
   }
 
