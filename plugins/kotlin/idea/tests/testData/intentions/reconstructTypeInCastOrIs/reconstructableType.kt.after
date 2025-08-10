@@ -1,4 +1,5 @@
 // IS_APPLICABLE: true
+// PRIORITY: LOW
 open class B<T>
 class G<T>: B<T>()
 
