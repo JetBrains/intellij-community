@@ -105,13 +105,26 @@ internal object Completions {
 
         val completionRunner = K2CompletionRunner.getInstance(sections.size)
 
-        // TODO: Add chain completion
-
         // We make sure the type parameters match before, so this cast is safe.
         @Suppress("UNCHECKED_CAST")
-        val addedElements =
+        val completionRunnerResult =
             completionRunner.runCompletion(completionContext, sections as List<K2CompletionSection<KotlinRawPositionContext>>)
-        return addedElements > 0
+
+        val chainCompletionContributors = completionRunnerResult.registeredChainContributors
+        if (positionContext is KotlinNameReferencePositionContext
+            && chainCompletionContributors.isNotEmpty()
+            && RegistryManager.getInstance().`is`("kotlin.k2.chain.completion.enabled")
+        ) {
+            @Suppress("UNCHECKED_CAST")
+            K2CompletionRunner.runChainCompletion(
+                originalPositionContext = positionContext,
+                completionResultSet = resultSet,
+                parameters = parameters,
+                chainCompletionContributors = chainCompletionContributors,
+            )
+        }
+
+        return completionRunnerResult.addedElements > 0
     }
 
 

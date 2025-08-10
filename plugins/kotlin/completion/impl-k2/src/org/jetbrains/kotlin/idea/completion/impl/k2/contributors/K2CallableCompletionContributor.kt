@@ -60,7 +60,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
 ) : K2SimpleCompletionContributor<P>(
     positionContextClass = positionContextClass,
     priority = K2ContributorSectionPriority.HEURISTIC,
-), K2ChainCompletionContributor<P> {
+) {
 
     context(KaSession)
     protected open fun getImportStrategy(
@@ -248,34 +248,6 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
     }
 
     context(KaSession)
-    override fun createChainedLookupElements(
-        context: K2CompletionSectionContext<P>,
-        receiverExpression: KtDotQualifiedExpression,
-        importingStrategy: ImportStrategy
-    ): Sequence<LookupElement> {
-        val weighingContext = WeighingContext.create(context.parameters, context.positionContext)
-
-        return collectDotCompletionFromLocalScope(
-            context = context,
-            scopeContext = weighingContext.scopeContext,
-            explicitReceiver = receiverExpression,
-            showReceiver = true,
-        ).flatMap { callableWithMetadata ->
-            val signature = callableWithMetadata.signature
-
-            createCallableLookupElements(
-                context = weighingContext,
-                parameters = context.parameters,
-                signature = signature,
-                options = callableWithMetadata.options.copy(importingStrategy = importingStrategy),
-                scopeKind = callableWithMetadata.scopeKind,
-                presentableText = callableWithMetadata.itemText,
-                withTrailingLambda = true,
-            )
-        }
-    }
-
-    context(KaSession)
     protected open fun collectDotCompletionFromLocalScope(
         context: K2CompletionSectionContext<P>,
         scopeContext: KaScopeContext,
@@ -302,7 +274,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
                     )
                 }
 
-                if (!showReceiver) {
+                if (!showReceiver && this@K2AbstractCallableCompletionContributor is K2ChainCompletionContributor) {
                     context.sink.registerChainContributor(this@K2AbstractCallableCompletionContributor)
                 }
             }
@@ -914,7 +886,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
 
 internal class K2CallableCompletionContributor : K2AbstractCallableCompletionContributor<KotlinNameReferencePositionContext>(
     KotlinNameReferencePositionContext::class
-) {
+), K2ChainCompletionContributor {
     override fun K2CompletionSetupScope<KotlinNameReferencePositionContext>.isAppropriateContext(): Boolean = when (position) {
         is KotlinExpressionNameReferencePositionContext,
         is KotlinWithSubjectEntryPositionContext -> true
@@ -929,6 +901,32 @@ internal class K2CallableCompletionContributor : K2AbstractCallableCompletionCon
 
     override fun KaSession.shouldExecute(context: K2CompletionSectionContext<KotlinNameReferencePositionContext>): Boolean {
         return !context.positionContext.isAfterRangeOperator() && !context.positionContext.allowsOnlyNamedArguments()
+    }
+
+    context(KaSession)
+    override fun createChainedLookupElements(
+        context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>,
+        receiverExpression: KtDotQualifiedExpression,
+        importingStrategy: ImportStrategy
+    ): Sequence<LookupElement> {
+        return collectDotCompletionFromLocalScope(
+            context = context,
+            scopeContext = context.weighingContext.scopeContext,
+            explicitReceiver = receiverExpression,
+            showReceiver = true,
+        ).flatMap { callableWithMetadata ->
+            val signature = callableWithMetadata.signature
+
+            createCallableLookupElements(
+                context = context.weighingContext,
+                parameters = context.parameters,
+                signature = signature,
+                options = callableWithMetadata.options.copy(importingStrategy = importingStrategy),
+                scopeKind = callableWithMetadata.scopeKind,
+                presentableText = callableWithMetadata.itemText,
+                withTrailingLambda = true,
+            )
+        }
     }
 }
 

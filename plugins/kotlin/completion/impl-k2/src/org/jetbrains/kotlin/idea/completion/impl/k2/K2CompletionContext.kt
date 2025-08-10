@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.name.Name
 
-internal class K2CompletionContext<P: KotlinRawPositionContext>(
+internal class K2CompletionContext<out P: KotlinRawPositionContext>(
     val parameters: KotlinFirCompletionParameters,
     val resultSet: CompletionResultSet,
     val positionContext: P,

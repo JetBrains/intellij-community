@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupEle
 import org.jetbrains.kotlin.idea.completion.lookups.factories.shortenCommand
 import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -43,7 +42,7 @@ import org.jetbrains.kotlin.utils.yieldIfNotNull
 
 internal open class K2ClassifierCompletionContributor : K2CompletionContributor<KotlinNameReferencePositionContext>(
     KotlinNameReferencePositionContext::class
-), K2ChainCompletionContributor<KotlinNameReferencePositionContext> {
+), K2ChainCompletionContributor {
 
     context(KaSession)
     private fun filterClassifiers(
@@ -245,27 +244,25 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
 
     context(KaSession)
     override fun createChainedLookupElements(
-        context: K2CompletionSectionContext<KotlinNameReferencePositionContext>,
+        context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>,
         receiverExpression: KtDotQualifiedExpression,
         importingStrategy: ImportStrategy
     ): Sequence<LookupElement> {
         val selectorExpression = receiverExpression.selectorExpression ?: return emptySequence()
 
         val reference = receiverExpression.reference() ?: return emptySequence()
-        val visibilityChecker = CompletionVisibilityChecker(context.parameters)
 
-        val weighingContext = WeighingContext.create(context.parameters, context.positionContext)
         return reference.resolveToSymbols()
             .asSequence()
             .mapNotNull { it.staticScope }
-            .flatMap { it.completeClassifiers(context, visibilityChecker) }
+            .flatMap { it.completeClassifiers(context, context.visibilityChecker) }
             .flatMap {
                 createClassifierLookupElement(
                     classifierSymbol = it,
-                    expectedType = weighingContext.expectedType,
+                    expectedType = context.weighingContext.expectedType,
                     importingStrategy = importingStrategy,
                     positionContext = context.positionContext,
-                    visibilityChecker = visibilityChecker
+                    visibilityChecker = context.visibilityChecker
                 )
             }.map { it.withPresentableText(selectorExpression.text + "." + it.lookupString) }
     }

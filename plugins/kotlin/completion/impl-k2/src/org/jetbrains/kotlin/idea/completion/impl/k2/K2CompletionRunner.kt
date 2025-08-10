@@ -19,18 +19,31 @@ import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2AccumulatingLookupElementSink.AccumulatingSinkMessage
 import org.jetbrains.kotlin.idea.completion.impl.k2.ParallelCompletionRunner.Companion.MAX_CONCURRENT_COMPLETION_THREADS
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensionCandidateChecker
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2ChainCompletionContributor
+import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.getAnnotationLiteralExpectedType
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.getEqualityExpectedType
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.renderer.render
 import java.util.*
 
+
+internal class K2CompletionRunnerResult(
+    val addedElements: Int,
+    val registeredChainContributors: List<K2ChainCompletionContributor>,
+)
 
 /**
  * Interface responsible for executing completion sections within a completion context.
@@ -49,7 +62,7 @@ internal interface K2CompletionRunner {
     fun <P : KotlinRawPositionContext> runCompletion(
         completionContext: K2CompletionContext<P>,
         sections: List<K2CompletionSection<P>>,
-    ): Int
+    ): K2CompletionRunnerResult
 
     companion object {
         /**
@@ -60,6 +73,79 @@ internal interface K2CompletionRunner {
                 return ParallelCompletionRunner()
             } else {
                 return SequentialCompletionRunner()
+            }
+        }
+
+        @OptIn(KaImplementationDetail::class)
+        fun runChainCompletion(
+            originalPositionContext: KotlinNameReferencePositionContext,
+            completionResultSet: CompletionResultSet,
+            parameters: KotlinFirCompletionParameters,
+            chainCompletionContributors: List<K2ChainCompletionContributor>,
+        ) {
+            val explicitReceiver = originalPositionContext.explicitReceiver ?: return
+
+            completionResultSet.runRemainingContributors(parameters.delegate) { completionResult ->
+                val lookupElement = completionResult.lookupElement
+                val classifierLookupObject = lookupElement.`object` as? ClassifierLookupObject
+                val nameToImport = when (val importStrategy = classifierLookupObject?.importingStrategy) {
+                    is ImportStrategy.AddImport -> importStrategy.nameToImport
+                    is ImportStrategy.InsertFqNameAndShorten -> importStrategy.fqName
+                    else -> null
+                }
+
+                if (nameToImport == null) {
+                    completionResultSet.passResult(completionResult)
+                    return@runRemainingContributors
+                }
+
+                val expression = KtPsiFactory.contextual(explicitReceiver)
+                    .createExpression(nameToImport.render() + "." + originalPositionContext.nameExpression.text) as KtDotQualifiedExpression
+
+                val receiverExpression = expression.receiverExpression as? KtDotQualifiedExpression
+                val nameExpression = expression.selectorExpression as? KtNameReferenceExpression
+
+                if (receiverExpression == null
+                    || nameExpression == null
+                ) {
+                    completionResultSet.passResult(completionResult)
+                    return@runRemainingContributors
+                }
+
+                // Chain completion results are run sequentially for now.
+                // TODO: Potentially unify with remaining section logic
+                analyze(nameExpression) {
+                    val newCompletionContext = K2CompletionContext(
+                        parameters = parameters,
+                        resultSet = completionResultSet,
+                        positionContext = KotlinExpressionNameReferencePositionContext(nameExpression)
+                    )
+
+                    // TODO: Remove once KT-79109 KaBaseIllegalPsiException is thrown incorrectly when using CodeFragments in KtCompletionExtensionCandidateChecker.create
+                    @OptIn(KaImplementationDetail::class)
+                    val commonData = createCommonSectionData(newCompletionContext) ?: return@analyze
+                    val importingStrategy = ImportStrategy.AddImport(nameToImport)
+
+                    val sink = K2DelegatingLookupElementSink(completionResultSet)
+
+                    val lookupElements = chainCompletionContributors.asSequence()
+                        .flatMap { contributor ->
+                            // This cast is safe because the contributor is not used except for extracting the name when debugging
+                            @Suppress("UNCHECKED_CAST")
+                            val completionContributor = contributor as? K2CompletionContributor<KotlinExpressionNameReferencePositionContext>
+                                ?: return@flatMap emptySequence()
+                            val sectionContext = K2CompletionSectionContext(
+                                commonData = commonData,
+                                sink = sink,
+                                contributor = completionContributor,
+                                addLaterSection = { section ->
+                                    throw IllegalStateException("Chain completion sections cannot add later sections yet")
+                                }
+                            )
+                            contributor.createChainedLookupElements(sectionContext, receiverExpression, importingStrategy)
+                        }.asIterable()
+                    completionResultSet.addAllElements(lookupElements)
+                }
             }
         }
     }
@@ -207,7 +293,7 @@ private class SequentialCompletionRunner : K2CompletionRunner {
     override fun <P : KotlinRawPositionContext> runCompletion(
         completionContext: K2CompletionContext<P>,
         sections: List<K2CompletionSection<P>>,
-    ): Int {
+    ): K2CompletionRunnerResult {
         val parameters = completionContext.parameters
         val resultSet = completionContext.resultSet
         val sink = K2DelegatingLookupElementSink(resultSet)
@@ -228,7 +314,7 @@ private class SequentialCompletionRunner : K2CompletionRunner {
                 // We can share the same sink for all sections when running completion sequentially.
                 val sectionContext = K2CompletionSectionContext(
                     commonData = commonData,
-                    section = section,
+                    contributor = section.contributor,
                     sink = sink,
                     addLaterSection = { section ->
                         globalAndLocalQueue.addLocal(section)
@@ -240,7 +326,10 @@ private class SequentialCompletionRunner : K2CompletionRunner {
             }
         }
 
-        return sink.addedElementCount
+        return K2CompletionRunnerResult(
+            addedElements = sink.addedElementCount,
+            registeredChainContributors = sink.registeredChainContributors,
+        )
     }
 }
 
@@ -262,8 +351,11 @@ private class ParallelCompletionRunner : K2CompletionRunner {
     private val maxCompletionThreads
         get() = Runtime.getRuntime().availableProcessors().coerceIn(1..MAX_CONCURRENT_COMPLETION_THREADS)
 
-    private fun handleElement(
+    private fun <P : KotlinRawPositionContext> handleElement(
+        currentSection: K2CompletionSection<P>,
         resultSet: CompletionResultSet,
+        registeredChainContributors: MutableList<K2ChainCompletionContributor>,
+        registeredSinks: SharedPriorityQueue<Pair<K2CompletionSection<P>, K2AccumulatingLookupElementSink>, K2ContributorSectionPriority>.LocalInstance,
         element: AccumulatingSinkMessage
     ) = when (element) {
         is AccumulatingSinkMessage.ElementBatch -> {
@@ -278,15 +370,15 @@ private class ParallelCompletionRunner : K2CompletionRunner {
             resultSet.addElement(element.element)
         }
 
-        is AccumulatingSinkMessage.RegisterChainContributor -> {} // TODO()
+        is AccumulatingSinkMessage.RegisterChainContributor -> registeredChainContributors.add(element.chainContributor)
 
-        else -> {}
+        is AccumulatingSinkMessage.RegisterLaterSectionSink -> registeredSinks.addLocal(currentSection to element.sink)
     }
 
     override fun <P : KotlinRawPositionContext> runCompletion(
         completionContext: K2CompletionContext<P>,
         sections: List<K2CompletionSection<P>>,
-    ): Int {
+    ): K2CompletionRunnerResult {
         val parameters = completionContext.parameters
         val resultSet = completionContext.resultSet
 
@@ -320,7 +412,7 @@ private class ParallelCompletionRunner : K2CompletionRunner {
                                 val sectionContext = K2CompletionSectionContext(
                                     commonData = commonData,
                                     sink = sectionSink,
-                                    section = currentSection,
+                                    contributor = currentSection.contributor,
                                     addLaterSection = { section ->
                                         val laterSectionSink = K2AccumulatingLookupElementSink()
                                         localQueueInstance.addLocal(section to laterSectionSink)
@@ -339,25 +431,31 @@ private class ParallelCompletionRunner : K2CompletionRunner {
                 }
 
                 var addedElements = 0
-                val initiallyRegisteredSinks = SharedPriorityQueue(sectionsWithSinks) { it.first.priority }.getLocalInstance()
+                val registeredSinks = SharedPriorityQueue(sectionsWithSinks) { it.first.priority }.getLocalInstance()
 
+                val registeredChainContributors = mutableListOf<K2ChainCompletionContributor>()
                 while (true) {
-                    val entry = initiallyRegisteredSinks.popFirst()
+                    val entry = registeredSinks.popFirst()
                     if (entry == null) break
 
                     val (currentSection, sectionSink) = entry
 
                     sectionSink.consumeElements { element ->
-                        if (element is AccumulatingSinkMessage.RegisterLaterSectionSink) {
-                            initiallyRegisteredSinks.addLocal(currentSection to element.sink)
-                        } else {
-                            handleElement(resultSet, element)
-                        }
+                        handleElement(
+                            currentSection = currentSection,
+                            resultSet = resultSet,
+                            registeredChainContributors = registeredChainContributors,
+                            registeredSinks = registeredSinks,
+                            element = element
+                        )
                     }
                     addedElements += sectionSink.addedElementCount
                 }
 
-                addedElements
+                K2CompletionRunnerResult(
+                    addedElements = addedElements,
+                    registeredChainContributors = registeredChainContributors,
+                )
             } finally {
                 sectionsWithSinks.forEach { it.second.cancel() }
             }

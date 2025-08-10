@@ -39,7 +39,7 @@ internal interface K2LookupElementSink {
     /**
      * Registers a [K2ChainCompletionContributor] for later processing.
      */
-    fun registerChainContributor(chainContributor: K2ChainCompletionContributor<*>)
+    fun registerChainContributor(chainContributor: K2ChainCompletionContributor)
 
     /**
      * Returns the number of elements added through the [addElement] and [addElements] methods.
@@ -52,7 +52,7 @@ internal interface K2LookupElementSink {
  */
 internal class K2DelegatingLookupElementSink(
     private val resultSet: CompletionResultSet,
-    private val registeredChainContributors: MutableList<K2ChainCompletionContributor<*>> = mutableListOf(),
+    internal val registeredChainContributors: MutableList<K2ChainCompletionContributor> = mutableListOf(),
 ) : K2LookupElementSink {
     private val addedElementCounter: AtomicInteger = AtomicInteger(0)
     override val addedElementCount: Int
@@ -72,7 +72,7 @@ internal class K2DelegatingLookupElementSink(
         resultSet.restartCompletionOnPrefixChange(prefixCondition)
     }
 
-    override fun registerChainContributor(chainContributor: K2ChainCompletionContributor<*>) {
+    override fun registerChainContributor(chainContributor: K2ChainCompletionContributor) {
         registeredChainContributors.add(chainContributor)
     }
 }
@@ -86,7 +86,7 @@ internal class K2AccumulatingLookupElementSink() : K2LookupElementSink {
         class SingleElement(val element: LookupElement) : AccumulatingSinkMessage
         class ElementBatch(val elements: List<LookupElement>) : AccumulatingSinkMessage
         class RestartCompletionOnPrefixChange(val prefixCondition: ElementPattern<String>) : AccumulatingSinkMessage
-        class RegisterChainContributor(val chainContributor: K2ChainCompletionContributor<*>) : AccumulatingSinkMessage
+        class RegisterChainContributor(val chainContributor: K2ChainCompletionContributor) : AccumulatingSinkMessage
         class RegisterLaterSectionSink(val priority: K2ContributorSectionPriority, val sink: K2AccumulatingLookupElementSink) : AccumulatingSinkMessage
     }
 
@@ -124,7 +124,7 @@ internal class K2AccumulatingLookupElementSink() : K2LookupElementSink {
         elementChannel.trySend(RestartCompletionOnPrefixChange(prefixCondition))
     }
 
-    override fun registerChainContributor(chainContributor: K2ChainCompletionContributor<*>) {
+    override fun registerChainContributor(chainContributor: K2ChainCompletionContributor) {
         elementChannel.trySend(RegisterChainContributor(chainContributor))
     }
 

@@ -47,9 +47,9 @@ internal class K2CompletionSectionCommonData<P: KotlinRawPositionContext>(
  * This is the context used within a [K2CompletionSection] providing common data that might be
  * shared between contributors running in the same analysis session.
  */
-internal class K2CompletionSectionContext<P : KotlinRawPositionContext>(
+internal class K2CompletionSectionContext<out P : KotlinRawPositionContext>(
     private val commonData: K2CompletionSectionCommonData<P>,
-    private val section: K2CompletionSection<P>,
+    private val contributor: K2CompletionContributor<P>,
     val sink: K2LookupElementSink,
     private val addLaterSection: (K2CompletionSection<P>) -> Unit,
 ) {
@@ -82,7 +82,7 @@ internal class K2CompletionSectionContext<P : KotlinRawPositionContext>(
     ) {
         addLaterSection(K2CompletionSection(
             priority = priority,
-            contributor = section.contributor,
+            contributor = contributor,
             name = name,
             runnable = runnable
         ))
