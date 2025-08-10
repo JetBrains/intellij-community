@@ -37,9 +37,12 @@ interface Finder {
   }
 
   fun <T : UiComponent> x(@Language("xpath") xpath: String, type: Class<T>): T {
-    return type.getConstructor(
+    val constructor = type.getConstructor(
       ComponentData::class.java
-    ).newInstance(ComponentData(xpath, driver, searchService, robotProvider, searchContext, null))
+    )
+    // support private Kotlin classes declared in the same file as test
+    constructor.isAccessible = true
+    return constructor.newInstance(ComponentData(xpath, driver, searchService, robotProvider, searchContext, null))
   }
 
   /**
