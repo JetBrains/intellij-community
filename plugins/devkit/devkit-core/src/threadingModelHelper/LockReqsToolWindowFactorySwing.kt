@@ -11,7 +11,7 @@ import javax.swing.JPanel
 import javax.swing.table.DefaultTableModel
 import java.awt.BorderLayout
 
-class LockReqsToolWindowFactory : ToolWindowFactory {
+class LockReqsToolWindowFactorySwing : ToolWindowFactory {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val service = project.service<LockReqsService>()
@@ -22,7 +22,7 @@ class LockReqsToolWindowFactory : ToolWindowFactory {
     val scrollPane = JBScrollPane(table)
     panel.add(scrollPane)
 
-    service.onResultsUpdated = { loadData(service.currentResults, tableModel) }
+    service.onResultsUpdated = { loadData(service.currentResult!!.paths.map{it.pathString}, tableModel) }
     val factory = toolWindow.contentManager.factory
     val content = factory.createContent(panel, null, false)
     toolWindow.contentManager.addContent(content)

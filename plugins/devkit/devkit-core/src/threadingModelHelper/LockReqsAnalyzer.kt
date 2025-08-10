@@ -6,6 +6,7 @@ import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.JavaRecursiveElementVisitor
 import com.intellij.psi.PsiMethodReferenceExpression
 
+
 class LockReqsAnalyzer {
 
   companion object {
@@ -42,7 +43,13 @@ class LockReqsAnalyzer {
           }
         }
     }
+
+    data class AnalysisResult(
+      val method: PsiMethod,
+      val paths: List<ExecutionPath>,
+    )
   }
+
 
   private val processed = mutableSetOf<PsiMethod>()
 
@@ -106,7 +113,8 @@ class LockReqsAnalyzer {
   }
 
   private fun isAssertReadAccess(expression: PsiMethodCallExpression): Boolean {
-    return ASSERT_READ_ACCESS_METHOD == expression.methodExpression.referenceName && THREADING_ASSERTIONS_CLASS == expression.resolveMethod()?.containingClass?.qualifiedName
+    return ASSERT_READ_ACCESS_METHOD == expression.methodExpression.referenceName &&
+           THREADING_ASSERTIONS_CLASS == expression.resolveMethod()?.containingClass?.qualifiedName
   }
 
   private fun hasAssertReadAccessCall(method: PsiMethod): Boolean {
