@@ -22,17 +22,17 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PySdkBundle
-import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagers
+import com.jetbrains.python.packaging.PyTargetEnvCreationManager
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.target.ui.PyAddSdkPanelBase
-import com.jetbrains.python.target.ui.PyAddSdkPanelBase.Companion.isLocal
-import com.jetbrains.python.target.ui.TargetPanelExtension
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.getInterpreterVersion
+import com.jetbrains.python.target.ui.PyAddSdkPanelBase
+import com.jetbrains.python.target.ui.PyAddSdkPanelBase.Companion.isLocal
+import com.jetbrains.python.target.ui.TargetPanelExtension
 import com.jetbrains.python.ui.pyModalBlocking
 import org.jetbrains.annotations.ApiStatus
 
@@ -75,8 +75,7 @@ fun createVirtualEnvAndSdkSynchronously(
       }
 
       try {
-        val packageManager = PyPackageManager.getInstance(sdk)
-        return packageManager.createVirtualEnv(venvRoot, inheritSitePackages)
+        return PyTargetEnvCreationManager(sdk).createVirtualEnv(venvRoot, inheritSitePackages)
       }
       finally {
         PyPackageManagers.getInstance().clearCache(sdk)

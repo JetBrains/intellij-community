@@ -18,7 +18,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.InputData
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
@@ -27,10 +26,8 @@ import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewVirtualE
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
@@ -40,7 +37,6 @@ import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.createVirtualEnvAndSdkSynchronously
-import com.jetbrains.python.sdk.isTargetBased
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
@@ -94,37 +90,12 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
         PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(module.project, sdk, requirementsTxtOrSetupPyFile.toNioPath())
       }
 
-      if (!sdk.isTargetBased()) {
-        val pythonPackageManager = PythonPackageManager.forSdk(module.project, sdk)
-        pythonPackageManager.sync().getOr {
-          PySdkConfigurationCollector.logVirtualEnv(module.project, VirtualEnvResult.INSTALLATION_FAILURE)
-          return it
-        }
-      }
-      else {
-        withContext(Dispatchers.Default) {
-          createTargetBased(sdk, requirementsTxtOrSetupPyFile)
-        }
-      }
-
-      return PyResult.success(sdk)
+      return PythonPackageManager.forSdk(module.project, sdk).sync().mapSuccess { sdk }
     }
     catch (e: ExecutionException) {
       PySdkConfigurationCollector.logVirtualEnv(module.project, VirtualEnvResult.INSTALLATION_FAILURE)
       LOGGER.warn("Exception during creating virtual environment", e)
       return PyResult.localizedError(e.localizedMessage)
-    }
-  }
-
-  private suspend fun createTargetBased(
-    sdk: Sdk,
-    requirementsTxtOrSetupPyFile: VirtualFile,
-  ) {
-    reportRawProgress {
-      it.text(PyBundle.message("python.packaging.installing.packages"))
-      val packageManager = PyPackageManager.getInstance(sdk)
-      val command = getCommandForPipInstall(requirementsTxtOrSetupPyFile)
-      packageManager.install(emptyList(), command)
     }
   }
 
