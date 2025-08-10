@@ -96,9 +96,6 @@
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinClassConstructorInfoHandler"/>
 
-    <codeInsight.nonBlockingContextChecker
-            implementation="org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineNonBlockingContextChecker"/>
-
     <codeInsight.implementMethod language="kotlin"
                                  implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler"/>
     <codeInsight.overrideMethod language="kotlin"

@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import kotlin.collections.get
 
-object CoroutineBlockingCallInspectionUtils {
+internal object CoroutineBlockingCallInspectionUtils {
 
     context(_: KaSession)
     fun isInSuspendLambdaOrFunction(ktElement: KtElement): Boolean {
@@ -116,7 +116,7 @@ object CoroutineBlockingCallInspectionUtils {
 }
 
 context(_: KaSession)
-fun KaCall.getFirstArgumentExpression(): KtExpression? {
+internal fun KaCall.getFirstArgumentExpression(): KtExpression? {
     if (this !is KaFunctionCall<*>) return null
     val firstValueParameter = partiallyAppliedSymbol.signature.valueParameters.firstOrNull() ?: return null
     return argumentMapping.entries.find { (_, valueParameter) -> valueParameter == firstValueParameter }?.key

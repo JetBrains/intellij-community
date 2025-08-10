@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.inspections.blockingCallsDetection
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.blockingCallsDetection
 
 import com.intellij.codeInspection.blockingCallsDetection.ContextType
 import com.intellij.codeInspection.blockingCallsDetection.ContextType.*
@@ -38,7 +37,6 @@ import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.blockingCallsDet
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.MAIN_DISPATCHER_FQN
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.NONBLOCKING_EXECUTOR_ANNOTATION
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.findFlowOnCall
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.blockingCallsDetection.getFirstArgumentExpression
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -49,7 +47,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
-class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
+internal class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
 
     override fun isApplicable(file: PsiFile): Boolean {
         if (file !is KtFile) return false
@@ -136,7 +134,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
     context(_: KaSession)
     private fun isCoroutineContextPlus(symbol: KaCallableSymbol): Boolean {
         val coroutineContextPlus = CallableId(ClassId.topLevel(COROUTINE_CONTEXT), Name.identifier("plus"))
-        
+
         if (symbol.name != coroutineContextPlus.callableName) return false
         return symbol.allOverriddenSymbolsWithSelf
             .any { it.callableId == coroutineContextPlus }

@@ -6,6 +6,9 @@
 
     <codeInsight.blockingMethodChecker
             implementation="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.blockingCallsDetection.CoroutineBlockingMethodChecker"/>
+    
+    <codeInsight.nonBlockingContextChecker
+            implementation="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.blockingCallsDetection.CoroutineNonBlockingContextChecker"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RemoveRedundantBackticksInspection"
                      groupPath="Kotlin"

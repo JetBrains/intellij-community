@@ -6,37 +6,4 @@ import org.jetbrains.kotlin.idea.intentions.AbstractBlockingCallRelatedFixesTest
 
 internal class SharedK2BlockingCallRelatedFixesTest : AbstractBlockingCallRelatedFixesTest() {
     override val pluginMode: KotlinPluginMode get() = KotlinPluginMode.K2
-    
-    private fun muteFailure(test: () -> Unit): Unit = 
-        assertThrows(Throwable::class.java, test)
-
-    override fun `test add dispatcher in flow generator`() {
-        muteFailure {
-            super.`test add dispatcher in flow generator`()
-        }
-    }
-
-    override fun `test add dispatcher in flow`() {
-        muteFailure {
-            super.`test add dispatcher in flow`()
-        }
-    }
-
-    override fun `test add flowOn to flow generator`() {
-        muteFailure {
-            super.`test add flowOn to flow generator`()
-        }
-    }
-
-    override fun `test replace unknown dispatcher in withContext`() {
-        muteFailure {
-            super.`test replace unknown dispatcher in withContext`()
-        }
-    }
-
-    override fun `test replace unknown dispatcher in flow`() {
-        muteFailure {
-            super.`test replace unknown dispatcher in flow`()
-        }
-    }
 }
