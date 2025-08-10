@@ -116,7 +116,7 @@ object CoroutineBlockingCallInspectionUtils {
 }
 
 context(_: KaSession)
-internal fun KaCall.getFirstArgumentExpression(): KtExpression? {
+fun KaCall.getFirstArgumentExpression(): KtExpression? {
     if (this !is KaFunctionCall<*>) return null
     val firstValueParameter = partiallyAppliedSymbol.signature.valueParameters.firstOrNull() ?: return null
     return argumentMapping.entries.find { (_, valueParameter) -> valueParameter == firstValueParameter }?.key
