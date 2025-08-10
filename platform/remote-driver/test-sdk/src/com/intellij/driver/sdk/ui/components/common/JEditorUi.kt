@@ -16,6 +16,7 @@ import com.intellij.driver.sdk.ui.center
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.remote.Component
+import com.intellij.driver.sdk.ui.shouldContainText
 import org.intellij.lang.annotations.Language
 import java.awt.Point
 import java.awt.Rectangle
@@ -198,6 +199,10 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     driver.utility(AiTestIntentionUtils::class).invokeAiAssistantIntention(editor, intentionActionName)
   }
 
+  /**
+   * @see shouldContainText For better readability
+   */
+  @Deprecated("Use shouldContainText instead", ReplaceWith("shouldContainText(expectedText)"))
   fun containsText(expectedText: String) {
     step("Verify that editor contains text: $expectedText") {
       waitFor(errorMessage = { "Editor doesn't contain text: $expectedText" },
