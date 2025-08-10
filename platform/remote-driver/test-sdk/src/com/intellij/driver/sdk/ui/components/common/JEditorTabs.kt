@@ -20,7 +20,9 @@ class EditorTabsUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun getTabs() = editorTabsComponent.getTabs().map { Tab(it) }
 
-  fun tab(accessibleName: String) = x { and(byType(TYPE_EDITOR_TAB), byAccessibleName(accessibleName)) }
+  fun tab(accessibleName: String, fullMatch: Boolean = true) =
+    if (fullMatch) x { and(byType(TYPE_EDITOR_TAB), byAccessibleName(accessibleName)) }
+    else x { and(byType(TYPE_EDITOR_TAB), contains(byAccessibleName(accessibleName))) }
 
   fun getTabsComponents(): List<UiComponent> = xx { byType(TYPE_EDITOR_TAB) }.list().filter {
     it.component.width > 0 && it.component.height > 0
