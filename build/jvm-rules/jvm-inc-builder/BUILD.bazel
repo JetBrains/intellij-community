@@ -92,7 +92,7 @@ string_list_flag(
 
 java_library(
   name = "patched-kotlin-compiler-for-bazel",
-  visibility = ["//visibility:private"],
+  visibility = ["//visibility:public"],  # used by @community//:monorepo-jvm-builder (@community//fleet/compiler-plugins/expects:expects-compiler-plugin, etc.)
   exports = [
     ":kotlin-compiler-2_2_10-RC-359_http_import",
     ":kotlin-stdlib-jdk8-2_2_10-RC-359_http_import",
@@ -102,9 +102,6 @@ java_library(
     ":kotlin-reflect-1_6_10_http_import",
     #":kotlinx-coroutines-core-jvm-1_8_0_http_import",
     #":annotations-23_0_0_http_import",
-    ":expects-compiler-plugin-2_2_0-0_1_http_import",
-    ":rpc-compiler-plugin-2_2_0-0_2_http_import",
-    ":noria-compiler-plugin-2_2_0-0_2_http_import",
     ":patched-jvm-abi-gen-for-bazel_http_import",
   ],
 )
@@ -112,21 +109,6 @@ java_library(
 jvm_import(
   name = "patched-jvm-abi-gen-for-bazel_http_import",
   jar = "@jvm-abi-gen-2_2_10-RC-359_http//file",
-)
-
-jvm_import(
-    name = "expects-compiler-plugin-2_2_0-0_1_http_import",
-    jar = "@expects-compiler-plugin-2_2_0-0_1_http//file",
-)
-
-jvm_import(
-    name = "rpc-compiler-plugin-2_2_0-0_2_http_import",
-    jar = "@rpc-compiler-plugin-2_2_0-0_2_http//file",
-)
-
-jvm_import(
-    name = "noria-compiler-plugin-2_2_0-0_2_http_import",
-    jar = "@noria-compiler-plugin-2_2_0-0_2_http//file",
 )
 
 jvm_import(

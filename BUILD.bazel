@@ -9,9 +9,9 @@ create_kotlinc_options(name = "k17", jvm_target = "17")
 java_binary(
     name = "monorepo-jvm-builder",
 #     jvm_flags = [],  -- Note(k15tfu): ignored w/ deploy jar, use @rules_jvm//:jvm-builder-jvm_flags
-    main_class = "org.jetbrains.bazel.jvm.worker.JvmBuildWorker",
+    main_class = "com.intellij.tools.build.bazel.jvmIncBuilder.BazelIncExecutor",
     visibility = ["//visibility:public"],
-    runtime_deps = ["@rules_jvm//src/jvm-builder:jvm-builder-lib", "@lib//:rhizomedb-compiler-plugin", "@lib//:expects-compiler-plugin", "@lib//:rpc-compiler-plugin", "@lib//:noria-compiler-plugin"],
+    runtime_deps = ["@rules_jvm//jvm-inc-builder:jvm-inc-builder-lib", "@community//fleet/compiler-plugins/expects:expects-compiler-plugin", "@community//fleet/compiler-plugins/noria:noria-compiler-plugin", "@community//fleet/compiler-plugins/rpc:rpc-compiler-plugin"],
 )
 
 java_binary(

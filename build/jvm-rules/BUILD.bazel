@@ -66,13 +66,7 @@ _kt_kotlinc_options(
     name = "rules_jvm_bootstrap_kotlinc_options",
     include_stdlibs = "none",
     jvm_target = "17",
-    visibility = [
-        "//src:__subpackages__",
-        "//zip:__pkg__",
-        "//jvm-inc-builder:__subpackages__",
-        "//jps-builders-6:__subpackages__",
-        "//dependency-graph:__subpackages__",
-    ],
+    visibility = ["//visibility:public"],  # used by @community//:monorepo-jvm-builder (@community//fleet/compiler-plugins/expects:expects-compiler-plugin, etc.)
     x_jdk_release = "17",
 )
 

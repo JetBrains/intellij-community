@@ -68,27 +68,6 @@ http_file(
 )
 
 http_file(
-  name = "expects-compiler-plugin-2_2_0-0_1_http",
-  url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/expects-compiler-plugin/2.2.0-0.1/expects-compiler-plugin-2.2.0-0.1.jar",
-  sha256 = "628cafacf89a5fd9e55ec6a8d91429d8158bb41d355723a4a324864973e425f6",
-  downloaded_file_path = "expects-compiler-plugin-2.2.0-RC-0.1.jar"
-)
-
-http_file(
-  name = "rpc-compiler-plugin-2_2_0-0_2_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fleet/rpc-compiler-plugin/2.2.0-0.2/rpc-compiler-plugin-2.2.0-0.2.jar",
-  sha256 = "aba987ad87817fc6574e3362fbc3159712bc9c592e48d13484c2f505b5ad42f1",
-  downloaded_file_path = "rpc-compiler-plugin-2.2.0-0.2.jar"
-)
-
-http_file(
-  name = "noria-compiler-plugin-2_2_0-0_2_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/noria-compiler-plugin/2.2.0-0.2/noria-compiler-plugin-2.2.0-0.2.jar",
-  sha256 = "9368e1ed77e1bd061fecf511ce281532d9db8194a50a39a39c64f2e67630982a",
-  downloaded_file_path = "noria-compiler-plugin-2.2.0-0.2.jar"
-)
-
-http_file(
   name = "kotlin-compiler-2_2_10-RC-359_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler/2.2.10-RC-359/kotlin-compiler-2.2.10-RC-359.jar",
   sha256 = "0e9d1ae9063aaa2c1c49ba1e869b23768a55b6679cf95fe19a6c041220e7fea4",
