@@ -4,6 +4,9 @@
             serviceInterface="org.jetbrains.kotlin.idea.codeinsights.impl.base.KotlinInspectionFacade"
             serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.KotlinInspectionFacadeImpl"/>
 
+    <codeInsight.blockingMethodChecker
+            implementation="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.blockingCallsDetection.CoroutineBlockingMethodChecker"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RemoveRedundantBackticksInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"

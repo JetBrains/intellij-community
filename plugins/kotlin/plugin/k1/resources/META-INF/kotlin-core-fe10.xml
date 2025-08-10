@@ -98,8 +98,6 @@
 
     <codeInsight.nonBlockingContextChecker
             implementation="org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineNonBlockingContextChecker"/>
-    <codeInsight.blockingMethodChecker
-            implementation="org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingMethodChecker"/>
 
     <codeInsight.implementMethod language="kotlin"
                                  implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler"/>

@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.inspections.blockingCallsDetection
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.blockingCallsDetection
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor
 import com.intellij.openapi.module.ModuleUtilCore
@@ -13,21 +13,17 @@ import org.jetbrains.kotlin.analysis.api.components.isSuspendFunctionType
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.util.reformatted
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
-import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import kotlin.collections.get
 
-internal object CoroutineBlockingCallInspectionUtils {
+object CoroutineBlockingCallInspectionUtils {
 
     context(_: KaSession)
     fun isInSuspendLambdaOrFunction(ktElement: KtElement): Boolean {
@@ -87,18 +83,6 @@ internal object CoroutineBlockingCallInspectionUtils {
         ShortenReferencesFacility.getInstance().shorten(replacedElement.reformatted() as KtElement)
         OptimizeImportsProcessor(project, containingKtFile).run()
         containingKtFile.commitAndUnblockDocument()
-    }
-
-    // TODO: Remove when no more usages
-    tailrec fun KtExpression.findFlowOnCall(): ResolvedCall<out CallableDescriptor>? {
-        val dotQualifiedExpression = this.getStrictParentOfType<KtDotQualifiedExpression>() ?: return null
-        val candidate = dotQualifiedExpression
-            .children
-            .asSequence()
-            .filterIsInstance<KtCallExpression>()
-            .mapNotNull { it.resolveToCall(BodyResolveMode.PARTIAL) }
-            .firstOrNull { it.isCalling(FLOW_ON_FQN) }
-        return candidate ?: dotQualifiedExpression.findFlowOnCall()
     }
 
     context(_: KaSession)

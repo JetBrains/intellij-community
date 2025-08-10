@@ -10,12 +10,6 @@ internal class SharedK2BlockingCallRelatedFixesTest : AbstractBlockingCallRelate
     private fun muteFailure(test: () -> Unit): Unit = 
         assertThrows(Throwable::class.java, test)
 
-    override fun `test wrap in withContext`() {
-        muteFailure {
-            super.`test wrap in withContext`()
-        }
-    }
-
     override fun `test add dispatcher in flow generator`() {
         muteFailure {
             super.`test add dispatcher in flow generator`()
@@ -43,12 +37,6 @@ internal class SharedK2BlockingCallRelatedFixesTest : AbstractBlockingCallRelate
     override fun `test replace unknown dispatcher in flow`() {
         muteFailure {
             super.`test replace unknown dispatcher in flow`()
-        }
-    }
-
-    override fun `test wrap dot qualified expression`() {
-        muteFailure {
-            super.`test wrap dot qualified expression`()
         }
     }
 }
