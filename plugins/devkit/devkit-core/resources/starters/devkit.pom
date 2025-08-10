@@ -9,9 +9,9 @@
     <kotlin.target>21</kotlin.target>
     <gradle.version>8.14.3</gradle.version>
     <kotlin.version>2.1.0</kotlin.version>
-    <gradle.intellij.version>2.7.0</gradle.intellij.version>
+    <gradle.intellij.version>2.7.1</gradle.intellij.version>
 
-    <intellij.version>2025.1.4</intellij.version>
+    <intellij.version>2025.1.4.1</intellij.version>
     <intellij.since.build>251</intellij.since.build>
   </properties>
 
