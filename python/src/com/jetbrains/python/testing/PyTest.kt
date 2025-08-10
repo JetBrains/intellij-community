@@ -146,7 +146,7 @@ class PyTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFactory<P
 
   override fun getName(): String = PyBundle.message("runcfg.pytest.display_name")
 
-  override fun onlyClassesAreSupported(sdk: Sdk): Boolean = false
+  override fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean = false
 
   override val packageRequired: String = "pytest"
 }

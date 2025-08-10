@@ -13,7 +13,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.PackageManagementServiceEx;
 import com.intellij.webcore.packaging.RepoPackage;
@@ -24,9 +23,8 @@ import com.jetbrains.python.errorProcessing.ExecErrorImpl;
 import com.jetbrains.python.errorProcessing.ExecErrorReason;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.PyPIPackageUtil.PackageDetails;
-import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -35,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
@@ -52,7 +49,7 @@ import static com.jetbrains.python.SdkUiUtilKt.isVirtualEnv;
  * obtained through {@link com.jetbrains.python.packaging.management.PythonPackageManager}
  */
 @Deprecated(forRemoval = true)
-public class PyPackageManagementService extends PackageManagementServiceEx {
+public abstract class PyPackageManagementService extends PackageManagementServiceEx {
   private static final @NotNull Pattern PATTERN_ERROR_LINE = Pattern.compile(".*error:.*", Pattern.CASE_INSENSITIVE);
   protected static final @NonNls String TEXT_PREFIX = buildHtmlStylePrefix();
 
@@ -124,26 +121,9 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     return getAllPackagesCached();
   }
 
-  @Override
-  public @NotNull List<RepoPackage> getAllPackagesCached() {
-    // Make a copy, since ManagePackagesDialog attempts to change the passed in collection directly
-    final List<RepoPackage> result = new ArrayList<>();
-    if (!PyPackageService.getInstance().PYPI_REMOVED) {
-      result.addAll(getCachedPyPIPackages());
-    }
-    result.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackages(getAdditionalRepositories()));
-    return result;
-  }
 
   private static @NotNull List<String> getAdditionalRepositories() {
     return PyPackageService.getInstance().additionalRepositories;
-  }
-
-  private static @NotNull List<RepoPackage> getCachedPyPIPackages() {
-    // Don't show URL next to the package name in "Available Packages" if only PyPI is in use
-    final boolean customRepoConfigured = !getAdditionalRepositories().isEmpty();
-    final String url = customRepoConfigured ? PyPIPackageUtil.PYPI_LIST_URL : "";
-    return ContainerUtil.map(PyPIPackageCache.getInstance().getPackageNames(), name -> new RepoPackage(name, url, null));
   }
 
   @Override
@@ -170,48 +150,6 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     PyPackageService.getInstance().addSdkToUserSite(mySdk.getHomePath(), newValue);
   }
 
-
-  @Override
-  public void installPackage(@NotNull RepoPackage repoPackage,
-                             @Nullable String version,
-                             boolean forceUpgrade,
-                             @Nullable String extraOptions,
-                             @NotNull Listener listener,
-                             boolean installToUser) {
-    final String packageName = repoPackage.getName();
-    final String repository = PyPIPackageUtil.isPyPIRepository(repoPackage.getRepoUrl()) ? null : repoPackage.getRepoUrl();
-    final List<String> extraArgs = new ArrayList<>();
-    if (installToUser) {
-      extraArgs.add(PyPackageManager.USE_USER_SITE);
-    }
-    if (extraOptions != null) {
-      // TODO: Respect arguments quotation
-      Collections.addAll(extraArgs, extraOptions.split(" +"));
-    }
-    if (!StringUtil.isEmptyOrSpaces(repository)) {
-      extraArgs.add("--index-url");
-      extraArgs.add(repository);
-    }
-    if (forceUpgrade) {
-      extraArgs.add("-U");
-    }
-    final PyRequirement req = version == null
-                              ? PyRequirementsKt.pyRequirement(packageName, null)
-                              : PyRequirementsKt.pyRequirement(packageName, PyRequirementRelation.EQ, version);
-
-    final PyPackageManagerUI ui = new PyPackageManagerUI(myProject, mySdk, new PyPackageManagerUI.Listener() {
-      @Override
-      public void started() {
-        listener.operationStarted(packageName);
-      }
-
-      @Override
-      public void finished(@Nullable List<ExecutionException> exceptions) {
-        listener.operationFinished(packageName, toErrorDescription(exceptions, mySdk, repoPackage.getName()));
-      }
-    });
-    ui.install(Collections.singletonList(req), extraArgs);
-  }
 
   public static @Nullable ErrorDescription toErrorDescription(@Nullable List<ExecutionException> exceptions, @Nullable Sdk sdk) {
     return toErrorDescription(exceptions, sdk, null);
@@ -347,7 +285,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
       if (cause != null) {
         if (StringUtil.containsIgnoreCase(cause, "SyntaxError")) {
-          final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
+          final LanguageLevel languageLevel = PySdkUtil.getLanguageLevelForSdk(sdk);
           return PySdkBundle.message("python.sdk.use.python.version.supported.by.this.package", languageLevel);
         }
       }

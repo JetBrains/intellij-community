@@ -406,6 +406,6 @@ internal fun isPyTestEnabled(module: Module): Boolean {
   if (factory.id == PyTestFactory.id) return true
 
   val sdk = module.getSdk() ?: return false
-  val factoryId = (if (factory is PyAutoDetectionConfigurationFactory) factory.getFactory(sdk) else factory).id
+  val factoryId = (if (factory is PyAutoDetectionConfigurationFactory) factory.getFactory(sdk, module.project) else factory).id
   return factoryId == PyTestFactory.id
 }

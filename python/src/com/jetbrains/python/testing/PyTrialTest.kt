@@ -44,7 +44,7 @@ class PyTrialTestFactory(type:PythonTestConfigurationType) : PyAbstractTestFacto
 
   override fun getId(): String = "Twisted Trial"
 
-  override fun onlyClassesAreSupported(sdk: Sdk): Boolean = true
+  override fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean = true
 
   override val packageRequired: String = "Twisted"
 }

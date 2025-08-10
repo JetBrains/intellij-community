@@ -12,6 +12,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Function;
 import com.jetbrains.python.packaging.PyPackageUtil;
+import com.jetbrains.python.packaging.management.PythonPackageManager;
+import com.jetbrains.python.packaging.management.PythonPackageManagerExt;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -57,9 +59,10 @@ final class TestRunnerDetector implements Function<Pair<Module, Collection<Virtu
     //check if installed in sdk
     final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
     if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
-      PyPackageUtil.refreshAndGetPackagesModally(sdk);
+      PythonPackageManager packageManager = PythonPackageManager.Companion.forSdk(module.getProject(), sdk);
+      PythonPackageManagerExt.waitInitBlocking(packageManager);
       var factories = PythonTestConfigurationType.getInstance().getTypedFactories();
-      var factory = factories.stream().filter(o -> o.isFrameworkInstalled(sdk)).findFirst();
+      var factory = factories.stream().filter(o -> o.isFrameworkInstalled(module.getProject(), sdk)).findFirst();
       if (factory.isPresent()) {
         testRunner = factory.get().getId();
       }

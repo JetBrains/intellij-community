@@ -2,14 +2,12 @@
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Sets;
-import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -18,7 +16,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
@@ -29,9 +26,7 @@ import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils;
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementsTxtManager;
@@ -40,7 +35,6 @@ import com.jetbrains.python.packaging.setupPy.SetupPyManager;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
 import com.jetbrains.python.sdk.CredentialsTypeExChecker;
@@ -53,9 +47,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @ApiStatus.Internal
 public final class PyPackageUtil {
@@ -113,24 +105,6 @@ public final class PyPackageUtil {
     if (sdk == null) return null;
 
     return PythonRequirementsTxtManager.getInstance(module.getProject(), sdk).getDependencies();
-  }
-
-  @ApiStatus.Internal
-  public static @Nullable VirtualFile findRootFile(@NotNull Module module, String rootFile) {
-    if (!rootFile.isEmpty()) {
-      final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(rootFile);
-      if (file != null) {
-        return file;
-      }
-      final ModuleRootManager manager = ModuleRootManager.getInstance(module);
-      for (VirtualFile root : manager.getContentRoots()) {
-        final VirtualFile fileInRoot = root.findFileByRelativePath(rootFile);
-        if (fileInRoot != null) {
-          return fileInRoot;
-        }
-      }
-    }
-    return null;
   }
 
 
@@ -230,101 +204,6 @@ public final class PyPackageUtil {
     }.check(sdk);
   }
 
-  /**
-   * Refresh the list of installed packages inside the specified SDK if it hasn't been updated yet
-   * displaying modal progress bar in the process, return cached packages otherwise.
-   * <p>
-   * Note that <strong>you shall never call this method from a write action</strong>, since such modal
-   * tasks are executed directly on EDT and network operations on the dispatch thread are prohibited
-   * (see the implementation of ApplicationImpl#runProcessWithProgressSynchronously() for details).
-   */
-  public static @NotNull List<PyPackage> refreshAndGetPackagesModally(@NotNull Sdk sdk) {
-
-    final Application app = ApplicationManager.getApplication();
-    assert !(app.isWriteAccessAllowed()) :
-      "This method can't be called on WriteAction because " +
-      "refreshAndGetPackages would be called on AWT thread in this case (see runProcessWithProgressSynchronously) " +
-      "and may lead to freeze";
-
-
-    final Ref<List<PyPackage>> packagesRef = Ref.create();
-    final Throwable callStacktrace = new Throwable();
-    var lock = new AtomicBoolean(false);
-    LOG.debug("Showing modal progress for collecting installed packages", new Throwable());
-    PyUtil.runWithProgress(null, PyBundle.message("sdk.scanning.installed.packages"), true, false, indicator -> {
-      if (PythonSdkUtil.isDisposed(sdk)) {
-        packagesRef.set(Collections.emptyList());
-        synchronized (lock) {
-          lock.set(true);
-          lock.notifyAll();
-        }
-        return;
-      }
-
-      indicator.setIndeterminate(true);
-      try {
-        final PyPackageManager manager = PyPackageManager.getInstance(sdk);
-        packagesRef.set(manager.refreshAndGetPackages(false));
-        synchronized (lock) {
-          lock.set(true);
-          lock.notifyAll();
-        }
-      }
-      catch (ExecutionException e) {
-        packagesRef.set(Collections.emptyList());
-        synchronized (lock) {
-          lock.set(true);
-          lock.notifyAll();
-        }
-        e.initCause(callStacktrace);
-        LOG.warn(e);
-      }
-    });
-    if (!SwingUtilities.isEventDispatchThread()) {
-      synchronized (lock) {
-        while (!lock.get()) {
-          try {
-            lock.wait();
-          }
-          catch (InterruptedException e) {
-            throw new ProcessCanceledException(e);
-          }
-        }
-      }
-    }
-    return packagesRef.get();
-  }
-
-  /**
-   * Run unconditional update of the list of packages installed in SDK. Normally only one such of updates should run at time.
-   * This behavior in enforced by the parameter isUpdating.
-   *
-   * @param manager    package manager for SDK
-   * @param isUpdating flag indicating whether another refresh is already running
-   * @return whether packages were refreshed successfully, e.g. this update wasn't cancelled because of another refresh in progress
-   */
-  public static boolean updatePackagesSynchronouslyWithGuard(@NotNull PyPackageManager manager, @NotNull AtomicBoolean isUpdating) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-    if (!isUpdating.compareAndSet(false, true)) {
-      return false;
-    }
-    try {
-      manager.refreshAndGetPackages(true);
-    }
-    catch (ExecutionException ignored) {
-    }
-    finally {
-      isUpdating.set(false);
-    }
-    return true;
-  }
-
-
-  public static boolean hasManagement(@NotNull List<PyPackage> packages) {
-    return PyPsiPackageUtil.findPackage(packages, SETUPTOOLS) != null ||
-           PyPsiPackageUtil.findPackage(packages, DISTRIBUTE) != null ||
-           PyPsiPackageUtil.findPackage(packages, PIP) != null;
-  }
 
   public static void addRequirementToTxtOrSetupPy(@NotNull Module module,
                                                   @NotNull String requirementName,
@@ -336,13 +215,6 @@ public final class PyPackageUtil {
       return;
     }
     SetupPyManager.getInstance(module.getProject(), sdk).addDependency(requirementName);
-  }
-
-  @ApiStatus.Internal
-  public static boolean addToRequirementsTxt(@NotNull Module module, @NotNull String requirementName) {
-    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-    if (sdk == null) return false;
-    return PythonRequirementsTxtManager.getInstance(module.getProject(), sdk).addDependency(requirementName);
   }
 
 

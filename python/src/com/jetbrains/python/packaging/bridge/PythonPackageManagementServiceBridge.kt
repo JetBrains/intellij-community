@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
@@ -19,7 +20,6 @@ import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.management.ui.installPackageBackground
 import com.jetbrains.python.packaging.pyRequirementVersionSpec
@@ -58,14 +58,10 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
 
 
   override fun getAllPackages(): List<RepoPackage> {
-    val packagesWithRepositories = repositoryManager.packagesByRepository()
-    return packagesWithRepositories
-      .flatMap { (repository, packages) ->
-        packages.asSequence().map { pkg ->
-          createRepoPackage(pkg, repository)
-        }
-      }
-      .toList()
+    runBlockingMaybeCancellable {
+      repositoryManager.initCaches()
+    }
+    return getAllPackagesCached()
   }
 
   private fun createRepoPackage(pkg: String, repository: PyPackageRepository): RepoPackage {
@@ -74,7 +70,10 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
   }
 
   override fun getAllPackagesCached(): List<RepoPackage> {
-    return allPackages
+    val packages = repositoryManager.repositories.flatMap { repo ->
+      repo.getPackages().map { createRepoPackage(it, repo) }
+    }
+    return packages
   }
 
   override fun reloadAllPackages(): List<RepoPackage> {
@@ -166,5 +165,4 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
   override fun dispose() {
     scope.cancel()
   }
-
 }

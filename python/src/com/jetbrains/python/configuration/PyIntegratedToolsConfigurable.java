@@ -165,7 +165,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
         final Sdk sdk = PythonSdkUtil.findPythonSdk(myModule);
         if (sdk != null) {
           var factory = myModel.getSelected();
-          if (factory != null && !factory.isFrameworkInstalled(sdk)) {
+          if (factory != null && !factory.isFrameworkInstalled(myProject, sdk)) {
             return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", factory.getName()),
                                         createQuickFix(sdk, facetErrorPanel, factory.getPackageRequired()));
           }
@@ -211,7 +211,12 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   @Override
   public JComponent createComponent() {
     myModel = PyTestRunConfigurationsModel.Companion.create(myModule);
-    myTestRunnerComboBox.setRenderer(new PyTestRunConfigurationRenderer(PythonSdkUtil.findPythonSdk(myModule)));
+
+    if (myModule != null) {
+      Project project = myModule.getProject();
+      myTestRunnerComboBox.setRenderer(new PyTestRunConfigurationRenderer(PythonSdkUtil.findPythonSdk(myModule), project));
+    }
+
     for (@NotNull DialogPanel panel : myCustomizePanels) {
       myTestsPanel.add(BorderLayout.AFTER_LAST_LINE, panel);
     }

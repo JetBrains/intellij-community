@@ -3,6 +3,7 @@
 
 package com.jetbrains.python.packaging.management
 
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
@@ -15,6 +16,21 @@ import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import org.jetbrains.annotations.ApiStatus
+
+
+@ApiStatus.Internal
+fun PythonPackageManager.waitInitBlocking() {
+  runBlockingMaybeCancellable {
+    waitForInit()
+  }
+}
+
+@ApiStatus.Internal
+fun PythonPackageManager.reloadPackagesBlocking() {
+  runBlockingMaybeCancellable {
+    reloadPackages().orThrow()
+  }
+}
 
 
 @ApiStatus.Internal

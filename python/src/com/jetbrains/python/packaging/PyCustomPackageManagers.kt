@@ -14,8 +14,6 @@ interface PyPackageManagerProvider {
   /**
    * Returns [PyPackageManager] if specified [sdk] is known to this provider
    * and `null` otherwise.
-   *
-   * @see tryCreateCustomPackageManager
    */
   fun tryCreateForSdk(sdk: Sdk): PyPackageManager?
 
