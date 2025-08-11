@@ -24,6 +24,10 @@ public class MavenResource implements Serializable {
     myExcludes = excludes == null ? Collections.emptyList() : new ArrayList<String>(excludes);
   }
 
+  public MavenResource(@NotNull MavenSource source) {
+    this(source.getDirectory(), source.isFiltered(), source.getTargetPath(), source.getIncludes(), source.getExcludes());
+  }
+
   public @NotNull String getDirectory() {
     return myDirectory;
   }

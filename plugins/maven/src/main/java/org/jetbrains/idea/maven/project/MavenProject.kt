@@ -188,10 +188,7 @@ class MavenProject(val file: VirtualFile) {
   @Internal
   fun setFolders(folders: MavenGoalExecutionResult.Folders): MavenProjectChanges {
     val newState = myState.copy(
-      sources = folders.sources,
-      testSources = folders.testSources,
-      resources = folders.resources,
-      testResources = folders.testResources,
+      mavenSources = folders.mavenSources
     )
     return setState(newState)
   }
@@ -264,17 +261,32 @@ class MavenProject(val file: VirtualFile) {
   val testOutputDirectory: @NlsSafe String
     get() = myState.testOutputDirectory!!
 
+  val mavenSources: List<MavenSource>
+    get() = myState.mavenSources
+
+  /**
+   * use mavenSources instead
+   */
   val sources: List<String>
-    get() = myState.sources
+    @ApiStatus.Obsolete get() = myState.mavenSources.filter { MavenSource.isSource(it) }.map { it.directory }
 
+  /**
+   * use mavenSources instead
+   */
   val testSources: List<String>
-    get() = myState.testSources
+    @ApiStatus.Obsolete get() = myState.mavenSources.filter { MavenSource.isTestSource(it) }.map { it.directory }
 
+  /**
+   * use mavenSources instead
+   */
   val resources: List<MavenResource>
-    get() = myState.resources
+    @ApiStatus.Obsolete get() = myState.mavenSources.filter { MavenSource.isResource(it) }.map { MavenResource(it) }
 
+  /**
+   * use mavenSources instead
+   */
   val testResources: List<MavenResource>
-    get() = myState.testResources
+    @ApiStatus.Obsolete get() = myState.mavenSources.filter { MavenSource.isTestResource(it) }.map { MavenResource(it) }
 
   val filters: List<String>
     get() = myState.filters
@@ -930,10 +942,7 @@ class MavenProject(val file: VirtualFile) {
         modulesPathsAndNames = collectModulePathsAndNames(model, directory, fileExtension),
         profilesIds = collectProfilesIds(model.profiles) + if (keepPreviousProfiles) state.profilesIds else emptySet(),
         modelMap = nativeModelMap,
-        sources = build.sources,
-        testSources = build.testSources,
-        resources = build.resources,
-        testResources = build.testResources,
+        mavenSources = build.mavenSources,
         unresolvedArtifactIds = newUnresolvedArtifacts,
         remoteRepositories = remoteRepositories,
         remotePluginRepositories = remotePluginRepositories,

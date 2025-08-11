@@ -118,6 +118,9 @@ abstract class MavenTestCase : UsefulTestCase() {
     myAllPoms.add(pom)
   }
 
+  protected fun useModel410() {
+    myModelVersion = "4.1.0"
+  }
   override fun setUp() {
     super.setUp()
 
@@ -825,5 +828,4 @@ abstract class MavenTestCase : UsefulTestCase() {
              """.trimIndent() + xml + "</project>"
     }
   }
-
 }

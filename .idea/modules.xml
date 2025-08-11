@@ -664,6 +664,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven36-server-impl/intellij.maven.server.m36.impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven36-server-impl/intellij.maven.server.m36.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven40-server-impl/intellij.maven.server.m40.iml" filepath="$PROJECT_DIR$/plugins/maven/maven40-server-impl/intellij.maven.server.m40.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven-server-telemetry/intellij.maven.server.telemetry.iml" filepath="$PROJECT_DIR$/plugins/maven/maven-server-telemetry/intellij.maven.server.telemetry.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/maven-server-api/test/intellij.maven.server.tests.iml" filepath="$PROJECT_DIR$/plugins/maven-server-api/test/intellij.maven.server.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/testFramework/intellij.maven.testFramework.iml" filepath="$PROJECT_DIR$/plugins/maven/testFramework/intellij.maven.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/src/test/intellij.maven.tests.iml" filepath="$PROJECT_DIR$/plugins/maven/src/test/intellij.maven.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/intellij.mcpserver.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/intellij.mcpserver.iml" />

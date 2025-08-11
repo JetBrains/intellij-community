@@ -2,6 +2,7 @@
 package com.intellij.maven.server.m40.utils;
 
 import com.intellij.util.ReflectionUtilRt;
+import org.apache.maven.api.SourceRoot;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -24,15 +25,6 @@ public class Maven40ModelConverter {
     if (model.getBuild() == null) {
       model.setBuild(new Build());
     }
-    Build build = model.getBuild();
-    return convertModel(model,
-                        asSourcesList(build.getSourceDirectory()),
-                        asSourcesList(build.getTestSourceDirectory()));
-  }
-
-  public static @NotNull MavenModel convertModel(Model model,
-                                                 List<String> sources,
-                                                 List<String> testSources) {
     MavenModel result = new MavenModel();
     result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
 
@@ -51,7 +43,7 @@ public class Maven40ModelConverter {
     result.setProfiles(convertProfiles(model.getProfiles()));
     result.setModules(model.getModules());
 
-    convertBuild(result.getBuild(), model.getBuild(), sources, testSources);
+    convertBuild(result.getBuild(), model.getBuild());
     return result;
   }
 
@@ -140,20 +132,76 @@ public class Maven40ModelConverter {
     return directory == null ? Collections.emptyList() : Collections.singletonList(directory);
   }
 
-  public static void convertBuild(MavenBuild result, Build build, List<String> sources, List<String> testSources) {
+  public static void convertBuild(MavenBuild result, Build build) {
     convertBuildBase(result, build);
     result.setOutputDirectory(build.getOutputDirectory());
     result.setTestOutputDirectory(build.getTestOutputDirectory());
-    result.setSources(sources);
-    result.setTestSources(testSources);
+    setupSourceDirectories(result, build);
+  }
+
+
+  private static void setupSourceDirectories(MavenBuild result, Build build) {
+
+    /*
+     *  `sourceDirectory`, `testSourceDirectory` and `scriptSourceDirectory`
+     * are ignored if the POM file contains at least one <source> element
+     * for the corresponding scope and language. This rule exists because
+     * Maven provides default values for those elements which may conflict
+     * with user's configuration.
+     */
+    List<org.apache.maven.api.model.Source> sourceList = build.getDelegate().getSources();
+    if (sourceList.isEmpty()) {
+      List<String> sources = asSourcesList(build.getSourceDirectory());
+      List<String> testSources = asSourcesList(build.getTestSourceDirectory());
+      result.setSources(sources);
+      result.setTestSources(testSources);
+      result.setResources(convertResources(build.getResources()));
+      result.setTestResources(convertResources(build.getTestResources()));
+    }
+    else {
+      List<MavenSource> list = new ArrayList<>();
+      for (org.apache.maven.api.model.Source it : sourceList) {
+        MavenSource source = convert(it);
+        list.add(source);
+      }
+      result.setMavenSources(list);
+    }
+  }
+
+  public static @NotNull MavenSource convert(org.apache.maven.api.model.Source it) {
+    return MavenSource.fromSourceTag(
+      it.getDirectory(),
+      it.getIncludes(),
+      it.getExcludes(),
+      it.getScope(),
+      it.getLang(),
+      it.getTargetPath(),
+      it.getTargetVersion(),
+      it.isStringFiltering(),
+      it.isEnabled()
+    );
+  }
+
+  public static @NotNull MavenSource convert(SourceRoot it) {
+    var scope = it.scope() == null ? null : it.scope().id();
+    var lang = it.language() == null ? null : it.language().id();
+    return MavenSource.fromSourceTag(
+      it.directory().toString(),
+      Collections.emptyList(),
+      Collections.emptyList(),
+      scope,
+      lang,
+      it.targetPath().map(tp -> tp.toString()).orElse(null),
+      it.targetVersion().map(tv -> tv.toString()).orElse(null),
+      it.stringFiltering(),
+      it.enabled()
+    );
   }
 
   private static void convertBuildBase(MavenBuildBase result, BuildBase build) {
     result.setFinalName(build.getFinalName());
     result.setDefaultGoal(build.getDefaultGoal());
     result.setDirectory(build.getDirectory());
-    result.setResources(convertResources(build.getResources()));
-    result.setTestResources(convertResources(build.getTestResources()));
     result.setFilters(build.getFilters() == null ? Collections.emptyList() : build.getFilters());
   }
 
@@ -171,10 +219,10 @@ public class Maven40ModelConverter {
       if (null == directory) continue;
 
       result.add(new MavenResource(directory,
-                                   each.isFiltering(),
-                                   each.getTargetPath(),
-                                   ensurePatterns(each.getIncludes()),
-                                   ensurePatterns(each.getExcludes())));
+                                  each.isFiltering(),
+                                  each.getTargetPath(),
+                                  ensurePatterns(each.getIncludes()),
+                                  ensurePatterns(each.getExcludes())));
     }
     return result;
   }

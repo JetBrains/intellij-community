@@ -21,14 +21,15 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 public class MavenBuildBase implements Serializable {
   private String myFinalName;
   private String myDefaultGoal;
   private String myDirectory;
-  private @NotNull List<@NotNull MavenResource> myResources = new CopyOnWriteArrayList<>();
-  private @NotNull List<@NotNull MavenResource> myTestResources = new CopyOnWriteArrayList<>();
-  private @NotNull List<@NotNull String> myFilters = new CopyOnWriteArrayList<>();
+  private final @NotNull List<@NotNull String> myFilters =new CopyOnWriteArrayList<>();
+
+  private final @NotNull List<@NotNull MavenSource> myMavenSources = new CopyOnWriteArrayList<>();
 
   public String getFinalName() {
     return myFinalName;
@@ -55,19 +56,29 @@ public class MavenBuildBase implements Serializable {
   }
 
   public @NotNull List<@NotNull MavenResource> getResources() {
-    return Collections.unmodifiableList(myResources);
+    return myMavenSources.stream().filter(it -> MavenSource.isResource(it))
+      .map(it -> new MavenResource(it)).collect(Collectors.toList());
   }
 
   public void setResources(@NotNull List<@NotNull MavenResource> resources) {
-    myResources = new CopyOnWriteArrayList<>(resources);
+    myMavenSources.removeIf(it -> MavenSource.isResource(it));
+    resources.forEach(it -> {
+      myMavenSources.add(MavenSource.fromResource(it, false));
+    });
   }
 
+
+
   public @NotNull List<@NotNull MavenResource> getTestResources() {
-    return Collections.unmodifiableList(myTestResources);
+    return myMavenSources.stream().filter(it -> MavenSource.isTestResource(it))
+      .map(it -> new MavenResource(it)).collect(Collectors.toList());
   }
 
   public void setTestResources(@NotNull List<@NotNull MavenResource> testResources) {
-    myTestResources = new CopyOnWriteArrayList<>(testResources);
+    myMavenSources.removeIf(it -> MavenSource.isTestResource(it));
+    testResources.forEach(it -> {
+      myMavenSources.add(MavenSource.fromResource(it, true));
+    });
   }
 
   public @NotNull List<@NotNull String> getFilters() {
@@ -75,6 +86,17 @@ public class MavenBuildBase implements Serializable {
   }
 
   public void setFilters(@NotNull List<@NotNull String> filters) {
-    myFilters = new CopyOnWriteArrayList<>(filters);
+    myFilters.clear();
+    myFilters.addAll(filters);
   }
+
+  public @NotNull List<@NotNull MavenSource> getMavenSources() {
+    return myMavenSources;
+  }
+
+  public void setMavenSources(@NotNull List<@NotNull MavenSource> mavenSources) {
+    myMavenSources.clear();
+    myMavenSources.addAll(mavenSources);
+  }
+
 }

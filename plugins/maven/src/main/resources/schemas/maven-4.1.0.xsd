@@ -2355,6 +2355,23 @@
       </xs:documentation>
     </xs:annotation>
     <xs:all>
+      <xs:element minOccurs="0" name="sources">
+        <xs:annotation>
+          <xs:documentation source="version">4.1.0+</xs:documentation>
+          <xs:documentation source="description">
+            All the sources to compile and resources files to copy for a project or it's unit tests.
+            The sources can be Java source files, generated source files, scripts or resources for examples.
+            Each source is specified by a mandatory {@code directory} element, which is relative to the POM.
+            The kind of sources (codes to compile or resources to copy) and their usage (for the main code or for the tests) is specified by the
+            {@code &lt;scope&gt;} element together with each source directory.
+          </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element type="Source" name="source" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
       <xs:element minOccurs="0" name="sourceDirectory" type="xs:string">
         <xs:annotation>
           <xs:documentation source="version">3.0.0+</xs:documentation>
@@ -2505,6 +2522,84 @@
         <xs:complexType>
           <xs:sequence>
             <xs:element type="Plugin" name="plugin" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+  <xs:complexType name="Source">
+    <xs:annotation>
+      <xs:documentation source="version">4.1.0+</xs:documentation>
+      <xs:documentation source="description"> Description of the sources associated with a project main code or unit tests. The sources can be Java source files, generated source files, scripts or resources for examples. A source is specified by a mandatory {@code directory} element, which is relative to the POM. The directory content can optionally by reduced to a subset with the {@code includes} and {@code excludes} elements. The kind of sources (codes, resources, <i>etc.</i>) and their usage (main code, tests, <i>etc.</i>) is specified by the {@code scope} element. <h2>Default source directories</h2> If no source directories are specified, the defaults are {@code src/${scope}/${lang}} where {@code ${scope}} is the value of the {@link #scope} element (typically {@code main} or {@code test}) and {@code ${lang}} is the value of the {@link #lang} element (typically {@code java} or {@code resources}). </xs:documentation>
+    </xs:annotation>
+    <xs:all>
+      <xs:element minOccurs="0" name="scope" type="xs:string" default="main">
+        <xs:annotation>
+          <xs:documentation source="version">4.1.0+</xs:documentation>
+          <xs:documentation source="description"> Specifies in which context the source files will be used - typically {@code main} or {@code test}. <p>The <b>main</b> scope is used for specifying a directory containing the source of the project. The generated build system will compile the sources from this directory when the project is built. The path given in the {@code directory} field is relative to the project descriptor. The default directory for the default language (Java) is {@code "src/main/java"}.</p> <p>The <b>test</b> scope is used for specifying a directory containing the unit test source of the project. The generated build system will compile these directories when the project is being tested. The path given in the {@code directory} field is relative to the project descriptor. The default directory for the default language (Java) is {@code "src/test/java"}.</p> <p>If no scope is specified, the default is {@code main}.</p> </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="lang" type="xs:string" default="java">
+        <xs:annotation>
+          <xs:documentation source="version">4.1.0+</xs:documentation>
+          <xs:documentation source="description"> Specifies the language of the source files - typically {@code java} or {@code resources}. Resources is used as a generic term for scripting languages (e.g., JavaScript or Python) or markup languages (e.g. properties file, <abbr>JSON</abbr> or <abbr>XML</abbr>). <p>The <b>java</b> language is used for specifying a directory containing the Java sources of the project. The generated build system will compile the sources from this directory using the Java compiler when the project is built. The path given in the {@code directory} field is relative to the project descriptor. The default directory for the main Java sources is {@code "src/main/java"}.</p> <p>The <b>resources</b> language is used for specifying a directory containing the class-path or module-path resources such as properties files or scripts associated with a project. This directory is meant to be different from the main source directory, in that its contents will be copied to the output directory in most cases (since scripts are interpreted rather than compiled). The default directory for the main resources is {@code "src/main/resources"}.</p> <p>If no language is specified, the default is {@code java}.</p> </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="module" type="xs:string">
+        <xs:annotation>
+          <xs:documentation source="version">4.1.0+</xs:documentation>
+          <xs:documentation source="description"> Name of the Java module (or other language-specific module) which is built by the sources. This element can be specified in a Maven project containing multiple Java modules. It is generally not needed for non-modular projects, or for modular projects having only one module. <p>If a module name is specified for resources or script files, then this value modifies the directory where the files will be copied. For example, if a Java module name is "foo.biz", then the {@code foo/bar.properties} resource file will be copied as {@code foo.biz/foo/bar.properties}.</p> <p>This element can be combined with the {@code targetVersion} element for specifying sources, scripts or resources that are specific to both a particular module and a target version.</p> </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="targetVersion" type="xs:string">
+        <xs:annotation>
+          <xs:documentation source="version">4.1.0+</xs:documentation>
+          <xs:documentation source="description"> The version of the platform where the code will be executed. In a Java environment, this is the value of the {@code --release} compiler option. If a Java project contains multiple main sources with different target versions, then a multi-version <abbr>JAR</abbr> file will be created with the lowest version taken as the <dfn>base version</dfn>. If this element is omitted, then the default target version is the compiler default value, which is usually the version of the Java environment running Maven. <p>If a target version, different from the base version, is specified for resources or script files, then this value modifies the directory where the files will be copied. For example, if {@code targetVersion} is 17, then the {@code foo/bar.properties} resource file will be copied as {@code META-INF/versions/17/foo/bar.properties}.</p> <p>This element can be combined with the {@code module} element for specifying sources, scripts or resources that are specific to both a particular module and a target version.</p> </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="targetPath" type="xs:string">
+        <xs:annotation>
+          <xs:documentation source="version">4.1.0+</xs:documentation>
+          <xs:documentation source="description"> Specifies an explicit target path, overriding the default value. The path is relative to the {@code ${project.build.outputDirectory}} directory, which is typically {@code target/classes} in a Java project. <p>When a target path is explicitly specified, the values of the {@code module} and {@code targetVersion} elements are not used for inferring the path (they are still used as compiler options however). It means that for scripts and resources, the files below the path specified by {@code directory} are copied to the path specified by {@code targetPath} with the exact same directory structure. It is user's responsibility to put module and version components in the {@code targetPath} if needed.</p> <p>Note that for Java source files, a directory with the module name may still be generated despite above statement about {@code module} being ignored, because that directory is generated by the Java compiler rather than Maven.</p> </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="stringFiltering" type="xs:boolean" default="false">
+        <xs:annotation>
+          <xs:documentation source="version">4.1.0+</xs:documentation>
+          <xs:documentation source="description"> Whether resources are filtered to replace tokens with parameterized values. The values are taken from the {@code properties} element and from the properties in the files listed in the {@code filters} element. <p>The default value is {@code false}.</p> </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="enabled" type="xs:boolean" default="true">
+        <xs:annotation>
+          <xs:documentation source="version">4.1.0+</xs:documentation>
+          <xs:documentation source="description"> Whether the directory described by this source element should be included in the build. This flag provides an easy way to include or exclude some sources depending, for example, o property values defined in profiles. A use case is including optional resources only when the user confirmed a license agreement. <p>The default value is {@code true}.</p> </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="directory" type="xs:string">
+        <xs:annotation>
+          <xs:documentation source="version">3.0.0+</xs:documentation>
+          <xs:documentation source="description">Describe the directory where the resources are stored. The path is relative to the POM.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="includes">
+        <xs:annotation>
+          <xs:documentation source="version">3.0.0+</xs:documentation>
+          <xs:documentation source="description"> A list of patterns to include, e.g. {@code **&#47;*.xml}. </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element type="xs:string" name="include" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element minOccurs="0" name="excludes">
+        <xs:annotation>
+          <xs:documentation source="version">3.0.0+</xs:documentation>
+          <xs:documentation source="description"> A list of patterns to exclude, e.g. {@code **&#47;*.xml} </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element type="xs:string" name="exclude" minOccurs="0" maxOccurs="unbounded"/>
           </xs:sequence>
         </xs:complexType>
       </xs:element>

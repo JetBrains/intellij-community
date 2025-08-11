@@ -22,6 +22,7 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ArrayUtil
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
@@ -1867,6 +1868,48 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                        """.trimIndent())
     assertModules("project")
     assertExcludes("project", "target")
+  }
+
+
+  @Test
+  fun testImportingSourcesTag() = runBlocking {
+    assumeMaven4()
+    useModel410()
+    createProjectSubDirs("my/src", "my/res", "my/testsrc", "my/testres")
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>
+        <sources>
+            <source>
+                <directory>my/src</directory>
+                <lang>java</lang>
+                <scope>main</scope>
+            </source>
+            <source>
+                <directory>my/res</directory>
+                <lang>resources</lang>
+                <scope>main</scope>
+            </source>
+            <source>
+                <directory>my/testsrc</directory>
+                <lang>java</lang>
+                <scope>test</scope>
+            </source>
+             <source>
+                <directory>my/testres</directory>
+                <lang>resources</lang>
+                <scope>test</scope>
+            </source>
+        </sources>
+      </build>
+      """);
+    assertModules("project")
+    assertSources("project", "my/src")
+    assertTestSources("project", "my/testsrc")
+    assertResources("project", "my/res")
+    assertTestResources("project", "my/testres")
   }
 
   private suspend fun resolveFoldersAndImport() {

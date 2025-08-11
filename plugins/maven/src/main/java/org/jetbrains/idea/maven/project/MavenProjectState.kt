@@ -26,10 +26,7 @@ data class MavenProjectState(
   val buildDirectory: String? = null,
   val outputDirectory: String? = null,
   val testOutputDirectory: String? = null,
-  val sources: List<String> = emptyList(),
-  val testSources: List<String> = emptyList(),
-  val resources: List<MavenResource> = emptyList(),
-  val testResources: List<MavenResource> = emptyList(),
+  val mavenSources: List<MavenSource> = emptyList(),
   val filters: List<String> = emptyList(),
   val properties: Properties? = null,
   val extensions: List<MavenArtifact> = emptyList(),
@@ -69,10 +66,7 @@ data class MavenProjectState(
                                || outputDirectory != newState.outputDirectory
                                || testOutputDirectory != newState.testOutputDirectory)
 
-    result.setHasSourceChanges(!Comparing.equal(sources, newState.sources)
-                               || !Comparing.equal(testSources, newState.testSources)
-                               || !Comparing.equal(resources, newState.resources)
-                               || !Comparing.equal(testResources, newState.testResources))
+    result.setHasSourceChanges(!Comparing.equal(mavenSources, newState.mavenSources))
 
     val repositoryChanged = !Comparing.equal(localRepository, newState.localRepository)
 

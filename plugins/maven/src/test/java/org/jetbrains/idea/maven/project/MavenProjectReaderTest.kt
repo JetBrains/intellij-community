@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
@@ -1910,5 +1911,68 @@ ${System.getProperty("os.name")}</value>
     PlatformTestUtil.assertPathsEqual(targetPath, resource.targetPath)
     assertOrderedElementsAreEqual(resource.includes, includes)
     assertOrderedElementsAreEqual(resource.excludes, excludes)
+  }
+
+  fun `test custom source directories 410 model`() = runBlocking {
+    assumeMaven4()
+    useModel410()
+    val submodulePom = createModulePom("submodule",
+                                       """
+                      <groupId>test</groupId>
+                      <artifactId>submodule</artifactId>
+                      <version>1</version>
+                      <parent>
+                        <groupId>test</groupId>
+                        <artifactId>project</artifactId>
+                        <version>1</version>
+                      </parent>
+                      """.trimIndent())
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <subprojects>
+        <subproject>submodule</subproject>
+      </subprojects>
+      <build>
+        <sources>
+            <source>
+                <directory>my/src</directory>
+                <lang>java</lang>
+                <scope>main</scope>
+            </source>
+            <source>
+                <directory>my/res</directory>
+                <lang>resources</lang>
+                <scope>main</scope>
+            </source>
+            <source>
+                <directory>my/testsrc</directory>
+                <lang>java</lang>
+                <scope>test</scope>
+            </source>
+             <source>
+                <directory>my/testres</directory>
+                <lang>resources</lang>
+                <scope>test</scope>
+            </source>
+        </sources>
+      </build>
+      """);
+    assertModules("project")
+
+
+    val submoduleModelBuild = readProject(submodulePom).build
+
+    val submodulePath = submodulePom.parent.path
+    val srcPaths = listOf(Path.of(submodulePath, "my/src").pathString)
+    val testPaths = listOf(Path.of(submodulePath, "my/testsrc").pathString)
+    val resourcePaths = listOf(Path.of(submodulePath, "my/res").pathString)
+    val testResourcePaths = listOf(Path.of(submodulePath, "my/testsrc").pathString)
+
+    assertEquals(srcPaths, submoduleModelBuild.sources)
+    assertEquals(testPaths, submoduleModelBuild.testSources)
+    assertEquals(resourcePaths, submoduleModelBuild.resources.map { it.directory })
+    assertEquals(testResourcePaths, submoduleModelBuild.testResources.map { it.directory })
   }
 }

@@ -23,17 +23,14 @@ import org.apache.maven.DefaultMaven;
 import org.apache.maven.Maven;
 import org.apache.maven.MavenExecutionException;
 import org.apache.maven.RepositoryUtils;
-import org.apache.maven.api.ArtifactCoordinates;
-import org.apache.maven.api.DependencyCoordinates;
-import org.apache.maven.api.DownloadedArtifact;
-import org.apache.maven.api.Node;
-import org.apache.maven.api.PathScope;
-import org.apache.maven.api.Session;
+import org.apache.maven.api.*;
 import org.apache.maven.api.annotations.Nonnull;
 import org.apache.maven.api.cli.InvokerException;
 import org.apache.maven.api.cli.InvokerRequest;
 import org.apache.maven.api.cli.Logger;
 import org.apache.maven.api.cli.ParserRequest;
+import org.apache.maven.api.cli.mvn.MavenOptions;
+import org.apache.maven.api.model.Source;
 import org.apache.maven.api.services.ArtifactResolver;
 import org.apache.maven.api.services.ArtifactResolverResult;
 import org.apache.maven.api.services.Lookup;
@@ -82,15 +79,7 @@ import org.eclipse.aether.transfer.ArtifactTransferException;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenArchetype;
-import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.model.MavenArtifactInfo;
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.model.MavenModel;
-import org.jetbrains.idea.maven.model.MavenProjectProblem;
-import org.jetbrains.idea.maven.model.MavenRemoteRepository;
-import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
+import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.LongRunningTask;
 import org.jetbrains.idea.maven.server.LongRunningTaskInput;
 import org.jetbrains.idea.maven.server.MavenArtifactResolutionRequest;
@@ -865,12 +854,27 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     MavenProject mavenProject = result.getMavenProject();
     if (mavenProject == null) return new MavenGoalExecutionResult(false, file, folders, problems);
 
-    folders.setSources(mavenProject.getCompileSourceRoots());
-    folders.setTestSources(mavenProject.getTestCompileSourceRoots());
-    folders.setResources(Maven40ModelConverter.convertResources(mavenProject.getModel().getBuild().getResources()));
-    folders.setTestResources(Maven40ModelConverter.convertResources(mavenProject.getModel().getBuild().getTestResources()));
+    folders.setMavenSources(convertSourceRoots(mavenProject.getSourceRoots()));
 
     return new MavenGoalExecutionResult(true, file, folders, problems);
+  }
+
+  private static List<MavenSource> convertSourceRoots(List<Source> roots) {
+    List<MavenSource> list = new ArrayList<>();
+    for (Source it : roots) {
+      MavenSource convert = Maven40ModelConverter.convert(it);
+      list.add(convert);
+    }
+    return list;
+  }
+
+  private static List<MavenSource> convertSourceRoots(Collection<SourceRoot> roots) {
+    List<MavenSource> list = new ArrayList<>();
+    for (SourceRoot it : roots) {
+      MavenSource convert = Maven40ModelConverter.convert(it);
+      list.add(convert);
+    }
+    return list;
   }
 
   private static List<Exception> filterExceptions(List<Throwable> list) {

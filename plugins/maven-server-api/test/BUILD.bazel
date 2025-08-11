@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.maven.server.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "maven-server-tests_test_lib",
+  module_name = "intellij.maven.server.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["java/**/*.kt", "java/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/maven-server-api:maven-server",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:assert_j",
+  ]
+)
+### auto-generated section `build intellij.maven.server.tests` end
+
+### auto-generated section `test intellij.maven.server.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "maven-server-tests_test",
+  runtime_deps = [":maven-server-tests_test_lib"]
+)
+### auto-generated section `test intellij.maven.server.tests` end

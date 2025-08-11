@@ -23,19 +23,11 @@ import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.cli.internal.extension.model.CoreExtension;
-import org.apache.maven.execution.DefaultMavenExecutionRequest;
-import org.apache.maven.execution.MavenExecutionRequest;
-import org.apache.maven.execution.MavenExecutionRequestPopulationException;
-import org.apache.maven.execution.MavenExecutionRequestPopulator;
-import org.apache.maven.execution.MavenExecutionResult;
+import org.apache.maven.execution.*;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
-import org.apache.maven.model.building.DefaultModelBuilder;
-import org.apache.maven.model.building.FileModelSource;
-import org.apache.maven.model.building.ModelBuilder;
-import org.apache.maven.model.building.ModelProblem;
-import org.apache.maven.model.building.ModelProcessor;
+import org.apache.maven.model.building.*;
 import org.apache.maven.model.interpolation.ModelInterpolator;
 import org.apache.maven.model.interpolation.StringSearchModelInterpolator;
 import org.apache.maven.model.io.ModelReader;
@@ -74,20 +66,8 @@ import org.eclipse.aether.transfer.ArtifactTransferException;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.model.MavenArtifactInfo;
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.model.MavenModel;
-import org.jetbrains.idea.maven.model.MavenProjectProblem;
-import org.jetbrains.idea.maven.model.MavenRemoteRepository;
-import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
-import org.jetbrains.idea.maven.server.embedder.CustomMaven3ArtifactFactory;
-import org.jetbrains.idea.maven.server.embedder.CustomMaven3ArtifactResolver;
-import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2;
-import org.jetbrains.idea.maven.server.embedder.CustomMaven3RepositoryMetadataManager;
-import org.jetbrains.idea.maven.server.embedder.CustomModelValidator385;
-import org.jetbrains.idea.maven.server.embedder.Maven3ExecutionResult;
+import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.server.embedder.*;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 import org.jetbrains.idea.maven.server.utils.Maven3SettingsBuilder;
 import org.jetbrains.idea.maven.server.utils.Maven3XProjectResolver;
@@ -98,18 +78,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Overridden maven components:
@@ -707,11 +676,11 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     MavenProject mavenProject = result.getMavenProject();
     if (mavenProject == null) return new MavenGoalExecutionResult(false, file, folders, problems);
 
-    folders.setSources(mavenProject.getCompileSourceRoots());
-    folders.setTestSources(mavenProject.getTestCompileSourceRoots());
-    folders.setResources(Maven3ModelConverter.convertResources(mavenProject.getModel().getBuild().getResources()));
-    folders.setTestResources(Maven3ModelConverter.convertResources(mavenProject.getModel().getBuild().getTestResources()));
-
+    folders.set(mavenProject.getCompileSourceRoots(),
+                mavenProject.getTestCompileSourceRoots(),
+                Maven3ModelConverter.convertResources(mavenProject.getModel().getBuild().getResources()),
+                Maven3ModelConverter.convertResources(mavenProject.getModel().getBuild().getTestResources())
+    );
     return new MavenGoalExecutionResult(true, file, folders, problems);
   }
 

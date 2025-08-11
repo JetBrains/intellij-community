@@ -362,30 +362,30 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testInheritingLanguageLevelFromPluginManagementSection() = runBlocking {
     importProjectAsync(("<groupId>test</groupId>" +
-                   "<artifactId>project</artifactId>" +
-                   "<version>1</version>" +
-                   "<build>" +
-                   "  <pluginManagement>" +
-                   "    <plugins>" +
-                   "      <plugin>" +
-                   "        <groupId>org.apache.maven.plugins</groupId>" +
-                   "        <artifactId>maven-compiler-plugin</artifactId>" +
-                   "        <configuration>" +
-                   "          <source>1.4</source>" +
-                   "        </configuration>" +
-                   "      </plugin>" +
-                   "    </plugins>" +
-                   "  </pluginManagement>" +
-                   "  <plugins>" +
-                   "    <plugin>" +
-                   "      <groupId>org.apache.maven.plugins</groupId>" +
-                   "      <artifactId>maven-compiler-plugin</artifactId>" +
-                   "      <configuration>" +
-                   "          <target>1.5</target>" +
-                   "      </configuration>" +
-                   "    </plugin>" +
-                   "  </plugins>" +
-                   "</build>"))
+                        "<artifactId>project</artifactId>" +
+                        "<version>1</version>" +
+                        "<build>" +
+                        "  <pluginManagement>" +
+                        "    <plugins>" +
+                        "      <plugin>" +
+                        "        <groupId>org.apache.maven.plugins</groupId>" +
+                        "        <artifactId>maven-compiler-plugin</artifactId>" +
+                        "        <configuration>" +
+                        "          <source>1.4</source>" +
+                        "        </configuration>" +
+                        "      </plugin>" +
+                        "    </plugins>" +
+                        "  </pluginManagement>" +
+                        "  <plugins>" +
+                        "    <plugin>" +
+                        "      <groupId>org.apache.maven.plugins</groupId>" +
+                        "      <artifactId>maven-compiler-plugin</artifactId>" +
+                        "      <configuration>" +
+                        "          <target>1.5</target>" +
+                        "      </configuration>" +
+                        "    </plugin>" +
+                        "  </plugins>" +
+                        "</build>"))
     assertModules("project")
     TestCase.assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForModule())
   }
@@ -1092,28 +1092,28 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testCompilerPluginConfigurationUnresolvedCompilerArguments() = runBlocking {
     importProjectAsync(("<groupId>test</groupId>" +
-                   "<artifactId>project</artifactId>" +
-                   "<version>1</version>" +
-                   "<build>" +
-                   "  <plugins>" +
-                   "    <plugin>" +
-                   "      <groupId>org.apache.maven.plugins</groupId>" +
-                   "      <artifactId>maven-compiler-plugin</artifactId>" +
-                   "      <configuration>" +
-                   "        <compilerId>\${maven.compiler.compilerId}</compilerId>" +
-                   "        <compilerArgument>\${unresolvedArgument}</compilerArgument>" +
-                   "        <compilerArguments>" +
-                   "          <d>path/with/braces_\${</d>" +
-                   "          <anotherStrangeArg>\${_\${foo}</anotherStrangeArg>" +
-                   "        </compilerArguments>" +
-                   "        <compilerArgs>" +
-                   "          <arg>\${anotherUnresolvedArgument}</arg>" +
-                   "          <arg>-myArg</arg>" +
-                   "        </compilerArgs>" +
-                   "      </configuration>" +
-                   "    </plugin>" +
-                   "  </plugins>" +
-                   "</build>"))
+                        "<artifactId>project</artifactId>" +
+                        "<version>1</version>" +
+                        "<build>" +
+                        "  <plugins>" +
+                        "    <plugin>" +
+                        "      <groupId>org.apache.maven.plugins</groupId>" +
+                        "      <artifactId>maven-compiler-plugin</artifactId>" +
+                        "      <configuration>" +
+                        "        <compilerId>\${maven.compiler.compilerId}</compilerId>" +
+                        "        <compilerArgument>\${unresolvedArgument}</compilerArgument>" +
+                        "        <compilerArguments>" +
+                        "          <d>path/with/braces_\${</d>" +
+                        "          <anotherStrangeArg>\${_\${foo}</anotherStrangeArg>" +
+                        "        </compilerArguments>" +
+                        "        <compilerArgs>" +
+                        "          <arg>\${anotherUnresolvedArgument}</arg>" +
+                        "          <arg>-myArg</arg>" +
+                        "        </compilerArgs>" +
+                        "      </configuration>" +
+                        "    </plugin>" +
+                        "  </plugins>" +
+                        "</build>"))
     assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
     assertUnorderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project")),
                                     "-myArg", "-d", "path/with/braces_\${")
@@ -1333,6 +1333,55 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
       </build> """.trimIndent())
 
     assertModules("project")
+  }
+
+  @Test
+  fun testLanguageLevelMavenSourcesTag() = runBlocking {
+    assumeMaven4()
+    useModel410()
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>  
+        <sources>
+          <source>
+            <directory>src</directory>
+            <targetVersion>17</targetVersion>
+          </source>
+        </sources>
+      </build>""")
+    assertModules("project")
+    assertEquals(LanguageLevel.parse("17"), getLanguageLevelForModule())
+  }
+
+  @Test
+  fun testLanguageLevelSplittedForMavenSourcesTag() = runBlocking {
+    assumeMaven4()
+    useModel410()
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>  
+        <sources>
+          <source>
+            <directory>test</directory>
+            <targetVersion>17</targetVersion>
+            <scope>test</scope>
+          </source>
+          <source>
+            <directory>src</directory>
+            <targetVersion>11</targetVersion>
+          </source>
+        </sources>
+      </build>""")
+    assertModules("project", "project.main", "project.test")
+    assertModules("project", "project.main", "project.test")
+    TestCase.assertEquals(LanguageLevel.JDK_11, LanguageLevel.parse(
+      ideCompilerConfiguration.getBytecodeTargetLevel(getModule("project.main"))))
+    TestCase.assertEquals(LanguageLevel.JDK_17, LanguageLevel.parse(
+      ideCompilerConfiguration.getBytecodeTargetLevel(getModule("project.test"))))
   }
 
 }
