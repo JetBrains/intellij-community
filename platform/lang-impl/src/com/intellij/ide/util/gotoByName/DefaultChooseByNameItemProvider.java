@@ -182,9 +182,10 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
       long started = System.currentTimeMillis();
       String fullPattern = parameters.getCompletePattern();
       MinusculeMatcher matcher = buildPatternMatcher(namePattern, preferStartMatches);
+      MinusculeMatcher fullMatcher = buildPatternMatcher(fullPattern, preferStartMatches);
       ((ChooseByNameModelEx)model).processNames(sequence -> {
         indicator.checkCanceled();
-        MatchResult result = matches(base, fullPattern, matcher, sequence);
+        MatchResult result = matchesWithFullMatcherCheck(base, fullMatcher, fullPattern, matcher, sequence);
         if (result != null) {
           collect.consume(result);
           return true;
@@ -355,7 +356,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     MinusculeMatcher matcher = buildPatternMatcher(pattern, preferStartMatches);
     Processor<String> processor = name -> {
       ProgressManager.checkCanceled();
-      MatchResult result = matches(base, pattern, matcher, name);
+      MatchResult result = matchesWithFullMatcherCheck(base, null, pattern, matcher, name);
       if (result != null) {
         consumer.consume(result);
       }
@@ -383,6 +384,25 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
       pattern = ((ContributorsBasedGotoByModel)model).removeModelSpecificMarkup(pattern);
     }
     return pattern;
+  }
+
+  @ApiStatus.Internal
+  protected static @Nullable MatchResult matchesWithFullMatcherCheck(@NotNull ChooseByNameViewModel base,
+                                                                   @Nullable MinusculeMatcher fullMatcher,
+                                                                   @NotNull String pattern,
+                                                                   @NotNull MinusculeMatcher matcher,
+                                                                   @Nullable String name) {
+    if (name == null) {
+      return null;
+    }
+    if (base.getModel() instanceof MatchResultCustomizerModel customizerModel && fullMatcher != null) {
+      MatchResult customResult = customizerModel.getCustomRulesMatchResult(fullMatcher, pattern, matcher, name);
+      if (customResult != null) {
+        return customResult;
+      }
+    }
+
+    return matches(base, pattern, matcher, name);
   }
 
   protected static @Nullable MatchResult matches(@NotNull ChooseByNameViewModel base,
