@@ -31,8 +31,3 @@ abstract class TerminalPromotedEditorAction(handler: EditorActionHandler) : Edit
     return listOf(this)
   }
 }
-
-@ApiStatus.Internal
-abstract class TerminalFrontendEditorAction(
-  handler: EditorActionHandler
-) : TerminalPromotedEditorAction(handler), ActionRemoteBehaviorSpecification.Frontend
