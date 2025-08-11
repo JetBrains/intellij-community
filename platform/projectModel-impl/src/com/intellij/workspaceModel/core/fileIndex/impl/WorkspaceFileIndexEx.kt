@@ -186,7 +186,8 @@ sealed interface WorkspaceFileInternalInfo {
   abstract override fun toString(): String
 }
 
-internal sealed interface MultipleWorkspaceFileSets : WorkspaceFileInternalInfo {
+@ApiStatus.Internal
+sealed interface MultipleWorkspaceFileSets : WorkspaceFileInternalInfo {
   override val fileSets: List<WorkspaceFileSetWithCustomData<*>>
   fun find(acceptedCustomDataClass: Class<out WorkspaceFileSetData>?): WorkspaceFileSetWithCustomData<*>?
 }

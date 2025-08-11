@@ -8,6 +8,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
@@ -49,7 +50,7 @@ private fun WorkspaceFileIndexEx.contentUnindexedRoots(): Set<VirtualFile> {
 internal fun iterateNonIndexableFilesImpl(project: Project, inputFilter: VirtualFileFilter?, processor: ContentIterator): Boolean {
   val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
   val roots: Set<VirtualFile> = ReadAction.nonBlocking<Set<VirtualFile>> { workspaceFileIndex.contentUnindexedRoots() }.executeSynchronously()
-  return workspaceFileIndex.iterateNonIndexableFilesImpl(roots, inputFilter ?: VirtualFileFilter.ALL, processor)
+  return iterateNonIndexableFilesImpl(project, roots, inputFilter ?: VirtualFileFilter.ALL, processor)
 }
 
 private data class AllFileSets(val recursive: List<WorkspaceFileSet>, val nonRecursive: List<WorkspaceFileSet>)
@@ -61,16 +62,19 @@ private fun WorkspaceFileIndex.allIndexableFileSets(root: VirtualFile): AllFileS
 }.let { (recursive, nonRecursive) -> AllFileSets(recursive, nonRecursive) }
 
 @RequiresBackgroundThread
-private fun WorkspaceFileIndex.iterateNonIndexableFilesImpl(roots: Set<VirtualFile>, filter: VirtualFileFilter, processor: ContentIterator): Boolean {
+private fun iterateNonIndexableFilesImpl(project: Project, roots: Set<VirtualFile>, filter: VirtualFileFilter, processor: ContentIterator): Boolean {
+  val workspaceFileIndex = WorkspaceFileIndex.getInstance(project)
+  val projectFileIndex = ProjectFileIndex.getInstance(project)
   for (root in roots) {
     val res = VfsUtilCore.visitChildrenRecursively(root, object : VirtualFileVisitor<Any?>() {
       override fun visitFileEx(file: VirtualFile): Result {
         ProgressManager.checkCanceled()
-        val currentIndexableFileSets = allIndexableFileSets(root = file)
+        if (projectFileIndex.isExcluded(file)) return SKIP_CHILDREN
+        val currentIndexableFileSets = workspaceFileIndex.allIndexableFileSets(root = file)
         return when {
-          !filter.accept(file) -> SKIP_CHILDREN
           currentIndexableFileSets.recursive.isNotEmpty() -> SKIP_CHILDREN
           currentIndexableFileSets.nonRecursive.isNotEmpty() -> CONTINUE // skip only the current file, children can be non-indexable
+          !filter.accept(file) -> SKIP_CHILDREN
           !processor.processFile(file) -> skipTo(root) // terminate processing
           else -> CONTINUE
         }
@@ -115,6 +119,8 @@ private class NonIndexableFilesDequeImpl(private val project: Project, private v
 
       if (file in visitedRoots) continue
       if (file in roots) visitedRoots.add(file)
+
+      if (ProjectFileIndex.getInstance(project).isExcluded(file)) continue
 
       val indexableFileSets = WorkspaceFileIndexEx.getInstance(project).allIndexableFileSets(file)
 

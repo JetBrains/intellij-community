@@ -68,9 +68,12 @@ class SearchInNonIndexableTest() {
     val indexableNonRecursive = baseDir.newVirtualDirectory("non-indexable/indexable-non-recursive").toVirtualFileUrl(urlManager)
     baseDir.newVirtualFile("non-indexable/indexable-non-recursive/non-indexable-beats-non-recursive-content", "this is a file with some data".toByteArray())
 
+    val excludedDir = baseDir.newVirtualDirectory("non-indexable/excluded").toVirtualFileUrl(urlManager)
+    baseDir.newVirtualFile("non-indexable/excluded/file-in-excluded", "this is a file inside an excluded directory".toByteArray())
+
     project.workspaceModel.update("add non-indexable root") { storage ->
       storage.addEntity(NonIndexableTestEntity(nonIndexableDir, NonPersistentEntitySource))
-      storage.addEntity(IndexingTestEntity(listOf(indexableDir), emptyList(), NonPersistentEntitySource))
+      storage.addEntity(IndexingTestEntity(listOf(indexableDir), listOf(excludedDir), NonPersistentEntitySource))
       storage.addEntity(NonRecursiveTestEntity(indexableNonRecursive, NonPersistentEntitySource))
     }
     VfsTestUtil.syncRefresh()
