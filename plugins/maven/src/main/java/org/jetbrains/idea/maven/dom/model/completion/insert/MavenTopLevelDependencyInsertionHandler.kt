@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlText
 import org.jetbrains.idea.maven.dom.MavenDomUtil
-import org.jetbrains.idea.maven.dom.generate.GenerateDependencyAction
+import org.jetbrains.idea.maven.dom.generate.GenerateDependencyProvider
 import org.jetbrains.idea.maven.dom.generate.GenerateManagedDependencyAction
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
@@ -40,9 +40,7 @@ internal class MavenTopLevelDependencyInsertionHandler : InsertHandler<LookupEle
       }
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments()
-    val dependency =
-      GenerateDependencyAction.createDependency(model, context.editor, managedDependencies,
-                                                mutableListOf<MavenRepositoryArtifactInfo?>(obj))
+    val dependency = GenerateDependencyProvider.createDependency(model, context.editor, managedDependencies, listOf(obj))
 
     element.delete()
     if (dependency != null && dependency.getXmlTag() != null) {
