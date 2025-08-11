@@ -88,7 +88,6 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
                    "Compiler outputs may only be updated under write action. " +
                    "This method is deprecated. Please consider using `setCompilerOutputUrl` instead.");
 
-    ThreadingAssertions.assertWriteAccess(); // TODO: check usages
     myCompilerOutput = pointer;
   }
 
