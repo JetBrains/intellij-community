@@ -285,8 +285,10 @@ internal class IslandsUICustomization : InternalUICustomization() {
           }
         }
 
-        if (!isIslands && toolWindowPaneParent.border != null) {
-          toolWindowPaneParent.border = null
+        if (!isIslands) {
+          if (toolWindowPaneParent.border != null) {
+            toolWindowPaneParent.border = null
+          }
           return@addVisibleToolbarsListener
         }
 
