@@ -141,9 +141,6 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       .row(resizable = true).cell(resultsScrollPane, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL, resizableColumn = true)
       .row().cell(extendedInfoContainer, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
 
-    // hide resultsScrollPane and extendedInfoContainer
-    updateViewMode()
-
     textField.text = vm.searchPattern.value
     textField.selectAll()
     textField.document.addDocumentListener(object : DocumentAdapter() {
@@ -151,6 +148,13 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
         vm.setSearchText(textField.text)
       }
     })
+
+    if (textField.text.isNotEmpty()) {
+      isCompactViewMode = false
+    }
+
+    // hide resultsScrollPane and extendedInfoContainer if isCompactViewMode = true
+    updateViewMode()
 
     addHistoryExtensionToTextField()
 
@@ -697,7 +701,6 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
 
   private fun updateViewMode(compact: Boolean) {
     extendedInfoContainer.isVisible = !compact && isExtendedInfoEnabled()
-    resultsScrollPane.isVisible = !compact
 
     if (compact == isCompactViewMode) return
     isCompactViewMode = compact
