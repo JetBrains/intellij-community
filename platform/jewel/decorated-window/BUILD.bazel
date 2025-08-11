@@ -3,28 +3,29 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
-  name = "custom",
-  context_receivers = True,
+  name = "custom_decorated-window",
   opt_in = [
     "androidx.compose.ui.ExperimentalComposeUiApi",
     "androidx.compose.foundation.ExperimentalFoundationApi",
     "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
     "org.jetbrains.jewel.foundation.InternalJewelApi",
-  ]
+  ],
+  x_context_receivers = True,
+  x_explicit_api_mode = "strict"
 )
 
 jvm_resources(
-  name = "decoratedWindow_resources",
+  name = "decorated-window_resources",
   files = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
 jvm_library(
-  name = "decoratedWindow",
+  name = "decorated-window",
   module_name = "intellij.platform.jewel.decoratedWindow",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/java/**/*.kt", "src/main/java/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom_decorated-window",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -32,9 +33,15 @@ jvm_library(
     "//platform/jewel/ui",
     "//libraries/compose-foundation-desktop",
     "//platform/jewel/foundation",
+    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
     "@lib//:jna",
+    "@lib//:jbr-api",
   ],
-  runtime_deps = [":decoratedWindow_resources"],
+  exports = [
+    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
+    "@lib//:jbr-api",
+  ],
+  runtime_deps = [":decorated-window_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.platform.jewel.decoratedWindow` end
