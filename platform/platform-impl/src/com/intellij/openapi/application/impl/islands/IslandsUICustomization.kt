@@ -324,7 +324,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
           val shift = SwingUtilities.convertPoint(component, 0, 0, glassPane)
 
           g.translate(-shift.x, -shift.y)
-          editorEmptyTextPainter.paintEmptyText(glassPane, g)
+          editorEmptyTextPainter.doPaintEmptyText(glassPane, g)
           g.translate(shift.x, shift.y)
         }
 
