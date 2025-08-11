@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.model.task;
 
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
@@ -100,7 +101,25 @@ public interface ExternalSystemTaskNotificationListener extends EventListener {
    * @param text   text produced by the external system during the target task execution
    * @param outputType type of the output (stdout, stderr, or system)
    */
-  default void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType outputType) {}
+  default void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType outputType) {
+    Class<?> interfaceClass = ExternalSystemTaskNotificationListener.class;
+    Class<?>[] parameters = {ExternalSystemTaskId.class, String.class, boolean.class};
+    if (ReflectionUtil.hasOverriddenMethod(getClass(), interfaceClass, "onTaskOutput", parameters)) {
+      onTaskOutput(id, text, outputType.isStdout());
+    }
+  }
+
+  /**
+   * @deprecated Use the onTaskOutput method with the ProcessOutputType parameter instead.
+   */
+  @Deprecated
+  default void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+    Class<?> interfaceClass = ExternalSystemTaskNotificationListener.class;
+    Class<?>[] parameters = {ExternalSystemTaskId.class, String.class, ProcessOutputType.class};
+    if (ReflectionUtil.hasOverriddenMethod(getClass(), interfaceClass, "onTaskOutput", parameters)) {
+      onTaskOutput(id, text, stdOut ? ProcessOutputType.STDOUT : ProcessOutputType.STDERR);
+    }
+  }
 
   /**
    * @deprecated use {@link #onEnd(String, ExternalSystemTaskId)} instead

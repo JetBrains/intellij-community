@@ -217,6 +217,30 @@ public final class ReflectionUtil {
     return null;
   }
 
+  /**
+   * Checks that {@code objectClass} or their super classes and interfaces override
+   * the {@code methodName} method from the defined {@code interfaceClass}.
+   * The implemented or default methods of the {@code interfaceClass} are excluded from this check.
+   * <p>
+   * Requires the {@code methodName} method should be directly declared in the {@code interfaceClass}.
+   * Otherwise, it returns {@code false}.
+   */
+  public static boolean hasOverriddenMethod(
+    @NotNull Class<?> objectClass,
+    @NotNull Class<?> interfaceClass,
+    @NotNull String methodName,
+    @NotNull Class<?> @NotNull ... parameters
+  ) {
+    try {
+      Method objectMethod = objectClass.getMethod(methodName, parameters);
+      Method interfaceMethod = interfaceClass.getDeclaredMethod(methodName, parameters);
+      return !objectMethod.equals(interfaceMethod);
+    }
+    catch (NoSuchMethodException e) {
+      return false;
+    }
+  }
+
   public static <T> T getField(@NotNull Class<?> objectClass, @Nullable Object object, @Nullable("null means any type") Class<T> fieldType, @NotNull @NonNls String fieldName) {
     try {
       Field field = findAssignableField(objectClass, fieldType, fieldName);

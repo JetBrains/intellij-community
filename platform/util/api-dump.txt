@@ -307,6 +307,8 @@ com.intellij.util.Producer
 - java.util.function.Supplier
 - get():java.lang.Object
 - a:produce():java.lang.Object
+f:com.intellij.util.ReflectionUtil
+- s:hasOverriddenMethod(java.lang.Class,java.lang.Class,java.lang.String,java.lang.Class[]):Z
 com.intellij.util.ThrowableConvertor
 - a:convert(java.lang.Object):java.lang.Object
 com.intellij.util.ThrowablePairConsumer

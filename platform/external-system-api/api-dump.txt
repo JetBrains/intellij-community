@@ -870,6 +870,7 @@ com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationLis
 - onSuccess(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
 - onSuccess(java.lang.String,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
 - onTaskOutput(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String,com.intellij.execution.process.ProcessOutputType):V
+- onTaskOutput(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String,Z):V
 a:com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 - com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 - <init>():V
