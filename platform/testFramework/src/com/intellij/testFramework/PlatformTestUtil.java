@@ -82,10 +82,8 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import junit.framework.AssertionFailedError;
 import kotlin.Unit;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import kotlinx.coroutines.Job;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.junit.AssumptionViolatedException;
@@ -513,6 +511,25 @@ public final class PlatformTestUtil {
       });
       return null;
     });
+  }
+
+  @TestOnly
+  public static void waitForSingleAlarm(@NotNull SingleAlarm alarm, long timeout, @NotNull TimeUnit timeUnit) throws TimeoutException {
+    Job job = alarm.getCurrentJob();
+    if (job == null) {
+      return;
+    }
+
+    long currentTime = System.currentTimeMillis();
+    while (true) {
+      if (!job.isActive()) {
+        return;
+      }
+      if (getMillisSince(currentTime) > timeUnit.toMillis(timeout)) {
+        throw new TimeoutException("Could not wait for " + alarm + "to finish");
+      }
+      dispatchAllEventsInIdeEventQueue();
+    }
   }
 
   /**

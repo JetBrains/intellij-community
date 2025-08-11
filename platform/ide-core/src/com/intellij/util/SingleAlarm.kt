@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Alarm.ThreadToUse
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.RawSwingDispatcher
 import kotlinx.coroutines.*
@@ -263,7 +264,11 @@ class SingleAlarm internal constructor(
   val isEmpty: Boolean
     get() = synchronized(LOCK) { currentJob == null }
 
+  /**
+   * For EDT, consider using PlatformTestUtil.waitForSingleAlarm instead
+   */
   @TestOnly
+  @RequiresBackgroundThread
   fun waitForAllExecuted(timeout: Long, timeUnit: TimeUnit) {
     require(ApplicationManager.getApplication().isUnitTestMode)
 
@@ -283,21 +288,10 @@ class SingleAlarm internal constructor(
   }
 
   @TestOnly
-  internal fun waitForAllExecutedInEdt(timeout: Duration) {
+  @Internal
+  fun getCurrentJob(): Job? {
     require(ApplicationManager.getApplication().isUnitTestMode)
-
-    if (currentJob == null) {
-      return
-    }
-
-    @Suppress("RAW_RUN_BLOCKING", "RedundantSuppression")
-    runBlocking {
-      withTimeout(timeout) {
-        while (currentJob != null) {
-          EDT.dispatchAllInvocationEvents()
-        }
-      }
-    }
+    return currentJob
   }
 
   fun request() {
