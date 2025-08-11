@@ -191,7 +191,7 @@ public abstract class TextExtractor {
                                       List<TextContent> contents) {
     contents.forEach(content -> {
       int startOffset = content.textOffsetToFile(0);
-      int endOffset = content.textOffsetToFile(content.length() - 1);
+      int endOffset = content.textOffsetToFile(content.length());
       TextRange psiRangeInFile = psi.getTextRange();
       if (psiRangeInFile.getStartOffset() > startOffset || psiRangeInFile.getEndOffset() < endOffset) {
         for (ASTNode child : psi.getParent().getNode().getChildren(null)) {
