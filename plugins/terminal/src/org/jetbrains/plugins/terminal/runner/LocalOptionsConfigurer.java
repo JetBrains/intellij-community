@@ -8,13 +8,14 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.EelPlatformKt;
 import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.utils.EelUtilsKt;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.EnvironmentRestorer;
@@ -113,23 +114,20 @@ public final class LocalOptionsConfigurer {
   private static @NotNull Map<String, String> getTerminalEnvironment(@NotNull Map<String, String> baseEnvs,
                                                                      @NotNull String workingDir,
                                                                      @NotNull Project project,
-                                                                     @Nullable EelDescriptor eelDescriptor) {
-    final var isWindows =
-      eelDescriptor == null
-      ? SystemInfo.isWindows
-      : switch (eelDescriptor.getOsFamily()) {
-        case Posix -> false;
-        case Windows -> true;
-      };
+                                                                     @NotNull EelDescriptor eelDescriptor) {
+    final var isWindows = EelPlatformKt.isWindows(eelDescriptor.getOsFamily());
 
     Map<String, String> envs = isWindows ? CollectionFactory.createCaseInsensitiveStringMap() : new HashMap<>();
     EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(project).getEnvData();
     if (envData.isPassParentEnvs()) {
-      if (eelDescriptor != null) {
-        envs.putAll(fetchLoginShellEnvVariables(eelDescriptor));
+      if (eelDescriptor == LocalEelDescriptor.INSTANCE) {
+        // Use the default environment variables when running locally.
+        // Calling `fetchLoginShellEnvVariables(eelDescriptor)` retrieves shell environment variables
+        // via `com.intellij.util.EnvironmentUtil.getEnvironmentMap`, which can break PATH.
+        envs.putAll(System.getenv());
       }
       else {
-        envs.putAll(System.getenv());
+        envs.putAll(fetchLoginShellEnvVariables(eelDescriptor));
       }
       EnvironmentRestorer.restoreOverriddenVars(envs);
     }
