@@ -99,7 +99,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import static com.intellij.codeInsight.daemon.impl.FileLevelComponentUtil.doAddFileLevelInfoComponent;
 import static com.intellij.codeInsight.daemon.impl.FileLevelComponentUtil.doRemoveFileLevelInfoComponent;
 
-@SuppressWarnings({"IncorrectCancellationExceptionHandling", "removal", "deprecation", "UsagesOfObsoleteApi"})
 @State(name = "DaemonCodeAnalyzer", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 @ApiStatus.Internal
 public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
