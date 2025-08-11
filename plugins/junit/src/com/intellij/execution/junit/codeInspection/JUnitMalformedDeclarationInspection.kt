@@ -25,6 +25,7 @@ import com.intellij.lang.java.request.CreateFieldFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
+import com.intellij.lang.jvm.JvmValue
 import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.lang.jvm.types.JvmType
@@ -45,6 +46,7 @@ import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.util.asSafely
+import com.siyeh.ig.fixes.SerialVersionUIDBuilder
 import com.siyeh.ig.junit.JUnitCommonClassNames.*
 import com.siyeh.ig.psiutils.TestUtils
 import com.siyeh.ig.psiutils.TypeUtils
@@ -713,25 +715,20 @@ private class JUnitMalformedSignatureVisitor(
     )
     val className = StringUtil.getPackageName(sourceProviderName, '#')
     return if (isOnTheFly && className.isEmpty()) {
-      val modifiers = mutableListOf(JvmModifier.PUBLIC)
+      val modifiers = mutableListOf(JvmModifier.PRIVATE, JvmModifier.FINAL)
       if (!TestUtils.testInstancePerClass(containingClass)) modifiers.add(JvmModifier.STATIC)
       val elementFactory = JavaPsiFacade.getElementFactory(containingClass.project)
       val sourceFieldType = elementFactory.createTypeFromText(FIELD_SOURCE_TYPE, containingClass)
-      val sourceField = elementFactory.createField(sourceProviderName, sourceFieldType).apply {
-        modifierList?.setModifierProperty(PsiModifier.PUBLIC, true)
-        modifierList?.setModifierProperty(PsiModifier.STATIC, true)
-      }
-
-      val sourceFieldReference = elementFactory.createExpressionFromText(sourceProviderName, sourceField) as PsiReferenceExpression
-      val createFieldRequest = object : CreateFieldFromJavaUsageRequest(
-        reference = sourceFieldReference,
+      val request = fieldRequest(
+        fieldName = sourceProviderName,
+        annotations = emptyList(),
         modifiers = modifiers,
-        isConstant = true,
-        useAnchor = false
-      ) {
-        override fun getFieldType() = listOf(expectedType(sourceFieldType))
-      }
-      val actions = createAddFieldActions(containingClass, createFieldRequest)
+        fieldType = expectedTypes(sourceFieldType),
+        targetSubstitutor = PsiJvmSubstitutor(containingClass.project, PsiSubstitutor.EMPTY),
+        initializer = null,
+        isConstant = false
+      )
+      val actions = createAddFieldActions(containingClass, request)
       val quickFixes = IntentionWrapper.wrapToQuickFixes(actions, containingClass.containingFile).toTypedArray()
 
       holder.registerProblem(anchor.navigationElement, message, *quickFixes)
@@ -1441,7 +1438,7 @@ private class JUnitMalformedSignatureVisitor(
 
     const val TEST_INSTANCE_PER_CLASS = "@org.junit.jupiter.api.TestInstance(TestInstance.Lifecycle.PER_CLASS)"
     const val METHOD_SOURCE_RETURN_TYPE = "java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments>"
-    const val FIELD_SOURCE_TYPE = "java.util.Collection<java.lang.Object>"
+    const val FIELD_SOURCE_TYPE = "java.util.Collection<org.junit.jupiter.params.provider.Arguments>"
 
     val checkableRunners = listOf(
       "org.junit.runners.AllTests",

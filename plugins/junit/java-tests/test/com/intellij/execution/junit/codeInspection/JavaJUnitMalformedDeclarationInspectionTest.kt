@@ -1384,22 +1384,23 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       import org.junit.jupiter.params.provider.FieldSource;
       
       class Test {
-        @FieldSource("li<caret>st")
-        @ParameterizedTest
-        void foo(String param) { }
+          @FieldSource("li<caret>st")
+          @ParameterizedTest
+          void foo(String param) { }
       }
     """.trimIndent(), """
       import org.junit.jupiter.params.ParameterizedTest;
+      import org.junit.jupiter.params.provider.Arguments;
       import org.junit.jupiter.params.provider.FieldSource;
 
       import java.util.Collection;
 
       class Test {
-          public static final Collection<Object> list = ;
+          private static final Collection<Arguments> list = ;
 
           @FieldSource("list")
-        @ParameterizedTest
-        void foo(String param) { }
+          @ParameterizedTest
+          void foo(String param) { }
       }
     """.trimIndent(), "Create constant field 'list' in 'Test'", testPreview = true)
     }

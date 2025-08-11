@@ -37,6 +37,8 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestV57 : KotlinJUnitMal
 }
 
 abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnitMalformedDeclarationInspectionTestBase(JUNIT5_LATEST) {
+  abstract val pluginVersion: String
+
   /* Malformed extensions */
   fun `test malformed extension no highlighting`() {
     myFixture.testHighlighting(
@@ -1166,6 +1168,7 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
     """.trimIndent(), "Add method 'parameters' to 'Test'") // TODO make createMethod preview work
   }
 
+  // TODO remove the "pluginVersion" property after fixing KTIJ-35230
   fun `test malformed parameterized introduce field source quick fix`() {
     myFixture.testQuickFix(
       JvmLanguage.KOTLIN, """
@@ -1173,25 +1176,25 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
       import org.junit.jupiter.params.provider.FieldSource
       
       class Test {
-        @FieldSource("para<caret>meters")
-        @ParameterizedTest
-        fun foo(param: String) { }
+          @FieldSource("para<caret>meters")
+          @ParameterizedTest
+          fun foo(param: String) { }
       }
     """.trimIndent(), """
       import org.junit.jupiter.params.ParameterizedTest
+      import org.junit.jupiter.params.provider.Arguments
       import org.junit.jupiter.params.provider.FieldSource
 
       class Test {
-        @FieldSource("parameters")
-        @ParameterizedTest
-        fun foo(param: String) { }
+          @FieldSource("parameters")
+          @ParameterizedTest
+          fun foo(param: String) { }
 
           companion object {
-              @JvmField
-              const val parameters: MutableCollection<Any> = TODO("initialize me")
+              private${if(pluginVersion == "K1") " final" else ""} val parameters: MutableCollection<Arguments> = TODO("initialize me")
           }
       }
-    """.trimIndent(), "Add 'const val' property 'parameters' to 'Test'")
+    """.trimIndent(), "Add 'val' property 'parameters' to 'Test'")
   }
 
   fun `test malformed parameterized create csv source quick fix`() {
