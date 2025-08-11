@@ -8,9 +8,9 @@ internal class BazelFileUpdater(private val file: Path) {
   private var originalContent: String? = runCatching { Files.readString(file) }.getOrNull()
   private var fileContent: String? = originalContent
 
-  fun removeSections(sectionName: String) {
+  fun removeSections(sectionNamePrefix: String) {
     val fileContent = fileContent ?: return
-    val pattern = Regex("### auto-generated section `$sectionName[^`]*` start[.\\n\\s\\S]*?### auto-generated section `$sectionName[^`]*` end")
+    val pattern = Regex("### auto-generated section `$sectionNamePrefix[^`]*` start[.\\n\\s\\S]*?### auto-generated section `$sectionNamePrefix[^`]*` end")
     this.fileContent = fileContent.replace(pattern, "").trim().takeIf { it.isNotBlank() }
   }
 

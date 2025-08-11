@@ -149,27 +149,32 @@ internal class BazelBuildFileGenerator(
 
   data class LibraryKey(
     @JvmField
-    val owner: LibOwnerDescriptor,
+    val container: LibraryContainer,
     @JvmField
     val targetName: String
   )
 
-  val libs: Object2ObjectOpenHashMap<LibraryKey, MavenLibrary> = Object2ObjectOpenHashMap()
-  val localLibs: Object2ObjectOpenHashMap<LibraryKey, LocalLibrary> = Object2ObjectOpenHashMap()
+  val mavenLibraries: Object2ObjectOpenHashMap<LibraryKey, MavenLibrary> = Object2ObjectOpenHashMap()
+  val localLibraries: Object2ObjectOpenHashMap<LibraryKey, LocalLibrary> = Object2ObjectOpenHashMap()
 
-  private val providedRequested = HashSet<LibOwner>()
+  private val providedLibraries: ProvidedLibraries = ProvidedLibraries()
+  class ProvidedLibraries() {
+    private val providedLibraries: MutableSet<Library> = mutableSetOf()
+    fun isProvided(library: Library): Boolean = providedLibraries.contains(library)
+    fun markAsProvided(library: Library) { providedLibraries.add(library) }
+  }
 
   private val generated = IdentityHashMap<ModuleDescriptor, Boolean>()
 
-  private val communityLibOwner = LibOwnerDescriptor(
+  private val communityLibraries = LibraryContainer(
     repoLabel = "@lib",
     buildFile = communityRoot.resolve("lib/BUILD.bazel"),
     moduleFile = communityRoot.resolve("lib/MODULE.bazel"),
     isCommunity = true
   )
 
-  private val ultimateLibOwner = ultimateRoot?.let { ultimate ->
-    LibOwnerDescriptor(
+  private val ultimateLibraries = ultimateRoot?.let { ultimate ->
+    LibraryContainer(
       repoLabel = "@ultimate_lib",
       buildFile = ultimate.resolve("lib/BUILD.bazel"),
       moduleFile = ultimate.resolve("lib/MODULE.bazel"),
@@ -177,14 +182,14 @@ internal class BazelBuildFileGenerator(
     )
   }
 
-  fun getLibOwner(isCommunity: Boolean): LibOwnerDescriptor = if (isCommunity) {
-    communityLibOwner
+  fun getLibraryContainer(isCommunity: Boolean): LibraryContainer = if (isCommunity) {
+    communityLibraries
   }
   else {
-    require(ultimateLibOwner != null) {
+    require(ultimateLibraries != null) {
       "requesting ultimate lib owner, but ultimate root is not present"
     }
-    ultimateLibOwner
+    ultimateLibraries
   }
 
   fun generateLibs(
@@ -193,7 +198,7 @@ internal class BazelBuildFileGenerator(
   ) {
     val fileToLabelTracker = LinkedHashMap<Path, MutableSet<String>>()
     val fileToUpdater = LinkedHashMap<Path, BazelFileUpdater>()
-    for ((owner, list) in libs
+    for ((owner, list) in mavenLibraries
       .values
       .groupByTo(
       destination = TreeMap(
@@ -202,7 +207,7 @@ internal class BazelBuildFileGenerator(
           { it.buildFile.invariantSeparatorsPathString },
         )
       ),
-      keySelector = { it.lib.owner },
+      keySelector = { it.target.container },
     )) {
       val bazelFileUpdater = fileToUpdater.computeIfAbsent(owner.buildFile) {
         val updater = BazelFileUpdater(it)
@@ -211,9 +216,9 @@ internal class BazelBuildFileGenerator(
         updater
       }
 
-      val sortedList = list.sortedBy { it.lib.targetName }
+      val sortedList = list.sortedBy { it.target.targetName }
 
-      val groupedByTargetName = sortedList.groupBy { it.lib.targetName }
+      val groupedByTargetName = sortedList.groupBy { it.target.targetName }
 
       val labelTracker = fileToLabelTracker.computeIfAbsent(owner.moduleFile) { HashSet() }
       buildFile(out = bazelFileUpdater, sectionName = owner.sectionName) {
@@ -224,7 +229,7 @@ internal class BazelBuildFileGenerator(
           if (libs.size > 1) {
             throw IllegalStateException("More than one versions: $entry")
           }
-          generateMavenLib(lib = libs.single(), labelTracker = labelTracker, providedRequested = providedRequested, libVisibility = owner.visibility)
+          generateMavenLib(lib = libs.single(), labelTracker = labelTracker, isLibraryProvided = providedLibraries::isProvided, libVisibility = owner.visibility)
         }
       }
 
@@ -239,7 +244,7 @@ internal class BazelBuildFileGenerator(
       )
     }
 
-    generateLocalLibs(libs = localLibs.values, providedRequested = providedRequested, fileToUpdater = fileToUpdater)
+    generateLocalLibs(libs = localLibraries.values, isLibraryProvided = providedLibraries::isProvided, fileToUpdater = fileToUpdater)
 
     for (updater in fileToUpdater.values) {
       updater.save()
@@ -247,27 +252,27 @@ internal class BazelBuildFileGenerator(
   }
 
   fun addMavenLibrary(lib: MavenLibrary, isProvided: Boolean): MavenLibrary {
-    if (lib.lib.owner == ultimateLibOwner) {
-      val communityLib = libs[LibraryKey(communityLibOwner, lib.lib.targetName)]
-      if (communityLib != null) {
+    if (lib.target.container == ultimateLibraries) {
+      val communityLibrary = mavenLibraries[LibraryKey(communityLibraries, lib.target.targetName)]
+      if (communityLibrary != null) {
         if (isProvided) {
-          providedRequested.add(communityLib)
+          providedLibraries.markAsProvided(communityLibrary)
         }
-        return communityLib
+        return communityLibrary
       }
     }
 
-    val internedLib = libs.computeIfAbsent(LibraryKey(lib.lib.owner, lib.lib.targetName)) { lib }
+    val internedLib = mavenLibraries.computeIfAbsent(LibraryKey(lib.target.container, lib.target.targetName)) { lib }
     if (isProvided) {
-      providedRequested.add(internedLib)
+      providedLibraries.markAsProvided(internedLib)
     }
     return internedLib
   }
 
   fun addLocalLibrary(lib: LocalLibrary, isProvided: Boolean): LocalLibrary {
-    val internedLib = localLibs.computeIfAbsent(LibraryKey(lib.lib.owner, lib.lib.targetName)) { lib }
+    val internedLib = localLibraries.computeIfAbsent(LibraryKey(lib.target.container, lib.target.targetName)) { lib }
     if (isProvided) {
-      providedRequested.add(internedLib)
+      providedLibraries.markAsProvided(internedLib)
     }
     return internedLib
   }

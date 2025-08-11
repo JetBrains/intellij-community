@@ -13,6 +13,7 @@ import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import kotlin.collections.asSequence
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
@@ -93,7 +94,7 @@ internal class JpsModuleToBazel {
 
       if (ultimateRoot != null) {
         val targetsFile = ultimateRoot.resolve("build/bazel-targets.json")
-        saveTargets(targetsFile, communityResult.moduleTargets + ultimateResult.moduleTargets, moduleList, generator.libs.values + generator.localLibs.values)
+        saveTargets(targetsFile, communityResult.moduleTargets + ultimateResult.moduleTargets, moduleList, generator.mavenLibraries.values + generator.localLibraries.values)
       }
     }
 
@@ -134,7 +135,7 @@ internal class JpsModuleToBazel {
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    fun saveTargets(file: Path, targets: List<BazelBuildFileGenerator.ModuleTargets>, moduleList: ModuleList, libs: Collection<LibOwner>) {
+    fun saveTargets(file: Path, targets: List<BazelBuildFileGenerator.ModuleTargets>, moduleList: ModuleList, libs: Collection<Library>) {
       @Serializable
       data class TargetsFileModuleDescription(
         val productionTargets: List<String>,
@@ -170,8 +171,8 @@ internal class JpsModuleToBazel {
               )
             } + skippedModules.associateWith { emptyModule },
             projectLibraries = libs.asSequence().mapNotNull {
-              if (it.lib.isModuleLibrary) return@mapNotNull null
-              return@mapNotNull it.lib.jpsName to "${it.lib.owner.repoLabel}//:${it.lib.targetName}"
+              if (it.target.isModuleLibrary) return@mapNotNull null
+              return@mapNotNull it.target.jpsName to "${it.target.container.repoLabel}//:${it.target.targetName}"
             }.sortedBy { it.first }.toMap()
           )))
         tempFile.moveTo(file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
