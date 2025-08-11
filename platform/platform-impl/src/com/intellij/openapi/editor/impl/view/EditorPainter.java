@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder.EffectDescriptor;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
@@ -1637,12 +1638,15 @@ public final class EditorPainter implements TextDrawingCallback {
       return TextAttributesEffectsBuilder.create(secondary).coverWith(primary).applyTo(result);
     }
 
+    // local copy of com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl.FRONTEND_CREATED
+    // to avoid circular dependency.
+    private static final Key<Boolean> FRONTEND_CREATED = Key.create("FRONTEND_CREATED");
     private static TextAttributes debugZombieFoldRegion(@NotNull FoldRegion region, @NotNull TextAttributes foldAttributes) {
       if (Registry.is("cache.markup.debug") && region.getUserData(FoldingKeys.ZOMBIE_REGION_KEY) != null) {
         TextAttributes zombieAttr = foldAttributes.clone();
         zombieAttr.copyFrom(foldAttributes);
         zombieAttr.setEffectType(EffectType.STRIKEOUT);
-        if (region.getUserData(FoldingKeys.AUTO_CREATED_ZOMBIE) != null) {
+        if (FRONTEND_CREATED.isIn(region)) {
           zombieAttr.setEffectColor(JBColor.MAGENTA);
         } else {
           zombieAttr.setEffectColor(JBColor.DARK_GRAY);

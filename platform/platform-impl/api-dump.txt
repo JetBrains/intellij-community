@@ -534,6 +534,7 @@ com.intellij.openapi.editor.ex.FocusChangeListener
 - focusLost(com.intellij.openapi.editor.Editor,java.awt.event.FocusEvent):V
 com.intellij.openapi.editor.ex.FoldingListener
 - beforeFoldRegionRemoved(com.intellij.openapi.editor.FoldRegion):V
+- onFoldInitializationStatusChanged(Z):V
 - onFoldProcessingEnd():V
 - onFoldProcessingStart():V
 - onFoldRegionStateChange(com.intellij.openapi.editor.FoldRegion):V
@@ -575,6 +576,8 @@ com.intellij.openapi.editor.ex.TooltipAction
 - a:getText():java.lang.String
 - a:showAllActions(com.intellij.openapi.editor.Editor):V
 f:com.intellij.openapi.editor.impl.EditorIdKt
+f:com.intellij.openapi.editor.impl.FoldingModelImpl
+- onFoldInitializationStatusChanged(Z):V
 com.intellij.openapi.editor.impl.HighlighterListener
 - a:highlighterChanged(I,I):V
 com.intellij.openapi.editor.impl.TextDrawingCallback

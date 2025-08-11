@@ -14,12 +14,6 @@ object FoldingKeys {
   val ZOMBIE_REGION_KEY: Key<Boolean> = Key.create("zombie.fold.region")
 
   @JvmField
-  val ZOMBIE_BITTEN_KEY: Key<Boolean> = Key.create("zombie.bitten.region")
-
-  @JvmField
-  val AUTO_CREATED_ZOMBIE: Key<Boolean> = Key.create("zombie.backend.created")
-
-  @JvmField
   val HIDE_GUTTER_RENDERER_FOR_COLLAPSED: Key<Boolean> = Key.create("FoldRegion.HIDE_GUTTER_RENDERER_FOR_COLLAPSED")
 
 

@@ -32,7 +32,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
@@ -62,8 +61,6 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   private final EditorScrollingPositionKeeper myScrollingPositionKeeper;
   private final List<FoldingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Set<CustomFoldRegionImpl> myAffectedCustomRegions = new HashSet<>();
-  private final AtomicBoolean myIsZombieRaised = new AtomicBoolean();
-  private final AtomicBoolean myIsAutoCreatedZombieRaised = new AtomicBoolean();
 
   private TextAttributes myFoldTextAttributes;
   private boolean myIsFoldingEnabled = true;
@@ -406,16 +403,6 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       }
     }
     return endOffset;
-  }
-
-  @ApiStatus.Internal
-  public AtomicBoolean getIsZombieRaised() {
-    return myIsZombieRaised;
-  }
-
-  @ApiStatus.Internal
-  public AtomicBoolean getIsAutoCreatedZombieRaised() {
-    return myIsAutoCreatedZombieRaised;
   }
 
   void refreshSettings() {
@@ -827,6 +814,12 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   private void beforeFoldRegionRemoved(@NotNull FoldRegion foldRegion) {
     for (FoldingListener listener : myListeners) {
       listener.beforeFoldRegionRemoved(foldRegion);
+    }
+  }
+
+  public void onFoldInitializationStatusChanged(boolean initInProgress) {
+    for (FoldingListener listener : myListeners) {
+      listener.onFoldInitializationStatusChanged(initInProgress);
     }
   }
 
