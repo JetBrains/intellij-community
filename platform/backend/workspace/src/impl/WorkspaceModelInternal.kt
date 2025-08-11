@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.backend.workspace.impl
 
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.platform.backend.workspace.BuilderSnapshot
 import com.intellij.platform.backend.workspace.StorageReplacement
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -73,6 +74,8 @@ public interface WorkspaceModelInternal: WorkspaceModel {
    * @see [WorkspaceModel.getBuilderSnapshot]
    */
   public fun replaceWorkspaceModel(description: @NonNls String, replacement: StorageReplacement): Boolean
+
+  public val modificationTracker: ModificationTracker
 
   @Deprecated("Use replaceWorkspaceModel instead", ReplaceWith("replaceWorkspaceModel(replacement)"))
   public fun replaceProjectModel(replacement: StorageReplacement): Boolean = replaceWorkspaceModel("WSM update", replacement)

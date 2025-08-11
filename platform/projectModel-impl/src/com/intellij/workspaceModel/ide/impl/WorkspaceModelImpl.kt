@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.*
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
@@ -70,6 +71,9 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
        update of the WorkspaceModel, what is probably also okay.
   */
   private val updatesFlow = MutableSharedFlow<VersionedStorageChange>(replay = 1)
+
+  // stored property
+  override val modificationTracker: ModificationTracker = ModificationTracker { entityStorage.version }
 
   val virtualFileManager: VirtualFileUrlManager
 
