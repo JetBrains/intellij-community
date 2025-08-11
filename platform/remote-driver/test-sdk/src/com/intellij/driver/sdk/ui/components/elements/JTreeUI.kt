@@ -172,7 +172,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     expandedPath.path.size == path.size && expandedPath.path.containsAllNodes(*path, fullMatch = fullMatch)
   }
 
-  fun collectExpandedPaths(): List<TreePathToRow> {
+  open fun collectExpandedPaths(): List<TreePathToRow> {
     return fixture.collectExpandedPaths()
   }
 
