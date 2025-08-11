@@ -248,9 +248,18 @@ class JarPackager private constructor(
   private suspend fun computeModuleSources(includedModules: Collection<ModuleItem>, layout: BaseLayout?, searchableOptionSet: SearchableOptionSetDescriptor?) {
     val addedModules = HashSet<String>()
 
+    val modulesWithCustomPath = HashSet<String>()
+    for (item in includedModules) {
+      if (layout is PluginLayout && !item.relativeOutputFile.contains('/')) {
+        if (item.relativeOutputFile != layout.getMainJarName()) {
+          modulesWithCustomPath.add(item.moduleName)
+        }
+      }
+    }
+
     // First, check the content. This is done prior to everything else since we might configure a custom relativeOutputFile.
     if (layout is PluginLayout) {
-      computeModuleSourcesByContent(helper, context, layout, addedModules, jarPackager = this, searchableOptionSet)
+      computeModuleSourcesByContent(helper, context, layout, addedModules, jarPackager = this, searchableOptionSet, modulesWithCustomPath)
     }
 
     for (item in includedModules) {

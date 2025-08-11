@@ -524,11 +524,11 @@ private suspend fun processAndGetProductPluginContentModules(
 private val excludedPaths = java.util.Set.of(
   "/META-INF/ultimate.xml",
   "/META-INF/ultimate-services.xml",
-  "/META-INF/RdServer.xml",
-  "/META-INF/unattendedHost.xml",
   "/META-INF/cwmBackendConnection.xml",
   "/META-INF/cwmConnectionFrontend.xml",
   "/META-INF/clientUltimate.xml",
+  "/META-INF/backendUltimate.xml",
+  "/META-INF/controllerBackendUltimate.xml"
 )
 
 private val COMMUNITY_IMPL_EXTENSIONS = setOf(
