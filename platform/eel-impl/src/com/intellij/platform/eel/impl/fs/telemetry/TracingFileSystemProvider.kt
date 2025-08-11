@@ -19,9 +19,10 @@ import java.nio.file.spi.FileSystemProvider
 // TODO There should be an implementation for Path, to meet the contract `fsp.getPath(..).fileSystem.provider() === fsp`
 class TracingFileSystemProvider(
   val delegate: FileSystemProvider,
+  val spanNamePrefix: String = "",
 ) : DelegatingFileSystemProvider<TracingFileSystemProvider, TracingFileSystem>(), RoutingAwareFileSystemProvider {
   override fun wrapDelegateFileSystem(delegateFs: FileSystem): TracingFileSystem =
-    TracingFileSystem(this, delegateFs)
+    TracingFileSystem(this, delegateFs, spanNamePrefix)
 
   override fun getDelegate(path1: Path?, path2: Path?): FileSystemProvider = delegate
 
@@ -32,100 +33,100 @@ class TracingFileSystemProvider(
   override fun toString(): String = """${javaClass.simpleName}($delegate)"""
 
   override fun newByteChannel(path: Path, options: MutableSet<out OpenOption>?, vararg attrs: FileAttribute<*>?): SeekableByteChannel =
-    TracingSeekableByteChannel(this, Measurer.measure(Measurer.Operation.providerNewByteChannel) {
+    TracingSeekableByteChannel(Measurer.measure(Measurer.Operation.providerNewByteChannel, spanNamePrefix) {
       super.newByteChannel(path, options, *attrs)
-    })
+    }, spanNamePrefix)
 
   override fun newDirectoryStream(dir: Path, filter: DirectoryStream.Filter<in Path>?): DirectoryStream<Path> =
-    TracingDirectoryStream<Path>(Measurer.measure(Measurer.Operation.providerNewDirectoryStream) {
+    TracingDirectoryStream<Path>(Measurer.measure(Measurer.Operation.providerNewDirectoryStream, spanNamePrefix) {
       super.newDirectoryStream(dir, filter)
-    })
+    }, spanNamePrefix)
 
   override fun createDirectory(dir: Path, vararg attrs: FileAttribute<*>?) {
-    Measurer.measure(Measurer.Operation.providerCreateDirectory) {
+    Measurer.measure(Measurer.Operation.providerCreateDirectory, spanNamePrefix) {
       super.createDirectory(dir, *attrs)
     }
   }
 
   override fun delete(path: Path) {
-    Measurer.measure(Measurer.Operation.providerDelete) {
+    Measurer.measure(Measurer.Operation.providerDelete, spanNamePrefix) {
       super.delete(path)
     }
   }
 
   override fun copy(source: Path, target: Path, vararg options: CopyOption?) {
-    Measurer.measure(Measurer.Operation.providerCopy) {
+    Measurer.measure(Measurer.Operation.providerCopy, spanNamePrefix) {
       super.copy(source, target, *options)
     }
   }
 
   override fun move(source: Path, target: Path, vararg options: CopyOption?) {
-    Measurer.measure(Measurer.Operation.providerMove) {
+    Measurer.measure(Measurer.Operation.providerMove, spanNamePrefix) {
       super.move(source, target, *options)
     }
   }
 
   override fun isSameFile(path: Path, path2: Path): Boolean =
-    Measurer.measure(Measurer.Operation.providerIsSameFile) {
+    Measurer.measure(Measurer.Operation.providerIsSameFile, spanNamePrefix) {
       super.isSameFile(path, path2)
     }
 
   override fun isHidden(path: Path): Boolean =
-    Measurer.measure(Measurer.Operation.providerIsHidden) {
+    Measurer.measure(Measurer.Operation.providerIsHidden, spanNamePrefix) {
       super.isHidden(path)
     }
 
   override fun getFileStore(path: Path): FileStore =
-    Measurer.measure(Measurer.Operation.providerGetFileStore) {
+    Measurer.measure(Measurer.Operation.providerGetFileStore, spanNamePrefix) {
       super.getFileStore(path)
     }
 
   override fun checkAccess(path: Path, vararg modes: AccessMode?) {
-    Measurer.measure(Measurer.Operation.providerCheckAccess) {
+    Measurer.measure(Measurer.Operation.providerCheckAccess, spanNamePrefix) {
       super.checkAccess(path, *modes)
     }
   }
 
   override fun <V : FileAttributeView?> getFileAttributeView(path: Path?, type: Class<V>?, vararg options: LinkOption?): V =
-    Measurer.measure(Measurer.Operation.providerGetFileAttributeView) {
+    Measurer.measure(Measurer.Operation.providerGetFileAttributeView, spanNamePrefix) {
       super.getFileAttributeView(path, type, *options)
     }
 
   override fun <A : BasicFileAttributes?> readAttributes(path: Path?, type: Class<A>?, vararg options: LinkOption?): A =
-    Measurer.measure(Measurer.Operation.providerReadAttributes) {
+    Measurer.measure(Measurer.Operation.providerReadAttributes, spanNamePrefix) {
       super.readAttributes(path, type, *options)
     }
 
   override fun readAttributes(path: Path?, attributes: String?, vararg options: LinkOption?): MutableMap<String, Any> =
-    Measurer.measure(Measurer.Operation.providerReadAttributes) {
+    Measurer.measure(Measurer.Operation.providerReadAttributes, spanNamePrefix) {
       super.readAttributes(path, attributes, *options)
     }
 
   override fun setAttribute(path: Path?, attribute: String?, value: Any?, vararg options: LinkOption?) {
-    Measurer.measure(Measurer.Operation.providerSetAttribute) {
+    Measurer.measure(Measurer.Operation.providerSetAttribute, spanNamePrefix) {
       super.setAttribute(path, attribute, value, *options)
     }
   }
 
   override fun createSymbolicLink(link: Path?, target: Path?, vararg attrs: FileAttribute<*>?) {
-    Measurer.measure(Measurer.Operation.providerCreateSymbolicLink) {
+    Measurer.measure(Measurer.Operation.providerCreateSymbolicLink, spanNamePrefix) {
       super.createSymbolicLink(link, target, *attrs)
     }
   }
 
   override fun createLink(link: Path?, existing: Path?) {
-    Measurer.measure(Measurer.Operation.providerCreateLink) {
+    Measurer.measure(Measurer.Operation.providerCreateLink, spanNamePrefix) {
       super.createLink(link, existing)
     }
   }
 
   override fun deleteIfExists(path: Path?): Boolean =
-    Measurer.measure(Measurer.Operation.providerDeleteIfExists) {
+    Measurer.measure(Measurer.Operation.providerDeleteIfExists, spanNamePrefix) {
       super.deleteIfExists(path)
     }
 
   override fun readSymbolicLink(link: Path?): Path =
-    Measurer.measure(Measurer.Operation.providerReadSymbolicLink) {
+    Measurer.measure(Measurer.Operation.providerReadSymbolicLink, spanNamePrefix) {
       super.readSymbolicLink(link)
     }
 }

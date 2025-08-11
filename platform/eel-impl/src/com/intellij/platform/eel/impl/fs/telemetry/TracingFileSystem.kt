@@ -8,6 +8,7 @@ import java.nio.file.WatchService
 class TracingFileSystem(
   private val provider: TracingFileSystemProvider,
   private val delegate: FileSystem,
+  private val spanNamePrefix: String
 ) : DelegatingFileSystem<TracingFileSystemProvider>() {
   public override fun getDelegate(): FileSystem = delegate
 
@@ -16,7 +17,7 @@ class TracingFileSystem(
   override fun toString(): String = """${javaClass.simpleName}($delegate)"""
 
   override fun close() {
-    Measurer.measure(Measurer.Operation.fileSystemClose) {
+    Measurer.measure(Measurer.Operation.fileSystemClose, spanNamePrefix) {
       delegate.close()
     }
   }
@@ -24,12 +25,12 @@ class TracingFileSystem(
   override fun provider(): TracingFileSystemProvider = provider
 
   override fun supportedFileAttributeViews(): MutableSet<String> =
-    Measurer.measure(Measurer.Operation.supportedFileAttributeViews) {
+    Measurer.measure(Measurer.Operation.supportedFileAttributeViews, spanNamePrefix) {
       super.supportedFileAttributeViews()
     }
 
   override fun newWatchService(): WatchService =
-    Measurer.measure(Measurer.Operation.fileSystemNewWatchService) {
+    Measurer.measure(Measurer.Operation.fileSystemNewWatchService, spanNamePrefix) {
       super.newWatchService()
     }
 }

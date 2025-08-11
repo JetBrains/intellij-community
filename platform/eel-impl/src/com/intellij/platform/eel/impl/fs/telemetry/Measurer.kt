@@ -8,23 +8,24 @@ import com.intellij.platform.diagnostic.telemetry.TracerLevel
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import java.util.concurrent.atomic.AtomicLong
 
-private val eventsCounter: AtomicLong = AtomicLong()
-
-internal val ijentMetricsScope = Scope("ijent", PlatformMetrics, verbose = true)
-internal val ijentTracer by lazy { TelemetryManager.getTracer(ijentMetricsScope) }
-internal val ijentMeter by lazy { TelemetryManager.getMeter(ijentMetricsScope) }
-
-@Suppress("Unused")
-internal val eventsCounterMeter by lazy {
-  ijentMeter.counterBuilder("ijent.events.count").buildObserver().also {
-    ijentMeter.batchCallback(
-      { it.record(eventsCounter.get()) },
-      it
-    )
-  }
-}
-
 object Measurer {
+
+  internal val eventsCounter: AtomicLong = AtomicLong()
+
+  internal val ijentMetricsScope = Scope("ijent", PlatformMetrics, verbose = true)
+  internal val ijentTracer by lazy { TelemetryManager.getTracer(ijentMetricsScope) }
+  internal val ijentMeter by lazy { TelemetryManager.getMeter(ijentMetricsScope) }
+
+  @Suppress("Unused")
+  internal val eventsCounterMeter by lazy {
+    ijentMeter.counterBuilder("ijent.events.count").buildObserver().also {
+      ijentMeter.batchCallback(
+        { it.record(eventsCounter.get()) },
+        it
+      )
+    }
+  }
+
   enum class Operation {
     directoryStreamClose,
     directoryStreamIteratorNext,
@@ -59,8 +60,8 @@ object Measurer {
   }
 }
 
-internal inline fun <T> Measurer.measure(operation: Measurer.Operation, body: () -> T): T {
-  return ijentTracer.spanBuilder("ijent.${operation.name}", TracerLevel.DETAILED).use {
+internal inline fun <T> Measurer.measure(operation: Measurer.Operation, spanNamePrefix: String = "", body: () -> T): T {
+  return ijentTracer.spanBuilder("ijent.${spanNamePrefix.takeIf { it.isEmpty() }?.plus(".")}${operation.name}", TracerLevel.DETAILED).use {
     eventsCounter.incrementAndGet()
     body()
   }

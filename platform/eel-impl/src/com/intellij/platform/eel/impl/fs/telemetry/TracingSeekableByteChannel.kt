@@ -5,11 +5,11 @@ import java.nio.ByteBuffer
 import java.nio.channels.SeekableByteChannel
 
 internal class TracingSeekableByteChannel(
-  private val provider: TracingFileSystemProvider,
   private val delegate: SeekableByteChannel,
+  private val spanNamePrefix: String
 ) : SeekableByteChannel {
   override fun close() {
-    Measurer.measure(Measurer.Operation.seekableByteChannelClose) {
+    Measurer.measure(Measurer.Operation.seekableByteChannelClose, spanNamePrefix) {
       delegate.close()
     }
   }
@@ -18,35 +18,35 @@ internal class TracingSeekableByteChannel(
     delegate.isOpen
 
   override fun read(dst: ByteBuffer?): Int =
-    Measurer.measure(Measurer.Operation.seekableByteChannelRead) {
+    Measurer.measure(Measurer.Operation.seekableByteChannelRead, spanNamePrefix) {
       delegate.read(dst)
     }
 
   override fun write(src: ByteBuffer?): Int =
-    Measurer.measure(Measurer.Operation.seekableByteChannelWrite) {
+    Measurer.measure(Measurer.Operation.seekableByteChannelWrite, spanNamePrefix) {
       delegate.write(src)
     }
 
   override fun position(): Long =
-    Measurer.measure(Measurer.Operation.seekableByteChannelPosition) {
+    Measurer.measure(Measurer.Operation.seekableByteChannelPosition, spanNamePrefix) {
       delegate.position()
     }
 
   override fun position(newPosition: Long): SeekableByteChannel =
     TracingSeekableByteChannel(
-      provider,
-      Measurer.measure(Measurer.Operation.seekableByteChannelNewPosition) {
+      Measurer.measure(Measurer.Operation.seekableByteChannelNewPosition, spanNamePrefix) {
         delegate.position(newPosition)
-      }
+      },
+      spanNamePrefix
     )
 
   override fun size(): Long =
-    Measurer.measure(Measurer.Operation.seekableByteChannelSize) {
+    Measurer.measure(Measurer.Operation.seekableByteChannelSize, spanNamePrefix) {
       delegate.size()
     }
 
   override fun truncate(size: Long): SeekableByteChannel =
-    Measurer.measure(Measurer.Operation.seekableByteChannelTruncate) {
+    Measurer.measure(Measurer.Operation.seekableByteChannelTruncate, spanNamePrefix) {
       delegate.truncate(size)
     }
 }

@@ -4,6 +4,7 @@ package com.intellij.platform.eel.impl.fs
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
+import com.intellij.platform.eel.impl.fs.telemetry.MeasuringFileSystemListener
 import com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -23,6 +24,7 @@ object GlobalEelMrfsBackendProvider {
 
   fun install(provider: MultiRoutingFileSystemProvider) {
     provider.theOnlyFileSystem.setBackendProvider(::compute, ::getCustomRoots, ::getCustomFileStores)
+    provider.setTraceListener(MeasuringFileSystemListener())
   }
 
   fun compute(localFS: FileSystem, sanitizedPath: String): FileSystem {
