@@ -3,7 +3,9 @@ package com.intellij.ide.plugins.newui
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class OneLineProgressIndicatorWithAsyncCallback(private val coroutineScope: CoroutineScope, withText: Boolean, var callback: suspend () -> Unit) : OneLineProgressIndicator(withText) {
   override fun cancelRequest() {
     coroutineScope.launch {

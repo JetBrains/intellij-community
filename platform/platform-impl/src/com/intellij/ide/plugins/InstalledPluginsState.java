@@ -221,7 +221,7 @@ public final class InstalledPluginsState {
   }
 
   @ApiStatus.Internal
-  public void runShutdownCallback() {
+  public synchronized void runShutdownCallback() {
     if (myShutdownCallback != null) {
       myShutdownCallback.run();
       myShutdownCallback = null;

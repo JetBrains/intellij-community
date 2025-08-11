@@ -42,12 +42,14 @@ import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Window
 import java.util.*
+import java.util.function.Consumer
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -91,9 +93,26 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   /**
    * @return true if changes were applied without a restart
    */
+  @Suppress("RAW_RUN_BLOCKING")
+  @Deprecated("Use applyAsync() instead")
   @Throws(ConfigurationException::class)
   fun apply(parent: JComponent?): Boolean {
-    val applyResult = UiPluginManager.getInstance().applySession(mySessionId.toString(), parent, project)
+    return runBlocking {
+      applyAsync(parent)
+    }
+  }
+
+  fun applyWithCallback(parent: JComponent?, callback: Consumer<Boolean>) {
+    coroutineScope.launch {
+      val installedWithoutRestart = applyAsync(parent)
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        callback.accept(installedWithoutRestart)
+      }
+    }
+  }
+
+  suspend fun applyAsync(parent: JComponent?): Boolean {
+    val applyResult = withContext(Dispatchers.IO) { UiPluginManager.getInstance().applySession(mySessionId.toString(), parent, project) }
     val error = applyResult.error
     if (error != null) {
       throw ConfigurationException(XmlStringUtil.wrapInHtml(error)).withHtmlMessage()
@@ -502,7 +521,8 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   suspend fun appendOrUpdateDescriptor(descriptor: PluginUiModel, restartNeeded: Boolean, errors: List<HtmlChunk>) {
     val id = descriptor.pluginId
-    if (!UiPluginManager.getInstance().isPluginInstalled(id)) {
+    val pluginManager = UiPluginManager.getInstance()
+    if (!pluginManager.isPluginInstalled(id)) {
       appendOrUpdateDescriptor(descriptor)
       setEnabled(id, PluginEnabledState.ENABLED)
     }
@@ -535,7 +555,9 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
         }
         return
       }
-      downloadedGroup!!.setErrors(descriptor, errors)
+      downloadedGroup!!.preloadedModel.setErrors(descriptor.pluginId, errors)
+      val pluginInstallationState = pluginManager.getPluginInstallationState(descriptor.pluginId)
+      downloadedGroup!!.preloadedModel.setPluginInstallationState(descriptor.pluginId, pluginInstallationState)
       myInstalledPanel!!.addToGroup(this.downloadedGroup!!, descriptor)
       downloadedGroup!!.titleWithEnabled(PluginModelFacade(this))
       myInstalledPanel!!.doLayout()
@@ -754,23 +776,25 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   }
 
   open fun runRestartButton(component: Component) {
-    if (PluginManagerConfigurable.showRestartDialog() == Messages.YES) {
-      needRestart = true
-      createShutdownCallback = false
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(component).asContextElement()) {
+      if (PluginManagerConfigurable.showRestartDialog() == Messages.YES) {
+        needRestart = true
+        createShutdownCallback = false
 
-      val settings = DialogWrapper.findInstance(component)
-      if (settings is SettingsDialog) {
-        settings.applyAndClose(false /* will be saved on app exit */)
-      }
-      else if (isModified()) {
-        try {
-          apply(null)
+        val settings = DialogWrapper.findInstance(component)
+        if (settings is SettingsDialog) {
+          settings.applyAndClose(false /* will be saved on app exit */)
         }
-        catch (e: ConfigurationException) {
-          LOG.error(e)
+        else if (isModified()) {
+          try {
+            applyAsync(null)
+          }
+          catch (e: ConfigurationException) {
+            LOG.error(e)
+          }
         }
+        ApplicationManagerEx.getApplicationEx().restart(true)
       }
-      ApplicationManagerEx.getApplicationEx().restart(true)
     }
   }
 
@@ -829,10 +853,11 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   ) {
     val pluginId = descriptor.pluginId
     myTopController!!.showProgress(false)
+    val installationState = withContext(Dispatchers.IO) { UiPluginManager.getInstance().getPluginInstallationState(pluginId) }
     val listComponents = myInstalledPluginComponentMap[pluginId]
     if (listComponents != null) {
       for (listComponent in listComponents) {
-        listComponent.updateAfterUninstall(needRestartForUninstall)
+        listComponent.updateAfterUninstall(needRestartForUninstall, installationState)
       }
     }
 
@@ -840,7 +865,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     if (marketplaceComponents != null) {
       for (component in marketplaceComponents) {
         if (component.myInstalledDescriptorForMarketplace != null) {
-          component.updateAfterUninstall(needRestartForUninstall)
+          component.updateAfterUninstall(needRestartForUninstall, installationState)
         }
       }
     }

@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.ListPluginModel;
 import com.intellij.ide.plugins.enums.PluginsGroupType;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -27,8 +28,7 @@ public class PluginsGroup {
   public Runnable clearCallback;
   public PluginsGroupType type;
   private final List<PluginUiModel> models = new ArrayList<>();
-  private Map<PluginId, List<HtmlChunk>> errors = new HashMap<>();
-  private Map<PluginId, PluginUiModel> installedPlugins = new HashMap<>();
+  private final ListPluginModel preloadedModel = new ListPluginModel();
 
   public PluginsGroup(@NotNull @Nls String title, @NotNull PluginsGroupType type) {
     myTitlePrefix = title;
@@ -86,25 +86,8 @@ public class PluginsGroup {
     return -1;
   }
 
-
-  public void setErrors(Map<PluginId, List<HtmlChunk>> errors) {
-    this.errors = errors;
-  }
-
-  public void setErrors(PluginUiModel model, List<HtmlChunk> errors) {
-    this.errors.put(model.getPluginId(), errors);
-  }
-
-  public void setInstalledPlugins(Map<PluginId, PluginUiModel> installedDescriptors) {
-    this.installedPlugins = installedDescriptors;
-  }
-
-  public PluginUiModel getInstalledDescriptor(@NotNull PluginId pluginId) {
-    return installedPlugins.get(pluginId);
-  }
-
-  public List<HtmlChunk> getErrors(PluginUiModel model) {
-    return errors.getOrDefault(model.getPluginId(), Collections.emptyList());
+  public ListPluginModel getPreloadedModel() {
+    return preloadedModel;
   }
 
   protected void updateTitle() {

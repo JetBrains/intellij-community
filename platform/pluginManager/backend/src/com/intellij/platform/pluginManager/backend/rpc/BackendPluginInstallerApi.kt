@@ -42,10 +42,6 @@ internal class BackendPluginInstallerApi : PluginInstallerApi {
     return DefaultUiPluginManagerController.resetSession(sessionId, removeSession)
   }
 
-  override suspend fun getApplySessionError(sessionId: String): String? {
-    return DefaultUiPluginManagerController.getApplyError(sessionId)
-  }
-
   override suspend fun isModified(sessionId: String): Boolean {
     return DefaultUiPluginManagerController.isModified(sessionId)
   }

@@ -2,18 +2,8 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.PluginEnabler
-import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
-import com.intellij.ide.plugins.marketplace.CheckErrorsResult
-import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
-import com.intellij.ide.plugins.marketplace.InitSessionResult
-import com.intellij.ide.plugins.marketplace.InstallPluginResult
-import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
-import com.intellij.ide.plugins.marketplace.PluginReviewComment
-import com.intellij.ide.plugins.marketplace.PluginSearchResult
-import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
-import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
-import com.intellij.openapi.application.ModalityState
 import com.intellij.ide.plugins.marketplace.*
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
@@ -21,13 +11,12 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import javax.swing.JComponent
@@ -104,14 +93,8 @@ class UiPluginManager {
     getController().setPluginStatus(sessionId, pluginIds, enable)
   }
 
-  fun applySession(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult {
+  suspend fun applySession(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult {
     return getController().applySession(sessionId, parent, project)
-
-  }
-
-  @NlsSafe
-  fun getApplySessionError(sessionId: String): String? {
-    return getController().getApplyError(sessionId)
   }
 
   suspend fun updatePluginDependencies(sessionId: String): Set<PluginId> {
@@ -132,6 +115,14 @@ class UiPluginManager {
 
   fun findInstalledPluginsSync(plugins: Set<PluginId>): Map<PluginId, PluginUiModel> {
     return runBlockingMaybeCancellable { findInstalledPlugins(plugins) }
+  }
+
+  fun getInstallationStatesSync(): Map<PluginId, PluginInstallationState> {
+    return runBlockingMaybeCancellable { getInstallationStates() }
+  }
+
+  suspend fun getInstallationStates(): Map<PluginId, PluginInstallationState> {
+    return getController().getPluginInstallationStates()
   }
 
   fun enablePlugins(sessionId: String, descriptorIds: List<PluginId>, enable: Boolean, project: Project?): SetEnabledStateResult {
@@ -227,7 +218,7 @@ class UiPluginManager {
     return runBlockingMaybeCancellable { getController().isNeedUpdate(pluginId) }
   }
 
-  fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
+  suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
     return getController().getPluginInstallationState(pluginId)
   }
 

@@ -104,19 +104,8 @@ public final class ListPluginComponent extends JPanel {
   public ListPluginComponent(@NotNull PluginModelFacade pluginModelFacade,
                              @NotNull PluginUiModel pluginUiModel,
                              @NotNull PluginsGroup group,
+                             @NotNull ListPluginModel listModel,
                              @NotNull LinkListener<Object> searchListener,
-                             @NotNull List<HtmlChunk> errors,
-                             @NotNull CoroutineScope coroutineScope,
-                             boolean marketplace) {
-    this(pluginModelFacade, pluginUiModel, null, group, searchListener, errors, coroutineScope, marketplace);
-  }
-
-  public ListPluginComponent(@NotNull PluginModelFacade pluginModelFacade,
-                             @NotNull PluginUiModel pluginUiModel,
-                             @Nullable PluginUiModel installedDescriptorForMarketplace,
-                             @NotNull PluginsGroup group,
-                             @NotNull LinkListener<Object> searchListener,
-                             @NotNull List<HtmlChunk> errors,
                              @NotNull CoroutineScope coroutineScope,
                              boolean marketplace) {
     myPlugin = pluginUiModel;
@@ -125,10 +114,11 @@ public final class ListPluginComponent extends JPanel {
     mySearchListener = searchListener;
     myMarketplace = marketplace;
     myCoroutineScope = coroutineScope;
-    myInstalledDescriptorForMarketplace = installedDescriptorForMarketplace;
+    myInstalledDescriptorForMarketplace = listModel.getInstalledModels().get(pluginUiModel.getPluginId());
     PluginId pluginId = myPlugin.getPluginId();
     boolean compatible = !myPlugin.isIncompatibleWithCurrentOs();
-    myIsAvailable = (compatible || isInstalledAndEnabled()) && pluginUiModel.getCanBeEnabled();
+    PluginInstallationState pluginInstallationState = listModel.getPluginInstallationStates().get(pluginId);
+    myIsAvailable = (compatible || isInstalledAndEnabled(pluginInstallationState)) && pluginUiModel.getCanBeEnabled();
     UiPluginManager pluginManager = UiPluginManager.getInstance();
     myIsNotFreeInFreeMode = pluginManager
       .isPluginRequiresUltimateButItIsDisabled(pluginModelFacade.getModel().getSessionId(), pluginUiModel.getPluginId());
@@ -149,7 +139,7 @@ public final class ListPluginComponent extends JPanel {
     createTag();
 
     if (myIsAvailable) {
-      doCreateButtons(pluginManager.getPluginInstallationState(pluginId), installedDescriptorForMarketplace);
+      doCreateButtons(pluginInstallationState, listModel.getInstalledModels().get(pluginId));
       createMetricsPanel();
       createLicensePanel();
     }
@@ -161,7 +151,7 @@ public final class ListPluginComponent extends JPanel {
       updateIcon(false, !myIsAvailable);
     }
     else {
-      updateErrors(errors);
+      updateErrors(listModel.getErrors().getOrDefault(pluginId, Collections.emptyList()));
     }
     if (myModelFacade.isPluginInstallingOrUpdating(pluginUiModel)) {
       showProgress(false);
@@ -269,6 +259,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private void doCreateButtons(PluginInstallationState installationState, PluginUiModel installedModel) {
+    installationState = installationState == null ? new PluginInstallationState(false, null) : installationState;
     if (myMarketplace) {
       if (installationState.getStatus() == PluginStatus.INSTALLED_AND_REQUIRED_RESTART) {
         myLayout.addButtonComponent(myRestartButton = new RestartButton(myModelFacade));
@@ -914,14 +905,12 @@ public final class ListPluginComponent extends JPanel {
     }
   }
 
-  public void updateAfterUninstall(boolean needRestartForUninstall) {
+  public void updateAfterUninstall(boolean needRestartForUninstall, PluginInstallationState pluginInstallationState) {
     myModelFacade.addUninstalled(getDescriptorForActions().getPluginId());
     updateColors(mySelection);
     removeButtons(needRestartForUninstall);
 
-    PluginInstallationState installationState =
-      UiPluginManager.getInstance().getPluginInstallationState(getDescriptorForActions().getPluginId());
-    if (!needRestartForUninstall && installationState.getStatus() == PluginStatus.UNINSTALLED_WITHOUT_RESTART) {
+    if (!needRestartForUninstall && pluginInstallationState.getStatus() == PluginStatus.UNINSTALLED_WITHOUT_RESTART) {
       myLayout.addButtonComponent(myInstallButton = createInstallButton());
       myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
     }
@@ -1631,8 +1620,8 @@ public final class ListPluginComponent extends JPanel {
     }
   }
 
-  private boolean isInstalledAndEnabled() {
-    return UiPluginManager.getInstance().getPluginInstallationState(myPlugin.getPluginId()).getFullyInstalled() &&
+  private boolean isInstalledAndEnabled(PluginInstallationState pluginInstallationState) {
+    return pluginInstallationState.getFullyInstalled() &&
            !myModelFacade.getState(myPlugin).isDisabled();
   }
 

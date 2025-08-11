@@ -121,8 +121,7 @@ public class PluginUpdateDialog extends DialogWrapper {
       @Override
       protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
                                                                  @NotNull PluginsGroup group,
-                                                                 @NotNull List<HtmlChunk> errors,
-                                                                 @Nullable PluginUiModel installedDescriptorDorMarketplace) {
+                                                                 @NotNull ListPluginModel listPluginModel) {
         if (!(model.isFromMarketplace())) {
           PluginNode node = new PluginNode(model.getPluginId(), model.getName(), "0");
           node.setDescription(model.getDescription());
@@ -136,7 +135,7 @@ public class PluginUpdateDialog extends DialogWrapper {
           model = new PluginUiModelAdapter(node);
         }
         CoroutineScope scope = ApplicationManager.getApplication().getService(CoreUiCoroutineScopeHolder.class).coroutineScope;
-        @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(new PluginModelFacade(myPluginModel), model, group, LinkListener.NULL, errors, scope, true);
+        @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(new PluginModelFacade(myPluginModel), model, group, listPluginModel, LinkListener.NULL, scope, true);
         PluginModelAsyncOperationsExecutor.INSTANCE.findPlugin(myPluginModel.getCoroutineScope(), model.getPluginId(), foundPlugin -> {
           component.setOnlyUpdateMode(foundPlugin);
           return null;

@@ -1266,7 +1266,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
-  private fun updateButtons() {
+  private suspend fun updateButtons() {
     if (!isPluginAvailable) {
       restartButton!!.isVisible = false
       installButton!!.setVisible(false)
@@ -1667,6 +1667,8 @@ suspend fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
   return UiPluginManager.getInstance().loadPluginDetails(model)
 }
 
+@ApiStatus.Internal
+@IntellijInternalApi
 fun loadAllPluginDetailsSync(existingModel: PluginUiModel, targetModel: PluginUiModel): PluginUiModel? {
   return runBlockingCancellable { loadAllPluginDetails(existingModel, targetModel) }
 }
@@ -1734,7 +1736,7 @@ private fun updateUrlComponent(panel: LinkPanel?, messageKey: String, url: Strin
   }
 }
 
-private fun getDeletedState(pluginUiModel: PluginUiModel): BooleanArray {
+private suspend fun getDeletedState(pluginUiModel: PluginUiModel): BooleanArray {
   val pluginId = pluginUiModel.pluginId
   var uninstalled = pluginUiModel.isDeleted
 

@@ -207,12 +207,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     awaitForResult { PluginManagerApi.getInstance().setEnabledState(sessionId, pluginIds, enable) }
   }
 
-  override fun getApplyError(sessionId: String): String? {
-    return awaitForResult { PluginInstallerApi.getInstance().getApplySessionError(sessionId) }
-  }
-
-  override fun applySession(sessionId: String, parent: JComponent?, project: Project?): ApplyPluginsStateResult {
-    return awaitForResult { PluginInstallerApi.getInstance().applyPluginSession(sessionId, project?.projectId()) }
+  override suspend fun applySession(sessionId: String, parent: JComponent?, project: Project?): ApplyPluginsStateResult {
+    return PluginInstallerApi.getInstance().applyPluginSession(sessionId, project?.projectId())
   }
 
   override suspend fun updatePluginDependencies(sessionId: String): Set<PluginId> {

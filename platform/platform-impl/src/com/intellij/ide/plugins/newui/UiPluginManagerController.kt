@@ -36,7 +36,7 @@ interface UiPluginManagerController {
   suspend fun performUninstall(sessionId: String, pluginId: PluginId): Boolean
   suspend fun installOrUpdatePlugin(sessionId: String, project: Project, parentComponent: JComponent?, descriptor: PluginUiModel, updateDescriptor: PluginUiModel?, installSource: FUSEventSource?, modalityState: ModalityState?, pluginEnabler: PluginEnabler?): InstallPluginResult
   suspend fun continueInstallation(sessionId: String, pluginId: PluginId, project: Project, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, pluginEnabler: PluginEnabler?, modalityState: ModalityState?, parentComponent: JComponent?): InstallPluginResult
-  fun applySession(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult
+  suspend fun applySession(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult
   suspend fun updatePluginDependencies(sessionId: String): Set<PluginId>
   suspend fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult
   suspend fun isBundledUpdate(pluginIds: List<PluginId>): Boolean
@@ -55,7 +55,6 @@ interface UiPluginManagerController {
   suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState
   suspend fun getPluginInstallationStates(): Map<PluginId, PluginInstallationState>
   suspend fun checkPluginCanBeDownloaded(pluginUiModel: PluginUiModel, progressIndicator: ProgressIndicator?): Boolean
-  fun getApplyError(sessionId: String): String?
   suspend fun getCustomRepoTags(): Set<String>
 
   fun enablePlugins(sessionId: String, descriptorIds: List<PluginId>, enable: Boolean, project: Project?): SetEnabledStateResult
