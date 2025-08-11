@@ -33,9 +33,6 @@ import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.plugins.terminal.TerminalFontSettingsListener
-import org.jetbrains.plugins.terminal.TerminalFontSettingsService
-import org.jetbrains.plugins.terminal.TerminalFontSizeProviderImpl
 import org.jetbrains.plugins.terminal.TerminalPanelMarker
 import org.jetbrains.plugins.terminal.block.TerminalContentView
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
@@ -369,7 +366,6 @@ class ReworkedTerminalView(
       cursorPainter.addListener(parentDisposable, fusCursorPainterListener)
     }
 
-    val eventsHandler = TerminalEventsHandlerImpl(sessionModel, editor, encodingManager, terminalInput, settings, scrollingModel, model)
     setupKeyEventHandling(editor, settings, eventsHandler, parentDisposable)
     setupMouseListener(editor, sessionModel, settings, eventsHandler, parentDisposable)
 
