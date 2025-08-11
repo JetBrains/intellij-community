@@ -77,6 +77,10 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
     return getInstance().isVersionAtLeast(element, GROOVY4_0);
   }
 
+  public static boolean isAtLeastGroovy50(@NotNull PsiElement element) {
+    return getInstance().isVersionAtLeast(element, GROOVY5_0);
+  }
+
   public static @NlsSafe String getMavenSdkRepository(@NotNull String groovyVersion) {
     if (compareSdkVersions(groovyVersion, GROOVY4_0) >= 0) {
       return "org.apache.groovy";

@@ -313,4 +313,32 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
       }
     """, null)
   }
+
+  fun testResolveAfterImplicationExpression() {
+    resolveByText("""
+      class Main {
+          static class A {}
+          static class B extends A{}
+
+          static void main(String[] args) {
+              A a = new B()
+              def z = a instanceof B variable ==> variab<caret>le
+          }
+      }
+    """.trimIndent(), GrPatternVariable::class.java)
+  }
+
+  fun testResolveAfterImplicationExpressionNegation() {
+    resolveByText("""
+      class Main {
+          static class A {}
+          static class B extends A{}
+
+          static void main(String[] args) {
+              A a = new B()
+              def z = !(a instanceof B variable) ==> variab<caret>le
+          }
+      }
+    """.trimIndent(), GrPatternVariable::class.java)
+  }
 }

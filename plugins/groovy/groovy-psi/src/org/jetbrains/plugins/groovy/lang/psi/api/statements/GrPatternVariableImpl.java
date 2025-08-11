@@ -135,7 +135,9 @@ public class GrPatternVariableImpl extends GroovyPsiElementImpl implements GrPat
       if (nextParent instanceof GrParenthesizedExpression || nextParent instanceof GrTraditionalForClause) continue;
       if (nextParent instanceof GrLogicalExpression logicalExpression) {
         IElementType operationTokenType = logicalExpression.getOperationTokenType();
-        if (operationTokenType.equals(GroovyElementTypes.T_LAND) || operationTokenType.equals(GroovyElementTypes.T_LOR)) continue;
+        if (operationTokenType.equals(GroovyElementTypes.T_LAND) ||
+            operationTokenType.equals(GroovyElementTypes.T_LOR) ||
+            operationTokenType.equals(GroovyElementTypes.T_IMPL)) continue;
       }
       if (nextParent instanceof GrForStatement ||
           nextParent instanceof GrConditionalExpression && parent == ((GrConditionalExpression)nextParent).getCondition()) {
