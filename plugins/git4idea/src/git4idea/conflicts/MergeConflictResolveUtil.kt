@@ -28,6 +28,7 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.Consumer
+import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -127,7 +128,11 @@ object MergeConflictResolveUtil {
       val file = resolver.virtualFile
 
       val document = FileDocumentManager.getInstance().getCachedDocument(file)
-      if (document != null) FileDocumentManager.getInstance().saveDocument(document)
+      if (document != null) {
+        application.runWriteAction {
+          FileDocumentManager.getInstance().saveDocument(document)
+        }
+      }
 
       MergeUtil.reportProjectFileChangeIfNeeded(project, file)
 
