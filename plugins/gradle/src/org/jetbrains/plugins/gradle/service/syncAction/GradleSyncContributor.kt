@@ -51,7 +51,7 @@ interface GradleSyncContributor {
     /**
      * The [PROJECT_ROOT_CONTRIBUTOR] configures the IDE project root and their basic module info.
      *
-     * @see org.jetbrains.plugins.gradle.service.syncContributor.GradleProjectRootSyncContributor
+     * @see org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleProjectRootSyncContributor
      */
     const val PROJECT_ROOT_CONTRIBUTOR = 0
 
@@ -60,7 +60,7 @@ interface GradleSyncContributor {
     /**
      * The [CONTENT_ROOT_CONTRIBUTOR] configures the IDE project content root structure and their basic module info.
      *
-     * @see org.jetbrains.plugins.gradle.service.syncContributor.GradleContentRootSyncContributor
+     * @see org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleContentRootSyncContributor
      */
     const val CONTENT_ROOT_CONTRIBUTOR = 1000
 

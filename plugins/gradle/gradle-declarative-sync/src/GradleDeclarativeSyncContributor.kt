@@ -27,8 +27,8 @@ import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.service.syncAction.virtualFileUrl
 import org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeEntitySource
-import org.jetbrains.plugins.gradle.service.syncContributor.hasNonPreviewEntities
-import org.jetbrains.plugins.gradle.service.syncContributor.removeProjectRoot
+import org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.hasNonPreviewEntities
+import org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.removeProjectRoot
 import java.io.File
 
 private val LOG = logger<GradleDeclarativeSyncContributor>()

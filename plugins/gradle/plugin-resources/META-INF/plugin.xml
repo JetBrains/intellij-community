@@ -60,9 +60,9 @@
     <taskManager implementation="org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtensionResolverBridge"/>
     <taskManager implementation="org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtensionDebuggerBridge"/>
 
-    <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncContributor.GradleProjectRootSyncContributor"/>
-    <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncContributor.GradleProjectRootSyncContributor$Bridge"/>
-    <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncContributor.GradleContentRootSyncContributor"/>
+    <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleProjectRootSyncContributor"/>
+    <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleProjectRootSyncContributor$Bridge"/>
+    <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleContentRootSyncContributor"/>
 
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseResolverExtension"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.CommonGradleProjectResolverExtension"/>

@@ -22,7 +22,7 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
         
         addMetadata(typeMetadata)
         
-        typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.plugins.gradle.service.syncContributor.GradleContentRootSyncContributor\$GradleContentRootEntitySource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "projectPath", valueType = primitiveTypeStringNotNullable, withDefault = false),
+        typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleContentRootSyncContributor\$GradleContentRootEntitySource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "projectPath", valueType = primitiveTypeStringNotNullable, withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource",
 "org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource",
 "org.jetbrains.plugins.gradle.service.syncContributor.bridge.GradleBridgeEntitySource"))
@@ -40,7 +40,7 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
     override fun initializeMetadataHash() {
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1637225356)
         addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource", metadataHash = -565169080)
-        addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncContributor.GradleContentRootSyncContributor\$GradleContentRootEntitySource", metadataHash = -59086515)
+        addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleContentRootSyncContributor\$GradleContentRootEntitySource", metadataHash = -59086515)
         addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncContributor.GradleProjectRootEntitySource", metadataHash = -1531457959)
         addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncContributor.GradleSourceRootSyncContributor\$GradleSourceRootEntitySource", metadataHash = 1491679397)
         addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncContributor.bridge.GradleBridgeEntitySource", metadataHash = -574106825)
