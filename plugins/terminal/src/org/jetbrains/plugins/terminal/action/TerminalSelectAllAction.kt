@@ -3,24 +3,19 @@ package org.jetbrains.plugins.terminal.action
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.editor.Caret
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler
-import org.jetbrains.plugins.terminal.block.TerminalFrontendEditorAction
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
 internal class TerminalSelectAllAction : TerminalPromotedDumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.editor?.isReworkedTerminalEditor == true
+    e.presentation.isEnabled = e.terminalEditor?.isReworkedTerminalEditor == true
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val editor = e.editor ?: return
+    val editor = e.terminalEditor ?: return
     editor.selectionModel.setSelection(0, editor.document.textLength)
   }
 }

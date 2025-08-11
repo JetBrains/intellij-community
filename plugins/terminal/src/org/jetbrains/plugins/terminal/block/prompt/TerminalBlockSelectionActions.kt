@@ -4,10 +4,10 @@ package org.jetbrains.plugins.terminal.block.prompt
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.selectionController
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
 /** Can be invoked only from the Prompt */
 internal class TerminalSelectLastBlockAction : TerminalPromotedDumbAwareAction() {
@@ -16,7 +16,7 @@ internal class TerminalSelectLastBlockAction : TerminalPromotedDumbAwareAction()
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.editor?.isPromptEditor == true
+    e.presentation.isEnabledAndVisible = e.terminalEditor?.isPromptEditor == true
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -24,7 +24,7 @@ internal class TerminalSelectLastBlockAction : TerminalPromotedDumbAwareAction()
 
 internal abstract class TerminalOutputSelectionAction : TerminalPromotedDumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.editor?.isOutputEditor == true
+    e.presentation.isEnabledAndVisible = e.terminalEditor?.isOutputEditor == true
                                          && e.selectionController?.primarySelection != null
   }
 

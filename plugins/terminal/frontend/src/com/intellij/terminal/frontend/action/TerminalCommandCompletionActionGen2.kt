@@ -10,13 +10,13 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.frontend.TerminalCommandCompletion
 import org.jetbrains.annotations.Unmodifiable
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.Companion.REWORKED_TERMINAL_COMPLETION_POPUP
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isSuppressCompletion
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
 internal class TerminalCommandCompletionActionGen2 : BaseCodeCompletionAction(), ActionPromoter {
   override fun actionPerformed(e: AnActionEvent) {
-    val editor = e.editor!!
+    val editor = e.terminalEditor!!
     if (!editor.isSuppressCompletion) {
       val inlineCompletionHandler = InlineCompletion.getHandlerOrNull(editor)
       val inlineCompletionContext = InlineCompletionContext.getOrNull(editor)
@@ -30,7 +30,7 @@ internal class TerminalCommandCompletionActionGen2 : BaseCodeCompletionAction(),
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = e.editor?.isReworkedTerminalEditor == true && Registry.`is`(REWORKED_TERMINAL_COMPLETION_POPUP)
+    e.presentation.isEnabledAndVisible = e.terminalEditor?.isReworkedTerminalEditor == true && Registry.`is`(REWORKED_TERMINAL_COMPLETION_POPUP)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

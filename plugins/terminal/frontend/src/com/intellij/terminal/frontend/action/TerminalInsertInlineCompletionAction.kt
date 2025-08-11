@@ -6,14 +6,14 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.WriteAction
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
 internal class TerminalInsertInlineCompletionAction : TerminalPromotedDumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val editor = e.editor
+    val editor = e.terminalEditor
     e.presentation.isEnabled =
       editor != null &&
       editor.isReworkedTerminalEditor &&
@@ -21,7 +21,7 @@ internal class TerminalInsertInlineCompletionAction : TerminalPromotedDumbAwareA
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val editor = e.editor ?: return
+    val editor = e.terminalEditor ?: return
     WriteAction.run<Throwable> {
       InlineCompletion.getHandlerOrNull(editor)?.insert()
     }

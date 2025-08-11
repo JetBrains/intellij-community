@@ -50,7 +50,7 @@ object TerminalDataContextUtils {
   val Editor.terminalPromptModel: TerminalPromptModel?
     get() = getUserData(TerminalPromptModel.KEY)
 
-  val DataContext.editor: Editor?
+  val DataContext.terminalEditor: Editor?
     get() = getData(TerminalActionUtil.EDITOR_KEY) ?: getData(CommonDataKeys.EDITOR)
 
   @get:ApiStatus.Internal
@@ -82,8 +82,8 @@ object TerminalDataContextUtils {
     get() = getData(BlockTerminalSession.DATA_KEY)
 
 
-  val AnActionEvent.editor: Editor?
-    get() = dataContext.editor
+  val AnActionEvent.terminalEditor: Editor?
+    get() = dataContext.terminalEditor
 
   @get:ApiStatus.Internal
   val AnActionEvent.outputController: TerminalOutputController?

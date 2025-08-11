@@ -16,7 +16,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
 internal class TerminalCommandCompletion(
   val completionType: CompletionType,
@@ -29,7 +29,7 @@ internal class TerminalCommandCompletion(
     val outputModel = e.terminalOutputModel
                       ?: throw AssertionError("Output model is null during completion")
 
-    val commonEditor = e.editor
+    val commonEditor = e.terminalEditor
                        ?: throw AssertionError("Common editor is null during completion")
 
     val project = commonEditor.project

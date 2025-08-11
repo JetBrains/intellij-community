@@ -10,12 +10,12 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.history.CommandHistoryPresenter.Companion.isTerminalCommandHistory
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.blockTerminalController
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.promptController
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.selectionController
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSession
 
 /**
@@ -83,7 +83,7 @@ internal class TerminalEscapeAction : TerminalPromotedDumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    val editor = e.editor
+    val editor = e.terminalEditor
     if (editor?.isPromptEditor != true && editor?.isOutputEditor != true && editor?.isReworkedTerminalEditor != true) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -92,7 +92,7 @@ internal class TerminalEscapeAction : TerminalPromotedDumbAwareAction() {
   }
 
   private fun handlers(e: AnActionEvent): List<TerminalEscapeHandler> {
-    return if (e.editor?.isReworkedTerminalEditor == true) {
+    return if (e.terminalEditor?.isReworkedTerminalEditor == true) {
       TERMINAL_ESCAPE_HANDLER_EP.extensionList.sortedBy { it.order }
     }
     else {
@@ -128,7 +128,7 @@ internal class TerminalEscapeAction : TerminalPromotedDumbAwareAction() {
     }
 
     override fun isEnabled(e: AnActionEvent): Boolean {
-      return e.editor?.isPromptEditor == true && LookupManager.getActiveLookup(e.editor)?.isTerminalCommandHistory == true
+      return e.terminalEditor?.isPromptEditor == true && LookupManager.getActiveLookup(e.terminalEditor)?.isTerminalCommandHistory == true
     }
   }
 
@@ -138,7 +138,7 @@ internal class TerminalEscapeAction : TerminalPromotedDumbAwareAction() {
     }
 
     override fun isEnabled(e: AnActionEvent): Boolean {
-      val editor = e.editor ?: return false
+      val editor = e.terminalEditor ?: return false
       val selectionController = e.selectionController ?: return false
       return editor.isOutputEditor && (selectionController.primarySelection != null || editor.selectionModel.hasSelection())
     }
@@ -162,11 +162,11 @@ internal class TerminalEscapeAction : TerminalPromotedDumbAwareAction() {
     override fun isEnabled(e: AnActionEvent): Boolean {
       val terminalModel = e.terminalSession?.model ?: return false
       return e.project != null
-             && LookupManager.getActiveLookup(e.editor) == null
+             && LookupManager.getActiveLookup(e.terminalEditor) == null
              // the terminal can be located in the Editor tab, so in this case we also should do nothing
              && e.getData(PlatformDataKeys.TOOL_WINDOW) != null
              && AdvancedSettings.getBoolean("terminal.escape.moves.focus.to.editor")
-             && (e.editor?.isPromptEditor == true
+             && (e.terminalEditor?.isPromptEditor == true
                  // Or enable it in output, but only when command is running
                  // In alternate mode, escape action should be sent to the terminal process, so disable the action in this case.
                  || terminalModel.isCommandRunning && !terminalModel.useAlternateBuffer)

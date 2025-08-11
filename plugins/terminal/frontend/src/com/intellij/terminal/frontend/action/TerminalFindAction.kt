@@ -12,13 +12,13 @@ import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.te
 import org.jetbrains.plugins.terminal.block.BlockTerminalController
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.blockTerminalController
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferModelEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
 internal class TerminalFindAction : TerminalPromotedDumbAwareAction() {
   private val handler = TerminalFindHandler(originalHandler = null)
@@ -26,13 +26,13 @@ internal class TerminalFindAction : TerminalPromotedDumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT // yes, that's what EditorAction defaults to as well!
 
   override fun update(e: AnActionEvent) {
-    val editor = e.editor
+    val editor = e.terminalEditor
     val caret = editor?.caretModel?.currentCaret
     e.presentation.isEnabled = editor != null && caret != null && handler.isEnabled(editor, caret, e.dataContext)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val editor = e.editor ?: return
+    val editor = e.terminalEditor ?: return
     val caret = editor.caretModel.currentCaret
     handler.executeForTerminal(editor, caret, e.dataContext)
   }

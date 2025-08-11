@@ -11,7 +11,6 @@ import com.jediterm.terminal.TerminalOutputStream
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.ui.getClipboardText
 import org.jetbrains.plugins.terminal.block.ui.sanitizeLineSeparators
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferModelEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
@@ -21,12 +20,13 @@ import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.output
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.promptController
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.selectionController
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.simpleTerminalController
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalFocusModel
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSession
 
 internal class TerminalPasteAction : TerminalPromotedDumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val editor = e.editor as? EditorEx ?: return
+    val editor = e.terminalEditor as? EditorEx ?: return
     val input = e.terminalInput
     when {
       editor.isPromptEditor -> pasteIntoPrompt(e, e.dataContext)
@@ -52,7 +52,7 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    val editor = e.editor
+    val editor = e.terminalEditor
     e.presentation.isEnabledAndVisible = editor != null && (
       editor.isPromptEditor || editor.isOutputEditor || editor.isAlternateBufferEditor || // gen1
       editor.isOutputModelEditor || editor.isAlternateBufferModelEditor // gen2

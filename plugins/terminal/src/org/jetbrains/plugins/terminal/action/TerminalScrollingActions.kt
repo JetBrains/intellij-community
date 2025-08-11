@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actions.EditorActionUtil
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
 internal class TerminalLineUpAction : TerminalScrollingAction(LineUpHandler())
 
@@ -25,11 +25,11 @@ internal abstract class TerminalScrollingAction(private val handler: ScrollingHa
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.editor?.isOutputModelEditor == true
+    e.presentation.isEnabled = e.terminalEditor?.isOutputModelEditor == true
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val editor = e.editor ?: return
+    val editor = e.terminalEditor ?: return
     handler.doExecute(editor)
   }
 }
