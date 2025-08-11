@@ -6,7 +6,7 @@ load("@bazel_features//:features.bzl", "bazel_features")
 # to automatically update repositories list in community/MODULE.bazel
 def _kotlin_test_deps_impl(ctx):
     kotlinCompilerCliVersion = "2.3.0-dev-3276"
-    kotlincKotlinJpsPluginTestsVersion = "2.1.21"
+    kotlincKotlinJpsPluginTestsVersion = "2.2.0"
 
     http_file(
         name = "kotlin_test_deps_annotations",
@@ -25,7 +25,7 @@ def _kotlin_test_deps_impl(ctx):
     http_file(
         name = "kotlin_test_deps_js-ir-runtime-for-ide",
         url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/js-ir-runtime-for-ide/{0}/js-ir-runtime-for-ide-{0}.klib".format(kotlincKotlinJpsPluginTestsVersion),
-        sha256 = "ce7dfdb29f2fcd1818d6096683853a0b5150751c0181cc59c8e366f766e39369",
+        sha256 = "2418eb1ebd6998c2879730cf0d41409269eb0a40df4e5744a912893079cec139",
         downloaded_file_path = "js-ir-runtime-for-ide.klib",
     )
 
@@ -81,7 +81,7 @@ def _kotlin_test_deps_impl(ctx):
     http_file(
         name = "kotlin_test_deps_kotlin-dist-for-ide",
         url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dist-for-ide/{0}/kotlin-dist-for-ide-{0}.jar".format(kotlincKotlinJpsPluginTestsVersion),
-        sha256 = "afc456c6ff50abb192624f4424324d7c9a1c927fcc03896b93b08ad1f0800a46",
+        sha256 = "efe04515b3c45083ad8119249bef00d540a8ba9f10b4e0fa93833e10f47f2f9f",
         downloaded_file_path = "kotlin-dist-for-ide.jar",
     )
 
@@ -95,7 +95,7 @@ def _kotlin_test_deps_impl(ctx):
     http_file(
         name = "kotlin_test_deps_kotlin-jps-plugin-classpath",
         url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/{0}/kotlin-jps-plugin-classpath-{0}.jar".format(kotlincKotlinJpsPluginTestsVersion),
-        sha256 = "c05e38ca6de3cfdb77b315c1488e0e860082670642592b897d93e41ce0ffb0ac",
+        sha256 = "61002bb21cc3c512bd7c9d532f3932e33e019e58d554bc4d3c208ebec5c11284",
         downloaded_file_path = "kotlin-jps-plugin-classpath.jar",
     )
 
