@@ -41,7 +41,8 @@ class TextMateCachingSyntaxMatcherCore(private val delegate: TextMateSyntaxMatch
                                                matchBeginPosition = matchBeginPosition,
                                                matchBeginString = matchBeginString,
                                                priority = priority,
-                                               currentScope = currentScope, injections = injections,
+                                               currentScope = currentScope,
+                                               injections = injections,
                                                checkCancelledCallback = checkCancelledCallback)) { it }
   }
 

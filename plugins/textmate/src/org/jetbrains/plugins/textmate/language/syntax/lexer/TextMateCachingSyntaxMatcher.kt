@@ -40,7 +40,7 @@ class TextMateCachingSyntaxMatcher(private val delegate: TextMateSyntaxMatcher) 
                          matchBeginString = it.matchBeginString,
                          priority = it.priority,
                          currentScope = it.currentScope,
-                         injections = injections,
+                         injections = it.injections,
                          checkCancelledCallback = checkCancelledCallback)
     }
   }

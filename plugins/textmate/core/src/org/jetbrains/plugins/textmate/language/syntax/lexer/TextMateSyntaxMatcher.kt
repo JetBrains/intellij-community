@@ -22,7 +22,7 @@ interface TextMateSyntaxMatcher {
     matchBeginString: Boolean,
     priority: TextMateWeigh.Priority,
     currentScope: TextMateScope,
-    injections: List<InjectionNodeDescriptor> = emptyList(),
+    injections: List<InjectionNodeDescriptor>,
     checkCancelledCallback: Runnable?,
   ): TextMateLexerState
 
@@ -69,6 +69,7 @@ class TextMateSyntaxMatcherImpl(
                                                        matchBeginPosition = matchBeginPosition,
                                                        matchBeginString = matchBeginString,
                                                        priority = priority,
+                                                       injections = injections,
                                                        currentScope = currentScope))
       if (resultState.matchData.matched && resultState.matchData.byteRange().start == byteOffset) {
         // Optimization. There cannot be anything more `important` than the current state matched from the very beginning
@@ -122,6 +123,7 @@ class TextMateSyntaxMatcherImpl(
     matchBeginPosition: Boolean,
     matchBeginString: Boolean,
     priority: TextMateWeigh.Priority,
+    injections: List<InjectionNodeDescriptor>,
     currentScope: TextMateScope,
     checkCancelledCallback: Runnable? = null,
   ): TextMateLexerState {
@@ -153,7 +155,7 @@ class TextMateSyntaxMatcherImpl(
       return TextMateLexerState.notMatched(syntaxNodeDescriptor)
     }
     return matchRule(syntaxNodeDescriptor, string, byteOffset, matchBeginPosition, matchBeginString, priority, currentScope,
-                     emptyList(), checkCancelledCallback)
+                     injections, checkCancelledCallback)
   }
 
   private fun hasBeginKey(lexerState: TextMateLexerState): Boolean {
@@ -196,15 +198,15 @@ class TextMateSyntaxMatcherImpl(
       }
       val injectionState =
         matchRule(
-          injection.syntaxNodeDescriptor,
-          string,
-          byteOffset,
-          matchBeginPosition,
-          matchBeginString,
-          selectorWeigh.priority,
-          currentScope,
-          emptyList(),
-          checkCancelledCallback
+          syntaxNodeDescriptor = injection.syntaxNodeDescriptor,
+          string = string,
+          byteOffset = byteOffset,
+          matchBeginPosition = matchBeginPosition,
+          matchBeginString = matchBeginString,
+          priority = selectorWeigh.priority,
+          currentScope = currentScope,
+          injections = emptyList(),
+          checkCancelledCallback = checkCancelledCallback
         )
 
       resultState = moreImportantState(resultState, injectionState)

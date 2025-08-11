@@ -89,7 +89,7 @@ class TextMateLexerCore(
     lineStartOffset: TextMateCharOffset,
     linePosition: TextMateCharOffset,
     lineByteOffset: TextMateByteOffset,
-    injections: List<InjectionNodeDescriptor> = emptyList(),
+    injections: List<InjectionNodeDescriptor>,
     checkCancelledCallback: Runnable?,
   ): PersistentList<TextMateLexerState> {
     var states = states
@@ -143,7 +143,7 @@ class TextMateLexerCore(
                                                      priority = TextMateWeigh.Priority.NORMAL,
                                                      currentScope = myCurrentScope,
                                                      injections = injections,
-                                                   checkCancelledCallback = checkCancelledCallback)
+                                                     checkCancelledCallback = checkCancelledCallback)
       val currentRule = currentState.syntaxRule
       val currentMatch = currentState.matchData
 
@@ -318,6 +318,7 @@ class TextMateLexerCore(
                     lineStartOffset = startLineOffset,
                     linePosition = captureRange.start,
                     lineByteOffset = byteRange.start,
+                    injections = emptyList(),
                     checkCancelledCallback = checkCancelledCallback)
         }
       }
