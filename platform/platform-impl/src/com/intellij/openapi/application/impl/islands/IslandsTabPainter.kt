@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl.islands
 
+import com.intellij.openapi.fileEditor.impl.EditorTabPainterAdapter
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.RectanglePainter2D
@@ -16,10 +17,21 @@ import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.awt.geom.RoundRectangle2D
 
-internal class ManyIslandsTabPainterAdapter : TabPainterAdapter {
-  override val tabPainter: JBTabPainter = ManyIslandsTabPainter()
+internal class IslandsTabPainterAdapter(var isEnabled: Boolean) : TabPainterAdapter {
+  private val editorAdapter = EditorTabPainterAdapter()
+  private val islandsAdapter = IslandsTabPainter()
+
+  override val tabPainter: JBTabPainter
+    get() {
+      return if (isEnabled) islandsAdapter else editorAdapter.tabPainter
+    }
 
   override fun paintBackground(label: TabLabel, g: Graphics, tabs: JBTabsImpl) {
+    if (!isEnabled) {
+      editorAdapter.paintBackground(label, g, tabs)
+      return
+    }
+
     val info = label.info
     val selected = info == tabs.selectedInfo
     val active = tabs.isActiveTabs(info)
@@ -36,7 +48,7 @@ internal class ManyIslandsTabPainterAdapter : TabPainterAdapter {
       val accentedRect = Rectangle(rect.x, rect.y, rect.width, rect.height)
       JBInsets.removeFrom(accentedRect, JBInsets(5, 3, 5, 3))
 
-      (tabPainter as ManyIslandsTabPainter).paintTab(g2, accentedRect, info.tabColor, active, hovered, selected)
+      (tabPainter as IslandsTabPainter).paintTab(g2, accentedRect, info.tabColor, active, hovered, selected)
     }
     finally {
       g2.dispose()
@@ -44,7 +56,7 @@ internal class ManyIslandsTabPainterAdapter : TabPainterAdapter {
   }
 }
 
-private class ManyIslandsTabTheme : TabTheme {
+private class IslandsTabTheme : TabTheme {
   override val background: Color
     get() = JBUI.CurrentTheme.EditorTabs.background()
 
@@ -74,8 +86,8 @@ private class ManyIslandsTabTheme : TabTheme {
     get() = JBColor.namedColor("EditorTabs.underlinedTabInactiveForeground", JBColor(0x000000, 0xFFFFFF))
 }
 
-private class ManyIslandsTabPainter : JBTabPainter {
-  private val myTheme = ManyIslandsTabTheme()
+private class IslandsTabPainter : JBTabPainter {
+  private val myTheme = IslandsTabTheme()
 
   override fun getTabTheme(): TabTheme = myTheme
 

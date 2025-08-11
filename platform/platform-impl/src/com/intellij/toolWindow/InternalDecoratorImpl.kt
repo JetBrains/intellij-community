@@ -279,8 +279,12 @@ class InternalDecoratorImpl internal constructor(
       Mode.SINGLE, Mode.CELL -> {
         layout = BorderLayout()
 
-        InternalUICustomization.getInstance()?.toolWindowUIDecorator?.decorateAndReturnHolder(dividerAndHeader, myDecoratorChild)?.let {
+        val decorator = InternalUICustomization.getInstance()?.toolWindowUIDecorator
+          ?.decorateAndReturnHolder(dividerAndHeader, myDecoratorChild) { InnerPanelBorder(toolWindow) }
+
+        decorator?.let {
           add(it, BorderLayout.CENTER)
+          putClientProperty("ToolWindow.ID", toolWindowId)
         } ?: run {
           add(dividerAndHeader, BorderLayout.NORTH)
           add(myDecoratorChild, BorderLayout.CENTER)

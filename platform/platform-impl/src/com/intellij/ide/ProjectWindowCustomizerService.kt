@@ -520,6 +520,7 @@ private class ProjectWindowCustomizerListener : ProjectActivity, UISettingsListe
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
+    InternalUICustomization.getInstance()?.updateBackgroundPainter()
     ProjectWindowCustomizerService.getInstance().update(uiSettings.differentiateProjects)
   }
 }

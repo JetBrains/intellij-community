@@ -105,6 +105,8 @@ open class InternalUICustomization {
 
   open fun attachIdeFrameBackgroundPainter(frame: IdeFrame, glassPane: IdeGlassPane): Unit = Unit
 
+  open fun updateBackgroundPainter() {}
+
   open fun attachIdeFallbackBackgroundPainter(glassPane: IdeGlassPane): Unit = Unit
 
   open fun attachDialogFallbackBackgroundPainter(glassPane: IdeGlassPane): Unit = Unit
