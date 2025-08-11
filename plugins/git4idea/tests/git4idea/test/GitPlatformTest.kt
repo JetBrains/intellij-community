@@ -1,7 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.test
 
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -33,7 +36,7 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.test.GitPlatformTest.ConfigScope.GLOBAL
 import git4idea.test.GitPlatformTest.ConfigScope.SYSTEM
 import java.nio.file.Path
-import java.util.Locale
+import java.util.*
 
 abstract class GitPlatformTest : VcsPlatformTest() {
   protected lateinit var repositoryManager: GitRepositoryManager
@@ -78,6 +81,11 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
     credentialHelpers = if (hasRemoteGitOperation()) readAndResetCredentialHelpers() else emptyMap()
     globalSslVerify = if (hasRemoteGitOperation()) readAndDisableSslVerifyGlobally() else null
+  }
+
+  override fun setUpProject() {
+    setRegistryPropertyForTest("git.use.env.from.project.context", false.toString())
+    super.setUpProject()
   }
 
   override fun tearDown() {
