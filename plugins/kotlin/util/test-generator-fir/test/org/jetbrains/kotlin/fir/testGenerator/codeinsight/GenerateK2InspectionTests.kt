@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import org.jetbrains.kotlin.idea.inspections.AbstractCoroutineNonBlockingContextDetectionTest
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractK2SharedQuickFixTest
-import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2CoroutineNonBlockingContextDetectionTest
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2InspectionTest
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2LocalInspectionTest
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2MultiFileQuickFixTest
@@ -253,7 +252,9 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${relativeIdea}/quickfix/optimizeImports", pattern = pattern, testMethodName = "doTestWithExtraFile")
         }
 
-        testClass<AbstractSharedK2CoroutineNonBlockingContextDetectionTest> {
+        testClass<AbstractCoroutineNonBlockingContextDetectionTest>(
+            generatedClassName = "org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.SharedK2CoroutineNonBlockingContextDetectionTestGenerated"
+        ) {
             model("inspections/blockingCallsDetection", pattern = KT)
         }
     }

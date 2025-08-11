@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateHashCodeAn
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateTestSupportMethodActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateToStringActionTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.*
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AbstractSharedK1CoroutineNonBlockingContextDetectionTest
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AbstractSharedK1InspectionTest
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AbstractSharedK1LocalInspectionTest
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.idea.kdoc.AbstractSharedK1KDocHighlightingTest
@@ -74,10 +73,7 @@ import org.jetbrains.kotlin.idea.imports.AbstractJvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.imports.AbstractK1AutoImportTest
 import org.jetbrains.kotlin.idea.imports.AbstractK1FilteringAutoImportTest
 import org.jetbrains.kotlin.idea.index.AbstractKotlinTypeAliasByExpansionShortNameIndexTest
-import org.jetbrains.kotlin.idea.inspections.AbstractInspectionTest
-import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
-import org.jetbrains.kotlin.idea.inspections.AbstractMultiFileLocalInspectionTest
-import org.jetbrains.kotlin.idea.inspections.AbstractViewOfflineInspectionTest
+import org.jetbrains.kotlin.idea.inspections.*
 import org.jetbrains.kotlin.idea.intentions.AbstractConcatenatedStringGeneratorTest
 import org.jetbrains.kotlin.idea.intentions.AbstractK1IntentionTest
 import org.jetbrains.kotlin.idea.intentions.AbstractK1IntentionTest2
@@ -1651,7 +1647,9 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
         }
 
-        testClass<AbstractSharedK1CoroutineNonBlockingContextDetectionTest> {
+        testClass<AbstractCoroutineNonBlockingContextDetectionTest>(
+            generatedClassName = "org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SharedK1CoroutineNonBlockingContextDetectionTestGenerated"
+        ) {
             model("inspections/blockingCallsDetection", pattern = KT)
         }
     }
