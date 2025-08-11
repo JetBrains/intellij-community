@@ -169,7 +169,7 @@ open class ProjectRootManagerImpl(
   // This field is not used when useWsm set to `true`
   private val stateComponent = ProjectRootManagerStateComponentImpl(this::projectJdkChanged, this::notifyExtensions)
 
-  protected val useWsm: Boolean = Registry.`is`("project.root.manager.over.wsm", false)
+  protected val useWsm: Boolean = Registry.`is`("project.root.manager.over.wsm", true)
 
   private val rootCache: OrderRootsCache
 

@@ -45,7 +45,7 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
 
   private LocalFileSystem.WatchRequest myCompilerOutputWatchRequest;
   private final Project project;
-  private final boolean useWsm = Registry.is("project.root.manager.over.wsm", false);
+  private final boolean useWsm = Registry.is("project.root.manager.over.wsm", true);
 
   CompilerProjectExtensionImpl(@NotNull Project project) {
     this.project = project;

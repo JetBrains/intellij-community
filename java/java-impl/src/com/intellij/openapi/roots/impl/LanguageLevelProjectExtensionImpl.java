@@ -40,7 +40,7 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
   private static final String DEFAULT_ATTRIBUTE = "default";
   private static final Logger LOG = Logger.getInstance(LanguageLevelProjectExtensionImpl.class);
 
-  private final boolean useWsm = Registry.is("project.root.manager.over.wsm", false);
+  private final boolean useWsm = Registry.is("project.root.manager.over.wsm", true);
   private final Project myProject;
   private LanguageLevel myCurrentLevel;
 

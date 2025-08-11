@@ -17,7 +17,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 
 class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity>, PlatformInternalWorkspaceFileIndexContributor {
 
-  private val useWsmForProjectSdk: Boolean = Registry.`is`("project.root.manager.over.wsm", false)
+  private val useWsmForProjectSdk: Boolean = Registry.`is`("project.root.manager.over.wsm", true)
 
   override val entityClass: Class<SdkEntity>
     get() = SdkEntity::class.java

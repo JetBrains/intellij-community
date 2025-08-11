@@ -51,7 +51,7 @@ class ProjectSettingsSerializer(
     errorReporter: ErrorReporter,
     virtualFileManager: VirtualFileUrlManager,
   ): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>> = loadEntitiesTimeMs.addMeasuredTime {
-    if (!Registry.`is`("project.root.manager.over.wsm", false)) {
+    if (!Registry.`is`("project.root.manager.over.wsm", true)) {
       return@addMeasuredTime LoadingResult(emptyMap())
     }
 
@@ -102,7 +102,7 @@ class ProjectSettingsSerializer(
     storage: EntityStorage,
     writer: JpsFileContentWriter,
   ): Unit = saveEntitiesTimeMs.addMeasuredTime {
-    if (!Registry.`is`("project.root.manager.over.wsm", false)) {
+    if (!Registry.`is`("project.root.manager.over.wsm", true)) {
       thisLogger().error( // severity error because we don't expect these entities to exist in the first place
         "ProjectSettingsEntity and JavaProjectSettingsEntity will not be saved, because registry flag " +
         "`project.root.manager.over.wsm` is false"
