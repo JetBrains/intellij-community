@@ -19,6 +19,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -51,17 +52,29 @@ private fun WorkspaceFileIndex.allIndexableFileSets(root: VirtualFile): AllFileS
   }
 }.let { (recursive, nonRecursive) -> AllFileSets(recursive, nonRecursive) }
 
+private fun WorkspaceFileIndexEx.isExcludedOrInvalid(file: VirtualFile): Boolean = runReadAction {
+  val info = getFileInfo(file, true, true, true, true, true, true)
+  when (info) {
+    NonWorkspace.EXCLUDED -> true
+    NonWorkspace.IGNORED -> true
+    NonWorkspace.INVALID -> true
+    NonWorkspace.NOT_UNDER_ROOTS -> true
+    else -> false
+  }
+}
+
 @RequiresBackgroundThread
-private fun WorkspaceFileIndex.iterateNonIndexableFilesImpl(roots: Set<VirtualFile>, filter: VirtualFileFilter, processor: ContentIterator): Boolean {
+private fun WorkspaceFileIndexEx.iterateNonIndexableFilesImpl(roots: Set<VirtualFile>, filter: VirtualFileFilter, processor: ContentIterator): Boolean {
   for (root in roots) {
     val res = VfsUtilCore.visitChildrenRecursively(root, object : VirtualFileVisitor<Any?>() {
       override fun visitFileEx(file: VirtualFile): Result {
         ProgressManager.checkCanceled()
+        if (isExcludedOrInvalid(file)) return SKIP_CHILDREN
         val currentIndexableFileSets = allIndexableFileSets(root = file)
         return when {
-          !filter.accept(file) -> SKIP_CHILDREN
           currentIndexableFileSets.recursive.isNotEmpty() -> SKIP_CHILDREN
           currentIndexableFileSets.nonRecursive.isNotEmpty() -> CONTINUE // skip only the current file, children can be non-indexable
+          !filter.accept(file) -> SKIP_CHILDREN
           !processor.processFile(file) -> skipTo(root) // terminate processing
           else -> CONTINUE
         }
@@ -107,6 +120,8 @@ private class NonIndexableFilesDequeImpl(private val project: Project, private v
       if (file in visitedRoots) continue
       if (file in roots) visitedRoots.add(file)
 
+      val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
+      if (workspaceFileIndex.isExcludedOrInvalid(file)) continue
       val indexableFileSets = WorkspaceFileIndexEx.getInstance(project).allIndexableFileSets(file)
 
       if (indexableFileSets.recursive.isNotEmpty()) continue // skip the current file and their children
