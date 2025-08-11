@@ -7,6 +7,7 @@ import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.util.KotlinSingleClassFileAnalyzer
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractNavBarModelExtensionCompatBase : StructureAwareNavBarModelExtension() {
@@ -21,7 +22,7 @@ abstract class AbstractNavBarModelExtensionCompatBase : StructureAwareNavBarMode
 
     override fun acceptParentFromModel(psiElement: PsiElement?): Boolean {
         if (psiElement is KtFile) {
-            return KotlinIconProvider.getSingleClass(psiElement) == null
+            return KotlinSingleClassFileAnalyzer.getSingleClass(psiElement) == null
         }
         return true
     }

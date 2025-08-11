@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
-import org.jetbrains.kotlin.idea.KotlinIconProvider
+import org.jetbrains.kotlin.idea.base.util.KotlinSingleClassFileAnalyzer
 import org.jetbrains.kotlin.idea.util.isFileInRoots
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -37,7 +37,7 @@ class KotlinExpandNodeProjectViewProvider : TreeStructureProvider, DumbAware {
             val nestedFileNodes = (child as? FileNodeWithNestedFileNodes)?.nestedFileNodes ?: emptyList()
 
             if (ktFile != null) {
-                val mainClass = KotlinIconProvider.getSingleClass(ktFile)
+                val mainClass = KotlinSingleClassFileAnalyzer.getSingleClass(ktFile)
                 if (mainClass != null && mainClass.containingKtFile.declarations.size == 1) {
                     // Only use a KtClassOrObjectTreeNode if the file contains only the class.
                     // Otherwise, the move behavior when trying to move the node will only move the mainClass,

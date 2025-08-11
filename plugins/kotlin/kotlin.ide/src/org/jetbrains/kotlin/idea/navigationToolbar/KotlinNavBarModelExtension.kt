@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.navigationToolbar
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinIconProvider
+import org.jetbrains.kotlin.idea.base.util.KotlinSingleClassFileAnalyzer
 import org.jetbrains.kotlin.idea.projectView.KtDeclarationTreeNode.Companion.tryGetRepresentableText
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
@@ -18,6 +19,6 @@ class KotlinNavBarModelExtension : AbstractNavBarModelExtensionCompatBase() {
         }
 
         val containingFile = psiElement?.containingFile as? KtFile ?: return psiElement
-        return KotlinIconProvider.getSingleClass(containingFile) ?: psiElement
+        return KotlinSingleClassFileAnalyzer.getSingleClass(containingFile) ?: psiElement
     }
 }

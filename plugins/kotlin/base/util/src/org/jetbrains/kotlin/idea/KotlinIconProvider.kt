@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.asJava.elements.KtLightParameter
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.KotlinIcons.*
+import org.jetbrains.kotlin.idea.base.util.KotlinSingleClassFileAnalyzer
 import org.jetbrains.kotlin.idea.util.isFileInRoots
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -61,7 +62,7 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
             if (psiElement.isScript()) {
                 return psiElement.scriptIcon()
             }
-            val mainClass = getSingleClass(psiElement)
+            val mainClass = KotlinSingleClassFileAnalyzer.getSingleClass(psiElement)
             return if (mainClass != null) getIcon(mainClass, flags) else FILE
         }
 
@@ -82,52 +83,6 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
     }
 
     companion object {
-        fun isSingleClassFile(file: KtFile): Boolean = getSingleClass(file) != null
-
-        fun getSingleClass(file: KtFile): KtClassOrObject? {
-            // no reason to show a difference between single class and kotlin file for non-source roots kotlin files
-            // in consistence with [org.jetbrains.kotlin.idea.projectView.KotlinSelectInProjectViewProvider#getTopLevelElement]
-            if (!file.project.isFileInRoots(file.virtualFile)){
-                return null
-            }
-
-            var targetDeclaration: KtDeclaration? = null
-
-            /**
-             * Returns true if more iterations are needed.
-             *
-             * [targetDeclaration] points to the only one non-private declaration, otherwise it is null.
-             */
-            fun handleDeclaration(psiElement: PsiElement?): Boolean {
-                val declaration = psiElement as? KtDeclaration ?: return true
-                if (!declaration.isPrivate() && declaration !is KtTypeAlias) {
-                    if (targetDeclaration != null) {
-                        targetDeclaration = null
-                        return false
-                    }
-                    targetDeclaration = declaration
-                }
-                return true
-            }
-
-            // do not build AST for stubs when it is unnecessary.
-            file.withGreenStubOrAst(
-                { fileStub ->
-                    for (stubElement in fileStub.childrenStubs) {
-                        val elementType = stubElement.elementType
-                        if (elementType != KtNodeTypes.TYPEALIAS && elementType in KtTokenSets.DECLARATION_TYPES) {
-                            if (!handleDeclaration(stubElement.psi)) return@withGreenStubOrAst
-                        }
-                    }
-                }, { fileElement ->
-                    for (node in fileElement.children()) {
-                        if (!handleDeclaration(node.psi)) return@withGreenStubOrAst
-                    }
-                }
-            )
-            return targetDeclaration?.takeIf { it is KtClassOrObject && StringUtil.getPackageName(file.name) == it.name } as? KtClassOrObject
-        }
-
         private fun createRowIcon(baseIcon: Icon, visibilityIcon: Icon): RowIcon {
             val rowIcon = RowIcon(2)
             rowIcon.setIcon(baseIcon, 0)
