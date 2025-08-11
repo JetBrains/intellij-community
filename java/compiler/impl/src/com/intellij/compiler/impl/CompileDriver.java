@@ -10,8 +10,8 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.DefaultMessageHandler;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.internal.statistic.StructuredIdeActivity;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
+import com.intellij.java.JavaBundle;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -25,17 +25,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory;
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -69,6 +66,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
@@ -355,6 +353,9 @@ public final class CompileDriver {
           }
         }
 
+
+        private final AtomicBoolean myFallbackSdkHintReported = new AtomicBoolean(false);
+
         @Override
         protected void handleBuildEvent(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event) {
           final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type eventType = event.getEventType();
@@ -398,12 +399,32 @@ public final class CompileDriver {
               if (event.hasCustomBuilderMessage()) {
                 final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage message =
                   event.getCustomBuilderMessage();
-                if (GlobalOptions.JPS_SYSTEM_BUILDER_ID.equals(message.getBuilderId()) &&
-                    GlobalOptions.JPS_UNPROCESSED_FS_CHANGES_MESSAGE_ID.equals(message.getMessageType())) {
-                  //noinspection HardCodedStringLiteral
-                  final String text = message.getMessageText();
-                  if (!StringUtil.isEmpty(text)) {
-                    compileContext.addMessage(CompilerMessageCategory.INFORMATION, text, null, -1, -1);
+                if (GlobalOptions.JPS_SYSTEM_BUILDER_ID.equals(message.getBuilderId())) {
+                  if (GlobalOptions.JPS_UNPROCESSED_FS_CHANGES_MESSAGE_ID.equals(message.getMessageType())) {
+                    //noinspection HardCodedStringLiteral
+                    final String text = message.getMessageText();
+                    if (!StringUtil.isEmpty(text)) {
+                      compileContext.addMessage(CompilerMessageCategory.INFORMATION, text, null, -1, -1);
+                    }
+                  }
+                  else if (GlobalOptions.JPS_FALLBACK_SDK_SETUP_MESSAGE_ID.equals(message.getMessageType())) {
+                    if (!myFallbackSdkHintReported.getAndSet(true)) {
+                      @NlsSafe String notificationContent = message.getMessageText();
+                      NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Unsupported JDK");
+
+                      Notification notification = notificationGroup.createNotification(
+                        JavaBundle.message("unsupported.jdk.notification.title"),
+                          notificationContent,
+                          NotificationType.WARNING
+                        )
+                        .setImportantSuggestion(true)
+                        .setRemoveWhenExpired(true)
+                        .addAction(
+                          NotificationAction.createSimpleExpiring(ProjectBundle.message("action.text.config.invalid.sdk.configure"), () -> openJdkConfigurationSettings(compileContext.getCompileScope()))
+                        );
+                      compileContext.getBuildSession().registerCloseAction(notification::expire);
+                      notification.notify(myProject);
+                    }
                   }
                 }
               }
@@ -416,6 +437,18 @@ public final class CompileDriver {
           return compileContext.getProgressIndicator();
         }
       });
+  }
+
+  private void openJdkConfigurationSettings(CompileScope compileScope) {
+    for (Module module : compileScope.getAffectedModules()) {
+      for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+        if (entry instanceof JdkOrderEntry) {
+          ProjectSettingsService.getInstance(myProject).openLibraryOrSdkSettings(entry);
+          return;
+        }
+      }
+    }
+    ProjectSettingsService.getInstance(myProject).openProjectSettings();
   }
 
   @RequiresEdt

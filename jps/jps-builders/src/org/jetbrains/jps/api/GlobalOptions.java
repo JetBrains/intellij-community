@@ -37,6 +37,10 @@ public interface GlobalOptions {
   // notification about the files changed during compilation, but not compiled in current compilation session
   String JPS_UNPROCESSED_FS_CHANGES_MESSAGE_ID = "!unprocessed_fs_changes_detected!";
 
+  // notification about necessary fallback SDK setup to enable compilation for older JVM targets
+  @ApiStatus.Internal
+  String JPS_FALLBACK_SDK_SETUP_MESSAGE_ID = "!fallback_sdk_setup_required!";
+
   /**
    * The path to external project config directory (used for external system projects).
    */

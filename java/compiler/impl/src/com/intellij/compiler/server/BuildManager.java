@@ -63,7 +63,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.registry.RegistryManagerKt;
@@ -186,9 +185,6 @@ public final class BuildManager implements Disposable {
               Strings.endsWithIgnoreCase(path.getName(), IPR_EXTENSION));
 
   private static final String JPS_USE_EXPERIMENTAL_STORAGE = "jps.use.experimental.storage";
-
-  private final String myFallbackSdkHome;
-  private final String myFallbackSdkVersion;
 
   private final Map<TaskFuture<?>, Project> myAutomakeFutures = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, RequestFuture<?>> myBuildsInProgress = Collections.synchronizedMap(new HashMap<>());
@@ -324,19 +320,6 @@ public final class BuildManager implements Disposable {
 
     final Application application = ApplicationManager.getApplication();
     IS_UNIT_TEST_MODE = application.isUnitTestMode();
-
-
-    String fallbackSdkHome = System.getProperty(GlobalOptions.FALLBACK_JDK_HOME, null);
-    String fallbackSdkVersion = System.getProperty(GlobalOptions.FALLBACK_JDK_VERSION, null);
-    if (fallbackSdkHome == null || fallbackSdkVersion == null) {
-      // default to the IDE's runtime
-      myFallbackSdkHome = getFallbackSdkHome();
-      myFallbackSdkVersion = SystemInfo.JAVA_VERSION;
-    }
-    else {
-      myFallbackSdkHome = fallbackSdkHome;
-      myFallbackSdkVersion = fallbackSdkVersion;
-    }
 
     SimpleMessageBusConnection connection = application.getMessageBus().connect(coroutineScope);
     connection.subscribe(ProjectCloseListener.TOPIC, new ProjectWatcher());
@@ -493,17 +476,6 @@ public final class BuildManager implements Disposable {
         mySuspendBackgroundTasksCounter.incrementAndGet();
       }
     }
-  }
-
-  private static @NotNull String getFallbackSdkHome() {
-    String home = SystemProperties.getJavaHome(); // should point either to jre or jdk
-    if (!JdkUtil.checkForJdk(home)) {
-      String parent = new File(home).getParent();
-      if (parent != null && JdkUtil.checkForJdk(parent)) {
-        home = parent;
-      }
-    }
-    return FileUtilRt.toSystemIndependentName(home);
   }
 
   private static @NotNull List<Project> getOpenProjects() {
@@ -1210,19 +1182,11 @@ public final class BuildManager implements Disposable {
 
     return getRuntimeSdk(project, MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION, processed -> {
       // build's fallback SDK choosing policy: select among unprocessed SDKs in the SDK table the oldest possible one that can be used
-      // select only SDKs that match project's WSL VM, if any
-      Supplier<WSLDistribution> projectWslDistribution = new Supplier<>() {
-        private WSLDistribution val;
-
-        @Override
-        public WSLDistribution get() {
-          return val != null ? val : (val = findWSLDistribution(project));
-        }
-      };
-      Predicate<Sdk> sdkFilter = sdk -> !processed.contains(sdk) && Objects.equals(projectWslDistribution.get(), findWSLDistribution(sdk));
+      // if project is located in a WSL VM, consider only SDKs, configured in the same WSL VM
+      Predicate<Sdk> wslSdkFilter = getWslSdkFilter(project);
 
       return StreamEx.of(ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance()))
-        .filter(sdkFilter)
+        .filter(sdk -> !processed.contains(sdk) && wslSdkFilter.test(sdk))
         .mapToEntry(sdk -> JavaVersion.tryParse(sdk.getVersionString()))
         .filterValues(version -> version != null && version.isAtLeast(MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION))
         .min(Map.Entry.comparingByValue())
@@ -1230,6 +1194,19 @@ public final class BuildManager implements Disposable {
         .filter(p -> p.second != null)
         .orElseGet(BuildManager::getIDERuntimeSdk);
     });
+  }
+
+  private static @NotNull Predicate<Sdk> getWslSdkFilter(@NotNull Project project) {
+    // if WSL is configured, accepts only those SDKs that match project's WSL VM
+    Supplier<WSLDistribution> projectWslDistribution = new Supplier<>() {
+      private Ref<WSLDistribution> val;
+
+      @Override
+      public WSLDistribution get() {
+        return val != null? val.get() : (val = Ref.create(findWSLDistribution(project))).get();
+      }
+    };
+    return sdk -> Objects.equals(projectWslDistribution.get(), findWSLDistribution(sdk));
   }
 
   public static @NotNull Pair<@NotNull Sdk, @Nullable JavaSdkVersion> getJavacRuntimeSdk(@NotNull Project project) {
@@ -1286,6 +1263,18 @@ public final class BuildManager implements Disposable {
       .map(p -> Pair.create(p.getKey(), JavaSdkVersion.fromJavaVersion(p.getValue())))
       .filter(p -> p.second != null)
       .orElseGet(() -> fallbackSdkProvider.apply(candidates.keySet()));
+  }
+
+  private static @Nullable Pair<Sdk, JavaSdkVersion> getForkedJavacFallbackSdk(@NotNull Project project, int oldestPossibleVersion) {
+    // select the oldest SDK version among SDKs that are present in the SDK Table, but not older than <oldestPossibleVersion>
+    return StreamEx.of(ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance()))
+      .filter(getWslSdkFilter(project))
+      .mapToEntry(sdk -> JavaVersion.tryParse(sdk.getVersionString()))
+      .filterValues(version -> version != null && version.isAtLeast(oldestPossibleVersion))
+      .min(Map.Entry.comparingByValue())
+      .map(p -> Pair.create(p.getKey(), JavaSdkVersion.fromJavaVersion(p.getValue())))
+      .filter(p -> p.second != null)
+      .orElse(null);
   }
 
   private static @NotNull Pair<Sdk, JavaSdkVersion> getIDERuntimeSdk() {
@@ -1707,9 +1696,19 @@ public final class BuildManager implements Disposable {
       cmdLine.addParameter("-Djps.report.registered.unexistent.output=true");
     }
 
-    if (localProject && myFallbackSdkHome != null && myFallbackSdkVersion != null) {
-      cmdLine.addPathParameter("-D" + GlobalOptions.FALLBACK_JDK_HOME + '=', myFallbackSdkHome);
-      cmdLine.addParameter("-D" + GlobalOptions.FALLBACK_JDK_VERSION + '=' + myFallbackSdkVersion);
+    String fallbackSdkHome = localProject? System.getProperty(GlobalOptions.FALLBACK_JDK_HOME, null) : null;
+    String fallbackSdkVersion = localProject? System.getProperty(GlobalOptions.FALLBACK_JDK_VERSION, null) : null;
+    if (fallbackSdkHome == null || fallbackSdkVersion == null) {
+      Pair<Sdk, JavaSdkVersion> fallback = getForkedJavacFallbackSdk(project, ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION);
+      Sdk sdk = fallback != null? fallback.first : null;
+      if (sdk != null && sdk.getSdkType() instanceof JavaSdkType javaSdk && !FileUtil.pathsEqual(vmExecutablePath, javaSdk.getVMExecutablePath(sdk))) {
+        fallbackSdkHome = sdk.getHomePath();
+        fallbackSdkVersion = fallback.second.getMaxLanguageLevel().getShortText();
+      }
+    }
+    if (fallbackSdkHome != null && fallbackSdkVersion != null) {
+      cmdLine.addPathParameter("-D" + GlobalOptions.FALLBACK_JDK_HOME + '=', fallbackSdkHome);
+      cmdLine.addParameter("-D" + GlobalOptions.FALLBACK_JDK_VERSION + '=' + fallbackSdkVersion);
     }
     cmdLine.addParameter("-Dio.netty.noUnsafe=true");
 

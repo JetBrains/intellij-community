@@ -39,6 +39,7 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.incremental.messages.FallbackJdkSetupNotification;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.javac.*;
@@ -446,7 +447,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       // when forking external javac, compilers from SDK 1.7 and higher are supported
       final Pair<String, Integer> forkSdk;
       if (shouldForkCompilerProcess(context, chunk, targetLanguageLevel, compilingTool)) {
-        forkSdk = getForkedJavacSdk(diagnosticSink, chunk, targetLanguageLevel);
+        forkSdk = getForkedJavacSdk(context, diagnosticSink, chunk, targetLanguageLevel);
         if (forkSdk == null) {
           return false;
         }
@@ -1203,7 +1204,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     return chunkSdkVersion;
   }
 
-  private static @Nullable Pair<String, Integer> getForkedJavacSdk(DiagnosticListener<? super JavaFileObject> diagnostic, ModuleChunk chunk, int targetLanguageLevel) {
+  private static @Nullable Pair<String, Integer> getForkedJavacSdk(CompileContext context, DiagnosticListener<? super JavaFileObject> diagnostic, ModuleChunk chunk, int targetLanguageLevel) {
     final Pair<JpsSdk<JpsDummyElement>, Integer> associatedSdk = getAssociatedSdk(chunk);
     boolean canRunAssociatedJavac = false;
     if (associatedSdk != null) {
@@ -1238,33 +1239,52 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       final int fallbackVersion = JpsJavaSdkType.parseVersion(fallbackJdkVersion);
       if (isTargetReleaseSupported(fallbackVersion, targetLanguageLevel)) {
         if (fallbackVersion >= ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION) {
+          diagnostic.report(new PlainMessageDiagnostic(Diagnostic.Kind.NOTE,
+            JpsBuildBundle.message(
+              "build.message.fallback.javac.used",
+              chunk.getName(),
+              targetLanguageLevel,
+              fallbackJdkVersion
+            )
+          ));
           return Pair.create(fallbackJdkHome, fallbackVersion);
         }
         else {
+          // the configured fallback SDK supports the required JVM target, but cannot be run by JPS
           LOG.info("Version string for fallback JDK is '" + fallbackJdkVersion + "' (recognized as version '" + fallbackVersion + "')." +
                    " At least version " + ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION + " is required to launch javac process.");
+
+          diagnostic.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR,
+            JpsBuildBundle.message("build.message.cannot.compile.fallback.jdk.not.supported", chunk.getName(), targetLanguageLevel, fallbackJdkVersion)
+          ));
         }
       }
-    }
-
-    // at this point, fallbackJdk is not suitable too
-    if (associatedSdk != null) {
-      if (canRunAssociatedJavac) {
-        // although target release is not supported, attempt to start javac, so that javac properly reports this error
-        return Pair.create(associatedSdk.first.getHomePath(), associatedSdk.second);
-      }
       else {
+        // configured fallback SDK does not support the required jvm target
         diagnostic.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR,
-          JpsBuildBundle.message(
-            "build.message.unsupported.javac.version",
-            chunk.getName(),
-            associatedSdk.second,
-            ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION,
-            targetLanguageLevel
-          )
+          JpsBuildBundle.message("build.message.cannot.compile.fallback.jdk.unsupported.jvm.target", chunk.getName(), targetLanguageLevel, fallbackJdkVersion)
         ));
       }
     }
+    else {
+      // fallback JDK is not configured at all;
+      // associatedSdk != null, is configured, but either JPS cannot run it, or it does not support the required jvm target
+
+      String errorMessage;
+      if (canRunAssociatedJavac) {
+        errorMessage = JpsBuildBundle.message("build.message.cannot.compile.associated.jdk.unsupported.jvm.target", chunk.getName(), targetLanguageLevel, associatedSdk.first.getVersionString());
+      }
+      else {
+        errorMessage = JpsBuildBundle.message("build.message.cannot.compile.associated.jdk.not.supported", chunk.getName(), targetLanguageLevel, associatedSdk.first.getVersionString());
+      }
+      diagnostic.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, errorMessage));
+    }
+    
+    String fallbackSDKHint = JpsBuildBundle.message(
+      "build.message.fallback.jdk.hint", ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION, targetLanguageLevel
+    );
+    context.processMessage(new FallbackJdkSetupNotification(fallbackSDKHint));
+    diagnostic.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, fallbackSDKHint));
 
     return null;
   }
