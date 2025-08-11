@@ -45,7 +45,6 @@ jvm_library(
     "@lib//:ion",
     "@lib//:stream_ex",
     "//platform/statistics",
-    "//platform/inspect",
     "@lib//:fastutil-min",
     "@lib//:commons-cli",
     "//platform/workspace/storage",
@@ -77,7 +76,6 @@ jvm_library(
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
     "@lib//:gradle",
-    "//platform/inspect",
   ],
   runtime_deps = [
     ":gradle_resources",

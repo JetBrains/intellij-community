@@ -350,6 +350,8 @@ jvm_library(
     "//platform/whatsNew:whatsNew_test_lib",
     "//platform/remoteDev-util",
     "//platform/remoteDev-util:remoteDev-util_test_lib",
+    "//platform/inspect",
+    "//platform/inspect:inspect_test_lib",
     "//wintools",
     "//wintools:wintools_test_lib",
     "//python/python-exec-service:community-execService",

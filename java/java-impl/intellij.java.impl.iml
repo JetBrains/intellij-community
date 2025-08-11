@@ -100,7 +100,6 @@
     <orderEntry type="module" module-name="intellij.copyright" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.inspect" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />

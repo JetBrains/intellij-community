@@ -33,7 +33,6 @@
     <orderEntry type="library" name="clikt" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="commons-text" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.inspect" />
     <orderEntry type="module" module-name="intellij.platform.warmup" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />

@@ -77,7 +77,6 @@ jvm_library(
     "//plugins/copyright",
     "@lib//:stream_ex",
     "//platform/statistics",
-    "//platform/inspect",
     "@lib//:fastutil-min",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",

@@ -31,7 +31,6 @@ jvm_library(
     "//java/idea-ui:ui",
     "//python/pluginCore/impl",
     "//python/python-psi-impl:psi-impl",
-    "//platform/inspect",
     "//platform/core-ui",
     "//platform/util/jdom",
     "//python/python-core-impl:community-core-impl",
