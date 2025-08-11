@@ -2,6 +2,11 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
+import com.intellij.ide.plugins.newui.MyPluginModel
+import com.intellij.ide.plugins.newui.PluginInstallationState
+import com.intellij.ide.plugins.newui.PluginLogo
+import com.intellij.ide.plugins.newui.PluginUiModel
+import com.intellij.ide.plugins.newui.UiPluginManager
 import com.intellij.ide.plugins.newui.*
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -33,6 +38,7 @@ object PluginManagerPanelFactory {
       val pluginManager = UiPluginManager.getInstance()
       val marketplaceData = mutableMapOf<String, PluginSearchResult>()
       val internalPluginsGroupDescriptor = getPluginsViewCustomizer().getInternalPluginsGroupDescriptor()
+      val installationStates = pluginManager.getInstallationStates()
 
       val queries = listOf(
         "is_featured_search=true",
