@@ -27,6 +27,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * @deprecated Use {@link JavaApplicationSettingsEditor} instead.
+ */
+@Deprecated(forRemoval = true)
 public class ApplicationConfigurable extends SettingsEditor<ApplicationConfiguration> implements PanelWithAnchor {
   private final Project myProject;
   private final ConfigurationModuleSelector myModuleSelector;
