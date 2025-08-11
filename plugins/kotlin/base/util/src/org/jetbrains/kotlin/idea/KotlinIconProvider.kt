@@ -128,49 +128,6 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
             return targetDeclaration?.takeIf { it is KtClassOrObject && StringUtil.getPackageName(file.name) == it.name } as? KtClassOrObject
         }
 
-        fun getMainClass(file: KtFile): KtClassOrObject? {
-            // no reason to show a difference between single class and kotlin file for non-source roots kotlin files
-            // in consistence with [org.jetbrains.kotlin.idea.projectView.KotlinSelectInProjectViewProvider#getTopLevelElement]
-            if (!file.project.isFileInRoots(file.virtualFile)){
-                return null
-            }
-
-            var targetClassOrObject: KtClassOrObject? = null
-            /**
-             * Returns true if more iterations are needed.
-             *
-             * [targetClassOrObject] points to the only one non-private class or object, otherwise it is null.
-             */
-            fun handleDeclaration(psiElement: PsiElement?): Boolean {
-                val classOrObject = psiElement as? KtClassOrObject ?: return true
-                if (!classOrObject.isPrivate()) {
-                    if (targetClassOrObject != null) {
-                        targetClassOrObject = null
-                        return false
-                    }
-                    targetClassOrObject = classOrObject
-                }
-                return true
-            }
-
-            // do not build AST for stubs when it is unnecessary.
-            file.withGreenStubOrAst(
-                { fileStub ->
-                    for (stubElement in fileStub.childrenStubs) {
-                        val elementType = stubElement.elementType
-                        if (elementType == KtNodeTypes.CLASS || elementType == KtNodeTypes.OBJECT_DECLARATION) {
-                            if (!handleDeclaration(stubElement.psi)) return@withGreenStubOrAst
-                        }
-                    }
-                }, { fileElement ->
-                    for (node in fileElement.children()) {
-                        if (!handleDeclaration(node.psi)) return@withGreenStubOrAst
-                    }
-                }
-            )
-            return targetClassOrObject?.takeIf { StringUtil.getPackageName(file.name) == it.name }
-        }
-
         private fun createRowIcon(baseIcon: Icon, visibilityIcon: Icon): RowIcon {
             val rowIcon = RowIcon(2)
             rowIcon.setIcon(baseIcon, 0)
