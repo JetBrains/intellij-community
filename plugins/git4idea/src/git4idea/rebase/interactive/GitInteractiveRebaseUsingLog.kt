@@ -17,6 +17,7 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.DialogManager
 import git4idea.GitOperationsCollector
 import git4idea.branch.GitRebaseParams
+import git4idea.config.GitConfigUtil.isRebaseUpdateRefsEnabledCached
 import git4idea.history.GitHistoryTraverser
 import git4idea.history.GitHistoryTraverserImpl
 import git4idea.i18n.GitBundle
@@ -64,6 +65,10 @@ internal fun getEntriesUsingLog(
 
     if (details.any { detail -> GitSquashedCommitsMessage.isAutosquashCommitMessage(detail.subject) }) {
       throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.FIXUP_SQUASH)
+    }
+
+    if (isRebaseUpdateRefsEnabledCached(repository.project, repository.root)) {
+      throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.UPDATE_REFS)
     }
 
     return details.map { GitRebaseEntryGeneratedUsingLog(it) }.reversed()
@@ -180,7 +185,8 @@ internal class CantRebaseUsingLogException(val reason: Reason) : Exception(reaso
     MERGE,
     FIXUP_SQUASH,
     UNEXPECTED_HASH,
-    UNRESOLVED_HASH
+    UNRESOLVED_HASH,
+    UPDATE_REFS // should generate an update-ref entry in the editor, which is not supported when using log
   }
 }
 
