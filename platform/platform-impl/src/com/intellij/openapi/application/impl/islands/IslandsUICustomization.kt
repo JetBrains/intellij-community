@@ -19,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
@@ -37,6 +38,7 @@ import java.awt.event.HierarchyEvent
 import java.awt.geom.Area
 import java.awt.geom.RoundRectangle2D
 import javax.swing.JComponent
+import javax.swing.JFrame
 import javax.swing.SwingUtilities
 import javax.swing.border.Border
 
@@ -256,17 +258,25 @@ internal class IslandsUICustomization : InternalUICustomization() {
     if (buttonManager is ToolWindowPaneNewButtonManager) {
       buttonManager.addVisibleToolbarsListener { leftVisible, rightVisible ->
         val isIslands = isManyIslandEnabled
-        val gap = JBUI.getInt("Islands.emptyGap", JBUI.scale(4))
+        val gap = JBUI.unscale(JBUI.getInt("Islands.emptyGap", JBUI.scale(4)))
 
         if (SystemInfo.isMac) {
           UIUtil.getRootPane(toolWindowPaneParent)?.let { rootPane ->
             val tabContainer = rootPane.getClientProperty("WINDOW_TABS_CONTAINER_KEY")
             if (tabContainer is JComponent) {
               if (isIslands) {
-                val left = if (leftVisible) buttonManager.left.width + JBUI.scale(1) else gap
-                val right = if (rightVisible) buttonManager.right.width + JBUI.scale(2) else gap + JBUI.scale(1)
+                val left = if (leftVisible) JBUI.unscale(buttonManager.left.width) + 1 else gap
+                val right = if (rightVisible) JBUI.unscale(buttonManager.right.width) + 2 else gap + 1
 
-                tabContainer.border = JBUI.Borders.empty(0, left, 0, right)
+                val frame = rootPane.parent
+                if (frame is IdeFrame) {
+                  val project = frame.project
+                  if (project != null) {
+                    tabContainer.putClientProperty("PROJECT_ID", project.locationHash)
+                  }
+                }
+
+                tabContainer.border = JBUI.Borders.empty(0, left, 2, right)
               }
               else if (tabContainer.border != null) {
                 tabContainer.border = null
@@ -460,6 +470,13 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
+  override fun getProjectTabContentInsets(): Insets? {
+    if (isManyIslandEnabled) {
+      return JBUI.insets(0, 4, 0, 15)
+    }
+    return null
+  }
+
   override fun paintProjectTabsContainer(component: JComponent, g: Graphics): Boolean {
     if (isManyIslandEnabled) {
       val gg = IdeBackgroundUtil.withFrameBackground(g, component)
@@ -474,21 +491,31 @@ internal class IslandsUICustomization : InternalUICustomization() {
   private val PROJECT_TAB_HOVER_BACKGROUND = JBColor.namedColor("MainWindow.Tab.hoverBackground", JBColor.namedColor("MainToolbar.Dropdown.transparentHoverBackground"))
   private val PROJECT_TAB_SEPARATOR_COLOR = JBColor.namedColor("MainWindow.Tab.separatorColor", 0xD3D5DB, 0x43454A)
 
-  override fun paintProjectTab(label: TabLabel, g: Graphics, tabs: JBTabsImpl, selected: Boolean, index: Int, lastIndex: Int): Boolean {
+  private fun isColorfulToolbar(frame: JFrame): Boolean {
+    val glassPane = frame.glassPane
+    if (glassPane is IdeGlassPaneEx) {
+      return glassPane.isColorfulToolbar
+    }
+    return true
+  }
+
+  override fun paintProjectTab(frame: JFrame, label: TabLabel, g: Graphics, tabs: JBTabsImpl, selected: Boolean, index: Int, lastIndex: Int): Boolean {
     if (!isManyIslandEnabled) {
       return false
     }
 
     val parent = tabs.parent
-    if (parent is JComponent && parent.border == null) {
-      val project = ProjectUtil.getProjectForComponent(tabs)
-      if (project != null) {
+
+    if (parent is JComponent && frame is IdeFrame) {
+      val project = frame.project
+
+      if (project != null && (parent.border == null || project.locationHash != parent.getClientProperty("PROJECT_ID"))) {
         updateToolStripesVisibility(ToolWindowManager.getInstance(project))
       }
     }
 
     val hovered = tabs.isHoveredTab(label)
-    val isGradient = isIslandsGradientEnabled
+    val isGradient = isIslandsGradientEnabled && !CustomWindowHeaderUtil.isCompactHeader() && isColorfulToolbar(frame)
     val rect = Rectangle(label.width, label.height)
 
     if (!isGradient) {

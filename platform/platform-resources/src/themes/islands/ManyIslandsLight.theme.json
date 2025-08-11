@@ -41,6 +41,12 @@
     "Borders.color": "BorderDark",
     "Borders.ContrastBorderColor": "BorderDark",
 
+    "MainWindow.Tab": {
+      "selectedBackground": "BackgroundMid",
+      "hoverBackground": "#0000000D",
+      "separatorColor": "#00000012"
+    },
+
     "MainToolbar": {
       "background": "BackgroundDark",
       "borderColor": "BorderTransparent"

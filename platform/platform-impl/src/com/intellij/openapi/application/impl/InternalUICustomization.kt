@@ -19,11 +19,9 @@ import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.tabs.impl.TabPainterAdapter
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Color
-import java.awt.Graphics
-import java.awt.Paint
-import java.awt.Rectangle
+import java.awt.*
 import javax.swing.JComponent
+import javax.swing.JFrame
 import javax.swing.JPanel
 
 @ApiStatus.Experimental
@@ -130,7 +128,9 @@ open class InternalUICustomization {
 
   fun statusBarRequired(): Boolean = !isSingleStripe()
 
+  open fun getProjectTabContentInsets(): Insets? = null
+
   open fun paintProjectTabsContainer(component: JComponent, g: Graphics): Boolean = false
 
-  open fun paintProjectTab(label: TabLabel, g: Graphics, tabs: JBTabsImpl, selected: Boolean, index: Int, lastIndex: Int): Boolean = false
+  open fun paintProjectTab(frame: JFrame, label: TabLabel, g: Graphics, tabs: JBTabsImpl, selected: Boolean, index: Int, lastIndex: Int): Boolean = false
 }
