@@ -98,3 +98,10 @@ class WithArrayReference {
     IntSupplier aNew = Object[]::new;
   }
 }
+class InnerClassScope {
+  class Inner {}
+  
+  Inner create() {
+    return new Inner();
+  }
+}

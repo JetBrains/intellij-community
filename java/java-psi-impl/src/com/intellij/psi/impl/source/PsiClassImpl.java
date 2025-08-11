@@ -21,7 +21,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stub.JavaStubImplUtil;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
@@ -116,18 +115,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
     if (stub != null) {
       return stub.getParentStub().getPsi();
     }
-
-    ASTNode treeElement = getNode();
-    ASTNode parent = treeElement.getTreeParent();
-
-    while(parent != null) {
-      if (parent.getElementType() instanceof IStubElementType){
-        return parent.getPsi();
-      }
-      parent = parent.getTreeParent();
-    }
-
-    return getContainingFile();
+    return PsiTreeUtil.getParentOfType(this, PsiMember.class, PsiFile.class);
   }
 
   @Override
