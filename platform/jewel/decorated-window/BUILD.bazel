@@ -33,7 +33,13 @@ jvm_library(
     "//platform/jewel/ui",
     "//libraries/compose-foundation-desktop",
     "//platform/jewel/foundation",
+    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
     "@lib//:jna",
+    "@lib//:jbr-api",
+  ],
+  exports = [
+    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
+    "@lib//:jbr-api",
   ],
   runtime_deps = [":decorated-window_resources"],
   plugins = ["@lib//:compose-plugin"]
