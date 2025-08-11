@@ -644,12 +644,8 @@ final class ClassChecker {
     myVisitor.report(error.create(ref, aClass));
   }
 
-  void checkValueClassExtends(@NotNull PsiClass superClass,
-                              @NotNull PsiClass psiClass,
-                              @NotNull PsiJavaCodeReferenceElement ref) {
-    if (!(!psiClass.isValueClass() ||
-          superClass.isValueClass() ||
-          CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName()))) {
+  void checkValueClassExtends(@NotNull PsiClass superClass, @NotNull PsiClass psiClass, @NotNull PsiJavaCodeReferenceElement ref) {
+    if (psiClass.isValueClass() && !superClass.isValueClass() && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
       myVisitor.report(JavaErrorKinds.VALUE_CLASS_EXTENDS_NON_ABSTRACT.create(ref));
     }
   }
