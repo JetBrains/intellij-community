@@ -742,7 +742,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       protected void textChanged(@NotNull DocumentEvent e) {
         if (myDialog == null) return;
         if (e.getDocument() == mySearchComponent.getDocument()) {
-          scheduleResultsUpdate(true);
+          scheduleResultsUpdate();
         }
         if (e.getDocument() == myReplaceComponent.getDocument()) {
           applyTo(myHelper.getModel());
@@ -1075,7 +1075,9 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     header.fileMaskField.setEnabled(isThereFileFilter);
     FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
     String search = myModel.hasStringToFind() ? myModel.getStringToFind() : findInProjectSettings.getMostRecentFindString();
-    mySearchComponent.setText(search);
+    if (!mySearchComponent.getText().equals(search)) {
+      mySearchComponent.setText(search);
+    }
     String replace = myModel.hasStringToFind() ? myModel.getStringToReplace() : findInProjectSettings.getMostRecentReplaceString();
     myReplaceComponent.setText(replace);
     updateControls();
@@ -1149,7 +1151,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
   }
 
   private void findSettingsChanged(boolean checkModel) {
-    FindModel previousModel = myHelper.getModel().clone();
+    FindModel previousModel = myHelper.myPreviousModel;
     applyTo(myHelper.getModel());
     FindModel findModel = new FindModel();
     findModel.copyFrom(myHelper.getModel());
