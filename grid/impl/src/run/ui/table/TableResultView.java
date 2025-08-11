@@ -49,7 +49,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingTextTrimmer;
 import com.intellij.util.ui.UIUtil;
@@ -70,8 +69,8 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.IntUnaryOperator;
@@ -93,7 +92,8 @@ import static java.awt.event.InputEvent.ALT_DOWN_MASK;
  * @author gregsh
  */
 public final class TableResultView extends JBTableWithResizableCells
-  implements ResultView, ResultViewWithCells, ResultViewWithColumns, ResultViewWithRows, EditorColorsListener, UISettingsListener, UiDataProvider {
+  implements ResultView, ResultViewWithCells, ResultViewWithColumns, ResultViewWithRows, EditorColorsListener, UISettingsListener,
+             UiDataProvider {
 
   private final DataGrid myResultPanel;
   private final MyTableColumnCache myColumnCache;
@@ -252,8 +252,12 @@ public final class TableResultView extends JBTableWithResizableCells
       parent.setRowHeaderView(myResultPanel.createRowHeader(this));
       return;
     }
-    if (myIsShowRowNumbers) parent.setRowHeaderView(myResultPanel.createRowHeader(this));
-    else parent.setRowHeader(null);
+    if (myIsShowRowNumbers) {
+      parent.setRowHeaderView(myResultPanel.createRowHeader(this));
+    }
+    else {
+      parent.setRowHeader(null);
+    }
   }
 
   @Override
@@ -1318,7 +1322,8 @@ public final class TableResultView extends JBTableWithResizableCells
   private boolean shouldDisplayValueEditor(int row, int column) {
     var tableModel = getModel();
     var cellValue = tableModel.getValueAt(row, column);
-    return (cellValue instanceof LobInfo.ClobInfo clob && clob.isFullyReloaded()) || (cellValue instanceof LobInfo.BlobInfo blob && blob.isFullyReloaded());
+    return (cellValue instanceof LobInfo.ClobInfo clob && clob.isFullyReloaded()) ||
+           (cellValue instanceof LobInfo.BlobInfo blob && blob.isFullyReloaded());
   }
 
   private void showValueEditor(EventObject e) {
@@ -1349,7 +1354,8 @@ public final class TableResultView extends JBTableWithResizableCells
       // prevents myColumnLayout.columnsShown call in setColumnEnabled
       boolean enabled = isTransposed() ||
                         myResultPanel.isColumnEnabled(ModelIndex.forColumn(myResultPanel, columnDataIdx)) &&
-                        !(collapseManager != null && collapseManager.isColumnHiddenDueToCollapse(ModelIndex.forColumn(myResultPanel, columnDataIdx)));
+                        !(collapseManager != null &&
+                          collapseManager.isColumnHiddenDueToCollapse(ModelIndex.forColumn(myResultPanel, columnDataIdx)));
       ModelIndex<?> modelColumnIdx =
         isTransposed() ? ModelIndex.forRow(myResultPanel, columnDataIdx) : ModelIndex.forColumn(myResultPanel, columnDataIdx);
       setViewColumnVisible(modelColumnIdx, enabled);
@@ -1595,8 +1601,9 @@ public final class TableResultView extends JBTableWithResizableCells
 
       if (filterLabel.getBounds().contains(relativePoint)) {
         var popup = ColumnLocalFilterAction.createFilterPopup(myResultPanel, columnIdx);
-        if (popup != null)
+        if (popup != null) {
           popup.show(new RelativePoint(e.getComponent(), point));
+        }
       }
       else if (sortLabel != null && sortLabel.getBounds().contains(relativePoint)) {
         handleClickToSortColumn(columnIdx, e);
@@ -1622,7 +1629,7 @@ public final class TableResultView extends JBTableWithResizableCells
       // Collapse the columns subtree for any other clicked header line.
       myResultPanel.getAutoscrollLocker()
         .runWithLock(() -> GridUtil.collapseColumnsSubtree(myResultPanel, columnIdx, clickedHeaderLineIndex.getAsInt(),
-                                                           /* onCollapseCompleted */ () -> onColumnHierarchyChanged()));
+          /* onCollapseCompleted */ () -> onColumnHierarchyChanged()));
     }
   }
 
@@ -1848,7 +1855,8 @@ public final class TableResultView extends JBTableWithResizableCells
     return isTransposed() ? getColumnCount() : getRowCount();
   }
 
-  private @NotNull <T> ModelIndexSet<T> validIndexSet(@NotNull ModelIndexSet<T> indexSet, @NotNull Function<int[], ModelIndexSet<T>> factory) {
+  private @NotNull <T> ModelIndexSet<T> validIndexSet(@NotNull ModelIndexSet<T> indexSet,
+                                                      @NotNull Function<int[], ModelIndexSet<T>> factory) {
     IntList validIndices = new IntArrayList(indexSet.size());
     for (ModelIndex<T> idx : indexSet.asIterable()) {
       if (idx.isValid(myResultPanel)) {
@@ -1979,7 +1987,8 @@ public final class TableResultView extends JBTableWithResizableCells
     ModelIndex<GridRow> rowIdx = ViewIndex.forRow(myResultPanel, isTransposed() ? column : row).toModel(myResultPanel);
     ModelIndex<GridColumn> columnIdx = ViewIndex.forColumn(myResultPanel, isTransposed() ? row : column).toModel(myResultPanel);
     GridCellEditorFactoryProvider factoryProvider = GridCellEditorFactoryProvider.get(myResultPanel);
-    GridCellEditorFactory editorFactory = factoryProvider == null ? null : factoryProvider.getEditorFactory(myResultPanel, rowIdx, columnIdx);
+    GridCellEditorFactory editorFactory =
+      factoryProvider == null ? null : factoryProvider.getEditorFactory(myResultPanel, rowIdx, columnIdx);
     GridColumn dataColumn = myResultPanel.getDataModel(DATA_WITH_MUTATIONS).getColumn(columnIdx);
     return dataColumn != null && !GridUtilCore.isRowId(dataColumn) && !GridUtilCore.isVirtualColumn(dataColumn) && editorFactory != null ?
            new GridTableCellEditor(myResultPanel, rowIdx, columnIdx, editorFactory) :
@@ -2239,7 +2248,8 @@ public final class TableResultView extends JBTableWithResizableCells
       if (headerLineValues.size() > myNameLabels.size()) {
         clearAllLabelsAndPanels();
         initializeLabelsForEachHeaderLine(getHeaderLineNum(reader));
-      } else if (myNameLabels.size() != getHeaderLineNum(reader)) {
+      }
+      else if (myNameLabels.size() != getHeaderLineNum(reader)) {
         clearAllLabelsAndPanels();
         initializeLabelsForEachHeaderLine(getHeaderLineNum(reader));
       }
@@ -2470,8 +2480,9 @@ public final class TableResultView extends JBTableWithResizableCells
 
         var vGroup = layout.createParallelGroup();
         vGroup.addComponent(nameLabel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE);
-        if (i + 1 == headerLineNum)
+        if (i + 1 == headerLineNum) {
           vGroup.addComponent(filterLabel, tableRowHeight, tableRowHeight, Short.MAX_VALUE);
+        }
         vGroup.addComponent(sortLabel, tableRowHeight, tableRowHeight, Short.MAX_VALUE);
 
         layout.setHorizontalGroup(hGroup);
@@ -2495,7 +2506,7 @@ public final class TableResultView extends JBTableWithResizableCells
         myNameLabels.get(lineIdx).setHorizontalAlignment(SwingConstants.LEFT);
       }
     }
-    
+
     private void setValueForLastNonEmptyHeaderLine(@NlsSafe String value, int lineIdx, int columnDataIdx, boolean forDisplay) {
       JLabel nameLabel = myNameLabels.get(lineIdx);
       JLabel sortLabel = myIconLabels.get(lineIdx);
@@ -2503,8 +2514,8 @@ public final class TableResultView extends JBTableWithResizableCells
       nameLabel.setIcon(myCurrentColumn.getIcon(forDisplay));
       nameLabel.setForeground(getHeaderCellForeground());
       nameLabel.setText(myTable.myAllowMultilineColumnLabel && StringUtil.containsLineBreak(value)
-                          ? "<html>" + StringUtil.replace(value, "\n", "<br>") + "</html>"
-                          : value);
+                        ? "<html>" + StringUtil.replace(value, "\n", "<br>") + "</html>"
+                        : value);
 
       Icon sortLabelIcon = null;
       String sortLabelText = "";
@@ -2755,7 +2766,9 @@ public final class TableResultView extends JBTableWithResizableCells
 
   @Override
   public boolean isHoveredRowBgHighlightingEnabled() {
-    if (isStriped()) { return false; }
+    if (isStriped()) {
+      return false;
+    }
 
     return switch (myHoveredRowMode) {
       case AUTO -> ResultView.super.isHoveredRowBgHighlightingEnabled();
@@ -2779,12 +2792,13 @@ public final class TableResultView extends JBTableWithResizableCells
 
   public void setStatisticsPanelMode(StatisticsPanelMode newPanelMode) {
     StatisticsPanelMode previousPanelMode = getStatisticsPanelMode();
-    if (myStatisticsHeader != null) {
-      myStatisticsHeader.setStatisticsPanelMode(newPanelMode);
+    if (previousPanelMode == newPanelMode) return;
+    if (myStatisticsHeader == null) return;
 
-      if (previousPanelMode != null) {
-        myColumnLayout.resetLayout();
-      }
+    myStatisticsHeader.setStatisticsPanelMode(newPanelMode);
+
+    if (previousPanelMode != null) {
+      myColumnLayout.resetLayout();
     }
   }
 

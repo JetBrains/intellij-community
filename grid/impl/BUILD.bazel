@@ -1,5 +1,14 @@
 ### auto-generated section `build intellij.grid.impl` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "kt_javac_options")
+
+create_kotlinc_options(
+  name = "custom_impl",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi",
+  ]
+)
 
 kt_javac_options(
   name = "custom-javac-options",
@@ -21,7 +30,9 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   javac_opts = ":custom-javac-options",
+  kotlinc_opts = ":custom_impl",
   deps = [
+    "@lib//:kotlinx-serialization-core",
     "//grid/core-impl",
     "//grid/csv:csv-core-impl",
     "//grid/types",

@@ -15,7 +15,7 @@ import javax.swing.JTable
 import javax.swing.table.TableColumn
 import kotlin.math.max
 
-abstract class StatisticsTableHeader(statisticsPanelMode: StatisticsPanelMode = StatisticsPanelMode.OFF): AdditionalTableHeader() {
+abstract class StatisticsTableHeader(statisticsPanelMode: StatisticsPanelMode = StatisticsPanelMode.OFF) : AdditionalTableHeader() {
   var statisticsPanelMode: StatisticsPanelMode = statisticsPanelMode
     set(value) {
       field = value
@@ -27,15 +27,11 @@ abstract class StatisticsTableHeader(statisticsPanelMode: StatisticsPanelMode = 
 
   override var table: JTable? = null
 
-  companion object {
-    val DEFAULT_POSITION: Position = Position.INLINE
-  }
-
   override fun detachController() {
     columnsController?.detach()
   }
 
-  abstract inner class StatisticsColumnsControllerPanel(table: JTable): ColumnsControllerPanel(table) {
+  abstract inner class StatisticsColumnsControllerPanel(table: JTable) : ColumnsControllerPanel(table) {
     abstract fun setMode(statisticsPanelMode: StatisticsPanelMode)
 
     override fun computeMyPreferredSize(): Dimension {
@@ -71,7 +67,7 @@ abstract class StatisticsTableHeader(statisticsPanelMode: StatisticsPanelMode = 
 
     abstract inner class StatisticsPanel(tc: TableColumn) : AdditionalPanel(tc) {
       var panel: Component? = null
-      protected var offStatisticsPanel: DialogPanel = panel {  }
+      protected var offStatisticsPanel: DialogPanel = panel { }
       protected var compactStatisticsPanel: @Nls String? = null
       protected var detailedStatisticsPanel: @Nls String? = null
 
@@ -129,5 +125,9 @@ abstract class StatisticsTableHeader(statisticsPanelMode: StatisticsPanelMode = 
         update()
       }
     }
+  }
+
+  companion object {
+    val DEFAULT_POSITION: Position = Position.INLINE
   }
 }
