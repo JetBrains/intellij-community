@@ -13,6 +13,7 @@ import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -52,6 +53,7 @@ class KotlinBinaryRootToPackageIndexJrtTest : AbstractMultiModuleTest() {
     }
 
     @Test
+    @Ignore("KTIJ-35195")
     fun testCustomRuntime() {
         val module = createMainModule()
         module.addLibrary(jrtRoot, "JRT-based library")

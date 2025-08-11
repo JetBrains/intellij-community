@@ -20,6 +20,9 @@ import kotlin.io.path.name
  * be put under the same key in the index. (The current index includes file extensions, so this won't happen, but the test shouldn't rely
  * on this behavior.)
  */
+
+// Commented out because of KTIJ-35195. No nice way to ignore this test because of JUnit3.
+/*
 class KotlinBinaryRootToPackageIndexTest : AbstractMultiModuleTest() {
     override fun getTestDataDirectory(): File = KotlinRoot.DIR.resolve("base/indices/tests/testData/kotlinBinaryRootToPackageIndex")
 
@@ -342,3 +345,4 @@ class KotlinBinaryRootToPackageIndexTest : AbstractMultiModuleTest() {
     private fun accessIndex(rootName: String): Set<String> =
         FileBasedIndex.getInstance().getValues(KotlinBinaryRootToPackageIndex.NAME, rootName, GlobalSearchScope.allScope(project)).toSet()
 }
+*/
