@@ -11,13 +11,13 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 
-class KotlinDslScriptSyncContributor : GradleSyncContributor {
+internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
 
     override val name: String = "Kotlin DSL Script"
 
     override val phase: GradleSyncPhase = GradleSyncPhase.ADDITIONAL_MODEL_PHASE
 
-    override suspend fun configureProjectModel(
+    override suspend fun updateProjectModel(
         context: ProjectResolverContext,
         storage: MutableEntityStorage
     ) {

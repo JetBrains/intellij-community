@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing.syncAction
 
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.Disposable
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.testFramework.registerOrReplaceServiceInstance
@@ -31,6 +32,15 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
       })
   }
 
+  fun whenModelFetchPhaseCompleted(parentDisposable: Disposable, action: (ProjectResolverContext, GradleModelFetchPhase) -> Unit) {
+    application.messageBus.connect(parentDisposable)
+      .subscribe(GradleSyncListener.TOPIC, object : GradleSyncListener {
+        override fun onModelFetchPhaseCompleted(context: ProjectResolverContext, phase: GradleModelFetchPhase) {
+          action(context, phase)
+        }
+      })
+  }
+
   fun whenModelFetchCompleted(parentDisposable: Disposable, action: (ProjectResolverContext) -> Unit) {
     application.messageBus.connect(parentDisposable)
       .subscribe(GradleSyncListener.TOPIC, object : GradleSyncListener {
@@ -53,7 +63,7 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     GradleSyncContributor.EP_NAME.point.registerExtension(
       object : GradleSyncContributor {
         override val phase: GradleSyncPhase = phase
-        override suspend fun configureProjectModel(context: ProjectResolverContext, storage: MutableEntityStorage) {
+        override suspend fun updateProjectModel(context: ProjectResolverContext, storage: MutableEntityStorage) {
           action(context, storage)
         }
       }, parentDisposable)

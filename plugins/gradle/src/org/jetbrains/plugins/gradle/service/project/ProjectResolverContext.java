@@ -29,6 +29,7 @@ public interface ProjectResolverContext extends GradleExecutionContext, UserData
 
   @Nullable String getIdeProjectPath();
 
+  @ApiStatus.Internal
   boolean isPhasedSyncEnabled();
 
   boolean isResolveModulePerSourceSet();

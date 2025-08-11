@@ -10,7 +10,6 @@ import com.android.tools.idea.gradle.feature.flags.DeclarativeStudioSupport
 import com.intellij.gradle.declarativeSync.GradleLibrariesResolver.LibDepData
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.service.project.nameGenerator.ModuleNameGenerator
-import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
@@ -19,16 +18,15 @@ import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.toPath
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.service.syncAction.virtualFileUrl
 import org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeEntitySource
-import org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.hasNonPreviewEntities
-import org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.removeProjectRoot
 import java.io.File
 
 private val LOG = logger<GradleDeclarativeSyncContributor>()
@@ -36,32 +34,20 @@ private val LOG = logger<GradleDeclarativeSyncContributor>()
 /**
  * Statically analyzes declarative Gradle build files and builds a model of the project structure if possible
  */
-@ApiStatus.Internal
-@Order(GradleSyncContributor.Order.DECLARATIVE_CONTRIBUTOR)
-class GradleDeclarativeSyncContributor : GradleSyncContributor {
+internal class GradleDeclarativeSyncContributor : GradleSyncContributor {
 
   override val phase: GradleSyncPhase = GradleSyncPhase.DECLARATIVE_PHASE
 
-  override suspend fun configureProjectModel(
+  override suspend fun updateProjectModel(
     context: ProjectResolverContext,
     storage: MutableEntityStorage,
   ) {
-    if (!context.isPhasedSyncEnabled) return
-
     if (!DeclarativeStudioSupport.isEnabled()) {
       LOG.debug("Skipped Declarative Gradle static import: Disabled")
       return
     }
-    if (!File(context.projectPath, "build.gradle.dcl").isFile && !File(context.projectPath, "settings.gradle.dcl").isFile) {
-      LOG.debug("Skipped Declarative Gradle static import: No Gradle DCL files")
-      return
-    }
-    if (hasNonPreviewEntities(context, storage)) {
-      LOG.debug("Skipped Declarative Gradle static import: Secondary sync")
-      return
-    }
     LOG.debug("Removing preview project root")
-    removeProjectRoot(context, storage)
+    storage.replaceBySource({ it is GradleEntitySource && it.phase <= phase }, ImmutableEntityStorage.empty())
     LOG.debug("Starting Declarative Gradle static import")
     configureProject(context, storage)
     LOG.debug("Finished Declarative Gradle static import")
@@ -74,7 +60,7 @@ class GradleDeclarativeSyncContributor : GradleSyncContributor {
     val project = context.project
 
     val projectRootUrl = context.virtualFileUrl(context.projectPath)
-    val entitySource = GradleDeclarativeEntitySource(context.projectPath)
+    val entitySource = GradleDeclarativeEntitySource(context.projectPath, phase)
 
     // try finding the Gradle build file in the project root directory
     val declarativeGradleBuildFile = File(context.projectPath, "build.gradle.dcl")
@@ -329,30 +315,6 @@ class GradleDeclarativeSyncContributor : GradleSyncContributor {
 
   private data class GradleDeclarativeEntitySource(
     override val projectPath: String,
+    override val phase: GradleSyncPhase,
   ) : GradleBridgeEntitySource
-
-  class Bridge : GradleSyncContributor {
-
-    override val phase: GradleSyncPhase = GradleSyncPhase.PROJECT_MODEL_PHASE
-
-    override suspend fun configureProjectModel(
-      context: ProjectResolverContext,
-      storage: MutableEntityStorage,
-    ) {
-      if (!context.isPhasedSyncEnabled) return
-
-      removeDeclarativeModel(context, storage)
-    }
-
-    private fun removeDeclarativeModel(
-      context: ProjectResolverContext,
-      storage: MutableEntityStorage,
-    ) {
-      val entitySource = GradleDeclarativeEntitySource(context.projectPath)
-      val projectEntities = storage.entitiesBySource { it == entitySource }
-      for (projectEntity in projectEntities.toList()) {
-        storage.removeEntity(projectEntity)
-      }
-    }
-  }
 }

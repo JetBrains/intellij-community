@@ -111,7 +111,7 @@ jvm_library(
   name = "gradle-tests_test_lib",
   module_name = "intellij.gradle.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
+  srcs = glob(["testGen/**/*.kt", "testGen/**/*.java", "testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:jmock",
     "@lib//:jmock-junit4",

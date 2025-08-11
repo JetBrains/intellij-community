@@ -13,6 +13,7 @@ interface GradleEntitySource : EntitySource {
 
   /**
    * Identifies entities in the one independent Gradle model.
+   *
    * Usually correspond to the linked Gradle project [org.jetbrains.plugins.gradle.settings.GradleProjectSettings].
    * However, for Gradle older than 8.0, the buildSrc is synced as independent Gradle model.
    * Therefore, it needs separately identified entity source to avoid the main Gradle model entities' replacement.
@@ -20,6 +21,14 @@ interface GradleEntitySource : EntitySource {
    * @see org.jetbrains.plugins.gradle.service.project.ProjectResolverContext.projectPath
    */
   val projectPath: String
+
+  /**
+   * Identifies entities in the one Gradle sync phase.
+   *
+   * It allows replacing only updated entities during Gradle phased sync.
+   * And allows keeping entities for late phases from the previous Gradle sync.
+   */
+  val phase: GradleSyncPhase
 
   // Expected to be implemented as private data class
   override fun equals(other: Any?): Boolean

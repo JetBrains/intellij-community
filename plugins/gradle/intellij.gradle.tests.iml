@@ -5,6 +5,9 @@
     <content url="file://$MODULE_DIR$/testData">
       <sourceFolder url="file://$MODULE_DIR$/testData" type="java-test-resource" />
     </content>
+    <content url="file://$MODULE_DIR$/testGen">
+      <sourceFolder url="file://$MODULE_DIR$/testGen" isTestSource="true" generated="true" />
+    </content>
     <content url="file://$MODULE_DIR$/testSources">
       <sourceFolder url="file://$MODULE_DIR$/testSources" isTestSource="true" />
     </content>

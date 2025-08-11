@@ -3,33 +3,46 @@ package org.jetbrains.kotlin.gradle.scripting.k2.importing
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.psi.PsiManager
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptDefinitionsStorage
 import org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptRefinedConfigurationProvider
-import org.jetbrains.kotlin.gradle.scripting.shared.GradleDefinitionsParams
-import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptModel
-import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptModelData
+import org.jetbrains.kotlin.gradle.scripting.shared.*
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.kotlinDslSyncListenerInstance
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.processScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.saveGradleBuildEnvironment
-import org.jetbrains.kotlin.gradle.scripting.shared.kotlinDslScriptsModelImportSupported
 import org.jetbrains.kotlin.idea.core.script.k2.highlighting.DefaultScriptResolutionStrategy
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncExtension
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import java.nio.file.Path
 
-class KotlinDslScriptSyncContributor : GradleSyncContributor {
+internal class KotlinDslScriptSyncExtension : GradleSyncExtension {
+
+    override fun updateProjectStorage(
+        context: ProjectResolverContext,
+        syncStorage: ImmutableEntityStorage,
+        projectStorage: MutableEntityStorage,
+        phase: GradleSyncPhase
+    ) {
+        if (phase == GradleSyncPhase.ADDITIONAL_MODEL_PHASE) {
+            projectStorage.replaceBySource({ it is KotlinGradleScriptEntitySource }, syncStorage)
+        }
+    }
+}
+
+internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
 
     override val name: String = "Kotlin DSL Script"
 
     override val phase: GradleSyncPhase = GradleSyncPhase.ADDITIONAL_MODEL_PHASE
 
-    override suspend fun configureProjectModel(
+    override suspend fun updateProjectModel(
         context: ProjectResolverContext,
         storage: MutableEntityStorage
     ) {
