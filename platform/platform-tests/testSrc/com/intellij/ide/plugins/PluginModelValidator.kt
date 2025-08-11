@@ -6,7 +6,6 @@ package com.intellij.ide.plugins
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
 import com.intellij.platform.plugins.parser.impl.elements.ContentElement
 import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
@@ -287,9 +286,21 @@ class PluginModelValidator(
                       mapOf("descriptorFile" to pluginInfo.descriptorFile))
         }
       }
-      
-      checkDependencies(descriptor.dependencies, pluginInfo, pluginInfo, moduleNameToInfo, sourceModuleNameToFileInfo,
-                        registeredContentModules)
+
+      val moduleNameToLoadingRule = pluginInfo.descriptor.contentModules
+        .asSequence()
+        .filterIsInstance<ContentElement.Module>()
+        .associateBy({ it.name }, { it.loadingRule })
+      checkDependencies(
+        dependenciesElements = descriptor.dependencies,
+        referencingModuleInfo = pluginInfo,
+        referencingPluginInfo = pluginInfo,
+        moduleNameToInfo = moduleNameToInfo,
+        sourceModuleNameToFileInfo = sourceModuleNameToFileInfo,
+        registeredContentModules = registeredContentModules,
+        isMainModule = true,
+        contentModuleNameFromThisPluginToLoadingRule = moduleNameToLoadingRule,
+      )
 
       val duplicateContentModules = pluginInfo.content.groupBy { it.name }.filter { it.value.size > 1 }.keys
       if (duplicateContentModules.isNotEmpty()) {
@@ -311,6 +322,8 @@ class PluginModelValidator(
           moduleNameToInfo = moduleNameToInfo,
           sourceModuleNameToFileInfo = sourceModuleNameToFileInfo,
           registeredContentModules = registeredContentModules,
+          isMainModule = false,
+          contentModuleNameFromThisPluginToLoadingRule = moduleNameToLoadingRule,
         )
 
         if (contentModuleInfo.descriptor.depends.isNotEmpty()) {
@@ -370,7 +383,9 @@ class PluginModelValidator(
     referencingPluginInfo: ModuleInfo,
     moduleNameToInfo: Map<String, ModuleInfo>,
     sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>,
-    registeredContentModules: Set<String>
+    registeredContentModules: Set<String>,
+    isMainModule: Boolean,
+    contentModuleNameFromThisPluginToLoadingRule: Map<String, ModuleLoadingRule>,
   ) {
     val moduleDependenciesCount = dependenciesElements.count { 
       it is DependenciesElement.ModuleDependency || it is DependenciesElement.PluginDependency && it.pluginId.startsWith("com.intellij.modules.")
@@ -459,7 +474,42 @@ class PluginModelValidator(
                           "Either convert it to a content module, or use dependency on the plugin which includes it instead.")
             continue
           }
-
+          val loadingRule = contentModuleNameFromThisPluginToLoadingRule[moduleName]
+          when {
+            isMainModule && loadingRule != null -> {
+              registerError("""
+                        |The main module of plugin '${referencingPluginInfo.pluginId}' declares dependency on a content module '$moduleName' registered 
+                        |in the same plugin. Such dependencies aren't allowed.
+                        |To fix the problem, extract relevant code to a separate content module and move the dependency to it.
+                        |""".trimMargin())
+              continue
+            }
+            !isMainModule && loadingRule == ModuleLoadingRule.OPTIONAL 
+              && moduleName != "intellij.platform.backend" -> { // remove this check when IJPL-201428 is fixed
+                
+              val thisModuleName = referencingModuleInfo.name ?: error("Module name is not specified for $referencingModuleInfo")
+              val thisLoadingRule = contentModuleNameFromThisPluginToLoadingRule.getValue(thisModuleName)
+              val problemDescription = when (thisLoadingRule) {
+                ModuleLoadingRule.EMBEDDED ->
+                  "Since optional modules have implicit dependencies on the main module, this creates a circular dependency and the plugin won't load."
+                ModuleLoadingRule.REQUIRED ->
+                  "This actually makes '${moduleName}' required as well (the plugin won't load if it's not available)."
+                else -> null
+              }
+              if (problemDescription != null) {
+                registerError("""
+                    |The content module '$thisModuleName' is registered as '${thisLoadingRule.name.lowercase()}', but it depends on the module '$moduleName' which is declared as optional
+                    |in the same plugin '${referencingPluginInfo.pluginId}'.
+                    |$problemDescription
+                    |To fix the problem, you can do one of the following:
+                    | * set 'loading="required"' for '$moduleName',
+                    | * set 'loading="optional"' for '$thisModuleName',
+                    | * remove the dependency on '$moduleName' from '${referencingModuleInfo.descriptorFile.name}', if it's not needed.
+                    |""".trimMargin())
+              }
+            }
+          }
+          
           referencingModuleInfo.dependencies.add(Reference(moduleName, isPlugin = false, moduleInfo))
 
           for (dependsElement in referencingModuleInfo.descriptor.depends) {
