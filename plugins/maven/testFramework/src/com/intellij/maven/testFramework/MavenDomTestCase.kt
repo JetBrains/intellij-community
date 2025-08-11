@@ -407,7 +407,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   protected suspend fun getDependencyCompletionVariants(f: VirtualFile): Set<String> {
-    return getDependencyCompletionVariants(f) { it: MavenRepositoryArtifactInfo? -> MavenDependencyCompletionUtil.getPresentableText(it) }
+    return getDependencyCompletionVariants(f) { MavenDependencyCompletionUtil.getPresentableText(it!!) }
   }
 
   protected suspend fun getDependencyCompletionVariants(

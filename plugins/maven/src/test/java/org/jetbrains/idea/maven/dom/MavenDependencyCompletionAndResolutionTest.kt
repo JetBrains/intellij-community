@@ -1252,11 +1252,11 @@ ${libPath.parent}</depDir>
     withContext(Dispatchers.EDT) {
       //maybe readacton
       writeIntentReadAction {
-        val model = MavenDomUtil.getMavenDomModel(project, projectPom, MavenDomProjectModel::class.java)
+        val model = MavenDomUtil.getMavenDomModel(project, projectPom, MavenDomProjectModel::class.java)!!
 
         val dependency = MavenDependencyCompletionUtil.findManagedDependency(model, project, "org.example", "something")
         assertNotNull(dependency)
-        assertEquals("42", dependency.getVersion().getStringValue())
+        assertEquals("42", dependency!!.version.stringValue)
       }
     }
   }

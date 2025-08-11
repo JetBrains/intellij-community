@@ -1,167 +1,157 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.dom.converters;
+package org.jetbrains.idea.maven.dom.converters
 
-import com.intellij.codeInsight.completion.BaseCompletionLookupArranger;
-import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
-import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.xml.DomElement;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
-import org.jetbrains.idea.maven.dom.model.*;
-import org.jetbrains.idea.maven.indices.IndicesBundle;
-import org.jetbrains.idea.maven.indices.MavenArtifactSearchResult;
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
+import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.Processor
+import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils
+import org.jetbrains.idea.maven.dom.model.*
+import org.jetbrains.idea.maven.indices.IndicesBundle
+import org.jetbrains.idea.maven.indices.MavenArtifactSearchResult
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import java.util.*
+import java.util.function.Function
+import javax.swing.Icon
 
-import javax.swing.*;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-
-import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER;
-import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED;
-import static org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem.Type.PROJECT;
-
-public final class MavenDependencyCompletionUtil {
-
-  public static boolean isPlugin(@NotNull MavenDomShortArtifactCoordinates dependency) {
-    return dependency instanceof MavenDomPlugin;
+object MavenDependencyCompletionUtil {
+  fun isPlugin(dependency: MavenDomShortArtifactCoordinates): Boolean {
+    return dependency is MavenDomPlugin
   }
 
-  public static MavenDomPlugin findManagedPlugin(MavenDomProjectModel domModel, Project project,
-                                                 final @NotNull String groupId, final @NotNull String artifactId) {
+  fun findManagedPlugin(
+    domModel: MavenDomProjectModel, project: Project,
+    groupId: String, artifactId: String,
+  ): MavenDomPlugin? {
+    val ref = Ref<MavenDomPlugin?>()
 
-    final Ref<MavenDomPlugin> ref = new Ref<>();
-
-    MavenDomProjectProcessorUtils.processPluginsInPluginManagement(domModel, plugin -> {
-      if (groupId.equals(plugin.getGroupId().getStringValue())
-          && artifactId.equals(plugin.getArtifactId().getStringValue())
-          && null != plugin.getVersion().getStringValue()) {
-        ref.set(plugin);
-        return true;
+    MavenDomProjectProcessorUtils.processPluginsInPluginManagement(domModel, Processor { plugin: MavenDomPlugin? ->
+      if (groupId == plugin!!.groupId.stringValue
+          && artifactId == plugin.artifactId.stringValue
+          && null != plugin.version.stringValue
+      ) {
+        ref.set(plugin)
+        return@Processor true
       }
-      return false;
-    }, project);
+      false
+    }, project)
 
-    return ref.get();
+    return ref.get()
   }
 
-  public static MavenDomDependency findManagedDependency(MavenDomProjectModel domModel, Project project,
-                                                         final @NotNull String groupId, final @NotNull String artifactId) {
+  @JvmStatic
+  fun findManagedDependency(
+    domModel: MavenDomProjectModel, project: Project,
+    groupId: String, artifactId: String,
+  ): MavenDomDependency? {
+    val ref = Ref<MavenDomDependency?>()
 
-    final Ref<MavenDomDependency> ref = new Ref<>();
+    MavenDomProjectProcessorUtils.processDependenciesInDependencyManagement(domModel, Processor { dependency: MavenDomDependency? ->
+      if (groupId == dependency!!.groupId.stringValue
+          &&
+          artifactId == dependency.artifactId.stringValue
+      ) {
+        ref.set(dependency)
+        return@Processor true
+      }
+      false
+    }, project)
 
-    MavenDomProjectProcessorUtils.processDependenciesInDependencyManagement(domModel,
-                                                                            dependency -> {
-                                                                              if (groupId.equals(dependency.getGroupId().getStringValue())
-                                                                                  &&
-                                                                                  artifactId.equals(
-                                                                                    dependency.getArtifactId().getStringValue())) {
-                                                                                ref.set(dependency);
-                                                                                return true;
-                                                                              }
-                                                                              return false;
-                                                                            }, project);
-
-    return ref.get();
+    return ref.get()
   }
 
-  public static boolean isInsideManagedDependency(@NotNull MavenDomShortArtifactCoordinates dependency) {
-    DomElement parent = dependency.getParent();
-    if (!(parent instanceof MavenDomDependencies)) return false;
+  @JvmStatic
+  fun isInsideManagedDependency(dependency: MavenDomShortArtifactCoordinates): Boolean {
+    val parent = dependency.parent
+    if (parent !is MavenDomDependencies) return false
 
-    return parent.getParent() instanceof MavenDomDependencyManagement;
+    return parent.parent is MavenDomDependencyManagement
   }
 
-  public static void invokeCompletion(final @NotNull InsertionContext context, final CompletionType completionType) {
-    context.setLaterRunnable(
-      () -> new CodeCompletionHandlerBase(completionType).invokeCompletion(context.getProject(), context.getEditor()));
+  @JvmStatic
+  fun invokeCompletion(context: InsertionContext, completionType: CompletionType) {
+    context.laterRunnable = Runnable { CodeCompletionHandlerBase(completionType).invokeCompletion(context.project, context.editor) }
   }
 
-  public static LookupElementBuilder lookupElement(MavenDependencyCompletionItem item, String lookup) {
+  fun lookupElement(item: MavenDependencyCompletionItem, lookup: String): LookupElementBuilder {
     return LookupElementBuilder.create(item, lookup)
-      .withIcon(getIcon(item.getType()));
+      .withIcon(getIcon(item.type))
   }
 
-  public static MavenDependencyCompletionItem getMaxIcon(MavenArtifactSearchResult searchResult) {
-    return Collections.max(Arrays.asList(searchResult.getSearchResults().getItems()),
-                           Comparator.comparing(r -> {
-                             if (r.getType() == null) {
-                               return Integer.MIN_VALUE;
-                             }
-                             return r.getType().getWeight();
-                           }));
+  @JvmStatic
+  fun getMaxIcon(searchResult: MavenArtifactSearchResult): MavenDependencyCompletionItem {
+    return Collections.max(
+      listOf(*searchResult.searchResults.items),
+      Comparator.comparing(Function { r: MavenDependencyCompletionItem ->
+        if (r.type == null) {
+          return@Function Int.MIN_VALUE
+        }
+        r.type!!.weight
+      }))
   }
 
-  public static LookupElementBuilder lookupElement(MavenRepositoryArtifactInfo info) {
-    return lookupElement(info, getPresentableText(info));
-  }
-
-  public static LookupElementBuilder lookupElement(MavenRepositoryArtifactInfo info, String presentableText) {
-
-    LookupElementBuilder elementBuilder = LookupElementBuilder.create(info, getLookupString(info))
-      .withPresentableText(presentableText);
-    elementBuilder.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, new Object());
-    if (info.getItems().length == 1) {
-      return elementBuilder.withIcon(getIcon(info.getItems()[0].getType()));
+  @JvmOverloads
+  fun lookupElement(info: MavenRepositoryArtifactInfo, presentableText: String = getPresentableText(info)): LookupElementBuilder {
+    val elementBuilder = LookupElementBuilder.create(info, getLookupString(info))
+      .withPresentableText(presentableText)
+    elementBuilder.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
+    if (info.items.size == 1) {
+      return elementBuilder.withIcon(getIcon(info.items[0].type))
     }
-    return elementBuilder;
+    return elementBuilder
   }
 
-  public static String getPresentableText(MavenRepositoryArtifactInfo info) {
-    if (info.getItems().length == 1) {
-      return getLookupString(info.getItems()[0]);
+  fun getPresentableText(info: MavenRepositoryArtifactInfo): String {
+    if (info.items.size == 1) {
+      return getLookupString(info.items[0])
     }
-    return IndicesBundle.message("maven.dependency.completion.presentable", info.getGroupId(), info.getArtifactId());
+    return IndicesBundle.message("maven.dependency.completion.presentable", info.groupId, info.artifactId)
   }
 
-  public static @Nullable Icon getIcon(@Nullable MavenDependencyCompletionItem.Type type) {
-    if (type == PROJECT) {
-      return AllIcons.Nodes.Module;
+  @JvmStatic
+  fun getIcon(type: MavenDependencyCompletionItem.Type?): Icon? {
+    if (type == MavenDependencyCompletionItem.Type.PROJECT) {
+      return AllIcons.Nodes.Module
     }
-    return null;
+    return null
   }
 
-  public static String getLookupString(MavenRepositoryArtifactInfo info) {
-    MavenDependencyCompletionItem[] infoItems = info.getItems();
-    if (infoItems.length > 0) {
-      return getLookupString(infoItems[0]);
+  fun getLookupString(info: MavenRepositoryArtifactInfo): String {
+    val infoItems = info.items
+    if (infoItems.isNotEmpty()) {
+      return getLookupString(infoItems[0])
     }
-    return info.getGroupId() + ":" + info.getArtifactId();
+    return info.groupId + ":" + info.artifactId
   }
 
-  public static String getLookupString(MavenDependencyCompletionItem description) {
-    StringBuilder builder = new StringBuilder(description.getGroupId());
-    if (description.getArtifactId() == null) {
-      builder.append(":...");
+  fun getLookupString(description: MavenDependencyCompletionItem): String {
+    val builder = StringBuilder(description.groupId)
+    if (description.artifactId == null) {
+      builder.append(":...")
     }
     else {
-      builder.append(":").append(description.getArtifactId());
-      if (description.getPackaging() != null) {
-        builder.append(":").append(description.getPackaging());
+      builder.append(":").append(description.artifactId)
+      if (description.packaging != null) {
+        builder.append(":").append(description.packaging)
       }
-      if (description.getVersion() != null) {
-        builder.append(":").append(description.getVersion());
+      if (description.version != null) {
+        builder.append(":").append(description.version)
       }
       else {
-        builder.append(":...");
+        builder.append(":...")
       }
     }
-    return builder.toString();
+    return builder.toString()
   }
 
-  public static @NotNull
-  String removeDummy(@Nullable String str) {
+  fun removeDummy(str: String?): String {
     if (str == null) {
-      return "";
+      return ""
     }
-    return StringUtil.trim(str.replace(DUMMY_IDENTIFIER, "").replace(DUMMY_IDENTIFIER_TRIMMED, ""));
+    return StringUtil.trim(str.replace(CompletionUtil.DUMMY_IDENTIFIER, "").replace(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED, ""))
   }
 }
