@@ -13,7 +13,7 @@ internal fun List<JpsModule>.prepareModuleList(): List<JpsModule> {
     throw AssertionError("Cycle detected: ${circularDependency}")
   }
 
-  return builder.sortedNodes.reversed()
+  return builder.sortedNodes
 }
 
 private class DepGraph(
