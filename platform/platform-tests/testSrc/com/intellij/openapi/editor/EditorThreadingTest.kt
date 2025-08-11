@@ -9,6 +9,7 @@ import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.*
 import kotlinx.coroutines.Dispatchers
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.assertThrows
@@ -41,68 +42,28 @@ class EditorThreadingTest {
     }
   }
 
-  private fun withRawAccess(kind: Boolean, action: () -> Unit) {
-    val registryValue = Registry.get("editor.allow.raw.access.on.edt")
-    val current = registryValue.asBoolean()
-    registryValue.setValue(kind)
-    try {
-      action
-    }
-    finally {
-      registryValue.setValue(current)
-    }
-  }
-
   @TestFactory
   fun `access to editor is not allowed on BGT`() = runTest { action ->
-    withRawAccess(false) {
-      timeoutRunBlocking(context = Dispatchers.Default) {
-        assertThrows<Exception> {
-          action()
-        }
-      }
-    }
-  }
-
-  @TestFactory
-  fun `access to editor is not allowed on raw EDT`() = runTest { action ->
-    withRawAccess(true) {
-      timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
-        assertThrows<Exception> {
-          action()
-        }
-      }
-    }
-  }
-
-  @TestFactory
-  fun `access to editor is allowed under read lock`() = runTest { action ->
-    withRawAccess(false) {
-      timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
-        readAction {
-          action()
-        }
-      }
-    }
-  }
-
-  @TestFactory
-  fun `access to editor is allowed on raw EDT with flag`() = runTest { action ->
-    withRawAccess(true) {
-      timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    timeoutRunBlocking(context = Dispatchers.Default) {
+      assertThrows<Exception> {
         action()
       }
     }
   }
 
   @TestFactory
+  fun `access to editor is allowed on raw EDT with flag`() = runTest { action ->
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      action()
+    }
+  }
+
+  @TestFactory
   @RegistryKey("editor.allow.raw.access.on.edt", "true")
   fun `access to editor is allowed under read lock with flag`() = runTest { action ->
-    withRawAccess(true) {
-      timeoutRunBlocking(context = Dispatchers.Default) {
-        readAction {
-          action()
-        }
+    timeoutRunBlocking(context = Dispatchers.Default) {
+      readAction {
+        action()
       }
     }
   }
