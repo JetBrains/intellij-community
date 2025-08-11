@@ -1,12 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.openapi.vcs.merge.MergeConflictManager
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultTreeModel
 
@@ -25,46 +22,40 @@ object NoneChangesGroupingFactory : ChangesGroupingPolicyFactory() {
 @ApiStatus.Internal
 class DefaultChangesGroupingPolicy(val project: Project, model: DefaultTreeModel) : SimpleChangesGroupingPolicy<Any>(model) {
   override fun getGroupRootValueFor(nodePath: StaticFilePath, node: ChangesBrowserNode<*>): Any? {
-    if (!MergeConflictManager.isNonModalMergeEnabled(project)) return null
-
-    if (isMergeStatus(nodePath, node)) {
-      return RESOLVED_CONFLICTS_NODE_FLAG
+    if (isMergeConflict(nodePath, node)) {
+      return CONFLICTS_NODE_FLAG
     }
     return null
   }
 
   override fun createGroupRootNode(value: Any): ChangesBrowserNode<*> {
-    assert(value == RESOLVED_CONFLICTS_NODE_FLAG)
-    val resolvedConflictsRoot = ChangesBrowserResolvedConflictsNode(project)
-    resolvedConflictsRoot.markAsHelperNode()
-    return resolvedConflictsRoot
+    assert(value == CONFLICTS_NODE_FLAG)
+    val conflictsRoot = ChangesBrowserConflictsNode(project)
+    conflictsRoot.markAsHelperNode()
+    return conflictsRoot
   }
 
-  private fun isMergeStatus(nodePath: StaticFilePath, node: ChangesBrowserNode<*>): Boolean {
+  private fun isMergeConflict(nodePath: StaticFilePath, node: ChangesBrowserNode<*>): Boolean {
     if (node is ChangesGroupingPolicy.CompatibilityPlaceholderChangesBrowserNode) {
       val vFile = nodePath.resolve() ?: return false
       val status = ChangeListManager.getInstance(project).getStatus(vFile)
-
-      return status == FileStatus.MERGE || MergeConflictManager.getInstance(project).isResolvedConflict(nodePath.filePath)
+      return isMergeConflict(status)
     }
 
     if (node is ChangesBrowserChangeNode) {
-      val change = node.userObject
-      val filePath = ChangesUtil.getFilePath(change)
-
-      return change.fileStatus == FileStatus.MERGE
-             || (MergeConflictManager.getInstance(project).isResolvedConflict(filePath))
-
-    }
-    val userObject = node.userObject
-    if (userObject is FilePath) {
-      return MergeConflictManager.getInstance(project).isResolvedConflict(userObject)
+      return isMergeConflict(node.userObject.fileStatus)
     }
     return false
   }
 
+  private fun isMergeConflict(status: FileStatus): Boolean {
+    return status === FileStatus.MERGED_WITH_CONFLICTS ||
+           status === FileStatus.MERGED_WITH_BOTH_CONFLICTS ||
+           status === FileStatus.MERGED_WITH_PROPERTY_CONFLICTS
+  }
+
   companion object {
-    private val RESOLVED_CONFLICTS_NODE_FLAG = Any()
+    private val CONFLICTS_NODE_FLAG = Any()
   }
 
   internal class Factory @JvmOverloads constructor(private val forLocalChanges: Boolean = false) : ChangesGroupingPolicyFactory() {
