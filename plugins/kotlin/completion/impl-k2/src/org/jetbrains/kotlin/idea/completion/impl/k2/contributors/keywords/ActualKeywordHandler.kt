@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
-import org.jetbrains.kotlin.idea.KtIconProvider.getBaseIcon
+import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
@@ -151,7 +151,7 @@ internal class ActualKeywordHandler(
     context(KaSession)
     private fun KaDeclarationSymbol.iconPresentation(): RowIcon {
         val symbol = this
-        val baseIcon = getBaseIcon(symbol)
+        val baseIcon = KotlinIconProvider.getBaseIcon(symbol)
         val additionalIcon = AllIcons.Gutter.ImplementingMethod
         return RowIcon(baseIcon, additionalIcon)
     }

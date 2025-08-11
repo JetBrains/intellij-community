@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.validityAsserted
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
+import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClass
@@ -51,9 +51,9 @@ private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> 
             KtClassMemberInfo.create(
                 symbol,
                 symbol.render(renderer),
-                getIcon(symbol),
+                KotlinIconProvider.getIcon(symbol),
                 fqName,
-                containingSymbol?.let { getIcon(it) },
+                containingSymbol?.let { KotlinIconProvider.getIcon(it) },
             ),
             bodyType,
             preferConstructorParameter = false,

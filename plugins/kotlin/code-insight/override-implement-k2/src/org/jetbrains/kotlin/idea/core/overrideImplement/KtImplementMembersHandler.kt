@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.contextParameters
-import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
+import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersHandler.Companion.getUnimplementedMembers
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
@@ -191,9 +191,9 @@ private fun List<KaCallableSymbol>.mapToKtClassMemberInfo(): List<KtClassMemberI
         KtClassMemberInfo.create(
             symbol = unimplementedMemberSymbol,
             memberText = unimplementedMemberSymbol.render(KtGenerateMembersHandler.renderer),
-            memberIcon = getIcon(unimplementedMemberSymbol),
+            memberIcon = KotlinIconProvider.getIcon(unimplementedMemberSymbol),
             containingSymbolText = fqName,
-            containingSymbolIcon = containingSymbol?.let { symbol -> getIcon(symbol) }
+            containingSymbolIcon = containingSymbol?.let { symbol -> KotlinIconProvider.getIcon(symbol) }
         )
     }
 }

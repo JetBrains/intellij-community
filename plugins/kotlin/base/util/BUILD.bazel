@@ -1,11 +1,25 @@
 ### auto-generated section `build kotlin.base.util` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_util",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
+)
 
 jvm_library(
   name = "util",
   module_name = "kotlin.base.util",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom_util",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -30,6 +44,7 @@ jvm_library(
     "@lib//:gson",
     "//platform/core-ui",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "@lib//:kotlinc-analysis-api",
   ]
 )
 
@@ -37,6 +52,7 @@ jvm_library(
   name = "util_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom_util",
   associates = [":util"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -65,6 +81,7 @@ jvm_library(
     "@lib//:gson",
     "//platform/core-ui",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "@lib//:kotlinc-analysis-api",
   ]
 )
 ### auto-generated section `build kotlin.base.util` end
