@@ -501,6 +501,14 @@ internal class IslandsUICustomization : InternalUICustomization() {
     return true
   }
 
+  override fun createProjectTab(frame: JFrame) {
+    if (frame is IdeFrame) {
+      frame.project?.also { project ->
+        updateToolStripesVisibility(ToolWindowManager.getInstance(project))
+      }
+    }
+  }
+
   override fun paintProjectTab(frame: JFrame, label: TabLabel, g: Graphics, tabs: JBTabsImpl, selected: Boolean, index: Int, lastIndex: Int): Boolean {
     if (!isManyIslandEnabled) {
       return false

@@ -207,6 +207,11 @@ public final class MacWinTabsHandlerV2 extends MacWinTabsHandler {
     parent.doLayout();
     parent.revalidate();
     parent.repaint();
+
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+    if (customization != null) {
+      customization.createProjectTab(frame);
+    }
   }
 
   private static void insertTabForFrame(@NotNull IdeFrameImpl frame, @NotNull IdeFrameImpl tab, int index) {
