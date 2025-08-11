@@ -103,7 +103,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     int i = 1;
     Map<VirtualFile, ScopeRootDescriptor> map = new HashMap<>(entries.size());
     for (RootEntry root : entries) {
-      map.put(root.root(), new ScopeRootDescriptor(root.root(), root.orderEntry(), i++));
+      map.put(root.root(), ScopeRootDescriptors.ScopeRootDescriptor(root.root(), root.orderEntry(), i++));
     }
     return map;
   }
