@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.Groups
 import com.intellij.openapi.options.Scheme
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
 import org.jetbrains.annotations.ApiStatus
 
@@ -78,9 +77,6 @@ class EditorColorSchemesSorterImpl: EditorColorSchemesSorter {
         theme.defaultSchemeName.takeIf { !theme.isThemeFromPlugin }
       }
       schemesToFilterOut.addAll(newUiSchemeIds)
-    }
-    else if (!Registry.`is`("idea.islands.enabled", false)) {
-      schemesToFilterOut.add("Island Dark")
     }
 
     schemesToFilterOut.forEach {

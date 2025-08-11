@@ -1,17 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl.islands
 
-import com.intellij.diagnostic.LoadingState
-import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.ToolWindowUIDecorator
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
@@ -19,8 +14,6 @@ import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splittable
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.openapi.wm.IdeGlassPaneUtil
@@ -115,62 +108,6 @@ internal class IslandsUICustomization : InternalUICustomization() {
         toolkit.addAWTEventListener(awtListener, AWTEvent.HIERARCHY_EVENT_MASK)
       }
     })
-
-    if (LoadingState.COMPONENTS_LOADED.isOccurred) {
-      checkThemesVisible()
-    }
-    else {
-      connection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
-        override fun appStarted() {
-          checkThemesVisible()
-        }
-      })
-    }
-  }
-
-  private fun checkThemesVisible() {
-    val key = "idea.islands.enabled"
-    val properties = PropertiesComponent.getInstance()
-
-    if (!properties.getBoolean(key, false)) {
-      properties.setValue(key, true)
-
-      if (isIslandsEnabled) {
-        Registry.get(key).setValue(true)
-      }
-      else {
-        resetColorScheme()
-      }
-    }
-
-    Registry.get(key).addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) {
-        if (!value.asBoolean()) {
-          if (isIslandsEnabled) {
-            val lafManager = LafManager.getInstance()
-            val theme = if (JBColor.isBright()) lafManager.defaultLightLaf else lafManager.defaultDarkLaf
-
-            if (theme != null) {
-              lafManager.setCurrentLookAndFeel(theme, true)
-
-              val colorsManager = EditorColorsManager.getInstance()
-              theme.installEditorScheme(colorsManager.getScheme(if (JBColor.isBright()) "Light" else "Dark") ?: colorsManager.defaultScheme)
-            }
-          }
-          else {
-            resetColorScheme()
-          }
-        }
-      }
-    }, ApplicationManager.getApplication())
-  }
-
-  private fun resetColorScheme() {
-    val colorsManager = EditorColorsManager.getInstance()
-
-    if (colorsManager.globalScheme.displayName == "Island Dark") {
-      colorsManager.setGlobalScheme(colorsManager.getScheme("Dark"))
-    }
   }
 
   private val tabPainterAdapter = ManyIslandsTabPainterAdapter()
