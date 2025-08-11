@@ -60,8 +60,6 @@ internal val moduleWithForm: Set<String> = setOf(
   "intellij.restClient",
   "intellij.diagram.impl",
   "intellij.platform.graph.impl",
-  "intellij.javascript.backend",
-  "intellij.css.plugin",
   "intellij.vcs.git",
   "intellij.editorconfig.backend",
   "intellij.database.plugin",
