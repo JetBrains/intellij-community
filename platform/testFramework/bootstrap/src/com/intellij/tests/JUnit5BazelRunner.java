@@ -29,6 +29,12 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectMetho
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class JUnit5BazelRunner {
+  // compatible with https://github.com/bazelbuild/bazel/blob/master/src/java_tools/junitrunner/java/com/google/testing/junit/runner/BazelTestRunner.java
+  private static final int EXIT_CODE_SUCCESS = 0;
+  private static final int EXIT_CODE_TEST_FAILURE_OTHER = 1;
+  private static final int EXIT_CODE_TEST_RUNNER_FAILURE = 2;
+  private static final int EXIT_CODE_TEST_FAILURE_OOM = 137;
+
   private static final String bazelEnvSelfLocation = "SELF_LOCATION";
   private static final String bazelEnvTestTmpDir = "TEST_TMPDIR";
   private static final String bazelEnvRunFilesDir = "RUNFILES_DIR";
@@ -168,18 +174,23 @@ public final class JUnit5BazelRunner {
       if (testExecutionListener instanceof ConsoleTestLogger &&
           ((ConsoleTestLogger)testExecutionListener).hasTestsWithThrowableResults()) {
         System.err.println("Some tests failed");
-        System.exit(1);
+        System.exit(EXIT_CODE_TEST_FAILURE_OTHER);
       }
+    }
+    catch (OutOfMemoryError e) {
+      //noinspection CallToPrintStackTrace
+      e.printStackTrace();
+      System.exit(EXIT_CODE_TEST_FAILURE_OOM);
     }
     catch (Throwable e) {
       // Internal error, exit with non-zero code
-
       //noinspection CallToPrintStackTrace
       e.printStackTrace();
-      System.exit(155);
+      System.exit(EXIT_CODE_TEST_RUNNER_FAILURE);
     }
     finally {
-      System.exit(0);
+      // System.exit to exist even if some other non-background threads exist
+      System.exit(EXIT_CODE_SUCCESS);
     }
   }
 
