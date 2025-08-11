@@ -148,6 +148,8 @@ public class ControlFlowTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testUnfinishedAssignment() { doTest(); }
 
+  public void testImplication() { doTest(); }
+
   public void doTest() {
     final String path = getTestName(true) + ".test";
     final List<String> input = TestUtils.readInput(getTestDataPath() + path);

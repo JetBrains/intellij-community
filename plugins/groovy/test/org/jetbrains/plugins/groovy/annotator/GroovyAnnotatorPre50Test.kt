@@ -14,11 +14,10 @@ class GroovyAnnotatorPre50Test: LightGroovyTestCase() {
       class B extends A{}
       def foo() {
         A a = new B()
-        if (a instanceof B <error descr="Pattern variable inside 'instanceof' expressions is available in Groovy 5.0 or later">b</error>) {
+        if (a instanceof B <error descr="Pattern variable inside instanceof expressions is available in Groovy 5.0 or later">b</error>) {
         }
       }
     """.trimIndent())
     myFixture.testHighlighting()
-    //myFixture.checkHighlighting()
   }
 }

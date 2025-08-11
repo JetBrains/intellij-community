@@ -82,6 +82,27 @@ public class GrUnassignedVariableAccessTest extends GrHighlightingTestBase {
     myFixture.testHighlighting(true, false, true);
   }
 
+  public void testUnassignedAccessInBooleanExpressionsEnabled() {
+    UnassignedVariableAccessInspection inspection = new UnassignedVariableAccessInspection();
+    inspection.myIgnoreBooleanExpressions = false;
+    myFixture.enableInspections(inspection);
+
+    myFixture.configureByFile(getTestName(false) + ".groovy");
+
+    myFixture.testHighlighting(true, false, true);
+  }
+
+
+  public void testUnassignedAccessInBooleanExpressionsDisabled() {
+    UnassignedVariableAccessInspection inspection = new UnassignedVariableAccessInspection();
+    inspection.myIgnoreBooleanExpressions = true;
+    myFixture.enableInspections(inspection);
+
+    myFixture.configureByFile(getTestName(false) + ".groovy");
+
+    myFixture.testHighlighting(true, false, true);
+  }
+
   public void testVarNotAssigned() { doTest(); }
 
   public void testMultipleVarNotAssigned() { doTest(); }
@@ -94,6 +115,6 @@ public class GrUnassignedVariableAccessTest extends GrHighlightingTestBase {
 
   @Override
   public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_3_0;
+    return GroovyProjectDescriptors.GROOVY_5_0;
   }
 }
