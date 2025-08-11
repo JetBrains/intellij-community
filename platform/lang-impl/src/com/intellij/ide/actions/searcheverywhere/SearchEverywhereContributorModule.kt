@@ -1,8 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
+import com.intellij.ide.util.gotoByName.FilteringGotoByModel
+import com.intellij.ide.util.gotoByName.LanguageRef
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.ListCellRenderer
@@ -26,4 +29,6 @@ interface SearchEverywhereContributorModule : Disposable {
   fun currentSearchEverywhereToggledActionChanged(newAction: SearchEverywhereToggleAction)
 
   fun adjustFoundElementWeight(element: Any, weight: Int): Int
+
+  fun createCustomModel(project: Project?, contributor: AbstractGotoSEContributor): FilteringGotoByModel<LanguageRef>?
 }
