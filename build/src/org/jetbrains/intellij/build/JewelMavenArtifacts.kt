@@ -41,7 +41,7 @@ internal object JewelMavenArtifacts {
   private val transitiveJewelDependencies = mapOf(
     "jewel-foundation" to emptySet(),
     "jewel-ui" to emptySet(),
-    "jewel-decorated-window" to setOf("jewel-foundation"),
+    "jewel-decorated-window" to setOf("jewel-foundation", "jewel-ui"),
     "jewel-markdown-core" to setOf("jewel-foundation"),
     "jewel-markdown-extensions-autolink" to setOf("jewel-foundation", "jewel-ui"),
     "jewel-markdown-extensions-gfm-alerts" to setOf("jewel-foundation", "jewel-ui"),
