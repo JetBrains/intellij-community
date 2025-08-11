@@ -84,9 +84,11 @@ private class SdkScopeDescriptor(
   orderEntry: JdkOrderEntry,
   orderIndex: Int,
 ) : ScopeRootDescriptorBase<JdkOrderEntry>(root, orderEntry, orderIndex) {
+  private val sdk: Sdk? by lazy { orderEntry.jdk }
+
   override fun correspondTo(rootDescriptor: RootDescriptor): Boolean {
     if (rootDescriptor is SdkRootDescriptor) {
-      val orderEntrySdk = orderEntry.jdk ?: return false
+      val orderEntrySdk = sdk ?: return false
       val rootDescriptorSdk = rootDescriptor.sdk
       return orderEntrySdk == rootDescriptorSdk ||
              isEqualBackup(orderEntrySdk, rootDescriptorSdk)
