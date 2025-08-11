@@ -346,7 +346,7 @@ internal open class FrontendXBreakpointProxy(
     }
     // TODO: do we need to pass XBreakpointType.getBreakpointComparator somehow?
     //  it always uses timestamps, so it seems like we can keep comparing by timestamps.
-    return getTimestamp().compareTo(other.getTimestamp())
+    return other.getTimestamp() compareTo this.getTimestamp()
   }
 
   override fun equals(other: Any?): Boolean {
