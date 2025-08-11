@@ -1,12 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl.islands
 
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.ToolWindowUIDecorator
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.OnePixelDivider
@@ -14,16 +17,12 @@ import com.intellij.openapi.ui.Splittable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
-import com.intellij.openapi.wm.impl.IdeBackgroundUtil
-import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
-import com.intellij.openapi.wm.impl.SquareStripeButtonLook
-import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.openapi.wm.impl.*
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
-import com.intellij.ui.ClientProperty
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.JBColor
+import com.intellij.ui.*
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
@@ -31,7 +30,10 @@ import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.event.AWTEventListener
 import java.awt.event.HierarchyEvent
+import java.awt.geom.Area
+import java.awt.geom.RoundRectangle2D
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 import javax.swing.border.Border
 
 internal class IslandsUICustomization : InternalUICustomization() {
@@ -80,7 +82,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
         if (isManyIslandEnabled) {
           background = JBUI.CurrentTheme.ToolWindow.background()
-          IslandsRoundedBorder.createToolWindowBorder(toolWindow, this)
+          createToolWindowBorderPainter(toolWindow, this)
           child.putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, true)
         }
         else {
@@ -146,7 +148,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
       UIUtil.forEachComponentInHierarchy(frame.component) {
         when (it) {
           is EditorsSplitters -> {
-            IslandsRoundedBorder.createEditorBorder(it, editorTabPainterAdapter)
+            createEditorBorderPainter(it)
             clearParentNoBackground(it)
           }
           is JBEditorTabs -> {
@@ -189,7 +191,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
         when (it) {
           is EditorsSplitters -> {
-            it.border = null
+            it.borderPainter = DefaultBorderPainter()
           }
           is ManyIslandDivider -> {
             it.configure(false)
@@ -221,12 +223,13 @@ internal class IslandsUICustomization : InternalUICustomization() {
         holder.border = border
       }
     }
+    holder.borderPainter = DefaultBorderPainter()
     holder.background = JBColor.PanelBackground
   }
 
   private fun setToolWindowManyBorder(toolwindow: ToolWindow, holder: XNextIslandHolder) {
     holder.background = JBUI.CurrentTheme.ToolWindow.background()
-    IslandsRoundedBorder.createToolWindowBorder(toolwindow, holder)
+    createToolWindowBorderPainter(toolwindow, holder)
     clearParentNoBackground(holder)
 
     for (child in holder.components) {
@@ -292,13 +295,81 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
   override fun configureEditorsSplitters(component: EditorsSplitters) {
     if (isManyIslandEnabled) {
-      IslandsRoundedBorder.createEditorBorder(component, editorTabPainterAdapter)
+      createEditorBorderPainter(component)
     }
   }
 
-  override fun paintBeforeEditorEmptyText(component: JComponent, graphics: Graphics) {
-    if (isManyIslandEnabled) {
-      IslandsRoundedBorder.paintBeforeEditorEmptyText(component, graphics, editorTabPainterAdapter)
+  private fun createToolWindowBorderPainter(toolwindow: ToolWindow, component: XNextIslandHolder) {
+    component.border = null
+    component.borderPainter = object : AbstractBorderPainter() {
+      override fun paintAfterChildren(component: JComponent, g: Graphics) {
+        if (toolwindow.type.isInternal) {
+          paintIslandBorder(component, g, false)
+        }
+      }
+    }
+  }
+
+  private fun createEditorBorderPainter(component: EditorsSplitters) {
+    ClientProperty.putRecursive(component, IdeBackgroundUtil.NO_BACKGROUND, true)
+    component.borderPainter = object : AbstractBorderPainter() {
+      override fun paintAfterChildren(component: JComponent, g: Graphics) {
+        val fileEditorManager = ProjectUtil.getProjectForComponent(component)?.getServiceIfCreated(FileEditorManager::class.java)
+
+        if (fileEditorManager?.openFiles?.isEmpty() == true) {
+          IslandsRoundedBorder.paintBeforeEditorEmptyText(component, g, editorTabPainterAdapter)
+
+          val editorEmptyTextPainter = ApplicationManager.getApplication().getService(EditorEmptyTextPainter::class.java)
+          val glassPane = IdeGlassPaneUtil.find(component) as JComponent
+          val shift = SwingUtilities.convertPoint(component, 0, 0, glassPane)
+
+          g.translate(-shift.x, -shift.y)
+          editorEmptyTextPainter.paintEmptyText(glassPane, g)
+          g.translate(shift.x, shift.y)
+        }
+
+        paintIslandBorder(component, g, true)
+      }
+    }
+  }
+
+  private fun paintIslandBorder(component: JComponent, g: Graphics, editor: Boolean) {
+    val isGradient = isIslandsGradientEnabled
+
+    val gg: Graphics2D
+
+    if (isGradient) {
+      component.putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, null)
+      gg = if (editor) IdeBackgroundUtil.withEditorBackground(g, component) else IdeBackgroundUtil.withFrameBackground(g, component)
+    }
+    else {
+      gg = g as Graphics2D
+    }
+
+    gg.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+
+    try {
+      val width = component.width
+      val height = component.height
+
+      val shape = Area(Rectangle(0, 0, width, height))
+      val cornerRadius = JBUI.getInt("Island.arc", 10).toFloat()
+      val offset = JBUIScale.scale(2f)
+      val offsetWidth = offset * 2 + 0.5f
+      val border = Area(RoundRectangle2D.Float(offset, offset, width.toFloat() - offsetWidth, height.toFloat() - offsetWidth, cornerRadius, cornerRadius))
+
+      shape.subtract(border)
+
+      gg.color = getMainBackgroundColor()
+      gg.fill(shape)
+
+      gg.stroke = BasicStroke(JBUIScale.scale(1f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
+      gg.draw(border)
+    }
+    finally {
+      if (isGradient) {
+        component.putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, true)
+      }
     }
   }
 

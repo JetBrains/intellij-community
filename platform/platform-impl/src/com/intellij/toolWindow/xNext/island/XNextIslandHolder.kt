@@ -2,7 +2,9 @@
 package com.intellij.toolWindow.xNext.island
 
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
+import com.intellij.ui.BorderPainter
 import com.intellij.ui.ClientProperty
+import com.intellij.ui.DefaultBorderPainter
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Graphics
@@ -40,5 +42,16 @@ class XNextIslandHolder : JPanel() {
 
   override fun isOpaque(): Boolean {
     return true
+  }
+
+  internal var borderPainter: BorderPainter = DefaultBorderPainter()
+
+  override fun paintChildren(g: Graphics) {
+    super.paintChildren(g)
+    borderPainter.paintAfterChildren(this, g)
+  }
+
+  override fun isPaintingOrigin(): Boolean {
+    return borderPainter.isPaintingOrigin(this)
   }
 }

@@ -28,6 +28,7 @@ internal class IslandsTabPainterAdapter(var isEnabled: Boolean) : TabPainterAdap
 
   override fun paintBackground(label: TabLabel, g: Graphics, tabs: JBTabsImpl) {
     if (!isEnabled) {
+      tabs.setFirstTabOffset(0)
       editorAdapter.paintBackground(label, g, tabs)
       return
     }
@@ -45,6 +46,7 @@ internal class IslandsTabPainterAdapter(var isEnabled: Boolean) : TabPainterAdap
 
       tabPainter.fillBackground(g2, rect)
 
+      tabs.setFirstTabOffset(5)
       val accentedRect = Rectangle(rect.x, rect.y, rect.width, rect.height)
       JBInsets.removeFrom(accentedRect, JBInsets(5, 3, 5, 3))
 

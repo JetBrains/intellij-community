@@ -7,7 +7,6 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -37,11 +36,6 @@ public class EditorEmptyTextPainter {
     }
 
     UISettings.setupAntialiasing(g);
-
-    InternalUICustomization customization = InternalUICustomization.getInstance();
-    if (customization != null) {
-      customization.paintBeforeEditorEmptyText(splitters, g);
-    }
 
     UIUtil.TextPainter painter = createTextPainter();
     advertiseActions(splitters, painter);
