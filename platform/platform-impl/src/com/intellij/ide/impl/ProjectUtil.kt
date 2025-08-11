@@ -161,6 +161,7 @@ object ProjectUtil {
   suspend fun openOrImportAsync(file: Path, options: OpenProjectTask = OpenProjectTask()): Project? {
     if (!options.forceOpenInNewFrame) {
       findAndFocusExistingProjectForPath(file)?.let {
+        LOG.info("Reusing already opened project $file")
         return it
       }
     }
@@ -178,10 +179,12 @@ object ProjectUtil {
         virtualFileResult = Result.success(it)
       } ?: return null
       if (provider.canOpenProject(virtualFile)) {
+        LOG.info("Opening project at $file with strong project info holder $provider")
         return chooseProcessorAndOpenAsync(mutableListOf(provider), virtualFile, options)
       }
     }
     if (isValidProjectPath(file)) {
+      LOG.info("Opening existing project with .idea at $file")
       // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
       return (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options.copy(runConfigurators = true))
     }
@@ -194,6 +197,7 @@ object ProjectUtil {
           for (child in directoryStream) {
             val childPath = child.toString()
             if (childPath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
+              LOG.info("Opening project with IPR lookup at child path $childPath")
               return openProject(Path.of(childPath), options)
             }
           }
@@ -221,6 +225,7 @@ object ProjectUtil {
       LOG.info("No processor found for project in $file")
       return null
     }
+    LOG.info("Processors found for project in $file: ${ processors.joinToString { it.name} }")
 
     val project: Project?
     if (processors.size == 1 && processors[0] is PlatformProjectOpenProcessor) {
