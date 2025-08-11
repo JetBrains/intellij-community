@@ -50,6 +50,9 @@ open class ClassSearchEverywhereContributor @Internal constructor(event: AnActio
   override fun getSortWeight(): Int = 100
 
   override fun createModel(project: Project): FilteringGotoByModel<LanguageRef> {
+    val customModel = contributorModules?.firstNotNullOfOrNull { mod -> mod.createCustomModel(project, this) }
+    if (customModel != null) return customModel
+
     val model = GotoClassModel2(project)
     model.setFilterItems(filter.selectedElements)
     return model
