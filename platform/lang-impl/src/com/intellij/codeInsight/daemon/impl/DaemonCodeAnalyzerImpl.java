@@ -547,11 +547,16 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       if (System.currentTimeMillis() > dStart + 100_000) {
         throw new IllegalStateException("Timeout waiting for smart mode. If you absolutely want to be dumb, please use DaemonCodeAnalyzerImpl.mustWaitForSmartMode(false).");
       }
-      EDT.dispatchAllInvocationEvents();
+      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+        EDT.dispatchAllInvocationEvents();
+        return Unit.INSTANCE;
+      });
     }
     ((GistManagerImpl)GistManager.getInstance()).clearQueueInTests();
-    EDT.dispatchAllInvocationEvents();
-
+    TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+      EDT.dispatchAllInvocationEvents();
+      return Unit.INSTANCE;
+    });
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion(); // wait for async editor loading
 
     clearReferences();
