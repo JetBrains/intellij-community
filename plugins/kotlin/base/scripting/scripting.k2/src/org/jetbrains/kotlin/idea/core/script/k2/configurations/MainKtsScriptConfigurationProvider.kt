@@ -7,7 +7,7 @@ import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
@@ -15,6 +15,7 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgressScope
+import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import kotlinx.coroutines.CoroutineScope
@@ -80,7 +81,7 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
 
     private suspend fun resolveMainKtsConfiguration(mainKts: VirtualFile, definition: ScriptDefinition): ScriptConfigurationWithSdk {
         val scriptSource = VirtualFileScriptSource(mainKts)
-        val sdk = ProjectJdkTable.getInstance().allJdks.firstOrNull()
+        val sdk = ProjectRootManager.getInstance(project).projectSdk
 
         val providedConfiguration = sdk?.homePath?.let { jdkHome ->
             definition.compilationConfiguration.with {
@@ -150,7 +151,12 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
                 storageToUpdate addEntity KotlinScriptLibraryEntity(classes, sources, DefaultScriptEntitySource)
             }
 
-            storageToUpdate addEntity KotlinScriptEntity(virtualFileUrl, libraryIds.toList(), MainKtsKotlinScriptEntitySource)
+            storageToUpdate addEntity KotlinScriptEntity(
+                virtualFileUrl,
+                libraryIds.toList(),
+                InheritedSdkDependency,
+                MainKtsKotlinScriptEntitySource
+            )
         }
 
         return storageToUpdate

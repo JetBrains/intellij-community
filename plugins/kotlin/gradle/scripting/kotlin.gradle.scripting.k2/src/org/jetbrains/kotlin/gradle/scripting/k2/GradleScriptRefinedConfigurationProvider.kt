@@ -7,16 +7,17 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
+import com.intellij.platform.workspace.jps.entities.SdkDependency
+import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.containers.addIfNotNull
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptModelData
 import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptEntitySource
@@ -157,7 +158,9 @@ class GradleScriptRefinedConfigurationProvider(
                 }
             }
 
-            this addEntity KotlinScriptEntity(scriptUrl, dependencies, KotlinGradleScriptEntitySource)
+            val sdk = configurationWithSdk.sdk?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) } ?: InheritedSdkDependency
+
+            this addEntity KotlinScriptEntity(scriptUrl, dependencies, sdk, KotlinGradleScriptEntitySource)
         }
     }
 

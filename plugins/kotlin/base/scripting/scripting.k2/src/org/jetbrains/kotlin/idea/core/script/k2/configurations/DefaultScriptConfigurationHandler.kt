@@ -5,11 +5,11 @@ import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import kotlinx.coroutines.CoroutineScope
@@ -51,7 +51,7 @@ open class DefaultScriptConfigurationHandler(
     }
 
     private suspend fun resolveScriptConfiguration(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptConfigurationWithSdk {
-        val sdk = ProjectRootManager.getInstance(project).projectSdk ?: ProjectJdkTable.getInstance().allJdks.firstOrNull()
+        val sdk = ProjectRootManager.getInstance(project).projectSdk
 
         val scriptSource = VirtualFileScriptSource(virtualFile)
 
@@ -103,7 +103,10 @@ open class DefaultScriptConfigurationHandler(
                 result addEntity KotlinScriptLibraryEntity(classes, sources, DefaultScriptEntitySource)
             }
 
-            result addEntity KotlinScriptEntity(scriptUrl, libraryIds.toList(), DefaultScriptEntitySource)
+            result addEntity KotlinScriptEntity(
+                scriptUrl, libraryIds.toList(),
+                InheritedSdkDependency, DefaultScriptEntitySource
+            )
         }
 
         return result

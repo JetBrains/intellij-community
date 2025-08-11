@@ -4,20 +4,24 @@ package org.jetbrains.kotlin.idea.core.script.k2.configurations
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
+import com.intellij.platform.workspace.jps.entities.SdkDependency
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptRefinedConfigurationResolver
 import org.jetbrains.kotlin.idea.core.script.shared.ScriptClassPathUtil
 import org.jetbrains.kotlin.idea.core.script.shared.ScriptVirtualFileCache
-import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
+import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -80,7 +84,7 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
         val (configuration, sdk) = getConfigurationWithSdk(virtualFile) ?: return GlobalSearchScope.EMPTY_SCOPE
         val configurationWrapper = configuration.valueOrNull() ?: return GlobalSearchScope.EMPTY_SCOPE
 
-        val roots = configurationWrapper.dependenciesClassPath.mapNotNull { ScriptClassPathUtil.Companion.findVirtualFile(it.path) }
+        val roots = configurationWrapper.dependenciesClassPath.mapNotNull { ScriptClassPathUtil.findVirtualFile(it.path) }
 
         val sdkClasses = sdk?.rootProvider?.getFiles(OrderRootType.CLASSES)?.toList() ?: emptyList<VirtualFile>()
 
@@ -90,26 +94,24 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
     override fun getScriptDependenciesClassFiles(virtualFile: VirtualFile): Collection<VirtualFile> {
         val dependencies =
             getConfigurationWithSdk(virtualFile)?.scriptConfiguration?.valueOrNull()?.dependenciesClassPath ?: return emptyList()
-        return dependencies.mapNotNull { ScriptClassPathUtil.Companion.findVirtualFile(it.path) }
+        return dependencies.mapNotNull { ScriptClassPathUtil.findVirtualFile(it.path) }
     }
 
-    override fun getFirstScriptsSdk(): Sdk? = getProjectSdk() ?: allDependencies.get().sdks.firstOrNull()
+    override fun getFirstScriptsSdk(): Sdk? = ProjectRootManager.getInstance(project).projectSdk ?: allDependencies.get().sdks.firstOrNull()
 
-    override fun getScriptSdk(virtualFile: VirtualFile): Sdk? =
-        getConfigurationWithSdk(virtualFile)?.sdk ?: ProjectJdkTable.getInstance().allJdks.find { it.canBeUsedForScript() }
+    override fun getScriptSdk(virtualFile: VirtualFile): Sdk? {
+        val index = project.workspaceModel.currentSnapshot.getVirtualFileUrlIndex()
+
+        val virtualFileUrl = virtualFile.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
+        val entity = index.findEntitiesByUrl(virtualFileUrl).filterIsInstance<KotlinScriptEntity>().firstOrNull() ?: return null
+        return when (val sdkDependency = entity.sdk) {
+            is SdkDependency -> ProjectJdkTable.getInstance().findJdk(sdkDependency.sdk.name, sdkDependency.sdk.type)
+            is InheritedSdkDependency -> ProjectRootManager.getInstance(project).projectSdk
+            else -> null
+        }
+    }
 
     override fun getScriptDependingOn(dependencies: Collection<String>): VirtualFile? = null
-
-    private fun getProjectSdk(): Sdk? {
-        return ProjectRootManager.getInstance(project).projectSdk?.takeIf { it.canBeUsedForScript() }
-    }
-
-    private fun Sdk.hasValidClassPathRoots(): Boolean {
-        val rootClasses = rootProvider.getFiles(OrderRootType.CLASSES)
-        return rootClasses.isNotEmpty() && rootClasses.all { it.isValid }
-    }
-
-    private fun Sdk.canBeUsedForScript() = sdkType is JavaSdkType && hasValidClassPathRoots()
 
     override fun getScriptConfigurationResult(file: KtFile): ScriptCompilationConfigurationResult? {
         val definition = file.findScriptDefinition() ?: return null
