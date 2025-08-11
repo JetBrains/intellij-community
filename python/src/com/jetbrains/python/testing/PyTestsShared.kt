@@ -54,6 +54,7 @@ import com.jetbrains.python.reflection.Properties
 import com.jetbrains.python.reflection.Property
 import com.jetbrains.python.reflection.getProperties
 import com.jetbrains.python.run.*
+import com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
 import com.jetbrains.python.run.targetBasedConfiguration.createRefactoringListenerIfPossible
@@ -501,9 +502,8 @@ abstract class PyAbstractTestConfiguration(project: Project,
   }
 
   override fun getWorkingDirectorySafe(): String {
-    val dirProvidedByUser = super.getWorkingDirectory()
-    if (!dirProvidedByUser.isNullOrEmpty()) {
-      return dirProvidedByUser
+    workingDirectory?.takeIf { it.isNotEmpty() }?.let {
+      return getExpandedWorkingDir(this)
     }
 
     return ApplicationManager.getApplication().runReadAction<String> {
