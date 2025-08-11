@@ -66,14 +66,12 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
       }
     }
     finally {
-      synchronized (mySocketObject) {
-        if (!myServerSocket.isClosed()) {
-          try {
-            myServerSocket.close();
-          }
-          catch (IOException e) {
-            LOG.warn("Error closing socket", e);
-          }
+      if (!myServerSocket.isClosed()) {
+        try {
+          myServerSocket.close();
+        }
+        catch (IOException e) {
+          LOG.warn("Error closing socket", e);
         }
       }
     }
@@ -140,6 +138,6 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
     }
 
     @Override
-    protected void onCommunicationError() {getDebugger().fireCommunicationError();}
+    protected void onCommunicationError() { getDebugger().fireCommunicationError(); }
   }
 }
