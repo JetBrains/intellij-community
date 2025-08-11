@@ -51,7 +51,7 @@ public class JavaPlatformModuleSystemScope extends DelegatingGlobalSearchScope {
     if (isModuleFile(module2, file2)) return -1;
 
     // Files from the same module: use base comparator
-    if (module1 == module2 || module1.getName().equals(module2.getName())) return getDelegate().compare(file1, file2);
+    if (module1.equals(module2) || module1.getName().equals(module2.getName())) return getDelegate().compare(file1, file2);
 
     // Prefer: a file from a module that the current module reads
     int result = Boolean.compare(JavaPsiModuleUtil.reads(myModule, module1), JavaPsiModuleUtil.reads(myModule, module2));
