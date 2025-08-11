@@ -21,17 +21,16 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
-import com.intellij.platform.find.*
+import com.intellij.platform.find.FindInFilesResult
+import com.intellij.platform.find.FindRemoteApi
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewPresentation
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
@@ -40,50 +39,46 @@ private val LOG: Logger = logger<FindRemoteApiImpl>()
 
 internal class FindRemoteApiImpl : FindRemoteApi {
 
-  override suspend fun findByModel(findModel: FindModel, projectId: ProjectId, filesToScanInitially: List<VirtualFileId>, maxUsagesCount: Int): Flow<SearchResult> {
+  override suspend fun findByModel(findModel: FindModel, projectId: ProjectId, filesToScanInitially: List<VirtualFileId>, maxUsagesCount: Int): Flow<FindInFilesResult> {
     val sentItems = AtomicInteger(0)
-    val sharedFlow = MutableSharedFlow<SearchResult>(
-      replay = maxUsagesCount + 3, // +3 for stop events to prevent overriding the previous values if there are no subscribers yet
-      onBufferOverflow = BufferOverflow.SUSPEND,
-    )
-    CoroutineScope(currentCoroutineContext()).launch {
-        //TODO rewrite find function without using progress indicator and presentation
-        val progressIndicator = EmptyProgressIndicator()
-        val presentation = FindUsagesProcessPresentation(UsageViewPresentation())
+    return channelFlow {
+      //TODO rewrite find function without using progress indicator and presentation
+      val progressIndicator = EmptyProgressIndicator()
+      val presentation = FindUsagesProcessPresentation(UsageViewPresentation())
 
-        val isReplaceState = findModel.isReplaceState
-        val previousResult = ThreadLocal<UsageInfo2UsageAdapter>()
-        val usagesCount = AtomicInteger()
+      val isReplaceState = findModel.isReplaceState
+      val previousResult = ThreadLocal<UsageInfo2UsageAdapter>()
+      val usagesCount = AtomicInteger()
 
-        val project = projectId.findProjectOrNull()
-        if (project == null) {
-          LOG.warn("Project not found for id ${projectId}")
-          return@launch
+      val project = projectId.findProjectOrNull()
+      if (project == null) {
+        LOG.warn("Project not found for id ${projectId}")
+        return@channelFlow
+      }
+      val filesToScanInitially = filesToScanInitially.mapNotNull { it.virtualFile() }.toSet()
+      // SearchScope is not serializable, so we will get it by id from the client
+      setCustomScopeById(project, findModel)
+      //read action is necessary in case of the loading from a directory
+      val scope = readAction { FindInProjectUtil.getGlobalSearchScope(project, findModel) }
+      FindInProjectUtil.findUsages(findModel, project, progressIndicator, presentation, filesToScanInitially) { usageInfo ->
+        val usageNum = usagesCount.incrementAndGet()
+        if (usageNum > maxUsagesCount) {
+          return@findUsages false
         }
-        val filesToScanInitially = filesToScanInitially.mapNotNull { it.virtualFile() }.toSet()
-        // SearchScope is not serializable, so we will get it by id from the client
-        setCustomScopeById(project, findModel)
-        //read action is necessary in case of the loading from a directory
-        val scope = readAction { FindInProjectUtil.getGlobalSearchScope(project, findModel) }
-        FindInProjectUtil.findUsages(findModel, project, progressIndicator, presentation, filesToScanInitially) { usageInfo ->
-          val usageNum = usagesCount.incrementAndGet()
-          if (usageNum > maxUsagesCount) {
-            return@findUsages false
-          }
-          val virtualFile = usageInfo.virtualFile
-          if (virtualFile == null)
-            return@findUsages true
+        val virtualFile = usageInfo.virtualFile
+        if (virtualFile == null)
+          return@findUsages true
 
-          val adapter = UsageInfo2UsageAdapter(usageInfo)
-          val previousItem: UsageInfo2UsageAdapter? = previousResult.get()
-          if (!isReplaceState && previousItem != null) adapter.merge(previousItem)
-          previousResult.set(adapter)
-          adapter.updateCachedPresentation()
-          val textChunks = adapter.text.map {
-            it.toSerializableTextChunk()
-          }
-          val bgColor = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile)?.rpcId()
-          val presentablePath = getPresentableFilePath(project, scope, virtualFile)
+        val adapter = UsageInfo2UsageAdapter(usageInfo)
+        val previousItem: UsageInfo2UsageAdapter? = previousResult.get()
+        if (!isReplaceState && previousItem != null) adapter.merge(previousItem)
+        previousResult.set(adapter)
+        adapter.updateCachedPresentation()
+        val textChunks = adapter.text.map {
+          it.toSerializableTextChunk()
+        }
+        val bgColor = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile)?.rpcId()
+        val presentablePath = getPresentableFilePath(project, scope, virtualFile)
 
           val result = FindInFilesResult(
             presentation = textChunks,
@@ -103,17 +98,16 @@ internal class FindRemoteApiImpl : FindRemoteApi {
             usageInfos = adapter.mergedInfos.toList()
           )
 
-          sharedFlow.tryEmit(SearchResultFound(result))
+        launch (start = CoroutineStart.UNDISPATCHED) {
+          send(result)
           if (sentItems.incrementAndGet() >= maxUsagesCount) {
-            sharedFlow.tryEmit(SearchStopped())
-            sentItems.incrementAndGet()
+            close()
           }
-
-          usagesCount.get() <= maxUsagesCount
         }
-        sharedFlow.tryEmit(SearchStopped())
-      }.invokeOnCompletion { sharedFlow.tryEmit(SearchStopped()) }
-    return sharedFlow
+
+        usagesCount.get() <= maxUsagesCount
+      }
+    }
   }
 
   override suspend fun performFindAllOrReplaceAll(findModel: FindModel, openInNewTab: Boolean, projectId: ProjectId) {
