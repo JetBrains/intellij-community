@@ -5,7 +5,6 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.properties.psi.Property
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -14,8 +13,6 @@ import org.jetbrains.plugins.gradle.codeInspection.fix.GradleWrapperVersionFix
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 
 const val DISTRIBUTION_URL_KEY: String = "distributionUrl"
-
-private val LOG = logger<GradleLatestMinorVersionInspection>()
 
 class GradleLatestMinorVersionInspection : LocalInspectionTool() {
 
@@ -36,8 +33,7 @@ class GradleLatestMinorVersionInspection : LocalInspectionTool() {
         val currentGradleVersion = try {
           GradleVersion.version(currentVersion)
         }
-        catch (e: IllegalArgumentException) {
-          LOG.warnWithDebug("Failed to parse the Gradle version", e)
+        catch (_: IllegalArgumentException) {
           return
         }
 
