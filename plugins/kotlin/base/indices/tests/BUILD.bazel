@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//plugins/kotlin/plugin/k1",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/core-ui",
