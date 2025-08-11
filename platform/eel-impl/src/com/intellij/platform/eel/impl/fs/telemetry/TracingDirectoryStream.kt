@@ -1,14 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ijent.community.impl.nio.telemetry
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.eel.impl.fs.telemetry
 
-import com.intellij.platform.ijent.community.impl.nio.telemetry.Measurer.Operation.*
 import java.nio.file.DirectoryStream
 
 internal class TracingDirectoryStream<T>(
   private val delegate: DirectoryStream<T>,
 ) : DirectoryStream<T> {
   override fun close() {
-    Measurer.measure(directoryStreamClose) {
+    Measurer.measure(Measurer.Operation.directoryStreamClose) {
       delegate.close()
     }
   }
@@ -18,17 +17,17 @@ internal class TracingDirectoryStream<T>(
       private val iterator = delegate.iterator()
 
       override fun hasNext(): Boolean =
-        Measurer.measure(directoryStreamIteratorNext) {
+        Measurer.measure(Measurer.Operation.directoryStreamIteratorNext) {
           iterator.hasNext()
         }
 
       override fun next(): T =
-        Measurer.measure(directoryStreamIteratorNext) {
+        Measurer.measure(Measurer.Operation.directoryStreamIteratorNext) {
           iterator.next()
         }
 
       override fun remove() {
-        Measurer.measure(directoryStreamIteratorRemove) {
+        Measurer.measure(Measurer.Operation.directoryStreamIteratorRemove) {
           iterator.remove()
         }
       }

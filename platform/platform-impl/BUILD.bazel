@@ -151,6 +151,7 @@ jvm_library(
     "//platform/locking.impl",
     "//platform/platform-impl/concurrency",
     "//platform/pratt",
+    "//platform/eel-impl",
     "//platform/platform-impl/recentProjects",
   ],
   exports = [
@@ -316,6 +317,7 @@ jvm_library(
     "//platform/locking.impl",
     "//platform/platform-impl/concurrency",
     "//platform/pratt",
+    "//platform/eel-impl",
     "//platform/platform-impl/recentProjects",
   ],
   exports = [

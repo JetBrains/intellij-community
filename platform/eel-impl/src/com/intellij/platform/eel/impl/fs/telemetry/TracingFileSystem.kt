@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ijent.community.impl.nio.telemetry
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.eel.impl.fs.telemetry
 
 import com.intellij.platform.core.nio.fs.DelegatingFileSystem
-import com.intellij.platform.ijent.community.impl.nio.telemetry.Measurer.Operation.*
 import java.nio.file.FileSystem
 import java.nio.file.WatchService
 
@@ -17,7 +16,7 @@ class TracingFileSystem(
   override fun toString(): String = """${javaClass.simpleName}($delegate)"""
 
   override fun close() {
-    Measurer.measure(fileSystemClose) {
+    Measurer.measure(Measurer.Operation.fileSystemClose) {
       delegate.close()
     }
   }
@@ -25,12 +24,12 @@ class TracingFileSystem(
   override fun provider(): TracingFileSystemProvider = provider
 
   override fun supportedFileAttributeViews(): MutableSet<String> =
-    Measurer.measure(supportedFileAttributeViews) {
+    Measurer.measure(Measurer.Operation.supportedFileAttributeViews) {
       super.supportedFileAttributeViews()
     }
 
   override fun newWatchService(): WatchService =
-    Measurer.measure(fileSystemNewWatchService) {
+    Measurer.measure(Measurer.Operation.fileSystemNewWatchService) {
       super.newWatchService()
     }
 }

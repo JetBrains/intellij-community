@@ -29,6 +29,8 @@ jvm_library(
     "//platform/core-nio-fs",
     "//platform/core-impl",
     "@lib//:hash4j",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
   ],
   runtime_deps = [":eel-impl_resources"]
 )

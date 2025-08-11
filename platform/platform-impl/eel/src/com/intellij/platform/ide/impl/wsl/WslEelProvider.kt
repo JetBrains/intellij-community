@@ -18,7 +18,7 @@ import com.intellij.platform.ide.impl.wsl.ijent.nio.IjentWslNioFileSystemProvide
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemPosixApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
-import com.intellij.platform.ijent.community.impl.nio.telemetry.TracingFileSystemProvider
+import com.intellij.platform.eel.impl.fs.telemetry.TracingFileSystemProvider
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
