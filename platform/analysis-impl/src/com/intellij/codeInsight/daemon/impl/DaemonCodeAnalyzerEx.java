@@ -171,8 +171,8 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     }
 
     Document document = textEditor.getEditor().getDocument();
-    CodeInsightContext context = EditorContextManager.getEditorContext(textEditor.getEditor(), project);
-    return getInstanceEx(project).getFileStatusMap().allDirtyScopesAreNull(document, context);
+    CodeInsightContext context = EditorContextManager.getCachedEditorContext(textEditor.getEditor(), project);
+    return context != null && getInstanceEx(project).getFileStatusMap().allDirtyScopesAreNull(document, context);
   }
 
   @ApiStatus.Internal
