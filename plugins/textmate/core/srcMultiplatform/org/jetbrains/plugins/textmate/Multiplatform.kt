@@ -21,7 +21,7 @@ import kotlin.reflect.KClass
  * and every target should provide its own implementation.
  */
 
-internal fun <T> AtomicReference<T>.update(f: (T) -> T) {
+fun <T> AtomicReference<T>.update(f: (T) -> T) {
   updateAndGet(f)
 }
 

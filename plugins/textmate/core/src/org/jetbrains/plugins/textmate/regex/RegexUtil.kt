@@ -3,7 +3,7 @@ package org.jetbrains.plugins.textmate.regex
 import kotlin.Char.Companion.MIN_HIGH_SURROGATE
 import kotlin.Char.Companion.MIN_LOW_SURROGATE
 
-internal fun byteOffsetByCharOffset(
+fun byteOffsetByCharOffset(
   charSequence: CharSequence,
   startOffset: TextMateCharOffset,
   targetOffset: TextMateCharOffset,

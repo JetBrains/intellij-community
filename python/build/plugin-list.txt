@@ -20,7 +20,7 @@ intellij.sh
 intellij.statsCollector
 intellij.tasks.core
 intellij.terminal
-intellij.textmate
+intellij.textmate.plugin
 intellij.toml
 intellij.vcs.git
 intellij.vcs.hg

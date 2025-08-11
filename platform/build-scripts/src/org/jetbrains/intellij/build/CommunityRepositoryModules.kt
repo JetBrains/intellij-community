@@ -186,8 +186,8 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.terminal.completion")
       spec.withResource("resources/shell-integrations", "shell-integrations")
     },
-    pluginAuto(listOf("intellij.textmate")) { spec ->
-      spec.withResource("lib/bundles", "lib/bundles")
+    pluginAuto(listOf("intellij.textmate.plugin")) { spec ->
+      spec.withResourceFromModule("intellij.textmate", "lib/bundles", "lib/bundles")
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
     androidDesignPlugin(),

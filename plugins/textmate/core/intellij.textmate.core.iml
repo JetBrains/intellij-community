@@ -26,10 +26,9 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/srcJvmMain" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/srcMultiplatform" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/testsMultiplatform" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -38,14 +37,9 @@
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="slf4j-api" level="project" />
-    <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.util.xmlDom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
-    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinx-collections-immutable" level="project" />
   </component>
 </module>

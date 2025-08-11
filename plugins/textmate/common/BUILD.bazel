@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.textmate.common` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "common_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":common_resources"]
+)
+### auto-generated section `build intellij.textmate.common` end

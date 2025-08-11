@@ -1,0 +1,58 @@
+### auto-generated section `build intellij.textmate.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "tests_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.textmate.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "testsMultiplatform/**/*.kt", "testsMultiplatform/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//plugins/textmate/core",
+    "//plugins/textmate/joni",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "@lib//:junit5",
+    "@lib//:kotlin-test",
+    "@lib//:kotlinx-coroutines-test",
+    "//platform/util",
+    "//platform/util/xmlDom",
+    "@lib//:kotlinx-collections-immutable",
+    "@lib//:kotlinx-coroutines-core",
+    "//plugins/textmate",
+    "//platform/core-api:core",
+    "//platform/lang-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/textmate/plugin",
+  ],
+  runtime_deps = [":tests_test_resources"]
+)
+### auto-generated section `build intellij.textmate.tests` end
+
+### auto-generated section `test intellij.textmate.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.textmate.tests` end

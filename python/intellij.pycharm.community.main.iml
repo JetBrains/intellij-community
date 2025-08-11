@@ -33,7 +33,7 @@
     <orderEntry type="module" module-name="intellij.sh" />
     <orderEntry type="module" module-name="intellij.terminal.sh" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.langInjection" />
-    <orderEntry type="module" module-name="intellij.textmate" />
+    <orderEntry type="module" module-name="intellij.textmate.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.completionMlRankingModels" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.emojipicker" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.grazie" scope="RUNTIME" />

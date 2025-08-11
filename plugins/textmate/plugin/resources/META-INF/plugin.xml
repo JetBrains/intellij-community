@@ -1,0 +1,26 @@
+<idea-plugin allow-bundled-update="true">
+  <id>org.jetbrains.plugins.textmate</id>
+  <name>TextMate Bundles</name>
+  <category>Languages</category>
+  <vendor>JetBrains</vendor>
+
+  <description><![CDATA[
+    Supports syntax highlighting for arbitrary file types,
+    controlled by <a href="https://macromates.com/textmate/manual/bundles">TextMate bundles</a>
+  ]]></description>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.modules.spellchecker"/>
+  </dependencies>
+
+  <content>
+    <module name="intellij.textmate" loading="required"/>
+    <module name="intellij.textmate.common" loading="required"/>
+    <module name="intellij.textmate.core" loading="required"/>
+    <module name="intellij.textmate.joni" loading="required"/>
+    <module name="intellij.textmate.backend"/>
+    <module name="intellij.textmate.frontend.split"/>
+  </content>
+
+</idea-plugin>

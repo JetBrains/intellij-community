@@ -3,7 +3,7 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer
 import org.jetbrains.plugins.textmate.regex.MatchData
 import org.jetbrains.plugins.textmate.regex.TextMateString
 
-internal object SyntaxMatchUtils {
+object SyntaxMatchUtils {
 
   /**
    * Replaces parts like \1 or \20 in string parameter with group captures from matchData.

@@ -293,8 +293,7 @@ jvm_library(
     "//plugins/testng_rt/tests:tests_test_lib",
     "//platform/workspace/storage/tests:tests_test_lib",
     "//platform/workspace/jps/tests:tests_test_lib",
-    "//plugins/textmate",
-    "//plugins/textmate:textmate_test_lib",
+    "//plugins/textmate/plugin",
     "//plugins/space/jps-plugin:java-jps",
     "//build/tasks",
     "//build/tasks:tasks_test_lib",
@@ -360,6 +359,7 @@ jvm_library(
     "//python/python-pyproject:pyproject_test_lib",
     "//platform/indexing-tests:indexing-tests_test_lib",
     "//platform/testFramework/monorepo:monorepo_test_lib",
+    "//plugins/textmate/tests:tests_test_lib",
   ],
   runtime_deps = [
     "//platform/main/intellij.platform.monolith.main:monolith-main",

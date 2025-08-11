@@ -1,7 +1,5 @@
 package org.jetbrains.plugins.textmate.regex
 
-import kotlin.jvm.JvmInline
-
 @JvmInline
 value class TextMateCharOffset(val offset: Int): Comparable<TextMateCharOffset> {
   operator fun plus(other: TextMateCharOffset): TextMateCharOffset {
@@ -28,13 +26,13 @@ value class TextMateByteOffset(val offset: Int): Comparable<TextMateByteOffset> 
   }
 }
 
-internal fun Int.byteOffset(): TextMateByteOffset = TextMateByteOffset(this)
-internal fun Int.charOffset(): TextMateCharOffset = TextMateCharOffset(this)
+fun Int.byteOffset(): TextMateByteOffset = TextMateByteOffset(this)
+fun Int.charOffset(): TextMateCharOffset = TextMateCharOffset(this)
 
-internal operator fun CharSequence.get(offset: TextMateCharOffset): Char = get(offset.offset)
-internal fun CharSequence.subSequence(start: TextMateCharOffset, end: TextMateCharOffset): CharSequence = subSequence(start.offset, end.offset)
-internal fun CharSequence.subSequence(range: TextMateCharRange): CharSequence = subSequence(range.start.offset, range.end.offset)
-internal fun CharSequence.indexOf(char: Char, startIndex: TextMateCharOffset): TextMateCharOffset {
+operator fun CharSequence.get(offset: TextMateCharOffset): Char = get(offset.offset)
+fun CharSequence.subSequence(start: TextMateCharOffset, end: TextMateCharOffset): CharSequence = subSequence(start.offset, end.offset)
+fun CharSequence.subSequence(range: TextMateCharRange): CharSequence = subSequence(range.start.offset, range.end.offset)
+fun CharSequence.indexOf(char: Char, startIndex: TextMateCharOffset): TextMateCharOffset {
   return indexOf(char, startIndex = startIndex.offset).charOffset()
 }
 

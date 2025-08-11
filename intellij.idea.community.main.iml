@@ -149,7 +149,7 @@
     <orderEntry type="module" module-name="intellij.gradle.java.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.markdown" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.markdown.plugin.main" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.textmate" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.textmate.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.webp" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.space.java.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.emojipicker" scope="RUNTIME" />
@@ -255,5 +255,6 @@
     <orderEntry type="module" module-name="intellij.maven.server.m36.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.maven.server.m40" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.mcpserver" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.textmate.tests" scope="TEST" />
   </component>
 </module>

@@ -1249,8 +1249,12 @@ plugins/testng
 plugins/testng_rt
 plugins/testng_rt/tests
 plugins/textmate
+plugins/textmate/backend
+plugins/textmate/common
 plugins/textmate/core
 plugins/textmate/joni
+plugins/textmate/plugin
+plugins/textmate/tests
 plugins/toml
 plugins/toml/backend
 plugins/toml/core
