@@ -327,3 +327,12 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
         private fun PsiElement.getBaseIconUnwrapped(): Icon? = unwrapped?.takeIf { it != this }?.getBaseIcon()
     }
 }
+
+@ApiStatus.Internal
+class KotlinNoneIconProvider : KotlinIconProvider() {
+    override fun getIcon(psiElement: PsiElement, flags: Int): Icon? = null
+    override fun isMatchingExpected(declaration: KtDeclaration): Boolean = false
+    context(_: KaSession) override fun getBaseIcon(symbol: KaSymbol): Icon? = null
+    context(_: KaSession) override fun getIcon(ktSymbol: KaSymbol): Icon? = null
+    override fun getVisibilityIcon(list: KtModifierList?): Icon? = null
+}
