@@ -51,6 +51,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   private final FileManagerEx myFileManager;
 
   private final List<PsiTreeChangePreprocessor> myTreeChangePreprocessors = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<PsiTreeChangePreprocessor> myTreeChangePreprocessorsBackgroundable = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<PsiTreeChangeListener> myTreeChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<PsiTreeChangeListener> myTreeChangeListenersBackgroundable =
     ContainerUtil.createLockFreeCopyOnWriteList();
@@ -397,6 +398,14 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     myTreeChangePreprocessors.remove(preprocessor);
   }
 
+  @Override
+  @ApiStatus.Internal
+  public void addTreeChangePreprocessorBackgroundable(@NotNull PsiTreeChangePreprocessor preprocessor,
+                                                      @NotNull Disposable parentDisposable) {
+    myTreeChangePreprocessorsBackgroundable.add(preprocessor);
+    Disposer.register(parentDisposable, () -> myTreeChangePreprocessorsBackgroundable.remove(preprocessor));
+  }
+
   private void fireEvent(@NotNull PsiTreeChangeEventImpl event) {
     boolean isRealTreeChange = event.getCode() != PsiTreeChangeEventImpl.PsiEventType.PROPERTY_CHANGED
                                && event.getCode() != PsiTreeChangeEventImpl.PsiEventType.BEFORE_PROPERTY_CHANGE;
@@ -410,8 +419,15 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
       myTreeChangeEventIsFiring = true;
     }
     try {
-      for (PsiTreeChangePreprocessor preprocessor : myTreeChangePreprocessors) {
+      for (PsiTreeChangePreprocessor preprocessor : myTreeChangePreprocessorsBackgroundable) {
         preprocessor.treeChanged(event);
+      }
+      if (!myTreeChangePreprocessors.isEmpty()) {
+        runWriteActionOnEdtRegardlessOfCurrentThread(() -> {
+          for (PsiTreeChangePreprocessor preprocessor : myTreeChangePreprocessors) {
+            preprocessor.treeChanged(event);
+          }
+        });
       }
       for (PsiTreeChangePreprocessor preprocessor : PsiTreeChangePreprocessor.EP.getExtensions(myProject)) {
         try {

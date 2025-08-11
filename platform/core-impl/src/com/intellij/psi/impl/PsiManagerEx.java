@@ -87,6 +87,10 @@ public abstract class PsiManagerEx extends PsiManager {
   @Deprecated
   public abstract void removeTreeChangePreprocessor(@NotNull PsiTreeChangePreprocessor preprocessor);
 
+  @ApiStatus.Internal
+  public abstract void addTreeChangePreprocessorBackgroundable(@NotNull PsiTreeChangePreprocessor preprocessor,
+                                                               @NotNull Disposable parentDisposable);
+
   public abstract void beforeChange(boolean isPhysical);
 
   public abstract void afterChange(boolean isPhysical);

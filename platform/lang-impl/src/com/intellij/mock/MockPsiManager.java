@@ -277,6 +277,12 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
   }
 
   @Override
+  @ApiStatus.Internal
+  public void addTreeChangePreprocessorBackgroundable(@NotNull PsiTreeChangePreprocessor preprocessor,
+                                                      @NotNull Disposable parentDisposable) {
+  }
+
+  @Override
   public void beforeChildAddition(@NotNull PsiTreeChangeEventImpl event) {
   }
 
