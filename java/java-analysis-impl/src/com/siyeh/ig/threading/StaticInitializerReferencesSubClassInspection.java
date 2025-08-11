@@ -62,7 +62,7 @@ public final class StaticInitializerReferencesSubClassInspection extends Abstrac
         }
 
         PsiClass targetClass = extractClass(element);
-        if (targetClass != null && targetClass.isInheritor(baseClass, true) && !hasSingleInitializationPlace(targetClass)) {
+        if (targetClass != null && targetClass.isInheritor(baseClass, true) && !hasSingleInitializationPlace(targetClass, baseClass)) {
           PsiElement problemElement = calcProblemElement(element);
           if (problemElement != null) {
             result.set(Pair.create(problemElement, targetClass));
@@ -75,8 +75,9 @@ public final class StaticInitializerReferencesSubClassInspection extends Abstrac
     return result.get();
   }
 
-  private static boolean hasSingleInitializationPlace(@NotNull PsiClass targetClass) {
+  private static boolean hasSingleInitializationPlace(@NotNull PsiClass targetClass, @NotNull PsiClass baseClass) {
     if (!targetClass.hasModifierProperty(PsiModifier.PRIVATE)) return false;
+    if (!targetClass.isInheritor(baseClass, false) && !baseClass.hasModifierProperty(PsiModifier.PRIVATE)) return false;
 
     PsiFile file = targetClass.getContainingFile();
     if (file == null) return false;
