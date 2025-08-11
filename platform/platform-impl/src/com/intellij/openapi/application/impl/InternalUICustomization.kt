@@ -14,6 +14,8 @@ import com.intellij.toolWindow.StripesUxCustomizer
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.xNext.XNextStripesUxCustomizer
 import com.intellij.ui.JBColor
+import com.intellij.ui.tabs.impl.JBTabsImpl
+import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.tabs.impl.TabPainterAdapter
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -44,6 +46,7 @@ open class InternalUICustomization {
       return result
     }
   }
+
   open fun progressWidget(project: Project): JComponent? = null
 
   open val aiComponentMarker: AiInternalUiComponentMarker = AiInternalUiComponentMarker()
@@ -70,10 +73,10 @@ open class InternalUICustomization {
    */
   open fun isSingleStripe(): Boolean = false
 
-  internal val internalCustomizer: StripesUxCustomizer = if(isSingleStripe())
+  internal val internalCustomizer: StripesUxCustomizer = if (isSingleStripe())
     XNextStripesUxCustomizer()
   else
-    StripesUxCustomizer ()
+    StripesUxCustomizer()
 
   open fun configureButtonLook(look: ActionButtonLook, g: Graphics): Graphics? = null
 
@@ -126,4 +129,8 @@ open class InternalUICustomization {
   open fun getCustomMainBackgroundColor(): Color? = null
 
   fun statusBarRequired(): Boolean = !isSingleStripe()
+
+  open fun paintProjectTabsContainer(component: JComponent, g: Graphics): Boolean = false
+
+  open fun paintProjectTab(label: TabLabel, g: Graphics, tabs: JBTabsImpl, selected: Boolean, index: Int, lastIndex: Int): Boolean = false
 }

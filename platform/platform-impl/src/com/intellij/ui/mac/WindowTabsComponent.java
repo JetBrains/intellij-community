@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -276,8 +277,14 @@ public final class WindowTabsComponent extends JBTabsImpl {
         int index = tabs.getIndexOf(info);
         int lastIndex = tabs.getTabCount() - 1;
         int border = JBUI.scale(1);
+        boolean selected = info.getObject() == myNativeWindow;
 
-        if (info.getObject() == myNativeWindow) {
+        InternalUICustomization customization = InternalUICustomization.getInstance();
+        if (customization != null && customization.paintProjectTab(label, g, tabs, selected, index, lastIndex)) {
+          return;
+        }
+
+        if (selected) {
           Window window = ComponentUtil.getWindow(WindowTabsComponent.this);
           Color tabColor = JBUI.CurrentTheme.MainWindow.Tab.background(true, window != null && !window.isActive(), false);
           myTabPainter.paintTab(tabs.getTabsPosition(), g2d, rect, tabs.getBorderThickness(), tabColor, true, false);
@@ -441,11 +448,11 @@ public final class WindowTabsComponent extends JBTabsImpl {
     };
 
     Presentation presentation = closeAction.getTemplatePresentation();
-    boolean isNewUi = ExperimentalUI.isNewUI();
-    presentation.setIcon(isNewUi ?
+    boolean isNewUiAndDark = ExperimentalUI.isNewUI() && (!JBColor.isBright() || ColorUtil.isDark(JBColor.namedColor("MainToolbar.background")));
+    presentation.setIcon(isNewUiAndDark ?
                          IconManager.getInstance().getIcon("expui/general/closeSmall_dark.svg", AllIcons.class.getClassLoader()) :
                          AllIcons.Actions.Close);
-    presentation.setHoveredIcon(isNewUi
+    presentation.setHoveredIcon(isNewUiAndDark
                                 ? IconManager.getInstance()
                                   .getIcon("expui/general/closeSmallHovered_dark.svg", AllIcons.class.getClassLoader())
                                 : AllIcons.Actions.CloseHovered);

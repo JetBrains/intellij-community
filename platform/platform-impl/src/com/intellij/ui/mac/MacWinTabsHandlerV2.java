@@ -2,13 +2,13 @@
 package com.intellij.ui.mac;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImplKt;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.platform.jbr.JdkEx;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
@@ -33,7 +33,16 @@ public final class MacWinTabsHandlerV2 extends MacWinTabsHandler {
   private static final String WINDOW_TABS_CONTAINER = "WINDOW_TABS_CONTAINER_KEY";
 
   static @NotNull JComponent _createAndInstallHandlerComponent(@NotNull JRootPane rootPane) {
-    JPanel tabsContainer = new NonOpaquePanel(new BorderLayout());
+    JPanel tabsContainer = new JPanel(new BorderLayout()) {
+      @Override
+      protected void paintComponent(Graphics g) {
+        InternalUICustomization customization = InternalUICustomization.getInstance();
+        if (customization != null && customization.paintProjectTabsContainer(this, g)) {
+          return;
+        }
+        super.paintComponent(g);
+      }
+    };
     tabsContainer.setVisible(false);
 
     rootPane.putClientProperty(WINDOW_TABS_CONTAINER, tabsContainer);
