@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
 
-public class A implements Serializable {
+public class MethodMayBeStatic implements Serializable {
 
     private void writeObject(java.io.ObjectOutputStream out)
             throws IOException {
