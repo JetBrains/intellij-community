@@ -183,6 +183,8 @@ internal class MacToolbarFrameHeader(
     updateRequests.tryEmit(Unit)
   }
 
+  override fun isColorfulToolbar(): Boolean = view is ToolbarHeaderView
+
   private suspend fun updateView(isCompactHeader: Boolean): Boolean {
     val view = withContext(Dispatchers.EDT) {
       if (isCompactHeader == (view is CompactHeaderView)) {

@@ -3,4 +3,6 @@ package com.intellij.openapi.wm.impl
 
 internal interface ToolbarHolder {
   fun scheduleUpdateToolbar()
+
+  fun isColorfulToolbar(): Boolean
 }
