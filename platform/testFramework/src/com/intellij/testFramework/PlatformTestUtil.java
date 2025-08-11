@@ -78,6 +78,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import junit.framework.AssertionFailedError;
@@ -409,14 +410,19 @@ public final class PlatformTestUtil {
   }
 
   public static <T> T waitForFuture(@NotNull Future<T> future, long timeoutMillis) {
+    if (!EDT.isCurrentThreadEdt()) {
+      try {
+        return future.get(timeoutMillis, TimeUnit.MILLISECONDS);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
     assertDispatchThreadWithoutWriteAccess();
     long start = System.currentTimeMillis();
     while (true) {
       if (!future.isDone()) {
-        TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
-          UIUtil.dispatchAllInvocationEvents();
-          return Unit.INSTANCE;
-        });
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       }
       try {
         return future.get(10, TimeUnit.MILLISECONDS);

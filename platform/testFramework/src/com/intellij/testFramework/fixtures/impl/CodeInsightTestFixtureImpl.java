@@ -796,11 +796,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public @Nullable String getIntentionPreviewText(@NotNull IntentionAction action) {
     // Run in background thread to catch accidental write-actions during preview generation
     try {
-      return ReadAction.nonBlocking(() -> IntentionPreviewPopupUpdateProcessor.getPreviewText(getProject(), action, getFile(), getEditor()))
-        .submit(AppExecutorUtil.getAppExecutorService()).get();
+      return PlatformTestUtil.waitForFuture(
+        ReadAction.nonBlocking(() -> IntentionPreviewPopupUpdateProcessor.getPreviewText(getProject(), action, getFile(), getEditor()))
+          .submit(AppExecutorUtil.getAppExecutorService()));
     }
-    catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
+    catch (AssertionError e) {
+      throw new RuntimeException(e.getCause());
     }
   }
 
@@ -831,14 +832,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void checkIntentionPreviewHtml(@NotNull IntentionAction action, @NotNull @Language("HTML") String expected) {
     // Run in background thread to catch accidental write-actions during preview generation
-    IntentionPreviewInfo info;
-    try {
-      info = ReadAction.nonBlocking(() -> IntentionPreviewPopupUpdateProcessor.getPreviewInfo(getProject(), action, getFile(), getEditor()))
-        .submit(AppExecutorUtil.getAppExecutorService()).get();
-    }
-    catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
+    IntentionPreviewInfo info = PlatformTestUtil.waitForFuture(
+      ReadAction.nonBlocking(() -> IntentionPreviewPopupUpdateProcessor.getPreviewInfo(getProject(), action, getFile(), getEditor()))
+        .submit(AppExecutorUtil.getAppExecutorService()));
     assertTrue(action.getText(), info instanceof IntentionPreviewInfo.Html);
     assertEquals(action.getText(), expected, ((IntentionPreviewInfo.Html)info).content().toString());
   }
