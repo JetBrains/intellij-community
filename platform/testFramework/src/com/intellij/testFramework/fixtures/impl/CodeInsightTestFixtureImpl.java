@@ -75,6 +75,7 @@ import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -316,11 +317,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           Segment focusModeRange = (editor instanceof EditorImpl) ? ((EditorImpl)editor).getFocusModeRange() : null;
           int startOffset = focusModeRange != null ? focusModeRange.getStartOffset() : 0;
           int endOffset = focusModeRange != null ? focusModeRange.getEndOffset() : editor.getDocument().getTextLength();
-          DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, startOffset, endOffset,
-                                                 Processors.cancelableCollectProcessor(infos));
+
           if (readEditorMarkupModel) {
+            MarkupModelEx filteredDocumentMarkupModel = ((EditorEx)editor).getFilteredDocumentMarkupModel();
+            DaemonCodeAnalyzerEx.processHighlights(filteredDocumentMarkupModel, project, null, startOffset, endOffset,
+                                                   Processors.cancelableCollectProcessor(infos));
             MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
             DaemonCodeAnalyzerEx.processHighlights(markupModel, project, null, startOffset, endOffset,
+                                                   Processors.cancelableCollectProcessor(infos));
+          }
+          else {
+            DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, startOffset, endOffset,
                                                    Processors.cancelableCollectProcessor(infos));
           }
         });
@@ -2284,7 +2291,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
             boolean executed = ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, action, action.getText());
             if (!executed) {
               boolean available = action.isAvailable(project, editor, file);
-              Assert.fail("Quick fix '" + action.getText() + "' (" + action.getClass() + ")" +
+              fail("Quick fix '" + action.getText() + "' (" + action.getClass() + ")" +
                           " hasn't executed. isAvailable()=" + available);
             }
           }
