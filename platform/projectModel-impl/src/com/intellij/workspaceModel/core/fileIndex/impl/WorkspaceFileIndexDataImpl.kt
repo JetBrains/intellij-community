@@ -377,12 +377,23 @@ internal class WorkspaceFileIndexDataImpl(
     // everything in actual dependencies but not in previous is considered new
     // everything in previous but not in actual dependencies is considered removed
 
-    (actualDependencies - previousDependencies).mapNotNullTo(addedEntities) { it.resolve(event.storageAfter) }
+    (actualDependencies - previousDependencies)
+      // We want to filter out entities that were already referenced by any reference holder
+      .filter { event.storageBefore.referrers(it, dependencyDescription.referenceHolderClass).none() }
+      .mapNotNull { it.resolve(event.storageAfter) }
+      .forEach {
+        removedEntities.add(it)
+        addedEntities.add(it)
+      }
 
     (previousDependencies - actualDependencies)
-      // check if any reference holder is still references removed entity
+      // we want to filter out references that are still referenced by any reference holder
       .filter { event.storageAfter.referrers(it, dependencyDescription.referenceHolderClass).none() }
-      .mapNotNullTo(removedEntities) { it.resolve(event.storageBefore) }
+      .mapNotNull { it.resolve(event.storageBefore) }
+      .forEach {
+        removedEntities.add(it)
+        addedEntities.add(it)
+      }
   }
 
   private fun <R: WorkspaceEntity, E: WorkspaceEntity> processOnArbitraryEntityDependency(dependency: DependencyDescription.OnArbitraryEntity<R, E>,

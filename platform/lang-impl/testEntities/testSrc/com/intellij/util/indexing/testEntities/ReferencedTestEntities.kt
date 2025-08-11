@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 data class WithReferenceTestEntityId(val name: String) : SymbolicEntityId<WithReferenceTestEntity> {
   override val presentableName: String
@@ -72,6 +73,7 @@ fun MutableEntityStorage.modifyWithReferenceTestEntity(
 
 interface ReferredTestEntity : WorkspaceEntityWithSymbolicId {
   val name: @NlsSafe String
+  val file: VirtualFileUrl
 
   override val symbolicId: ReferredTestEntityId
     get() = ReferredTestEntityId(name)
@@ -81,6 +83,7 @@ interface ReferredTestEntity : WorkspaceEntityWithSymbolicId {
   interface Builder : WorkspaceEntity.Builder<ReferredTestEntity> {
     override var entitySource: EntitySource
     var name: String
+    var file: VirtualFileUrl
   }
 
   companion object : EntityType<ReferredTestEntity, Builder>() {
@@ -89,11 +92,13 @@ interface ReferredTestEntity : WorkspaceEntityWithSymbolicId {
     @JvmName("create")
     operator fun invoke(
       name: String,
+      file: VirtualFileUrl,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
     ): Builder {
       val builder = builder()
       builder.name = name
+      builder.file = file
       builder.entitySource = entitySource
       init?.invoke(builder)
       return builder

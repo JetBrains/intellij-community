@@ -19,6 +19,7 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.indexing.testEntities.ReferredTestEntity
 import com.intellij.util.indexing.testEntities.ReferredTestEntityId
 
@@ -42,6 +43,12 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
     get() {
       readField("name")
       return dataSource.name
+    }
+
+  override val file: VirtualFileUrl
+    get() {
+      readField("file")
+      return dataSource.file
     }
 
   override val entitySource: EntitySource
@@ -77,6 +84,7 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
       // Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
 
+      index(this, "file", this.file)
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
@@ -90,6 +98,9 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
       if (!getEntityData().isNameInitialized()) {
         error("Field ReferredTestEntity#name should be initialized")
       }
+      if (!getEntityData().isFileInitialized()) {
+        error("Field ReferredTestEntity#file should be initialized")
+      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -101,6 +112,7 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
       dataSource as ReferredTestEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.name != dataSource.name) this.name = dataSource.name
+      if (this.file != dataSource.file) this.file = dataSource.file
       updateChildToParentReferences(parents)
     }
 
@@ -122,6 +134,16 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
         changedProperty.add("name")
       }
 
+    override var file: VirtualFileUrl
+      get() = getEntityData().file
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).file = value
+        changedProperty.add("file")
+        val _diff = diff
+        if (_diff != null) index(this, "file", value)
+      }
+
     override fun getEntityClass(): Class<ReferredTestEntity> = ReferredTestEntity::class.java
   }
 }
@@ -129,8 +151,10 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ReferredTestEntityData : WorkspaceEntityData<ReferredTestEntity>() {
   lateinit var name: String
+  lateinit var file: VirtualFileUrl
 
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
+  internal fun isFileInitialized(): Boolean = ::file.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ReferredTestEntity> {
     val modifiable = ReferredTestEntityImpl.Builder(null)
@@ -159,7 +183,7 @@ internal class ReferredTestEntityData : WorkspaceEntityData<ReferredTestEntity>(
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
-    return ReferredTestEntity(name, entitySource) {
+    return ReferredTestEntity(name, file, entitySource) {
     }
   }
 
@@ -176,6 +200,7 @@ internal class ReferredTestEntityData : WorkspaceEntityData<ReferredTestEntity>(
 
     if (this.entitySource != other.entitySource) return false
     if (this.name != other.name) return false
+    if (this.file != other.file) return false
     return true
   }
 
@@ -186,18 +211,21 @@ internal class ReferredTestEntityData : WorkspaceEntityData<ReferredTestEntity>(
     other as ReferredTestEntityData
 
     if (this.name != other.name) return false
+    if (this.file != other.file) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
     result = 31 * result + name.hashCode()
+    result = 31 * result + file.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
     result = 31 * result + name.hashCode()
+    result = 31 * result + file.hashCode()
     return result
   }
 }

@@ -65,6 +65,7 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
         typeMetadata = EntityMetadata(fqName = "com.intellij.util.indexing.testEntities.ReferredTestEntity", entityDataFqName = "com.intellij.util.indexing.testEntities.impl.ReferredTestEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
 "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable, withDefault = false),
+OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "file", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false),
 OwnPropertyMetadata(isComputable = true, isKey = false, isOpen = false, name = "symbolicId", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.util.indexing.testEntities.ReferredTestEntityId", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable, withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "presentableName", valueType = primitiveTypeStringNotNullable, withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))), withDefault = false)), extProperties = listOf(), isAbstract = false)
         
@@ -93,7 +94,7 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
         addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.NonIndexableTestEntity", metadataHash = -15259978)
         addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.NonRecursiveTestEntity", metadataHash = -55418454)
         addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.ParentTestEntity", metadataHash = 1278429366)
-        addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.ReferredTestEntity", metadataHash = -1530311253)
+        addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.ReferredTestEntity", metadataHash = -241259566)
         addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.SiblingEntity", metadataHash = 144691097)
         addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.WithReferenceTestEntity", metadataHash = -2013557311)
         addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.ReferredTestEntityId", metadataHash = 443324880)
