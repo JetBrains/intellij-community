@@ -71,22 +71,16 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
           if (shouldThrottle) it.throttledWithAccumulation()
           else it.map { event -> ThrottledOneItem(event) }
         }.collect { throttledItems ->
-          throttledItems.items.forEach { searchResult ->
-            if (searchResult is SearchStopped) {
-              onFinish()
-              return@collect
+          throttledItems.items.forEach { item ->
+            val usage = UsageInfoModel.createUsageInfoModel(project, item, this.childScope("UsageInfoModel.init"), onDocumentUpdated)
+            currentSearchDisposable?.let { parent ->
+              if (parent.isDisposed) return@collect
+              Disposer.register(parent, usage)
             }
-            if (searchResult is SearchResultFound) {
-              val item = searchResult.result
-              val usage = UsageInfoModel.createUsageInfoModel(project, item, this.childScope("UsageInfoModel.init"), onDocumentUpdated)
-              currentSearchDisposable?.let { parent ->
-                if (parent.isDisposed) return@collect
-                Disposer.register(parent, usage)
-              }
-              onResult(usage)
-            }
+            onResult(usage)
           }
         }
+        onFinish()
       }
     }
     else {

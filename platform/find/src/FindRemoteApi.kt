@@ -30,7 +30,7 @@ interface FindRemoteApi : RemoteApi<Unit> {
    * @param filesToScanInitially a list of file identifiers to be scanned initially as part of the search
    * @return a flow emitting search results as instances of [FindInFilesResult]
    */
-  suspend fun findByModel(findModel: FindModel, projectId: ProjectId, filesToScanInitially: List<VirtualFileId>, maxUsagesCount: Int): Flow<SearchResult>
+  suspend fun findByModel(findModel: FindModel, projectId: ProjectId, filesToScanInitially: List<VirtualFileId>, maxUsagesCount: Int): Flow<FindInFilesResult>
 
   /**
    * Initiates a "Find all"/"Replace all" operation on the backend and displays results in the Find tool window.
@@ -89,21 +89,3 @@ data class FindInFilesResult(
   val fileLength: Int,
   @Transient val usageInfos: List<UsageInfo> = emptyList(),
 )
-
-@Internal
-@Serializable
-sealed interface SearchResult {
-  fun getData(): FindInFilesResult?
-}
-
-@Internal
-@Serializable
-data class SearchResultFound(val result: FindInFilesResult) : SearchResult {
-  override fun getData(): FindInFilesResult = result
-}
-
-@Internal
-@Serializable
-class SearchStopped() : SearchResult {
-  override fun getData(): FindInFilesResult? = null
-}
