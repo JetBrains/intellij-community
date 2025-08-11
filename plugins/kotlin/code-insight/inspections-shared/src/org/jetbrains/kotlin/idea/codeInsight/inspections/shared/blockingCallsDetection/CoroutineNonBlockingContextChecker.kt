@@ -140,6 +140,7 @@ internal class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
             .any { it.callableId == coroutineContextPlus }
     }
 
+    // TODO add testdata to check this function
     context(_: KaSession)
     private fun checkFunctionWithDefaultDispatcher(callExpression: KtCallExpression): ContextType {
         val receiverType = (callExpression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
