@@ -602,8 +602,8 @@ f:com.intellij.lang.LanguageTokenSeparatorGenerators
 c:com.intellij.lang.LanguageTokenSeparatorGenerators$DefaultTokenSeparatorGenerator
 - com.intellij.lang.TokenSeparatorGenerator
 - <init>():V
-- p:createNewLine(com.intellij.lang.ASTNode,com.intellij.lang.ASTNode):com.intellij.psi.impl.source.tree.LeafElement
-- p:createWhiteSpace(com.intellij.lang.ASTNode,com.intellij.lang.ASTNode):com.intellij.psi.impl.source.tree.LeafElement
+- p:createNewLine(com.intellij.lang.ASTNode,com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
+- p:createWhiteSpace(com.intellij.lang.ASTNode,com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
 - generateWhitespaceBetweenTokens(com.intellij.lang.ASTNode,com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
 f:com.intellij.lang.PsiBuilderUtil
 - s:advance(com.intellij.lang.PsiBuilder,I):V
