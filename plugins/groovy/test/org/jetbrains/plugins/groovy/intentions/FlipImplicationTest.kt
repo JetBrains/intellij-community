@@ -18,5 +18,7 @@ class FlipImplicationTest : GrIntentionTestCase("Flip '==>'") {
 
   fun testDoNotWrapReferenceExpression() = doTest(true)
 
-  fun testDoNotWrapParenthesizedExpression() = doTest(true)
+  fun testRemoveParensFromParenthesizedExpression() = doTest(true)
+
+  fun testPreserveWrapWithLowerPriority() = doTest(true)
 }

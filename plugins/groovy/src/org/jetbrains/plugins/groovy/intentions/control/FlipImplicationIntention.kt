@@ -9,12 +9,9 @@ import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLNOT
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils
 
 class FlipImplicationIntention : GrPsiUpdateIntention() {
   override fun processIntention(element: PsiElement, context: ActionContext, updater: ModPsiUpdater) {
@@ -34,18 +31,31 @@ class FlipImplicationIntention : GrPsiUpdateIntention() {
   }
 
   private fun invertExpression(parenthesizedExpression: GrExpression?) : String? {
-    val expression = PsiUtil.skipParentheses(parenthesizedExpression, false) ?: return null
+    if (parenthesizedExpression == null) return null
+    val expression = ParenthesesUtils.unparenthesize(parenthesizedExpression)
     if (expression is GrUnaryExpression && expression.operationTokenType == mLNOT) {
-      return PsiUtil.skipParentheses(expression.getOperand(), false)?.text
+      val operand = expression.getOperand() ?: return null
+      val unparenthesized = ParenthesesUtils.unparenthesize(operand)
+      return if (
+        ParenthesesUtils.checkPrecedence(
+          ParenthesesUtils.IMPL_PRECEDENCE,
+          ParenthesesUtils.getPrecedence(unparenthesized)
+        )) {
+         unparenthesized.text
+      } else {
+        operand.text
+      }
     }
-
     val expressionText = expression.getText()
-    return if (parenthesizedExpression is GrCallExpression || parenthesizedExpression is GrReferenceExpression || parenthesizedExpression is GrLiteral) {
-       "!$expressionText"
+    return if (
+      ParenthesesUtils.checkPrecedence(
+        ParenthesesUtils.getPrecedence(expression),
+        ParenthesesUtils.TYPE_CAST_PRECEDENCE)
+      ) {
+       "!($expressionText)"
     }
     else {
-      "!($expressionText)"
+      "!$expressionText"
     }
-
   }
 }
