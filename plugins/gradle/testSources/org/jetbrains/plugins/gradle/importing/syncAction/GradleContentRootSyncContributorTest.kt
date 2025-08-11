@@ -358,7 +358,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
   fun `test content root configuration outside project root`() {
 
     val projectRoot = myProjectRoot.toNioPath()
-    val externalProjectRoot = myTestDir.toPath().resolve("external/project/root")
+    val externalProjectRoot = myTestDir.resolve("external/project/root")
 
     Assertions.assertFalse(projectRoot.startsWith(externalProjectRoot)) {
       """

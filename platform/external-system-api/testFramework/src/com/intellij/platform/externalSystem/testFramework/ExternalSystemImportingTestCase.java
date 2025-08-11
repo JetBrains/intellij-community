@@ -52,6 +52,7 @@ import com.intellij.testFramework.RunAll;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +76,7 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 /**
  * @author Vladislav.Soroka
  */
-public abstract class ExternalSystemImportingTestCase extends ExternalSystemTestCase {
+public abstract class ExternalSystemImportingTestCase extends NioExternalSystemTestCase {
 
   private @Nullable Disposable myTestDisposable = null;
 
@@ -374,7 +375,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   private void assertModuleDeps(String moduleName, Class clazz, String... expectedDeps) {
-    assertModuleDeps(equalsPredicate(), moduleName, clazz, expectedDeps);
+    assertModuleDeps((o1, o2) -> Objects.equals(o1, o2), moduleName, clazz, expectedDeps);
   }
 
   private void assertModuleDeps(BiPredicate<? super String, ? super String> predicate, String moduleName, Class clazz, String... expectedDeps) {
@@ -609,25 +610,86 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     return null;
   }
 
-  //protected void assertProblems(String... expectedProblems) {
-  //  final List<String> actualProblems = new ArrayList<String>();
-  //  UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-  //    @Override
-  //    public void run() {
-  //      final NewErrorTreeViewPanel messagesView = ExternalSystemNotificationManager.getInstance(myProject)
-  //        .prepareMessagesView(getExternalSystemId(), NotificationSource.PROJECT_SYNC, false);
-  //      final ErrorViewStructure treeStructure = messagesView.getErrorViewStructure();
-  //
-  //      ErrorTreeElement[] elements = treeStructure.getChildElements(treeStructure.getRootElement());
-  //      for (ErrorTreeElement element : elements) {
-  //        if (element.getKind() == ErrorTreeElementKind.ERROR ||
-  //            element.getKind() == ErrorTreeElementKind.WARNING) {
-  //          actualProblems.add(StringUtil.join(element.getText(), "\n"));
-  //        }
-  //      }
-  //    }
-  //  });
-  //
-  //  assertOrderedElementsAreEqual(actualProblems, expectedProblems);
-  //}
+  protected static <T, U> void assertOrderedElementsAreEqual(Collection<? extends U> actual, Collection<? extends T> expected) {
+    assertOrderedElementsAreEqual(actual, expected.toArray());
+  }
+
+  protected static <T> void assertUnorderedElementsAreEqual(Collection<? extends T> actual, Collection<? extends T> expected) {
+    assertEquals(new HashSet<>(expected), new HashSet<>(actual));
+  }
+
+  protected static void assertUnorderedPathsAreEqual(Collection<String> actual, Collection<String> expected) {
+    assertEquals(new SetWithToString<>(CollectionFactory.createFilePathSet(expected)),
+                 new SetWithToString<>(CollectionFactory.createFilePathSet(actual)));
+  }
+
+  protected static <T> void assertUnorderedElementsAreEqual(T[] actual, T... expected) {
+    assertUnorderedElementsAreEqual(Arrays.asList(actual), expected);
+  }
+
+  protected static <T> void assertUnorderedElementsAreEqual(Collection<? extends T> actual, T... expected) {
+    assertUnorderedElementsAreEqual(actual, Arrays.asList(expected));
+  }
+
+  protected static <T, U> void assertOrderedElementsAreEqual(Collection<? extends U> actual, T... expected) {
+    assertOrderedElementsAreEqual(Objects::equals, actual, expected);
+  }
+
+  protected static <T, U> void assertOrderedElementsAreEqual(BiPredicate<? super U, ? super T> predicate,
+                                                          Collection<? extends U> actual,
+                                                          T... expected) {
+    String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + new ArrayList<>(actual);
+    assertEquals(s, expected.length, actual.size());
+
+    List<U> actualList = new ArrayList<>(actual);
+    for (int i = 0; i < expected.length; i++) {
+      T expectedElement = expected[i];
+      U actualElement = actualList.get(i);
+      assertTrue(s, predicate.test(actualElement, expectedElement));
+    }
+  }
+
+  protected static <T> void assertContain(java.util.List<? extends T> actual, T... expected) {
+    List<T> expectedList = Arrays.asList(expected);
+    assertTrue("expected: " + expectedList + "\n" + "actual: " + actual.toString(), actual.containsAll(expectedList));
+  }
+
+  private static class SetWithToString<T> extends AbstractSet<T> {
+
+    private final Set<T> myDelegate;
+
+    SetWithToString(@NotNull Set<T> delegate) {
+      myDelegate = delegate;
+    }
+
+    @Override
+    public int size() {
+      return myDelegate.size();
+    }
+
+    @Override
+    public boolean contains(Object o) {
+      return myDelegate.contains(o);
+    }
+
+    @Override
+    public @NotNull Iterator<T> iterator() {
+      return myDelegate.iterator();
+    }
+
+    @Override
+    public boolean containsAll(Collection<?> c) {
+      return myDelegate.containsAll(c);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return myDelegate.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+      return myDelegate.hashCode();
+    }
+  }
 }

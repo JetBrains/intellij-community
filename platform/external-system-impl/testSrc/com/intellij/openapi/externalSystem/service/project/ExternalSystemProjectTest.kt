@@ -15,7 +15,6 @@ import com.intellij.openapi.externalSystem.test.javaProject
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.platform.externalSystem.testFramework.Module
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -26,7 +25,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemProjectTestCase
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase.collectRootsInside
+import com.intellij.platform.externalSystem.testFramework.Module
+import com.intellij.platform.externalSystem.testFramework.NioExternalSystemTestCase
 import com.intellij.platform.externalSystem.testFramework.toDataNode
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions
 import com.intellij.pom.java.LanguageLevel
@@ -472,7 +472,7 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
 
     val allowedRoots = mutableListOf<String>()
     allowedRoots.add(myJdkHome)
-    allowedRoots.addAll(collectRootsInside(myJdkHome))
+    allowedRoots.addAll(NioExternalSystemTestCase.collectRootsInside(myJdkHome))
     VfsRootAccess.allowRootAccess(testRootDisposable, *allowedRoots.toTypedArray())
 
     runWriteAction {

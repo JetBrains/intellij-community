@@ -49,7 +49,7 @@ import kotlin.reflect.KClass
 abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
                                                ExpectedPluginModeProvider {
 
-    public override fun getModule(name: String?): Module = super.getModule(name)
+    public override fun getModule(name: String): Module = super.getModule(name)
 
     protected open fun testDataDirName(): String = ""
 

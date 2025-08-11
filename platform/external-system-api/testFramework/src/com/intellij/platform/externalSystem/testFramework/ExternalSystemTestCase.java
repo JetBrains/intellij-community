@@ -32,7 +32,6 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,9 +45,9 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.function.BiPredicate;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -60,8 +59,6 @@ import static com.intellij.util.PathUtil.toSystemIndependentName;
  * @author Vladislav.Soroka
  */
 public abstract class ExternalSystemTestCase extends UsefulTestCase {
-
-  private static final BiPredicate<Object, Object> EQUALS_PREDICATE = (t, u) -> Objects.equals(t, u);
 
   private File ourTempDir;
   private Project myProject;
@@ -419,56 +416,9 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     }
   }
 
-  protected static <T, U> void assertOrderedElementsAreEqual(Collection<? extends U> actual, Collection<? extends T> expected) {
-    assertOrderedElementsAreEqual(actual, expected.toArray());
-  }
-
-  protected static <T> void assertUnorderedElementsAreEqual(Collection<? extends T> actual, Collection<? extends T> expected) {
-    assertEquals(new HashSet<>(expected), new HashSet<>(actual));
-  }
-
-  protected static void assertUnorderedPathsAreEqual(Collection<String> actual, Collection<String> expected) {
-    assertEquals(new SetWithToString<>(CollectionFactory.createFilePathSet(expected)),
-                 new SetWithToString<>(CollectionFactory.createFilePathSet(actual)));
-  }
-
-  protected static <T> void assertUnorderedElementsAreEqual(T[] actual, T... expected) {
-    assertUnorderedElementsAreEqual(Arrays.asList(actual), expected);
-  }
-
-  protected static <T> void assertUnorderedElementsAreEqual(Collection<? extends T> actual, T... expected) {
-    assertUnorderedElementsAreEqual(actual, Arrays.asList(expected));
-  }
-
-  protected static <T, U> void assertOrderedElementsAreEqual(Collection<? extends U> actual, T... expected) {
-    assertOrderedElementsAreEqual(equalsPredicate(), actual, expected);
-  }
-
-  protected static <T, U> void assertOrderedElementsAreEqual(BiPredicate<? super U, ? super T> predicate, Collection<? extends U> actual, T... expected) {
-    String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + new ArrayList<>(actual);
-    assertEquals(s, expected.length, actual.size());
-
-    java.util.List<U> actualList = new ArrayList<>(actual);
-    for (int i = 0; i < expected.length; i++) {
-      T expectedElement = expected[i];
-      U actualElement = actualList.get(i);
-      assertTrue(s, predicate.test(actualElement, expectedElement));
-    }
-  }
-
-  protected static <T> void assertContain(java.util.List<? extends T> actual, T... expected) {
-    java.util.List<T> expectedList = Arrays.asList(expected);
-    assertTrue("expected: " + expectedList + "\n" + "actual: " + actual.toString(), actual.containsAll(expectedList));
-  }
-
   protected boolean ignore() {
     printIgnoredMessage(null);
     return true;
-  }
-
-  protected static <T, U> BiPredicate<T, U> equalsPredicate() {
-    //noinspection unchecked
-    return (BiPredicate<T, U>)EQUALS_PREDICATE;
   }
 
   private void printIgnoredMessage(String message) {
@@ -478,44 +428,5 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     }
     toPrint += ": " + getClass().getSimpleName() + "." + getName();
     System.out.println(toPrint);
-  }
-
-  private static class SetWithToString<T> extends AbstractSet<T> {
-
-    private final Set<T> myDelegate;
-
-    SetWithToString(@NotNull Set<T> delegate) {
-      myDelegate = delegate;
-    }
-
-    @Override
-    public int size() {
-      return myDelegate.size();
-    }
-
-    @Override
-    public boolean contains(Object o) {
-      return myDelegate.contains(o);
-    }
-
-    @Override
-    public @NotNull Iterator<T> iterator() {
-      return myDelegate.iterator();
-    }
-
-    @Override
-    public boolean containsAll(Collection<?> c) {
-      return myDelegate.containsAll(c);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      return myDelegate.equals(o);
-    }
-
-    @Override
-    public int hashCode() {
-      return myDelegate.hashCode();
-    }
   }
 }

@@ -580,7 +580,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   protected void overrideGradleUserHome(@NotNull String relativeUserHomePath) throws IOException {
-    Path gradleUserHome = getMyTestDir().toPath().resolve(relativeUserHomePath);
+    Path gradleUserHome = getMyTestDir().resolve(relativeUserHomePath);
     String gradleCachedFolderName = "gradle-%s-bin".formatted(gradleVersion);
     Path cachedGradleDistribution = findGradleDistributionInCache(gradleCachedFolderName);
     if (cachedGradleDistribution != null) {

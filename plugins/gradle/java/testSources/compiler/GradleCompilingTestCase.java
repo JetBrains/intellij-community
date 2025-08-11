@@ -9,8 +9,8 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase;
 
 import java.io.File;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * @author Vladislav.Soroka
@@ -18,7 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public abstract class GradleCompilingTestCase extends GradleImportingTestCase {
 
   protected void assertCopied(String path) {
-    assertThat(file(path)).exists();
+    Path projectPath = getProjectPath(path);
+    assertTrue("The path should exist: " + projectPath, Files.exists(projectPath));
   }
 
   protected void assertCopied(String path, String content) {
@@ -27,7 +28,8 @@ public abstract class GradleCompilingTestCase extends GradleImportingTestCase {
   }
 
   protected void assertNotCopied(String path) {
-    assertThat(file(path)).doesNotExist();
+    Path projectPath = getProjectPath(path);
+    assertFalse("The path should not exist: " + projectPath, Files.exists(projectPath));
   }
 
   @Override
