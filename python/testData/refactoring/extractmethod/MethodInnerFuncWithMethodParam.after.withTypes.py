@@ -4,6 +4,6 @@ class Test:
             y = extracted()
             return y
 
-        def extracted() -> int | Any:
+        def extracted() -> Any:
             y = x * 2
             return y

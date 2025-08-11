@@ -5,6 +5,6 @@ class Test:
             y = extracted(c)
             return y
 
-        def extracted(c_new) -> int | Any:
+        def extracted(c_new) -> Any:
             y = self.a + b * c_new
             return y
