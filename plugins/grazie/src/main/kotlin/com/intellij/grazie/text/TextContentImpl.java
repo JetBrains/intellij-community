@@ -484,7 +484,9 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof PsiToken psiToken)) return false;
-      return kind == psiToken.kind && psi.equals(psiToken.psi) && (kind != TokenKind.text || rangeInPsi.equals(psiToken.rangeInPsi));
+      return kind == psiToken.kind
+             && psi.equals(psiToken.psi)
+             && (kind != TokenKind.text || (rangeInPsi.equals(psiToken.rangeInPsi) && rangeInFile.equals(psiToken.rangeInFile)));
     }
 
     @Override
