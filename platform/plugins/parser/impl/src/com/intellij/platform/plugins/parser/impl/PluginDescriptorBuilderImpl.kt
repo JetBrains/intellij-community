@@ -96,14 +96,14 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   override val extensions: Map<String, List<ExtensionElement>>
     get() = _extensions ?: Java11Shim.INSTANCE.mapOf()
 
-  private var _contentModules: MutableList<ContentElement>? = null
-  override fun addContentModule(contentModule: ContentElement) {
+  private var _contentModules: MutableList<ContentModuleElement>? = null
+  override fun addContentModule(contentModule: ContentModuleElement) {
     if (_contentModules == null) {
       _contentModules = ArrayList()
     }
     _contentModules!!.add(contentModule)
   }
-  override val contentModules: List<ContentElement>
+  override val contentModules: List<ContentModuleElement>
     get() = _contentModules ?: Java11Shim.INSTANCE.listOf()
 
   private var _dependencies: MutableList<DependenciesElement>? = null

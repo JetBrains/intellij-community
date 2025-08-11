@@ -58,6 +58,6 @@ class RawPluginDescriptor(
    * */
   val extensions: Map<String, List<ExtensionElement>>,
 
-  val contentModules: List<ContentElement>,
+  val contentModules: List<ContentModuleElement>,
   val dependencies: List<DependenciesElement>,
 )

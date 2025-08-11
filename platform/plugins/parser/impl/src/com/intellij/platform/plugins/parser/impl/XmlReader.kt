@@ -670,7 +670,7 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
     val isEndElement = reader.next() == XMLStreamConstants.END_ELEMENT
     if (isEndElement) {
       if (os == null || readContext.elementOsFilter(os)) {
-        builder.addContentModule(ContentElement.Module(name = name, loadingRule = loadingRule, embeddedDescriptorContent = null))
+        builder.addContentModule(ContentModuleElement(name = name, loadingRule = loadingRule, embeddedDescriptorContent = null))
       }
     }
     else {
@@ -679,7 +679,7 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
         val toIndex = fromIndex + reader.textLength
         val length = toIndex - fromIndex
         val descriptorContent = if (length == 0) null else reader.textCharacters.copyOfRange(fromIndex, toIndex)
-        builder.addContentModule(ContentElement.Module(name = name, loadingRule = loadingRule, embeddedDescriptorContent = descriptorContent))
+        builder.addContentModule(ContentModuleElement(name = name, loadingRule = loadingRule, embeddedDescriptorContent = descriptorContent))
       }
 
       var nesting = 1

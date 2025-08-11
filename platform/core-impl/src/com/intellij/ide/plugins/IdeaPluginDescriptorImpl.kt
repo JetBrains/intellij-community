@@ -475,21 +475,13 @@ class PluginMainDescriptor(
 
   @ApiStatus.Internal
   companion object {
-    private fun convertContentModules(contentElements: List<ContentElement>): List<PluginContentDescriptor.ModuleItem> {
-      return contentElements.mapNotNull { elem ->
-        when (elem) {
-          is ContentElement.Module -> {
-            val index = elem.name.lastIndexOf('/')
-            val configFile: String? = if (index != -1) {
-              "${elem.name.substring(0, index)}.${elem.name.substring(index + 1)}.xml"
-            } else null
-            PluginContentDescriptor.ModuleItem(elem.name, configFile, elem.embeddedDescriptorContent, elem.loadingRule.convert())
-          }
-          else -> {
-            LOG.error("Unknown content element: $elem")
-            null
-          }
-        }
+    private fun convertContentModules(contentElements: List<ContentModuleElement>): List<PluginContentDescriptor.ModuleItem> {
+      return contentElements.map { elem ->
+        val index = elem.name.lastIndexOf('/')
+        val configFile: String? = if (index != -1) {
+          "${elem.name.substring(0, index)}.${elem.name.substring(index + 1)}.xml"
+        } else null
+        PluginContentDescriptor.ModuleItem(elem.name, configFile, elem.embeddedDescriptorContent, elem.loadingRule.convert())
       }
     }
     

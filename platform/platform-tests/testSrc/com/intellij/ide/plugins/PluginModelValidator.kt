@@ -7,7 +7,7 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
-import com.intellij.platform.plugins.parser.impl.elements.ContentElement
+import com.intellij.platform.plugins.parser.impl.elements.ContentModuleElement
 import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
 import com.intellij.platform.plugins.testFramework.LoadFromSourceXIncludeLoader
@@ -288,8 +288,6 @@ class PluginModelValidator(
       }
 
       val moduleNameToLoadingRule = pluginInfo.descriptor.contentModules
-        .asSequence()
-        .filterIsInstance<ContentElement.Module>()
         .associateBy({ it.name }, { it.loadingRule })
       checkDependencies(
         dependenciesElements = descriptor.dependencies,
@@ -528,13 +526,12 @@ class PluginModelValidator(
   // 2) no depends + no dependency on plugin in a referenced descriptor = directly injected into plugin (separate classloader is not created
   // during a transition period). In old format: xi:include (e.g. <xi:include href="dockerfile-language.xml"/>).
   private fun checkContent(
-    contentElements: List<ContentElement>,
+    contentElements: List<ContentModuleElement>,
     referencingModuleInfo: ModuleInfo,
     sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>,
     moduleNameToInfo: MutableMap<String, ModuleInfo>
   ) {
     for (contentElement in contentElements) {
-      contentElement as ContentElement.Module
       fun registerError(message: String, additionalParams: Map<String, Any?> = emptyMap()) {
         reportError(
           message,
