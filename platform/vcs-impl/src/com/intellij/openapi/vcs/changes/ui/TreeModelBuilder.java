@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.function.Function;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.createLockedFolders;
+import static com.intellij.openapi.vcs.changes.ui.TreeModelBuilderKeys.IS_CACHING_ROOT;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 import static java.util.Comparator.comparing;
@@ -40,20 +41,8 @@ import static java.util.Comparator.comparingInt;
 @SuppressWarnings("UnusedReturnValue")
 public class TreeModelBuilder implements ChangesViewModelBuilder {
   public static final Key<Function<StaticFilePath, ChangesBrowserNode<?>>> PATH_NODE_BUILDER = Key.create("ChangesTree.PathNodeBuilder");
-  public static final NotNullLazyKey<Map<String, ChangesBrowserNode<?>>, ChangesBrowserNode<?>> DIRECTORY_CACHE =
-    NotNullLazyKey.createLazyKey("ChangesTree.DirectoryCache", node -> new HashMap<>());
+  public static final NotNullLazyKey<Map<String, ChangesBrowserNode<?>>, ChangesBrowserNode<?>> DIRECTORY_CACHE = TreeModelBuilderKeys.DIRECTORY_CACHE;
   private static final Key<ChangesGroupingPolicy> GROUPING_POLICY = Key.create("ChangesTree.GroupingPolicy");
-
-  /**
-   * Node grouping forms hierarchical structure.
-   * For example, one module may have multiple content roots - and these roots may belong to different git repositories.
-   * In this case, root caching should be performed at the particular repository node instead of a subtreeRoot
-   * (this way each repository node will get its own module group node inside).
-   * <p>
-   * Prefer using {@link BaseChangesGroupingPolicy} methods or implementing {@link SimpleChangesGroupingPolicy} instead of using it directly.
-   */
-  @ApiStatus.Internal
-  public static final Key<Boolean> IS_CACHING_ROOT = Key.create("ChangesTree.IsCachingRoot");
 
   /**
    * The helper UserData keys that will be cleaned at the end of the tree building to reduce memory footprint.

@@ -41,5 +41,6 @@
     <orderEntry type="library" scope="RUNTIME" name="sqlite" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.externalProcessAuthHelper" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" />
   </component>
 </module>

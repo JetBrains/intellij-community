@@ -368,6 +368,9 @@
     <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.shelf.ShelvedChangeNodeConverter"/>
     <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.shelf.ModuleNodeToEntityConverter"/>
     <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.shelf.FilePathNodeToEntityConverter"/>
+
+    <applicationService serviceImplementation="com.intellij.openapi.vcs.changes.ui.BackendChangesTreeCompatibilityProvider"
+                        serviceInterface="com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

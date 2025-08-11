@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.vcs.changes.ChangesDataKeys;
 import com.intellij.util.Consumer;
 import com.intellij.vcs.commit.CommitWorkflowHandler;
 import com.intellij.vcs.commit.CommitWorkflowUi;
@@ -33,13 +34,13 @@ public interface VcsDataKeys {
   DataKey<VirtualFile> VCS_VIRTUAL_FILE = DataKey.create("VCS_VIRTUAL_FILE");
   DataKey<FilePath> FILE_PATH = DataKey.create("FILE_PATH");
 
-  @ApiStatus.Internal DataKey<Iterable<FilePath>> FILE_PATHS = DataKey.create("VCS_FILE_PATHS");
+  @ApiStatus.Internal DataKey<Iterable<FilePath>> FILE_PATHS = ChangesDataKeys.FILE_PATHS;
   /**
    * Lazily iterable {@link com.intellij.openapi.actionSystem.CommonDataKeys#VIRTUAL_FILE_ARRAY}.
    *
    * @see com.intellij.openapi.vcs.VcsVirtualFilesRule
    */
-  DataKey<Iterable<VirtualFile>> VIRTUAL_FILES = DataKey.create("VCS_VIRTUAL_FILES");
+  DataKey<Iterable<VirtualFile>> VIRTUAL_FILES = ChangesDataKeys.VIRTUAL_FILES;
 
   DataKey<ChangeList[]> CHANGE_LISTS = DataKey.create("vcs.ChangeList");
   /**
@@ -47,15 +48,15 @@ public interface VcsDataKeys {
    *
    * @see #SELECTED_CHANGES
    */
-  DataKey<Change[]> CHANGES = DataKey.create("vcs.Change");
+  DataKey<Change[]> CHANGES = ChangesDataKeys.CHANGES;
   /**
    * Selected changes only.
    */
-  DataKey<Change[]> SELECTED_CHANGES = DataKey.create("ChangeListView.SelectedChange");
+  DataKey<Change[]> SELECTED_CHANGES = ChangesDataKeys.SELECTED_CHANGES;
   /**
    * Same as {@link #SELECTED_CHANGES}.
    */
-  DataKey<Change[]> SELECTED_CHANGES_IN_DETAILS = DataKey.create("ChangeListView.SelectedChangesWithMovedSubtrees");
+  DataKey<Change[]> SELECTED_CHANGES_IN_DETAILS = ChangesDataKeys.SELECTED_CHANGES_IN_DETAILS;
   /**
    * For multiple selection, return selected changes.
    * For singular selection, return all changes and set selected index.
@@ -64,7 +65,7 @@ public interface VcsDataKeys {
    * @see com.intellij.openapi.vcs.changes.VcsChangesSelectionRule
    * @see com.intellij.openapi.vcs.changes.ui.VcsTreeModelData#getListSelectionOrAll
    */
-  DataKey<ListSelection<Change>> CHANGES_SELECTION = DataKey.create("vcs.ChangesSelection");
+  DataKey<ListSelection<Change>> CHANGES_SELECTION = ChangesDataKeys.CHANGES_SELECTION;
   /**
    * Explicitly selected changes.
    * <p>
@@ -72,7 +73,7 @@ public interface VcsDataKeys {
    * This key will return selected nodes only.
    * This difference might be important when {@link AbstractVcs#areDirectoriesVersionedItems()} is {@code true}.
    */
-  DataKey<Change[]> CHANGE_LEAD_SELECTION = DataKey.create("ChangeListView.ChangeLeadSelection");
+  DataKey<Change[]> CHANGE_LEAD_SELECTION = ChangesDataKeys.CHANGE_LEAD_SELECTION;
 
   DataKey<Change> CURRENT_CHANGE = DataKey.create("vcs.CurrentChange");
   DataKey<VirtualFile> CURRENT_UNVERSIONED = DataKey.create("ChangeListView.CurrentUnversionedFile");

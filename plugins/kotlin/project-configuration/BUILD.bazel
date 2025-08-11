@@ -59,6 +59,7 @@ jvm_library(
     "@lib//:maven-resolver-provider",
     "//platform/util",
     "//platform/workspace/storage",
+    "//platform/vcs-impl/shared",
   ],
   runtime_deps = [":project-configuration_resources"]
 )

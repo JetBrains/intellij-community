@@ -669,6 +669,7 @@ platform/util/troveCompileOnly
 platform/util/xmlDom
 platform/util/zip
 platform/vcs-api
+platform/vcs-api/shared
 platform/vcs-api/vcs-api-core
 platform/vcs-impl
 platform/vcs-impl/exec

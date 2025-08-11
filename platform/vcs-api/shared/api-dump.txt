@@ -1,0 +1,76 @@
+com.intellij.openapi.vcs.actions.VcsContextFactory
+- a:createFilePath(com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z):com.intellij.openapi.vcs.FilePath
+- a:createFilePath(java.lang.String,Z):com.intellij.openapi.vcs.FilePath
+- a:createFilePath(java.nio.file.Path,Z):com.intellij.openapi.vcs.FilePath
+- a:createFilePathOn(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FilePath
+- a:createFilePathOn(com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.openapi.vcs.FilePath
+- a:createFilePathOn(java.io.File):com.intellij.openapi.vcs.FilePath
+- a:createFilePathOn(java.io.File,Z):com.intellij.openapi.vcs.FilePath
+- a:createFilePathOnNonLocal(java.lang.String,Z):com.intellij.openapi.vcs.FilePath
+- a:createLocalChangeList(com.intellij.openapi.project.Project,java.lang.String):com.intellij.openapi.vcs.changes.LocalChangeList
+- s:getInstance():com.intellij.openapi.vcs.actions.VcsContextFactory
+f:com.intellij.openapi.vcs.actions.VcsContextFactory$SERVICE
+- s:getInstance():com.intellij.openapi.vcs.actions.VcsContextFactory
+com.intellij.openapi.vcs.changes.ChangeList
+- a:getChanges():java.util.Collection
+- a:getComment():java.lang.String
+- a:getName():java.lang.String
+f:com.intellij.openapi.vcs.changes.ChangeListChange
+- com.intellij.openapi.vcs.changes.Change
+- sf:Companion:com.intellij.openapi.vcs.changes.ChangeListChange$Companion
+- sf:HASHING_STRATEGY:com.intellij.util.containers.HashingStrategy
+- <init>(com.intellij.openapi.vcs.changes.Change,java.lang.String,java.lang.String):V
+- <init>(com.intellij.openapi.vcs.changes.ContentRevision,com.intellij.openapi.vcs.changes.ContentRevision,com.intellij.openapi.vcs.FileStatus,com.intellij.openapi.vcs.changes.Change,java.lang.String,java.lang.String):V
+- f:getChange():com.intellij.openapi.vcs.changes.Change
+- f:getChangeListId():java.lang.String
+- f:getChangeListName():java.lang.String
+f:com.intellij.openapi.vcs.changes.ChangeListChange$Companion
+- f:replaceChangeContents(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.changes.ContentRevision,com.intellij.openapi.vcs.changes.ContentRevision):com.intellij.openapi.vcs.changes.Change
+com.intellij.openapi.vcs.changes.InclusionListener
+- java.util.EventListener
+- a:inclusionChanged():V
+com.intellij.openapi.vcs.changes.InclusionModel
+- a:addInclusion(java.util.Collection):V
+- a:addInclusionListener(com.intellij.openapi.vcs.changes.InclusionListener):V
+- a:clearInclusion():V
+- a:getInclusion():java.util.Set
+- a:getInclusionState(java.lang.Object):com.intellij.util.ui.ThreeStateCheckBox$State
+- a:isInclusionEmpty():Z
+- a:removeInclusion(java.util.Collection):V
+- a:removeInclusionListener(com.intellij.openapi.vcs.changes.InclusionListener):V
+- a:retainInclusion(java.util.Collection):V
+- a:setInclusion(java.util.Collection):V
+a:com.intellij.openapi.vcs.changes.LocalChangeList
+- com.intellij.openapi.vcs.changes.ChangeList
+- java.lang.Cloneable
+- sf:OLD_DEFAULT_NAME:java.lang.String
+- <init>():V
+- a:copy():com.intellij.openapi.vcs.changes.LocalChangeList
+- s:createEmptyChangeList(com.intellij.openapi.project.Project,java.lang.String):com.intellij.openapi.vcs.changes.LocalChangeList
+- s:getAllDefaultNames():java.util.List
+- a:getChanges():java.util.Collection
+- a:getComment():java.lang.String
+- a:getData():java.lang.Object
+- s:getDefaultName():java.lang.String
+- getId():java.lang.String
+- a:getName():java.lang.String
+- hasDefaultName():Z
+- isBlank():Z
+- a:isDefault():Z
+- a:isReadOnly():Z
+- a:setComment(java.lang.String):V
+c:com.intellij.openapi.vcs.changes.LocallyDeletedChange
+- <init>(com.intellij.openapi.vcs.FilePath):V
+- equals(java.lang.Object):Z
+- getAddIcon():javax.swing.Icon
+- getDescription():java.lang.String
+- getPath():com.intellij.openapi.vcs.FilePath
+- getPresentableUrl():java.lang.String
+- hashCode():I
+f:com.intellij.openapi.vcs.changes.LogicalLock
+- <init>(Z,java.lang.String,java.lang.String,java.util.Date,java.util.Date):V
+- getComment():java.lang.String
+- getCreationDate():java.util.Date
+- getExpirationDate():java.util.Date
+- getOwner():java.lang.String
+- isIsLocal():Z

@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.platform.vcs.shared` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "shared_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "shared",
+  module_name = "intellij.platform.vcs.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/ide-core",
+    "//platform/diff-api:diff",
+    "//platform/util/diff",
+    "@lib//:kotlin-stdlib",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/analysis-api:analysis",
+    "//platform/core-ui",
+    "//platform/util:util-ui",
+  ],
+  runtime_deps = [":shared_resources"]
+)
+### auto-generated section `build intellij.platform.vcs.shared` end

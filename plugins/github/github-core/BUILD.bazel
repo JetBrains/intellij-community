@@ -77,6 +77,7 @@ jvm_library(
     "@lib//:gson",
     "//platform/dvcs-impl/shared",
     "//platform/ide-core-impl",
+    "//platform/vcs-impl/shared",
   ],
   runtime_deps = [
     ":vcs-github_resources",
@@ -163,6 +164,7 @@ jvm_library(
     "@lib//:vcs-github-apollographql-apollo-ast-jvm",
     "//platform/dvcs-impl/shared",
     "//platform/ide-core-impl",
+    "//platform/vcs-impl/shared",
   ],
   runtime_deps = [
     ":vcs-github_resources",

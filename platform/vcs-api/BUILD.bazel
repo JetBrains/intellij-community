@@ -28,8 +28,12 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-ui",
     "@lib//:caffeine",
+    "//platform/vcs-api/shared",
   ],
-  exports = ["//platform/vcs-api/vcs-api-core:vcs-core"],
+  exports = [
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/vcs-api/shared",
+  ],
   runtime_deps = [
     ":vcs_resources",
     "//platform/backend",

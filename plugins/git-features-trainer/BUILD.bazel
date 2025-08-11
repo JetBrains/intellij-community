@@ -33,6 +33,7 @@ jvm_library(
     "//plugins/git4idea/shared",
     "//platform/lang-impl",
     "//platform/dvcs-impl/shared",
+    "//platform/vcs-impl/shared",
   ],
   runtime_deps = [":vcs-git-featuresTrainer_resources"]
 )
@@ -70,6 +71,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/dvcs-impl/shared",
+    "//platform/vcs-impl/shared",
   ],
   runtime_deps = [":vcs-git-featuresTrainer_resources"]
 )

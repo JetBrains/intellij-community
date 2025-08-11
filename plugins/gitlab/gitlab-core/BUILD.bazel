@@ -64,6 +64,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/dvcs-impl/shared",
     "//platform/ide-core-impl",
+    "//platform/vcs-impl/shared",
   ],
   runtime_deps = [
     ":vcs-gitlab_resources",
@@ -133,6 +134,7 @@ jvm_library(
     "@lib//:io-mockk-jvm",
     "//platform/dvcs-impl/shared",
     "//platform/ide-core-impl",
+    "//platform/vcs-impl/shared",
   ],
   runtime_deps = [
     ":vcs-gitlab_resources",

@@ -1,5 +1,6 @@
 <idea-plugin>
   <dependencies>
     <module name="intellij.platform.vcs.core"/>
+    <module name="intellij.platform.vcs.shared"/>
   </dependencies>
 </idea-plugin>
