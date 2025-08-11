@@ -13,7 +13,7 @@ import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 
-open class TerminalNewTabAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
+open class TerminalNewTabAction : TerminalPromotedDumbAwareAction() {
 
   init {
     templatePresentation.also {

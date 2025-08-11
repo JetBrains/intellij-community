@@ -48,6 +48,6 @@ internal abstract class TerminalCommandUpDownScrolling(private val up: Boolean) 
   }
 }
 
-internal class TerminalCompletionUpAction : TerminalCommandUpDownScrolling(up = true), ActionRemoteBehaviorSpecification.Disabled
+internal class TerminalCompletionUpAction : TerminalCommandUpDownScrolling(up = true)
 
-internal class TerminalCompletionDownAction : TerminalCommandUpDownScrolling(up = false), ActionRemoteBehaviorSpecification.Disabled
+internal class TerminalCompletionDownAction : TerminalCommandUpDownScrolling(up = false)

@@ -11,7 +11,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-abstract class TerminalPromotedDumbAwareAction : DumbAwareAction(), ActionPromoter {
+abstract class TerminalPromotedDumbAwareAction : DumbAwareAction(), ActionPromoter, ActionRemoteBehaviorSpecification.Frontend {
   /**
    * Prioritize terminal actions if there are actions with the same shortcuts.
    * It's safe because terminal actions are enabled only in the terminal.

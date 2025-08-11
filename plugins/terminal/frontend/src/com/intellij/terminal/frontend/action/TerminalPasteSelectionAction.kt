@@ -12,7 +12,7 @@ import org.jetbrains.plugins.terminal.block.ui.sanitizeLineSeparators
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
-internal class TerminalPasteSelectionAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
+internal class TerminalPasteSelectionAction : TerminalPromotedDumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val terminalInput = e.terminalInput ?: error("TerminalInput is missing in terminal editor")
     val text = getClipboardText(useSystemSelectionClipboardIfAvailable = true)
