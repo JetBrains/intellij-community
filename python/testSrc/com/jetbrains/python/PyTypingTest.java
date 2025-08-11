@@ -18,6 +18,7 @@ package com.jetbrains.python;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -6778,6 +6779,26 @@ public class PyTypingTest extends PyTestCase {
       from typing import Callable, Concatenate
       
       expr: Callable[Concatenate[int, ...], str]
+      """);
+  }
+
+  // See com.jetbrains.python.refactoring.PyExtractMethodTest.testTypedStatements
+  //
+  // This scenario changes depending on whether the strict unions are enabled.
+  // Without them, the inferred type is LiteralString | str | int, because due to special handling
+  // of unions containing literal types in PyTypeChecker, none of the candidate methods fully matches:
+  // `LiteralString | str | int` receiver is compatible with neither `LiteralString`, `str` nor `int` for `self`,
+  // so we infer a union of all possible return types.
+  // With strict unions, due to special handling of self in #processSelfParameter, only
+  // `__add__(self: str, other: str) -> str` overload remains.
+  // PY-24834 PY-83313
+  public void testUnionStrConcat() {
+    //Registry.get("python.typing.strict.unions").setValue(false, myFixture.getTestRootDisposable());
+    doTest("str", """
+      from typing import LiteralString
+      
+      x: LiteralString | str | int
+      expr = x + "foo"
       """);
   }
 
