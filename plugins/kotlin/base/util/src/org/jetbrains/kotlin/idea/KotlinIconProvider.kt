@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.ui.IconManager
 import com.intellij.ui.RowIcon
 import com.intellij.util.PlatformIcons
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclarationBase
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -82,27 +83,36 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
         return result
     }
 
+    open fun getVisibilityIcon(list: KtModifierList?): Icon? {
+        val icon: com.intellij.ui.PlatformIcons? = if (list != null) {
+            when {
+                list.hasModifier(KtTokens.PRIVATE_KEYWORD) -> com.intellij.ui.PlatformIcons.Private
+                list.hasModifier(KtTokens.PROTECTED_KEYWORD) -> com.intellij.ui.PlatformIcons.Protected
+                list.hasModifier(KtTokens.INTERNAL_KEYWORD) -> com.intellij.ui.PlatformIcons.Local
+                else -> null
+            }
+        } else {
+            null
+        }
+
+        return (icon ?: com.intellij.ui.PlatformIcons.Public).let(IconManager.getInstance()::getPlatformIcon)
+    }
+
     companion object {
-        private fun createRowIcon(baseIcon: Icon, visibilityIcon: Icon): RowIcon {
+        private fun createRowIcon(baseIcon: Icon, visibilityIcon: Icon?): RowIcon {
             val rowIcon = RowIcon(2)
             rowIcon.setIcon(baseIcon, 0)
             rowIcon.setIcon(visibilityIcon, 1)
             return rowIcon
         }
 
-        fun getVisibilityIcon(list: KtModifierList?): Icon {
-            val icon: com.intellij.ui.PlatformIcons? = if (list != null) {
-                when {
-                    list.hasModifier(KtTokens.PRIVATE_KEYWORD) -> com.intellij.ui.PlatformIcons.Private
-                    list.hasModifier(KtTokens.PROTECTED_KEYWORD) -> com.intellij.ui.PlatformIcons.Protected
-                    list.hasModifier(KtTokens.INTERNAL_KEYWORD) -> com.intellij.ui.PlatformIcons.Local
-                    else -> null
-                }
-            } else {
-                null
-            }
 
-            return (icon ?: com.intellij.ui.PlatformIcons.Public).let(IconManager.getInstance()::getPlatformIcon)
+        @ApiStatus.Internal
+        fun getVisibilityIcon(list: KtModifierList?): Icon? {
+            for (kotlinIconProvider in EXTENSION_POINT_NAME.getIterable().filterIsInstance<KotlinIconProvider>()) {
+                kotlinIconProvider.getVisibilityIcon(list)?.let { return it }
+            }
+            return null
         }
 
         private fun PsiFile.scriptIcon(): Icon = when {
