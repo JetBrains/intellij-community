@@ -96,7 +96,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
 
-    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.syncContributor.bridge.GradleBridgeProjectDataService"/>
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeProjectDataService"/>
 
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleStartupActivity"/>
     <backgroundPostStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleVersionUpdateStartupActivity"/>
