@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.scopes.backend
 
-import com.intellij.ide.scratch.ScratchesSearchScope
 import com.intellij.ide.util.scopeChooser.*
-import com.intellij.idea.AppMode
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -78,8 +76,6 @@ internal class ScopesModelApiImpl : ScopeModelApi {
           val scopesState = ScopesStateService.getInstance(project).getScopesState()
           val scopesStateMap = mutableMapOf<String, ScopeDescriptor>()
           val scopesData = scopes.scopeDescriptors.mapNotNull { descriptor ->
-            // TODO should be removed after support scopes with frontend activity IJPL-194098
-            if (AppMode.isRemoteDevHost() && (descriptor.needsUserInputForScope() || descriptor.scope is ScratchesSearchScope)) return@mapNotNull null
             val scopeId = scopesState.addScope(descriptor)
             val scopeData = SearchScopeData.from(descriptor, scopeId) ?: return@mapNotNull null
             scopesStateMap[scopeData.scopeId] = descriptor
@@ -103,6 +99,15 @@ internal class ScopesModelApiImpl : ScopeModelApi {
       }
     }
     return flow
+  }
+
+  override suspend fun performScopeSelection(scopeId: String, projectId: ProjectId): Boolean {
+    val project = projectId.findProjectOrNullWithLogError(LOG)
+    if (project == null) {
+      LOG.warn("Cannot find project for id $projectId")
+      return false
+    }
+    return ScopesStateService.getInstance(project).getScopeById(scopeId) != null
   }
 }
 

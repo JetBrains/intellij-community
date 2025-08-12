@@ -27,6 +27,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/util/coroutines",
+    "//platform/scopes",
   ],
   runtime_deps = [":find_resources"]
 )

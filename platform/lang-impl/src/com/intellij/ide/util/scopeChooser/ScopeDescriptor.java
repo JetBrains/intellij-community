@@ -30,15 +30,22 @@ public class ScopeDescriptor implements ColoredItem {
   }
 
   public @Nullable SearchScope getScope() {
+    if (needsUserInputForScope()) {
+      performUiAction();
+    }
     return myScope;
   }
 
   /**
    * @return true if obtaining this scope requires user interaction (e.g., UI dialog, confirmation); false if it can be resolved programmatically.
    */
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public boolean needsUserInputForScope() {
     return false;
+  }
+
+  @ApiStatus.Experimental
+  protected void performUiAction() {
   }
 
   public boolean scopeEquals(SearchScope scope) {

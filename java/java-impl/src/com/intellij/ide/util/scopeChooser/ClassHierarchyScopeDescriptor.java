@@ -32,6 +32,8 @@ final class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
   private @Nullable SearchScope myCachedScope;
   private final @NotNull Project myProject;
   private final @Nullable PsiClass myRootClass;
+  private @Nullable PsiClass mySelectedClass;
+  private boolean isUiActionPerformed;
 
   ClassHierarchyScopeDescriptor(@NotNull Project project, @NotNull DataContext dataContext) {
     super(null);
@@ -55,16 +57,11 @@ final class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
 
   @Override
   public @NotNull SearchScope getScope() {
+    if (needsUserInputForScope()) {
+      performUiAction();
+    }
     if (myCachedScope == null) {
-      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject)
-        .createAllProjectScopeChooser(JavaBundle.message("prompt.choose.base.class.of.the.hierarchy"));
-      if (myRootClass != null) {
-        chooser.select(myRootClass);
-      }
-
-      chooser.showDialog();
-
-      PsiClass aClass = chooser.getSelected();
+      PsiClass aClass = mySelectedClass;
       if (aClass == null) {
         myCachedScope = LocalSearchScope.EMPTY;
       }
@@ -89,6 +86,20 @@ final class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
 
   @Override
   public boolean needsUserInputForScope() {
-    return true;
+    return !isUiActionPerformed && myCachedScope == null && mySelectedClass == null;
+  }
+
+  @Override
+  public void performUiAction() {
+    TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject)
+      .createAllProjectScopeChooser(JavaBundle.message("prompt.choose.base.class.of.the.hierarchy"));
+    if (myRootClass != null) {
+      chooser.select(myRootClass);
+    }
+
+    chooser.showDialog();
+
+    mySelectedClass = chooser.getSelected();
+    isUiActionPerformed = true;
   }
 }

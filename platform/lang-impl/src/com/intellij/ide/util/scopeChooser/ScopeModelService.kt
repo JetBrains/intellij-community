@@ -15,7 +15,7 @@ interface ScopeModelService {
 
   fun disposeModel(modelId: String)
 
-  fun getScopeById(scopeId: String): ScopeDescriptor?
+  fun getScopeDescriptorById(scopeId: String): ScopeDescriptor?
 
   fun openEditScopesDialog(selectedScopeId: String?, onFinish: (selectedScopeId: String?) -> Unit)
 
