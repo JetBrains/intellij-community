@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.traceThrowable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -25,6 +26,7 @@ import com.intellij.ui.DisposableWindow
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.launchOnShow
@@ -157,6 +159,9 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
   override fun paint(g: Graphics) {
     if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
       setupAntialiasing(g)
+    }
+    if (!EDT.isCurrentThreadEdt()) {
+      logger<IdeFrameImpl>().error("paint must be called on EDT", Throwable())
     }
     super.paint(g)
   }

@@ -177,6 +177,7 @@ private suspend fun replaceIdeEventQueue(isHeadless: Boolean) {
 
   if (!isHeadless && System.getProperty("idea.check.swing.threading").toBoolean()) {
     span("repaint manager set") {
+      logger<RepaintManager>().info("Setting RepaintManager to AssertiveRepaintManager")
       RepaintManager.setCurrentManager(AssertiveRepaintManager())
     }
   }

@@ -1043,6 +1043,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         // inherit graphics so rendering hints won't be applied and trees or lists may render ugly.
         UISettings.setupAntialiasing(g);
       }
+      if (!EDT.isCurrentThreadEdt()) {
+        LOG.error("paint must be called on EDT", new Throwable());
+      }
 
       super.paint(g);
     }
