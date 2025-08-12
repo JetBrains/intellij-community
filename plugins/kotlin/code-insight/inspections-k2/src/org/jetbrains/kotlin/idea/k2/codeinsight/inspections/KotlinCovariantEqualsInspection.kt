@@ -2,12 +2,11 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.utils.isNonNullableBooleanType
+import org.jetbrains.kotlin.idea.codeinsight.utils.isEqualsMethodSymbol
 import org.jetbrains.kotlin.idea.codeinsight.utils.isNullableAnyType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -25,14 +24,17 @@ class KotlinCovariantEqualsInspection : AbstractKotlinInspection() {
         if (classOrObject is KtObjectDeclaration && classOrObject.isCompanion()) return
 
         val parameter = function.valueParameters.singleOrNull() ?: return
-        val typeReference = parameter.typeReference ?: return
 
         analyze(function) {
             val parameterSymbol = parameter.symbol
             val parameterType = parameterSymbol.returnType
             if (parameterType.isNullableAnyType()) return
 
-            if (classOrObject.declarations.any { it is KtNamedFunction && it.isEquals() }) return
+            val hasOverrideEquals = classOrObject.declarations.any { declaration ->
+                declaration is KtNamedFunction && 
+                (declaration.symbol as? KaNamedFunctionSymbol)?.isEqualsMethodSymbol() == true
+            }
+            if (hasOverrideEquals) return
 
             holder.registerProblem(
                 nameIdentifier, 
@@ -40,14 +42,4 @@ class KotlinCovariantEqualsInspection : AbstractKotlinInspection() {
             )
         }
     })
-
-    context(_: KaSession)
-    private fun KtNamedFunction.isEquals(): Boolean {
-        if (!hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
-        if (nameAsName != OperatorNameConventions.EQUALS) return false
-        val parameterType = symbol.valueParameters.singleOrNull()?.returnType ?: return false
-        if (!parameterType.isNullableAnyType()) return false
-        if (!symbol.returnType.isNonNullableBooleanType()) return false
-        return true
-    }
 }
