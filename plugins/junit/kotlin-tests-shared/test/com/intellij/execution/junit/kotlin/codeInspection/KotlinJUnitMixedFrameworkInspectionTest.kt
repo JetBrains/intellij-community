@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
 import com.intellij.junit.testFramework.JUnitMixedFrameworkInspectionTestBase
@@ -142,7 +142,7 @@ abstract class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInsp
   }
 
 
-  fun `test junit 5 test case with junit 4 quickfix`() {
+  open fun `test junit 5 test case with junit 4 quickfix`() {
     myFixture.testQuickFix(
       JvmLanguage.KOTLIN, """
       class MyTest {
