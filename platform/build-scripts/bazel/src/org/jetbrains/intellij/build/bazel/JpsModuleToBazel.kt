@@ -167,7 +167,7 @@ internal class JpsModuleToBazel {
                 productionJars = moduleTarget.productionJars,
                 testTargets = moduleTarget.testTargets,
                 testJars = moduleTarget.testJars,
-                exports = moduleList.deps[moduleTarget.moduleDescriptor]?.exports ?: emptyList(),
+                exports = moduleList.deps[moduleTarget.moduleDescriptor]?.exports?.map { it.label } ?: emptyList(),
               )
             } + skippedModules.associateWith { emptyModule },
             projectLibraries = libs.asSequence().mapNotNull {

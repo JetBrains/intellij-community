@@ -72,6 +72,8 @@ internal class Target(private val type: String) : Renderable {
 
   // Support for setting key-value pairs with arrays
   fun option(key: String, value: Any) {
+    verifyTypeIsSupported(value)
+
     if (attributes.containsKey(key)) {
       error("Duplicate key: $key. Old value: ${attributes[key]}, new value: $value")
     }
@@ -79,10 +81,30 @@ internal class Target(private val type: String) : Renderable {
     attributes[key] = value
   }
 
+  private fun verifyTypeIsSupported(value: Any) {
+    val klass = value.javaClass
+    when {
+      String::class.java.isAssignableFrom(klass) -> Unit
+      value == true || value == false -> Unit
+      Renderable::class.java.isAssignableFrom(klass) -> Unit
+      List::class.java.isAssignableFrom(klass) -> {
+        for (item in value as List<*>) {
+          verifyTypeIsSupported(item!!)
+        }
+      }
+      LinkedHashSet::class.java.isAssignableFrom(klass) -> {
+        for (item in value as LinkedHashSet<*>) {
+          verifyTypeIsSupported(item!!)
+        }
+      }
+      else -> error("Unsupported type '$klass' for value: $value")
+    }
+  }
+
   fun optionCount(): Int = attributes.size
 
   fun visibility(targets: Array<String>) {
-    option("visibility", targets)
+    option("visibility", targets.toList())
   }
 
   internal fun glob(list: List<String>, exclude: List<String> = emptyList(), allowEmpty: Boolean = true): Renderable {
@@ -90,10 +112,10 @@ internal class Target(private val type: String) : Renderable {
       override fun render(): String {
         val opts = LinkedHashMap<String, Any>()
         if (allowEmpty) {
-          opts.put("allow_empty", true)
+          opts["allow_empty"] = true
         }
         if (exclude.isNotEmpty()) {
-          opts.put("exclude", exclude)
+          opts["exclude"] = exclude
         }
 
         val extra = if (opts.isEmpty()) "" else ", ${opts.entries.joinToString(", ") { "${it.key} = ${formatValue(it.value)}" }}"
@@ -124,7 +146,7 @@ internal class Target(private val type: String) : Renderable {
 
 private fun formatValue(value: Any?): String {
   return when (value) {
-    is List<*> -> {
+    is Collection<*> -> {
       if (value.size > 1) {
         value.joinToString(separator = ",\n    ", prefix = "[\n    ", postfix = ",\n  ]") { formatValue(it) }
       }

@@ -44,6 +44,8 @@ internal data class ModuleDescriptor(
       "imlFile must be a regular file: $imlFile"
     }
   }
+
+  val targetAsLabel = BazelLabel(targetName, this)
 }
 
 internal data class ResourceDescriptor(

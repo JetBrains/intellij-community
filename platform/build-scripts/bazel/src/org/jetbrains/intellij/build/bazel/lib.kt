@@ -143,7 +143,7 @@ internal fun BuildFile.generateMavenLib(
     if (exportedCompilerPlugins.isEmpty()) {
       target("java_library") {
         option("name", targetName + PROVIDED_SUFFIX)
-        option("exports", arrayOf(":$targetName"))
+        option("exports", listOf(":$targetName"))
         option("neverlink", true)
         libVisibility?.let {
           visibility(arrayOf(it))
@@ -153,7 +153,7 @@ internal fun BuildFile.generateMavenLib(
     else {
       target("kt_jvm_library") {
         option("name", targetName + PROVIDED_SUFFIX)
-        option("exports", arrayOf(":$targetName"))
+        option("exports", listOf(":$targetName"))
         option("neverlink", true)
         option("exported_compiler_plugins", exportedCompilerPlugins)
         libVisibility?.let {
@@ -236,14 +236,14 @@ internal fun generateLocalLibs(libs: Collection<LocalLibrary>, isLibraryProvided
         target("java_import") {
           option("name", targetName)
           option("jars", lib.files.map { it.fileName.toString() })
-          option("visibility", arrayOf("//visibility:public"))
+          option("visibility", listOf("//visibility:public"))
         }
 
         if (isLibraryProvided(lib)) {
           load("@rules_java//java:defs.bzl", "java_library")
           target("java_library") {
             option("name", targetName + PROVIDED_SUFFIX)
-            option("exports", arrayOf(":$targetName"))
+            option("exports", listOf(":$targetName"))
             option("neverlink", true)
             visibility(arrayOf("//visibility:public"))
           }

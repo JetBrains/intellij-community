@@ -15,19 +15,31 @@ import org.jetbrains.jps.model.module.JpsTestModuleProperties
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.nio.file.Path
+import java.util.TreeSet
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.relativeTo
 
+internal data class BazelLabel(
+  val label: String,
+  // module if label is produced from that module, null in case of a library
+  val module: ModuleDescriptor?,
+) : Renderable {
+  override fun render(): String = "\"$label\""
+}
+
 internal data class ModuleDeps(
-  @JvmField val deps: List<String>,
-  @JvmField val provided: List<String>,
-  @JvmField val runtimeDeps: List<String>,
-  @JvmField val exports: List<String>,
-  @JvmField val associates: List<String>,
+  @JvmField val deps: List<BazelLabel>,
+  @JvmField val provided: List<BazelLabel>,
+  @JvmField val runtimeDeps: List<BazelLabel>,
+  @JvmField val exports: List<BazelLabel>,
+  @JvmField val associates: List<BazelLabel>,
   @JvmField val plugins: List<String>,
-)
+) {
+  val depsModuleSet = deps.mapNotNull { it.module }.toSet()
+  val runtimeDepsModuleSet = runtimeDeps.mapNotNull { it.module }.toSet()
+}
 
 internal fun generateDeps(
   module: ModuleDescriptor,
@@ -35,15 +47,15 @@ internal fun generateDeps(
   isTest: Boolean,
   context: BazelBuildFileGenerator,
 ): ModuleDeps {
-  val deps = mutableListOf<String>()
-  val associates = mutableListOf<String>()
-  val exports = mutableListOf<String>()
-  val runtimeDeps = mutableListOf<String>()
-  val provided = mutableListOf<String>()
+  val deps = mutableListOf<BazelLabel>()
+  val associates = mutableListOf<BazelLabel>()
+  val exports = mutableListOf<BazelLabel>()
+  val runtimeDeps = mutableListOf<BazelLabel>()
+  val provided = mutableListOf<BazelLabel>()
 
   if (isTest && module.sources.isNotEmpty()) {
     // associates also is a dependency
-    associates.add(":${module.targetName}")
+    associates.add(BazelLabel(":${module.targetName}", module))
   }
 
   val testModuleProperties = context.javaExtensionService.getTestModuleProperties(module.module)
@@ -58,7 +70,10 @@ internal fun generateDeps(
     if (element is JpsModuleDependency) {
       val dependencyModule = element.moduleReference.resolve()!!
       val dependencyModuleDescriptor = context.getKnownModuleDescriptorOrError(dependencyModule)
-      val label = context.getBazelDependencyLabel(module = dependencyModuleDescriptor, dependent = module)
+      val label = BazelLabel(
+        label = context.getBazelDependencyLabel(module = dependencyModuleDescriptor, dependent = module),
+        module = dependencyModuleDescriptor,
+      )
 
       // intellij.platform.configurationStore.tests uses internal symbols from intellij.platform.configurationStore.impl
       val dependencyModuleName = dependencyModule.name
@@ -122,7 +137,7 @@ internal fun generateDeps(
           isTest = isTest,
           scope = scope,
           deps = deps,
-          dependencyLabel = "$prefix:$targetName$targetNameSuffix",
+          dependencyLabel = BazelLabel("$prefix:$targetName$targetNameSuffix", null),
           runtimeDeps = runtimeDeps,
           hasSources = hasSources,
           dependentModule = module,
@@ -162,7 +177,7 @@ internal fun generateDeps(
           isProvided = isProvided,
         ).target.container
 
-        val libLabel = "${libraryContainer.repoLabel}//:$targetName$targetNameSuffix"
+        val libLabel = BazelLabel("${libraryContainer.repoLabel}//:$targetName$targetNameSuffix", module = null)
 
         addDep(
           isTest = isTest,
@@ -182,15 +197,15 @@ internal fun generateDeps(
   }
 
   if (exports.isNotEmpty()) {
-    require(!exports.contains("@lib//:kotlinx-serialization-core")) {
+    require(!exports.any { it.label == "@lib//:kotlinx-serialization-core" }) {
       "Do not export kotlinx-serialization-core (module=$dependentModuleName})"
     }
-    require(!exports.contains("jetbrains-jewel-markdown-laf-bridge-styling")) {
+    require(!exports.any { it.label == "jetbrains-jewel-markdown-laf-bridge-styling"}) {
       "Do not export jetbrains-jewel-markdown-laf-bridge-styling (module=$dependentModuleName})"
     }
   }
 
-  fun checkForDuplicates(listMoniker: String, list: List<String>) {
+  fun checkForDuplicates(listMoniker: String, list: List<BazelLabel>) {
     if (list.distinct() == list) {
       return
     }
@@ -198,12 +213,12 @@ internal fun generateDeps(
     val duplicates = list
       .groupBy { it }
       .filter { it.value.size > 1 }
-      .map { it.key }
+      .map { it.key.label }
       .sorted()
     error("Duplicate $listMoniker ${duplicates} for module '${module.module.name}',\ncheck ${module.imlFile}")
   }
 
-  val plugins = mutableListOf<String>()
+  val plugins = TreeSet<String>()
   val kotlinFacetModuleExtension = module.module.container.getChild(JpsKotlinFacetModuleExtension.KIND)
   kotlinFacetModuleExtension?.settings?.mergedCompilerArguments?.pluginClasspaths.orEmpty().map(Path::of).forEach {
     if (it.name.startsWith("kotlin-compose-compiler-plugin-") && it.name.endsWith(".jar")) {
@@ -216,9 +231,8 @@ internal fun generateDeps(
   checkForDuplicates("bazel runtimeDeps", runtimeDeps)
   checkForDuplicates("bazel exports", exports)
   checkForDuplicates("bazel provided", provided)
-  checkForDuplicates("bazel plugins", plugins)
 
-  return ModuleDeps(deps = deps, associates = associates, runtimeDeps = runtimeDeps, exports = exports, provided = provided, plugins = plugins)
+  return ModuleDeps(deps = deps, associates = associates, runtimeDeps = runtimeDeps, exports = exports, provided = provided, plugins = plugins.toList())
 }
 
 private fun getFileMavenFileDescription(lib: JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>, jar: Path): MavenFileDescription {
@@ -253,14 +267,14 @@ private fun isTestFriend(
 private fun addDep(
   isTest: Boolean,
   scope: JpsJavaDependencyScope,
-  deps: MutableList<String>,
-  dependencyLabel: String,
-  runtimeDeps: MutableList<String>,
+  deps: MutableList<BazelLabel>,
+  dependencyLabel: BazelLabel,
+  runtimeDeps: MutableList<BazelLabel>,
   hasSources: Boolean,
   dependentModule: ModuleDescriptor,
   dependencyModuleDescriptor: ModuleDescriptor?,
-  exports: MutableList<String>,
-  provided: MutableList<String>,
+  exports: MutableList<BazelLabel>,
+  provided: MutableList<BazelLabel>,
   isExported: Boolean,
 ) {
   if (isTest) {
@@ -326,7 +340,7 @@ private fun addDep(
       }
       else {
         if (!isExported) {
-          println("WARN: dependency scope for $dependencyLabel should be RUNTIME and not COMPILE (module=${dependentModule.module.name})")
+          println("WARN: dependency scope for ${dependencyLabel.label} should be RUNTIME and not COMPILE (module=${dependentModule.module.name})")
         }
         runtimeDeps.add(dependencyLabel)
       }
@@ -368,14 +382,15 @@ private fun needsBackwardCompatibleTestDependency(
   }
 }
 
-private fun addSuffix(s: String, @Suppress("SameParameterValue") labelSuffix: String): String {
-  val lastSlashIndex = s.lastIndexOf('/')
-  return (if (s.indexOf(':', lastSlashIndex) == -1) {
-    s + ":" + s.substring(lastSlashIndex + 1)
+private fun addSuffix(s: BazelLabel, @Suppress("SameParameterValue") labelSuffix: String): BazelLabel {
+  val lastSlashIndex = s.label.lastIndexOf('/')
+  val labelWithSuffix = (if (s.label.indexOf(':', lastSlashIndex) == -1) {
+    s.label + ":" + s.label.substring(lastSlashIndex + 1)
   }
   else {
-    s
+    s.label
   }) + labelSuffix
+  return s.copy(label = labelWithSuffix)
 }
 
 internal fun hasOnlyTestResources(moduleDescriptor: ModuleDescriptor): Boolean {
@@ -393,13 +408,14 @@ internal val PRODUCTION_RESOURCES_TARGET_REGEX = Regex("^(?!.+${Regex.escape(TES
 internal const val TEST_RESOURCES_TARGET_SUFFIX = "_test_resources"
 internal val TEST_RESOURCES_TARGET_REGEX = Regex("^.+${Regex.escape(TEST_RESOURCES_TARGET_SUFFIX)}(_[0-9]+)?$")
 
-private fun getLabelForTest(dependencyLabel: String): String {
-  if (dependencyLabel.contains(':')) {
-    return "${dependencyLabel}$TEST_LIB_NAME_SUFFIX"
+private fun getLabelForTest(dependencyLabel: BazelLabel): BazelLabel {
+  val testLabel = if (dependencyLabel.label.contains(':')) {
+    "${dependencyLabel.label}$TEST_LIB_NAME_SUFFIX"
   }
   else {
-    return "$dependencyLabel:${dependencyLabel.substringAfterLast('/')}$TEST_LIB_NAME_SUFFIX"
+    "${dependencyLabel.label}:${dependencyLabel.label.substringAfterLast('/')}$TEST_LIB_NAME_SUFFIX"
   }
+  return dependencyLabel.copy(label = testLabel)
 }
 
 private val camelCaseToSnakeCasePattern = Regex("(?<=.)[A-Z]")

@@ -73,7 +73,7 @@ internal val customModules: Map<String, CustomModuleDescription> = listOf(
                           additionalProductionTargets = listOf("@rules_jvm//jps-builders-6:build-javac-rt_resources"), additionalProductionJars = listOf("out/bazel-out/jvm-fastbuild/bin/external/rules_jvm+/jps-builders-6/build-javac-rt_resources.jar")),
 ).associateBy { it.moduleName }
 
-@Suppress("ReplaceGetOrSet")
+@Suppress("ReplaceGetOrSet", "SSBasedInspection")
 internal class BazelBuildFileGenerator(
   val ultimateRoot: Path?,
   val communityRoot: Path,
@@ -342,9 +342,6 @@ internal class BazelBuildFileGenerator(
     // bazel build file -> (bzlFile (for import) -> already imported symbols)
     val existingLoads = mutableMapOf<Path, MutableMap<String, MutableSet<String>>>()
     for (module in (if (isCommunity) list.community else list.ultimate)) {
-      if (module.module.name == "intellij.javascript.backend") {
-        println("STOP")
-      }
       if (generated.putIfAbsent(module, true) == null) {
         val fileUpdater = fileToUpdater.computeIfAbsent(module.bazelBuildFileDir) {
           val fileUpdater = BazelFileUpdater(module.bazelBuildFileDir.resolve("BUILD.bazel"))
@@ -490,10 +487,10 @@ internal class BazelBuildFileGenerator(
                               ?: (if (jvmTarget == "17") null else "@community//:k$jvmTarget")
     val javacOptionsLabel = computeJavacOptions(moduleDescriptor, jvmTarget)
 
-    val resourceTargets = mutableListOf<String>()
-    val productionCompileTargets = mutableListOf<String>()
-    val productionCompileJars = mutableListOf<String>()
-    val testCompileTargets = mutableListOf<String>()
+    val resourceTargets = mutableListOf<BazelLabel>()
+    val productionCompileTargets = mutableListOf<BazelLabel>()
+    val productionCompileJars = mutableListOf<BazelLabel>()
+    val testCompileTargets = mutableListOf<BazelLabel>()
 
     val sources = moduleDescriptor.sources
     if (moduleDescriptor.resources.isNotEmpty()) {
@@ -516,8 +513,8 @@ internal class BazelBuildFileGenerator(
 
       target("jvm_library") {
         option("name", moduleDescriptor.targetName)
-        productionCompileTargets.add(moduleDescriptor.targetName)
-        productionCompileJars.add(moduleDescriptor.targetName)
+        productionCompileTargets.add(moduleDescriptor.targetAsLabel)
+        productionCompileJars.add(moduleDescriptor.targetAsLabel)
 
         option("module_name", module.name)
         visibility(arrayOf("//visibility:public"))
@@ -529,15 +526,16 @@ internal class BazelBuildFileGenerator(
           option("kotlinc_opts", kotlincOptionsLabel)
         }
 
+        @Suppress("CascadeIf")
         if (module.name == "fleet.util.multiplatform" || module.name == "intellij.platform.syntax.multiplatformSupport") {
-          option("exported_compiler_plugins", arrayOf("@lib//:expects-plugin"))
+          option("exported_compiler_plugins", listOf("@lib//:expects-plugin"))
         }
         //else if (module.name == "fleet.rhizomedb") {
           // https://youtrack.jetbrains.com/issue/IJI-2662/RhizomedbCommandLineProcessor-requires-output-dir-but-we-dont-have-it-for-Bazel-compilation
           //option("exported_compiler_plugins", arrayOf("@lib//:rhizomedb-plugin"))
         //}
         else if (module.name == "fleet.rpc") {
-          option("exported_compiler_plugins", arrayOf("@lib//:rpc-plugin"))
+          option("exported_compiler_plugins", listOf("@lib//:rpc-plugin"))
         }
         else if (module.name == "fleet.noria.cells" ||
                  module.name == "fleet.noria.html" ||
@@ -547,18 +545,18 @@ internal class BazelBuildFileGenerator(
                  module.name == "fleet.noria.windowManagement.extensions" ||
                  module.name == "fleet.noria.windowManagement.impl" ||
                  module.name == "fleet.noria.windowManagement.implDesktopMacOS") {
-          option("exported_compiler_plugins", arrayOf("@lib//:noria-plugin"))
+          option("exported_compiler_plugins", listOf("@lib//:noria-plugin"))
         }
 
         var deps = moduleList.deps.get(moduleDescriptor)
         if (deps != null && deps.provided.isNotEmpty()) {
           load("@rules_jvm//:jvm.bzl", "jvm_provided_library")
 
-          val extraDeps = mutableListOf<String>()
-          val labelToName = getUniqueSegmentName(deps.provided)
+          val extraDeps = mutableListOf<BazelLabel>()
+          val labelToName = getUniqueSegmentName(deps.provided.map { it.label })
           for (label in deps.provided) {
-            val name = labelToName.get(label) + "_provided"
-            extraDeps.add(":$name")
+            val name = labelToName.get(label.label) + "_provided"
+            extraDeps.add(BazelLabel(":$name", null))
             target("jvm_provided_library") {
               option("name", name)
               option("lib", label)
@@ -600,8 +598,8 @@ internal class BazelBuildFileGenerator(
       if (addPhonyTarget) {
         addTarget(target)
 
-        productionCompileTargets.add(moduleDescriptor.targetName)
-        productionCompileJars.add(moduleDescriptor.targetName)
+        productionCompileTargets.add(moduleDescriptor.targetAsLabel)
+        productionCompileJars.add(moduleDescriptor.targetAsLabel)
       }
     }
 
@@ -610,7 +608,7 @@ internal class BazelBuildFileGenerator(
     // Decide whether to render a test target at all
     if (moduleHasTestSources || isTestClasspathModule(moduleDescriptor)) {
       val testLibTargetName = "${moduleDescriptor.targetName}$TEST_LIB_NAME_SUFFIX"
-      testCompileTargets.add(testLibTargetName)
+      testCompileTargets.add(BazelLabel(testLibTargetName, moduleDescriptor))
 
       val testDeps = moduleList.testDeps.get(moduleDescriptor)
 
@@ -659,15 +657,15 @@ internal class BazelBuildFileGenerator(
       else -> "out/bazel-out/jvm-fastbuild/bin/$bazelModuleRelativePath"
     }
 
-    fun addPackagePrefix(target: String): String =
-      if (target.startsWith("//") || target.startsWith("@")) target else "$packagePrefix:$target"
+    fun addPackagePrefix(target: BazelLabel): String =
+      if (target.label.startsWith("//") || target.label.startsWith("@")) target.label else "$packagePrefix:${target.label}"
 
-    fun getJarLocation(jarName: String) = when {
+    fun getJarLocation(jarName: BazelLabel) = when {
       // full target name instead of just jar for intellij.dotenv.*
       // like @community//plugins/env-files-support:dotenv-go_resources
-      jarName.startsWith("@community//") ->
-        "out/bazel-out/jvm-fastbuild/bin/external/community+/${jarName.substringAfter("@community//").replace(':', '/')}.jar"
-      else -> "$jarOutputDirectory/$jarName.jar"
+      jarName.label.startsWith("@community//") ->
+        "out/bazel-out/jvm-fastbuild/bin/external/community+/${jarName.label.substringAfter("@community//").replace(':', '/')}.jar"
+      else -> "$jarOutputDirectory/${jarName.label}.jar"
     }
 
     return ModuleTargets(
@@ -688,7 +686,7 @@ internal class BazelBuildFileGenerator(
   }
 
   private data class GenerateResourcesResult(
-    val resourceTargets: List<String>,
+    val resourceTargets: List<BazelLabel>,
   )
 
   private fun BuildFile.generateResources(
@@ -718,7 +716,7 @@ internal class BazelBuildFileGenerator(
         emptyList()
       }
       else {
-        listOf("@community//plugins/env-files-support:${module.targetName}_resources")
+        listOf(BazelLabel("@community//plugins/env-files-support:${module.targetName}_resources", module))
       }
       return GenerateResourcesResult(resourceTargets = fixedTargetsList)
     }
@@ -744,7 +742,7 @@ internal class BazelBuildFileGenerator(
         }
       }
 
-      name
+      BazelLabel(name, module)
     }
 
     return GenerateResourcesResult(resourceTargets = resourceTargets)
@@ -871,13 +869,12 @@ private fun isReferencedAsTestDep(
   return false
 }
 
-// todo: use context.getBazelDependencyLabel
 private fun isUsed(
   deps: ModuleDeps,
   referencedModule: ModuleDescriptor,
 ): Boolean {
-  return deps.deps.any { it.substringAfterLast(':').substringAfterLast('/').contains(referencedModule.targetName) } ||
-         deps.runtimeDeps.any { it.substringAfterLast(':').substringAfterLast('/').contains(referencedModule.targetName) }
+  return deps.depsModuleSet.contains(referencedModule) ||
+         deps.runtimeDepsModuleSet.contains(referencedModule)
 }
 
 private fun jpsModuleNameToBazelBuildName(module: JpsModule, baseBuildDir: Path, communityRoot: Path, ultimateRoot: Path?): @NlsSafe String {
@@ -1155,7 +1152,7 @@ private val addExportsRegex = Regex("""--add-exports\s+([^=]+)=\S+""")
 private fun renderDeps(
   deps: ModuleDeps?,
   target: Target,
-  resourceDependencies: List<String>,
+  resourceDependencies: List<BazelLabel>,
   forTests: Boolean,
 ) {
   if (deps != null) {
@@ -1174,21 +1171,26 @@ private fun renderDeps(
     val runtimeDeps = resourceDependencies
                         .filter {
                           check(
-                            PRODUCTION_RESOURCES_TARGET_REGEX.matches(it) ||
-                            TEST_RESOURCES_TARGET_REGEX.matches(it)
+                            PRODUCTION_RESOURCES_TARGET_REGEX.matches(it.label) ||
+                            TEST_RESOURCES_TARGET_REGEX.matches(it.label)
                           ) {
                             "Unexpected resource dependency target name: $it"
                           }
                           check(
-                            !PRODUCTION_RESOURCES_TARGET_REGEX.matches(it) ||
-                            !TEST_RESOURCES_TARGET_REGEX.matches(it)
+                            !PRODUCTION_RESOURCES_TARGET_REGEX.matches(it.label) ||
+                            !TEST_RESOURCES_TARGET_REGEX.matches(it.label)
                           ) {
                             "Resource dependency target name matches both prod and test regex: $it"
                           }
-                          return@filter PRODUCTION_RESOURCES_TARGET_REGEX.matches(it) ||
-                          (forTests && TEST_RESOURCES_TARGET_REGEX.matches(it))
-                        }.map { if (it.startsWith('@') || it.startsWith("//")) it else ":$it" } +
-                      (deps?.runtimeDeps ?: emptyList())
+                          return@filter PRODUCTION_RESOURCES_TARGET_REGEX.matches(it.label) ||
+                          (forTests && TEST_RESOURCES_TARGET_REGEX.matches(it.label))
+                        }.map {
+                          if (it.label.startsWith('@') || it.label.startsWith("//")) {
+                            it
+                          } else {
+                            it.copy(label = ":${it.label}")
+                          }
+                        } + (deps?.runtimeDeps ?: emptyList())
     if (runtimeDeps.isNotEmpty()) {
       target.option("runtime_deps", runtimeDeps)
     }
