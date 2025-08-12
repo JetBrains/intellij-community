@@ -90,7 +90,6 @@ final class FindInProjectTask {
       .thenComparing(VirtualFile::getPath);
 
   /** Total size of processed files before asking user 'too many files, should we continue?' */
-  //TODO 70 Kb -- isn't it too small limit?
   private static final int TOTAL_FILES_SIZE_LIMIT_BEFORE_ASKING = 70 * 1024 * 1024; // megabytes.
 
   private final FindModel findModel;
