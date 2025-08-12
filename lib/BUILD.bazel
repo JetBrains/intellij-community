@@ -2689,8 +2689,8 @@ jvm_import(
 
 jvm_import(
   name = "jb-jdi",
-  jar = "@jb-jdi-2_43_http//file",
-  source_jar = "@jb-jdi-2_43-sources_http//file",
+  jar = "@jb-jdi-2_44_http//file",
+  source_jar = "@jb-jdi-2_44-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
