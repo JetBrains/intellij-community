@@ -21,11 +21,13 @@ import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.project.projectId
+import com.intellij.platform.scopes.ScopeModelApi
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
+import fleet.rpc.client.RpcTimeoutException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -40,6 +42,7 @@ private val LOG = logger<FindAndReplaceExecutorImpl>()
 open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : FindAndReplaceExecutor {
   private var validationJob: Job? = null
   private var findUsagesJob: Job? = null
+  private var selectScopeJob: Job? = null
   private var currentSearchDisposable: CheckedDisposable? = null
 
   @OptIn(ExperimentalAtomicApi::class)
@@ -53,11 +56,12 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     disposableParent: Disposable,
     onDocumentUpdated: (usageInfos: List<UsageInfo>) -> Unit?,
     onResult: (UsageInfoAdapter) -> Boolean,
-    onFinish: () -> Unit?,
+    onFinish: () -> Unit?
   ) {
     if (FindKey.isEnabled) {
       findUsagesJob?.cancel("new find request is started")
       findUsagesJob = coroutineScope.launch {
+        selectScopeJob?.join()
         val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfoModel)?.model?.fileId?.virtualFile() }.toSet()
         currentSearchDisposable?.let { Disposer.dispose(it) }
         currentSearchDisposable = Disposer.newCheckedDisposable(disposableParent, "Find in Project Search")
@@ -121,9 +125,21 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     }
   }
 
+  override fun performScopeSelection(scopeId: String, project: Project) {
+    selectScopeJob = coroutineScope.launch {
+      try {
+       ScopeModelApi.getInstance().performScopeSelection(scopeId, project.projectId())
+      }
+      catch (e: RpcTimeoutException) {
+        LOG.warn("Failed to select scope", e)
+      }
+    }
+  }
+
   override fun cancelActivities() {
     val message = "cancel all activities for find and replace executor"
     validationJob?.cancel(message)
     findUsagesJob?.cancel(message)
+    selectScopeJob?.cancel(message)
   }
 }

@@ -2,10 +2,12 @@
 package com.intellij.ide.util.scopeChooser
 
 import com.intellij.find.FindBundle
+import com.intellij.find.impl.FindAndReplaceExecutor
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo.BrowseListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.observable.util.whenItemSelected
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.FixedSizeButton
@@ -50,6 +52,12 @@ class FrontendScopeChooser(private val project: Project, private val preselected
   init {
     comboBox.renderer = createScopeDescriptorRenderer({ descriptor -> scopeToSeparator[descriptor] }, FindBundle.message("find.usages.loading.search.scopes"))
     comboBox.setSwingPopup(false)
+    comboBox.whenItemSelected {
+      val scopeId = getSelectedScopeId() ?: return@whenItemSelected
+      if (it.needsUserInputForScope()) {
+        FindAndReplaceExecutor.getInstance().performScopeSelection(scopeId, project)
+      }
+    }
 
     val cachedScopes = ScopesStateService.getInstance(project).getCachedScopeDescriptors()
     initItems(cachedScopes)
@@ -62,7 +70,7 @@ class FrontendScopeChooser(private val project: Project, private val preselected
   private fun loadItemsAsync() {
     scopeService.loadItemsAsync(modelId, filterConditionType, onScopesUpdate = { scopeIdToScopeDescriptor, selectedScopeId ->
       scopesMap = scopeIdToScopeDescriptor ?: emptyMap()
-      val items = scopesMap.values
+      val items = scopesMap.values.toList()
       withContext(Dispatchers.EDT) {
         initItems(items, selectedScopeId)
       }
@@ -71,8 +79,8 @@ class FrontendScopeChooser(private val project: Project, private val preselected
 
   fun getComboBox(): ComboBox<ScopeDescriptor> = comboBox
 
-  private fun initItems(items: Collection<ScopeDescriptor>, selectedScopeId: String? = null) {
-    val previousSelection = selectedScopeId?.let { scopesMap[it] } ?: selectedItem
+  private fun initItems(items: List<ScopeDescriptor>, selectedScopeId: String? = null) {
+    val previousSelection = selectedScopeId?.let { scopesMap[it] }
     comboBox.removeAllItems()
     items.filterOutSeparators().forEach { comboBox.addItem(it) }
     tryToSelectItem(items, previousSelection)
@@ -93,7 +101,9 @@ class FrontendScopeChooser(private val project: Project, private val preselected
   }
 
   private fun tryToSelectItem(items: Collection<ScopeDescriptor>, previousSelection: ScopeDescriptor?) {
-    items.find { (previousSelection?.displayName ?: preselectedScopeName) == it.displayName }?.let { selectedItem = it }
+    items.find { (previousSelection?.displayName ?: preselectedScopeName) == it.displayName }?.let {
+      if (!it.needsUserInputForScope()) selectedItem = it
+    }
   }
 
   override fun setMinimumSize(minimumSize: Dimension?) {

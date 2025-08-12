@@ -49,9 +49,10 @@ private class ScopeModelServiceImpl(private val project: Project, private val co
 
   override fun disposeModel(modelId: String) {
     itemsLoadingJob?.cancel()
+    editScopesJob?.cancel()
   }
 
-  override fun getScopeById(scopeId: String): ScopeDescriptor? {
+  override fun getScopeDescriptorById(scopeId: String): ScopeDescriptor? {
     scopeIdToDescriptor[scopeId]?.let { return it }
     return null
   }
@@ -60,7 +61,7 @@ private class ScopeModelServiceImpl(private val project: Project, private val co
     val projectId = project.projectIdOrNullWithLogError(LOG) ?: return
     editScopesJob = coroutineScope.launch {
       try {
-        val selectedScopeName = selectedScopeId?.let { ScopesStateService.getInstance(project).getScopeById(selectedScopeId)?.displayName }
+        val selectedScopeName = selectedScopeId?.let { ScopesStateService.getInstance(project).getScopeNameById(selectedScopeId) }
         val scopeId = ScopeModelApi.getInstance().openEditScopesDialog(projectId, selectedScopeName)
         onFinish(scopeId)
       }

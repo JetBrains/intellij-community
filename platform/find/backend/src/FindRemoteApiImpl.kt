@@ -133,7 +133,7 @@ internal class FindRemoteApiImpl : FindRemoteApi {
     return FindInProjectUtil.getDirectory(findModel) != null
   }
 
-  private fun setCustomScopeById(project: Project, findModel: FindModel) {
+  private suspend fun setCustomScopeById(project: Project, findModel: FindModel) {
     if (findModel.customScope == null && findModel.isCustomScope) {
       val scopeId = findModel.customScopeId ?: return
       ScopesStateService.getInstance(project).getScopeById(scopeId)?.let {

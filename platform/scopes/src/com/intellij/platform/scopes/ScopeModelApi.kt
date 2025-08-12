@@ -17,6 +17,8 @@ interface ScopeModelApi : RemoteApi<Unit> {
 
   suspend fun openEditScopesDialog(projectId: ProjectId, selectedScopeId: String?): String?
 
+  suspend fun performScopeSelection(scopeId: String, projectId: ProjectId): Boolean
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): ScopeModelApi {

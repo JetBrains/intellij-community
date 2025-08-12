@@ -746,6 +746,10 @@ f:com.intellij.ide.impl.StructureViewWrapperImpl
 - sf:EP:com.intellij.openapi.extensions.ExtensionPointName
 - a:createNode(com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.openapi.project.Project,com.intellij.ide.projectView.ViewSettings):com.intellij.ide.util.treeView.AbstractTreeNode
 - a:getWorkspaceClass():java.lang.Class
+c:com.intellij.ide.util.scopeChooser.ScopeDescriptor
+- com.intellij.openapi.util.ColoredItem
+- *:needsUserInputForScope():Z
+- *p:performUiAction():V
 *f:com.intellij.microservices.client.generator.ClientGeneratorOpenInScratchService
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - f:createScratchFile(com.intellij.microservices.client.generator.ClientGenerator,com.intellij.microservices.oas.OpenApiSpecification,kotlin.coroutines.Continuation):java.lang.Object
