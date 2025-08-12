@@ -47,7 +47,6 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/eval4j",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/lang-impl",
-    "//platform/script-debugger/debugger-ui:scriptDebugger-ui",
     "//java/openapi:java",
     "//java/java-psi-impl:psi-impl",
     "//java/debugger/impl",
