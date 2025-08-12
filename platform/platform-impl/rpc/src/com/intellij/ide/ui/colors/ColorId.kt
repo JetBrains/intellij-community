@@ -16,7 +16,7 @@ private val LOG = fileLogger()
 /**
  * Converts an [Color] instance into a [ColorId] which can be used in RPC calls and stored in Rhizome.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun Color.rpcId(): ColorId {
   val color = this
   val serializedColor = serializeToRpc(color)
@@ -27,7 +27,7 @@ fun Color.rpcId(): ColorId {
 /**
  * Retrieves the [Color] associated with the given [ColorId].
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun ColorId.color(): Color {
   if (localColor != null) {
     return localColor
@@ -39,7 +39,7 @@ fun ColorId.color(): Color {
   }
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @Serializable
 class ColorId internal constructor(
   @Serializable @JvmField internal val serializedValue: SerializedValue? = null,
