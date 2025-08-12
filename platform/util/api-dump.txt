@@ -23,6 +23,7 @@ com.intellij.openapi.Disposable$Parent
 - a:beforeTreeDispose():V
 a:com.intellij.openapi.application.AccessToken
 - s:compound(java.util.List):com.intellij.openapi.application.AccessToken
+- s:create(java.lang.Runnable):com.intellij.openapi.application.AccessToken
 f:com.intellij.openapi.application.PathManager
 - s:findBinFile(java.lang.String):java.nio.file.Path
 - s:findBinFileWithException(java.lang.String):java.nio.file.Path

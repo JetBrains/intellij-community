@@ -17,6 +17,15 @@ public abstract class AccessToken implements AutoCloseable {
     @Override
     public void finish() { }
   };
+  
+  public static @NotNull AccessToken create(@NotNull Runnable onFinish) {
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        onFinish.run();
+      }
+    };
+  }
 
   public static @NotNull AccessToken compound(@NotNull List<@NotNull AccessToken> tokens) {
     if (tokens.isEmpty()) {
