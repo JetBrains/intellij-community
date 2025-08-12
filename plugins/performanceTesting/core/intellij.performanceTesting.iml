@@ -40,10 +40,10 @@
     <orderEntry type="module" module-name="intellij.platform.ide.internal" />
     <orderEntry type="module-library">
       <library name="github.oshi.core" type="repository">
-        <properties maven-id="com.github.oshi:oshi-core:6.6.0">
+        <properties maven-id="com.github.oshi:oshi-core:6.8.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.6.0/oshi-core-6.6.0.jar">
-              <sha256sum>706b5582246d534f427a57141d9fe4a9a7ac1aae37aac857769ec9abacf0de82</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.8.2/oshi-core-6.8.2.jar">
+              <sha256sum>9403c2537ac0dd425e556dfc3434e5d9f9a9547312472f4c27b7ab2673e9e862</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -53,11 +53,11 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.6.0/oshi-core-6.6.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.8.2/oshi-core-6.8.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.6.0/oshi-core-6.6.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.8.2/oshi-core-6.8.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

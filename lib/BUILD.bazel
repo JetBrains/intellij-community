@@ -7877,8 +7877,8 @@ jvm_import(
 
 jvm_import(
   name = "performance_testing-github-oshi-core",
-  jar = "@oshi-core-6_6_0_http//file",
-  source_jar = "@oshi-core-6_6_0-sources_http//file",
+  jar = "@oshi-core-6_8_2_http//file",
+  source_jar = "@oshi-core-6_8_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

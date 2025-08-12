@@ -11053,17 +11053,17 @@ http_file(
 )
 
 http_file(
-  name = "oshi-core-6_6_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/oshi/oshi-core/6.6.0/oshi-core-6.6.0.jar",
-  sha256 = "706b5582246d534f427a57141d9fe4a9a7ac1aae37aac857769ec9abacf0de82",
-  downloaded_file_path = "oshi-core-6.6.0.jar"
+  name = "oshi-core-6_8_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/oshi/oshi-core/6.8.2/oshi-core-6.8.2.jar",
+  sha256 = "9403c2537ac0dd425e556dfc3434e5d9f9a9547312472f4c27b7ab2673e9e862",
+  downloaded_file_path = "oshi-core-6.8.2.jar"
 )
 
 http_file(
-  name = "oshi-core-6_6_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/oshi/oshi-core/6.6.0/oshi-core-6.6.0-sources.jar",
-  sha256 = "8ff83b8b56a26ce09769a9f660f7a0dbc297340ac16955f9495420a4d90a9a9a",
-  downloaded_file_path = "oshi-core-6.6.0-sources.jar"
+  name = "oshi-core-6_8_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/oshi/oshi-core/6.8.2/oshi-core-6.8.2-sources.jar",
+  sha256 = "70ff1b508309bbc8aa0b383d6a0f528b71e17886943de71fec8a8a5f20c54aef",
+  downloaded_file_path = "oshi-core-6.8.2-sources.jar"
 )
 
 http_file(
