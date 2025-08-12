@@ -310,8 +310,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       spec.withProjectLibrary("jackson-dataformat-toml")
 
       withKotlincInPluginDirectory(spec = spec)
-      // TODO: KTIJ-32993
-      withKotlincInPluginDirectory(libName = "kotlin-ide-dist", target = "kotlinc.ide", spec = spec)
 
       spec.withCustomVersion(PluginVersionEvaluator { _, ideBuildVersion, _ ->
         // in kt-branches we have own since and until versions
@@ -377,8 +375,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       withKotlincKotlinCompilerCommonLibrary(spec, mainModuleName)
       spec.withProjectLibrary("kotlinc.kotlin-compiler-fe10")
       withKotlincInPluginDirectory(spec = spec)
-      // TODO: KTIJ-32993
-      withKotlincInPluginDirectory(libName = "kotlin-ide-dist", target = "kotlinc.ide", spec = spec)
 
       addition?.invoke(spec)
     }

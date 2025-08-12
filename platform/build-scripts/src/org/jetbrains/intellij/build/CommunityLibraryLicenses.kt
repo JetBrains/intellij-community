@@ -1429,8 +1429,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.kotlin-dataframe-compiler-plugin"),
     jetbrainsLibrary("kotlinc.kotlin-dist"),
     jetbrainsLibrary("kotlinc.kotlin-gradle-statistics"),
-    // TODO: KTIJ-32993
-    jetbrainsLibrary("kotlinc.kotlin-ide-dist"),
     jetbrainsLibrary("kotlinc.kotlin-jps-common"),
     jetbrainsLibrary("kotlinc.kotlin-jps-plugin-classpath"),
     jetbrainsLibrary("kotlinc.kotlin-objcexport-header-generator"),

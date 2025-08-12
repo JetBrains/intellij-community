@@ -3766,13 +3766,6 @@ java_library(
 )
 
 jvm_import(
-  name = "kotlinc-kotlin-ide-dist",
-  jar = "@kotlin-dist-for-ide-2_3_0-dev-3276_http//file",
-  source_jar = "@kotlin-dist-for-ide-2_3_0-dev-3276-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
   name = "kotlinc-kotlin-jps-common",
   jar = "@kotlin-jps-common-for-ide-2_3_0-dev-3276_http//file",
   source_jar = "@kotlin-jps-common-for-ide-2_3_0-dev-3276-sources_http//file",

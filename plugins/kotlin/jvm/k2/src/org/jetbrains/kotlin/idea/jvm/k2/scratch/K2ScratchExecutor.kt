@@ -20,7 +20,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
@@ -62,8 +61,7 @@ class K2ScratchExecutor(override val file: K2KotlinScratchFile, val project: Pro
             }
 
             val (code, stdout, stderr) = withBackgroundProgress(
-                project,
-                title = KotlinJvmBundle.message("progress.title.compiling.kotlin.scratch")
+                project, title = KotlinJvmBundle.message("progress.title.compiling.kotlin.scratch")
             ) {
                 val process = getJavaCommandLine(file.file, module).createProcess()
                 process.awaitExit()
@@ -112,10 +110,9 @@ class K2ScratchExecutor(override val file: K2KotlinScratchFile, val project: Pro
     }
 
     private fun getJavaCommandLine(scriptVirtualFile: VirtualFile, module: Module?): GeneralCommandLine {
-        val javaParameters = JavaParametersBuilder(project)
-            .withSdkFrom(module ?: ModuleUtilCore.findModuleForFile(scriptVirtualFile, project), true)
-            .withMainClassName("org.jetbrains.kotlin.preloading.Preloader")
-            .build()
+        val javaParameters =
+            JavaParametersBuilder(project).withSdkFrom(module ?: ModuleUtilCore.findModuleForFile(scriptVirtualFile, project), true)
+                .withMainClassName("org.jetbrains.kotlin.preloading.Preloader").build()
 
         javaParameters.charset = null
         with(javaParameters.vmParametersList) {
@@ -132,24 +129,21 @@ class K2ScratchExecutor(override val file: K2KotlinScratchFile, val project: Pro
 
         val ideScriptingClasses = PathUtil.getJarPathForClass(KotlinScratchScript::class.java)
 
-        // TODO: KTIJ-32993
-        val kotlincIdeLibDirectory = File(KotlinPluginLayout.kotlincIde, "lib")
-        val powerAssertLib = File(kotlincIdeLibDirectory, KotlinArtifactNames.POWER_ASSERT_COMPILER_PLUGIN)
-
-        // TODO: KTIJ-32993
         val classPath = buildSet {
             this += ideScriptingClasses
-            listOf( //KotlinArtifacts.kotlinCompiler,
-                File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_COMPILER), //KotlinArtifacts.kotlinStdlib,
-                File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB), //KotlinArtifacts.kotlinReflect,
-                File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_REFLECT), //KotlinArtifacts.kotlinScriptRuntime,
-                File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPT_RUNTIME), // KotlinArtifacts.trove4j,
-                File(kotlincIdeLibDirectory, KotlinArtifactNames.TROVE4J), // KotlinArtifacts.kotlinDaemon,
-                File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_DAEMON), powerAssertLib, //KotlinArtifacts.kotlinScriptingCompiler,
-                File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPTING_COMPILER), //KotlinArtifacts.kotlinScriptingCompilerImpl,
-                File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPTING_COMPILER_IMPL), //KotlinArtifacts.kotlinScriptingCommon,
-                File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPTING_COMMON), //KotlinArtifacts.kotlinScriptingJvm,
-                File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPTING_JVM), KotlinArtifacts.jetbrainsAnnotations
+            listOf(
+                KotlinArtifacts.kotlinCompiler,
+                KotlinArtifacts.kotlinStdlib,
+                KotlinArtifacts.kotlinReflect,
+                KotlinArtifacts.kotlinScriptRuntime,
+                KotlinArtifacts.trove4j,
+                KotlinArtifacts.kotlinDaemon,
+                KotlinArtifacts.powerAssertPlugin,
+                KotlinArtifacts.kotlinScriptingCompiler,
+                KotlinArtifacts.kotlinScriptingCompilerImpl,
+                KotlinArtifacts.kotlinScriptingCommon,
+                KotlinArtifacts.kotlinScriptingJvm,
+                KotlinArtifacts.jetbrainsAnnotations
             ).mapTo(this) { it.toPath().absolutePathString() }
 
             if (module != null) {
@@ -158,18 +152,18 @@ class K2ScratchExecutor(override val file: K2KotlinScratchFile, val project: Pro
 
         }.toList()
 
-        javaParameters.classPath.add(File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_PRELOADER).absolutePath)
+        javaParameters.classPath.add(KotlinArtifacts.kotlinPreloader.absolutePath)
         javaParameters.programParametersList.addAll(
             "-cp",
-            File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_COMPILER).absolutePath,
+            KotlinArtifacts.kotlinCompiler.absolutePath,
             "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler",
             "-cp",
             classPath.joinToString(File.pathSeparator),
             "-kotlin-home",
-            KotlinPluginLayout.kotlincIde.absolutePath,
+            KotlinPluginLayout.kotlinc.absolutePath,
             "-script",
             scriptVirtualFile.path,
-            "-Xplugin=${powerAssertLib.absolutePath}",
+            "-Xplugin=${KotlinArtifacts.powerAssertPlugin.absolutePath}",
             "-P",
             "plugin:kotlin.scripting:script-templates=${KotlinScratchScript::class.java.name}",
             "-Xuse-fir-lt=false",

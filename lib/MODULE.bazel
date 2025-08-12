@@ -5201,20 +5201,6 @@ http_file(
 )
 
 http_file(
-  name = "kotlin-dist-for-ide-2_3_0-dev-3276_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dist-for-ide/2.3.0-dev-3276/kotlin-dist-for-ide-2.3.0-dev-3276.jar",
-  sha256 = "b674165d3189da820ebc74ef267a610320a06f7e3aef176b4ba2a4b07548493a",
-  downloaded_file_path = "kotlin-dist-for-ide-2.3.0-dev-3276.jar"
-)
-
-http_file(
-  name = "kotlin-dist-for-ide-2_3_0-dev-3276-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dist-for-ide/2.3.0-dev-3276/kotlin-dist-for-ide-2.3.0-dev-3276-sources.jar",
-  sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
-  downloaded_file_path = "kotlin-dist-for-ide-2.3.0-dev-3276-sources.jar"
-)
-
-http_file(
   name = "kotlin-jps-common-for-ide-2_3_0-dev-3276_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.3.0-dev-3276/kotlin-jps-common-for-ide-2.3.0-dev-3276.jar",
   sha256 = "6f2c5e21475b8c13e315af558c9f9f38afd65e75715a85f407f01a0acce579ba",

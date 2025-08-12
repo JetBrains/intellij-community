@@ -84,9 +84,6 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincWithStandardNaming("kotlinc.kotlin-dist", jpsPluginCoordinates, postfix = "-for-ide", repository = INTELLIJ_DEPENDENCIES_REPOSITORY)
         kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", jpsPluginCoordinates, repository = INTELLIJ_DEPENDENCIES_REPOSITORY)
 
-        // TODO: KTIJ-32993
-        kotlincWithStandardNaming("kotlinc.kotlin-dist", kotlincCoordinates, postfix = "-for-ide", jpsLibraryName = "kotlinc.kotlin-ide-dist")
-
         // bootstrap version of kotlin-jps-plugin-classpath required for testing
         kotlincWithStandardNaming(
             "kotlinc.kotlin-jps-plugin-classpath",

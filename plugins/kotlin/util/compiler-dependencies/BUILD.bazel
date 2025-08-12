@@ -7,7 +7,6 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     "@lib//:kotlinc-kotlin-dist",
-    "@lib//:kotlinc-kotlin-ide-dist",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
