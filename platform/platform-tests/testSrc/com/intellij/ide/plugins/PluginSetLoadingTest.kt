@@ -15,6 +15,8 @@ import org.intellij.lang.annotations.Language
 import org.junit.Rule
 import org.junit.Test
 import java.util.function.Function
+import kotlin.math.absoluteValue
+import kotlin.random.Random
 
 class PluginSetLoadingTest {
   init {
@@ -451,6 +453,35 @@ class PluginSetLoadingTest {
     val descriptor = pluginSet.getPlugin("disabled")
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
     assertThat(descriptor).isNotMarkedEnabled()
+  }
+
+  @Test
+  fun `dependency on a plugin alias in core content module from a plugin required content module is allowed`() {
+    // note: result can be order-dependent
+    val rnd = Random(239)
+    val ids = (1..20).map { rnd.nextInt().absoluteValue.toString(36) }.distinct()
+    for (id in ids) {
+      plugin("intellij.textmate.$id") {
+        content {
+          module("intellij.textmate.impl.$id", loadingRule = ModuleLoadingRule.REQUIRED) {
+            dependencies {
+              plugin("com.intellij.modules.spellchecker")
+            }
+          }
+        }
+      }.buildDir(pluginsDirPath.resolve("foo.$id"))
+    }
+    plugin(PluginManagerCore.CORE_PLUGIN_ID) {
+      content {
+        module("intellij.spellchecker") {
+          isSeparateJar = true
+          pluginAlias("com.intellij.modules.spellchecker")
+        }
+        module("intellij.required", loadingRule = ModuleLoadingRule.REQUIRED) {}
+      }
+    }.buildDir(pluginsDirPath.resolve("core"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins(PluginManagerCore.CORE_PLUGIN_ID, *ids.map { "intellij.textmate.$it" }.toTypedArray())
   }
 
   private fun writeDescriptor(id: String, @Language("xml") data: String) {
