@@ -12,7 +12,9 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListOwner;
+import com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.JBColor;
@@ -118,20 +120,6 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
 
   public static @NotNull ChangesBrowserNode<?> createFilePath(@NotNull FilePath userObject) {
     return createFilePath(userObject, null);
-  }
-
-  public static @NotNull ChangesBrowserNode<?> createLogicallyLocked(@Nullable Project project,
-                                                                     @NotNull VirtualFile file,
-                                                                     @NotNull LogicalLock lock) {
-    return new ChangesBrowserLogicallyLockedFile(project, file, lock);
-  }
-
-  public static @NotNull ChangesBrowserNode<?> createLockedFolders(@NotNull Project project) {
-    return new ChangesBrowserLockedFoldersNode(project);
-  }
-
-  public static @NotNull ChangesBrowserNode<?> createLocallyDeleted(@NotNull LocallyDeletedChange change) {
-    return new ChangesBrowserLocallyDeletedNode(change);
   }
 
   @Override

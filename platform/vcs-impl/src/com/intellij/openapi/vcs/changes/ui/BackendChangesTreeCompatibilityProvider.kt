@@ -60,13 +60,6 @@ internal class BackendChangesTreeCompatibilityProvider : ChangesTreeCompatibilit
   override fun getPresentablePath(project: Project?, path: FilePath, useRelativeRootPaths: Boolean, acceptEmptyPath: Boolean): @NlsSafe String =
     VcsUtil.getPresentablePath(project, path, true, true)
 
-  override fun getLockedFilesCleanupWorker(project: Project, lockedFoldersNode: ChangesBrowserLockedFoldersNode): Runnable =
-    Runnable {
-      ChangesUtil.processVirtualFilesByVcs(project, lockedFoldersNode.iterateFilesUnder().toList(), { vcs, files ->
-        vcs.changeProvider?.doCleanup(files)
-      })
-    }
-
   override fun logInclusionToggle(project: Project, exclude: Boolean, event: MouseEvent) {
     CommitSessionCollector.getInstance(project).logInclusionToggle(exclude, event)
   }

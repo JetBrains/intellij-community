@@ -8,7 +8,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ui.ChangeListDragBean
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserLockedFoldersNode
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
@@ -30,8 +29,6 @@ interface ChangesTreeCompatibilityProvider {
   fun getPresentablePath(project: Project?, path: FilePath, useRelativeRootPaths: Boolean, acceptEmptyPath: Boolean): @NlsSafe String
 
   fun getFileStatus(project: Project, file: VirtualFile): FileStatus
-
-  fun getLockedFilesCleanupWorker(project: Project, lockedFoldersNode: ChangesBrowserLockedFoldersNode): Runnable?
 
   fun getIcon(project: Project?, filePath: FilePath, isDirectory: Boolean): Icon?
 

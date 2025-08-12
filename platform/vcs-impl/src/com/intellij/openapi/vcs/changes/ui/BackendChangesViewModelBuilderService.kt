@@ -102,7 +102,7 @@ internal class BackendChangesViewModelBuilderService(private val project: Projec
 
     val subtreeRoot = createTagNode(ChangesBrowserNode.LOCALLY_DELETED_NODE_TAG)
     for (change in locallyDeletedChanges.sortedWith(compareBy(TreeModelBuilder.PATH_COMPARATOR) { it.path })) {
-      insertChangeNode(change.path, subtreeRoot, ChangesBrowserNode.createLocallyDeleted(change))
+      insertChangeNode(change.path, subtreeRoot, ChangesBrowserLocallyDeletedNode(change))
     }
     return this
   }
@@ -128,7 +128,7 @@ internal class BackendChangesViewModelBuilderService(private val project: Projec
 
   fun TreeModelBuilder.setLockedFolders(lockedFolders: List<VirtualFile>): TreeModelBuilder {
     if (lockedFolders.isEmpty()) return this
-    insertFilesIntoNode(lockedFolders, ChangesBrowserNode.createLockedFolders(project))
+    insertFilesIntoNode(lockedFolders, ChangesBrowserLockedFoldersNode(project))
     return this
   }
 
@@ -137,7 +137,7 @@ internal class BackendChangesViewModelBuilderService(private val project: Projec
     val subtreeRoot = createTagNode(ChangesBrowserNode.LOGICALLY_LOCKED_TAG)
 
     for ((file, lock) in logicallyLockedFiles.toSortedMap(TreeModelBuilder.FILE_COMPARATOR)) {
-      insertChangeNode(file, subtreeRoot, ChangesBrowserNode.createLogicallyLocked(project, file, lock))
+      insertChangeNode(file, subtreeRoot, ChangesBrowserLogicallyLockedFile(project, file, lock))
     }
     return this
   }
