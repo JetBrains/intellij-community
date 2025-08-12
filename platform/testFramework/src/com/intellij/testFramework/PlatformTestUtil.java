@@ -78,14 +78,13 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import junit.framework.AssertionFailedError;
 import kotlin.Unit;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import kotlinx.coroutines.Job;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.junit.AssumptionViolatedException;
@@ -411,14 +410,19 @@ public final class PlatformTestUtil {
   }
 
   public static <T> T waitForFuture(@NotNull Future<T> future, long timeoutMillis) {
+    if (!EDT.isCurrentThreadEdt()) {
+      try {
+        return future.get(timeoutMillis, TimeUnit.MILLISECONDS);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
     assertDispatchThreadWithoutWriteAccess();
     long start = System.currentTimeMillis();
     while (true) {
       if (!future.isDone()) {
-        TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
-          UIUtil.dispatchAllInvocationEvents();
-          return Unit.INSTANCE;
-        });
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       }
       try {
         return future.get(10, TimeUnit.MILLISECONDS);
@@ -513,6 +517,25 @@ public final class PlatformTestUtil {
       });
       return null;
     });
+  }
+
+  @TestOnly
+  public static void waitForSingleAlarm(@NotNull SingleAlarm alarm, long timeout, @NotNull TimeUnit timeUnit) throws TimeoutException {
+    Job job = alarm.getCurrentJob();
+    if (job == null) {
+      return;
+    }
+
+    long currentTime = System.currentTimeMillis();
+    while (true) {
+      if (!job.isActive()) {
+        return;
+      }
+      if (getMillisSince(currentTime) > timeUnit.toMillis(timeout)) {
+        throw new TimeoutException("Could not wait for " + alarm + "to finish");
+      }
+      dispatchAllEventsInIdeEventQueue();
+    }
   }
 
   /**

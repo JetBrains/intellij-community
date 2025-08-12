@@ -33,6 +33,10 @@
     <inline.completion.insertActionIdResolver
       implementation="com.intellij.terminal.frontend.inlineCompletion.TerminalInlineCompletionInsertActionIdResolver"
       order="first"/>
+    <completion.contributor language="any"
+                            id="terminalCommandSpecGen2"
+                            implementationClass="com.intellij.terminal.frontend.TerminalCommandSpecCompletionContributorGen2"
+                            order="first, before terminalPowerShell, after ml_context"/>
     <applicationService
       serviceInterface="org.jetbrains.plugins.terminal.fus.TerminalFocusFusService"
       serviceImplementation="com.intellij.terminal.frontend.fus.TerminalFocusFusServiceImpl"/>

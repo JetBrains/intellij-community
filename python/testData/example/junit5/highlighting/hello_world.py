@@ -1,0 +1,2 @@
+class Main:
+    pass<caret>

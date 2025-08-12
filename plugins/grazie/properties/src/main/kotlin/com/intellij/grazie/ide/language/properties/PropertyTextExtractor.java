@@ -8,6 +8,8 @@ import com.intellij.grazie.utils.HtmlUtilsKt;
 import com.intellij.grazie.utils.PsiUtilsKt;
 import com.intellij.grazie.utils.Text;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
+import com.intellij.lang.properties.spellchecker.MnemonicsTokenizer;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -18,10 +20,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.intellij.grazie.text.TextContent.TextDomain.COMMENTS;
 
 final class PropertyTextExtractor extends TextExtractor {
+
+  private static final ExtensionPointName<MnemonicsTokenizer> MNEMONICS_EP_NAME =
+    ExtensionPointName.create("com.intellij.properties.spellcheckerMnemonicsTokenizer");
+
   private static final Pattern apostrophes = Pattern.compile("'(?=')");
   private static final Pattern continuationIndent = Pattern.compile("(?<=\n)[ \t]+");
   private static final Pattern trailingSlash = Pattern.compile("\\\\\n");
@@ -41,6 +48,19 @@ final class PropertyTextExtractor extends TextExtractor {
         content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(apostrophes, content), Exclusion::exclude));
         content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(continuationIndent, content), Exclusion::exclude));
         content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(trailingSlash, content), Exclusion::exclude));
+        for (MnemonicsTokenizer tokenizer : MNEMONICS_EP_NAME.getExtensionList()) {
+          if (tokenizer.hasMnemonics(content.toString())) {
+            Pattern ignoredCharactersPattern = Pattern.compile(
+              "[" +
+              tokenizer.ignoredCharacters().stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining()) +
+              "]"
+            );
+            content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(ignoredCharactersPattern, content), Exclusion::exclude));
+            break;
+          }
+        }
       }
 
       while (content != null) {

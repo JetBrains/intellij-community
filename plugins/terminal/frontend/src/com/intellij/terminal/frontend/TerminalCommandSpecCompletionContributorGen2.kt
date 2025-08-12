@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.reworked.completion
+package com.intellij.terminal.frontend
 
+import com.google.common.base.Ascii
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -10,9 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.terminal.completion.ShellCommandSpecCompletion
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
@@ -20,11 +18,9 @@ import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellSuggestionType
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
-import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionScope
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorReworkedImpl
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellMergedCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderReworkedImpl
 import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
@@ -36,7 +32,6 @@ import org.jetbrains.plugins.terminal.util.ShellType
 import java.io.File
 
 internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContributor(), DumbAware {
-  val tracer = TelemetryManager.getTracer(TerminalCompletionScope)
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     if (!parameters.editor.isReworkedTerminalEditor) return
@@ -77,17 +72,13 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
     if (allTokens.isEmpty()) {
       return
     }
-    tracer.spanBuilder("terminal-completion-all").use {
-      val suggestions = runBlockingCancellable {
-        val expandedTokens = expandAliases(context, allTokens, aliasesStorage)
-        computeSuggestions(expandedTokens, context, parameters.isAutoPopup)
-      }
-      tracer.spanBuilder("terminal-completion-submit-suggestions-to-lookup").use {
-        submitSuggestions(suggestions, allTokens, result, ShellType.ZSH, parameters.isAutoPopup)
-      }
+    val suggestions = runBlockingCancellable {
+      val expandedTokens = expandAliases(context, allTokens, aliasesStorage)
+      computeSuggestions(expandedTokens, context, parameters.isAutoPopup)
     }
+    submitSuggestions(suggestions, allTokens, result, ShellType.ZSH, parameters.isAutoPopup)
   }
-  
+
   private fun submitSuggestions(
     suggestions: List<ShellCompletionSuggestion>,
     allTokens: List<String>,
@@ -131,9 +122,7 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
 
     val fileProducer = suspend { context.generatorsExecutor.execute(runtimeContext, ShellDataGenerators.fileSuggestionsGenerator()) }
     val specCompletionFunction: suspend (String) -> List<ShellCompletionSuggestion>? = { commandName ->
-      tracer.spanBuilder("terminal-completion-compute-completion-items").useWithScope {
-        completion.computeCompletionItems(commandName, commandArguments)
-      }
+      completion.computeCompletionItems(commandName, commandArguments)
     }
 
     if (commandArguments.isEmpty()) {
@@ -262,21 +251,17 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
       // PowerShell consider both slash and backslash as valid path separators.
       // But after suggestion insertion, it is replacing wrong path separators with OS path separators.
       // Here we are emulating the same behavior.
+      val terminalInput = context.editor.getUserData(TerminalInput.KEY)
       if (shellType == ShellType.POWERSHELL && (suggestion.type == ShellSuggestionType.FOLDER || suggestion.type == ShellSuggestionType.FILE)) {
         val pathStartOffset = context.startOffset - suggestion.prefixReplacementIndex
         val pathText = context.document.immutableCharSequence.substring(pathStartOffset, context.tailOffset)
         val wrongSeparator = if (File.separatorChar == '/') '\\' else '/'
         val adjustedPathText = pathText.replace(wrongSeparator, File.separatorChar)
-        context.document.replaceString(pathStartOffset, context.tailOffset, adjustedPathText)
+        terminalInput?.sendBytes(ByteArray(pathText.length) { Ascii.BS })
+        terminalInput?.sendString(adjustedPathText)
       }
       if (appendPathSeparator) {
-        val tailOffset = context.tailOffset
-        context.document.insertString(tailOffset, File.separator)
-        context.editor.caretModel.moveToOffset(tailOffset + 1)
-      }
-      val cursorOffset = suggestion.insertValue?.indexOf("{cursor}")
-      if (cursorOffset != null && cursorOffset != -1) {
-        context.editor.caretModel.moveToOffset(context.startOffset + cursorOffset)
+        terminalInput?.sendString(File.separator)
       }
     }
   }

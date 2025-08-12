@@ -70,7 +70,7 @@ class SingleEdtTaskScheduler private constructor(kind: UiDispatcherKind) {
 
   @TestOnly
   @RequiresEdt
-  fun waitForAllExecuted(timeout: Duration) {
-    impl.waitForAllExecutedInEdt(timeout)
+  fun getAlarm(): SingleAlarm {
+    return impl
   }
 }

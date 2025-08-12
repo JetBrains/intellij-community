@@ -58,5 +58,6 @@
     <orderEntry type="module" module-name="intellij.platform.feedback" />
     <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" />
     <orderEntry type="module" module-name="intellij.platform.inline.completion" />
+    <orderEntry type="module" module-name="intellij.terminal.completion" />
   </component>
 </module>

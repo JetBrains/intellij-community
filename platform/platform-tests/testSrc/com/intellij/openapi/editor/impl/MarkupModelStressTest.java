@@ -54,22 +54,14 @@ public class MarkupModelStressTest extends AbstractEditorTest {
   private void validateState() {
     MarkupModelEx markupModel = ((EditorEx)getEditor()).getMarkupModel();
     List<RangeHighlighterEx> list1;
-    MarkupIterator<RangeHighlighterEx> it1 = markupModel.overlappingIterator(0, Integer.MAX_VALUE);
-    try {
-      list1 = ContainerUtil.collect(it1, h->h.isRenderedInGutter());
-    }
-    finally {
-      it1.dispose();
+    try (MarkupIterator<RangeHighlighterEx> it1 = markupModel.overlappingIterator(0, Integer.MAX_VALUE)) {
+      list1 = ContainerUtil.collect(it1, h -> h.isRenderedInGutter());
     }
 
-    MarkupIterator<RangeHighlighterEx> it2 =
-      new FilteringMarkupIterator<>(markupModel.overlappingIterator(0, Integer.MAX_VALUE), h->h.isRenderedInGutter());
     List<RangeHighlighterEx> list2;
-    try {
+    try (MarkupIterator<RangeHighlighterEx> it2 = new FilteringMarkupIterator<>(markupModel.overlappingIterator(0, Integer.MAX_VALUE),
+                                                                                h -> h.isRenderedInGutter())) {
       list2 = ContainerUtil.collect(it2);
-    }
-    finally {
-      it2.dispose();
     }
     assertEquals(list1, list2);
   }

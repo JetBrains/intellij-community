@@ -3,7 +3,7 @@ package com.intellij.ide
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
@@ -21,7 +21,7 @@ object FileIconUtil {
     for (extension in FileIconProvider.EP_NAME.filterableLazySequence()) {
       val icon = runCatching {
         extension.instance?.getIcon(file, flags, project)
-      }.getOrLogException {
+      }.getOrHandleException {
         if (it !is IndexNotReadyException) {
           LOG.warn(PluginException("FileIconProvider $extension threw an exception", it, extension.pluginDescriptor.pluginId))
         }
@@ -38,7 +38,7 @@ object FileIconUtil {
     for (extension in FileIconPatcher.EP_NAME.filterableLazySequence()) {
       patched = runCatching {
         extension.instance?.patchIcon(patched, file, flags, project)
-      }.getOrLogException {
+      }.getOrHandleException {
         if (it !is IndexNotReadyException) {
           LOG.warn(PluginException("FileIconPatcher $extension threw an exception", it, extension.pluginDescriptor.pluginId))
         }

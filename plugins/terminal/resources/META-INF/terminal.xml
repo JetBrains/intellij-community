@@ -96,10 +96,6 @@
                             implementationClass="org.jetbrains.plugins.terminal.block.completion.TerminalCommandSpecCompletionContributorGen1"
                             order="first, before terminalPowerShell, after ml_context"/>
     <completion.contributor language="any"
-                            id="terminalCommandSpecGen2"
-                            implementationClass="org.jetbrains.plugins.terminal.block.reworked.completion.TerminalCommandSpecCompletionContributorGen2"
-                            order="first, before terminalPowerShell, after ml_context"/>
-    <completion.contributor language="any"
                             id="terminalPowerShell"
                             implementationClass="org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionContributor"
                             order="first, before shShebang, before liveTemplates, after ml_context"/>

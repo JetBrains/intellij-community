@@ -86,7 +86,7 @@ import org.jetbrains.jewel.ui.theme.inlineBannerStyle
     "Use the overload with 'linkActions' and 'iconActions' parameters instead",
     replaceWith =
         ReplaceWith(
-            "org.jetbrains.jewel.ui.component.InlineInformationBanner(" +
+            "InlineInformationBanner(" +
                 "text = text, " +
                 "modifier = modifier, " +
                 "title = title, " +
@@ -95,7 +95,8 @@ import org.jetbrains.jewel.ui.theme.inlineBannerStyle
                 "iconActions = actionIcons," +
                 "style = style, " +
                 "textStyle = textStyle" +
-                ")"
+                ")",
+            "org.jetbrains.jewel.ui.component.InlineInformationBanner",
         ),
 )
 public fun InformationInlineBanner(
@@ -228,7 +229,7 @@ public fun InlineInformationBanner(
     "Use the overload with 'linkActions' and 'iconActions' parameters instead",
     replaceWith =
         ReplaceWith(
-            "org.jetbrains.jewel.ui.component.InlineInformationBanner(" +
+            "InlineInformationBanner(" +
                 "text = text, " +
                 "modifier = modifier, " +
                 "title = title, " +
@@ -237,7 +238,8 @@ public fun InlineInformationBanner(
                 "iconActions = actionIcons," +
                 "style = style, " +
                 "textStyle = textStyle" +
-                ")"
+                ")",
+            "org.jetbrains.jewel.ui.component.InlineInformationBanner",
         ),
 )
 public fun InformationInlineBanner(
@@ -365,7 +367,7 @@ public fun InlineInformationBanner(
     "Use the overload with 'linkActions' and 'iconActions' parameters instead",
     replaceWith =
         ReplaceWith(
-            "org.jetbrains.jewel.ui.component.InlineSuccessBanner(" +
+            "InlineSuccessBanner(" +
                 "text = text, " +
                 "modifier = modifier, " +
                 "title = title, " +
@@ -374,7 +376,8 @@ public fun InlineInformationBanner(
                 "iconActions = actionIcons," +
                 "style = style, " +
                 "textStyle = textStyle" +
-                ")"
+                ")",
+            "org.jetbrains.jewel.ui.component.InlineSuccessBanner",
         ),
 )
 public fun SuccessInlineBanner(
@@ -505,7 +508,7 @@ public fun InlineSuccessBanner(
     "Use the overload with 'linkActions' and 'iconActions' parameters instead",
     replaceWith =
         ReplaceWith(
-            "org.jetbrains.jewel.ui.component.InlineSuccessBanner(" +
+            "InlineSuccessBanner(" +
                 "text = text, " +
                 "modifier = modifier, " +
                 "title = title, " +
@@ -514,7 +517,8 @@ public fun InlineSuccessBanner(
                 "iconActions = actionIcons," +
                 "style = style, " +
                 "textStyle = textStyle" +
-                ")"
+                ")",
+            "org.jetbrains.jewel.ui.component.InlineSuccessBanner",
         ),
 )
 public fun SuccessInlineBanner(
@@ -646,7 +650,7 @@ public fun InlineSuccessBanner(
     "Use the overload with 'linkActions' and 'iconActions' parameters instead",
     replaceWith =
         ReplaceWith(
-            "org.jetbrains.jewel.ui.component.InlineWarningBanner(" +
+            "InlineWarningBanner(" +
                 "text = text, " +
                 "modifier = modifier, " +
                 "title = title, " +
@@ -655,7 +659,8 @@ public fun InlineSuccessBanner(
                 "iconActions = actionIcons," +
                 "style = style, " +
                 "textStyle = textStyle" +
-                ")"
+                ")",
+            "org.jetbrains.jewel.ui.component.InlineWarningBanner",
         ),
 )
 public fun WarningInlineBanner(
@@ -788,7 +793,7 @@ public fun InlineWarningBanner(
     "Use the overload with 'linkActions' and 'iconActions' parameters instead",
     replaceWith =
         ReplaceWith(
-            "org.jetbrains.jewel.ui.component.InlineWarningBanner(" +
+            "InlineWarningBanner(" +
                 "text = text, " +
                 "modifier = modifier, " +
                 "title = title, " +
@@ -797,7 +802,8 @@ public fun InlineWarningBanner(
                 "iconActions = actionIcons," +
                 "style = style, " +
                 "textStyle = textStyle" +
-                ")"
+                ")",
+            "org.jetbrains.jewel.ui.component.InlineWarningBanner",
         ),
 )
 public fun WarningInlineBanner(
@@ -927,7 +933,7 @@ public fun InlineWarningBanner(
     "Use the overload with 'linkActions' and 'iconActions' parameters instead",
     replaceWith =
         ReplaceWith(
-            "org.jetbrains.jewel.ui.component.InlineErrorBanner(" +
+            "InlineErrorBanner(" +
                 "text = text, " +
                 "modifier = modifier, " +
                 "title = title, " +
@@ -936,7 +942,8 @@ public fun InlineWarningBanner(
                 "iconActions = actionIcons," +
                 "style = style, " +
                 "textStyle = textStyle" +
-                ")"
+                ")",
+            "org.jetbrains.jewel.ui.component.InlineErrorBanner",
         ),
 )
 public fun ErrorInlineBanner(
@@ -1069,7 +1076,7 @@ public fun InlineErrorBanner(
     "Use the overload with 'linkActions' and 'iconActions' parameters instead",
     replaceWith =
         ReplaceWith(
-            "org.jetbrains.jewel.ui.component.InlineErrorBanner(" +
+            "InlineErrorBanner(" +
                 "text = text, " +
                 "modifier = modifier, " +
                 "title = title, " +
@@ -1078,7 +1085,8 @@ public fun InlineErrorBanner(
                 "iconActions = actionIcons," +
                 "style = style, " +
                 "textStyle = textStyle" +
-                ")"
+                ")",
+            "org.jetbrains.jewel.ui.component.InlineErrorBanner",
         ),
 )
 public fun ErrorInlineBanner(

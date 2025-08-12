@@ -12,7 +12,10 @@ import com.intellij.spellchecker.tokenizer.TokenConsumer
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.PsiUtil.isPluginModule
 
+private val IGNORED_CHARS = setOf('_', '&')
+
 internal class DevKitMnemonicsTokenizer : EscapeSequenceTokenizer<PropertyValueImpl>(), MnemonicsTokenizer {
+
   override fun hasMnemonics(propertyValue: String): Boolean {
     return propertyValue.contains('_') || propertyValue.contains('&')
   }
@@ -33,6 +36,8 @@ internal class DevKitMnemonicsTokenizer : EscapeSequenceTokenizer<PropertyValueI
     }
   }
 
+  override fun ignoredCharacters(): Set<Char> = IGNORED_CHARS
+
   private fun isRelevantModule(module: Module): Boolean {
     return isIntelliJPlatformProject(module.project)
            || isPluginModule(module)
@@ -50,7 +55,7 @@ internal class DevKitMnemonicsTokenizer : EscapeSequenceTokenizer<PropertyValueI
       val c = chars[index++]
       sourceOffsets[out.length - outOffset] = index - 1
       sourceOffsets[out.length + 1 - outOffset] = index
-      if (c != '_' && c != '&') {
+      if (c !in IGNORED_CHARS) {
         out.append(c)
         continue
       }

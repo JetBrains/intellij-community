@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetPresentable
@@ -32,7 +32,7 @@ internal suspend fun createMacDelegate(): SystemDock {
       if (Taskbar.isTaskbarSupported() /* not supported in CWM/Projector environment */) {
         Taskbar.getTaskbar().menu = dockMenu
       }
-    }.getOrLogException { logger<MacDockDelegate>() }
+    }.getOrHandleException { logger<MacDockDelegate>() }
     recentProjectsMenu
   }
   return MacDockDelegate(recentProjectsMenu)

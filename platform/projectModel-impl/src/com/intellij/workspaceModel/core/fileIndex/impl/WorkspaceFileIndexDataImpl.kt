@@ -468,10 +468,10 @@ internal class WorkspaceFileIndexDataImpl(
     }
     resetFileCache()
     if (storeRegistrar.registeredFileSets.isNotEmpty() || removeRegistrar.removedFileSets.isNotEmpty()) {
-      val changeLog = VersionedWorkspaceFileIndexChangeEvent(storageBefore = event.storageBefore,
-                                                             storageAfter = event.storageAfter,
-                                                             removedFileSets = removeRegistrar.removedFileSets.values,
-                                                             registeredFileSets = storeRegistrar.registeredFileSets.values,)
+      val changeLog = WorkspaceFileIndexChangedEvent(removedFileSets = removeRegistrar.removedFileSets.values,
+                                                     registeredFileSets = storeRegistrar.registeredFileSets.values,
+                                                     storageBefore = event.storageBefore,
+                                                     storageAfter = event.storageAfter,)
       project.messageBus.syncPublisher(WorkspaceFileIndexListener.TOPIC).workspaceFileIndexChanged(changeLog)
     }
   }
@@ -505,8 +505,10 @@ internal class WorkspaceFileIndexDataImpl(
 
     WorkspaceFileIndexDataMetrics.updateDirtyEntitiesTimeNanosec.addElapsedTime(start)
     if (storeRegistrar.registeredFileSets.isNotEmpty() || removeRegistrar.removedFileSets.isNotEmpty()) {
-      val changeLog = WorkspaceFileIndexChangedEventImpl(removedFileSets = removeRegistrar.removedFileSets.values,
-                                                         registeredFileSets = storeRegistrar.registeredFileSets.values,)
+      val changeLog = WorkspaceFileIndexChangedEvent(removedFileSets = removeRegistrar.removedFileSets.values,
+                                                     registeredFileSets = storeRegistrar.registeredFileSets.values,
+                                                     storageBefore = storage,
+                                                     storageAfter = storage,)
       project.messageBus.syncPublisher(WorkspaceFileIndexListener.TOPIC).workspaceFileIndexChanged(changeLog)
     }
   }

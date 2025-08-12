@@ -7,8 +7,8 @@ import org.gradle.tooling.internal.gradle.DefaultProjectIdentifier
 import org.gradle.tooling.model.gradle.BasicGradleProject
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
-import org.jetbrains.plugins.gradle.testFramework.util.GradleVersionSpecificsUtil.isBuildSrcSyncedSeparately
-import org.jetbrains.plugins.gradle.testFramework.util.GradleVersionSpecificsUtil.isBuildTreePathAvailable
+import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildSrcSyncedSeparately
+import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildTreePathAvailable
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest

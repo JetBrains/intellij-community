@@ -526,13 +526,13 @@ fun CodeInsightTestFixture.checkGTDUOutcome(expectedOutcome: GotoDeclarationOrUs
   val editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file)
   val offset = editor.caretModel.offset
 
-  val gtduOutcome = ReadAction
-    .nonBlocking(Callable {
-      val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: file
-      testGTDUOutcome(editor, file, offset)
-    })
-    .submit(AppExecutorUtil.getAppExecutorService())
-    .get()
+  val gtduOutcome = PlatformTestUtil.waitForFuture(
+    ReadAction
+      .nonBlocking(Callable {
+        val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: file
+        testGTDUOutcome(editor, file, offset)
+      })
+      .submit(AppExecutorUtil.getAppExecutorService()))
   Assert.assertEquals(actualSignature,
                       expectedOutcome,
                       gtduOutcome)

@@ -4068,20 +4068,6 @@ c:com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 - run():V
 - s:showOverChangesView(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.ui.MessageType,com.intellij.openapi.util.NamedRunnable[]):V
 - s:showOverVersionControlView(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.ui.MessageType):V
-a:com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
-- com.intellij.openapi.project.DumbAwareAction
-- sf:Companion:com.intellij.openapi.vcs.update.AbstractCommonUpdateAction$Companion
-- p:<init>(com.intellij.openapi.vcs.update.ActionInfo,com.intellij.openapi.vcs.update.ScopeInfo,Z):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- pa:filterRootsBeforeAction():Z
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- f:getConfigurableToEnvMap(com.intellij.openapi.project.Project):java.util.LinkedHashMap
-- p:isShowOptions(com.intellij.openapi.project.Project):Z
-- p:onSuccess():V
-- sf:showsCustomNotification(java.util.Collection):Z
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.openapi.vcs.update.AbstractCommonUpdateAction$Companion
-- f:showsCustomNotification(java.util.Collection):Z
 com.intellij.openapi.vcs.update.ActionInfo
 - sf:INTEGRATE:com.intellij.openapi.vcs.update.ActionInfo
 - sf:STATUS:com.intellij.openapi.vcs.update.ActionInfo
@@ -4094,10 +4080,6 @@ com.intellij.openapi.vcs.update.ActionInfo
 - a:getEnvironment(com.intellij.openapi.vcs.AbstractVcs):com.intellij.openapi.vcs.update.UpdateEnvironment
 - a:getGroupName(com.intellij.openapi.vcs.update.FileGroup):java.lang.String
 - a:showOptions(com.intellij.openapi.project.Project):Z
-c:com.intellij.openapi.vcs.update.CommonUpdateProjectAction
-- com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
-- <init>():V
-- p:filterRootsBeforeAction():Z
 com.intellij.openapi.vcs.update.FilePathChange
 - a:getAfterPath():com.intellij.openapi.vcs.FilePath
 - a:getBeforePath():com.intellij.openapi.vcs.FilePath
@@ -4518,7 +4500,7 @@ f:com.intellij.vcs.VcsShowToolWindowTabAction$Companion
 - f:activateVcsTab(com.intellij.openapi.project.Project,java.lang.String,Z):V
 f:com.intellij.vcs.ViewUpdateInfoNotification
 - com.intellij.notification.NotificationAction
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.update.UpdateInfoTree,java.lang.String,com.intellij.notification.Notification):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.update.UpdateInfoTree,java.lang.String):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.notification.Notification):V
 - s:focusUpdateInfoTree(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.update.UpdateInfoTree):V
 f:com.intellij.vcs.branch.BranchDataImpl

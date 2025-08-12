@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//plugins/grazie/src:core",
     "//plugins/yaml/backend",
+    "//json/backend",
     "//platform/util",
     "//plugins/yaml",
     "//platform/core-api:core",

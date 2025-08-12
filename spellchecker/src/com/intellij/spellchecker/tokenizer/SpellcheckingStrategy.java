@@ -131,6 +131,14 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
     return parserDefinition.getCommentTokens().contains(psiElement.getNode().getElementType());
   }
 
+
+  /**
+   * Controls whether to use text-level spellchecking provided by {@link com.intellij.grazie.spellcheck.GrazieSpellcheckingExtension}.
+   */
+  public boolean useTextLevelSpellchecking() {
+    return false;
+  }
+
   protected static boolean isInjectedLanguageFragment(@Nullable PsiElement element) {
     return element instanceof PsiLanguageInjectionHost
            && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element);

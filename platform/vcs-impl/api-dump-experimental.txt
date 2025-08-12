@@ -17,6 +17,11 @@
 c:com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 - com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder
 - *:build(Z):javax.swing.tree.DefaultTreeModel
+*f:com.intellij.openapi.vcs.update.VcsUpdateProcess
+- sf:INSTANCE:com.intellij.openapi.vcs.update.VcsUpdateProcess
+- sf:checkUpdateHasCustomNotification(java.util.Collection):Z
+- f:launchUpdate(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.update.ActionInfo,com.intellij.openapi.vcs.update.ScopeInfo,com.intellij.openapi.actionSystem.DataContext,java.lang.String,Z):V
+- bs:launchUpdate$default(com.intellij.openapi.vcs.update.VcsUpdateProcess,com.intellij.openapi.project.Project,com.intellij.openapi.vcs.update.ActionInfo,com.intellij.openapi.vcs.update.ScopeInfo,com.intellij.openapi.actionSystem.DataContext,java.lang.String,Z,I,java.lang.Object):V
 *:com.intellij.vcs.CacheableAnnotationProvider
 - a:getFromCache(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.annotate.FileAnnotation
 - a:populateCache(com.intellij.openapi.vfs.VirtualFile):V

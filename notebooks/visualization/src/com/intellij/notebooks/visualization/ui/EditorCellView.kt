@@ -8,6 +8,7 @@ import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedCo
 import com.intellij.notebooks.visualization.ui.cellsDnD.DropHighlightable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import java.awt.Rectangle
 
@@ -77,6 +78,7 @@ class EditorCellView(val cell: EditorCell) : EditorCellViewComponent() {
     }
     else {
       outputs?.let {
+        Disposer.dispose(it)
         remove(it)
         outputs = null
       }

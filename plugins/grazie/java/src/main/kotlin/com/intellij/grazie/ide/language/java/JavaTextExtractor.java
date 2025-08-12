@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import static com.intellij.grazie.text.TextContent.TextDomain.*;
+import static com.intellij.grazie.utils.EscapeUtilsKt.replaceBackslashEscapes;
 import static com.intellij.psi.JavaDocTokenType.*;
 import static com.intellij.psi.impl.source.tree.ElementType.JAVA_PLAIN_COMMENT_BIT_SET;
 import static com.intellij.psi.impl.source.tree.JavaDocElementType.DOC_PARAMETER_REF;
@@ -72,11 +73,11 @@ public class JavaTextExtractor extends TextExtractor {
           content = content.excludeRanges(
             ContainerUtil.map(Text.allOccurrences(Pattern.compile("(?<=\n)" + "\\s{" + indent + "}"), content), Exclusion::exclude));
         }
-        content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(Pattern.compile("\\\\\n"), content), Exclusion::exclude));
+        content = replaceBackslashEscapes(content);
         return ContainerUtil.createMaybeSingletonList(content.trimWhitespace());
       }
       if (indent == -1 && content != null) {
-        content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(Pattern.compile("\\\\n"), content), Exclusion::markUnknown));
+        content = replaceBackslashEscapes(content);
       }
 
       return ContainerUtil.createMaybeSingletonList(content);

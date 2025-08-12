@@ -27,6 +27,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.*;
+import com.intellij.spellchecker.xml.HtmlSpellcheckingStrategy;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -242,11 +243,9 @@ public class XmlTextExtractor extends TextExtractor {
                                                            @NotNull Set<TextContent.TextDomain> allowedDomains) {
       if (PsiUtilCore.getElementType(element) == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN &&
           element.getParent() instanceof XmlAttributeValue value &&
-          value.getParent() instanceof XmlAttribute attr &&
-          "class".equalsIgnoreCase(attr.getName())) {
-        return List.of();
+          value.getParent() instanceof XmlAttribute attr) {
+        if ("class".equals(attr.getName()) || HtmlSpellcheckingStrategy.shouldBeIgnored(value)) return List.of();
       }
-
       return super.buildTextContents(element, allowedDomains);
     }
 

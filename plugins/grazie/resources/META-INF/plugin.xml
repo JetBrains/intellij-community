@@ -83,7 +83,7 @@
     <spellchecker.lifecycle implementation="com.intellij.grazie.spellcheck.GrazieSpellcheckerLifecycle"/>
     <spellchecker.extension implementation="com.intellij.grazie.spellcheck.GrazieSpellcheckingExtension"/>
 
-    <registryKey key="spellchecker.grazie.enabled" defaultValue="false" description="Enables Grazie text-level spellchecking"/>
+    <registryKey key="spellchecker.grazie.enabled" defaultValue="true" description="Enables Grazie text-level spellchecking"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">

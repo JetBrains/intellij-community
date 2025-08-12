@@ -75,7 +75,9 @@ com.intellij.openapi.editor.ex.LineIterator
 - a:start(I):V
 com.intellij.openapi.editor.ex.MarkupIterator
 - com.intellij.util.containers.PeekableIterator
+- java.lang.AutoCloseable
 - sf:EMPTY:com.intellij.openapi.editor.ex.MarkupIterator
+- close():V
 - a:dispose():V
 - s:emptyIterator():com.intellij.openapi.editor.ex.MarkupIterator
 - s:mergeIterators(com.intellij.openapi.editor.ex.MarkupIterator,com.intellij.openapi.editor.ex.MarkupIterator,java.util.Comparator):com.intellij.openapi.editor.ex.MarkupIterator

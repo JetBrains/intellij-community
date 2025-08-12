@@ -38,6 +38,7 @@ jvm_library(
     "//platform/feedback",
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
     "//platform/inline-completion/shared:inline-completion",
+    "//plugins/terminal/completion",
   ],
   runtime_deps = [":frontend_resources"]
 )

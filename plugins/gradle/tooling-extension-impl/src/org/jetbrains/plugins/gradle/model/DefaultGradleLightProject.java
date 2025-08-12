@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
-import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.tooling.internal.gradle.DefaultProjectIdentifier;
 import org.gradle.tooling.model.ProjectIdentifier;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
@@ -15,6 +14,8 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildTreePathAvailable;
 
 @ApiStatus.Internal
 public final class DefaultGradleLightProject implements GradleLightProject, Serializable {
@@ -36,7 +37,7 @@ public final class DefaultGradleLightProject implements GradleLightProject, Seri
     myBuildModel = buildModel;
     myName = gradleProject.getName();
     myPath = gradleProject.getPath();
-    myIdentityPath = GradleVersionUtil.isGradleAtLeast(gradleVersion, "8.2") ? gradleProject.getBuildTreePath() : null;
+    myIdentityPath = isBuildTreePathAvailable(gradleVersion) ? gradleProject.getBuildTreePath() : null;
     myProjectDirectory = gradleProject.getProjectDirectory();
     myProjectIdentifier = new DefaultProjectIdentifier(
       gradleProject.getProjectIdentifier().getBuildIdentifier().getRootDir(),

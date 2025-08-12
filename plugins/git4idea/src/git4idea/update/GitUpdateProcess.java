@@ -438,12 +438,11 @@ public final class GitUpdateProcess {
     FixTrackedBranchDialog updateDialog = new FixTrackedBranchDialog(repository.getProject());
 
     if (updateDialog.showAndGet()) {
-      new GitUpdateExecutionProcess(repository.getProject(),
-                                    myRepositories,
-                                    updateDialog.getUpdateConfig(),
-                                    updateDialog.getUpdateMethod(),
-                                    updateDialog.shouldSetAsTrackedBranch())
-        .execute();
+      GitUpdateExecutionProcess.launchUpdate(repository.getProject(),
+                                             myRepositories,
+                                             updateDialog.getUpdateConfig(),
+                                             updateDialog.getUpdateMethod(),
+                                             updateDialog.shouldSetAsTrackedBranch());
     }
   }
 

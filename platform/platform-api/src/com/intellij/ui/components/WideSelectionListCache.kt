@@ -3,7 +3,7 @@ package com.intellij.ui.components
 
 import com.intellij.ui.speedSearch.FilteringListModel
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Dimension
 import java.beans.PropertyChangeListener
 import java.util.*
@@ -13,7 +13,7 @@ import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
 @ApiStatus.Internal
-@TestOnly
+@VisibleForTesting
 class WideSelectionListCache(private val list: JList<*>) {
 
   private var modelChanged = false
@@ -22,8 +22,7 @@ class WideSelectionListCache(private val list: JList<*>) {
    * Key is a value from the [list].
    * Don't cache `null` value because of using [MutableMap.getOrPut]
    */
-  @ApiStatus.Internal
-  @TestOnly
+  @VisibleForTesting
   val preferredSizeCache: MutableMap<Any, Dimension> = IdentityHashMap()
 
   private val listDataListener = object : ListDataListener {

@@ -8,6 +8,7 @@
   },
   "actions": {
     "evaluationRoots": [
+      "community/platform/core-impl/src/com/intellij/openapi/editor/impl/DocumentImpl.java",
       "community/platform/platform-impl/src/com/intellij/openapi/editor/impl/EditorImpl.java",
       "fleet/plugins/run/terminal/frontend/srcCommonMain/fleet/run/terminal/frontend/api/orchestrator/TerminalOrchestrator.kt",
       "phpstorm/php/src/com/jetbrains/php/PhpWorkaroundUtil.java",
@@ -21,6 +22,7 @@
       "plugins/evaluation-plugin/ijnext/src/com/intellij/evaluationPlugin/ijnext/insight/InsightFeature.kt",
       "plugins/full-line/cloud-impl/src/com/intellij/ml/llm/completion/cloud/context/mainEditor/RecentlyViewedContextCollector.kt",
       "plugins/full-line/core-completion/src/com/intellij/ml/inline/completion/experiment/extendable/ExperimentStatusManager.kt",
+      "plugins/full-line/core-completion/src/com/intellij/ml/inline/completion/impl/inline/MLCompletionHighlighterUtils.kt",
       "plugins/full-line/core-completion/src/com/intellij/ml/inline/completion/impl/kit/MLCompletionEnclosuresSupporter.kt",
       "plugins/full-line/core-completion/src/com/intellij/ml/inline/completion/impl/postprocessing/transformer/CodeSpecificTransformersProvider.kt",
       "plugins/full-line/markdown/cloud/src/com/intellij/ml/llm/markdown/completion/MarkdownCloudCompletionLanguageKit.kt",

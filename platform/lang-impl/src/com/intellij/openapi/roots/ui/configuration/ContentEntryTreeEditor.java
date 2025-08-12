@@ -39,18 +39,11 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeUIHelper;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,13 +82,8 @@ public class ContentEntryTreeEditor {
     TreeUtil.installActions(myTree);
     TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
 
-    JPanel excludePatternsPanel = new JPanel(new GridBagLayout());
-    excludePatternsPanel.setBorder(JBUI.Borders.empty(5));
-    GridBag gridBag = new GridBag().setDefaultWeightX(1, 1.0).setDefaultPaddingX(JBUIScale.scale(5));
-    JLabel myExcludePatternsLabel = new JLabel(ProjectBundle.message("module.paths.exclude.patterns"));
-    excludePatternsPanel.add(myExcludePatternsLabel, gridBag.nextLine().next());
-    myExcludePatternsField = new JTextField();
-    myExcludePatternsLabel.setLabelFor(myExcludePatternsField);
+    ContentEntryTreeEditorUI ui = new ContentEntryTreeEditorUI(myTree);
+    myExcludePatternsField = ui.excludePatternsField;
     myExcludePatternsField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
@@ -110,15 +98,7 @@ public class ContentEntryTreeEditor {
         }
       }
     });
-    excludePatternsPanel.add(myExcludePatternsField, gridBag.next().fillCellHorizontally());
-    JBLabel excludePatternsLegendLabel =
-      new JBLabel(XmlStringUtil.wrapInHtml(ProjectBundle.message("label.content.entry.separate.name.patterns")));
-    excludePatternsLegendLabel.setForeground(JBColor.GRAY);
-    excludePatternsPanel.add(excludePatternsLegendLabel, gridBag.nextLine().next().next().fillCellHorizontally());
-    JPanel treePanel = new JPanel(new BorderLayout());
-    treePanel.add(ScrollPaneFactory.createScrollPane(myTree, true), BorderLayout.CENTER);
-    treePanel.add(excludePatternsPanel, BorderLayout.SOUTH);
-    myComponent = UiDataProvider.wrapComponent(treePanel, sink -> {
+    myComponent = UiDataProvider.wrapComponent(ui.panel, sink -> {
       sink.set(FileSystemTree.DATA_KEY, myFileSystemTree);
       // fix SelectInProjectViewAction if the virtual files are moved into BGT_DATA_PROVIDER
       sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, myFileSystemTree == null ? null : myFileSystemTree.getSelectedFiles());

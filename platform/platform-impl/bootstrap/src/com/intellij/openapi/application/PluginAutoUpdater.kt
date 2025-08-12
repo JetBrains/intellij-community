@@ -8,7 +8,7 @@ import com.intellij.openapi.application.PluginAutoUpdateRepository.getAutoUpdate
 import com.intellij.openapi.application.PluginAutoUpdateRepository.safeConsumeUpdates
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.findUnsatisfiedDependencies
@@ -48,13 +48,13 @@ object PluginAutoUpdater {
       val updatesApplied = applyPluginUpdates(updates, logDeferred)
       PluginAutoUpdateStatistics(updatesPrepared = updates.size, pluginsUpdated = updatesApplied)
     }.apply {
-      getOrLogException { e ->
+      getOrHandleException { e ->
         logDeferred.await().error("Error occurred during application of plugin updates", e)
       }
     }
     runCatching {
       clearUpdates()
-    }.getOrLogException { e ->
+    }.getOrHandleException { e ->
       logDeferred.await().warn("Failed to clear plugin auto update directory", e)
     }
   }

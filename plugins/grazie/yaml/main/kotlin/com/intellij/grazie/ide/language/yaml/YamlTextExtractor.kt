@@ -9,6 +9,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.elementType
+import org.jetbrains.yaml.YAMLSpellcheckerStrategy.JsonSchemaSpellcheckerClientForYaml
 import org.jetbrains.yaml.YAMLTokenTypes.*
 import org.jetbrains.yaml.psi.YAMLScalar
 
@@ -16,15 +17,17 @@ private class YamlTextExtractor : TextExtractor() {
   private val commentBuilder = TextContentBuilder.FromPsi.removingIndents(" \t#")
 
   override fun buildTextContent(root: PsiElement, allowedDomains: MutableSet<TextContent.TextDomain>): TextContent? {
-    when (root) {
-      is PsiComment -> {
-        val siblings = getNotSoDistantSimilarSiblings(root, TokenSet.create(WHITESPACE, INDENT, EOL)) { it.elementType == COMMENT }
-        return TextContent.joinWithWhitespace('\n', siblings.mapNotNull { commentBuilder.build(it, TextContent.TextDomain.COMMENTS) })
-      }
-      is YAMLScalar ->
-        return TextContentBuilder.FromPsi.excluding { isStealth(it) }.build(root, TextContent.TextDomain.LITERALS)
-      else -> return null
+    if (root is PsiComment) {
+      val siblings = getNotSoDistantSimilarSiblings(root, TokenSet.create(WHITESPACE, INDENT, EOL)) { it.elementType == COMMENT }
+      return TextContent.joinWithWhitespace('\n', siblings.mapNotNull { commentBuilder.build(it, TextContent.TextDomain.COMMENTS) })
     }
+    if (root is YAMLScalar) {
+      if (JsonSchemaSpellcheckerClientForYaml(root).matchesNameFromSchema()) {
+        return null
+      }
+      return TextContentBuilder.FromPsi.excluding { isStealth(it) }.build(root, TextContent.TextDomain.LITERALS)
+    }
+    return null
   }
 
   private fun isStealth(element: PsiElement) = when (element.node.elementType) {

@@ -7030,12 +7030,6 @@ c:com.intellij.ui.components.TextComponentEmptyText
 - resetFontToOwnerFont():V
 - setTextToTriggerStatus(java.lang.String):V
 - s:setupPlaceholderVisibility(javax.swing.text.JTextComponent):V
-f:com.intellij.ui.components.WideSelectionListUI
-- javax.swing.plaf.basic.BasicListUI
-- <init>():V
-- s:createUI(javax.swing.JComponent):javax.swing.plaf.ComponentUI
-- getCellBounds(javax.swing.JList,I,I):java.awt.Rectangle
-- paint(java.awt.Graphics,javax.swing.JComponent):V
 c:com.intellij.ui.components.ZoomingDelegate
 - <init>(javax.swing.JComponent,javax.swing.JComponent):V
 - p:convertToContentCoordinates(java.awt.Point):java.awt.Point
