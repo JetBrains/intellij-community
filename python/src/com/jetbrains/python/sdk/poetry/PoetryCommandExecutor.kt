@@ -172,6 +172,12 @@ suspend fun poetryInstallPackage(sdk: Sdk, packages: List<String>, extraArgs: Li
   return runPoetryWithSdk(sdk, *args.toTypedArray())
 }
 
+@Internal
+suspend fun poetryInstallPackageDetached(sdk: Sdk, packages: List<String>, extraArgs: List<String>): PyResult<String> {
+  val args = listOf("run", "pip", "install") + packages + extraArgs
+  return runPoetryWithSdk(sdk, *args.toTypedArray())
+}
+
 /**
  * Uninstalls a Python package using Poetry.
  * Runs `poetry remove [packages]`

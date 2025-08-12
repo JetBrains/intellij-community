@@ -92,6 +92,14 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
   }
 
   @ApiStatus.Internal
+  suspend fun installPackageDetached(installRequest: PythonPackageInstallRequest, options: List<String> = emptyList()): PyResult<List<PythonPackage>> {
+    waitForInit()
+    installPackageDetachedCommand(installRequest, options).getOr { return it }
+
+    return reloadPackages()
+  }
+
+  @ApiStatus.Internal
   suspend fun updatePackages(vararg packages: PythonRepositoryPackageSpecification): PyResult<List<PythonPackage>> {
     if (sdk.isReadOnly) {
       return PyResult.localizedError(sdk.readOnlyErrorMessage)
@@ -186,10 +194,14 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
   @CheckReturnValue
   protected abstract suspend fun syncCommand(): PyResult<Unit>
 
-
   @ApiStatus.Internal
   @CheckReturnValue
   protected abstract suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit>
+
+  @ApiStatus.Internal
+  @CheckReturnValue
+  protected open suspend fun installPackageDetachedCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> =
+    installPackageCommand(installRequest, options)
 
   @ApiStatus.Internal
   @CheckReturnValue

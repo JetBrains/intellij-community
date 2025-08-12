@@ -34,14 +34,19 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
   }
 
 
-  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
-    if (installRequest !is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications) {
-      return PyResult.localizedError(PyBundle.message("python.sdk.poetry.supports.installing.only.packages.from.repositories"))
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> =
+    when (installRequest) {
+      is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications ->
+        addPackages(installRequest.specifications, options)
+      is PythonPackageInstallRequest.ByLocation -> PyResult.localizedError(PyBundle.message("python.sdk.poetry.supports.installing.only.packages.from.repositories"))
     }
 
-    val packageSpecifications = installRequest.specifications
-    return addPackages(packageSpecifications, options)
-  }
+  override suspend fun installPackageDetachedCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> =
+    when (installRequest) {
+      is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications ->
+        installPackages(installRequest.specifications, options)
+      is PythonPackageInstallRequest.ByLocation -> PyResult.localizedError(PyBundle.message("python.sdk.poetry.supports.installing.only.packages.from.repositories"))
+    }
 
   override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
     return addPackages(specifications.map { it.copy(requirement = pyRequirement(it.name, null)) }, emptyList())
@@ -123,6 +128,16 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
     return poetryInstallPackage(sdk, specifications, options).mapSuccess { }
   }
 
+  private suspend fun installPackages(
+    packageSpecifications: List<PythonRepositoryPackageSpecification>,
+    options: List<String>,
+  ): PyResult<Unit> {
+    val specifications = packageSpecifications.map {
+      it.getPackageWithVersionInPoetryFormat()
+    }
+
+    return poetryInstallPackageDetached(sdk, specifications, options).mapSuccess { }
+  }
 
   private fun PythonRepositoryPackageSpecification.getPackageWithVersionInPoetryFormat(): String {
     return versionSpec?.let { "$name@${it.presentableText}" } ?: name

@@ -32,6 +32,10 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
     return result
   }
 
+  override suspend fun installPackageDetachedCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
+    return uv.installPackage(installRequest, emptyList())
+  }
+
   override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
     val specsWithoutVersion = specifications.map { it.copy(requirement = pyRequirement(it.name, null)) }
     val request = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specsWithoutVersion)

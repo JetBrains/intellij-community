@@ -62,6 +62,15 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
     return installPyRequirementsBackground(confirmed)
   }
 
+  suspend fun installPyRequirementsDetachedWithConfirmation(packages: List<PyRequirement>): List<PythonPackage>? {
+    val confirmed = PyPackageManagerUiConfirmationHelpers.getConfirmedPackages(packages, project)
+    if (confirmed.isEmpty())
+      return null
+
+    PyPackagesUsageCollector.installAllEvent.log(confirmed.size)
+    return installPyRequirementsDetachedBackground(confirmed)
+  }
+
   /**
    * @return List of all installed packages or null if the operation was failed.
    */
@@ -81,6 +90,25 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
 
     return executeCommand(progressTitle) {
       manager.installPackage(installRequest, options)
+    }
+  }
+
+  suspend fun installPackagesRequestDetachedBackground(
+    installRequest: PythonPackageInstallRequest,
+    options: List<String> = emptyList(),
+  ): List<PythonPackage>? {
+    val progressTitle = when (installRequest) {
+      is PythonPackageInstallRequest.ByLocation -> PyBundle.message("python.packaging.installing.package", installRequest.title)
+      is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> if (installRequest.specifications.size == 1) {
+        PyBundle.message("python.packaging.installing.package", installRequest.specifications.first().name)
+      }
+      else {
+        PyBundle.message("python.packaging.installing.packages")
+      }
+    }
+
+    return executeCommand(progressTitle) {
+      manager.installPackageDetached(installRequest, options)
     }
   }
 

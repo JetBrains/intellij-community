@@ -72,6 +72,19 @@ suspend fun PythonPackageManagerUI.installPyRequirementsBackground(
                                           options = options)
 }
 
+@ApiStatus.Internal
+suspend fun PythonPackageManagerUI.installPyRequirementsDetachedBackground(
+  packages: List<PyRequirement>,
+  options: List<String> = emptyList(),
+): List<PythonPackage>? {
+  manager.waitForInit()
+  val specifications = packages.mapNotNull {
+    manager.repositoryManager.findPackageSpecification(it)
+  }
+  return installPackagesRequestDetachedBackground(PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specifications),
+                                                  options = options)
+}
+
 
 @ApiStatus.Internal
 suspend fun PythonPackageManagerUI.installPackagesBackground(
