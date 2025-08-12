@@ -27,17 +27,15 @@ class SearchService(
   }
 
   fun findAll(@Language("xpath") xpath: String, component: Component? = null, onlyFrontend: Boolean = false): List<Component> {
-    val html = swingHierarchyService.getSwingHierarchyAsDOM(component, onlyFrontend)
-
-    val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-    val model = builder.parse(html.byteInputStream())
-    val result = xPath.compile(xpath).evaluate(model, XPathConstants.NODESET) as NodeList
-
-    return (0 until result.length).mapNotNull { result.item(it) }.filterIsInstance<Element>().mapNotNull(::reconstructComponent)
+    var matchingElements = getSwingHierarchyDOMAndFindMatchingElements(xpath, component, onlyFrontend)
+    if (matchingElements.all { isBeControl(it) && !validateBeControlElement(it) }) {
+      matchingElements = getSwingHierarchyDOMAndFindMatchingElements(xpath, component, true)
+    }
+    return matchingElements.mapNotNull { reconstructComponent(it) }
   }
 
   private fun reconstructComponent(element: Element): Component? {
-    if (element.hasAttribute("beControlDataId")) {
+    if (isBeControl(element)) {
       if (!validateBeControlElement(element)) return null
       return reconstructBeControlComponent(element)
     }
@@ -53,7 +51,7 @@ class SearchService(
     return driver.cast(wrapRef(ref), Component::class)
   }
 
-  private fun reconstructBeControlComponent(element: Element): Component? {
+  private fun reconstructBeControlComponent(element: Element): Component {
     val frontendRef = getFrontendRef(element)
     val backendRef = getBackendRef(element)
 
@@ -61,5 +59,17 @@ class SearchService(
     val backendComponent = driver.cast(wrapRef(backendRef), Component::class)
 
     return BeControlComponentBase(driver, frontendComponent, backendComponent)
+  }
+
+  private fun isBeControl(element: Element) = element.hasAttribute("beControlDataId")
+
+  private fun getSwingHierarchyDOMAndFindMatchingElements(xpath: String, component: Component? = null, onlyFrontend: Boolean = false): List<Element> {
+    val html = swingHierarchyService.getSwingHierarchyAsDOM(component, onlyFrontend)
+
+    val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+    val model = builder.parse(html.byteInputStream())
+    val result = xPath.compile(xpath).evaluate(model, XPathConstants.NODESET) as NodeList
+
+    return (0 until result.length).mapNotNull { result.item(it) }.filterIsInstance<Element>()
   }
 }
