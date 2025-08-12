@@ -32,6 +32,7 @@ import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
+import java.awt.Dimension
 import java.awt.Point
 import java.util.regex.PatternSyntaxException
 import javax.swing.JComponent
@@ -98,8 +99,6 @@ internal class TerminalSearchSession(
       .withCloseAction(this::close)
       .build().also {
         (it.searchTextComponent as? JTextArea)?.columns = 14  // default is 12
-        it.preferredWidth = JBUI.scale(TerminalUi.searchComponentWidth)
-        it.maximumWidth = JBUI.scale(TerminalUi.searchComponentWidth)
         it.border = JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 1, 1,0)
       }
   }
@@ -279,5 +278,13 @@ internal class TerminalSearchSession(
 private class DataContextWrapper(component: JComponent): Wrapper(component), UiDataProvider {
   override fun uiDataSnapshot(sink: DataSink) {
     sink.setNull(TerminalActionUtil.EDITOR_KEY) // disable editor actions when the search is in focus
+  }
+
+  override fun getPreferredSize(): Dimension = super.getPreferredSize().also {
+    it.width = JBUI.scale(TerminalUi.searchComponentWidth)
+  }
+
+  override fun getMaximumSize(): Dimension = super.getMaximumSize().also {
+    it.width = JBUI.scale(TerminalUi.searchComponentWidth)
   }
 }
