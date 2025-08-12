@@ -16,7 +16,7 @@ private val LOG = fileLogger()
 /**
  * Converts an [Icon] instance into a [IconId] which can be used in RPC calls and stored in Rhizome.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun Icon.rpcId(): IconId {
   val icon = this
   val serializedIcon = serializeToRpc(icon)
@@ -24,7 +24,7 @@ fun Icon.rpcId(): IconId {
   return IconId(serializedIcon, icon)
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun Icon.rpcIdOrNull(): IconId? {
   val icon = this
 
@@ -41,7 +41,7 @@ fun Icon.rpcIdOrNull(): IconId? {
 /**
  * Retrieves the [Icon] associated with the given [IconId].
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun IconId.icon(): Icon {
   if (localIcon != null) {
     return localIcon
@@ -53,7 +53,7 @@ fun IconId.icon(): Icon {
   }
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @Serializable
 class IconId internal constructor(
   @Serializable @JvmField internal val serializedValue: SerializedValue? = null,
