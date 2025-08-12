@@ -11,8 +11,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LBRACE
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl
 
-class GrArrayInitializerImpl(node: ASTNode) : GroovyPsiElementImpl(node), GrArrayInitializer, PsiListLikeElement {
+class GrArrayInitializerImpl(node: ASTNode) : GrExpressionImpl(node), GrArrayInitializer, PsiListLikeElement {
 
   override fun toString(): String = "Array initializer"
 

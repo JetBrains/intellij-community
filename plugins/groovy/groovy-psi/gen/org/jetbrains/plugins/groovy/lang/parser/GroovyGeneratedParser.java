@@ -1167,15 +1167,47 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // mb_nl expression
+  // mb_nl (nested_array_initializer | expression)
   static boolean array_initializer_item(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "array_initializer_item")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = mb_nl(b, l + 1);
-    r = r && expression(b, l + 1, -1);
+    r = r && array_initializer_item_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  // nested_array_initializer | expression
+  private static boolean array_initializer_item_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "array_initializer_item_1")) return false;
+    boolean r;
+    r = nested_array_initializer(b, l + 1);
+    if (!r) r = expression(b, l + 1, -1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // '{' <<a_b_a array_initializer_item array_initializer_separator>> array_initializer_separator? mb_nl '}'
+  static boolean array_initializer_no_pin(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "array_initializer_no_pin")) return false;
+    if (!nextTokenIs(b, T_LBRACE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, T_LBRACE);
+    r = r && a_b_a(b, l + 1, GroovyGeneratedParser::array_initializer_item, GroovyGeneratedParser::array_initializer_separator);
+    r = r && array_initializer_no_pin_2(b, l + 1);
+    r = r && mb_nl(b, l + 1);
+    r = r && consumeToken(b, T_RBRACE);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // array_initializer_separator?
+  private static boolean array_initializer_no_pin_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "array_initializer_no_pin_2")) return false;
+    array_initializer_separator(b, l + 1);
+    return true;
   }
 
   /* ********************************************************** */
@@ -5246,6 +5278,31 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = mb_nl(b, l + 1);
     r = r && expression(b, l + 1, -1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // '{' mb_nl '}' | array_initializer_no_pin
+  public static boolean nested_array_initializer(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "nested_array_initializer")) return false;
+    if (!nextTokenIs(b, T_LBRACE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = nested_array_initializer_0(b, l + 1);
+    if (!r) r = array_initializer_no_pin(b, l + 1);
+    exit_section_(b, m, ARRAY_INITIALIZER, r);
+    return r;
+  }
+
+  // '{' mb_nl '}'
+  private static boolean nested_array_initializer_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "nested_array_initializer_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, T_LBRACE);
+    r = r && mb_nl(b, l + 1);
+    r = r && consumeToken(b, T_RBRACE);
     exit_section_(b, m, null, r);
     return r;
   }

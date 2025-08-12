@@ -12,5 +12,5 @@ Groovy script
     PsiWhiteSpace(' ')
     Array initializer
       PsiElement({)('{')
-      PsiErrorElement:<expression> or '}' expected
+      PsiErrorElement:<expression>, '{' or '}' expected
         <empty list>

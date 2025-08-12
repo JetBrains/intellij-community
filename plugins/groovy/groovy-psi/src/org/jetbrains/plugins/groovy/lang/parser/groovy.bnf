@@ -992,8 +992,10 @@ private array_initializer_tail ::= array_initializer_declaration mb_nl array_ini
 array_initializer_declaration ::= array_dimensions+ { elementType = array_declaration }
 private array_dimensions ::= non_empty_annotation_list? '['(']') { consumeTokenMethod = 'consumeTokenFast' }
 array_initializer ::= '{' mb_nl '}' | array_initializer_pin
+nested_array_initializer ::= '{' mb_nl '}' | array_initializer_no_pin { elementType = array_initializer }
+private array_initializer_no_pin ::= '{' <<a_b_a array_initializer_item array_initializer_separator>> array_initializer_separator? mb_nl '}'
 private array_initializer_pin ::=  '{' <<a_b_a array_initializer_item array_initializer_separator>> array_initializer_separator? mb_nl '}' { pin = 1 }
-private array_initializer_item ::= mb_nl expression
+private array_initializer_item ::= mb_nl (nested_array_initializer | expression)
 private array_initializer_separator ::= mb_nl ','
 
 array_declaration ::= mandatory_expression optional_expression* { consumeTokenMethod = 'consumeTokenFast' }
