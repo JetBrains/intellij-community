@@ -9,6 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.changes.Change
@@ -83,9 +84,9 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     globalSslVerify = if (hasRemoteGitOperation()) readAndDisableSslVerifyGlobally() else null
   }
 
-  override fun setUpProject() {
-    setRegistryPropertyForTest("git.use.env.from.project.context", false.toString())
-    super.setUpProject()
+  override fun initApplication() {
+    super.initApplication()
+    Registry.get("git.use.env.from.project.context").setValue(false)
   }
 
   override fun tearDown() {
