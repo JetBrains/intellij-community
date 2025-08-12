@@ -2,5 +2,13 @@
   <extensions defaultExtensionNs="com.intellij">
     <referencesSearch implementation="org.jetbrains.plugins.gradle.findUsages.GradlePropertyReferencesSearcher"/>
     <properties.implicitPropertyUsageProvider implementation="org.jetbrains.plugins.gradle.findUsages.GradleImplicitPropertyUsageProvider"/>
+
+    <localInspection language="Properties" groupPath="Gradle" shortName="LatestMinorVersion"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.latest.minor.version" groupKey="inspection.best.practises"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleLatestMinorVersionInspection"/>
+
   </extensions>
 </idea-plugin>
