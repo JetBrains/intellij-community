@@ -795,7 +795,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
         DefaultTreeModel treeModel = ChangesViewUtil.INSTANCE.createTreeModel(
           myProject,
-          myView,
+          myView.getGrouping(),
           changeLists,
           unversionedFiles,
           myChangesViewManager.myState.myShowIgnored,

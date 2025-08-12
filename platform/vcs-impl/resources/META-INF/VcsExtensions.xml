@@ -371,6 +371,10 @@
 
     <applicationService serviceImplementation="com.intellij.openapi.vcs.changes.ui.BackendChangesTreeCompatibilityProvider"
                         serviceInterface="com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider"/>
+
+    <projectService
+      serviceInterface="com.intellij.platform.vcs.impl.shared.changes.ChangesViewModelBuilderService"
+      serviceImplementation="com.intellij.openapi.vcs.changes.ui.BackendChangesViewModelBuilderService"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

@@ -14,9 +14,6 @@
 *f:com.intellij.openapi.vcs.changes.shelf.ShelveSilentlyTitleProvider$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 - f:suggestTitle(com.intellij.openapi.project.Project,java.util.Collection):java.lang.String
-c:com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
-- com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder
-- *:build(Z):javax.swing.tree.DefaultTreeModel
 *f:com.intellij.openapi.vcs.update.VcsUpdateProcess
 - sf:INSTANCE:com.intellij.openapi.vcs.update.VcsUpdateProcess
 - sf:checkUpdateHasCustomNotification(java.util.Collection):Z

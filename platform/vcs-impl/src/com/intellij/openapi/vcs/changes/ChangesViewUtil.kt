@@ -9,8 +9,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserUnversionedLoadingPendingNode
-import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
+import com.intellij.platform.vcs.impl.shared.changes.ChangesViewModelBuilderService
 import com.intellij.vcs.commit.PartialCommitChangeNodeDecorator
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultTreeModel
@@ -23,7 +24,7 @@ object ChangesViewUtil {
 
   fun createTreeModel(
     project: Project,
-    tree: ChangesListView,
+    grouping: ChangesGroupingPolicyFactory,
     changeLists: List<LocalChangeList>,
     unversionedFiles: List<FilePath>,
     showIgnoredFiles: Boolean,
@@ -37,14 +38,11 @@ object ChangesViewUtil {
     val skipSingleDefaultChangeList = Registry.`is`("vcs.skip.single.default.changelist") ||
                                       !changeListManager.areChangeListsEnabled()
 
-    val treeModelBuilder = TreeModelBuilder(project, tree.grouping)
+    val treeModelBuilder = TreeModelBuilder(project, grouping)
       .setChangeLists(changeLists, skipSingleDefaultChangeList, getChangeDecoratorProvider(project, isAllowExcludeFromCommit))
-      .setLocallyDeletedPaths(changeListManager.deletedFiles)
-      .setModifiedWithoutEditing(changeListManager.modifiedWithoutEditing)
-      .setSwitchedFiles(changeListManager.switchedFilesMap)
-      .setSwitchedRoots(changeListManager.switchedRoots)
-      .setLockedFolders(changeListManager.lockedFolders)
-      .setLogicallyLockedFiles(changeListManager.logicallyLockedFolders)
+      .apply {
+        with(ChangesViewModelBuilderService.getInstance(project)) { createNodes() }
+      }
       .setUnversioned(unversionedFiles)
 
     if (showIgnoredFiles) {

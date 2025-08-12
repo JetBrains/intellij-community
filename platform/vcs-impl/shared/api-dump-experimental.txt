@@ -1,2 +1,5 @@
 *:com.intellij.openapi.vcs.LinkDescriptor
 - a:getRange():com.intellij.openapi.util.TextRange
+c:com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
+- com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder
+- *:build(Z):javax.swing.tree.DefaultTreeModel

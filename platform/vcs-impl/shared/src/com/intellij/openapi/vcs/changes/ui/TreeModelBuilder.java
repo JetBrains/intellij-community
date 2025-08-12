@@ -7,20 +7,21 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.merge.MergeConflictManager;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.platform.vcs.changes.ChangesUtil;
+import com.intellij.platform.vcs.impl.shared.changes.ChangesViewModelBuilderService;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,6 @@ import javax.swing.tree.TreeNode;
 import java.util.*;
 import java.util.function.Function;
 
-import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.createLockedFolders;
 import static com.intellij.openapi.vcs.changes.ui.TreeModelBuilderKeys.IS_CACHING_ROOT;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.sorted;
@@ -41,7 +41,8 @@ import static java.util.Comparator.comparingInt;
 @SuppressWarnings("UnusedReturnValue")
 public class TreeModelBuilder implements ChangesViewModelBuilder {
   public static final Key<Function<StaticFilePath, ChangesBrowserNode<?>>> PATH_NODE_BUILDER = Key.create("ChangesTree.PathNodeBuilder");
-  public static final NotNullLazyKey<Map<String, ChangesBrowserNode<?>>, ChangesBrowserNode<?>> DIRECTORY_CACHE = TreeModelBuilderKeys.DIRECTORY_CACHE;
+  public static final NotNullLazyKey<Map<String, ChangesBrowserNode<?>>, ChangesBrowserNode<?>> DIRECTORY_CACHE =
+    TreeModelBuilderKeys.DIRECTORY_CACHE;
   private static final Key<ChangesGroupingPolicy> GROUPING_POLICY = Key.create("ChangesTree.GroupingPolicy");
 
   /**
@@ -136,7 +137,8 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
       .build();
   }
 
-  public @NotNull TreeModelBuilder setChanges(@NotNull Collection<? extends Change> changes, @Nullable ChangeNodeDecorator changeNodeDecorator) {
+  public @NotNull TreeModelBuilder setChanges(@NotNull Collection<? extends Change> changes,
+                                              @Nullable ChangeNodeDecorator changeNodeDecorator) {
     return setChanges(changes, changeNodeDecorator, null);
   }
 
@@ -185,8 +187,9 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return this;
   }
 
-  private @NotNull TreeModelBuilder insertSpecificFileNodeToModel(@NotNull List<? extends VirtualFile> specificFiles,
-                                                                  @NotNull ChangesBrowserSpecificFilesNode<?> node) {
+  @ApiStatus.Internal
+  public @NotNull TreeModelBuilder insertSpecificFileNodeToModel(@NotNull List<? extends VirtualFile> specificFiles,
+                                                                 @NotNull ChangesBrowserSpecificFilesNode<?> node) {
     insertSubtreeRoot(node);
     if (!node.isManyFiles()) {
       node.markAsHelperNode();
@@ -198,69 +201,15 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   public @NotNull TreeModelBuilder setChangeLists(@NotNull Collection<? extends ChangeList> changeLists,
                                                   boolean skipSingleDefaultChangeList,
                                                   @Nullable Function<? super ChangeNodeDecorator, ? extends ChangeNodeDecorator> changeDecoratorProvider) {
+
     assert myProject != null;
-    List<FilePath> resolvedUnchangedFiles = MergeConflictManager.getInstance(myProject).getResolvedConflictPaths();
-    RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
-    boolean skipChangeListNode = skipSingleDefaultChangeList && isSingleBlankChangeList(changeLists);
-    ChangesBrowserConflictsNode conflictsRoot = null;
-
-    for (ChangeList list : changeLists) {
-      List<Change> changes = sorted(list.getChanges(), CHANGE_COMPARATOR);
-      ChangeListRemoteState listRemoteState = new ChangeListRemoteState();
-
-      ChangesBrowserNode<?> changesParent;
-      if (!skipChangeListNode) {
-        ChangesBrowserChangeListNode listNode = new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
-        listNode.markAsHelperNode();
-
-        insertSubtreeRoot(listNode);
-        changesParent = listNode;
-      }
-      else {
-        changesParent = myRoot;
-      }
-
-      for (int i = 0; i < changes.size(); i++) {
-        Change change = changes.get(i);
-        RemoteStatusChangeNodeDecorator baseDecorator = new RemoteStatusChangeNodeDecorator(revisionsCache, listRemoteState, i);
-        ChangeNodeDecorator decorator = changeDecoratorProvider != null ? changeDecoratorProvider.apply(baseDecorator) : baseDecorator;
-        FilePath path = ChangesUtil.getFilePath(change);
-        if (MergeConflictManager.getInstance(myProject).isResolvedConflict(path)) {
-          resolvedUnchangedFiles.remove(path);
-          insertChangeNode(change, changesParent, createChangeNode(change, decorator));
-        }
-        else if (MergeConflictManager.isMergeConflict(change.getFileStatus())) {
-          if (conflictsRoot == null) {
-            conflictsRoot = new ChangesBrowserConflictsNode(myProject);
-            conflictsRoot.markAsHelperNode();
-            myModel.insertNodeInto(conflictsRoot, myRoot, myModel.getChildCount(myRoot));
-          }
-          insertChangeNode(change, conflictsRoot, createChangeNode(change, decorator));
-        }
-        else {
-          insertChangeNode(change, changesParent, createChangeNode(change, decorator));
-        }
-      }
-
-      insertResolvedUnchangedNodes(list, resolvedUnchangedFiles, changesParent);
-    }
-
+    ChangesViewModelBuilderService.getInstance(myProject)
+      .setChangeList(this, changeLists, skipSingleDefaultChangeList, changeDecoratorProvider);
     return this;
   }
 
-  private void insertResolvedUnchangedNodes(@NotNull ChangeList list,
-                                            @NotNull List<FilePath> resolvedUnchangedFilePaths,
-                                            @NotNull ChangesBrowserNode<?> changesParent) {
-    if (resolvedUnchangedFilePaths.isEmpty()) return;
-
-    if (list instanceof LocalChangeList localList && localList.isDefault()) {
-      for (FilePath resolvedConflictPath : resolvedUnchangedFilePaths) {
-        insertChangeNode(resolvedConflictPath, changesParent, ChangesBrowserNode.createFilePath(resolvedConflictPath, FileStatus.MERGE));
-      }
-    }
-  }
-
-  private static boolean isSingleBlankChangeList(Collection<? extends ChangeList> lists) {
+  @ApiStatus.Internal
+  public static boolean isSingleBlankChangeList(Collection<? extends ChangeList> lists) {
     if (lists.size() != 1) return false;
     ChangeList single = lists.iterator().next();
     if (!(single instanceof LocalChangeList)) return false;
@@ -271,21 +220,8 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return new ChangesBrowserChangeNode(myProject, change, decorator);
   }
 
-  public @NotNull TreeModelBuilder setLockedFolders(@Nullable List<? extends VirtualFile> lockedFolders) {
-    assert myProject != null;
-    if (ContainerUtil.isEmpty(lockedFolders)) return this;
-    insertFilesIntoNode(lockedFolders, createLockedFolders(myProject));
-    return this;
-  }
-
-  public @NotNull TreeModelBuilder setModifiedWithoutEditing(@NotNull List<? extends VirtualFile> modifiedWithoutEditing) {
-    assert myProject != null;
-    if (ContainerUtil.isEmpty(modifiedWithoutEditing)) return this;
-    ModifiedWithoutEditingNode node = new ModifiedWithoutEditingNode(myProject, modifiedWithoutEditing);
-    return insertSpecificFileNodeToModel(modifiedWithoutEditing, node);
-  }
-
-  private @NotNull TreeModelBuilder setVirtualFiles(@Nullable Collection<? extends VirtualFile> files, @Nullable ChangesBrowserNode.Tag tag) {
+  private @NotNull TreeModelBuilder setVirtualFiles(@Nullable Collection<? extends VirtualFile> files,
+                                                    @Nullable ChangesBrowserNode.Tag tag) {
     if (ContainerUtil.isEmpty(files)) return this;
     insertFilesIntoNode(files, createTagNode(tag));
     return this;
@@ -303,7 +239,9 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return createTagNode(tag, SimpleTextAttributes.REGULAR_ATTRIBUTES, expandByDefault);
   }
 
-  public @NotNull ChangesBrowserNode<?> createTagNode(@NotNull @Nls String tag, @NotNull SimpleTextAttributes attributes, boolean expandByDefault) {
+  public @NotNull ChangesBrowserNode<?> createTagNode(@NotNull @Nls String tag,
+                                                      @NotNull SimpleTextAttributes attributes,
+                                                      boolean expandByDefault) {
     return createTagNode(new ChangesBrowserNode.TagImpl(tag), attributes, expandByDefault);
   }
 
@@ -349,82 +287,15 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     }
   }
 
-  public @NotNull TreeModelBuilder setLocallyDeletedPaths(@Nullable Collection<? extends LocallyDeletedChange> locallyDeletedChanges) {
-    if (ContainerUtil.isEmpty(locallyDeletedChanges)) return this;
-    ChangesBrowserNode<?> subtreeRoot = createTagNode(ChangesBrowserNode.LOCALLY_DELETED_NODE_TAG);
-
-    for (LocallyDeletedChange change : sorted(locallyDeletedChanges, comparing(LocallyDeletedChange::getPath, PATH_COMPARATOR))) {
-      insertChangeNode(change.getPath(), subtreeRoot, ChangesBrowserNode.createLocallyDeleted(change));
-    }
-    return this;
-  }
-
   public @NotNull TreeModelBuilder setFilePaths(@NotNull Collection<? extends FilePath> filePaths) {
     return setFilePaths(filePaths, myRoot);
   }
 
-  public @NotNull TreeModelBuilder setFilePaths(@NotNull Collection<? extends FilePath> filePaths, @NotNull ChangesBrowserNode<?> subtreeRoot) {
+  public @NotNull TreeModelBuilder setFilePaths(@NotNull Collection<? extends FilePath> filePaths,
+                                                @NotNull ChangesBrowserNode<?> subtreeRoot) {
     for (FilePath file : sorted(filePaths, PATH_COMPARATOR)) {
       assert file != null;
       insertChangeNode(file, subtreeRoot, ChangesBrowserNode.createFilePath(file));
-    }
-    return this;
-  }
-
-  public @NotNull TreeModelBuilder setSwitchedRoots(@Nullable Map<VirtualFile, @NlsSafe String> switchedRoots) {
-    if (ContainerUtil.isEmpty(switchedRoots)) return this;
-    ChangesBrowserNode<?> rootsHeadNode = createTagNode(ChangesBrowserNode.SWITCHED_ROOTS_TAG,
-                                                        SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES,
-                                                        true);
-
-    List<VirtualFile> files = sorted(switchedRoots.keySet(), FILE_COMPARATOR);
-
-    for (VirtualFile vf : files) {
-      final ContentRevision cr = new CurrentContentRevision(VcsUtil.getFilePath(vf));
-      final Change change = new Change(cr, cr, FileStatus.NOT_CHANGED);
-      final String branchName = switchedRoots.get(vf);
-      insertChangeNode(vf, rootsHeadNode, createChangeNode(change, new ChangeNodeDecorator() {
-        @Override
-        public void decorate(@NotNull Change change1, @NotNull SimpleColoredComponent component, boolean isShowFlatten) {
-        }
-
-        @Override
-        public void preDecorate(@NotNull Change change1, @NotNull ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
-          renderer.append("[" + branchName + "] ", SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
-        }
-      }));
-    }
-    return this;
-  }
-
-  public @NotNull TreeModelBuilder setSwitchedFiles(@NotNull MultiMap<@NlsSafe String, VirtualFile> switchedFiles) {
-    if (switchedFiles.isEmpty()) return this;
-    ChangesBrowserNode<?> subtreeRoot = createTagNode(ChangesBrowserNode.SWITCHED_FILES_TAG);
-    for (@Nls String branchName : switchedFiles.keySet()) {
-      List<VirtualFile> switchedFileList = sorted(switchedFiles.get(branchName), FILE_COMPARATOR);
-      if (!switchedFileList.isEmpty()) {
-        ChangesBrowserNode<?> branchNode = new ChangesBrowserStringNode(branchName);
-        branchNode.markAsHelperNode();
-
-        insertSubtreeRoot(branchNode, subtreeRoot);
-
-        for (VirtualFile file : switchedFileList) {
-          insertChangeNode(file, branchNode, ChangesBrowserNode.createFile(myProject, file));
-        }
-      }
-    }
-    return this;
-  }
-
-  public @NotNull TreeModelBuilder setLogicallyLockedFiles(@Nullable Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
-    if (ContainerUtil.isEmpty(logicallyLockedFiles)) return this;
-    ChangesBrowserNode<?> subtreeRoot = createTagNode(ChangesBrowserNode.LOGICALLY_LOCKED_TAG);
-
-    List<VirtualFile> keys = sorted(logicallyLockedFiles.keySet(), FILE_COMPARATOR);
-
-    for (VirtualFile file : keys) {
-      final LogicalLock lock = logicallyLockedFiles.get(file);
-      insertChangeNode(file, subtreeRoot, ChangesBrowserNode.createLogicallyLocked(myProject, file, lock));
     }
     return this;
   }
@@ -622,7 +493,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   public static @NotNull StaticFilePath staticFrom(@NotNull VirtualFile vf) {
-    return new StaticFilePath(VcsUtil.getFilePath(vf));
+    return new StaticFilePath(VcsContextFactory.getInstance().createFilePathOn(vf));
   }
 
   public static @NotNull StaticFilePath staticFrom(@NotNull Change change) {
@@ -630,17 +501,17 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   public static @NotNull FilePath getPathForObject(@NotNull Object o) {
-    if (o instanceof Change) {
-      return ChangesUtil.getFilePath((Change)o);
+    if (o instanceof Change change) {
+      return ChangesUtil.getFilePath(change);
     }
-    else if (o instanceof VirtualFile) {
-      return VcsUtil.getFilePath((VirtualFile)o);
+    else if (o instanceof VirtualFile virtualFile) {
+      return VcsContextFactory.getInstance().createFilePathOn(virtualFile);
     }
     else if (o instanceof FilePath) {
       return (FilePath)o;
     }
-    else if (o instanceof LocallyDeletedChange) {
-      return ((LocallyDeletedChange)o).getPath();
+    else if (o instanceof LocallyDeletedChange locallyDeletedChange) {
+      return locallyDeletedChange.getPath();
     }
 
     throw new IllegalArgumentException("Unknown type - " + o.getClass());
