@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.COMMIT_TOOLWINDOW_ID
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.CONTENT_PROVIDER_SUPPLIER_KEY
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.IS_IN_COMMIT_TOOLWINDOW_KEY
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
@@ -64,6 +65,9 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     val contentManager = toolWindow.contentManager
     contentManager.addUiDataProvider { sink ->
       sink[ChangesViewContentManager.CONTENT_TAB_NAME_KEY] = contentManager.selectedContent?.tabName
+      sink[ChangesViewContentManager.IS_COMMIT_TOOLWINDOW_WINDOWED_KEY] =
+        toolWindow.id == COMMIT_TOOLWINDOW_ID &&
+        CommitToolWindowUtil.isInWindow(toolWindow.type)
     }
   }
 

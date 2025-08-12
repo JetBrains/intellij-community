@@ -268,6 +268,13 @@ class ChangesViewContentManager private constructor(private val project: Project
     internal val CONTENT_PROVIDER_SUPPLIER_KEY = Key.create<() -> ChangesViewContentProvider?>("CONTENT_PROVIDER_SUPPLIER")
 
     /**
+     * Whether the commit window is in the windowed or floating mode.
+     */
+    @JvmField
+    internal val IS_COMMIT_TOOLWINDOW_WINDOWED_KEY: DataKey<Boolean> =
+      DataKey.create<Boolean>("ChangesViewContentManager.IS_COMMIT_TOOLWINDOW_WINDOWED_KEY")
+
+    /**
      * Whether [Content] should be shown in [ToolWindowId.COMMIT] toolwindow.
      */
     @JvmField
