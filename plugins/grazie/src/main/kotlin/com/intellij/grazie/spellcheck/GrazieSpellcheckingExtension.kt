@@ -1,6 +1,10 @@
 package com.intellij.grazie.spellcheck
 
+import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.LanguageWithVariant
+import ai.grazie.nlp.tokenizer.Tokenizer
+import ai.grazie.nlp.utils.checkedEndExclusive
+import ai.grazie.rules.common.KnownPhrases
 import ai.grazie.spell.Speller
 import ai.grazie.spell.text.TextSpeller
 import ai.grazie.spell.text.Typo
@@ -28,6 +32,7 @@ import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellCheckin
 import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellingTypo
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy.EMPTY_TOKENIZER
+import com.intellij.util.containers.ContainerUtil
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.function.Consumer
@@ -35,6 +40,8 @@ import java.util.function.Consumer
 private val DOMAINS = TextContent.TextDomain.ALL
 
 class GrazieSpellcheckingExtension : SpellcheckingExtension {
+
+  private val knownPhrases = ContainerUtil.createConcurrentSoftValueMap<Language, KnownPhrases>()
 
   override fun spellcheck(element: PsiElement, session: LocalInspectionToolSession, consumer: Consumer<SpellingTypo>): SpellCheckingResult {
     val strategy = getSpellcheckingStrategy(element)
@@ -61,9 +68,27 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
 
   private fun getTextSpeller(project: Project): TextSpeller? {
     val speller = project.service<GrazieSpellCheckerEngine>().getSpeller() ?: return null
-    return TextSpeller(listOf(object : Speller by speller {
-      override fun languages(): List<LanguageWithVariant> = GrazieConfig.get().enabledLanguages.mapNotNull { it.withVariant }
-    }))
+    val enabledLanguages = GrazieConfig.get().enabledLanguages.mapNotNull { it.withVariant }
+
+    return object : TextSpeller(listOf(object : Speller by speller {
+      override fun languages(): List<LanguageWithVariant> = enabledLanguages
+    })) {
+      override fun ignoreInContext(word: Tokenizer.Token, text: CharSequence): Boolean {
+        return super.ignoreInContext(word, text) || isRangeCoveredByValidPhrase(word, text)
+      }
+
+      private fun isRangeCoveredByValidPhrase(word: Tokenizer.Token, text: CharSequence): Boolean {
+        return enabledLanguages
+          .asSequence()
+          .map { it.base }
+          .filter { it in KnownPhrases.SUPPORTED_LANGUAGES }
+          .map { lang -> knownPhrases.computeIfAbsent(lang) { KnownPhrases.forLanguage(lang) } }
+          .any {
+            ProgressManager.checkCanceled()
+            it.isRangeCoveredByValidPhrase(text, word.range.first, word.range.checkedEndExclusive)
+          }
+      }
+    }
   }
 
   private fun mapTypo(text: TextContent, typos: List<Typo>, element: PsiElement): List<SimpleTypo> {

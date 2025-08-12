@@ -156,6 +156,27 @@ jvm_import(
 )
 
 java_library(
+  name = "ai-grazie-rule-engine",
+  exports = [
+    ":grazie-rule-engine-0_2_41_http_import",
+    ":jemoji-1_3_1_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "grazie-rule-engine-0_2_41_http_import",
+  jar = "@grazie-rule-engine-0_2_41_http//file",
+  source_jar = "@grazie-rule-engine-0_2_41-sources_http//file"
+)
+
+jvm_import(
+  name = "jemoji-1_3_1_http_import",
+  jar = "@jemoji-1_3_1_http//file",
+  source_jar = "@jemoji-1_3_1-sources_http//file"
+)
+
+java_library(
   name = "android-adt-ui-compose-jetbrains-compose-ui-test-junit4-desktop",
   exports = [
     ":ui-test-junit4-desktop-1_7_1_http_import",

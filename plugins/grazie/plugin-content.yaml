@@ -1,3 +1,9 @@
+- name: lib/ai.grazie.rule.engine.jar
+  library: ai.grazie.rule.engine
+  files:
+  - name: $MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0/grazie-rule-engine-0.jar
+  - name: $MAVEN_REPOSITORY$/net/fellbaum/jemoji/1/jemoji-1.jar
+  reason: <- intellij.grazie.core
 - name: lib/com.carrotsearch-hppc.jar
   library: com.carrotsearch:hppc
   module: intellij.grazie.core

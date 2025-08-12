@@ -360,6 +360,7 @@
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.lucene.common" />
     <orderEntry type="module" module-name="intellij.libraries.ai.grazie.spell.gec.engine.local" />
+    <orderEntry type="library" exported="" name="ai.grazie.rule.engine" level="project" />
     <orderEntry type="library" name="kotlinx-html-jvm" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="commons-lang3" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />

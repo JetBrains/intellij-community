@@ -30,7 +30,7 @@ object GraziePlugin {
     const val url = "https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/spell"
 
     override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
-      // Do not preload the hunspell /speller in test mode, so it won't slow down tests not related to the spellchecker.
+      // Do not preload the hunspell / speller in test mode, so it won't slow down tests not related to the spellchecker.
       // We will still load it in tests but only when it is actually necessary.
       if (ApplicationManager.getApplication().isUnitTestMode) {
         return

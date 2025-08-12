@@ -1,0 +1,59 @@
+<component name="libraryTable">
+  <library name="ai.grazie.rule.engine" type="repository">
+    <properties maven-id="ai.grazie:grazie-rule-engine:0.2.41">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0.2.41/grazie-rule-engine-0.2.41.jar">
+          <sha256sum>8a61939f2873509c2af22f49cb78bd692b60a9003096689a65aacfc89c0e908a</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/net/fellbaum/jemoji/1.3.1/jemoji-1.3.1.jar">
+          <sha256sum>80a2f8918240a07d3a6fc7cdcc543d278013f6943c080835e43a22fc90462a9f</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="ai.grazie.spell:hunspell-en" />
+        <dependency maven-id="org.jetbrains:annotations" />
+        <dependency maven-id="one.util:streamex" />
+        <dependency maven-id="org.languagetool:languagetool-core" />
+        <dependency maven-id="com.fasterxml.jackson.core:jackson-databind" />
+        <dependency maven-id="org.languagetool:language-en" />
+        <dependency maven-id="org.yaml:snakeyaml" />
+        <dependency maven-id="ai.grazie.model:model-ner-jvm" />
+        <dependency maven-id="ai.grazie.model:model-tree-jvm" />
+        <dependency maven-id="ai.grazie.spell:gec-spell-engine-local" />
+        <dependency maven-id="ai.grazie.spell:gec-spell-engine-local-jvm" />
+        <dependency maven-id="ai.grazie.nlp:nlp-langs-jvm" />
+        <dependency maven-id="org.jspecify:jspecify" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+        <dependency maven-id="org.apache.lucene:lucene-analysis-common" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
+        <dependency maven-id="org.slf4j:slf4j-api" />
+        <dependency maven-id="it.unimi.dsi:fastutil-core" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-datetime-jvm" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
+        <dependency maven-id="org.apache.lucene:lucene-core" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+        <dependency maven-id="ai.grazie.utils:utils-common-jvm" />
+        <dependency maven-id="ai.grazie.model:model-text-jvm" />
+        <dependency maven-id="ai.grazie.nlp:nlp-tokenizer-jvm" />
+        <dependency maven-id="ai.grazie.model:model-gec-jvm" />
+        <dependency maven-id="ai.grazie.nlp:nlp-common-jvm" />
+        <dependency maven-id="ai.grazie.nlp:nlp-patterns-jvm" />
+        <dependency maven-id="ai.grazie.nlp:nlp-phonetics-jvm" />
+        <dependency maven-id="ai.grazie.nlp:nlp-similarity-jvm" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0.2.41/grazie-rule-engine-0.2.41.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/fellbaum/jemoji/1.3.1/jemoji-1.3.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0.2.41/grazie-rule-engine-0.2.41-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/fellbaum/jemoji/1.3.1/jemoji-1.3.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
