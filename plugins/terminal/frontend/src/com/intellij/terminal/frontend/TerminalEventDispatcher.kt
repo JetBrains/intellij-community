@@ -107,6 +107,10 @@ private class TerminalEventDispatcher(
       IdeEventQueue.getInstance().addDispatcher(this, parentDisposable)
       sendShortcutAction.register(editor.contentComponent, getAllowedActions())
       myRegistered = true
+      // The same reasoning as with the initialization:
+      // the terminal might have been activated with a shortcut that will be immediately followed by a "key typed" event.
+      // If that's the case, we should ignore that event. If not, the flag will be cleared when the next event is processed.
+      ignoreNextKeyTypedEvent = true
       LOG.trace { "Dispatcher registered: start capturing key events" }
     }
   }
