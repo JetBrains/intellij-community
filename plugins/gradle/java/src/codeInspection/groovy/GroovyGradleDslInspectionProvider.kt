@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.codeInspection.groovy
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.gradle.codeInspection.GradleDslInspectionProvider
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor
 
@@ -23,6 +24,7 @@ class GroovyGradleDslInspectionProvider : GradleDslInspectionProvider {
   override fun getPluginDslStructureInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor
     = GroovyPsiElementVisitor(GroovyPluginDslStructureInspectionVisitor(holder))
 
+  override fun isAvoidDependencyNamedArgumentsNotationInspectionAvailable(file: PsiFile) : Boolean = file.name.endsWith(".gradle")
   override fun getAvoidDependencyNamedArgumentsNotationInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor
     = GroovyPsiElementVisitor(GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(holder))
 }

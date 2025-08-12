@@ -54,6 +54,9 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//plugins/repository-search",
     "//platform/eel-provider",
+    "//plugins/gradle/java",
+    "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/gradle/code-insight-common",
   ]
 )
 ### auto-generated section `build kotlin.gradle.scripting.shared` end

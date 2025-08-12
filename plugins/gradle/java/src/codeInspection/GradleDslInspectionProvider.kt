@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.codeInspection
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.LanguageExtension
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -41,5 +42,6 @@ interface GradleDslInspectionProvider {
   /**
    * @see GradleAvoidDependencyNamedArgumentsNotationInspection
    */
+  fun isAvoidDependencyNamedArgumentsNotationInspectionAvailable(file: PsiFile) : Boolean
   fun getAvoidDependencyNamedArgumentsNotationInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor
 }

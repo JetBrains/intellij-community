@@ -1,0 +1,60 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.gradle.scripting.shared.inspections
+
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
+import org.jetbrains.plugins.gradle.codeInspection.GradleDslInspectionProvider
+
+class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
+    override fun getConfigurationAvoidanceInspectionVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean
+    ): PsiElementVisitor {
+        return PsiElementVisitor.EMPTY_VISITOR
+        //TODO("Not yet implemented")
+    }
+
+    override fun getForeignDelegateInspectionVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean
+    ): PsiElementVisitor {
+        return PsiElementVisitor.EMPTY_VISITOR
+        //TODO("Not yet implemented")
+    }
+
+    override fun getIncorrectDependencyNotationArgumentInspectionVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean
+    ): PsiElementVisitor {
+        return PsiElementVisitor.EMPTY_VISITOR
+        //TODO("Not yet implemented")
+    }
+
+    override fun getDeprecatedConfigurationInspectionVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean
+    ): PsiElementVisitor {
+        return PsiElementVisitor.EMPTY_VISITOR
+        //TODO("Not yet implemented")
+    }
+
+    override fun getPluginDslStructureInspectionVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean
+    ): PsiElementVisitor {
+        return PsiElementVisitor.EMPTY_VISITOR
+        //TODO("Not yet implemented")
+    }
+
+    override fun isAvoidDependencyNamedArgumentsNotationInspectionAvailable(file: PsiFile) : Boolean {
+        return file.name.endsWith(".gradle.kts")
+    }
+
+    override fun getAvoidDependencyNamedArgumentsNotationInspectionVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean
+    ): PsiElementVisitor {
+        return KotlinAvoidDependencyNamedArgumentsNotationInspectionVisitor(holder)
+    }
+}
