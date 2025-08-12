@@ -20,12 +20,6 @@ jvm_resources(
 )
 
 jvm_library(
-  name = "ui-tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
-)
-
-jvm_library(
   name = "ui-tests_test_lib",
   module_name = "intellij.platform.jewel.uiTests",
   visibility = ["//visibility:public"],

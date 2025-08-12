@@ -8,12 +8,6 @@ jvm_resources(
 )
 
 jvm_library(
-  name = "tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
-)
-
-jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.terminal.tests",
   visibility = ["//visibility:public"],

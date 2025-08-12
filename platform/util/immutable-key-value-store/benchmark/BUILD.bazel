@@ -2,12 +2,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "benchmark",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
-)
-
-jvm_library(
   name = "benchmark_test_lib",
   module_name = "intellij.platform.util.immutableKeyValueStore.benchmark",
   visibility = ["//visibility:public"],

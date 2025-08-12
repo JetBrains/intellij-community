@@ -2,12 +2,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
-)
-
-jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.idea.community.build.tests",
   visibility = ["//visibility:public"],

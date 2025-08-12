@@ -49,12 +49,6 @@ jvm_library(
 
 ### auto-generated section `build intellij.sh.tests` start
 jvm_library(
-  name = "tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
-)
-
-jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.sh.tests",
   visibility = ["//visibility:public"],
