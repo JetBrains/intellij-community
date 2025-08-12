@@ -13,7 +13,7 @@ private val LOG = fileLogger()
 /**
  * Converts an [Document] instance into a [DocumentId] which can be used in RPC calls and stored in Rhizome.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun Document.rpcId(): DocumentId {
   val file = this
   val serializedFile = serializeToRpc(file)
@@ -23,7 +23,7 @@ fun Document.rpcId(): DocumentId {
 /**
  * Retrieves the [Document] associated with the given [DocumentId].
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun DocumentId.document(): Document? {
   if (localDocument != null) {
     return localDocument
@@ -35,6 +35,6 @@ fun DocumentId.document(): Document? {
   }
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @Serializable
 class DocumentId internal constructor(@Serializable internal val serializedValue: SerializedValue? = null, @Transient internal val localDocument: Document? = null)
