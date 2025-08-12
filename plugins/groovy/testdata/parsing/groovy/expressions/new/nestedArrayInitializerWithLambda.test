@@ -1,7 +1,10 @@
 new int[][]{
  {},
- {a, b -> println a + b},
- {1, 2, 3}}
+ {(a) -> println a},
+ {(a, b) -> a + b},
+ {(String a) -> a},
+ {(String a, String b) -> a+b}
+}
 -----
 Groovy script
   NEW expression
@@ -22,18 +25,18 @@ Groovy script
         PsiElement(})('}')
       PsiElement(,)(',')
       PsiElement(new line)('\n ')
-      Array initializer
+      Closable block
         PsiElement({)('{')
-        Reference expression
-          PsiElement(identifier)('a')
-        PsiElement(,)(',')
-        PsiWhiteSpace(' ')
+        Parameter list
+          <empty list>
         Lambda expression
           Parameter list
+            PsiElement(()('(')
             Parameter
               Modifiers
                 <empty list>
-              PsiElement(identifier)('b')
+              PsiElement(identifier)('a')
+            PsiElement())(')')
           PsiWhiteSpace(' ')
           PsiElement(->)('->')
           PsiWhiteSpace(' ')
@@ -43,28 +46,105 @@ Groovy script
                 PsiElement(identifier)('println')
               PsiWhiteSpace(' ')
               Command arguments
-                Additive expression
-                  Reference expression
-                    PsiElement(identifier)('a')
-                  PsiWhiteSpace(' ')
-                  PsiElement(+)('+')
-                  PsiWhiteSpace(' ')
-                  Reference expression
-                    PsiElement(identifier)('b')
+                Reference expression
+                  PsiElement(identifier)('a')
         PsiElement(})('}')
       PsiElement(,)(',')
       PsiElement(new line)('\n ')
-      Array initializer
+      Closable block
         PsiElement({)('{')
-        Literal
-          PsiElement(Integer)('1')
-        PsiElement(,)(',')
-        PsiWhiteSpace(' ')
-        Literal
-          PsiElement(Integer)('2')
-        PsiElement(,)(',')
-        PsiWhiteSpace(' ')
-        Literal
-          PsiElement(Integer)('3')
+        Parameter list
+          <empty list>
+        Lambda expression
+          Parameter list
+            PsiElement(()('(')
+            Parameter
+              Modifiers
+                <empty list>
+              PsiElement(identifier)('a')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            Parameter
+              Modifiers
+                <empty list>
+              PsiElement(identifier)('b')
+            PsiElement())(')')
+          PsiWhiteSpace(' ')
+          PsiElement(->)('->')
+          PsiWhiteSpace(' ')
+          Lambda body
+            Additive expression
+              Reference expression
+                PsiElement(identifier)('a')
+              PsiWhiteSpace(' ')
+              PsiElement(+)('+')
+              PsiWhiteSpace(' ')
+              Reference expression
+                PsiElement(identifier)('b')
         PsiElement(})('}')
+      PsiElement(,)(',')
+      PsiElement(new line)('\n ')
+      Closable block
+        PsiElement({)('{')
+        Parameter list
+          <empty list>
+        Lambda expression
+          Parameter list
+            PsiElement(()('(')
+            Parameter
+              Modifiers
+                <empty list>
+              Type element
+                Reference element
+                  PsiElement(identifier)('String')
+              PsiWhiteSpace(' ')
+              PsiElement(identifier)('a')
+            PsiElement())(')')
+          PsiWhiteSpace(' ')
+          PsiElement(->)('->')
+          PsiWhiteSpace(' ')
+          Lambda body
+            Reference expression
+              PsiElement(identifier)('a')
+        PsiElement(})('}')
+      PsiElement(,)(',')
+      PsiElement(new line)('\n ')
+      Closable block
+        PsiElement({)('{')
+        Parameter list
+          <empty list>
+        Lambda expression
+          Parameter list
+            PsiElement(()('(')
+            Parameter
+              Modifiers
+                <empty list>
+              Type element
+                Reference element
+                  PsiElement(identifier)('String')
+              PsiWhiteSpace(' ')
+              PsiElement(identifier)('a')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            Parameter
+              Modifiers
+                <empty list>
+              Type element
+                Reference element
+                  PsiElement(identifier)('String')
+              PsiWhiteSpace(' ')
+              PsiElement(identifier)('b')
+            PsiElement())(')')
+          PsiWhiteSpace(' ')
+          PsiElement(->)('->')
+          PsiWhiteSpace(' ')
+          Lambda body
+            Additive expression
+              Reference expression
+                PsiElement(identifier)('a')
+              PsiElement(+)('+')
+              Reference expression
+                PsiElement(identifier)('b')
+        PsiElement(})('}')
+      PsiElement(new line)('\n')
       PsiElement(})('}')

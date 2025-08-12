@@ -227,6 +227,8 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   public void testnew$nestedArrayInitializerWithLambda() { doTest(); }
 
+  public void testnew$nestedArrayInitializerCommaAfterLastElement() { doTest(); }
+
   public void testnew$nestedArrayInitializerNewLinesInside() { doTest(); }
 
   public void testnew$noInitializer() { doTest(); }

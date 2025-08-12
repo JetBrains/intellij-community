@@ -995,7 +995,8 @@ array_initializer ::= '{' mb_nl '}' | array_initializer_pin
 nested_array_initializer ::= '{' mb_nl '}' | array_initializer_no_pin { elementType = array_initializer }
 private array_initializer_no_pin ::= '{' <<a_b_a array_initializer_item array_initializer_separator>> array_initializer_separator? mb_nl '}'
 private array_initializer_pin ::=  '{' <<a_b_a array_initializer_item array_initializer_separator>> array_initializer_separator? mb_nl '}' { pin = 1 }
-private array_initializer_item ::= mb_nl (nested_array_initializer | expression)
+private array_initializer_item ::= mb_nl (array_initializer_closable_item | nested_array_initializer | expression)
+array_initializer_closable_item ::= non_empty_closure | (non_empty_lamda) { elementType = closure }
 private array_initializer_separator ::= mb_nl ','
 
 array_declaration ::= mandatory_expression optional_expression* { consumeTokenMethod = 'consumeTokenFast' }
@@ -1061,6 +1062,7 @@ closure ::= closure_impl
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrClosureElementType'
   extraRoot = true
 }
+
 closure_switch_aware ::= <<insideSwitchExpression closure_impl>>
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrClosureElementType'
@@ -1069,6 +1071,9 @@ closure_switch_aware ::= <<insideSwitchExpression closure_impl>>
 }
 private closure_impl ::= '{' mb_nl closure_header mb_separators block_levels '}' { pin = 1   consumeTokenMethod = 'consumeTokenFast'
  }
+
+private non_empty_closure ::= '{' mb_nl closure_header_with_arrow mb_separators block_levels '}' { consumeTokenMethod = 'consumeTokenFast'}
+private non_empty_lamda ::= '{' empty_parameter_list mb_nl lambda_expression mb_nl '}' {consumeTokenMethod = 'consumeTokenFast' }
 private closure_header ::= closure_header_with_arrow | empty_parameter_list
 private closure_header_with_arrow ::= empty_parameter_list mb_nl closure_arrow | closure_parameter_list mb_nl closure_arrow
 private closure_arrow ::= '->'
