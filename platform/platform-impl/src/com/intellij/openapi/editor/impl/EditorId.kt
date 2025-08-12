@@ -17,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
  * @see findEditor
  */
 @Serializable
-@ApiStatus.Internal
+@ApiStatus.Experimental
 data class EditorId(private val id: UID) {
   // NB: This API is necessary only for TextControlHost functionality that uses RD Protocol
   //     for RemoteApi use just [EditorId], since it is serializable
@@ -58,7 +58,7 @@ val KERNEL_EDITOR_ID_KEY = Key.create<EditorId>("EditorImpl.KERNEL_EDITOR_ID")
  * @return The [EditorId] instance associated with the provided [Editor],
  *         or null if [Editor]'s implementation didn't assign id to it.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun Editor.editorIdOrNull(): EditorId? {
   return getUserData(KERNEL_EDITOR_ID_KEY)
 }
@@ -70,7 +70,7 @@ fun Editor.editorIdOrNull(): EditorId? {
  * @return The [EditorId] instance associated with the provided [Editor]
  * @throws IllegalStateException if [Editor]'s implementation didn't assign [EditorId] to it
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun Editor.editorId(): EditorId {
   return editorIdOrNull() ?: error("EditorId is not found for editor: $this")
 }
@@ -81,7 +81,7 @@ fun Editor.editorId(): EditorId {
  * @return The [Editor] instance associated with the provided [EditorId],
  *         or null if there is no editor with the given [EditorId].
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun EditorId.findEditorOrNull(): Editor? {
   return EditorFactory.getInstance().allEditors.find { it.editorIdOrNull() == this }
 }
@@ -93,7 +93,7 @@ fun EditorId.findEditorOrNull(): Editor? {
  *         or null if there is no editor with the given [EditorId].
  * @throws IllegalStateException if there is no editor with the given [EditorId].
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun EditorId.findEditor(): Editor {
   return findEditorOrNull() ?: error("Editor is not found for id: $this")
 }
