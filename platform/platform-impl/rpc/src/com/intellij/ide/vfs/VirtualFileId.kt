@@ -15,7 +15,7 @@ private val LOG = fileLogger()
 /**
  * Converts an [VirtualFile] instance into a [VirtualFileId] which can be used in RPC calls and stored in Rhizome.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun VirtualFile.rpcId(): VirtualFileId {
   val file = this
   val serializedFile = serializeToRpc(file)
@@ -25,7 +25,7 @@ fun VirtualFile.rpcId(): VirtualFileId {
 /**
  * Retrieves the [VirtualFile] associated with the given [VirtualFileId].
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun VirtualFileId.virtualFile(): VirtualFile? {
   if (localVirtualFile != null) {
     return localVirtualFile
@@ -37,7 +37,7 @@ fun VirtualFileId.virtualFile(): VirtualFile? {
   }
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @ConsistentCopyVisibility
 @Serializable
 data class VirtualFileId internal constructor(@Serializable internal val serializedValue: SerializedValue? = null, @Transient internal val localVirtualFile: VirtualFile? = null)
