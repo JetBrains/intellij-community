@@ -39,8 +39,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log" />
     <orderEntry type="library" name="caffeine" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.collaborationTools.auth.base" />
-    <orderEntry type="module" module-name="intellij.platform.collaborationTools.auth" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="jetbrains.markdown" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
