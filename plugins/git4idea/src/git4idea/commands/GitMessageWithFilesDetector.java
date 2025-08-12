@@ -51,12 +51,15 @@ public class GitMessageWithFilesDetector implements GitLineEventDetector {
     }
     if (outputType.equals(myMessageOutputType)) {
       LOG.debug("|" + myEvent.name + "| Treating as a file: [" + line + "]" + "of type " + outputType);
-      myAffectedFiles.add(line.trim());
-      return;
+      handleAsAffectedFiles(line);
     }
     else {
       LOG.debug("|" + myEvent.name + "| Plain message: [" + line + "]" + "of type " + outputType);
     }
+  }
+
+  protected void handleAsAffectedFiles(@NotNull String line) {
+    myAffectedFiles.add(line.trim());
   }
 
   /**
