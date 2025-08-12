@@ -33,17 +33,18 @@ class KotlinCoroutineJvmDebugArgumentsProvider implements CommandLineArgumentPro
 
     private static def VERSION_PATTERN = Pattern.compile(/(\d+)\.(\d+)(\.(\d+))?.*/)
 
-    private final FileCollection taskClasspath
+    private final Task myTask
 
     KotlinCoroutineJvmDebugArgumentsProvider(Task task) {
-        this.taskClasspath = task.classpath
+        myTask = task
     }
 
     @Override
     Iterable<String> asArguments() {
+        def classpath = myTask.classpath
         List<String> emptyList = Collections.emptyList()
         if (System.getProperty(ForkedDebuggerHelper.DISPATCH_PORT_SYS_PROP) == null) return emptyList
-        def kotlinxCoroutinesCoreJar = taskClasspath.find {
+        def kotlinxCoroutinesCoreJar = classpath.find {
             it.name.startsWith("kotlinx-coroutines-core") && !it.name.contains("sources")
         }
         if (kotlinxCoroutinesCoreJar == null) return emptyList

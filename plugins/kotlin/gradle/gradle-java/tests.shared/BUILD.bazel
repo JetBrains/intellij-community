@@ -93,6 +93,7 @@ jvm_library(
     "//plugins/kotlin/base/external-build-system",
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/openapi:java",
+    "//plugins/kotlin/jvm-debugger/coroutines",
   ]
 )
 ### auto-generated section `build kotlin.gradle.gradle-java.tests.shared` end

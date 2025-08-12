@@ -91,5 +91,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="commons-lang3" level="project" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.coroutines" />
   </component>
 </module>
