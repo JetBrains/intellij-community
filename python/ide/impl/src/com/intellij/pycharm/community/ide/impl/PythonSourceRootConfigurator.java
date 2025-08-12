@@ -23,14 +23,26 @@ import org.jetbrains.annotations.NotNull;
 
 final class PythonSourceRootConfigurator implements DirectoryProjectConfigurator {
   private static final @NonNls String SETUP_PY = "setup.py";
+  private static final @NonNls String SRC_FOLDER = "src";
 
   @Override
   public void configureProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Ref<Module> moduleRef, boolean isProjectCreatedWithWizard) {
     VirtualFile setupPy = baseDir.findChild(SETUP_PY);
-    if (setupPy == null) {
-      return;
+    if (setupPy != null) {
+      configureFromSetupPy(project, baseDir, setupPy);
     }
 
+    VirtualFile srcFolder = baseDir.findChild(SRC_FOLDER);
+    if (srcFolder != null) {
+      configureSrcDirectory(project, baseDir, srcFolder);
+    }
+  }
+
+  private static void configureSrcDirectory(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull VirtualFile srcFolder) {
+    addSourceRoot(project, baseDir, srcFolder, false);
+  }
+
+  private static void configureFromSetupPy(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull VirtualFile setupPy) {
     CharSequence content = LoadTextUtil.loadText(setupPy);
     PsiElement setupPyFile = PsiFileFactory.getInstance(project).createFileFromText(SETUP_PY, PythonFileType.INSTANCE, content.toString());
     final SetupCallVisitor visitor = new SetupCallVisitor();
