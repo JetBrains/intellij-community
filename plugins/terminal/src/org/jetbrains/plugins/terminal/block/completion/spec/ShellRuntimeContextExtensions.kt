@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.block.completion.spec
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.session.ShellIntegrationFunctions.GET_DIRECTORY_FILES
@@ -35,11 +36,11 @@ suspend fun ShellRuntimeContext.getChildFiles(
   onlyDirectories: Boolean = false,
 ): List<String> {
   val adjustedPath = path.ifEmpty { "." }
-  val command = if (isReworkedTerminal) {
-    "ls -1ap $adjustedPath"
+  val command: String = if (isReworkedTerminal) {
+    createGetFilesCommandReworked(adjustedPath)
   }
   else {
-    "${GET_DIRECTORY_FILES.functionName} $adjustedPath"
+    createGetFilesCommand(adjustedPath)
   }
   val result = runShellCommand(command)
   if (result.exitCode != 0) {
@@ -53,4 +54,12 @@ suspend fun ShellRuntimeContext.getChildFiles(
     // do not suggest './' and '../' directories if the user already typed some path
     .filter { path.isEmpty() || (it != ".$separator" && it != "..$separator") }
     .toList()
+}
+
+private fun createGetFilesCommand(adjustedPath: String): String {
+  return "${GET_DIRECTORY_FILES.functionName} $adjustedPath"
+}
+
+private fun createGetFilesCommandReworked(adjustedPath: String): String {
+  return "ls -1ap ${FileUtil.expandUserHome(adjustedPath)}"
 }
