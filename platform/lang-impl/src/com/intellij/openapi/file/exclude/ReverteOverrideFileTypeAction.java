@@ -9,16 +9,19 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-/** removes destruction caused by {@link OverrideFileTypeAction} and restores the original file type */
-final class RevertOverrideFileTypeAction extends DumbAwareAction {
+/**
+ * Remove destruction caused by {@link OverrideFileTypeAction} and restore the original file type.
+ * @see <a href="https://harrypotter.fandom.com/wiki/Reverte">Reverte incantation</a> for details.
+ */
+final class ReverteOverrideFileTypeAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     VirtualFile[] files = OverrideFileTypeAction.getContextFiles(e, file -> OverrideFileTypeManager.getInstance().getFileValue(file) != null);
     Presentation presentation = e.getPresentation();
     boolean enabled = files.length != 0;
     presentation.setDescription(enabled
-                                ? ActionsBundle.message("action.RevertOverrideFileTypeAction.verbose.description", files[0].getName(), files.length - 1)
-                                : ActionsBundle.message("action.RevertOverrideFileTypeAction.description"));
+                                ? ActionsBundle.message("action.ReverteOverrideFileTypeAction.verbose.description", files[0].getName(), files.length - 1)
+                                : ActionsBundle.message("action.ReverteOverrideFileTypeAction.description"));
     presentation.setEnabledAndVisible(enabled);
   }
 
