@@ -123,7 +123,7 @@ abstract class PythonAddInterpreterModel(
     }.mapLatest { allExisting ->
       val existingLanguageLevels = allExisting.map { it.languageLevel }.toSet()
       val nonExistingInstallable = installable.filter { it.languageLevel !in existingLanguageLevels }
-      allExisting + nonExistingInstallable
+      allExisting.sorted() + nonExistingInstallable
     }.stateIn(scope, started = SharingStarted.Eagerly, initialValue = emptyList())
 
 
