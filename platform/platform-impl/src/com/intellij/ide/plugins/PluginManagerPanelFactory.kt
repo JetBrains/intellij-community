@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.newui.MyPluginModel
 import com.intellij.ide.plugins.newui.PluginLogo
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.UiPluginManager
+import com.intellij.ide.plugins.newui.*
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -35,6 +36,7 @@ object PluginManagerPanelFactory {
       val suggestedPlugins = if (project != null) findSuggestedPlugins(project, customRepositoriesMap) else emptyList()
       val pluginManager = UiPluginManager.getInstance()
       val marketplaceData = mutableMapOf<String, PluginSearchResult>()
+      val internalPluginsGroupDescriptor = getPluginsViewCustomizer().getInternalPluginsGroupDescriptor()
 
       val queries = listOf(
         "is_featured_search=true",
@@ -58,7 +60,7 @@ object PluginManagerPanelFactory {
       }
       val installedPlugins = pluginManager.findInstalledPlugins(marketplaceData.flatMap { it.value.getPlugins().map { plugin -> plugin.pluginId } }.toSet())
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        callback(CreateMarketplacePanelModel(marketplaceData, errors, suggestedPlugins, customRepositoriesMap, installedPlugins))
+        callback(CreateMarketplacePanelModel(marketplaceData, errors, suggestedPlugins, customRepositoriesMap, installedPlugins, internalPluginsGroupDescriptor))
       }
     }
   }
@@ -105,4 +107,5 @@ data class CreateMarketplacePanelModel(
   val suggestedPlugins: List<PluginUiModel>,
   val customRepositories: Map<String, List<PluginUiModel>>,
   val installedPlugins: Map<PluginId, PluginUiModel>,
+  val internalPluginsGroupDescriptor: PluginsViewCustomizer.PluginsGroupDescriptor?,
 )

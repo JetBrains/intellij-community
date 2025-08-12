@@ -523,9 +523,7 @@ public final class PluginManagerConfigurable
               if (project != null) {
                 addSuggestedGroup(groups, model.getErrors(), model.getSuggestedPlugins(), model.getInstalledPlugins());
               }
-
-              PluginsViewCustomizer.PluginsGroupDescriptor internalPluginsGroupDescriptor =
-                getPluginsViewCustomizer().getInternalPluginsGroupDescriptor();
+              PluginsViewCustomizer.PluginsGroupDescriptor internalPluginsGroupDescriptor = model.getInternalPluginsGroupDescriptor();
               if (internalPluginsGroupDescriptor != null) {
                 List<PluginUiModel> customPlugins =
                   ContainerUtil.map(internalPluginsGroupDescriptor.getPlugins(), it -> new PluginUiModelAdapter(it));
