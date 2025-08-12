@@ -20,4 +20,19 @@ class GroovyAnnotatorPre50Test: LightGroovyTestCase() {
     """.trimIndent())
     myFixture.testHighlighting()
   }
+
+  fun testArrayInitializer() {
+    myFixture.configureByText("a.groovy", """
+      class A{}
+      class B extends A{}
+      def foo() {
+        def o = new String[][]{}
+      
+        def a = <error descr="Multidimensional array initializer is available in Groovy 5.0 or later">new String[][]{{}}</error>
+        
+        def b = <error descr="Multidimensional array initializer is available in Groovy 5.0 or later">new String[][]{{"foo"}}</error>
+      }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
 }
