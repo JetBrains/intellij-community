@@ -1,5 +1,3 @@
-// IGNORE_K1
-
 fun main() {
     foo1 {
         fun localFun() {

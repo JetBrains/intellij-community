@@ -1,7 +1,7 @@
-LineBreakpoint created at variousLocalReturns.kt:31
+LineBreakpoint created at variousLocalReturns.kt:29
 Run Java
 Connected to the target VM
-variousLocalReturns.kt:31
+variousLocalReturns.kt:29
 Compile bytecode for block()
 Disconnected from the target VM
 

@@ -1,5 +1,3 @@
-// IGNORE_K1
-
 // At the moment step-into functionality may work incorrect when we have multiple statements in a single line
 // Yet the compiler should not fail with an internal error
 
