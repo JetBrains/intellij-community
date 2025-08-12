@@ -1,0 +1,3 @@
+<idea-plugin>
+  <module value="com.intellij.modules.collaborationTools.auth.base"/>
+</idea-plugin>

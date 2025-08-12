@@ -184,6 +184,7 @@ private val knownNotFullyMigratedPluginIds: Set<String> = hashSetOf(
  */
 private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins = listOf(
   "intellij.platform.collaborationTools.auth",
+  "intellij.platform.collaborationTools.auth.base",
   "intellij.platform.tasks",
   "intellij.platform.tasks.impl",
   "intellij.spellchecker.xml",

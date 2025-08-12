@@ -6,6 +6,7 @@
     <module name="intellij.platform.smRunner.vcs"/>
     <module name="intellij.platform.collaborationTools"/>
     <module name="intellij.platform.collaborationTools.auth"/>
+    <module name="intellij.platform.collaborationTools.auth.base"/>
     <module name="intellij.platform.tasks"/>
     <module name="intellij.platform.tasks.impl"/>
     <module name="intellij.platform.ml.impl"/>
