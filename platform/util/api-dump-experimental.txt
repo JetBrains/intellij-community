@@ -24,8 +24,8 @@ f:com.intellij.openapi.util.UserDataAccessorsKt
 - *sf:createUserDataProperty(java.lang.Class):kotlin.properties.ReadWriteProperty
 - *sf:createUserDataProperty(java.lang.Class,kotlin.jvm.functions.Function1):kotlin.properties.ReadWriteProperty
 c:com.intellij.openapi.util.UserDataHolderBase
-- java.util.concurrent.atomic.AtomicReference
 - com.intellij.openapi.util.UserDataHolderEx
+- java.io.Serializable
 - *:isCopyableDataEqual(com.intellij.openapi.util.UserDataHolderBase):Z
 e:com.intellij.openapi.util.io.FileAttributes$CaseSensitivity
 - java.lang.Enum

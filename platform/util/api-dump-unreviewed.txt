@@ -854,7 +854,6 @@ a:com.intellij.openapi.util.UserDataCache
 - put(com.intellij.openapi.util.UserDataHolder,java.lang.Object):V
 - pf:putValue(java.lang.Object,com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.util.Key):V
 c:com.intellij.openapi.util.UserDataHolderBase
-- java.util.concurrent.atomic.AtomicReference
 - com.intellij.openapi.util.UserDataHolderEx
 - <init>():V
 - p:changeUserMap(com.intellij.util.keyFMap.KeyFMap,com.intellij.util.keyFMap.KeyFMap):Z

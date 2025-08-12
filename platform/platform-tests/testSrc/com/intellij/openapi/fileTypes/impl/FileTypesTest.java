@@ -57,7 +57,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jdom.Element;
@@ -217,7 +216,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     VirtualFile virtualFile = getVirtualFile(file);
     assertNotNull(virtualFile);
     assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
-    virtualFile.set(KeyFMap.EMPTY_MAP);
+    myFileTypeManager.detectionService.clearDetectedFromContentData(virtualFile);
     clearFileTypeCache();
     assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
   }

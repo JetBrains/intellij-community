@@ -124,6 +124,8 @@ f:com.intellij.openapi.util.UserDataAccessorsKt
 com.intellij.openapi.util.UserDataHolder
 - a:getUserData(com.intellij.openapi.util.Key):java.lang.Object
 - a:putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
+c:com.intellij.openapi.util.UserDataHolderBase
+- java.io.Serializable
 com.intellij.openapi.util.UserDataHolderEx
 - com.intellij.openapi.util.UserDataHolder
 - a:putUserDataIfAbsent(com.intellij.openapi.util.Key,java.lang.Object):java.lang.Object

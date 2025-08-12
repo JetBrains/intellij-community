@@ -398,6 +398,10 @@ public final class FileTypeDetectionService {
     }
   }
 
+  @ApiStatus.Internal
+  public void clearDetectedFromContentData(@NotNull VirtualFile file) {
+    file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
+  }
   private void awakeReDetectExecutor() {
     reDetectExecutor.execute(() -> {
       List<VirtualFile> files = new ArrayList<>(CHUNK_SIZE);

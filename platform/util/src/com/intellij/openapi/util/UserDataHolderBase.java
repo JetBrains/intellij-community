@@ -3,17 +3,18 @@ package com.intellij.openapi.util;
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.util.userData.ExternalUserDataStorage;
+import com.intellij.util.containers.VarHandleWrapper;
 import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.*;
 
+import java.io.Serializable;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-@ReviseWhenPortedToJDK("11") // rewrite to VarHandles to avoid smelling AtomicREference inheritance
+@ReviseWhenPortedToJDK("11") // rewrite to real VarHandles
 @Transient
-public class UserDataHolderBase extends AtomicReference<KeyFMap> implements UserDataHolderEx {
+public class UserDataHolderBase implements UserDataHolderEx, Serializable {
   private static final Key<KeyFMap> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
 
   @Nullable
@@ -28,9 +29,10 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
     Supplier<ExternalUserDataStorage> supplier = ourExternalUserDataStorage;
     return supplier == null ? null : supplier.get();
   }
+  private volatile @NotNull KeyFMap value = KeyFMap.EMPTY_MAP;
+  private static final VarHandleWrapper VALUE_HANDLE = VarHandleWrapper.getFactory().create(UserDataHolderBase.class, "value", KeyFMap.class);
 
   public UserDataHolderBase() {
-    super(KeyFMap.EMPTY_MAP);
   }
 
   @Override
@@ -79,7 +81,7 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
       return external.getUserMap(this);
     }
     else {
-      return get();
+      return value;
     }
   }
 
@@ -101,7 +103,7 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
   }
 
   protected boolean changeUserMap(@NotNull KeyFMap oldMap, @NotNull KeyFMap newMap) {
-    return compareAndSet(oldMap, newMap);
+    return VALUE_HANDLE.compareAndSet(this, oldMap, newMap);
   }
 
   public <T> @UnknownNullability T getCopyableUserData(@NotNull Key<T> key) {
@@ -215,11 +217,16 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
       external.setUserMap(this, map);
     }
     else {
-      set(map);
+      value = map;
     }
   }
 
   public boolean isUserDataEmpty() {
     return getUserMap().isEmpty();
+  }
+
+  @Override
+  public String toString() {
+    return getUserMap().toString();
   }
 }

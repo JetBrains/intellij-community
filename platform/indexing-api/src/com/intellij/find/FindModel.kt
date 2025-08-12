@@ -707,7 +707,7 @@ open class FindModel : UserDataHolder, Cloneable {
            "moduleName = '" + moduleName + "'\n" +
            "customScopeName = '" + customScopeName + "'\n" +
            "searchInProjectFiles = " + mySearchInProjectFiles + "\n" +
-           "userDataMap = " + dataHolder.get() + "\n"
+           "userDataMap = " + dataHolder + "\n"
   }
 
   @Transient
