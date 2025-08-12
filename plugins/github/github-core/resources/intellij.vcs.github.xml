@@ -3,6 +3,7 @@
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="Git4Idea"/>
     <module name="intellij.platform.collaborationTools"/>
+    <module name="intellij.platform.collaborationTools.auth"/>
   </dependencies>
 
   <resource-bundle>messages.GithubBundle</resource-bundle>

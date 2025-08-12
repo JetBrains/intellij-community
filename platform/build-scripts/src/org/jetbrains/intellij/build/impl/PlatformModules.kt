@@ -667,7 +667,6 @@ private val PRODUCT_MODULE_IMPL_COMPOSITION = java.util.Map.of(
   ),
   "intellij.platform.collaborationTools", listOf(
     "intellij.platform.collaborationTools.auth.base",
-    "intellij.platform.collaborationTools.auth",
   ),
   "intellij.platform.vcs.dvcs.impl", listOf(
     "intellij.platform.vcs.dvcs"

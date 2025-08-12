@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.platform.collaborationTools.auth` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "auth_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "auth",
@@ -16,6 +22,7 @@ jvm_library(
     "//platform/platform-util-netty:ide-util-netty",
     "//platform/collaboration-tools/auth-base:collaborationTools-auth-base",
     "//platform/built-in-server:builtInServer-impl",
-  ]
+  ],
+  runtime_deps = [":auth_resources"]
 )
 ### auto-generated section `build intellij.platform.collaborationTools.auth` end
