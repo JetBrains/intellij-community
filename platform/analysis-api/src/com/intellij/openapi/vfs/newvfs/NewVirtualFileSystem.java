@@ -5,7 +5,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.FileNavigator.NavigateResult;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -16,13 +20,15 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.intellij.openapi.vfs.VFileProperty.SYMLINK;
+
 /**
  * 'New' virtual file systems are managed and centered around {@link ManagingFS}.
  * These are file systems that are really data-providers ({@link FileSystemInterface}) for {@link ManagingFS},
  * while {@link ManagingFS} caches ({@link CachingVirtualFileSystem}) and manages the data provided.
  */
 public abstract class NewVirtualFileSystem extends VirtualFileSystem implements FileSystemInterface, CachingVirtualFileSystem {
-  private static final Logger LOG = Logger.getInstance(NewVirtualFileSystem.class);
+  static final Logger LOG = Logger.getInstance(NewVirtualFileSystem.class);
 
   private final Map<VirtualFileListener, VirtualFileListener> myListenerWrappers = new ConcurrentHashMap<>();
 
@@ -151,66 +157,12 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   @Override
   @ApiStatus.Internal
   public @Nullable VirtualFile findFileByPathWithoutCaching(@NotNull String path) {
-    Pair<VirtualFile, VirtualFile> pair = findCachedOrTransientFileByPath(this, path);
-    if (pair.first != null) {
-      return pair.first;
-    }
-    else if (pair.second != null) {
-      return pair.second;
-    }
-    return null;//file is invalid, doesn't exist, or doesn't belong to this file system
+    NavigateResult<VirtualFile> result = findCachedOrTransientFileByPath(this, path);
+    return result.resolvedFileOr(null);
   }
 
   /* ============================================== static helpers ============================================== */
 
-
-  /**
-   * Resolves the given path against the given fileSystem.
-   *
-   * @return VirtualFile for the path, if resolved, null if not -- e.g. path is invalid or doesn't exist, or not belongs to
-   * fileSystem given.
-   */
-  protected static @Nullable NewVirtualFile findFileByPath(@NotNull NewVirtualFileSystem fileSystem,
-                                                           @NotNull String path) {
-    Pair<NewVirtualFile, Iterable<String>> rootAndPath = extractRootAndPathSegments(fileSystem, path);
-    if (rootAndPath == null) return null;
-
-    NewVirtualFile file = rootAndPath.first;
-    for (String pathElement : rootAndPath.second) {
-      if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
-      NewVirtualFile fileBefore = file;
-      //Here we do 'partial canonicalization' of the path: we resolve symlinks, but only before '..' segments.
-      // It makes the resolution a bit surprising: 'a/b/c' and 'a/../a/b/c' could be resolved to different files, if 'a'
-      // is a symlink. But this follows the POSIX rules for path resolution, there symlinks indeed resolved as soon, as
-      // they are met in the path.
-      //Still, the result differs from regular canonicalization, via VirtualFile.getCanonicalPath() or Path.toRealPath(),
-      // there _all_ symlinks are resolved -- and the result also differs from Path.toRealPath(NOFOLLOW_LINKS) where _none_
-      // of symlinks are resolved.
-      if ("..".equals(pathElement)) {
-        if (file.is(VFileProperty.SYMLINK)) {
-          NewVirtualFile canonicalFile = file.getCanonicalFile();
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("[" + file.getPath() + "]: symlink to [" + canonicalFile + "]");
-          }
-          file = canonicalFile != null ? canonicalFile.getParent() : null;
-        }
-        else {
-          file = file.getParent();
-        }
-      }
-      else {
-        file = file.findChild(pathElement);
-      }
-
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("[" + fileBefore.getPath() + "]/[" + pathElement + "] resolved to [" + file + "]");
-      }
-
-      if (file == null) return null;
-    }
-
-    return file;
-  }
 
   /**
    * Resolves the given path against the given fileSystem, looking only in already cached in VFS {@link VirtualFile}s.
@@ -226,78 +178,94 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
    */
   public static @NotNull Pair<NewVirtualFile, NewVirtualFile> findCachedFileByPath(@NotNull NewVirtualFileSystem fileSystem,
                                                                                    @NotNull String path) {
-    Pair<NewVirtualFile, Iterable<String>> rootAndPath = extractRootAndPathSegments(fileSystem, path);
-    if (rootAndPath == null) return Pair.empty();
+    //Pair<NewVirtualFile, Iterable<String>> rootAndPath = extractRootAndPathSegments(fileSystem, path);
+    //if (rootAndPath == null) return Pair.empty();
 
-    NewVirtualFile root = rootAndPath.first;
-    Iterable<String> pathSegments = rootAndPath.second;
-    NewVirtualFile currentFile = root;
-    for (String pathElement : pathSegments) {
-      if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
+    FileNavigator<NewVirtualFile> navigator = new FileNavigator<>() {
+      @Override
+      public @Nullable NewVirtualFile parentOf(@NotNull NewVirtualFile file) {
+        if (!file.is(SYMLINK)) {
+          return file.getParent();
+        }
+        String canonicalPath = file.getCanonicalPath();
+        if (canonicalPath != null) {
+          NewVirtualFile canonicalFile = findCachedFileByPath(fileSystem, canonicalPath).first;
+          if (canonicalFile != null) {
+            return canonicalFile.getParent();
+          }
+        }
+        return null;
+      }
 
-      NewVirtualFile last = currentFile;
-      if ("..".equals(pathElement)) {
-        currentFile = fetchParentResolvingSymlink(fileSystem, currentFile);
+      @Override
+      public @Nullable NewVirtualFile childOf(@NotNull NewVirtualFile parent, @NotNull String childName) {
+        return parent.findChildIfCached(childName);
       }
-      else {
-        currentFile = currentFile.findChildIfCached(pathElement);
-      }
+    };
 
-      if (currentFile == null) {
-        return Pair.create(null, last);
-      }
+    NavigateResult<NewVirtualFile> result = FileNavigator.navigate(fileSystem, path, navigator);
+
+    if (result.isResolved()) {
+      return Pair.pair(result.resolvedFileOrFail(), null);
     }
-
-    return Pair.create(currentFile, null);
+    else {
+      return Pair.pair(null, result.lastResolvedFile());
+    }
   }
 
   /**
    * Resolves the given path against the given fileSystem.
    *
-   * @return (cachedFile, null), or (null, transientFile) for the path given, or (null, null) if the path is invalid or doesn't exist,
-   * or doesn't belong to the fileSystem given.
+   * @return {@code NavigateResult.found(cachedFile | transientFile)} for the path given, or {@code NavigateResult.empty()} if the path
+   * is invalid or doesn't exist, or doesn't belong to the fileSystem given.
    */
   @ApiStatus.Internal
-  public static @NotNull Pair<VirtualFile, VirtualFile> findCachedOrTransientFileByPath(@NotNull NewVirtualFileSystem fileSystem,
-                                                                                        @NotNull String path) {
-    Pair<NewVirtualFile, Iterable<String>> rootAndPath = extractRootAndPathSegments(fileSystem, path);
-    if (rootAndPath == null) return Pair.empty();
+  public static @NotNull NavigateResult<VirtualFile> findCachedOrTransientFileByPath(@NotNull NewVirtualFileSystem fileSystem,
+                                                                                     @NotNull String path) {
+    FileNavigator<VirtualFile> navigator = new FileNavigator<>() {
+      @Override
+      public @Nullable VirtualFile parentOf(@NotNull VirtualFile file) {
+        if (!file.is(SYMLINK)) {
+          return file.getParent();
+        }
 
-    NewVirtualFile root = rootAndPath.first;
-    Iterable<String> pathSegments = rootAndPath.second;
-    VirtualFile currentFile = root;
-    for (String pathElement : pathSegments) {
-      if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
-
-      if ("..".equals(pathElement)) {
-        currentFile = fetchParentResolvingSymlink(fileSystem, root);
+        String canonicalPath = file.getCanonicalPath();
+        if (canonicalPath != null) {
+          NewVirtualFile canonicalFile = findCachedFileByPath(fileSystem, canonicalPath).first;
+          if (canonicalFile != null) {
+            return canonicalFile.getParent();
+          }
+        }
+        return null;
       }
-      else {
-        if (currentFile instanceof NewVirtualFile) {
-          VirtualFile child = ((NewVirtualFile)currentFile).findChildIfCached(pathElement);
+
+      @Override
+      public VirtualFile childOf(@NotNull VirtualFile parent,
+                                 @NotNull String childName) {
+        if (parent instanceof NewVirtualFile) {
+          NewVirtualFile child = ((NewVirtualFile)parent).findChildIfCached(childName);
           if (child != null) {
-            currentFile = child;
-          }
-          else {
-            currentFile = new TransientVirtualFileImpl(pathElement, path, fileSystem, currentFile);
+            return child;
           }
         }
-        else {
-          currentFile = new TransientVirtualFileImpl(pathElement, path, fileSystem, currentFile);
-        }
+        return new TransientVirtualFileImpl(childName, path, fileSystem, parent);
       }
+    };
 
-      if (currentFile == null) {
-        break;
-      }
+    NavigateResult<VirtualFile> result = FileNavigator.navigate(fileSystem, path, navigator);
+
+    if (!result.isResolved()) {
+      //I see no reason to pass through partially-resolved file, if any:
+      return NavigateResult.empty();
     }
 
-    if (currentFile instanceof NewVirtualFile) {
-      VirtualFile wrappedFile = new CacheAvoidingVirtualFileWrapper((NewVirtualFile)currentFile);
-      return Pair.create(wrappedFile, null);
+    VirtualFile resolvedFile = result.resolvedFileOrFail();
+    if (resolvedFile instanceof NewVirtualFile) {
+      VirtualFile wrappedFile = new CacheAvoidingVirtualFileWrapper((NewVirtualFile)resolvedFile);
+      return NavigateResult.resolved(wrappedFile);
     }
-    else {//TransientVirtualFileImpl is NOT NewVirtualFile
-      return Pair.create(null, currentFile);
+    else {// i.e. TransientVirtualFileImpl (is NOT NewVirtualFile)
+      return NavigateResult.resolved(resolvedFile);
     }
   }
 
@@ -309,22 +277,6 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   public static @Nullable NewVirtualFile findFileByPathIfCached(@NotNull NewVirtualFileSystem fileSystem,
                                                                 @NotNull String path) {
     return findCachedFileByPath(fileSystem, path).first;
-  }
-
-  /**
-   * @return just {@link VirtualFile#getParent()} if the file is a regular file (not a symlink). If the file is a symlink, than
-   * canonicalise it, and get parent of the canonicalised file.
-   */
-  private static @Nullable NewVirtualFile fetchParentResolvingSymlink(@NotNull NewVirtualFileSystem fileSystem,
-                                                                      @NotNull NewVirtualFile file) {
-    if (file.is(VFileProperty.SYMLINK)) {
-      String canonicalPath = file.getCanonicalPath();
-      NewVirtualFile canonicalFile = canonicalPath != null ? findCachedFileByPath(fileSystem, canonicalPath).first : null;
-      return canonicalFile != null ? canonicalFile.getParent() : null;
-    }
-    else {
-      return file.getParent();
-    }
   }
 
   private static final String FILE_SEPARATORS = "/" + (File.separatorChar == '/' ? "" : File.separator);
@@ -381,5 +333,18 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
 
   @ApiStatus.Internal
   public record PathFromRoot(@NotNull NewVirtualFile root, @NotNull String pathFromRoot) {
+  }
+
+
+  /**
+   * Resolves the given path against the given fileSystem.
+   *
+   * @return VirtualFile for the path, if resolved, null if not -- e.g. path is invalid or doesn't exist, or not belongs to
+   * fileSystem given.
+   */
+  protected static @Nullable NewVirtualFile findFileByPath(@NotNull NewVirtualFileSystem vfs,
+                                                           @NotNull String path) {
+    NavigateResult<NewVirtualFile> result = FileNavigator.navigate(vfs, path, FileNavigator.POSIX_LIGHT);
+    return result.resolvedFileOr(null);
   }
 }

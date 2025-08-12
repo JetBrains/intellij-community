@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
+import com.intellij.openapi.vfs.newvfs.FileNavigator.NavigateResult;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -25,6 +26,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.vfs.VFileProperty.SYMLINK;
 import static com.intellij.openapi.vfs.newvfs.events.VFileEvent.REFRESH_REQUESTOR;
 
 public final class VfsImplUtil {
@@ -39,7 +41,6 @@ public final class VfsImplUtil {
    *
    * @return VirtualFile for the path, if resolved, null if not -- e.g. path is invalid or doesn't exist, or not belongs to
    * fileSystem given.
-   *
    * @deprecated use NewVirtualFileSystem.findFileByPath() instead.
    */
   @Deprecated(forRemoval = true)
@@ -48,38 +49,32 @@ public final class VfsImplUtil {
     return NewVirtualFileSystem.findFileByPath(fileSystem, path);
   }
 
-  /** @deprecated use NewVirtualFileSystem.findFileByPathIfCached() instead.*/
+  /** @deprecated use NewVirtualFileSystem.findFileByPathIfCached() instead. */
   @Deprecated(forRemoval = true)
   public static @Nullable NewVirtualFile findFileByPathIfCached(@NotNull NewVirtualFileSystem fileSystem,
-                                                                @NotNull String path){
+                                                                @NotNull String path) {
     return NewVirtualFileSystem.findFileByPathIfCached(fileSystem, path);
   }
 
   public static @Nullable NewVirtualFile refreshAndFindFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
-    Pair<NewVirtualFile, Iterable<String>> rootAndPath = NewVirtualFileSystem.extractRootAndPathSegments(vfs, path);
-    if (rootAndPath == null) return null;
-
-    NewVirtualFile file = rootAndPath.first;
-    for (String pathElement : rootAndPath.second) {
-      if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
-      if ("..".equals(pathElement)) {
-        if (file.is(VFileProperty.SYMLINK)) {
-          String canonicalPath = file.getCanonicalPath();
-          NewVirtualFile canonicalFile = canonicalPath != null ? refreshAndFindFileByPath(vfs, canonicalPath) : null;
-          file = canonicalFile != null ? canonicalFile.getParent() : null;
+    FileNavigator<NewVirtualFile> navigator = new FileNavigator<>() {
+      @Override
+      public @Nullable NewVirtualFile parentOf(@NotNull NewVirtualFile file) {
+        if (!file.is(SYMLINK)) {
+          return file.getParent();
         }
-        else {
-          file = file.getParent();
-        }
-      }
-      else {
-        file = file.refreshAndFindChild(pathElement);
+        String canonicalPath = file.getCanonicalPath();
+        return canonicalPath != null ? refreshAndFindFileByPath(vfs, canonicalPath) : null;
       }
 
-      if (file == null) return null;
-    }
-
-    return file;
+      @Override
+      public @Nullable NewVirtualFile childOf(@NotNull NewVirtualFile parent,
+                                              @NotNull String childName) {
+        return parent.refreshAndFindChild(childName);
+      }
+    };
+    NavigateResult<NewVirtualFile> result = FileNavigator.navigate(vfs, path, navigator);
+    return result.resolvedFileOr(null);
   }
 
   /** An experimental refresh-and-find routine that doesn't require a write-lock (and hence EDT). */
@@ -95,13 +90,14 @@ public final class VfsImplUtil {
       else {
         NewVirtualFile root = rootAndPath.first;
         Iterable<String> pathSegments = rootAndPath.second;
-        refreshAndFindFileByPath(root, pathSegments.iterator(), consumer);
+        refreshAndFindFileByPath(root, pathSegments.iterator(), FileNavigator.POSIX_LIGHT, consumer);
       }
     });
   }
 
   private static void refreshAndFindFileByPath(@Nullable NewVirtualFile root,
                                                @NotNull Iterator<String> pathSegments,
+                                               @NotNull FileNavigator<NewVirtualFile> navigator,
                                                @NotNull Consumer<? super @Nullable NewVirtualFile> consumer) {
     if (root == null || !pathSegments.hasNext()) {
       consumer.accept(root);
@@ -110,34 +106,33 @@ public final class VfsImplUtil {
 
     String pathSegment = pathSegments.next();
     if (pathSegment.isEmpty() || ".".equals(pathSegment)) {
-      refreshAndFindFileByPath(root, pathSegments, consumer);
+      refreshAndFindFileByPath(root, pathSegments, navigator, consumer);
+      return;
     }
-    else if ("..".equals(pathSegment)) {
-      if (root.is(VFileProperty.SYMLINK)) {//resolve the symlink then:
-        String rootPathCanonicalized = root.getCanonicalPath();
-        if (rootPathCanonicalized != null) {
-          //TODO RC: shouldn't we use rootPathCanonicalized.getParent() here? Because we already cut 1st segment from pathSegments.
-          refreshAndFindFileByPath(root.getFileSystem(), rootPathCanonicalized,
-                                   canonicalFile -> refreshAndFindFileByPath(canonicalFile, pathSegments, consumer));
-        }
-        else {//symlink unresolved -- broken link?
-          consumer.accept(null);
-        }
+
+    if ("..".equals(pathSegment)) {
+      NewVirtualFile parent = navigator.parentOf(root);
+      if (parent == null) {
+        consumer.accept(null);
       }
       else {
-        refreshAndFindFileByPath(root.getParent(), pathSegments, consumer);
+        String rootPathCanonicalized = parent.getPath();
+        refreshAndFindFileByPath(root.getFileSystem(), rootPathCanonicalized,
+                                 canonicalFile -> refreshAndFindFileByPath(canonicalFile, pathSegments, navigator, consumer));
       }
     }
     else {
-      NewVirtualFile child = root.findChild(pathSegment);
+      NewVirtualFile child = navigator.childOf(root, pathSegment);
       if (child != null) {
-        refreshAndFindFileByPath(child, pathSegments, consumer);
+        refreshAndFindFileByPath(child, pathSegments, navigator, consumer);
       }
       else {
-        root.refresh(true, false,
-                     () -> ProcessIOExecutorService.INSTANCE.execute(
-                       () -> refreshAndFindFileByPath(root.findChild(pathSegment), pathSegments, consumer)
-                     )
+        root.refresh(
+          /*async: */ true,
+          /*recursive: */ false,
+                      () -> ProcessIOExecutorService.INSTANCE.execute(
+                        () -> refreshAndFindFileByPath(navigator.childOf(root, pathSegment), pathSegments, navigator, consumer)
+                      )
         );
       }
     }

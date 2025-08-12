@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.FileNavigator;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
@@ -138,6 +140,43 @@ public class PersistentFS_FindFilesTest {
   }
 
   @Test
+  void findCachedFileByPath_findsEveryFileByItsOwnPath() {
+    PersistentFSImpl pFS = (PersistentFSImpl)PersistentFS.getInstance();
+    int filesToTrial = Math.min(MAX_FILES_TO_TRIAL, pFS.peer().connection().records().maxAllocatedID());
+    forRandomValidFilesInVFS(pFS, filesToTrial, (fileId, file) -> {
+
+      String path = file.getPath();
+      Pair<NewVirtualFile, NewVirtualFile> result = NewVirtualFileSystem.findCachedFileByPath(file.getFileSystem(), path);
+      //file is guaranteed to be cached, since we load its path from the VFS:
+      NewVirtualFile fileFoundByPath = result.first;
+      assertEquals(
+        file,
+        fileFoundByPath,
+        () -> ".findCachedFileByPath( file.getPath(=" + path + ") ) should resolve to the file itself"
+      );
+    });
+  }
+
+  @Test
+  void findCachedOrTransientFileByPath_findsEveryFileByItsOwnPath() {
+    PersistentFSImpl pFS = (PersistentFSImpl)PersistentFS.getInstance();
+    int filesToTrial = Math.min(MAX_FILES_TO_TRIAL, pFS.peer().connection().records().maxAllocatedID());
+    forRandomValidFilesInVFS(pFS, filesToTrial, (fileId, file) -> {
+
+      String path = file.getPath();
+      FileNavigator.NavigateResult<VirtualFile> result = NewVirtualFileSystem.findCachedOrTransientFileByPath(file.getFileSystem(), path);
+      assertTrue(result.isResolved(),
+                 () -> ".findCachedOrTransientFileByPath( file.getPath(=" + path + ") ) should resolve to the file itself");
+      //the file is on the stack, hence, it can't be removed from the cache => [findFileByPathIfCached() == findFileByPath()]
+      assertEquals(
+        file,
+        result.resolvedFileOr(null),
+        () -> ".findFileByPathIfCached( file.getPath(=" + path + ") ) should resolve to the file itself"
+      );
+    });
+  }
+
+  @Test
   void findFileByPath_findsEveryFileByItsOwnPath_AdjustedWithDots() {
     PersistentFSImpl pFS = (PersistentFSImpl)PersistentFS.getInstance();
     int filesToTrial = Math.min(MAX_FILES_TO_TRIAL, pFS.peer().connection().records().maxAllocatedID());
@@ -183,30 +222,6 @@ public class PersistentFS_FindFilesTest {
       NewVirtualFile fileFoundByNonCanonicalPath = VfsImplUtil.findFileByPath(fileSystem, nonCanonicalPath);
       assertEquals(file, fileFoundByNonCanonicalPath,
                    () -> "[" + nonCanonicalPath + "] must be resolved to it's original [" + path + "]");
-      /*if (fileFoundByNonCanonicalPath == null) {
-        NewVirtualFile canonicalFile = file.getCanonicalFile();
-        fail("[" + nonCanonicalPath + "] must be resolved to it's original [" + path + "], but is not resolved:\n" +
-             "\tfs.exists(" + file + "): " + fileSystem.exists(file) + "\n" +
-             "\tcanonicalFile: " + canonicalFile + "\n" +
-             "\tfs.exists(" + canonicalFile + "): " + fileSystem.exists(canonicalFile) + "\n"
-        );
-      }
-
-      if (!file.equals(fileFoundByNonCanonicalPath)) {
-        // ['..'] processing includes _some_ symlinks resolution that may lead to the canonical file, different from the original
-        // so compare canonicalized versions of the files also:
-        NewVirtualFile canonicalizedFile = file.getCanonicalFile();
-        NewVirtualFile fileFoundByNonCanonicalPathCanonicalized = fileFoundByNonCanonicalPath.getCanonicalFile();
-        if (!Objects.equals(canonicalizedFile, fileFoundByNonCanonicalPathCanonicalized)) {
-          fail(".findFileByPath( file.getPath(!canonical=" + nonCanonicalPath + ") ) \n" +
-               "\tis                                   (=" + fileFoundByNonCanonicalPath + ")\n" +
-               "\tshould resolve to the file itself(=" + file + ")\n" +
-               "or at least canonicalized versions should match, but:\n" +
-               "\tcanonicalized original file (=" + canonicalizedFile + ")\n" +
-               "\tcanonicalized resolved file (=" + fileFoundByNonCanonicalPathCanonicalized + ")\n"
-          );
-        }
-      }*/
     });
   }
 
