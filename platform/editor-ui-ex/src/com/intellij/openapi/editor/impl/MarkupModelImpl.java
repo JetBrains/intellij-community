@@ -37,7 +37,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   private final RangeHighlighterTree myHighlighterTreeForLines;  // this tree holds line range highlighters with target = HighlighterTargetArea.LINES_IN_RANGE
 
   @ApiStatus.Internal
-  public MarkupModelImpl(@NotNull DocumentEx document) {
+  protected MarkupModelImpl(@NotNull DocumentEx document) {
     myDocument = document;
     myHighlighterTree = new RangeHighlighterTree(this);
     myHighlighterTreeForLines = new RangeHighlighterTree(this);
@@ -221,12 +221,10 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   public void addMarkupModelListener(@NotNull Disposable parentDisposable, final @NotNull MarkupModelListener listener) {
     List<MarkupModelListener> listeners = myListeners;
     listeners.add(listener);
-    Disposer.register(parentDisposable, () -> removeMarkupModelListener(listeners, listener));
-  }
-
-  private static void removeMarkupModelListener(@NotNull List<MarkupModelListener> listeners, @NotNull MarkupModelListener listener) {
-    boolean success = listeners.remove(listener);
-    LOG.assertTrue(success);
+    Disposer.register(parentDisposable, () -> {
+      boolean success = listeners.remove(listener);
+      LOG.assertTrue(success);
+    });
   }
 
   @Override
