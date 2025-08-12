@@ -1,7 +1,6 @@
 // IGNORE_K1
 // "Replace '&&' with 'if'" "false"
 // WITH_STDLIB
-// K2_AFTER_ERROR: The feature "when guards" is only available since language version 2.2
 
 fun test(a: Any) {
     when (a) {
