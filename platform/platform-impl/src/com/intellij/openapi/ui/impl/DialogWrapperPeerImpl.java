@@ -482,19 +482,19 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     CompletableFuture<Void> result = new CompletableFuture<>();
     SplashManagerKt.hideSplash();
     try ( // numbered in the order of invocation (which is reverse)
-      NonThrowingCloseable ignore5 = () -> {
+      AccessToken ignore5 = AccessToken.create(() -> {
         if (changeModalityState) {
           LaterInvocator.leaveModal(myDialog);
         }
-      };
-      NonThrowingCloseable ignore4 = () -> {
+      });
+      AccessToken ignore4 = AccessToken.create(() -> {
         if (changeModalityState) {
           commandProcessor.leaveModal();
         }
-      };
-      NonThrowingCloseable ignore3 = () -> {
+      });
+      AccessToken ignore3 = AccessToken.create(() -> {
         lockCleanup.invoke();
-      };
+      });
       AccessToken ignore2 = SlowOperations.startSection(SlowOperations.RESET);
       AccessToken ignore1 = resetCoroutinesEventLoop()
     ) {
@@ -1287,8 +1287,4 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     UIUtil.setAutoRequestFocus((JDialog)myDialog, b);
   }
   
-  private interface NonThrowingCloseable extends AutoCloseable {
-    @Override
-    void close();
-  }
 }
