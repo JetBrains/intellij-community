@@ -34,7 +34,7 @@ public class PyStructuralType implements PyType {
   private final boolean myInferredFromUsages;
 
   public PyStructuralType(@NotNull Set<String> attributes, boolean inferredFromUsages) {
-    myAttributes = attributes;
+    myAttributes = new LinkedHashSet<>(attributes);
     myInferredFromUsages = inferredFromUsages;
   }
 
@@ -81,8 +81,8 @@ public class PyStructuralType implements PyType {
     return myInferredFromUsages;
   }
 
-  public Set<String> getAttributeNames() {
-    return myAttributes;
+  public @NotNull Set<String> getAttributeNames() {
+    return Collections.unmodifiableSet(myAttributes);
   }
 
   @Override
