@@ -154,6 +154,8 @@
 
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginManagerConfigurableService"
                         serviceImplementation="com.intellij.ide.plugins.PluginManagerConfigurableServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.ide.plugins.UltimateDependencyChecker"
+                        serviceImplementation="com.intellij.ide.plugins.UltimateDependencyCheckerImpl"/>
 
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginManagementPolicy"
                         serviceImplementation="com.intellij.ide.plugins.DefaultPluginManagementPolicy"/>
