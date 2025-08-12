@@ -171,7 +171,7 @@ public final class MavenRunnerParameters implements Cloneable {
   }
 
   public List<String> getGoals() {
-    return myGoals;
+    return Collections.unmodifiableList(myGoals);
   }
 
   public void setGoals(@Nullable List<String> goals) {
