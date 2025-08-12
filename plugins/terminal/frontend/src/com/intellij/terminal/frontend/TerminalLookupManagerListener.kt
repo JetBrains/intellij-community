@@ -25,7 +25,6 @@ class TerminalLookupListener : LookupListener {
     val completionChar = event.completionChar
 
     if (item == null || !item.isValid() || item is EmptyLookupItem) {
-      lookup.hideWithItemSelected(null, completionChar)
       return false
     }
 
