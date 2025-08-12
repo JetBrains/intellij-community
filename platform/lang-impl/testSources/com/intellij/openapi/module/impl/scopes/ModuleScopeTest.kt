@@ -12,9 +12,9 @@ import com.intellij.psi.impl.file.impl.sharedSourceRootFixture
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.contains
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.*
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
 @TestApplication
@@ -39,7 +39,7 @@ internal class ModuleScopeTest {
   }
 
   @Test
-  fun testAnyContext() = runBlocking {
+  fun testAnyContext() = timeoutRunBlocking {
     val scope = module1.moduleScope()
 
     assertScopeContains(file1, anyContext(), scope)
@@ -48,7 +48,7 @@ internal class ModuleScopeTest {
   }
 
   @Test
-  fun testResolveScopeAndModule1Context() = runBlocking {
+  fun testResolveScopeAndModule1Context() = timeoutRunBlocking {
     val scope1 = module1.moduleScope()
     val module1Context = module1.moduleContext()
 
@@ -58,7 +58,7 @@ internal class ModuleScopeTest {
   }
 
   @Test
-  fun testResolveScopeAndModule2Context() = runBlocking {
+  fun testResolveScopeAndModule2Context() = timeoutRunBlocking {
     val scope2 = module2.moduleScope()
     val module2Context = module2.moduleContext()
 
@@ -68,7 +68,7 @@ internal class ModuleScopeTest {
   }
 
   @Test
-  fun testSharedFileAndScopes() = runBlocking {
+  fun testSharedFileAndScopes() = timeoutRunBlocking {
     val scope1 = module1.moduleScope()
     val scope2 = module2.moduleScope()
 
