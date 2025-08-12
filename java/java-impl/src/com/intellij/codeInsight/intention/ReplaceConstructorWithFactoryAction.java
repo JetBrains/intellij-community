@@ -119,6 +119,10 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     PsiUtil.setModifierProperty(wrConstructor, getMinimalAccessLevel(constructorOrClass, usages.otherUsages), true);
 
     for (PsiNewExpression newExpression : writableUsages) {
+      if (newExpression.isArrayCreation()) {
+        continue;
+      }
+
       var factoryCall = (PsiMethodCallExpression)factory.createExpressionFromText(factoryName + "()", newExpression);
       CommentTracker ct = new CommentTracker();
       

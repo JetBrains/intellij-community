@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -129,6 +129,10 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
 
   public void testRedCodeFromIDEA376351() {
     assertNotAvailable("RedCodeFromIDEA376351");
+  }
+
+  public void testArrayCreation() {
+    runTest("ArrayCreation", null);
   }
 
   private void assertNotAvailable(String name) {
