@@ -41,6 +41,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.MouseEvent
 import java.awt.event.WindowEvent
+import java.awt.image.BufferStrategy
 import javax.accessibility.AccessibleContext
 import javax.swing.JComponent
 import javax.swing.JFrame
@@ -164,6 +165,34 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
       logger<IdeFrameImpl>().error("paint must be called on EDT", Throwable())
     }
     super.paint(g)
+  }
+
+  override fun revalidate() {
+    if (!EDT.isCurrentThreadEdt()) {
+      logger<IdeFrameImpl>().error("revalidate must be called on EDT", Throwable())
+    }
+    super.revalidate()
+  }
+
+  override fun getBufferStrategy(): BufferStrategy? {
+    if (!EDT.isCurrentThreadEdt()) {
+      logger<IdeFrameImpl>().error("getBufferStrategy must be called on EDT", Throwable())
+    }
+    return super.getBufferStrategy()
+  }
+
+  override fun createBufferStrategy(numBuffers: Int) {
+    if (!EDT.isCurrentThreadEdt()) {
+      logger<IdeFrameImpl>().error("createBufferStrategy must be called on EDT", Throwable())
+    }
+    super.createBufferStrategy(numBuffers)
+  }
+
+  override fun createBufferStrategy(numBuffers: Int, caps: BufferCapabilities?) {
+    if (!EDT.isCurrentThreadEdt()) {
+      logger<IdeFrameImpl>().error("createBufferStrategy must be called on EDT", Throwable())
+    }
+    super.createBufferStrategy(numBuffers, caps)
   }
 
   @Suppress("OVERRIDE_DEPRECATION")

@@ -1010,6 +1010,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       final BufferStrategy strategy = getBufferStrategy();
       if (strategy != null) {
+        if (!EDT.isCurrentThreadEdt()) {
+          LOG.error("Component dispose must be called on EDT", new Throwable());
+        }
         strategy.dispose();
       }
       super.dispose();
