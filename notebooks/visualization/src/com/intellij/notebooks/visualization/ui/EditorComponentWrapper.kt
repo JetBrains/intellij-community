@@ -130,32 +130,23 @@ class EditorComponentWrapper private constructor(private val editor: EditorImpl)
     }
   }
 
-  // Used in drawing cell frame for selected and hovered.
+  /** Helper function to create a Rectangle from Line2D to repaint the exact line area. */
+  private fun rectangleFromLine(line: Line2D): Rectangle = Rectangle(
+    line.x1.toInt().coerceAtMost(line.x2.toInt()),
+    line.y1.toInt().coerceAtMost(line.y2.toInt()),
+    abs(line.x2.toInt() - line.x1.toInt()) + 1,
+    abs(line.y2.toInt() - line.y1.toInt()) + 1
+  )
+
+  /** Used in drawing cell frame for selected and hovered. */
   fun replaceOverlayLine(oldLine: Line2D?, line: Line2D, color: Color) {
     val repaintRect = if (oldLine != null) {
-      val oldBounds = Rectangle(
-        oldLine.x1.toInt().coerceAtMost(oldLine.x2.toInt()),
-        oldLine.y1.toInt().coerceAtMost(oldLine.y2.toInt()),
-        abs(oldLine.x2.toInt() - oldLine.x1.toInt()) + 1,
-        abs(oldLine.y2.toInt() - oldLine.y1.toInt()) + 1
-      )
-
-      val newBounds = Rectangle(
-        line.x1.toInt().coerceAtMost(line.x2.toInt()),
-        line.y1.toInt().coerceAtMost(line.y2.toInt()),
-        abs(line.x2.toInt() - line.x1.toInt()) + 1,
-        abs(line.y2.toInt() - line.y1.toInt()) + 1
-      )
-
+      val oldBounds = rectangleFromLine(oldLine)
+      val newBounds = rectangleFromLine(line)
       oldBounds.union(newBounds)
     }
     else {
-      Rectangle(
-        line.x1.toInt().coerceAtMost(line.x2.toInt()),
-        line.y1.toInt().coerceAtMost(line.y2.toInt()),
-        abs(line.x2.toInt() - line.x1.toInt()) + 1,
-        abs(line.y2.toInt() - line.y1.toInt()) + 1
-      )
+      rectangleFromLine(line)
     }
     overlayLines.removeIf { it.first == oldLine }
     overlayLines.add(line to color)
@@ -164,7 +155,7 @@ class EditorComponentWrapper private constructor(private val editor: EditorImpl)
 
   fun removeOverlayLine(line: Line2D) {
     overlayLines.removeIf { it.first == line }
-    layeredPane.repaint()
+    layeredPane.repaint(rectangleFromLine(line))
   }
 
   companion object {
