@@ -1,28 +1,28 @@
 <component name="libraryTable">
   <library name="equalsverifier" type="repository">
-    <properties maven-id="nl.jqno.equalsverifier:equalsverifier:3.16.1">
+    <properties maven-id="nl.jqno.equalsverifier:equalsverifier:3.19.4">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/nl/jqno/equalsverifier/equalsverifier/3.16.1/equalsverifier-3.16.1.jar">
-          <sha256sum>3bbd0f98e95579271c6f838fb591fc1fa8f5b0af880e2de30220c7706f915148</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/nl/jqno/equalsverifier/equalsverifier/3.19.4/equalsverifier-3.19.4.jar">
+          <sha256sum>2bcbbf2f3227aa97527730eb92ca8724263e6d555b888fbb14aae52bc712d434</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.3/objenesis-3.3.jar">
-          <sha256sum>02dfd0b0439a5591e35b708ed2f5474eb0948f53abf74637e959b8e4ef69bfeb</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.4/objenesis-3.4.jar">
+          <sha256sum>95488102feaf2e2858adf6b299353677dac6c15294006f8ed1c5556f8e3cd251</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.13/byte-buddy-1.14.13.jar">
-          <sha256sum>ba8254ff6d612af49acee4cac1108453ce3a417efa548b24f2f4f268cd2b441a</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.17.5/byte-buddy-1.17.5.jar">
+          <sha256sum>71568c9f8396677219f650268fbf6493ded484edcdbdf2dae6129ca5be81e8db</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/nl/jqno/equalsverifier/equalsverifier/3.16.1/equalsverifier-3.16.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.3/objenesis-3.3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.13/byte-buddy-1.14.13.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/nl/jqno/equalsverifier/equalsverifier/3.19.4/equalsverifier-3.19.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.4/objenesis-3.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.17.5/byte-buddy-1.17.5.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/nl/jqno/equalsverifier/equalsverifier/3.16.1/equalsverifier-3.16.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.3/objenesis-3.3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.13/byte-buddy-1.14.13-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/nl/jqno/equalsverifier/equalsverifier/3.19.4/equalsverifier-3.19.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.4/objenesis-3.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.17.5/byte-buddy-1.17.5-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

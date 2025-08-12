@@ -1722,45 +1722,45 @@ http_file(
 )
 
 http_file(
-  name = "equalsverifier-3_16_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/nl/jqno/equalsverifier/equalsverifier/3.16.1/equalsverifier-3.16.1.jar",
-  sha256 = "3bbd0f98e95579271c6f838fb591fc1fa8f5b0af880e2de30220c7706f915148",
-  downloaded_file_path = "equalsverifier-3.16.1.jar"
+  name = "equalsverifier-3_19_4_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/nl/jqno/equalsverifier/equalsverifier/3.19.4/equalsverifier-3.19.4.jar",
+  sha256 = "2bcbbf2f3227aa97527730eb92ca8724263e6d555b888fbb14aae52bc712d434",
+  downloaded_file_path = "equalsverifier-3.19.4.jar"
 )
 
 http_file(
-  name = "objenesis-3_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/objenesis/objenesis/3.3/objenesis-3.3.jar",
-  sha256 = "02dfd0b0439a5591e35b708ed2f5474eb0948f53abf74637e959b8e4ef69bfeb",
-  downloaded_file_path = "objenesis-3.3.jar"
+  name = "objenesis-3_4_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/objenesis/objenesis/3.4/objenesis-3.4.jar",
+  sha256 = "95488102feaf2e2858adf6b299353677dac6c15294006f8ed1c5556f8e3cd251",
+  downloaded_file_path = "objenesis-3.4.jar"
 )
 
 http_file(
-  name = "byte-buddy-1_14_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.14.13/byte-buddy-1.14.13.jar",
-  sha256 = "ba8254ff6d612af49acee4cac1108453ce3a417efa548b24f2f4f268cd2b441a",
-  downloaded_file_path = "byte-buddy-1.14.13.jar"
+  name = "byte-buddy-1_17_5_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.5/byte-buddy-1.17.5.jar",
+  sha256 = "71568c9f8396677219f650268fbf6493ded484edcdbdf2dae6129ca5be81e8db",
+  downloaded_file_path = "byte-buddy-1.17.5.jar"
 )
 
 http_file(
-  name = "equalsverifier-3_16_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/nl/jqno/equalsverifier/equalsverifier/3.16.1/equalsverifier-3.16.1-sources.jar",
-  sha256 = "9330adcbace0f6cffa85f421b9f613fd88e9a594e31558dcb370c0aa7e734c07",
-  downloaded_file_path = "equalsverifier-3.16.1-sources.jar"
+  name = "equalsverifier-3_19_4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/nl/jqno/equalsverifier/equalsverifier/3.19.4/equalsverifier-3.19.4-sources.jar",
+  sha256 = "50728701faf3624efe9c756629141ef17e4fd2c7c5591cf1865c35acc8de89cb",
+  downloaded_file_path = "equalsverifier-3.19.4-sources.jar"
 )
 
 http_file(
-  name = "objenesis-3_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/objenesis/objenesis/3.3/objenesis-3.3-sources.jar",
-  sha256 = "d06164f8ca002c8ef193cef2d682822014dd330505616af93a3fb64226fc131d",
-  downloaded_file_path = "objenesis-3.3-sources.jar"
+  name = "objenesis-3_4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/objenesis/objenesis/3.4/objenesis-3.4-sources.jar",
+  sha256 = "896fa899a262c2f0f7e661848025fad22349300a5247ac175510993a9a5eede9",
+  downloaded_file_path = "objenesis-3.4-sources.jar"
 )
 
 http_file(
-  name = "byte-buddy-1_14_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.14.13/byte-buddy-1.14.13-sources.jar",
-  sha256 = "e4f5eb90e113712cd68861344fc6aaa23479ad13f57f6d60d9a600982c722044",
-  downloaded_file_path = "byte-buddy-1.14.13-sources.jar"
+  name = "byte-buddy-1_17_5-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.5/byte-buddy-1.17.5-sources.jar",
+  sha256 = "722eaa17b935a25e994f625b32ec166c53d23770d0659c615e62a0b26ce71615",
+  downloaded_file_path = "byte-buddy-1.17.5-sources.jar"
 )
 
 http_file(
@@ -10248,17 +10248,17 @@ http_file(
 )
 
 http_file(
-  name = "byte-buddy-1_17_5_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.5/byte-buddy-1.17.5.jar",
-  sha256 = "71568c9f8396677219f650268fbf6493ded484edcdbdf2dae6129ca5be81e8db",
-  downloaded_file_path = "byte-buddy-1.17.5.jar"
-)
-
-http_file(
   name = "byte-buddy-agent-1_17_5_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy-agent/1.17.5/byte-buddy-agent-1.17.5.jar",
   sha256 = "c5b9334ad82e632f6af60df22bbbdbbb62cee04877f4f43c38ba04aed9bd9901",
   downloaded_file_path = "byte-buddy-agent-1.17.5.jar"
+)
+
+http_file(
+  name = "objenesis-3_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/objenesis/objenesis/3.3/objenesis-3.3.jar",
+  sha256 = "02dfd0b0439a5591e35b708ed2f5474eb0948f53abf74637e959b8e4ef69bfeb",
+  downloaded_file_path = "objenesis-3.3.jar"
 )
 
 http_file(
@@ -10269,17 +10269,17 @@ http_file(
 )
 
 http_file(
-  name = "byte-buddy-1_17_5-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.5/byte-buddy-1.17.5-sources.jar",
-  sha256 = "722eaa17b935a25e994f625b32ec166c53d23770d0659c615e62a0b26ce71615",
-  downloaded_file_path = "byte-buddy-1.17.5-sources.jar"
-)
-
-http_file(
   name = "byte-buddy-agent-1_17_5-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy-agent/1.17.5/byte-buddy-agent-1.17.5-sources.jar",
   sha256 = "40497a5ae2d6fb5931b4e00325ce747a6fb253996afb231b404dfadbe2811e68",
   downloaded_file_path = "byte-buddy-agent-1.17.5-sources.jar"
+)
+
+http_file(
+  name = "objenesis-3_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/objenesis/objenesis/3.3/objenesis-3.3-sources.jar",
+  sha256 = "d06164f8ca002c8ef193cef2d682822014dd330505616af93a3fb64226fc131d",
+  downloaded_file_path = "objenesis-3.3-sources.jar"
 )
 
 http_file(
@@ -10686,20 +10686,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/noria-compiler-plugin/2.2.0-0.2/noria-compiler-plugin-2.2.0-0.2-sources.jar",
   sha256 = "964f2821a62327776a62ffb2f68d889e94176349775a0e68feafb5f1a0700c0d",
   downloaded_file_path = "noria-compiler-plugin-2.2.0-0.2-sources.jar"
-)
-
-http_file(
-  name = "objenesis-3_4_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/objenesis/objenesis/3.4/objenesis-3.4.jar",
-  sha256 = "95488102feaf2e2858adf6b299353677dac6c15294006f8ed1c5556f8e3cd251",
-  downloaded_file_path = "objenesis-3.4.jar"
-)
-
-http_file(
-  name = "objenesis-3_4-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/objenesis/objenesis/3.4/objenesis-3.4-sources.jar",
-  sha256 = "896fa899a262c2f0f7e661848025fad22349300a5247ac175510993a9a5eede9",
-  downloaded_file_path = "objenesis-3.4-sources.jar"
 )
 
 http_file(

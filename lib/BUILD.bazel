@@ -1447,29 +1447,29 @@ jvm_import(
 java_library(
   name = "equalsverifier",
   exports = [
-    ":equalsverifier-3_16_1_http_import",
-    ":objenesis-3_3_http_import",
-    ":byte-buddy-1_14_13_http_import",
+    ":equalsverifier-3_19_4_http_import",
+    ":objenesis-3_4_http_import",
+    ":byte-buddy-1_17_5_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "equalsverifier-3_16_1_http_import",
-  jar = "@equalsverifier-3_16_1_http//file",
-  source_jar = "@equalsverifier-3_16_1-sources_http//file"
+  name = "equalsverifier-3_19_4_http_import",
+  jar = "@equalsverifier-3_19_4_http//file",
+  source_jar = "@equalsverifier-3_19_4-sources_http//file"
 )
 
 jvm_import(
-  name = "objenesis-3_3_http_import",
-  jar = "@objenesis-3_3_http//file",
-  source_jar = "@objenesis-3_3-sources_http//file"
+  name = "objenesis-3_4_http_import",
+  jar = "@objenesis-3_4_http//file",
+  source_jar = "@objenesis-3_4-sources_http//file"
 )
 
 jvm_import(
-  name = "byte-buddy-1_14_13_http_import",
-  jar = "@byte-buddy-1_14_13_http//file",
-  source_jar = "@byte-buddy-1_14_13-sources_http//file"
+  name = "byte-buddy-1_17_5_http_import",
+  jar = "@byte-buddy-1_17_5_http//file",
+  source_jar = "@byte-buddy-1_17_5-sources_http//file"
 )
 
 jvm_import(
@@ -7339,15 +7339,15 @@ jvm_import(
 )
 
 jvm_import(
-  name = "byte-buddy-1_17_5_http_import",
-  jar = "@byte-buddy-1_17_5_http//file",
-  source_jar = "@byte-buddy-1_17_5-sources_http//file"
-)
-
-jvm_import(
   name = "byte-buddy-agent-1_17_5_http_import",
   jar = "@byte-buddy-agent-1_17_5_http//file",
   source_jar = "@byte-buddy-agent-1_17_5-sources_http//file"
+)
+
+jvm_import(
+  name = "objenesis-3_3_http_import",
+  jar = "@objenesis-3_3_http//file",
+  source_jar = "@objenesis-3_3-sources_http//file"
 )
 
 jvm_import(
