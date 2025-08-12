@@ -332,7 +332,10 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       args.addAll("-s", generalSettings.userSettingsFile.asTargetPathString())
     }
     if (generalSettings.localRepository.isNotBlank()) {
-      args.addProperty("-Dmaven.repo.local=${MavenSettingsCache.getInstance(myConfiguration.project).getEffectiveUserLocalRepo()}")
+      args.addProperty("maven.repo.local", Path.of(generalSettings.localRepository).asEelPath().toString())
+    }
+    else {
+      args.addProperty("maven.repo.local", MavenSettingsCache.getInstance(myConfiguration.project).getEffectiveUserLocalRepo().asEelPath().toString())
     }
   }
 

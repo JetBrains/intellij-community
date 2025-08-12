@@ -189,9 +189,31 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
     val mavenOptsLineEnd = executionInfo.stdout.indexOf("\n", mavenOptsLineStarts)
     val mavenOptsLine = executionInfo.stdout.substring(mavenOptsLineStarts, mavenOptsLineEnd)
     assertTrue("MAVEN_OPTS should contain parameters, but was ${mavenOptsLine}", mavenOptsLine.contains("-XMyJavaParameter"))
-
   }
 
+  @Test
+  fun testShouldExecuteMavenScriptWithLocalCache() = runBlocking {
+    importProjectAsync("""
+         <groupId>test</groupId>
+         <artifactId>project</artifactId>
+         <version>1</version>
+         """
+    )
+    createFakeProjectWrapper()
+    mavenGeneralSettings.mavenHomeType = MavenWrapper
+    val executionInfo = execute(params = MavenRunnerParameters(
+      true, projectPath.toCanonicalPath(),
+      null as String?,
+      mutableListOf("verify"), emptyList()),
+                                generalSettings = mavenGeneralSettings.clone().also {
+                                  it.setLocalRepository("/my/Path/To/Local/Repository")
+                                }
+    )
+    assertTrue("Should run wrapper", executionInfo.stdout.contains(wrapperOutput))
+    assertTrue("Should proper pass local repository: ${executionInfo.system}", executionInfo.system.contains(" -Dmaven.repo.local=/my/Path/To/Local/Repository "))
+
+  }
+  
   companion object {
     const val wrapperOutput = "WRAPPER REPLACEMENT in Intellij tests"
   }
