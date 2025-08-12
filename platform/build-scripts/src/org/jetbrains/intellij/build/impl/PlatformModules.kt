@@ -63,7 +63,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.platform.macro",
   "intellij.platform.scriptDebugger.protocolReaderRuntime",
   "intellij.platform.remoteServers.impl",
-  "intellij.platform.scriptDebugger.backend",
   "intellij.platform.debugger.impl",
   "intellij.platform.smRunner",
   "intellij.platform.structureView.impl",

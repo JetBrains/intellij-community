@@ -188,6 +188,7 @@ private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins
   "intellij.platform.tasks",
   "intellij.platform.tasks.impl",
   "intellij.platform.scriptDebugger.ui",
+  "intellij.platform.scriptDebugger.backend",
   "intellij.spellchecker.xml",
   "intellij.relaxng",
   "intellij.spellchecker",
