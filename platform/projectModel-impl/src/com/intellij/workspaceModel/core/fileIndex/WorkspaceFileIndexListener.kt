@@ -18,21 +18,9 @@ interface WorkspaceFileIndexListener : EventListener {
 }
 
 @ApiStatus.Internal
-sealed interface WorkspaceFileIndexChangedEvent {
-  val removedFileSets: Collection<Set<WorkspaceFileSet>>
-  val registeredFileSets: Collection<Set<WorkspaceFileSet>>
-}
-
-@ApiStatus.Internal
-class WorkspaceFileIndexChangedEventImpl(
-  override val removedFileSets: Collection<Set<WorkspaceFileSet>>,
-  override val registeredFileSets: Collection<Set<WorkspaceFileSet>>,
-) : WorkspaceFileIndexChangedEvent
-
-@ApiStatus.Internal
-class VersionedWorkspaceFileIndexChangeEvent(
-  override val removedFileSets: Collection<Set<WorkspaceFileSet>>,
-  override val registeredFileSets: Collection<Set<WorkspaceFileSet>>,
+class WorkspaceFileIndexChangedEvent(
+  val removedFileSets: Collection<Set<WorkspaceFileSet>>,
+  val registeredFileSets: Collection<Set<WorkspaceFileSet>>,
   val storageBefore: EntityStorage,
   val storageAfter: EntityStorage,
-) : WorkspaceFileIndexChangedEvent
+)
