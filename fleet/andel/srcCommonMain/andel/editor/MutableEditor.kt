@@ -195,3 +195,4 @@ interface MutableDocument : Document {
 }
 
 object EditorCommandKey : EditorMetaKey<EditorCommandType>
+
