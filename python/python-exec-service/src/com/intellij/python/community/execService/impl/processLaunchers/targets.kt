@@ -52,7 +52,7 @@ internal suspend fun createProcessLauncherOnTarget(binOnTarget: BinOnTarget, lau
     targetEnv.getTargetPaths(localFile.pathString).first()
   }
   val exePath: FullPathOnTarget
-  val cmdLine = TargetedCommandLineBuilder(request).also {commandLineBuilder ->
+  val cmdLine = TargetedCommandLineBuilder(request).also { commandLineBuilder ->
     binOnTarget.configureTargetCmdLine(commandLineBuilder)
     // exe path is always fixed (pre-presolved) promise. It can't be obtained directly because of Targets API limitation
     exePath = commandLineBuilder.exePath.localValue.blockingGet(1000) ?: error("Exe path not set: $binOnTarget is broken")
@@ -87,7 +87,11 @@ private class TargetProcessCommands(
     while (process?.isAlive == true) {
       delay(100.milliseconds)
     }
-  }, killProcess = { process?.destroyForcibly() })
+    targetEnv.shutdown()
+  }, killProcess = {
+    process?.destroyForcibly();
+    targetEnv.shutdown()
+  })
 
   override suspend fun start(): Result<Process, ExecErrorReason.CantStart> {
 
