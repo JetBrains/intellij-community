@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.testFramework.gradle
 import com.intellij.openapi.util.Couple
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.execution.GradleDebuggingIntegrationTestCase
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
@@ -53,19 +55,107 @@ class KotlinGradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase(
         } else {
             scriptParameters
         }
-        val output = executeRunConfiguration(":test", isDebugServerProcess = true, scriptParameters = mergedScriptParameters.joinToString(" "))
+        val output = executeDebugRunConfiguration(":test", isDebugServerProcess = true, scriptParameters = mergedScriptParameters.joinToString(" "))
         assertDebugJvmArgs(":printArgs", execArgsFile, shouldBeDebugged = false)
         assertDebugJvmArgs(":test", testArgsFile)
         val testArgsFileAssertion = assertThat(testArgsFile).content()
         testArgsFileAssertion
             .describedAs("test run should contain java agent setup")
-            .containsPattern(JAVA_AGENT_PATTERN)
+            .containsPattern(COROUTINE_DEBUG_AGENT_PATTERN)
         testArgsFileAssertion
             .describedAs("test run should enable assertions")
             .contains(ENABLE_ASSERTIONS_FLAG)
         assertThat(output)
             .describedAs("Build should be successful")
             .contains("BUILD SUCCESSFUL")
+    }
+
+    /**
+     * Test a Gradle project with both Kotlin and Java modules.
+     * Coroutine debug agent should only be attached to the Gradle RC if kotlinx-coroutines library is present in the classpath of the corresponding sourceSet.
+     * See the attach logic in KotlinCoroutineJvmDebugInit.gradle
+     */
+    @Test
+    @TargetVersions("8.1+")
+    fun testManyGradleModules() {
+        val mergedScriptParameters = if (isGradleAtLeast("8.2")) {
+            "--warning-mode=summary" // KGP causes deprecation warnings
+        } else {
+            ""
+        }
+        createPrintArgsClass()
+        createPrintArgsClass("kotlinModule")
+        createPrintArgsClass("javaModule")
+
+        val projectArgsFile = createArgsFile()
+        val kotlinModuleArgsFile = createArgsFile("kotlinModule")
+        val javaModuleArgsFile = createArgsFile("javaModule")
+
+        createSettingsFile { include("kotlinModule"); include("javaModule") }
+        importProject {
+            withMavenCentral()
+            withPrintArgsTask(projectArgsFile)
+            addImplementationDependency(COROUTINES_DEPENDENCY)
+        }
+        createBuildFile("kotlinModule") {
+            withPrintArgsTask(kotlinModuleArgsFile, dependsOn = ":printArgs")
+            withKotlinJvmPlugin()
+            addImplementationDependency(COROUTINES_DEPENDENCY)
+            withTask("runKotlinMain", "JavaExec") {
+                assign("classpath", code("sourceSets.main.runtimeClasspath"))
+                assign("mainClass", "kotlinModule.MainKt")
+            }
+        }
+        createProjectSubFile(
+            "kotlinModule/src/main/kotlin/Main.kt",
+            //language=kotlin
+            """
+                    package kotlinModule
+
+                    import kotlinx.coroutines.*
+
+                    fun main() = runBlocking {
+                        val res = async {
+                           delay(1)
+                           "hello"
+                        }
+                        println(res.await())
+                    }
+                    """.trimIndent()
+        )
+        createProjectSubFile(
+            "javaModule/src/main/java/Main.java",
+            //language=java
+            """
+                    public class Main {
+                      public static void main(String[] args) {
+                        System.out.printf("Hello");
+                     }
+                    }
+                    """.trimIndent()
+        )
+        createBuildFile("javaModule") {
+            withPrintArgsTask(javaModuleArgsFile, dependsOn = ":printArgs")
+            withMavenCentral()
+            withTask("runJavaMain", "JavaExec") {
+                assign("classpath", code("sourceSets.main.runtimeClasspath"))
+                assign("mainClass", "Main")
+            }
+        }
+        val output = executeDebugRunConfiguration(":kotlinModule:runKotlinMain", scriptParameters = mergedScriptParameters)
+        assertThat(output)
+            .describedAs("Build should be successful")
+            .contains("BUILD SUCCESSFUL")
+        assertThat(output)
+            .describedAs("kotlinModule:runKotlinMain should contain coroutines debug agent")
+            .containsPattern(COROUTINE_DEBUG_AGENT_PATTERN)
+        val javaOutput = executeDebugRunConfiguration(":javaModule:runJavaMain", scriptParameters = mergedScriptParameters)
+        assertThat(javaOutput)
+            .describedAs("Build should be successful")
+            .contains("BUILD SUCCESSFUL")
+        assertThat(javaOutput)
+            .describedAs(":javaModule:runJavaMain should not contain coroutines debug agent")
+            .doesNotContainPattern(COROUTINE_DEBUG_AGENT_PATTERN)
     }
 
     override fun handleDeprecationError(errorInfo: Couple<String>?) {
@@ -87,7 +177,7 @@ class KotlinGradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase(
 
     companion object {
         private const val COROUTINES_DEPENDENCY = "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
-        private const val JAVA_AGENT_PATTERN = "-javaagent:((?!\\.jar).)*kotlinx-coroutines-core-(jvm-)?1\\.7\\.3\\.jar"
+        private const val COROUTINE_DEBUG_AGENT_PATTERN = "-javaagent:((?!\\.jar).)*kotlinx-coroutines-core-(jvm-)?1\\.7\\.3\\.jar"
         private const val ENABLE_ASSERTIONS_FLAG = "-ea"
     }
 }
