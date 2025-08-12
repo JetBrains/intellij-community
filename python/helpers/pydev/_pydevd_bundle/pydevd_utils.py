@@ -7,12 +7,12 @@ import traceback
 
 try:
     import torch
-except ImportError:
+except Exception:
     pass
 
 try:
     import tensorflow as tf
-except ImportError:
+except Exception:
     pass
 
 import pydevd_file_utils
