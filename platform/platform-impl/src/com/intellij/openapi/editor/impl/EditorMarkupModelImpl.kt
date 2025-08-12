@@ -20,8 +20,6 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performAction
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.actionSystem.remoting.ActionWithMergeId
@@ -50,7 +48,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.IconLoader.getDarkIcon
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
@@ -88,7 +85,6 @@ import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 import java.util.*
 import java.util.Queue
-import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.border.Border
 import javax.swing.plaf.FontUIResource
@@ -97,36 +93,6 @@ import kotlin.concurrent.Volatile
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
-
-private const val LEFT_RIGHT_INDENT = 5
-private const val INTER_GROUP_OFFSET = 6
-
-private val LOG = logger<EditorMarkupModelImpl>()
-
-private val ERROR_STRIPE_TOOLTIP_GROUP = TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0)
-
-private val SCROLLBAR_WIDTH: JBValue = UIInteger("Editor.scrollBarWidth", 14)
-
-private val ICON_TEXT_COLOR = ColorKey.createColorKey("ActionButton.iconTextForeground", UIUtil.getContextHelpForeground())
-
-private const val QUICK_ANALYSIS_TIMEOUT_MS = 3000
-
-private val thinGap: Int
-  get() = scale(2)
-
-private val maxStripeSize: Int
-  get() = scale(4)
-
-private val maxMacThumbWidth: Int
-  get() = scale(10)
-
-private val statusIconSize: Int
-  get() = scale(18)
-
-private val WHOLE_DOCUMENT = ProperTextRange(0, 0)
-
-private val EXPANDED_STATUS = Key<List<StatusItem>>("EXPANDED_STATUS")
-private val TRANSLUCENT_STATE = Key<Boolean>("TRANSLUCENT_STATE")
 
 @ApiStatus.Internal
 class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl) :
@@ -188,6 +154,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     val nextErrorAction = createAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatchesSmall)
     val prevErrorAction = createAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatchesSmall)
 
+    class ExtraActionGroup : DefaultActionGroup(), ActionWithMergeId
     extraActions = ExtraActionGroup()
     populateInspectionWidgetActionsFromExtensions()
 
@@ -307,6 +274,33 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
     @JvmField
     val DISABLE_CODE_LENS: Key<Boolean> = Key<Boolean>("DISABLE_CODE_LENS")
+    private const val LEFT_RIGHT_INDENT = 5
+    private const val INTER_GROUP_OFFSET = 6
+    private const val QUICK_ANALYSIS_TIMEOUT_MS = 3000
+    private val LOG = logger<EditorMarkupModelImpl>()
+
+    private val ERROR_STRIPE_TOOLTIP_GROUP = TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0)
+
+    private val SCROLLBAR_WIDTH: JBValue = UIInteger("Editor.scrollBarWidth", 14)
+
+    internal val ICON_TEXT_COLOR = ColorKey.createColorKey("ActionButton.iconTextForeground", UIUtil.getContextHelpForeground())
+
+    private val thinGap: Int
+      get() = scale(2)
+
+    private val maxStripeSize: Int
+      get() = scale(4)
+
+    private val maxMacThumbWidth: Int
+      get() = scale(10)
+
+    internal val statusIconSize: Int
+      get() = scale(18)
+
+    private val WHOLE_DOCUMENT = ProperTextRange(0, 0)
+
+    private val EXPANDED_STATUS = Key<List<StatusItem>>("EXPANDED_STATUS")
+    private val TRANSLUCENT_STATE = Key<Boolean>("TRANSLUCENT_STATE")
   }
 
   override fun toString(): String = "EditorMarkupModel for $editor"
@@ -1327,13 +1321,12 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     val document: Document = editor.document
     val startLineNumber = if (end == -1) 0 else offsetToLine(start, document)
     val editorStartY = editor.visualLineToY(startLineNumber)
-    val startY: Int
     val editorTargetHeight = max(0, myEditorTargetHeight)
-    if (myEditorSourceHeight < editorTargetHeight) {
-      startY = myEditorScrollbarTop + editorStartY
+    val startY: Int = myEditorScrollbarTop + if (myEditorSourceHeight < editorTargetHeight) {
+      editorStartY
     }
     else {
-      startY = myEditorScrollbarTop + (editorStartY.toFloat() / myEditorSourceHeight * editorTargetHeight).toInt()
+      (editorStartY.toFloat() / myEditorSourceHeight * editorTargetHeight).toInt()
     }
 
     var endY: Int
@@ -1760,174 +1753,31 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
   @ApiStatus.Internal
   class StatusToolbarGroup internal constructor(vararg actions: AnAction) : DefaultActionGroup(*actions)
+
+  private fun getBoundsOnScreen(hint: LightweightHint): Rectangle {
+    val component = hint.component
+    val location = hint.getLocationOn(component)
+    SwingUtilities.convertPointToScreen(location, component)
+    return Rectangle(location, hint.size)
+  }
+
+  private fun createHint(component: Component?, point: Point?): HintHint {
+    return HintHint(component, point)
+      .setAwtTooltip(true)
+      .setPreferredPosition(Balloon.Position.atLeft)
+      .setBorderInsets(JBUI.insets(EditorFragmentRenderer.EDITOR_FRAGMENT_POPUP_BORDER))
+      .setShowImmediately(true)
+      .setAnimationEnabled(false)
+      .setStatus(HintHint.Status.Info)
+  }
+
+  private class PositionedStripe(
+    @JvmField var color: Color,
+    @JvmField var yEnd: Int,
+    @JvmField val thin: Boolean,
+    @JvmField val layer: Int,
+  )
+
 }
 
-private class ExtraActionGroup : DefaultActionGroup(), ActionWithMergeId
 
-@ApiStatus.Internal
-class EditorToolbarButtonLook(private val editor: Editor) : ActionButtonLook() {
-  companion object {
-    private val HOVER_BACKGROUND = ColorKey.createColorKey("ActionButton.hoverBackground",
-                                                           JBUI.CurrentTheme.ActionButton.hoverBackground())
-
-    private val PRESSED_BACKGROUND = ColorKey.createColorKey("ActionButton.pressedBackground",
-                                                             JBUI.CurrentTheme.ActionButton.pressedBackground())
-  }
-
-  override fun paintBorder(g: Graphics?, component: JComponent?, state: Int) {}
-
-  override fun paintBorder(g: Graphics?, component: JComponent?, color: Color?) {}
-
-  override fun paintBackground(g: Graphics, component: JComponent, @ActionButtonComponent.ButtonState state: Int) {
-    if (state == ActionButtonComponent.NORMAL) {
-      return
-    }
-
-    val rect = Rectangle(component.size)
-    JBInsets.removeFrom(rect, component.getInsets())
-
-    val scheme = editor.getColorsScheme()
-    val color = if (state == ActionButtonComponent.PUSHED) scheme.getColor(PRESSED_BACKGROUND) else scheme.getColor(HOVER_BACKGROUND)
-    if (color != null) {
-      SYSTEM_LOOK.paintLookBackground(g, rect, color)
-    }
-  }
-
-  override fun paintBackground(g: Graphics?, component: JComponent, color: Color?) {
-    SYSTEM_LOOK.paintBackground(g, component, color)
-  }
-
-  override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon?, x: Int, y: Int) {
-    if (icon != null) {
-      val isDark = ColorUtil.isDark(editor.getColorsScheme().getDefaultBackground())
-      super.paintIcon(g, actionButton, getDarkIcon(icon, isDark), x, y)
-    }
-  }
-}
-
-@ApiStatus.Internal
-open class EditorInspectionsActionToolbar(
-  actions: DefaultActionGroup,
-  private val editor: EditorImpl,
-  private val editorButtonLook: ActionButtonLook,
-  private val nextErrorAction: AnAction?,
-  private val prevErrorAction: AnAction?,
-) : ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
-  init {
-    ClientProperty.put(this, SUPPRESS_FAST_TRACK, true)
-  }
-
-  override fun addNotify() {
-    setTargetComponent(editor.contentComponent)
-    super.addNotify()
-  }
-
-  override fun paintComponent(g: Graphics) {
-    editorButtonLook.paintBackground(g, this, editor.backgroundColor)
-  }
-
-  override fun getSeparatorHeight(): Int = statusIconSize
-
-  override fun createTextButton(
-    action: AnAction,
-    place: String,
-    presentation: Presentation,
-    minimumSize: Supplier<out Dimension>,
-  ): ActionButtonWithText {
-    if (RedesignedInspectionsManager.isAvailable()) {
-      return super.createTextButton(action, place, presentation, minimumSize)
-    }
-
-    val button = super.createTextButton(action, place, presentation, minimumSize)
-    val color = JBColor.lazy { (editor.colorsScheme.getColor(ICON_TEXT_COLOR)) ?: ICON_TEXT_COLOR.defaultColor }
-    button.setForeground(color)
-    return button
-  }
-
-  override fun createIconButton(
-    action: AnAction,
-    place: String,
-    presentation: Presentation,
-    minimumSize: Supplier<out Dimension>,
-  ): ActionButton {
-    if (RedesignedInspectionsManager.isAvailable()) {
-      return super.createIconButton(action, place, presentation, minimumSize)
-    }
-    return ToolbarActionButton(action, presentation, place, minimumSize)
-  }
-
-  override fun isDefaultActionButtonImplementation(oldActionButton: ActionButton, newPresentation: Presentation): Boolean {
-    if (RedesignedInspectionsManager.isAvailable()) {
-      return super.isDefaultActionButtonImplementation(oldActionButton, newPresentation)
-    }
-    return oldActionButton.javaClass == ToolbarActionButton::class.java
-  }
-
-  override fun doLayout() {
-    val layoutManager = layout
-    if (layoutManager != null) {
-      layoutManager.layoutContainer(this)
-    }
-    else {
-      super.doLayout()
-    }
-  }
-
-  @ApiStatus.Internal
-  open inner class ToolbarActionButton(
-    action: AnAction,
-    presentation: Presentation,
-    place: String,
-    minimumSize: Supplier<out Dimension>,
-  ) : ActionButton(action, presentation, place, minimumSize) {
-    override fun updateIcon() {
-      super.updateIcon()
-      revalidate()
-      repaint()
-    }
-
-    override fun getInsets(): Insets {
-      return when {
-        myAction === nextErrorAction -> JBUI.insets(2, 1)
-        myAction === prevErrorAction -> JBUI.insets(2, 1, 2, 2)
-        else -> JBUI.insets(2)
-      }
-    }
-
-    override fun getPreferredSize(): Dimension {
-      val icon = getIcon()
-      val size = Dimension(icon.iconWidth, icon.iconHeight)
-
-      val minSize: Int = statusIconSize
-      size.width = max(size.width, minSize)
-      size.height = max(size.height, minSize)
-
-      JBInsets.addTo(size, insets)
-      return size
-    }
-  }
-}
-
-private fun getBoundsOnScreen(hint: LightweightHint): Rectangle {
-  val component = hint.component
-  val location = hint.getLocationOn(component)
-  SwingUtilities.convertPointToScreen(location, component)
-  return Rectangle(location, hint.size)
-}
-
-private fun createHint(component: Component?, point: Point?): HintHint {
-  return HintHint(component, point)
-    .setAwtTooltip(true)
-    .setPreferredPosition(Balloon.Position.atLeft)
-    .setBorderInsets(JBUI.insets(EditorFragmentRenderer.EDITOR_FRAGMENT_POPUP_BORDER))
-    .setShowImmediately(true)
-    .setAnimationEnabled(false)
-    .setStatus(HintHint.Status.Info)
-}
-
-private class PositionedStripe(
-  @JvmField var color: Color,
-  @JvmField var yEnd: Int,
-  @JvmField val thin: Boolean,
-  @JvmField val layer: Int,
-)

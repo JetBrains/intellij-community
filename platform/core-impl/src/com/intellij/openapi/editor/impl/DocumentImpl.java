@@ -357,7 +357,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     boolean executeInBulk = finalTargetOffsetPos > STRIP_TRAILING_SPACES_BULK_MODE_LINES_LIMIT * 2;
     // Document must be unblocked by now. If not, some Save handler attempted to modify PSI
     // which should have been caught by assertion in com.intellij.pom.core.impl.PomModelImpl.runTransaction
-    DocumentUtil.writeInRunUndoTransparentAction(() -> {
+    DocumentUtil.writeInRunUndoTransparentAction(() ->
       DocumentUtil.executeInBulk(this, executeInBulk, () -> {
         int pos = finalTargetOffsetPos;
         while (pos > 0) {
@@ -365,8 +365,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
           int startOffset = targetOffsets[--pos];
           deleteString(startOffset, endOffset);
         }
-      });
-    });
+      })
+    );
     return markAsNeedsStrippingLater;
   }
 
@@ -485,7 +485,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     return collectGuardedBlocks();
   }
 
-  private @NotNull List<RangeMarker> collectGuardedBlocks() {
+  private @NotNull @UnmodifiableView List<RangeMarker> collectGuardedBlocks() {
     List<RangeMarker> blocks = new ArrayList<>();
     myPersistentRangeMarkers.processAll(GuardedBlock.processor(block -> {
       blocks.add(block);
@@ -1135,9 +1135,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   private void fireDocumentFullUpdated() {
-    fullUpdateListeners.forEach(listener -> {
-      listener.onFullUpdateDocument(this);
-    });
+    fullUpdateListeners.forEach(listener -> listener.onFullUpdateDocument(this));
   }
 
   @ApiStatus.Internal

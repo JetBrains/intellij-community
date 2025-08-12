@@ -44,10 +44,10 @@ public final class DocumentMarkupModel {
    */
   @Contract("_,_,true -> !null")
   public static MarkupModel forDocument(@NotNull Document document, @Nullable Project project, boolean create) {
-    if (document instanceof DocumentWindow) {
-      Document delegate = ((DocumentWindow)document).getDelegate();
+    if (document instanceof DocumentWindow window) {
+      Document delegate = window.getDelegate();
       MarkupModelEx baseMarkupModel = (MarkupModelEx)forDocument(delegate, project, true);
-      return new MarkupModelWindow(baseMarkupModel, (DocumentWindow) document);
+      return new MarkupModelWindow(baseMarkupModel, window);
     }
 
     if (project == null) {

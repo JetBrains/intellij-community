@@ -77,6 +77,7 @@ com.intellij.openapi.editor.ex.MarkupIterator
 - com.intellij.util.containers.PeekableIterator
 - sf:EMPTY:com.intellij.openapi.editor.ex.MarkupIterator
 - a:dispose():V
+- s:emptyIterator():com.intellij.openapi.editor.ex.MarkupIterator
 - s:mergeIterators(com.intellij.openapi.editor.ex.MarkupIterator,com.intellij.openapi.editor.ex.MarkupIterator,java.util.Comparator):com.intellij.openapi.editor.ex.MarkupIterator
 com.intellij.openapi.editor.ex.RangeMarkerEx
 - com.intellij.openapi.editor.RangeMarker

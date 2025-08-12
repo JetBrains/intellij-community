@@ -43,6 +43,10 @@ public interface MarkupIterator<T> extends PeekableIterator<T> {
       return "EMPTY";
     }
   };
+  static <T> @NotNull MarkupIterator<T> emptyIterator() {
+    //noinspection unchecked
+    return EMPTY;
+  }
 
   static @NotNull <T> MarkupIterator<T> mergeIterators(final @NotNull MarkupIterator<T> iterator1,
                                                        final @NotNull MarkupIterator<T> iterator2,
