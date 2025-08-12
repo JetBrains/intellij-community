@@ -243,6 +243,7 @@ object CommunityRepositoryModules {
         spec.withModule("intellij.android.design-plugin.descriptor")
       }
       spec.withModule("intellij.android.designer.customview")
+      spec.withModule("intellij.android.designer.gradle")
       spec.withModule("intellij.android.designer")
       spec.withModule("intellij.android.glance-designer")
       spec.withModule("intellij.android.layoutlib")
