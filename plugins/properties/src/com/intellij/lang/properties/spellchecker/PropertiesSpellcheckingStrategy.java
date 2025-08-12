@@ -7,6 +7,7 @@ import com.intellij.lang.properties.psi.impl.PropertyKeyImpl;
 import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.inspections.PropertiesSplitter;
@@ -40,6 +41,11 @@ final class PropertiesSpellcheckingStrategy extends SpellcheckingStrategy implem
   }
 
   @Override
+  public boolean useTextLevelSpellchecking() {
+    return Registry.is("spellchecker.grazie.enabled");
+  }
+
+  @Override
   protected boolean isLiteral(@NotNull PsiElement element) {
     return !super.isComment(element);
   }
@@ -60,9 +66,7 @@ final class PropertiesSpellcheckingStrategy extends SpellcheckingStrategy implem
     public void tokenize(@NotNull PropertyValueImpl element, @NotNull TokenConsumer consumer) {
       String text = element.getText();
 
-      var mnemonicsTokenizers = MNEMONICS_EP_NAME.getExtensionList();
-      if (!mnemonicsTokenizers.isEmpty()) {
-        MnemonicsTokenizer tokenizer = mnemonicsTokenizers.get(0);
+      for (MnemonicsTokenizer tokenizer : MNEMONICS_EP_NAME.getExtensionList()) {
         if (tokenizer.hasMnemonics(text)) {
           tokenizer.tokenize(element, consumer);
           return;

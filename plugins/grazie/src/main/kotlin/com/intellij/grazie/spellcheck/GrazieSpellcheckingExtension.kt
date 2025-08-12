@@ -14,7 +14,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -38,13 +37,14 @@ private val DOMAINS = TextContent.TextDomain.ALL
 class GrazieSpellcheckingExtension : SpellcheckingExtension {
 
   override fun spellcheck(element: PsiElement, session: LocalInspectionToolSession, consumer: Consumer<SpellingTypo>): SpellCheckingResult {
-    if (!Registry.`is`("spellchecker.grazie.enabled")) return SpellCheckingResult.Ignored
+    val strategy = getSpellcheckingStrategy(element)
+    if (!strategy.useTextLevelSpellchecking()) return SpellCheckingResult.Ignored
+    
     if (element is PsiWhiteSpace) return SpellCheckingResult.Checked
     ProgressManager.checkCanceled()
 
     val texts = sortByPriority(TextExtractor.findTextsExactlyAt(element, DOMAINS), session.priorityRange)
     if (texts.isEmpty()) {
-      val strategy = getSpellcheckingStrategy(element)
       if (strategy.getTokenizer(element) == EMPTY_TOKENIZER) return SpellCheckingResult.Ignored
       if (hasTextAround(element, strategy)) return SpellCheckingResult.Checked
       return SpellCheckingResult.Ignored

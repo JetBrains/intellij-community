@@ -38,6 +38,7 @@
     <severitiesProvider implementation="com.intellij.spellchecker.SpellCheckerSeveritiesProvider"/>
 
     <spellchecker.support language="TEXT" implementationClass="com.intellij.spellchecker.tokenizer.VmOptionsSpellcheckingStrategy"/>
+    <spellchecker.support language="TEXT" implementationClass="com.intellij.spellchecker.tokenizer.PlainTextSpellcheckingStrategy"/>
     <spellchecker.support language="TEXT" implementationClass="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
 
     <spellchecker.bundledDictionaryProvider implementation="com.intellij.spellchecker.DefaultBundledDictionariesProvider"/>

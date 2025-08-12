@@ -191,6 +191,20 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertEquals(offset, content.textOffsetToFile("abc ".length()));
   }
 
+  public void testJavaTextBlockWithSpaces() {
+    String text = """
+      class C {   String s = ""\"
+          abc    \\
+           \\
+              def
+            ghi
+          ""\"; }""";
+    int offset = text.indexOf("def");
+    TextContent content = extractText("a.java", text, offset);
+    assertEquals("abc        def\n  ghi", content.toString());
+    assertEquals(offset, content.textOffsetToFile("abc        ".length()));
+  }
+
   public void testNoExtractionInInjectedFragments() {
     InjectedLanguageManager.getInstance(getProject()).registerMultiHostInjector(new MultiHostInjector() {
       @Override

@@ -24,26 +24,31 @@ public class HtmlSpellcheckingStrategy extends XmlSpellcheckingStrategy implemen
 
   @Override
   public @NotNull Tokenizer getTokenizer(PsiElement element) {
-    if (element instanceof HtmlDocumentImpl) {
+    if (element instanceof HtmlDocumentImpl && !useTextLevelSpellchecking()) {
       return myDocumentTextTokenizer;
     }
-    if (element instanceof XmlAttributeValue) {
+    if (element instanceof XmlAttributeValue attributeValue) {
       if (URLUtil.isDataUri(ElementManipulators.getValueText(element))) {
         return EMPTY_TOKENIZER;
       }
-      PsiElement parent = element.getParent();
-      if (parent instanceof XmlAttribute) {
-        if (HtmlCompletionContributor.hasHtmlAttributesCompletion(element) &&
-            HtmlCompletionContributor.addSpecificCompletions((XmlAttribute)parent).length > 0) {
-          return EMPTY_TOKENIZER;
-        }
-        XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
-        if (descriptor != null && (descriptor.isEnumerated() || descriptor.isFixed())) {
-          return EMPTY_TOKENIZER;
-        }
-      }
+      if (shouldBeIgnored(attributeValue)) return EMPTY_TOKENIZER;
     }
     return super.getTokenizer(element);
+  }
+
+  public static boolean shouldBeIgnored(XmlAttributeValue element) {
+    PsiElement parent = element.getParent();
+    if (parent instanceof XmlAttribute) {
+      if (HtmlCompletionContributor.hasHtmlAttributesCompletion(element) &&
+          HtmlCompletionContributor.addSpecificCompletions((XmlAttribute)parent).length > 0) {
+        return true;
+      }
+      XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
+      if (descriptor != null && (descriptor.isEnumerated() || descriptor.isFixed())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

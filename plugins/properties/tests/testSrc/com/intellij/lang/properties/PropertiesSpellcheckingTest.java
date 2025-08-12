@@ -28,7 +28,7 @@ public class PropertiesSpellcheckingTest extends LightJavaCodeInsightFixtureTest
                                 valid.key=value
                                 # comment is <TYPO descr="Typo: In word 'cheked'">cheked</TYPO>
                                 validWord<TYPO descr="Typo: In word 'Buuundary'">Buuundary</TYPO>=value
-                                i3<TYPO descr="Typo: In word 'nvalid'">nvalid</TYPO>.key=i3<TYPO descr="Typo: In word 'nvalid'">nvalid</TYPO>Value""");
+                                i3<TYPO descr="Typo: In word 'nvalid'">nvalid</TYPO>.key=i3<TYPO descr="Typo: In word 'nvalidValue'">nvalidValue</TYPO>""");
     myFixture.testHighlighting();
   }
 }

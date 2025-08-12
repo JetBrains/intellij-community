@@ -5,6 +5,7 @@ import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
@@ -46,6 +47,11 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy implements D
   @Override
   protected boolean isLiteral(@NotNull PsiElement element) {
     return super.isLiteral(element) || !super.isComment(element) && !CODE_LIKE_PATTERN.matcher(element.getText()).matches();
+  }
+
+  @Override
+  public boolean useTextLevelSpellchecking() {
+    return Registry.is("spellchecker.grazie.enabled");
   }
 
   @Override

@@ -17,6 +17,7 @@ jvm_library(
     "//plugins/grazie/src:core",
     "//platform/core-api:core",
     "//json/backend",
+    "//platform/util",
     "//platform/util-ex",
   ],
   runtime_deps = [":json_resources"]

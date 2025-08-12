@@ -24,10 +24,7 @@ import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.grazie.diacritic.Diacritics;
 import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellCheckingResult;
 import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellingTypo;
-import com.intellij.spellchecker.tokenizer.LanguageSpellchecking;
-import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
-import com.intellij.spellchecker.tokenizer.SuppressibleSpellcheckingStrategy;
-import com.intellij.spellchecker.tokenizer.TokenConsumer;
+import com.intellij.spellchecker.tokenizer.*;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.CollectionFactory;
@@ -143,7 +140,9 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
     SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());
     Set<SpellCheckingScope> scopes = buildAllowedScopes();
     tokenize(
-      element, new MyTokenConsumer(manager, strategy, holder, LanguageNamesValidation.INSTANCE.forLanguage(element.getLanguage())), scopes
+      strategy, element,
+      new MyTokenConsumer(manager, strategy, holder, LanguageNamesValidation.INSTANCE.forLanguage(element.getLanguage())),
+      scopes
     );
   }
 
