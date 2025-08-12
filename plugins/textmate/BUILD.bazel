@@ -23,7 +23,7 @@ jvm_library(
     "//spellchecker",
     "//platform/diff-api:diff",
     "//plugins/textmate/core",
-    "//platform/indexing-impl",
+    "//plugins/textmate/joni",
     "//platform/core-ui",
     "//platform/editor-ui-ex:editor-ex",
     "@lib//:jackson",
@@ -34,8 +34,12 @@ jvm_library(
     "@lib//:caffeine",
     "//fleet/fastutil",
     "@lib//:fastutil-min",
-    "//plugins/textmate/joni",
+    "//platform/indexing-impl",
     "//platform/util/xmlDom",
+  ],
+  exports = [
+    "//plugins/textmate/core",
+    "//plugins/textmate/joni",
   ],
   runtime_deps = [":textmate_resources"]
 )
