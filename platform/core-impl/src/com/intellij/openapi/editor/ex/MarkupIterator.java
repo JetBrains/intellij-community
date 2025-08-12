@@ -8,9 +8,16 @@ import java.util.Comparator;
 import java.util.NoSuchElementException;
 
 /**
- * An iterator you must {@link #dispose()} after use
+ * An iterator you must {@link #dispose()} after use.
+ * Alternatively and more preferably, use try-with-resources, e.g.
+ * <pre>
+ * {@code try (MarkupIterator<RangeHighlighterEx> it = markupModel.overlappingIterator(0, 1)) {
+ *     useIterator(it);
+ * }
+ * }
+ * </pre>
  */
-public interface MarkupIterator<T> extends PeekableIterator<T> {
+public interface MarkupIterator<T> extends PeekableIterator<T>, AutoCloseable {
   void dispose();
 
   MarkupIterator EMPTY = new MarkupIterator() {
@@ -97,5 +104,10 @@ public interface MarkupIterator<T> extends PeekableIterator<T> {
         return choose().peek();
       }
     };
+  }
+
+  @Override
+  default void close() {
+    dispose();
   }
 }

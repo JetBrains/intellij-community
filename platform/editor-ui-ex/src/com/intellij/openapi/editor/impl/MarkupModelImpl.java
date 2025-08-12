@@ -277,17 +277,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   public boolean processRangeHighlightersOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
-    MarkupIterator<RangeHighlighterEx> iterator = overlappingIterator(start, end);
-    try {
-      while (iterator.hasNext()) {
-        if (!processor.process(iterator.next())) {
-          return false;
-        }
-      }
-      return true;
-    }
-    finally {
-      iterator.dispose();
+    try (MarkupIterator<RangeHighlighterEx> iterator = overlappingIterator(start, end)) {
+      return ContainerUtil.process(iterator, processor);
     }
   }
 

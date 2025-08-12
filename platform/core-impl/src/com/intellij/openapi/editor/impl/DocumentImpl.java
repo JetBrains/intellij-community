@@ -1231,13 +1231,9 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   @Override
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor) {
     TextRange interval = new ProperTextRange(start, end);
-    MarkupIterator<RangeMarkerEx> iterator = IntervalTreeImpl
-      .mergingOverlappingIterator(myRangeMarkers, interval, myPersistentRangeMarkers, interval, RangeMarker.BY_START_OFFSET);
-    try {
+    try (MarkupIterator<RangeMarkerEx> iterator = IntervalTreeImpl
+      .mergingOverlappingIterator(myRangeMarkers, interval, myPersistentRangeMarkers, interval, RangeMarker.BY_START_OFFSET)) {
       return ContainerUtil.process(iterator, processor);
-    }
-    finally {
-      iterator.dispose();
     }
   }
 
