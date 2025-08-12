@@ -12,10 +12,12 @@ import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.annotator.intentions.AddParenthesesToLambdaParameterIntention
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
+import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
@@ -29,6 +31,17 @@ class GroovyAnnotator30(private val holder: AnnotationHolder) : GroovyElementVis
 
   override fun visitModifierList(modifierList: GrModifierList) {
     checkDefaultModifier(modifierList)
+  }
+
+  override fun visitArrayInitializer(arrayInitializer: GrArrayInitializer) {
+    arrayInitializer.expressions.forEach {
+      if (it is GrClosableBlock) {
+        holder
+          .newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("closures.are.not.allowed.in.array.initializer"))
+          .range(it)
+          .create()
+      }
+    }
   }
 
   private fun checkDefaultModifier(modifierList: GrModifierList) {

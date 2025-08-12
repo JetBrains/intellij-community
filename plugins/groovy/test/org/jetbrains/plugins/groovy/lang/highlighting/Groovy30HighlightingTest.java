@@ -238,6 +238,8 @@ public class Groovy30HighlightingTest extends GroovyVersionBasedTest {
                        }""");
   }
 
+  public void testClosureInsideArrayInitializer() { fileHighlightingTest(); }
+
   @Override
   public final @NotNull LightProjectDescriptor getProjectDescriptor() {
     return GroovyProjectDescriptors.GROOVY_3_0_REAL_JDK;
