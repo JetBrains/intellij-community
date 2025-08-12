@@ -203,6 +203,27 @@ com.intellij.openapi.editor.impl.EditorGutterListener
 - *:hoverStarted(com.intellij.openapi.editor.impl.event.EditorGutterHoverEvent):V
 *:com.intellij.openapi.editor.impl.EditorHighlightingPredicate
 - a:shouldRender(com.intellij.openapi.editor.markup.RangeHighlighter):Z
+*f:com.intellij.openapi.editor.impl.EditorId
+- *sf:Companion:com.intellij.openapi.editor.impl.EditorId$Companion
+- <init>(fleet.util.UID):V
+- f:copy(fleet.util.UID):com.intellij.openapi.editor.impl.EditorId
+- bs:copy$default(com.intellij.openapi.editor.impl.EditorId,fleet.util.UID,I,java.lang.Object):com.intellij.openapi.editor.impl.EditorId
+- equals(java.lang.Object):Z
+- hashCode():I
+*bf:com.intellij.openapi.editor.impl.EditorId$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.openapi.editor.impl.EditorId$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.openapi.editor.impl.EditorId
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.openapi.editor.impl.EditorId):V
+*f:com.intellij.openapi.editor.impl.EditorId$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.openapi.editor.impl.EditorIdKt
+- *sf:editorId(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.impl.EditorId
+- *sf:editorIdOrNull(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.impl.EditorId
+- *sf:findEditor(com.intellij.openapi.editor.impl.EditorId):com.intellij.openapi.editor.Editor
+- *sf:findEditorOrNull(com.intellij.openapi.editor.impl.EditorId):com.intellij.openapi.editor.Editor
 f:com.intellij.openapi.editor.impl.EditorImpl
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.diagnostic.Dumpable

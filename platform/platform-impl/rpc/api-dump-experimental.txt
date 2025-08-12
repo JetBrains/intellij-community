@@ -1,0 +1,78 @@
+*f:com.intellij.ide.rpc.DataContextId
+- *sf:Companion:com.intellij.ide.rpc.DataContextId$Companion
+- <init>():V
+*bf:com.intellij.ide.rpc.DataContextId$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.rpc.DataContextId$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.rpc.DataContextId
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.rpc.DataContextId):V
+*f:com.intellij.ide.rpc.DataContextId$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.ide.rpc.DataContextIdKt
+- *sf:dataContext(com.intellij.ide.rpc.DataContextId):com.intellij.openapi.actionSystem.DataContext
+- *sf:rpcId(com.intellij.openapi.actionSystem.DataContext):com.intellij.ide.rpc.DataContextId
+*f:com.intellij.ide.rpc.DocumentId
+- *sf:Companion:com.intellij.ide.rpc.DocumentId$Companion
+- <init>():V
+*bf:com.intellij.ide.rpc.DocumentId$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.rpc.DocumentId$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.rpc.DocumentId
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.rpc.DocumentId):V
+*f:com.intellij.ide.rpc.DocumentId$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.ide.rpc.DocumentIdKt
+- *sf:document(com.intellij.ide.rpc.DocumentId):com.intellij.openapi.editor.Document
+- *sf:rpcId(com.intellij.openapi.editor.Document):com.intellij.ide.rpc.DocumentId
+*f:com.intellij.ide.ui.colors.ColorId
+- *sf:Companion:com.intellij.ide.ui.colors.ColorId$Companion
+- <init>():V
+*bf:com.intellij.ide.ui.colors.ColorId$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.ui.colors.ColorId$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.ui.colors.ColorId
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.ui.colors.ColorId):V
+*f:com.intellij.ide.ui.colors.ColorId$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.ide.ui.colors.ColorIdKt
+- *sf:color(com.intellij.ide.ui.colors.ColorId):java.awt.Color
+- *sf:rpcId(java.awt.Color):com.intellij.ide.ui.colors.ColorId
+*f:com.intellij.ide.ui.icons.IconId
+- *sf:Companion:com.intellij.ide.ui.icons.IconId$Companion
+- <init>():V
+*bf:com.intellij.ide.ui.icons.IconId$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.ui.icons.IconId$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.ui.icons.IconId
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.ui.icons.IconId):V
+*f:com.intellij.ide.ui.icons.IconId$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.ide.ui.icons.IconIdKt
+- *sf:icon(com.intellij.ide.ui.icons.IconId):javax.swing.Icon
+- *sf:rpcId(javax.swing.Icon):com.intellij.ide.ui.icons.IconId
+- *sf:rpcIdOrNull(javax.swing.Icon):com.intellij.ide.ui.icons.IconId
+*f:com.intellij.ide.vfs.VirtualFileId
+- *sf:Companion:com.intellij.ide.vfs.VirtualFileId$Companion
+- <init>():V
+- equals(java.lang.Object):Z
+- hashCode():I
+*bf:com.intellij.ide.vfs.VirtualFileId$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.vfs.VirtualFileId$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.vfs.VirtualFileId
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.vfs.VirtualFileId):V
+*f:com.intellij.ide.vfs.VirtualFileId$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.ide.vfs.VirtualFileIdKt
+- *sf:rpcId(com.intellij.openapi.vfs.VirtualFile):com.intellij.ide.vfs.VirtualFileId
+- *sf:virtualFile(com.intellij.ide.vfs.VirtualFileId):com.intellij.openapi.vfs.VirtualFile

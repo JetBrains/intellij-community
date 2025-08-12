@@ -568,6 +568,7 @@ com.intellij.openapi.editor.ex.TooltipAction
 - a:execute(com.intellij.openapi.editor.Editor,java.awt.event.InputEvent):V
 - a:getText():java.lang.String
 - a:showAllActions(com.intellij.openapi.editor.Editor):V
+f:com.intellij.openapi.editor.impl.EditorIdKt
 com.intellij.openapi.editor.impl.HighlighterListener
 - a:highlighterChanged(I,I):V
 com.intellij.openapi.editor.impl.TextDrawingCallback
