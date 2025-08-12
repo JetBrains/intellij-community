@@ -10,10 +10,7 @@ import com.intellij.ui.hover.ListHoverListener;
 import com.intellij.ui.list.ListCellBackgroundSupplier;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -33,7 +30,7 @@ public final class WideSelectionListUI extends BasicListUI {
   private Rectangle myPaintBounds;
 
   @ApiStatus.Internal
-  @TestOnly
+  @VisibleForTesting
   public WideSelectionListCache cacheSupport;
 
   @Override
