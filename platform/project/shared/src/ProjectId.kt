@@ -18,7 +18,7 @@ private val LOG = fileLogger()
  * To retrieve the id of a given project use [projectIdOrNull] or [projectId]
  */
 @Serializable
-@ApiStatus.Internal
+@ApiStatus.Experimental
 data class ProjectId(private val id: UID) {
 
   /**
@@ -96,7 +96,7 @@ fun setNewProjectId(project: Project, newProjectId: ProjectId) {
  * @return The [ProjectId] instance associated with the provided [Project],
  * or null if [Project]'s implementation didn't assign id to it.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun Project.projectIdOrNull(): ProjectId? {
   return ProjectIdsStorage.getInstance().getProjectId(this)
 }
@@ -108,12 +108,12 @@ fun Project.projectIdOrNull(): ProjectId? {
  * @return The [ProjectId] instance associated with the provided [Project],
  * @throws IllegalStateException if [Project]'s implementation didn't assign id to it.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun Project.projectId(): ProjectId {
   return projectIdOrNull() ?: error("Project ID is not set for $this")
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun Project.projectIdOrNullWithLogError(log: Logger): ProjectId? {
   val projectId = projectIdOrNull()
   if (projectId == null) {
@@ -128,7 +128,7 @@ fun Project.projectIdOrNullWithLogError(log: Logger): ProjectId? {
  * @return The [Project] instance associated with the provided [ProjectId],
  * or null if there is no project with the given [ProjectId].
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun ProjectId.findProjectOrNull(): Project? {
   return ProjectIdsStorage.getInstance().findProject(this)
 }
@@ -139,7 +139,7 @@ fun ProjectId.findProjectOrNull(): Project? {
  * @return The [Project] instance associated with the provided [ProjectId],
  * or null if there is no project with the given [ProjectId] and logs an error.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun ProjectId.findProjectOrNullWithLogError(log: Logger): Project? {
   val project = ProjectIdsStorage.getInstance().findProject(this)
   if (project == null) {
@@ -154,7 +154,7 @@ fun ProjectId.findProjectOrNullWithLogError(log: Logger): Project? {
  * @return The [Project] instance associated with the provided [ProjectId],
  * @throws IllegalStateException if there is no project with the given [ProjectId].
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun ProjectId.findProject(): Project {
   return findProjectOrNull() ?: run {
     LOG.error("Project is not found for $this. Opened projects: ${ProjectManager.getInstance().openProjects.joinToString { it.projectId().toString() }}")
