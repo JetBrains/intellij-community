@@ -31,6 +31,7 @@
     <module name="intellij.platform.diagnostic.freezeAnalyzer"/>
     <module name="intellij.platform.diagnostic.freezes"/>
     <module name="intellij.platform.warmup"/>
+    <module name="intellij.platform.inspect"/>
     <module name="intellij.settingsSync.core"/>
     
     <module name="intellij.libraries.lucene.common"/>

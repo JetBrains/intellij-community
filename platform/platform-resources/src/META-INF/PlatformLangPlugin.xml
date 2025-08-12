@@ -32,10 +32,6 @@
   <xi:include href="/META-INF/Editor.xml"/>
   <xi:include href="/META-INF/EditorEx.xml"/>
 
-  <xi:include href="/META-INF/Inspect.xml">
-    <xi:fallback/>
-  </xi:include>
-
   <xi:include href="/META-INF/IdeCore.xml"/>
   <xi:include href="/META-INF/PlatformExtensionPoints.xml"/>
   <xi:include href="/META-INF/Refactoring.xml"/>

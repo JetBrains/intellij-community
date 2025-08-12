@@ -58,7 +58,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.platform.diff.impl",
   "intellij.platform.editor.ex",
   "intellij.platform.externalProcessAuthHelper",
-  "intellij.platform.inspect",
   "intellij.platform.lvcs",
   "intellij.platform.macro",
   "intellij.platform.scriptDebugger.protocolReaderRuntime",

@@ -1,4 +1,8 @@
 <idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <appStarter id="inspect" implementation="com.intellij.codeInspection.InspectionMain"/>
     <inspectionGroupProvider implementation="com.intellij.codeInspection.inspectionProfile.InspectionBasicGroupProvider" />
