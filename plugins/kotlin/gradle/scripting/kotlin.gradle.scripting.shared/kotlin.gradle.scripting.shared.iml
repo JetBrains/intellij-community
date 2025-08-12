@@ -52,5 +52,6 @@
     <orderEntry type="module" module-name="intellij.gradle.java" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" />
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" />
+    <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
   </component>
 </module>

@@ -8,50 +8,53 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY
 
 class KotlinAvoidDependencyNamedArgumentsNotationInspectionVisitor(val holder: ProblemsHolder) : KtVisitorVoid() {
-    private val SCRIPT_DEPENDENCY_STATEMENTS = (
-            SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS
-                    + SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS.map {
-                        "test" + it.first().uppercaseChar() + it.substring(1)
-                    }
-            )
+    private val GRADLE_DSL_PACKAGE = FqName("org.gradle.kotlin.dsl")
 
-    override fun visitScriptInitializer(initializer: KtScriptInitializer) {
-        if (!initializer.text.startsWith("dependencies")) return
-        val dependenciesCall = PsiTreeUtil.findChildOfType(initializer, KtCallExpression::class.java)
-        val dependenciesBlock = (dependenciesCall?.valueArguments?.singleOrNull()?.getArgumentExpression() as? KtLambdaExpression)?.bodyExpression
-                ?: dependenciesCall?.lambdaArguments?.lastOrNull()?.getLambdaExpression()?.bodyExpression
-        val dependencies = PsiTreeUtil.findChildrenOfType(dependenciesBlock, KtCallExpression::class.java).filter { call ->
-            val calleeText = call.calleeExpression?.text
-            // TODO only checks for standard configuration names
-            calleeText in SCRIPT_DEPENDENCY_STATEMENTS
+    override fun visitCallExpression(expression: KtCallExpression) {
+        if (!isExternalDependencyDeclaration(expression)) return
+        val argList = expression.valueArgumentList ?: return
+        if (!argList.isPhysical) return
+        val args = argList.arguments
+        val ids = args.mapNotNull { it.getArgumentName()?.asName?.identifier }
+        // check that there are only 3 arguments and the named ones are among group, name or version
+        if (args.size !in 2..3 || !setOf("group", "name", "version").containsAll(ids)) return
+        // check that all values are string literals
+        val values = args.map { it.getArgumentExpression()?.text }
+        for (value in values) {
+            if (value == null) continue
+            if (!value.startsWith("\"") || !value.endsWith("\"")) continue
         }
-        for (dep in dependencies) {
-            val argList = dep.valueArgumentList ?: continue
-            if (!argList.isPhysical) continue
-            val args = argList.arguments
-            val ids = args.map { it.getArgumentName()?.asName?.identifier }
-            val values = args.map { it.getArgumentExpression()?.text }
-            // check that there are only group, name and version named arguments
-            if (ids.size != 3 && values.size != 3) continue
-            if (ids.intersect(listOf("group", "name", "version")).size != 3) continue
-            // check that all values are string literals
-            for (value in values) {
-                if (value == null) continue
-                if (!value.startsWith("\"") || !value.endsWith("\"")) continue
-            }
-            holder.registerProblem(
-                argList,
-                GradleInspectionBundle.message("inspection.message.avoid.dependency.named.arguments.notation.descriptor"),
-                ProblemHighlightType.WEAK_WARNING,
-                GradleDependencyNamedArgumentsFix()
-            )
+        holder.registerProblem(
+            argList,
+            GradleInspectionBundle.message("inspection.message.avoid.dependency.named.arguments.notation.descriptor"),
+            ProblemHighlightType.WEAK_WARNING,
+            GradleDependencyNamedArgumentsFix()
+        )
+    }
+
+    private fun isExternalDependencyDeclaration(expression: KtCallExpression): Boolean {
+        return analyze(expression) {
+            val singleFunctionCallOrNull = expression.resolveToCall()?.singleFunctionCallOrNull()
+            val symbol = singleFunctionCallOrNull?.symbol ?: return@analyze false
+            symbol.callableId?.packageName == GRADLE_DSL_PACKAGE
+                    && symbol.returnType.symbol?.classId?.asSingleFqName() == FqName(GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY)
+                    && symbol.valueParameters[0].name.identifier == "group"
+                    && symbol.valueParameters[1].name.identifier == "name"
+                    && symbol.valueParameters[2].name.identifier == "version"
         }
     }
 }
@@ -66,13 +69,18 @@ private class GradleDependencyNamedArgumentsFix() : KotlinModCommandQuickFix<KtV
     }
 
     override fun applyFix(project: Project, element: KtValueArgumentList, updater: ModPsiUpdater) {
-        val group = element.arguments.find { it.getArgumentName()?.asName?.identifier == "group" }?.getArgumentExpression()?.text?.removeSurrounding("\"")
-            ?: return
-        val name = element.arguments.find { it.getArgumentName()?.asName?.identifier== "name" }?.getArgumentExpression()?.text?.removeSurrounding("\"")
-            ?: return
-        val version = element.arguments.find { it.getArgumentName()?.asName?.identifier == "version" }?.getArgumentExpression()?.text?.removeSurrounding("\"")
-            ?: return
+        val group = findArgumentInDependency(element, "group", 0) ?: return
+        val name = findArgumentInDependency(element, "name", 1) ?: return
+        val version = findArgumentInDependency(element, "version", 2)
         element.arguments.forEach { element.removeArgument(it) }
-        element.addArgument(KtPsiFactory(project, true).createArgument("\"$group:$name:$version\""))
+        val stringNotationArgument = if (version != null) "\"$group:$name:$version\"" else "\"$group:$name\""
+        element.addArgument(KtPsiFactory(project, true).createArgument(stringNotationArgument))
+    }
+
+    private fun findArgumentInDependency(element: KtValueArgumentList, parameterName: String, expectedIndex: Int): String? {
+        val argument = element.arguments.find {
+            it.getArgumentName()?.asName?.identifier == parameterName
+        } ?: element.arguments.getOrNull(expectedIndex)
+        return argument?.getArgumentExpression()?.text?.removeSurrounding("\"")
     }
 }

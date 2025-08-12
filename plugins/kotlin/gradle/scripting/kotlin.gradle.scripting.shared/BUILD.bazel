@@ -57,6 +57,7 @@ jvm_library(
     "//plugins/gradle/java",
     "//plugins/kotlin/code-insight/api",
     "//plugins/kotlin/gradle/code-insight-common",
+    "@lib//:kotlinc-analysis-api",
   ]
 )
 ### auto-generated section `build kotlin.gradle.scripting.shared` end
