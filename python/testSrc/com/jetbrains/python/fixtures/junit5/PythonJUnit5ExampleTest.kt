@@ -17,13 +17,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
+
 
 @PyDefaultTestApplication
 @TestClassInfo(Repository.PY_COMMUNITY)
 @TestDataPath($$"$CONTENT_ROOT/../testData/example/junit5")
 class PythonJUnit5ExampleTest(
-  val project: Project, /* class-level declared in PyWithDefaultFixturesExtension */
-  val module: Module, /* class-level declared in PyWithDefaultFixturesExtension */
+  val project: Project, /* class-level, the value is projectFixture.get(), might be declared implicitly */
+  val module: Module, /* class-level implicitly declared in PyWithDefaultFixturesExtension */
 ) {
   companion object {
     // An explicit override of the default fixture, which can be omitted if the default is enough.
@@ -56,5 +59,21 @@ class PythonJUnit5ExampleTest(
     withContext(Dispatchers.EDT) {
       Assertions.assertEquals("print(\"Hello, world!\")\n", psiFile.text)
     }
+  }
+
+  /**
+   * This is an example of a parametrized test with multiple cases provided.
+   * The one could write expectations among the parameters as well.
+   *
+   * @param fileName the name of the file being tested
+   * @param length the expected length of the file name
+   */
+  @ParameterizedTest
+  @CsvSource(value = [
+    "first.py,8",
+    "second.py,9",
+  ])
+  fun testMultipleParameters(fileName: String, length: Int) {
+    Assertions.assertEquals(length, fileName.length)
   }
 }
