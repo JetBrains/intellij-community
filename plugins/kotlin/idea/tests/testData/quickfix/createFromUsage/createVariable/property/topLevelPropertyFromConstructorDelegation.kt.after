@@ -1,6 +1,6 @@
 // "Create property 'foo'" "true"
 // ERROR: Property must be initialized
-// K2_AFTER_ERROR: None of the following candidates is applicable:<br>constructor(pi: Int): CtorChain<br>constructor(ps: String): CtorChain
+// K2_AFTER_ERROR: None of the following candidates is applicable:<br><br>constructor(pi: Int): CtorChain:<br>  Argument type mismatch: actual type is 'Any', but 'Int' was expected.<br><br>constructor(ps: String): CtorChain:<br>  Argument type mismatch: actual type is 'Any', but 'String' was expected.<br><br>
 // K2_AFTER_ERROR: Property must be initialized.
 
 

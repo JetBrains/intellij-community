@@ -308,6 +308,7 @@ private fun List<KtNamedDeclaration>.sortedWithPrimitiveFirst(): List<KtNamedDec
         val isBacking2 = o2.propertyHasBackingField()
         val fieldCompare = -isBacking1.compareTo(isBacking2)
         if (fieldCompare != 0) return fieldCompare
+        check (o1 is KtDeclarationWithReturnType && o2 is KtDeclarationWithReturnType)
         return -o1.returnType.isPrimitive.compareTo(o2.returnType.isPrimitive)
     }
 })

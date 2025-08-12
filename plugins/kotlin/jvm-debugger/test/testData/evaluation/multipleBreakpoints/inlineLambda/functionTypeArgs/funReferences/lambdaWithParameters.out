@@ -1,0 +1,8 @@
+LineBreakpoint created at lambdaWithParameters.kt:11
+Run Java
+Connected to the target VM
+lambdaWithParameters.kt:11
+Compile bytecode for block(5, "x")
+Disconnected from the target VM
+
+Process finished with exit code 0

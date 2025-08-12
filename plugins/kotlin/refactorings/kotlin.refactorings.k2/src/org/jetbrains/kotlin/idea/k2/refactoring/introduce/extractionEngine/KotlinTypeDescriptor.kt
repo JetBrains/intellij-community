@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtDeclarationWithReturnType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtTypeParameter
@@ -70,7 +71,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
     }
 
     override fun returnType(ktNamedDeclaration: KtNamedDeclaration): KaType =
-        analyze(data.commonParent) { ktNamedDeclaration.returnType }
+        analyze(data.commonParent) { (ktNamedDeclaration as KtDeclarationWithReturnType).returnType }
 
     @OptIn(KaExperimentalApi::class)
     override fun renderForMessage(ktNamedDeclaration: KtNamedDeclaration): String {

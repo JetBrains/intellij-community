@@ -116,7 +116,7 @@ object CallableReturnTypeUpdaterUtils {
 
         if (declaration is KtProperty && !typeInfo.useTemplate) {
             val getter = declaration.getter
-            val returnTypeReference = getter?.returnTypeReference
+            val returnTypeReference = getter?.typeReference
             if (returnTypeReference != null && !typeInfo.defaultType.isUnit) {
                 val typeRef = shortenReferences(returnTypeReference.replace(KtPsiFactory(project).createType(typeInfo.defaultType.longTypeRepresentation)) as KtElement)
                 if (typeRef != null) {

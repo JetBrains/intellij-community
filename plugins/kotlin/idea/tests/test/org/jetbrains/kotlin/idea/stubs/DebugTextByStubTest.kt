@@ -131,7 +131,7 @@ class DebugTextByStubTest : LightJavaCodeInsightFixtureTestCase() {
 
     fun testClass() {
         clazz("class A")
-        clazz("open private class A")
+        clazz("open private class A", expectedText = "private open class A")
         clazz("public class private A")
         clazz("class A()")
         clazz("class A() : B()", expectedText = "class A() : B")

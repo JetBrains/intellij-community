@@ -64,10 +64,10 @@ class BuiltInDecompilerForWrongMetadataVersionTest : AbstractBuiltInDecompilerTe
     }
 
     fun testStubTreesEqualForIncompatibleAbiVersion() {
-        val serializedStub = doTest("test")
+        val serializedStub = doTest("test").replace(BuiltInsBinaryVersion.INSTANCE.toString(), $$"$VERSION$")
         KotlinTestUtils.assertEqualsToFile(
             File(testDataDirectory, "test.text"),
-            myFixture.file.text.replace(BuiltInsBinaryVersion.INSTANCE.toString(), "\$VERSION\$")
+            myFixture.file.text.replace(BuiltInsBinaryVersion.INSTANCE.toString(), $$"$VERSION$")
         )
         KotlinTestUtils.assertEqualsToFile(File(testDataDirectory, "test.stubs"), serializedStub)
     }

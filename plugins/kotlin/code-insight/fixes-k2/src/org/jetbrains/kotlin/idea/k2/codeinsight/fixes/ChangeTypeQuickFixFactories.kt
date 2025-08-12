@@ -102,7 +102,7 @@ internal object ChangeTypeQuickFixFactories {
         }.map { KtPsiUtil.safeDeparenthesize(it) }
 
         returnedExpressions.singleOrNull()?.let {
-            if (it.isNull() || this is KtCallableDeclaration && this.typeReference == null || this is KtPropertyAccessor && this.returnTypeReference == null) return candidateType
+            if (it.isNull() || this is KtCallableDeclaration && this.typeReference == null || this is KtPropertyAccessor && this.typeReference == null) return candidateType
         }
 
         val property = this as? KtProperty

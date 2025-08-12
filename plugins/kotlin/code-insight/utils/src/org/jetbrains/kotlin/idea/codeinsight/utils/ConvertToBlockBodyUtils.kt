@@ -41,10 +41,10 @@ object ConvertToBlockBodyUtils {
         reformat: Boolean,
         isErrorReturnTypeAllowed: Boolean = false,
     ): ConvertToBlockBodyContext? {
+        if (declaration !is KtDeclarationWithReturnType) return null
         if (!isConvertibleByPsi(declaration)) return null
 
         val body = declaration.bodyExpression ?: return null
-
         val returnType = declaration.returnType.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true)
         if (!isErrorReturnTypeAllowed && returnType is KaErrorType && declaration is KtNamedFunction && !declaration.hasDeclaredReturnType()) {
             return null

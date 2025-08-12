@@ -150,7 +150,7 @@ object K2CreateParameterFromUsageBuilder {
             val right = binaryExpression?.right
             right?.expressionType.withResolvableApproximation()?.let { return it }
             right?.expectedType?.let { return it }
-            (expression.parent as? KtDeclaration)?.returnType.withResolvableApproximation()?.let { return it }
+            (expression.parent as? KtDeclarationWithReturnType)?.returnType.withResolvableApproximation()?.let { return it }
             return builtinTypes.any
         }
 

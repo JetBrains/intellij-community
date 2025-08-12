@@ -78,7 +78,7 @@ fun KtPropertyAccessor.canBeCompletelyDeleted(): Boolean {
 
 fun removeRedundantGetter(getter: KtPropertyAccessor) {
     val property = getter.property
-    val accessorTypeReference = getter.returnTypeReference
+    val accessorTypeReference = getter.typeReference
     if (accessorTypeReference != null && property.typeReference == null && property.initializer == null) {
         property.typeReference = accessorTypeReference
     }

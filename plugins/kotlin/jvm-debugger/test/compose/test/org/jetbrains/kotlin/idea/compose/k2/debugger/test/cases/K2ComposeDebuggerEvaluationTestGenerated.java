@@ -34,4 +34,19 @@ public class K2ComposeDebuggerEvaluationTestGenerated extends AbstractK2ComposeD
     public void testComposableLambda() throws Exception {
         runTest("../testData/evaluation/compose/composableLambda.kt");
     }
+
+    @TestMetadata("composeCompositionLocal.kt")
+    public void testComposeCompositionLocal() throws Exception {
+        runTest("../testData/evaluation/compose/composeCompositionLocal.kt");
+    }
+
+    @TestMetadata("composeSideEffects.kt")
+    public void testComposeSideEffects() throws Exception {
+        runTest("../testData/evaluation/compose/composeSideEffects.kt");
+    }
+
+    @TestMetadata("composeStatefulComponent.kt")
+    public void testComposeStatefulComponent() throws Exception {
+        runTest("../testData/evaluation/compose/composeStatefulComponent.kt");
+    }
 }

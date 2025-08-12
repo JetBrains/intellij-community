@@ -35,9 +35,9 @@ import org.jetbrains.kotlin.psi.psiUtil.inferClassIdByPsi
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class RemoveExplicitTypeIntention :
-    KotlinApplicableModCommandAction<KtDeclaration, Unit>(KtDeclaration::class) {
+    KotlinApplicableModCommandAction<KtDeclarationWithReturnType, Unit>(KtDeclarationWithReturnType::class) {
 
-    override fun getApplicableRanges(element: KtDeclaration): List<TextRange> {
+    override fun getApplicableRanges(element: KtDeclarationWithReturnType): List<TextRange> {
         val typeReference = element.typeReference
             ?: return emptyList()
 
@@ -51,9 +51,9 @@ internal class RemoveExplicitTypeIntention :
         return listOf(textRange)
     }
 
-    override fun isApplicableByPsi(element: KtDeclaration): Boolean = canExplicitTypeBeRemoved(element)
+    override fun isApplicableByPsi(element: KtDeclarationWithReturnType): Boolean = canExplicitTypeBeRemoved(element)
 
-    override fun KaSession.prepareContext(element: KtDeclaration): Unit? = when {
+    override fun KaSession.prepareContext(element: KtDeclarationWithReturnType): Unit? = when {
         element is KtParameter -> true
         element is KtNamedFunction && element.hasBlockBody() -> element.returnType.isUnitType
         element is KtNamedFunction && element.isRecursive() -> false
@@ -73,7 +73,7 @@ internal class RemoveExplicitTypeIntention :
     }
 
     context(_: KaSession)
-    private fun KtDeclaration.isExplicitTypeReferenceNeededForTypeInferenceByAnalyze(): Boolean {
+    private fun KtDeclarationWithReturnType.isExplicitTypeReferenceNeededForTypeInferenceByAnalyze(): Boolean {
         val typeReference = typeReference ?: return false
         val initializer = getInitializerOrGetterInitializer() ?: return true
         val explicitType = returnType
@@ -172,7 +172,7 @@ internal class RemoveExplicitTypeIntention :
         return typeParameters.all { typeReferencesTypeParameter(it, receiverType) }
     }
 
-    private val KtDeclaration.isVar: Boolean
+    private val KtDeclarationWithReturnType.isVar: Boolean
         get() {
             val property = (this as? KtProperty) ?: (this as? KtPropertyAccessor)?.property
             return property?.isVar == true
@@ -182,7 +182,7 @@ internal class RemoveExplicitTypeIntention :
 
     override fun invoke(
       actionContext: ActionContext,
-      element: KtDeclaration,
+      element: KtDeclarationWithReturnType,
       elementContext: Unit,
       updater: ModPsiUpdater,
     ) {
