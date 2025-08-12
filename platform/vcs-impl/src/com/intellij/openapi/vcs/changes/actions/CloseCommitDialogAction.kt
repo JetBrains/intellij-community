@@ -26,8 +26,8 @@ internal class CloseCommitDialogAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     e.getCommitDialog()?.hide()
   }
+}
 
-  private fun AnActionEvent.getCommitDialog(): ToolWindow? = getData(PlatformDataKeys.TOOL_WINDOW)?.takeIf { commitTw: ToolWindow ->
-    CommitToolWindowUtil.isInWindow(commitTw.type)
-  }
+private fun AnActionEvent.getCommitDialog(): ToolWindow? = getData(PlatformDataKeys.TOOL_WINDOW)?.takeIf { commitTw: ToolWindow ->
+  CommitToolWindowUtil.isInWindow(commitTw.type)
 }
