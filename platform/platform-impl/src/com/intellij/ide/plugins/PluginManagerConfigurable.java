@@ -78,6 +78,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -895,7 +896,7 @@ public final class PluginManagerConfigurable
           new SearchResultPanel(marketplaceController, panel, true, 0, 0) {
             @Override
             @SuppressWarnings("unchecked")
-            protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
+            protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result, AtomicBoolean runQuery) {
               int searchIndex = PluginManagerUsageCollector.updateAndGetSearchIndex();
 
               SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
@@ -957,6 +958,7 @@ public final class PluginManagerConfigurable
                                             (searchResult, updates) -> {
                                               applySearchResult(result, searchResult, (List<PluginUiModel>)updates, customRepositoriesMap,
                                                                 parser, pluginToScore, searchIndex);
+                                              updatePanel(runQuery);
                                               return null;
                                             });
               }
@@ -1333,7 +1335,7 @@ public final class PluginManagerConfigurable
           }
 
           @Override
-          protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
+          protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result, AtomicBoolean runQuery) {
             int searchIndex = PluginManagerUsageCollector.updateAndGetSearchIndex();
             myPluginModelFacade.getModel().setInvalidFixCallback(null);
 
@@ -1449,6 +1451,7 @@ public final class PluginManagerConfigurable
                 return null;
               });
             }
+            updatePanel(runQuery);
           }
         };
 

@@ -230,7 +230,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       val (installResult, info) = withContext(Dispatchers.IO) {
         withBackgroundProgress(projectNotNull, IdeBundle.message("progress.title.loading.plugin.details")) {
           jobToIndicator(coroutineContext.job, bgProgressIndicator) {
-            val installPluginInfo = InstallPluginInfo(bgProgressIndicator, descriptor, this@MyPluginModel, updateDescriptor != null)
+            val installPluginInfo = InstallPluginInfo(bgProgressIndicator, descriptor, this@MyPluginModel, updateDescriptor == null)
             return@jobToIndicator runBlockingCancellable {
               prepareToInstall(installPluginInfo)
               val result = controller.installOrUpdatePlugin(sessionId, projectNotNull, parentComponent, descriptor, updateDescriptor, myInstallSource, modalityState, null)

@@ -42,12 +42,12 @@ internal object PluginModelAsyncOperationsExecutor {
     cs: CoroutineScope,
     modelFacade: PluginModelFacade,
     descriptor: PluginUiModel,
-    customizer: PluginManagerCustomizer,
+    customizer: PluginManagerCustomizer?,
     component: JComponent,
   ) {
     cs.launch(Dispatchers.IO) {
       val stateForComponent = ModalityState.stateForComponent(component)
-      val customizationModel = customizer.getInstallButonCustomizationModel(modelFacade, descriptor, stateForComponent)
+      val customizationModel = customizer?.getInstallButonCustomizationModel(modelFacade, descriptor, stateForComponent)
       withContext(Dispatchers.EDT + stateForComponent.asContextElement()) {
         val customAction = customizationModel?.mainAction
         if (customAction != null) {

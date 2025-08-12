@@ -131,38 +131,11 @@ public abstract class SearchResultPanel {
       PluginsGroup group = myGroup;
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        handleQuery(query, group);
-
-        ApplicationManager.getApplication().invokeLater(() -> {
-          assert SwingUtilities.isEventDispatchThread();
-
-          if (!runQuery.get()) {
-            return;
-          }
-          myRunQuery = null;
-
-          loading(false);
-
-          if (!myGroup.getDescriptors().isEmpty()) {
-            myGroup.titleWithCount();
-            try {
-              PluginLogo.startBatchMode();
-              myPanel.addLazyGroup(myGroup, myVerticalScrollBar, 100, this::fullRepaint);
-            }
-            finally {
-              PluginLogo.endBatchMode();
-            }
-          }
-
-          announceSearchResultsWithDelay();
-          myPanel.initialSelection(false);
-          runPostFillGroupCallback();
-          fullRepaint();
-        }, ModalityState.any());
+        handleQuery(query, group, runQuery);
       });
     }
     else {
-      handleQuery(query, myGroup);
+      handleQuery(query, myGroup, null);
 
       if (!myGroup.getDescriptors().isEmpty()) {
         myPanel.addGroup(myGroup);
@@ -176,7 +149,36 @@ public abstract class SearchResultPanel {
     }
   }
 
-  protected abstract void handleQuery(@NotNull String query, @NotNull PluginsGroup result);
+  protected void updatePanel(AtomicBoolean runQuery) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      assert SwingUtilities.isEventDispatchThread();
+
+      if (!runQuery.get()) {
+        return;
+      }
+      myRunQuery = null;
+
+      loading(false);
+
+      if (!myGroup.getDescriptors().isEmpty()) {
+        myGroup.titleWithCount();
+        try {
+          PluginLogo.startBatchMode();
+          myPanel.addLazyGroup(myGroup, myVerticalScrollBar, 100, this::fullRepaint);
+        }
+        finally {
+          PluginLogo.endBatchMode();
+        }
+      }
+
+      announceSearchResultsWithDelay();
+      myPanel.initialSelection(false);
+      runPostFillGroupCallback();
+      fullRepaint();
+    }, ModalityState.any());
+  }
+
+  protected abstract void handleQuery(@NotNull String query, @NotNull PluginsGroup result, @Nullable AtomicBoolean runQuery);
 
   private void runPostFillGroupCallback() {
     if (myPostFillGroupCallback != null) {
