@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Converts an [DataContext] instance into a [DataContextId] which can be used in RPC calls and stored in Rhizome.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun DataContext.rpcId(): DataContextId {
   val context = this
   val serializedContext = serializeToRpc(context)
@@ -21,7 +21,7 @@ fun DataContext.rpcId(): DataContextId {
 /**
  * Retrieves the [DataContext] associated with the given [DataContextId].
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun DataContextId.dataContext(): DataContext? {
   if (localContext != null) {
     return localContext
@@ -30,7 +30,7 @@ fun DataContextId.dataContext(): DataContext? {
   return deserializeFromRpc<DataContext>(serializedValue)
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @Serializable
 class DataContextId internal constructor(
   @Serializable @JvmField internal val serializedValue: SerializedValue? = null,
