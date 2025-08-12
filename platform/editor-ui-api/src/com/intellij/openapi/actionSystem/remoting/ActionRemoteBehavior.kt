@@ -23,7 +23,10 @@ enum class ActionRemoteBehavior {
   /**
    * The action updates on both backend and frontend,
    * if a frontend action is available, its presentation will be taken, and the action will be performed on the frontend.
-   * Otherwise, backend's presentation will be used, and the action will be performed on the backend
+   * Otherwise, backend's presentation will be used, and the action will be performed on the backend.
+   *
+   * It's possible to disable the action update on the backend side by setting [SKIP_FALLBACK_UPDATE] to `true`
+   * in the presentation during the frontend's update.
    */
   FrontendOtherwiseBackend,
 
@@ -46,7 +49,16 @@ enum class ActionRemoteBehavior {
   /**
    * Action should be disabled in remote dev mode on both sides
    */
-  Disabled
+  Disabled;
+
+  companion object {
+    /**
+     * If set as a presentation property by an action with [FrontendOtherwiseBackend] behaviour during frontend update,
+     * disables the subsequent backend update, even if the frontend update reports the action as disabled.
+     */
+    @JvmField
+    val SKIP_FALLBACK_UPDATE: Key<Boolean> = Key.create("SKIP_FALLBACK_UPDATE")
+  }
 }
 
 /**
