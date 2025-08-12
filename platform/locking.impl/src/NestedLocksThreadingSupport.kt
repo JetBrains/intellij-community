@@ -952,6 +952,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       }
     }
     finally {
+      drainWriteActionFollowups()
       writeIntentInitResult.release()
     }
   }
@@ -1117,6 +1118,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   private fun endPendingWriteAction(state: ComputationState) {
     val stateLevel = state.level()
     myWriteActionPending.get()[stateLevel].decrementAndGet()
+    drainWriteActionFollowups()
   }
 
   private data class WriteLockInitResult(
@@ -1168,8 +1170,8 @@ class NestedLocksThreadingSupport : ThreadingSupport {
           support.myTopmostReadAction.set(currentReadState)
           if (shouldRelease) {
             support.fireAfterWriteActionFinished(listeners, clazz)
-            support.drainWriteActionFollowups()
           }
+          support.drainWriteActionFollowups()
         }
 
       }
@@ -1541,10 +1543,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     synchronized(pendingWriteActionFollowup) {
       pendingWriteActionFollowup.add(action)
     }
-    val isWriteActionDemanded2 = isWriteActionPendingOrRunning()
-    if (!isWriteActionDemanded2) {
-      drainWriteActionFollowups()
-    }
+    drainWriteActionFollowups()
   }
 
   private fun drainWriteActionFollowups() {
