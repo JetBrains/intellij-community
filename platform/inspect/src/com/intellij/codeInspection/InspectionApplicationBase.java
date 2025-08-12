@@ -62,6 +62,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import kotlinx.coroutines.future.FutureKt;
 import one.util.streamex.StreamEx;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -81,29 +82,42 @@ import java.util.function.Predicate;
 import static com.intellij.configurationStore.StoreUtilKt.forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod;
 
 public class InspectionApplicationBase implements CommandLineInspectionProgressReporter {
+  @ApiStatus.Internal
   public static final Logger LOG = Logger.getInstance(InspectionApplicationBase.class);
 
   public static final String PROJECT_STRUCTURE_DIR = "projectStructure";
 
+  @ApiStatus.Internal
   public InspectionToolCmdlineOptionHelpProvider myHelpProvider;
+  @ApiStatus.Internal
   public String myProjectPath;
+  @ApiStatus.Internal
   public String myOutPath;
+  @ApiStatus.Internal
   public String mySourceDirectory;
+  @ApiStatus.Internal
   public String myStubProfile;
+  @ApiStatus.Internal
   public String myProfileName;
+  @ApiStatus.Internal
   public String myProfilePath;
+  @ApiStatus.Internal
   public boolean myRunWithEditorSettings;
   boolean myRunGlobalToolsOnly;
+  @ApiStatus.Internal
   public boolean myAnalyzeChanges;
   private boolean myPathProfiling;
   private int myVerboseLevel;
   private final Map<String, List<Range>> diffMap = new ConcurrentHashMap<>();
   private final MultiMap<Pair<String, Integer>, String> originalWarnings = MultiMap.createConcurrent();
   private final AsyncPromise<Void> isMappingLoaded = new AsyncPromise<>();
+  @ApiStatus.Internal
   public String myOutputFormat;
+  @ApiStatus.Internal
   public InspectionProfileImpl myInspectionProfile;
 
   String myTargets;
+  @ApiStatus.Internal
   public boolean myErrorCodeRequired = true;
   String myScopePattern;
 
