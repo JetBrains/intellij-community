@@ -3,7 +3,6 @@ package com.intellij.terminal.frontend
 
 import com.intellij.codeInsight.completion.CompletionPhase
 import com.intellij.codeInsight.inline.completion.InlineCompletion
-import com.intellij.find.SearchReplaceComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
@@ -281,11 +280,11 @@ class ReworkedTerminalView(
   private fun listenSearchController() {
     terminalSearchController.addListener(object : TerminalSearchControllerListener {
       override fun searchSessionStarted(session: TerminalSearchSession) {
-        terminalPanel.installSearchComponent(session.component)
+        terminalPanel.installSearchComponent(session.wrapper)
       }
 
       override fun searchSessionFinished(session: TerminalSearchSession) {
-        terminalPanel.removeSearchComponent(session.component)
+        terminalPanel.removeSearchComponent(session.wrapper)
       }
     })
   }
