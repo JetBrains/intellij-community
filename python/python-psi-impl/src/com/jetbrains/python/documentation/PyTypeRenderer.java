@@ -55,15 +55,15 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     TYPE_VAR_BOUNDS,
   }
 
-  protected final boolean renderFqn() {
+  protected final boolean isRenderingFqn() {
     return myRenderingFeatures.contains(Feature.USE_FQN);
   }
 
-  protected final boolean renderTypeVarBounds() {
+  protected final boolean isRenderingTypeVarBounds() {
     return myRenderingFeatures.contains(Feature.TYPE_VAR_BOUNDS);
   }
 
-  protected final boolean renderUnsafeUnion() {
+  protected final boolean isRenderingUnsafeUnion() {
     return myRenderingFeatures.contains(Feature.UNSAFE_UNION);
   }
 
@@ -114,7 +114,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   }
 
   public static final class TypeHint extends PyTypeRenderer {
-    private static final EnumSet<Feature> SUPPORTED = EnumSet.of(Feature.USE_FQN); 
+    private static final EnumSet<Feature> SUPPORTED_FEATURES = EnumSet.of(Feature.USE_FQN); 
     
     public TypeHint(@NotNull TypeEvalContext typeEvalContext, @NotNull EnumSet<Feature> features) {
       super(typeEvalContext, validateFeatures(features));
@@ -122,7 +122,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
     private static @NotNull EnumSet<Feature> validateFeatures(@NotNull EnumSet<Feature> features) {
       EnumSet<Feature> unsupported = EnumSet.copyOf(features);
-      unsupported.removeAll(SUPPORTED);
+      unsupported.removeAll(SUPPORTED_FEATURES);
       if (!unsupported.isEmpty()) {
         throw new IllegalArgumentException("Unsupported features for type hint rendering " + unsupported);
       }
@@ -137,7 +137,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     @Override
     public HtmlChunk visitPyCallableType(@NotNull PyCallableType callableType) {
       HtmlBuilder result = new HtmlBuilder();
-      result.append(HtmlChunk.raw(renderFqn() ? "typing.Callable" : "Callable")); //NON-NLS
+      result.append(HtmlChunk.raw(isRenderingFqn() ? "typing.Callable" : "Callable")); //NON-NLS
       result.append(styled("[", PyHighlighter.PY_BRACKETS));
       List<PyCallableParameter> parameters = getParameters(callableType);
       if (parameters != null) {
@@ -252,13 +252,13 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     String className = genericType.getName();
     if (renderTypeArgumentList && !isGenericBuiltinsAvailable() && PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.containsKey(className)) {
       className = PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.get(className);
-      if (renderFqn()) {
+      if (isRenderingFqn()) {
         className = PyTypingTypeProvider.TYPING + "." + className;
       }
       result.append(className(className));
     }
     else {
-      result.append(className(renderFqn() ? genericType.getClassQName() : className));
+      result.append(className(isRenderingFqn() ? genericType.getClassQName() : className));
     }
     if (renderTypeArgumentList) {
       result.append(styled("[", PyHighlighter.PY_BRACKETS));
@@ -271,7 +271,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   protected @NotNull HtmlChunk wrapInTypingType(@NotNull HtmlChunk instanceTypeRender) {
     return new HtmlBuilder()
       .append(isGenericBuiltinsAvailable() ? styled("type", PyHighlighter.PY_BUILTIN_NAME) : //NON-NLS
-              escaped(renderFqn() ? "typing.Type" : "Type")) //NON-NLS
+              escaped(isRenderingFqn() ? "typing.Type" : "Type")) //NON-NLS
       .append(styled("[", PyHighlighter.PY_BRACKETS))
       .append(instanceTypeRender)
       .append(styled("]", PyHighlighter.PY_BRACKETS))
@@ -288,10 +288,10 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   public HtmlChunk visitPyNarrowedType(@NotNull PyNarrowedType narrowedType) {
     HtmlBuilder result = new HtmlBuilder();
     if (narrowedType.getTypeIs()) {
-      result.append(styled(renderFqn() ? "typing.TypeIs" : "TypeIs", PyHighlighter.PY_CLASS_DEFINITION));
+      result.append(styled(isRenderingFqn() ? "typing.TypeIs" : "TypeIs", PyHighlighter.PY_CLASS_DEFINITION));
     }
     else {
-      result.append(styled(renderFqn() ? "typing.TypeGuard" : "TypeGuard", PyHighlighter.PY_CLASS_DEFINITION));
+      result.append(styled(isRenderingFqn() ? "typing.TypeGuard" : "TypeGuard", PyHighlighter.PY_CLASS_DEFINITION));
     }
     result.append(styled("[", PyHighlighter.PY_BRACKETS));
     result.append(render(narrowedType.getNarrowedType()));
@@ -332,7 +332,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   @Override
   public @NotNull HtmlChunk visitPyUnsafeUnionType(@NotNull PyUnsafeUnionType unsafeUnionType) {
-    if (renderUnsafeUnion()) {
+    if (isRenderingUnsafeUnion()) {
       HtmlBuilder result = new HtmlBuilder();
       result.append(escaped("UnsafeUnion")); //NON-NLS
       result.append(styled("[", PyHighlighter.PY_BRACKETS));
@@ -345,7 +345,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   private @NotNull HtmlChunk renderUnionOfLiterals(@NotNull List<PyLiteralType> literals) {
     return new HtmlBuilder()
-      .append(escaped(renderFqn() ? "typing.Literal" : "Literal")) //NON-NLS
+      .append(escaped(isRenderingFqn() ? "typing.Literal" : "Literal")) //NON-NLS
       .append(styled("[", PyHighlighter.PY_BRACKETS))
       .append(StreamEx
                 .of(literals)
@@ -362,7 +362,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
       result.append(renderList(renderedUnionMembers, " | "));
     }
     else {
-      result.append(escaped(renderFqn() ? "typing.Union" : "Union")); //NON-NLS
+      result.append(escaped(isRenderingFqn() ? "typing.Union" : "Union")); //NON-NLS
       result.append(styled("[", PyHighlighter.PY_BRACKETS));
       result.append(renderList(renderedUnionMembers));
       result.append(styled("]", PyHighlighter.PY_BRACKETS));
@@ -379,7 +379,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
       result.append(render(ContainerUtil.find(type.getMembers(), t -> isNoneType(t)))); //NON-NLS
     }
     else {
-      result.append(escaped(renderFqn() ? "typing.Optional" : "Optional")); //NON-NLS
+      result.append(escaped(isRenderingFqn() ? "typing.Optional" : "Optional")); //NON-NLS
       result.append(styled("[", PyHighlighter.PY_BRACKETS));
       result.append(render(ContainerUtil.find(type.getMembers(), t -> !isNoneType(t))));
       result.append(styled("]", PyHighlighter.PY_BRACKETS));
@@ -409,7 +409,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
       result.append(styled("tuple", PyHighlighter.PY_BUILTIN_NAME)); //NON-NLS
     }
     else {
-      result.append(escaped(renderFqn() ? "typing.Tuple" : "Tuple")); //NON-NLS
+      result.append(escaped(isRenderingFqn() ? "typing.Tuple" : "Tuple")); //NON-NLS
     }
     result.append(styled("[", PyHighlighter.PY_BRACKETS));
     if (!tupleType.getElementTypes().isEmpty()) {
@@ -428,7 +428,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   @Override
   public HtmlChunk visitUnknownType() {
-    return HtmlChunk.raw(renderFqn() ? "typing.Any" : "Any"); //NON-NLS
+    return HtmlChunk.raw(isRenderingFqn() ? "typing.Any" : "Any"); //NON-NLS
   }
 
   @Override
@@ -498,7 +498,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   public @NotNull HtmlChunk visitPyTypeVarType(@NotNull PyTypeVarType typeVarType) {
     HtmlBuilder result = new HtmlBuilder();
     result.append(escaped(getTypeName(typeVarType)));
-    if (renderTypeVarBounds()) {
+    if (isRenderingTypeVarBounds()) {
       PyType effectiveBound = PyTypeUtil.getEffectiveBound(typeVarType);
       if (effectiveBound != null) {
         result.append(escaped(" ≤: "));
@@ -532,7 +532,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     if (isNoneType(type)) {
       return PyNames.NONE;
     }
-    if (renderFqn()) {
+    if (isRenderingFqn()) {
       PyQualifiedNameOwner declarationElement = type.getDeclarationElement();
       return declarationElement != null ? declarationElement.getQualifiedName() : null;
     }
