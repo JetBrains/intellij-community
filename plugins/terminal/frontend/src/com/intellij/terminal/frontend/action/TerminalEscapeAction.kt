@@ -39,10 +39,10 @@ interface TerminalEscapeHandler {
    *
    * The currently reserved values are:
    * - 100 - close the active completion popup;
-   * - 150 - cancel the AI prompt;
+   * - 150 - cancel the AI prompt (implemented only in gen1 terminal);
    * - 200 - cancel selection and focus the prompt;
    * - 300 - cancel the active search;
-   * - 400 - leave the terminal tool window and focus the code editor.
+   * - 500 - leave the terminal tool window and focus the code editor.
    *
    * As a rule of thumb, values divisible by 100 are reserved for the main terminal plugin,
    * values divisible by 10 are reserved for JetBrains plugins,
