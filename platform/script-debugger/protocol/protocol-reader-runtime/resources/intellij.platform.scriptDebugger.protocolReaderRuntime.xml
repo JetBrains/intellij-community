@@ -1,0 +1,6 @@
+<idea-plugin>
+  <module value="com.intellij.modules.scriptDebugger.protocolReaderRuntime"/>
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>  
+</idea-plugin>

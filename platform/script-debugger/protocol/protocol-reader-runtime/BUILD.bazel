@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.platform.scriptDebugger.protocolReaderRuntime` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "protocol-reader-runtime_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "protocol-reader-runtime",
@@ -15,6 +21,10 @@ jvm_library(
     "@lib//:fastutil-min",
     "@lib//:netty-buffer",
   ],
-  exports = ["@lib//:gson"]
+  exports = ["@lib//:gson"],
+  runtime_deps = [
+    ":protocol-reader-runtime_resources",
+    "//platform/backend",
+  ]
 )
 ### auto-generated section `build intellij.platform.scriptDebugger.protocolReaderRuntime` end
