@@ -6,6 +6,7 @@ package com.intellij.notebooks.visualization.r.inlays
 
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.system.OS
 import java.awt.Image
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
@@ -32,6 +33,10 @@ object ClipboardUtils {
 
     CopyPasteManager.getInstance().setContents(FileTransferable(listOf(tempImage)))
   }
+
+  // Standard copy works incorrectly on Mac, see JBR-6788,
+  // But it seemingly was fixed in the newer (15 and later) Mac versions
+  fun isIntermediateFileWorkaroundNeeded(): Boolean = OS.CURRENT == OS.macOS && !OS.CURRENT.isAtLeast(15, 0)
 
   private class FileTransferable(private val files: List<File>) : Transferable {
     override fun getTransferDataFlavors(): Array<DataFlavor> = arrayOf(DataFlavor.javaFileListFlavor)
