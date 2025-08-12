@@ -468,8 +468,10 @@ class PluginModelValidator(
           }
           
           if (moduleName !in registeredContentModules) {
-            registerError("Module '$moduleName' is not registered as a content module, but used as a dependency." +
-                          "Either convert it to a content module, or use dependency on the plugin which includes it instead.")
+            registerError("""
+              |Module '$moduleName' is not registered as a content module, but used as a dependency.
+              |Either convert it to a content module, or use dependency on the plugin which includes it instead.
+              |""".trimMargin())
             continue
           }
           val loadingRule = contentModuleNameFromThisPluginToLoadingRule[moduleName]
