@@ -42,6 +42,7 @@ import java.awt.event.ComponentEvent
 import java.awt.event.MouseEvent
 import java.awt.event.WindowEvent
 import java.awt.image.BufferStrategy
+import java.awt.image.VolatileImage
 import javax.accessibility.AccessibleContext
 import javax.swing.JComponent
 import javax.swing.JFrame
@@ -194,6 +195,22 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
     }
     super.createBufferStrategy(numBuffers, caps)
   }
+
+  override fun createVolatileImage(width: Int, height: Int): VolatileImage? {
+    if (!EDT.isCurrentThreadEdt()) {
+      logger<IdeFrameImpl>().error("createVolatileImage must be called on EDT", Throwable())
+    }
+    return super.createVolatileImage(width, height)
+  }
+
+  override fun createVolatileImage(width: Int, height: Int, caps: ImageCapabilities?): VolatileImage? {
+    if (!EDT.isCurrentThreadEdt()) {
+      logger<IdeFrameImpl>().error("createVolatileImage must be called on EDT", Throwable())
+    }
+    return super.createVolatileImage(width, height, caps)
+  }
+
+
 
   @Suppress("OVERRIDE_DEPRECATION")
   override fun show() {
