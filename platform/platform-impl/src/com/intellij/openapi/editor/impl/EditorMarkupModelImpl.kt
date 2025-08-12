@@ -904,7 +904,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
         return
       }
       if (transparent()) {
-        ReadAction.run<RuntimeException?> { doPaintTrack(g, c, trackBounds) }
+        EditorThreading.run { doPaintTrack(g, c, trackBounds) }
       }
       else {
         super.paintTrack(g, c, trackBounds)
