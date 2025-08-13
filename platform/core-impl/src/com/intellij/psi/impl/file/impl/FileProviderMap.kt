@@ -415,21 +415,19 @@ private class ManyItemMap<V : Any>(
     var newMap: MutableMap<CodeInsightContext, V>? = null
 
     for (k in map.keys) {
-      val v = map[k]
-      if (v != null) {
-        if (newMap == null) {
-          newMap = ContainerUtil.createWeakValueMap<CodeInsightContext, V>()
-        }
-        newMap[k] = v
+      val v = map[k] ?: continue
+
+      if (newMap == null) {
+        // constructing map only if at least 2 elements are found
+        newMap = newMap(key, value)
       }
+      newMap[k] = v
     }
 
     if (newMap == null) {
       // we have only one (k, v) pair
       return OneItemMap(key, value)
     }
-
-    newMap[key] = value
 
     val newDefaultContext = if (newMap[defaultContext] == null) {
       key // todo IJPL-339 does changing the default context require some more care???
@@ -451,35 +449,35 @@ private class ManyItemMap<V : Any>(
   private fun produceNewMapWithoutKey(key: CodeInsightContext?): ContextMap<V> {
     var newMap: MutableMap<CodeInsightContext, V>? = null
 
-    var existingKey: CodeInsightContext? = null
-    var existingValue: V? = null
+    var firstKey: CodeInsightContext? = null
+    var firstValue: V? = null
 
     for (k in map.keys) {
       if (k == key) continue
-      val value = map[k]
-      if (value != null) {
-        if (existingKey == null) {
-          existingKey = k
-          existingValue = value
+
+      val value = map[k] ?: continue
+
+      if (firstKey == null) {
+        firstKey = k
+        firstValue = value
+      }
+      else {
+        if (newMap == null) {
+          // creating new map only if at least 2 elements are found
+          newMap = newMap(firstKey, firstValue!!)
         }
-        else {
-          if (newMap == null) {
-            newMap = ContainerUtil.createWeakValueMap<CodeInsightContext, V>()
-          }
-          newMap[existingKey] = existingValue!!
-          newMap[k] = value
-        }
+        newMap[k] = value
       }
     }
 
-    if (existingKey == null) {
+    if (firstKey == null) {
       // we don't have even one survived value, GC collected all of them
       return emptyContextMap()
     }
 
     if (newMap == null) {
       // we have only one (k, v) pair
-      return OneItemMap(existingKey, existingValue!!)
+      return OneItemMap(firstKey, firstValue!!)
     }
 
     val newDefaultContext = when (key) {
@@ -487,6 +485,12 @@ private class ManyItemMap<V : Any>(
       else -> defaultContext
     }
     return ManyItemMap(newMap, newDefaultContext)
+  }
+
+  private fun newMap(firstKey: CodeInsightContext, firstValue: V): MutableMap<CodeInsightContext, V> {
+    val map = ContainerUtil.createWeakValueMap<CodeInsightContext, V>()
+    map[firstKey] = firstValue
+    return map
   }
 
   override fun entries(): Collection<Map.Entry<CodeInsightContext, V>> {
