@@ -83,6 +83,11 @@ public class PyUnusedImportTest extends PyTestCase {
     doTest();
   }
 
+  // PY-83075
+  public void testInjectedImportUsage() {
+    doTest("injectedImportUsage.py");
+  }
+
   // PY-22620
   public void testTupleTypeCommentsUseImportsFromTyping() {
     doTest();

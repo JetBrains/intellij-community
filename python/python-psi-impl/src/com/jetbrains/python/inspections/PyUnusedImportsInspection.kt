@@ -91,6 +91,9 @@ class PyUnusedImportsInspection : PyInspection() {
 
     override fun visitPyElement(node: PyElement) {
       super.visitPyElement(node)
+      if (node is PsiLanguageInjectionHost) {
+        processInjection(node)
+      }
       if (node is PyReferenceOwner) {
         val resolveContext = PyResolveContext.defaultContext(myTypeEvalContext)
         processReference(node, node.getReference(resolveContext))
