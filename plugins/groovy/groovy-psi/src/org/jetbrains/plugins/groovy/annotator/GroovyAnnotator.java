@@ -268,7 +268,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       final PsiElement last = PsiUtil.skipWhitespacesAndComments(list.getLastChild(), false);
       if (last != null) {
         final IElementType type = last.getNode().getElementType();
-        if (type != GroovyTokenTypes.kDEF) {
+        if (type != GroovyTokenTypes.kDEF && type != GroovyTokenTypes.kVAR) {
           myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("tuple.declaration.should.end.with.def.modifier")).range(list).create();
         }
       }
