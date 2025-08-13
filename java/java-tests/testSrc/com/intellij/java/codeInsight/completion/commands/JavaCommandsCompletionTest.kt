@@ -16,6 +16,7 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.documentation.AsyncDocumentation
@@ -758,37 +759,35 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
 
   fun testRedCode() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-    runBlocking {
-      val psiFile = myFixture.configureByText(JavaFileType.INSTANCE, """
-      class A { 
-        void foo() {
-          int y = 10L<caret>;
-        } 
-      }
-      """.trimIndent())
-      myFixture.doHighlighting()
-      myFixture.type(".")
-      val elements = myFixture.completeBasic()
-      val item = elements.first { element -> element.lookupString.contains("Convert literal to", ignoreCase = true) }
-      val documentationProvider = CommandCompletionDocumentationProvider()
-      val documentationTarget = documentationProvider.documentationTarget(psiFile, item, editor.caretModel.offset)
-      val documentation = documentationTarget?.computeDocumentation() as? AsyncDocumentation
-      assertNotNull(documentation)
-      val resultDocumentation = documentation?.supplier?.invoke() as? DocumentationData
-      assertNotNull(resultDocumentation)
-      val expected = """<ideaFloatingCodePreview background-color="#ffffff" font-size="13">
+    val psiFile = myFixture.configureByText(JavaFileType.INSTANCE, """
+    class A { 
+      void foo() {
+        int y = 10L<caret>;
+      } 
+    }
+    """.trimIndent())
+    myFixture.doHighlighting()
+    myFixture.type(".")
+    val elements = myFixture.completeBasic()
+    val item = elements.first { element -> element.lookupString.contains("Convert literal to", ignoreCase = true) }
+    val documentationProvider = CommandCompletionDocumentationProvider()
+    val documentationTarget = documentationProvider.documentationTarget(psiFile, item, editor.caretModel.offset)
+    val documentation = documentationTarget?.computeDocumentation() as? AsyncDocumentation
+    assertNotNull(documentation)
+    val resultDocumentation = runBlockingMaybeCancellable { documentation?.supplier?.invoke() } as? DocumentationData
+    assertNotNull(resultDocumentation)
+    val expected = """<ideaFloatingCodePreview background-color="#ffffff" font-size="13">
       <div style="#ffffff; line-height:1.3200000524520874;"><div style="background-color:#ffffff;color:#000000"><pre style="font-family:'JetBrains Mono',monospace;"><span style="font-size: 90%; color:#999999;">  3  </span><span style="color:#000080;font-weight:bold;">int&#32;</span>y&#32;=&#32;<span style="color:#0000ff;background-color:#cad9fa;">10</span>;</pre></div>
       </div></ideaFloatingCodePreview>"""
-      assertEquals(expected, resultDocumentation?.html ?: "")
-      selectItem(item)
-      myFixture.checkResult("""
-      class A { 
-        void foo() {
-          int y = 10;
-        } 
-      }
-    """.trimIndent())
+    assertEquals(expected, resultDocumentation?.html ?: "")
+    selectItem(item)
+    myFixture.checkResult("""
+    class A { 
+      void foo() {
+        int y = 10;
+      } 
     }
+  """.trimIndent())
   }
 
   fun testRedCodeImport() {
