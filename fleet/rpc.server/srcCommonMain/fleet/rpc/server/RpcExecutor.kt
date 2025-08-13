@@ -21,6 +21,7 @@ import kotlinx.serialization.json.Json
 import fleet.multiplatform.shims.ConcurrentHashMap
 import fleet.multiplatform.shims.ConcurrentHashSet
 import fleet.util.async.withSupervisor
+import kotlinx.serialization.json.JsonNull
 import kotlin.coroutines.EmptyCoroutineContext
 
 class RpcExecutor private constructor(
@@ -209,7 +210,11 @@ class RpcExecutor private constructor(
               else {
                 val (resultSerialized, streamDescriptors) = withSerializationContext("Result of ${message.requestId}", null, serviceScope) {
                   val kserializer = returnType.serializer(message.classMethodDisplayName())
-                  json.encodeToJsonElement(kserializer, result)
+                  val isUnitData = (returnType is RemoteKind.Data) &&
+                                   (returnType.serializer.descriptor.serialName == "kotlin.Unit")
+
+                  if (isUnitData && result == null) JsonNull
+                  else json.encodeToJsonElement(kserializer, result)
                 }
 
                 streamDescriptors.forEach {
