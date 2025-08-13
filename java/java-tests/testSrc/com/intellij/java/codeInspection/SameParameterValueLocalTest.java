@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -13,11 +13,7 @@ public class SameParameterValueLocalTest extends JavaInspectionTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
-  }
-
-  private String getGlobalTestDir() {
-    return "sameParameterValue/" + getTestName(true);
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/sameParameterValue/";
   }
 
   @Override
@@ -26,71 +22,37 @@ public class SameParameterValueLocalTest extends JavaInspectionTestCase {
     super.tearDown();
   }
 
-  public void testEntryPoint() {
-    doTest(getGlobalTestDir(), myTool);
+  private void doTest() {
+    doTest(getTestName(true), myTool);
   }
+  
+  public void testEntryPoint() { doTest(); }
+  public void testNotReportedDueToHighVisibility() { doTest(); }
+  public void testNativeMethod() { doTest(); }
+  public void testNegativeDouble() { doTest(); }
+  public void testMethodReferenceInCallArguments() { doTest(); }
+  public void testFixAvailable() { doTest(); }
+  public void testFixNotAvailable() { doTest(); }
+  public void testOverrideGroovy() { doTest(); }
+  public void testMethodReferences() { doTest(); }
 
   public void testMethodWithSuper() {
-    AccessModifier previous = myGlobalTool.highestModifier;
     myGlobalTool.highestModifier = AccessModifier.PUBLIC;
-    try {
-      doTest(getGlobalTestDir(), myTool);
-    } finally {
-      myGlobalTool.highestModifier = previous;
-    }
-  }
-
-  public void testNotReportedDueToHighVisibility() {
-    doTest(getGlobalTestDir(), myTool);
+    doTest();
   }
 
   public void testVarargs() {
     myGlobalTool.ignoreWhenRefactoringIsComplicated = false;
-    doTest(getGlobalTestDir(), myTool);
+    doTest();
   }
-
-  public void testNativeMethod() {
-    doTest(getGlobalTestDir(), myTool);
-  }
-
-  public void testNegativeDouble() {
-    doTest(getGlobalTestDir(), myTool);
-  }
-
-  public void testMethodReferenceInCallArguments() {
-    doTest(getGlobalTestDir(), myTool);
-  }
-
-  public void testFixAvailable() { doTest(getGlobalTestDir(), myTool); }
-
-  public void testFixNotAvailable() { doTest(getGlobalTestDir(), myTool); }
 
   public void testFixNotAvailableIsShown() {
-    boolean previous = myGlobalTool.ignoreWhenRefactoringIsComplicated;
-    try {
-      myGlobalTool.ignoreWhenRefactoringIsComplicated = false;
-      doTest(getGlobalTestDir(), myTool);
-    } finally {
-      myGlobalTool.ignoreWhenRefactoringIsComplicated = previous;
-    }
+    myGlobalTool.ignoreWhenRefactoringIsComplicated = false;
+    doTest();
   }
 
   public void testUsageCount() {
-    int previous = myGlobalTool.minimalUsageCount;
-    try {
-      myGlobalTool.minimalUsageCount = 5;
-      doTest(getGlobalTestDir(), myTool);
-    }
-    finally {
-      myGlobalTool.minimalUsageCount = previous;
-    }
-  }
-
-  public void testOverrideGroovy() {
-    doTest(getGlobalTestDir(), myTool);
-  }
-
-  public void testMethodReferences() {
-    doTest(getGlobalTestDir(), myTool);
+    myGlobalTool.minimalUsageCount = 5;
+    doTest();
   }
 }
