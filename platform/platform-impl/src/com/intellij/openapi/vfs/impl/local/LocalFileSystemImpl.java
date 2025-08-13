@@ -305,16 +305,6 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
    */
   @ApiStatus.Internal
   @Deprecated(forRemoval = true)
-  public final String @NotNull [] listWithCaching(@NotNull VirtualFile dir) {
-    return listWithCaching(dir, null);
-  }
-
-  /**
-   * @deprecated prefer to use {@link #listWithAttributes(VirtualFile, Set)} instead -- it is stateless, hence its
-   * behavior is more predictable
-   */
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
   public final String @NotNull [] listWithCaching(@NotNull VirtualFile dir,
                                                   @Nullable Set<String> filter) {
     var cache = myFileAttributesCache.get();
@@ -326,7 +316,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     return ArrayUtil.toStringArray(result.keySet());
   }
 
-  /** @deprecated see {@link #listWithCaching(VirtualFile)} docs for reasoning */
+  /** @deprecated see {@link #listWithCaching(VirtualFile, Set)} docs for reasoning */
   @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public void clearListCache() {

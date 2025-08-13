@@ -68,7 +68,7 @@ final class RefreshWorker {
   );
 
   /**
-   * Use legacy {@link LocalFileSystemImpl#listWithCaching(VirtualFile)} method instead of new, more generic
+   * Use legacy {@link LocalFileSystemImpl#listWithCaching(VirtualFile, Set)} method instead of new, more generic
    * {@link BatchingFileSystem#listWithAttributes(VirtualFile, Set)}
    * Temporary flag, to investigate performance issues linked to the transition to {@link BatchingFileSystem},
    * remove afterward.

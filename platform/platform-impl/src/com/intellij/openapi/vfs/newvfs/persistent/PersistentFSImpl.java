@@ -2517,7 +2517,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     else {
       //The order: first(remove the file from it's parent.children) then(mark the file as deleted) -- is important!
       // During .children processing we rely on the fact that .children are all valid files
-      vfsPeer.update(parent, parentId, list -> list.remove(fileIdToDelete), /*setAllChildrenCached: */ false);
+      vfsPeer.update(parent, parentId, children -> children.remove(fileIdToDelete), /*setAllChildrenCached: */ false);
 
       ((VirtualDirectoryImpl)parent).removeChild((VirtualFileSystemEntry)file);
     }
