@@ -488,7 +488,7 @@ internal class BazelBuildFileGenerator(
     val jvmTarget = getLanguageLevel(module)
     val kotlincOptionsLabel = computeKotlincOptions(buildFile = this, module = moduleDescriptor, jvmTarget = jvmTarget)
                               ?: (if (jvmTarget == "17") null else "@community//:k$jvmTarget")
-    val javacOptionsLabel = computeJavacOptions(module, jvmTarget)
+    val javacOptionsLabel = computeJavacOptions(moduleDescriptor, jvmTarget)
 
     val resourceTargets = mutableListOf<String>()
     val productionCompileTargets = mutableListOf<String>()
@@ -750,14 +750,15 @@ internal class BazelBuildFileGenerator(
     return GenerateResourcesResult(resourceTargets = resourceTargets)
   }
 
-  private fun BuildFile.computeJavacOptions(module: JpsModule, jvmTarget: String): String? {
-    val extraJavacOptions = projectJavacSettings.currentCompilerOptions.ADDITIONAL_OPTIONS_OVERRIDE.get(module.name) ?: return null
+  private fun BuildFile.computeJavacOptions(module: ModuleDescriptor, jvmTarget: String): String? {
+    val extraJavacOptions = projectJavacSettings.currentCompilerOptions.ADDITIONAL_OPTIONS_OVERRIDE.get(module.module.name) ?: ""
     val exports = addExportsRegex.findAll(extraJavacOptions).map { it.groupValues[1] + "=ALL-UNNAMED" }.toList()
-    if (exports.isEmpty()) {
+    val noProc = !projectJavacSettings.getAnnotationProcessingProfile(module.module).isEnabled
+    if (exports.isEmpty() && noProc) {
       return null
     }
 
-    load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+    load("@rules_jvm//:jvm.bzl", "kt_javac_options")
     val customJavacOptionsName = "custom-javac-options"
     target("kt_javac_options") {
       option("name", customJavacOptionsName)
@@ -766,6 +767,7 @@ internal class BazelBuildFileGenerator(
       option("x_ep_disable_all_checks", true)
       option("warn", "off")
       option("add_exports", exports)
+      option("no_proc", noProc)
     }
     return ":$customJavacOptionsName"
   }
