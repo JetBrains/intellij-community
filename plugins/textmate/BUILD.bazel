@@ -33,7 +33,6 @@ jvm_library(
     "@lib//:caffeine",
     "//fleet/fastutil",
     "@lib//:fastutil-min",
-    "//platform/indexing-impl",
     "//platform/util/xmlDom",
   ],
   exports = [

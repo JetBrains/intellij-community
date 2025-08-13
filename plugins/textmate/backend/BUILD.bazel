@@ -22,6 +22,46 @@ jvm_provided_library(
   lib = "//platform/core-api:core"
 )
 
+jvm_provided_library(
+  name = "platform_lang-impl_provided",
+  lib = "//platform/lang-impl"
+)
+
+jvm_provided_library(
+  name = "platform_editor-ui_provided",
+  lib = "//platform/editor-ui-api:editor-ui"
+)
+
+jvm_provided_library(
+  name = "platform_ide-impl_provided",
+  lib = "//platform/platform-impl:ide-impl"
+)
+
+jvm_provided_library(
+  name = "platform_analysis_provided",
+  lib = "//platform/analysis-api:analysis"
+)
+
+jvm_provided_library(
+  name = "platform_codeStyle_provided",
+  lib = "//platform/code-style-api:codeStyle"
+)
+
+jvm_provided_library(
+  name = "platform_indexing-impl_provided",
+  lib = "//platform/indexing-impl"
+)
+
+jvm_provided_library(
+  name = "platform_indexing_provided",
+  lib = "//platform/indexing-api:indexing"
+)
+
+jvm_provided_library(
+  name = "java_indexing-impl_provided",
+  lib = "//java/java-indexing-impl:indexing-impl"
+)
+
 jvm_library(
   name = "backend",
   module_name = "intellij.textmate.backend",
@@ -30,14 +70,17 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations-provided",
     "@lib//:kotlin-stdlib-provided",
-    "//platform/lang-impl",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/platform-impl:ide-impl",
-    "//platform/analysis-api:analysis",
-    "//platform/code-style-api:codeStyle",
     ":plugins_textmate_common_provided",
     ":spellchecker_provided",
     ":platform_core_provided",
+    ":platform_lang-impl_provided",
+    ":platform_editor-ui_provided",
+    ":platform_ide-impl_provided",
+    ":platform_analysis_provided",
+    ":platform_codeStyle_provided",
+    ":platform_indexing-impl_provided",
+    ":platform_indexing_provided",
+    ":java_indexing-impl_provided",
   ],
   runtime_deps = [":backend_resources"]
 )

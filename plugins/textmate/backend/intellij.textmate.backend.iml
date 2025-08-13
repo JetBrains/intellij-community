@@ -13,10 +13,13 @@
     <orderEntry type="library" scope="PROVIDED" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
-    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="intellij.platform.analysis" />
-    <orderEntry type="module" module-name="intellij.platform.codeStyle" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.indexing.impl" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.java.indexing.impl" scope="PROVIDED" />
   </component>
 </module>
