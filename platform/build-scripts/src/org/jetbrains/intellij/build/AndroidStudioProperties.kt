@@ -226,6 +226,16 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
         spec.withModule("intellij.cidr.clangFormat.lang")
       },
     ))
+
+    // Patch plugin.xml files to ensure plugins are non-updatable. We want platform
+    // plugins to always come from our own IntelliJ fork (which may have patches, for example).
+    // Note: this logic is validated by an assertion in check_plugin.py in our Bazel build.
+    for (pluginLayout in productLayout.pluginLayouts) {
+      val delegatePatcher = pluginLayout.pluginXmlPatcher
+      pluginLayout.pluginXmlPatcher = { pluginXml, ctx ->
+        delegatePatcher(pluginXml, ctx).replace("allow-bundled-update=\"true\"", "allow-bundled-update=\"false\"")
+      }
+    }
   }
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {
