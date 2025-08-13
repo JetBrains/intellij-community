@@ -211,7 +211,7 @@ private fun canBeResolvedViaImport(reference: KDocReference, target: KaSymbol): 
     val qualifier = reference.element.getQualifier() ?: return true
 
     return if (target is KaCallableSymbol && target.isExtension) {
-        val elementHasFunctionDescriptor = reference.element.mainReference.resolveToSymbols().any { it is KaFunctionSymbol }
+        val elementHasFunctionDescriptor = reference.element.mainReference.resolveToSymbols().any { it is KaCallableSymbol }
         val qualifierHasClassDescriptor = qualifier.mainReference.resolveToSymbols().any { it is KaClassLikeSymbol }
         elementHasFunctionDescriptor && qualifierHasClassDescriptor
     } else {
