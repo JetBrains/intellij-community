@@ -55,10 +55,10 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
     get() {
       if (field.isEmpty()) {
         LOG.warn("UsageInfos are not yet initialized for ${model.presentablePath}")
-        //initialize(onDocumentUpdated)
       }
       return field
     }
+  private var isLoaded: Boolean = false
   private var initializationJob: Job? = null
 
   private val defaultRange: TextRange = TextRange(model.navigationOffset, model.navigationOffset + model.length)
@@ -89,6 +89,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
       cachedPsiFile = cachedUsageInfos.firstOrNull()?.file
       cachedMergedSmartRanges = cachedUsageInfos.map { it.psiFileRange }.sortedBy { it.range?.startOffset ?: 0 }
       cachedSmartRange = cachedMergedSmartRanges.firstOrNull()
+      isLoaded = true
     }
     //RemDev case - we need to load psi elements
     else {
@@ -112,7 +113,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
               PsiManager.getInstance(project).findFile(vFile)
             }
             cachedPsiFile = psiFile
-            if (document == null) document = psiFile?.fileDocument ?.also {
+            if (document == null) document = psiFile?.fileDocument?.also {
               (it as? DocumentEx)?.addFullUpdateListener(fullUpdateListener)
             }
 
@@ -138,6 +139,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
           }
         }
         finally {
+          isLoaded = true
           withContext(Dispatchers.EDT) {
             onDocumentUpdated?.invoke(cachedUsageInfos)
           }
@@ -145,6 +147,8 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
       }
     }
   }
+
+  override fun isLoaded(): Boolean = isLoaded
 
   companion object {
     @JvmStatic
@@ -273,13 +277,19 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
   override fun getFile(): VirtualFile? = virtualFile
 
   override fun getDocument(): Document? {
-    return runReadAction {
-      val document = cachedPsiFile?.let { psiFile -> PsiDocumentManager.getInstance(project).getDocument(psiFile) }
-      if (document == null) {
-        LOG.warn("PsiFile is not yet loaded for path ${model.presentablePath}. Trying to get document from virtualFile")
-        virtualFile?.findDocument()
+    return try {
+      runReadAction {
+        val document = cachedPsiFile?.let { psiFile -> PsiDocumentManager.getInstance(project).getDocument(psiFile) }
+        if (document == null) {
+          LOG.warn("PsiFile is not yet loaded for path ${model.presentablePath}. Trying to get document from virtualFile")
+          virtualFile?.findDocument()
+        }
+        document
       }
-      document
+    }
+    catch (t: Throwable) {
+      LOG.warn("Failed to get document for ${model.presentablePath}", t)
+      null
     }
   }
 
