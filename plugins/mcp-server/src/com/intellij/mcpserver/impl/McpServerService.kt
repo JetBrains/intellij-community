@@ -309,4 +309,3 @@ private fun McpTool.mcpToolToRegisteredTool(): RegisteredTool {
     return@RegisteredTool CallToolResult(content = contents, structuredContent = null, isError = callResult.isError)}
   }
 }
-

@@ -24,6 +24,34 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
   public void testUnreachable() {
     runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
   }
+  
+  // PY-82712
+  public void testIfInsideTryExcept() {
+    doTestByText("""
+try:
+    if a==1:
+        print(0)
+    else:
+        print(1)
+finally:
+    print(2)
+print("Reachable")
+                   """);
+  }
+
+  // PY-81608
+  public void testWhileInsideTryExcept() {
+    doTestByText("""
+try:
+    x = True
+    while x and not condition():
+        print('a')
+        x = False
+finally:
+    print('b')
+print('Reachable')
+                   """);
+  }
 
   // PY-81482
   public void testTryAssertFinally() {
@@ -55,6 +83,25 @@ if sys.version_info > (3, 11):
 def func(x: Any | None = None):
     if x is not None:
         print("foo")
+                   """);
+  }
+  
+  // PY-82707
+  public void testClassInheritingFromAny() {
+    doTestByText("""
+from typing import Any
+
+class A(Any): ...
+
+a = A()
+if a is not None:
+    print("hi")  # reachable
+
+match a:
+    case int():
+        print()
+    case str():
+        print()  # reachable
                    """);
   }
 

@@ -81,6 +81,6 @@ fun LicenseDialogUi.removeLicenseConfirmationDialog(action: RemoveLicenseConfirm
 }
 
 class RemoveLicenseConfirmationDialogUi(data: ComponentData): DialogUiComponent(data) {
-  val confirmButton: UiComponent = x { (byAccessibleName("Remove License") or byAccessibleName("Deactivate and Restart")) and byType("JButton") }
-  val cancelRemoveButton: UiComponent = x { (byAccessibleName("TODO") or byAccessibleName("Keep Subscription")) and byType("JButton") }
+  val confirmButton: UiComponent = x { (byAccessibleName("Remove License") or byAccessibleName("Deactivate and Restart")) and byClass("JButton") }
+  val cancelRemoveButton: UiComponent = x { (byAccessibleName("TODO") or byAccessibleName("Keep Subscription")) and byClass("JButton") }
 }

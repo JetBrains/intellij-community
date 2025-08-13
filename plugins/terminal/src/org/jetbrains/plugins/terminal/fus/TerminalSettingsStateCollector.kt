@@ -15,7 +15,7 @@ import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
 
 internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("terminalShell.settings", 3)
+  private val GROUP = EventLogGroup("terminalShell.settings", 4)
 
   private val NON_DEFAULT_OPTIONS = GROUP.registerEvent(
     "non.default.options",
@@ -24,6 +24,10 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
   )
   private val NON_DEFAULT_SHELL = GROUP.registerEvent("non.default.shell", "User modified the default shell path")
   private val NON_DEFAULT_TAB_NAME = GROUP.registerEvent("non.default.tab.name", "User modified the default terminal tab name")
+  private val NON_DEFAULT_ENGINE = GROUP.registerEvent(
+    "non.default.engine",
+    EventFields.Enum<TerminalEngine>("engine")
+  )
   private val NON_DEFAULT_CURSOR_SHAPE = GROUP.registerEvent(
     "non.default.cursor.shape",
     EventFields.Enum<TerminalUiSettingsManager.CursorShape>("shape")
@@ -57,6 +61,13 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
 
     addIfNotDefault(metrics, NON_DEFAULT_SHELL, TerminalLocalOptions.getInstance().shellPath, null)
     addIfNotDefault(metrics, NON_DEFAULT_TAB_NAME, TerminalOptionsProvider.instance.tabName, TerminalOptionsProvider.State().myTabName)
+
+    addIfNotDefault(
+      metrics,
+      NON_DEFAULT_ENGINE,
+      curValue = TerminalOptionsProvider.instance.terminalEngine,
+      defaultValue = TerminalOptionsProvider.State().terminalEngine
+    )
 
     addIfNotDefault(
       metrics,

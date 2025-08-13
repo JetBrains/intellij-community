@@ -500,7 +500,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
 
     exitInstructions.add(myBuilder.prevInstruction);
-    myBuilder.prevInstruction = addTransparentInstruction();
+    myBuilder.prevInstruction = addTransparentInstruction(node);
 
     for (Instruction exitInstruction : Lists.reverse(exitInstructions)) {
       myBuilder.addEdge(exitInstruction, myBuilder.prevInstruction);
@@ -1134,7 +1134,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
    * }</pre>
    */
   private void collectInternalPendingEdges(@NotNull PyElement node) {
-    myBuilder.addNode(new TransparentInstructionImpl(myBuilder, null, "")); // exit
+    myBuilder.addNode(new TransparentInstructionImpl(myBuilder, node, "")); // exit
     myBuilder.processPending((pendingScope, instruction) -> {
       if (pendingScope != null && PsiTreeUtil.isAncestor(node, pendingScope, false)) {
         myBuilder.addEdge(instruction, myBuilder.prevInstruction); // to exit

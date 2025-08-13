@@ -24,7 +24,6 @@
                         serviceImplementation="org.intellij.images.fileTypes.impl.ImageFileTypeManagerImpl"/>
     <applicationService serviceInterface="org.intellij.images.options.OptionsManager"
                         serviceImplementation="org.intellij.images.options.impl.OptionsManagerImpl"/>
-    <applicationService serviceImplementation="org.intellij.images.scientific.utils.BinarizationThresholdConfig"/>
     <projectService serviceInterface="org.intellij.images.thumbnail.ThumbnailManager"
                     serviceImplementation="org.intellij.images.thumbnail.impl.ThumbnailManagerImpl"/>
     <!-- ImageIO.getReaderFormatNames() -->
@@ -152,23 +151,57 @@
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
+    <action class="org.intellij.images.scientific.action.BinarizeImageAction"
+            id="Images.BinarizeImageAction"
+            text="Binarize Image"
+            description="Binarize image">
+    </action>
+    <action class="org.intellij.images.scientific.action.ConfigureActions"
+            id="Images.ConfigureActions"
+            text="Configure Actions"
+            description="Configure debug image viewer actions.">
+    </action>
+    <action class="org.intellij.images.scientific.action.GrayscaleImageAction"
+            id="Images.GrayscaleImageAction"
+            text="Apply Grayscale"
+            description="Apply grayscale">
+    </action>
+    <action class="org.intellij.images.scientific.action.InvertChannelsAction"
+            id="Images.InvertChannelsAction"
+            text="Invert Channels"
+            description="Invert image channels">
+    </action>
+    <action class="org.intellij.images.scientific.action.RestoreOriginalImageAction"
+            id="Images.RestoreOriginalImageAction"
+            text="Restore Original"
+            description="Restore original image">
+    </action>
+    <action class="org.intellij.images.scientific.action.ReverseChannelsOrderAction"
+            id="Images.ReverseChannelsOrderAction"
+            text="Reverse Channels"
+            description="Reverse image channels">
+    </action>
+    <action class="org.intellij.images.scientific.action.SaveImageAction"
+            id="Images.SaveImageAction"
+            icon="AllIcons.Actions.MenuSaveall">
+    </action>
+    <action class="org.intellij.images.scientific.action.CopyImageAction"
+            id="Images.CopyImageAction"
+            icon="AllIcons.Actions.Copy">
+    </action>
+    <action class="org.intellij.images.scientific.action.RotateImageAction"
+            id="Images.RotateImageAction"
+            icon="org.intellij.images.ImagesIcons.Rotate">
+    </action>
+    <action class="org.intellij.images.scientific.action.NormalizeImageAction"
+            id="Images.NormalizeImageAction"
+            icon="org.intellij.images.ImagesIcons.NormalizeImage">
+    </action>
     <group id="Images.ScientificGroup">
-      <action class="org.intellij.images.scientific.action.SaveImageAction"
-              id="Images.SaveImageAction"
-              icon="AllIcons.Actions.MenuSaveall">
-      </action>
-      <action class="org.intellij.images.scientific.action.CopyImageAction"
-              id="Images.CopyImageAction"
-              icon="AllIcons.Actions.Copy">
-      </action>
-      <action class="org.intellij.images.scientific.action.RotateImageAction"
-              id="Images.RotateImageAction"
-              icon="org.intellij.images.ImagesIcons.Rotate">
-      </action>
-      <action class="org.intellij.images.scientific.action.NormalizeImageAction"
-              id="Images.NormalizeImageAction"
-              icon="org.intellij.images.ImagesIcons.NormalizeImage">
-      </action>
+      <reference ref="Images.SaveImageAction"/>
+      <reference ref="Images.CopyImageAction"/>
+      <reference ref="Images.RotateImageAction"/>
+      <reference ref="Images.NormalizeImageAction"/>
       <group id="Images.ImageOperationsGroup"
              class="org.intellij.images.scientific.action.ImageOperationsActionGroup"/>
     </group>

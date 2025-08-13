@@ -188,8 +188,8 @@ def attach(port, host, protocol="", debug_mode=""):
         pydevd.settrace(
             port=port,
             host=host,
-            stdoutToServer=True,
-            stderrToServer=True,
+            stdout_to_server=True,
+            stderr_to_server=True,
             overwrite_prev_trace=True,
             suspend=False,
             trace_only_current_thread=False,

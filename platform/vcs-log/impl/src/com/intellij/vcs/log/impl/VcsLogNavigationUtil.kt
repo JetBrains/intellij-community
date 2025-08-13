@@ -79,16 +79,23 @@ object VcsLogNavigationUtil {
     }, SettableFuture.create(), silently, focus)
   }
 
+  @Deprecated("Prefer using jumpToBranch(repositoryRoot: VirtualFile?, branchName: String, silently: Boolean, focus: Boolean)")
+  @JvmStatic
+  fun VcsLogUiEx.jumpToBranch(branchName: String, silently: Boolean, focus: Boolean) {
+    jumpToBranch(null, branchName, silently, focus)
+  }
+
   /**
    * Asynchronously selects the commit node at the given branch head.
+   * @Param repositoryRoot target repository root, if known
    * @param branchName name of the target branch
    * @param silently   skip showing notification when the target is not found
    * @param focus      focus the table
    */
   @JvmStatic
-  fun VcsLogUiEx.jumpToBranch(branchName: String, silently: Boolean, focus: Boolean) {
+  fun VcsLogUiEx.jumpToBranch(repositoryRoot: VirtualFile?, branchName: String, silently: Boolean, focus: Boolean) {
     jumpTo(branchName, { visiblePack, branch ->
-      return@jumpTo getBranchRow(logData, visiblePack, branch)
+      return@jumpTo getBranchRow(logData, visiblePack, branch, repositoryRoot)
     }, SettableFuture.create(), silently, focus)
   }
 
@@ -98,18 +105,20 @@ object VcsLogNavigationUtil {
    * Note: this function decides if the provided reference is a hash or a branch/tag once at the start.
    * This may not work as expected when log is not up-to-date, since all the branches and tags are not available yet.
    *
+   * @Param repositoryRoot target repository root, if known
    * @param reference target reference (commit hash, branch or tag)
    * @param silently  skip showing notification when the target is not found
    * @param focus     focus the table
    * @return future result (success or failure)
    */
   @JvmStatic
-  fun VcsLogUiEx.jumpToRefOrHash(reference: String, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
+  fun VcsLogUiEx.jumpToRefOrHash(repositoryRoot: VirtualFile?, reference: String, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
     if (reference.isBlank()) return Futures.immediateFuture(false)
     val future = SettableFuture.create<Boolean>()
     val refs = dataPack.refs
     ApplicationManager.getApplication().executeOnPooledThread {
-      val matchingRefs = refs.stream().filter { ref -> ref.name.startsWith(reference) }.toList()
+      val matchingRefs = refs.stream().filter { ref -> ref.name.startsWith(reference)
+                                                       && (repositoryRoot == null || ref.root == repositoryRoot) }.toList()
       ApplicationManager.getApplication().invokeLater {
         if (matchingRefs.isNotEmpty()) {
           val ref = matchingRefs.minWith(VcsGoToRefComparator(dataPack.logProviders))
@@ -121,6 +130,12 @@ object VcsLogNavigationUtil {
       }
     }
     return future
+  }
+
+  @Deprecated("Prefer using jumpToRefOrHash(repositoryRoot: VirtualFile?, reference: String, silently: Boolean, focus: Boolean)")
+  @JvmStatic
+  fun VcsLogUiEx.jumpToRefOrHash(reference: String, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
+    return jumpToRefOrHash(null, reference, silently, focus)
   }
 
   /**
@@ -197,8 +212,9 @@ object VcsLogNavigationUtil {
     return mapToJumpSuccess(future)
   }
 
-  private fun getBranchRow(vcsLogData: VcsLogData, visiblePack: VisiblePack, referenceName: String): VcsLogVisibleGraphIndex {
-    val matchingRefs = visiblePack.refs.branches.filter { ref -> ref.name == referenceName }
+  private fun getBranchRow(vcsLogData: VcsLogData, visiblePack: VisiblePack, referenceName: String, repositoryRoot: VirtualFile?): VcsLogVisibleGraphIndex {
+    val matchingRefs = visiblePack.refs.branches.filter { ref -> ref.name == referenceName
+                                                                 && (repositoryRoot == null || ref.root == repositoryRoot) }
     if (matchingRefs.isEmpty()) return VcsLogUiEx.COMMIT_NOT_FOUND
 
     val sortedRefs = matchingRefs.sortedWith(VcsGoToRefComparator(visiblePack.logProviders))

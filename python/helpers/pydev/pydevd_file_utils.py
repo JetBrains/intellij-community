@@ -32,7 +32,7 @@ r'''
     @note: all the paths with breakpoints must be translated (otherwise they won't be found in the server)
 
     @note: to enable remote debugging in the target machine (pydev extensions in the eclipse installation)
-        import pydevd;pydevd.settrace(host, stdoutToServer, stderrToServer, port, suspend)
+        import pydevd;pydevd.settrace(host, stdout_to_server, stderr_to_server, port, suspend)
 
         see parameter docs on pydevd.py
 

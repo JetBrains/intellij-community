@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal
 
 import org.jetbrains.annotations.Nls
 
+/** [org.jetbrains.plugins.terminal.fus.TerminalSettingsStateCollector.GROUP] must be updated if any new value added or renamed. */
 enum class TerminalEngine(val presentableName: @Nls String) {
   REWORKED(TerminalBundle.message("terminal.engine.reworked")),
   CLASSIC(TerminalBundle.message("terminal.engine.classic")),

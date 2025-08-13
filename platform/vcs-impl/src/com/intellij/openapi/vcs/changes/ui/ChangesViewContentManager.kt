@@ -2,12 +2,17 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -374,14 +379,49 @@ fun MessageBusConnection.subscribeOnVcsToolWindowLayoutChanges(updateLayout: Run
  */
 @RequiresEdt
 internal fun hideWindowedFloatingTwOnCommit(project: Project) {
-  val commitTw = getCommitToolWindow(project) ?: return
-  if (!commitTw.isActive || !commitTw.isVisible) return
-  if (CommitToolWindowUtil.isInWindow(commitTw.type)) {
-    commitTw.hide()
-  }
+  if (!CloseWindowedFloatingTwOnCommit.isSelected()) return
+
+  ifCommitTwOpenInWindow(project) { it.hide() }
 }
 
 
 private fun getCommitToolWindow(project: Project): ToolWindow? {
   return ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMIT)
+}
+
+private fun ifCommitTwOpenInWindow(project: Project, handler: (commitTw: ToolWindow) -> Unit) {
+  val commitTw = getCommitToolWindow(project) ?: return
+  if (!commitTw.isActive || !commitTw.isVisible) return
+  if (!CommitToolWindowUtil.isInWindow(commitTw.type)) return
+
+  handler(commitTw)
+}
+
+private object CloseWindowedFloatingTwOnCommit {
+  private const val ID = "vcs.non.modal.commit.close.in.windowed.mode"
+
+  fun isSelected(): Boolean = AdvancedSettings.getBoolean(ID)
+  fun setSelected(state: Boolean) {
+    AdvancedSettings.setBoolean(ID, state)
+  }
+}
+
+private class CloseWindowedFloatingTwOnCommitAction : ToggleAction(), DumbAware {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    val pr = e.project ?: return
+
+    e.presentation.isEnabledAndVisible = false
+    ifCommitTwOpenInWindow(pr) {
+      e.presentation.isEnabledAndVisible = true
+    }
+  }
+
+  override fun isSelected(e: AnActionEvent): Boolean = CloseWindowedFloatingTwOnCommit.isSelected()
+
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    CloseWindowedFloatingTwOnCommit.setSelected(state)
+  }
 }

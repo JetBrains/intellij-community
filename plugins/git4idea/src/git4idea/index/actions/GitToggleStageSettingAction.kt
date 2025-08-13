@@ -36,12 +36,16 @@ abstract class GitToggleStageSettingAction : DumbAwareToggleAction {
   }
 }
 
-class GitToggleIgnoredFilesAction : GitToggleStageSettingAction(VcsBundle.messagePointer("changes.action.show.ignored.text"),
+internal class GitToggleIgnoredFilesAction : GitToggleStageSettingAction(VcsBundle.messagePointer("changes.action.show.ignored.text"),
                                                                 VcsBundle.messagePointer("changes.action.show.ignored.description"),
                                                                 AllIcons.Actions.ToggleVisibility) {
-  override var GitStageUiSettings.setting by GitStageUiSettings::ignoredFilesShown
+  override var GitStageUiSettings.setting: Boolean
+    get() = ignoredFilesShown
+    set(value) { ignoredFilesShown = value }
 }
 
-class GitToggleCommitAllAction : GitToggleStageSettingAction() {
-  override var GitStageUiSettings.setting by GitStageUiSettings::isCommitAllEnabled
+internal class GitToggleCommitAllAction : GitToggleStageSettingAction() {
+  override var GitStageUiSettings.setting: Boolean
+    get() = isCommitAllEnabled
+    set(value) { isCommitAllEnabled = value }
 }

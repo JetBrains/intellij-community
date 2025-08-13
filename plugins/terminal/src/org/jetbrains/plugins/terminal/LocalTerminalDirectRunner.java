@@ -9,9 +9,11 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
+import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +47,19 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   public static final List<String> LOGIN_CLI_OPTIONS = List.of(LOGIN_CLI_OPTION, "-l");
 
   protected final Charset myDefaultCharset;
+
+  /**
+   * A workaround to pass some additional information ({@link ShellProcessHolder})
+   * from {@link #createProcess(ShellStartupOptions)} to {@link #createTtyConnector(PtyProcess)}.
+   * <p>
+   * This map references {@code PtyProcess} objects weakly, so no memory leaks are possible
+   * as long as {@code ShellProcessHolder} and {@code PtyProcess} are not strongly reachable
+   * from other GC roots.
+   * <p>
+   * TODO merge {@link #createProcess(ShellStartupOptions)} and {@link #createTtyConnector(PtyProcess)} into
+   *     a single {@code createTtyConnector(ShellStartupOptions)} and remove this workaround
+   */
+  private final Map<PtyProcess, ShellProcessHolder> myProcessHolderMap = CollectionFactory.createConcurrentWeakMap();
 
   public LocalTerminalDirectRunner(Project project) {
     super(project);
@@ -116,7 +131,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       long startNano = System.nanoTime();
       PtyProcess process;
       if (workingDirPath != null && shouldUseEelApi()) {
-        process = startProcess(List.of(command), envs, workingDirPath, Objects.requireNonNull(initialTermSize));
+        Pair<PtyProcess, ShellProcessHolder> processPair = startProcess(
+          List.of(command), envs, workingDirPath, Objects.requireNonNull(initialTermSize)
+        );
+        myProcessHolderMap.put(processPair.getFirst(), processPair.getSecond());
+        process = processPair.getFirst();
       }
       else {
         process = (PtyProcess)LocalProcessService.getInstance().startPtyProcess(
@@ -179,9 +198,14 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
   }
 
+  @ApiStatus.Internal
+  protected @Nullable ShellProcessHolder getHolder(@NotNull PtyProcess process) {
+    return myProcessHolderMap.remove(process);
+  }
+
   @Override
   public @NotNull TtyConnector createTtyConnector(@NotNull PtyProcess process) {
-    return new LocalTerminalTtyConnector(process, myDefaultCharset);
+    return new LocalTerminalTtyConnector(process, myDefaultCharset, getHolder(process));
   }
 
   @Override
@@ -224,10 +248,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   /**
-   * @return true if block terminal can be used with the provided shell name
+   * @return true if we should source advanced shell integration for the specified shell.
+   * This integration makes available such advanced terminal features as command blocks.
    */
   @ApiStatus.Internal
-  public static boolean isBlockTerminalSupported(@NotNull String shellName) {
+  public static boolean supportsBlocksShellIntegration(@NotNull String shellName) {
     if (isPowerShell(shellName)) {
       return SystemInfo.isWin11OrNewer && Registry.is(BLOCK_TERMINAL_POWERSHELL_WIN11_REGISTRY, false) ||
              SystemInfo.isWin10OrNewer && !SystemInfo.isWin11OrNewer && Registry.is(BLOCK_TERMINAL_POWERSHELL_WIN10_REGISTRY, false) ||

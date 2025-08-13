@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.terminal.ShellStartupOptions;
 import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider;
-import org.jetbrains.plugins.terminal.TerminalStartupKt;
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment;
 
 import java.nio.file.Files;
@@ -39,19 +38,18 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.isDirectory;
+import static org.jetbrains.plugins.terminal.TerminalStartupKt.findEelDescriptor;
 
 @ApiStatus.Internal
 public final class LocalOptionsConfigurer {
   private static final Logger LOG = Logger.getInstance(LocalOptionsConfigurer.class);
 
   public static @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions, @NotNull Project project) {
-    final var useEel = TerminalStartupKt.shouldUseEelApi();
-    final var eelDescriptor = useEel ? EelProviderUtil.getEelDescriptor(project) : null;
-
+    List<String> initialCommand = getInitialCommand(baseOptions, project);
     String workingDir = getWorkingDirectory(baseOptions.getWorkingDirectory(), project);
+    var eelDescriptor = findEelDescriptor(workingDir, initialCommand);
     Map<String, String> envs = getTerminalEnvironment(baseOptions.getEnvVariables(), workingDir, project, eelDescriptor);
 
-    List<String> initialCommand = getInitialCommand(baseOptions, project);
     TerminalWidget widget = baseOptions.getWidget();
     if (widget != null) {
       widget.setShellCommand(initialCommand);

@@ -139,10 +139,6 @@ class UiPluginManager {
     return getController().prepareToUninstall(pluginsToUninstall)
   }
 
-  fun isBundledUpdate(pluginIds: List<PluginId>): Boolean {
-    return getController().isBundledUpdate(pluginIds)
-  }
-
   fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean {
     return getController().isPluginRequiresUltimateButItIsDisabled(sessionId, pluginId)
   }

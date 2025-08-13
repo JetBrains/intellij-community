@@ -1824,9 +1824,9 @@ def settrace(
     @param host: the user may specify another host, if the debug server is not in the same machine (default is the local
         host)
 
-    @param stdoutToServer: when this is true, the stdout is passed to the debug server
+    @param stdout_to_server: when this is true, the stdout is passed to the debug server
 
-    @param stderrToServer: when this is true, the stderr is passed to the debug server
+    @param stderr_to_server: when this is true, the stderr is passed to the debug server
         so that they are printed in its console and not in this process console.
 
     @param port: specifies which port to use for communicating with the server (note that the server must be started
