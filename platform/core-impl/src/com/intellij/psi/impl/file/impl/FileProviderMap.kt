@@ -480,9 +480,12 @@ private class ManyItemMap<V : Any>(
       return OneItemMap(firstKey, firstValue!!)
     }
 
-    val newDefaultContext = when (key) {
-      defaultContext -> newMap.keys.first() // todo IJPL-339 does changing the default context require some more care???
-      else -> defaultContext
+    val newDefaultContext = if (key == defaultContext || newMap[defaultContext] == null) {
+      // todo IJPL-339 does changing the default context require some more care???
+      firstKey
+    }
+    else {
+      defaultContext
     }
     return ManyItemMap(newMap, newDefaultContext)
   }
