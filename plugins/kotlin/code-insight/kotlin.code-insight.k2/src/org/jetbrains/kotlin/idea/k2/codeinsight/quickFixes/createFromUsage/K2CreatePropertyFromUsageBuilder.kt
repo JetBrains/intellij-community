@@ -247,14 +247,21 @@ object K2CreatePropertyFromUsageBuilder {
                     } else "fix.create.from.usage.property"
                     KotlinBundle.message(key, request.fieldName)
                 }
-            } else
-            KotlinBundle.message(
-                "quickFix.add.property.text",
-                kotlinModifiers?.joinToString(separator = " ", postfix = " ") ?: "",
-                varVal,
-                request.fieldName,
-                classOrFileName.toString()
-            )
+            } else {
+                val modifier = if (lateinit || kotlinModifiers?.contains(KtTokens.LATEINIT_KEYWORD) == true) {
+                    "lateinit "
+                } else if (request.isConstant) {
+                    "const "
+                } else ""
+
+                KotlinBundle.message(
+                    "quickFix.add.property.text",
+                    modifier,
+                    varVal,
+                    request.fieldName,
+                    classOrFileName.toString()
+                )
+            }
         }
 
         private var declarationText: String = computeDeclarationText()
