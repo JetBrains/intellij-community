@@ -4,6 +4,7 @@
     <module name="intellij.platform.vcs.impl.exec"/>
     <module name="intellij.platform.vcs.impl.lang"/>
     <module name="intellij.platform.vcs.impl.lang.actions"/>
+    <module name="intellij.platform.vcs.log"/>
     <module name="intellij.platform.vcs.log.impl"/>
     <module name="intellij.platform.vcs.log.graph.impl"/>
     <module name="intellij.platform.vcs.dvcs"/>

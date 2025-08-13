@@ -75,7 +75,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.platform.runtime.product",
   "intellij.platform.bootstrap",
 
-  "intellij.platform.vcs.log",
+  "intellij.platform.vcs.log.graph",
 
   "intellij.platform.markdown.utils",
   "intellij.platform.util.commonsLangV2Shim",

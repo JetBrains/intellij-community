@@ -4,6 +4,7 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="Git4Idea"/>
+    <module name="intellij.platform.vcs.log"/>
     <module name="intellij.platform.collaborationTools"/>
   </dependencies>
 

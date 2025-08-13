@@ -8,6 +8,7 @@
     <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.shared"/>
     <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.log"/>
     <module name="intellij.platform.kernel.backend"/>
   </dependencies>
 
