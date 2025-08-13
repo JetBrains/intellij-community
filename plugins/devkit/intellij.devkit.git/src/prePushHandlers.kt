@@ -29,6 +29,37 @@ internal class IntelliJPrePushHandler : IssueIDPrePushHandler() {
   override fun getPresentableName(): @Nls String = DevKitGitBundle.message("push.commit.handler.idea.name")
 }
 
+internal class IntelliJPlatformPrePushHandler : IssueIDPrePushHandler() {
+  override val paths: List<String> = listOf("/community/platform/")
+  override val pathsToIgnore: List<String> = listOf()
+  override val commitMessageRegex = Regex("""(?:^|.*[^-A-Z0-9])[A-Z]+-(?:[A-Z]+-)?\d+.*""", RegexOption.DOT_MATCHES_ALL)
+  override val ignorePattern = Regex("""^(?:\[.+\] ?)?\[?(?:tests?|cleanup|docs?|typo|refactor(?:ing)?|format|style|testFramework|test framework)\]?.*\s.*[A-Z0-9].*""", RegexOption.IGNORE_CASE)
+
+  override fun isAvailable(): Boolean = Registry.`is`("intellij.platform.commit.message.validation.enabled", true)
+  override fun getPresentableName(): @Nls String = DevKitGitBundle.message("push.commit.intellij.platform.handler.name")
+
+  override fun isTargetBranchProtected(project: Project, pushInfo: PushInfo): Boolean = true
+
+  override fun doCommitsViolateRule(project: Project, commitsToWarnAbout: List<Pair<String, String>>, modalityState: ModalityState): Boolean {
+    val commitsInfo = commitsToWarnAbout.joinToString("<br/>") { (hash, subject) ->
+      "$hash: $subject"
+    }
+
+    val commitAsIs = invokeAndWait(modalityState) {
+      MessageDialogBuilder.yesNo(
+        DevKitGitBundle.message("push.commit.intellij.platform.handler.title"),
+        DevKitGitBundle.message("push.commit.intellij.platform.message.lacks.issue.reference.body", commitsInfo)
+      )
+        .yesText(DevKitGitBundle.message("push.commit.message.lacks.issue.reference.commit"))
+        .noText(DevKitGitBundle.message("push.commit.message.lacks.issue.reference.edit"))
+        .asWarning()
+        .ask(project)
+    }
+
+    return !commitAsIs
+  }
+}
+
 internal class KotlinBuildToolsPrePushHandler : AbstractIntelliJProjectPrePushHandler() {
 
   override val pathsToIgnore: List<String> =
