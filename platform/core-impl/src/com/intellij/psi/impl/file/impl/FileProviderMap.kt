@@ -145,6 +145,7 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
       log.trace { "anyContext was GCed for [$this]. Trying again" }
       cancellationCounter++
       if (cancellationCounter % 1000 == 0) {
+        log.error("Can't find anyContext by ${cancellationCounter} attempts. $this")
         ProgressManager.checkCanceled()
       }
     }
@@ -306,6 +307,8 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
   private fun storeStrongLinkInProvider(provider: FileViewProvider) {
     provider.putUserData(strongLinkToFileProviderMap, this)
   }
+
+  override fun toString(): String = "FileProviderMapImpl(map=$map)"
 }
 
 private fun mapOf(
@@ -346,6 +349,7 @@ private object EmptyMap: ContextMap<Any> {
   override fun size(): Int = 0
   override fun defaultValue(): Any? = null
   override fun processQueue(): EmptyMap = this
+  override fun toString(): String = "EmptyMap"
 }
 
 private class OneItemMap<V : Any> private constructor(
@@ -517,9 +521,8 @@ private class ManyItemMap<V : Any>(
     }
   }
 
-  override fun toString(): String {
-    return "ManyItemMap(map=$map)"
-  }
+  override fun toString(): String =
+    "ManyItemMap(map=" + map.entries.joinToString(separator = ", ", prefix = "{", postfix = "}") { (k, v) -> "$k=$v" } + ", defaultContext=$defaultContext)"
 }
 
 private class EntryImpl<V : Any>(
