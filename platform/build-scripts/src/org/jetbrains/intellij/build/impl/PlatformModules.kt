@@ -660,9 +660,6 @@ private suspend fun collectAndEmbedProductModules(root: Element, xIncludePathRes
 // we can consider ways to improve `pluginAuto` and eliminate the need for an explicit declaration here.
 @Suppress("RemoveRedundantQualifierName")
 private val PRODUCT_MODULE_IMPL_COMPOSITION = java.util.Map.of(
-  "intellij.platform.vcs.log.impl", listOf(
-    "intellij.platform.vcs.log.graph.impl",
-  ),
   "intellij.rider", listOf(
     "intellij.platform.debugger.modulesView"
   ),

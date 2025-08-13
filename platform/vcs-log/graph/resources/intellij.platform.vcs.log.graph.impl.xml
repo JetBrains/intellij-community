@@ -1,0 +1,4 @@
+<idea-plugin>
+  <!-- This module shouldn't declare services or extensions to allow using it outside the IDE process. 
+       This descriptor is added to allow loading it as a separate content module inside the IDE. -->
+</idea-plugin>

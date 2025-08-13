@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.platform.vcs.log.graph.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "vcs-log-graph-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "vcs-log-graph-impl",
@@ -16,7 +22,8 @@ jvm_library(
   exports = [
     "//platform/util",
     "//platform/vcs-log/graph-api:vcs-log-graph",
-  ]
+  ],
+  runtime_deps = [":vcs-log-graph-impl_resources"]
 )
 
 jvm_library(
@@ -35,7 +42,8 @@ jvm_library(
     "@lib//:fastutil-min",
     "@lib//:assert_j",
     "@lib//:kotlin-test",
-  ]
+  ],
+  runtime_deps = [":vcs-log-graph-impl_resources"]
 )
 ### auto-generated section `build intellij.platform.vcs.log.graph.impl` end
 
