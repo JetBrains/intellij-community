@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 
 /**

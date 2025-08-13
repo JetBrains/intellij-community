@@ -7,6 +7,8 @@ import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBro
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.idea.AppModeAssertions
+import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSystemInfo
@@ -14,6 +16,7 @@ import com.intellij.openapi.client.sessions
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -22,6 +25,7 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.Strings
 import com.intellij.terminal.TerminalUiSettingsManager
@@ -53,16 +57,19 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle.message
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
+import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import java.awt.Color
 import java.awt.Component
 import java.awt.event.ActionListener
+import java.awt.event.KeyEvent
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import javax.swing.JTextField
+import javax.swing.KeyStroke
 import javax.swing.UIManager
 import javax.swing.event.DocumentEvent
 import javax.swing.plaf.basic.BasicComboBoxEditor
@@ -156,6 +163,33 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .align(AlignX.FILL)
         }
       }
+
+      group(message("terminal.command.completion")) {
+        buttonsGroup(title = message("terminal.command.completion.show")) {
+          row {
+            radioButton(message("terminal.command.completion.show.always"), value = TerminalCommandCompletionShowingMode.ALWAYS)
+          }
+          row {
+            radioButton(message("terminal.command.completion.show.parameters"), value = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS)
+          }
+          row {
+            radioButton(message("terminal.command.completion.show.never"), value = TerminalCommandCompletionShowingMode.NEVER)
+          }
+        }.bind(optionsProvider::commandCompletionShowingMode)
+        row {
+          shortcutCombobox(
+            labelText = message("terminal.command.completion.trigger.shortcut.insert"),
+            presets = listOf(
+              KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), null),
+              KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null)
+            )
+          ).bindItem(
+            getter = { optionsProvider.completionInsertShortcut },
+            setter = { optionsProvider.completionInsertShortcut = it!!}
+          )
+        }
+
+      }.visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED))
 
       group(message("settings.terminal.font.settings")) {
         var fontSettings = TerminalFontSettingsService.getInstance().getSettings()
@@ -497,3 +531,17 @@ private fun getClientSystemInfo(project: Project): ClientSystemInfo? {
 }
 
 private val LOG = logger<TerminalOptionsConfigurable>()
+
+fun Row.shortcutCombobox(
+  @NlsContexts.Label labelText: String,
+  presets: List<Shortcut>
+): Cell<ComboBox<Shortcut>> {
+  label(labelText)
+
+  return comboBox(
+    items = presets,
+    renderer = textListCellRenderer(nullValue = "No Shortcut") { shortcut ->
+      KeymapUtil.getShortcutText(shortcut)
+    }
+  )
+}
