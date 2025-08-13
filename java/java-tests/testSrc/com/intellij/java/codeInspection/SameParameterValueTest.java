@@ -37,6 +37,7 @@ public class SameParameterValueTest extends JavaInspectionTestCase {
   public void testField() { doTest(); }
   public void testOverrideGroovy() { doTest(); }
   public void testMethodReferences() { doTest(); }
+  public void testLocalClassArgument() { doTest(); }
 
   public void testWithoutDeadCode() {
     myTool.highestModifier = AccessModifier.PUBLIC;

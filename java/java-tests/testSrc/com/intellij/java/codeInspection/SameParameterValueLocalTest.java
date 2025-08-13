@@ -35,6 +35,7 @@ public class SameParameterValueLocalTest extends JavaInspectionTestCase {
   public void testFixNotAvailable() { doTest(); }
   public void testOverrideGroovy() { doTest(); }
   public void testMethodReferences() { doTest(); }
+  public void testLocalClassArgument() { doTest(); }
 
   public void testMethodWithSuper() {
     myGlobalTool.highestModifier = AccessModifier.PUBLIC;

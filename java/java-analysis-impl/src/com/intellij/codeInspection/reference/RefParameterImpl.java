@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -190,10 +191,14 @@ public final class RefParameterImpl extends RefJavaElementImpl implements RefPar
              : convertToStringRepresentation(value);
     }
     Object value = expression.evaluate();
+    if (value instanceof PsiClassType type) {
+      PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+      if (aClass == null || PsiUtil.isLocalClass(aClass)) return VALUE_IS_NOT_CONST;
+    }
     return value == null ? VALUE_IS_NOT_CONST : convertToStringRepresentation(value);
   }
 
-  private static @Nullable Object convertToStringRepresentation(Object value) {
+  private static @NotNull Object convertToStringRepresentation(@NotNull Object value) {
     if (value instanceof Long) {
       return value + "L";
     }
