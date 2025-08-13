@@ -15,21 +15,3 @@ diff --git a/platform/build-scripts/src/org/jetbrains/intellij/build/impl/Window
        }
      }
    }
-Index: platform/build-scripts/src/org/jetbrains/intellij/build/impl/WinExeInstallerBuilder.kt
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/platform/build-scripts/src/org/jetbrains/intellij/build/impl/WinExeInstallerBuilder.kt b/platform/build-scripts/src/org/jetbrains/intellij/build/impl/WinExeInstallerBuilder.kt
---- a/platform/build-scripts/src/org/jetbrains/intellij/build/impl/WinExeInstallerBuilder.kt	(revision f6b94e2cdc05a7b3e03fae6270dc650c770099b9)
-+++ b/platform/build-scripts/src/org/jetbrains/intellij/build/impl/WinExeInstallerBuilder.kt	(revision 5c8833f836091dc79e67ec0994bc3c6a6d4c976a)
-@@ -166,7 +166,7 @@
- 
-   val uninstallerCopy = context.paths.artifactDir.resolve("Uninstall-${context.applicationInfo.productCode}-${arch.dirName}.exe")
-   val uninstallerSignCmd = when {
--    !context.options.isInDevelopmentMode -> {
-+    !context.isStepSkipped(BuildOptions.WIN_SIGN_STEP) -> {
-       val signTool = prepareSignTool(nsiConfDir, context, uninstallerCopy)
-       "'${signTool}' '%1'"
-     }
- 

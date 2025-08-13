@@ -21,12 +21,12 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/platform/platform-resources/src/META-INF/PlatformExtensions.xml b/platform/platform-resources/src/META-INF/PlatformExtensions.xml
---- a/platform/platform-resources/src/META-INF/PlatformExtensions.xml	(revision d4453647be19492ef13e0961e8c3918b3d746317)
-+++ b/platform/platform-resources/src/META-INF/PlatformExtensions.xml	(date 1747768111432)
-@@ -1755,8 +1755,6 @@
-     <registryKey key="popup.advertiser.speed.search" defaultValue="false" description="Shows speed search advertiser in popups"/>
+--- a/platform/platform-resources/src/META-INF/PlatformExtensions.xml	(revision 205cd88fa199b3443866419f84bbd203c5be7cf9)
++++ b/platform/platform-resources/src/META-INF/PlatformExtensions.xml	(date 1758021161733)
+@@ -1793,8 +1793,6 @@
      <actionPromoter implementation="com.intellij.ide.actions.speedSearch.SpeedSearchActionPromoter"/>
  
+     <fileEditorProvider id="learnIde" implementation="com.intellij.openapi.wm.impl.welcomeScreen.learnIde.editorTab.LearnIdeFileEditorProvider"/>
 -    <interactiveCourseFactory implementation="com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy.JBAcademyInteractiveCourse"/>
 -
      <cachesInvalidator implementation="com.intellij.ide.ui.IconCacheInvalidator"/>

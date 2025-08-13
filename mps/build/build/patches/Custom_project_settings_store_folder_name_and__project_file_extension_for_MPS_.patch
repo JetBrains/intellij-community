@@ -21,18 +21,21 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/platform/configuration-store-impl/src/ProjectStoreImpl.kt b/platform/configuration-store-impl/src/ProjectStoreImpl.kt
---- a/platform/configuration-store-impl/src/ProjectStoreImpl.kt	(revision 21cf7720cefd5756007a45f97b5a015d86212d19)
-+++ b/platform/configuration-store-impl/src/ProjectStoreImpl.kt	(date 1749544810121)
-@@ -112,10 +112,10 @@
-     val storageManager = storageManager
+--- a/platform/configuration-store-impl/src/ProjectStoreImpl.kt	(revision 205cd88fa199b3443866419f84bbd203c5be7cf9)
++++ b/platform/configuration-store-impl/src/ProjectStoreImpl.kt	(date 1758021161383)
+@@ -96,13 +96,13 @@
      val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
      val macros = ArrayList<Macro>(5)
+     val iprFile: Path?
 -    if (file.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
 +    if (file.toString().endsWith(".mpr")) {
+       iprFile = file
+
        macros.add(Macro(PROJECT_FILE, file))
  
--      val workspacePath = file.parent.resolve("${file.fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}")
-+      val workspacePath = file.parent.resolve("${file.fileName.toString().removeSuffix(".mpr")}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}")
+       val userBaseDir = file.parent
+-      val workspacePath = userBaseDir.resolve("${file.fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}")
++      val workspacePath = userBaseDir.resolve("${file.fileName.toString().removeSuffix(".mpr")}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}")
        macros.add(Macro(StoragePathMacros.WORKSPACE_FILE, workspacePath))
  
        if (isUnitTestMode) {
