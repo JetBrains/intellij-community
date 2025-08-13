@@ -56,6 +56,7 @@ public class UnivocityTest extends BaseUnivocityTest {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
     GlobalSearchScope allScope = GlobalSearchScope.allScope(myProject);
     Assume.assumeTrue("Maven import failed",
+                      facade.findClass("java.lang.Object", allScope) != null && // verify that JDK is attached
                       facade.findClass("org.testng.Assert", allScope) != null &&
                       facade.findClass("com.univocity.test.OutputTester", allScope) != null);
 
