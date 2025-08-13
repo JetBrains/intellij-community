@@ -10,6 +10,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import junit.framework.TestCase;
 import one.util.streamex.IntStreamEx;
@@ -17,14 +18,13 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.function.ThrowingRunnable;
 
-import java.util.HashSet;
-import java.util.HashMap;
 import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 public class ContainerUtilTest extends TestCase {
@@ -214,8 +214,7 @@ public class ContainerUtilTest extends TestCase {
     List<Object> my = ContainerUtil.createLockFreeCopyOnWriteList();
 
     for (int i = 0; i < 2; i++) {
-      @SuppressWarnings("unchecked")
-      Object[] array = ((AtomicReference<Object @NotNull []>)my).get();
+      Object[] array = ReflectionUtil.getField(my.getClass(), my, Object[].class, "array");
       assertSame(ArrayUtilRt.EMPTY_OBJECT_ARRAY, array);
       assertReallyEmpty(my);
       my.add(this);
