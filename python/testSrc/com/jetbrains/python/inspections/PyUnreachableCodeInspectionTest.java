@@ -24,6 +24,19 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
   public void testUnreachable() {
     runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
   }
+  
+  // PY-83237
+  public void testIrrefutablePatternWithGuardCondition() {
+    doTestByText("""
+def foo(x):
+    match x:
+        case _ if x.isdigit():
+            print(2)
+        case _:
+            print("reachable")
+    print("reachable")
+                   """);
+  }
 
   // PY-81676
   public void testUnreachableBranchesAreStillConnected() {

@@ -367,7 +367,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       if (unreachable) {
         addAssertTypeNever();
       }
-      if (pattern != null && pattern.isIrrefutable()) {
+      if (pattern != null && pattern.isIrrefutable() && (guard == null || PyEvaluator.evaluateAsBooleanNoResolve(guard, false))) {
         unreachable = true;
       }
       myBuilder.startNode(clause.getStatementList());
