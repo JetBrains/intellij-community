@@ -79,6 +79,7 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
         moduleMap.get("intellij.platform.vcs.dvcs")?.let { dependenciesCollector.add(it) }
         moduleMap.get("intellij.platform.vcs.dvcs.impl")?.let { dependenciesCollector.add(it) }
         moduleMap.get("intellij.platform.vcs.log")?.let { dependenciesCollector.add(it) }
+        moduleMap.get("intellij.platform.vcs.log.graph")?.let { dependenciesCollector.add(it) }
         moduleMap.get("intellij.platform.vcs.log.impl")?.let { dependenciesCollector.add(it) }
       }
       if (!strictCheck) {

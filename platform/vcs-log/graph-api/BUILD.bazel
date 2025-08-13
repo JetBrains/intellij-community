@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.platform.vcs.log.graph` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "vcs-log-graph_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "vcs-log-graph",
@@ -10,6 +16,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "//platform/util-rt",
-  ]
+  ],
+  runtime_deps = [":vcs-log-graph_resources"]
 )
 ### auto-generated section `build intellij.platform.vcs.log.graph` end
