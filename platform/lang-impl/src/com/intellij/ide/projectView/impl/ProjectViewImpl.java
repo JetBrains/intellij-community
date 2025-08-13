@@ -1036,8 +1036,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  @ApiStatus.Internal
-  public synchronized void reloadPanes() {
+  private synchronized void reloadPanes() {
     if (project.isDisposed() || !isExtensionsLoaded.get()) return; // panes will be loaded later
 
     Map<String, AbstractProjectViewPane> newPanes = loadPanes();
