@@ -318,11 +318,15 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     return evaluate()
   }
 
-  override fun evaluate(): Icon {
+  override fun evaluate(): Icon = runEvaluator {
+    evaluator?.invoke(param) ?: EMPTY_ICON
+  }
+
+  private inline fun runEvaluator(evaluator: () -> Icon): Icon {
     val result = try {
-      evaluator?.invoke(param) ?: EMPTY_ICON
+      evaluator()
     }
-    catch (e: IndexNotReadyException) {
+    catch (_: IndexNotReadyException) {
       EMPTY_ICON
     }
 
