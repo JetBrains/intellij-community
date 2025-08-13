@@ -19,3 +19,5 @@ when(a) {                   // RESULT: res4: kotlin.Int = 11
     1 -> 11
     else -> 12
 }
+/** warning: flag is not supported by this version of the compiler: -Xrepl
+ */

@@ -4,3 +4,5 @@
 import myTest.MyJavaClass
 
 MyJavaClass().test()         // RESULT: res1: kotlin.Int = 1
+/** warning: flag is not supported by this version of the compiler: -Xrepl
+ */
