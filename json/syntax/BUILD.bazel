@@ -1,5 +1,12 @@
 ### auto-generated section `build intellij.json.syntax` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom_syntax",
+  x_no_call_assertions = True,
+  x_no_param_assertions = True
+)
 
 jvm_resources(
   name = "syntax_resources",
@@ -12,6 +19,7 @@ jvm_library(
   module_name = "intellij.json.syntax",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom_syntax",
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/syntax/syntax-api:syntax",

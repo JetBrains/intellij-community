@@ -320,6 +320,7 @@ json
 json/backend
 json/backend/regexp
 json/backend/tests
+json/syntax
 jupyter
 jvm/jvm-analysis-api
 jvm/jvm-analysis-impl
