@@ -4,7 +4,9 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 interface UltimateDependencyChecker {
   companion object {
     @JvmStatic
