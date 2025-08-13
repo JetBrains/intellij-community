@@ -34,6 +34,8 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/util/concurrency",
     "//platform/vcs-api/shared",
+    "@lib//:fastutil-min",
+    "//platform/util/jdom",
   ],
   runtime_deps = [":shared_resources"]
 )

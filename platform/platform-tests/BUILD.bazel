@@ -171,6 +171,7 @@ jvm_library(
     "//platform/runtime/product",
     "//platform/locking.impl",
     "//platform/testFramework/junit5/highlighting",
+    "//platform/vcs-impl/shared",
   ],
   runtime_deps = [
     ":tests_test_resources",

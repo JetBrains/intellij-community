@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -105,13 +105,6 @@ public final class LocalChangeListImpl extends LocalChangeList {
   public LocalChangeListImpl copy() {
     return this;
   }
-
-
-  @Override
-  public void setComment(@Nullable String comment) {
-    ChangeListManager.getInstance(myProject).editComment(myName, comment);
-  }
-
 
   public static class Builder {
     private final @NotNull Project myProject;

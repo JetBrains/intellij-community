@@ -28,11 +28,64 @@ c:com.intellij.openapi.vcs.IssueNavigationLink
 - hashCode():I
 - setIssueRegexp(java.lang.String):V
 - setLinkRegexp(java.lang.String):V
+f:com.intellij.openapi.vcs.changes.ChangeListData
+- sf:Companion:com.intellij.openapi.vcs.changes.ChangeListData$Companion
+- <init>():V
+- <init>(com.intellij.vcs.log.VcsUser):V
+- <init>(com.intellij.vcs.log.VcsUser,java.util.Date):V
+- <init>(com.intellij.vcs.log.VcsUser,java.util.Date,Z):V
+- b:<init>(com.intellij.vcs.log.VcsUser,java.util.Date,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():com.intellij.vcs.log.VcsUser
+- f:component2():java.util.Date
+- f:component3():Z
+- f:copy(com.intellij.vcs.log.VcsUser,java.util.Date,Z):com.intellij.openapi.vcs.changes.ChangeListData
+- bs:copy$default(com.intellij.openapi.vcs.changes.ChangeListData,com.intellij.vcs.log.VcsUser,java.util.Date,Z,I,java.lang.Object):com.intellij.openapi.vcs.changes.ChangeListData
+- equals(java.lang.Object):Z
+- f:getAuthor():com.intellij.vcs.log.VcsUser
+- f:getAutomatic():Z
+- f:getDate():java.util.Date
+- f:getPresentation():java.lang.String
+- hashCode():I
+- f:nullize():com.intellij.openapi.vcs.changes.ChangeListData
+- sf:readExternal(org.jdom.Element):com.intellij.openapi.vcs.changes.ChangeListData
+- sf:writeExternal(com.intellij.openapi.vcs.changes.ChangeListData):org.jdom.Element
+f:com.intellij.openapi.vcs.changes.ChangeListData$Companion
+- f:of(com.intellij.vcs.log.VcsUser,java.util.Date):com.intellij.openapi.vcs.changes.ChangeListData
+- f:readExternal(org.jdom.Element):com.intellij.openapi.vcs.changes.ChangeListData
+- f:writeExternal(com.intellij.openapi.vcs.changes.ChangeListData):org.jdom.Element
+f:com.intellij.openapi.vcs.changes.ChangeListDataKt
+- sf:getAuthor(com.intellij.openapi.vcs.changes.LocalChangeList):com.intellij.vcs.log.VcsUser
+- sf:getAuthorDate(com.intellij.openapi.vcs.changes.LocalChangeList):java.util.Date
 f:com.intellij.openapi.vcs.changes.FilePathsHelper
 - s:convertPath(com.intellij.openapi.vcs.FilePath):java.lang.String
 - s:convertPath(java.lang.String):java.lang.String
 - s:convertPath(java.lang.String,java.lang.String):java.lang.String
 - s:convertWithLastSeparator(com.intellij.openapi.vcs.FilePath):java.lang.String
+f:com.intellij.openapi.vcs.changes.LocalChangeListImpl
+- com.intellij.openapi.vcs.changes.LocalChangeList
+- copy():com.intellij.openapi.vcs.changes.LocalChangeListImpl
+- s:createEmptyChangeListImpl(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):com.intellij.openapi.vcs.changes.LocalChangeListImpl
+- equals(java.lang.Object):Z
+- s:generateChangelistId():java.lang.String
+- getChanges():java.util.Set
+- getComment():java.lang.String
+- getData():com.intellij.openapi.vcs.changes.ChangeListData
+- getId():java.lang.String
+- getName():java.lang.String
+- hashCode():I
+- isDefault():Z
+- isReadOnly():Z
+c:com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
+- <init>(com.intellij.openapi.project.Project,java.lang.String):V
+- <init>(com.intellij.openapi.vcs.changes.LocalChangeListImpl):V
+- build():com.intellij.openapi.vcs.changes.LocalChangeListImpl
+- setChanges(java.util.Collection):com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
+- setChangesCollection(java.util.Set):com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
+- setComment(java.lang.String):com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
+- setData(com.intellij.openapi.vcs.changes.ChangeListData):com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
+- setDefault(Z):com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
+- setId(java.lang.String):com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
+- setReadOnly(Z):com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
 c:com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer
 - <init>(com.intellij.openapi.project.Project,com.intellij.ui.SimpleColoredComponent):V
 - appendTextWithLinks(java.lang.String):java.util.List
@@ -518,3 +571,27 @@ f:com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 - closePreview():V
 - openPreview(Z):Z
 - f:updatePreview(Z):V
+f:com.intellij.vcs.log.impl.VcsUserImpl
+- com.intellij.vcs.log.VcsUser
+- <init>(java.lang.String,java.lang.String):V
+- equals(java.lang.Object):Z
+- getEmail():java.lang.String
+- getName():java.lang.String
+- hashCode():I
+f:com.intellij.vcs.log.util.VcsUserUtil
+- <init>():V
+- s:capitalizeName(java.lang.String):java.lang.String
+- s:emailToLowerCase(java.lang.String):java.lang.String
+- s:getFirstAndLastName(java.lang.String):com.intellij.openapi.util.Couple
+- s:getNameFromEmail(java.lang.String):java.lang.String
+- s:getNameInStandardForm(java.lang.String):java.lang.String
+- s:getShortPresentation(com.intellij.vcs.log.VcsUser):java.lang.String
+- s:getUserName(java.lang.String,java.lang.String):java.lang.String
+- s:isSamePerson(com.intellij.vcs.log.VcsUser,com.intellij.vcs.log.VcsUser):Z
+- s:nameToLowerCase(java.lang.String):java.lang.String
+- s:toExactString(com.intellij.vcs.log.VcsUser):java.lang.String
+c:com.intellij.vcs.log.util.VcsUserUtil$VcsUserHashingStrategy
+- it.unimi.dsi.fastutil.Hash$Strategy
+- <init>():V
+- equals(com.intellij.vcs.log.VcsUser,com.intellij.vcs.log.VcsUser):Z
+- hashCode(com.intellij.vcs.log.VcsUser):I

@@ -58,7 +58,6 @@ a:com.intellij.openapi.vcs.changes.LocalChangeList
 - isBlank():Z
 - a:isDefault():Z
 - a:isReadOnly():Z
-- a:setComment(java.lang.String):V
 c:com.intellij.openapi.vcs.changes.LocallyDeletedChange
 - <init>(com.intellij.openapi.vcs.FilePath):V
 - equals(java.lang.Object):Z
@@ -74,3 +73,6 @@ f:com.intellij.openapi.vcs.changes.LogicalLock
 - getExpirationDate():java.util.Date
 - getOwner():java.lang.String
 - isIsLocal():Z
+com.intellij.vcs.log.VcsUser
+- a:getEmail():java.lang.String
+- a:getName():java.lang.String

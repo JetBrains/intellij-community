@@ -2202,9 +2202,6 @@ com.intellij.vcs.history.VcsHistoryProviderEx
 - com.intellij.openapi.vcs.history.VcsHistoryProvider
 - a:getLastRevision(com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vcs.history.VcsFileRevision
 - a:reportAppendableHistory(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.history.VcsRevisionNumber,com.intellij.openapi.vcs.history.VcsAppendableHistorySessionPartner):V
-com.intellij.vcs.log.VcsUser
-- a:getEmail():java.lang.String
-- a:getName():java.lang.String
 a:com.intellij.vcsUtil.ActionWithTempFile
 - <init>(java.io.File):V
 - execute():V

@@ -13,9 +13,6 @@ open class AlienLocalChangeList(private val myChanges: List<Change>, @Nls privat
   override fun getName(): String = myName
 
   override fun getComment(): String? = myComment
-  override fun setComment(comment: String?) {
-    myComment = comment
-  }
 
   override fun isDefault(): Boolean = false
 
