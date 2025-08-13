@@ -277,11 +277,9 @@ data class ServerCapabilities(
     val experimental: JsonElement? = null,
 )
 
-
 typealias HoverOptions = Unknown
 typealias TypeDefinitionOptions = Unknown
 typealias ImplementationOptions = Unknown
-typealias DocumentHighlightOptions = Unknown
 typealias DocumentSymbolOptions = Unknown
 typealias DocumentLinkOptions = Unknown
 typealias DocumentColorOptions = Unknown
@@ -296,6 +294,11 @@ typealias SemanticTokensRegistrationOptions = Unknown
 typealias MonikerOptions = Unknown
 typealias TypeHierarchyOptions = Unknown
 typealias InlineValueOptions = Unknown
+
+@Serializable
+data class DocumentHighlightOptions(
+    override val workDoneProgress: Boolean? = null,
+) : WorkDoneProgressOptions
 
 @Serializable
 data class RenameOptions(
