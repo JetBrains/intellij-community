@@ -6,6 +6,7 @@ import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl
 import com.intellij.codeInsight.multiverse.anyContext
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.psi.AbstractFileViewProvider
 import com.intellij.psi.FileViewProvider
@@ -130,6 +131,7 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
     // There was a designated default context, but its provider was collected.
     // Let's try to find another one.
 
+    var cancellationCounter = 0
     while (this.map.size() > 0) {
       // evicting collected items and assigning the new default context
       update {
@@ -141,6 +143,10 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
       }
       // Damn it. Another view provider was collected too! Let's try one more time.
       log.trace { "anyContext was GCed for [$this]. Trying again" }
+      cancellationCounter++
+      if (cancellationCounter % 1000 == 0) {
+        ProgressManager.checkCanceled()
+      }
     }
 
     log.trace { "anyContext was GCed for [$this]. no provider found" }
@@ -274,6 +280,8 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
     contract {
       callsInPlace(block, kotlin.contracts.InvocationKind.AT_LEAST_ONCE)
     }
+
+    var cancellationCounter = 0
     while (true) {
       val currentMap = map
       val newMap = block(currentMap) ?: continue
@@ -282,6 +290,11 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
       }
       if (compareAndSet(currentMap, newMap)) {
         return
+      }
+
+      cancellationCounter++
+      if (cancellationCounter % 1000 == 0) {
+        ProgressManager.checkCanceled()
       }
     }
   }
