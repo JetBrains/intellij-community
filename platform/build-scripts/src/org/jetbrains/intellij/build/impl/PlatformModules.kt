@@ -95,7 +95,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.platform.ide.favoritesTreeView",
   "intellij.platform.bookmarks",
   "intellij.platform.todo",
-  "intellij.libraries.cglib",
 )
 
 @Suppress("RemoveRedundantQualifierName")

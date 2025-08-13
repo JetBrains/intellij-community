@@ -14,6 +14,7 @@
     <module name="intellij.relaxng"/>
     <module name="intellij.xml.impl" loading="embedded"/>
     <module name="intellij.xml.analysis.impl" loading="embedded"/>
+    <module name="intellij.libraries.cglib" loading="embedded"/> <!-- embedded because intellij.xml.dom.impl which depends on it, is also embedded -->
     <module name="intellij.libraries.xerces" loading="embedded"/>
   </content>
 </idea-plugin>

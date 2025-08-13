@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.libraries.cglib` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "cglib_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "cglib",
@@ -16,6 +22,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/util-class-loader:util-classLoader",
   ],
-  exports = ["@lib//:libraries-cglib-cglib"]
+  exports = ["@lib//:libraries-cglib-cglib"],
+  runtime_deps = [":cglib_resources"]
 )
 ### auto-generated section `build intellij.libraries.cglib` end
