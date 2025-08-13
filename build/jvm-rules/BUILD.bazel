@@ -2,7 +2,13 @@ load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "int_flag")
 load("@rules_java//java:defs.bzl", "java_import")
 load("@rules_kotlin//kotlin:core.bzl", _kt_kotlinc_options = "kt_kotlinc_options")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
-load("//:jvm.bzl", "jvm_import", "jvm_provided_library", "kt_kotlinc_options")
+load("//:jvm.bzl", "jvm_import", "jvm_provided_library", "kt_javac_options", "kt_kotlinc_options")
+
+label_flag(
+    name = "default-javac-opts",
+    build_setting_default = ":default-javac-opts-value",
+    visibility = ["//visibility:public"],
+)
 
 label_flag(
     name = "default-kotlinc-opts",
@@ -38,6 +44,11 @@ label_flag(
 exports_files(
   ["rules/impl/MemoryLauncher.java"],
   visibility = ["//visibility:private"],
+)
+
+kt_javac_options(
+    name = "default-javac-opts-value",
+    visibility = ["//visibility:public"],
 )
 
 kt_kotlinc_options(

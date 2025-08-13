@@ -188,7 +188,11 @@ public class BuildContextImpl implements BuildContext {
     else if (warn != null) {
       throw new IllegalArgumentException("unsupported javac warning option: " + warn);
     }
-    
+
+    if (CLFlags.NO_PROC.isFlagSet(flags)) {
+      options.add("-proc:none");
+    }
+
     options.add("-encoding");
     options.add("UTF-8");
 

@@ -8,8 +8,8 @@ load(
     _TOOLCHAIN_TYPE = "TOOLCHAIN_TYPE",
 )
 load(
-    "@rules_kotlin//kotlin/internal:opts.bzl",
-    _JavacOptions = "JavacOptions",
+    "//:rules/impl/javac-options.bzl",
+    "JavacOptions",
 )
 load(
     "//:rules/impl/kotlinc-options.bzl",
@@ -93,8 +93,8 @@ common_attr = add_dicts(
             be used instead of the ones provided to the toolchain.
             Use --@rules_jvm:default-kotlinc-opts=//:my-custom-settings to point to a custom global default options in .bazelrc
             """,
-            default = None,
-            providers = [_JavacOptions],
+            default = "//:default-javac-opts",
+            providers = [JavacOptions],
         ),
         "_jvm_builder": attr.label(
             default = "//:jvm-builder",

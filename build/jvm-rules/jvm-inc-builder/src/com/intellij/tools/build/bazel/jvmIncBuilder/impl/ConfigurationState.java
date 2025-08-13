@@ -62,7 +62,8 @@ public class ConfigurationState {
     CLFlags.X_SAM_CONVERSIONS,
     CLFlags.X_STRICT_JAVA_NULLABILITY_ASSERTIONS,
     CLFlags.X_X_LANGUAGE,
-    CLFlags.FRIENDS
+    CLFlags.FRIENDS,
+    CLFlags.NO_PROC
   );
   
   private final NodeSourcePathMapper myPathMapper;
