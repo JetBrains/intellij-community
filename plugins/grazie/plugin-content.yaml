@@ -1,3 +1,13 @@
+- name: lib/ai.grazie.model.ner.jvm.jar
+  library: ai.grazie.model.ner.jvm
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-ner-jvm/0/model-ner-jvm-0.jar
+- name: lib/ai.grazie.model.tree.jvm.jar
+  library: ai.grazie.model.tree.jvm
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-tree-jvm/0/model-tree-jvm-0.jar
 - name: lib/ai.grazie.rule.engine.jar
   library: ai.grazie.rule.engine
   files:

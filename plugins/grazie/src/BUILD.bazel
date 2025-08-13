@@ -67,12 +67,16 @@ jvm_library(
     "//libraries/lucene.common",
     "//libraries/ai.grazie.spell.gec.engine.local",
     "@lib//:ai-grazie-rule-engine",
+    "@lib//:grazie-core-ai-grazie-model-tree-jvm",
+    "@lib//:grazie-core-ai-grazie-model-ner-jvm",
     "@lib//:kotlinx-html-jvm",
     "//platform/util/coroutines",
   ],
   exports = [
     "@lib//:grazie-core-org-jetbrains-intellij-deps-languagetool-languagetool-core",
     "@lib//:ai-grazie-rule-engine",
+    "@lib//:grazie-core-ai-grazie-model-tree-jvm",
+    "@lib//:grazie-core-ai-grazie-model-ner-jvm",
   ],
   runtime_deps = [
     ":core_resources",

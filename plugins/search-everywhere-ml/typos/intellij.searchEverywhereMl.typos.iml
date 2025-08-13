@@ -27,19 +27,19 @@
     <orderEntry type="module" module-name="intellij.platform.ml.impl" />
     <orderEntry type="module-library">
       <library name="ai.grazie.spell.gec.engine.local.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:gec-spell-engine-local:0.8.33">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:gec-spell-engine-local:0.8.41">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.33/gec-spell-engine-local-0.8.33.jar">
-              <sha256sum>253215615fcd36b42c641525fcf46358aac4c88e2e11185f6312d8d5f43cf1ef</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.41/gec-spell-engine-local-0.8.41.jar">
+              <sha256sum>c7f73b047d33b5ae54d9c5823cd13b69d06f65282209050cb400b65f899d192c</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.33/gec-spell-engine-local-0.8.33.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.41/gec-spell-engine-local-0.8.41.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.33/gec-spell-engine-local-0.8.33-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.41/gec-spell-engine-local-0.8.41-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
