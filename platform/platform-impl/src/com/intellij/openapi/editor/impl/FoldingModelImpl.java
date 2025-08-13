@@ -943,7 +943,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       }
 
       @Override
-      public void addIntervalsFrom(@NotNull IntervalTreeImpl.IntervalNode<FoldRegionImpl> otherNode) {
+      protected void addIntervalsFrom(@NotNull IntervalTreeImpl.IntervalNode<FoldRegionImpl> otherNode) {
         FoldRegionImpl region = getRegion(this);
         FoldRegionImpl otherRegion = getRegion(otherNode);
         if (otherRegion.mySizeBeforeUpdate > region.mySizeBeforeUpdate) {

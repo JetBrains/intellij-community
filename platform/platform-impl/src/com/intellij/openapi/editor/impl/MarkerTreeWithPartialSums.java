@@ -72,7 +72,7 @@ public class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> 
   }
 
   @Override
-  public void correctMax(@NotNull IntervalNode<T> node, int deltaUpToRoot) {
+  protected void correctMax(@NotNull IntervalNode<T> node, int deltaUpToRoot) {
     super.correctMax(node, deltaUpToRoot);
     ((Node<T>)node).recalculateSubTreeSum();
   }

@@ -32,7 +32,7 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
 
   @Override
   @ApiStatus.Internal
-  public void correctMax(@NotNull IntervalNode<RangeHighlighterEx> node, int deltaUpToRoot) {
+  protected void correctMax(@NotNull IntervalNode<RangeHighlighterEx> node, int deltaUpToRoot) {
     super.correctMax(node, deltaUpToRoot);
     ((RHNode)node).recalculateRenderFlags();
   }
@@ -112,7 +112,7 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
     }
 
     @Override
-    public void addInterval(@NotNull RangeHighlighterEx h) {
+    protected void addInterval(@NotNull RangeHighlighterEx h) {
       super.addInterval(h);
       if (!isRenderedInGutter() && h.isRenderedInGutter()) {
         recalculateRenderFlagsUp();
@@ -128,7 +128,9 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
       RangeHighlighterEx h = intervals.get(i).get();
       boolean recalculateFlags = h.isRenderedInGutter();
       super.removeIntervalInternal(i);
-      if (recalculateFlags) recalculateRenderFlagsUp();
+      if (recalculateFlags) {
+        recalculateRenderFlagsUp();
+      }
     }
   }
 

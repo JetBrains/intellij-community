@@ -39,7 +39,7 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
   private int deadReferenceCount;
 
   @ApiStatus.Internal
-  public static class IntervalNode<E> extends RedBlackTree.Node<E> implements MutableInterval {
+  protected static class IntervalNode<E> extends Node<E> implements MutableInterval {
     private volatile long myRange;
     private static final byte ATTACHED_TO_TREE_FLAG = COLOR_MASK <<1; // true if the node is inserted to the tree
     protected final List<Supplier<? extends E>> intervals;
@@ -47,10 +47,10 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
     int delta;  // delta of startOffset. getStartOffset() = myStartOffset + Sum of deltas up to root
 
     private volatile long cachedDeltaUpToRoot; // field (packed to long for atomicity) containing deltaUpToRoot, node modCount and allDeltasUpAreNull flag
-    // These fields are packed inside cachedDeltaUpToRoot, as follows:
-    //  private int modCount; // if it equals to the com.intellij.openapi.editor.impl.RedBlackTree.modCount then deltaUpToRoot can be used, otherwise it is expired
-    //  private int deltaUpToRoot; // sum of all deltas up to the root (including this node.delta). Has valid value only if modCount == IntervalTreeImpl.this.modCount
-    //  private boolean allDeltasUpAreNull;  // true if all deltas up the tree (including this node) are 0. Has valid value only if modCount == IntervalTreeImpl.this.modCount
+    // These fields are packed inside cachedDeltaUpToRoot, as follows, starting with LSB:
+    //  private int modCount:32; // if it equals to the com.intellij.openapi.editor.impl.RedBlackTree.modCount then deltaUpToRoot can be used, otherwise it is expired
+    //  private int deltaUpToRoot:31; // sum of all deltas up to the root (including this node.delta). Has valid value only if modCount == IntervalTreeImpl.this.modCount
+    //  private boolean allDeltasUpAreNull:1;  // true if all deltas up the tree (including this node) are 0. Has valid value only if modCount == IntervalTreeImpl.this.modCount
 
     private final @NotNull IntervalTreeImpl<E> myTree;
 
@@ -99,22 +99,21 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
     }
 
     @Override
-    public boolean hasAliveKey(boolean purgeDead) {
+    public boolean hasAliveKey(boolean purgeAllDead) {
       boolean hasAliveInterval = false;
       for (int i = intervals.size() - 1; i >= 0; i--) {
         Supplier<? extends E> interval = intervals.get(i);
-        if (interval.get() != null) {
-          hasAliveInterval = true;
-          if (purgeDead) {
-            continue;
-          }
-          else {
-            break;
+        if (interval.get() == null) {
+          if (purgeAllDead) {
+            myTree.assertUnderWriteLock();
+            removeIntervalInternal(i);
           }
         }
-        if (purgeDead) {
-          myTree.assertUnderWriteLock();
-          removeIntervalInternal(i);
+        else {
+          hasAliveInterval = true;
+          if (!purgeAllDead) {
+            break;
+          }
         }
       }
       return hasAliveInterval;
@@ -148,7 +147,7 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
     }
 
     @ApiStatus.Internal
-    public void removeIntervalInternal(int i) {
+    protected void removeIntervalInternal(int i) {
       intervals.remove(i);
       if (isAttachedToTree()) {   // for detached node, do not update tree node count
         assert myTree.keySize > 0 : myTree.keySize;
@@ -157,7 +156,7 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
     }
 
     @ApiStatus.Internal
-    public void addInterval(@NotNull E interval) {
+    protected void addInterval(@NotNull E interval) {
       myTree.assertUnderWriteLock();
       intervals.add(myTree.createGetter(interval));
       if (isAttachedToTree()) { // for detached node, do not update tree node count
@@ -166,7 +165,7 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
       }
     }
 
-    public void addIntervalsFrom(@NotNull IntervalNode<E> otherNode) {
+    protected void addIntervalsFrom(@NotNull IntervalNode<E> otherNode) {
       for (Supplier<? extends E> key : otherNode.intervals) {
         E interval = key.get();
         if (interval != null) {
@@ -604,7 +603,7 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
 
   @NotNull
   @ApiStatus.Internal
-  public MarkupIterator<T> overlappingIterator(@NotNull TextRange rangeInterval) {
+  protected MarkupIterator<T> overlappingIterator(@NotNull TextRange rangeInterval) {
     l.readLock().lock();
 
     try {
@@ -817,8 +816,8 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
     }
   }
 
-  public @NotNull IntervalTreeImpl.IntervalNode<T> addInterval(@NotNull T interval, int start, int end,
-                                                               boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+  protected @NotNull IntervalNode<T> addInterval(@NotNull T interval, int start, int end,
+                                                 boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     l.writeLock().lock();
     try {
       if (firingRemove) {
@@ -1151,7 +1150,7 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
 
   // max of n.left's maxEnd, n.right's maxEnd and its own interval endOffset
   @ApiStatus.Internal
-  public void correctMax(@NotNull IntervalNode<T> node, int deltaUpToRoot) {
+  protected void correctMax(@NotNull IntervalNode<T> node, int deltaUpToRoot) {
     if (!node.isValid()) return;
     int realMax = Math.max(Math.max(maxEndOf(node.getLeft(), deltaUpToRoot), maxEndOf(node.getRight(), deltaUpToRoot)),
                            deltaUpToRoot + node.intervalEnd());
@@ -1425,7 +1424,7 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
 
   // combines iterators for two trees in one using the specified comparator
   @ApiStatus.Internal
-  public static @NotNull <T> MarkupIterator<T> mergingOverlappingIterator(
+  protected static @NotNull <T> MarkupIterator<T> mergingOverlappingIterator(
     @NotNull IntervalTreeImpl<T> tree1,
     @NotNull TextRange tree1Range,
     @NotNull IntervalTreeImpl<T> tree2,
