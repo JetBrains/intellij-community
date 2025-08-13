@@ -2,6 +2,8 @@
 package com.intellij.ide
 
 import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.util.registry.RegistryValue
+import org.jetbrains.annotations.ApiStatus
 
 object EssentialHighlightingMode {
   private val handle = RegistryManager.getInstance().get("ide.highlighting.mode.essential")
@@ -10,5 +12,10 @@ object EssentialHighlightingMode {
 
   fun setEnabled(value: Boolean) {
     handle.setValue(value)
+  }
+
+  @ApiStatus.Internal
+  fun isMyRegistryValue(value: RegistryValue) : Boolean {
+    return value.key == handle.key
   }
 }
