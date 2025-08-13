@@ -276,7 +276,7 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
    */
   @OptIn(ExperimentalContracts::class)
   private inline fun update(
-    block: (currentMap: ContextMap<FileViewProvider>) -> ContextMap<FileViewProvider>?
+    block: (currentMap: ContextMap<FileViewProvider>) -> ContextMap<FileViewProvider>?,
   ) {
     contract {
       callsInPlace(block, kotlin.contracts.InvocationKind.AT_LEAST_ONCE)
@@ -341,7 +341,7 @@ private interface ContextMap<V : Any> {
 @Suppress("UNCHECKED_CAST")
 private fun <V : Any> emptyContextMap(): ContextMap<V> = EmptyMap as ContextMap<V>
 
-private object EmptyMap: ContextMap<Any> {
+private object EmptyMap : ContextMap<Any> {
   override fun get(key: CodeInsightContext): Any? = null
   override fun add(key: CodeInsightContext, value: Any): ContextMap<Any> = OneItemMap(key, value)
   override fun remove(key: CodeInsightContext): ContextMap<Any> = this
@@ -354,9 +354,9 @@ private object EmptyMap: ContextMap<Any> {
 
 private class OneItemMap<V : Any> private constructor(
   val key: CodeInsightContext,
-  val value: WeakReference<V>
-): ContextMap<V> {
-  constructor(key: CodeInsightContext, value: V): this(key, WeakReference(value))
+  val value: WeakReference<V>,
+) : ContextMap<V> {
+  constructor(key: CodeInsightContext, value: V) : this(key, WeakReference(value))
 
   override fun get(key: CodeInsightContext): V? {
     return if (this.key == key) value.get()
@@ -411,7 +411,7 @@ private class OneItemMap<V : Any> private constructor(
 private class ManyItemMap<V : Any>(
   private val map: Map<CodeInsightContext, V>,
   private val defaultContext: CodeInsightContext,
-): ContextMap<V> {
+) : ContextMap<V> {
 
   override fun get(key: CodeInsightContext): V? = map[key]
 
@@ -503,7 +503,8 @@ private class ManyItemMap<V : Any>(
   override fun entries(): Collection<Map.Entry<CodeInsightContext, V>> {
     return map.keys.mapNotNull { key ->
       val value = map[key] ?: return@mapNotNull null
-      EntryImpl(key, value) }
+      EntryImpl(key, value)
+    }
   }
 
   override fun size(): Int = map.size
@@ -528,7 +529,7 @@ private class ManyItemMap<V : Any>(
 private class EntryImpl<V : Any>(
   override val key: CodeInsightContext,
   override val value: V,
-): Map.Entry<CodeInsightContext, V>
+) : Map.Entry<CodeInsightContext, V>
 
 private val log = com.intellij.openapi.diagnostic.logger<FileProviderMap>()
 
