@@ -51,6 +51,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
+import org.jetbrains.kotlin.idea.base.psi.presentableClassId
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
@@ -143,7 +144,7 @@ object K2CreatePropertyFromUsageBuilder {
                 }
                 val jvmModifiers = createModifiers(ref, containingKtFile, isExtension = true, static = true, false)
                 val classId =
-                    (defaultContainerPsi as? KtClassOrObject)?.takeUnless { it is KtEnumEntry }?.classIdIfNonLocal ?: (defaultContainerPsi as? PsiClass)?.classIdIfNonLocal
+                    (defaultContainerPsi as? KtClassOrObject)?.takeUnless { it is KtEnumEntry }?.presentableClassId ?: (defaultContainerPsi as? PsiClass)?.classIdIfNonLocal
                 if (classId != null) {
                     val targetClassType = buildClassType(if (static) ClassId.fromString(classId.asFqNameString() + ".Companion") else classId)
                     requests.add(wrapperForKtFile to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers, targetClassType, isExtension = true))
