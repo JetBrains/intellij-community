@@ -345,7 +345,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                                               int nameId,
                                                               @Attributes int attributes,
                                                               boolean isEmptyDirectory) {
-    if(PersistentFSRecordAccessor.hasDeletedFlag(attributes)){
+    if (PersistentFSRecordAccessor.hasDeletedFlag(attributes)) {
       throw new FileDeletedException(
         childId, "{nameId: " + nameId + ", attributes: " + attributes + "} is deleted -- can't load deleted file records"
       );
@@ -590,7 +590,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         newChildren[i] = child;
       }
       if (!prevChildren.isEmpty()) {
-        logDisappearedChildren(vfsData, prevChildren, newChildren);
+        logDisappearedChildren(vfsData, prevChildren, newChildren, childrenInfo);
       }
 
       directoryData.clearAdoptedNames();
@@ -1204,7 +1204,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   private void logDisappearedChildren(@NotNull VfsData vfsData,
                                       @NotNull IntSet prevChildren,
-                                      @NotNull VirtualFile @NotNull [] newChildren) {
+                                      @NotNull VirtualFile @NotNull [] newChildren,
+                                      @NotNull List<? extends ChildInfo> childrenInfo) {
     StringBuilder sb = new StringBuilder("Loaded child(ren) disappeared: \n" +
                                          "parent: " + verboseToString(this) + "\n" +
                                          "missed children: ");
@@ -1214,7 +1215,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     sb.append("\nexisting children:");
     for (VirtualFile existingChild : newChildren) {
-      sb.append("\n\t").append(verboseToString((VirtualFileSystemEntry)existingChild));
+      sb.append("\n\t[" + existingChild + "] ").append(verboseToString((VirtualFileSystemEntry)existingChild));
+    }
+    sb.append("\nchildren infos:");
+    for (final ChildInfo childInfo : childrenInfo) {
+      sb.append("\n\t[" + childInfo.getId() + "] ").append(childInfo);
     }
     LOG.error(sb.toString());
   }
