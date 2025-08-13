@@ -29,7 +29,7 @@ class MPSBuilder {
 
             val fusp = FeatureUsageStatisticsProperties("FUS", "https://resources.jetbrains.com/storage/fus/config/v4/FUS/")
             val buildTools = ProprietaryBuildTools(ProprietaryBuildTools.DUMMY.signTool,
-                    scrambleTool = null, macOsCodesignIdentity = null, artifactsServer = null,
+                    scrambleTool = null, artifactsServer = null,
                     featureUsageStatisticsProperties = listOf(fusp), licenseServerHost = null
             )
 
