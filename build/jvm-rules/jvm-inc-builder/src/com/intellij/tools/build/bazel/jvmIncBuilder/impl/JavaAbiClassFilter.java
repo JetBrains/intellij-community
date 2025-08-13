@@ -34,8 +34,10 @@ public class JavaAbiClassFilter extends ClassVisitor {
     };
     ClassReader reader = new FailSafeClassReader(classBytes);
     JavaAbiClassFilter abiVisitor = new JavaAbiClassFilter(writer, MethodContainer.create(reader));
+    // Stripping FRAMES and DEBUG-INFO from abi.jar might lead to bytecode differences between compilation results against some artifact and abi-version of this artifact.
+    // This won't affect the behavior of the resulting bytecode. However, if such differences are not desired, FRAMES and DEBUG-INFO should be kept.
     reader.accept(
-      abiVisitor, ClassReader.SKIP_FRAMES | ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG
+      abiVisitor, ClassReader.SKIP_CODE /*| ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG*/
     );
     return abiVisitor.isAbiClass? writer.toByteArray() : null;
   }
