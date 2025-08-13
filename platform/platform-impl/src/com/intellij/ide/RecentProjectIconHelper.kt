@@ -21,6 +21,8 @@ import com.intellij.util.IconUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.ui.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.imgscalr.Scalr
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.SystemIndependent
@@ -171,11 +173,13 @@ class RecentProjectIconHelper {
 }
 
 private fun createDeferredIcon(key: DeferredIconKey): Icon {
-  return IconDeferrer.getInstance().defer(
+  return IconDeferrer.getInstance().deferAsync(
     EmptyIcon.create(key.iconSize),
     key,
   ) {
-    it.loadIcon()
+    withContext(Dispatchers.IO) {
+      it.loadIcon()
+    }
   }
 }
 
