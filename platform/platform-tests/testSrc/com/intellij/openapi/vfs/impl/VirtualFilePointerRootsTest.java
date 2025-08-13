@@ -131,14 +131,16 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
         events.add(new VFileCreateEvent(this, temp, name, true, null, null, null));
       }
       Benchmark.newBenchmark(getTestName(false), () -> {
-          for (int i = 0; i < 100; i++) {
-            // simulate VFS refresh events since launching the actual refresh is too slow
-            AsyncFileListener.ChangeApplier applier = myVirtualFilePointerManager.prepareChange(events);
-            applier.beforeVfsChange();
-            applier.afterVfsChange();
-            myVirtualFilePointerManager.before(events);
-            myVirtualFilePointerManager.after(events);
-          }
+          WriteAction.run(() -> {
+            for (int i = 0; i < 100; i++) {
+              // simulate VFS refresh events since launching the actual refresh is too slow
+              AsyncFileListener.ChangeApplier applier = myVirtualFilePointerManager.prepareChange(events);
+              applier.beforeVfsChange();
+              applier.afterVfsChange();
+              myVirtualFilePointerManager.before(events);
+              myVirtualFilePointerManager.after(events);
+            }
+          });
         })
         .warmupIterations(5)
         .start();
@@ -164,19 +166,21 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
     PersistentFSImpl persistentFS = (PersistentFSImpl)ManagingFS.getInstance();
 
     Benchmark.newBenchmark(getTestName(false), () -> {
-        for (int i = 0; i < 500_000; i++) {
-          persistentFS.incStructuralModificationCount();
-          AsyncFileListener.ChangeApplier applier = myVirtualFilePointerManager.prepareChange(createEvents);
-          applier.beforeVfsChange();
-          applier.afterVfsChange();
-          myVirtualFilePointerManager.after(createEvents);
+        WriteAction.run(() -> {
+          for (int i = 0; i < 500_000; i++) {
+            persistentFS.incStructuralModificationCount();
+            AsyncFileListener.ChangeApplier applier = myVirtualFilePointerManager.prepareChange(createEvents);
+            applier.beforeVfsChange();
+            applier.afterVfsChange();
+            myVirtualFilePointerManager.after(createEvents);
 
-          persistentFS.incStructuralModificationCount();
-          AsyncFileListener.ChangeApplier applier2 = myVirtualFilePointerManager.prepareChange(deleteEvents);
-          applier2.beforeVfsChange();
-          applier2.afterVfsChange();
-          myVirtualFilePointerManager.after(deleteEvents);
-        }
+            persistentFS.incStructuralModificationCount();
+            AsyncFileListener.ChangeApplier applier2 = myVirtualFilePointerManager.prepareChange(deleteEvents);
+            applier2.beforeVfsChange();
+            applier2.afterVfsChange();
+            myVirtualFilePointerManager.after(deleteEvents);
+          }
+        });
       })
       .warmupIterations(3)
       .attempts(5)
