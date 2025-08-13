@@ -39,7 +39,7 @@ class KotlinMavenPluginPhaseInspection : DomElementsInspection<MavenDomProjectMo
         val JS_STDLIB_MAVEN_ID = MavenId(KotlinMavenConfigurator.GROUP_ID, MAVEN_JS_STDLIB_ID, null)
     }
 
-    override fun getStaticDescription() = KotlinMavenBundle.message("inspection.description")
+    override fun getStaticDescription(): String = KotlinMavenBundle.message("inspection.description")
 
     override fun checkFileElement(domFileElement: DomFileElement<MavenDomProjectModel>, holder: DomElementAnnotationHolder) {
         val module = domFileElement.module ?: return

@@ -16,6 +16,7 @@ import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlText
 import com.intellij.util.xml.GenericDomValue
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.dom.MavenDomElement
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.model.*
@@ -31,15 +32,13 @@ import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.buildArgumentString
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
+import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator.Companion.kotlinPluginId
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import org.jetbrains.kotlin.utils.SmartList
-
-fun kotlinPluginId(version: String?) = MavenId(KotlinMavenConfigurator.GROUP_ID, KotlinMavenConfigurator.MAVEN_PLUGIN_ID, version)
-
 
 class PomFile private constructor(private val xmlFile: XmlFile, val domModel: MavenDomProjectModel) {
     constructor(xmlFile: XmlFile) : this(
@@ -58,13 +57,19 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
             override fun visitElement(element: PsiElement) {
                 super.visitElement(element)
 
-                if (element is XmlTag && element.localName in recommendedElementsOrder && element.parent === projectElement) {
-                    nodesByName[element.localName] = element
-                } else if (element is XmlTag && element.localName == "project") {
-                    projectElement = element
-                    element.acceptChildren(this)
-                } else {
-                    element.acceptChildren(this)
+                when (element) {
+                    is XmlTag if element.localName in recommendedElementsOrder && element.parent === projectElement -> {
+                        nodesByName[element.localName] = element
+                    }
+
+                    is XmlTag if element.localName == "project" -> {
+                        projectElement = element
+                        element.acceptChildren(this)
+                    }
+
+                    else -> {
+                        element.acceptChildren(this)
+                    }
                 }
             }
         })
@@ -129,7 +134,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         return dependency
     }
 
-    fun addKotlinPlugin(version: String?) = addPlugin(kotlinPluginId(version))
+    fun addKotlinPlugin(version: String?): MavenDomPlugin = addPlugin(kotlinPluginId(version))
 
     fun addPlugin(artifact: MavenId): MavenDomPlugin {
         ensureBuild()
@@ -146,7 +151,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         return plugin
     }
 
-    fun findPlugin(groupArtifact: MavenId) = domModel.build.plugins.plugins.firstOrNull { it.matches(groupArtifact) }
+    fun findPlugin(groupArtifact: MavenId): MavenDomPlugin? = domModel.build.plugins.plugins.firstOrNull { it.matches(groupArtifact) }
 
     fun isPluginAfter(plugin: MavenDomPlugin, referencePlugin: MavenDomPlugin): Boolean {
         require(plugin.parent === referencePlugin.parent) { "Plugins should be siblings" }
@@ -176,12 +181,12 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         return plugin
     }
 
-    fun findKotlinPlugins() = domModel.build.plugins.plugins.filter { it.isKotlinMavenPlugin() }
-    fun findKotlinExecutions(vararg goals: String) = findKotlinExecutions().filter { it.goals.goals.any { it.rawText in goals } }
-    fun findKotlinExecutions() = findKotlinPlugins().flatMap { it.executions.executions }
+    fun findKotlinPlugins(): List<MavenDomPlugin> = domModel.build.plugins.plugins.filter { it.isKotlinMavenPlugin() }
+    fun findKotlinExecutions(vararg goals: String): List<MavenDomPluginExecution> = findKotlinExecutions().filter { it.goals.goals.any { it.rawText in goals } }
+    fun findKotlinExecutions(): List<MavenDomPluginExecution> = findKotlinPlugins().flatMap { it.executions.executions }
 
     private fun findExecutions(plugin: MavenDomPlugin) = plugin.executions.executions
-    fun findExecutions(plugin: MavenDomPlugin, vararg goals: String) =
+    fun findExecutions(plugin: MavenDomPlugin, vararg goals: String): List<MavenDomPluginExecution> =
         findExecutions(plugin).filter { it.goals.goals.any { it.rawText in goals } }
 
     fun addExecution(plugin: MavenDomPlugin, executionId: String, phase: String, goals: List<String>): MavenDomPluginExecution {
@@ -220,7 +225,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         executionSourceDirs(execution, sourceDirs)
     }
 
-    fun isPluginExecutionMissing(plugin: MavenPlugin?, excludedExecutionId: String, goal: String) =
+    fun isPluginExecutionMissing(plugin: MavenPlugin?, excludedExecutionId: String, goal: String): Boolean =
         plugin == null || plugin.executions.none { it.executionId != excludedExecutionId && goal in it.goals }
 
     fun hasJavacPlugin(): Boolean {
@@ -331,14 +336,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
 
     private fun executionConfiguration(execution: MavenDomPluginExecution, name: String): XmlTag {
         val configurationTag = execution.configuration.ensureTagExists()!!
-
-        val existingTag = configurationTag.findSubTags(name).firstOrNull()
-        if (existingTag != null) {
-            return existingTag
-        }
-
-        val newTag = configurationTag.createChildTag(name)
-        return configurationTag.add(newTag) as XmlTag
+        return configurationTag.findSubTagOrCreate(name)
     }
 
     fun addPluginConfiguration(plugin: MavenDomPlugin, optionName: String, optionValue: String): XmlTag {
@@ -428,7 +426,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         return repository
     }
 
-    fun findDependencies(artifact: MavenId, scope: MavenArtifactScope? = null) =
+    fun findDependencies(artifact: MavenId, scope: MavenArtifactScope? = null): List<MavenDomDependency> =
         domModel.dependencies.findDependencies(artifact, scope)
 
     fun findDependencies(artifacts: List<MavenId>, scope: MavenArtifactScope? = null): List<MavenDomDependency> {
@@ -516,42 +514,42 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
 
     @Suppress("Unused")
     object DefaultPhases {
-        const val None = "none"
-        const val Validate = "validate"
-        const val Initialize = "initialize"
-        const val GenerateSources = "generate-sources"
-        const val ProcessSources = "process-sources"
-        const val GenerateResources = "generate-resources"
-        const val ProcessResources = "process-resources"
-        const val Compile = "compile"
-        const val ProcessClasses = "process-classes"
-        const val GenerateTestSources = "generate-test-sources"
-        const val ProcessTestSources = "process-test-sources"
-        const val GenerateTestResources = "generate-test-resources"
-        const val ProcessTestResources = "process-test-resources"
-        const val TestCompile = "test-compile"
-        const val ProcessTestClasses = "process-test-classes"
-        const val Test = "test"
-        const val PreparePackage = "prepare-package"
-        const val Package = "package"
-        const val PreIntegrationTest = "pre-integration-test"
-        const val IntegrationTest = "integration-test"
-        const val PostIntegrationTest = "post-integration-test"
-        const val Verify = "verify"
-        const val Install = "install"
-        const val Deploy = "deploy"
+        const val None: String = "none"
+        const val Validate: String = "validate"
+        const val Initialize: String = "initialize"
+        const val GenerateSources: String = "generate-sources"
+        const val ProcessSources: String = "process-sources"
+        const val GenerateResources: String = "generate-resources"
+        const val ProcessResources: String = "process-resources"
+        const val Compile: String = "compile"
+        const val ProcessClasses: String = "process-classes"
+        const val GenerateTestSources: String = "generate-test-sources"
+        const val ProcessTestSources: String = "process-test-sources"
+        const val GenerateTestResources: String = "generate-test-resources"
+        const val ProcessTestResources: String = "process-test-resources"
+        const val TestCompile: String = "test-compile"
+        const val ProcessTestClasses: String = "process-test-classes"
+        const val Test: String = "test"
+        const val PreparePackage: String = "prepare-package"
+        const val Package: String = "package"
+        const val PreIntegrationTest: String = "pre-integration-test"
+        const val IntegrationTest: String = "integration-test"
+        const val PostIntegrationTest: String = "post-integration-test"
+        const val Verify: String = "verify"
+        const val Install: String = "install"
+        const val Deploy: String = "deploy"
     }
 
     object KotlinGoals {
-        const val Compile = "compile"
-        const val TestCompile = "test-compile"
+        const val Compile: String = "compile"
+        const val TestCompile: String = "test-compile"
 
-        const val Js = "js"
-        const val TestJs = "test-js"
-        const val MetaData = "metadata"
+        const val Js: String = "js"
+        const val TestJs: String = "test-js"
+        const val MetaData: String = "metadata"
 
-        val JvmGoals = listOf(Compile, TestCompile)
-        val CompileGoals = listOf(Compile, TestCompile, Js, TestJs, MetaData)
+        val JvmGoals: List<String> = listOf(Compile, TestCompile)
+        val CompileGoals: List<String> = listOf(Compile, TestCompile, Js, TestJs, MetaData)
     }
 
     companion object {
@@ -562,7 +560,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
 
         @Suppress("DeprecatedCallableAddReplaceWith")
         @Deprecated("We shouldn't use phase but additional compiler configuration in most cases")
-        fun getPhase(hasJavaFiles: Boolean, isTest: Boolean) = when {
+        fun getPhase(hasJavaFiles: Boolean, isTest: Boolean): String = when {
             hasJavaFiles -> when {
                 isTest -> DefaultPhases.ProcessTestSources
                 else -> DefaultPhases.ProcessSources
@@ -574,7 +572,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         }
 
         // from maven code convention: https://maven.apache.org/developers/conventions/code.html
-        val recommendedElementsOrder = """
+        val recommendedElementsOrder: LinkedHashSet<String> = """
           <modelVersion/>
           <parent/>
 
@@ -622,18 +620,13 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
             .filter(String::isNotEmpty)
             .toCollection(LinkedHashSet())
 
-        val recommendedOrderAsList = recommendedElementsOrder.toList()
+        val recommendedOrderAsList: List<String> = recommendedElementsOrder.toList()
     }
 }
 
+@ApiStatus.Internal
 fun PomFile.changeLanguageVersion(languageVersion: String?, apiVersion: String?): PsiElement? {
-    val kotlinPlugin = findPlugin(
-        MavenId(
-            KotlinMavenConfigurator.GROUP_ID,
-            KotlinMavenConfigurator.MAVEN_PLUGIN_ID,
-            null
-        )
-    ) ?: return null
+    val kotlinPlugin = findPlugin(kotlinPluginId(null)) ?: return null
     val languageElement = languageVersion?.let {
         changeConfigurationOrProperty(kotlinPlugin, "languageVersion", "kotlin.compiler.languageVersion", it)
     }
@@ -641,6 +634,17 @@ fun PomFile.changeLanguageVersion(languageVersion: String?, apiVersion: String?)
         changeConfigurationOrProperty(kotlinPlugin, "apiVersion", "kotlin.compiler.apiVersion", it)
     }
     return languageElement ?: apiElement
+}
+
+@ApiStatus.Internal
+fun PomFile.addKotlinCompilerPlugins(name: String) {
+    val kotlinPlugin = findPlugin(kotlinPluginId(null)) ?: return
+    val configurationTag = kotlinPlugin.configuration.ensureTagExists()
+    val compilerPluginsTag = configurationTag.findSubTagOrCreate("compilerPlugins")
+    compilerPluginsTag.findSubTags("plugin").firstOrNull { it.value.trimmedText == name } ?: run {
+        val pluginTag = compilerPluginsTag.createChildTag("plugin", name)
+        compilerPluginsTag.add(pluginTag)
+    }
 }
 
 internal fun MavenDomDependencies.findDependencies(artifact: MavenId, scope: MavenArtifactScope? = null) =
@@ -690,13 +694,7 @@ private fun PomFile.changeConfigurationOrProperty(
 }
 
 fun PomFile.changeCoroutineConfiguration(value: String): PsiElement? {
-    val kotlinPlugin = findPlugin(
-        MavenId(
-            KotlinMavenConfigurator.GROUP_ID,
-            KotlinMavenConfigurator.MAVEN_PLUGIN_ID,
-            null
-        )
-    ) ?: return null
+    val kotlinPlugin = findPlugin(kotlinPluginId(null)) ?: return null
     return changeConfigurationOrProperty(kotlinPlugin, "experimentalCoroutines", "kotlin.compiler.experimental.coroutines", value)
 }
 
@@ -704,20 +702,9 @@ fun PomFile.changeFeatureConfiguration(
     feature: LanguageFeature,
     state: LanguageFeature.State
 ): PsiElement? {
-    val kotlinPlugin = findPlugin(
-        MavenId(
-            KotlinMavenConfigurator.GROUP_ID,
-            KotlinMavenConfigurator.MAVEN_PLUGIN_ID,
-            null
-        )
-    ) ?: return null
+    val kotlinPlugin = findPlugin(kotlinPluginId(null)) ?: return null
     val configurationTag = kotlinPlugin.configuration.ensureTagExists()
-    val argsSubTag = configurationTag.findSubTags("args").firstOrNull()
-        ?: run {
-            val childTag = configurationTag.createChildTag("args")
-            configurationTag.add(childTag) as XmlTag
-        }
-
+    val argsSubTag = configurationTag.findSubTagOrCreate("args")
     argsSubTag.findSubTags("arg").filter { feature.name in it.value.text }.forEach { it.deleteCascade() }
     val kotlinVersion = kotlinPlugin.version.stringValue?.let(IdeKotlinVersion::opt)
     val featureArgumentString = feature.buildArgumentString(state, kotlinVersion)
@@ -725,8 +712,15 @@ fun PomFile.changeFeatureConfiguration(
     return argsSubTag.add(childTag)
 }
 
-private fun MavenDomElement.createChildTag(name: String, value: String? = null) = xmlTag?.createChildTag(name, value)
-private fun XmlTag.createChildTag(name: String, value: String? = null) = createChildTag(name, namespace, value, false)!!
+private fun MavenDomElement.createChildTag(name: String, value: String? = null): XmlTag? =
+    xmlTag?.createChildTag(name, value)
+private fun XmlTag.createChildTag(name: String, value: String? = null): XmlTag =
+    createChildTag(name, namespace, value, false)!!
+private fun XmlTag.findSubTagOrCreate(name: String): XmlTag =
+    findSubTags(name).firstOrNull() ?: run {
+        val childTag = createChildTag(name)
+        add(childTag) as XmlTag
+    }
 
 private tailrec fun XmlTag.deleteCascade() {
     val oldParent = this.parentTag
