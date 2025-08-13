@@ -807,6 +807,20 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
+    <evoTreeElementProvider id="UvEvoProvider"
+                            order="first"
+                            implementation="com.jetbrains.python.uv.sdk.evolution.UvSelectSdkProvider"/>
+
+    <evoTreeElementProvider id="PoetryEvoProvider"
+                            implementation="com.jetbrains.python.poetry.sdk.evolution.PoetrySelectSdkProvider"/>
+
+    <evoTreeElementProvider id="CondaEvoProvider"
+                            implementation="com.jetbrains.python.conda.sdk.evolution.CondaSelectSdkProvider"/>
+
+    <evoTreeElementProvider id="AdvancedEvoProvider"
+                            order="before AutoconfigEvoProvider,last"
+                            implementation="com.jetbrains.python.sdk.evolution.AdvancedSelectSdkProvider"/>
+
     <pyReferenceCustomTargetChecker implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureTargetChecker"/>
 
     <!--stdlib-->

@@ -1,0 +1,30 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.community.execService"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.evoTreeElementProvider"
+                    interface="com.intellij.python.sdk.ui.evolution.ui.EvoSelectSdkProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <statusBarWidgetFactory id="EvoPySdkStatusBarWidget"
+                            implementation="com.intellij.python.sdk.ui.evolution.ui.PySdkStatusBarWidgetFactory"
+                            order="before Notifications, before git, after CodeStyleStatusBarWidget, after pythonInterpreterWidget"/>
+
+    <registryKey key="python.evolution.widget" defaultValue="false" restartRequired="true"
+                 description="Enables the 'Evo Module Python Interpreter' widget in the status bar (PoC)"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <evoTreeElementProvider id="VenvEvoProvider"
+                            implementation="com.intellij.python.sdk.ui.evolution.tool.pip.ui.VenvSelectSdkProvider"/>
+
+    <evoTreeElementProvider id="AutoconfigEvoProvider"
+                            order="last"
+                            implementation="com.intellij.python.sdk.ui.evolution.ui.AutoconfigSelectSdkProvider"/>
+  </extensions>
+</idea-plugin>

@@ -1314,6 +1314,7 @@ python/python-psi-impl
 python/python-pyproject
 python/python-restructuredtext
 python/python-sdk
+python/python-sdk-ui
 python/python-syntax
 python/python-syntax-core
 python/python-terminal

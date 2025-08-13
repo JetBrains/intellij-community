@@ -3,5 +3,12 @@
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.sdk"/>
+    <module name="intellij.python.sdk.ui"/>
   </dependencies>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <evoTreeElementProvider id="HatchEvoProvider"
+                            order="after CondaEvoProvider"
+                            implementation="com.intellij.python.hatch.sdk.evolution.HatchSelectSdkProvider"/>
+  </extensions>
 </idea-plugin>

@@ -7,7 +7,7 @@
   library: io.github.z4kn4fein.semver.jvm
   files:
   - name: $MAVEN_REPOSITORY$/io/github/z4kn4fein/semver-jvm/2/semver-jvm-2.jar
-  reason: <- intellij.python.community.impl
+  reason: <- intellij.python.sdk.ui
 - name: lib/jsr305.jar
   library: jsr305
   files:
@@ -50,6 +50,7 @@
   - name: intellij.python.psi
   - name: intellij.python.psi.impl
   - name: intellij.python.sdk
+  - name: intellij.python.sdk.ui
   - name: intellij.python.pyproject
   - name: intellij.python.community.impl.poetry
   - name: intellij.python.community.core.impl

@@ -278,6 +278,7 @@ jvm_library(
     "@lib//ant/lib:ant-antlr-provided",
     "//python/python-psi-impl:psi-impl",
     "//python/python-sdk:sdk",
+    "//python/python-sdk-ui:sdk-ui",
     "@lib//:stream_ex",
     "//platform/statistics",
     "@lib//:python-community-impl-ml-completion-prev-exprs-models",
