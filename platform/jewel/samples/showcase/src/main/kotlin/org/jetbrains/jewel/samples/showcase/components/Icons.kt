@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.samples.showcase.ShowcaseIcons
 import org.jetbrains.jewel.ui.component.Icon
+import org.jetbrains.jewel.ui.component.Image
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.badge.DotBadgeShape
@@ -94,6 +97,27 @@ public fun Icons(modifier: Modifier = Modifier) {
                 Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
                     Icon(key = AllIconsKeys.Nodes.ConfigFolder, contentDescription = "taskGroup", hint = Size(20))
                 }
+            }
+        }
+
+        Column {
+            Text("Images:")
+
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Image(ShowcaseIcons.jewelLogo, contentDescription = "Jewel Logo", modifier = Modifier.size(96.dp))
+
+                // Note: this currently looks identical to the hint-less image due to JEWEL-971
+                Image(
+                    iconKey = ShowcaseIcons.jewelLogo,
+                    contentDescription = "Jewel Logo with hint",
+                    hints = arrayOf(Stroke(Color.Red)),
+                    modifier = Modifier.size(96.dp),
+                )
             }
         }
     }
