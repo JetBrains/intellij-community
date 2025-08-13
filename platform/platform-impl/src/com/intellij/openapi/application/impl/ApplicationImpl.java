@@ -1412,15 +1412,13 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     app.lock.addWriteActionListener(app.appListenerDispatcherWrapper);
     app.lock.setLegacyIndicatorProvider(myLegacyIndicatorProvider);
     app.lock.setErrorHandler(lockingErrorHandler);
-    if (ThreadingRuntimeFlagsKt.getInstallSuvorovProgress()) {
-      SwingUtilities.invokeLater(() -> {
-        SuvorovProgress.INSTANCE.init(app);
-        app.lock.setLockAcquisitionInterceptor((deferred) -> {
-          SuvorovProgress.dispatchEventsUntilComputationCompletes(deferred);
-          return Unit.INSTANCE;
-        });
+    SwingUtilities.invokeLater(() -> {
+      SuvorovProgress.INSTANCE.init(app);
+      app.lock.setLockAcquisitionInterceptor((deferred) -> {
+        SuvorovProgress.dispatchEventsUntilComputationCompletes(deferred);
+        return Unit.INSTANCE;
       });
-    }
+    });
 
     app.addApplicationListener(new ApplicationListener() {
       @Override
