@@ -98,7 +98,7 @@ public fun retrieveConsoleTextStyle(): TextStyle {
             fontFamily = font.asComposeFontFamily(),
             fontSize = fontSize,
             lineHeight = (baseLineHeight * editorColorScheme.lineSpacing).coerceAtLeast(1f).sp,
-            fontFeatureSettings = if (!editorColorScheme.isUseLigatures) "liga 0" else "liga 1",
+            fontFeatureSettings = if (!editorColorScheme.isUseLigatures) "liga 0, calt 0" else "liga 1, calt 1",
         )
 }
 
