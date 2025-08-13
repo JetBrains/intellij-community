@@ -69,6 +69,11 @@ class VarHandleWrapperUnsafe extends VarHandleWrapper implements VarHandleWrappe
   }
 
   @Override
+  public int getAndAdd(Object thisObject, int value) {
+    return Unsafe.getAndAddInt(thisObject, OFFSET, value);
+  }
+
+  @Override
   public Object getVolatileArrayElement(Object thisObject, int index) {
     assert OFFSET == -1;
     return Unsafe.getObjectVolatile(thisObject, ((long)index << ASHIFT) + ABASE);

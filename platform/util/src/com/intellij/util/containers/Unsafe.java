@@ -17,6 +17,7 @@ public final class Unsafe {
   private static final MethodHandle compareAndSwapObject;
   private static final MethodHandle compareAndSwapInt;
   private static final MethodHandle compareAndSwapLong;
+  private static final MethodHandle getAndAddInt;
   private static final MethodHandle objectFieldOffset;
   private static final MethodHandle arrayIndexScale;
   private static final MethodHandle arrayBaseOffset;
@@ -29,6 +30,7 @@ public final class Unsafe {
       compareAndSwapObject = find("compareAndSwapObject", boolean.class, Object.class, long.class, Object.class, Object.class);
       compareAndSwapInt = find("compareAndSwapInt", boolean.class, Object.class, long.class, int.class, int.class);
       compareAndSwapLong = find("compareAndSwapLong", boolean.class, Object.class, long.class, long.class, long.class);
+      getAndAddInt = find("getAndAddInt", int.class, Object.class, long.class, int.class);
       objectFieldOffset = find("objectFieldOffset", long.class, Field.class);
       arrayBaseOffset = find("arrayBaseOffset", int.class, Class.class);
       arrayIndexScale = find("arrayIndexScale", int.class, Class.class);
@@ -59,6 +61,14 @@ public final class Unsafe {
   static boolean compareAndSwapLong(@NotNull Object object, long offset, long expected, long value) {
     try {
       return (boolean)compareAndSwapLong.invokeExact(object, offset, expected, value);
+    }
+    catch (Throwable throwable) {
+      throw new RuntimeException(throwable);
+    }
+  }
+  static int getAndAddInt(@NotNull Object object, long offset, int value) {
+    try {
+      return (int)getAndAddInt.invokeExact(object, offset, value);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);

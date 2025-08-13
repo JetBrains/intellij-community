@@ -77,6 +77,12 @@ public class VarHandleWrapperImpl extends VarHandleWrapper implements VarHandleW
     return myVarHandle.compareAndSet(thisObject, index, expected, value);
   }
 
+  @Override
+  public int getAndAdd(Object thisObject, int value) {
+    assert !isArray;
+    return (int)myVarHandle.getAndAdd(thisObject, value);
+  }
+
   public static void useVarHandlesInConcurrentCollections() {
     // use VarHandles in concurrent collections because they are available in the classpath
     FACTORY = new VarHandleWrapperImpl(null, false);

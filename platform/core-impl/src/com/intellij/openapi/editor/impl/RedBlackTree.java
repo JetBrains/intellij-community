@@ -4,20 +4,18 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.VarHandleWrapper;
 import org.jetbrains.annotations.*;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 
 @ApiStatus.Internal
-public abstract class RedBlackTree<K> extends AtomicInteger {
-  // this "extends AtomicInteger" thing is for supporting modCounter.
-  // I couldn't make it "volatile int" field because Unsafe.getAndAddInt is since jdk8 only, and "final AtomicInteger" field would be too many indirections
-
+public abstract class RedBlackTree<K> {
   static boolean VERIFY;
   private static final int INDENT_STEP = 4;
   private int nodeSize; // number of nodes
   protected Node<K> root;
+  @SuppressWarnings("unused") private volatile int modCount;
+  private static final VarHandleWrapper MOD_COUNT_HANDLE = VarHandleWrapper.getFactory().create(RedBlackTree.class, "modCount", int.class);
 
   RedBlackTree() {
     root = null;
@@ -25,10 +23,10 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
   }
 
   void incModCount() {
-    incrementAndGet();
+    MOD_COUNT_HANDLE.getAndAdd(this, 1);
   }
   int getModCount() {
-    return get();
+    return modCount;
   }
 
   protected void rotateLeft(@NotNull Node<K> n) {
