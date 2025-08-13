@@ -3,10 +3,8 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.util.BitUtil;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.*;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -287,6 +285,19 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
     }
     if (n.getLeft() != null) {
       printHelper(n.getLeft(), indent + INDENT_STEP);
+    }
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public static void runAssertingInternalInvariants(@NotNull ThrowableRunnable<?> runnable) throws Throwable {
+    boolean old = VERIFY;
+    VERIFY = true;
+    try {
+      runnable.run();
+    }
+    finally {
+      VERIFY = old;
     }
   }
 
