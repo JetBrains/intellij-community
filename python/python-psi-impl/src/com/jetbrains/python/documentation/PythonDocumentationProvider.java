@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -337,13 +338,16 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * @return string representation of the type
    */
   public static @NotNull @NlsSafe String getTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return getTypeName(type, context, EnumSet.noneOf(Feature.class));
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.Documentation(context, EnumSet.noneOf(Feature.class))).toString();
   }
 
-  public static @NotNull String getTypeName(@Nullable PyType type, @NotNull TypeEvalContext context, @NotNull EnumSet<Feature> features) {
-    return PyTypeVisitor.visit(type, new PyTypeRenderer.Documentation(context, features)).toString();
+  @ApiStatus.Experimental
+  public static @NotNull @NlsSafe String getTypeName(@Nullable PyType type,
+                                                     @NotNull TypeEvalContext context,
+                                                     Feature @NotNull ... features) {
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.Documentation(context, EnumSet.copyOf(Arrays.asList(features)))).toString();
   }
-  
+
   /**
    * Returns the provided type in PEP 484 compliant format.
    */
@@ -365,7 +369,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * such as bounds for TypeVar types in ' ≤: *bound*' format
    */
   public static @NotNull String getVerboseTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return getTypeName(type, context, EnumSet.of(Feature.TYPE_VAR_BOUNDS));
+    return getTypeName(type, context, Feature.TYPE_VAR_BOUNDS);
   }
 
   /**

@@ -584,7 +584,7 @@ public abstract class PyTestCase extends UsefulTestCase {
                                 @NotNull PyTypedElement element,
                                 @NotNull TypeEvalContext context) {
     final PyType actual = context.getType(element);
-    final String actualType = PythonDocumentationProvider.getTypeName(actual, context, EnumSet.of(Feature.UNSAFE_UNION));
+    final String actualType = PythonDocumentationProvider.getTypeName(actual, context, Feature.UNSAFE_UNION);
     assertEquals(message, expectedType, actualType);
   }
 

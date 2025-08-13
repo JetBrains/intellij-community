@@ -54,8 +54,8 @@ public final class PythonExpressionTypeProvider extends ExpressionTypeProvider<P
       TypeEvalContext.userInitiated: %s
       TypeEvalContext.codeAnalysis: %s
       """.formatted(
-      PythonDocumentationProvider.getTypeName(userInitiated.getType(element), userInitiated, EnumSet.of(Feature.UNSAFE_UNION)),
-      PythonDocumentationProvider.getTypeName(codeAnalysis.getType(element), codeAnalysis, EnumSet.of(Feature.UNSAFE_UNION))
+      PythonDocumentationProvider.getTypeName(userInitiated.getType(element), userInitiated, Feature.UNSAFE_UNION),
+      PythonDocumentationProvider.getTypeName(codeAnalysis.getType(element), codeAnalysis, Feature.UNSAFE_UNION)
     );
   }
 }
