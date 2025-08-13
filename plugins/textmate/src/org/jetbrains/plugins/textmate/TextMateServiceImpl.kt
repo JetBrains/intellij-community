@@ -377,7 +377,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
 }
 
 private val bundledBundlePath: Path
-  get() = PluginPathManager.getPluginHome("textmate").toPath().resolve("lib/bundles").normalize()
+  get() = PluginPathManager.getPluginHome("textmate-plugin").toPath().resolve("lib/bundles").normalize()
 
 private fun fireFileTypesChangedEvent(reason: @NonNls String, update: Runnable) {
   ApplicationManager.getApplication().invokeLater(
