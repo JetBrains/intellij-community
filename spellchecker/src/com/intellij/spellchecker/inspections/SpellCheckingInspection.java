@@ -24,7 +24,10 @@ import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.grazie.diacritic.Diacritics;
 import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellCheckingResult;
 import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellingTypo;
-import com.intellij.spellchecker.tokenizer.*;
+import com.intellij.spellchecker.tokenizer.LanguageSpellchecking;
+import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
+import com.intellij.spellchecker.tokenizer.SuppressibleSpellcheckingStrategy;
+import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.CollectionFactory;
@@ -94,6 +97,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     var scopes = buildAllowedScopes();
+    SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());
     return new PsiElementVisitor() {
       @Override
       public void visitElement(final @NotNull PsiElement element) {
@@ -118,12 +122,13 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
           return;
         }
 
-        inspect(element, session, strategy, holder);
+        inspect(manager, element, session, strategy, holder);
       }
     };
   }
 
-  private void inspect(@NotNull PsiElement element,
+  private void inspect(@NotNull SpellCheckerManager manager,
+                       @NotNull PsiElement element,
                        @NotNull LocalInspectionToolSession session,
                        @NotNull SpellcheckingStrategy strategy,
                        @NotNull ProblemsHolder holder) {
@@ -137,7 +142,6 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
     );
     if (result == SpellCheckingResult.Checked) return;
 
-    SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());
     Set<SpellCheckingScope> scopes = buildAllowedScopes();
     tokenize(
       strategy, element,

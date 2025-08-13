@@ -1,7 +1,7 @@
-/** Half width Katakana variants (FF00 - <TYPO descr="Typo: In word 'FFEF'">FFEF</TYPO>)
+/** Half width Katakana variants (FF00 - FFEF)
  * ﾜﾀｼﾊｼﾞｬﾊﾞｶﾞｽｷﾃﾞｽ｡
  */
-/** Full width ASCII variants (FF00 - <TYPO descr="Typo: In word 'FFEF'">FFEF</TYPO>)
+/** Full width ASCII variants (FF00 - FFEF)
  * Ｉ　ＬＯＶＥ　ＪＡＶＡ
  */
 /** Hiragana (3040 - 309F)

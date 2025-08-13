@@ -4,6 +4,7 @@ package com.intellij.spellchecker.xml;
 import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
@@ -92,6 +93,11 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
   protected boolean isInTemplateLanguageFile(PsiElement element) {
     PsiFile file = element.getContainingFile();
     return file == null || file.getLanguage() instanceof TemplateLanguage;
+  }
+
+  @Override
+  public boolean useTextLevelSpellchecking() {
+    return Registry.is("spellchecker.grazie.enabled");
   }
 
   @Override

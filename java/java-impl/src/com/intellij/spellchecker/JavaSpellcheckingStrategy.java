@@ -4,6 +4,7 @@ package com.intellij.spellchecker;
 import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.util.ChronoUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiMethod;
@@ -41,5 +42,10 @@ public final class JavaSpellcheckingStrategy extends SpellcheckingStrategy imple
     }
 
     return super.getTokenizer(element);
+  }
+
+  @Override
+  public boolean useTextLevelSpellchecking() {
+    return Registry.is("spellchecker.grazie.enabled");
   }
 }
