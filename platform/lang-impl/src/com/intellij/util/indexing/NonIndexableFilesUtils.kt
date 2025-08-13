@@ -8,7 +8,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
@@ -21,6 +20,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -50,7 +50,7 @@ private fun WorkspaceFileIndexEx.contentUnindexedRoots(): Set<VirtualFile> {
 internal fun iterateNonIndexableFilesImpl(project: Project, inputFilter: VirtualFileFilter?, processor: ContentIterator): Boolean {
   val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
   val roots: Set<VirtualFile> = ReadAction.nonBlocking<Set<VirtualFile>> { workspaceFileIndex.contentUnindexedRoots() }.executeSynchronously()
-  return iterateNonIndexableFilesImpl(project, roots, inputFilter ?: VirtualFileFilter.ALL, processor)
+  return workspaceFileIndex.iterateNonIndexableFilesImpl(roots, inputFilter ?: VirtualFileFilter.ALL, processor)
 }
 
 private data class AllFileSets(val recursive: List<WorkspaceFileSet>, val nonRecursive: List<WorkspaceFileSet>)
@@ -61,16 +61,25 @@ private fun WorkspaceFileIndex.allIndexableFileSets(root: VirtualFile): AllFileS
   }
 }.let { (recursive, nonRecursive) -> AllFileSets(recursive, nonRecursive) }
 
+private fun WorkspaceFileIndexEx.isExcludedOrInvalid(file: VirtualFile): Boolean = runReadAction {
+  val info = getFileInfo(file, true, true, true, true, true, true)
+  when (info) {
+    NonWorkspace.EXCLUDED -> true
+    NonWorkspace.IGNORED -> true
+    NonWorkspace.INVALID -> true
+    NonWorkspace.NOT_UNDER_ROOTS -> true
+    else -> false
+  }
+}
+
 @RequiresBackgroundThread
-private fun iterateNonIndexableFilesImpl(project: Project, roots: Set<VirtualFile>, filter: VirtualFileFilter, processor: ContentIterator): Boolean {
-  val workspaceFileIndex = WorkspaceFileIndex.getInstance(project)
-  val projectFileIndex = ProjectFileIndex.getInstance(project)
+private fun WorkspaceFileIndexEx.iterateNonIndexableFilesImpl(roots: Set<VirtualFile>, filter: VirtualFileFilter, processor: ContentIterator): Boolean {
   for (root in roots) {
     val res = VfsUtilCore.visitChildrenRecursively(root, object : VirtualFileVisitor<Any?>() {
       override fun visitFileEx(file: VirtualFile): Result {
         ProgressManager.checkCanceled()
-        if (projectFileIndex.isExcluded(file)) return SKIP_CHILDREN
-        val currentIndexableFileSets = workspaceFileIndex.allIndexableFileSets(root = file)
+        if (isExcludedOrInvalid(file)) return SKIP_CHILDREN
+        val currentIndexableFileSets = allIndexableFileSets(root = file)
         return when {
           currentIndexableFileSets.recursive.isNotEmpty() -> SKIP_CHILDREN
           currentIndexableFileSets.nonRecursive.isNotEmpty() -> CONTINUE // skip only the current file, children can be non-indexable
@@ -120,8 +129,8 @@ private class NonIndexableFilesDequeImpl(private val project: Project, private v
       if (file in visitedRoots) continue
       if (file in roots) visitedRoots.add(file)
 
-      if (ProjectFileIndex.getInstance(project).isExcluded(file)) continue
-
+      val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
+      if (workspaceFileIndex.isExcludedOrInvalid(file)) continue
       val indexableFileSets = WorkspaceFileIndexEx.getInstance(project).allIndexableFileSets(file)
 
       if (indexableFileSets.recursive.isNotEmpty()) continue // skip the current file and their children
