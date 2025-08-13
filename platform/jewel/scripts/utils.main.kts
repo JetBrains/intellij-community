@@ -4,13 +4,13 @@
 
 import com.github.pgreze.process.Redirect
 import com.github.pgreze.process.process
+import java.io.File
 import kotlin.system.exitProcess
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.intellij.lang.annotations.Language
-import java.io.File
 
 fun checkGhTool() = runBlocking { runCommand(command = "which gh", workingDir = null, exitOnError = false).isSuccess }
 
@@ -23,6 +23,18 @@ fun requireGhTool() {
 
     printlnErr("ERROR: the GitHub CLI tool must be present on the PATH.")
     exitProcess(1)
+}
+
+fun findJewelRoot(base: File = File("").canonicalFile): File? {
+    fun isJewelDir(file: File): Boolean = file.name == "jewel" && file.parentFile.name == "platform"
+
+    var file = base
+    while (file.isDirectory) {
+        if (isJewelDir(file)) return file.canonicalFile
+        if (file.parentFile == null) break
+        file = file.parentFile
+    }
+    return null
 }
 
 fun requirePrNumber() {
