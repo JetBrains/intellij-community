@@ -136,8 +136,8 @@ public class BuildContextImpl implements BuildContext {
     else if ("error".equals(warn)) {
       options.add("-Werror");
     }
-    else if (warn != null) {
-      throw new IllegalArgumentException("unsupported kotlinc warning option: " + warn);
+    else if (warn != null && !"report".equals(warn)) {
+      throw new IllegalArgumentException("Unsupported kotlinc warning option: " + warn);
     }
 
     if (CLFlags.X_ALLOW_RESULT_RETURN_TYPE.isFlagSet(flags)) {
@@ -183,10 +183,10 @@ public class BuildContextImpl implements BuildContext {
       options.add("-nowarn");
     }
     else if ("error".equals(warn)) {
-      options.add("-werror");
+      options.add("-Werror");
     }
-    else if (warn != null) {
-      throw new IllegalArgumentException("unsupported javac warning option: " + warn);
+    else if (warn != null && !"report".equals(warn)) {
+      throw new IllegalArgumentException("Unsupported javac warning option: " + warn);
     }
 
     if (CLFlags.NO_PROC.isFlagSet(flags)) {
