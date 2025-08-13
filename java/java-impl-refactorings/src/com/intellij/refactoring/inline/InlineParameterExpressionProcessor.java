@@ -96,7 +96,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     final List<UsageInfo> result = new ArrayList<>();
     myInitializer.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement element = expression.resolve();
         if (element instanceof PsiLocalVariable localVariable) {
@@ -264,7 +264,8 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     }
     else {
       for (PsiJavaCodeReferenceElement paramRef : paramRefsToInline) {
-        InlineUtil.inlineVariable(myParameter, myInitializer, paramRef);
+        PsiExpression expression = InlineUtil.inlineVariable(myParameter, myInitializer, paramRef);
+        CommonJavaRefactoringUtil.tryToInlineArrayCreationForVarargs(expression);
       }
     }
 

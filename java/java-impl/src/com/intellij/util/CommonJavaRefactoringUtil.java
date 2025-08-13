@@ -997,8 +997,7 @@ public final class CommonJavaRefactoringUtil {
     }
     final PsiType substitutedLastParamType = substitutor.substitute(((PsiEllipsisType)lastParamType).toArrayType());
     final PsiType lastArgType = lastArg.getType();
-    if (lastArgType == null || !lastArgType.equals(substitutedLastParamType) &&
-                               !lastArgType.equals(TypeConversionUtil.erasure(substitutedLastParamType))) {
+    if (lastArgType == null || !substitutedLastParamType.isAssignableFrom(lastArgType)) {
       return null;
     }
     PsiExpression[] initializers = getInitializers(newExpression);

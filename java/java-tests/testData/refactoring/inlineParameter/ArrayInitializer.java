@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 class Test {
   public static void main(String[] args) {
     System.out.println(use(new Object[]{"1", "2", "3"}));

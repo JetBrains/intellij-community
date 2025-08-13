@@ -337,10 +337,10 @@ public class InlineParameterTest extends LightRefactoringTestCase {
       assertEquals("Method <b><code>doTest()</code></b> is already defined in class <b><code>Test</code></b>", e.getMessage());
     }
   }
-
-  public void testArrayInitializer() {
-    doTest(false);
-  }
+  
+  public void testInlineVararg() { doTest(false); }
+  public void testVarargs() { doTest(false); }
+  public void testArrayInitializer() { doTest(false); }
 
   private void doTest(boolean createLocal) {
     getProject().putUserData(InlineParameterExpressionProcessor.CREATE_LOCAL_FOR_TESTS, createLocal);

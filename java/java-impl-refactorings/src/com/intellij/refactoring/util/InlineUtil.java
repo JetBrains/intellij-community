@@ -166,6 +166,9 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     else if (typeElement.isInferredType()) {
       return expr;
     }
+    if (typeElement.getType() instanceof PsiEllipsisType type) {
+      typeElement = factory.createTypeElement(type.toArrayType());
+    }
     castTypeElement.replace(typeElement);
     final PsiExpression operand = cast.getOperand();
     assert operand != null;
