@@ -2,5 +2,20 @@
   <dependencies>
     <module name="intellij.platform.backend"/>
     <module name="intellij.textmate.common"/>
+    <module name="intellij.spellchecker"/>
   </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <customLiveTemplate implementation="org.jetbrains.plugins.textmate.editor.TextMateCustomLiveTemplate"/>
+    <todoIndexer filetype="textmate" implementationClass="com.intellij.psi.impl.cache.impl.todo.PlainTextTodoIndexer"/>
+    <idIndexer filetype="textmate" implementationClass="com.intellij.psi.impl.cache.impl.id.PlainTextIdIndexer"/>
+    <indexPatternBuilder implementation="org.jetbrains.plugins.textmate.TextMatePatternBuilder"/>
+    <completion.contributor id="TextMateCompletionContributor" language="textmate"
+                            implementationClass="org.jetbrains.plugins.textmate.editor.TextMateCompletionContributor" order="last"/>
+    <applicationConfigurable groupId="editor"
+                             bundle="messages.IdeBundle"
+                             key="configurable.TextMateConfigurableProvider.display.name"
+                             id="reference.settingsdialog.textmate.bundles"
+                             provider="org.jetbrains.plugins.textmate.configuration.TextMateConfigurableProvider"/>
+    <spellchecker.support language="textmate" implementationClass="org.jetbrains.plugins.textmate.spellchecker.TextMateSpellingStrategy"/>
+  </extensions>
 </idea-plugin>

@@ -29,9 +29,6 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core-provided",
     "@lib//:kotlinx-collections-immutable-provided",
   ],
-  runtime_deps = [
-    ":core_resources",
-    "//platform/backend",
-  ]
+  runtime_deps = [":core_resources"]
 )
 ### auto-generated section `build intellij.textmate.core` end

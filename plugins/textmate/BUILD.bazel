@@ -20,7 +20,6 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/ide-core-impl",
     "//platform/projectModel-api:projectModel",
-    "//spellchecker",
     "//platform/diff-api:diff",
     "//plugins/textmate/core",
     "//plugins/textmate/joni",
