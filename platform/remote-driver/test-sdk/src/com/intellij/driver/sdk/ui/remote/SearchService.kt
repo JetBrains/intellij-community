@@ -28,7 +28,7 @@ class SearchService(
 
   fun findAll(@Language("xpath") xpath: String, component: Component? = null, onlyFrontend: Boolean = false): List<Component> {
     var matchingElements = getSwingHierarchyDOMAndFindMatchingElements(xpath, component, onlyFrontend)
-    if (matchingElements.all { isBeControl(it) && !validateBeControlElement(it) }) {
+    if (matchingElements.isNotEmpty() && matchingElements.all { isBeControl(it) && !validateBeControlElement(it) }) {
       matchingElements = getSwingHierarchyDOMAndFindMatchingElements(xpath, component, true)
     }
     return matchingElements.mapNotNull { reconstructComponent(it) }
