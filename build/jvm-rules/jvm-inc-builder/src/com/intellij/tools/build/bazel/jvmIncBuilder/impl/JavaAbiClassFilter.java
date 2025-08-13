@@ -2,28 +2,27 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.FailSafeClassReader;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.FieldNode;
 import org.jetbrains.org.objectweb.asm.tree.InsnNode;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class JavaAbiClassFilter extends ClassVisitor {
   public static final String MODULE_INFO_CLASS_NAME = "module-info";
   private boolean isAbiClass;
-  private boolean isAnnotation;
+  private boolean isEnum;
   private boolean allowPackageLocalMethods;
   private final Set<String> myExcludedClasses = new HashSet<>();
   private final List<FieldNode> myFields = new ArrayList<>();
-  private final List<MethodNode> myMethods = new ArrayList<>();
+  private final MethodContainer myMethods;
 
-  private JavaAbiClassFilter(ClassVisitor delegate) {
+  private JavaAbiClassFilter(ClassVisitor delegate, MethodContainer methodContainer) {
     super(Opcodes.API_VERSION, delegate);
+    myMethods = methodContainer;
   }
 
   public static byte @Nullable [] filter(byte[] classBytes) {
@@ -33,8 +32,9 @@ public class JavaAbiClassFilter extends ClassVisitor {
         return null;
       }
     };
-    JavaAbiClassFilter abiVisitor = new JavaAbiClassFilter(writer);
-    new FailSafeClassReader(classBytes).accept(
+    ClassReader reader = new FailSafeClassReader(classBytes);
+    JavaAbiClassFilter abiVisitor = new JavaAbiClassFilter(writer, MethodContainer.create(reader));
+    reader.accept(
       abiVisitor, ClassReader.SKIP_FRAMES | ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG
     );
     return abiVisitor.isAbiClass? writer.toByteArray() : null;
@@ -43,7 +43,7 @@ public class JavaAbiClassFilter extends ClassVisitor {
   @Override
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     isAbiClass = MODULE_INFO_CLASS_NAME.equals(name) || isAbiVisible(access);
-    isAnnotation = isAnnotation(access);
+    isEnum = isEnum(access);
     allowPackageLocalMethods = name.contains("/android/");   // todo: temporary condition to enable android tests compilation
     if (!isAbiClass) {
       myExcludedClasses.add(name);
@@ -55,8 +55,12 @@ public class JavaAbiClassFilter extends ClassVisitor {
     return (access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0;
   }
 
-  private static boolean isAnnotation(int access) {
-    return (access & Opcodes.ACC_ANNOTATION) != 0;
+  private static boolean isEnum(int access) {
+    return (access & Opcodes.ACC_ENUM) != 0;
+  }
+
+  private static boolean isSynthetic(int access) {
+    return (access & Opcodes.ACC_SYNTHETIC) != 0;
   }
 
   private static boolean isPackageLocal(int access) {
@@ -65,7 +69,7 @@ public class JavaAbiClassFilter extends ClassVisitor {
 
   @Override
   public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-    if (isAbiVisible(access)) {
+    if (isAbiVisible(access) || isEnum && isSynthetic(access)) {
       FieldNode field = new FieldNode(Opcodes.API_VERSION, access, name, descriptor, signature, value);
       myFields.add(field);
       return field;
@@ -76,9 +80,7 @@ public class JavaAbiClassFilter extends ClassVisitor {
   @Override
   public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
     if (isAbiVisible(access) || (allowPackageLocalMethods && isPackageLocal(access))) {
-      MethodNode method = new AbiMethod(access, name, descriptor, signature, exceptions);
-      myMethods.add(method);
-      return method;
+      return myMethods.addAbiStubMethod(access, name, descriptor, signature, exceptions);
     }
     return null;
   }
@@ -95,7 +97,7 @@ public class JavaAbiClassFilter extends ClassVisitor {
     }
 
     //Collections.sort(myMethods, Comparator.comparing(m -> m.name));
-    for (MethodNode method : myMethods) {
+    for (MethodNode method : myMethods.getMethods()) {
       method.accept(cv);
     }
     super.visitEnd();
@@ -140,4 +142,83 @@ public class JavaAbiClassFilter extends ClassVisitor {
       }
     }
   }
+
+  private interface MethodContainer {
+    @Nullable
+    MethodNode addAbiStubMethod(int access, String name, String descriptor, String signature, String[] exceptions);
+
+    Collection<MethodNode> getMethods();
+
+    static MethodContainer create(ClassReader reader) {
+      if (isEnum(reader.getAccess())) {
+        // Keep enum's certain methods in ABI content. Form compiler relies on enum's valueOf() and similar methods in property value introspection.
+        // Failure to read enum constants on compilation stage may lead to incorrectly generated UI setup code.
+        return new EnumMethodContainer(Opcodes.API_VERSION, reader);
+      }
+      return new MethodContainer() {
+        private final List<MethodNode> myNodes = new ArrayList<>();
+        @Override
+        public MethodNode addAbiStubMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+          AbiMethod node = new AbiMethod(access, name, descriptor, signature, exceptions);
+          myNodes.add(node);
+          return node;
+        }
+
+        @Override
+        public Collection<MethodNode> getMethods() {
+          return Collections.unmodifiableCollection(myNodes);
+        }
+      };
+    }
+  }
+
+  private static class EnumMethodContainer implements MethodContainer {
+    private static final Set<String> ourEnumMethodsToKeep = Set.of(
+      "valueOf", "values", "$values", "name", "ordinal", "compareTo"
+    );
+    private final Map<String, MethodNode> myNodes = new LinkedHashMap<>(); // keep method order
+
+    EnumMethodContainer(int api, ClassReader reader) {
+      if (isAbiVisible(reader.getAccess())) {
+        // collect methods to keep
+        reader.accept(new ClassVisitor(api) {
+          @Override
+          public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+            if (shouldKeepMethod(access, name)) {
+              MethodNode node = new MethodNode(api, access, name, descriptor, signature, exceptions);
+              myNodes.put(getKey(name, descriptor), node);
+              return node;
+            }
+
+            myNodes.put(getKey(name, descriptor), new AbiMethod(access, name, descriptor, signature, exceptions));
+            return null;
+          }
+        }, ClassReader.SKIP_DEBUG);
+      }
+    }
+
+    @Override
+    @Nullable
+    public MethodNode addAbiStubMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+      return shouldKeepMethod(access, name)? null : myNodes.computeIfAbsent(getKey(name, descriptor), k -> new AbiMethod(access, name, descriptor, signature, exceptions));
+    }
+
+    @Override
+    public Collection<MethodNode> getMethods() {
+      return Collections.unmodifiableCollection(myNodes.values());
+    }
+
+    private static @NotNull String getKey(String name, String descriptor) {
+      return name + descriptor;
+    }
+
+    private static boolean shouldKeepMethod(int access, String name) {
+      return isSynthetic(access) || isAbiVisible(access) && ourEnumMethodsToKeep.contains(name) || isConstructor(name);
+    }
+
+    private static boolean isConstructor(String name) {
+      return "<init>".equals(name) || "<clinit>".equals(name);
+    }
+  }
+  
 }
