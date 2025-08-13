@@ -33,37 +33,18 @@ public class ConfigurationState {
   private static final int VERSION = 1;
 
   private static final ConfigurationState EMPTY = new ConfigurationState(new PathSourceMapper(), NodeSourceSnapshot.EMPTY, NodeSourceSnapshot.EMPTY, Map.of());
-  
-  private static final Set<CLFlags> ourTrackedFlags = EnumSet.of(
-    CLFlags.PLUGIN_ID,
-    CLFlags.PLUGIN_CLASSPATH,
-    CLFlags.PLUGIN_OPTIONS,
-    CLFlags.API_VERSION,
-    CLFlags.KOTLIN_MODULE_NAME,
-    CLFlags.LANGUAGE_VERSION,
-    CLFlags.JVM_TARGET,
-    CLFlags.OPT_IN,
-    CLFlags.X_ALLOW_KOTLIN_PACKAGE,
-    CLFlags.X_ALLOW_RESULT_RETURN_TYPE,
-    CLFlags.X_WHEN_GUARDS,
-    CLFlags.X_LAMBDAS,
-    CLFlags.JVM_DEFAULT,
-    CLFlags.X_JVM_DEFAULT, 
-    CLFlags.X_INLINE_CLASSES,
-    CLFlags.X_CONTEXT_RECEIVERS,
-    CLFlags.X_CONTEXT_PARAMETERS,
-    CLFlags.X_CONSISTENT_DATA_CLASS_COPY_VISIBILITY,
-    CLFlags.X_ALLOW_UNSTABLE_DEPENDENCIES,
-    CLFlags.SKIP_METADATA_VERSION_CHECK,
-    CLFlags.X_SKIP_PRERELEASE_CHECK,
-    CLFlags.X_EXPLICIT_API_MODE,
-    CLFlags.X_NO_CALL_ASSERTIONS,
-    CLFlags.X_NO_PARAM_ASSERTIONS,
-    CLFlags.X_SAM_CONVERSIONS,
-    CLFlags.X_STRICT_JAVA_NULLABILITY_ASSERTIONS,
-    CLFlags.X_X_LANGUAGE,
-    CLFlags.FRIENDS,
-    CLFlags.NO_PROC
+
+  private static final Set<CLFlags> ourIgnoredFlags = EnumSet.of(
+    CLFlags.NON_INCREMENTAL,
+    CLFlags.JAVA_COUNT,
+    CLFlags.TARGET_LABEL,
+    CLFlags.CP, // processed separately
+    CLFlags.OUT,
+    CLFlags.ABI_OUT,
+    CLFlags.WARN,
+    CLFlags.X_WASM_ATTACH_JS_EXCEPTION,
+    CLFlags.ADD_EXPORT,
+    CLFlags.ADD_READS
   );
   
   private final NodeSourcePathMapper myPathMapper;
@@ -167,7 +148,7 @@ public class ConfigurationState {
     };
 
     return Utils.digest(
-      flat(map(filter(Arrays.asList(CLFlags.values()), flg -> ourTrackedFlags.contains(flg) && flags.containsKey(flg)), flg -> flat(asIterable(flg.name()), sorted.fun(flags.get(flg)))))
+      flat(map(filter(Arrays.asList(CLFlags.values()), flg -> flags.containsKey(flg) && !ourIgnoredFlags.contains(flg)), flg -> flat(asIterable(flg.name()), sorted.fun(flags.get(flg)))))
     );
   }
 
