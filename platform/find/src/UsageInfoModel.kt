@@ -139,13 +139,9 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
           }
         }
         finally {
-          //if we get some model without ranges or proper ranges were loaded - full model loaded
-          val loaded = defaultMergedRanges.isEmpty() || !cachedUsageInfos.isNotEmpty()
-          isLoaded = loaded
-          if (loaded) {
-            withContext(Dispatchers.EDT) {
-              onDocumentUpdated?.invoke(cachedUsageInfos)
-            }
+          isLoaded = true
+          withContext(Dispatchers.EDT) {
+            onDocumentUpdated?.invoke(cachedUsageInfos)
           }
         }
       }
