@@ -153,8 +153,13 @@ class JpsBuild(communityRoot: BuildDependenciesCommunityRoot, private val myMode
             info(text)
           }
           else {
-            // Warnings mean little for bootstrapping
-            verbose(text)
+            if (kind == BuildMessage.Kind.PROGRESS && (text.startsWith("GET INITIATED") || text.startsWith("GET PROGRESSED"))) {
+              // ignore
+            }
+            else {
+              // Warnings mean little for bootstrapping
+              verbose(text)
+            }
           }
         }
 
