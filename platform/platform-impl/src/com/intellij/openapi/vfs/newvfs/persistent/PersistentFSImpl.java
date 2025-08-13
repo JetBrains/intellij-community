@@ -392,13 +392,19 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     //          (and DiskQueryRelay waiting) is done before the locked region anyway?
 
     //TODO RC: there are few places in this class .update() is used to update a hierarchy, but there is no consistency
-    //         in how those updates are organised: in some cases real FS queries and makeChildRecord() calls are made
-    //         _inside_ the .update(), i.e. inside the .update()'s lock -- as it is done here. But in other cases FS
-    //         requests and corresponding makeChildRecord() calls are done outside the .update() and it's lock. This
-    //         is quite misleading, it makes unclear that is the consistency model of that hierarchy update.
+    //         in how those updates are organised: in some cases (events processing) real FS queries and makeChildRecord()
+    //         calls are made _inside_ the .update(), i.e. inside the .update()'s lock -- as it is done here.
+    //         But in other cases FS requests and corresponding makeChildRecord() calls are done outside the .update() and
+    //         it's lock.
+    //         This is quite misleading, it makes unclear that is the consistency model of that hierarchy update -- looks like
+    //         in some cases we rely on external WA/RA, while in other cases we don't rel on it.
     //         (See also an overall VFS thread-safety rant in FSRecordsImpl)
 
-
+    //RC: interestingly, here we only _add_ childrenNames returned by FS to the children already in the directory, but
+    //    never remove the children that _were_ in directory, but currently FS reports they are not there anymore.
+    //    It seems logical to remove those children from the directory, but we don't do that -- why?
+    //    Maybe it is because we'll need to remove those children, and hence issue a notification, that we don't want to
+    //    do here?
     ListResult saved = vfsPeer.update(
       dir,
       dirId,
@@ -1704,10 +1710,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           }
 
           added.sort(ChildInfo.BY_ID);
-          vfsPeer.update(directory, directoryId,
-                         oldChildren -> oldChildren.merge(vfsPeer, added, isCaseSensitive), /*setAllChildrenCached: */ true);
-          // set "all children loaded" because the first "fileCreated" listener (looking at you, local history)
+          // set "all children cached" because the first "fileCreated" listener (looking at you, local history)
           // will call getChildren() anyway, beyond a shadow of a doubt
+          vfsPeer.update(
+            directory, directoryId,
+            oldChildren -> oldChildren.merge(vfsPeer, added, isCaseSensitive),
+            /*setAllChildrenCached: */ true
+          );
           directory.initializeAndAddChildren(added, true, (childCreated, childInfo) -> {
             // enqueue recursive children
             if (childCreated instanceof VirtualDirectoryImpl && childInfo.getChildren() != null) {

@@ -1206,6 +1206,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                       @NotNull IntSet prevChildren,
                                       @NotNull VirtualFile @NotNull [] newChildren,
                                       @NotNull List<? extends ChildInfo> childrenInfo) {
+    //RC: why it is suspicious: because we _never remove_ the child(ren) from the directory on reading path -- even if
+    //    the FS reports some children are not there anymore (see comments in PersistentFSImpl.persistAllChildren()).
+    //    We only _add_ new child(ren), if any -- but all previously existing children remain intact.
+    //    Hence it is unclear: how PersistentFSImpl.listAll() could return a children list there some of previously existing
+    //    children are absent? PersistentFSImpl.listAll() is either returns already cached children, or the previously cached
+    //    children with merged in FS data -- in both cases previous children must be there.
+    //    But it seems there is some path to that -- the goal is to trace it, and verify is it benign or not.
     StringBuilder sb = new StringBuilder("Loaded child(ren) disappeared: \n" +
                                          "parent: " + verboseToString(this) + "\n" +
                                          "missed children: ");
