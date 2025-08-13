@@ -57,7 +57,7 @@ internal sealed interface FileProviderMap {
   /**
    * Support [anyContext] special case. See doc of [FileProviderMap].
    *
-   * This method is called when the map contains a single entry, it has [anyContext] as a key, and we want to reassing this entry to [context]..
+   * This method is called when the map contains a single entry, it has [anyContext] as a key, and we want to reassigning this entry to [context]..
    * The method tries to assign the context to the existing provider.
    *
    * @return the actual context assigned to [viewProvider]. Either [context] or a context that had been assigned to [viewProvider] concurrently.
