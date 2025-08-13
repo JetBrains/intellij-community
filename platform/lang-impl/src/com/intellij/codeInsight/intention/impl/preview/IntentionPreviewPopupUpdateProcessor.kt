@@ -168,7 +168,8 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
         val factory = EditorFactory.getInstance()
         val probeEditor = factory.createEditor(factory.createDocument("X"))
         val lineHeight = probeEditor.lineHeight.coerceAtLeast(1)
-        val maxLines = ((screen.height - location.y) / lineHeight - 1).coerceAtLeast(2) 
+        factory.releaseEditor(probeEditor)
+        val maxLines = ((screen.height - location.y) / lineHeight - 1).coerceAtLeast(2)
         val editors = IntentionPreviewEditorsPanel.createEditors(project, result.shorten(maxLines))
         if (editors.isEmpty()) {
           IntentionPreviewComponent.createNoPreviewPanel()
