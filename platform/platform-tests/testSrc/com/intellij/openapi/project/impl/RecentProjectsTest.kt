@@ -10,6 +10,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.ui.DeferredIconImpl
 import com.intellij.util.IconUtil
 import com.intellij.util.PathUtil
@@ -108,14 +109,14 @@ class RecentProjectsTest {
   }
 
   @Test
-  fun solutionLikeProjectIcon() {
+  fun solutionLikeProjectIcon() = timeoutRunBlocking {
     // For Rider
     val rpm = (RecentProjectsManager.getInstance() as RecentProjectsManagerBase)
 
     val projectDir = Path.of("${PlatformTestUtil.getPlatformTestDataPath()}/recentProjects/dotNetSampleRecent/Povysh")
     val slnFile = projectDir.resolve("Povysh.sln")
 
-    val icon = (rpm.getProjectIcon(slnFile.toString(), isProjectValid = true) as DeferredIconImpl<*>).evaluate()
+    val icon = (rpm.getProjectIcon(slnFile.toString(), isProjectValid = true) as DeferredIconImpl<*>).evaluateAsync()
     assertThat(icon).isNotInstanceOf(EmptyIcon::class.java)
 
     // For custom icons we add a 2px empty border
