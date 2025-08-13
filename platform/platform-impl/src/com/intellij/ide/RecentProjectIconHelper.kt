@@ -153,13 +153,7 @@ class RecentProjectIconHelper {
     if (!RecentProjectsManagerBase.isFileSystemPath(path)) {
       return EmptyIcon.create(iconSize)
     }
-
-    return IconDeferrer.getInstance().defer(
-      EmptyIcon.create(iconSize),
-      LocalProjectIconKey(cacheEpoch.get(), path, isProjectValid, iconSize, name),
-    ) {
-      it.loadIcon()
-    }
+    return createDeferredIcon(LocalProjectIconKey(cacheEpoch.get(), path, isProjectValid, iconSize, name))
   }
 
   fun getNonLocalProjectIcon(
@@ -168,12 +162,7 @@ class RecentProjectIconHelper {
     iconSize: Int = unscaledProjectIconSize(),
     name: String? = null,
   ): Icon {
-    return IconDeferrer.getInstance().defer(
-      EmptyIcon.create(iconSize),
-      NonLocalProjectIconKey(cacheEpoch.get(), id, isProjectValid, iconSize, name),
-    ) {
-      it.loadIcon()
-    }
+    return createDeferredIcon(NonLocalProjectIconKey(cacheEpoch.get(), id, isProjectValid, iconSize, name))
   }
 
 
@@ -181,7 +170,17 @@ class RecentProjectIconHelper {
     ProjectWindowCustomizerService.projectPath(project)?.let { getCustomIconFileInfo(it) } != null
 }
 
+private fun createDeferredIcon(key: DeferredIconKey): Icon {
+  return IconDeferrer.getInstance().defer(
+    EmptyIcon.create(key.iconSize),
+    key,
+  ) {
+    it.loadIcon()
+  }
+}
+
 private sealed class DeferredIconKey {
+  abstract val iconSize: Int
   abstract fun loadIcon(): Icon
 }
 
@@ -189,7 +188,7 @@ private data class LocalProjectIconKey(
   val cacheEpoch: Int,
   val path: @SystemIndependent String,
   val isProjectValid: Boolean,
-  val iconSize: Int,
+  override val iconSize: Int,
   val name: String?,
 ) : DeferredIconKey() {
   override fun loadIcon(): Icon =
@@ -201,7 +200,7 @@ private data class NonLocalProjectIconKey(
   val cacheEpoch: Int,
   val id: String,
   val isProjectValid: Boolean,
-  val iconSize: Int,
+  override val iconSize: Int,
   val name: String?,
 ) : DeferredIconKey() {
   override fun loadIcon(): Icon =
