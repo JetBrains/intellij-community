@@ -54,7 +54,7 @@ private fun getDotIdeaPath(path: Path): Path {
 
   val fileName = path.fileName.toString()
   val dotIndex = fileName.lastIndexOf('.')
-  val fileNameWithoutExt = if (dotIndex == -1) fileName else fileName.substring(0, dotIndex)
+  val fileNameWithoutExt = if (dotIndex == -1) fileName else fileName.take(dotIndex)
   return path.parent.resolve("$IDEA_DIR/$IDEA_DIR.$fileNameWithoutExt/$IDEA_DIR")
 }
 
@@ -69,7 +69,7 @@ class RecentProjectIconHelper {
       try {
         return getDotIdeaPath(Path.of(path))
       }
-      catch (e: InvalidPathException) {
+      catch (_: InvalidPathException) {
         return null
       }
     }
