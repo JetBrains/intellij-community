@@ -64,7 +64,7 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
       return
     }
 
-    LOG.debug("Schedule cache update")
+    LOG.debug("Schedule global cache update")
     check(saveRequests.tryEmit(Unit))
   }
 
