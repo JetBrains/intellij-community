@@ -38,6 +38,18 @@ import org.jetbrains.jewel.ui.icon.newUiChecker
 import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 
+/**
+ * Icon component that draws an icon from an [IconKey].
+ *
+ * @param key The [IconKey] to resolve the icon from.
+ * @param contentDescription text used by accessibility services to describe what this icon represents. This should
+ *   always be provided unless this icon is used for decorative purposes, and does not represent a meaningful action
+ *   that a user can take.
+ * @param modifier optional [Modifier] for this Icon.
+ * @param iconClass The class to use for resolving the icon resource. Defaults to `key.iconClass`.
+ * @param tint tint to be applied to the icon. If [Color.Unspecified] is provided, then no tint is applied.
+ * @param hints [PainterHint]s to be used by the painter.
+ */
 @Suppress("ComposableParamOrder") // It doesn't like the vararg
 @Composable
 public fun Icon(
@@ -56,6 +68,18 @@ public fun Icon(
     Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, tint = tint)
 }
 
+/**
+ * Icon component that draws an icon from an [IconKey] using a [tint].
+ *
+ * @param key The [IconKey] to resolve the icon from.
+ * @param contentDescription text used by accessibility services to describe what this icon represents. This should
+ *   always be provided unless this icon is used for decorative purposes, and does not represent a meaningful action
+ *   that a user can take.
+ * @param modifier optional [Modifier] for this Icon.
+ * @param iconClass The class to use for resolving the icon resource. Defaults to `key.iconClass`.
+ * @param tint tint to be applied to the icon. If [Color.Unspecified] is provided, then no tint is applied.
+ * @param hint [PainterHint] to be passed to the painter.
+ */
 @Suppress("ComposableParamOrder") // To fix in JEWEL-929
 @Composable
 public fun Icon(
@@ -75,6 +99,18 @@ public fun Icon(
     Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, tint = tint)
 }
 
+/**
+ * Icon component that draws an icon from an [IconKey] using a [colorFilter].
+ *
+ * @param key The [IconKey] to resolve the icon from.
+ * @param contentDescription text used by accessibility services to describe what this icon represents. This should
+ *   always be provided unless this icon is used for decorative purposes, and does not represent a meaningful action
+ *   that a user can take.
+ * @param modifier optional [Modifier] for this Icon.
+ * @param iconClass The class to use for resolving the icon resource. Defaults to `key.iconClass`.
+ * @param colorFilter [ColorFilter] to be applied to the icon.
+ * @param hint [PainterHint] to be passed to the painter.
+ */
 @Suppress("ComposableParamOrder") // To fix in JEWEL-929
 @Composable
 public fun Icon(
@@ -93,6 +129,18 @@ public fun Icon(
     Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, colorFilter = colorFilter)
 }
 
+/**
+ * Icon component that draws an icon from an [IconKey] using a [colorFilter].
+ *
+ * @param key The [IconKey] to resolve the icon from.
+ * @param contentDescription text used by accessibility services to describe what this icon represents. This should
+ *   always be provided unless this icon is used for decorative purposes, and does not represent a meaningful action
+ *   that a user can take.
+ * @param modifier optional [Modifier] for this Icon.
+ * @param iconClass The class to use for resolving the icon resource. Defaults to `key.iconClass`.
+ * @param colorFilter [ColorFilter] to be applied to the icon.
+ * @param hints [PainterHint]s to be used by the painter.
+ */
 @Suppress("ComposableParamOrder") // To fix in JEWEL-929
 @Composable
 public fun Icon(
@@ -214,6 +262,10 @@ public fun Icon(
     )
 }
 
+@Deprecated(
+    "Please use iconKeys with the Icon or Image components instead. " +
+        "This will prevent issues when running in the IntelliJ Platform."
+)
 @Composable
 public fun painterResource(resourcePath: String): Painter =
     when (resourcePath.substringAfterLast(".").lowercase()) {
