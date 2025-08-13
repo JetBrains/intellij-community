@@ -3,6 +3,7 @@ package com.intellij.usages;
 
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.rules.MergeableUsage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletableFuture;
@@ -16,4 +17,9 @@ public interface UsageInfoAdapter extends Usage, MergeableUsage {
   @NotNull UsageInfo @NotNull [] getMergedInfos();
   @NotNull
   CompletableFuture<UsageInfo[]> getMergedInfosAsync();
+
+  @ApiStatus.Internal
+  default boolean isLoaded() {
+    return true;
+  }
 }
