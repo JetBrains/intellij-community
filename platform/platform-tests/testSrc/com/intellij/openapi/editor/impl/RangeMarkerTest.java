@@ -1463,7 +1463,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     document = null;
     TestTimeOut t = TestTimeOut.setTimeout(100, TimeUnit.SECONDS);
     GCUtil.tryGcSoftlyReachableObjects(() -> {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       return ref.get() == null || t.isTimedOut();
     });
     Document d = ref.get();
