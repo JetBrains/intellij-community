@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
+    "//platform/core-api:core",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/native",
@@ -24,8 +25,7 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/java-psi-api:psi",
     "//java/idea-ui:ui",
-  ],
-  runtime_deps = ["//platform/core-api:core"]
+  ]
 )
 ### auto-generated section `build kotlin.native.tests` end
 

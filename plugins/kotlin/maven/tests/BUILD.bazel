@@ -63,6 +63,7 @@ jvm_library(
     "//plugins/maven",
     "//plugins/maven/testFramework",
     "//platform/util/jdom",
+    "//java/java-runtime:rt",
   ],
   runtime_deps = [
     "//plugins/kotlin/compiler-plugins/allopen/common-k1:kotlin-compiler-plugins-allopen-common-k1",

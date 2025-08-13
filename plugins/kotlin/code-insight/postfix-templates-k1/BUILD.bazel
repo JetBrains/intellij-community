@@ -31,6 +31,7 @@ jvm_library(
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
     "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/base/code-insight",
   ],
   runtime_deps = [":kotlin-code-insight-postfix-templates-k1_resources"]
 )

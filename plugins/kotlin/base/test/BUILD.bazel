@@ -32,6 +32,7 @@ jvm_library(
     "//java/testFramework",
     "//plugins/junit_rt:junit-rt",
     "@lib//:slf4j-api",
+    "//java/java-runtime:rt",
   ],
   exports = ["//plugins/junit_rt:junit-rt"]
 )

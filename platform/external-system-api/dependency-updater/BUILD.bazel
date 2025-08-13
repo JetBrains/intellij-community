@@ -53,6 +53,7 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//java/java-runtime:rt",
   ],
   runtime_deps = [":externalSystem-dependencyUpdater-tests_test_resources"]
 )

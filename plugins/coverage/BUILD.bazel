@@ -100,6 +100,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
     "@lib//:fastutil-min",
+    "//java/java-runtime:rt",
   ],
   exports = [
     "//plugins/coverage-common:coverage",

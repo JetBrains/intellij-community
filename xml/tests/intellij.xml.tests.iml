@@ -48,6 +48,7 @@
     <orderEntry type="module" module-name="intellij.libraries.xerces" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.syntax.scripts" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.syntax" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>

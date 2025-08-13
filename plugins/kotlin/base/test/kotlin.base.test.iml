@@ -24,5 +24,6 @@
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.junit.rt" exported="" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="slf4j-api" level="project" />
+    <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
   </component>
 </module>

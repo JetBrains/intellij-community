@@ -33,6 +33,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/core-ui",
     "@lib//:junit5",
+    "//java/java-runtime:rt",
   ],
   runtime_deps = [":testExtensions_resources"]
 )

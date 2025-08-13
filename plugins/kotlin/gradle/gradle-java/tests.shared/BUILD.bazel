@@ -94,6 +94,7 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/openapi:java",
     "//plugins/kotlin/jvm-debugger/coroutines",
+    "//java/java-runtime:rt",
   ],
   exports = ["@lib//:kotlin-gradle-plugin-idea"]
 )

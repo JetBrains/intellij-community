@@ -63,6 +63,7 @@ jvm_library(
     "//libraries/xerces",
     "//platform/syntax/syntax-scripts:scripts",
     "//xml/xml-syntax:syntax",
+    "//java/java-runtime:rt",
   ],
   runtime_deps = [
     ":tests_test_resources",
