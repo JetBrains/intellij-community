@@ -180,9 +180,7 @@ fun ObjClass<*>.generateExtensionCode(): String? {
       line("$generatedCodeVisibilityModifier fun ${MutableEntityStorage}.modify$name(")
       line("  entity: $name,")
       line("  modification: $name.Builder.() -> Unit,")
-      line("): $name {")
-      line("  return modifyEntity($name.Builder::class.java, entity, modification)")
-      line("}")
+      line("): $name = modifyEntity($name.Builder::class.java, entity, modification)")
     }
     fields.sortedWith(compareBy({ it.receiver.name }, { it.name })).forEach { line(it.wsCode) }
   }
