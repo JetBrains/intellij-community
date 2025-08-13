@@ -78,7 +78,7 @@ jvm_library(
     "//platform/dvcs-api:vcs-dvcs",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "//platform/vcs-tests:vcs-testFramework",
     "@lib//:miglayout-swing",
     "@lib//:stream_ex",

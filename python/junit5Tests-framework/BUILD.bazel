@@ -53,6 +53,7 @@ jvm_library(
     "//python/python-sdk:sdk_test_lib",
     "@lib//:python-community-junit5_tests-framework-uk-webcompere-system-stubs-jupiter",
     "//platform/util/coroutines",
+    "@lib//:byte-buddy",
   ],
   runtime_deps = [
     ":community-junit5Tests-framework_test_resources",

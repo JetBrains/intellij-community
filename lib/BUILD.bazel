@@ -839,6 +839,13 @@ jvm_import(
 )
 
 jvm_import(
+  name = "byte-buddy",
+  jar = "@byte-buddy-1_17_6_http//file",
+  source_jar = "@byte-buddy-1_17_6-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "caffeine",
   jar = "@caffeine-3_2_1_http//file",
   source_jar = "@caffeine-3_2_1-sources_http//file",
@@ -7332,7 +7339,6 @@ java_library(
   name = "mockito",
   exports = [
     ":mockito-core-5_18_0_http_import",
-    ":byte-buddy-1_17_5_http_import",
     ":byte-buddy-agent-1_17_5_http_import",
     ":objenesis-3_3_http_import",
   ],
@@ -8945,8 +8951,6 @@ java_library(
   exports = [
     ":system-stubs-jupiter-2_1_8_http_import",
     ":system-stubs-core-2_1_8_http_import",
-    ":byte-buddy-1_17_4_http_import",
-    ":byte-buddy-agent-1_17_4_http_import",
   ],
   visibility = ["//visibility:public"]
 )
@@ -8961,18 +8965,6 @@ jvm_import(
   name = "system-stubs-core-2_1_8_http_import",
   jar = "@system-stubs-core-2_1_8_http//file",
   source_jar = "@system-stubs-core-2_1_8-sources_http//file"
-)
-
-jvm_import(
-  name = "byte-buddy-1_17_4_http_import",
-  jar = "@byte-buddy-1_17_4_http//file",
-  source_jar = "@byte-buddy-1_17_4-sources_http//file"
-)
-
-jvm_import(
-  name = "byte-buddy-agent-1_17_4_http_import",
-  jar = "@byte-buddy-agent-1_17_4_http//file",
-  source_jar = "@byte-buddy-agent-1_17_4-sources_http//file"
 )
 
 jvm_import(

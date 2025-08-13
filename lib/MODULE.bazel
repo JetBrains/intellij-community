@@ -700,6 +700,20 @@ http_file(
 )
 
 http_file(
+  name = "byte-buddy-1_17_6_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.6/byte-buddy-1.17.6.jar",
+  sha256 = "d26382a839cb26d5c62a0b0f04715bcef55a531f96ac6ce40de452a1c0539e70",
+  downloaded_file_path = "byte-buddy-1.17.6.jar"
+)
+
+http_file(
+  name = "byte-buddy-1_17_6-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.6/byte-buddy-1.17.6-sources.jar",
+  sha256 = "bed458b6ee0df083eb4e1bd2dd171f7d8abe30993b510a9a241ba7bff3653e27",
+  downloaded_file_path = "byte-buddy-1.17.6-sources.jar"
+)
+
+http_file(
   name = "caffeine-3_2_1_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ben-manes/caffeine/caffeine/3.2.1/caffeine-3.2.1.jar",
   sha256 = "771175b14f1f893856a901e81a4a76073c806f931102c6b23e6e41969a98a4a5",
@@ -12817,20 +12831,6 @@ http_file(
 )
 
 http_file(
-  name = "byte-buddy-1_17_4_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.4/byte-buddy-1.17.4.jar",
-  sha256 = "74768731219a5b2e0cc9d2b1c9e2092e0622242e41b1925a6ba7346e160731bc",
-  downloaded_file_path = "byte-buddy-1.17.4.jar"
-)
-
-http_file(
-  name = "byte-buddy-agent-1_17_4_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy-agent/1.17.4/byte-buddy-agent-1.17.4.jar",
-  sha256 = "e1dae7efc5562c29ad3b625b90e6864208de69bad5632c3f93a547f17622ac51",
-  downloaded_file_path = "byte-buddy-agent-1.17.4.jar"
-)
-
-http_file(
   name = "system-stubs-jupiter-2_1_8-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/uk/org/webcompere/system-stubs-jupiter/2.1.8/system-stubs-jupiter-2.1.8-sources.jar",
   sha256 = "208bfe2907ab022fe206402f2ef6b1ea445f8240f072a14a49e338c1448fb2b6",
@@ -12842,20 +12842,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/uk/org/webcompere/system-stubs-core/2.1.8/system-stubs-core-2.1.8-sources.jar",
   sha256 = "6e6c4adf9094e0200400a5d9f8086c8a1c4a0940919fe0b30d30543b483d5687",
   downloaded_file_path = "system-stubs-core-2.1.8-sources.jar"
-)
-
-http_file(
-  name = "byte-buddy-1_17_4-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.4/byte-buddy-1.17.4-sources.jar",
-  sha256 = "ea0286512984db5473f6573bc84030a5d1eab4dbaecf3ffde0b8827d967316f8",
-  downloaded_file_path = "byte-buddy-1.17.4-sources.jar"
-)
-
-http_file(
-  name = "byte-buddy-agent-1_17_4-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy-agent/1.17.4/byte-buddy-agent-1.17.4-sources.jar",
-  sha256 = "57b0ee93eab8caa3cfc424aa24616462543bb2a7f13848cbb537c225314dffaf",
-  downloaded_file_path = "byte-buddy-agent-1.17.4-sources.jar"
 )
 
 http_file(

@@ -130,7 +130,7 @@ jvm_library(
     "//platform/external-system-api/dependency-updater",
     "//java/debugger/impl",
     "//plugins/maven-server-api:maven-server",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "@lib//:mockito-kotlin",
     "//java/execution/impl",
     "//plugins/groovy",

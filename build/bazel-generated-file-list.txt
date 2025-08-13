@@ -351,6 +351,7 @@ libraries/ktor-client
 libraries/ktor-client-cio
 libraries/lucene.common
 libraries/microba
+libraries/mockito
 libraries/skiko
 libraries/testcontainers
 libraries/testng

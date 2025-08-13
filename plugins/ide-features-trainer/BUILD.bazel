@@ -103,7 +103,7 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:mockito-kotlin",
-    "@lib//:mockito",
+    "//libraries/mockito",
   ],
   runtime_deps = [":featuresTrainer_resources"]
 )

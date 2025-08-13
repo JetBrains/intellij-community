@@ -159,7 +159,7 @@ jvm_library(
     "//platform/dvcs-api:vcs-dvcs",
     "//platform/built-in-server:builtInServer-impl",
     "//platform/built-in-server-api:builtInServer",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "@lib//:kotlin-test",
     "//platform/vcs-tests:vcs-tests_test_lib",
     "//platform/util",

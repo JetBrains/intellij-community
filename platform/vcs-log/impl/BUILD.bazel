@@ -115,7 +115,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/util/storages",
     "//platform/vcs-impl/shared",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "//platform/bookmarks",
   ],
   runtime_deps = [":impl_resources"]

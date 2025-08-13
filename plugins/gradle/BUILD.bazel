@@ -116,7 +116,7 @@ jvm_library(
     "@lib//:jmock",
     "@lib//:jmock-junit4",
     "@lib//:jmock-legacy",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "@lib//:mockito-kotlin",
     "@lib//:junit4",
     "//plugins/gradle",

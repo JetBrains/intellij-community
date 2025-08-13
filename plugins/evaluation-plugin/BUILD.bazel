@@ -59,7 +59,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "@lib//:junit5",
     "@lib//:gson",
     "//plugins/evaluation-plugin/languages",

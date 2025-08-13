@@ -39,7 +39,7 @@ jvm_library(
     "@lib//:hash4j",
     "@lib//:fastutil-min",
     "@lib//:maven-resolver-provider",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "@lib//:mockito-kotlin",
     "//jps/model-serialization",
     "//jps/model-api:model",

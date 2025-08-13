@@ -41,7 +41,7 @@ jvm_library(
     "@lib//:kotlin-reflect",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-test-assertions-core-jvm",
-    "@lib//:mockito",
+    "//libraries/mockito",
   ]
 )
 ### auto-generated section `build intellij.platform.core.nio.fs.tests` end

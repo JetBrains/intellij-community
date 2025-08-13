@@ -460,7 +460,7 @@ jvm_library(
     "//platform/observable",
     "//platform/usageView",
     "@lib//:assert_j",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "//java/testFramework",
     "@lib//:easymock",
     "@lib//:objenesis",

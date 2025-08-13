@@ -100,7 +100,7 @@ jvm_library(
     "//java/openapi:java",
     "@lib//:junit4",
     "@lib//:assert_j",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "@lib//:mockito-kotlin",
     "//platform/lang-impl:lang-tests_test_lib",
     "@lib//:kotlinx-coroutines-core",
