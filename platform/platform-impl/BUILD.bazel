@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.ide.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "kt_javac_options")
 
 kt_javac_options(
   name = "custom-javac-options",
@@ -15,7 +14,8 @@ kt_javac_options(
     "java.desktop/sun.awt.datatransfer=ALL-UNNAMED",
     "java.desktop/sun.swing=ALL-UNNAMED",
     "java.base/sun.nio.fs=ALL-UNNAMED",
-  ]
+  ],
+  no_proc = True
 )
 
 jvm_resources(

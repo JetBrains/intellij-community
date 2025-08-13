@@ -142,7 +142,7 @@ jps_test(
 ### auto-generated section `test intellij.platform.util.tests` end
 
 ### auto-generated section `build intellij.platform.util.ui` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+load("@rules_jvm//:jvm.bzl", "kt_javac_options")
 
 kt_javac_options(
   name = "custom-javac-options",
@@ -152,7 +152,8 @@ kt_javac_options(
     "java.desktop/sun.font=ALL-UNNAMED",
     "java.desktop/sun.awt.image=ALL-UNNAMED",
     "java.desktop/sun.swing=ALL-UNNAMED",
-  ]
+  ],
+  no_proc = True
 )
 
 jvm_resources(

@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.ide` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "kt_javac_options")
 
 kt_javac_options(
   name = "custom-javac-options",
@@ -9,7 +8,8 @@ kt_javac_options(
   add_exports = [
     "java.desktop/sun.swing=ALL-UNNAMED",
     "java.desktop/sun.awt=ALL-UNNAMED",
-  ]
+  ],
+  no_proc = True
 )
 
 jvm_resources(
