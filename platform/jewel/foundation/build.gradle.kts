@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+sourceSets { test { kotlin { srcDirs("src/main/generated-kotlin") } } }
+
 private val composeVersion
     get() = ComposeBuildConfig.composeVersion
 

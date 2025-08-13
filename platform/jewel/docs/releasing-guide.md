@@ -10,6 +10,23 @@ artefacts to Maven Central.
 
 Please ping Jakub, Nebojsa, or Sasha for help and guidance.
 
+High-level steps:
+
+1. Bump the Jewel API version in [`gradle.properties`](../gradle.properties)
+2. Run the [version updater script](../scripts/jewel-version-updater.main.kts)
+3. Cherry-pick the changes to the target release branches (e.g., `252`)
+   1. Make sure you've not included IJP major release-specific changes
+   2. Update the `ijp.target` entry in [`gradle.properties`](../gradle.properties)
+   3. Update the Kotlin version in the [Gradle version catalog](../gradle/libs.versions.toml) to match the IJP's Kotlin version
+   4. Update other related versions if needed
+   5. Run all Gradle-based checks
+   6. Run all IJ tests (e.g., via the `tests.cmd` script)
+   7. Verify everything works in the Jewel Standalone sample (components, Markdown rendering)
+   8. Verify everything works in the Jewel IDE samples (toolwindow, component showcase)
+   9. Verify that the publishing works locally (including POMs, especially for newly added/changed modules — see below)
+   10. Open a MR for each cherry-pick branch on Space
+4. When both MRs are approved and merged, run the TeamCity job to publish the artefacts to Maven Central
+
 ## Testing publishing locally
 
 Before pulling the trigger on a release process, it's a good idea to make sure that all and only the artefacts that
