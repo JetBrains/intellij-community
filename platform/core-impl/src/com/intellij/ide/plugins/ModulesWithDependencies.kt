@@ -76,6 +76,7 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
       val strictCheck = module.isBundled || PluginManagerCore.isVendorJetBrains(module.vendor ?: "")
       if (!strictCheck || doesDependOnPluginAlias(module, VCS_ALIAS_ID)) {
         moduleMap.get("intellij.platform.vcs.impl")?.let { dependenciesCollector.add(it) }
+        moduleMap.get("intellij.platform.vcs.dvcs")?.let { dependenciesCollector.add(it) }
         moduleMap.get("intellij.platform.vcs.dvcs.impl")?.let { dependenciesCollector.add(it) }
         moduleMap.get("intellij.platform.vcs.log.impl")?.let { dependenciesCollector.add(it) }
       }

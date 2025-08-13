@@ -3,6 +3,7 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
+    <module name="intellij.platform.vcs.dvcs"/>
     <module name="intellij.platform.collaborationTools"/>
   </dependencies>
 

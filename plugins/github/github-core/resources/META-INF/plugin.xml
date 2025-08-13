@@ -28,6 +28,7 @@
 
   <dependencies>
     <plugin id="Git4Idea"/>
+    <module name="intellij.platform.vcs.dvcs"/>
     <module name="intellij.platform.collaborationTools"/>
   </dependencies>
 </idea-plugin>

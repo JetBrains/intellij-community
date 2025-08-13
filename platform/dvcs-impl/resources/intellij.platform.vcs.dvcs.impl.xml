@@ -1,5 +1,6 @@
 <idea-plugin>
   <dependencies>
+    <module name="intellij.platform.vcs.dvcs"/>
     <module name="intellij.platform.vcs.log.impl"/>
     <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.dvcs.impl.shared"/>
