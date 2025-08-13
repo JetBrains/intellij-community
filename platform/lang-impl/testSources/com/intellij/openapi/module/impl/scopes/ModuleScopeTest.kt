@@ -22,8 +22,8 @@ internal class ModuleScopeTest {
   companion object {
     private val project = projectFixture().withSharedSourceEnabled()
 
-    private val module1 = project.moduleFixture("src1")
-    private val module2 = project.moduleFixture("src2")
+    private val module1 = project.moduleFixture("ModuleScopeTest_src1")
+    private val module2 = project.moduleFixture("ModuleScopeTest_src2")
 
     private val sourceRoot1 = module1.sourceRootFixture()
     private val sourceRoot2 = module2.sourceRootFixture()
@@ -31,7 +31,7 @@ internal class ModuleScopeTest {
 
     private val psiFile1 = sourceRoot1.psiFileFixture("Test.txt", "Test file")
     private val psiFile2 = sourceRoot2.psiFileFixture("Test2.txt", "Test file 2")
-    private val psiFileCommon = sourceRootCommon.psiFileFixture("TestCommon.txt", "Test file Common")
+    private val psiFileCommon = sourceRootCommon.psiFileFixture("ModuleScopeTestTestCommon.txt", "Test file Common")
 
     private val file1 get() = psiFile1.get().virtualFile
     private val file2 get() = psiFile2.get().virtualFile

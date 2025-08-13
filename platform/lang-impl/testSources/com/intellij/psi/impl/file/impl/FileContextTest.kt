@@ -22,8 +22,8 @@ internal class FileContextTest {
   companion object {
     private val projectFixture = projectFixture().withSharedSourceEnabled()
 
-    private val module1 = projectFixture.moduleFixture("src1")
-    private val module2 = projectFixture.moduleFixture("src2")
+    private val module1 = projectFixture.moduleFixture("FileContextTest_src1")
+    private val module2 = projectFixture.moduleFixture("FileContextTest_src2")
 
     private val sourceRoot = sharedSourceRootFixture(module1, module2)
   }
