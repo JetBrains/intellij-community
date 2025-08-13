@@ -40,7 +40,6 @@ class MPSProperties : JetBrainsProductProperties() {
             "intellij.idea.community.customization",
             "intellij.java.ide.resources",
             "intellij.platform.whatsNew",
-            "intellij.xml.impl",
         )
 
         productLayout.addPlatformSpec(javaCompiler)
@@ -57,7 +56,7 @@ class MPSProperties : JetBrainsProductProperties() {
             "intellij.tasks.core",
             "intellij.vcs.git",
             "intellij.vcs.svn",
-            "intellij.vcs.github.community",
+            "intellij.vcs.github",
             "intellij.vcs.git.commit.modal",
             "intellij.ant",
             "intellij.sh",
