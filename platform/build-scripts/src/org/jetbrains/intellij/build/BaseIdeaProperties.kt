@@ -75,7 +75,7 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
   "lib/guava.jar" to "1.8",
   "lib/external-system-rt.jar" to "1.8",
   "plugins/java-coverage/lib/java-coverage-rt.jar" to "1.8",
-  "plugins/junit/lib/junit-rt.jar" to "1.7",
+  "plugins/junit/lib/junit-rt.jar" to "1.8",
   "plugins/junit/lib/junit5-rt.jar" to "1.8",
   "plugins/gradle/lib/gradle-tooling-extension-api.jar" to "1.8",
   "plugins/gradle/lib/gradle-tooling-extension-impl.jar" to "1.8",
