@@ -1,3 +1,5 @@
 // REPL_MODE: true
 
 println("hello")    // OUTPUT: hello
+/** warning: flag is not supported by this version of the compiler: -Xrepl
+ */

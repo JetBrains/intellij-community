@@ -3,3 +3,5 @@
 var a = 1
 a++          // RESULT: res1: kotlin.Int = 1
 a            // RESULT: res2: kotlin.Int = 2
+/** warning: flag is not supported by this version of the compiler: -Xrepl
+ */

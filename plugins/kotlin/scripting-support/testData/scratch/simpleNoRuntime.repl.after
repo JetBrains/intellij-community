@@ -2,3 +2,5 @@
 // NO_MODULE
 
 run { 1 + 1 }    // RESULT: res0: kotlin.Int = 2
+/** warning: flag is not supported by this version of the compiler: -Xrepl
+ */

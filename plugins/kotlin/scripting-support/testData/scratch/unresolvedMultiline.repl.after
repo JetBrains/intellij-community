@@ -15,3 +15,5 @@ public inline fun <T> Iterable<TypeVariable(T)>.forEach(action: (TypeVariable(T)
 public inline fun <K, V> Map<out TypeVariable(K), TypeVariable(V)>.forEach(action: (Map.Entry<TypeVariable(K), TypeVariable(V)>) -> Unit): Unit defined in kotlin.collections
 foo.forEach {
 ^ */
+/** warning: flag is not supported by this version of the compiler: -Xrepl
+ */
