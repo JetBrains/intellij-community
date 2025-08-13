@@ -48,6 +48,11 @@ f:org.jetbrains.jewel.foundation.GlobalMetricsKt
 - sf:getLocalGlobalMetrics():androidx.compose.runtime.ProvidableCompositionLocal
 @:org.jetbrains.jewel.foundation.InternalJewelApi
 - java.lang.annotation.Annotation
+f:org.jetbrains.jewel.foundation.JewelApiVersionKt
+- sf:getApiVersionString(org.jetbrains.jewel.foundation.JewelBuild):java.lang.String
+f:org.jetbrains.jewel.foundation.JewelBuild
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.foundation.JewelBuild
 f:org.jetbrains.jewel.foundation.JewelFlags
 - sf:$stable:I
 - sf:INSTANCE:org.jetbrains.jewel.foundation.JewelFlags
