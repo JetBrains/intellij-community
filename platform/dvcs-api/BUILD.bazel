@@ -16,7 +16,6 @@ jvm_library(
     "//platform/core-ui",
     "//platform/projectModel-api:projectModel",
     "//platform/util-rt",
-    "//platform/vcs-log/graph-api:vcs-log-graph",
     "//platform/core-api:core",
     "//platform/vcs-api:vcs",
     "//platform/extensions",
@@ -25,7 +24,6 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/dvcs-impl/shared",
   ],
-  exports = ["//platform/vcs-log/graph-api:vcs-log-graph"],
   runtime_deps = [":vcs-dvcs_resources"]
 )
 ### auto-generated section `build intellij.platform.vcs.dvcs` end
