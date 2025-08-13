@@ -191,7 +191,7 @@ class UiPluginManager {
     return getController().getLastCompatiblePluginUpdateModel(pluginId, buildNumber, indicator)
   }
 
-  fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String? = null): List<IdeCompatibleUpdate> {
+  suspend fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String? = null): List<IdeCompatibleUpdate> {
     return getController().getLastCompatiblePluginUpdate(allIds, throwExceptions, buildNumber)
   }
 

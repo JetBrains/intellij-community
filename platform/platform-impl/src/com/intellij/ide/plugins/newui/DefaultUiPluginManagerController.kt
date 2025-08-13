@@ -309,8 +309,8 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   override suspend fun applySession(sessionId: String, parent: JComponent?, project: Project?): ApplyPluginsStateResult {
-    val modalityState = parent?.let { ModalityState.stateForComponent(it) } ?: ModalityState.any()
-    return withContext(Dispatchers.EDT + modalityState.asContextElement()) {
+    val context = parent?.let { (Dispatchers.EDT + ModalityState.stateForComponent(it).asContextElement()) } ?: Dispatchers.EDT
+    return withContext(context) {
       val session = findSession(sessionId) ?: return@withContext ApplyPluginsStateResult()
       var needRestart = session.needRestart
       if (ApplicationManager.getApplication().isExitInProgress) {
@@ -732,7 +732,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return MarketplaceRequests.getInstance().getLastCompatiblePluginUpdateModel(pluginId, BuildNumber.fromString(buildNumber), indicator)
   }
 
-  override fun getLastCompatiblePluginUpdate(
+  override suspend fun getLastCompatiblePluginUpdate(
     allIds: Set<PluginId>,
     throwExceptions: Boolean,
     buildNumber: String?,
