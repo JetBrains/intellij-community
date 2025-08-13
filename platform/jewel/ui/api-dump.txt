@@ -396,6 +396,9 @@ f:org.jetbrains.jewel.ui.component.IconKt
 - sf:Icon-ww6aTOc(androidx.compose.ui.graphics.painter.Painter,java.lang.String,androidx.compose.ui.Modifier,J,androidx.compose.runtime.Composer,I,I):V
 - sf:Icon-ww6aTOc(androidx.compose.ui.graphics.vector.ImageVector,java.lang.String,androidx.compose.ui.Modifier,J,androidx.compose.runtime.Composer,I,I):V
 - sf:painterResource(java.lang.String,androidx.compose.runtime.Composer,I):androidx.compose.ui.graphics.painter.Painter
+f:org.jetbrains.jewel.ui.component.ImageKt
+- sf:Image(org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,androidx.compose.ui.Modifier,java.lang.Class,androidx.compose.ui.Alignment,androidx.compose.ui.layout.ContentScale,F,androidx.compose.ui.graphics.ColorFilter,androidx.compose.runtime.Composer,I,I):V
+- sf:Image(org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.painter.PainterHint[],androidx.compose.ui.Modifier,java.lang.Class,androidx.compose.ui.Alignment,androidx.compose.ui.layout.ContentScale,F,androidx.compose.ui.graphics.ColorFilter,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.InfoTextKt
 - sf:InfoText-F-Jr8PA(androidx.compose.ui.text.AnnotatedString,androidx.compose.ui.Modifier,J,J,androidx.compose.ui.text.font.FontStyle,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontFamily,J,androidx.compose.ui.text.style.TextDecoration,I,J,I,Z,I,java.util.Map,kotlin.jvm.functions.Function1,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I,I):V
 - sf:InfoText-bAzTDeA(java.lang.String,androidx.compose.ui.Modifier,J,J,androidx.compose.ui.text.font.FontStyle,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontFamily,J,androidx.compose.ui.text.style.TextDecoration,I,J,I,Z,I,kotlin.jvm.functions.Function1,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I,I):V
