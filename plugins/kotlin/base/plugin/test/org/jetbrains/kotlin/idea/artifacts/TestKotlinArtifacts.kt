@@ -17,12 +17,12 @@ import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_DEV_CDN_URL
 import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_RELEASE_CDN_URL
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.TargetSupportException
-import org.jetbrains.tools.model.updater.KotlinTestsDependenciesUtil
 import java.io.File
 import java.io.IOException
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
@@ -31,13 +31,13 @@ import kotlin.io.path.copyTo
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.moveTo
 import kotlin.io.path.name
+import kotlin.io.path.readText
 import kotlin.system.exitProcess
 
 object TestKotlinArtifacts {
     private val communityRoot by lazy {
         BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()))
     }
-
     private fun areFilesEquals(source: File, destination: File): Boolean {
         if (!destination.exists()) {
             return false
@@ -113,8 +113,45 @@ object TestKotlinArtifacts {
         return file
     }
 
+    private data class HttpFile(val downloadFilePath: String, val name: String, val url: String)
+
+    private val kotlinTestDependenciesHttpFiles by lazy {
+        val kotlinDepsFile = Paths
+            .get(PathManager.getCommunityHomePath()).resolve("plugins/kotlin/kotlin_test_dependencies.bzl")
+        if (!Files.isRegularFile(kotlinDepsFile)) {
+            error("Unable to find test dependency file '$kotlinDepsFile'")
+        }
+        val content = kotlinDepsFile.readText()
+        val httpFileRegex = Regex("""http_file\s*\((.*?)\)""", RegexOption.DOT_MATCHES_ALL)
+        val nameRegex = Regex("""name\s*=\s*["']([^"']+)["']""")
+        val urlRegex = Regex("""url\s*=\s*["']([^"']+)["']""")
+        val filenameRegex = Regex("""downloaded_file_path\s*=\s*["']([^"']+)["']""")
+        val errors = mutableListOf<String>()
+        val result =  httpFileRegex.findAll(content).mapNotNull { match ->
+            val block = match.groupValues[1]
+
+            val name = nameRegex.find(block)?.groupValues?.get(1)
+            val url = urlRegex.find(block)?.groupValues?.get(1)
+            val filename = filenameRegex.find(block)?.groupValues?.get(1)
+
+            if (name != null && url != null && filename != null) {
+                HttpFile(filename, name, url)
+            } else {
+                errors += buildString {
+                    appendLine("Unable to parse http_file block at offset ${match.range.first}:")
+                    appendLine(block.trim())
+                }
+                null
+            }
+        }.toList()
+        if (errors.isNotEmpty()) {
+            error("${errors.size} http_file blocks were not parsed correctly:\n${errors.joinToString("\n\n")}")
+        }
+        return@lazy result
+    }
+
     private fun findUrl(label: BazelLabel): URI {
-        return KotlinTestsDependenciesUtil.kotlinTestDependenciesHttpFiles.find { it.name == label.repo && it.downloadFilePath == label.file }?.let {
+        return kotlinTestDependenciesHttpFiles.find { it.name == label.repo && it.downloadFilePath == label.file }?.let {
             URI(it.url)
         } ?: error("Unable to find URL for '${label.asLabel}'")
     }
