@@ -13,9 +13,10 @@ import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.model.module.JpsTestModuleProperties
 import org.jetbrains.jps.util.JpsPathUtil
+import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.nio.file.Path
-import java.util.TreeSet
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.relativeTo
 
@@ -39,7 +40,6 @@ internal fun generateDeps(
   val exports = mutableListOf<String>()
   val runtimeDeps = mutableListOf<String>()
   val provided = mutableListOf<String>()
-  val plugins = TreeSet<String>()
 
   if (isTest && module.sources.isNotEmpty()) {
     // associates also is a dependency
@@ -76,14 +76,6 @@ internal fun generateDeps(
         provided = provided,
         isExported = isExported,
       )
-
-      if (dependencyModuleName == "intellij.libraries.compose.foundation.desktop" ||
-          dependencyModuleName == "intellij.android.adt.ui.compose" ||
-          dependencyModuleName == "intellij.platform.jewel.markdown.ideLafBridgeStyling" ||
-          dependencyModuleName == "intellij.ml.llm.libraries.compose.runtime" ||
-          dependencyModuleName == "intellij.platform.jewel.foundation") {
-        plugins.add("@lib//:compose-plugin")
-      }
     }
     else if (element is JpsLibraryDependency) {
       val jpsLibrary = element.library ?: error("library dependency '$element' from module ${module.module.name} is not resolved")
@@ -185,15 +177,6 @@ internal fun generateDeps(
           provided = provided,
           isExported = isExported,
         )
-
-        val libName = element.libraryReference.libraryName
-        if (libName == "jetbrains-jewel-markdown-laf-bridge-styling" ||
-            libName == "jetbrains.kotlin.compose.compiler.plugin" ||
-            libName == "toolbox:jetbrains.compose.foundation.desktop" ||
-            libName == "toolbox:jetbrains.compose.ui.test.junit4.desktop" ||
-            libName == "jetbrains-compose-ui-test-junit4-desktop") {
-          plugins.add("@lib//:compose-plugin")
-        }
       }
     }
   }
@@ -220,13 +203,22 @@ internal fun generateDeps(
     error("Duplicate $listMoniker ${duplicates} for module '${module.module.name}',\ncheck ${module.imlFile}")
   }
 
+  val plugins = mutableListOf<String>()
+  val kotlinFacetModuleExtension = module.module.container.getChild(JpsKotlinFacetModuleExtension.KIND)
+  kotlinFacetModuleExtension?.settings?.mergedCompilerArguments?.pluginClasspaths.orEmpty().map(Path::of).forEach {
+    if (it.name.startsWith("kotlin-compose-compiler-plugin-") && it.name.endsWith(".jar")) {
+      plugins.add("@lib//:compose-plugin")
+    }
+  }
+
   checkForDuplicates("bazel deps", deps)
   checkForDuplicates("bazel associates", associates)
   checkForDuplicates("bazel runtimeDeps", runtimeDeps)
   checkForDuplicates("bazel exports", exports)
   checkForDuplicates("bazel provided", provided)
+  checkForDuplicates("bazel plugins", plugins)
 
-  return ModuleDeps(deps = deps, associates = associates, runtimeDeps = runtimeDeps, exports = exports, provided = provided, plugins = plugins.toList())
+  return ModuleDeps(deps = deps, associates = associates, runtimeDeps = runtimeDeps, exports = exports, provided = provided, plugins = plugins)
 }
 
 private fun getFileMavenFileDescription(lib: JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>, jar: Path): MavenFileDescription {
