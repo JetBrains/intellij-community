@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -269,7 +269,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     });
 
     while (!getPsiDocumentManager().isCommitted(document)) {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.waitForAllDocumentsCommitted(10, TimeUnit.SECONDS);
     }
     assertCommitted(document, true, "");
     assertEquals(1, count.get());
@@ -285,7 +285,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     });
 
     while (!getPsiDocumentManager().isCommitted(document)) {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.waitForAllDocumentsCommitted(10, TimeUnit.SECONDS);
     }
     assertCommitted(document, true, "");
     assertEquals(2, count.get());
@@ -328,7 +328,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     TestTimeOut t = TestTimeOut.setTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS);
     while (!t.timedOut()) {
       if (semaphore.waitFor(1)) return;
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
     fail("Timeout");
   }
@@ -363,7 +363,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
     TestTimeOut t = TestTimeOut.setTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS);
     while (!alienDocManager.isCommitted(alienDocument) && !t.timedOut()) {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
     assertTrue("Still not committed: " + alienDocument, alienDocManager.isCommitted(alienDocument));
   }
@@ -501,7 +501,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertCommitted(document, true, "");
   }
 
-  public void testDoNotAutoCommitIfModalDialogSuddenlyAppears() throws IOException {
+  public void testDoNotAutoCommitIfModalDialogSuddenlyAppears() throws IOException, InterruptedException {
     VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
     PsiFile psiFile = findFile(vFile);
     Document document = getDocument(psiFile);
@@ -511,7 +511,9 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
     LaterInvocator.enterModal(new Object());
 
-    waitForCommits();
+    Thread.sleep(500); // awaiting background work
+    UIUtil.dispatchAllInvocationEvents(); // emulate modal window dispatch
+    Thread.sleep(500); // awaiting background work again in case of background write actions
     assertCommitted(document, false, "");
 
     LaterInvocator.leaveAllModals();
@@ -556,7 +558,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   private static void waitForCommits() {
-    DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
+    PlatformTestUtil.waitForAllDocumentsCommitted(100, TimeUnit.SECONDS);
   }
 
   public void testReparseDoesNotModifyDocument() throws Exception {
@@ -631,7 +633,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       String insert = "ddfdkjh";
       WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, insert));
       assertCommitted(document, false, i);
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
       WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(0, insert.length(), ""));
       assertCommitted(document, false, i);
@@ -713,7 +715,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertTrue(pdm.hasUncommitedDocuments());
     assertEquals("a", document.getText());
 
-    DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
+    PlatformTestUtil.waitForAllDocumentsCommitted(100, TimeUnit.SECONDS);
     assertEquals("ab", document.getText());
   }
 
@@ -737,7 +739,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       }
     });
 
-    DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
+    PlatformTestUtil.waitForAllDocumentsCommitted(100, TimeUnit.SECONDS);
 
     assertCommitted(document, true, "");
     assertFalse(file.isValid());
@@ -991,11 +993,21 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
         LaterInvocator.enterModal(this);
         assertFalse(TransactionGuard.getInstance().isWriteSafeModality(ModalityState.defaultModalityState()));
         getPsiDocumentManager().performWhenAllCommitted(() -> called.complete(true));
-        waitForCommits();
+        try {
+          // emulation of modal progress work...
+          Thread.sleep(200);
+          UIUtil.dispatchAllInvocationEvents();
+          Thread.sleep(200);
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
         assertFalse(called.isDone());
       }, ModalityState.any());
     });
 
+    // do NOT release write-intent lock here
+    //noinspection UIUtilDispatchAllInvocationEventsInTests
     UIUtil.dispatchAllInvocationEvents();
 
     LaterInvocator.leaveModal(this);
@@ -1036,7 +1048,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
             });
             WriteCommandAction.runWriteCommandAction(getProject(), () -> doc.insertString(0, " "));
           }
-          DocumentCommitThread.getInstance().waitForAllCommits(1, TimeUnit.MINUTES);
+          PlatformTestUtil.waitForAllDocumentsCommitted(1, TimeUnit.MINUTES);
         }
         finally {
           psiDocumentManager.clearUncommittedDocuments();
@@ -1106,7 +1118,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
             }
           });
           while (!future.isDone()) {
-            UIUtil.dispatchAllInvocationEvents();
+            PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
           }
           future.get();
         }

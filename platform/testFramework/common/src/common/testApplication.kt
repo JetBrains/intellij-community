@@ -378,7 +378,9 @@ fun waitForAppLeakingThreads(application: Application, timeout: Long, timeUnit: 
   }
 
   val commitThread = application.serviceIfCreated<DocumentCommitProcessor>() as? DocumentCommitThread
-  commitThread?.waitForAllCommits(timeout, timeUnit)
+  TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+    commitThread?.waitForAllCommits(timeout, timeUnit)
+  }
 
   val stubIndex = application.serviceIfCreated<StubIndex>() as? StubIndexImpl
   stubIndex?.waitUntilStubIndexedInitialized()
