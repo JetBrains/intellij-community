@@ -107,8 +107,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   public static final @NonNls String ANDROID_VIEW_ID = "AndroidView";
 
   private final CopyPasteDelegator copyPasteDelegator;
+  // all these booleans must be accessed only in synchronized code
   private boolean isInitialized;
-  private final AtomicBoolean isExtensionsLoaded = new AtomicBoolean(false);
+  private boolean isExtensionsLoading = false;
+  private boolean isExtensionsLoaded = false;
   private final @NotNull Project project;
 
   private boolean firstShow = true;
@@ -1037,7 +1039,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private synchronized void reloadPanes() {
-    if (project.isDisposed() || !isExtensionsLoaded.get()) return; // panes will be loaded later
+    if (project.isDisposed() || !isExtensionsLoaded) return; // panes will be loaded later
 
     Map<String, AbstractProjectViewPane> newPanes = loadPanes();
     Map<AbstractProjectViewPane, Boolean> oldPanes = new IdentityHashMap<>();
@@ -1056,23 +1058,35 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private void ensurePanesLoaded() {
-    if (project.isDisposed() || isExtensionsLoaded.getAndSet(true)) {
-      // avoid recursive loading
+  private synchronized void ensurePanesLoaded() {
+    // one boolean is about avoiding recursion, the other actually checks if the job was already done
+    if (project.isDisposed() || isExtensionsLoading || isExtensionsLoaded) {
       return;
     }
 
-    for (AbstractProjectViewPane pane : loadPanes().values()) {
-      if (pane.isInitiallyVisible()) {
-        addProjectPane(pane);
+    isExtensionsLoading = true;
+    try {
+      for (AbstractProjectViewPane pane : loadPanes().values()) {
+        try {
+          if (pane.isInitiallyVisible()) {
+            addProjectPane(pane);
+          }
+        }
+        catch (Throwable e) {
+          LOG.warn("An exception occurred when trying to add the pane " + pane.getId() + ", it may not appear or may have inconsistent state");
+        }
       }
+    }
+    finally {
+      isExtensionsLoading = false;
     }
   }
 
-  private @NotNull Map<String, AbstractProjectViewPane> loadPanes() {
+  private synchronized @NotNull Map<String, AbstractProjectViewPane> loadPanes() {
     Map<String, AbstractProjectViewPane> map = new LinkedHashMap<>();
     List<AbstractProjectViewPane> toSort = new ArrayList<>(AbstractProjectViewPane.EP.getExtensions(project));
     toSort.sort(PANE_WEIGHT_COMPARATOR);
+    isExtensionsLoaded = true; // safe code starts here, must not throw exceptions or the project view will be empty forever
     for (AbstractProjectViewPane pane : toSort) {
       AbstractProjectViewPane added = map.computeIfAbsent(pane.getId(), id -> pane);
       if (pane != added) {
@@ -1423,7 +1437,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return ProjectViewPane.ID;
   }
 
-  private void readPaneState(@NotNull Element panesElement) {
+  private synchronized void readPaneState(@NotNull Element panesElement) {
     List<Element> paneElements = panesElement.getChildren(ELEMENT_PANE);
     for (Element paneElement : paneElements) {
       String paneId = paneElement.getAttributeValue(ATTRIBUTE_ID);
@@ -1441,11 +1455,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private static void applyPaneState(@NotNull AbstractProjectViewPane pane, @NotNull Element element) {
+  private static synchronized void applyPaneState(@NotNull AbstractProjectViewPane pane, @NotNull Element element) {
     try {
       pane.readExternal(element);
     }
-    catch (InvalidDataException ignored) {
+    catch (Throwable e) {
+      LOG.warn("An exception occurred when initializing the pane " + pane.getId() + ", its state may be inconsistent", e);
     }
   }
 
