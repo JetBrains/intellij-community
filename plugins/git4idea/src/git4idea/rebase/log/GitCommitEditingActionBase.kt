@@ -343,7 +343,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     else -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state", operation)
   }
 
-  open class MultipleCommitEditingData(
+  open class MultipleCommitEditingData @JvmOverloads constructor(
     val repository: GitRepository,
     val selection: VcsLogCommitSelection,
     val logData: VcsLogData,
