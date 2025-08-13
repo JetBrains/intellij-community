@@ -460,7 +460,7 @@ public final class PlatformTestUtil {
     }, delay);
     pooledAlarm.addRequest(() -> pooledRunnableInvoked.set(true), delay);
 
-    UIUtil.dispatchAllInvocationEvents();
+    dispatchAllInvocationEventsInIdeEventQueue();
 
     long start = System.currentTimeMillis();
     try {
@@ -468,7 +468,7 @@ public final class PlatformTestUtil {
       while (!alarmInvoked2.get()) {
         AtomicBoolean laterInvoked = new AtomicBoolean();
         app.invokeLater(() -> laterInvoked.set(true));
-        UIUtil.dispatchAllInvocationEvents();
+        dispatchAllInvocationEventsInIdeEventQueue();
         assertTrue(laterInvoked.get());
 
         TimeoutUtil.sleep(sleptAlready ? 10 : delay);
@@ -494,7 +494,7 @@ public final class PlatformTestUtil {
     finally {
       Disposer.dispose(tempDisposable);
     }
-    UIUtil.dispatchAllInvocationEvents();
+    dispatchAllInvocationEventsInIdeEventQueue();
   }
 
   /**

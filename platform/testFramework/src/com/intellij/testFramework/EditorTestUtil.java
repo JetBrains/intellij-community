@@ -887,28 +887,22 @@ public final class EditorTestUtil {
   public static void buildInitialFoldingsInBackground(@NotNull Editor editor) {
     ThreadingAssertions.assertEventDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
-    CodeFoldingState foldingState;
-    try {
-      foldingState = ReadAction.nonBlocking(() -> {
-          Project project = editor.getProject();
-          if (project == null || editor.isDisposed()) {
-            return null;
-          }
-          if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) {
-            return null;
-          }
-          Document document = editor.getDocument();
-          PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-          if (psiFile == null || !supportsDumbModeFolding(psiFile)) {
-            return null;
-          }
-          return CodeFoldingManager.getInstance(project).buildInitialFoldings(document);
-        })
-        .submit(AppExecutorUtil.getAppExecutorService()).get();
-    }
-    catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
+    CodeFoldingState foldingState = PlatformTestUtil.waitForFuture(ReadAction.nonBlocking(() -> {
+        Project project = editor.getProject();
+        if (project == null || editor.isDisposed()) {
+          return null;
+        }
+        if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) {
+          return null;
+        }
+        Document document = editor.getDocument();
+        PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+        if (psiFile == null || !supportsDumbModeFolding(psiFile)) {
+          return null;
+        }
+        return CodeFoldingManager.getInstance(project).buildInitialFoldings(document);
+      })
+                                                                     .submit(AppExecutorUtil.getAppExecutorService()));
     if (foldingState != null) {
       foldingState.setToEditor(editor);
     }

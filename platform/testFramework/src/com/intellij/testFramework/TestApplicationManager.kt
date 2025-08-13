@@ -195,7 +195,7 @@ class TestApplicationManager private constructor() {
       val edtThrowable = runInEdtAndGet {
         runAllCatching(
           { PlatformTestUtil.cleanupAllProjects() },
-          { EDT.dispatchAllInvocationEvents() },
+          { PlatformTestUtil.dispatchAllEventsInIdeEventQueue() },
           {
             println((AppExecutorUtil.getAppScheduledExecutorService() as AppScheduledExecutorService).statistics())
             println("ProcessIOExecutorService threads created: ${(ProcessIOExecutorService.INSTANCE as ProcessIOExecutorService).threadCounter}")
@@ -211,7 +211,7 @@ class TestApplicationManager private constructor() {
             }
           },
           { getInstanceIfCreated()?.dispose() },
-          { EDT.dispatchAllInvocationEvents() },
+          { PlatformTestUtil.dispatchAllEventsInIdeEventQueue() },
         )
       }
 

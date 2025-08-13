@@ -340,7 +340,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     consoleView.getComponent(); //create editor
     consoleView.print("haha", ConsoleViewContentType.NORMAL_OUTPUT);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     try {
       checkDaemonReaction(false, () -> {
@@ -351,7 +351,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         catch (InterruptedException e) {
           LOG.error(e);
         }
-        UIUtil.dispatchAllInvocationEvents(); //flush
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); //flush
       });
       checkDaemonReaction(false, () -> {
         consoleView.print("sss", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -361,7 +361,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         catch (InterruptedException e) {
           LOG.error(e);
         }
-        UIUtil.dispatchAllInvocationEvents(); //flush
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); //flush
       });
       checkDaemonReaction(false, () -> {
         consoleView.setOutputPaused(true);
@@ -1325,7 +1325,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         EditorTracker editorTracker = EditorTracker.Companion.getInstance(myProject);
         setActiveEditors(editor);
         while (HeavyProcessLatch.INSTANCE.isRunning()) {
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
         type("xxx"); // restart daemon
         assertTrue(editorTracker.getActiveEditors().contains(editor));
@@ -1335,7 +1335,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         // wait for the first pass to complete
         long start = System.currentTimeMillis();
         while (myDaemonCodeAnalyzer.isRunning() || !applied.contains(editor)) {
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
           if (System.currentTimeMillis() - start > 1000000) {
             fail("Too long waiting for daemon (" +(System.currentTimeMillis() - start)+"ms) ");
           }
@@ -1350,7 +1350,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           })
         );
         while (!HeavyProcessLatch.INSTANCE.isRunning()) {
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
         applied.clear();
         collected.clear();
@@ -1361,7 +1361,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         while (System.currentTimeMillis() < start + 5000) {
           assertEmpty(applied);  // it should not restart
           assertEmpty(collected);
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
       }
       finally {
@@ -1383,7 +1383,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         EditorTracker editorTracker = EditorTracker.Companion.getInstance(myProject);
         setActiveEditors(editor);
         while (HeavyProcessLatch.INSTANCE.isRunning()) {
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
         type("xxx"); // restart daemon
         assertTrue(editorTracker.getActiveEditors().contains(editor));
@@ -1393,7 +1393,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         // wait for the first pass to complete
         long start = System.currentTimeMillis();
         while (myDaemonCodeAnalyzer.isRunning() || !applied.contains(editor)) {
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
           if (System.currentTimeMillis() - start > 1000000) {
             fail("Too long waiting for daemon (" +(System.currentTimeMillis() - start)+"ms) ");
           }
@@ -1408,7 +1408,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           })
         );
         while (!HeavyProcessLatch.INSTANCE.isRunning()) {
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
         applied.clear();
         collected.clear();
@@ -1456,7 +1456,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         while (System.currentTimeMillis() < start + 5000) {
           assertEmpty(applied);  // it must not restart
           assertEmpty(collected);
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
       });
 
@@ -1467,7 +1467,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
       long start = System.currentTimeMillis();
       while (System.currentTimeMillis() < start + 5000 && applied.isEmpty()) {
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       }
       assertNotEmpty(applied);  // it must restart outside bulk
       assertNotEmpty(collected);
@@ -2037,7 +2037,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       // register very slow annotator and make sure the invalid PSI highlighting was removed before this annotator finished
       TestTimeOut n = TestTimeOut.setTimeout(100, TimeUnit.SECONDS);
       Runnable checkHighlighted = () -> {
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         if (MyVerySlowAnnotator.syntaxHighlights(markupModel, errorDescription).isEmpty() && MyVerySlowAnnotator.wait.get()) {
           // removed before highlighting is finished
           MyVerySlowAnnotator.wait.set(false);
@@ -2319,7 +2319,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           //System.out.println(edtTrace+"\n  delay ="+delay+"  --------------------------------");
         }, delay, TimeUnit.MILLISECONDS);
         while (!future.isDone()) {
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
         try {
           future.get();
@@ -2373,7 +2373,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         {
           long deadline = System.currentTimeMillis() + 10; // do something for awhile
           while (System.currentTimeMillis() < deadline) {
-            UIUtil.dispatchAllInvocationEvents();
+            PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
           }
         }
 
@@ -2435,7 +2435,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
     while (!t.isTimedOut()) {
       assertTrue(restarts.toString(), restarts.get() < 10);
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
   }
 

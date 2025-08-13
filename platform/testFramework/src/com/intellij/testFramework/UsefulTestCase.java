@@ -1217,7 +1217,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
     EdtTestUtil.runInEdtAndWait(() -> {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         TestApplicationKt.waitForAppLeakingThreads(app, timeout, timeUnit);
       }
     }, false);
