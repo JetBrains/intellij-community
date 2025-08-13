@@ -414,11 +414,11 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * @param anchor    anchor element
    * @param body      body to be used to append description
    */
-  public static void describeTypeWithLinks(@Nullable PyType type,
-                                           @Nullable PyTypedElement typeOwner,
-                                           @NotNull TypeEvalContext context,
-                                           @NotNull PsiElement anchor,
-                                           @NotNull HtmlBuilder body) {
+  private static void describeTypeWithLinks(@Nullable PyType type,
+                                            @Nullable PyTypedElement typeOwner,
+                                            @NotNull TypeEvalContext context,
+                                            @NotNull PsiElement anchor,
+                                            @NotNull HtmlBuilder body) {
     // Variable annotated with "typing.TypeAlias" marker is deliberately treated as having "Any" type
     if (typeOwner instanceof PyTargetExpression && type == null) {
       PyAssignmentStatement assignment = as(typeOwner.getParent(), PyAssignmentStatement.class);
