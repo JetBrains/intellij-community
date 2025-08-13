@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.factories.OperatorNameLookup
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
 
-internal class FirOperatorNameCompletionContributor(
+internal class K2OperatorNameCompletionContributor(
     sink: LookupElementSink,
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinTypeNameReferencePositionContext>(sink, priority) {

@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
  * ```
  * This contributor would contribute `unresolvedVar` at caret position above.
  */
-internal class FirDeclarationFromUnresolvedNameContributor(
+internal class K2DeclarationFromUnresolvedNameContributor(
     sink: LookupElementSink,
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinRawPositionContext>(sink, priority) {

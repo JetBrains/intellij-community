@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
-internal class FirClassReferenceCompletionContributor(
+internal class K2ClassReferenceCompletionContributor(
     sink: LookupElementSink,
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinCallableReferencePositionContext>(sink, priority) {

@@ -139,29 +139,29 @@ internal object Completions {
                 FirTrailingFunctionParameterNameCompletionContributorBase.All(sink)
                     .complete(positionContext, weighingContext)
                 if (positionContext.allowsOnlyNamedArguments()) {
-                    FirNamedArgumentCompletionContributor(sink)
+                    K2NamedArgumentCompletionContributor(sink)
                         .complete(positionContext, weighingContext)
                 } else {
-                    FirKeywordCompletionContributor(sink)
+                    K2KeywordCompletionContributor(sink)
                         .complete(positionContext, weighingContext)
-                    FirNamedArgumentCompletionContributor(sink)
+                    K2NamedArgumentCompletionContributor(sink)
                         .complete(positionContext, weighingContext)
                     FirCallableCompletionContributor(sink, withTrailingLambda = true)
                         .complete(positionContext, weighingContext)
                     FirClassifierCompletionContributor(sink)
                         .complete(positionContext, weighingContext)
-                    FirPackageCompletionContributor(sink, priority = 1)
+                    K2PackageCompletionContributor(sink, priority = 1)
                         .complete(positionContext, weighingContext)
                 }
             }
 
             is KotlinSuperReceiverNameReferencePositionContext -> {
-                FirSuperMemberCompletionContributor(sink)
+                K2SuperMemberCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
             is KotlinTypeNameReferencePositionContext -> {
-                FirOperatorNameCompletionContributor(sink)
+                K2OperatorNameCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
                 val allowClassifiersAndPackagesForPossibleExtensionCallables =
                     !positionContext.hasNoExplicitReceiver()
@@ -172,30 +172,30 @@ internal object Completions {
                     FirClassifierCompletionContributor(sink)
                         .complete(positionContext, weighingContext)
                 }
-                FirKeywordCompletionContributor(sink, priority = 1)
+                K2KeywordCompletionContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
                 if (allowClassifiersAndPackagesForPossibleExtensionCallables) {
-                    FirPackageCompletionContributor(sink, priority = 2)
+                    K2PackageCompletionContributor(sink, priority = 2)
                         .complete(positionContext, weighingContext)
                 }
                 // For `val` and `fun` completion. For example, with `val i<caret>`, the fake file contains `val iX.f`. Hence a
                 // FirTypeNameReferencePositionContext is created because `iX` is parsed as a type reference.
-                FirDeclarationFromUnresolvedNameContributor(sink, priority = 1)
+                K2DeclarationFromUnresolvedNameContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
-                FirDeclarationFromOverridableMembersContributor(sink, priority = 1)
+                K2DeclarationFromOverridableMembersContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
                 K2ActualDeclarationContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
-                FirVariableOrParameterNameWithTypeCompletionContributor(sink)
+                K2VariableOrParameterNameWithTypeCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
             is KotlinAnnotationTypeNameReferencePositionContext -> {
                 FirAnnotationCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
-                FirKeywordCompletionContributor(sink, priority = 1)
+                K2KeywordCompletionContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
-                FirPackageCompletionContributor(sink, priority = 2)
+                K2PackageCompletionContributor(sink, priority = 2)
                     .complete(positionContext, weighingContext)
             }
 
@@ -205,14 +205,14 @@ internal object Completions {
             }
 
             is KotlinImportDirectivePositionContext -> {
-                FirPackageCompletionContributor(sink)
+                K2PackageCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
-                FirImportDirectivePackageMembersCompletionContributor(sink)
+                K2ImportDirectivePackageMembersCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
             is KotlinPackageDirectivePositionContext -> {
-                FirPackageCompletionContributor(sink)
+                K2PackageCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
@@ -222,25 +222,25 @@ internal object Completions {
             }
 
             is KotlinMemberDeclarationExpectedPositionContext -> {
-                FirKeywordCompletionContributor(sink)
+                K2KeywordCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
             is KotlinLabelReferencePositionContext -> {
-                FirKeywordCompletionContributor(sink)
+                K2KeywordCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
             is KotlinUnknownPositionContext -> {
                 if (positionContext.isAfterRangeToken()) return
-                FirKeywordCompletionContributor(sink)
+                K2KeywordCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
             is KotlinClassifierNamePositionContext -> {
-                FirSameAsFileClassifierNameCompletionContributor(sink)
+                K2SameAsFileClassifierNameCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
-                FirDeclarationFromUnresolvedNameContributor(sink, priority = 1)
+                K2DeclarationFromUnresolvedNameContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
             }
 
@@ -251,12 +251,12 @@ internal object Completions {
                     .complete(positionContext, weighingContext)
                 FirCallableCompletionContributor(sink, priority = 2)
                     .complete(positionContext, weighingContext)
-                FirPackageCompletionContributor(sink, priority = 3)
+                K2PackageCompletionContributor(sink, priority = 3)
                     .complete(positionContext, weighingContext)
             }
 
             is KotlinCallableReferencePositionContext -> {
-                FirClassReferenceCompletionContributor(sink)
+                K2ClassReferenceCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
                 FirCallableReferenceCompletionContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
@@ -265,7 +265,7 @@ internal object Completions {
             }
 
             is KotlinInfixCallPositionContext -> {
-                FirKeywordCompletionContributor(sink)
+                K2KeywordCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
                 FirInfixCallableCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
@@ -280,39 +280,39 @@ internal object Completions {
                 FirTrailingFunctionParameterNameCompletionContributorBase.Missing(sink)
                     .complete(positionContext, weighingContext)
                 // for parameter declaration
-                FirDeclarationFromUnresolvedNameContributor(sink)
+                K2DeclarationFromUnresolvedNameContributor(sink)
                     .complete(positionContext, weighingContext)
-                FirKeywordCompletionContributor(sink)
+                K2KeywordCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
-                FirVariableOrParameterNameWithTypeCompletionContributor(sink)
+                K2VariableOrParameterNameWithTypeCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
             is KotlinPrimaryConstructorParameterPositionContext -> {
                 // for parameter declaration
-                FirDeclarationFromUnresolvedNameContributor(sink)
+                K2DeclarationFromUnresolvedNameContributor(sink)
                     .complete(positionContext, weighingContext)
-                FirDeclarationFromOverridableMembersContributor(sink)
+                K2DeclarationFromOverridableMembersContributor(sink)
                     .complete(positionContext, weighingContext)
-                FirKeywordCompletionContributor(sink)
+                K2KeywordCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
-                FirVariableOrParameterNameWithTypeCompletionContributor(sink)
+                K2VariableOrParameterNameWithTypeCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
             is KDocParameterNamePositionContext -> {
-                FirKDocParameterNameContributor(sink)
+                K2KDocParameterNameContributor(sink)
                     .complete(positionContext, weighingContext)
             }
 
             is KDocLinkNamePositionContext -> {
-                FirKDocParameterNameContributor(sink)
+                K2KDocParameterNameContributor(sink)
                     .complete(positionContext, weighingContext)
                 FirKDocCallableCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
                 FirClassifierCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
-                FirPackageCompletionContributor(sink, priority = 1)
+                K2PackageCompletionContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
             }
         }

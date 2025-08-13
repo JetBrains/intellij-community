@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtSuperExpression
 
-internal class FirSuperMemberCompletionContributor(
+internal class K2SuperMemberCompletionContributor(
     sink: LookupElementSink,
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinSuperReceiverNameReferencePositionContext>(sink, priority) {

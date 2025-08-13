@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinImportDirectivePositionContext
 
-internal class FirImportDirectivePackageMembersCompletionContributor(
+internal class K2ImportDirectivePackageMembersCompletionContributor(
     sink: LookupElementSink,
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinImportDirectivePositionContext>(sink, priority) {

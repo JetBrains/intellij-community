@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
-internal class FirNamedArgumentCompletionContributor(
+internal class K2NamedArgumentCompletionContributor(
     sink: LookupElementSink,
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinExpressionNameReferencePositionContext>(sink, priority) {

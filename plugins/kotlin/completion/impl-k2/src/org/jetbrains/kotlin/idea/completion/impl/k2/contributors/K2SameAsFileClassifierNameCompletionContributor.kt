@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.renderer.render
 
-internal class FirSameAsFileClassifierNameCompletionContributor(
+internal class K2SameAsFileClassifierNameCompletionContributor(
     sink: LookupElementSink,
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinClassifierNamePositionContext>(sink, priority) {

@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
 
-internal open class FirKDocParameterNameContributor(
+internal open class K2KDocParameterNameContributor(
     sink: LookupElementSink,
     priority: Int = 0,
 ) : FirCompletionContributorBase<KDocNameReferencePositionContext>(sink, priority) {

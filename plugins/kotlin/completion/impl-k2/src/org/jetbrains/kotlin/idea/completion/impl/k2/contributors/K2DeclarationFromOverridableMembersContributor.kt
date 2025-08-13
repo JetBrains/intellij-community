@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.psi.KtTypeReference
  *
  * @see OverrideKeywordHandler
  */
-internal class FirDeclarationFromOverridableMembersContributor(
+internal class K2DeclarationFromOverridableMembersContributor(
     sink: LookupElementSink,
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinRawPositionContext>(sink, priority) {
