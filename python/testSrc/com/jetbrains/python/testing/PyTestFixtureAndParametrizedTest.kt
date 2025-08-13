@@ -45,6 +45,17 @@ class PyTestFixtureAndParametrizedTest : PyTestCase() {
     myFixture.checkResultByFile("after_test_test.txt")
   }
 
+  fun testUsefixturesCompletionSuggestsFixture() {
+    myFixture.copyDirectoryToProject(".", ".")
+    myFixture.configureByFile("test_usefixtures_completion.py")
+    myFixture.completeBasic()
+    val variants = myFixture.lookupElementStrings
+    assertNotNull(variants)
+    assertTrue(variants!!.contains("my_fixture"))
+    // Built-in pytest fixtures should not be suggested
+    assertFalse(variants.contains("tmp_path"))
+  }
+
   fun testRename() {
     myFixture.configureByFile("test_for_rename.py")
     myFixture.renameElementAtCaret("spam")
