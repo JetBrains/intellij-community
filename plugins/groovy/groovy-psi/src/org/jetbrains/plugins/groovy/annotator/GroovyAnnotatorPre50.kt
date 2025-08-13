@@ -30,7 +30,7 @@ class GroovyAnnotatorPre50(val holder : AnnotationHolder) : GroovyElementVisitor
     if (arrayDeclaration == null || arrayInitializer == null) return
 
     if(arrayInitializer.expressions.any { it is GrArrayInitializer }) {
-      error(newExpression, Groovy5Features.MULTIDIMENSIONAL_ARRAY_INITIALIZER)
+      error(newExpression, Groovy5Features.MULTI_DIMENSIONAL_ARRAY_INITIALIZER)
     }
   }
 
@@ -47,6 +47,6 @@ class GroovyAnnotatorPre50(val holder : AnnotationHolder) : GroovyElementVisitor
   private enum class Groovy5Features(val messageKey: @PropertyKey(resourceBundle = GroovyBundle.BUNDLE) String) {
     PATTERN_MATCHING("instanceof.pattern.variable.feature"),
     LOGICAL_IMPLICATION("logical.implication.feature"),
-    MULTIDIMENSIONAL_ARRAY_INITIALIZER("multidimensional.array.initializer.feature")
+    MULTI_DIMENSIONAL_ARRAY_INITIALIZER("multi.dimensional.array.initializer.feature")
   }
 }

@@ -28,9 +28,9 @@ class GroovyAnnotatorPre50Test: LightGroovyTestCase() {
       def foo() {
         def o = new String[][]{}
       
-        def a = <error descr="Multidimensional array initializer is available in Groovy 5.0 or later">new String[][]{{}}</error>
+        def a = <error descr="Multi-dimensional array initializer is available in Groovy 5.0 or later">new String[][]{{}}</error>
         
-        def b = <error descr="Multidimensional array initializer is available in Groovy 5.0 or later">new String[][]{{"foo"}}</error>
+        def b = <error descr="Multi-dimensional array initializer is available in Groovy 5.0 or later">new String[][]{{"foo"}}</error>
       }
     """.trimIndent())
     myFixture.testHighlighting()
