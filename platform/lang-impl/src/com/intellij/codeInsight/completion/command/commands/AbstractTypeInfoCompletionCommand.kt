@@ -17,7 +17,7 @@ abstract class AbstractTypeInfoCompletionCommandProvider :
                         priority = -100,
                         previewText = ActionsBundle.message("action.ExpressionTypeInfo.description")) {
 
-  override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
+  final override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     //findElement is used to check applicability
     return true
   }
