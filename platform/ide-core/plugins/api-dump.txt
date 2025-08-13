@@ -1,9 +1,3 @@
 com.intellij.ide.plugins.PluginManagerConfigurableService
 - s:getInstance():com.intellij.ide.plugins.PluginManagerConfigurableService
 - a:showPluginConfigurableAndEnable(com.intellij.openapi.project.Project,java.lang.String[]):V
-com.intellij.ide.plugins.UltimateDependencyChecker
-- sf:Companion:com.intellij.ide.plugins.UltimateDependencyChecker$Companion
-- a:canBeEnabled(com.intellij.openapi.extensions.PluginId):Z
-- s:getInstance():com.intellij.ide.plugins.UltimateDependencyChecker
-f:com.intellij.ide.plugins.UltimateDependencyChecker$Companion
-- f:getInstance():com.intellij.ide.plugins.UltimateDependencyChecker
