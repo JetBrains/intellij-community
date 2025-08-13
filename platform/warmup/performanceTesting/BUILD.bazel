@@ -20,8 +20,6 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/remote-driver/model",
     "//plugins/performanceTesting/commands-model:tools-ide-performanceTesting-commands",
-    "//platform/vcs-log/impl",
-    "//platform/vcs-log/api:vcs-log",
     "//platform/util/concurrency",
   ],
   runtime_deps = [":performanceTesting_resources"]

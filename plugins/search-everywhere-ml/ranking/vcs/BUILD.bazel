@@ -20,7 +20,6 @@ jvm_library(
     "//platform/vcs-api:vcs",
     "//plugins/search-everywhere-ml/ranking/core",
     "//plugins/search-everywhere-ml/ranking/ext",
-    "//platform/vcs-log/api:vcs-log",
     "//platform/vcs-log/impl",
   ],
   runtime_deps = [":vcs_resources"]
