@@ -53,7 +53,7 @@ private fun Element.patchColorAttribute(attrName: String, pattern: Map<Color, Co
         val alpha = opacity.toFloatOrNull() ?: 1.0f
         val originalColor = tryParseColor(color, alpha) ?: return
         val newColor = pattern[originalColor] ?: return
-        setAttribute(attrName, newColor.copy(alpha = 1.0f).toRgbaHexString())
+        setAttribute(attrName, newColor.copy(alpha = 1.0f).toRgbaHexString(omitAlphaWhenFullyOpaque = true))
         if (newColor.alpha != alpha) {
             setAttribute("$attrName-opacity", newColor.alpha.toString())
         }
