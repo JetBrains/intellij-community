@@ -19,9 +19,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -91,7 +91,7 @@ public final class GitConfigUtil {
     return getValue(h, key);
   }
 
-  public static @Nullable String getValue(@NotNull Project project, @NotNull File root, @NotNull @NonNls String key)
+  public static @Nullable String getValue(@NotNull Project project, @NotNull Path root, @NotNull @NonNls String key)
     throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     return getValue(h, key);
@@ -233,7 +233,7 @@ public final class GitConfigUtil {
   /**
    * Checks that Credential helper is defined in git config.
    */
-  public static boolean isCredentialHelperUsed(@NotNull Project project, @NotNull File workingDirectory) {
+  public static boolean isCredentialHelperUsed(@NotNull Project project, @NotNull Path workingDirectory) {
     try {
       GitLineHandler handler = new GitLineHandler(project, workingDirectory, GitCommand.CONFIG);
       String value = getValue(handler, CREDENTIAL_HELPER);

@@ -12,7 +12,7 @@ import git4idea.remote.GitRememberedInputs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Path;
 
 /**
  * @deprecated deprecated in favour of {@link com.intellij.util.ui.cloneDialog.VcsCloneDialog}
@@ -33,7 +33,7 @@ public class GitCloneDialog extends CloneDvcsDialog {
 
   @Override
   protected @NotNull TestResult test(@NotNull String url) {
-    GitCommandResult result = myGit.lsRemote(myProject, new File("."), url);
+    GitCommandResult result = myGit.lsRemote(myProject, Path.of("."), url);
     return result.success() ? TestResult.SUCCESS : new TestResult(result.getErrorOutputAsJoinedString());
   }
 

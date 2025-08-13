@@ -2,7 +2,6 @@
 package git4idea.light
 
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcsUtil.VcsImplUtil
@@ -30,7 +29,7 @@ fun getLocation(directory: VirtualFile, executable: GitExecutable): String {
 }
 
 private fun createRevParseHandler(directory: VirtualFile, executable: GitExecutable, abbrev: Boolean = true): GitLineHandler {
-  val handler = GitLineHandler(null, VfsUtilCore.virtualToIoFile(directory),
+  val handler = GitLineHandler(null, directory.toNioPath(),
                                executable, GitCommand.REV_PARSE, emptyList())
   if (abbrev) handler.addParameters("--abbrev-ref")
   handler.addParameters("HEAD")
@@ -39,11 +38,13 @@ private fun createRevParseHandler(directory: VirtualFile, executable: GitExecuta
 }
 
 @Throws(VcsException::class)
-fun getFileContent(directory: VirtualFile,
-                   repositoryPath: String,
-                   executable: GitExecutable,
-                   revisionOrBranch: String): ByteArray {
-  val h = GitBinaryHandler(VfsUtilCore.virtualToIoFile(directory), executable, GitCommand.CAT_FILE)
+fun getFileContent(
+  directory: VirtualFile,
+  repositoryPath: String,
+  executable: GitExecutable,
+  revisionOrBranch: String,
+): ByteArray {
+  val h = GitBinaryHandler(directory.toNioPath(), executable, GitCommand.CAT_FILE)
   addTextConvParameters(GitExecutableManager.getInstance().getVersion(executable), h, true)
   h.addParameters("$revisionOrBranch:$repositoryPath")
   return h.run()

@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -61,9 +62,11 @@ public interface Git {
   @NotNull
   GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, GitLineHandlerListener @NotNull ... listeners);
 
-  Set<FilePath> ignoredFilePaths(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<? extends FilePath> paths) throws VcsException;
+  Set<FilePath> ignoredFilePaths(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<? extends FilePath> paths)
+    throws VcsException;
 
-  Set<FilePath> ignoredFilePathsNoChunk(@NotNull Project project, @NotNull VirtualFile root, @Nullable List<String> paths) throws VcsException;
+  Set<FilePath> ignoredFilePathsNoChunk(@NotNull Project project, @NotNull VirtualFile root, @Nullable List<String> paths)
+    throws VcsException;
 
   @Deprecated
   @NotNull
@@ -72,14 +75,26 @@ public interface Git {
                                   @Nullable Collection<? extends VirtualFile> files) throws VcsException;
 
   Set<FilePath> untrackedFilePaths(@NotNull Project project, @NotNull VirtualFile root,
-                                  @Nullable Collection<FilePath> files) throws VcsException;
+                                   @Nullable Collection<FilePath> files) throws VcsException;
 
   @NotNull
   Collection<FilePath> untrackedFilePathsNoChunk(@NotNull Project project, @NotNull VirtualFile root,
-                                                @Nullable List<String> relativePaths) throws VcsException;
+                                                 @Nullable List<String> relativePaths) throws VcsException;
 
+  /**
+   * @apiNote Obsolete due to usage of {@link  java.io.File}, use the overloaded method using {@link java.nio.Path} instead.
+   */
+  @ApiStatus.Obsolete(since = "24.3")
   default @NotNull GitCommandResult clone(@Nullable Project project,
                                           @NotNull File parentDirectory,
+                                          @NotNull String url,
+                                          @NotNull String clonedDirectoryName,
+                                          GitLineHandlerListener @NotNull ... progressListeners) {
+    return clone(project, parentDirectory.toPath(), url, clonedDirectoryName, null, progressListeners);
+  }
+
+  default @NotNull GitCommandResult clone(@Nullable Project project,
+                                          @NotNull Path parentDirectory,
                                           @NotNull String url,
                                           @NotNull String clonedDirectoryName,
                                           GitLineHandlerListener @NotNull ... progressListeners) {
@@ -88,7 +103,7 @@ public interface Git {
 
   @NotNull
   GitCommandResult clone(@Nullable Project project,
-                         @NotNull File parentDirectory,
+                         @NotNull Path parentDirectory,
                          @NotNull String url,
                          @NotNull String clonedDirectoryName,
                          @Nullable GitShallowCloneOptions shallowCloneOptions,
@@ -113,13 +128,14 @@ public interface Git {
                             GitLineHandlerListener @NotNull ... listeners);
 
   @NotNull
-   GitCommandResult checkout(@NotNull GitRepository repository,
-                                    @NotNull String reference,
-                                    @Nullable String newBranch,
-                                    boolean force,
-                                    boolean detach,
-                                    boolean withReset,
-                                    GitLineHandlerListener @NotNull ... listeners);
+  GitCommandResult checkout(@NotNull GitRepository repository,
+                            @NotNull String reference,
+                            @Nullable String newBranch,
+                            boolean force,
+                            boolean detach,
+                            boolean withReset,
+                            GitLineHandlerListener @NotNull ... listeners);
+
   @NotNull
   GitCommandResult checkoutNewBranch(@NotNull GitRepository repository, @NotNull String branchName,
                                      @Nullable GitLineHandlerListener listener);
@@ -163,9 +179,9 @@ public interface Git {
                                 GitLineHandlerListener @NotNull ... listeners);
 
   default @NotNull GitCommandResult reset(@NotNull GitRepository repository,
-                         @NotNull GitResetMode mode,
-                         @NotNull String target,
-                         GitLineHandlerListener @NotNull ... listeners) {
+                                          @NotNull GitResetMode mode,
+                                          @NotNull String target,
+                                          GitLineHandlerListener @NotNull ... listeners) {
     return reset(repository, mode, target, null, listeners);
   }
 
@@ -263,8 +279,17 @@ public interface Git {
   @NotNull
   GitCommandResult setRemoteUrl(@NotNull GitRepository repository, @NotNull String remoteName, @NotNull String newUrl);
 
+  /**
+   * @apiNote Obsolete due to usage of {@link  java.io.File}, use the overloaded method using {@link java.nio.Path} instead.
+   */
   @NotNull
-  GitCommandResult lsRemote(@NotNull Project project, @NotNull File workingDir, @NotNull String url);
+  @ApiStatus.Obsolete(since = "24.3")
+  default GitCommandResult lsRemote(@NotNull Project project, @NotNull File workingDir, @NotNull String url) {
+    return lsRemote(project, workingDir.toPath(), url);
+  }
+
+  @NotNull
+  GitCommandResult lsRemote(@NotNull Project project, @NotNull Path workingDir, @NotNull String url);
 
   @NotNull
   GitCommandResult lsRemote(@NotNull Project project,

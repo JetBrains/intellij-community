@@ -128,7 +128,7 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
 
         GitCommandResult result;
         try {
-          result = git.clone(project, new File(parentDirectory), sourceRepositoryURL, directoryName, shallowCloneOptions, progressListener);
+          result = git.clone(project, Path.of(parentDirectory), sourceRepositoryURL, directoryName, shallowCloneOptions, progressListener);
         }
         catch (Exception e) {
           if (listener instanceof GitCheckoutListener) {
@@ -180,7 +180,8 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
     indicator.setIndeterminate(false);
 
     GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(indicator);
-    GitCommandResult result = git.clone(project, new File(parentDirectory), sourceRepositoryURL, directoryName, shallowCloneOptions, progressListener);
+    GitCommandResult result =
+      git.clone(project, Path.of(parentDirectory), sourceRepositoryURL, directoryName, shallowCloneOptions, progressListener);
     if (result.success()) {
       return true;
     }

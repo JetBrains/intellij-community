@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitUtil
 import git4idea.commands.Git
@@ -55,23 +54,27 @@ const val NUL = "\u0000"
  */
 
 @Throws(VcsException::class)
-fun getStatus(project: Project,
-              root: VirtualFile,
-              files: List<FilePath> = emptyList(),
-              withRenames: Boolean,
-              withUntracked: Boolean,
-              withIgnored: Boolean): List<GitFileStatus> {
+fun getStatus(
+  project: Project,
+  root: VirtualFile,
+  files: List<FilePath> = emptyList(),
+  withRenames: Boolean,
+  withUntracked: Boolean,
+  withIgnored: Boolean,
+): List<GitFileStatus> {
   return getFileStatus(project, root, files, withRenames, withUntracked, withIgnored)
     .map { GitFileStatus(root, it) }
 }
 
 @Throws(VcsException::class)
-fun getFileStatus(project: Project,
-                  root: VirtualFile,
-                  files: List<FilePath>,
-                  withRenames: Boolean,
-                  withUntracked: Boolean,
-                  withIgnored: Boolean): List<LightFileStatus.StatusRecord> {
+fun getFileStatus(
+  project: Project,
+  root: VirtualFile,
+  files: List<FilePath>,
+  withRenames: Boolean,
+  withUntracked: Boolean,
+  withIgnored: Boolean,
+): List<LightFileStatus.StatusRecord> {
   val h = GitUtil.createHandlerWithPaths(files) {
     val h = GitLineHandler(project, root, GitCommand.STATUS)
     h.setSilent(true)
@@ -86,7 +89,7 @@ fun getFileStatus(project: Project,
 
 @Throws(VcsException::class)
 fun getFileStatus(root: VirtualFile, filePath: FilePath, executable: GitExecutable): LightFileStatus {
-  val h = GitLineHandler(null, VfsUtilCore.virtualToIoFile(root), executable, GitCommand.STATUS, emptyList())
+  val h = GitLineHandler(null, root.toNioPath(), executable, GitCommand.STATUS, emptyList())
   h.setSilent(true)
   h.appendParameters(GitExecutableManager.getInstance().getVersion(executable),
                      withRenames = false, withUntracked = true, withIgnored = true)
@@ -103,8 +106,10 @@ fun getFileStatus(root: VirtualFile, filePath: FilePath, executable: GitExecutab
   return LightFileStatus.NotChanged(repositoryPath)
 }
 
-private fun GitLineHandler.appendParameters(gitVersion: GitVersion,
-                                            withRenames: Boolean = true, withUntracked: Boolean = true, withIgnored: Boolean = false) {
+private fun GitLineHandler.appendParameters(
+  gitVersion: GitVersion,
+  withRenames: Boolean = true, withUntracked: Boolean = true, withIgnored: Boolean = false,
+) {
   addParameters("--porcelain", "-z")
   if (!withRenames) {
     if (GitVersionSpecialty.STATUS_SUPPORTS_NO_RENAMES.existsIn(gitVersion)) {
@@ -127,7 +132,7 @@ private fun GitLineHandler.appendParameters(gitVersion: GitVersion,
 
 @Throws(VcsException::class)
 fun getFilePath(root: VirtualFile, filePath: FilePath, executable: GitExecutable): String? {
-  val handler = GitLineHandler(null, VfsUtilCore.virtualToIoFile(root),
+  val handler = GitLineHandler(null, root.toNioPath(),
                                executable, GitCommand.LS_FILES, emptyList())
   handler.addParameters("--full-name")
   handler.addRelativePaths(filePath)
@@ -222,10 +227,12 @@ sealed class LightFileStatus {
     override fun getFileStatus(): FileStatus = FileStatus.NOT_CHANGED
   }
 
-  data class StatusRecord(val index: StatusCode,
-                          val workTree: StatusCode,
-                          val path: String,
-                          val origPath: String? = null) : LightFileStatus() {
+  data class StatusRecord(
+    val index: StatusCode,
+    val workTree: StatusCode,
+    val path: String,
+    val origPath: String? = null,
+  ) : LightFileStatus() {
     override fun getFileStatus(): FileStatus {
       if (isConflicted()) return FileStatus.MERGED_WITH_CONFLICTS
       return getFileStatus(index) ?: getFileStatus(workTree) ?: FileStatus.NOT_CHANGED

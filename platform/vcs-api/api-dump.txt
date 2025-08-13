@@ -1947,7 +1947,7 @@ f:com.intellij.util.ui.VcsSynchronousProgressWrapper
 com.intellij.vcs.VcsRepositoryInitializer
 - sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getSupportedVcs():com.intellij.openapi.vcs.VcsKey
-- a:initRepository(java.io.File):V
+- a:initRepository(java.nio.file.Path):V
 com.intellij.vcs.VcsSymlinkResolver
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:isEnabled():Z

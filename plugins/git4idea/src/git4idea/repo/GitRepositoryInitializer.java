@@ -10,12 +10,12 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.nio.file.Path;
 
 public class GitRepositoryInitializer implements VcsRepositoryInitializer {
 
   @Override
-  public void initRepository(@NotNull File rootDir) throws VcsException {
+  public void initRepository(@NotNull Path rootDir) throws VcsException {
     GitLineHandler handler = new GitLineHandler(null, rootDir, GitCommand.INIT);
     Git.getInstance().runCommand(handler).throwOnError();
   }

@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.VcsEnvCustomizer;
 import com.intellij.openapi.vcs.VcsEnvCustomizer.VcsExecutableContext;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.EventDispatcher;
@@ -40,6 +39,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -84,12 +84,12 @@ public abstract class GitHandler {
    * @param command   a command to execute
    */
   protected GitHandler(@Nullable Project project,
-                       @NotNull File directory,
+                       @NotNull Path directory,
                        @NotNull GitCommand command,
                        @NotNull List<String> configParameters) {
     this(project,
          directory,
-         GitExecutableManager.getInstance().getExecutable(project, directory.toPath()),
+         GitExecutableManager.getInstance().getExecutable(project, directory),
          command,
          configParameters);
   }
@@ -105,7 +105,7 @@ public abstract class GitHandler {
                        @NotNull VirtualFile vcsRoot,
                        @NotNull GitCommand command,
                        @NotNull List<String> configParameters) {
-    this(project, VfsUtilCore.virtualToIoFile(vcsRoot), command, configParameters);
+    this(project, vcsRoot.toNioPath(), command, configParameters);
   }
 
   /**
@@ -118,7 +118,7 @@ public abstract class GitHandler {
    * @param configParameters list of config parameters to use for this git execution
    */
   protected GitHandler(@Nullable Project project,
-                       @NotNull File directory,
+                       @NotNull Path directory,
                        @NotNull GitExecutable executable,
                        @NotNull GitCommand command,
                        @NotNull List<String> configParameters) {
@@ -127,7 +127,7 @@ public abstract class GitHandler {
     myCommand = command;
 
     myCommandLine = new GeneralCommandLine()
-      .withWorkDirectory(directory)
+      .withWorkingDirectory(directory)
       .withExePath(executable.getExePath())
       .withCharset(StandardCharsets.UTF_8);
 
@@ -140,7 +140,7 @@ public abstract class GitHandler {
     mySilent = myCommand.lockingPolicy() != GitCommand.LockingPolicy.WRITE;
 
     GitVcs gitVcs = myProject != null ? GitVcs.getInstance(myProject) : null;
-    VirtualFile root = VfsUtil.findFileByIoFile(directory, true);
+    VirtualFile root = VfsUtil.findFile(directory, true);
     VcsEnvCustomizer.ExecutableType executableType = myExecutable instanceof GitExecutable.Wsl
                                                      ? VcsEnvCustomizer.ExecutableType.WSL
                                                      : VcsEnvCustomizer.ExecutableType.LOCAL;
@@ -168,9 +168,9 @@ public abstract class GitHandler {
     return myProject;
   }
 
-  @NotNull
-  File getWorkingDirectory() {
-    return myCommandLine.getWorkDirectory();
+  @Nullable
+  Path getWorkingDirectory() {
+    return myCommandLine.getWorkingDirectory();
   }
 
   public VcsExecutableContext getExecutableContext() {
@@ -245,13 +245,13 @@ public abstract class GitHandler {
 
   public void addRelativePaths(@NotNull Collection<? extends FilePath> filePaths) {
     for (FilePath path : filePaths) {
-      myCommandLine.addParameter(VcsFileUtil.relativePath(getWorkingDirectory(), path));
+      myCommandLine.addParameter(VcsFileUtil.relativePath(getWorkingDirectory().toFile(), path));
     }
   }
 
   public void addRelativeFiles(final @NotNull Collection<? extends VirtualFile> files) {
     for (VirtualFile file : files) {
-      myCommandLine.addParameter(VcsFileUtil.relativePath(getWorkingDirectory(), file));
+      myCommandLine.addParameter(VcsFileUtil.relativePath(getWorkingDirectory().toFile(), file));
     }
   }
 
@@ -457,7 +457,7 @@ public abstract class GitHandler {
     try {
       myStartTime = System.currentTimeMillis();
       String logDirectoryPath = myProject != null
-                                ? GitImplBase.stringifyWorkingDir(myProject.getBasePath(), myCommandLine.getWorkDirectory())
+                                ? GitImplBase.stringifyWorkingDir(myProject.getBasePath(), myCommandLine.getWorkingDirectory())
                                 : myCommandLine.getWorkDirectory().getPath();
       if (!mySilent) {
         LOG.info("[" + logDirectoryPath + "] " + printableCommandLine());

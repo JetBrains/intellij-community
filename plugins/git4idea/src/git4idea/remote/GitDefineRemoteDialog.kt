@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.DocumentAdapter
@@ -36,7 +35,7 @@ class GitDefineRemoteDialog(
   private val repository: GitRepository,
   private val git: Git,
   @NlsSafe private val initialName: String,
-  @NlsSafe initialUrl: String
+  @NlsSafe initialUrl: String,
 ) : DialogWrapper(repository.project) {
 
   private val uiDispatcher get() = Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()
@@ -146,6 +145,6 @@ class GitDefineRemoteDialog(
 
   private suspend fun lsRemote(url: String): GitCommandResult =
     withContext(Dispatchers.IO) {
-      coroutineToIndicator { git.lsRemote(repository.project, virtualToIoFile(repository.root), url) }
+      coroutineToIndicator { git.lsRemote(repository.project, repository.root.toNioPath(), url) }
     }
 }
