@@ -1,0 +1,15 @@
+<option>KEEP_LINE_BREAKS=false</option>
+a
+  && b
+
+a
+  || b
+
+a
+  ==> b
+-----
+a && b
+
+a || b
+
+a ==> b
