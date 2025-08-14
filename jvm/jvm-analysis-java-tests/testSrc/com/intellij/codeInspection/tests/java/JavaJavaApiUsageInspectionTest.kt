@@ -293,6 +293,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
       package java.lang;
       public class IO {
         public static void println() {}
+        public static void println(Object o) {}
       }
     """.trimIndent())
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_8)

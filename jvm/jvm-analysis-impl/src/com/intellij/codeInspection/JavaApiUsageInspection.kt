@@ -24,7 +24,6 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.uast.UastVisitorAdapter
-import com.intellij.util.asSafely
 import com.siyeh.ig.callMatcher.CallMatcher
 import org.jdom.Element
 import org.jetbrains.uast.*
@@ -159,10 +158,8 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
         if (uastParent is UImportStatement || uastParent !is UReferenceExpression) break
         parent = uastParent
       }
-      if (sourceNode.uastParent == parent) return
-      val expression = parent.asSafely<UReferenceExpression>() ?: return
-      val psiMember = expression.resolve().asSafely<PsiMember>() ?: return
-      if (!psiMember.hasModifierProperty(PsiModifier.STATIC)) return
+      if (sourceNode.uastParent == parent ||
+        sourceNode.textRange?.endOffset == parent.textRange?.endOffset) return
       processReference(sourceNode, target, null)
     }
 
