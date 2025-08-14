@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.TestDataPath
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.base.test.TestRoot
@@ -16,6 +17,16 @@ import org.junit.jupiter.params.ParameterizedTest
 @TestDataPath("\$CONTENT_ROOT")
 @TestMetadata("../../../idea/tests/testData/gradle/navigation/")
 abstract class KotlinGradleGotoDeclarationTest : AbstractKotlinGradleNavigationTest() {
+    override fun setUp() {
+        Registry.get("kotlin.scripting.index.dependencies.sources").setValue(true)
+        super.setUp()
+    }
+
+    override fun tearDown() {
+        Registry.get("kotlin.scripting.index.dependencies.sources").resetToDefault()
+        super.tearDown()
+    }
+
     @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("projectDependency.test")

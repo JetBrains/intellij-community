@@ -39,6 +39,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//java/java-psi-impl:psi-impl",
+    "//platform/indexing-api:indexing",
   ],
   runtime_deps = [":scripting.shared_resources"]
 )

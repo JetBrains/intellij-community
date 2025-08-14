@@ -159,10 +159,8 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
         }
     }
 
-    private fun isImported(virtualFile: VirtualFile, project: Project): Boolean {
-        return ScriptConfigurationsProviderImpl.getInstanceIfCreated(project)
-            ?.getConfigurationWithSdk(virtualFile)?.scriptConfiguration?.valueOrNull() != null
-    }
+    private fun isImported(virtualFile: VirtualFile, project: Project): Boolean =
+        GradleScriptRefinedConfigurationProvider.getInstance(project).get(virtualFile) != null
 
     private fun linkProject(
         project: Project,

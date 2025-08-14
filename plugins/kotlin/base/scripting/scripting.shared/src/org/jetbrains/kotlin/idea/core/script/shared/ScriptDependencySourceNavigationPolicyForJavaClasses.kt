@@ -4,13 +4,11 @@ package org.jetbrains.kotlin.idea.core.script.shared
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.compiled.ClsClassImpl
-import com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy
-import com.intellij.psi.impl.compiled.ClsFieldImpl
-import com.intellij.psi.impl.compiled.ClsFileImpl
-import com.intellij.psi.impl.compiled.ClsMethodImpl
+import com.intellij.psi.impl.compiled.*
+import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.util.MethodSignatureUtil
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
+import org.jetbrains.kotlin.idea.core.util.toPsiFile
 
 class ScriptDependencySourceNavigationPolicyForJavaClasses : ClsCustomNavigationPolicy {
     override fun getNavigationElement(clsClass: ClsClassImpl): PsiClass? {
@@ -35,25 +33,28 @@ class ScriptDependencySourceNavigationPolicyForJavaClasses : ClsCustomNavigation
     }
 
     override fun getNavigationElement(file: ClsFileImpl): PsiElement? {
-        val virtualFile = file.virtualFile
         val project = file.project
-        val sourceFileName = (file.classes.firstOrNull() as? ClsClassImpl)?.sourceFileName ?: return null
 
-        if (virtualFile !in ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFilesScope()) return null
+        if (file.virtualFile !in ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFilesScope()) return null
 
-        val packageName = file.packageName
-        val relativePath = if (packageName.isEmpty()) sourceFileName else packageName.replace('.', '/') + '/' + sourceFileName
+        val psiClass = file.classes.firstOrNull() as? ClsClassImpl ?: return null
 
-        for (root in ScriptDependencyAware.getInstance(project).getAllScriptDependenciesSources()) {
-            if (!root.isValid) continue
-            val sourceFile = root.findFileByRelativePath(relativePath)
-            if (sourceFile != null && sourceFile.isValid) {
-                val sourcePsi = file.manager.findFile(sourceFile)
-                if (sourcePsi is PsiClassOwner) {
-                    return sourcePsi
+        val candidates = FilenameIndex.getVirtualFilesByName(
+            psiClass.sourceFileName,
+            ScriptDependencyAware.getInstance(project).getAllScriptDependenciesSourcesScope()
+        )
+
+        for (virtualFile in candidates) {
+            if (!virtualFile.isValid) continue
+
+            val sourceFile = virtualFile.toPsiFile(project)
+            if (sourceFile != null && sourceFile.isValid && sourceFile is PsiClassOwner) {
+                if (sourceFile.classes.any { it.isEquivalentTo(psiClass) }) {
+                    return sourceFile
                 }
             }
         }
+
         return null
     }
 }

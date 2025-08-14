@@ -52,8 +52,6 @@ class ScriptClassRootsCache(
 
     fun getLightScriptInfo(file: String): LightScriptInfo? = scripts[file]
 
-    fun contains(file: VirtualFile): Boolean = file.path in scripts
-
     private fun getHeavyScriptInfo(file: String): HeavyScriptInfo? {
         val lightScriptInfo = getLightScriptInfo(file) ?: return null
         val heavy0 = lightScriptInfo.heavyCache?.get()
@@ -89,9 +87,6 @@ class ScriptClassRootsCache(
         }
     }
 
-    val firstScriptSdk: Sdk?
-        get() = sdks.first
-
     val allDependenciesClassFiles: Set<VirtualFile>
 
     val allDependenciesSources: Set<VirtualFile>
@@ -125,11 +120,8 @@ class ScriptClassRootsCache(
     fun getScriptConfiguration(file: VirtualFile): ScriptCompilationConfigurationWrapper? =
         getHeavyScriptInfo(file.path)?.scriptConfiguration
 
-    fun getScriptSdk(path: String): Sdk? =
-        getHeavyScriptInfo(path)?.sdk
-
     fun getScriptSdk(file: VirtualFile): Sdk? =
-        getScriptSdk(file.path)
+        getHeavyScriptInfo(file.path)?.sdk
 
     fun getScriptDependenciesClassFilesScope(file: VirtualFile): GlobalSearchScope =
       getHeavyScriptInfo(file.path)?.classFilesScope ?: GlobalSearchScope.EMPTY_SCOPE

@@ -116,7 +116,7 @@ class ScriptConfigurationManager(val myProject: Project, val scope: CoroutineSco
 
     @TestOnly
     fun hasConfiguration(file: KtFile): Boolean =
-        classpathRoots.contains(file.alwaysVirtualFile)
+        file.alwaysVirtualFile.path in classpathRoots.scripts
 
     fun isConfigurationLoadingInProgress(file: KtFile): Boolean =
         plugins.firstOrNull { it.isApplicable(file.alwaysVirtualFile) }?.isConfigurationLoadingInProgress(file)
@@ -170,9 +170,6 @@ class ScriptConfigurationManager(val myProject: Project, val scope: CoroutineSco
             classpathRoots.getScriptSdk(virtualFile)
         }
 
-    override fun getFirstScriptsSdk(): Sdk? =
-        classpathRoots.firstScriptSdk
-
     override fun getScriptDependenciesClassFilesScope(file: VirtualFile): GlobalSearchScope =
         classpathRoots.getScriptDependenciesClassFilesScope(file)
 
@@ -184,9 +181,6 @@ class ScriptConfigurationManager(val myProject: Project, val scope: CoroutineSco
 
     override fun getAllScriptsDependenciesClassFiles(): Collection<VirtualFile> =
         classpathRoots.allDependenciesClassFiles
-
-    override fun getAllScriptDependenciesSources(): Collection<VirtualFile> =
-        classpathRoots.allDependenciesSources
 
     override fun getScriptDependingOn(dependencies: Collection<String>): VirtualFile? =
         classpathRoots.scriptsPaths().firstNotNullOfOrNull { scriptPath ->

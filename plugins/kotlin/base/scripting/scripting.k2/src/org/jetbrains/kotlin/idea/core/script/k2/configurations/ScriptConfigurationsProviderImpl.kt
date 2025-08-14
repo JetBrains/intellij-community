@@ -2,24 +2,28 @@
 package org.jetbrains.kotlin.idea.core.script.k2.configurations
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
 import com.intellij.platform.workspace.jps.entities.SdkDependency
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptRefinedConfigurationResolver
-import org.jetbrains.kotlin.idea.core.script.shared.ScriptClassPathUtil
-import org.jetbrains.kotlin.idea.core.script.shared.ScriptVirtualFileCache
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.psi.KtFile
@@ -27,91 +31,98 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
-import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ide
-import kotlin.script.experimental.api.valueOrNull
 
-private class ScriptDependenciesData(
-    val classes: Set<VirtualFile> = mutableSetOf(),
-    val sources: Set<VirtualFile> = mutableSetOf(),
-    val sdks: Set<Sdk> = mutableSetOf(),
+private class AllScriptsDependencies(
+    val classes: Set<VirtualFile>,
+    val sources: Set<VirtualFile>,
+    val sdkClasses: Set<VirtualFile>,
+    val sdkSources: Set<VirtualFile>,
+)
+
+private data class ScriptDependencies(
+    val classes: Collection<VirtualFile>,
+    val sources: Collection<VirtualFile>,
+    val sdk: Sdk?,
 ) {
-    operator fun plus(other: ScriptDependenciesData): ScriptDependenciesData {
-        return ScriptDependenciesData(
-            this.classes + other.classes, this.sources + other.sources, this.sdks + other.sdks
-        )
+    companion object {
+        val EMPTY = ScriptDependencies(setOf(), setOf(), null)
     }
 }
 
 class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: CoroutineScope) : ScriptConfigurationsProvider(project),
                                                                                                ScriptDependencyAware {
-    private val allDependencies = AtomicReference(ScriptDependenciesData())
 
-    fun store(configurations: Collection<ScriptConfigurationWithSdk>) {
-        val cache = ScriptVirtualFileCache()
+    private val allScriptsDependencies
+        get() = ScriptDependenciesSingletonCache.getOrCompute(project) {
+            val snapshot = project.workspaceModel.currentSnapshot
 
-        val dataToAdd = configurations.fold(ScriptDependenciesData()) { left, right ->
-            val configurationWrapper = right.scriptConfiguration.valueOrNull()
+            val (classes, sources) = snapshot.entities(KotlinScriptLibraryEntity::class.java).toClassesSources()
 
-            if (configurationWrapper == null) {
-                left
-            } else {
-                left + ScriptDependenciesData(
-                    configurationWrapper.dependenciesClassPath.mapNotNull { cache.findVirtualFile(it.path) }.toSet(),
-                    configurationWrapper.dependenciesSources.mapNotNull { cache.findVirtualFile(it.path) }.toSet(),
-                    setOfNotNull(right.sdk)
-                )
-            }
+            val (sdkClasses, sdkSources) =
+                snapshot.entities(KotlinScriptEntity::class.java).mapNotNull { it.jdk }
+                    .fold(mutableSetOf<VirtualFile>() to mutableSetOf<VirtualFile>()) { (accClasses, accSources), jdk ->
+                        accClasses += jdk.rootProvider.getFiles(OrderRootType.CLASSES).toList()
+                        accSources += jdk.rootProvider.getFiles(OrderRootType.SOURCES).toList()
+                        accClasses to accSources
+                    }
+
+            AllScriptsDependencies(classes, sources, sdkClasses, sdkSources)
         }
-        allDependencies.accumulateAndGet(dataToAdd) { left, right -> left + right }
+
+    override fun getAllScriptsDependenciesClassFiles(): Collection<VirtualFile> = allScriptsDependencies.classes
+
+    override fun getAllScriptsDependenciesClassFilesScope(): GlobalSearchScope = with(allScriptsDependencies) {
+        compose(classes.toList() + sdkClasses)
     }
 
-    override fun getAllScriptDependenciesSources(): Collection<VirtualFile> = allDependencies.get()?.sources ?: emptyList()
-
-    override fun getAllScriptsDependenciesClassFiles(): Collection<VirtualFile> = allDependencies.get().classes
-
-    override fun getAllScriptsDependenciesClassFilesScope(): GlobalSearchScope = with(allDependencies.get()) {
-        compose(classes.toList() + getSdkClasses())
-    }
-
-    override fun getAllScriptDependenciesSourcesScope(): GlobalSearchScope = with(allDependencies.get()) {
-        compose(sources.toList() + getSdkSources())
+    override fun getAllScriptDependenciesSourcesScope(): GlobalSearchScope = with(allScriptsDependencies) {
+        compose(sources.toList() + sdkSources)
     }
 
     override fun getScriptDependenciesClassFilesScope(virtualFile: VirtualFile): GlobalSearchScope {
-        val (configuration, sdk) = getConfigurationWithSdk(virtualFile) ?: return GlobalSearchScope.EMPTY_SCOPE
-        val configurationWrapper = configuration.valueOrNull() ?: return GlobalSearchScope.EMPTY_SCOPE
-
-        val roots = configurationWrapper.dependenciesClassPath.mapNotNull { ScriptClassPathUtil.findVirtualFile(it.path) }
-
+        val (classes, _, sdk) = virtualFile.currentDependencies
         val sdkClasses = sdk?.rootProvider?.getFiles(OrderRootType.CLASSES)?.toList() ?: emptyList<VirtualFile>()
-
-        return compose(roots + sdkClasses)
+        return compose(classes + sdkClasses)
     }
 
-    override fun getScriptDependenciesClassFiles(virtualFile: VirtualFile): Collection<VirtualFile> {
-        val dependencies =
-            getConfigurationWithSdk(virtualFile)?.scriptConfiguration?.valueOrNull()?.dependenciesClassPath ?: return emptyList()
-        return dependencies.mapNotNull { ScriptClassPathUtil.findVirtualFile(it.path) }
-    }
+    override fun getScriptDependenciesClassFiles(virtualFile: VirtualFile): Collection<VirtualFile> =
+        virtualFile.currentDependencies.classes
 
-    override fun getFirstScriptsSdk(): Sdk? = ProjectRootManager.getInstance(project).projectSdk ?: allDependencies.get().sdks.firstOrNull()
+    override fun getScriptSdk(virtualFile: VirtualFile): Sdk? = virtualFile.currentDependencies.sdk
 
-    override fun getScriptSdk(virtualFile: VirtualFile): Sdk? {
-        val index = project.workspaceModel.currentSnapshot.getVirtualFileUrlIndex()
+    private val VirtualFile.currentDependencies: ScriptDependencies
+        get() {
+            val snapshot = project.workspaceModel.currentSnapshot
 
-        val virtualFileUrl = virtualFile.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
-        val entity = index.findEntitiesByUrl(virtualFileUrl).filterIsInstance<KotlinScriptEntity>().firstOrNull() ?: return null
-        return when (val sdkDependency = entity.sdk) {
+            val virtualFileUrl = this.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
+            val entity =
+                snapshot.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl).filterIsInstance<KotlinScriptEntity>().firstOrNull()
+                    ?: return ScriptDependencies.EMPTY
+
+            val (classes, sources) = entity.dependencies.asSequence()
+                .mapNotNull { snapshot.resolve(it) }
+                .toClassesSources()
+
+            return ScriptDependencies(
+                classes, sources, entity.jdk
+            )
+        }
+
+    private fun Sequence<KotlinScriptLibraryEntity>.toClassesSources(): Pair<MutableSet<VirtualFile>, MutableSet<VirtualFile>> =
+        fold(mutableSetOf<VirtualFile>() to mutableSetOf<VirtualFile>()) { (accClasses, accSources), entity ->
+            accClasses += entity.classes.mapNotNull { it.virtualFile }
+            accSources += entity.sources.mapNotNull { it.virtualFile }
+            accClasses to accSources
+        }
+
+    private val KotlinScriptEntity.jdk: Sdk?
+        get() = when (val sdkDependency = sdk) {
             is SdkDependency -> ProjectJdkTable.getInstance().findJdk(sdkDependency.sdk.name, sdkDependency.sdk.type)
             is InheritedSdkDependency -> ProjectRootManager.getInstance(project).projectSdk
             else -> null
         }
-    }
-
-    override fun getScriptDependingOn(dependencies: Collection<String>): VirtualFile? = null
 
     override fun getScriptConfigurationResult(file: KtFile): ScriptCompilationConfigurationResult? {
         val definition = file.findScriptDefinition() ?: return null
@@ -123,22 +134,21 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
             ?: DefaultScriptConfigurationHandler.getInstance(project)
     }
 
-    fun getConfigurationWithSdk(virtualFile: VirtualFile): ScriptConfigurationWithSdk? {
-        val definition = findScriptDefinition(project, VirtualFileScriptSource(virtualFile))
-        return getConfigurationSupplier(definition).get(virtualFile)
-    }
-
-    private fun ScriptDependenciesData.getSdkSources(): List<VirtualFile> =
-        sdks.flatMap { it.rootProvider.getFiles(OrderRootType.SOURCES).toList() }
-
-    private fun ScriptDependenciesData.getSdkClasses(): List<VirtualFile> =
-        sdks.flatMap { it.rootProvider.getFiles(OrderRootType.CLASSES).toList() }
-
     companion object {
         fun getInstance(project: Project): ScriptConfigurationsProviderImpl =
             project.service<ScriptConfigurationsProvider>() as ScriptConfigurationsProviderImpl
+    }
+}
 
-        fun getInstanceIfCreated(project: Project): ScriptConfigurationsProviderImpl? =
-            project.serviceIfCreated<ScriptConfigurationsProvider>() as? ScriptConfigurationsProviderImpl
+private object ScriptDependenciesSingletonCache {
+    inline fun <reified T : Any> getOrCompute(project: Project, noinline compute: () -> T): T {
+        val manager = CachedValuesManager.getManager(project)
+        val key: Key<CachedValue<T>> = manager.getKeyForClass(T::class.java)
+        val provider: CachedValueProvider<T> = CachedValueProvider {
+            CachedValueProvider.Result.create(
+                compute(), ScriptDependenciesModificationTracker.getInstance(project)
+            )
+        }
+        return manager.getCachedValue(project, key, provider, false)
     }
 }

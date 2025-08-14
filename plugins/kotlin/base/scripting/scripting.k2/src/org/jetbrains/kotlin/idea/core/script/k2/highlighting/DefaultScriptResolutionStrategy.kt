@@ -88,7 +88,6 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
         }
 
         projectModelUpdater.updateWorkspaceModel(configurationPerVirtualFile)
-        ScriptConfigurationsProviderImpl.getInstance(project).store(configurationPerVirtualFile.values)
 
         edtWriteAction {
             project.publishGlobalModuleStateModificationEvent()

@@ -9,7 +9,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 
 interface ScriptDependencyAware {
-    fun getAllScriptDependenciesSources(): Collection<VirtualFile>
     fun getAllScriptsDependenciesClassFiles(): Collection<VirtualFile>
 
     fun getAllScriptsDependenciesClassFilesScope(): GlobalSearchScope
@@ -18,24 +17,20 @@ interface ScriptDependencyAware {
     fun getScriptDependenciesClassFilesScope(virtualFile: VirtualFile): GlobalSearchScope
     fun getScriptDependenciesClassFiles(virtualFile: VirtualFile): Collection<VirtualFile>
 
-    fun getFirstScriptsSdk(): Sdk?
     fun getScriptSdk(virtualFile: VirtualFile): Sdk?
 
-    fun getScriptDependingOn(dependencies: Collection<String>): VirtualFile?
-
+    fun getScriptDependingOn(dependencies: Collection<String>): VirtualFile? = null
     fun updateScriptDefinitionReferences(): Unit = Unit
 
     companion object {
         fun getInstance(project: Project): ScriptDependencyAware = project.service<ScriptConfigurationsProvider>() as ScriptDependencyAware
 
         val EMPTY: ScriptDependencyAware = object : ScriptDependencyAware {
-            override fun getAllScriptDependenciesSources(): Collection<VirtualFile> = listOf()
             override fun getAllScriptsDependenciesClassFiles(): Collection<VirtualFile> = listOf()
             override fun getAllScriptsDependenciesClassFilesScope(): GlobalSearchScope = GlobalSearchScope.EMPTY_SCOPE
             override fun getAllScriptDependenciesSourcesScope(): GlobalSearchScope = GlobalSearchScope.EMPTY_SCOPE
             override fun getScriptDependenciesClassFilesScope(virtualFile: VirtualFile): GlobalSearchScope = GlobalSearchScope.EMPTY_SCOPE
             override fun getScriptDependenciesClassFiles(virtualFile: VirtualFile): Collection<VirtualFile> = listOf()
-            override fun getFirstScriptsSdk(): Sdk? = null
             override fun getScriptSdk(virtualFile: VirtualFile): Sdk? = null
             override fun getScriptDependingOn(dependencies: Collection<String>): VirtualFile? = null
         }

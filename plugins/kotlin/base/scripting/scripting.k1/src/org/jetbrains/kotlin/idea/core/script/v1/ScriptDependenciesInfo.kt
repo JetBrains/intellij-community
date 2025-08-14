@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.core.script.v1
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
@@ -99,7 +100,7 @@ sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleI
     // we do not know which scripts these dependencies are
     class ForProject(project: Project) : ScriptDependenciesInfo(project) {
         override val sdk: Sdk?
-            get() = ScriptDependencyAware.getInstance(project).getFirstScriptsSdk()
+            get() = ProjectRootManager.getInstance(project).projectSdk
 
         override val contentScope: GlobalSearchScope
             get() = KotlinSourceFilterScope.libraryClasses(
