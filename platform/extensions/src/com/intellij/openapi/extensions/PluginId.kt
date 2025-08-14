@@ -1,11 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions
 
-import com.intellij.ReviseWhenPortedToJDK
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Unmodifiable
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -60,13 +57,6 @@ class PluginId private constructor(val idString: String) : Comparable<PluginId> 
         }
       }
       return null
-    }
-
-    @JvmStatic
-    @ApiStatus.Internal
-    @ReviseWhenPortedToJDK(value = "10", description = "Collectors.toUnmodifiableSet()")
-    fun getRegisteredIds(): @Unmodifiable Set<PluginId> {
-      return registeredIds.values.toSet()
     }
   }
 }
