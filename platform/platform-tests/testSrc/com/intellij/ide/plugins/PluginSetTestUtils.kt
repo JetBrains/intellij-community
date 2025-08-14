@@ -25,7 +25,7 @@ fun ObjectAssert<PluginSet>.doesNotHaveEnabledPlugins(firstId: String, vararg ot
 fun ObjectAssert<PluginSet>.doesNotHaveEnabledPlugins() = hasExactlyEnabledPlugins()
 
 fun ObjectAssert<PluginSet>.hasExactlyEnabledModulesWithoutMainDescriptors(vararg ids: String) = apply {
-  extracting { it.getEnabledModules().mapNotNull { plugin -> plugin.contentModuleName } }
+  extracting { it.getEnabledModules().mapNotNull { plugin -> plugin.contentModuleId } }
     .asList()
     .containsExactlyInAnyOrder(*ids)
 }

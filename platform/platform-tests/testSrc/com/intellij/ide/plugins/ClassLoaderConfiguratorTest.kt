@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.plugins.contentModuleId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
@@ -46,7 +47,7 @@ internal class ClassLoaderConfiguratorTest {
                                                   descriptorContent = null))
     val plugins = arrayOf(kotlin, gradle, kotlinGradleJava, kotlinCompilerGradle)
     sortDependenciesInPlace(plugins)
-    assertThat(plugins.last().contentModuleName).isNull()
+    assertThat(plugins.last().contentModuleId).isNull()
   }
 
   @Test
