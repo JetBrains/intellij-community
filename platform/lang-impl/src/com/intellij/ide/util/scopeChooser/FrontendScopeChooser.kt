@@ -80,7 +80,7 @@ class FrontendScopeChooser(private val project: Project, private val preselected
   fun getComboBox(): ComboBox<ScopeDescriptor> = comboBox
 
   private fun initItems(items: List<ScopeDescriptor>, selectedScopeId: String? = null) {
-    val previousSelection = selectedScopeId?.let { scopesMap[it] }
+    val previousSelection = selectedScopeId?.let { scopesMap[it] } ?: selectedItem
     comboBox.removeAllItems()
     items.filterOutSeparators().forEach { comboBox.addItem(it) }
     tryToSelectItem(items, previousSelection)
