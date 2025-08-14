@@ -57,7 +57,7 @@
     <registryKey key="terminal.classic.refresh.vfs.on.shell.command.finished" defaultValue="true"
                  description="Refresh VFS when shell commands are finished in the Classic Terminal.
                   May not work 100% reliably as it uses heuristics to determine when command is finished."/>
-    <registryKey key="terminal.use.EelApi" defaultValue="true"
+    <registryKey key="terminal.use.EelApi" defaultValue="false"
                  description="Use EelApi to launch a shell process. Launching a local shell works the same as before.
                   For WSL environments, the shell process in WSL will be launched via IJEnt instead of using wsl.exe."/>
     <registryKey key="terminal.new.ui.completion.popup" defaultValue="false"

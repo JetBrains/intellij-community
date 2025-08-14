@@ -21,12 +21,15 @@ import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.EnvironmentRestorer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.terminal.ShellStartupOptions;
 import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider;
+import org.jetbrains.plugins.terminal.TerminalStartupKt;
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment;
 
 import java.nio.file.Files;
@@ -161,11 +164,34 @@ public final class LocalOptionsConfigurer {
     @NotNull Project project,
     @NotNull String workingDir
   ) {
-    List<String> shellCommand = options.getShellCommand();
+    List<String> shellCommand = fixShellCommand(options.getShellCommand());
     if (shellCommand != null) {
       return shellCommand;
     }
-    return LocalTerminalStartCommandBuilder.convertShellPathToCommand(getShellPath(project), workingDir);
+    String shellPath = fixShellPath(getShellPath(project), workingDir);
+    return LocalTerminalStartCommandBuilder.convertShellPathToCommand(shellPath, workingDir);
+  }
+
+  private static @Nullable List<String> fixShellCommand(@Nullable List<String> shellCommand) {
+    if (OS.CURRENT == OS.Windows && !TerminalStartupKt.shouldUseEelApi() &&
+        isUnixPath(ContainerUtil.getFirstItem(shellCommand))) {
+      return null; // use the default shell path
+    }
+    return shellCommand;
+  }
+
+  private static @NotNull String fixShellPath(@NotNull String shellPath, @NotNull String workingDirectory) {
+    if (OS.CURRENT == OS.Windows && !TerminalStartupKt.shouldUseEelApi() && isUnixPath(shellPath)) {
+      WslPath wslPath = WslPath.parseWindowsUncPath(workingDirectory);
+      if (wslPath != null) {
+        return "wsl.exe --distribution " + wslPath.getDistributionId();
+      }
+    }
+    return shellPath;
+  }
+
+  private static boolean isUnixPath(@Nullable String path) {
+    return path != null && path.startsWith("/") && !path.startsWith("//") /* UNC path */;
   }
 
   private static @NotNull String getShellPath(@NotNull Project project) {
