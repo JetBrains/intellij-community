@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class MarkupEditorFilterFactory {
   private static final MarkupEditorFilter IS_DIFF_FILTER = editor -> DiffUtil.isDiffEditor(editor);
-  private static final MarkupEditorFilter NOT_DIFF_FILTER = createNotFilter(IS_DIFF_FILTER);
+  private static final MarkupEditorFilter NOT_DIFF_FILTER = editor -> !DiffUtil.isDiffEditor(editor);
 
   public static @NotNull MarkupEditorFilter createNotFilter(@NotNull MarkupEditorFilter filter) {
     return editor -> !filter.avaliableIn(editor);

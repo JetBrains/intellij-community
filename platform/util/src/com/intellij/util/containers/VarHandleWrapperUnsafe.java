@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -9,6 +10,7 @@ import java.lang.reflect.Field;
 /**
  * Implementation of {@link VarHandleWrapper} based on {@link Unsafe}, when the {@link java.lang.invoke.VarHandle} is not available in the classpath
  */
+@ReviseWhenPortedToJDK("11") // get rid of unsafe
 @ApiStatus.Internal
 class VarHandleWrapperUnsafe extends VarHandleWrapper implements VarHandleWrapper.VarHandleWrapperFactory {
   private final long OFFSET;
