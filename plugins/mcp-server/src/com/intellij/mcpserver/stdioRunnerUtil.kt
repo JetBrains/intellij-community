@@ -20,7 +20,7 @@ import kotlin.reflect.jvm.javaMethod
  * @param projectBasePath path to the project. It's passed as a metadata into MCP requests and used on the server side to determine the proper project for a tool
  * @return commandline to run MCP stdio transport process
  */
-fun createStdioMcpServerCommandLine(ideServerPort: Int, projectBasePath: String?): GeneralCommandLine {
+fun createStdioMcpServerCommandLine(ideServerPort: Int, projectBasePath: String?, authToken: Pair<String, String>? = null): GeneralCommandLine {
   val classpaths = McpStdioRunnerClasspath.CLASSPATH_CLASSES.map {
     (PathManager.getJarForClass(it) ?: error("No path for class $it")).pathString
   }.toSet()
@@ -36,6 +36,7 @@ fun createStdioMcpServerCommandLine(ideServerPort: Int, projectBasePath: String?
     .withParameters(::main.javaMethod!!.declaringClass.name)
     .withEnvironment(IJ_MCP_SERVER_PORT, ideServerPort.toString())
   if (projectBasePath != null) commandLine.withEnvironment(IJ_MCP_SERVER_PROJECT_PATH, projectBasePath)
+  if (authToken != null) commandLine.withEnvironment(authToken.first, authToken.second)
   return commandLine
 }
 
@@ -87,12 +88,13 @@ fun createStdioServerJsonEntry(cmd: GeneralCommandLine): JsonObject {
  * }
  * ```
  */
-fun createSseServerJsonEntry(port: Int, projectBasePath: String?): JsonObject {
+fun createSseServerJsonEntry(port: Int, projectBasePath: String?, authToken: Pair<String, String>? = null): JsonObject {
   return buildJsonObject {
     put("type", "sse")
     put("url", "http://localhost:$port/sse")
     put("headers", buildJsonObject {
       put(IJ_MCP_SERVER_PROJECT_PATH, projectBasePath)
+      if (authToken != null) put(authToken.first, authToken.second)
     })
   }
 }

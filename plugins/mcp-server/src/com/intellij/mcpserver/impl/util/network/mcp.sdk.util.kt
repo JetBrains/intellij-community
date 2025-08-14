@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.trace
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCallPipeline
+import io.ktor.server.application.PipelineCall
 import io.ktor.server.application.install
 import io.ktor.server.request.ApplicationRequest
 import io.ktor.server.response.respond
@@ -15,6 +16,7 @@ import io.ktor.server.sse.SSE
 import io.ktor.server.sse.ServerSSESession
 import io.ktor.server.sse.sse
 import io.ktor.util.collections.ConcurrentMap
+import io.ktor.util.pipeline.PipelineContext
 import io.ktor.utils.io.KtorDsl
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.SseServerTransport
@@ -28,12 +30,15 @@ private val logger = logger<RoutingContext>()
  * Temporary copied code from MCP SDK to pass thought sse session into handler
  */
 @KtorDsl
-fun Application.mcpPatched(block: ServerSSESession.() -> Server) {
+fun Application.mcpPatched(prePhase: suspend PipelineContext<*, PipelineCall>.() -> Unit, block: suspend ServerSSESession.() -> Server) {
   val transports = ConcurrentMap<String, SseServerTransport>()
 
   install(SSE)
 
   routing {
+    intercept(ApplicationCallPipeline.Plugins) {
+      prePhase()
+    }
     sse("/sse") {
       mcpSseEndpoint("/message", transports, block)
     }
@@ -47,7 +52,7 @@ fun Application.mcpPatched(block: ServerSSESession.() -> Server) {
 private suspend fun ServerSSESession.mcpSseEndpoint(
   postEndpoint: String,
   transports: ConcurrentMap<String, SseServerTransport>,
-  block: ServerSSESession.() -> Server,
+  block: suspend ServerSSESession.() -> Server,
 ) {
   val transport =  mcpSseTransport(postEndpoint, transports)
 
