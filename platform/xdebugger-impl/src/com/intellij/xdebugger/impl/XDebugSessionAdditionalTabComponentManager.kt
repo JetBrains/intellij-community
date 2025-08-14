@@ -4,7 +4,6 @@ package com.intellij.xdebugger.impl
 import com.intellij.diagnostic.logging.AdditionalTabComponent
 import com.intellij.execution.configurations.AdditionalTabComponentManagerEx
 import com.intellij.ide.ui.icons.rpcId
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -16,12 +15,12 @@ import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.ui.content.Content
-import com.intellij.util.asDisposable
 import com.intellij.xdebugger.impl.rpc.XDebugSessionAdditionalTabComponentManagerId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -29,9 +28,14 @@ import javax.swing.Icon
 class XDebugSessionAdditionalTabComponentManager(
   private val project: Project,
   private val debugTabScope: CoroutineScope,
-) : AdditionalTabComponentManagerEx, Disposable {
+) : AdditionalTabComponentManagerEx {
   init {
-    Disposer.register(debugTabScope.asDisposable(), this)
+    debugTabScope.coroutineContext.job.invokeOnCompletion {
+      val tabs = tabToId.keys.toList()
+      for (tab in tabs) {
+        removeAdditionalTabComponent(tab)
+      }
+    }
   }
 
   val id: XDebugSessionAdditionalTabComponentManagerId = storeValueGlobally(debugTabScope, this, XDebugSessionAdditionalTabComponentManagerValueIdType)
@@ -60,13 +64,6 @@ class XDebugSessionAdditionalTabComponentManager(
     }
     val tabId = tabToId.remove(component) ?: return
     _tabComponentEvents.tryEmit(XDebuggerSessionAdditionalTabEvent.TabRemoved(tabId))
-  }
-
-  override fun dispose() {
-    val tabs = tabToId.keys.toList()
-    for (tab in tabs) {
-      removeAdditionalTabComponent(tab)
-    }
   }
 }
 
