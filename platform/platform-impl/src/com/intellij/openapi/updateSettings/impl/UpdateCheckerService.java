@@ -275,12 +275,10 @@ public class UpdateCheckerService {
 
     List<HtmlChunk.Element> links = new ArrayList<>();
     for (var id : getUpdatedPlugins()) {
-      var pluginId = PluginId.findId(id);
-      if (pluginId != null) {
-        var descriptor = PluginManagerCore.getPlugin(pluginId);
-        if (descriptor != null) {
-          links.add(HtmlChunk.link(id, descriptor.getName()));
-        }
+      var pluginId = PluginId.getId(id);
+      var descriptor = PluginManagerCore.getPlugin(pluginId);
+      if (descriptor != null) {
+        links.add(HtmlChunk.link(id, descriptor.getName()));
       }
     }
     if (links.isEmpty()) return;
@@ -298,10 +296,8 @@ public class UpdateCheckerService {
   private static void showPluginConfigurable(HyperlinkEvent event, Project project) {
     var id = event.getDescription();
     if (id != null) {
-      var pluginId = PluginId.findId(id);
-      if (pluginId != null) {
-        PluginManagerConfigurable.showPluginConfigurable(project, List.of(pluginId));
-      }
+      var pluginId = PluginId.getId(id);
+      PluginManagerConfigurable.showPluginConfigurable(project, List.of(pluginId));
     }
   }
 

@@ -331,7 +331,7 @@ public final class AboutDialog extends DialogWrapper {
     }
 
     if (PlatformUtils.isIntelliJ()) {
-      var kotlinPlugin = PluginManagerCore.getPlugin(PluginId.findId("org.jetbrains.kotlin"));
+      var kotlinPlugin = PluginManagerCore.getPlugin(PluginId.getId("org.jetbrains.kotlin"));
       if (kotlinPlugin != null) {
         text.append("Kotlin: ").append(kotlinPlugin.getVersion()).append('\n');
       }

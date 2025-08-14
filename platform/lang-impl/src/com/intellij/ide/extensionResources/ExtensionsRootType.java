@@ -81,7 +81,7 @@ public final class ExtensionsRootType extends RootType {
 
   public @Nullable PluginId getOwner(@Nullable VirtualFile resource) {
     VirtualFile file = resource == null ? null : getPluginResourcesDirectoryFor(resource);
-    return file == null ? null : PluginId.findId(file.getName());
+    return file == null ? null : PluginId.getId(file.getName());
   }
 
   public @Nullable Path findResource(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
