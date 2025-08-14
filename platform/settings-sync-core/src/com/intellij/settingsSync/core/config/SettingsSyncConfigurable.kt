@@ -53,6 +53,7 @@ import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.Consumer
 import com.intellij.util.asDisposable
 import com.intellij.util.text.DateFormatUtil
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.StartupUiUtil.labelFont
@@ -864,7 +865,9 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           icon(AllIcons.General.QuestionDialog).align(AlignY.TOP)
           panel {
             row {
-              text(message("enable.sync.choose.data.provider.title")).bold()
+              text(message("enable.sync.choose.data.provider.title")).applyToComponent {
+                font = JBFont.h4()
+              }
             }
             buttonsGroup (message("enable.sync.choose.data.provider.text"), false) {
               val availableProviders = RemoteCommunicatorHolder.getAvailableProviders().filter { it.isAvailable() }
