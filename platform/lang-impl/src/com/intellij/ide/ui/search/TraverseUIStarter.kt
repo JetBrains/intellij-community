@@ -323,9 +323,9 @@ private fun processKeymap(): Map<OptionSetId, Set<SearchableOptionEntry>> {
 
 private fun getActionToPluginId(actionManager: ActionManagerImpl): Map<String, PluginId> {
   val actionToPluginId = HashMap<String, PluginId>()
-  for (id in PluginId.getRegisteredIds()) {
-    for (action in actionManager.getPluginActions(id)) {
-      actionToPluginId.put(action, id)
+  for (pluginId in PluginManagerCore.getPluginSet().buildPluginIdMap().keys) {
+    for (action in actionManager.getPluginActions(pluginId)) {
+      actionToPluginId.put(action, pluginId)
     }
   }
   return actionToPluginId
