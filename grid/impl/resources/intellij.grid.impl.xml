@@ -165,10 +165,10 @@
       <reference ref="Console.TableResult.AddColumn"/>
       <reference ref="Console.TableResult.CloneColumn"/>
       <reference ref="Console.TableResult.DeleteColumns"/>
-      <separator text="ORDER BY"/>
+      <separator key="separator.order.by"/>
       <reference ref="Console.TableResult.ColumnSortAsc"/>
       <reference ref="Console.TableResult.ColumnSortDesc"/>
-      <separator text="Add to ORDER BY"/>
+      <separator key="separator.add.to.order.by"/>
       <reference ref="Console.TableResult.ColumnSortAddAsc"/>
       <reference ref="Console.TableResult.ColumnSortAddDesc"/>
       <separator/>
