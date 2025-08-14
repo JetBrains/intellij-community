@@ -2,7 +2,6 @@
 package com.intellij.platform.recentFiles.frontend
 
 import com.intellij.featureStatistics.FeatureUsageTracker
-import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.actions.shouldUseFallbackSwitcher
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -51,7 +50,7 @@ abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction(), Ac
     }
     else {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("switcher")
-      createAndShowNewSwitcher(null, event, message("window.title.switcher"), project)
+      createAndShowNewSwitcher(event, project)
     }
   }
 }
@@ -80,7 +79,7 @@ internal abstract class BaseRecentFilesAction(private val onlyEditedFiles: Boole
       existingPanel.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected }
     }
     else {
-      createAndShowNewSwitcher(onlyEditedFiles, null, message("title.popup.recent.files"), project)
+      createAndShowNewRecentFiles(onlyEditedFiles, project)
     }
   }
 }
