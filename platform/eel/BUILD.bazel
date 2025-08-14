@@ -29,6 +29,7 @@ jvm_test(
     "@lib//:kotlin-test",
     "@lib//:kotlin-test-assertions-core-jvm",
     "@lib//:kotlinx-coroutines-test",
+    "//platform/util-class-loader:util-classLoader",
   ]
 )
 ### auto-generated section `build intellij.platform.eel.tests` end
