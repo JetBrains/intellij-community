@@ -4,7 +4,6 @@ package com.intellij.openapi.extensions
 import com.intellij.openapi.extensions.PluginId.Companion.getId
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Represents an ID of a plugin. A full descriptor of the plugin may be obtained
@@ -33,36 +32,22 @@ class PluginId private constructor(val idString: String) : Comparable<PluginId> 
   }
 
   companion object {
-    private val registeredIds: MutableMap<String, PluginId> = ConcurrentHashMap<String, PluginId>()
-
     /**
      * Shorthand for [getId]
      */
     operator fun invoke(idString: String): PluginId = getId(idString)
 
     @JvmStatic
-    fun getId(idString: String): PluginId {
-      return registeredIds.computeIfAbsent(idString) { idString: String -> PluginId(idString) }
-    }
+    fun getId(idString: String): PluginId = PluginId(idString)
 
     @Deprecated("Use getId", ReplaceWith("getId(idString)"))
     @ApiStatus.ScheduledForRemoval
     @JvmStatic
-    fun findId(idString: String?): PluginId? {
-      return registeredIds[idString]
-    }
+    fun findId(idString: String?): PluginId? = idString?.let(::getId)
 
     @Deprecated("Use getId", ReplaceWith("getId(idStrings[0])"))
     @ApiStatus.ScheduledForRemoval
     @JvmStatic
-    fun findId(vararg idStrings: String): PluginId? {
-      for (idString in idStrings) {
-        val pluginId: PluginId? = registeredIds[idString]
-        if (pluginId != null) {
-          return pluginId
-        }
-      }
-      return null
-    }
+    fun findId(vararg idStrings: String): PluginId? = idStrings.firstOrNull()?.let(::getId)
   }
 }
