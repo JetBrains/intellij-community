@@ -2,7 +2,9 @@ package com.intellij.jvm.analysis.testFramework
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.psi.PsiReference
+import com.intellij.psi.ResolveResult
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 
 abstract class JvmReferenceContributorTestBase : LightJvmCodeInsightFixtureTestCase() {
@@ -18,6 +20,21 @@ abstract class JvmReferenceContributorTestBase : LightJvmCodeInsightFixtureTestC
     val resolved = reference.resolve()
     assertNotNull(resolved)
     assertion(reference, resolved!!)
+  }
+
+  protected fun JavaCodeInsightTestFixture.assertMultiresolveReference(
+    lang: JvmLanguage,
+    before: String,
+    fileName: String = generateFileName(),
+    assertion: (PsiReference, Array<ResolveResult>) -> Unit = { _, _ -> }
+  ) {
+    configureByText("$fileName${lang.ext}", before)
+    val offset = getCaretOffset()
+    val reference = myFixture.file.findReferenceAt(offset) ?: error("Could not find reference at caret offset")
+    assertTrue(reference is PsiPolyVariantReference)
+    if (reference !is PsiPolyVariantReference) return
+
+    assertion(reference, reference.multiResolve(false))
   }
 
   protected fun JavaCodeInsightTestFixture.assertUnResolvableReference(

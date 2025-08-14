@@ -21,11 +21,9 @@ import com.intellij.execution.junit.references.PsiSourceResolveResult
 import com.intellij.jvm.analysis.quickFix.CompositeModCommandQuickFix
 import com.intellij.jvm.analysis.quickFix.createModifierQuickfixes
 import com.intellij.lang.Language
-import com.intellij.lang.java.request.CreateFieldFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
-import com.intellij.lang.jvm.JvmValue
 import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.lang.jvm.types.JvmType
@@ -46,7 +44,6 @@ import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.util.asSafely
-import com.siyeh.ig.fixes.SerialVersionUIDBuilder
 import com.siyeh.ig.junit.JUnitCommonClassNames.*
 import com.siyeh.ig.psiutils.TestUtils
 import com.siyeh.ig.psiutils.TypeUtils
@@ -391,8 +388,10 @@ private class JUnitMalformedSignatureVisitor(
     val javaClass = aClass.javaPsi
     if (aClass.isInterface || aClass.javaPsi.hasModifier(JvmModifier.ABSTRACT)) return
     val hasNestedAnnotation = javaClass.hasAnnotation(ORG_JUNIT_JUPITER_API_NESTED)
-    if (!hasNestedAnnotation && !aClass.methods.any { it.javaPsi.hasAnnotation(ORG_JUNIT_JUPITER_API_TEST) ||
-                                                      it.javaPsi.hasAnnotation(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST)}) return
+    if (!hasNestedAnnotation && !aClass.methods.any {
+        it.javaPsi.hasAnnotation(ORG_JUNIT_JUPITER_API_TEST) ||
+        it.javaPsi.hasAnnotation(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST)
+      }) return
     if (!hasNestedAnnotation && aClass.isStatic) return
     if (hasNestedAnnotation && !aClass.isStatic && aClass.visibility != UastVisibility.PRIVATE) return
     val message = JUnitBundle.message("jvm.inspections.junit.malformed.missing.nested.annotation.descriptor")
@@ -631,10 +630,11 @@ private class JUnitMalformedSignatureVisitor(
   }
 
   private fun PsiSourceResolveResult.getSourceForClass(owner: PsiClass): PsiElement? {
-    if(element is PsiMethod) {
+    if (element is PsiMethod) {
       if (owners.isEmpty()) return element // direct link
       return owner.findMethodBySignature(element as PsiMethod, true)
-    } else if (element is PsiField) {
+    }
+    else if (element is PsiField) {
       if (owners.isEmpty()) return element // direct link
       return owner.findFieldByName((element as PsiField).name, true)
     }
@@ -642,7 +642,7 @@ private class JUnitMalformedSignatureVisitor(
   }
 
   private fun checkFieldSource(declaration: UDeclaration, methodSource: PsiAnnotation) {
-    if(declaration !is UMethod) return
+    if (declaration !is UMethod) return
     val psiMethod = declaration.javaPsi
     val containingClass = psiMethod.containingClass ?: return
     val annotationMemberValue = methodSource.flattenedAttributeValues(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
@@ -707,7 +707,7 @@ private class JUnitMalformedSignatureVisitor(
   }
 
   private fun checkAbsentFieldSourceProvider(
-    containingClass: PsiClass, anchor: PsiElement, sourceProviderName: String, method: UMethod
+    containingClass: PsiClass, anchor: PsiElement, sourceProviderName: String, method: UMethod,
   ) {
     val message = JUnitBundle.message(
       "jvm.inspections.junit.malformed.param.field.source.unresolved.descriptor",
@@ -797,7 +797,7 @@ private class JUnitMalformedSignatureVisitor(
     ) {
       val actions = mutableListOf<IntentionAction>()
       val sameClass = sourceProvider.containingClass == containingClass
-      if(sameClass) {
+      if (sameClass) {
         val annotation = JavaPsiFacade.getElementFactory(containingClass.project).createAnnotationFromText(
           TEST_INSTANCE_PER_CLASS, containingClass
         )

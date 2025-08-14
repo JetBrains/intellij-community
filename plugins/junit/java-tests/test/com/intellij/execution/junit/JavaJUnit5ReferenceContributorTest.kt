@@ -3,6 +3,7 @@ package com.intellij.execution.junit
 
 import com.intellij.junit.testFramework.JUnit5ReferenceContributorTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.psi.PsiMethod
 
 class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() {
   fun `test resolve to source method`() {
@@ -18,8 +19,103 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
          
          private static void cde() {}
       }
-    """.trimIndent()) { reference, resolved ->
-      assertContainsElements(reference.lookupStringVariants(), "abc", "cde")
+    """.trimIndent()) { reference, _ ->
+      assertContainsElements(reference.lookupStringVariants(), "abc")
+    }
+  }
+
+  fun `test filter resolved to source method`() {
+    myFixture.assertMultiresolveReference(JvmLanguage.JAVA, """
+      import org.junit.jupiter.params.ParameterizedTest;
+      import org.junit.jupiter.params.provider.MethodSource;
+      
+      interface MyFirstInterface {
+        static void abc() {}
+      }
+      
+      interface MySecondInterface {
+        static void abc() {}
+      }
+      
+      abstract class MyAbstractClass implements MyFirstInterface, MySecondInterface {}
+      
+      class ParameterizedTestsDemo extends MyAbstractClass {
+         @MethodSource("ab<caret>c")
+         void testWithProvider(String abc) {}
+      }
+    """.trimIndent()) { _, results ->
+      assertEquals(1, results.size)
+      val resolved = results.first().element
+      assertTrue(resolved is PsiMethod)
+      if (resolved !is PsiMethod) return@assertMultiresolveReference
+      assertEquals("MyFirstInterface", resolved.containingClass?.name)
+      assertEquals("abc", resolved.name)
+    }
+  }
+
+  fun `test filter resolved to source method with inherited`() {
+    myFixture.assertMultiresolveReference(JvmLanguage.JAVA, """
+      import org.junit.jupiter.params.ParameterizedTest;
+      import org.junit.jupiter.params.provider.MethodSource;
+      
+      interface MyFirstInterface {
+        static void abc() {}
+      }
+      
+      interface MySecondInterface {
+        static void abc() {}
+      }
+            
+      class ParameterizedTestsDemo implements MySecondInterface, MyFirstInterface {
+         @MethodSource("ab<caret>c")
+         void testWithProvider(String abc) {}
+      }
+      
+      class ChildOfParameterizedTestsDemo extends ParameterizedTestsDemo {
+        static void abc() {}
+      }
+    """.trimIndent()) { _, results ->
+      val classes = results.map { (it.element as PsiMethod).containingClass?.name }.toSet()
+      assertEquals(setOf("MySecondInterface", "ChildOfParameterizedTestsDemo"), classes)
+    }
+  }
+
+  fun `test filter resolved to source method with meta-annotation`() {
+    myFixture.assertMultiresolveReference(JvmLanguage.JAVA, """
+      import org.junit.jupiter.params.ParameterizedTest;
+      import org.junit.jupiter.params.provider.MethodSource;
+      
+      interface MyFirstInterface {
+        static void abc() {}
+      }
+      
+      interface MySecondInterface {
+        static void abc() {}
+      }
+      
+      interface MyThirdInterface {
+        static void abc() {}
+      }
+      
+      @MethodSource("ab<caret>c")
+      @interface MyAnnotation {}
+            
+      class ParameterizedTestsDemo1 implements MySecondInterface, MyFirstInterface {
+         @MyAnnotation
+         void testWithProvider(String abc) {}
+      }
+      
+      class ParameterizedTestsDemo2 implements MyThirdInterface, MyFirstInterface {
+         @MyAnnotation
+         void testWithProvider(String abc) {}
+      }
+
+      class ChildOfParameterizedTestsDemo extends ParameterizedTestsDemo1 {
+        static void abc() {}
+      }
+    """.trimIndent()) { _, results ->
+      val classes = results.map { (it.element as PsiMethod).containingClass?.name }.toSet()
+      assertEquals(setOf("MySecondInterface", "MyThirdInterface", "ChildOfParameterizedTestsDemo"), classes)
     }
   }
 

@@ -108,15 +108,38 @@ abstract class BaseJunitAnnotationReference<Psi : PsiMember, U : UDeclaration>(
     return filteredElements(factoryMethods, scope.javaPsi, testMethod?.javaPsi).firstOrNull()
   }
 
+  /**
+   * Recursively finds a relevant `Psi` element from the provided list that is associated with the given class scope.
+   * priority: interface (by ordering) -> super class
+   *
+   * @param scope The class scope used to find the relevant `Psi` element.
+   * @param elements The list of `Psi` elements to be filtered.
+   * @return The relevant `Psi` element if found, or `null` if no matching element exists.
+   */
+  private fun getRelevantElements(scope: PsiClass, elements: List<Psi>): Psi? {
+    elements.find { it.containingClass == scope }?.let { return it }
+    for (iface in scope.interfaces) {
+      getRelevantElements(iface, elements)?.let { return it }
+    }
+    scope.superClass?.let { superClass ->
+      getRelevantElements(superClass, elements)?.let { return it }
+    }
+    return null
+  }
+
   private fun fastResolveFor(literal: UExpression, scope: UClass, testMethod: UMethod?): Set<PsiElement> {
     val name = literal.evaluate() as String? ?: return setOf()
     val currentTestClass = scope.javaPsi
     val clazzElements = filteredElements(getPsiElementsByName(currentTestClass, name, true), currentTestClass, testMethod?.javaPsi)
+    val relevantElement = getRelevantElements(scope.javaPsi, clazzElements)
 
     val elements = ClassInheritorsSearch.search(currentTestClass, currentTestClass.resolveScope, true)
-      .flatMap { inheritedTestClass -> filteredElements(getPsiElementsByName(inheritedTestClass, name, true), inheritedTestClass, testMethod?.javaPsi) }
+      .mapNotNull { inheritedTestClass ->
+        getRelevantElements(inheritedTestClass,
+                            filteredElements(getPsiElementsByName(inheritedTestClass, name, true),
+                                             inheritedTestClass, testMethod?.javaPsi)) }
       .toMutableSet()
-    elements.addAll(clazzElements)
+    elements.addAll(if (relevantElement != null) listOf(relevantElement) else clazzElements)
     return elements
   }
 
