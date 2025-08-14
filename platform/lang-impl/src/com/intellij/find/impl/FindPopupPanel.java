@@ -268,7 +268,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       return null;
     });
 
-    previewUpdateRescheduler.rescheduleIfNeeded(ContainerUtil.and(adapters, UsageInfoAdapter::isLoaded));
+    previewUpdateRescheduler.rescheduleIfNeeded(!ContainerUtil.and(adapters, UsageInfoAdapter::isLoaded));
   }
 
   @Override
