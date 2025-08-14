@@ -109,6 +109,7 @@ internal object DefaultJavaSyntaxResources {
     "feature.sealed.classes" to "Sealed classes",
     "feature.sequenced.collections" to "Sequenced Collections",
     "feature.serial.annotation" to "@Serial annotation",
+    "feature.stable.values" to "Stable Values",
     "feature.statements.before.super" to "Flexible Constructor Bodies",
     "feature.static.imports" to "Static imports",
     "feature.static.interface.calls" to "Static interface method calls",
