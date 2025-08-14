@@ -136,6 +136,7 @@ enum class JavaFeature {
   },
 
   SCOPED_VALUES(LanguageLevel.JDK_21_PREVIEW, "feature.scoped.values"),
+  STABLE_VALUES(LanguageLevel.JDK_25_PREVIEW, "feature.stable.values"),
   STRUCTURED_CONCURRENCY(LanguageLevel.JDK_21_PREVIEW, "feature.structured.concurrency"),
   STRUCTURED_CONCURRENCY_TASK_SCOPE_CONSTRUCTORS(LanguageLevel.JDK_21_PREVIEW, "feature.structured.concurrency.constructors") {
     override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
@@ -366,6 +367,7 @@ enum class JavaFeature {
         "STRING_TEMPLATES" -> STRING_TEMPLATES
         "UNNAMED_CLASSES", "IMPLICIT_CLASSES" -> IMPLICIT_CLASSES
         "SCOPED_VALUES" -> SCOPED_VALUES
+        "STABLE_VALUES" -> STABLE_VALUES
         "STRUCTURED_CONCURRENCY" -> STRUCTURED_CONCURRENCY
         "CLASSFILE_API" -> CLASSFILE_API
         "STREAM_GATHERERS" -> STREAM_GATHERERS
