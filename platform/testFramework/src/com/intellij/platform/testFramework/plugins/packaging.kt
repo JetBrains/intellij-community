@@ -10,7 +10,7 @@ import java.nio.file.Path
 
 open class PluginPackagingConfig {
   open val ContentModuleSpec.descriptorFilename: String get() {
-    return "${moduleName.replace('/', '.')}.xml"
+    return "${moduleId.replace('/', '.')}.xml"
   }
 
   open val ContentModuleSpec.embedToPluginXml: Boolean get() {
@@ -18,7 +18,7 @@ open class PluginPackagingConfig {
   }
 
   open val ContentModuleSpec.jarFilename: String get() {
-    return "${moduleName.replace('/', '.')}.jar"
+    return "${moduleId.replace('/', '.')}.jar"
   }
 
   open val ContentModuleSpec.packageToMainJar: Boolean get() {
@@ -80,7 +80,7 @@ fun PluginSpec.buildXml(config: PluginPackagingConfig = PluginPackagingConfig())
           ModuleLoadingRule.EMBEDDED -> "loading=\"embedded\" "
           ModuleLoadingRule.ON_DEMAND -> "loading=\"on-demand\" "
         }
-        val tag = """module name="${module.moduleName}" $loadingAttribute"""
+        val tag = """module name="${module.moduleId}" $loadingAttribute"""
         if (module.embedToPluginXml) {
           appendLine("<$tag><![CDATA[${module.spec.buildXml(config)}]]></module>")
         } else {

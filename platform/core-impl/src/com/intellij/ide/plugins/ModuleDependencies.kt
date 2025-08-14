@@ -3,7 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
-import java.util.Collections
+import java.util.*
 
 /**
  * A dependency from [plugins] in fact means a module dependency on the *implicit main module* of a plugin.
@@ -18,8 +18,10 @@ class ModuleDependencies(
     val EMPTY: ModuleDependencies = ModuleDependencies(Collections.emptyList(), Collections.emptyList())
   }
 
-  class ModuleReference(val name: String) {
-    override fun toString(): String = "Module(name=$name)"
+  class ModuleReference(val id: String) {
+    @Deprecated("Use id", ReplaceWith("id"))
+    val name: String get() = id
+    override fun toString(): String = "Module(id=$id)"
   }
 
   class PluginReference(val id: PluginId) {

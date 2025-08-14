@@ -19,6 +19,7 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - f:getPlugins():java.util.List
 *f:com.intellij.ide.plugins.ModuleDependencies$ModuleReference
 - <init>(java.lang.String):V
+- f:getId():java.lang.String
 - f:getName():java.lang.String
 *f:com.intellij.ide.plugins.ModuleDependencies$PluginReference
 - <init>(com.intellij.openapi.extensions.PluginId):V

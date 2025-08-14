@@ -403,7 +403,7 @@ class PluginMainDescriptor(
   ): ContentModuleDescriptor = ContentModuleDescriptor(
     parent = this,
     raw = subBuilder.build(),
-    moduleId = module.name,
+    moduleId = module.moduleId,
     moduleLoadingRule = module.loadingRule,
     descriptorPath = descriptorPath
   )
@@ -413,8 +413,8 @@ class PluginMainDescriptor(
     if (content.modules.size > 1) {
       val duplicates = HashSet<String>()
       for (item in content.modules) {
-        if (!duplicates.add(item.name)) {
-          return onInitError(PluginHasDuplicateContentModuleDeclaration(this, item.name))
+        if (!duplicates.add(item.moduleId)) {
+          return onInitError(PluginHasDuplicateContentModuleDeclaration(this, item.moduleId))
         }
       }
     }
@@ -481,7 +481,7 @@ class PluginMainDescriptor(
         val configFile: String? = if (index != -1) {
           "${elem.name.substring(0, index)}.${elem.name.substring(index + 1)}.xml"
         } else null
-        PluginContentDescriptor.ModuleItem(elem.name, configFile, elem.embeddedDescriptorContent, elem.loadingRule.convert())
+        PluginContentDescriptor.ModuleItem(moduleId = elem.name, configFile, descriptorContent = elem.embeddedDescriptorContent, elem.loadingRule.convert())
       }
     }
     
@@ -609,7 +609,7 @@ class ContentModuleDescriptor(
   override fun getResourceBundleBaseName(): String? = resourceBundleBaseName
 
   override fun toString(): String =
-    "ContentModuleDescriptor(moduleName=${this@ContentModuleDescriptor.moduleId}" +
+    "ContentModuleDescriptor(id=${this@ContentModuleDescriptor.moduleId}" +
     (if (moduleLoadingRule == ModuleLoadingRule.OPTIONAL) "" else ", loadingRule=$moduleLoadingRule") +
     (if (packagePrefix == null) "" else ", package=$packagePrefix") +
     (if (descriptorPath == "${this@ContentModuleDescriptor.moduleId}.xml") "" else ", descriptorPath=$descriptorPath") +
@@ -620,7 +620,7 @@ class ContentModuleDescriptor(
   }
 
   override fun getPluginId(): PluginId = parent.pluginId
-  @Deprecated("make sure you don't confuse it with moduleName; use main descriptor", level = DeprecationLevel.ERROR)
+  @Deprecated("make sure you don't confuse it with moduleId; use main descriptor", level = DeprecationLevel.ERROR)
   override fun getName(): @NlsSafe String = parent.name // .also { LOG.error("unexpected call") } TODO test failures
   // <editor-fold desc="Deprecated">
   // These are meaningless for sub-descriptors

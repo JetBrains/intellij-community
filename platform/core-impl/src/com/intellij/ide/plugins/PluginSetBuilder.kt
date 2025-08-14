@@ -240,8 +240,8 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
     }
   }
 
-  private fun markModuleAsEnabled(moduleName: String, moduleDescriptor: ContentModuleDescriptor) {
-    enabledModuleV2Ids.put(moduleName, moduleDescriptor)
+  private fun markModuleAsEnabled(moduleId: String, moduleDescriptor: ContentModuleDescriptor) {
+    enabledModuleV2Ids.put(moduleId, moduleDescriptor)
     for (pluginAlias in moduleDescriptor.pluginAliases) {
       enabledPluginIds.put(pluginAlias, moduleDescriptor)
     }

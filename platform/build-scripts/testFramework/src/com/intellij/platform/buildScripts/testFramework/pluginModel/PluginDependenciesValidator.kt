@@ -333,9 +333,9 @@ class PluginDependenciesValidator private constructor(
       isBundled = pluginLayout.mainJpsModule in mainModulesOfBundledPlugins,
       useCoreClassLoader = false
     )
-    val embeddedContentModules = descriptor.content.modules.filter { it.loadingRule == ModuleLoadingRule.EMBEDDED }.map { it.name }
+    val embeddedContentModules = descriptor.content.modules.filter { it.loadingRule == ModuleLoadingRule.EMBEDDED }.map { it.moduleId }
     val customConfigFileToModule = descriptor.content.modules.mapNotNull { 
-      moduleItem -> moduleItem.configFile?.let { it to moduleItem.name.substringBefore('/') } 
+      moduleItem -> moduleItem.configFile?.let { it to moduleItem.moduleId.substringBefore('/') }
     }.toMap()
     val pathResolver = LoadFromSourcePathResolver(pluginLayout, customConfigFileToModule, embeddedContentModules, xIncludeLoader)
     val dataLoader = LoadFromSourceDataLoader(mainPluginModule = mainModule) 
@@ -439,11 +439,11 @@ class PluginDependenciesValidator private constructor(
       }
     }
 
-    override fun resolveCustomModuleClassesRoots(moduleName: String): List<Path> {
-      if (moduleName in embeddedContentModules) {
+    override fun resolveCustomModuleClassesRoots(moduleId: String): List<Path> {
+      if (moduleId in embeddedContentModules) {
         return emptyList()
       }
-      return listOf(getModuleOutputDir(moduleName.substringBefore('/')))
+      return listOf(getModuleOutputDir(moduleId.substringBefore('/')))
     }
   }
 

@@ -4,7 +4,6 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
-import com.intellij.ide.plugins.contentModuleId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
@@ -34,14 +33,14 @@ internal class ClassLoaderConfiguratorTest {
     val kotlinGradleJava = kotlin.createContentModuleInTest(
       subBuilder = emptyBuilder,
       descriptorPath = "",
-      module = PluginContentDescriptor.ModuleItem(name = "kotlin.gradle.gradle-java",
+      module = PluginContentDescriptor.ModuleItem(moduleId = "kotlin.gradle.gradle-java",
                                                   loadingRule = ModuleLoadingRule.OPTIONAL,
                                                   configFile = null,
                                                   descriptorContent = null))
     val kotlinCompilerGradle = kotlin.createContentModuleInTest(
       subBuilder = emptyBuilder,
       descriptorPath = "",
-      module = PluginContentDescriptor.ModuleItem(name = "kotlin.compiler-plugins.annotation-based-compiler-support.gradle",
+      module = PluginContentDescriptor.ModuleItem(moduleId = "kotlin.compiler-plugins.annotation-based-compiler-support.gradle",
                                                   loadingRule = ModuleLoadingRule.OPTIONAL,
                                                   configFile = null,
                                                   descriptorContent = null))
@@ -59,11 +58,11 @@ internal class ClassLoaderConfiguratorTest {
       Path.of(""),
       false,
     )
-    fun createModuleDescriptor(name: String): ContentModuleDescriptor {
+    fun createModuleDescriptor(moduleId: String): ContentModuleDescriptor {
       return plugin.createContentModuleInTest(
-        subBuilder = PluginDescriptorBuilder.builder().apply { `package` = name },
+        subBuilder = PluginDescriptorBuilder.builder().apply { `package` = moduleId },
         descriptorPath = "",
-        module = PluginContentDescriptor.ModuleItem(name = name, configFile = null, descriptorContent = null, loadingRule = ModuleLoadingRule.OPTIONAL),
+        module = PluginContentDescriptor.ModuleItem(moduleId = moduleId, configFile = null, descriptorContent = null, loadingRule = ModuleLoadingRule.OPTIONAL),
       )
     }
     val modules = arrayOf(

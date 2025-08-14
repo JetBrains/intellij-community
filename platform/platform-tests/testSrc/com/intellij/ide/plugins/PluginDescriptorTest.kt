@@ -356,9 +356,9 @@ class PluginDescriptorTest {
     plugin("bar") {
       resourceBundle = "resourceBundle"
       content {
-        module(moduleName = "bar.opt", loadingRule = ModuleLoadingRule.OPTIONAL) {}
-        module(moduleName = "bar.req", loadingRule = ModuleLoadingRule.REQUIRED) {}
-        module(moduleName = "bar.emb", loadingRule = ModuleLoadingRule.EMBEDDED) {}
+        module("bar.opt", loadingRule = ModuleLoadingRule.OPTIONAL) {}
+        module("bar.req", loadingRule = ModuleLoadingRule.REQUIRED) {}
+        module("bar.emb", loadingRule = ModuleLoadingRule.EMBEDDED) {}
       }
     }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
       override val ContentModuleSpec.packageToMainJar: Boolean get() = true
@@ -376,9 +376,9 @@ class PluginDescriptorTest {
     plugin("bar") {
       resourceBundle = "resourceBundle"
       content {
-        module(moduleName = "bar.opt", loadingRule = ModuleLoadingRule.OPTIONAL) { resourceBundle = "bar.opt" }
-        module(moduleName = "bar.req", loadingRule = ModuleLoadingRule.REQUIRED) { resourceBundle = "bar.req" }
-        module(moduleName = "bar.emb", loadingRule = ModuleLoadingRule.EMBEDDED) { resourceBundle = "bar.emb" }
+        module("bar.opt", loadingRule = ModuleLoadingRule.OPTIONAL) { resourceBundle = "bar.opt" }
+        module("bar.req", loadingRule = ModuleLoadingRule.REQUIRED) { resourceBundle = "bar.req" }
+        module("bar.emb", loadingRule = ModuleLoadingRule.EMBEDDED) { resourceBundle = "bar.emb" }
       }
     }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
       override val ContentModuleSpec.packageToMainJar: Boolean get() = true

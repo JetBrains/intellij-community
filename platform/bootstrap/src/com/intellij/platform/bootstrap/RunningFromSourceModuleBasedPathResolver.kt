@@ -31,8 +31,8 @@ internal class RunningFromSourceModuleBasedPathResolver(
     return fallbackResolver.resolveModuleFile(readContext = readContext, dataLoader = dataLoader, path = path)
   }
 
-  override fun resolveCustomModuleClassesRoots(moduleName: String): List<Path> {
-    val moduleDescriptor = moduleRepository.resolveModule(RuntimeModuleId.raw(moduleName)).resolvedModule
+  override fun resolveCustomModuleClassesRoots(moduleId: String): List<Path> {
+    val moduleDescriptor = moduleRepository.resolveModule(RuntimeModuleId.raw(moduleId)).resolvedModule
     if (moduleDescriptor?.moduleId?.stringId?.contains(".charts") == true) {
     }
     return moduleDescriptor?.resourceRootPaths ?: emptyList()

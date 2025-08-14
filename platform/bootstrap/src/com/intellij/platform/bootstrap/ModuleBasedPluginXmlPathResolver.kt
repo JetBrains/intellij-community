@@ -60,8 +60,8 @@ internal class ModuleBasedPluginXmlPathResolver(
     return fallbackResolver.resolveModuleFile(readContext = readContext, dataLoader = dataLoader, path = path)
   }
 
-  override fun resolveCustomModuleClassesRoots(moduleName: String): List<Path> {
-    val moduleDescriptor = includedModules.find { it.moduleDescriptor.moduleId.stringId == moduleName }?.moduleDescriptor
+  override fun resolveCustomModuleClassesRoots(moduleId: String): List<Path> {
+    val moduleDescriptor = includedModules.find { it.moduleDescriptor.moduleId.stringId == moduleId }?.moduleDescriptor
     return moduleDescriptor?.resourceRootPaths ?: emptyList()
   }
 

@@ -224,8 +224,8 @@ private fun collectDirectDependenciesInOldFormat(
       }
     }
     if (dependencyPluginId == "com.intellij.modules.platform" || dependencyPluginId == "com.intellij.modules.lang") {
-      for (contentModuleName in contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins) {
-        idMap.get(contentModuleName)?.let {
+      for (contentModuleId in contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins) {
+        idMap.get(contentModuleId)?.let {
           dependenciesCollector.add(it)
         }
       }

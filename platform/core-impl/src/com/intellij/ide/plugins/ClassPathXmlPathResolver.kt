@@ -3,12 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.plugins.parser.impl.LoadPathUtil
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
-import com.intellij.platform.plugins.parser.impl.XIncludeLoader
-import com.intellij.platform.plugins.parser.impl.consume
+import com.intellij.platform.plugins.parser.impl.*
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import org.codehaus.stax2.XMLStreamReader2
@@ -54,19 +49,19 @@ class ClassPathXmlPathResolver(
 
     if (resource == null) {
       val log = logger<ClassPathXmlPathResolver>()
-      val moduleName = path.removeSuffix(".xml")
+      val moduleId = path.removeSuffix(".xml")
       when {
         isRunningFromSourcesWithoutDevBuild && path.startsWith("intellij.") && dataLoader.emptyDescriptorIfCannotResolve -> {
           log.trace("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). ")
           return PluginDescriptorBuilder.builder().apply {
-            `package` = "unresolved.$moduleName"
+            `package` = "unresolved.$moduleId"
           }
         }
-        ProductLoadingStrategy.strategy.isOptionalProductModule(moduleName) -> {
+        ProductLoadingStrategy.strategy.isOptionalProductModule(moduleId) -> {
           // this check won't be needed when we are able to load optional modules directly from product-modules.xml
           log.debug { "Skip module '$path' since its descriptor cannot be found and it's optional" }
           return PluginDescriptorBuilder.builder().apply {
-            `package` = "unresolved.$moduleName"
+            `package` = "unresolved.$moduleId"
           }
         }
         else -> {

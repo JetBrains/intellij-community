@@ -120,11 +120,11 @@ class PluginBuilder() {
   }
 
   fun module(
-    moduleName: String, moduleDescriptor: PluginBuilder, loadingRule: ModuleLoadingRule = ModuleLoadingRule.OPTIONAL,
-    moduleFile: String = "$moduleName.xml",
+    moduleId: String, moduleDescriptor: PluginBuilder, loadingRule: ModuleLoadingRule = ModuleLoadingRule.OPTIONAL,
+    moduleFile: String = "$moduleId.xml",
   ): PluginBuilder {
     subDescriptors.add(SubDescriptor(moduleFile, moduleDescriptor))
-    content.add(PluginContentDescriptor.ModuleItem(name = moduleName, configFile = null, descriptorContent = null, loadingRule = loadingRule))
+    content.add(PluginContentDescriptor.ModuleItem(moduleId = moduleId, configFile = null, descriptorContent = null, loadingRule = loadingRule))
     return this
   }
 
@@ -254,7 +254,7 @@ class PluginBuilder() {
             ModuleLoadingRule.EMBEDDED -> "loading=\"embedded\" "
             ModuleLoadingRule.ON_DEMAND -> "loading=\"on-demand\" "
           }
-          """<module name="${moduleItem.name}" $loadingAttribute/>"""
+          """<module name="${moduleItem.moduleId}" $loadingAttribute/>"""
         }
         append("\n</content>")
       }
