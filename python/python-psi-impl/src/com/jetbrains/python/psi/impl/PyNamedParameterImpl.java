@@ -355,9 +355,13 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           final PyExpression lhs = node.getLeftExpression();
           final PyExpression rhs = node.getRightExpression();
 
-          if (isReferenceToParameter(lhs) ^ isReferenceToParameter(rhs) &&
-              (lhs != null && isNoneType(context.getType(lhs))) ^ (rhs != null && isNoneType(context.getType(rhs)))) {
-            noneComparison.set(true);
+          boolean lhsIsParam = isReferenceToParameter(lhs);
+          boolean rhsIsParam = isReferenceToParameter(rhs);
+          if (lhsIsParam ^ rhsIsParam) {
+            final PyExpression other = lhsIsParam ? rhs : lhs;
+            if (other != null && isNoneType(context.getType(other))) {
+              noneComparison.set(true);
+            }
           }
         }
 
