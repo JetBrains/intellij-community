@@ -62,6 +62,7 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//platform/core-ui",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//jps/model-api:model",

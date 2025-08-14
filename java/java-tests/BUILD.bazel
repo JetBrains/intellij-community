@@ -50,6 +50,7 @@ jvm_library(
     "//platform/diff-api:diff",
     "//platform/usageView",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//java/java-runtime:rt",
     "//platform/platform-api:ide",
     "//plugins/java-i18n",

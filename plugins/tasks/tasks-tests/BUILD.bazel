@@ -21,6 +21,7 @@ jvm_library(
     "//plugins/tasks/tasks-core:core",
     "//plugins/tasks/tasks-java:java",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//plugins/tasks/tasks-compatibility:compatibility",
     "//platform/vcs-api:vcs",
     "@lib//:junit4",

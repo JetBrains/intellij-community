@@ -30,6 +30,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/util",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.jvm-debugger.eval4j` end

@@ -123,6 +123,7 @@ jvm_library(
     "//java/compiler/impl",
     "//platform/ide-core-impl",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//platform/lang-api:lang",
     "@community//build:build-javac-rt",
     "//platform/editor-ui-ex:editor-ex",

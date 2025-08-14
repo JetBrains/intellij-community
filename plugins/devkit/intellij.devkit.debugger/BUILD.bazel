@@ -43,6 +43,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/xdebugger-api:debugger",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-impl:debugger-impl_test_lib",
     "//platform/editor-ui-api:editor-ui",

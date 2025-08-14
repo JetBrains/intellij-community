@@ -53,6 +53,7 @@ jvm_library(
     "//java/java-impl:impl",
     "@lib//:stream_ex",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-impl:debugger-impl_test_lib",
     "//java/execution/openapi:java-execution",

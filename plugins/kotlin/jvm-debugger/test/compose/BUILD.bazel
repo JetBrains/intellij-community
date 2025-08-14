@@ -30,6 +30,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "//android/compose-ide-plugin",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "@lib//:kotlinc-compose-compiler-plugin",
     "//android/streaming",
     "//plugins/kotlin/tests-compose:tests-compose_test_lib",

@@ -129,6 +129,7 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//platform/external-system-api/dependency-updater",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//plugins/maven-server-api:maven-server",
     "//libraries/mockito",
     "@lib//:mockito-kotlin",

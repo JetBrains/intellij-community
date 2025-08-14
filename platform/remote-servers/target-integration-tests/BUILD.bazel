@@ -30,6 +30,7 @@ jvm_library(
     "//java/execution/impl",
     "//java/debugger/openapi:java-debugger",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//java/testFramework",
     "//platform/core-ui",
     "//platform/smRunner",

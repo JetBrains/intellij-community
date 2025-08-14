@@ -54,7 +54,7 @@ jvm_library(
   name = "k2_test_lib",
   module_name = "kotlin.jvm-debugger.test.k2",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-ui",
     "//plugins/kotlin/plugin/k2",
@@ -99,6 +99,7 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl_test_lib",
     "//platform/xdebugger-testFramework:debugger-testFramework",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//plugins/stream-debugger:java-debugger-streams",
     "//plugins/stream-debugger:java-debugger-streams_test_lib",
     "//aether-dependency-resolver",
