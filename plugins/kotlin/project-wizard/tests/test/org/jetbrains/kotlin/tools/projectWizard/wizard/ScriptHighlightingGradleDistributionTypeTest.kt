@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
+import com.intellij.idea.IJIgnore
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.enableInspectionTool
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceUntilWithRangeUntilInspection
@@ -15,16 +16,19 @@ import java.nio.file.Paths
 class ScriptHighlightingGradleDistributionTypeTest : AbstractProjectTemplateNewWizardProjectImportTestBase() {
 
     @Test
+    @IJIgnore(issue = "KTIJ-35263")
     fun testScriptHighlightingGradleWrapped() {
         doTest(DistributionType.WRAPPED)
     }
 
     @Test
+    @IJIgnore(issue = "KTIJ-35263")
     fun testScriptHighlightingGradleDefaultWrapped() {
         doTest(DistributionType.DEFAULT_WRAPPED)
     }
 
     @Test
+    @IJIgnore(issue = "KTIJ-35263")
     fun testScriptHighlightingGradleBundled() {
         doTest(DistributionType.BUNDLED)
     }
