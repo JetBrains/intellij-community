@@ -148,7 +148,7 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
     if (extensionList.find { it.providerCode == DEFAULT_PROVIDER_CODE } == null) {
       extensionList.add(DelegatingDefaultCommunicatorProvider)
     }
-    return extensionList
+    return extensionList.sortedBy { it.providerCode } // always show providers in the same order
   }
 
   fun getExternalProviders(): List<SettingsSyncCommunicatorProvider> {
