@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.ide.wizard.NewProjectWizardActivityKey
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.externalSystem.util.DEFAULT_SYNC_TIMEOUT_MS
 import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
@@ -17,6 +18,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 class GradleProjectSettingsTest : AbstractProjectTemplateNewWizardProjectImportTestBase() {
+    @IJIgnore(issue = "KTIJ-34868")
     fun testDistributionTypeIsDefaultWrapped() {
         val directory = Paths.get("consoleApplication")
         val tempDirectory = Files.createTempDirectory(null)
