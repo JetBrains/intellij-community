@@ -367,6 +367,7 @@ f:com.intellij.icons.AllIcons$Debugger$ThreadStates
 - sf:Socket:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Diff
+- sf:AddComment_14x14:javax.swing.Icon
 - sf:ApplyNotConflicts:javax.swing.Icon
 - sf:ApplyNotConflictsLeft:javax.swing.Icon
 - sf:ApplyNotConflictsRight:javax.swing.Icon
@@ -387,6 +388,7 @@ f:com.intellij.icons.AllIcons$Diff
 - sf:GutterCheckBox:javax.swing.Icon
 - sf:GutterCheckBoxIndeterminate:javax.swing.Icon
 - sf:GutterCheckBoxSelected:javax.swing.Icon
+- sf:HiddenComment_14x14:javax.swing.Icon
 - sf:Lock:javax.swing.Icon
 - sf:MagicResolve:javax.swing.Icon
 - sf:MagicResolveToolbar:javax.swing.Icon

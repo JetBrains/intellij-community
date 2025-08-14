@@ -2621,6 +2621,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Debugger$ThreadStates
 - sf:Socket:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Diff
+- sf:AddComment_14x14:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ApplyNotConflicts:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ApplyNotConflictsLeft:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ApplyNotConflictsRight:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -2641,6 +2642,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Diff
 - sf:GutterCheckBox:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:GutterCheckBoxIndeterminate:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:GutterCheckBoxSelected:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:HiddenComment_14x14:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Lock:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MagicResolve:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MagicResolveToolbar:org.jetbrains.jewel.ui.icon.IntelliJIconKey

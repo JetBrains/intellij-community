@@ -389,6 +389,7 @@ public final class AllIconsKeys {
   }
 
   public static final class Diff {
+    /** 14x14 */ public static final @NotNull IntelliJIconKey AddComment_14x14 = new IntelliJIconKey("diff/addComment@14x14.svg", "diff/addComment@14x14.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey ApplyNotConflicts = new IntelliJIconKey("diff/applyNotConflicts.svg", "expui/diff/applyNotConflicts.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey ApplyNotConflictsLeft = new IntelliJIconKey("diff/applyNotConflictsLeft.svg", "expui/diff/applyNotConflictsLeft.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey ApplyNotConflictsRight = new IntelliJIconKey("diff/applyNotConflictsRight.svg", "expui/diff/applyNotConflictsRight.svg", AllIconsKeys.class);
@@ -409,6 +410,7 @@ public final class AllIconsKeys {
     /** 12x12 */ public static final @NotNull IntelliJIconKey GutterCheckBox = new IntelliJIconKey("diff/gutterCheckBox.svg", "expui/diff/gutterCheckBox@14x14.svg", AllIconsKeys.class);
     /** 12x12 */ public static final @NotNull IntelliJIconKey GutterCheckBoxIndeterminate = new IntelliJIconKey("diff/gutterCheckBoxIndeterminate.svg", "expui/diff/gutterCheckBoxIndeterminate@14x14.svg", AllIconsKeys.class);
     /** 12x12 */ public static final @NotNull IntelliJIconKey GutterCheckBoxSelected = new IntelliJIconKey("diff/gutterCheckBoxSelected.svg", "expui/diff/gutterCheckBoxSelected@14x14.svg", AllIconsKeys.class);
+    /** 14x14 */ public static final @NotNull IntelliJIconKey HiddenComment_14x14 = new IntelliJIconKey("diff/hiddenComment@14x14.svg", "diff/hiddenComment@14x14.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Lock = new IntelliJIconKey("diff/lock.svg", "expui/diff/disableEditing.svg", AllIconsKeys.class);
     /** 12x12 */ public static final @NotNull IntelliJIconKey MagicResolve = new IntelliJIconKey("diff/magicResolve.svg", "expui/diff/magicResolve@14x14.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey MagicResolveToolbar = new IntelliJIconKey("diff/magicResolveToolbar.svg", "expui/diff/magicResolveToolbar.svg", AllIconsKeys.class);

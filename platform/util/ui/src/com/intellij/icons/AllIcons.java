@@ -396,6 +396,7 @@ public class AllIcons {
   }
 
   public static final class Diff {
+    /** 14x14 */ public static final @NotNull Icon AddComment_14x14 = load("diff/addComment@14x14.svg", -467598878, 2);
     /** 16x16 */ public static final @NotNull Icon ApplyNotConflicts = load("expui/diff/applyNotConflicts.svg", "diff/applyNotConflicts.svg", 2046764338, 2);
     /** 16x16 */ public static final @NotNull Icon ApplyNotConflictsLeft = load("expui/diff/applyNotConflictsLeft.svg", "diff/applyNotConflictsLeft.svg", -1820078354, 2);
     /** 16x16 */ public static final @NotNull Icon ApplyNotConflictsRight = load("expui/diff/applyNotConflictsRight.svg", "diff/applyNotConflictsRight.svg", 1493717263, 2);
@@ -416,6 +417,7 @@ public class AllIcons {
     /** 12x12 */ public static final @NotNull Icon GutterCheckBox = load("expui/diff/gutterCheckBox@14x14.svg", "diff/gutterCheckBox.svg", 1404993646, 2);
     /** 12x12 */ public static final @NotNull Icon GutterCheckBoxIndeterminate = load("expui/diff/gutterCheckBoxIndeterminate@14x14.svg", "diff/gutterCheckBoxIndeterminate.svg", 463858440, 2);
     /** 12x12 */ public static final @NotNull Icon GutterCheckBoxSelected = load("expui/diff/gutterCheckBoxSelected@14x14.svg", "diff/gutterCheckBoxSelected.svg", 514644427, 2);
+    /** 14x14 */ public static final @NotNull Icon HiddenComment_14x14 = load("diff/hiddenComment@14x14.svg", 964058965, 2);
     /** 16x16 */ public static final @NotNull Icon Lock = load("expui/diff/disableEditing.svg", "diff/lock.svg", 1074340224, 2);
     /** 12x12 */ public static final @NotNull Icon MagicResolve = load("expui/diff/magicResolve@14x14.svg", "diff/magicResolve.svg", 1858456010, 2);
     /** 16x16 */ public static final @NotNull Icon MagicResolveToolbar = load("expui/diff/magicResolveToolbar.svg", "diff/magicResolveToolbar.svg", 485340428, 2);
