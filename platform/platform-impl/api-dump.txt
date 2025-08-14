@@ -165,6 +165,8 @@ c:com.intellij.ide.RecentProjectListActionProvider
 c:com.intellij.ide.RecentProjectsManagerBase
 - f:getCurrentBranch(java.lang.String,Z):java.lang.String
 - willReopenProjectOnStart(kotlin.coroutines.Continuation):java.lang.Object
+c:com.intellij.ide.ReopenProjectAction
+- getNameToDisplayAsText():java.lang.String
 com.intellij.ide.actions.CloseAction$CloseTarget
 - sf:KEY:com.intellij.openapi.actionSystem.DataKey
 - a:close():V

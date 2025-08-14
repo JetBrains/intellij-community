@@ -70,7 +70,7 @@ open class ReopenProjectAction @JvmOverloads constructor(
     presentation.isEnabledAndVisible = true
   }
 
-  val projectDisplayName: @NlsSafe String?
+  val projectDisplayName: @NlsSafe String
     get() {
       val s = if (myProjectPath == myDisplayName) FileUtil.getLocationRelativeToUserHome(myProjectPath) else myDisplayName!!
       if (branchName != null) {
@@ -129,6 +129,8 @@ open class ReopenProjectAction @JvmOverloads constructor(
       val manager = RecentProjectsManager.getInstance()
       return (if (manager is RecentProjectsManagerBase) manager.getDisplayName(myProjectPath) else null) ?: projectName ?: projectPath
     }
+
+  override val nameToDisplayAsText: @NlsSafe String get() = projectDisplayName
 
   override val projectPathToDisplay: @NlsSafe String
     get() = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(projectPath), false)
