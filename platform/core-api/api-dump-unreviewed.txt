@@ -1214,7 +1214,7 @@ a:com.intellij.openapi.fileTypes.LanguageFileType
 - extractCharsetFromFileContent(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.String):java.nio.charset.Charset
 - getDisplayName():java.lang.String
 - f:getLanguage():com.intellij.lang.Language
-- f:isBinary():Z
+- isBinary():Z
 - isJVMDebuggingSupported():Z
 - isSecondary():Z
 e:com.intellij.openapi.fileTypes.OSFileIdeAssociation$ExtensionMode
