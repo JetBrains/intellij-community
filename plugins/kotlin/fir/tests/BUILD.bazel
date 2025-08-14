@@ -96,6 +96,7 @@ jvm_library(
     "//plugins/kotlin/completion/impl-k2:kotlin-completion-impl-k2",
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
+    "//java/java-runtime:rt",
   ]
 )
 ### auto-generated section `build kotlin.fir.tests` end
