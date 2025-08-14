@@ -107,6 +107,7 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
       }
     }
 
+  @get:ApiStatus.Internal
   var commandCompletionShowingMode: TerminalCommandCompletionShowingMode
     get() = state.commandCompletionShowingMode
     set(value) {
