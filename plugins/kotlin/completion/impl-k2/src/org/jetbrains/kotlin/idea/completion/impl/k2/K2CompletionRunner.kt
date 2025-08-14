@@ -375,6 +375,8 @@ private class ParallelCompletionRunner : K2CompletionRunner {
         is AccumulatingSinkMessage.RegisterLaterSectionSink -> registeredSinks.addLocal(currentSection to element.sink)
     }
 
+    private class WeighingContextCreationImpossibleException : Exception()
+
     override fun <P : KotlinRawPositionContext> runCompletion(
         completionContext: K2CompletionContext<P>,
         sections: List<K2CompletionSection<P>>,
@@ -397,7 +399,8 @@ private class ParallelCompletionRunner : K2CompletionRunner {
                         // associated utility objects like the visibility checker per thread.
                         analyze(parameters.completionFile) {
                             // We need to create one common data (containing weighing context and similar constructs) per session
-                            val commonData = createCommonSectionData(completionContext) ?: return@analyze
+                            val commonData = createCommonSectionData(completionContext)
+                                ?: throw WeighingContextCreationImpossibleException()
                             val localQueueInstance = remainingSectionsQueue.getLocalInstance()
 
                             while (true) {
@@ -456,6 +459,8 @@ private class ParallelCompletionRunner : K2CompletionRunner {
                     addedElements = addedElements,
                     registeredChainContributors = registeredChainContributors,
                 )
+            } catch (_: WeighingContextCreationImpossibleException) {
+                K2CompletionRunnerResult(0, emptyList())
             } finally {
                 sectionsWithSinks.forEach { it.second.cancel() }
             }
