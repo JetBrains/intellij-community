@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.util.containers.Interner
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -10,4 +11,11 @@ import org.jetbrains.annotations.ApiStatus
 @JvmInline
 @ApiStatus.Internal
 @IntellijInternalApi
-value class ModuleId(val id: String)
+value class ModuleId private constructor(val id: String){
+  companion object {
+    // ModuleId can be either boxed or unboxed, so only interning of value matters
+    private val interner = Interner.createWeakInterner<String>()
+
+    operator fun invoke(id: String): ModuleId = ModuleId(interner.intern(id))
+  }
+}
