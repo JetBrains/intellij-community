@@ -17,7 +17,6 @@ import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.project.projectId
@@ -43,7 +42,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
   private var validationJob: Job? = null
   private var findUsagesJob: Job? = null
   private var selectScopeJob: Job? = null
-  private var currentSearchDisposable: CheckedDisposable? = null
+  private var currentSearchDisposable: Disposable? = null
 
   @OptIn(ExperimentalAtomicApi::class)
   override fun findUsages(
@@ -64,7 +63,14 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
         selectScopeJob?.join()
         val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfoModel)?.model?.fileId?.virtualFile() }.toSet()
         currentSearchDisposable?.let { Disposer.dispose(it) }
-        currentSearchDisposable = Disposer.newCheckedDisposable(disposableParent, "Find in Project Search")
+        currentSearchDisposable = Disposer.newDisposable( "Find in Project Search").also {
+          if (!Disposer.tryRegister(disposableParent, it)) {
+            Disposer.dispose(it)
+            LOG.warn("Failed to register disposable for search. Looks like FindPopup is already closed. Search will be canceled.")
+            return@launch
+          }
+        }
+        val searchDisposable = currentSearchDisposable
 
         FindRemoteApi.getInstance().findByModel(
           findModel = findModel,
@@ -77,11 +83,13 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
         }.collect { throttledItems ->
           throttledItems.items.forEach { item ->
             val usage = UsageInfoModel.createUsageInfoModel(project, item, this.childScope("UsageInfoModel.init"), onDocumentUpdated)
-            currentSearchDisposable?.let { parent ->
-              if (parent.isDisposed) return@collect
-              Disposer.register(parent, usage)
+            if (searchDisposable != null && Disposer.tryRegister(searchDisposable, usage)) {
+              onResult(usage)
             }
-            onResult(usage)
+            else {
+              Disposer.dispose(usage)
+              return@collect
+            }
           }
         }
         onFinish()
