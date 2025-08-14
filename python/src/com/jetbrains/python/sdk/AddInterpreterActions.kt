@@ -8,6 +8,7 @@ import com.intellij.execution.target.TargetCustomToolWizardStep
 import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.execution.target.TargetEnvironmentWizard
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
@@ -17,6 +18,8 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
@@ -111,23 +114,32 @@ private class AddInterpreterOnTargetAction(
   target = targetType.displayName,
 ), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
-    val wizard = createDialog()
-    if (wizard != null && wizard.showAndGet()) {
-      val model = PyConfigurableInterpreterList.getInstance(project).model
-      val sdk = (wizard.currentStepObject as? TargetCustomToolWizardStep)?.customTool as? Sdk
-      if (sdk != null) {
-        PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk, isPreviouslyConfigured = true)
-        if (model.findSdk(sdk.name) == null) {
-          model.addSdk(sdk)
-          model.apply()
-          onSdkCreated.accept(sdk)
-        }
-      }
-    }
+    createDialog()?.show()
   }
 
   override fun createDialog(): TargetEnvironmentWizard? {
-    return TargetEnvironmentWizard.createWizard(project, targetType, PythonLanguageRuntimeType.getInstance())
+    val wizard = TargetEnvironmentWizard.createWizard(project, targetType, PythonLanguageRuntimeType.getInstance())
+
+    wizard?.let {
+      Disposer.register(it.disposable, Disposable {
+        exitHandler(it)
+      })
+    }
+
+    return wizard
+  }
+
+  private fun exitHandler(dialogWrapper: TargetEnvironmentWizard) {
+    if (dialogWrapper.exitCode != OK_EXIT_CODE) return
+    val model = PyConfigurableInterpreterList.getInstance(project).model
+    val sdk = (dialogWrapper.currentStepObject as? TargetCustomToolWizardStep)?.customTool as? Sdk ?: return
+
+    PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk, isPreviouslyConfigured = true)
+    if (model.findSdk(sdk.name) == null) {
+      model.addSdk(sdk)
+      model.apply()
+      onSdkCreated.accept(sdk)
+    }
   }
 }
 
