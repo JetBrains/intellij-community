@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands
 
 import com.intellij.codeInsight.completion.command.commands.AbstractSurroundWithCompletionCommandProvider
 import com.intellij.codeInsight.completion.command.getCommandContext
+import com.intellij.lang.folding.CustomFoldingSurroundDescriptor
+import com.intellij.lang.surroundWith.ModCommandSurrounder
 import com.intellij.lang.surroundWith.Surrounder
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
@@ -11,12 +13,12 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.findTopmostParentInFile
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinStatementsSurrounderMarker
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.psi.KtExpression
 
 internal class KotlinSurroundWithCompletionCommandProvider : AbstractSurroundWithCompletionCommandProvider() {
     override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?, surrounder: Surrounder): Boolean {
-        return surrounder is KotlinStatementsSurrounderMarker
+        return surrounder is ModCommandSurrounder && surrounder !is CustomFoldingSurroundDescriptor.CustomFoldingRegionSurrounder
     }
 
     override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
@@ -27,7 +29,9 @@ internal class KotlinSurroundWithCompletionCommandProvider : AbstractSurroundWit
             currentOffset = currentCommandContext.endOffset
         }
         val expression = currentCommandContext.findTopmostParentInFile(withSelf = true) {
-            it is KtExpression && it.textRange.endOffset == currentOffset
+            it is KtExpression && it.textRange.endOffset == currentOffset &&
+                    it.parentOfType<KtExpression>() != null &&
+                    analyze(it) { !it.isUsedAsExpression }
         } ?: return false
         val parentExpression = expression.parentOfType<KtExpression>() ?: return true
         val fileDocument = psiFile.fileDocument

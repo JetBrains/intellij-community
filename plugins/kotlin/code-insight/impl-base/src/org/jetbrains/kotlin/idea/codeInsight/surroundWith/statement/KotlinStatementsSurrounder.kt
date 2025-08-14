@@ -10,10 +10,9 @@ import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinStatementsSurrounderMarker
 import org.jetbrains.kotlin.psi.KtExpression
 
-abstract class KotlinStatementsSurrounder : KotlinStatementsSurrounderMarker, ModCommandSurrounder() {
+abstract class KotlinStatementsSurrounder : ModCommandSurrounder() {
     @OptIn(KaAllowAnalysisOnEdt::class)
     final override fun isApplicable(elements: Array<PsiElement>): Boolean {
         if (elements.isEmpty()) {
