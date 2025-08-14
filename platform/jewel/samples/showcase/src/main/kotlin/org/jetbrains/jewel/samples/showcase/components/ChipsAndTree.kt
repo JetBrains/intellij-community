@@ -26,6 +26,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
@@ -51,17 +53,26 @@ import org.jetbrains.jewel.ui.theme.colorPalette
 @Composable
 public fun ChipsAndTrees(modifier: Modifier = Modifier) {
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(
+            Modifier.weight(1f).semantics { isTraversalGroup = true },
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             GroupHeader(text = "Chips", modifier = Modifier.fillMaxWidth())
             ChipsSample(Modifier.padding(8.dp))
         }
 
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(
+            Modifier.weight(1f).semantics { isTraversalGroup = true },
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             GroupHeader("Tree", modifier = Modifier.fillMaxWidth())
             TreeSample()
         }
 
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(
+            Modifier.weight(1f).semantics { isTraversalGroup = true },
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             GroupHeader("SelectableLazyColumn", modifier = Modifier.width(300.dp))
             SelectableLazyColumnSample()
         }
