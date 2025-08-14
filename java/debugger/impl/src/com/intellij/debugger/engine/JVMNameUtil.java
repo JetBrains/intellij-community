@@ -479,6 +479,10 @@ public final class JVMNameUtil {
 
   public static @Nullable String getClassVMName(@Nullable PsiClass containingClass) {
     if (containingClass == null) return null;
-    return ClassUtil.getBinaryClassName(containingClass);
+    if (PsiUtil.isLocalOrAnonymousClass(containingClass)) {
+      return ClassUtil.getBinaryClassName(containingClass);
+    }
+    // need to use getNonAnonymousClassName to have name mappers involved, see DebuggerManagerImpl#getVMClassQualifiedName
+    return getNonAnonymousClassName(containingClass);
   }
 }
