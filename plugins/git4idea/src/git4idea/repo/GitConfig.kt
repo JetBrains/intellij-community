@@ -2,19 +2,16 @@
 package git4idea.repo
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.openapi.vcs.VcsException
 import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
 import git4idea.branch.GitBranchUtil
-import org.ini4j.Ini
-import org.ini4j.Profile
+import git4idea.config.GitConfigUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.File
-import java.io.IOException
-import java.util.regex.Matcher
-import java.util.regex.Pattern
+import java.nio.file.Path
 
 /**
  * Reads information from the `.git/config` file, and parses it to actual objects.
@@ -100,10 +97,10 @@ class GitConfig private constructor(
   companion object {
     private val LOG = Logger.getInstance(GitConfig::class.java)
 
-    private val REMOTE_SECTION: Pattern = Pattern.compile("(?:svn-)?remote \"(.*)\"", Pattern.CASE_INSENSITIVE)
-    private val URL_SECTION: Pattern = Pattern.compile("url \"(.*)\"", Pattern.CASE_INSENSITIVE)
-    private val BRANCH_INFO_SECTION: Pattern = Pattern.compile("branch \"(.*)\"", Pattern.CASE_INSENSITIVE)
-    private val BRANCH_COMMON_PARAMS_SECTION: Pattern = Pattern.compile("branch", Pattern.CASE_INSENSITIVE)
+    private const val SVN_REMOTE_SECTION = "svn-remote"
+    private const val GIT_REMOTE_SECTION = "remote"
+    private const val URL_SECTION = "url"
+    private const val BRANCH_INFO_SECTION = "branch"
     private const val CORE_SECTION = "core"
 
     private fun convertRemoteToGitRemote(urls: List<Url>, remote: Remote): GitRemote {
@@ -119,42 +116,68 @@ class GitConfig private constructor(
      */
     @JvmStatic
     @VisibleForTesting
-    fun read(configFile: File): GitConfig {
-      val emptyConfig = GitConfig(mutableListOf(), mutableListOf(), mutableListOf(), Core(null))
-      if (!configFile.exists() || configFile.isDirectory()) {
-        LOG.info("No .git/config file at " + configFile.path)
-        return emptyConfig
-      }
-
-      val ini: Ini?
+    fun read(project: Project?, root: Path): GitConfig {
+      val configurations: Map<String, List<String>>
       try {
-        ini = loadIniFile(configFile)
+        configurations = GitConfigUtil.getValues(project, root, null)
       }
-      catch (e: IOException) {
-        LOG.warn("Couldn't read .git/config at" + configFile.path, e)
-        return emptyConfig
+      catch (_: VcsException) {
+        return GitConfig(listOf(), listOf(), listOf(), Core(null))
       }
 
-      val (remotes, urls) = parseRemotes(ini)
-      val trackedInfos = parseTrackedInfos(ini)
-      val core: Core = parseCore(ini)
+      val remotes = mutableListOf<Remote>()
+      val urls = mutableListOf<Url>()
+      val trackedInfos = mutableListOf<BranchConfig>()
+      val core = createCore(configurations)
+
+      val sections = parseKeysIntoSections(configurations)
+
+      for (section in sections) {
+        val sectionName = section.first
+        val sectionVariable = section.second
+
+        when (sectionName) {
+          SVN_REMOTE_SECTION, GIT_REMOTE_SECTION -> if (sectionVariable != null) {
+            remotes.add(createRemote(configurations, sectionName, sectionVariable))
+          }
+          URL_SECTION -> if (sectionVariable != null) {
+            urls.add(createUrl(configurations, sectionName, sectionVariable))
+          }
+          BRANCH_INFO_SECTION -> if (sectionVariable == null) {
+            LOG.debug(
+              String.format("Common branch option(s) defined .git/config. sectionName: %s%n section: %s", sectionName, section))
+          }
+          else {
+            trackedInfos.add(createBranchConfig(configurations, sectionName, sectionVariable))
+          }
+        }
+      }
 
       return GitConfig(remotes, urls, trackedInfos, core)
     }
 
-    private fun parseTrackedInfos(ini: Ini): List<BranchConfig> {
-      val configs: MutableList<BranchConfig> = ArrayList()
-      for (stringSectionEntry in ini.entries) {
-        val sectionName = stringSectionEntry.key
-        val section = stringSectionEntry.value
+    private fun parseKeysIntoSections(
+      configurations: Map<String, List<String>>,
+    ): Set<Pair<String, String?>> =
+      configurations.entries.mapNotNull { entry ->
+        val key: String = entry.key
 
-        val branchConfig: BranchConfig? = parseBranchSection(sectionName, section)
-        if (branchConfig != null) {
-          configs.add(branchConfig)
+        val variableSeparatorIndex = key.lastIndexOf('.')
+        if (variableSeparatorIndex == -1) return@mapNotNull null
+
+        val section = key.take(variableSeparatorIndex)
+        val sectionNameSeparatorIndex = section.indexOf('.')
+
+        if (sectionNameSeparatorIndex == -1) {
+          section to null
         }
-      }
-      return configs
-    }
+        else {
+          val sectionName = section.take(sectionNameSeparatorIndex)
+          val sectionVariable = section.substring(sectionNameSeparatorIndex + 1)
+
+          sectionName to sectionVariable
+        }
+      }.toSet()
 
     private fun convertBranchConfig(
       branchConfig: BranchConfig,
@@ -203,44 +226,6 @@ class GitConfig private constructor(
         branch.nameForRemoteOperations == branchName &&
         branch.remote.name == remoteName
       }
-    }
-
-    private fun parseBranchSection(
-      sectionName: String,
-      section: Profile.Section,
-    ): BranchConfig? {
-      val matcher: Matcher = BRANCH_INFO_SECTION.matcher(sectionName)
-      if (matcher.matches()) {
-        val remote = section["remote"]
-        val merge = section["merge"]
-        val rebase = section["rebase"]
-        return BranchConfig(matcher.group(1), remote, merge, rebase)
-      }
-      if (BRANCH_COMMON_PARAMS_SECTION.matcher(sectionName).matches()) {
-        LOG.debug(String.format("Common branch option(s) defined .git/config. sectionName: %s%n section: %s", sectionName, section))
-        return null
-      }
-      return null
-    }
-
-    private fun parseRemotes(ini: Ini): Pair<List<Remote>, List<Url>> {
-      val remotes: MutableList<Remote> = ArrayList()
-      val urls: MutableList<Url> = ArrayList()
-      for (sectionName in ini.keys) {
-        val section: Profile.Section = ini[sectionName]!!
-
-        val remote: Remote? = parseRemoteSection(sectionName, section)
-        if (remote != null) {
-          remotes.add(remote)
-        }
-        else {
-          val url: Url? = parseUrlSection(sectionName, section)
-          if (url != null) {
-            urls.add(url)
-          }
-        }
-      }
-      return remotes to urls
     }
 
     /**
@@ -321,39 +306,66 @@ class GitConfig private constructor(
       return url.name + remoteUrl.substring(insteadOf.length)
     }
 
-    private fun parseRemoteSection(
+    private fun createBranchConfig(
+      configurations: Map<String, List<String>>,
       sectionName: String,
-      section: Profile.Section,
-    ): Remote? {
-      val matcher: Matcher = REMOTE_SECTION.matcher(sectionName)
-      if (matcher.matches() && matcher.groupCount() == 1) {
-        val fetch = section.getAll("fetch") ?: emptyList()
-        val push = section.getAll("push") ?: emptyList()
-        val url = section.getAll("url") ?: emptyList()
-        val pushurl = section.getAll("pushurl") ?: emptyList()
-        return Remote(matcher.group(1), fetch, push, url, pushurl)
-      }
-      return null
+      branchName: String,
+    ): BranchConfig {
+      val sectionKey = "$sectionName.$branchName"
+
+      val remote: String? = getOneConfig(configurations, "$sectionKey.remote")
+      val merge: String? = getOneConfig(configurations, "$sectionKey.merge")
+      val rebase: String? = getOneConfig(configurations, "$sectionKey.rebase")
+
+      return BranchConfig(branchName, remote, merge, rebase)
     }
 
-    private fun parseUrlSection(sectionName: String, section: Profile.Section): Url? {
-      val matcher: Matcher = URL_SECTION.matcher(sectionName)
-      if (matcher.matches() && matcher.groupCount() == 1) {
-        val insteadof = section["insteadof"]
-        val pushInsteadof = section["pushinsteadof"]
-        return Url(matcher.group(1), insteadof, pushInsteadof)
-      }
-      return null
+    private fun createRemote(
+      configurations: Map<String, List<String>>,
+      sectionName: String,
+      remoteName: String,
+    ): Remote {
+      val sectionKey = sectionName + "." + remoteName
+
+      val fetchSpecs = getAllConfigs(configurations, sectionKey + ".fetch")
+      val pushSpecs = getAllConfigs(configurations, sectionKey + ".push")
+      val urls = getAllConfigs(configurations, sectionKey + ".url")
+      val pushUrls = getAllConfigs(configurations, sectionKey + ".pushurl")
+
+      return Remote(remoteName, fetchSpecs, pushSpecs, urls, pushUrls)
     }
 
-    private fun parseCore(ini: Ini): Core {
-      var hooksPath: String? = null
+    private fun createUrl(
+      configurations: Map<String, List<String>>,
+      sectionName: String,
+      url: String,
+    ): Url {
+      val sectionKey = sectionName + "." + url
 
-      val sections = ini.getAll(CORE_SECTION) ?: emptyList()
-      for (section in ContainerUtil.reverse(sections)) { // take entry from last section for duplicates
-        if (hooksPath == null) hooksPath = section.getAll("hookspath")?.lastOrNull()
-      }
+      val insteadof: String? = getOneConfig(configurations, sectionKey + ".insteadof")
+      val pushInsteadof: String? = getOneConfig(configurations, sectionKey + ".pushinsteadof")
+
+      return Url(url, insteadof, pushInsteadof)
+    }
+
+    private fun createCore(
+      configurations: Map<String, List<String>>,
+    ): Core {
+      val hooksPath: String? = getOneConfig(configurations, CORE_SECTION + ".hookspath")
+
       return Core(hooksPath)
     }
+
+    private fun getAllConfigs(
+      configurations: Map<String, List<String>>,
+      sectionKey: String,
+    ): List<String> {
+      return configurations[sectionKey] ?: emptyList()
+    }
+
+    private fun getOneConfig(
+      configurations: Map<String, List<String>>,
+      key: String,
+    ): String? = configurations[key]?.lastOrNull()
   }
 }

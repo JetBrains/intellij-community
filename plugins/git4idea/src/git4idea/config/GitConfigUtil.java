@@ -22,9 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
@@ -54,9 +52,19 @@ public final class GitConfigUtil {
   private GitConfigUtil() {
   }
 
-  public static @NotNull Map<@NotNull String, @NotNull String> getValues(@NotNull Project project,
-                                                                         @NotNull VirtualFile root,
-                                                                         @Nullable @NonNls String keyMask) throws VcsException {
+  public static @NotNull Map<@NotNull String, @NotNull List<@NotNull String>> getValues(
+    @Nullable Project project,
+    @NotNull VirtualFile root,
+    @Nullable @NonNls String keyMask
+  ) throws VcsException {
+    return getValues(project, root.toNioPath(), keyMask);
+  }
+
+  public static @NotNull Map<@NotNull String, @NotNull List<@NotNull String>> getValues(
+    @Nullable Project project,
+    @NotNull Path root,
+    @Nullable @NonNls String keyMask
+  ) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     h.setEnableInteractiveCallbacks(false);
     h.setSilent(true);
@@ -70,7 +78,7 @@ public final class GitConfigUtil {
     String output = Git.getInstance().runCommand(h).getOutputOrThrow();
     int start = 0;
     int pos;
-    Map<String, String> result = new HashMap<>();
+    Map<String, List<String>> result = new HashMap<>();
     while ((pos = output.indexOf('\n', start)) != -1) {
       String key = output.substring(start, pos);
       start = pos + 1;
@@ -79,7 +87,12 @@ public final class GitConfigUtil {
       }
       String value = output.substring(start, pos);
       start = pos + 1;
-      result.put(key, value);
+
+      result.putIfAbsent(key, new ArrayList<>());
+      List<String> values = result.get(key);
+      Objects.requireNonNull(values);
+
+      values.add(value);
     }
     return result;
   }

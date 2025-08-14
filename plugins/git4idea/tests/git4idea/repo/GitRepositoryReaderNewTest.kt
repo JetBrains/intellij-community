@@ -291,7 +291,7 @@ abstract class GitRepositoryReaderNewTest(val usingReftable: Boolean) : GitPlatf
 
   private fun readState(): GitBranchState {
     val gitFiles = repo.repositoryFiles
-    val config = GitConfig.read(gitFiles.configFile)
+    val config = GitConfig.read(project, projectNioRoot)
     val reader = GitRepositoryReader(myProject, gitFiles)
     val remotes = config.parseRemotes()
     return reader.readState(remotes)

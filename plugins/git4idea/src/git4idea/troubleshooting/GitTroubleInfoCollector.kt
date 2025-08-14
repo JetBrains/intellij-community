@@ -132,10 +132,12 @@ private object GitConfigHelper {
     val singleGitRoot = GitRepositoryManager.getInstance(project).repositories.singleOrNull()
     if (singleGitRoot != null) {
       GitConfigUtil.getValues(project, singleGitRoot.root, null)
+        .mapValues { it.value.last() }
     }
     else {
       val projectDir = project.guessProjectDir() ?: return null
       GitConfigUtil.getValues(project, projectDir, null)
+        .mapValues { it.value.last() }
     }
   }
   catch (e: VcsException) {

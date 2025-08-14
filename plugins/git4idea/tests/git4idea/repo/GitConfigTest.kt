@@ -12,12 +12,17 @@ import git4idea.GitLocalBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.test.*
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.util.*
 
 class GitConfigTest : GitPlatformTest() {
   private val HOOK_FAILURE_MESSAGE = "IJ_TEST_GIT_HOOK_FAILED"
 
   fun testRemotes() {
+    createRepository()
+
     val objects = loadRemotes()
     for (spec in objects) {
       doTestRemotes(spec.name, spec.config, spec.result)
@@ -25,6 +30,8 @@ class GitConfigTest : GitPlatformTest() {
   }
 
   fun testBranches() {
+    createRepository()
+
     val objects = loadBranches()
     for (spec in objects) {
       doTestBranches(spec.name, spec.config, spec.result)
@@ -40,7 +47,7 @@ class GitConfigTest : GitPlatformTest() {
 
     val rootFile = File(projectPath)
     val gitFile = File(projectPath, ".git")
-    val config = GitConfig.read(File(gitFile, "config"))
+    val config = GitConfig.read(project, projectNioRoot)
     val rootDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(rootFile)
     val gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(gitFile)
     val reader = GitRepositoryReader(myProject, GitRepositoryFiles.createInstance(rootDir!!, gitDir!!))
@@ -103,7 +110,7 @@ class GitConfigTest : GitPlatformTest() {
     createRepository()
     addRemote("git@github.com:foo/bar.git")
     val configFile = configFile()
-    FileUtil.writeToFile(configFile, FileUtil.loadFile(configFile).replace("remote", "REMOTE"))
+    FileUtil.writeToFile(configFile.toFile(), FileUtil.loadFile(configFile.toFile()).replace("remote", "REMOTE"))
 
     assertSingleRemoteInConfig()
   }
@@ -242,7 +249,7 @@ class GitConfigTest : GitPlatformTest() {
   }
 
   private fun readConfig(): GitConfig {
-    return GitConfig.read(configFile())
+    return GitConfig.read(project, projectNioRoot)
   }
 
   private fun assertSingleRemoteInConfig() {
@@ -250,22 +257,26 @@ class GitConfigTest : GitPlatformTest() {
     assertSingleRemote(remotes)
   }
 
-  private fun doTestRemotes(testName: String, configFile: File, resultFile: File) {
-    val config = GitConfig.read(configFile)
+  private fun doTestRemotes(testName: String, configFile: Path, resultFile: File) {
+    Files.copy(configFile, projectNioRoot.resolve(".git/config"), StandardCopyOption.REPLACE_EXISTING)
+
+    val config = GitConfig.read(project, projectNioRoot)
     VcsTestUtil.assertEqualCollections(testName, config.parseRemotes(), readRemoteResults(resultFile))
   }
 
-  private fun configFile(): File {
-    val gitDir = File(projectPath, ".git")
-    return File(gitDir, "config")
+  private fun configFile(): Path {
+    val gitDir = Path.of(projectPath, ".git")
+    return gitDir.resolve("config")
   }
 
-  private fun doTestBranches(testName: String, configFile: File, resultFile: File) {
+  private fun doTestBranches(testName: String, configFile: Path, resultFile: File) {
+    Files.copy(configFile, projectNioRoot.resolve(".git/config"), StandardCopyOption.REPLACE_EXISTING)
+
     val expectedInfos = readBranchResults(resultFile)
     val localBranches = expectedInfos.map { it.localBranch }
     val remoteBranches = expectedInfos.map { it.remoteBranch }
 
-    val trackInfos = GitConfig.read(configFile).parseTrackInfos(localBranches, remoteBranches)
+    val trackInfos = GitConfig.read(project, projectNioRoot).parseTrackInfos(localBranches, remoteBranches)
     VcsTestUtil.assertEqualCollections(testName, trackInfos, expectedInfos)
   }
 
@@ -273,7 +284,7 @@ class GitConfigTest : GitPlatformTest() {
 
   private fun loadBranches() = loadConfigData(getTestDataFolder("branch"))
 
-  private class TestSpec(internal var name: String, internal var config: File, internal var result: File)
+  private class TestSpec(internal var name: String, internal var config: Path, internal var result: File)
 
   private fun addRemote(url: String) {
     addRemote("origin", url)
@@ -317,7 +328,7 @@ class GitConfigTest : GitPlatformTest() {
 
       val testName = FileUtil.loadFile(descriptionFile!!).lines()[0] // description is in the first line of the desc-file
       if (!testName.lowercase(Locale.getDefault()).startsWith("ignore")) {
-        data.add(TestSpec(testName, configFile!!, resultFile!!))
+        data.add(TestSpec(testName, configFile!!.toPath(), resultFile!!))
       }
     }
     return data
