@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 import java.util.function.Supplier;
@@ -37,7 +36,7 @@ public final class NullArgumentToVariableArgMethodInspection extends BaseInspect
   }
 
   @Override
-  public @Nullable String getAlternativeID() {
+  public @NotNull String getAlternativeID() {
     return "NullArgumentToVariableArgMethod"; // old suppressions should keep working
   }
 
@@ -96,7 +95,7 @@ public final class NullArgumentToVariableArgMethodInspection extends BaseInspect
       visitCall(call);
     }
 
-      private static PsiArrayType getSuspiciousVarargType(PsiCall call, PsiType type, Supplier<? extends PsiMethod> resolver) {
+    private static PsiArrayType getSuspiciousVarargType(PsiCall call, PsiType type, Supplier<? extends PsiMethod> resolver) {
       final boolean checkArray;
       if (PsiTypes.nullType().equals(type)) {
         checkArray = false;
@@ -126,7 +125,7 @@ public final class NullArgumentToVariableArgMethodInspection extends BaseInspect
         return null;
       }
 
-        final PsiArrayType arrayType = (PsiArrayType)ellipsisType.toArrayType();
+      final PsiArrayType arrayType = (PsiArrayType)ellipsisType.toArrayType();
       final PsiType componentType = arrayType.getComponentType();
       if (checkArray) {
         if (!componentType.equals(TypeUtils.getObjectType(call))) {
