@@ -10,8 +10,10 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
@@ -128,20 +130,29 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
     return colorScheme.getAttributes(myTextAttributesKey);
   }
 
+  private void runUnderWriteLock(Runnable runnable) {
+    RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
+    if (node == null) {
+      runnable.run();
+    }
+    else {
+      node.getTree().runUnderWriteLock(runnable);
+    }
+  }
+
   @Override
   public void setTextAttributes(@Nullable TextAttributes textAttributes) {
     TextAttributes old = myForcedTextAttributes;
     if (old == textAttributes) return;
-
     myForcedTextAttributes = textAttributes;
 
-    if (old == TextAttributes.ERASE_MARKER || textAttributes == TextAttributes.ERASE_MARKER ||
-        old == null && myTextAttributesKey != null) {
-      fireChanged(false, true, true);
-    }
-    else if (!Objects.equals(old, textAttributes)) {
-      fireChanged(false, getFontStyle(old) != getFontStyle(textAttributes),
-                  !Objects.equals(getForegroundColor(old), getForegroundColor(textAttributes)));
+    boolean erasedChanged = old == TextAttributes.ERASE_MARKER || textAttributes == TextAttributes.ERASE_MARKER ||
+                old == null && myTextAttributesKey != null;
+    boolean attributesChanged = !Objects.equals(old, textAttributes);
+    if (erasedChanged || attributesChanged) {
+      boolean fontStyleChanged = erasedChanged || getFontStyle(old) != getFontStyle(textAttributes);
+      boolean foregroundColorChanged = erasedChanged || !Objects.equals(getForegroundColor(old), getForegroundColor(textAttributes));
+      fireChanged(false, fontStyleChanged, foregroundColorChanged);
     }
   }
 
@@ -157,7 +168,7 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   @Override
   public void setVisibleIfFolded(boolean value) {
     if (isVisibleIfFolded() != value) {
-      putUserData(VISIBLE_IF_FOLDED, value ? Boolean.TRUE : null);
+      runUnderWriteLock(() -> putUserData(VISIBLE_IF_FOLDED, value ? Boolean.TRUE : null));
     }
   }
 
@@ -361,6 +372,7 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
 
   @Override
   public void fireChanged(boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
+    runUnderWriteLock(EmptyRunnable.getInstance()); // throw exception if changed under read lock
     if (isFlagSet(IN_BATCH_CHANGE_MASK)) {
       // under IN_BATCH_CHANGE_MASK, do not fire events, just add flags above
       int changedFlags = CHANGED_MASK|RENDERERS_CHANGED_MASK|FONT_STYLE_CHANGED_MASK|FOREGROUND_COLOR_CHANGED_MASK;

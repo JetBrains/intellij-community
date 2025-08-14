@@ -107,7 +107,6 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
           if (n.isRenderedInGutter() == prevInGutter) break;
           n = (RHNode)n.getParent();
         }
-        return null;
       });
     }
 

@@ -79,7 +79,6 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
         if (msg != null) {
           LOG.warn(msg);
         }
-        return null;
       });
     }
     return node;
