@@ -43,6 +43,7 @@ jvm_library(
     "//spellchecker:spellchecker_test_lib",
     "//platform/projectModel-api:projectModel",
     "//plugins/textmate/plugin",
+    "//plugins/textmate/backend",
   ],
   runtime_deps = [":tests_test_resources"]
 )

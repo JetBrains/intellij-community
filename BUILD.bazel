@@ -300,6 +300,7 @@ jvm_library(
     "//platform/workspace/storage/tests:tests_test_lib",
     "//platform/workspace/jps/tests:tests_test_lib",
     "//plugins/textmate/plugin",
+    "//plugins/textmate/backend",
     "//plugins/space/jps-plugin:java-jps",
     "//build/tasks",
     "//build/tasks:tasks_test_lib",

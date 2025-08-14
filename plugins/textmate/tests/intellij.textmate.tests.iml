@@ -30,5 +30,6 @@
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.textmate.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.textmate.backend" scope="TEST" />
   </component>
 </module>
