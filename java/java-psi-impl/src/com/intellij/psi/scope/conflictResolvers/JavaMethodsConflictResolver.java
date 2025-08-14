@@ -126,28 +126,26 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                 @MethodCandidateInfo.ApplicabilityLevelConstant int applicabilityLevel,
                                 Map<MethodCandidateInfo, PsiSubstitutor> map,
                                 int offset) {
-    final boolean applicable = applicabilityLevel > MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
+    if (applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE) return;
 
-    int conflictsCount = conflicts.size();
-    // Specifics
-    if (applicable) {
-      final CandidateInfo[] newConflictsArray = conflicts.toArray(CandidateInfo.EMPTY_ARRAY);
-      for (int i = 1; i < conflictsCount; i++) {
-        final CandidateInfo method = newConflictsArray[i];
-        for (int j = 0; j < i; j++) {
-          ProgressManager.checkCanceled();
-          final CandidateInfo conflict = newConflictsArray[j];
-          if (nonComparable(method, conflict, applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY)) continue;
-          switch (isMoreSpecific((MethodCandidateInfo)method, (MethodCandidateInfo)conflict, applicabilityLevel, map, offset)) {
-            case FIRST:
-              conflicts.remove(conflict);
-              break;
-            case SECOND:
-              conflicts.remove(method);
-              break;
-            case NEITHER:
-              break;
-          }
+    outer: for (int i = 1; i < conflicts.size(); i++) {
+      final CandidateInfo method = conflicts.get(i);
+      for (int j = 0; j < i; j++) {
+        ProgressManager.checkCanceled();
+        final CandidateInfo conflict = conflicts.get(j);
+        if (nonComparable(method, conflict, applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY)) continue;
+        switch (isMoreSpecific((MethodCandidateInfo)method, (MethodCandidateInfo)conflict, applicabilityLevel, map, offset)) {
+          case FIRST:
+            conflicts.remove(j);
+            j--;
+            i--;
+            break;
+          case SECOND:
+            conflicts.remove(i);
+            i--;
+            continue outer;
+          case NEITHER:
+            break;
         }
       }
     }
