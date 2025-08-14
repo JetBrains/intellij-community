@@ -92,7 +92,14 @@ public fun <T : Any> ListComboBox(
     listState: SelectableLazyListState = rememberSelectableLazyListState(),
     itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
-    LaunchedEffect(itemKeys) { listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex])) }
+    LaunchedEffect(itemKeys) {
+        val item = items.getOrNull(selectedIndex)
+        if (item != null) {
+            listState.selectedKeys = setOf(itemKeys(selectedIndex, item))
+        } else {
+            listState.selectedKeys = emptySet()
+        }
+    }
 
     var previewSelectedIndex by remember { mutableIntStateOf(selectedIndex) }
     val scope = rememberCoroutineScope()
@@ -171,8 +178,11 @@ public fun <T : Any> ListComboBox(
         outline = outline,
         popupManager = popupManager,
         labelContent = {
-            // We draw label items as not selected and not active
-            itemContent(items[selectedIndex], false, false)
+            val item = items.getOrNull(selectedIndex)
+            if (item != null) {
+                // We draw label items as not selected and not active
+                itemContent(item, false, false)
+            }
         },
         popupContent = {
             PopupContent(
@@ -240,13 +250,13 @@ public fun ListComboBox(
     itemKeys: (Int, String) -> Any = { _, item -> item },
     listState: SelectableLazyListState = rememberSelectableLazyListState(),
 ) {
-    var labelText by remember { mutableStateOf(items[selectedIndex]) }
+    var labelText by remember { mutableStateOf(items.getOrNull(selectedIndex).orEmpty()) }
     var previewSelectedIndex by remember { mutableIntStateOf(-1) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(itemKeys) {
         // Select the first item in the list when creating
-        listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex]))
+        listState.selectedKeys = setOf(itemKeys(selectedIndex, items.getOrNull(selectedIndex).orEmpty()))
     }
 
     fun setSelectedItem(index: Int) {
@@ -395,13 +405,13 @@ public fun EditableListComboBox(
     itemKeys: (Int, String) -> Any = { _, item -> item },
     listState: SelectableLazyListState = rememberSelectableLazyListState(),
 ) {
-    val textFieldState = rememberTextFieldState(items[selectedIndex])
+    val textFieldState = rememberTextFieldState(items.getOrNull(selectedIndex).orEmpty())
     var previewSelectedIndex by remember { mutableIntStateOf(-1) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(itemKeys) {
         // Select the first item in the list when creating
-        listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex]))
+        listState.selectedKeys = setOf(itemKeys(selectedIndex, items.getOrNull(selectedIndex).orEmpty()))
     }
 
     fun setSelectedItem(index: Int) {
