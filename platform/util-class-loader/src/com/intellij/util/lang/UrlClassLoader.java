@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -703,7 +703,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
    * Also, loading nio classes might not work during `#appendToClassPathForInstrumentation`.
    * Because for some versions of JBR, it leads to NPE during initialization of ZipFile through FileSystems.getDefault.
    */
-  private static FileSystem getPlatformDefaultFileSystem() {
+  static FileSystem getPlatformDefaultFileSystem() {
     if (theFileSystem != null) {
       return theFileSystem;
     }
