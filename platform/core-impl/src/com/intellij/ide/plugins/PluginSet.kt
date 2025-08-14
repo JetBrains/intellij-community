@@ -89,11 +89,11 @@ class PluginSet internal constructor(
     val enabledPluginIds = enabledPlugins.mapTo(HashSet()) { it.pluginId }
     for (plugin in allPlugins) {
       if (plugin.pluginId !in enabledPluginIds) {
-        plugin.contentModules.associateByTo(result, ContentModuleDescriptor::moduleName)
+        plugin.contentModules.associateByTo(result, ContentModuleDescriptor::moduleId)
       }
     }
     for (plugin in enabledPlugins) {
-      plugin.contentModules.associateByTo(result, ContentModuleDescriptor::moduleName)
+      plugin.contentModules.associateByTo(result, ContentModuleDescriptor::moduleId)
     }
     return result
   }

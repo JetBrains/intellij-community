@@ -41,7 +41,7 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
     modules.add(module)
     for (subModule in module.contentModules) {
       modules.add(subModule)
-      moduleMap.put(subModule.moduleName, subModule)
+      moduleMap.put(subModule.moduleId, subModule)
       for (pluginAlias in subModule.pluginAliases) {
         moduleMap.put(pluginAlias.idString, subModule)
       }
@@ -288,7 +288,7 @@ private fun collectDirectDependenciesInNewFormat(
        can be loaded or not. */
     for (item in module.contentModules) {
       if (item.moduleLoadingRule.required) {
-        val descriptor = idMap.get(item.moduleName)
+        val descriptor = idMap.get(item.moduleId)
         if (descriptor != null) {
           additionalEdges.add(descriptor)
         }

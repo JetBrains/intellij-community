@@ -70,7 +70,7 @@ internal class ClassLoaderConfiguratorTest {
       createModuleDescriptor("com.foo.bar"),
     )
     sortDependenciesInPlace(modules)
-    assertThat(modules.map { it.moduleName }).containsExactly("com.foo.bar", "com.foo")
+    assertThat(modules.map { it.moduleId }).containsExactly("com.foo.bar", "com.foo")
   }
 
   @Test

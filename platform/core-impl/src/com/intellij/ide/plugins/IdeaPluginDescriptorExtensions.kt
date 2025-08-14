@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @get:ApiStatus.Experimental
 val IdeaPluginDescriptor.contentModuleName: String?
-  get() = (this as? ContentModuleDescriptor)?.moduleName
+  get() = (this as? ContentModuleDescriptor)?.moduleId
 
 @get:ApiStatus.Experimental
 val IdeaPluginDescriptor.isRequiredContentModule: Boolean

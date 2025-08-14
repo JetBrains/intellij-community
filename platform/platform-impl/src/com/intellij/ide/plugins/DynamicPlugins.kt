@@ -328,7 +328,7 @@ object DynamicPlugins {
     checkUnloadActions(module)?.let { return it }
 
     for (moduleRef in module.contentModules) {
-      if (pluginSet.isModuleEnabled(moduleRef.moduleName)) {
+      if (pluginSet.isModuleEnabled(moduleRef.moduleId)) {
         checkCanUnloadWithoutRestart(module = moduleRef,
                                      parentModule = module,
                                      optionalDependencyPluginId = null,
@@ -999,7 +999,7 @@ object DynamicPlugins {
                                                  classLoaderConfigurator = classLoaderConfigurator,
                                                  pluginSet = pluginSet).filter { descriptorImpl ->
             when (descriptorImpl) {
-              is ContentModuleDescriptor if !pluginSet.isModuleEnabled(descriptorImpl.moduleName) -> false
+              is ContentModuleDescriptor if !pluginSet.isModuleEnabled(descriptorImpl.moduleId) -> false
               is PluginMainDescriptor if !pluginSet.isPluginEnabled(descriptorImpl.pluginId) -> false
               else -> true
             }
@@ -1251,7 +1251,7 @@ private fun processDependenciesOnPlugin(
   val wantedIds = HashSet<String>(1 + dependencyTarget.contentModules.size)
   wantedIds.add(dependencyTarget.pluginId.idString)
   for (module in dependencyTarget.contentModules) {
-    wantedIds.add(module.moduleName)
+    wantedIds.add(module.moduleId)
   }
   // FIXME plugin aliases probably missing?
 

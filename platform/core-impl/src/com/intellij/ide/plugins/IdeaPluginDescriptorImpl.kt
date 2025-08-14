@@ -199,7 +199,7 @@ sealed class IdeaPluginDescriptorImpl(
       LOG.warnInProduction(PluginException(buildString {
         append("Plugin descriptor for ")
         when (this@logUnexpectedElement) {
-          is ContentModuleDescriptor -> append("content module '${moduleName}' of plugin '${pluginId}'")
+          is ContentModuleDescriptor -> append("content module '${moduleId}' of plugin '${pluginId}'")
           is DependsSubDescriptor -> append("'depends' sub-descriptor '${descriptorPath}' of plugin '${pluginId}'")
           is PluginMainDescriptor -> error("not intended")
         }
@@ -594,7 +594,7 @@ class ContentModuleDescriptor(
   moduleLoadingRule: ModuleLoadingRule,
   private val descriptorPath: String
 ): PluginModuleDescriptor(raw) {
-  val moduleName: String = moduleName
+  val moduleId: String = moduleName
   val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
 
   override val useCoreClassLoader: Boolean
@@ -609,10 +609,10 @@ class ContentModuleDescriptor(
   override fun getResourceBundleBaseName(): String? = resourceBundleBaseName
 
   override fun toString(): String =
-    "ContentModuleDescriptor(moduleName=$moduleName" +
+    "ContentModuleDescriptor(moduleName=$moduleId" +
     (if (moduleLoadingRule == ModuleLoadingRule.OPTIONAL) "" else ", loadingRule=$moduleLoadingRule") +
     (if (packagePrefix == null) "" else ", package=$packagePrefix") +
-    (if (descriptorPath == "$moduleName.xml") "" else ", descriptorPath=$descriptorPath") +
+    (if (descriptorPath == "$moduleId.xml") "" else ", descriptorPath=$descriptorPath") +
     ") <- $parent"
 
   init {

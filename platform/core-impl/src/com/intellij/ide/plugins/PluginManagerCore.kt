@@ -488,10 +488,10 @@ object PluginManagerCore {
                     }.toMap()
     val fullContentModuleIdMap = HashMap<String, ContentModuleDescriptor>()
     for (descriptor in loadingResult.getIncompleteIdMap().values) {
-      descriptor.contentModules.associateByTo(fullContentModuleIdMap) { it.moduleName }
+      descriptor.contentModules.associateByTo(fullContentModuleIdMap) { it.moduleId }
     }
     for (descriptor in idMap.values) {
-      descriptor.contentModules.associateByTo(fullContentModuleIdMap) { it.moduleName }
+      descriptor.contentModules.associateByTo(fullContentModuleIdMap) { it.moduleId }
     }
 
     if (initContext.checkEssentialPlugins && !idMap.containsKey(CORE_ID)) {
@@ -579,7 +579,7 @@ object PluginManagerCore {
       val pluginsToLoad = LinkedHashSet<IdeaPluginDescriptorImpl>(rootPluginsToLoad.size)
       val contentModuleIdMap = HashMap<String, ContentModuleDescriptor>()
       for (descriptor in descriptors) {
-        descriptor.contentModules.associateByTo(contentModuleIdMap) { it.moduleName }
+        descriptor.contentModules.associateByTo(contentModuleIdMap) { it.moduleId }
       }
       for (id in rootPluginsToLoad) {
         val descriptor = idMap[id] ?: continue
@@ -630,7 +630,7 @@ object PluginManagerCore {
         corePlugin.contentModules
           .filter { it.moduleLoadingRule.required && !it.isMarkedForLoading }
       if (disabledModulesOfCorePlugin.isNotEmpty()) {
-        throw EssentialPluginMissingException(disabledModulesOfCorePlugin.map { it.moduleName })
+        throw EssentialPluginMissingException(disabledModulesOfCorePlugin.map { it.moduleId })
       }
     }
     var missing: MutableList<Pair<String, PluginNonLoadReason?>>? = null

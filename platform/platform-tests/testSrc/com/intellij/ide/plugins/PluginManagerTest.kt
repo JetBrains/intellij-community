@@ -276,7 +276,7 @@ class PluginManagerTest {
       for (descriptor in loadPluginResult.pluginSet.getEnabledModules()) {
         text.append(if (descriptor.isEnabled()) "+ " else "  ").append(descriptor.getPluginId().idString)
         if (descriptor is ContentModuleDescriptor) {
-          text.append(" | ").append(descriptor.moduleName)
+          text.append(" | ").append(descriptor.moduleId)
         }
         text.append('\n')
       }

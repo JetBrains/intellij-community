@@ -264,7 +264,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         .also { descriptor ->
           descriptor?.contentModules?.forEach { module ->
             if (module.packagePrefix == null) {
-              val moduleName = module.moduleName
+              val moduleName = module.moduleId
               module.jarFiles = moduleRepository.getModule(RuntimeModuleId.module(moduleName)).resourceRootPaths
             }
           }

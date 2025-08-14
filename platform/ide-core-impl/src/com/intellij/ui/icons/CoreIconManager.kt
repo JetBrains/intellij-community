@@ -256,7 +256,7 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
       return plugin.classLoader
     }
     else {
-      return plugin.contentModules.firstOrNull { it.moduleName == moduleId }?.classLoader
+      return plugin.contentModules.firstOrNull { it.moduleId == moduleId }?.classLoader
     }
   }
 

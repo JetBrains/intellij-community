@@ -97,7 +97,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
     val enabledRequiredContentModules = HashMap<String, ContentModuleDescriptor>()
     val disabledModuleToProblematicPlugin = HashMap<String, PluginId>()
     for (incompletePlugin in incompletePlugins) {
-      incompletePlugin.contentModules.associateByTo(disabledModuleToProblematicPlugin, { it.moduleName }, { incompletePlugin.pluginId })
+      incompletePlugin.contentModules.associateByTo(disabledModuleToProblematicPlugin, { it.moduleId }, { incompletePlugin.pluginId })
     }
     val moduleIncompatibleWithCurrentMode = getModuleIncompatibleWithCurrentProductMode(currentProductModeEvaluator)
     val usedPackagePrefixes = HashMap<String, IdeaPluginDescriptorImpl>()
@@ -106,15 +106,15 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
     fun registerLoadingError(plugin: IdeaPluginDescriptorImpl, disabledModule: ContentModuleDescriptor) {
       loadingErrors.add(createCannotLoadError(
         descriptor = plugin,
-        dependencyPluginId = disabledModuleToProblematicPlugin.get(disabledModule.moduleName) ?: PluginId.getId(disabledModule.moduleName),
+        dependencyPluginId = disabledModuleToProblematicPlugin.get(disabledModule.moduleId) ?: PluginId.getId(disabledModule.moduleId),
         errors = emptyMap(),
         isNotifyUser = !plugin.isImplementationDetail))
     }
 
     m@ for (module in sortedModulesWithDependencies.modules) {
-      if (module is ContentModuleDescriptor && module.moduleName == moduleIncompatibleWithCurrentMode) {
+      if (module is ContentModuleDescriptor && module.moduleId == moduleIncompatibleWithCurrentMode) {
         module.isMarkedForLoading = false
-        logMessages.add("Module ${module.moduleName} is disabled because it is not compatible with the current product mode")
+        logMessages.add("Module ${module.moduleId} is disabled because it is not compatible with the current product mode")
         continue
       }
 
@@ -130,7 +130,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         }
       }
       else if (!module.isRequiredContentModule && !enabledPluginIds.containsKey(module.pluginId)) {
-        disabledModuleToProblematicPlugin.put(module.moduleName, module.pluginId)
+        disabledModuleToProblematicPlugin.put(module.moduleId, module.pluginId)
         continue
       }
 
@@ -138,7 +138,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         if (!enabledModuleV2Ids.containsKey(ref.name) && !enabledRequiredContentModules.containsKey(ref.name)) {
           logMessages.add("Module ${module.contentModuleName ?: module.pluginId} is not enabled because dependency ${ref.name} is not available")
           if (module is ContentModuleDescriptor) {
-            disabledModuleToProblematicPlugin.put(module.moduleName, disabledModuleToProblematicPlugin.get(ref.name) ?: PluginId.getId(ref.name))
+            disabledModuleToProblematicPlugin.put(module.moduleId, disabledModuleToProblematicPlugin.get(ref.name) ?: PluginId.getId(ref.name))
           }
           continue@m
         }
@@ -147,7 +147,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         if (!enabledPluginIds.containsKey(ref.id)) {
           logMessages.add("Module ${module.contentModuleName ?: module.pluginId} is not enabled because dependency ${ref.id} is not available")
           if (module is ContentModuleDescriptor) {
-            disabledModuleToProblematicPlugin.put(module.moduleName, ref.id)
+            disabledModuleToProblematicPlugin.put(module.moduleId, ref.id)
           }
           continue@m
         }
@@ -170,10 +170,10 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         is PluginMainDescriptor -> {
           if (module.pluginId != PluginManagerCore.CORE_ID) {
             for (contentModule in module.contentModules) {
-              if (contentModule.moduleLoadingRule.required && !enabledRequiredContentModules.containsKey(contentModule.moduleName)) {
+              if (contentModule.moduleLoadingRule.required && !enabledRequiredContentModules.containsKey(contentModule.moduleId)) {
                 module.isMarkedForLoading = false
-                if (isDisabledDueToPackagePrefixConflict.containsKey(contentModule.moduleName)) {
-                  val alreadyRegistered = isDisabledDueToPackagePrefixConflict[contentModule.moduleName]!!
+                if (isDisabledDueToPackagePrefixConflict.containsKey(contentModule.moduleId)) {
+                  val alreadyRegistered = isDisabledDueToPackagePrefixConflict[contentModule.moduleId]!!
                   loadingErrors.add(PluginPackagePrefixConflict(module, contentModule, alreadyRegistered))
                 } else {
                   registerLoadingError(module, contentModule)
@@ -193,18 +193,18 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
           if (module.pluginId != PluginManagerCore.CORE_ID) {
             for (contentModule in module.contentModules) {
               if (contentModule.moduleLoadingRule.required) {
-                val requiredContentModule = enabledRequiredContentModules.remove(contentModule.moduleName)!!
-                markModuleAsEnabled(contentModule.moduleName, requiredContentModule)
+                val requiredContentModule = enabledRequiredContentModules.remove(contentModule.moduleId)!!
+                markModuleAsEnabled(contentModule.moduleId, requiredContentModule)
               }
             }
           }
         }
         is ContentModuleDescriptor -> {
           if (module.isRequiredContentModule && module.pluginId != PluginManagerCore.CORE_ID) {
-            enabledRequiredContentModules.put(module.moduleName, module)
+            enabledRequiredContentModules.put(module.moduleId, module)
           }
           else {
-            markModuleAsEnabled(module.moduleName, module)
+            markModuleAsEnabled(module.moduleId, module)
           }
         }
       }
@@ -213,7 +213,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
     val corePlugin = enabledPluginIds.get(PluginManagerCore.CORE_ID)
     if (corePlugin != null) {
       for (moduleItem in corePlugin.contentModules) {
-        if (moduleItem.moduleLoadingRule.required && !enabledModuleV2Ids.containsKey(moduleItem.moduleName)) {
+        if (moduleItem.moduleLoadingRule.required && !enabledModuleV2Ids.containsKey(moduleItem.moduleId)) {
           moduleItem.isMarkedForLoading = false
           registerLoadingError(corePlugin, moduleItem)
         }
@@ -265,7 +265,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
     val java11Shim = Java11Shim.INSTANCE
     fun isPluginModuleEnabled(module: PluginModuleDescriptor): Boolean {
       if (module !is ContentModuleDescriptor) return module.isMarkedForLoading
-      return enabledModuleV2Ids[module.moduleName] === module
+      return enabledModuleV2Ids[module.moduleId] === module
     }
 
     return PluginSet(
