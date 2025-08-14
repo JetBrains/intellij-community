@@ -5,8 +5,6 @@
     <!-- ===================================================== -->
 
     <property name="tc.root" location="${basedir}/../../.."/>
-    <property name="tc.community.root" location="${tc.root}/ij-community"/>
-    <property name="tc.android.root" location="${tc.root}/ij-android"/>
     <property name="jps.project.root" location="${basedir}/.."/>
     <property name="community.folder" location="${basedir}/../community"/>
     <property name="android.folder" location="${community.folder}/android"/>
@@ -248,19 +246,18 @@
     <!-- ===================================================== -->
 
     <!-- Exists as standalone task for TeamCity build -->
-    <target name="prepare" depends="link,patch,compiler,modules,kotlinc,jar-repositories,libraries"
-            description="Make all build preparation tasks"/>
+    <target name="teamcity" depends="patch,configure,compile,repackage" description="Builds TC artifacts for the build chain"/>
+
+    <!-- Run this before opening mps-platform project in IDEA -->
+    <target name="configure" depends="compiler,modules,kotlinc,jar-repositories,libraries" description="Configures IDEA platform project"/>
+
+    <target name="prepare" depends="patch,configure" description="Make all build preparation tasks"/>
 
     <!-- Exists as standalone task for TeamCity build -->
     <condition property="script.suffix" value=".cmd">
         <os family="windows" />
     </condition>
     <property name="script.suffix" value=".sh" />
-
-    <target name="link" description="Links IC and Android repositories into MPS project">
-        <symlink link="${community.folder}" resource="${tc.community.root}"/>
-        <symlink link="${community.folder}/android" resource="${tc.android.root}"/>
-    </target>
 
     <target name="compile" description="Runs building script.">
         <symlink link="${jps.project.root}/.mps" resource="${jps.project.root}/.idea"/>

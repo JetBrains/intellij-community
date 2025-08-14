@@ -1,0 +1,140 @@
+<project name="getResources" default="getall">
+
+    <target name="geturls">
+        <loadproperties srcfile="mps-platform/community/build/dependencies/dependencies.properties"/>
+        <!-- now it is necessary to parse jdkBuild or secondJreBuild into two parts: uNNNbNNNN.NN => uNNN & bNNNN.NN -->
+        <!--script language="javascript">
+          s = project.getProperty('runtimeBuild')                             // 17.0.5b653.14
+          b = s.substring(s.indexOf('b'));                                    // b653.14
+          project.setProperty('jdkBuildU', s.substring(0, s.indexOf('b')));   // 17.0.5
+          project.setProperty('jdkBuildB', b);                                // b653.14
+          project.setProperty('jdkBuildB0', b.substring(0, b.indexOf('.')));  // .14
+        </script-->
+        <!-- convert runtimeBuild from 17.0.5b653.14 -->
+        <!-- jdkBuildU = 17.0.5 -->
+        <exec executable="sh" outputproperty="jdkBuildU">
+            <arg value="-c"/>
+            <arg value="echo '${runtimeBuild}' | sed 's/b.*//'"/>
+        </exec>
+        <!-- jdkBuildB = b653.14 -->
+        <exec executable="sh" outputproperty="jdkBuildB">
+            <arg value="-c"/>
+            <arg value="echo '${runtimeBuild}' | sed 's/.*\(b.*\)/\1/'"/>
+        </exec>
+        <!-- jdkBuildB0 = b653 -->
+        <exec executable="sh" outputproperty="jdkBuildB0">
+            <arg value="-c"/>
+            <arg value="echo '${runtimeBuild}' | sed 's/.*\(b.*\)\..*/\1/'"/>
+        </exec>
+        <property name="jbr.url" value="https://cache-redirector.jetbrains.com/intellij-jbr/" />
+
+        <property name="openjdk2.mac.url" value="${jbr.url}jbrsdk-${jdkBuildU}-osx-x64-${jdkBuildB}.tar.gz" />
+        <property name="openjdk2.mac.aarch64.url" value="${jbr.url}jbrsdk-${jdkBuildU}-osx-aarch64-${jdkBuildB}.tar.gz" />
+        <property name="openjdk2.win.url" value="${jbr.url}jbrsdk-${jdkBuildU}-windows-x64-${jdkBuildB}.tar.gz" />
+        <property name="openjdk2.linux.url" value="${jbr.url}jbrsdk-${jdkBuildU}-linux-x64-${jdkBuildB}.tar.gz" />
+        <property name="jbr.mac.x64.url" value="${jbr.url}jbr_jcef-${jdkBuildU}-osx-x64-${jdkBuildB}.tar.gz" />
+        <property name="jbr.mac.aarch64.url" value="${jbr.url}jbr_jcef-${jdkBuildU}-osx-aarch64-${jdkBuildB}.tar.gz" />
+        <property name="jbr.windows.x64.url" value="${jbr.url}jbr_jcef-${jdkBuildU}-windows-x64-${jdkBuildB}.tar.gz" />
+        <property name="jbr.linux.x64.url" value="${jbr.url}jbr_jcef-${jdkBuildU}-linux-x64-${jdkBuildB}.tar.gz" />
+    </target>
+
+    <target name="getall" depends="getmacjdk2, getwinjdk2, getlinuxjdk2"/>
+
+    <target name="getmacjdk2" depends="geturls">
+        <mkdir dir="openJDKorig" />
+        <mkdir dir="openJDK" />
+        <!--get dest="openJDK/jbrsdk-osx-x64.tar.gz" src="${openjdk2.mac.url}"/-->
+        <antcall target="getjdk">
+            <param name="name.orig" value="jbrsdk-${jdkBuildU}-osx-x64-${jdkBuildB}.tar.gz" />
+            <param name="name.our" value="jbrsdk-osx-x64.tar.gz" />
+            <param name="dir.orig" value="jbrsdk-${jdkBuildU}-osx-x64-${jdkBuildB}" />
+            <param name="dir.our" value="jbrsdk" />
+        </antcall>
+        <!--get dest="openJDK/jbrsdk-osx-aarch64.tar.gz" src="${openjdk2.mac.aarch64.url}"/-->
+        <antcall target="getjdk">
+            <param name="name.orig" value="jbrsdk-${jdkBuildU}-osx-aarch64-${jdkBuildB}.tar.gz" />
+            <param name="name.our" value="jbrsdk-osx-aarch64.tar.gz" />
+            <param name="dir.orig" value="jbrsdk-${jdkBuildU}-osx-aarch64-${jdkBuildB}" />
+            <param name="dir.our" value="jbrsdk" />
+        </antcall>
+        <!--get dest="openJDK/jbr-osx-x64.tar.gz" src="${jbr.mac.x64.url}"/-->
+        <antcall target="getjdk">
+            <param name="name.orig" value="jbr_jcef-${jdkBuildU}-osx-x64-${jdkBuildB}.tar.gz" />
+            <param name="name.our" value="jbr-osx-x64.tar.gz" />
+            <param name="dir.orig" value="jbr_jcef-${jdkBuildU}-osx-x64-${jdkBuildB}" />
+            <param name="dir.our" value="jbr" />
+        </antcall>
+        <!--get dest="openJDK/jbr-osx-aarch64.tar.gz" src="${jbr.mac.aarch64.url}"/-->
+        <antcall target="getjdk">
+            <param name="name.orig" value="jbr_jcef-${jdkBuildU}-osx-aarch64-${jdkBuildB}.tar.gz" />
+            <param name="name.our" value="jbr-osx-aarch64.tar.gz" />
+            <param name="dir.orig" value="jbr_jcef-${jdkBuildU}-osx-aarch64-${jdkBuildB}" />
+            <param name="dir.our" value="jbr" />
+        </antcall>
+    </target>
+
+    <target name="getwinjdk2" depends="geturls">
+        <mkdir dir="openJDKorig" />
+        <mkdir dir="openJDK" />
+        <!--get dest="openJDK/jbrsdk-windows-x64.tar.gz" src="${openjdk2.win.url}"/-->
+        <antcall target="getjdk">
+            <param name="name.orig" value="jbrsdk-${jdkBuildU}-windows-x64-${jdkBuildB}.tar.gz" />
+            <param name="name.our" value="jbrsdk-windows-x64.tar.gz" />
+            <param name="dir.orig" value="jbrsdk-${jdkBuildU}-windows-x64-${jdkBuildB}" />
+            <param name="dir.our" value="jbrsdk" />
+        </antcall>
+        <!--get dest="openJDK/jbr-windows-x64.tar.gz" src="${jbr.windows.x64.url}"/-->
+        <antcall target="getjdk">
+            <param name="name.orig" value="jbr_jcef-${jdkBuildU}-windows-x64-${jdkBuildB}.tar.gz" />
+            <param name="name.our" value="jbr-windows-x64.tar.gz" />
+            <param name="dir.orig" value="jbr_jcef-${jdkBuildU}-windows-x64-${jdkBuildB}" />
+            <param name="dir.our" value="jbr" />
+        </antcall>
+    </target>
+
+    <target name="getlinuxjdk2" depends="geturls">
+        <mkdir dir="openJDKorig" />
+        <mkdir dir="openJDK" />
+        <!--get dest="openJDK/jbrsdk-linux-x64.tar.gz" src="${openjdk2.linux.url}"/-->
+        <antcall target="getjdk">
+            <param name="name.orig" value="jbrsdk-${jdkBuildU}-linux-x64-${jdkBuildB}.tar.gz" />
+            <param name="name.our" value="jbrsdk-linux-x64.tar.gz" />
+            <param name="dir.orig" value="jbrsdk-${jdkBuildU}-linux-x64-${jdkBuildB}" />
+            <param name="dir.our" value="jbrsdk" />
+        </antcall>
+        <!--get dest="openJDK/jbr-linux-x64.tar.gz" src="${jbr.linux.x64.url}"/-->
+        <antcall target="getjdk">
+            <param name="name.orig" value="jbr_jcef-${jdkBuildU}-linux-x64-${jdkBuildB}.tar.gz" />
+            <param name="name.our" value="jbr-linux-x64.tar.gz" />
+            <param name="dir.orig" value="jbr_jcef-${jdkBuildU}-linux-x64-${jdkBuildB}" />
+            <param name="dir.our" value="jbr" />
+        </antcall>
+    </target>
+
+
+    <target name="getjdk">
+        <get dest="openJDKorig/${name.our}" src="${jbr.url}${name.orig}" />
+
+        <!-- unarchive into xxx temp dir -->
+        <mkdir dir="xxx" />
+        <exec executable="tar">
+            <arg value="xvf" />
+            <arg value="openJDKorig/${name.our}" />
+            <arg value="-C" />
+            <arg value="xxx" />
+        </exec>
+        <!-- rename root dir in archive -->
+        <move file="xxx/${dir.orig}" tofile="xxx/${dir.our}" />
+        <!-- archive to openJDK with our name -->
+        <exec executable="tar">
+            <arg value="czv" />
+            <arg value="-C" />
+            <arg value="xxx" />
+            <arg value="-f" />
+            <arg value="openJDK/${name.our}" />
+            <arg value="${dir.our}" />
+        </exec>
+        <delete dir="xxx" />
+    </target>
+
+</project>
