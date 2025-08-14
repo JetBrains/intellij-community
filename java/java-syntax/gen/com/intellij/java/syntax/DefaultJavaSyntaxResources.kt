@@ -100,6 +100,7 @@ internal object DefaultJavaSyntaxResources {
     "feature.pattern.guard.and.record.patterns" to "Pattern guards and record patterns",
     "feature.patterns.in.switch" to "Patterns in switch",
     "feature.patterns.instanceof" to "Patterns in 'instanceof'",
+    "feature.pem.api" to "PEM Encodings API",
     "feature.primitive.types.in.patterns" to "Primitive types in patterns, instanceof and switch",
     "feature.private.interface.methods" to "Private interface methods",
     "feature.record.patterns.in.for.each" to "Record patterns in for-each loops",
