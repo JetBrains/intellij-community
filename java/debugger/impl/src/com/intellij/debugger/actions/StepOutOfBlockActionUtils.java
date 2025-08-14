@@ -7,11 +7,8 @@ import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.MethodFilter;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
@@ -21,21 +18,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Range;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.Location;
 import com.sun.jdi.request.StepRequest;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
-public class StepOutOfBlockAction extends DebuggerAction implements DumbAware {
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    XDebugSession session = DebuggerUIUtil.getSession(e);
-    if (session != null) {
-      doStepOutOfBlock(session);
-    }
-  }
+@ApiStatus.Internal
+public final class StepOutOfBlockActionUtils {
 
   private static void doStepOutOfBlock(@NotNull XDebugSession xSession) {
     XDebugProcess process = xSession.getDebugProcess();
@@ -65,21 +54,9 @@ public class StepOutOfBlockAction extends DebuggerAction implements DumbAware {
     xSession.stepOut();
   }
 
-  @TestOnly
+  @ApiStatus.Internal
   public static void stepOutOfBlock(@NotNull XDebugSession xSession) {
     doStepOutOfBlock(xSession);
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    XDebugSession session = DebuggerUIUtil.getSession(e);
-    e.getPresentation().setEnabledAndVisible(session != null && session.getDebugProcess() instanceof JavaDebugProcess &&
-                                             !((XDebugSessionImpl)session).isReadOnly() && session.isSuspended());
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
   }
 
   private static final class BlockFilter implements MethodFilter {

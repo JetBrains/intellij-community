@@ -32,6 +32,8 @@ interface JavaDebuggerSessionApi : RemoteApi<Unit> {
 
   suspend fun interruptThread(executionStackId: XExecutionStackId)
 
+  suspend fun stepOutOfCodeBlock(sessionId: XDebugSessionId)
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): JavaDebuggerSessionApi {

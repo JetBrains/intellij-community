@@ -288,12 +288,6 @@
         <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend"/>
       </action>
 
-      <action id="Debugger.StepOutOfBlock" class="com.intellij.debugger.actions.StepOutOfBlockAction"
-              icon="AllIcons.Actions.StepOutCodeBlock">
-        <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="StepOut"/>
-        <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra" anchor="after" relative-to-action="SmartStepInto"/>
-      </action>
-
       <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction">
         <add-to-group group-id="XDebugger.Watches.Inline.Popup" anchor="last"/>
         <override-text place="XDebuggerTreePopup"/>
