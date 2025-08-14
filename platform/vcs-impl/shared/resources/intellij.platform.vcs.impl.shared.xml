@@ -15,5 +15,14 @@
     <projectService serviceImplementation="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
     <projectSettings service="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
     <rdct.remoteSettingProvider implementation="com.intellij.platform.vcs.impl.shared.VcsRemoteSettingsInfoProvider"/>
+
+    <changesGroupingPolicy key="directory" id="directory" weight="10"
+                           implementationClass="com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy$Factory"/>
   </extensions>
+
+  <extensionPoints>
+    <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactoryEPBean" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"/>
+    </extensionPoint>
+  </extensionPoints>
 </idea-plugin>

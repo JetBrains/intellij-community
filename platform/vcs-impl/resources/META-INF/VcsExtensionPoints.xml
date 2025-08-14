@@ -52,10 +52,6 @@
       <with attribute="preloaderClassName" implements="com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider$Preloader"/>
     </extensionPoint>
 
-    <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactoryEPBean" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"/>
-    </extensionPoint>
-
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="openapi.vcs.impl.LocalLineStatusTrackerProvider"
                     interface="com.intellij.openapi.vcs.impl.LocalLineStatusTrackerProvider"
