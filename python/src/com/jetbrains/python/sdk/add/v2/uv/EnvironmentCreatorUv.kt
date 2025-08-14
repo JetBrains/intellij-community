@@ -16,7 +16,6 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
-import com.intellij.uiDesigner.core.Spacer
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.AsyncProcessIcon
 import com.jetbrains.python.PyBundle.message
@@ -46,7 +45,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
-import java.awt.Dimension
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
@@ -194,9 +192,4 @@ internal class EnvironmentCreatorUv(
     model.detectUvExecutable()
   }
 
-  private class DummySpace : Spacer() {
-    override fun getMinimumSize(): Dimension {
-      return Dimension(8, 0)
-    }
-  }
 }
