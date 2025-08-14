@@ -10,13 +10,24 @@ import org.jetbrains.annotations.Nls
 
 internal class KotlinPluginPrePushHandler : IssueIDPrePushHandler() {
   override val paths: List<String> = listOf("plugins/kotlin/")
-  override val commitMessageRegex = Regex(".*(?:KTIJ|KTNB|KT|IDEA|IJPL)-\\d+.*", RegexOption.DOT_MATCHES_ALL /* line breaks matter */)
+  override val commitMessageRegex = buildRegexFromAcceptableProjects()
   override val pathsToIgnore = super.pathsToIgnore.toMutableList()
     .apply { add("/fleet/plugins/kotlin/") }
     .apply { add("/plugins/kotlin/jupyter/") }
 
   override fun isAvailable(): Boolean = Registry.`is`("kotlin.commit.message.validation.enabled", true)
-  override fun getPresentableName(): String = DevKitGitBundle.message("push.commit.handler.name")
+  override fun getPresentableName(): String = DevKitGitBundle.message("push.commit.kotlin.handler.name")
+}
+
+internal class KotlinNotebookPluginPrePushHandler : IssueIDPrePushHandler() {
+  override val paths: List<String> = listOf("plugins/kotlin/jupyter/")
+  override val acceptableProjects: List<String> = super.acceptableProjects + listOf(
+    "PY"
+  )
+  override val commitMessageRegex = buildRegexFromAcceptableProjects()
+
+  override fun isAvailable(): Boolean = Registry.`is`("kotlin.notebook.commit.message.validation.enabled", true)
+  override fun getPresentableName(): String = DevKitGitBundle.message("push.commit.kotlin.notebook.handler.name")
 }
 
 internal class IntelliJPrePushHandler : IssueIDPrePushHandler() {

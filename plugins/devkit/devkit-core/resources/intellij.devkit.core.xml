@@ -671,7 +671,9 @@
                  description="Generate line numbers when instrumenting @RequiresEdt and similar annotations.
                  This results in better stack traces when generated assertions throw exceptions, but might slow down the compilation."/>
     <registryKey key="kotlin.commit.message.validation.enabled" defaultValue="true"
-                 description="Enables commit messages validation for kotlin plugin"/>
+                 description="Enables commit messages validation for Kotlin plugin"/>
+    <registryKey key="kotlin.notebook.commit.message.validation.enabled" defaultValue="true"
+                 description="Enables commit messages validation for Kotlin Notebook plugin"/>
     <registryKey key="kotlin.build.tools.code.ownership.commit.message.enabled" defaultValue="true"
                  description="Enables commit messages validation for Kotlin Build Tools code ownership"/>
     <codeInsight.declarativeInlayProvider

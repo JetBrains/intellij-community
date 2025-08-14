@@ -14,6 +14,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails
 import git4idea.config.GitSharedSettings
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.collections.joinToString
 import kotlin.io.path.extension
 import kotlin.io.path.invariantSeparatorsPathString
 
@@ -74,12 +75,26 @@ internal abstract class AbstractIntelliJProjectPrePushHandler : PrePushHandler {
 }
 
 internal abstract class IssueIDPrePushHandler : AbstractIntelliJProjectPrePushHandler() {
+  open val acceptableProjects = listOf(
+    "KTIJ", "KTNB", "KT", "IDEA", "IJPL"
+  )
   abstract val commitMessageRegex: Regex
   open val ignorePattern: Regex = Regex("(?!.*)")
 
   override val pathsToIgnore = listOf("/test/", "/testData/")
 
   override fun doCommitsViolateRule(project: Project, commitsToWarnAbout: List<Pair<String, String>>, modalityState: ModalityState): Boolean {
+    val lastAcceptableProjectIndex = acceptableProjects.lastIndex
+    val acceptableProjectIssueLinks = acceptableProjects.mapIndexed { index, projectId ->
+      val link = getProjectIssueLink(projectId)
+      val suffix = when(index) {
+        lastAcceptableProjectIndex -> ""
+        lastAcceptableProjectIndex - 1 -> " or "
+        else -> ", "
+      }
+      link + suffix
+    }.joinToString("")
+
     val commitsInfo = commitsToWarnAbout.joinToString("<br/>") { hashAndSubject ->
       "${hashAndSubject.first}: ${hashAndSubject.second}"
     }
@@ -88,7 +103,11 @@ internal abstract class IssueIDPrePushHandler : AbstractIntelliJProjectPrePushHa
       @Suppress("DialogTitleCapitalization")
       MessageDialogBuilder.yesNo(
         DevKitGitBundle.message("push.commit.message.lacks.issue.reference.title"),
-        DevKitGitBundle.message("push.commit.message.lacks.issue.reference.body", commitsInfo)
+        DevKitGitBundle.message(
+          "push.commit.message.lacks.issue.reference.body",
+          acceptableProjectIssueLinks,
+          commitsInfo
+        )
       )
         .yesText(DevKitGitBundle.message("push.commit.message.lacks.issue.reference.commit"))
         .noText(DevKitGitBundle.message("push.commit.message.lacks.issue.reference.edit"))
@@ -105,4 +124,15 @@ internal abstract class IssueIDPrePushHandler : AbstractIntelliJProjectPrePushHa
   override fun breaksMessageRules(commit: VcsFullCommitDetails): Boolean {
     return super.breaksMessageRules(commit) && !commitMessageIsCorrect(commit.fullMessage)
   }
+
+  protected fun buildRegexFromAcceptableProjects(): Regex {
+    @Suppress("RegExpUnnecessaryNonCapturingGroup")
+    return Regex(
+      ".*(?:${acceptableProjects.joinToString("|")})-\\d+.*",
+      RegexOption.DOT_MATCHES_ALL /* line breaks matter */
+    )
+  }
+
+  private fun getProjectIssueLink(projectId: String) =
+    "<a href=\"https://youtrack.jetbrains.com/newIssue?project=$projectId\">$projectId</a>"
 }
