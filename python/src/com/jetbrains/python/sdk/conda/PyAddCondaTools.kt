@@ -23,7 +23,6 @@ import com.jetbrains.python.conda.saveLocalPythonCondaPath
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.getOrThrow
-import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
@@ -48,14 +47,14 @@ import kotlin.io.path.pathString
 internal val condaSupportedLanguages: List<LanguageLevel>
   get() = LanguageLevel.SUPPORTED_LEVELS
     .asReversed()
-    .filter { it < LanguageLevel.PYTHON313 }
+    .filter { it < LanguageLevel.PYTHON314 }
 
 val condaLatestSupportedLanguage: LanguageLevel
   @ApiStatus.Internal get() =
     condaSupportedLanguages.maxWith(LanguageLevel.VERSION_COMPARATOR)
 
 /**
- * See [com.jetbrains.env.conda.PyCondaSdkTest]
+ * See `com.jetbrains.env.python.conda.PyCondaSdkTest`
  */
 suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(
   condaIdentity: PyCondaEnvIdentity,
@@ -123,7 +122,7 @@ private suspend fun getCondaInterpreterOutput(
 }
 
 /**
- * See [com.jetbrains.env.conda.PyCondaSdkTest]
+ * See `com.jetbrains.env.python.conda.PyCondaSdkTest`
  */
 suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(
   newCondaEnvInfo: NewCondaEnvRequest,
