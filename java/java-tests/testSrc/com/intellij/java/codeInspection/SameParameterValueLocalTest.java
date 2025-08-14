@@ -36,14 +36,11 @@ public class SameParameterValueLocalTest extends JavaInspectionTestCase {
   public void testOverrideGroovy() { doTest(); }
   public void testMethodReferences() { doTest(); }
   public void testLocalClassArgument() { doTest(); }
+  public void testWrittenVar() { doTest(); }
+  public void testVarargs() { doTest(); }
 
   public void testMethodWithSuper() {
     myGlobalTool.highestModifier = AccessModifier.PUBLIC;
-    doTest();
-  }
-
-  public void testVarargs() {
-    myGlobalTool.ignoreWhenRefactoringIsComplicated = false;
     doTest();
   }
 

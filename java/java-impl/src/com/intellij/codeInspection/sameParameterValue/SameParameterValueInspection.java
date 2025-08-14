@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sameParameterValue;
 
 import com.intellij.analysis.AnalysisScope;
@@ -184,11 +184,10 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
   }
 
-  private static @Nullable Boolean isFixAvailable(UParameter parameter, Object value, boolean usedForWriting) {
-    if (usedForWriting) return false;
-    PsiParameter javaParameter = ObjectUtils.tryCast(parameter.getSourcePsi(), PsiParameter.class);
-    if (javaParameter == null) return null;
-    if (javaParameter.isVarArgs()) return false;
+  private static @Nullable Boolean isFixAvailable(UParameter parameter, Object value, Boolean usedForWriting) {
+    if (Boolean.TRUE == usedForWriting) return false;
+    if (!(parameter.getSourcePsi() instanceof PsiParameter javaParameter)) return null;
+    if (usedForWriting == null && VariableAccessUtils.variableIsAssigned(javaParameter, javaParameter.getDeclarationScope())) return false;
     if (value instanceof RefParameterImpl.ConstValue constValue) {
       PsiExpression expression =
         JavaPsiFacade.getElementFactory(javaParameter.getProject()).createExpressionFromText(constValue.canonicalText(), javaParameter);
@@ -235,7 +234,10 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
           ContainerUtil.find(method.getParameterList().getParameters(), (param) -> Comparing.strEqual(param.getName(), myParameterName));
       }
       if (parameter == null) return;
-      final PsiExpression expression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(myValue, parameter);
+      String text = parameter.isVarArgs() 
+                    ? "new " + ((PsiEllipsisType)parameter.getType()).getComponentType().getCanonicalText() + "[]{" + myValue + "}" 
+                    : myValue;
+      final PsiExpression expression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(text, parameter);
       inlineSameParameterValue(method, parameter, expression);
     }
 
@@ -293,9 +295,10 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
         for (PsiReference call : calls) {
           PsiElement parent = call.getElement().getParent();
           if (parent instanceof PsiMethodCallExpression methodCallExpression) {
-            PsiExpression[] arguments = methodCallExpression.getArgumentList().getExpressions();
+            PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+            PsiExpression[] arguments = argumentList.getExpressions();
             if (vararg) {
-              methodCallExpression.deleteChildRange(arguments[parameterIndex], arguments[arguments.length - 1]);
+              argumentList.deleteChildRange(arguments[parameterIndex], arguments[arguments.length - 1]);
             }
             else {
               arguments[parameterIndex].delete();
@@ -449,7 +452,7 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
               List<Object> valueList = valueToList(value);
               if (valueList == null || ContainerUtil.all(valueList, v -> v != VALUE_UNDEFINED && v != VALUE_IS_NOT_CONST)) {
                 final UParameter parameter = parameters.get(i);
-                Boolean isFixAvailable = isFixAvailable(parameter, value, false);
+                Boolean isFixAvailable = isFixAvailable(parameter, value, null);
                 if (Boolean.FALSE.equals(isFixAvailable) && myGlobal.ignoreWhenRefactoringIsComplicated) return true;
                 Object presentableValue = value;
                 if (valueList != null && valueList.size() == 1 && valueList.get(0) == null) presentableValue = valueList.get(0);
@@ -464,6 +467,7 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
           return true;
         }
       };
+      //noinspection unchecked
       return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), visitor, new Class[]{UMethod.class});
     }
   }

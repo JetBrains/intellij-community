@@ -38,19 +38,11 @@ public class SameParameterValueTest extends JavaInspectionTestCase {
   public void testOverrideGroovy() { doTest(); }
   public void testMethodReferences() { doTest(); }
   public void testLocalClassArgument() { doTest(); }
-
+  public void testVarargs() { doTest(); }
+  public void testSimpleVararg() { doTest(); }
+  
   public void testWithoutDeadCode() {
     myTool.highestModifier = AccessModifier.PUBLIC;
-    doTest();
-  }
-
-  public void testVarargs() {
-    myTool.ignoreWhenRefactoringIsComplicated = false;
-    doTest();
-  }
-
-  public void testSimpleVararg() {
-    myTool.ignoreWhenRefactoringIsComplicated = false;
     doTest();
   }
   

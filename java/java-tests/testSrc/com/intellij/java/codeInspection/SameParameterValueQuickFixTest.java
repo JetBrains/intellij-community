@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -19,7 +19,7 @@ public final class SameParameterValueQuickFixTest extends LightJavaCodeInsightFi
   public void testCastedValue() { doTest(); }
   public void testStringThatNeedsEscaping() { doTest(false, false); }
   public void testLongValue() { doTest(); }
-  public void testVararg() { doTest(true, true); }
+  public void testVararg() { doTest(); }
 
   private void doTest() {
     doTest(true, false);
