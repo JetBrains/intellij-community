@@ -6,7 +6,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
 import com.jetbrains.python.sdk.sdkFlavor
 
-class PythonSystemSdkReadOnlyProvider : PythonSdkReadOnlyProvider {
+internal class PythonSystemSdkReadOnlyProvider : PythonSdkReadOnlyProvider {
   override fun isSdkReadOnly(sdk: Sdk): Boolean {
     return sdk.sdkFlavor is UnixPythonSdkFlavor
   }

@@ -14,7 +14,7 @@ interface PythonSdkReadOnlyProvider {
   companion object {
     private val EP_NAME = ExtensionPointName.create<PythonSdkReadOnlyProvider>("Pythonid.pythonSdkReadOnlyProvider")
 
-    fun isReadOnly(sdk: Sdk): Boolean {
+    internal fun isReadOnly(sdk: Sdk): Boolean {
       if (!PythonSdkUtil.isPythonSdk(sdk)) {
         return false
       }
@@ -22,7 +22,7 @@ interface PythonSdkReadOnlyProvider {
       return EP_NAME.extensionList.any { it.isSdkReadOnly(sdk) }
     }
 
-    fun getReadOnlyMessage(sdk: Sdk): String? {
+    internal fun getReadOnlyMessage(sdk: Sdk): String? {
       if (!PythonSdkUtil.isPythonSdk(sdk)) {
         return null
       }
