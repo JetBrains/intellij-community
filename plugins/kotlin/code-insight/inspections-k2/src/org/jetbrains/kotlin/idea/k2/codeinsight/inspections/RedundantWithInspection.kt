@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
@@ -21,19 +24,23 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
 
-class RedundantWithInspection : KotlinApplicableInspectionBase.Simple<KtCallExpression, RedundantWithInspection.Context>() {
+class RedundantWithInspection : KotlinApplicableInspectionBase<KtCallExpression, RedundantWithInspection.Context>() {
 
     data class Context(val receiver: KtExpression, val typeReference: KtTypeReference?)
 
-    override fun createQuickFix(
+    override fun InspectionManager.createProblemDescriptor(
         element: KtCallExpression,
         context: Context,
-    ): KotlinModCommandQuickFix<KtCallExpression> = RemoveRedundantWithFix(context)
-
-    override fun getProblemDescription(
-        element: KtCallExpression,
-        context: Context,
-    ): String = KotlinBundle.message("inspection.redundant.with.display.name")
+        rangeInElement: TextRange?,
+        onTheFly: Boolean,
+    ): ProblemDescriptor = createProblemDescriptor(
+        /* psiElement = */ element,
+        /* rangeInElement = */ rangeInElement,
+        /* descriptionTemplate = */ KotlinBundle.message("inspection.redundant.with.display.name"),
+        /* highlightType = */ ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+        /* onTheFly = */ onTheFly,
+        /* ...fixes = */ RemoveRedundantWithFix(context),
+    )
 
     override fun buildVisitor(
         holder: ProblemsHolder,
