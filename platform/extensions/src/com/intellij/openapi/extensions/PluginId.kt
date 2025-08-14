@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions
 
+import com.intellij.openapi.extensions.PluginId.Companion.getId
 import kotlinx.serialization.Serializable
 import java.util.concurrent.ConcurrentHashMap
 
@@ -32,6 +33,11 @@ class PluginId private constructor(val idString: String) : Comparable<PluginId> 
 
   companion object {
     private val registeredIds: MutableMap<String, PluginId> = ConcurrentHashMap<String, PluginId>()
+
+    /**
+     * Shorthand for [getId]
+     */
+    operator fun invoke(idString: String): PluginId = getId(idString)
 
     @JvmStatic
     fun getId(idString: String): PluginId {
