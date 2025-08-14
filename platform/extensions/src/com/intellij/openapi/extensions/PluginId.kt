@@ -2,7 +2,6 @@
 package com.intellij.openapi.extensions
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -32,9 +31,6 @@ class PluginId private constructor(val idString: String) : Comparable<PluginId> 
   }
 
   companion object {
-    @ApiStatus.Internal
-    val EMPTY_ARRAY: Array<PluginId> = emptyArray()
-
     private val registeredIds: MutableMap<String, PluginId> = ConcurrentHashMap<String, PluginId>()
 
     @JvmStatic
