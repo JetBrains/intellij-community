@@ -3,6 +3,7 @@ package com.intellij.openapi.extensions
 
 import com.intellij.openapi.extensions.PluginId.Companion.getId
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -44,11 +45,15 @@ class PluginId private constructor(val idString: String) : Comparable<PluginId> 
       return registeredIds.computeIfAbsent(idString) { idString: String -> PluginId(idString) }
     }
 
+    @Deprecated("Use getId", ReplaceWith("getId(idString)"))
+    @ApiStatus.ScheduledForRemoval
     @JvmStatic
     fun findId(idString: String?): PluginId? {
       return registeredIds[idString]
     }
 
+    @Deprecated("Use getId", ReplaceWith("getId(idStrings[0])"))
+    @ApiStatus.ScheduledForRemoval
     @JvmStatic
     fun findId(vararg idStrings: String): PluginId? {
       for (idString in idStrings) {
