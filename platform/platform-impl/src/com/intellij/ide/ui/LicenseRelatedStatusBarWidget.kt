@@ -17,6 +17,7 @@ import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import java.awt.Color
 import java.awt.Graphics
 import java.awt.event.MouseEvent
 import javax.accessibility.AccessibleAction
@@ -92,8 +93,10 @@ abstract class LicenseRelatedStatusBarWidget(private val factory: LicenseRelated
 
   protected abstract val text: String
   protected open val tooltip: String? = null
-  protected open val foreground: JBColor = JBColor.namedColor("Badge.greenOutlineForeground", JBColor(0x208A3C, 0x5FAD65))
-  protected open val borderColor: JBColor = JBColor.namedColor("Badge.greenOutlineBorderColor", JBColor(0x55A76A, 0x4E8052))
+
+  protected abstract val foreground: Color
+  protected open val background: Color? = null
+  protected abstract val borderColor: Color
 
   protected abstract fun createClickListener(): ClickListener
 
@@ -106,6 +109,7 @@ abstract class LicenseRelatedStatusBarWidget(private val factory: LicenseRelated
     val icon = label.icon as? TextIcon
     icon?.text = text
     icon?.foreground = foreground
+    icon?.background = background
     icon?.borderColor = borderColor
     label.toolTipText = tooltip
     label.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, text)
@@ -117,7 +121,7 @@ abstract class LicenseRelatedStatusBarWidget(private val factory: LicenseRelated
   private fun createLabel(): JLabel {
     val uiSettings = UISettings.getInstance()
     val text = text
-    val icon = TextIcon(text, foreground, null, borderColor, 0, true)
+    val icon = TextIcon(text, foreground, background, borderColor, 0, true)
     icon.setFont(getStatusFont())
     icon.round = 18
     icon.insets = JBUI.insets(if (!ExperimentalUI.isNewUI() || uiSettings.compactMode) 3 else 4, 8)
