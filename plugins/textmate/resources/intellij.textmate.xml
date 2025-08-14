@@ -38,13 +38,13 @@
     <!--<lang.formatter language="textmate" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateFormattingModelBuilder"/>-->
 
     <applicationService serviceImplementation="org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings" />
-    <applicationSettings service="org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings"/>
-    <rdct.remoteSettingProvider
-      implementation="org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettingsRemoteInfoProvider"/>
+    <!--<applicationSettings service="org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings"/>-->
+    <!--<rdct.remoteSettingProvider-->
+    <!--  implementation="org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettingsRemoteInfoProvider"/>-->
 
     <applicationService serviceImplementation="org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings" />
-    <applicationSettings service="org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings"/>
-    <rdct.remoteSettingProvider
-      implementation="org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettingsRemoteInfoProvider"/>
+    <!--<applicationSettings service="org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings"/>-->
+    <!--<rdct.remoteSettingProvider-->
+    <!--  implementation="org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettingsRemoteInfoProvider"/>-->
   </extensions>
 </idea-plugin>
