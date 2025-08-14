@@ -16,8 +16,7 @@ class PluginId private constructor(val idString: String) : Comparable<PluginId> 
     if (this === o) return true
     if (o !is PluginId) return false
 
-    val pluginId = o
-    return idString == pluginId.idString
+    return idString == o.idString
   }
 
   override fun hashCode(): Int {
