@@ -2,6 +2,7 @@
 package com.intellij.openapi.extensions
 
 import com.intellij.openapi.extensions.PluginId.Companion.getId
+import com.intellij.util.containers.Interner
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
@@ -32,13 +33,15 @@ class PluginId private constructor(val idString: String) : Comparable<PluginId> 
   }
 
   companion object {
+    private val interner = Interner.createWeakInterner<PluginId>()
+
     /**
      * Shorthand for [getId]
      */
     operator fun invoke(idString: String): PluginId = getId(idString)
 
     @JvmStatic
-    fun getId(idString: String): PluginId = PluginId(idString)
+    fun getId(idString: String): PluginId = interner.intern(PluginId(idString))
 
     @Deprecated("Use getId", ReplaceWith("getId(idString)"))
     @ApiStatus.ScheduledForRemoval
