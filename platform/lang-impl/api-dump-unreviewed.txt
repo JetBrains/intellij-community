@@ -2812,6 +2812,9 @@ pf:com.intellij.codeInsight.documentation.DocumentationComponent$ShowToolbarActi
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
+com.intellij.codeInsight.documentation.DocumentationCssProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:generateCss(java.util.function.Function,Z):java.lang.String
 c:com.intellij.codeInsight.documentation.DocumentationManager
 - com.intellij.codeInsight.documentation.DockablePopupManager
 - sf:IS_FROM_LOOKUP:com.intellij.openapi.util.Key

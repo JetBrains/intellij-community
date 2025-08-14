@@ -78,6 +78,13 @@ import kotlin.math.roundToInt
  * - `<samp>` - show a piece of text in editor font. Similar to `<code>`,
  *     but without any special formatting except for the font.
  * - `<hr>` - a horizontal line, no shade, with support for colors
+ * - `<details>`/`<summary>` - collapsible section:
+ *     ```html
+ *     <details>
+ *       <summary>Contents always visible, clickable chevron to the right to expand section</summary>
+ *       <p>The rest of the contents visible after expanding the section</p>
+ *     </details>
+ *     ```
  *
  * ### CSS Support
  *
@@ -184,7 +191,8 @@ open class JBHtmlPane : JEditorPane, Disposable, ExtendableHTMLViewFactory.Scale
       ExtendableHTMLViewFactory.Extensions.HIDPI_IMAGES.takeIf {
         !myPaneConfiguration.extensions.contains(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES)
       },
-      ExtendableHTMLViewFactory.Extensions.BLOCK_HR_SUPPORT
+      ExtendableHTMLViewFactory.Extensions.BLOCK_HR_SUPPORT,
+      ExtendableHTMLViewFactory.Extensions.DETAILS_SUMMARY_SUPPORT,
     )
 
     val editorKit = HTMLEditorKitBuilder()

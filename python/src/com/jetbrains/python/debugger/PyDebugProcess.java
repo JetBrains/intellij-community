@@ -833,6 +833,13 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
+  public String execTableImageCommand(String command, TableCommandType commandType, TableCommandParameters tableCommandParameters)
+    throws PyDebuggerException {
+    final PyStackFrame frame = currentFrame();
+    return myDebugger.execTableImageCommand(frame.getThreadId(), frame.getFrameId(), command, commandType, tableCommandParameters);
+  }
+
+  @Override
   public boolean isFrameCached(@NotNull XStackFrame contextFrame) {
     synchronized (myFrameCacheObject) {
       final PyStackFrame frame = (PyStackFrame)contextFrame;

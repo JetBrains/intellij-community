@@ -373,9 +373,9 @@ public final class ResolveImportUtil {
       result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, PyStubPackages.transferStubPackageMarker(dir, subdir)));
     }
 
-    final PsiDirectory stubPackage = PyStubPackages.findStubPackage(dir, referencedName, checkForPackage, withoutStubs);
+    final var stubPackage = PyStubPackages.findStubPackage(dir, referencedName, checkForPackage, withoutStubs);
     if (stubPackage != null) {
-      result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, stubPackage));
+      result.addAll(ContainerUtil.map(stubPackage, it -> new RatedResolveResult(RatedResolveResult.RATE_NORMAL, it)));
     }
 
     final PsiFile module = findPyFileInDir(dir, referencedName, withoutStubs);

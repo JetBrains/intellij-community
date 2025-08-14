@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.markdown.extensions.github.strikethrough
 
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.WithInlineMarkdown
 
@@ -13,6 +14,7 @@ import org.jetbrains.jewel.markdown.WithInlineMarkdown
  * @see GitHubStrikethroughProcessorExtension
  * @see GitHubStrikethroughRendererExtension
  */
+@ExperimentalJewelApi
 public data class GitHubStrikethroughNode(val delimiter: String, override val inlineContent: List<InlineMarkdown>) :
     InlineMarkdown.CustomDelimitedNode, WithInlineMarkdown {
     override val openingDelimiter: String = delimiter

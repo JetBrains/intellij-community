@@ -18,7 +18,7 @@ object Html5TagAndAttributeNamesProvider {
    * Version of the information, should be used to calculate stub version,
    * if parser or lexer depends on the information from this object.
    */
-  const val VERSION = 2
+  const val VERSION = 3
 
   /**
    * Retrieves the set of all known HTML, SVG or MathML attributes of tags with a particular name.
@@ -186,7 +186,7 @@ object Html5TagAndAttributeNamesProvider {
         "dl" to attrs(htmlAttrs, "compact", "role"),
         "dt" to attrs(htmlAttrs, "role"),
         "em" to attrs(htmlAttrs, "role"),
-        "embed" to attrs(emptyList(), "base", "lang", "onbeforeinput", "role", "space"),
+        "embed" to attrs(htmlAttrs, "align", "height", "hspace", "name", "src", "type", "vspace", "width"),
         "fieldset" to attrs(htmlAttrs, "disabled", "form", "name", "role"),
         "figcaption" to attrs(htmlAttrs, "role"),
         "figure" to attrs(htmlAttrs, "role"),

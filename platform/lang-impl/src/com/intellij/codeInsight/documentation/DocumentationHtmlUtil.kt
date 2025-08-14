@@ -6,7 +6,7 @@ import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.module.UnknownModuleType
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
-import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.SmartList
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StyleSheetUtil
@@ -67,17 +67,20 @@ object DocumentationHtmlUtil {
       .takeIf { it !is UnknownModuleType }
       ?.icon
   }
+  @JvmStatic
+  fun getDocumentationPaneAdditionalCssRules(): StyleSheet =
+    getDocumentationPaneAdditionalCssRules { JBUIScale.scale(it) }
 
   @JvmStatic
-  fun getDocumentationPaneAdditionalCssRules(): StyleSheet {
+  fun getDocumentationPaneAdditionalCssRules(scaleFunction: Function<Int, Int>): StyleSheet {
     val linkColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED)
-    val sectionColor = ColorUtil.toHtmlColor(DocumentationComponent.SECTION_COLOR)
+    val sectionColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Tooltip.grayedForeground())
 
     // When updating styles here, consider updating styles in DocRenderer#getStyleSheet
-    val contentOuterPadding = scale(contentOuterPadding)
-    val beforeSpacing = scale(spaceBeforeParagraph)
-    val afterSpacing = scale(spaceAfterParagraph)
-    val contentInnerPadding = scale(contentInnerPadding)
+    val contentOuterPadding = scaleFunction.apply(contentOuterPadding)
+    val beforeSpacing = scaleFunction.apply(spaceBeforeParagraph)
+    val afterSpacing = scaleFunction.apply(spaceAfterParagraph)
+    val contentInnerPadding = scaleFunction.apply(contentInnerPadding)
 
     @Suppress("CssUnusedSymbol")
     @Language("CSS")
@@ -101,7 +104,9 @@ object DocumentationHtmlUtil {
         }
         .$CLASS_SECTIONS { padding: 0 ${contentInnerPadding - 2}px 0 ${contentInnerPadding - 2}px 0; border-spacing: 0; }
         .$CLASS_SECTION { color: $sectionColor; padding-right: 4px; white-space: nowrap; }
-      """.trimIndent()
+      """.trimIndent() + DocumentationCssProvider.EP_NAME.extensionList.joinToString(separator = "\n", prefix = "\n") {
+        it.generateCss(scaleFunction, false)
+      }
     return StyleSheetUtil.loadStyleSheet(result)
   }
 

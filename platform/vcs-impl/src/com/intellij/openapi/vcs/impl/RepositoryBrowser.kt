@@ -102,7 +102,7 @@ class RepositoryBrowserPanel(
         }
         if (file is VcsVirtualFile) {
           val localPath = getLocalFilePath(file)
-          val icon = FilePathIconProvider.EP_NAME.computeSafeIfAny { it.getIcon(localPath, project) }
+          val icon = FilePathIconProvider.EP_NAME.computeSafeIfAny { it.getIcon(localPath, false, project) }
           if (icon != null) return icon
         }
         return FileTypeManager.getInstance().getFileTypeByFileName(file.nameSequence).icon

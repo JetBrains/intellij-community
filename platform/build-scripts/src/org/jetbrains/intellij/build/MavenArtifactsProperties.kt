@@ -6,6 +6,7 @@ import kotlinx.collections.immutable.persistentListOf
 import org.apache.maven.model.Model
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.maven.GeneratedMavenArtifacts
+import org.jetbrains.intellij.build.impl.maven.MavenArtifactDependency
 import org.jetbrains.intellij.build.impl.maven.MavenCoordinates
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
@@ -54,6 +55,9 @@ class MavenArtifactsProperties {
 
   @ApiStatus.Internal
   var patchCoordinates: (JpsModule, MavenCoordinates) -> MavenCoordinates = { _, coordinates -> coordinates }
+
+  @ApiStatus.Internal
+  var patchDependencies: (JpsModule, List<MavenArtifactDependency>) -> List<MavenArtifactDependency> = { _, dependencies -> dependencies }
 
   @ApiStatus.Internal
   var addPomMetadata: (JpsModule, Model) -> Unit = { _, _ -> }

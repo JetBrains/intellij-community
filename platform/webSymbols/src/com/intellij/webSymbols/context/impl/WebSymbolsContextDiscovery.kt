@@ -451,6 +451,9 @@ private class WebSymbolsContextDiscoveryInfo(private val project: Project, priva
         }
       }
     })
+    WEB_SYMBOLS_CONTEXT_EP.point!!.addChangeListener(Runnable{
+      cachedData.clear()
+    }, project)
   }
 
   fun getProximityFromExtensions(dir: VirtualFile, kind: ContextKind, name: ContextName): Int? =

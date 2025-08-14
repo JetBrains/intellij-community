@@ -596,7 +596,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta alt RIGHT",           "AIAssistant.Editor.AcceptOneLineCompletion", "NextTab"},
       {"shift alt SEMICOLON",      "ForceStepInto", SECOND_STROKE},
       {"shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"},
-      {"shift meta alt BACK_SLASH","AIAssistant.Chat.AIPopupChat", "ToggleTemporaryLineBreakpoint"}
     })
   );
   // @formatter:on

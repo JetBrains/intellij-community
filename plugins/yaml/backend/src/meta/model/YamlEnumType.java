@@ -59,6 +59,10 @@ public class YamlEnumType extends YamlScalarType {
     return this;
   }
 
+  public boolean isLiteralDeprecated(@NotNull String literal) {
+    return Arrays.asList(myDeprecatedLiterals).contains(literal);
+  }
+
   protected final @NotNull Stream<String> getLiteralsStream() {
     return Stream.concat(Arrays.stream(myLiterals), Arrays.stream(myDeprecatedLiterals));
   }
@@ -73,12 +77,7 @@ public class YamlEnumType extends YamlScalarType {
       return;
     }
 
-    if (Arrays.asList(myDeprecatedLiterals).contains(text)) {
-      holder.registerProblem(scalarValue,
-                             YAMLBundle.message("YamlEnumType.validation.warning.value.deprecated", text),
-                             ProblemHighlightType.LIKE_DEPRECATED);
-    }
-    else if (Stream.concat(Arrays.stream(myHiddenLiterals), getLiteralsStream()).noneMatch(text::equals)) {
+    if (Stream.concat(Arrays.stream(myHiddenLiterals), getLiteralsStream()).noneMatch(text::equals)) {
       //TODO quickfix makes sense here if !text.equals(text.toLowerCase)
       holder.registerProblem(scalarValue,
                              YAMLBundle.message("YamlEnumType.validation.error.value.unknown", text),

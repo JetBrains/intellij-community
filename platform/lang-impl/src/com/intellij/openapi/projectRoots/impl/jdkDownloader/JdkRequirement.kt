@@ -124,7 +124,7 @@ object JdkRequirements {
   }
 
   private val JAVA_VERSION_REGEX = Regex("^" +
-                                         "(9|[1-9][1-9]|)(\\.0(\\.\\d+)?)?" +
+                                         "(9|[1-9][0-9]|)(\\.0(\\.\\d+)?)?" +
                                          "|" +
                                          "1\\.\\d(\\.0(_\\d+)?)?" +
                                          "|" +

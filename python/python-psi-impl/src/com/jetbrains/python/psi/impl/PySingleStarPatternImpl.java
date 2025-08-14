@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class PySingleStarPatternImpl extends PyElementImpl implements PySingleStarPattern {
+public class PySingleStarPatternImpl extends PyElementImpl implements PySingleStarPattern, PyInstantTypeProvider {
   public PySingleStarPatternImpl(ASTNode astNode) {
     super(astNode);
   }

@@ -6,9 +6,11 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.icon.IconKey
 
+@ExperimentalJewelApi
 @GenerateDataFunctions
 public class AlertStyling(
     public val note: NoteAlertStyling,
@@ -54,6 +56,7 @@ public class AlertStyling(
     public companion object
 }
 
+@ExperimentalJewelApi
 public sealed interface BaseAlertStyling {
     public val padding: PaddingValues
     public val lineWidth: Dp
@@ -66,6 +69,7 @@ public sealed interface BaseAlertStyling {
     public val textColor: Color
 }
 
+@ExperimentalJewelApi
 @GenerateDataFunctions
 public class NoteAlertStyling(
     override val padding: PaddingValues,
@@ -127,6 +131,7 @@ public class NoteAlertStyling(
     public companion object
 }
 
+@ExperimentalJewelApi
 @GenerateDataFunctions
 public class TipAlertStyling(
     override val padding: PaddingValues,
@@ -188,6 +193,7 @@ public class TipAlertStyling(
     public companion object
 }
 
+@ExperimentalJewelApi
 @GenerateDataFunctions
 public class ImportantAlertStyling(
     override val padding: PaddingValues,
@@ -249,6 +255,7 @@ public class ImportantAlertStyling(
     public companion object
 }
 
+@ExperimentalJewelApi
 @GenerateDataFunctions
 public class WarningAlertStyling(
     override val padding: PaddingValues,
@@ -310,6 +317,7 @@ public class WarningAlertStyling(
     public companion object
 }
 
+@ExperimentalJewelApi
 @GenerateDataFunctions
 public class CautionAlertStyling(
     override val padding: PaddingValues,

@@ -92,7 +92,7 @@ public fun ComboBox(
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     onArrowDownPress: () -> Unit = {},
     onArrowUpPress: () -> Unit = {},
-    popupManager: PopupManager = PopupManager(),
+    popupManager: PopupManager = remember { PopupManager() },
     popupContent: @Composable () -> Unit,
 ) {
     var chevronHovered by remember { mutableStateOf(false) }
@@ -274,7 +274,7 @@ public fun ComboBox(
     style: ComboBoxStyle = JewelTheme.comboBoxStyle,
     onArrowDownPress: () -> Unit = {},
     onArrowUpPress: () -> Unit = {},
-    popupManager: PopupManager = PopupManager(),
+    popupManager: PopupManager = remember { PopupManager() },
     labelContent: @Composable (() -> Unit),
     popupContent: @Composable (() -> Unit),
 ) {

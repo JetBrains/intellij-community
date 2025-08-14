@@ -78,14 +78,16 @@ internal fun DecoratedWindowScope.TitleBarView() {
                 }
             }
 
-            Tooltip({
-                when (MainViewModel.theme) {
-                    IntUiThemes.Light -> Text("Switch to light theme with light header")
-                    IntUiThemes.LightWithLightHeader -> Text("Switch to dark theme")
-                    IntUiThemes.Dark,
-                    IntUiThemes.System -> Text("Switch to light theme")
+            Tooltip(
+                tooltip = {
+                    when (MainViewModel.theme) {
+                        IntUiThemes.Light -> Text("Switch to light theme with light header")
+                        IntUiThemes.LightWithLightHeader -> Text("Switch to dark theme")
+                        IntUiThemes.Dark,
+                        IntUiThemes.System -> Text("Switch to light theme")
+                    }
                 }
-            }) {
+            ) {
                 IconButton(
                     {
                         MainViewModel.theme =

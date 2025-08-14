@@ -89,6 +89,13 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
   @JvmField
   protected val myPsiContext: SmartPsiElementPointer<PsiElement?>?
 
+  @ApiStatus.Internal var contributorModules: List<SearchEverywhereContributorModule>? = null
+
+  @ApiStatus.Internal
+  protected constructor(event: AnActionEvent, contributorModules: List<SearchEverywhereContributorModule>?) : this(event) {
+    this.contributorModules = contributorModules
+  }
+
   init {
     val context = GotoActionBase.getPsiContext(event)
     myPsiContext = if (context == null) null else SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(context)
@@ -205,6 +212,10 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
 
   override fun isShownInSeparateTab(): Boolean = true
 
+  @ApiStatus.Internal
+  protected var currentSearchEverywhereAction: SearchEverywhereToggleAction? = null
+    private set
+
   protected fun <T> doGetActions(
     filter: PersistentSearchEverywhereContributorFilter<T>?,
     statisticsCollector: ElementsChooser.StatisticsCollector<T>?,
@@ -214,8 +225,7 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
       return emptyList()
     }
 
-    val result = ArrayList<AnAction>()
-    result.add(object : ScopeChooserAction() {
+    val toggleAction = object : ScopeChooserAction() {
       val canToggleEverywhere = everywhereScope != projectScope
 
       override fun onScopeSelected(o: ScopeDescriptor) {
@@ -249,7 +259,12 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
       override fun setScopeIsDefaultAndAutoSet(scopeDefaultAndAutoSet: Boolean) {
         isScopeDefaultAndAutoSet = scopeDefaultAndAutoSet
       }
-    })
+    }
+
+    currentSearchEverywhereAction = toggleAction
+
+    val result = ArrayList<AnAction>()
+    result.add(toggleAction)
     result.add(PreviewAction())
     result.add(SearchEverywhereFiltersAction(filter, onChanged, statisticsCollector))
     return result
@@ -298,6 +313,17 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
 
       val everywhere = scope.isSearchInLibraries
       val viewModel = MyViewModel(myProject, model)
+
+      if (LOG.isTraceEnabled) {
+        LOG.trace(buildString {
+          append("!! Collecting Goto SE items for ").append(this@AbstractGotoSEContributor::class.simpleName).append(" !!\n")
+          append("PSI context is: ").append(context).append("\n")
+          append("Provider is: ").append(provider::class.simpleName).append("\n")
+          append("Search scope is: ").append(scope.displayName).append("\n")
+          append("Is libraries search? ").append(if (everywhere) "YES" else "NO").append("\n")
+        })
+      }
+
       when (provider) {
         is ChooseByNameInScopeItemProvider -> {
           val parameters = FindSymbolParameters.wrap(pattern, scope)
@@ -378,73 +404,96 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
 
   override fun showInFindResults(): Boolean = true
 
+  // This sets off-the-stack coroutining for some (most) inputs. Take care.
+  // a "true" return value does NOT mean that the navigation was successful.
   override fun processSelectedItem(selected: Any, modifiers: Int, searchText: String): Boolean {
+    contributorModules?.forEach {
+      val processedFlag = it.processSelectedItem(selected, modifiers, searchText)
+      if (processedFlag != null) {
+        return processedFlag
+      }
+    }
+
+    return processByGotoSelectedItem(selected, modifiers, searchText)
+  }
+
+  @Suppress("SameReturnValue")
+  private fun processByGotoSelectedItem(selected: Any, modifiers: Int, searchText: String): Boolean {
     if (selected !is PsiElement) {
+      if (LOG.isTraceEnabled) {
+        LOG.trace("Selected item for $searchText is not PsiElement, it is: ${selected}; performing non-suspending navigation")
+      }
       EditSourceUtil.navigate((selected as NavigationItem), true, false)
       return true
     }
 
     project.service<SearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch(ClientId.coroutineContext()) {
-      val command = readAction {
-        if (!selected.isValid) {
-          LOG.warn("Cannot navigate to invalid PsiElement")
-          return@readAction null
-        }
-
-        val psiElement = preparePsi(selected, searchText)
-        val file =
-          if (selected is PsiFile) selected.virtualFile
-          else PsiUtilCore.getVirtualFile(psiElement)
-
-        val extendedNavigatable = if (file == null) {
-          null
-        }
-        else {
-          val position = getLineAndColumn(searchText)
-          if (position.first >= 0 || position.second >= 0) {
-            //todo create navigation request by line&column, not by offset only
-            OpenFileDescriptor(project, file, position.first, position.second)
-          }
-          else {
-            null
-          }
-        }
-
-        suspend {
-          @Suppress("DEPRECATION")
-          val navigationOptions = NavigationOptions.defaultOptions()
-            .openInRightSplit((modifiers and InputEvent.SHIFT_MASK) != 0)
-            .preserveCaret(true)
-          if (extendedNavigatable == null) {
-            if (file == null) {
-              val navigatable = psiElement as? Navigatable
-              if (navigatable != null) {
-                // Navigation items from rd protocol often lack .containingFile or other PSI extensions, and are only expected to be
-                // navigated through the Navigatable API.
-                // This fallback is for items like that.
-                val navRequest = RawNavigationRequest(navigatable, true)
-                project.serviceAsync<NavigationService>().navigate(navRequest, navigationOptions)
-              } else {
-                LOG.warn("Cannot navigate to invalid PsiElement (psiElement=$psiElement, selected=$selected)")
-              }
-            }
-            else {
-              createSourceNavigationRequest(element = psiElement, file = file, searchText = searchText)?.let {
-                project.serviceAsync<NavigationService>().navigate(it, navigationOptions)
-              }
-            }
-          }
-          else {
-            project.serviceAsync<NavigationService>().navigate(extendedNavigatable, navigationOptions)
-            triggerLineOrColumnFeatureUsed(extendedNavigatable)
-          }
-        }
+      val navigatingAction = readAction { tryMakeNavigatingFunction(selected, modifiers, searchText) }
+      if (navigatingAction != null) {
+        navigatingAction()
       }
-
-      command?.invoke()
+      else {
+        LOG.warn("Selected $selected produced an invalid navigation action! Doing nothing!")
+      }
     }
 
     return true
+  }
+
+  private fun tryMakeNavigatingFunction(selected: PsiElement, modifiers: Int, searchText: String): (suspend () -> Unit)? {
+    if (!selected.isValid) {
+      LOG.warn("Cannot navigate to invalid PsiElement")
+      return null
+    }
+
+    val psiElement = preparePsi(selected, searchText)
+    val file =
+      if (selected is PsiFile) selected.virtualFile
+      else PsiUtilCore.getVirtualFile(psiElement)
+
+    val extendedNavigatable = if (file == null) {
+      null
+    }
+    else {
+      val position = getLineAndColumn(searchText)
+      if (position.first >= 0 || position.second >= 0) {
+        //todo create navigation request by line&column, not by offset only
+        OpenFileDescriptor(project, file, position.first, position.second)
+      }
+      else {
+        null
+      }
+    }
+
+    return suspend {
+      @Suppress("DEPRECATION")
+      val navigationOptions = NavigationOptions.defaultOptions()
+        .openInRightSplit((modifiers and InputEvent.SHIFT_MASK) != 0)
+        .preserveCaret(true)
+      if (extendedNavigatable == null) {
+        if (file == null) {
+          val navigatable = psiElement as? Navigatable
+          if (navigatable != null) {
+            // Navigation items from rd protocol often lack .containingFile or other PSI extensions, and are only expected to be
+            // navigated through the Navigatable API.
+            // This fallback is for items like that.
+            val navRequest = RawNavigationRequest(navigatable, true)
+            project.serviceAsync<NavigationService>().navigate(navRequest, navigationOptions)
+          } else {
+            LOG.warn("Cannot navigate to invalid PsiElement (psiElement=$psiElement, selected=$selected)")
+          }
+        }
+        else {
+          createSourceNavigationRequest(element = psiElement, file = file, searchText = searchText)?.let {
+            project.serviceAsync<NavigationService>().navigate(it, navigationOptions)
+          }
+        }
+      }
+      else {
+        project.serviceAsync<NavigationService>().navigate(extendedNavigatable, navigationOptions)
+        triggerLineOrColumnFeatureUsed(extendedNavigatable)
+      }
+    }
   }
 
   @ApiStatus.Internal
@@ -488,7 +537,9 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
 
   override fun isDumbAware(): Boolean = isDumbAware(createModel(myProject))
 
-  override fun getElementsRenderer(): ListCellRenderer<in Any?> = SearchEverywherePsiRenderer(this)
+  override fun getElementsRenderer(): ListCellRenderer<in Any?> =
+    contributorModules?.firstNotNullOfOrNull { it.getOverridingElementRenderer(this) }
+    ?: SearchEverywherePsiRenderer(this)
 
   @Suppress("OVERRIDE_DEPRECATION")
   override fun getElementPriority(element: Any, searchPattern: String): Int = 50

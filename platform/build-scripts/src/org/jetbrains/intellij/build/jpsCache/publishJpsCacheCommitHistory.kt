@@ -17,6 +17,7 @@ import org.jetbrains.intellij.build.http2Client.getString
 import org.jetbrains.intellij.build.http2Client.upload
 import org.jetbrains.intellij.build.http2Client.withHttp2ClientConnectionFactory
 import org.jetbrains.intellij.build.impl.compilation.checkExists
+import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.net.URI
@@ -183,14 +184,12 @@ private suspend fun verify(
   urlPathPrefixForGet: String,
 ) {
   val expected = newHistory.commitsForRemote(remoteGitUrl).toSet()
-  val actual = getRemoteCommitHistory(connectionForGet, urlPathPrefixForGet).commitsForRemote(remoteGitUrl).toSet()
-  val missing = expected - actual
-  val unexpected = actual - expected
-  check(missing.none() && unexpected.none()) {
-    """
-      Missing: $missing
-      Unexpected: $unexpected
-    """.trimIndent()
+  retryWithExponentialBackOff {
+    val actual = getRemoteCommitHistory(connectionForGet, urlPathPrefixForGet).commitsForRemote(remoteGitUrl).toSet()
+    val missing = expected - actual
+    check(missing.none()) {
+      "Missing: $missing"
+    }
   }
 }
 

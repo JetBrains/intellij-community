@@ -217,10 +217,12 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.startNode(node);
     for (PyExpression target : node.getTargets()) {
       if (target instanceof PyReferenceExpression expr) {
-        myBuilder.addNode(ReadWriteInstruction.newInstruction(myBuilder, target, expr.getName(), ReadWriteInstruction.ACCESS.DELETE));
         PyExpression qualifier = expr.getQualifier();
         if (qualifier != null) {
           qualifier.accept(this);
+        }
+        else {
+          myBuilder.addNode(ReadWriteInstruction.newInstruction(myBuilder, target, expr.getName(), ReadWriteInstruction.ACCESS.DELETE));
         }
       }
       else {
@@ -351,7 +353,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     PyPattern pattern = clause.getPattern();
     if (pattern != null) {
       pattern.accept(this);
-      addTypeAssertionNodes(pattern, true);
     }
 
     TransparentInstruction trueNode = addTransparentInstruction();
@@ -360,11 +361,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     if (guard != null) {
       visitCondition(guard, trueNode, falseNode);
       addTypeAssertionNodes(guard, true);
+      myBuilder.addPendingEdge(clause, falseNode);
     }
     else {
       myBuilder.addEdge(myBuilder.prevInstruction, trueNode);
     }
-    myBuilder.addPendingEdge(clause, falseNode);
     myBuilder.prevInstruction = trueNode;
 
     clause.getStatementList().accept(this);
@@ -394,6 +395,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
     if (isRefutable) {
       myBuilder.addNode(new RefutablePatternInstruction(myBuilder, node, true));
+      addTypeAssertionNodes(node, true);
     }
   }
 
@@ -426,6 +428,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     node.getClassNameReference().accept(this);
     myBuilder.addPendingEdge(node.getParent(), myBuilder.prevInstruction);
 
+    addTypeAssertionNodes(node, true);
     node.getArgumentList().acceptChildren(this);
     myBuilder.updatePendingElementScope(node, node.getParent());
 
@@ -439,13 +442,14 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     node.getValue().accept(this);
     myBuilder.addPendingEdge(node.getParent(), myBuilder.prevInstruction);
 
+    addTypeAssertionNodes(node, true);
     myBuilder.addNode(new RefutablePatternInstruction(myBuilder, node, true));
   }
 
   @Override
   public void visitPyAsPattern(@NotNull PyAsPattern node) {
-    // AsPattern cannot fail by itself - it fails only if its child fails.
-    // So no need to create additional fail edge
+    // AsPattern can't fail by itself – it fails only if its child fails.
+    // So no need to create an additional fail edge
     myBuilder.startNode(node);
     node.acceptChildren(this);
     myBuilder.updatePendingElementScope(node, node.getParent());
@@ -453,9 +457,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyGroupPattern(@NotNull PyGroupPattern node) {
-    // GroupPattern cannot fail by itself - it fails only if its child fails.
-    // So no need to create additional fail edge
-    // Also no need to dedicated node for GroupPattern itself
+    // GroupPattern can't fail by itself – it fails only if its child fails.
+    // So no need to create an additional fail edge 
+    // Also no need for a dedicated node for GroupPattern itself
     node.acceptChildren(this);
     myBuilder.updatePendingElementScope(node, node.getParent());
   }
@@ -583,6 +587,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     if (elsePart != null) {
       visitPyStatementPart(elsePart);
     }
+
+    collectInternalPendingEdges(node);
   }
 
   @Override
@@ -627,7 +633,10 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       elsePart.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
+    
+
     myBuilder.flowAbrupted();
+    collectInternalPendingEdges(node);
   }
 
   private static boolean loopHasAtLeastOneIteration(@NotNull PyLoopStatement loopStatement) {
@@ -747,18 +756,21 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final Instruction finallyFailInstruction;
 
     // Store pending normal exit instructions from try-except-else parts
-    myBuilder.processPending((pendingScope, instruction) -> {
-      final PsiElement pendingElement = instruction.getElement();
-      final boolean isPending = pendingElement == null || 
-                                PsiTreeUtil.isAncestor(node, pendingElement, false) &&
-                                !PsiTreeUtil.isAncestor(finallyPart, pendingElement, false);
-      if (isPending && pendingScope != null) {
-        pendingNormalExits.add(Pair.createNonNull(pendingScope, instruction));
-      }
-      else {
-        myBuilder.addPendingEdge(pendingScope, instruction);
-      }
-    });
+    if (finallyPart != null) {
+      myBuilder.processPending((pendingScope, instruction) -> {
+        final PsiElement pendingElement = instruction.getElement();
+        if (pendingElement != null) {
+          final boolean isPending = PsiTreeUtil.isAncestor(node, pendingElement, false) &&
+                                    !PsiTreeUtil.isAncestor(finallyPart, pendingElement, false);
+          if (isPending && pendingScope != null) {
+            pendingNormalExits.add(Pair.createNonNull(pendingScope, instruction));
+          }
+          else {
+            myBuilder.addPendingEdge(pendingScope, instruction);
+          }
+        }
+      });
+    }
 
     // Finally-fail part handling
     if (finallyPart != null) {
@@ -802,7 +814,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       }
     }
 
-    final Instruction exitInstruction;
     if (finallyPart != null) {
       myBuilder.processPending((pendingScope, instruction) -> {
         final PsiElement e = instruction.getElement();
@@ -823,6 +834,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
       // Duplicate CFG for finally (-fail and -success) only if there are some successful exits from the
       // try part. Otherwise, a single CFG for finally provides the correct control flow
+      final Instruction finallyInstruction;
       if (!pendingNormalExits.isEmpty()) {
         // Finally-success part handling
         pendingBackup = new ArrayList<>(myBuilder.pending);
@@ -833,30 +845,28 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         for (Pair<PsiElement, Instruction> pair : pendingBackup) {
           myBuilder.addPendingEdge(pair.first, pair.second);
         }
-        exitInstruction = finallySuccessInstruction;
+        finallyInstruction = finallySuccessInstruction;
       }
       else {
-        exitInstruction = finallyFailInstruction;
+        finallyInstruction = finallyFailInstruction;
+      }
+
+      // Connect normal exits from try and else parts to the finally part
+      for (Pair<PsiElement, Instruction> pendingScopeAndInstruction : pendingNormalExits) {
+        final PsiElement pendingScope = pendingScopeAndInstruction.first;
+        final Instruction instruction = pendingScopeAndInstruction.second;
+
+        myBuilder.addEdge(instruction, finallyInstruction);
+
+        // When instruction continues outside try-except statement scope
+        // the last instruction in finally-block is marked as pointing to that continuation
+        if (PsiTreeUtil.isAncestor(pendingScope, node, true)) {
+          myBuilder.addPendingEdge(pendingScope, myBuilder.prevInstruction);
+        }
       }
     }
-    else {
-      exitInstruction = addTransparentInstruction();    
-      myBuilder.prevInstruction = exitInstruction;
-    }
 
-    // Connect normal exits from try and else parts to the finally part or exit instruction
-    for (Pair<PsiElement, Instruction> pendingScopeAndInstruction : pendingNormalExits) {
-      final PsiElement pendingScope = pendingScopeAndInstruction.first;
-      final Instruction instruction = pendingScopeAndInstruction.second;
-
-      myBuilder.addEdge(instruction, exitInstruction);
-
-      // When instruction continues outside try-except statement scope
-      // the last instruction in finally-block is marked as pointing to that continuation
-      if (PsiTreeUtil.isAncestor(pendingScope, node, true)) {
-        myBuilder.addPendingEdge(pendingScope, myBuilder.prevInstruction);
-      }
-    }
+    collectInternalPendingEdges(node);
   }
 
   @Override
@@ -930,6 +940,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         myBuilder.addEdge(myBuilder.prevInstruction, i);
       }
     }
+    
+    collectInternalPendingEdges(node);
   }
 
   @Override
@@ -1099,5 +1111,28 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     TransparentInstructionImpl instruction = new TransparentInstructionImpl(myBuilder, null, "");
     myBuilder.instructions.add(instruction);
     return instruction;
+  }
+
+  /**
+   * Can be used to collect all pending edges  
+   * that we used to build CFG for `node`,
+   * but are not relevant to other elements.
+   * Is almost equivalent to this:
+   * 
+   * <pre>{@code
+   * visitPy...(node);
+   * myBuilder.startNode(node.nextSibling); // collectInternalPendingEdges does this, without needing nextSibling
+   * }</pre>
+   */
+  private void collectInternalPendingEdges(@NotNull PyElement node) {
+    myBuilder.addNode(new TransparentInstructionImpl(myBuilder, null, "")); // exit
+    myBuilder.processPending((pendingScope, instruction) -> {
+      if (pendingScope != null && PsiTreeUtil.isAncestor(node, pendingScope, false)) {
+        myBuilder.addEdge(instruction, myBuilder.prevInstruction); // to exit
+      }
+      else {
+        myBuilder.addPendingEdge(pendingScope, instruction);
+      }
+    });
   }
 }

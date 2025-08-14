@@ -10,11 +10,16 @@ import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.intellij.images.ImagesBundle
-import org.intellij.images.scientific.ScientificUtils
+import org.intellij.images.scientific.utils.ScientificUtils
+import org.intellij.images.scientific.statistics.ScientificImageActionsCollector
+import org.intellij.images.scientific.utils.launchBackground
 import java.io.IOException
 import java.nio.file.Files
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 internal class SaveImageAction : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
@@ -29,12 +34,19 @@ internal class SaveImageAction : DumbAwareAction() {
     val wrapper = chooser.save(project.basePath?.let { VirtualFileManager.getInstance().findFileByUrl(it) }, IMAGE_DEFAULT_NAME)
 
     if (wrapper == null) return
+    val targetFile = wrapper.file
+    val selectedFormat = targetFile.extension.lowercase()
 
-    try {
-      Files.write(wrapper.file.toPath(), virtualFile.contentsToByteArray())
-    }
-    catch (e: IOException) {
-      logger.warn("Failed to save image", e)
+    launchBackground {
+      withContext(Dispatchers.IO) {
+        try {
+          Files.write(wrapper.file.toPath(), virtualFile.contentsToByteArray())
+        }
+        catch (e: IOException) {
+          logger.warn("Failed to save image", e)
+        }
+        ScientificImageActionsCollector.logSaveAsImageInvoked(selectedFormat)
+      }
     }
   }
 
@@ -42,8 +54,6 @@ internal class SaveImageAction : DumbAwareAction() {
     val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
     e.presentation.isEnabledAndVisible = imageFile?.getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null
   }
-
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   companion object {
     private const val IMAGE_FORMAT = "png"

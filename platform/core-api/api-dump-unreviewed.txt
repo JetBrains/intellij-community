@@ -780,12 +780,14 @@ a:com.intellij.lang.injection.InjectedLanguageManager
 - a:injectedToHost(com.intellij.psi.PsiElement,I,Z):I
 - a:injectedToHost(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):com.intellij.openapi.util.TextRange
 - a:intersectWithAllEditableFragments(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange):java.util.List
+- a:isFrankensteinInjection(com.intellij.psi.PsiElement):Z
 - isInjectedFragment(com.intellij.psi.PsiFile):Z
 - a:isInjectedViewProvider(com.intellij.psi.FileViewProvider):Z
 - mapInjectedOffsetToUnescaped(com.intellij.psi.PsiFile,I):I
 - mapUnescapedOffsetToInjected(com.intellij.psi.PsiFile,I):I
 - a:mightHaveInjectedFragmentAtOffset(com.intellij.openapi.editor.Document,I):Z
 - a:registerMultiHostInjector(com.intellij.lang.injection.MultiHostInjector,com.intellij.openapi.Disposable):V
+- a:shouldInspectionsBeLenient(com.intellij.psi.PsiElement):Z
 com.intellij.lang.injection.MultiHostInjector
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:MULTIHOST_INJECTOR_EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
@@ -794,6 +796,9 @@ com.intellij.lang.injection.MultiHostInjector
 com.intellij.lang.injection.MultiHostRegistrar
 - a:addPlace(java.lang.String,java.lang.String,com.intellij.psi.PsiLanguageInjectionHost,com.intellij.openapi.util.TextRange):com.intellij.lang.injection.MultiHostRegistrar
 - a:doneInjecting():V
+- frankensteinInjection(Z):com.intellij.lang.injection.MultiHostRegistrar
+- makeInspectionsLenient(Z):com.intellij.lang.injection.MultiHostRegistrar
+- putInjectedFileUserData(com.intellij.openapi.util.Key,java.lang.Object):com.intellij.lang.injection.MultiHostRegistrar
 - a:startInjecting(com.intellij.lang.Language):com.intellij.lang.injection.MultiHostRegistrar
 - startInjecting(com.intellij.lang.Language,java.lang.String):com.intellij.lang.injection.MultiHostRegistrar
 com.intellij.lang.injection.general.Injection

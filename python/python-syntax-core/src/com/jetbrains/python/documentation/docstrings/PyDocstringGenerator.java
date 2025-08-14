@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -440,6 +441,22 @@ public final class PyDocstringGenerator {
       docStringExpression.replace(replacement.getExpression());
     }
     else {
+      if (myDocStringOwner instanceof PyAstFile pyAstFile) {
+        PsiElement lastCommentOrNull = null;
+        for (PsiElement child : pyAstFile.getChildren()) {
+          if (child instanceof PsiWhiteSpace) {
+            continue;
+          }
+          if (child instanceof PsiComment) {
+            lastCommentOrNull = child;
+          }
+          else {
+            break;
+          }
+        }
+        myDocStringOwner.addAfter(replacement, lastCommentOrNull);
+        return myDocStringOwner;
+      }
       PyAstStatementListContainer container = ObjectUtils.tryCast(myDocStringOwner, PyAstStatementListContainer.class);
       if (container == null) {
         throw new IllegalStateException("Should be a function or class");

@@ -4128,6 +4128,7 @@ f:com.intellij.microservices.url.references.UrlPathContext
 - f:withAuthorities(java.util.Set):com.intellij.microservices.url.references.UrlPathContext
 - f:withContentTypes(java.util.Set):com.intellij.microservices.url.references.UrlPathContext
 - f:withDeclarationFlag(Z):com.intellij.microservices.url.references.UrlPathContext
+- f:withFullUrlComputation(kotlin.jvm.functions.Function0):com.intellij.microservices.url.references.UrlPathContext
 - f:withMethod(java.lang.String):com.intellij.microservices.url.references.UrlPathContext
 - f:withMethods(java.util.Collection):com.intellij.microservices.url.references.UrlPathContext
 - f:withPaths(java.util.List):com.intellij.microservices.url.references.UrlPathContext
@@ -4153,9 +4154,6 @@ f:com.intellij.microservices.url.references.UrlPathReference
 - com.intellij.psi.PsiReferenceBase$Poly
 - com.intellij.microservices.url.references.UrlSegmentReference
 - sf:Companion:com.intellij.microservices.url.references.UrlPathReference$Companion
-- <init>(com.intellij.microservices.url.references.UrlPathContext,com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z):V
-- <init>(com.intellij.microservices.url.references.UrlPathContext,com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z,Z):V
-- <init>(com.intellij.microservices.url.references.UrlPathContext,com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z,Z,com.intellij.microservices.url.references.PathSegmentHandler):V
 - sf:createSearchableElement(com.intellij.openapi.project.Project,com.intellij.microservices.url.UrlTargetInfo):com.intellij.psi.NavigatablePsiElement
 - sf:createSearchableElement(com.intellij.openapi.project.Project,com.intellij.microservices.url.references.UrlPathContext):com.intellij.psi.NavigatablePsiElement
 - f:getContext():com.intellij.microservices.url.references.UrlPathContext

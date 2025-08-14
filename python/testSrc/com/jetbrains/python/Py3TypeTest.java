@@ -1914,6 +1914,48 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  // PY-79330
+  public void testEnumAutoValueType() {
+    doTest("int",
+           """
+             from enum import auto, Enum
+             
+             class MyEnum(Enum):
+                 FOO = auto()
+                 BAR = FOO
+             
+             def foo(e: MyEnum):
+                 expr = e.value""");
+  }
+
+  // PY-79330
+  public void testEnumAutoValueTypeCustomGenerateNextValue() {
+    doTest("str",
+           """
+             from enum import auto, Enum
+             
+             class MyEnumBase(Enum):
+                 @staticmethod
+                 def _generate_next_value_(name: str, start: int, count: int, last_values: list[str]) -> str: ...
+             
+             class MyEnumDerived(MyEnumBase):
+                 FOO = auto()
+             
+             def foo(e: MyEnumDerived):
+                 expr = e.value""");
+  }
+
+  // PY-79330
+  public void testEnumAutoValueTypeCustomGenerateNextValueMultiFile() {
+    doMultiFileTest("str",
+                    """
+                      from my_enum import MyEnumDerived
+                      
+                      def foo(e: MyEnumDerived):
+                          expr = e.value
+                      """);
+  }
+
   // PY-16622
   public void testVariableEnumValueType() {
     doTest("str",
@@ -3466,7 +3508,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testNonShadowingReturnInsideFinally() {
-    doTest("int | str", """
+    doTest("str | int", """
       def f(p):
           try:
               return 42

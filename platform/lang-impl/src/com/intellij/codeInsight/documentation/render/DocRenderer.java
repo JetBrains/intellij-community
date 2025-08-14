@@ -2,10 +2,7 @@
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.documentation.DocFontSizePopup;
-import com.intellij.codeInsight.documentation.DocumentationActionProvider;
-import com.intellij.codeInsight.documentation.DocumentationFontSize;
-import com.intellij.codeInsight.documentation.DocumentationHtmlUtil;
+import com.intellij.codeInsight.documentation.*;
 import com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
@@ -54,9 +51,10 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.font.TextAttribute;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.ImageObserver;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import static com.intellij.lang.documentation.DocumentationMarkup.*;
 
@@ -252,7 +250,8 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       if (nextLineNumber < document.getLineCount()) {
         int lineStartOffset = document.getLineStartOffset(nextLineNumber);
         int contentStartOffset = CharArrayUtil.shiftForward(document.getImmutableCharSequence(), lineStartOffset, " \t\n");
-        int vfmtRightShift = VirtualFormattingInlaysInfo.measureVirtualFormattingInlineInlays(editor, contentStartOffset, contentStartOffset);
+        int vfmtRightShift =
+          VirtualFormattingInlaysInfo.measureVirtualFormattingInlineInlays(editor, contentStartOffset, contentStartOffset);
         return editor.offsetToXY(contentStartOffset, false, true).x + vfmtRightShift;
       }
     }
@@ -356,22 +355,25 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     return color == null ? scheme.getDefaultForeground() : color;
   }
 
-  private static StyleSheet getStyleSheet(@NotNull Editor editor) {
+  private static StyleSheet getStyleSheet(@NotNull JBHtmlPane pane, @NotNull Editor editor) {
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     Color linkColor = colorsScheme.getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_LINK);
     if (linkColor == null) linkColor = getTextColor(colorsScheme);
-    String checkColors = ColorUtil.toHex(linkColor);
-    if (!Objects.equals(checkColors, ourCachedStyleSheetCheckColors)) {
+    float scaleFactor = pane.getContentsScaleFactor();
+    String checkColors = ColorUtil.toHex(linkColor) + ";" + scaleFactor;
+    if (ourCachedStyleSheet == null || (scaleFactor != 0 && !Objects.equals(checkColors, ourCachedStyleSheetCheckColors))) {
       // When updating styles here, consider updating styles in DocumentationHtmlUtil#getDocumentationPaneAdditionalCssRules
-      int beforeSpacing = scale(DocumentationHtmlUtil.getSpaceBeforeParagraph());
-      int afterSpacing = scale(DocumentationHtmlUtil.getSpaceAfterParagraph());
+      Function<Integer, Integer> scaleFunction = (val) -> (int)(scaleFactor * val);
+      int beforeSpacing = scaleFunction.apply(DocumentationHtmlUtil.getSpaceBeforeParagraph());
+      int afterSpacing = scaleFunction.apply(DocumentationHtmlUtil.getSpaceAfterParagraph());
       @Language("CSS") String input =
-        "body {overflow-wrap: anywhere; padding-top: " + scale(2) + "px }" + // supported by JetBrains Runtime
+        "body {overflow-wrap: anywhere; padding-top: " + scaleFunction.apply(2) + "px }" + // supported by JetBrains Runtime
         "pre {white-space: pre-wrap}" +  // supported by JetBrains Runtime
         "a {color: #" + ColorUtil.toHex(linkColor) + "; text-decoration: none}" +
         "." + CLASS_SECTIONS + " {border-spacing: 0}" +
-        "." + CLASS_SECTION + " {padding-right: " + scale(5) + "; white-space: nowrap}" +
-        "." + CLASS_CONTENT + " {padding: " + beforeSpacing + "px 2px " + afterSpacing + "px 0}";
+        "." + CLASS_SECTION + " {padding-right: " + scaleFunction.apply(5) + "; white-space: nowrap}" +
+        "." + CLASS_CONTENT + " {padding: " + beforeSpacing + "px 2px " + afterSpacing + "px 0}" +
+        StringUtil.join(DocumentationCssProvider.EP_NAME.getExtensionList(), it -> it.generateCss(scaleFunction, true), "\n");
       StyleSheet result = StyleSheetUtil.loadStyleSheet(input);
       ourCachedStyleSheet = result;
       ourCachedStyleSheetCheckColors = checkColors;
@@ -422,7 +424,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
         QuickDocHighlightingHelper.getDefaultDocStyleOptions(() -> editor.getColorsScheme(), true),
         JBHtmlPaneConfiguration.builder()
           .imageResolverFactory(pane -> IMAGE_MANAGER.getImageProvider())
-          .customStyleSheetProvider(bg -> getStyleSheet(editor))
+          .customStyleSheetProvider(pane -> getStyleSheet(pane, editor))
           .fontResolver(EditorCssFontResolver.getInstance(editor))
           .build()
       );
@@ -505,8 +507,16 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
                        rendererLocation.y + boundsWithinRenderer.y + (int)locationInPane.getY());
     }
 
+    @Override
+    public void revalidate() {
+      super.revalidate();
+      myCachedHeight = -1;
+      myCachedWidth = -1;
+      scheduleUpdate();
+    }
+
     private void scheduleUpdate() {
-      if (myUpdateScheduled.compareAndSet(false, true)) {
+      if (myUpdateScheduled != null && myUpdateScheduled.compareAndSet(false, true)) {
         SwingUtilities.invokeLater(() -> {
           myRepaintScheduled.set(false);
           myUpdateScheduled.set(false);

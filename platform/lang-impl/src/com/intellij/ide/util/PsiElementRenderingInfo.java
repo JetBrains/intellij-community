@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.platform.backend.presentation.TargetPresentation;
@@ -17,18 +18,24 @@ import java.util.Comparator;
 public interface PsiElementRenderingInfo<T extends PsiElement> {
 
   @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false)
   default @Nullable Icon getIcon(@NotNull T element) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
+    }
     return element.getIcon(0);
   }
 
   @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false)
   @NlsSafe @NotNull String getPresentableText(@NotNull T element);
 
   @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false)
   default @NlsSafe @Nullable String getContainerText(@NotNull T element) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
+    }
     return null;
   }
 

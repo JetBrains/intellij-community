@@ -1,5 +1,6 @@
 from _pydevd_bundle.pydevd_constants import dict_keys, NEXT_VALUE_SEPARATOR
 from _pydevd_bundle.pydevd_tables import exec_table_command
+from _pydevd_bundle.pydevd_tables import exec_image_table_command
 from _pydevd_bundle.pydevd_user_type_renderers import parse_set_type_renderers_message
 from _pydevd_bundle.pydevd_vars import resolve_compound_var_object_fields, \
     table_like_struct_to_xml, eval_in_context, resolve_var_object
@@ -93,6 +94,28 @@ def table_command(command_text):
         end_index = None
 
     status, res = exec_table_command(command, command_type, start_index, end_index, format, namespace, namespace)
+    print(res)
+
+
+def image_start_load_table_command(command_text):
+    ipython_shell = get_ipython()
+    namespace = ipython_shell.user_ns
+    command, command_type, _ = command_text.split(NEXT_VALUE_SEPARATOR)
+    status, res = exec_image_table_command(command, command_type, None, None, namespace, namespace)
+    print(res)
+
+
+def image_load_chunk_table_command(command_text):
+    ipython_shell = get_ipython()
+    namespace = ipython_shell.user_ns
+    command, command_type, offset, image_id = command_text.split(NEXT_VALUE_SEPARATOR)
+
+    try:
+        offset = int(offset)
+    except ValueError:
+        offset = None
+
+    status, res = exec_image_table_command(command, command_type, offset, image_id, namespace, namespace)
     print(res)
 
 def serializeImage(img):

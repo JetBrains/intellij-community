@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Locale
@@ -39,7 +40,6 @@ import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.HorizontallyScrollableContainer
 import org.jetbrains.jewel.ui.component.RadioButtonRow
 import org.jetbrains.jewel.ui.component.Text
-import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
@@ -48,6 +48,7 @@ import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
 import org.jetbrains.jewel.ui.theme.colorPalette
 import org.jetbrains.jewel.ui.theme.scrollbarStyle
 import org.jetbrains.jewel.ui.theme.textAreaStyle
+import org.jetbrains.jewel.ui.typography
 import org.jetbrains.skiko.OS
 import org.jetbrains.skiko.hostOs
 
@@ -137,7 +138,7 @@ private fun SettingsRow(
 @Composable
 private fun LazyColumnWithScrollbar(style: ScrollbarStyle, modifier: Modifier) {
     Column(modifier) {
-        Text("LazyColumn", style = Typography.h2TextStyle())
+        Text("LazyColumn", style = JewelTheme.typography.h2TextStyle)
 
         Spacer(Modifier.height(8.dp))
 
@@ -245,19 +246,23 @@ private fun AlignedContentExample(scrollbarStyle: ScrollbarStyle, modifier: Modi
                 Modifier.fillMaxWidth().border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal),
         ) {
             val shape = RoundedCornerShape(4.dp)
+            val borderColor =
+                if (JewelTheme.isDark) {
+                    JewelTheme.colorPalette.blueOrNull(2) ?: Color(0xFF2E436E)
+                } else {
+                    JewelTheme.colorPalette.blueOrNull(2) ?: Color(0xFF315FBD)
+                }
+            val backgroundColor =
+                if (JewelTheme.isDark) {
+                    JewelTheme.colorPalette.grayOrNull(1) ?: Color(0xFF1E1F22)
+                } else {
+                    JewelTheme.colorPalette.grayOrNull(14) ?: Color(0xFFFFFFFF)
+                }
             Column(
                 modifier =
                     Modifier.align(Alignment.Center)
-                        .background(
-                            color =
-                                if (JewelTheme.isDark) {
-                                    JewelTheme.colorPalette.gray(1)
-                                } else {
-                                    JewelTheme.colorPalette.gray(14)
-                                },
-                            shape,
-                        )
-                        .border(1.dp, JewelTheme.colorPalette.blue(2), shape)
+                        .background(color = backgroundColor, shape)
+                        .border(1.dp, borderColor, shape)
                         .padding(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp),

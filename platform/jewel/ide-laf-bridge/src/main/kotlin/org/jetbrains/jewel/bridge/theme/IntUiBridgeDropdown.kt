@@ -5,12 +5,12 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.util.ui.JBUI
 import org.jetbrains.jewel.bridge.dp
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.bridge.retrieveInsetsAsPaddingValues
-import org.jetbrains.jewel.bridge.toDpSize
+import org.jetbrains.jewel.bridge.safeValue
+import org.jetbrains.jewel.bridge.toNonNegativeDpSize
 import org.jetbrains.jewel.ui.component.styling.DropdownColors
 import org.jetbrains.jewel.ui.component.styling.DropdownIcons
 import org.jetbrains.jewel.ui.component.styling.DropdownMetrics
@@ -48,8 +48,8 @@ internal fun readDefaultDropdownStyle(menuStyle: MenuStyle): DropdownStyle {
             iconTintHovered = Color.Unspecified,
         )
 
-    val minimumSize = JBUI.CurrentTheme.ComboBox.minimumSize().toDpSize()
-    val arrowWidth = JBUI.CurrentTheme.Component.ARROW_AREA_WIDTH.dp
+    val minimumSize = JBUI.CurrentTheme.ComboBox.minimumSize().toNonNegativeDpSize()
+    val arrowWidth = JBUI.CurrentTheme.Component.ARROW_AREA_WIDTH.dp.safeValue()
     return DropdownStyle(
         colors = colors,
         metrics =
@@ -58,7 +58,7 @@ internal fun readDefaultDropdownStyle(menuStyle: MenuStyle): DropdownStyle {
                 minSize = DpSize(minimumSize.width + arrowWidth, minimumSize.height),
                 cornerSize = componentArc,
                 contentPadding = retrieveInsetsAsPaddingValues("ComboBox.padding"),
-                borderWidth = DarculaUIUtil.LW.dp,
+                borderWidth = borderWidth,
             ),
         icons = DropdownIcons(chevronDown = AllIconsKeys.General.ChevronDown),
         menuStyle = menuStyle,
@@ -94,8 +94,8 @@ internal fun readUndecoratedDropdownStyle(menuStyle: MenuStyle): DropdownStyle {
             iconTintHovered = Color.Unspecified,
         )
 
-    val arrowWidth = JBUI.CurrentTheme.Component.ARROW_AREA_WIDTH.dp
-    val minimumSize = JBUI.CurrentTheme.Button.minimumSize().toDpSize()
+    val arrowWidth = JBUI.CurrentTheme.Component.ARROW_AREA_WIDTH.dp.safeValue()
+    val minimumSize = JBUI.CurrentTheme.Button.minimumSize().toNonNegativeDpSize()
 
     return DropdownStyle(
         colors = colors,
@@ -103,7 +103,7 @@ internal fun readUndecoratedDropdownStyle(menuStyle: MenuStyle): DropdownStyle {
             DropdownMetrics(
                 arrowMinSize = DpSize(arrowWidth, minimumSize.height),
                 minSize = DpSize(minimumSize.width + arrowWidth, minimumSize.height),
-                cornerSize = CornerSize(JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().dp),
+                cornerSize = CornerSize(size = JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().dp.safeValue()),
                 contentPadding = PaddingValues(3.dp), // from
                 // com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI.getDefaultComboBoxInsets
                 borderWidth = 0.dp,

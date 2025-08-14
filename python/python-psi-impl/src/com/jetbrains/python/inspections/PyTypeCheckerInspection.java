@@ -525,7 +525,8 @@ public class PyTypeCheckerInspection extends PyInspection {
         return ContainerUtil.map(
           arguments,
           argument -> {
-            PyType actual = myTypeEvalContext.getType(argument);
+            final PyType promotedToLiteral = PyLiteralType.Companion.promoteToLiteral(argument, expected, myTypeEvalContext, substitutions);
+            final var actual = promotedToLiteral != null ? promotedToLiteral : myTypeEvalContext.getType(argument);
             boolean matched = matchParameterAndArgument(expected, actual, argument, substitutions);
             PyType expectedWithSubstitutions = substituteGenerics(expected, substitutions);
             return new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched);

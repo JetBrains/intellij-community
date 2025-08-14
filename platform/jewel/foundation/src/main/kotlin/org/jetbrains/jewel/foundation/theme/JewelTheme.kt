@@ -4,11 +4,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import java.util.UUID
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GlobalColors
 import org.jetbrains.jewel.foundation.GlobalMetrics
+import org.jetbrains.jewel.foundation.LocalDisabledAppearanceValues
 import org.jetbrains.jewel.foundation.LocalGlobalColors
 import org.jetbrains.jewel.foundation.LocalGlobalMetrics
 
@@ -16,6 +20,11 @@ public interface JewelTheme {
     public companion object {
         public val name: String
             @Composable @ReadOnlyComposable get() = LocalThemeName.current
+
+        /** @see LocalThemeInstanceUuid */
+        @ExperimentalJewelApi
+        public val instanceUuid: UUID
+            @Composable @ReadOnlyComposable get() = LocalThemeInstanceUuid.current
 
         public val globalColors: GlobalColors
             @Composable @ReadOnlyComposable get() = LocalGlobalColors.current
@@ -52,6 +61,7 @@ public fun JewelTheme(theme: ThemeDefinition, swingCompatMode: Boolean, content:
 public fun JewelTheme(theme: ThemeDefinition, content: @Composable () -> Unit) {
     CompositionLocalProvider(
         LocalThemeName provides theme.name,
+        LocalThemeInstanceUuid provides remember(theme) { UUID.randomUUID() },
         LocalIsDarkTheme provides theme.isDark,
         LocalContentColor provides theme.contentColor,
         LocalTextStyle provides theme.defaultTextStyle,
@@ -59,12 +69,27 @@ public fun JewelTheme(theme: ThemeDefinition, content: @Composable () -> Unit) {
         LocalConsoleTextStyle provides theme.consoleTextStyle,
         LocalGlobalColors provides theme.globalColors,
         LocalGlobalMetrics provides theme.globalMetrics,
+        LocalDisabledAppearanceValues provides theme.disabledAppearanceValues,
         content = content,
     )
 }
 
 public val LocalThemeName: ProvidableCompositionLocal<String> = staticCompositionLocalOf {
     error("No ThemeName provided")
+}
+
+/**
+ * A [UUID] that's unique to any instance of the [ThemeDefinition], and can be used as a signal to invalidate any
+ * remembered value that needs to be refreshed when the theme changes. Note that this can change even if the rest of the
+ * theme does not change, so you should only use this when you can't key the remembers to anything else in the theme
+ * (e.g., you need to re-read values from the environment whose changes can't be listened to).
+ *
+ * The provided value should be random, and must change every time the theme definition is changed, and be different
+ * from all previous values.
+ */
+@ExperimentalJewelApi
+public val LocalThemeInstanceUuid: ProvidableCompositionLocal<UUID> = staticCompositionLocalOf {
+    error("No ThemeInstanceUuid provided")
 }
 
 public val LocalContentColor: ProvidableCompositionLocal<Color> = staticCompositionLocalOf {

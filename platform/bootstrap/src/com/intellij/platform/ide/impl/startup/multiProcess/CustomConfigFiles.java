@@ -3,6 +3,7 @@ package com.intellij.platform.ide.impl.startup.multiProcess;
 
 import com.intellij.ide.plugins.DisabledPluginsState;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.project.impl.P3SupportKt;
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +31,10 @@ public final class CustomConfigFiles {
    */
   public static void prepareConfigDir(@NotNull Path currentConfigDir, @NotNull Path originalConfigDir) throws IOException {
     for (String fileName : FILE_NAMES) {
-      Path sourceFile = originalConfigDir.resolve(fileName);
+      String sourceFileName =
+        DisabledPluginsState.DISABLED_PLUGINS_FILENAME.equals(fileName) ? P3SupportKt.processPerProjectSupport().getDisabledPluginsFileName() 
+                                                                        : fileName;  
+      Path sourceFile = originalConfigDir.resolve(sourceFileName);
       Path targetFile = currentConfigDir.resolve(fileName);
       if (Files.exists(sourceFile)) {
         Files.createDirectories(targetFile.getParent());

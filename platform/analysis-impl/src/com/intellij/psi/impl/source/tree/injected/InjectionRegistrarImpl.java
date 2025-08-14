@@ -50,9 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @ApiStatus.Internal
 public final class InjectionRegistrarImpl implements MultiHostRegistrar {
@@ -63,6 +61,8 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
   private List<PlaceInfo> placeInfos;
   private boolean cleared = true;
   private String fileExtension;
+  @SuppressWarnings("rawtypes")
+  private Map<Key, Object> myUserData;
   private final Project myProject;
   private final DocumentEx myHostDocument;
   private final VirtualFile myHostVirtualFile;
@@ -120,6 +120,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     cleared = true;
     placeInfos = null;
     currentThread = null;
+    myUserData = null;
   }
 
   @Override
@@ -152,6 +153,19 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     PlaceInfo info = new PlaceInfo(nnPrefix, nnSuffix, host, rangeInsideHost);
     placeInfos.add(info);
 
+    return this;
+  }
+
+  @Override
+  public @NotNull <T> MultiHostRegistrar putInjectedFileUserData(@NotNull Key<T> key, @Nullable T data) {
+    if (myUserData == null) {
+      if (data == null) return this;
+      myUserData = new HashMap<>();
+    }
+    if (data == null)
+      myUserData.remove(key);
+    else
+      myUserData.put(key, data);
     return this;
   }
 
@@ -266,6 +280,13 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
         }
         else {
           cacheEverything(place, documentWindow, viewProvider, psiFile);
+        }
+        if (myUserData != null && !myUserData.isEmpty()) {
+          //noinspection rawtypes
+          for (Map.Entry<Key, Object> userData : myUserData.entrySet()) {
+            //noinspection unchecked
+            psiFile.putUserData(userData.getKey(), userData.getValue());
+          }
         }
 
         DocumentWindowImpl retrieved = (DocumentWindowImpl)myDocumentManagerBase.getDocument(psiFile);

@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,10 +25,14 @@ public abstract class InjectedLanguageManager {
   }
 
   /**
-   * Used to indicate a psi file should not be checked for errors, see e.g. {@link org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter}.
-   * Set in user data ({@link UserDataHolder}) on for example a string expression that can not be completely evaluated at compile time.
+   * @deprecated use {@link InjectedLanguageManager#isFrankensteinInjection(PsiElement)} or {@link MultiHostRegistrar#frankensteinInjection(boolean)} instead.
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static final Key<Boolean> FRANKENSTEIN_INJECTION = Key.create("FRANKENSTEIN_INJECTION");
+
+  @ApiStatus.Internal
+  public static final Key<Boolean> LENIENT_INSPECTIONS = Key.create("LENIENT_INSPECTIONS");
 
   public abstract PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider injectedProvider);
 
@@ -105,4 +108,34 @@ public abstract class InjectedLanguageManager {
    */
   public abstract boolean mightHaveInjectedFragmentAtOffset(@NotNull Document hostDocument, int hostOffset);
   public abstract @NotNull DocumentWindow freezeWindow(@NotNull DocumentWindow document);
+
+  /**
+   * The language should adjust severity and enablement of inspections based on the value provided to
+   * {@link MultiHostRegistrar#makeInspectionsLenient(boolean)} when registering the injection.
+   * Some injections should be treated as partial code fragments, where semantic errors are expected.
+   * For instance, an injection within a Markdown file will most likely be a partial example, so it is
+   * expected that semantic analysis should not be performed on it.
+   * <p>
+   * Note that this is different from {@link InjectedLanguageManager#isFrankensteinInjection}, since the injection
+   * contents are expected to be fully evaluated at compile time.
+   *
+   * @param injectedContext a {@code PsiElement}, which might be from an injected file
+   * @return if {@code injectedContext} is injected, value provided to {@link MultiHostRegistrar#makeInspectionsLenient(boolean)} if any,
+   *         otherwise {@code false}
+   *
+   * @see InjectedLanguageManager#isFrankensteinInjection(PsiElement)
+   */
+  public abstract boolean shouldInspectionsBeLenient(@NotNull PsiElement injectedContext);
+
+  /**
+   * Used to indicate a psi file should not be checked for errors at all, because the contents of the injections could not be
+   * evaluated completely at compile time.
+   *
+   * @param injectedContext a {@code PsiElement}, which might be from an injected file
+   * @return {@code true} if {@code injectedContext} is injected and the contents of injection could not be evaluated completely
+   *
+   * @see InjectedLanguageManager#shouldInspectionsBeLenient(PsiElement)
+   * @see org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter
+   */
+  public abstract boolean isFrankensteinInjection(@NotNull PsiElement injectedContext);
 }

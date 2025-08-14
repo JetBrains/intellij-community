@@ -8,6 +8,8 @@ import com.intellij.openapi.editor.impl.EditorCssFontResolver
 import com.intellij.ui.components.JBHtmlPane
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
 import com.intellij.util.ui.CSSFontResolver
+import com.intellij.util.ui.html.reapplyCss
+import com.intellij.util.ui.html.visitViews
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Component
@@ -39,12 +41,7 @@ internal class JBHtmlPaneImplService : JBHtmlPane.ImplService {
     JBHtmlPaneImageResolver(pane, null)
 
   override fun applyCssToView(pane: JBHtmlPane) {
-    visitViews(pane.ui.getRootView(pane)) { childView ->
-      when (childView) {
-        is BlockView -> blockViewSetPropertiesFromAttributesMethod.invoke(childView)
-        is LabelView -> labelViewSetPropertiesFromAttributesMethod.invoke(childView)
-      }
-    }
+    pane.ui.getRootView(pane).reapplyCss()
   }
 
   override fun ensureEditableViewsAreNotFocusable(pane: JBHtmlPane) {
@@ -64,27 +61,6 @@ internal class JBHtmlPaneImplService : JBHtmlPane.ImplService {
             }
           }
       }
-    }
-  }
-
-  private fun visitViews(view: View, visitor: (View) -> Unit) {
-    for (i in 0..<view.viewCount) {
-      view.getView(i)?.let {
-        visitViews(it, visitor)
-      }
-    }
-    visitor(view)
-  }
-
-  private val blockViewSetPropertiesFromAttributesMethod by lazy {
-    BlockView::class.java.getDeclaredMethod("setPropertiesFromAttributes").also {
-      it.isAccessible = true
-    }
-  }
-
-  private val labelViewSetPropertiesFromAttributesMethod by lazy {
-    LabelView::class.java.getDeclaredMethod("setPropertiesFromAttributes").also {
-      it.isAccessible = true
     }
   }
 

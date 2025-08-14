@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+import static com.intellij.python.community.impl.venv.VenvKt.LEGACY_VIRTUALENV_ZIPAPP_NAME;
 import static com.intellij.python.community.impl.venv.VenvKt.VIRTUALENV_ZIPAPP_NAME;
 import static com.jetbrains.python.sdk.PySdkExtKt.showSdkExecutionException;
 
@@ -42,8 +43,6 @@ import static com.jetbrains.python.sdk.PySdkExtKt.showSdkExecutionException;
  */
 @Deprecated(forRemoval = true)
 public class PyPackageManagerImpl extends PyPackageManagerImplBase {
-  private static final String LEGACY_VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.13.0.pyz"; // virtualenv used to create virtual environments for python 2.7 & 3.6
-
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
 
   @Override

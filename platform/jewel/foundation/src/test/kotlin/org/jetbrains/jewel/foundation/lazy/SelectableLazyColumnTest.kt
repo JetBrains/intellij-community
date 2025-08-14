@@ -22,6 +22,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
+@Suppress("ImplicitUnitReturnType")
 internal class SelectableLazyColumnTest {
     @get:Rule val composeRule = createComposeRule()
 

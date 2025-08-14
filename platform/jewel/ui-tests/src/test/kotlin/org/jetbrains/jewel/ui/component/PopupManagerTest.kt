@@ -86,10 +86,11 @@ class PopupManagerTest {
         assertTrue(first == second)
     }
 
+    @Suppress("UnusedExpression") // Used to make sure the lambdas are different
     @Test
     fun `should ignore onPopupVisibilityChange when checking equality`() {
-        var first = PopupManager({ "first" })
-        var second = PopupManager({ "second" })
+        val first = PopupManager({ "first" })
+        val second = PopupManager({ "second" })
         assertTrue(first == second)
     }
 
@@ -110,10 +111,11 @@ class PopupManagerTest {
         assertTrue(first.hashCode() == second.hashCode())
     }
 
+    @Suppress("UnusedExpression") // Used to make sure the lambdas are different
     @Test
     fun `should ignore onPopupVisibilityChange when computing hashcode`() {
-        var first = PopupManager({ "first" })
-        var second = PopupManager({ "second" })
+        val first = PopupManager({ "first" })
+        val second = PopupManager({ "second" })
         assertTrue(first.hashCode() == second.hashCode())
     }
 }

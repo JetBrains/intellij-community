@@ -1,0 +1,23 @@
+from typing import Any, ClassVar
+
+from django.db.models import Func
+from django.db.models.expressions import Combinable
+from django.db.models.fields import Field
+from django.db.models.fields.json import JSONField
+
+class Cast(Func):
+    def __init__(self, expression: Combinable | str, output_field: str | Field) -> None: ...
+
+class Coalesce(Func): ...
+
+class Collate(Func):
+    def __init__(self, expression: Combinable | str, collation: str) -> None: ...
+
+class Greatest(Func): ...
+
+class JSONObject(Func):
+    def __init__(self, **fields: Any) -> None: ...
+    output_field: ClassVar[JSONField]
+
+class Least(Func): ...
+class NullIf(Func): ...

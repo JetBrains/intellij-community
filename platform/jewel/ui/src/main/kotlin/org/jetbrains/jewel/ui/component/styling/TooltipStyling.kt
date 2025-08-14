@@ -12,12 +12,22 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.FixedCursorPoint
 
 @Stable
 @GenerateDataFunctions
-public class TooltipStyle(public val colors: TooltipColors, public val metrics: TooltipMetrics) {
+public class TooltipStyle(
+    public val colors: TooltipColors,
+    public val metrics: TooltipMetrics,
+    public val autoHideBehavior: TooltipAutoHideBehavior,
+) {
+    public constructor(
+        colors: TooltipColors,
+        metrics: TooltipMetrics,
+    ) : this(colors, metrics, TooltipAutoHideBehavior.Normal)
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -26,6 +36,7 @@ public class TooltipStyle(public val colors: TooltipColors, public val metrics: 
 
         if (colors != other.colors) return false
         if (metrics != other.metrics) return false
+        if (autoHideBehavior != other.autoHideBehavior) return false
 
         return true
     }
@@ -33,10 +44,12 @@ public class TooltipStyle(public val colors: TooltipColors, public val metrics: 
     override fun hashCode(): Int {
         var result = colors.hashCode()
         result = 31 * result + metrics.hashCode()
+        result = 31 * result + autoHideBehavior.hashCode()
         return result
     }
 
-    override fun toString(): String = "TooltipStyle(colors=$colors, metrics=$metrics)"
+    override fun toString(): String =
+        "TooltipStyle(colors=$colors, metrics=$metrics, autoHideBehavior=$autoHideBehavior)"
 
     public companion object
 }
@@ -92,7 +105,29 @@ public class TooltipMetrics(
     public val borderWidth: Dp,
     public val shadowSize: Dp,
     public val placement: TooltipPlacement,
+    public val regularDisappearDelay: Duration,
+    public val fullDisappearDelay: Duration,
 ) {
+    /** Only used to keep compatibility. **DON'T USE IT**. */
+    @ExperimentalJewelApi
+    public constructor(
+        contentPadding: PaddingValues,
+        showDelay: Duration,
+        cornerSize: CornerSize,
+        borderWidth: Dp,
+        shadowSize: Dp,
+        placement: TooltipPlacement,
+    ) : this(
+        contentPadding,
+        showDelay,
+        cornerSize,
+        borderWidth,
+        shadowSize,
+        placement,
+        10000.milliseconds,
+        30000.milliseconds,
+    )
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -105,6 +140,8 @@ public class TooltipMetrics(
         if (borderWidth != other.borderWidth) return false
         if (shadowSize != other.shadowSize) return false
         if (placement != other.placement) return false
+        if (regularDisappearDelay != other.regularDisappearDelay) return false
+        if (fullDisappearDelay != other.fullDisappearDelay) return false
 
         return true
     }
@@ -116,6 +153,8 @@ public class TooltipMetrics(
         result = 31 * result + borderWidth.hashCode()
         result = 31 * result + shadowSize.hashCode()
         result = 31 * result + placement.hashCode()
+        result = 31 * result + regularDisappearDelay.hashCode()
+        result = 31 * result + fullDisappearDelay.hashCode()
         return result
     }
 
@@ -127,6 +166,8 @@ public class TooltipMetrics(
             "borderWidth=$borderWidth, " +
             "shadowSize=$shadowSize, " +
             "placement=$placement" +
+            "regularDisappearDelay=$regularDisappearDelay, " +
+            "fullDisappearDelay=$fullDisappearDelay" +
             ")"
     }
 
@@ -134,12 +175,30 @@ public class TooltipMetrics(
         public fun defaults(
             contentPadding: PaddingValues = PaddingValues(vertical = 9.dp, horizontal = 12.dp),
             showDelay: Duration = 500.milliseconds, // ide.tooltip.initialReshowDelay
+            regularDisappearDelay: Duration = 10000.milliseconds, // ide.helptooltip.regular.dismissDelay
+            fullDisappearDelay: Duration = 30000.milliseconds, // ide.helptooltip.full.dismissDelay
             cornerSize: CornerSize = CornerSize(4.dp),
             borderWidth: Dp = 1.dp,
             shadowSize: Dp = 12.dp,
             placement: TooltipPlacement = FixedCursorPoint(DpOffset(4.dp, 24.dp)),
-        ): TooltipMetrics = TooltipMetrics(contentPadding, showDelay, cornerSize, borderWidth, shadowSize, placement)
+        ): TooltipMetrics =
+            TooltipMetrics(
+                contentPadding,
+                showDelay,
+                cornerSize,
+                borderWidth,
+                shadowSize,
+                placement,
+                regularDisappearDelay,
+                fullDisappearDelay,
+            )
     }
+}
+
+public enum class TooltipAutoHideBehavior {
+    Never,
+    Normal,
+    Long,
 }
 
 public val LocalTooltipStyle: ProvidableCompositionLocal<TooltipStyle> = staticCompositionLocalOf {

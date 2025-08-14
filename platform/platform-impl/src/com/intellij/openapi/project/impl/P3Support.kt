@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
+import com.intellij.ide.plugins.DisabledPluginsState
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 
@@ -39,6 +41,12 @@ interface P3Support {
    * @throws UnsupportedOperationException if the operation is not supported or if the method is called inappropriately.
    */
   suspend fun openInChildProcess(projectStoreBaseDir: Path)
+
+  /**
+   * Specifies the name of the file in the shared config directory where the list of disabled plugins is stored.
+   */
+  open val disabledPluginsFileName: String
+    get() = DisabledPluginsState.DISABLED_PLUGINS_FILENAME
 }
 
 @Internal
@@ -56,7 +64,7 @@ object DisabledP3Support : P3Support {
 @Internal
 @Experimental
 object P3SupportInstaller {
-  val atomicSupport = AtomicReference<P3Support?>()
+  internal val atomicSupport = AtomicReference<P3Support?>()
 
   fun installPerProcessInstanceSupportImplementation(support: P3Support) {
     if (!atomicSupport.compareAndSet(null, support)) {
@@ -66,6 +74,11 @@ object P3SupportInstaller {
 
   fun seal() {
     atomicSupport.compareAndSet(null, DisabledP3Support)
+  }
+  
+  @TestOnly
+  fun installPerProcessInstanceSupportTemporarily(support: P3Support?): P3Support? {
+    return atomicSupport.getAndSet(support)
   }
 }
 

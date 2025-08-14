@@ -3,6 +3,9 @@ set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )";
 
+cd "$DIR/../baseline-server"
+npm install
+
 mkdir -p "$DIR/../work"
 
 cd "$DIR/../work"

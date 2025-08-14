@@ -187,6 +187,14 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
+  public @Nullable String execTableImageCommand(String threadId, String frameId, String command, TableCommandType commandType,
+                                           TableCommandParameters tableCommandParameters) throws PyDebuggerException {
+    final TableImageCommand tableImageCommand = new TableImageCommand(this, threadId, frameId, command, commandType, tableCommandParameters);
+    tableImageCommand.execute();
+    return tableImageCommand.getCommandResult();
+  }
+
+  @Override
   public XValueChildrenList loadFrame(final String threadId, final String frameId, GROUP_TYPE groupType) throws PyDebuggerException {
     return executeCommand(new GetFrameCommand(this, threadId, frameId, groupType)).getVariables();
   }

@@ -1,7 +1,9 @@
 package org.jetbrains.jewel.markdown.extensions.github.alerts
 
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.MarkdownBlock
 
+@ExperimentalJewelApi
 public sealed interface GitHubAlert : MarkdownBlock.CustomBlock {
     public val content: List<MarkdownBlock>
 

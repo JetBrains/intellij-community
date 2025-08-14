@@ -18,6 +18,29 @@ public final class org/jetbrains/jewel/bridge/BridgeResourceResolverKt {
 	public static final fun bridgePainterProvider (Lorg/jetbrains/jewel/ui/icon/IconKey;)Lorg/jetbrains/jewel/ui/painter/ResourcePainterProvider;
 }
 
+public final class org/jetbrains/jewel/bridge/BridgeTypography : org/jetbrains/jewel/ui/Typography {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/bridge/BridgeTypography;
+	public fun getConsoleTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getEditorTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getH0TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getH1TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getH2TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getH3TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getH4TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getLabelTextSize (Landroidx/compose/runtime/Composer;I)J
+	public fun getLabelTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getMedium (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getRegular (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getSmall (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+}
+
+public final class org/jetbrains/jewel/bridge/BridgeUriHandler : androidx/compose/ui/platform/UriHandler {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/bridge/BridgeUriHandler;
+	public fun openUri (Ljava/lang/String;)V
+}
+
 public final class org/jetbrains/jewel/bridge/BridgeUtilsKt {
 	public static final fun createVerticalBrush-8A-3gB4 (Ljava/util/List;FFI)Landroidx/compose/ui/graphics/Brush;
 	public static synthetic fun createVerticalBrush-8A-3gB4$default (Ljava/util/List;FFIILjava/lang/Object;)Landroidx/compose/ui/graphics/Brush;
@@ -25,6 +48,7 @@ public final class org/jetbrains/jewel/bridge/BridgeUtilsKt {
 	public static final fun retrieveArcAsCornerSize (Ljava/lang/String;)Landroidx/compose/foundation/shape/CornerSize;
 	public static final fun retrieveArcAsCornerSizeOrDefault (Ljava/lang/String;Landroidx/compose/foundation/shape/CornerSize;)Landroidx/compose/foundation/shape/CornerSize;
 	public static final fun retrieveArcAsCornerSizeWithFallbacks ([Ljava/lang/String;)Landroidx/compose/foundation/shape/CornerSize;
+	public static final fun retrieveArcAsNonNegativeCornerSizeOrDefault (Ljava/lang/String;Landroidx/compose/foundation/shape/CornerSize;)Landroidx/compose/foundation/shape/CornerSize;
 	public static final fun retrieveColor-0YGnOg8 (Ljava/lang/String;ZJJ)J
 	public static final fun retrieveColor-4WTKRHQ (Ljava/lang/String;J)J
 	public static final fun retrieveColorOrNull (Ljava/lang/String;)Landroidx/compose/ui/graphics/Color;
@@ -36,15 +60,19 @@ public final class org/jetbrains/jewel/bridge/BridgeUtilsKt {
 	public static final fun retrieveIntAsDp-3F_vd3o (Ljava/lang/String;Landroidx/compose/ui/unit/Dp;)F
 	public static synthetic fun retrieveIntAsDp-3F_vd3o$default (Ljava/lang/String;Landroidx/compose/ui/unit/Dp;ILjava/lang/Object;)F
 	public static final fun retrieveIntAsDpOrUnspecified (Ljava/lang/String;)F
+	public static final fun retrieveIntAsNonNegativeDpOrUnspecified (Ljava/lang/String;)F
 	public static final fun retrievePlatformTextStyle ()Landroidx/compose/ui/text/PlatformTextStyle;
 	public static final fun retrieveTextStyle-WdJyH8Q (Ljava/lang/String;JJZIJ)Landroidx/compose/ui/text/TextStyle;
 	public static synthetic fun retrieveTextStyle-WdJyH8Q$default (Ljava/lang/String;JJZIJILjava/lang/Object;)Landroidx/compose/ui/text/TextStyle;
 	public static final fun retrieveTextStyle-tD9LlGs (Ljava/lang/String;Ljava/lang/String;JZIJ)Landroidx/compose/ui/text/TextStyle;
 	public static synthetic fun retrieveTextStyle-tD9LlGs$default (Ljava/lang/String;Ljava/lang/String;JZIJILjava/lang/Object;)Landroidx/compose/ui/text/TextStyle;
+	public static final fun toAwtColor-8_81llA (J)Ljava/awt/Color;
 	public static final fun toComposeColor (Ljava/awt/Color;)J
 	public static final fun toComposeColorOrUnspecified (Ljava/awt/Color;)J
 	public static final fun toDpSize (Lcom/intellij/util/ui/JBDimension;)J
 	public static final fun toDpSize (Ljava/awt/Dimension;)J
+	public static final fun toNonNegativeDpSize (Lcom/intellij/util/ui/JBDimension;)J
+	public static final fun toNonNegativeDpSize (Ljava/awt/Dimension;)J
 	public static final fun toPaddingValues (Lcom/intellij/util/ui/JBInsets;)Landroidx/compose/foundation/layout/PaddingValues;
 	public static final fun toPaddingValues (Ljava/awt/Insets;)Landroidx/compose/foundation/layout/PaddingValues;
 }
@@ -74,6 +102,12 @@ public final class org/jetbrains/jewel/bridge/JewelComposePanelWrapperKt {
 	public static synthetic fun JewelToolWindowComposePanel$default (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljavax/swing/JComponent;
 	public static final fun JewelToolWindowNoThemeComposePanel (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Ljavax/swing/JComponent;
 	public static synthetic fun JewelToolWindowNoThemeComposePanel$default (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljavax/swing/JComponent;
+	public static final fun compose (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Ljavax/swing/JComponent;
+	public static synthetic fun compose$default (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljavax/swing/JComponent;
+	public static final fun composeForToolWindowWithoutTheme (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Ljavax/swing/JComponent;
+	public static synthetic fun composeForToolWindowWithoutTheme$default (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljavax/swing/JComponent;
+	public static final fun composeWithoutTheme (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Ljavax/swing/JComponent;
+	public static synthetic fun composeWithoutTheme$default (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljavax/swing/JComponent;
 	public static final fun getLocalComponent ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 
@@ -137,6 +171,10 @@ public final class org/jetbrains/jewel/bridge/theme/BridgeGlobalMetricsKt {
 	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/GlobalMetrics$Companion;)Lorg/jetbrains/jewel/foundation/GlobalMetrics;
 }
 
+public final class org/jetbrains/jewel/bridge/theme/BridgeGrayFilterValuesKt {
+	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/DisabledAppearanceValues$Companion;)Lorg/jetbrains/jewel/foundation/DisabledAppearanceValues;
+}
+
 public final class org/jetbrains/jewel/bridge/theme/BridgeThemeColorPaletteKt {
 	public static final fun getWindowsPopupBorder (Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;)Landroidx/compose/ui/graphics/Color;
 	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette$Companion;)Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;
@@ -172,6 +210,7 @@ public final class org/jetbrains/jewel/bridge/theme/IntUiBridgeSplitButtonKt {
 public final class org/jetbrains/jewel/bridge/theme/IntUiBridgeTextKt {
 	public static final fun retrieveConsoleTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public static final fun retrieveDefaultTextStyle ()Landroidx/compose/ui/text/TextStyle;
+	public static final fun retrieveDefaultTextStyle (F)Landroidx/compose/ui/text/TextStyle;
 	public static final fun retrieveEditorTextStyle ()Landroidx/compose/ui/text/TextStyle;
 }
 

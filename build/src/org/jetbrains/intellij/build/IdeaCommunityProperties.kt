@@ -77,17 +77,23 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     ))
     mavenArtifacts.patchCoordinates = { module, coordinates ->
       when {
-        JewelMavenArtifacts.isJewel(module) -> JewelMavenArtifacts.patchCoordinates(module, coordinates)
+        JewelMavenArtifacts.isPublishedJewelModule(module) -> JewelMavenArtifacts.patchCoordinates(module, coordinates)
         else -> coordinates
+      }
+    }
+    mavenArtifacts.patchDependencies = { module, dependencies ->
+      when {
+        JewelMavenArtifacts.isPublishedJewelModule(module) -> JewelMavenArtifacts.patchDependencies(module, dependencies)
+        else -> dependencies
       }
     }
     mavenArtifacts.addPomMetadata = { module, model ->
       when {
-        JewelMavenArtifacts.isJewel(module) -> JewelMavenArtifacts.addPomMetadata(module, model)
+        JewelMavenArtifacts.isPublishedJewelModule(module) -> JewelMavenArtifacts.addPomMetadata(module, model)
       }
     }
     mavenArtifacts.isJavadocJarRequired = {
-      JewelMavenArtifacts.isJewel(it)
+      JewelMavenArtifacts.isPublishedJewelModule(it)
     }
     mavenArtifacts.validate = { context, artifacts ->
       JewelMavenArtifacts.validate(context, artifacts)

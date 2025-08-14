@@ -2564,7 +2564,7 @@ public class PyTypeTest extends PyTestCase {
           final List<PyClassLikeType> superClassTypes = ((PyClassType)type).getSuperClassTypes(context);
           assertEquals(1, superClassTypes.size());
 
-          assertInstanceOf(superClassTypes.get(0), PyNamedTupleType.class);
+          assertInstanceOf(superClassTypes.get(0), PyClassTypeImpl.class);
         }
       }
     );
@@ -4163,6 +4163,19 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-79330
+  public void testTypeHintedEnumItemValueAttribute2() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("() -> Any", // Should be 'Any' PY-71603
+                   """
+                     from enum import Enum
+                     
+                     def f(p: Enum):
+                         expr = p.value""")
+    );
+  }
+
   // PY-54503
   public void testImportedEnumGetItemResultValueAttribute() {
     myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
@@ -4172,7 +4185,7 @@ public class PyTypeTest extends PyTestCase {
                                               expr = MyEnum['ONE'].value""");
     assertNotNull(expr);
     TypeEvalContext codeAnalysisContext = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
-    assertType("Any", expr, codeAnalysisContext);
+    assertType("int", expr, codeAnalysisContext);
     assertProjectFilesNotParsed(codeAnalysisContext);
 
     TypeEvalContext userInitiatedContext = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile());

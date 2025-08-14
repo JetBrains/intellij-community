@@ -26,6 +26,7 @@ import org.jetbrains.jewel.samples.showcase.components.Tabs
 import org.jetbrains.jewel.samples.showcase.components.TextAreas
 import org.jetbrains.jewel.samples.showcase.components.TextFields
 import org.jetbrains.jewel.samples.showcase.components.Tooltips
+import org.jetbrains.jewel.samples.showcase.components.TypographyShowcase
 import org.jetbrains.jewel.ui.component.SplitLayoutState
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 
@@ -90,6 +91,11 @@ public class ComponentsViewModel(
                 },
             ),
             ViewInfo(title = "Banners", iconKey = ShowcaseIcons.Components.banners, content = { Banners() }),
+            ViewInfo(
+                title = "Typography",
+                iconKey = ShowcaseIcons.Components.typography,
+                content = { TypographyShowcase() },
+            ),
         )
 
     private var _currentView: ViewInfo by mutableStateOf(views.first())

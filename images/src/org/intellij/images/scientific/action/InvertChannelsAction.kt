@@ -5,38 +5,39 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.vfs.writeBytes
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.intellij.images.editor.ImageDocument.IMAGE_DOCUMENT_DATA_KEY
-import org.intellij.images.scientific.ScientificUtils
-import org.intellij.images.scientific.ScientificUtils.DEFAULT_IMAGE_FORMAT
-import org.intellij.images.scientific.ScientificUtils.ORIGINAL_IMAGE_KEY
+import org.intellij.images.scientific.statistics.ScientificImageActionsCollector
+import org.intellij.images.scientific.utils.ScientificUtils
+import org.intellij.images.scientific.utils.ScientificUtils.NORMALIZATION_APPLIED_KEY
+import org.intellij.images.scientific.utils.ScientificUtils.ORIGINAL_IMAGE_KEY
+import org.intellij.images.scientific.utils.ScientificUtils.ROTATION_ANGLE_KEY
+import org.intellij.images.scientific.utils.ScientificUtils.saveImageToFile
+import org.intellij.images.scientific.utils.launchBackground
 import java.awt.image.BufferedImage
-import java.io.ByteArrayOutputStream
-import javax.imageio.ImageIO
 
 class InvertChannelsAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  override fun update(e: AnActionEvent) {
-    val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
-    e.presentation.isEnabledAndVisible = imageFile?.getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null
-  }
-
   override fun actionPerformed(e: AnActionEvent) {
     val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
     val originalImage = imageFile.getUserData(ORIGINAL_IMAGE_KEY) ?: return
-    val invertedImage = applyInvertChannels(originalImage)
-    val byteArrayOutputStream = ByteArrayOutputStream()
-    ImageIO.write(invertedImage, DEFAULT_IMAGE_FORMAT, byteArrayOutputStream)
-    imageFile.writeBytes(byteArrayOutputStream.toByteArray())
     val document = e.getData(IMAGE_DOCUMENT_DATA_KEY) ?: return
-    document.value = invertedImage
+    val currentAngle = imageFile.getUserData(ROTATION_ANGLE_KEY) ?: 0
+    imageFile.putUserData(NORMALIZATION_APPLIED_KEY, false)
+
+    launchBackground {
+      val rotatedOriginal = if (currentAngle != 0) ScientificUtils.rotateImage(originalImage, currentAngle) else originalImage
+      val invertedImage = applyInvertChannels(rotatedOriginal)
+      saveImageToFile(imageFile, invertedImage)
+      document.value = invertedImage
+      ScientificImageActionsCollector.logInvertChannelsInvoked()
+    }
   }
 
-
-  private fun applyInvertChannels(image: BufferedImage): BufferedImage {
-    val hasAlpha = image.colorModel.hasAlpha()
-    val invertedImage = BufferedImage(image.width, image.height, if (hasAlpha) BufferedImage.TYPE_INT_ARGB else BufferedImage.TYPE_INT_RGB)
+  private suspend fun applyInvertChannels(image: BufferedImage): BufferedImage = withContext(Dispatchers.IO) {
+    val invertedImage = BufferedImage(image.width, image.height, image.type)
     for (x in 0 until image.width) {
       for (y in 0 until image.height) {
         val rgba = image.getRGB(x, y)
@@ -51,6 +52,6 @@ class InvertChannelsAction : DumbAwareAction() {
         invertedImage.setRGB(x, y, invertedRgba)
       }
     }
-    return invertedImage
+    invertedImage
   }
 }

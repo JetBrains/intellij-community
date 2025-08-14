@@ -51,7 +51,10 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
 
   /**
    * {@link InjectedLanguageManager#FRANKENSTEIN_INJECTION}
+   * @deprecated Use {@link InjectedLanguageManager#isFrankensteinInjection(PsiElement)} or
+   *             {@link MultiHostRegistrar#frankensteinInjection(boolean)} instead
    */
+  @Deprecated(forRemoval = true)
   public static final Key<Boolean> FRANKENSTEIN_INJECTION = InjectedLanguageManager.FRANKENSTEIN_INJECTION;
 
   private static final Comparator<PsiFile> LONGEST_INJECTION_HOST_RANGE_COMPARATOR = Comparator.comparing(
@@ -265,6 +268,11 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     return ref.get();
   }
 
+  /**
+   * Does not work with multiple injections on the same host.
+   *
+   * @deprecated Use {@link MultiHostRegistrar#putInjectedFileUserData(Key, Object)} when registering the injection.
+   */
   public static <T> void putInjectedFileUserData(@NotNull PsiElement element,
                                                  @NotNull Language language,
                                                  @NotNull Key<T> key,

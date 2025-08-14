@@ -15,7 +15,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -29,7 +28,7 @@ import org.jetbrains.jewel.ui.component.PopupContainer
 import org.jetbrains.jewel.ui.component.PopupManager
 import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.Text
-import org.jetbrains.jewel.ui.disabled
+import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
@@ -144,12 +143,12 @@ private fun ListComboBoxes() {
                 itemKeys = { index, _ -> index },
                 itemContent = { item, isSelected, isActive ->
                     SimpleListItem(
+                        modifier = Modifier.disabledAppearance(),
                         text = item.name,
                         selected = isSelected,
                         active = isActive,
                         iconContentDescription = item.name,
                         icon = item.icon,
-                        colorFilter = ColorFilter.disabled(),
                     )
                 },
             )
@@ -233,8 +232,8 @@ private fun CustomComboBoxes() {
                     SimpleListItem(
                         text = languageOptions[selectedIndex].name,
                         icon = languageOptions[selectedIndex].icon,
-                        isSelected = false,
-                        isActive = true,
+                        selected = false,
+                        active = true,
                     )
                 },
             )

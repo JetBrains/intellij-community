@@ -63,8 +63,8 @@ public fun Banners() {
                     style = JewelTheme.defaultBannerStyle.information,
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
                     actions = {
-                        Link("Action A", onClick = { clickLabel = "Info default no icon Action A clicked" })
-                        Link("Action B", onClick = { clickLabel = "Info default no icon Action B clicked" })
+                        Link("Action A", onClick = { clickLabel = "Info default with icon Action A clicked" })
+                        Link("Action B", onClick = { clickLabel = "Info default with icon Action B clicked" })
                     },
                 )
 

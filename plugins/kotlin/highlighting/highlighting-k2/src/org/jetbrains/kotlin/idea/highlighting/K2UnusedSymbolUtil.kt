@@ -391,10 +391,10 @@ object K2UnusedSymbolUtil {
               val lightMethods = declaration.toLightMethods()
               if (lightMethods.isNotEmpty()) {
                   val lightMethodsUsed = lightMethods.any { method ->
-                      isTooManyOccurrencesToCheck(method, declaration, project) || !MethodReferencesSearch.search(method)
-                            .forEach(Processor {
-                                checkReference(it.element, declaration, originalDeclaration)
-                            })
+                      isTooManyOccurrencesToCheck(method, declaration, project) ||
+                      !MethodReferencesSearch.search(method).forEach(Processor {
+                          checkReference(it.element, declaration, originalDeclaration)
+                      })
                   }
                   if (lightMethodsUsed) return true
                   if (!declaration.hasActualModifier()) return false
@@ -422,17 +422,6 @@ object K2UnusedSymbolUtil {
       }
       return checkPrivateDeclaration(declaration, symbol, originalDeclaration)
   }
-
-    private fun isTooManyOccurrencesToCheck(
-        method: PsiMethod,
-        declaration: KtCallableDeclaration,
-        project: Project
-    ): Boolean {
-        val searchScope = method.useScope
-        val name = method.name
-        return !declaration.name.equals(name) && searchScope is GlobalSearchScope &&
-                PsiSearchHelper.getInstance(project).isCheapEnoughToSearch(name, searchScope, null) == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES
-    }
 
     /**
    * Return true if [declaration] is a private nested class or object referenced by an import directive and the target symbol of
@@ -470,7 +459,18 @@ object K2UnusedSymbolUtil {
           .any { !checkReference(it.mainReference.element, declaration, originalDeclaration) }
   }
 
-  // search for references to an element in the scope, satisfying predicate, lazily
+  private fun isTooManyOccurrencesToCheck(
+        method: PsiMethod,
+        declaration: KtCallableDeclaration,
+        project: Project
+    ): Boolean {
+        val searchScope = method.useScope
+        val name = method.name
+        return !declaration.name.equals(name) && searchScope is GlobalSearchScope &&
+                PsiSearchHelper.getInstance(project).isCheapEnoughToSearch(name, searchScope, null) == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES
+    }
+
+    // search for references to an element in the scope, satisfying predicate, lazily
   private fun referenceExists(psiElement: PsiElement, scope:SearchScope, predicate: (PsiReference)->Boolean) : Boolean {
     return !ReferencesSearch.search(KotlinReferencesSearchParameters(psiElement, scope)).forEach(Processor<PsiReference> { !predicate.invoke(it) })
   }

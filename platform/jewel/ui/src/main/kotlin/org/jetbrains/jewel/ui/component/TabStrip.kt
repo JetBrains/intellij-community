@@ -6,10 +6,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.ScrollableDefaults
-import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.FocusInteraction
+import androidx.compose.foundation.interaction.HoverInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -18,14 +19,26 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.semantics.CollectionInfo
+import androidx.compose.ui.semantics.collectionInfo
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.util.fastRoundToInt
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
-import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask
 import org.jetbrains.jewel.foundation.state.FocusableComponentState
 import org.jetbrains.jewel.ui.component.styling.TabStyle
@@ -47,38 +60,125 @@ import org.jetbrains.jewel.ui.component.styling.TabStyle
  * @param style The visual styling configuration for the tab strip and its tabs
  * @param modifier Modifier to be applied to the tab strip container
  * @param enabled Controls the enabled state of the tab strip. When false, no tabs can be interacted with
+ * @param interactionSource The [MutableInteractionSource] that will be used to handle interactions with the tab strip
  * @see javax.swing.JTabbedPane
  * @see com.intellij.ui.components.JBTabbedPane
  */
 @Composable
-public fun TabStrip(tabs: List<TabData>, style: TabStyle, modifier: Modifier = Modifier, enabled: Boolean = true) {
+public fun TabStrip(
+    tabs: List<TabData>,
+    style: TabStyle,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+) {
     var tabStripState: TabStripState by remember { mutableStateOf(TabStripState.of(enabled = true)) }
+    val selectedIndex = remember(tabs) { tabs.indexOfFirst { it.selected } }
+    val tabCount = tabs.size
 
     remember(enabled) { tabStripState = tabStripState.copy(enabled) }
 
     val scrollState = rememberScrollState()
-    Box(
-        modifier.focusable(true, remember { MutableInteractionSource() }).onHover {
-            tabStripState = tabStripState.copy(hovered = it)
+
+    LaunchedEffect(interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is FocusInteraction ->
+                    tabStripState = tabStripState.copy(focused = interaction is FocusInteraction.Focus)
+
+                is HoverInteraction ->
+                    tabStripState = tabStripState.copy(hovered = interaction is HoverInteraction.Enter)
+            }
         }
+    }
+
+    Box(
+        modifier
+            .onPreviewKeyEvent { event ->
+                if (!enabled || tabs.isEmpty()) return@onPreviewKeyEvent false
+
+                when (event.type) {
+                    KeyEventType.KeyDown ->
+                        when (event.key) {
+                            Key.DirectionLeft -> {
+                                tabs[if (selectedIndex > 0) (selectedIndex - 1) else tabs.lastIndex].onClick()
+                                true
+                            }
+
+                            Key.DirectionRight -> {
+                                tabs[(selectedIndex + 1) % tabCount].onClick()
+                                true
+                            }
+
+                            else -> false
+                        }
+
+                    KeyEventType.KeyUp ->
+                        when (event.key) {
+                            Key.MoveHome -> {
+                                tabs.first().onClick()
+                                true
+                            }
+
+                            Key.MoveEnd -> {
+                                tabs.last().onClick()
+                                true
+                            }
+
+                            else -> false
+                        }
+
+                    else -> false
+                }
+            }
+            .focusable(enabled, interactionSource)
+            .hoverable(interactionSource, enabled)
     ) {
         Row(
             modifier =
-                Modifier.horizontalScroll(scrollState)
-                    .scrollable(
-                        orientation = Orientation.Vertical,
-                        reverseDirection =
-                            ScrollableDefaults.reverseDirection(
-                                LocalLayoutDirection.current,
-                                Orientation.Vertical,
-                                false,
-                            ),
-                        state = scrollState,
-                        interactionSource = remember { MutableInteractionSource() },
-                    )
-                    .selectableGroup()
+                Modifier.horizontalScroll(scrollState).selectableGroup().semantics {
+                    collectionInfo = CollectionInfo(rowCount = 1, columnCount = tabCount)
+                }
         ) {
-            tabs.forEach { tabData -> TabImpl(isActive = tabStripState.isActive, tabData = tabData, tabStyle = style) }
+            var selectedCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+
+            tabs.forEachIndexed { index, tab ->
+                TabImpl(
+                    isActive = tabStripState.isActive,
+                    tabData = tab,
+                    tabStyle = style,
+                    tabIndex = index,
+                    tabCount = tabCount,
+                    modifier =
+                        Modifier.onPlaced {
+                            if (tab.selected) {
+                                selectedCoordinates = it
+                            }
+                        },
+                )
+            }
+
+            LaunchedEffect(selectedCoordinates) {
+                val coordinates = selectedCoordinates ?: return@LaunchedEffect
+
+                val initialBound = scrollState.value
+                val tabStartPosition = coordinates.positionInParent().x.fastRoundToInt()
+
+                if (tabStartPosition < initialBound) {
+                    // If navigating back, scroll to the start of the tab
+                    scrollState.animateScrollTo(tabStartPosition)
+                    return@LaunchedEffect
+                }
+
+                val finalBound = initialBound + scrollState.viewportSize
+                val tabEndPosition = tabStartPosition + coordinates.size.width
+
+                if (tabEndPosition > finalBound) {
+                    // If navigating forward, move the scroll just enough to show the tab
+                    scrollState.animateScrollBy((tabEndPosition - finalBound).toFloat())
+                    return@LaunchedEffect
+                }
+            }
         }
 
         AnimatedVisibility(
@@ -89,6 +189,13 @@ public fun TabStrip(tabs: List<TabData>, style: TabStyle, modifier: Modifier = M
             HorizontalScrollbar(scrollState, style = style.scrollbarStyle, modifier = Modifier.fillMaxWidth())
         }
     }
+}
+
+/** Only used to keep compatibility. **DON'T USE IT.** */
+@ExperimentalJewelApi
+@Composable
+public fun TabStrip(tabs: List<TabData>, style: TabStyle, modifier: Modifier = Modifier, enabled: Boolean = true) {
+    TabStrip(tabs, style, modifier, enabled, remember { MutableInteractionSource() })
 }
 
 @Immutable

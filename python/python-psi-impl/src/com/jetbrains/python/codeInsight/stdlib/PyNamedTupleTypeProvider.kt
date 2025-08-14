@@ -169,23 +169,19 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
              )
     }
 
-    private fun getNamedTupleTypeForNTInheritorAsCallee(cls: PyClass, context: TypeEvalContext): PyType? {
+    private fun getNamedTupleTypeForNTInheritorAsCallee(cls: PyClass, context: TypeEvalContext): PyNamedTupleType? {
       if (cls.findInitOrNew(false, context) != null) return null
 
-      val parameters = if (isTypingNamedTupleDirectInheritor(cls, context)) {
+      return if (isTypingNamedTupleDirectInheritor(cls, context)) {
         val name = cls.name ?: return null
-        val tupleClass = PyPsiFacade.getInstance(cls.project).createClassByQName(PyTypingTypeProvider.NAMEDTUPLE, cls) ?: return null
-        val namedTupleType = PyNamedTupleType(tupleClass, name, collectTypingNTInheritorFields(cls, context), true, true, cls)
-
-        namedTupleType.getParameters(context)
+        PyNamedTupleType(cls, name, collectTypingNTInheritorFields(cls, context), true, true, cls)
       }
       else {
-        val superNTType = cls.getSuperClassTypes(context).firstOrNull(PyNamedTupleType::class.java::isInstance) ?: return null
-
-        superNTType.getParameters(context)
+        val base =
+          cls.getSuperClassTypes(context).firstOrNull(PyNamedTupleType::class.java::isInstance) as PyNamedTupleType? ?: return null
+        val name = cls.name ?: return null
+        PyNamedTupleType(cls, name, LinkedHashMap(base.fields), true, true, cls)
       }
-
-      return PyCallableTypeImpl(parameters, cls.getType(context)?.toInstance())
     }
 
     private fun getNamedTupleTypeFromStub(targetOrCall: PsiElement, stub: PyNamedTupleStub?, context: TypeEvalContext): PyNamedTupleType? {

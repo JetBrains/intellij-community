@@ -4,12 +4,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.util.ui.JBUI
 import org.jetbrains.jewel.bridge.dp
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.bridge.retrieveInsetsAsPaddingValues
-import org.jetbrains.jewel.bridge.toDpSize
+import org.jetbrains.jewel.bridge.safeValue
+import org.jetbrains.jewel.bridge.toNonNegativeDpSize
 import org.jetbrains.jewel.ui.component.styling.ComboBoxColors
 import org.jetbrains.jewel.ui.component.styling.ComboBoxIcons
 import org.jetbrains.jewel.ui.component.styling.ComboBoxMetrics
@@ -43,8 +43,8 @@ internal fun readDefaultComboBoxStyle(): ComboBoxStyle {
             borderHovered = normalBorder,
         )
 
-    val minimumSize = JBUI.CurrentTheme.ComboBox.minimumSize().toDpSize()
-    val arrowWidth = JBUI.CurrentTheme.Component.ARROW_AREA_WIDTH.dp
+    val minimumSize = JBUI.CurrentTheme.ComboBox.minimumSize().toNonNegativeDpSize()
+    val arrowWidth = JBUI.CurrentTheme.Component.ARROW_AREA_WIDTH.dp.safeValue()
     return ComboBoxStyle(
         colors = colors,
         metrics =
@@ -54,7 +54,7 @@ internal fun readDefaultComboBoxStyle(): ComboBoxStyle {
                 cornerSize = componentArc,
                 contentPadding = retrieveInsetsAsPaddingValues("ComboBox.padding"),
                 popupContentPadding = PaddingValues(vertical = 6.dp),
-                borderWidth = DarculaUIUtil.LW.dp,
+                borderWidth = borderWidth,
                 maxPopupHeight = Dp.Unspecified,
             ),
         icons = ComboBoxIcons(chevronDown = AllIconsKeys.General.ChevronDown),

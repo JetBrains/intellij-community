@@ -9,6 +9,8 @@ enum class GitLabGQLQuery(val filePath: String) {
   GET_CURRENT_USER("graphql/query/getCurrentUser.graphql"),
   @SinceGitLab("12.0")
   GET_MERGE_REQUEST("graphql/query/getMergeRequest.graphql"),
+  @SinceGitLab("14.0", note = "No exact version")
+  GET_MERGE_REQUEST_METRICS("graphql/query/getMergeRequestMetrics.graphql"),
   @SinceGitLab("13.1")
   FIND_MERGE_REQUESTS("graphql/query/findProjectMergeRequests.graphql"),
   @SinceGitLab("14.7")
@@ -21,6 +23,8 @@ enum class GitLabGQLQuery(val filePath: String) {
   GET_PROJECT_LABELS("graphql/query/getProjectLabels.graphql"),
   @SinceGitLab("15.2")
   GET_PROJECT_WORK_ITEMS("graphql/query/getProjectWidgets.graphql"),
+  @SinceGitLab("16.9")
+  GET_PROJECT_IS_FORKED("graphql/query/getProjectIsForked.graphql"),
   @SinceGitLab("13.0")
   GET_MEMBER_PROJECTS_FOR_SNIPPETS("graphql/query/getMemberProjectsForSnippets.graphql"),
   @SinceGitLab("13.0")

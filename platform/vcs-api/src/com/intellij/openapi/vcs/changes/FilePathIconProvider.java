@@ -22,10 +22,25 @@ public interface FilePathIconProvider {
     ExtensionPointName.create("com.intellij.openapi.vcs.changes.ui.filePathIconProvider");
 
   /**
+   * @deprecated Do not call this method directly because the `isDirectory` property of filePath is not reliable enough.
+   * Use {@link #getIcon(FilePath, boolean, Project)} instead.
+   *
    * @param filePath file for which icon is shown
    * @param project  current opened project
    * @return {@code null} if there is no appropriate icon for given file path
    */
-  @Nullable
-  Icon getIcon(@NotNull FilePath filePath, @Nullable Project project);
+  @Deprecated(forRemoval = true)
+  default @Nullable Icon getIcon(@NotNull FilePath filePath, @Nullable Project project) {
+    throw new UnsupportedOperationException("Implementors must override at least one of getIcon() methods");
+  }
+
+  /**
+   * @param filePath file for which icon is shown
+   * @param isDirectory flag that indicates if file is directory or not
+   * @param project  current opened project
+   * @return {@code null} if there is no appropriate icon for given file path
+   */
+  default @Nullable Icon getIcon(@NotNull FilePath filePath, boolean isDirectory, @Nullable Project project) {
+    return getIcon(filePath, project);
+  }
 }

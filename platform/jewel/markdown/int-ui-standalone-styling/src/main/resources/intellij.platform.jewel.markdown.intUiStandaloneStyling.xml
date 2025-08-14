@@ -1,9 +1,9 @@
 <idea-plugin>
-  <dependencies>
-    <module name="intellij.platform.jewel.markdown.core" />
-    <module name="intellij.platform.jewel.ui" />
-    <module name="intellij.platform.jewel.foundation" />
-    <module name="intellij.platform.jewel.intUi.standalone" />
-      <module name="intellij.platform.jewel.markdown.extensions.gfmAlerts"/>
-  </dependencies>
+    <dependencies>
+        <module name="intellij.platform.jewel.markdown.core"/>
+        <module name="intellij.platform.jewel.ui"/>
+        <module name="intellij.platform.jewel.foundation"/>
+        <module name="intellij.platform.jewel.intUi.standalone"/>
+        <module name="intellij.platform.jewel.markdown.extensions.gfmAlerts"/>
+    </dependencies>
 </idea-plugin>

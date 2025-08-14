@@ -42,6 +42,7 @@ object OsFamilyDetector {
 
   private val regex = "(^|-|/)((?<macos>(darwin|mac|macos)[-/])|(?<win>win32-|(win|windows)[-/])|(?<android>Linux-(Android|Musl)/)|(?<linux>linux[-/]))".toRegex(RegexOption.IGNORE_CASE)
 
+
   fun detectOsFamily(path: String): Pair<OsFamily, String>? {
     if (!path.contains("/")) { // support for dirless natives like skiko
       return when {
@@ -108,8 +109,8 @@ class NativeFilesMatcher(paths: List<String>, private val targetOs: Iterable<OsF
 
   companion object {
     fun isCompatibleWithTargetPlatform(name: String, os: PersistentList<OsFamily>, arch: JvmArchitecture?): Boolean {
-      val fileOs = OsFamilyDetector.detectOsFamily(name)?.first ?: error("Cannot determine native file OS Family")
-      val fileArch = determineArch(fileOs, name) ?: error("Cannot determine native file architecture")
+      val fileOs = OsFamilyDetector.detectOsFamily(name)?.first ?: error("Cannot determine '$name' native file OS Family")
+      val fileArch = determineArch(fileOs, name) ?: error("Cannot determine '$name' native file architecture")
       return os.contains(fileOs) && (arch == null || fileArch.compatibleWithTarget(arch))
     }
   }

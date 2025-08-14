@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import org.jetbrains.jewel.bridge.dp
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
+import org.jetbrains.jewel.bridge.safeValue
 import org.jetbrains.jewel.ui.component.styling.IconButtonColors
 import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
@@ -18,7 +19,7 @@ internal fun readIconButtonStyle(): IconButtonStyle =
     IconButtonStyle(
         metrics =
             IconButtonMetrics(
-                cornerSize = CornerSize(DarculaUIUtil.BUTTON_ARC.dp / 2),
+                cornerSize = CornerSize(DarculaUIUtil.BUTTON_ARC.dp.safeValue() / 2),
                 borderWidth = 1.dp,
                 padding = PaddingValues(0.dp),
                 minSize = DpSize(24.dp, 24.dp),

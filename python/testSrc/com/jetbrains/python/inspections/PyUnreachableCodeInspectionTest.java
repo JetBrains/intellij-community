@@ -25,6 +25,39 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
   }
 
+  // TODO: Test pattern matching more when we have Never type
+  // PY-79770
+  public void testBasicPatternMatching() {
+    doTestByText("""
+def foo(param: int) -> int:
+    match param:
+        case _:
+            return 41
+                   """);
+  }
+  
+  // PY-80471
+  public void testIfTrueForLoop() {
+    doTestByText("""
+if True:
+    for i in []:
+        pass
+else:
+    <warning descr="This code is unreachable">print("unreachable")</warning>
+                   """);
+  }
+
+  // PY-80471
+  public void testIfTrueWhileLoop() {
+    doTestByText("""
+if True:
+    while expr:
+        break
+else:
+    <warning descr="This code is unreachable">print("unreachable")</warning>
+                   """);
+  }
+
   // PY-51564
   public void testWithNotContext() {
     doTestByText("""

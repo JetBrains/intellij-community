@@ -25,6 +25,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPo
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition.TopEnd
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition.TopStart
 
+@ExperimentalJewelApi
 @GenerateDataFunctions
 public class MarkdownStyling(
     public val blockVerticalSpacing: Dp,
@@ -39,6 +40,7 @@ public class MarkdownStyling(
 ) {
     @ExperimentalJewelApi public val baseInlinesStyling: InlinesStyling = paragraph.inlinesStyling
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class Paragraph(override val inlinesStyling: InlinesStyling) : WithInlinesStyling {
         override fun equals(other: Any?): Boolean {
@@ -57,6 +59,7 @@ public class MarkdownStyling(
         public companion object
     }
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class Heading(
         public val h1: H1,
@@ -70,6 +73,7 @@ public class MarkdownStyling(
             public val padding: PaddingValues
         }
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class H1(
             override val inlinesStyling: InlinesStyling,
@@ -115,6 +119,7 @@ public class MarkdownStyling(
             public companion object
         }
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class H2(
             override val inlinesStyling: InlinesStyling,
@@ -160,6 +165,7 @@ public class MarkdownStyling(
             public companion object
         }
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class H3(
             override val inlinesStyling: InlinesStyling,
@@ -205,6 +211,7 @@ public class MarkdownStyling(
             public companion object
         }
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class H4(
             override val inlinesStyling: InlinesStyling,
@@ -250,6 +257,7 @@ public class MarkdownStyling(
             public companion object
         }
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class H5(
             override val inlinesStyling: InlinesStyling,
@@ -295,6 +303,7 @@ public class MarkdownStyling(
             public companion object
         }
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class H6(
             override val inlinesStyling: InlinesStyling,
@@ -371,6 +380,7 @@ public class MarkdownStyling(
         public companion object
     }
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class BlockQuote(
         public val padding: PaddingValues,
@@ -420,8 +430,10 @@ public class MarkdownStyling(
         public companion object
     }
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class List(public val ordered: Ordered, public val unordered: Unordered) {
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class Ordered(
             public val numberStyle: TextStyle,
@@ -431,7 +443,90 @@ public class MarkdownStyling(
             public val itemVerticalSpacing: Dp,
             public val itemVerticalSpacingTight: Dp,
             public val padding: PaddingValues,
+            public val numberFormatStyles: NumberFormatStyles,
         ) {
+            @GenerateDataFunctions
+            public class NumberFormatStyles(
+                public val firstLevel: NumberFormatStyle,
+                public val secondLevel: NumberFormatStyle = firstLevel,
+                public val thirdLevel: NumberFormatStyle = secondLevel,
+            ) {
+                public sealed interface NumberFormatStyle {
+                    public fun formatNumber(number: Int): String
+
+                    public object Decimal : NumberFormatStyle {
+                        override fun formatNumber(number: Int): String {
+                            require(number > 0) { "Input must be a positive integer" }
+
+                            return number.toString()
+                        }
+                    }
+
+                    public object Roman : NumberFormatStyle {
+                        override fun formatNumber(number: Int): String {
+                            require(number > 0) { "Input must be a positive integer" }
+
+                            val values = intArrayOf(1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1)
+                            val symbols = arrayOf("m", "cm", "d", "cd", "c", "xc", "l", "xl", "x", "ix", "v", "iv", "i")
+                            var remaining = number
+
+                            return buildString {
+                                for (i in values.indices) {
+                                    while (remaining >= values[i]) {
+                                        append(symbols[i])
+                                        remaining -= values[i]
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    public object Alphabetical : NumberFormatStyle {
+                        override fun formatNumber(number: Int): String {
+                            require(number > 0) { "Input must be a positive integer" }
+
+                            var num = number
+                            return buildString {
+                                    while (num > 0) {
+                                        num--
+                                        val remainder = num % 26
+                                        append('a' + remainder)
+                                        num /= 26
+                                    }
+                                }
+                                .reversed()
+                        }
+                    }
+                }
+
+                override fun equals(other: Any?): Boolean {
+                    if (this === other) return true
+                    if (javaClass != other?.javaClass) return false
+
+                    other as NumberFormatStyles
+
+                    if (firstLevel != other.firstLevel) return false
+                    if (secondLevel != other.secondLevel) return false
+                    if (thirdLevel != other.thirdLevel) return false
+
+                    return true
+                }
+
+                override fun hashCode(): Int {
+                    var result = firstLevel.hashCode()
+                    result = 31 * result + secondLevel.hashCode()
+                    result = 31 * result + thirdLevel.hashCode()
+                    return result
+                }
+
+                override fun toString(): String =
+                    "NumberFormatStyles(" +
+                        "firstLevel=$firstLevel, " +
+                        "secondLevel=$secondLevel, " +
+                        "thirdLevel=$thirdLevel" +
+                        ")"
+            }
+
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
                 if (javaClass != other?.javaClass) return false
@@ -445,6 +540,7 @@ public class MarkdownStyling(
                 if (itemVerticalSpacing != other.itemVerticalSpacing) return false
                 if (itemVerticalSpacingTight != other.itemVerticalSpacingTight) return false
                 if (padding != other.padding) return false
+                if (numberFormatStyles != other.numberFormatStyles) return false
 
                 return true
             }
@@ -457,6 +553,7 @@ public class MarkdownStyling(
                 result = 31 * result + itemVerticalSpacing.hashCode()
                 result = 31 * result + itemVerticalSpacingTight.hashCode()
                 result = 31 * result + padding.hashCode()
+                result = 31 * result + numberFormatStyles.hashCode()
                 return result
             }
 
@@ -468,13 +565,15 @@ public class MarkdownStyling(
                     "numberTextAlign=$numberTextAlign, " +
                     "itemVerticalSpacing=$itemVerticalSpacing, " +
                     "itemVerticalSpacingTight=$itemVerticalSpacingTight, " +
-                    "padding=$padding" +
+                    "padding=$padding, " +
+                    "numberFormatStyles=$numberFormatStyles" +
                     ")"
             }
 
             public companion object
         }
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class Unordered(
             public val bullet: Char?,
@@ -483,7 +582,43 @@ public class MarkdownStyling(
             public val itemVerticalSpacing: Dp,
             public val itemVerticalSpacingTight: Dp,
             public val padding: PaddingValues,
+            public val markerMinWidth: Dp,
+            public val bulletCharStyles: BulletCharStyles?,
         ) {
+            @GenerateDataFunctions
+            public class BulletCharStyles(
+                public val firstLevel: Char = '•',
+                public val secondLevel: Char = firstLevel,
+                public val thirdLevel: Char = secondLevel,
+            ) {
+                override fun equals(other: Any?): Boolean {
+                    if (this === other) return true
+                    if (javaClass != other?.javaClass) return false
+
+                    other as BulletCharStyles
+
+                    if (firstLevel != other.firstLevel) return false
+                    if (secondLevel != other.secondLevel) return false
+                    if (thirdLevel != other.thirdLevel) return false
+
+                    return true
+                }
+
+                override fun hashCode(): Int {
+                    var result = firstLevel.hashCode()
+                    result = 31 * result + secondLevel.hashCode()
+                    result = 31 * result + thirdLevel.hashCode()
+                    return result
+                }
+
+                override fun toString(): String =
+                    "BulletCharStyles(" +
+                        "firstLevel=$firstLevel, " +
+                        "secondLevel=$secondLevel, " +
+                        "thirdLevel=$thirdLevel" +
+                        ")"
+            }
+
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
                 if (javaClass != other?.javaClass) return false
@@ -496,6 +631,8 @@ public class MarkdownStyling(
                 if (itemVerticalSpacing != other.itemVerticalSpacing) return false
                 if (itemVerticalSpacingTight != other.itemVerticalSpacingTight) return false
                 if (padding != other.padding) return false
+                if (markerMinWidth != other.markerMinWidth) return false
+                if (bulletCharStyles != other.bulletCharStyles) return false
 
                 return true
             }
@@ -507,6 +644,8 @@ public class MarkdownStyling(
                 result = 31 * result + itemVerticalSpacing.hashCode()
                 result = 31 * result + itemVerticalSpacingTight.hashCode()
                 result = 31 * result + padding.hashCode()
+                result = 31 * result + markerMinWidth.hashCode()
+                result = 31 * result + bulletCharStyles.hashCode()
                 return result
             }
 
@@ -517,7 +656,9 @@ public class MarkdownStyling(
                     "bulletContentGap=$bulletContentGap, " +
                     "itemVerticalSpacing=$itemVerticalSpacing, " +
                     "itemVerticalSpacingTight=$itemVerticalSpacingTight, " +
-                    "padding=$padding" +
+                    "padding=$padding, " +
+                    "markerMinWidth=$markerMinWidth, " +
+                    "bulletCharByLevel=$bulletCharStyles" +
                     ")"
             }
 
@@ -547,8 +688,10 @@ public class MarkdownStyling(
         public companion object
     }
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class Code(public val indented: Indented, public val fenced: Fenced) {
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class Indented(
             public val editorTextStyle: TextStyle,
@@ -606,6 +749,7 @@ public class MarkdownStyling(
             public companion object
         }
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class Fenced(
             public val editorTextStyle: TextStyle,
@@ -708,6 +852,7 @@ public class MarkdownStyling(
         public companion object
     }
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class Image(
         public val alignment: Alignment,
@@ -761,6 +906,7 @@ public class MarkdownStyling(
         public companion object
     }
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class ThematicBreak(
         public val padding: PaddingValues,
@@ -792,6 +938,7 @@ public class MarkdownStyling(
         public companion object
     }
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class HtmlBlock(
         public val textStyle: TextStyle,
@@ -904,6 +1051,7 @@ public interface WithUnderline {
     public val underlineGap: Dp
 }
 
+@ExperimentalJewelApi
 @GenerateDataFunctions
 public class InlinesStyling(
     public val textStyle: TextStyle,

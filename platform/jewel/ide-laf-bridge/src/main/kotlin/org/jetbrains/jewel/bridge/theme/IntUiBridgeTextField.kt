@@ -7,10 +7,9 @@ import androidx.compose.ui.unit.dp
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
-import org.jetbrains.jewel.bridge.dp
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.bridge.toComposeColor
-import org.jetbrains.jewel.bridge.toDpSize
+import org.jetbrains.jewel.bridge.toNonNegativeDpSize
 import org.jetbrains.jewel.ui.component.styling.IconButtonColors
 import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
@@ -50,15 +49,15 @@ internal fun readTextFieldStyle(): TextFieldStyle {
             placeholder = NamedColorUtil.getInactiveTextColor().toComposeColor(),
         )
 
-    val minimumSize = JBUI.CurrentTheme.TextField.minimumSize().toDpSize()
+    val minimumSize = JBUI.CurrentTheme.TextField.minimumSize().toNonNegativeDpSize()
     return TextFieldStyle(
         colors = colors,
         metrics =
             TextFieldMetrics(
                 cornerSize = componentArc,
-                contentPadding = PaddingValues(horizontal = 8.dp + DarculaUIUtil.LW.dp),
+                contentPadding = PaddingValues(horizontal = 8.dp + borderWidth),
                 minSize = DpSize(144.dp, minimumSize.height),
-                borderWidth = DarculaUIUtil.LW.dp,
+                borderWidth = borderWidth,
             ),
         iconButtonStyle =
             readIconButtonStyle()

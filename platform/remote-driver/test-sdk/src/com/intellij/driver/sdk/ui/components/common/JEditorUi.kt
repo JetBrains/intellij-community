@@ -16,6 +16,7 @@ import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.remote.Component
 import org.intellij.lang.annotations.Language
 import java.awt.Point
+import java.awt.Rectangle
 
 fun Finder.editor(@Language("xpath") xpath: String? = null): JEditorUiComponent {
   return x(xpath ?: "//div[@class='EditorComponentImpl']",
@@ -232,7 +233,6 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
   val iconAreaOffset
     get() = gutter.getIconAreaOffset()
 
-
   fun getGutterIcons(): List<GutterIcon> {
     waitFor { this.icons.isNotEmpty() }
     return this.icons
@@ -247,6 +247,29 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun rightClickOnIcon(line: Int) {
     rightClick(icons.firstOrNull { it.line == line - 1 }!!.location)
+  }
+
+  fun clickLineMarkerAtLine(lineNum: Int, accessibleName: String, lineY: Int? = null) {
+    val lineIndex = lineNum - 1
+    val rectangle = waitNotNull("No $accessibleName marker on line $lineNum") {
+      driver.withContext(OnDispatcher.EDT) {
+        gutter.getActiveGutterRendererRectangle(lineIndex, accessibleName)
+      }
+    }
+    val lineY = lineY ?: driver.withContext(OnDispatcher.EDT) {
+      val startY = gutter.getEditor().visualLineToY(lineIndex)
+      startY + (gutter.getEditor().getLineHeight() / 2)
+    }
+    click(Point(rectangle.centerX.toInt(), lineY))
+  }
+
+  fun clickVcsLineMarkerAtLine(line: Int) {
+    //to support a deleted block marker, click on the first third of the line
+    val lineY = driver.withContext(OnDispatcher.EDT) {
+      val startY = gutter.getEditor().visualLineToY(line - 1)
+      startY + (gutter.getEditor().getLineHeight() / 6)
+    }
+    clickLineMarkerAtLine(line, "VCS marker: changed line", lineY)
   }
 
   inner class GutterIcon(private val data: GutterIconWithLocation) {
@@ -269,6 +292,7 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
         .findLast { it.trim().startsWith("path") }!!.split('=')[1]
     }
   }
+
 }
 
 enum class GutterIcon(val path: String) {
@@ -287,7 +311,6 @@ data class GutterState(
   val iconPath: String = "",
 )
 
-
 class InlayHint(val offset: Int, val text: String)
 
 fun List<InlayHint>.getHint(offset: Int): InlayHint {
@@ -298,12 +321,15 @@ fun List<InlayHint>.getHint(offset: Int): InlayHint {
   return foundHint
 }
 
-
 @Remote("com.intellij.openapi.editor.impl.EditorGutterComponentImpl")
 interface EditorGutterComponentImpl : Component {
   fun getLineGutterMarks(): List<GutterIconWithLocation>
 
   fun getIconAreaOffset(): Int
+
+  fun getActiveGutterRendererRectangle(lineNum: Int, accessibleName: String): Rectangle?
+
+  fun getEditor(): Editor
 }
 
 @Remote("com.intellij.openapi.editor.impl.GutterIconWithLocation")

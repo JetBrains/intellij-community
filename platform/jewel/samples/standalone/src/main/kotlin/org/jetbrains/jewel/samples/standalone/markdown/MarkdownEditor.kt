@@ -31,7 +31,7 @@ import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextArea
 
 @Composable
-public fun MarkdownEditor(state: TextFieldState, modifier: Modifier = Modifier) {
+internal fun MarkdownEditor(state: TextFieldState, modifier: Modifier = Modifier) {
     Column(modifier) {
         ControlsRow(
             modifier = Modifier.fillMaxWidth().background(JewelTheme.globalColors.panelBackground).padding(8.dp),

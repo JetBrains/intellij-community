@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isUnspecified
 import androidx.compose.ui.unit.sp
@@ -42,11 +43,13 @@ import com.intellij.util.ui.JBValue
 import java.awt.Dimension
 import java.awt.Insets
 import javax.swing.UIManager
-import org.jetbrains.jewel.ui.component.Typography
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 
 private val logger = Logger.getInstance("JewelBridge")
 
 public fun java.awt.Color.toComposeColor(): Color = Color(red = red, green = green, blue = blue, alpha = alpha)
+
+public fun Color.toAwtColor(): java.awt.Color = java.awt.Color(red, green, blue, alpha)
 
 public fun java.awt.Color?.toComposeColorOrUnspecified(): Color = this?.toComposeColor() ?: Color.Unspecified
 
@@ -96,6 +99,14 @@ public fun retrieveIntAsDpOrUnspecified(key: String): Dp =
         Dp.Unspecified
     }
 
+@ExperimentalJewelApi
+public fun retrieveIntAsNonNegativeDpOrUnspecified(key: String): Dp =
+    try {
+        retrieveIntAsDp(key).safeValue()
+    } catch (_: JewelBridgeException) {
+        Dp.Unspecified
+    }
+
 public fun retrieveInsetsAsPaddingValues(key: String, default: PaddingValues? = null): PaddingValues =
     UIManager.getInsets(key)?.toPaddingValues() ?: default ?: keyNotFound(key, "Insets")
 
@@ -107,7 +118,7 @@ public fun Insets.toPaddingValues(): PaddingValues =
     if (this is JBInsets) {
         toPaddingValues()
     } else {
-        PaddingValues(left.dp, top.dp, right.dp, bottom.dp)
+        PaddingValues(start = left.dp, top = top.dp, end = right.dp, bottom = bottom.dp)
     }
 
 /**
@@ -116,7 +127,7 @@ public fun Insets.toPaddingValues(): PaddingValues =
  */
 @Suppress("ktlint:standard:function-signature") // False positive
 public fun JBInsets.toPaddingValues(): PaddingValues =
-    PaddingValues(unscaled.left.dp, unscaled.top.dp, unscaled.right.dp, unscaled.bottom.dp)
+    PaddingValues(start = unscaled.left.dp, top = unscaled.top.dp, end = unscaled.right.dp, bottom = unscaled.bottom.dp)
 
 /**
  * Converts a [Dimension] to [DpSize]. If the receiver is a [JBDimension] instance, this function delegates to the
@@ -133,6 +144,28 @@ public fun JBDimension.toDpSize(): DpSize {
     return DpSize((width2d() / scaleFactor).dp, (height2d() / scaleFactor).dp)
 }
 
+/**
+ * Converts a [Dimension] to a non-negative [DpSize]. If the receiver is a [JBDimension] instance, this function
+ * delegates to the specific [toNonNegativeDpSize] for it, which is scaling-aware.
+ */
+@ExperimentalJewelApi
+public fun Dimension.toNonNegativeDpSize(): DpSize =
+    if (this is JBDimension) {
+        toNonNegativeDpSize()
+    } else {
+        DpSize(width = width.dp.safeValue(), height = height.dp.safeValue())
+    }
+
+/**
+ * Converts a [JBDimension] to a non-negative [DpSize], in a scaling-aware way. This means that the resulting [DpSize]
+ * will be constructed by first obtaining the unscaled values. This avoids double scaling.
+ */
+@ExperimentalJewelApi
+public fun JBDimension.toNonNegativeDpSize(): DpSize {
+    val scaleFactor = scale(1f)
+    return DpSize((width2d() / scaleFactor).dp.safeValue(), (height2d() / scaleFactor).dp.safeValue())
+}
+
 public fun retrieveArcAsCornerSize(key: String): CornerSize = CornerSize(retrieveIntAsDp(key) / 2)
 
 public fun retrieveArcAsCornerSizeOrDefault(key: String, default: CornerSize): CornerSize {
@@ -141,11 +174,18 @@ public fun retrieveArcAsCornerSizeOrDefault(key: String, default: CornerSize): C
     return CornerSize(intValue / 2)
 }
 
+@ExperimentalJewelApi
+public fun retrieveArcAsNonNegativeCornerSizeOrDefault(key: String, default: CornerSize): CornerSize {
+    val intValue = retrieveIntAsNonNegativeDpOrUnspecified(key)
+    if (intValue.isUnspecified) return default
+    return CornerSize(intValue / 2)
+}
+
 public fun retrieveArcAsCornerSizeWithFallbacks(vararg keys: String): CornerSize {
     for (key in keys) {
         val rawValue = UIManager.get(key)
         if (rawValue is Int) {
-            val cornerSize = rawValue.dp
+            val cornerSize = rawValue.dp.safeValue()
 
             // Swing uses arcs, which are a diameter length, but we need a radius
             return CornerSize(cornerSize / 2)
@@ -154,6 +194,18 @@ public fun retrieveArcAsCornerSizeWithFallbacks(vararg keys: String): CornerSize
 
     keysNotFound(keys.toList(), "Int")
 }
+
+/**
+ * To avoid having Jewel crash due to negative values that third-party themes can define, we need to constrain values
+ * that are read from LaF.
+ */
+internal fun Dp.safeValue(minimumValue: Dp = 0.dp) = this.coerceAtLeast(minimumValue)
+
+/**
+ * To avoid having Jewel crash due to negative values that third-party themes can define we need to constrain values
+ * that are read from LaF.
+ */
+internal fun Int.safeValue(minimumValue: Int = 0) = this.coerceAtLeast(minimumValue)
 
 public fun retrieveTextStyle(
     fontKey: String,
@@ -165,9 +217,7 @@ public fun retrieveTextStyle(
 ): TextStyle {
     val baseColor = colorKey?.let { retrieveColorOrUnspecified(colorKey) } ?: Color.Unspecified
     val resolvedStyle = retrieveTextStyle(fontKey, color = baseColor, lineHeight, bold, fontStyle, size)
-    return resolvedStyle.copy(
-        lineHeight = lineHeight.takeOrElse { resolvedStyle.fontSize * Typography.DefaultLineHeightMultiplier }
-    )
+    return resolvedStyle.copy(lineHeight = lineHeight.takeOrElse { resolvedStyle.lineHeight })
 }
 
 @OptIn(ExperimentalTextApi::class)
@@ -179,24 +229,31 @@ public fun retrieveTextStyle(
     fontStyle: FontStyle = FontStyle.Normal,
     size: TextUnit = TextUnit.Unspecified,
 ): TextStyle {
-    val lafFont = UIManager.getFont(key) ?: keyNotFound(key, "Font")
-    val jbFont = JBFont.create(lafFont, false)
-
+    val jbFont = retrieveJBFont(key)
     val derivedFont =
         jbFont
             .let { if (bold) it.asBold() else it.asPlain() }
             .let { if (fontStyle == FontStyle.Italic) it.asItalic() else it }
 
+    val safeFontSize = if (derivedFont.size > 0) derivedFont.size.sp else TextUnit.Unspecified
+    val safeLineHeight = if (lineHeight.value > 0) lineHeight else TextUnit.Unspecified
+    val safeSize = if (size.value > 0) size else TextUnit.Unspecified
+
     return TextStyle(
         color = color,
-        fontSize = size.takeOrElse { derivedFont.size.sp / UISettingsUtils.getInstance().currentIdeScale },
+        fontSize = safeSize.takeOrElse { safeFontSize / UISettingsUtils.getInstance().currentIdeScale },
         fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
         fontStyle = fontStyle,
         fontFamily = derivedFont.asComposeFontFamily(),
         // TODO textDecoration might be defined in the AWT theme
-        lineHeight = lineHeight,
+        lineHeight = safeLineHeight,
         platformStyle = retrievePlatformTextStyle(),
     )
+}
+
+internal fun retrieveJBFont(key: String): JBFont {
+    val lafFont = UIManager.getFont(key) ?: keyNotFound(key, "Font")
+    return JBFont.create(lafFont, false)
 }
 
 @OptIn(ExperimentalTextApi::class)
@@ -249,7 +306,6 @@ internal fun scaleDensityWithIdeScale(sourceDensity: Density): Density {
 
 internal fun isNewUiTheme(): Boolean = NewUI.isEnabled()
 
-@Suppress("UnstableApiUsage")
 internal fun lafName(): String {
     val lafInfo = LafManager.getInstance().currentUIThemeLookAndFeel
     return lafInfo.name

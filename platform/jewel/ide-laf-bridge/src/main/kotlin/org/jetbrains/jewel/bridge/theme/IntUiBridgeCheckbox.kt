@@ -7,7 +7,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
 import org.jetbrains.jewel.bridge.isNewUiTheme
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
-import org.jetbrains.jewel.bridge.retrieveIntAsDpOrUnspecified
+import org.jetbrains.jewel.bridge.retrieveIntAsNonNegativeDpOrUnspecified
 import org.jetbrains.jewel.ui.component.styling.CheckboxColors
 import org.jetbrains.jewel.ui.component.styling.CheckboxIcons
 import org.jetbrains.jewel.ui.component.styling.CheckboxMetrics
@@ -31,7 +31,7 @@ internal fun readCheckboxStyle(): CheckboxStyle {
     // com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI.getDefaultIcon()
     // is not correct though, the SVG is 19x19 and is missing 1px on the right
     val checkboxSize =
-        retrieveIntAsDpOrUnspecified("CheckBox.iconSize").let {
+        retrieveIntAsNonNegativeDpOrUnspecified("CheckBox.iconSize").let {
             when {
                 it.isSpecified -> DpSize(it, it)
                 else -> metrics.checkboxSize

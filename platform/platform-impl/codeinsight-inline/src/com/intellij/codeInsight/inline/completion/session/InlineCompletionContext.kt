@@ -20,7 +20,8 @@ class InlineCompletionContext internal constructor(
   /**
    * @see dispose
    */
-  var isDisposed = false
+  @Volatile
+  var isDisposed: Boolean = false
     @RequiresEdt
     get
     private set

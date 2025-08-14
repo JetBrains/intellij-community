@@ -1,7 +1,6 @@
 package com.jetbrains.python.codeInsight.controlflow;
 
 import com.intellij.codeInsight.controlflow.ControlFlow;
-import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -9,7 +8,10 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.List;
 
 @ApiStatus.Internal
 public class PyDataFlow {
@@ -25,14 +27,22 @@ public class PyDataFlow {
   }
 
   private void buildReachability() {
-    Queue<Instruction> toBeProcessed = new ArrayDeque<>();
-    toBeProcessed.add(myInstructions[0]);
-    while (!toBeProcessed.isEmpty()) {
-      Instruction instruction = toBeProcessed.poll();
-      myReachability[instruction.num()] = true;
-      for (var successor : getReachableSuccessors(instruction)) {
+    Deque<Instruction> stack = new ArrayDeque<>();
+    stack.push(myInstructions[0]);
+
+    while (!stack.isEmpty()) {
+      Instruction instruction = stack.pop();
+      int instructionNum = instruction.num();
+
+      if (myReachability[instructionNum]) {
+        continue; // Already visited
+      }
+
+      myReachability[instructionNum] = true;
+
+      for (Instruction successor : getReachableSuccessors(instruction)) {
         if (!myReachability[successor.num()]) {
-          toBeProcessed.add(successor);
+          stack.push(successor);
         }
       }
     }
@@ -45,6 +55,7 @@ public class PyDataFlow {
   }
 
   public boolean isUnreachable(@NotNull Instruction instruction) {
+    if (instruction.num() >= myReachability.length) return false;
     return !myReachability[instruction.num()];
   }
 
@@ -52,10 +63,22 @@ public class PyDataFlow {
     final var scope = ScopeUtil.getScopeOwner(element);
     if (scope != null) {
       final var flow = ControlFlowCache.getControlFlow(scope).getInstructions();
-      int idx = ControlFlowUtil.findInstructionNumberByElement(flow, element);
+      int idx = findInstructionNumberByElement(flow, element);
       if (idx < 0) return false;
       return ControlFlowCache.getDataFlow(scope, context).isUnreachable(flow[idx]);
     }
     return false;
+  }
+
+  /**
+   * Like ControlFlowUtil.findInstructionNumberByElement, but does not use ProgressManager.checkCanceled()
+   */
+  public static int findInstructionNumberByElement(final Instruction[] flow, final PsiElement element){
+    for (int i=0;i<flow.length;i++) {
+      if (element == flow[i].getElement()){
+        return i;
+      }
+    }
+    return -1;
   }
 }

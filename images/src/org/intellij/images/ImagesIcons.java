@@ -17,6 +17,8 @@ public final class ImagesIcons {
   private static @NotNull Icon load(@NotNull String path, @NotNull String expUIPath, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, expUIPath, ImagesIcons.class.getClassLoader(), cacheKey, flags);
   }
+  /** 16x16 */ public static final @NotNull Icon NormalizeImage = load("org/intellij/images/icons/normalizeImage.svg", 690378151, 2);
+  /** 16x16 */ public static final @NotNull Icon Rotate = load("org/intellij/images/icons/rotate.svg", 392918290, 2);
   /** 75x86 */ public static final @NotNull Icon ThumbnailBlank = load("org/intellij/images/icons/ThumbnailBlank.png", 0, 2);
   /** 75x82 */ public static final @NotNull Icon ThumbnailDirectory = load("org/intellij/images/icons/ThumbnailDirectory.png", 0, 0);
   /** 13x13 */ public static final @NotNull Icon ThumbnailToolWindow = load("org/intellij/images/icons/ThumbnailToolWindow.svg", 32430216, 2);

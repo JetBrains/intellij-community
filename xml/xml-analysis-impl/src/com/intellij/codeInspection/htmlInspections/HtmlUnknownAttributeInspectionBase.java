@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -114,6 +115,10 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
           && providerHighlightType != ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
         highlightType = providerHighlightType;
       }
+    }
+    if (XmlHighlightVisitor.isInjectedWithoutValidation(tag)
+        && ProblemHighlightType.WEAK_WARNING.ordinal() < highlightType.ordinal()) {
+      highlightType = ProblemHighlightType.WEAK_WARNING;
     }
     return highlightType;
   }

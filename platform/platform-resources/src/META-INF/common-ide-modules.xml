@@ -10,6 +10,7 @@
     <module name="intellij.libraries.microba"/>
     <module name="intellij.libraries.skiko"/>
     <module name="intellij.platform.compose"/>
+    <module name="intellij.platform.compose.markdown"/>
     <module name="intellij.platform.jewel.foundation"/>
     <module name="intellij.libraries.compose.foundation.desktop"/>
     <module name="intellij.platform.jewel.ui"/>
@@ -19,6 +20,7 @@
     <module name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough"/>
     <module name="intellij.platform.jewel.markdown.extensions.gfmTables"/>
     <module name="intellij.platform.jewel.markdown.extensions.autolink"/>
+    <module name="intellij.platform.jewel.markdown.extensions.images"/>
     <module name="intellij.platform.jewel.markdown.core"/>
     <module name="intellij.platform.diagnostic.freezeAnalyzer"/>
     <module name="intellij.platform.diagnostic.freezes"/>

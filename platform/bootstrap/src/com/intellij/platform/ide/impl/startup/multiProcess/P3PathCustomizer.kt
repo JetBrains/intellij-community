@@ -38,6 +38,7 @@ class P3PathCustomizer : PathCustomizer {
     val paths = P3PathsEx(projectStoreBaseDir)
     Files.createDirectories(paths.getConfigDir())
 
+    P3SupportInstaller.installPerProcessInstanceSupportImplementation(P3SupportImpl(projectStoreBaseDir))
     PerProcessPathCustomization.prepareConfig(paths.getConfigDir(), PathManager.getConfigDir(), false)
 
     if (ApplicationManagerEx.isInIntegrationTest()) {
@@ -51,7 +52,6 @@ class P3PathCustomizer : PathCustomizer {
       thisLogger().info("current pid: $pid, has been written to pids tile: $file")
     }
 
-    P3SupportInstaller.installPerProcessInstanceSupportImplementation(P3SupportImpl(projectStoreBaseDir))
     return PathCustomizer.CustomPaths(
       paths.getConfigDir().toCanonicalPath(),
       paths.getSystemDir().toCanonicalPath(),

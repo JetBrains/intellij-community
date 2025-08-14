@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.buildlogic.theme
 
 import com.squareup.kotlinpoet.ClassName
-import java.net.URI
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -11,8 +10,13 @@ import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.kotlin.dsl.property
 
@@ -23,20 +27,23 @@ class ThemeGeneration(val name: String, project: Project) {
 
     val targetDir: DirectoryProperty =
         project.objects.directoryProperty().convention(project.layout.buildDirectory.dir("generated/theme"))
-    val ideaVersion = project.objects.property<String>()
     val themeClassName = project.objects.property<String>()
-    val themeFile = project.objects.property<String>()
+    val themeFilePath = project.objects.property<String>()
 }
 
-open class IntelliJThemeGeneratorTask : DefaultTask() {
+@CacheableTask
+abstract class IntelliJThemeGeneratorTask : DefaultTask() {
 
-    @get:OutputFile val outputFile: RegularFileProperty = project.objects.fileProperty()
+    @get:OutputFile abstract val outputFile: RegularFileProperty
 
-    @get:Input val ideaVersion = project.objects.property<String>()
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val themeFile: RegularFileProperty
 
-    @get:Input val themeFile = project.objects.property<String>()
+    @get:Input
+    abstract val themeFilePath: Property<String>
 
-    @get:Input val themeClassName = project.objects.property<String>()
+    @get:Input abstract val themeClassName: Property<String>
 
     init {
         group = "jewel"
@@ -45,19 +52,14 @@ open class IntelliJThemeGeneratorTask : DefaultTask() {
     @TaskAction
     fun generate() {
         val json = Json { ignoreUnknownKeys = true }
-        val url = buildString {
-            append("https://raw.githubusercontent.com/JetBrains/intellij-community/")
-            append(ideaVersion.get())
-            append("/")
-            append(themeFile.get())
-        }
 
-        logger.lifecycle("Fetching theme descriptor from $url...")
-        val themeDescriptor =
-            URI.create(url).toURL().openStream().use { json.decodeFromStream<IntellijThemeDescriptor>(it) }
+        val themeFile = themeFile.get().asFile
+
+        logger.lifecycle("Fetching theme descriptor from ${themeFile.name}...")
+        val themeDescriptor = themeFile.inputStream().use { json.decodeFromStream<IntellijThemeDescriptor>(it) }
 
         val className = ClassName.bestGuess(themeClassName.get())
-        val file = IntUiThemeDescriptorReader.readThemeFrom(themeDescriptor, className, ideaVersion.get(), url)
+        val file = IntUiThemeDescriptorReader.readThemeFrom(themeDescriptor, className, themeFilePath.get())
 
         val outputFile = outputFile.get().asFile
         logger.lifecycle(

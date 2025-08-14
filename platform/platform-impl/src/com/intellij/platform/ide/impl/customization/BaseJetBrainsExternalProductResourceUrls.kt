@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.impl.customization
 
 import com.intellij.openapi.application.ApplicationInfo
@@ -78,7 +78,7 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
         "project" to youtrackProjectId,
         "clearDraft" to "true",
         "description" to description,
-        "c" to "Affected versions: ${ApplicationInfo.getInstance().fullVersion}"
+        "c" to "Affected versions: ${ApplicationInfo.getInstance().fullVersion} (${ApplicationInfo.getInstance().getBuild().withoutProductCode()})"
       ))
     }
   

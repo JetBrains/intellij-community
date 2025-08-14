@@ -10,16 +10,34 @@ import io.gitlab.arturbosch.detekt.api.Issue
 import io.gitlab.arturbosch.detekt.api.Rule
 import io.gitlab.arturbosch.detekt.api.Severity
 import io.gitlab.arturbosch.detekt.api.config
-import kotlin.collections.orEmpty
+import org.jetbrains.kotlin.com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.kotlin.com.intellij.psi.impl.source.tree.LeafPsiElement
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 
+/**
+ * This rule ensures that classes annotated with specific annotations (e.g., `@GenerateDataFunctions`) have correct
+ * `equals()`, `hashCode()`, and `toString()` implementations.
+ *
+ * It checks if these functions are present and if they correctly use all the class's properties. If a function is
+ * missing or incorrect, this rule will report a [CodeSmell].
+ *
+ * This rule also supports auto-correction. It can generate the missing or incorrect functions, ensuring they are
+ * correctly implemented based on the class's properties.
+ */
 class EqualityMembersRule(config: Config) : Rule(config) {
     override val issue: Issue =
-        Issue(javaClass.simpleName, Severity.Defect, "This rule detects missing equality functions.", Debt.FIVE_MINS)
+        Issue(
+            javaClass.simpleName,
+            Severity.Defect,
+            "This rule detects missing or incomplete equals/hashCode/toString functions.",
+            Debt.FIVE_MINS,
+        )
 
     private val functionsToCheck: List<String> by config(defaultValue = listOf("equals", "hashCode", "toString"))
     private val annotated: List<String> by config(defaultValue = listOf("GenerateDataFunctions"))
@@ -33,14 +51,14 @@ class EqualityMembersRule(config: Config) : Rule(config) {
 
         val properties = klass.getConstructorPropertiesNames()
         if (properties.isEmpty()) return
-        val methodsToRegenerate = analyseEqualityMembers(klass, functionsToCheck.toSet(), properties)
+        val methodsToRegenerate = analyzeEqualityMembers(klass, functionsToCheck.toSet(), properties)
 
-        withAutoCorrect { generateEqualityMembers(klass, methodsToRegenerate, properties) }
+        withAutoCorrect { generateEqualityMembers(klass, methodsToRegenerate.sorted(), properties) }
     }
 
-    private fun hasAnnotations(klass: KtClass, annotations: Set<String>): Boolean {
+    private fun hasAnnotations(klass: KtClass, requiredAnnotations: Set<String>): Boolean {
         var foundAny = false
-        for (annotation in annotations) {
+        for (annotation in requiredAnnotations) {
             if (klass.annotationEntries.any { it.shortName.toString() == annotation }) {
                 foundAny = true
             }
@@ -57,110 +75,162 @@ class EqualityMembersRule(config: Config) : Rule(config) {
             .orEmpty()
     }
 
-    private fun analyseEqualityMembers(klass: KtClass, equalityMembers: Set<String>, props: Set<String>): Set<String> {
-        val functions =
-            klass.declarations.filterIsInstance<KtNamedFunction>().filter { equalityMembers.contains(it.name) }
-        val badFunctions = mutableSetOf<String>()
-        val diff = equalityMembers - functions.mapNotNull { it.name }.toSet()
-        badFunctions.addAll(diff)
+    private fun analyzeEqualityMembers(
+        klass: KtClass,
+        expectedFunctionNames: Set<String>,
+        declaredCtorPropNames: Set<String>,
+    ): Set<String> {
+        val declaredFunctions =
+            klass.declarations.filterIsInstance<KtNamedFunction>().filter { it.name in expectedFunctionNames }
 
-        if (diff.isNotEmpty()) {
+        val badFunctionNames = mutableSetOf<String>()
+        val missingFunctionNames = expectedFunctionNames - declaredFunctions.mapNotNull { it.name }.toSet()
+        badFunctionNames += missingFunctionNames
+
+        if (missingFunctionNames.isNotEmpty()) {
+            val functionNames = missingFunctionNames.joinToString(", ")
             report(
                 CodeSmell(
-                    issue,
-                    Entity.from(klass),
-                    "${klass.name} Missing required equality functions ${diff.joinToString(", ")}.",
+                    issue = issue,
+                    entity = Entity.from(klass),
+                    message = "${klass.name} is missing required functions: $functionNames.",
                 )
             )
         }
 
-        for (function in functions) {
+        for (declaredFunction in declaredFunctions) {
             var hasAll = true
-            for (prop in props) {
-                val reference =
-                    function.bodyExpression?.findDescendantOfType<KtNameReferenceExpression> {
-                        it.getReferencedName() == prop
+            for (prop in declaredCtorPropNames) {
+                runCatching {
+                        declaredFunction.bodyExpression?.findDescendantOfType<KtNameReferenceExpression> {
+                            it.getReferencedName() == prop
+                        }
                     }
-                if (reference == null) {
-                    hasAll = false
-                    report(
-                        CodeSmell(issue, Entity.from(function), "Function ${function.name} is missing property $prop.")
+                    .fold(
+                        onSuccess = {
+                            if (it == null) {
+                                hasAll = false
+                                report(
+                                    CodeSmell(
+                                        issue,
+                                        Entity.from(declaredFunction),
+                                        "Function ${declaredFunction.name} is missing property $prop.",
+                                    )
+                                )
+                            }
+                        },
+                        onFailure = {
+                            System.err.println("Failed to find property $prop in function ${declaredFunction.name}")
+                            it.printStackTrace()
+                            throw it
+                        },
                     )
-                }
             }
-            function.name?.let { name ->
+
+            declaredFunction.name?.let { name ->
                 if (!hasAll) {
-                    badFunctions.add(name)
+                    badFunctionNames.add(name)
                 }
             }
         }
 
-        return badFunctions
+        return badFunctionNames
     }
 
-    private fun generateEqualityMembers(klass: KtClass, functionsToRegenerate: Set<String>, properties: Set<String>) {
-        for (function in functionsToRegenerate) {
-            val existingFunction = klass.declarations.find { it is KtNamedFunction && it.name == function }
+    private fun generateEqualityMembers(
+        klass: KtClass,
+        functionsToRegenerate: Collection<String>,
+        properties: Set<String>,
+    ) {
+        for (functionName in functionsToRegenerate) {
+            val existingFunction = klass.declarations.find { it is KtNamedFunction && it.name == functionName }
             existingFunction?.delete()
-            generateEqualityMember(klass, function, properties)
+            generateNamedFunction(klass, functionName, properties)
+        }
+
+        // Clean up class code after the fixes
+        val factory = KtPsiFactory(klass.project)
+        val body = checkNotNull(klass.body)
+        if (body.lastChild is LeafPsiElement && (body.lastChild as LeafPsiElement).elementType == KtTokens.RBRACE) {
+            when (val prevSibling = body.lastChild.prevSibling) {
+                is KtFunction -> {
+                    // Missing newline before rbrace
+                    body.addBefore(factory.createWhiteSpace("\n"), body.lastChild)
+                }
+                is PsiWhiteSpace -> {
+                    // Spurious whitespace before rbrace
+                    val text = prevSibling.text
+                    if (text.startsWith("\n") && text.endsWith(" ")) {
+                        prevSibling.replace(factory.createWhiteSpace("\n"))
+                    }
+                }
+            }
         }
     }
 
-    private fun generateEqualsFunction(klass: KtClass, name: String, props: Set<String>) {
+    private fun generateNamedFunction(klass: KtClass, functionName: String, properties: Set<String>) {
+        when (functionName) {
+            "hashCode" -> generateHashCodeFunction(klass, properties)
+            "equals" -> generateEqualsFunction(klass, properties)
+            "toString" -> generateToStringFunction(klass, properties)
+            else -> error("Unable to generate equality function $functionName")
+        }
+    }
+
+    private fun generateEqualsFunction(klass: KtClass, props: Set<String>) {
+        generateFunction(klass) {
+            appendLine("override fun equals(other: Any?): Boolean {")
+            appendLine("    if (this === other) return true")
+            appendLine("    if (javaClass != other?.javaClass) return false")
+            appendLine("")
+            appendLine("    other as ${klass.name}")
+            appendLine("")
+            for (prop in props) {
+                appendLine("    if ($prop != other.$prop) return false")
+            }
+            appendLine("")
+            appendLine("    return true")
+            appendLine("}")
+        }
+    }
+
+    private fun generateHashCodeFunction(klass: KtClass, props: Set<String>) {
         val first = props.first()
         val others = props.drop(1)
 
         generateFunction(klass) {
-            appendLine("override fun $name(other: Any?): Boolean {")
+            appendLine("override fun hashCode(): Int {")
             if (others.isNotEmpty()) {
-                appendLine("var result = $first.$name()")
+                appendLine("    var result = $first.hashCode()")
                 for (other in others) {
-                    appendLine("result = 31 * result + ($other?.$name() ?: 0)")
+                    appendLine("    result = 31 * result + $other.hashCode()")
                 }
-                appendLine("return result")
+                appendLine("    return result")
             } else {
-                appendLine("return $first.$name()")
+                appendLine("    return $first.hashCode()")
             }
             appendLine("}")
         }
     }
 
-    private fun generateHashCodeFunction(klass: KtClass, name: String, props: Set<String>) {
+    private fun generateToStringFunction(klass: KtClass, props: Set<String>) {
         generateFunction(klass) {
-            appendLine("override fun $name(): Int {")
-            appendLine("if (others.isNotEmpty()) {")
-            appendLine("if (this === other) return true")
-            appendLine("javaClass != other?.javaClass")
-            appendLine("other as ${klass.name}")
-            for (prop in props) {
-                appendLine("if ($prop != other.$prop) return false")
-            }
-            appendLine("return true")
-            appendLine("}")
-        }
-    }
-
-    private fun generateToStringFunction(klass: KtClass, name: String, props: Set<String>) {
-        generateFunction(klass) {
-            appendLine("override fun $name(): String {")
-            append("return \"${klass.name}(")
-            append(props.joinToString(", ") { "$it=\$$it" })
-            appendLine("\")")
+            appendLine("override fun toString(): String {")
+            append("    return \"${klass.name}(")
+            append(props.joinToString(", ") { "$it=$$it" })
+            appendLine(")\"")
             appendLine("}")
         }
     }
 
     private fun generateFunction(klass: KtClass, builder: StringBuilder.() -> Unit) {
         val factory = KtPsiFactory(klass.project)
-        klass.addDeclaration(factory.createFunction(buildString(builder)))
-    }
+        val newFunction = factory.createFunction(buildString(builder))
 
-    private fun generateEqualityMember(klass: KtClass, functionName: String, properties: Set<String>) {
-        when (functionName) {
-            "hashCode" -> generateHashCodeFunction(klass, functionName, properties)
-            "equals" -> generateEqualsFunction(klass, functionName, properties)
-            "toString" -> generateToStringFunction(klass, functionName, properties)
-            else -> error("Unable to generate equality member $functionName")
-        }
+        // 1. Add the function itself to the class body
+        val addedElement = klass.addDeclaration(newFunction)
+
+        // 2. Add two newlines before the function we just added for nice formatting.
+        checkNotNull(klass.body).addBefore(factory.createWhiteSpace("\n\n"), addedElement)
     }
 }

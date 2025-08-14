@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,12 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
                                                                                             SearchEverywherePreviewProvider {
 
   private final PersistentSearchEverywhereContributorFilter<LanguageRef> myFilter;
+
+  @ApiStatus.Internal
+  public SymbolSearchEverywhereContributor(@NotNull AnActionEvent event, @Nullable List<SearchEverywhereContributorModule> contributorModules) {
+    super(event, contributorModules);
+    myFilter = ClassSearchEverywhereContributor.createLanguageFilter(event.getRequiredData(CommonDataKeys.PROJECT));
+  }
 
   public SymbolSearchEverywhereContributor(@NotNull AnActionEvent event) {
     super(event);

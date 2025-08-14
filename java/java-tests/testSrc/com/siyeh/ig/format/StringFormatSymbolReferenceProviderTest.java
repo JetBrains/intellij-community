@@ -36,6 +36,20 @@ public class StringFormatSymbolReferenceProviderTest extends LightJavaCodeInsigh
     checkRefs(refs, str, str.getParent(), Map.of("%2$s", "date", "%1$d", "123"));
   }
 
+  public void testResolveFormatSpecifiersFormatted() {
+    myFixture.configureByText("Test.java", """
+      final class Demo {
+        static void process(String s, Object date, boolean b) {
+          String conditional = (b ? "myFormat: num = %1$d, date = %2$s" :
+                  "<caret>myFormat: date = %2$s; num = %1$d").formatted(123, date);
+        }
+      }""");
+    PsiLiteralExpression str = getLiteral();
+    Collection<? extends @NotNull PsiSymbolReference> refs = PsiSymbolReferenceService.getService().getReferences(str);
+    assertEquals(2, refs.size());
+    checkRefs(refs, str, str.getParent(), Map.of("%2$s", "date", "%1$d", "123"));
+  }
+
   public void testResolveFromLocalVar() {
     myFixture.configureByText("Test.java", """
       final class Demo {

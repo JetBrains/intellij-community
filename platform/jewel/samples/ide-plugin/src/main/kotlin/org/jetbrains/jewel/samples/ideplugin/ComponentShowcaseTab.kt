@@ -73,7 +73,6 @@ import org.jetbrains.jewel.ui.component.SuccessInlineBanner
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.Tooltip
-import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.component.WarningDefaultBanner
 import org.jetbrains.jewel.ui.component.WarningInlineBanner
@@ -85,6 +84,7 @@ import org.jetbrains.jewel.ui.painter.hints.Size
 import org.jetbrains.jewel.ui.painter.hints.Stroke
 import org.jetbrains.jewel.ui.theme.colorPalette
 import org.jetbrains.jewel.ui.theme.inlineBannerStyle
+import org.jetbrains.jewel.ui.typography
 
 @Composable
 internal fun ComponentShowcaseTab(project: Project) {
@@ -112,7 +112,7 @@ private fun RowScope.ColumnOne() {
         Text(
             "Here is a selection of our finest components(activated: $activated):",
             Modifier.onActivated { activated = it },
-            style = Typography.h3TextStyle(),
+            style = JewelTheme.typography.h3TextStyle,
         )
 
         var selectedItem by remember { mutableIntStateOf(-1) }
@@ -252,8 +252,8 @@ private fun RowScope.ColumnOne() {
                                 "incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, " +
                                 "quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
                                 "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu " +
-                                "fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa " +
-                                "qui officia deserunt mollit anim id est laborum.",
+                                "fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in " +
+                                "culpa qui officia deserunt mollit anim id est laborum.",
                         actions = {
                             Link("Action A", onClick = { clickLabel = "Success Inline Action A clicked" })
                             Link("Action B", onClick = { clickLabel = "Success Inline Action B clicked" })
@@ -420,6 +420,8 @@ private fun MarkdownExample(project: Project) {
                 | * Images
                 | * Tables
                 | * And more — I am running out of random things to say 😆
+                |    * But I'm not!
+                |       * Have fun indenting your lists as your heart pleases!
                 |
                 |```kotlin
                 |fun hello() = "World"

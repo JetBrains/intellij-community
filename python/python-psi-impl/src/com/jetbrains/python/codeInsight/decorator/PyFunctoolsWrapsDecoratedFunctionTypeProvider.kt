@@ -41,8 +41,8 @@ class PyFunctoolsWrapsDecoratedFunctionTypeProvider : PyTypeProviderBase() {
     return StubAwareComputation.on(decorator)
       .withCustomStub { it.getCustomStub(PyFunctoolsWrapsDecoratorStub::class.java) }
       .overStub {
-        if (it == null) return@overStub emptyList<PsiElement>()
-        var scopeOwner = ScopeUtil.getScopeOwner(decorator)
+        if (it == null) return@overStub emptyList()
+        val scopeOwner = ScopeUtil.getScopeOwner(decorator)
         val wrappedQName = QualifiedName.fromDottedString(it.wrapped)
         PyResolveUtil.resolveQualifiedNameInScope(wrappedQName, scopeOwner!!, context)
       }

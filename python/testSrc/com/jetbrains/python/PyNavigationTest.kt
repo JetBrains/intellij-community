@@ -5,6 +5,7 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2.GTDUOutcome
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.jetbrains.python.codeInsight.PyTypedDictGoToDeclarationProvider
 import com.jetbrains.python.fixtures.PyTestCase
@@ -227,7 +228,7 @@ class PyNavigationTest : PyTestCase() {
     myFixture.copyDirectoryToProject(getTestName(true), "")
     myFixture.configureByFile("test.py")
     val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
-    TestCase.assertNotNull(target)
+    assertNotNull(target)
     assertInstanceOf(target, PyFunction::class.java)
     checkPyNotPyi(target?.containingFile)
   }
@@ -332,6 +333,96 @@ class PyNavigationTest : PyTestCase() {
     }
   }
 
+  // PY-80931
+  fun testUnionAttribute() {
+    val (a, b) = checkMulti(
+      """
+        class A:
+            x: int
+        class B:
+            x: int
+        class C:
+            x: int
+        ab: A | B
+        ab.<caret>x
+        """.trimIndent(),
+      2,
+    )
+
+    assertInstanceOf<PyTargetExpression>(a)
+    assertEquals("A", a.parentOfType<PyClass>()!!.name)
+
+    assertInstanceOf<PyTargetExpression>(b)
+    assertEquals("B", b.parentOfType<PyClass>()!!.name)
+  }
+
+  // PY-53288
+  fun testOperators() {
+    val (a, b) = checkMulti(
+      """
+        class A:
+            def __add__(self, other): ...
+            def __radd__(self, other): ...
+        class B:
+            def __add__(self, other): ...
+            def __radd__(self, other): ...
+        A() +<caret> B()
+      """.trimIndent(),
+      2,
+    )
+
+    assertInstanceOf<PyFunction>(a)
+    assertEquals("__add__", a.name)
+    assertEquals("A", a.parentOfType<PyClass>()!!.name)
+
+    assertInstanceOf<PyFunction>(b)
+    assertEquals("__radd__", b.name)
+    assertEquals("B", b.parentOfType<PyClass>()!!.name)
+
+  }
+
+  // PY-81789
+  fun `test import isn't declaration and only one from other file`() {
+    runWithAdditionalFileInLibDir(
+      "a.py",
+      """
+      a = 1
+      a = 2""".trimIndent()
+    ) {
+      val (a) = checkMulti(
+        """
+        from a import a
+        
+        <caret>a
+        """.trimIndent(),
+        1
+      )
+
+      assertInstanceOf<PyTargetExpression>(a)
+    }
+  }
+
+  fun `test multi with pyi`() {
+    myFixture.copyDirectoryToProject("test_multi_with_pyi", "")
+    val (stubbed, local) = checkMulti(
+      """
+      if bool():
+          from stubbed import A
+      else:
+          class A:
+              pass
+
+      <caret>A
+      """.trimIndent(),
+      2
+    )
+    checkPyNotPyi(stubbed.containingFile)
+    assertEquals("stubbed.py", stubbed.containingFile.name)
+
+    checkPyNotPyi(local.containingFile)
+    assertEquals("test.py", local.containingFile.name)
+  }
+
   private fun doTestGotoDeclarationNavigatesToPyNotPyi() {
     myFixture.copyDirectoryToProject(getTestName(true), "")
     myFixture.configureByFile("test.py")
@@ -360,6 +451,17 @@ class PyNavigationTest : PyTestCase() {
     myFixture.copyDirectoryToProject(dirName, "")
     myFixture.configureByFile("test.py")
     assertTrue(myFixture.elementAtCaret is PyiFile)
+  }
+
+
+  private fun checkMulti(text: String, expectedSize: Int?): List<PsiElement> {
+    myFixture.configureByText("test.py", text)
+    return PyGotoDeclarationHandler()
+      .getGotoDeclarationTargets(elementAtCaret, -1, myFixture.editor)!!
+      .toList()
+      .also {
+        if (expectedSize != null) assertSize(expectedSize, it)
+      }
   }
 
   private fun checkPyNotPyi(file: PsiElement?) {

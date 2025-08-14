@@ -33,10 +33,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private boolean licenseOptional;
   private String version;
   private String vendor;
-  private String organization;
-  private String verifiedName;
-  private boolean verified;
-  private boolean trader;
+  private @Nullable PluginNodeVendorDetails vendorDetails = null;
   private @NlsSafe String description;
   private String sinceBuild;
   private String untilBuild;
@@ -240,37 +237,27 @@ public final class PluginNode implements IdeaPluginDescriptor {
     this.vendor = vendor;
   }
 
+  public @Nullable PluginNodeVendorDetails getVendorDetails() {
+    return vendorDetails;
+  }
+
+  public void setVendorDetails(@Nullable PluginNodeVendorDetails vendorDetails) {
+    this.vendorDetails = vendorDetails;
+  }
+
+  public void setVendorDetails(@NlsSafe @NotNull String vendorName, @Nullable String url, @Nullable Boolean isTrader, @Nullable Boolean isVerified) {
+    this.vendorDetails = new PluginNodeVendorDetails(vendorName, url, isTrader, isVerified);
+  }
+
+  public void setVendorDetails(@NlsSafe @Nullable String vendorName) {
+    if (vendorName == null) return;
+    this.vendorDetails = new PluginNodeVendorDetails(vendorName, null, null, null);
+  }
+
   @Override
   public @Nullable String getOrganization() {
-    return organization;
-  }
-
-  public void setOrganization(@Nullable String organization) {
-    this.organization = organization;
-  }
-
-  public String getVerifiedName() {
-    return verifiedName;
-  }
-
-  public void setVerifiedName(String verifiedName) {
-    this.verifiedName = verifiedName;
-  }
-
-  public boolean isVerified() {
-    return verified;
-  }
-
-  public void setVerified(boolean verified) {
-    this.verified = verified;
-  }
-
-  public boolean isTrader() {
-    return trader;
-  }
-
-  public void setTrader(boolean trader) {
-    this.trader = trader;
+    if (vendorDetails == null) return null;
+    return vendorDetails.getName();
   }
 
   @Override

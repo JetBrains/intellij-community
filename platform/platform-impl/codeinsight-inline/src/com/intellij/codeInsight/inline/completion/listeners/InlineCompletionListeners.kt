@@ -104,4 +104,10 @@ internal class InlineCompletionFocusListener : FocusChangeListener {
       handler.invokeEvent(event)
     }
   }
+
+  override fun focusLost(editor: Editor) {
+    // IJPL-189478: any interaction with the tooltip hides the inline completion. Didn't find an easy way to distinguish the tooltip.
+    return
+    hideInlineCompletion(editor, FinishType.FOCUS_LOST) // IJPL-186694
+  }
 }

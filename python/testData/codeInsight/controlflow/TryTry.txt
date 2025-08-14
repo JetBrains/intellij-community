@@ -55,7 +55,7 @@
 54(60) finally fail exit
 55(56,60) element: PyFinallyPart
 56(57,60) element: PyAssignmentStatement
-57(58,60,64) WRITE ACCESS: f
+57(60,64,58) WRITE ACCESS: f
 58(59,60) element: PyAssignmentStatement
 59(60,64) WRITE ACCESS: g
 60(61,71) element: PyFinallyPart
@@ -64,9 +64,9 @@
 63(71) finally fail exit
 64(65,71) element: PyFinallyPart
 65(66,71) element: PyAssignmentStatement
-66(67,69,71) WRITE ACCESS: h
+66(71,67,69) WRITE ACCESS: h
 67(68,71) element: PyAssignmentStatement
-68(8,69,71) WRITE ACCESS: i
+68(8,71,69) WRITE ACCESS: i
 69(70,71) element: PyAssignmentStatement
 70(71,75) WRITE ACCESS: j
 71(72) element: PyFinallyPart

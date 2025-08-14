@@ -205,6 +205,10 @@ public final class StringFormatSymbolReferenceProvider implements PsiSymbolRefer
           !(list.getParent() instanceof PsiCallExpression call)) {
         return null;
       }
+      if (myFormatStringIndex == -1) {
+        if (!(call instanceof PsiMethodCallExpression methodCall)) return null;
+        return PsiUtil.skipParenthesizedExprDown(methodCall.getMethodExpression().getQualifierExpression());
+      }
       PsiExpressionList argumentList = call.getArgumentList();
       if (argumentList == null) return null;
       PsiExpression[] expressions = argumentList.getExpressions();

@@ -1,9 +1,11 @@
 package org.jetbrains.jewel.markdown.extensions
 
 import org.commonmark.node.CustomBlock
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 
+@ExperimentalJewelApi
 /** Extension that can process a custom block-level [CustomBlock]. */
 public interface MarkdownBlockProcessorExtension {
     /**

@@ -53,6 +53,7 @@ import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
 import org.intellij.images.options.*;
+import org.intellij.images.scientific.utils.ScientificUtils;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
 import org.intellij.images.thumbnail.actions.ShowBorderAction;
 import org.intellij.images.ui.ImageComponent;
@@ -173,12 +174,15 @@ public final class ImageEditorUI extends JPanel implements UiDataProvider, CopyP
     contentPanel.add(myScrollPane, IMAGE_PANEL);
     contentPanel.add(errorPanel, ERROR_PANEL);
 
+    boolean isScientificMode = editor != null && editor.getFile().getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null;
     JPanel topPanel = new NonOpaquePanel(new BorderLayout());
     if (!isEmbedded) {
       topPanel.add(toolbarPanel, BorderLayout.WEST);
-      infoLabel = new JLabel((String)null, SwingConstants.RIGHT);
-      infoLabel.setBorder(JBUI.Borders.emptyRight(2));
-      topPanel.add(infoLabel, BorderLayout.EAST);
+      if (!isScientificMode) {
+        infoLabel = new JLabel((String)null, SwingConstants.RIGHT);
+        infoLabel.setBorder(JBUI.Borders.emptyRight(2));
+        topPanel.add(infoLabel, BorderLayout.EAST);
+      }
     }
 
     add(topPanel, BorderLayout.NORTH);
@@ -206,6 +210,8 @@ public final class ImageEditorUI extends JPanel implements UiDataProvider, CopyP
 
   private void updateInfo() {
     if (isEmbedded) return;
+    boolean isScientificMode = editor != null && editor.getFile().getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null;
+    if (isScientificMode) return;
     ImageDocument document = imageComponent.getDocument();
     BufferedImage image = document.getValue();
     if (image != null) {

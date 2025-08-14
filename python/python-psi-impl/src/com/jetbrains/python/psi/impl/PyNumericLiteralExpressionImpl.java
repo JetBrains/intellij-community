@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyInstantTypeProvider;
 import com.jetbrains.python.psi.PyNumericLiteralExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class PyNumericLiteralExpressionImpl extends PyElementImpl implements PyNumericLiteralExpression {
+public class PyNumericLiteralExpressionImpl extends PyElementImpl implements PyNumericLiteralExpression, PyInstantTypeProvider {
 
   public PyNumericLiteralExpressionImpl(@NotNull ASTNode astNode) {
     super(astNode);

@@ -33,7 +33,12 @@ import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isTertiary
 import androidx.compose.ui.input.pointer.onPointerEvent
+import androidx.compose.ui.semantics.CollectionItemInfo
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.collectionItemInfo
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Active
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Enabled
@@ -113,6 +118,8 @@ internal fun TabImpl(
     isActive: Boolean,
     tabData: TabData,
     tabStyle: TabStyle,
+    tabIndex: Int,
+    tabCount: Int,
     modifier: Modifier = Modifier,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
@@ -143,6 +150,12 @@ internal fun TabImpl(
                 .height(tabStyle.metrics.tabHeight)
                 .background(backgroundColor)
                 .focusProperties { canFocus = false }
+                .semantics(mergeDescendants = true) {
+                    role = Role.Tab
+                    selected = tabData.selected
+                    collectionItemInfo =
+                        CollectionItemInfo(rowIndex = 0, rowSpan = 1, columnIndex = tabIndex, columnSpan = tabCount)
+                }
                 .selectable(
                     onClick = tabData.onClick,
                     selected = tabData.selected,
@@ -169,6 +182,7 @@ internal fun TabImpl(
             horizontalArrangement = Arrangement.spacedBy(tabStyle.metrics.closeContentGap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // Tab content and close icon
             tabData.content(TabContentScopeContainer(), tabState)
 
             val showCloseIcon =
@@ -187,9 +201,7 @@ internal fun TabImpl(
                             is PressInteraction.Release -> {
                                 closeButtonState = closeButtonState.copy(pressed = false)
                             }
-
                             is HoverInteraction.Enter -> closeButtonState = closeButtonState.copy(hovered = true)
-
                             is HoverInteraction.Exit -> closeButtonState = closeButtonState.copy(hovered = false)
                         }
                     }
@@ -198,7 +210,8 @@ internal fun TabImpl(
                 Icon(
                     key = tabStyle.icons.close,
                     modifier =
-                        Modifier.clickable(
+                        Modifier.focusProperties { canFocus = false }
+                            .clickable(
                                 interactionSource = closeActionInteractionSource,
                                 indication = null,
                                 onClick = tabData.onClose,

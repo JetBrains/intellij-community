@@ -365,7 +365,8 @@ object MavenImportUtil {
     return moduleEntity.getMavenModuleType()
   }
 
-  private fun ModuleEntity.getMavenModuleType(): StandardMavenModuleType {
+  @ApiStatus.Internal
+  fun ModuleEntity.getMavenModuleType(): StandardMavenModuleType {
     val default = StandardMavenModuleType.SINGLE_MODULE
     val moduleTypeString = exModuleOptions?.externalSystemModuleType ?: return default
     return try {

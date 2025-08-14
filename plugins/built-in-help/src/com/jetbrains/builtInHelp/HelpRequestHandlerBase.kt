@@ -6,9 +6,11 @@ import io.netty.channel.Channel
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpHeaders
 import io.netty.handler.codec.http.HttpRequest
-import org.apache.commons.compress.utils.FileNameUtils
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.ide.HttpRequestHandler
+import kotlin.io.path.Path
+import kotlin.io.path.extension
+import kotlin.io.path.nameWithoutExtension
 
 /**
  * Created by Egor.Malyshev on 7/13/2017.
@@ -26,14 +28,15 @@ abstract class HelpRequestHandlerBase : HttpRequestHandler() {
     resourceLocation: String,
     request: FullHttpRequest,
     channel: Channel,
-    extraHeaders: HttpHeaders
+    extraHeaders: HttpHeaders,
   ): Boolean {
 
     val isImage = resourceLocation.contains("/img/")
     val retrieveName = when (isImage) {
       true -> {
-        val baseName = FileNameUtils.getBaseName(resourceName)
-        """${baseName.substringBeforeLast("_dark")}.${FileNameUtils.getExtension(resourceName)}"""
+        val base = Path(resourceName)
+        val baseName = base.nameWithoutExtension
+        """${baseName.substringBeforeLast("_dark")}.${base.extension}"""
       }
       else -> resourceName
     }

@@ -16,7 +16,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 internal const val BUILT_IN_HELP_MODULE_NAME = "intellij.builtInHelp"
-private val LUCENE_LIBRARIES = setOf("lucene-queryparser", "lucene-highlighter", "lucene-memory")
 
 internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): PluginLayout? {
   val productName = context.applicationInfo.fullProductName
@@ -26,12 +25,20 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Plug
     return null
   }
 
-  return PluginLayout.plugin(BUILT_IN_HELP_MODULE_NAME) { spec ->
+  return PluginLayout.pluginAutoWithCustomDirName(BUILT_IN_HELP_MODULE_NAME) { spec ->
     val productLowerCase = productName.replace(' ', '-').lowercase()
     spec.mainJarName = "$productLowerCase-help.jar"
     spec.directoryName = "${productName.replace(" ", "")}Help"
     spec.excludeFromModule(BUILT_IN_HELP_MODULE_NAME, "com/jetbrains/builtInHelp/indexer/**")
-    spec.doNotCopyModuleLibrariesAutomatically(listOf("jsoup"))
+    spec.withPatch { patcher, buildContext ->
+      patcher.patchModuleOutput(
+        moduleName = BUILT_IN_HELP_MODULE_NAME,
+        path = "META-INF/plugin.xml",
+        content = pluginXml(buildContext, pluginVersion),
+        overwrite = PatchOverwriteMode.TRUE
+      )
+    }
+    spec.withProjectLibrary("lucene-core")
     spec.withGeneratedResources { targetDir, buildContext ->
       val assetJar = targetDir.resolve("lib/help-$productLowerCase-assets.jar")
       buildResourcesForHelpPlugin(
@@ -41,16 +48,6 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Plug
         context = context,
       )
     }
-    spec.withPatch { patcher, buildContext ->
-      patcher.patchModuleOutput(moduleName = BUILT_IN_HELP_MODULE_NAME,
-                                path = "META-INF/services/org.apache.lucene.codecs.Codec",
-                                content = "org.apache.lucene.codecs.lucene50.Lucene50Codec")
-      patcher.patchModuleOutput(moduleName = BUILT_IN_HELP_MODULE_NAME,
-                                path = "META-INF/plugin.xml",
-                                content = pluginXml(buildContext, pluginVersion),
-                                overwrite = PatchOverwriteMode.TRUE)
-    }
-    LUCENE_LIBRARIES.forEach { spec.withProjectLibrary(it) }
   }
 }
 

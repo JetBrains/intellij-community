@@ -1,10 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources.rename
 
-import com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector
-import com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector.ActionType.RENAME
-import com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector.ResourceBaseType.FILE
-import com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector.ResourceBaseType.STRING
 import com.intellij.compose.ide.plugin.resources.getResourceItem
 import com.intellij.compose.ide.plugin.resources.isComposeResourceProperty
 import com.intellij.psi.PsiElement
@@ -27,12 +23,7 @@ internal class ComposeResourcesRenameProcessor : RenamePsiElementProcessor() {
     val kotlinSourceElement = element as? KtProperty ?: return
     val targetResourceItem = getResourceItem(kotlinSourceElement) ?: return
 
-    targetResourceItem.getPsiElements()
-      .also {
-        val resourceBaseType = if (targetResourceItem.type.isStringType) STRING else FILE
-        ComposeResourcesUsageCollector.logAction(RENAME, resourceBaseType, targetResourceItem.type, it.size)
-      }
-      .forEach {
+    targetResourceItem.getPsiElements().forEach {
       allRenames[it] = if (it is PsiFile) "$newName.${it.virtualFile.extension}" else newName
     }
   }

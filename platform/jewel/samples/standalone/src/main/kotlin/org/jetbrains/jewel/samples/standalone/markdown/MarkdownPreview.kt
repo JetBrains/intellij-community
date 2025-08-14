@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import coil3.compose.LocalPlatformContext
 import java.awt.Desktop
 import java.net.URI
 import kotlinx.coroutines.Dispatchers
@@ -38,6 +39,7 @@ import org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrike
 import org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableStyling
 import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableRendererExtension
+import org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
@@ -45,7 +47,7 @@ import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
 
 @Composable
-public fun MarkdownPreview(modifier: Modifier = Modifier, rawMarkdown: CharSequence) {
+internal fun MarkdownPreview(rawMarkdown: CharSequence, modifier: Modifier = Modifier) {
     val isDark = JewelTheme.isDark
 
     val markdownStyling = remember(isDark) { if (isDark) MarkdownStyling.dark() else MarkdownStyling.light() }
@@ -66,6 +68,10 @@ public fun MarkdownPreview(modifier: Modifier = Modifier, rawMarkdown: CharSeque
         )
     }
 
+    val coilContext = LocalPlatformContext.current
+    val coil3ImageRendererExtension =
+        remember(coilContext) { Coil3ImageRendererExtension.withDefaultLoader(coilContext) }
+
     LaunchedEffect(rawMarkdown) {
         // TODO you may want to debounce or drop on backpressure, in real usages. You should also
         // not do this
@@ -81,6 +87,7 @@ public fun MarkdownPreview(modifier: Modifier = Modifier, rawMarkdown: CharSeque
                     styling = markdownStyling,
                     rendererExtensions =
                         listOf(
+                            coil3ImageRendererExtension,
                             GitHubAlertRendererExtension(AlertStyling.dark(), markdownStyling),
                             GitHubStrikethroughRendererExtension,
                             GitHubTableRendererExtension(GfmTableStyling.dark(), markdownStyling),
@@ -91,6 +98,7 @@ public fun MarkdownPreview(modifier: Modifier = Modifier, rawMarkdown: CharSeque
                     styling = markdownStyling,
                     rendererExtensions =
                         listOf(
+                            coil3ImageRendererExtension,
                             GitHubAlertRendererExtension(AlertStyling.light(), markdownStyling),
                             GitHubStrikethroughRendererExtension,
                             GitHubTableRendererExtension(GfmTableStyling.light(), markdownStyling),

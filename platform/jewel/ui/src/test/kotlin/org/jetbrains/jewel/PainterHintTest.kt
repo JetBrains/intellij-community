@@ -52,7 +52,7 @@ public class PainterHintTest : BasicJewelUiTest() {
         density: Density,
         override val rawPath: String,
         override val path: String = rawPath,
-        override val acceptedHints: List<PainterHint> = listOf(),
+        override val acceptedHints: List<PainterHint> = emptyList(),
     ) : PainterProviderScope, Density by density {
         private val documentBuilderFactory =
             DocumentBuilderFactory.newDefaultInstance().apply {
