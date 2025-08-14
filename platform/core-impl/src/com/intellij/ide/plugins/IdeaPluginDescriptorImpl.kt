@@ -403,7 +403,7 @@ class PluginMainDescriptor(
   ): ContentModuleDescriptor = ContentModuleDescriptor(
     parent = this,
     raw = subBuilder.build(),
-    moduleName = module.name,
+    moduleId = module.name,
     moduleLoadingRule = module.loadingRule,
     descriptorPath = descriptorPath
   )
@@ -590,11 +590,11 @@ class DependsSubDescriptor(
 class ContentModuleDescriptor(
   val parent: PluginMainDescriptor,
   raw: RawPluginDescriptor,
-  moduleName: String,
+  moduleId: String,
   moduleLoadingRule: ModuleLoadingRule,
   private val descriptorPath: String
 ): PluginModuleDescriptor(raw) {
-  val moduleId: String = moduleName
+  val moduleId: String = moduleId
   val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
 
   override val useCoreClassLoader: Boolean
@@ -609,10 +609,10 @@ class ContentModuleDescriptor(
   override fun getResourceBundleBaseName(): String? = resourceBundleBaseName
 
   override fun toString(): String =
-    "ContentModuleDescriptor(moduleName=$moduleId" +
+    "ContentModuleDescriptor(moduleName=${this@ContentModuleDescriptor.moduleId}" +
     (if (moduleLoadingRule == ModuleLoadingRule.OPTIONAL) "" else ", loadingRule=$moduleLoadingRule") +
     (if (packagePrefix == null) "" else ", package=$packagePrefix") +
-    (if (descriptorPath == "$moduleId.xml") "" else ", descriptorPath=$descriptorPath") +
+    (if (descriptorPath == "${this@ContentModuleDescriptor.moduleId}.xml") "" else ", descriptorPath=$descriptorPath") +
     ") <- $parent"
 
   init {
