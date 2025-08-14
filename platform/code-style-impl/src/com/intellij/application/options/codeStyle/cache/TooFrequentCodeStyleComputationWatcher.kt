@@ -29,9 +29,9 @@ class TooFrequentCodeStyleComputationWatcher(val project: Project) {
   private var settingsModCountAtTrackingStart: Long = -1
 
   @Synchronized
-  fun beforeCacheEntryInserted(removeQueue: PriorityQueue<CodeStyleCachingServiceImpl.FileData>) {
+  fun beforeCacheEntryInserted(removeQueue: PriorityQueue<CodeStyleCachingServiceImpl.FileData>, maxCacheSize: Int) {
     if (Registry.`is`("code.style.cache.high.eviction.rate.automatic.recovery.enabled") && !isEvictionTrackingBlocked()) {
-      checkEvictionRate(removeQueue)
+      checkEvictionRate(removeQueue, maxCacheSize)
     }
   }
 
@@ -39,13 +39,13 @@ class TooFrequentCodeStyleComputationWatcher(val project: Project) {
     @Suppress("DEPRECATION")
     CodeStyleSettingsManager.getInstance().getCurrentSettings().modificationTracker.modificationCount
 
-  private fun checkEvictionRate(removeQueue: PriorityQueue<CodeStyleCachingServiceImpl.FileData>) {
-    if (!isEvictionTrackingBlocked() && removeQueue.size >= CodeStyleCachingServiceImpl.MAX_CACHE_SIZE) {
+  private fun checkEvictionRate(removeQueue: PriorityQueue<CodeStyleCachingServiceImpl.FileData>, maxCacheSize: Int) {
+    if (!isEvictionTrackingBlocked() && removeQueue.size >= maxCacheSize) {
       val oldestEntry: CodeStyleCachingServiceImpl.FileData = removeQueue.peek()
       val oldestEntryInsertTime = oldestEntry.lastRefTimeStamp
       val currentTime = System.currentTimeMillis()
       // evictions per second
-      val cacheEvictionRate = CodeStyleCachingServiceImpl.MAX_CACHE_SIZE.toDouble() / (currentTime - oldestEntryInsertTime) * 1000
+      val cacheEvictionRate = maxCacheSize.toDouble() / (currentTime - oldestEntryInsertTime) * 1000
       if (cacheEvictionRate > HIGH_CACHE_EVICTION_RATE_THRESHOLD) {
         if (cacheEvictionTrackingStart == TRACKING_NOT_STARTED) {
           cacheEvictionTrackingStart = currentTime

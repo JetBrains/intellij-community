@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -23,22 +24,23 @@ import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class CodeStyleCachingServiceImpl implements CodeStyleCachingService, Disposable {
-  public static final int MAX_CACHE_SIZE = 100;
-
   private static final Key<SoftReference<CodeStyleCachedValueProvider>> PROVIDER_KEY = Key.create("code.style.cached.value.provider");
 
   private final Map<String, FileData> myFileDataCache = new HashMap<>();
 
   private final Object CACHE_LOCK = new Object();
-  private final PriorityQueue<FileData> myRemoveQueue = new PriorityQueue<>(
-    MAX_CACHE_SIZE,
-    Comparator.comparingLong(fileData -> fileData.lastRefTimeStamp));
+  private final int maxCacheSize;
+  private final PriorityQueue<FileData> myRemoveQueue;
   private final Project myProject;
 
   private final TooFrequentCodeStyleComputationWatcher myFrequentCodeStyleComputationWatcher;
 
   public CodeStyleCachingServiceImpl(Project project) {
     myProject = project;
+    maxCacheSize = Registry.intValue("code.style.cache.maximum.size", 100);
+    myRemoveQueue = new PriorityQueue<>(
+      maxCacheSize,
+      Comparator.comparingLong(fileData -> fileData.lastRefTimeStamp));
     myFrequentCodeStyleComputationWatcher = TooFrequentCodeStyleComputationWatcher.getInstance(project);
     ApplicationManager.getApplication().getMessageBus().connect(this).
       subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
@@ -181,13 +183,13 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
    * @param existingData the result of calling {@code getDataHolder(path)} within a same synchronized block
    */
   private @NotNull FileData createFileData(@NotNull String path, @Nullable FileData existingData) {
-    myFrequentCodeStyleComputationWatcher.beforeCacheEntryInserted(myRemoveQueue);
+    myFrequentCodeStyleComputationWatcher.beforeCacheEntryInserted(myRemoveQueue, maxCacheSize);
     if (existingData != null) {
       myFileDataCache.remove(path);
       myRemoveQueue.remove(existingData);
     }
     FileData newData = new FileData();
-    if (existingData == null && myFileDataCache.size() >= MAX_CACHE_SIZE) {
+    if (existingData == null && myFileDataCache.size() >= maxCacheSize) {
       FileData fileData = myRemoveQueue.poll();
       if (fileData != null) {
         myFileDataCache.values().remove(fileData);
@@ -228,7 +230,7 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
 
   void dumpState(StringBuilder sb) {
     synchronized (CACHE_LOCK) {
-      sb.append("Max cache size: ").append(MAX_CACHE_SIZE).append("\n");
+      sb.append("Max cache size: ").append(maxCacheSize).append("\n");
       sb.append("Cache size: ").append(myFileDataCache.size()).append("\n");
       sb.append("Cached Entries: \n");
       myFileDataCache.forEach((key, value) -> {
