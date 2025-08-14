@@ -2,7 +2,11 @@
 package com.intellij.tools.ide.metrics.benchmark;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
@@ -32,7 +36,10 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -256,6 +263,14 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
 
   @Override
   public void start() {
+    Application app = ApplicationManager.getApplication();
+    if (app != null) {
+      if (!ApplicationManagerEx.isInStressTest()) {
+        Logger log = Logger.getInstance(BenchmarkTestInfoImpl.class);
+        log.error("ApplicationManagerEx.isInStressTest=false -- not good for reliable benchmarks!\n" +
+                  "Either set it 'true' explicitly, or use @StressTestApplication");
+      }
+    }
     start(getCallingTestMethod(), launchName);
   }
 
