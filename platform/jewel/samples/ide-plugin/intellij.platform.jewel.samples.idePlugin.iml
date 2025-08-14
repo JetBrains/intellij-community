@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=androidx.compose.ui.ExperimentalComposeUiApi -Xcontext-receivers -opt-in=androidx.compose.foundation.ExperimentalFoundationApi -opt-in=org.jetbrains.jewel.foundation.ExperimentalJewelApi -opt-in=org.jetbrains.jewel.foundation.InternalJewelApi" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=androidx.compose.ui.ExperimentalComposeUiApi -Xcontext-receivers -opt-in=androidx.compose.foundation.ExperimentalFoundationApi -opt-in=org.jetbrains.jewel.foundation.ExperimentalJewelApi -opt-in=org.jetbrains.jewel.foundation.InternalJewelApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
