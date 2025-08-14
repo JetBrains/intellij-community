@@ -53,10 +53,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.ant.execution.SegmentedOutputStream;
 import com.intellij.rt.junit.JUnitStarter;
-import com.intellij.testFramework.CompilerTester;
-import com.intellij.testFramework.MapDataContext;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -75,6 +72,11 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
   private Sdk myJdk;
   private static final String INNER_TEST_NAME = "test1.InnerTest.Inner";
   private static final String RT_INNER_TEST_NAME = "test1.InnerTest$Inner";
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return IdeaTestUtil.getMockJdk21();
+  }
 
   @Override
   protected void setUp() throws Exception {
