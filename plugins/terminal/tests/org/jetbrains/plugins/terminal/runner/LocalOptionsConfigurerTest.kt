@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.runner
 
 import com.intellij.idea.TestFor
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.utils.io.deleteRecursively
 import org.jetbrains.plugins.terminal.ShellStartupOptions
@@ -18,6 +19,8 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
   override fun setUp() {
     super.setUp()
     tempDirectory = createTempDirectory("dummy")
+    // enable EelApi to not "fix" Unix shell path on Windows
+    Registry.get("terminal.use.EelApi").setValue(true, testRootDisposable)
   }
 
   override fun tearDown() {
