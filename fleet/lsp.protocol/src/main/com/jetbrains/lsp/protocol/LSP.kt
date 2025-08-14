@@ -48,6 +48,7 @@ value class URI(val uri: String) {
         const val FILE: String = "file"
         const val JRT: String = "jrt"
         const val JAR: String = "jar"
+        const val ZIP: String = "zip"
     }
 
     companion object {
