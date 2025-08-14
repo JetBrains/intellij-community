@@ -143,8 +143,10 @@ enum class JavaFeature {
       return super.isSufficient(useSiteLevel) && !useSiteLevel.isAtLeast(LanguageLevel.JDK_25)
     }
   },
-  
+
   STRUCTURED_CONCURRENCY_TASK_SCOPE_STATIC_FACTORY_METHODS(LanguageLevel.JDK_25_PREVIEW, "feature.structured.concurrency.static.factory.methods"),
+
+  PEM_API(LanguageLevel.JDK_25_PREVIEW, "feature.pem.api"),
 
   /**
    * JEP 512
@@ -369,6 +371,7 @@ enum class JavaFeature {
         "SCOPED_VALUES" -> SCOPED_VALUES
         "STABLE_VALUES" -> STABLE_VALUES
         "STRUCTURED_CONCURRENCY" -> STRUCTURED_CONCURRENCY
+        "PEM_API" -> PEM_API
         "CLASSFILE_API" -> CLASSFILE_API
         "STREAM_GATHERERS" -> STREAM_GATHERERS
         "FOREIGN" -> FOREIGN_FUNCTIONS
