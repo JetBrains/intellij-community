@@ -3,11 +3,11 @@ Run Java
 Connected to the target VM
 inlineStackTraceWithTryFinally.kt:20
 Compile bytecode for a
-InlineStackFrame analyze (inlineStackTraceWithTryFinally.kt:20)
-InlineStackFrame lambda 'analyze' in 'foo' (inlineStackTraceWithTryFinally.kt:16)
+InlineStackFrame lambda 'analyze' in 'foo' (inlineStackTraceWithTryFinally.kt:20)
     JavaValue[local] a: int = 1 (inlineStackTraceWithTryFinally.kt:15)
     JavaValue[local] b: int = 2 (inlineStackTraceWithTryFinally.kt:15)
-KotlinStackFrame (inlineStackTraceWithTryFinally.kt:8)
+InlineStackFrame analyze (inlineStackTraceWithTryFinally.kt:8)
+KotlinStackFrame (inlineStackTraceWithTryFinally.kt:16)
     JavaValue[local] a: int = 1 (inlineStackTraceWithTryFinally.kt:15)
     JavaValue[local] b: int = 2 (inlineStackTraceWithTryFinally.kt:15)
 Disconnected from the target VM
