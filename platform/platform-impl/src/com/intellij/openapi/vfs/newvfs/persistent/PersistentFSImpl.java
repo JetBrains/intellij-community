@@ -1855,7 +1855,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   public void clearIdCache() {
     //It actually does nothing: dirByIdCache was merged with VfsData, there is no 2nd-level-VFS-cache to clear anymore
-    LOG.warn(".clearIdCache() method is doing nothing now -> please, remove it's usage");
+    THROTTLED_LOG.warn(".clearIdCache() method is doing nothing now -> please, remove it's usage");
   }
 
   @Override
