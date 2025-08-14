@@ -142,7 +142,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           element instanceof PyTargetExpression && e != null && PyUtil.inSameFile(element, e) && PyPsiUtils.isBefore(element, e)) {
         continue;
       }
-      results.add(changePropertyMethodToSameNameGetter(r, name));
+      results.add(changePropertyMethodToSameNameGetter(r, name, element));
     }
     return results;
   }
@@ -160,7 +160,19 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return false;
   }
 
-  private static @NotNull RatedResolveResult changePropertyMethodToSameNameGetter(@NotNull RatedResolveResult resolveResult, @NotNull String name) {
+  private static @NotNull RatedResolveResult changePropertyMethodToSameNameGetter(@NotNull RatedResolveResult resolveResult,
+                                                                                   @NotNull String name,
+                                                                                   @NotNull PsiElement referenceElement) {
+    PyCallExpression propertyCall = PsiTreeUtil.getParentOfType(referenceElement, PyCallExpression.class);
+    if (propertyCall != null) {
+      // Avoid converting function to property getter when the reference we are resolving sits inside a property(...) call (e.g., property(__getX))
+      // In such context we actually need the bare function, not the property
+      PyCallExpression propertyCallSite = PropertyBunch.findPropertyCallSite(propertyCall);
+      if (propertyCallSite != null) {
+        return resolveResult;
+      }
+    }
+
     final PsiElement element = resolveResult.getElement();
     if (element instanceof PyFunction) {
       final Property property = ((PyFunction)element).getProperty();
