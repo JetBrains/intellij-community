@@ -31,6 +31,11 @@ data class EvalMetric(
     fun <T> fromIndicators(data: EvalDataDescription<*, T>): EvalMetric {
       return fromIndicators(data.name, data)
     }
+
+    fun fromDoubleIndicators(data: EvalDataDescription<*, Double>): EvalMetric {
+      val name = data.name
+      return EvalMetric(0.0) { DataMetric(data, { value, _ -> value }, name) }
+    }
   }
 }
 
