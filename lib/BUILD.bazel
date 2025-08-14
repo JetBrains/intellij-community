@@ -707,12 +707,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "android-tools-sdklib",
-  jar = "@sdklib-31_5_0-alpha08_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
   name = "apache-sshd-osgi",
   jar = "@sshd-osgi-2_15_0_http//file",
   source_jar = "@sshd-osgi-2_15_0-sources_http//file",

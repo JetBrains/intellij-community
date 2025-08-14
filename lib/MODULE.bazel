@@ -497,13 +497,6 @@ http_file(
 )
 
 http_file(
-  name = "sdklib-31_5_0-alpha08_http",
-  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/com/android/tools/sdklib/31.5.0-alpha08/sdklib-31.5.0-alpha08.jar",
-  sha256 = "a87c7d95a6d9c329ddde828af3f213253140135c60a0bf025a9107b3c2123f20",
-  downloaded_file_path = "sdklib-31.5.0-alpha08.jar"
-)
-
-http_file(
   name = "sshd-osgi-2_15_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/sshd/sshd-osgi/2.15.0/sshd-osgi-2.15.0.jar",
   sha256 = "3c8a183f81e176d9c452c9bb94007574bc8188446b4fc98b527aa79074cd0dda",
