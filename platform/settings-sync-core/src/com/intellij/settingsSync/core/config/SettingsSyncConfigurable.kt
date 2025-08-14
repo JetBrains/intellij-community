@@ -41,6 +41,7 @@ import com.intellij.settingsSync.core.config.SettingsSyncEnabler.State
 import com.intellij.settingsSync.core.statistics.SettingsSyncEventsStatistics
 import com.intellij.ui.RelativeFont
 import com.intellij.ui.components.DropDownLink
+import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
@@ -59,6 +60,8 @@ import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.StartupUiUtil.labelFont
 import kotlinx.coroutines.*
 import java.awt.event.ItemEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.util.concurrent.CancellationException
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
@@ -591,8 +594,8 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
 
   private fun updateUserAccountsList() {
     userAccountsList.clear()
-    val providersMap = RemoteCommunicatorHolder.getAvailableProviders().sortedBy { it.providerCode }
-    providersMap.forEach { communicator ->
+    val providersList = RemoteCommunicatorHolder.getAvailableProviders()
+    providersList.forEach { communicator ->
       val authService = communicator.authService
       val providerName = authService.providerName
       authService.getAvailableUserAccounts().forEachIndexed { idx, account ->
@@ -869,23 +872,69 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
                 font = JBFont.h4()
               }
             }
-            buttonsGroup (message("enable.sync.choose.data.provider.text"), false) {
-              val availableProviders = RemoteCommunicatorHolder.getAvailableProviders().filter { it.isAvailable() }
-              availableProviders.firstOrNull { it.learnMoreLinkPair2 != null }?.also {
-                row {
-                  val linkPair = it.learnMoreLinkPair2!!
-                  browserLink(linkPair.first, linkPair.second)
-                }
-              }
-
+            val availableProviders = RemoteCommunicatorHolder.getAvailableProviders().filter { it.isAvailable() }
+            availableProviders.firstOrNull { it.learnMoreLinkPair2 != null }?.also {
               row {
-                for (provider in availableProviders) {
-                  radioButton(provider.authService.providerName, provider.providerCode)
-                }
+                val linkPair = it.learnMoreLinkPair2!!
+                browserLink(linkPair.first, linkPair.second)
               }
-            }.bind(::providerCode)
+            }
+
+            row {
+              text(message("enable.sync.choose.data.provider.text"))
+            }
+
+            val buttonGroup = ButtonGroup()
+            val radioButtonPanel = JPanel().apply {
+              layout = BoxLayout(this, BoxLayout.X_AXIS)
+              isOpaque = false
+            }
+
+            for ((index, provider) in availableProviders.withIndex()) {
+              if (index > 0) {
+                radioButtonPanel.add(Box.createHorizontalStrut(5))
+              }
+              val providerPanel = createRadioButtonPanelForProvider(provider, buttonGroup)
+              radioButtonPanel.add(providerPanel)
+            }
+            row {
+              cell(radioButtonPanel)
+            }
           }
         }
+      }
+    }
+
+    private fun createRadioButtonPanelForProvider(provider: SettingsSyncCommunicatorProvider, buttonGroup: ButtonGroup): JPanel {
+      val radioButton = JBRadioButton().apply {
+        actionCommand = provider.providerCode
+        addActionListener {
+          if (isSelected) {
+            providerCode = provider.providerCode
+          }
+        }
+      }
+      buttonGroup.add(radioButton)
+
+      // mouse listener for text and icon to mimic normal radiobutton behavior
+      val mouseListener = object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent) {
+          radioButton.doClick()
+        }
+      }
+
+      val iconLabel = provider.authService.icon?.let { JLabel(it).apply { addMouseListener(mouseListener) } }
+      val textLabel = JLabel(provider.authService.providerName).apply { addMouseListener(mouseListener) }
+      return JPanel().apply {
+        layout = BoxLayout(this, BoxLayout.X_AXIS)
+        isOpaque = false
+
+        add(radioButton)
+        if (iconLabel != null) {
+          add(iconLabel)
+          add(Box.createHorizontalStrut(4))
+        }
+        add(textLabel)
       }
     }
   }
