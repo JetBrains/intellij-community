@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
@@ -33,14 +34,21 @@ class RedundantWithInspection : KotlinApplicableInspectionBase<KtCallExpression,
         context: Context,
         rangeInElement: TextRange?,
         onTheFly: Boolean,
-    ): ProblemDescriptor = createProblemDescriptor(
-        /* psiElement = */ element,
-        /* rangeInElement = */ rangeInElement,
-        /* descriptionTemplate = */ KotlinBundle.message("inspection.redundant.with.display.name"),
-        /* highlightType = */ ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-        /* onTheFly = */ onTheFly,
-        /* ...fixes = */ RemoveRedundantWithFix(context),
-    )
+    ): ProblemDescriptor {
+        val fixes = when (context.receiver) {
+            is KtSimpleNameExpression, is KtStringTemplateExpression, is KtConstantExpression -> arrayOf(RemoveRedundantWithFix(context))
+            else -> LocalQuickFix.EMPTY_ARRAY
+        }
+
+        return createProblemDescriptor(
+            /* psiElement = */ element,
+            /* rangeInElement = */ rangeInElement,
+            /* descriptionTemplate = */ KotlinBundle.message("inspection.redundant.with.display.name"),
+            /* highlightType = */ ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+            /* onTheFly = */ onTheFly,
+            /* ...fixes = */ *fixes,
+        )
+    }
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -58,7 +66,7 @@ class RedundantWithInspection : KotlinApplicableInspectionBase<KtCallExpression,
         val valueArguments = element.valueArguments
         if (valueArguments.size != 2) return false
         val receiver = valueArguments[0].getArgumentExpression()
-        if (receiver == null || receiver !is KtSimpleNameExpression && receiver !is KtStringTemplateExpression && receiver !is KtConstantExpression) return false
+        if (receiver == null) return false
         val lambda = valueArguments[1].getLambdaExpression() ?: return false
         val lambdaBody = lambda.bodyExpression
         return lambdaBody != null

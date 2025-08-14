@@ -57,11 +57,11 @@ class RedundantWithInspection : AbstractKotlinInspection() {
             }
 
             if (!used) {
-                val quickfix = when (receiver) {
+                val fixes = when (receiver) {
                     is KtSimpleNameExpression, is KtStringTemplateExpression, is KtConstantExpression -> arrayOf(RemoveRedundantWithFix())
                     else -> LocalQuickFix.EMPTY_ARRAY
                 }
-                holder.registerProblem(callee, KotlinBundle.message("inspection.redundant.with.display.name"), *quickfix)
+                holder.registerProblem(callee, KotlinBundle.message("inspection.redundant.with.display.name"), *fixes)
             }
         })
 }
