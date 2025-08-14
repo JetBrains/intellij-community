@@ -1112,7 +1112,7 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
     module.module,
     mergedCompilerArguments,
     handledArguments = handledArguments + setOf("jvmTarget", "pluginClasspaths"),
-    handledInternalArguments = setOf("-XXLanguage:+InlineClasses"),
+    handledInternalArguments = setOf("-XXLanguage:+InlineClasses", "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks"),
     handledUnknownExtraFlags = setOf("-Xallow-result-return-type", "-Xstrict-java-nullability-assertions", "-Xwasm-attach-js-exception", "-Xwasm-kclass-fqn"),
   )
 
