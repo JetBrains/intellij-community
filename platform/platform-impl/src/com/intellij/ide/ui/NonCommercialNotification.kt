@@ -18,6 +18,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.ui.ClickListener
+import com.intellij.ui.JBColor
 import com.intellij.ui.LicensingFacade
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.dsl.builder.BottomGap
@@ -28,6 +29,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StyleSheetUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
 import java.awt.Point
 import java.awt.event.MouseEvent
 import java.util.*
@@ -52,6 +54,10 @@ internal class NonCommercialFactory : LicenseRelatedStatusBarWidgetFactory() {
 
 private class NonCommercialWidget(factory: LicenseRelatedStatusBarWidgetFactory) : LicenseRelatedStatusBarWidget(factory) {
   override val text: String = IdeBundle.message("status.bar.widget.non.commercial.usage")
+
+  override val foreground: Color = JBColor.namedColor("Badge.greenOutlineForeground", JBColor(0x208A3C, 0x5FAD65))
+  override val borderColor: Color = JBColor.namedColor("Badge.greenOutlineBorderColor", JBColor(0x55A76A, 0x4E8052))
+
   override fun createClickListener(): ClickListener = NonCommercialPopup(this)
 }
 
