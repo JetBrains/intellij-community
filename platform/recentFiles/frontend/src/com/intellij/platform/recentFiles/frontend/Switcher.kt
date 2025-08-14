@@ -66,10 +66,7 @@ import org.jetbrains.concurrency.await
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
-import java.awt.event.InputEvent
-import java.awt.event.ItemEvent
-import java.awt.event.ItemListener
-import java.awt.event.MouseEvent
+import java.awt.event.*
 import java.util.*
 import javax.swing.*
 import javax.swing.event.ListDataEvent
@@ -92,6 +89,7 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
     val project: Project,
     val title: @Nls String,
     launchParameters: SwitcherLaunchEventParameters,
+    alreadyReleasedKeys: List<KeyEvent>?,
     onlyEditedFiles: Boolean?,
     private val frontendModel: FrontendRecentFilesModel,
     private val remoteApi: FileSwitcherApi,
@@ -425,6 +423,14 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
 
       if (Registry.`is`("highlighting.passes.cache")) {
         scheduleBackendRecentFilesUpdate(RecentFilesBackendRequest.ScheduleRehighlighting(project.projectId()))
+      }
+
+      if (alreadyReleasedKeys?.isNotEmpty() == true) {
+        uiUpdateScope.launch(Dispatchers.EDT) { // using EDT because some navigate() stuff inside may need the WIL
+          for (event in alreadyReleasedKeys) {
+            onKeyRelease.keyReleased(event)
+          }
+        }
       }
     }
 
