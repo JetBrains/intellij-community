@@ -54,7 +54,7 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
                     ?.toKotlinToolingVersion()
                     ?.let { it >= KotlinGradlePluginVersionKeyVersion.KGP_WITH_ISOLATED_PROJECTS_SUPPORT.version } == true
 
-            if (kgpSupportsIsolatedProjects && importingContext.getProperty(GradleImportProperties.GRADLE_ISOLATED_PROJECTS)) {
+            if (kgpSupportsIsolatedProjects) {
                 return@let KotlinTargetJarImpl(jarReflection.archiveFile, emptySet())
             }
             val compileKotlinTaskNames = origin.compilations?.map { it.compileKotlinTaskName }?.toSet().orEmpty()
