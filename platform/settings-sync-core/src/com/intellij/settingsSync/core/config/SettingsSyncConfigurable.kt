@@ -80,7 +80,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
 
   private val syncEnabler = SettingsSyncEnabler()
   private val enableSyncOption = AtomicProperty<InitSyncType>(InitSyncType.GET_FROM_SERVER)
-  private val disableSyncOption = AtomicProperty<Int>(DisableSyncType.DISABLE)
+  private val disableSyncOption = AtomicProperty<DisableSyncType>(DisableSyncType.DISABLE)
   private val remoteSettingsExist = AtomicBooleanProperty(false)
   private val wasUsedBefore = AtomicBooleanProperty(currentUser() != null)
   private val userAccountsList = arrayListOf<UserProviderHolder>()
@@ -376,22 +376,19 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     }
   }
 
-  private fun showDisableSyncDialog(): Int {
-    @Suppress("DialogTitleCapitalization")
+  private fun showDisableSyncDialog(): DisableSyncType {
     val providerName = userDropDownLink.selectedItem?.providerName ?: ""
-    if (SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired)
-      return Messages.showDialog( // TODO<rv>: Use AlertMessage instead
+    val intResult = if (SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired) {
+      Messages.showDialog(
         message("disable.dialog.text", providerName),
         message("disable.dialog.title"),
         arrayOf(Messages.getCancelButton(), message("disable.dialog.disable.button")),
-        //message("disable.dialog.remove.data.box", providerName),
-        //false,
         1,
         1,
-        Messages.getInformationIcon(), null
+        Messages.getQuestionIcon(), null
       )
-    else {
-      return Messages.showCheckboxMessageDialog( // TODO<rv>: Use AlertMessage instead
+    } else {
+      Messages.showCheckboxMessageDialog(
         message("disable.dialog.text", providerName),
         message("disable.dialog.title"),
         arrayOf(Messages.getCancelButton(), message("disable.dialog.disable.button")),
@@ -399,16 +396,17 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         false,
         1,
         1,
-        Messages.getInformationIcon()
+        Messages.getQuestionIcon()
       ) { index: Int, checkbox: JCheckBox ->
         if (index == 1) {
-          if (checkbox.isSelected) DisableSyncType.DISABLE_AND_REMOVE_DATA else DisableSyncType.DISABLE
+          if (checkbox.isSelected) 2 else 1
         }
         else {
           0
         }
       }
     }
+    return DisableSyncType.entries.find { it.value == intResult } ?: DisableSyncType.DONT_DISABLE
   }
 
   private fun disableCurrentSyncDialog() : Boolean {
@@ -809,12 +807,10 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     GET_FROM_SERVER
   }
 
-  private sealed class DisableSyncType{
-    companion object{
-      const val DISABLE = 1
-      const val DISABLE_AND_REMOVE_DATA = 2
-      const val DONT_DISABLE = 0
-    }
+  private enum class DisableSyncType(val value: Int) {
+    DISABLE(1),
+    DISABLE_AND_REMOVE_DATA(2),
+    DONT_DISABLE(0)
   }
 
 
