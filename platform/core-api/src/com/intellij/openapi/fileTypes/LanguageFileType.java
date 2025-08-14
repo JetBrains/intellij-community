@@ -52,7 +52,7 @@ public abstract class LanguageFileType implements FileType {
   }
 
   @Override
-  public final boolean isBinary() {
+  public boolean isBinary() {
     return false;
   }
 
