@@ -28,44 +28,7 @@ class RedundantWithInspection : KotlinApplicableInspectionBase.Simple<KtCallExpr
     override fun createQuickFix(
         element: KtCallExpression,
         context: Context,
-    ): KotlinModCommandQuickFix<KtCallExpression> = object : KotlinModCommandQuickFix<KtCallExpression>() {
-
-        override fun getFamilyName(): String = KotlinBundle.message("remove.redundant.with.fix.text")
-
-        override fun applyFix(
-            project: Project,
-            element: KtCallExpression,
-            updater: ModPsiUpdater,
-        ) {
-            val lambdaExpression = element.valueArguments.getOrNull(1)?.getLambdaExpression() ?: return
-            val lambdaBody = lambdaExpression.bodyExpression ?: return
-
-            val function = element.getStrictParentOfType<KtFunction>()
-            val functionBody = function?.bodyExpression
-
-            val replaced = if (functionBody?.safeDeparenthesize() == element) {
-                val singleStatement = lambdaBody.statements.singleOrNull()
-                if (singleStatement != null) {
-                    element.replaced((singleStatement as? KtReturnExpression)?.returnedExpression ?: singleStatement)
-                } else {
-                    function.setTypeReference(context.typeReference)?.let { shortenReferences(it) }
-                    val lambdaStatements = lambdaBody.statements
-                    val lastStatement = lambdaStatements.lastOrNull()
-                    if (lastStatement != null && lastStatement !is KtReturnExpression) {
-                        lastStatement.replaced(KtPsiFactory(project).createExpressionByPattern("return $0", lastStatement))
-                    }
-
-                    function.equalsToken?.delete()
-
-                    functionBody.replace(KtPsiFactory.contextual(function).createSingleStatementBlock(lambdaBody))
-                }
-            } else {
-                element.replace(lambdaBody)
-            } ?: return
-
-            updater.moveCaretTo(replaced)
-        }
-    }
+    ): KotlinModCommandQuickFix<KtCallExpression> = RemoveRedundantWithFix(context)
 
     override fun getProblemDescription(
         element: KtCallExpression,
@@ -125,6 +88,47 @@ class RedundantWithInspection : KotlinApplicableInspectionBase.Simple<KtCallExpr
         return null
     }
 
-    private fun KtValueArgument.getLambdaExpression(): KtLambdaExpression? =
-        (this as? KtLambdaArgument)?.getLambdaExpression() ?: this.getArgumentExpression() as? KtLambdaExpression
 }
+
+private class RemoveRedundantWithFix(
+    private val context: RedundantWithInspection.Context,
+) : KotlinModCommandQuickFix<KtCallExpression>() {
+    override fun getFamilyName(): String = KotlinBundle.message("remove.redundant.with.fix.text")
+
+    override fun applyFix(
+        project: Project,
+        element: KtCallExpression,
+        updater: ModPsiUpdater,
+    ) {
+        val lambdaExpression = element.valueArguments.getOrNull(1)?.getLambdaExpression() ?: return
+        val lambdaBody = lambdaExpression.bodyExpression ?: return
+
+        val function = element.getStrictParentOfType<KtFunction>()
+        val functionBody = function?.bodyExpression
+
+        val replaced = if (functionBody?.safeDeparenthesize() == element) {
+            val singleStatement = lambdaBody.statements.singleOrNull()
+            if (singleStatement != null) {
+                element.replaced((singleStatement as? KtReturnExpression)?.returnedExpression ?: singleStatement)
+            } else {
+                function.setTypeReference(context.typeReference)?.let { shortenReferences(it) }
+                val lambdaStatements = lambdaBody.statements
+                val lastStatement = lambdaStatements.lastOrNull()
+                if (lastStatement != null && lastStatement !is KtReturnExpression) {
+                    lastStatement.replaced(KtPsiFactory(project).createExpressionByPattern("return $0", lastStatement))
+                }
+
+                function.equalsToken?.delete()
+
+                functionBody.replace(KtPsiFactory.contextual(function).createSingleStatementBlock(lambdaBody))
+            }
+        } else {
+            element.replace(lambdaBody)
+        } ?: return
+
+        updater.moveCaretTo(replaced)
+    }
+}
+
+private fun KtValueArgument.getLambdaExpression(): KtLambdaExpression? =
+    (this as? KtLambdaArgument)?.getLambdaExpression() ?: this.getArgumentExpression() as? KtLambdaExpression
