@@ -34,6 +34,7 @@ public final class ConsentOptions implements ModificationTracker {
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
   private static final String EAP_FEEDBACK_OPTION_ID = "eap";
   private static final String AI_DATA_COLLECTION_OPTION_ID = "ai.data.collection.and.use.policy";
+  private static final String TRACE_DATA_COLLECTION_OPTION_ID = "ai.trace.data.collection.and.use.policy";
   private static final Set<String> PER_PRODUCT_CONSENTS = Set.of(EAP_FEEDBACK_OPTION_ID);
   private final BooleanSupplier myIsEap;
   private String myProductCode;
@@ -198,6 +199,10 @@ public final class ConsentOptions implements ModificationTracker {
 
   public static @NotNull Predicate<Consent> condAiDataCollectionConsent() {
     return consent -> AI_DATA_COLLECTION_OPTION_ID.equals(consent.getId());
+  }
+
+  public static @NotNull Predicate<Consent> condTraceDataCollectionConsent() {
+    return consent -> TRACE_DATA_COLLECTION_OPTION_ID.equals(consent.getId());
   }
 
   /**
