@@ -327,10 +327,10 @@ private class RpcClient(
                 val kser = rpc.returnType.serializer(rpc.call.classMethodDisplayName())
                 val json = rpcJsonImplementationDetail()
                 val isUnitData = (rpc.returnType is RemoteKind.Data) &&
-                  ((rpc.returnType as RemoteKind.Data).serializer.descriptor.serialName == "kotlin.Unit")
+                                 (rpc.returnType.serializer.descriptor.serialName == "kotlin.Unit")
                 if (isUnitData && message.result is JsonNull) {
                   @Suppress("UNCHECKED_CAST")
-                  val baseSer = (rpc.returnType as RemoteKind.Data).serializer as kotlinx.serialization.KSerializer<Any>
+                  val baseSer = rpc.returnType.serializer as kotlinx.serialization.KSerializer<Any>
                   json.decodeFromJsonElement(baseSer.nullable, message.result)
                 }
                 else {
