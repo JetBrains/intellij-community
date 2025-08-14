@@ -721,7 +721,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
    * Also, loading nio classes might not work during `#appendToClassPathForInstrumentation`.
    * Because for some versions of JBR, it leads to NPE during initialization of ZipFile through FileSystems.getDefault.
    */
-  private static FileSystem getPlatformDefaultFileSystem() {
+  static FileSystem getPlatformDefaultFileSystem() {
     if (theFileSystem != null) {
       return theFileSystem;
     }

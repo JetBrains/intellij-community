@@ -10,10 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -45,6 +42,7 @@ public final class ClassPath {
   private static final AtomicLong classDefineTotalTime = new AtomicLong();
 
   private Path[] files;
+  private boolean filesConvertedToDefaultFs;
   private int searchOffset = 0;
 
   private final @NotNull Function<Path, ResourceFile> resourceFileFactory;
@@ -94,6 +92,9 @@ public final class ClassPath {
     this.mimicJarUrlConnection = mimicJarUrlConnection;
 
     this.files = files.toArray(new Path[]{});
+    synchronized (this) {
+      filesConvertedToDefaultFs = false;
+    }
     if (resourceFileFactory == null) {
       this.resourceFileFactory = file -> new JdkZipResourceFile(file, configuration.lockJars);
     }
@@ -103,12 +104,32 @@ public final class ClassPath {
   }
 
   public synchronized List<Path> getFiles() {
+    if (!filesConvertedToDefaultFs) {
+      try {
+        FileSystem fs = FileSystems.getDefault();
+        if (fs != UrlClassLoader.getPlatformDefaultFileSystem()) {
+          Path[] newFiles = files.clone();
+          for (int i = 0; i < files.length; i++) {
+            final Path oldFile = files[i];
+            if (oldFile.getFileSystem() == UrlClassLoader.getPlatformDefaultFileSystem()) {
+              newFiles[i] = fs.getPath(oldFile.toString());
+            }
+          }
+          files = newFiles;
+        }
+      }
+      catch (Exception error) {
+        throw new Error("Fatal error from class loader " + this, error);
+      }
+      filesConvertedToDefaultFs = true;
+    }
     return Arrays.asList(files);
   }
 
   public synchronized void reset(Collection<Path> newClassPath) {
     reset();
     files = newClassPath.toArray(new Path[]{});
+    filesConvertedToDefaultFs = false;
   }
 
   public synchronized void reset() {
@@ -148,6 +169,7 @@ public final class ClassPath {
     Path[] result = Arrays.copyOf(files, files.length + 1);
     result[result.length - 1] = file;
     files = result;
+    filesConvertedToDefaultFs = false;
     allUrlsWereProcessed = false;
   }
 
@@ -171,6 +193,7 @@ public final class ClassPath {
     }
 
     files = result.toArray(new Path[]{});
+    filesConvertedToDefaultFs = false;
     allUrlsWereProcessed = false;
   }
 
