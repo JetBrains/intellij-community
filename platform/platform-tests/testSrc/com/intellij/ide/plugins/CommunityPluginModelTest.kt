@@ -16,6 +16,7 @@ class CommunityPluginModelTest {
       skipUnresolvedOptionalContentModules = true,
       referencedPluginIdsOfExternalPlugins = setOf(
         //these modules are defined in the ultimate part
+        "com.intellij.marketplace",
         "com.intellij.modules.python-in-mini-ide-capable",
         "com.intellij.modules.rider",
         "com.intellij.modules.ultimate",
