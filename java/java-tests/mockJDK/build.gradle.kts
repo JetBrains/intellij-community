@@ -1,11 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /**
- * To publish a new mock to repository, create gradle.properties file and define "spaceUsername" and "spacePassword"
- * properties. The created mockJDK version is the same as Gradle bootstrap JDK, so carefully set it.
+ * To publish a new mock to repository, create gradle.properties file and define "spaceUsername" and "spacePassword" properties.
+ * The created mockJDK version is the same as Gradle bootstrap JDK, so carefully set it.
+ * For password, you might need to create an Application Password on Space.
  * 
  * Use `gradle clean build` to ensure that proper lib is created under build/libs
  * Use `gradle clean publish` to publish
+ * 
+ * You can find the uploaded artifact at https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/mockjdk/.
  */
 
 import java.nio.file.Files
