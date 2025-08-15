@@ -4,6 +4,8 @@
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
+import com.intellij.ide.plugins.PluginModuleId.Companion.asPluginId
+import com.intellij.ide.plugins.PluginModuleId.Companion.asPluginModuleId
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.graph.DFSTBuilder
@@ -107,7 +109,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       loadingErrors.add(createCannotLoadError(
         descriptor = plugin,
         dependencyPluginId = disabledModuleToProblematicPlugin.get(disabledModule.moduleId)
-                             ?: PluginId.getId(disabledModule.moduleId.id), // FIXME why is this so?
+                             ?: disabledModule.moduleId.asPluginId(),
         errors = emptyMap(),
         isNotifyUser = !plugin.isImplementationDetail))
     }
@@ -190,7 +192,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
             enabledPluginIds.put(pluginAlias, module)
           }
           if (module.packagePrefix != null) {
-            enabledModuleV2Ids.put(PluginModuleId(module.pluginId.idString), module) // FIXME ???
+            enabledModuleV2Ids.put(module.pluginId.asPluginModuleId(), module)
           }
           if (module.pluginId != PluginManagerCore.CORE_ID) {
             for (contentModule in module.contentModules) {
