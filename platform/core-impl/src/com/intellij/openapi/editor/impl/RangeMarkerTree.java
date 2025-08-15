@@ -110,7 +110,8 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   @Override
-  public void setNode(@NotNull T key, IntervalNode<T> intervalNode) {
+  protected void setNode(@NotNull T key, IntervalNode<T> intervalNode) {
+    assertUnderWriteLock();
     //noinspection unchecked
     ((RangeMarkerImpl)key).myNode = (RMNode<RangeMarkerEx>)intervalNode;
   }
@@ -304,9 +305,9 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
 
   // returns true if all deltas involved are still 0
   @ApiStatus.Internal
-  public void collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<T> root,
-                                                     int start, int end, int lengthDelta,
-                                                     @NotNull List<? super IntervalNode<T>> affected) {
+  protected void collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<T> root,
+                                                        int start, int end, int lengthDelta,
+                                                        @NotNull List<? super IntervalNode<T>> affected) {
     if (root == null) return;
     pushDelta(root);
 

@@ -881,7 +881,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
     @ApiStatus.Internal
     @Override
-    public void collectAffectedMarkersAndShiftSubtrees(
+    protected void collectAffectedMarkersAndShiftSubtrees(
       @Nullable IntervalNode<FoldRegionImpl> root,
       int start,
       int end,
