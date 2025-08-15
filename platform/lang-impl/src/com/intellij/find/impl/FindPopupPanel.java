@@ -134,7 +134,6 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
   private final @NotNull Disposable myDisposable;
   private final Alarm myPreviewUpdater;
   private final Runnable updatePreviewRunnable;
-  private final UpdateRescheduler previewUpdateRescheduler ;
   private final @NotNull FindPopupScopeUI myScopeUI;
   private JComponent myCodePreviewComponent;
   private SearchTextArea mySearchTextArea;
@@ -210,10 +209,6 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
     initComponents();
     updatePreviewRunnable = this::updatePreview;
-    // the last update attempt will be performed after 4s (to process a case with delayed RPC response). It'll be invoked only if !usageInfoAdapter.isLoaded
-    previewUpdateRescheduler = new UpdateRescheduler(50, 100, 9, LOG, (delay) -> {
-      myPreviewUpdater.addRequest(updatePreviewRunnable, delay);
-    });
     FindUsagesCollector.triggerUsedOptionsStats(myProject, FindUsagesCollector.FIND_IN_PATH, myHelper.getModel(), myScopeUI.getScopeTypeByModel(myHelper.getModel()));
   }
 
@@ -267,8 +262,6 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       Logger.getInstance(FindPopupPanel.class).error(throwable);
       return null;
     });
-
-    previewUpdateRescheduler.rescheduleIfNeeded(!ContainerUtil.and(adapters, UsageInfoAdapter::isLoaded));
   }
 
   @Override
@@ -744,7 +737,6 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
     myResultsPreviewTable.getSelectionModel().addListSelectionListener(e -> {
       if (e.getValueIsAdjusting() || Disposer.isDisposed(myPreviewUpdater)) return;
-      previewUpdateRescheduler.reset();
       myPreviewUpdater.addRequest(updatePreviewRunnable, 50);
     });
     DocumentAdapter documentAdapter = new DocumentAdapter() {
@@ -1238,9 +1230,11 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         Set<String> filePaths = ConcurrentHashMap.newKeySet();
 
         projectExecutor.findUsages(project, myResultsPreviewSearchProgress, processPresentation, findModel, previousUsages,
-                                   !myResultsPreviewTable.isEmpty(), myDisposable, (usageInfos) -> {
-            myPreviewUpdater.addRequest(updatePreviewRunnable, 50);
-            return null;
+                                   !myResultsPreviewTable.isEmpty(), myDisposable, (adapter) -> {
+            Map<Integer, Usage> selectedUsages = getSelectedUsages();
+            if (selectedUsages != null && selectedUsages.containsValue(adapter)) {
+              myPreviewUpdater.addRequest(updatePreviewRunnable, 50);
+            }
           }, (usage) -> {
           if (isCancelled()) {
             onStop(hash);
