@@ -36,6 +36,9 @@ class KotlinFirRefactoringsSettings : PersistentStateComponent<KotlinFirRefactor
     
     var PUSH_DOWN_PREVIEW_USAGES: Boolean = false
 
+    var EXTRACT_INTERFACE_JAVADOC: Int = 0
+    var EXTRACT_SUPERCLASS_JAVADOC: Int = 0
+
     var INLINE_METHOD_THIS: Boolean = false
     var INLINE_LOCAL_THIS: Boolean = false
     var INLINE_TYPE_ALIAS_THIS: Boolean = false
