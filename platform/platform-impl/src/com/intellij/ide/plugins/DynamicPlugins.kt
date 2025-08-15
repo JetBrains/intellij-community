@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
@@ -1426,10 +1426,7 @@ private fun findPluginExtensionPoint(pluginDescriptor: IdeaPluginDescriptorImpl,
                                                   ?: findInContainer(moduleContainerDescriptor)
   pluginDescriptor.findInAnyScope()?.let { return it }
   pluginDescriptor.contentModules.forEach { contentModule ->
-    // FIXME incomplete fix for IJPL-190703
-    if (contentModule.moduleLoadingRule.required) {
-      contentModule.findInAnyScope()?.let { return it }
-    }
+    contentModule.findInAnyScope()?.let { return it }
   }
   return null
 }
