@@ -24,12 +24,22 @@ val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
 
 class ProductModulesLayout {
   /**
-   * Names of the additional product-specific modules which need to be packed into openapi.jar in the product's 'lib' directory.
+   * Names of the additional product-specific modules which need to be packed into product.jar in the product's 'lib' directory.
+   * 
+   * **Note that these modules will be loaded by the core classloader.**
+   * 
+   * It's better to include them as content modules in a regular or the core plugin instead, this way they'll be loaded by separate classloaders and you won't need to register
+   * them explicitly in the build scripts.
    */
   var productApiModules: List<String> = emptyList()
 
   /**
    * Names of the additional product-specific modules which need to be included in the product's 'lib' directory
+   *
+   * **Note that these modules will be loaded by the core classloader.**
+   *
+   * It's better to include them as content modules in a regular or the core plugin instead, this way they'll be loaded by separate classloaders and you won't need to register
+   * them explicitly in the build scripts.
    */
   var productImplementationModules: List<String> = emptyList()
 
