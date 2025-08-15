@@ -2,8 +2,6 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.util.text.SemVer
-import kotlin.io.path.exists
-import kotlin.io.path.name
 import org.apache.maven.model.Developer
 import org.apache.maven.model.License
 import org.apache.maven.model.Model
@@ -11,14 +9,12 @@ import org.apache.maven.model.Scm
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.libraries.isLibraryModule
-import org.jetbrains.intellij.build.impl.maven.DependencyScope
-import org.jetbrains.intellij.build.impl.maven.GeneratedMavenArtifacts
-import org.jetbrains.intellij.build.impl.maven.MavenArtifactDependency
-import org.jetbrains.intellij.build.impl.maven.MavenCentralPublication
-import org.jetbrains.intellij.build.impl.maven.MavenCoordinates
+import org.jetbrains.intellij.build.impl.maven.*
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
+import kotlin.io.path.exists
+import kotlin.io.path.name
 
 internal object JewelMavenArtifacts {
   private const val GROUP_ID: String = "org.jetbrains.jewel"
@@ -46,7 +42,7 @@ internal object JewelMavenArtifacts {
   private val transitiveJewelDependencies = mapOf(
     "jewel-foundation" to emptySet(),
     "jewel-ui" to emptySet(),
-    "jewel-decorated-window" to setOf("jewel-foundation"),
+    "jewel-decorated-window" to setOf("jewel-foundation", "jewel-ui"),
     "jewel-markdown-core" to setOf("jewel-foundation"),
     "jewel-markdown-extensions-autolink" to setOf("jewel-foundation", "jewel-ui"),
     "jewel-markdown-extensions-gfm-alerts" to setOf("jewel-foundation", "jewel-ui"),
@@ -116,9 +112,6 @@ internal object JewelMavenArtifacts {
         }
         coordinates.groupId == "io.coil-kt.coil3" -> {
           // Add Coil 3 dependencies as "compile" dependencies when present
-          add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
-        }
-        coordinates.groupId == "org.jetbrains.compose.components" -> {
           add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
         }
 
