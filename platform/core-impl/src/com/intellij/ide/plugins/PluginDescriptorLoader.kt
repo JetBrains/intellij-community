@@ -1040,6 +1040,7 @@ private fun collectPluginFilesInClassPath(loader: ClassLoader): Map<URL, String>
   return urlToFilename
 }
 
+@Deprecated("use loadDescriptorFromArtifact")
 @Throws(IOException::class)
 @RequiresBackgroundThread
 fun loadAndInitDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): PluginMainDescriptor? {
@@ -1079,6 +1080,56 @@ fun loadAndInitDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): Pl
         return runBlocking {
           loadFromPluginDir(dir = rootDir, loadingContext = loadingContext, pool = NonShareableJavaZipFilePool(), isUnitTestMode = PluginManagerCore.isUnitTestMode)
             ?.apply { initialize(context = initContext) }
+        }
+      }
+    }
+    catch (_: NoSuchFileException) {
+    }
+  }
+  finally {
+    NioFiles.deleteRecursively(outputDir)
+  }
+
+  return null
+}
+
+@Throws(IOException::class)
+@RequiresBackgroundThread
+fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): PluginMainDescriptor? {
+  val loadingContext = PluginDescriptorLoadingContext(
+    getBuildNumberForDefaultDescriptorVersion = { buildNumber ?: PluginManagerCore.buildNumber },
+    isMissingSubDescriptorIgnored = true,
+  )
+
+  val path = file.toString()
+  if (path.endsWith(".jar", ignoreCase = true)) {
+    val descriptor = loadDescriptorFromJar(
+      file = file,
+      loadingContext = loadingContext,
+      pool = NonShareableJavaZipFilePool(),
+      pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
+    )
+    if (descriptor != null) {
+      return descriptor
+    }
+  }
+
+  if (!path.endsWith(".zip", ignoreCase = true)) {
+    return null
+  }
+
+  val outputDir = Files.createTempDirectory("plugin")!!
+  try {
+    Decompressor.Zip(file)
+      .withZipExtensions()
+      .extract(outputDir)
+    try {
+      //org.jetbrains.intellij.build.io.ZipArchiveOutputStream may add __index__ entry to the plugin zip, we need to ignore it here
+      val rootDir = NioFiles.list(outputDir).firstOrNull { it.fileName.toString() != "__index__" }
+      if (rootDir != null) {
+        @Suppress("SSBasedInspection")
+        return runBlocking {
+          loadFromPluginDir(dir = rootDir, loadingContext = loadingContext, pool = NonShareableJavaZipFilePool(), isUnitTestMode = PluginManagerCore.isUnitTestMode)
         }
       }
     }
