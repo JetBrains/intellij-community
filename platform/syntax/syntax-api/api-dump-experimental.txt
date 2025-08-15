@@ -256,10 +256,10 @@
 - a:changeMarkerCount(I,I,I):V
 - a:substitute(I,I,com.intellij.platform.syntax.tree.ASTMarkers):V
 *f:com.intellij.platform.syntax.tree.ASTMarkersKt
-- sf:ChameleonRef():com.intellij.platform.syntax.tree.ChameleonRef
-- sf:ChameleonRef(com.intellij.platform.syntax.tree.AstMarkersChameleon):com.intellij.platform.syntax.tree.ChameleonRef
 - sf:firstChild(com.intellij.platform.syntax.tree.ASTMarkers,I):I
 - sf:lastChild(com.intellij.platform.syntax.tree.ASTMarkers,I):I
+- sf:newChameleonRef():com.intellij.platform.syntax.tree.ChameleonRef
+- sf:newChameleonRef(com.intellij.platform.syntax.tree.AstMarkersChameleon):com.intellij.platform.syntax.tree.ChameleonRef
 - sf:nextSibling(com.intellij.platform.syntax.tree.ASTMarkers,I):I
 - sf:prevSibling(com.intellij.platform.syntax.tree.ASTMarkers,I):I
 *f:com.intellij.platform.syntax.tree.AstMarkersChameleon

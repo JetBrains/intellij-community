@@ -18,15 +18,15 @@ private class ChameleonRefImpl(private var ref: AstMarkersChameleon? = null) : C
 }
 
 /**
- * Wasm implementation of [ChameleonRef].
+ * Wasm implementation of [newChameleonRef].
  */
 @Suppress("unused")
 @Actual("ChameleonRef")
-internal fun newChameleonRefWasmJs(): ChameleonRef = ChameleonRefImpl()
+internal fun newChameleonRefJs(): ChameleonRef = ChameleonRefImpl()
 
 /**
- * Wasm implementation of [ChameleonRef].
+ * Wasm implementation of [newChameleonRef].
  */
 @Suppress("unused")
 @Actual("ChameleonRef")
-internal fun newChameleonRefWasmJs(chameleon: AstMarkersChameleon): ChameleonRef = ChameleonRefImpl(chameleon)
+internal fun newChameleonRefJs(chameleon: AstMarkersChameleon): ChameleonRef = ChameleonRefImpl(chameleon)

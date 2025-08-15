@@ -12,16 +12,16 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
 /**
- * Provides the current instance of [ExtensionRegistry].
+ * Provides the current instance of [currentExtensionRegistry].
  */
 @ApiStatus.Experimental
-fun ExtensionSupport(): ExtensionSupport = registry
+fun currentExtensionSupport(): ExtensionSupport = registry
 
 /**
- * Provides the current instance of [ExtensionRegistry] or `null` if it is not supported in the current environment (i.e., in IntelliJ runtime).
+ * Provides the current instance of [currentExtensionRegistry] or `null` if it is not supported in the current environment (i.e., in IntelliJ runtime).
  */
 @ApiStatus.Experimental
-fun ExtensionRegistry(): ExtensionRegistry? = registry as? ExtensionRegistry
+fun currentExtensionRegistry(): ExtensionRegistry? = registry as? ExtensionRegistry
 
 /**
  * Provides access for extensions registered in the current container.

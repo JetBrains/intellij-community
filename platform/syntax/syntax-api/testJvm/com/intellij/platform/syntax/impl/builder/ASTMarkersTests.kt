@@ -3,7 +3,7 @@ package com.intellij.platform.syntax.impl.builder
 
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.tree.ASTMarkersImpl
-import com.intellij.platform.syntax.tree.ChameleonRef
+import com.intellij.platform.syntax.tree.newChameleonRef
 import com.intellij.platform.syntax.tree.MarkerKind
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -233,7 +233,7 @@ class ASTMarkersTests {
 
   @Test
   fun testSubstituteChameleonRemoved() {
-    val atomicReference = ChameleonRef()
+    val atomicReference = newChameleonRef()
     val firstTree = ASTMarkersImpl().apply {
       pushBack()
       setMarker(0, 0, MarkerKind.Start, false, null, null)
@@ -319,7 +319,7 @@ class ASTMarkersTests {
       setMarker(3, 0, MarkerKind.End, false, null, null)
     }
 
-    val atomicReference = ChameleonRef()
+    val atomicReference = newChameleonRef()
     val secondTree = ASTMarkersImpl().apply {
       pushBack()
       setMarker(0, 0, MarkerKind.Start, false, null, null)

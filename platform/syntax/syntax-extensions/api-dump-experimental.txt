@@ -14,8 +14,8 @@
 - a:getExtensions(com.intellij.platform.syntax.extensions.ExtensionPointKey):java.util.List
 - a:getLanguageExtensions(com.intellij.platform.syntax.extensions.ExtensionPointKey,com.intellij.platform.syntax.SyntaxLanguage):java.util.List
 *f:com.intellij.platform.syntax.extensions.ExtensionSupportKt
-- *sf:ExtensionRegistry():com.intellij.platform.syntax.extensions.ExtensionRegistry
-- *sf:ExtensionSupport():com.intellij.platform.syntax.extensions.ExtensionSupport
 - sf:buildExtensionSupport(kotlin.jvm.functions.Function1):com.intellij.platform.syntax.extensions.ExtensionSupport
+- *sf:currentExtensionRegistry():com.intellij.platform.syntax.extensions.ExtensionRegistry
+- *sf:currentExtensionSupport():com.intellij.platform.syntax.extensions.ExtensionSupport
 - sf:performWithExtensionSupport(com.intellij.platform.syntax.extensions.ExtensionSupport,kotlin.jvm.functions.Function1):java.lang.Object
 *:com.intellij.platform.syntax.extensions.StaticExtensionSupport

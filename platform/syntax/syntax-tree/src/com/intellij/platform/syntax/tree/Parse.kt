@@ -7,7 +7,7 @@ import com.intellij.platform.syntax.CancellationProvider
 import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
-import com.intellij.platform.syntax.extensions.ExtensionSupport
+import com.intellij.platform.syntax.extensions.currentExtensionSupport
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.TokenList
 import com.intellij.platform.syntax.lexer.buildTokenList
@@ -82,6 +82,6 @@ fun parse(
     builderFactory = SyntaxBuilderFactory { text, tokens, startLexeme ->
       createBuilder(text, tokens, startLexeme)
     },
-    extensions = ::ExtensionSupport
+    extensions = ::currentExtensionSupport
   )
 }

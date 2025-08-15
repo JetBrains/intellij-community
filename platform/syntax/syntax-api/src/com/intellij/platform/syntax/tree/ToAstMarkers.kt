@@ -107,7 +107,7 @@ fun SyntaxTreeBuilder.toAstMarkers(): ASTMarkers {
           item.getNodeType()
         )
         if (item.getNodeType().isLazyParseable() && item.isCollapsed()) {
-          astMarkersResult.setChameleon(item.startIndex, ChameleonRef())
+          astMarkersResult.setChameleon(item.startIndex, newChameleonRef())
           isInsideChameleon = true
         }
         astTreeIndices.push(astTreeIndex)
@@ -117,7 +117,7 @@ fun SyntaxTreeBuilder.toAstMarkers(): ASTMarkers {
   }
   for (i in 0..<tokens.tokenCount) {
     if (tokens.getTokenType(i)?.isLazyParseable() == true)
-      astMarkersResult.setChameleon(i, ChameleonRef())
+      astMarkersResult.setChameleon(i, newChameleonRef())
   }
   return astMarkersResult
 }

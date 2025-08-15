@@ -596,7 +596,7 @@ private fun substitute(
     val contextKey = key + syntaxNode.context.startLexemeIndex
     val newKey = if (contextKey >= syntaxNode.endLexemeIndex) key + diff else key
     if (contextKey == syntaxNode.startLexemeIndex) {
-      newKey to ChameleonRef(parsedChameleon)
+      newKey to newChameleonRef(parsedChameleon)
     }
     else {
       newKey to value
@@ -637,7 +637,7 @@ private fun substitute(
               else oldParsedChameleon.customLexemeStore
               val newParsedChameleon = AstMarkersChameleon(newTokens, ast = reparsedAst)
               diff = if (theSameTokens) diff else 0
-              lexemeIndex to ChameleonRef(newParsedChameleon)
+              lexemeIndex to newChameleonRef(newParsedChameleon)
             }
 
             else -> (lexemeIndex + diff) to ref
