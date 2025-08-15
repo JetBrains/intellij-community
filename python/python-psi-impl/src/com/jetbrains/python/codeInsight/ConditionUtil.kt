@@ -207,11 +207,22 @@ private fun getInvertedConditionExpression(
     val chainedExpressions = mutableListOf<PyExpression>()
     var currentExpression = expression
     while (currentExpression is PyBinaryExpression && comparisonStrings.containsKey(currentExpression.operator)) {
-      val leftExpression = (currentExpression.leftExpression as? PyBinaryExpression)?.takeIf { comparisonStrings.containsKey(it.operator) }?.rightExpression
-                           ?: currentExpression.leftExpression
+      val leftExpression = currentExpression.leftExpression
+      // The left operand forms a chained comparison, e.g.
+      // `left.left <= left.right < right`, which is equivalent to
+      // `(left.left <= left.right) and (left.right < right)`
+      // so it should be inverted as
+      // `not (left.left <= left.right) or not (left.right < right)` or, after simplification,
+      // `left.left > left.right or left.right >= right`
+      val newLeftExpression = if (leftExpression is PyBinaryExpression && comparisonStrings.containsKey(leftExpression.operator)) {
+        leftExpression.rightExpression ?: leftExpression
+      }
+      else {
+        leftExpression
+      }
       val invertedOperator = invertedComparisons.getValue(currentExpression.operator)
       val invertedExpression = generator.createBinaryExpression(
-        comparisonStrings.getValue(invertedOperator), leftExpression, currentExpression.rightExpression!!)
+        comparisonStrings.getValue(invertedOperator), newLeftExpression, currentExpression.rightExpression!!)
       chainedExpressions.add(invertedExpression)
       currentExpression = currentExpression.leftExpression
     }
