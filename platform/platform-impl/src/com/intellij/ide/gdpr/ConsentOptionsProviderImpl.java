@@ -46,4 +46,9 @@ final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
 
     return allowedNow;
   }
+
+  @Override
+  public boolean isTraceDataCollectionAllowed() {
+    return ConsentOptions.getInstance().getTraceDataCollectionPermission() == ConsentOptions.Permission.YES;
+  }
 }
