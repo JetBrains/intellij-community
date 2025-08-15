@@ -7752,7 +7752,8 @@ f:com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:setTextAttributes(I,com.intellij.openapi.editor.markup.TextAttributes):V
 - f:split(I,Z,com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:split(I,Z,com.intellij.openapi.vfs.VirtualFile,Z,Z):com.intellij.openapi.fileEditor.impl.EditorWindow
-- bs:split$default(com.intellij.openapi.fileEditor.impl.EditorWindow,I,Z,com.intellij.openapi.vfs.VirtualFile,Z,Z,I,java.lang.Object):com.intellij.openapi.fileEditor.impl.EditorWindow
+- f:split(I,Z,com.intellij.openapi.vfs.VirtualFile,Z,Z,Z):com.intellij.openapi.fileEditor.impl.EditorWindow
+- bs:split$default(com.intellij.openapi.fileEditor.impl.EditorWindow,I,Z,com.intellij.openapi.vfs.VirtualFile,Z,Z,Z,I,java.lang.Object):com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:toFront():V
 - f:trimToSize(com.intellij.openapi.vfs.VirtualFile,Z):V
 - f:unsplitAll():V
@@ -7785,7 +7786,8 @@ c:com.intellij.openapi.fileEditor.impl.EditorsSplitters
 - f:openFilesAsync(Z):kotlinx.coroutines.Job
 - f:openInRightSplit(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:openInRightSplit(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.fileEditor.impl.EditorWindow
-- bs:openInRightSplit$default(com.intellij.openapi.fileEditor.impl.EditorsSplitters,com.intellij.openapi.vfs.VirtualFile,Z,I,java.lang.Object):com.intellij.openapi.fileEditor.impl.EditorWindow
+- f:openInRightSplit(com.intellij.openapi.vfs.VirtualFile,Z,Z):com.intellij.openapi.fileEditor.impl.EditorWindow
+- bs:openInRightSplit$default(com.intellij.openapi.fileEditor.impl.EditorsSplitters,com.intellij.openapi.vfs.VirtualFile,Z,Z,I,java.lang.Object):com.intellij.openapi.fileEditor.impl.EditorWindow
 - p:paintComponent(java.awt.Graphics):V
 - f:trimToSize():V
 - uiSettingsChanged(com.intellij.ide.ui.UISettings):V

@@ -887,7 +887,7 @@ open class FileEditorManagerImpl(
         }
       }
       else if (mode == OpenMode.RIGHT_SPLIT) {
-        openInRightSplit(file, options.requestFocus, options.explicitlyOpenCompositeProvider)?.let {
+        openInRightSplit(file, options.requestFocus, options.forceFocus, options.explicitlyOpenCompositeProvider)?.let {
           return it
         }
       }
@@ -931,7 +931,7 @@ open class FileEditorManagerImpl(
     }
     else if (mode == OpenMode.RIGHT_SPLIT) {
       withContext(Dispatchers.EDT) {
-        openInRightSplit(file, options.requestFocus, explicitlySetCompositeProvider = options.explicitlyOpenCompositeProvider)
+        openInRightSplit(file, options.requestFocus, options.forceFocus, explicitlySetCompositeProvider = options.explicitlyOpenCompositeProvider)
       }?.let { composite ->
         if (composite is EditorComposite) {
           composite.waitForAvailable()
@@ -1057,6 +1057,7 @@ open class FileEditorManagerImpl(
   private fun openInRightSplit(
     file: VirtualFile,
     requestFocus: Boolean,
+    forceFocus: Boolean,
     explicitlySetCompositeProvider: (() -> EditorComposite?)? = null
   ): FileEditorComposite? {
     val window = splitters.currentWindow ?: return null
@@ -1066,12 +1067,12 @@ open class FileEditorManagerImpl(
         // already in right splitter
         if (requestFocus) {
           window.setCurrentCompositeAndSelectTab(composite)
-          focusEditorOnComposite(composite = composite, splitters = window.owner)
+          focusEditorOnComposite(composite = composite, splitters = window.owner, forceFocus = forceFocus)
         }
         return composite
       }
     }
-    return window.owner.openInRightSplit(file, explicitlySetCompositeProvider = explicitlySetCompositeProvider)?.composites()?.firstOrNull { it.file == file }
+    return window.owner.openInRightSplit(file, forceFocus = forceFocus, explicitlySetCompositeProvider = explicitlySetCompositeProvider)?.composites()?.firstOrNull { it.file == file }
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
