@@ -35,6 +35,10 @@ class CommunityPluginModelTest {
         "org/jetbrains/android/dom",
         "com/android/tools/idea/ui/resourcemanager/META-INF",
       ),
+      componentImplementationClassesToIgnore = setOf(
+        "com.intellij.designer.DesignerToolWindowManager",
+        "com.intellij.designer.palette.PaletteToolWindowManager",
+      ),
       pluginVariantsWithDynamicIncludes = listOf(
         PluginVariantWithDynamicIncludes(
           mainModuleName = "kotlin.plugin",
