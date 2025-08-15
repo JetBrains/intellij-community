@@ -24,6 +24,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/core-ui",
     "//platform/util:util-ui",
+    "//platform/platform-impl/rpc",
   ],
   runtime_deps = [":shared_resources"]
 )

@@ -28,6 +28,24 @@ c:com.intellij.openapi.vcs.IssueNavigationLink
 - hashCode():I
 - setIssueRegexp(java.lang.String):V
 - setLinkRegexp(java.lang.String):V
+c:com.intellij.openapi.vcs.RemoteFilePath
+- com.intellij.openapi.vcs.FilePath
+- <init>(java.lang.String,Z):V
+- equals(java.lang.Object):Z
+- getCharset():java.nio.charset.Charset
+- getCharset(com.intellij.openapi.project.Project):java.nio.charset.Charset
+- getFileType():com.intellij.openapi.fileTypes.FileType
+- getIOFile():java.io.File
+- getName():java.lang.String
+- getParentPath():com.intellij.openapi.vcs.FilePath
+- getPath():java.lang.String
+- getPresentableUrl():java.lang.String
+- getVirtualFile():com.intellij.openapi.vfs.VirtualFile
+- getVirtualFileParent():com.intellij.openapi.vfs.VirtualFile
+- hashCode():I
+- isDirectory():Z
+- isNonLocal():Z
+- isUnder(com.intellij.openapi.vcs.FilePath,Z):Z
 f:com.intellij.openapi.vcs.changes.ChangeListData
 - sf:Companion:com.intellij.openapi.vcs.changes.ChangeListData$Companion
 - <init>():V
