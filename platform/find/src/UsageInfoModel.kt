@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.DocumentFullUpdateListener
-import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
@@ -45,7 +44,7 @@ private val LOG = logger<UsageInfoModel>()
 
 internal class UsageInfoModel private constructor(val project: Project, val model: FindInFilesResult, val coroutineScope: CoroutineScope) : UsageInfoAdapter, UsageInFile, UsageDocumentProcessor, Disposable {
   private val virtualFile: VirtualFile? = run {
-    val virtualFile = model.fileId.virtualFile()
+    val virtualFile = model.usageInfos.firstOrNull()?.file?.virtualFile ?: model.fileId.virtualFile()
     if (virtualFile == null) LOG.error("Cannot find virtualFile for ${model.presentablePath}")
     virtualFile
   }
@@ -85,7 +84,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
   }
 
   override fun dispose() {
-    (document as? DocumentImpl)?.removeFullUpdateListener(fullUpdateListener)
+    (document as? DocumentEx)?.removeFullUpdateListener(fullUpdateListener)
     initializationListeners.clear()
   }
 
@@ -133,8 +132,8 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
               return@readAction
             }
 
-            val smartRange = SmartPointerManager.getInstance(project)
-              .createSmartPsiFileRangePointer(psiFile, defaultRange)
+            val smartPointerManager = SmartPointerManager.getInstance(project)
+            val smartRange = smartPointerManager.createSmartPsiFileRangePointer(psiFile, defaultRange)
             cachedSmartRange = smartRange
 
             cachedMergedSmartRanges = if (defaultMergedRanges.size == 1) {
@@ -142,8 +141,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
             }
             else {
               defaultMergedRanges.map { range ->
-                SmartPointerManager.getInstance(project)
-                  .createSmartPsiFileRangePointer(psiFile, range)
+                smartPointerManager.createSmartPsiFileRangePointer(psiFile, range)
               }
             }
             cachedUsageInfos = defaultMergedRanges.map { UsageInfo(psiFile, it, false) }
@@ -201,7 +199,6 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
       return false
     }
 
-    FileTypeManager.getInstance().getFileTypeByFile(virtualFile)
     if (FileTypeManager.getInstance().getFileTypeByFile(virtualFile).isBinary()) {
       return false
     }
@@ -294,14 +291,19 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
   override fun getFile(): VirtualFile? = virtualFile
 
   override fun getDocument(): Document? {
+    document?.let { return it }
     return try {
       runReadAction {
-        val document = cachedPsiFile?.let { psiFile -> PsiDocumentManager.getInstance(project).getDocument(psiFile) }
-        if (document == null) {
+        val psiDoc = cachedPsiFile?.let { psiFile -> PsiDocumentManager.getInstance(project).getDocument(psiFile) }
+        if (psiDoc == null) {
           LOG.warn("PsiFile is not yet loaded for path ${model.presentablePath}. Trying to get document from virtualFile")
-          virtualFile?.findDocument()
         }
-        document
+        val doc = psiDoc ?: virtualFile?.findDocument()
+        if (doc != null && document == null) {
+          document = doc
+          (doc as? DocumentEx)?.addFullUpdateListener(fullUpdateListener)
+        }
+        doc
       }
     }
     catch (t: Throwable) {
