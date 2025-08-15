@@ -201,7 +201,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     try {
       doTest();
       fail("Should not work for assignment expression");
-    } catch (PrepareFailedException e){
+    } catch (PrepareFailedException ignored) {
     }
   }
 
@@ -273,7 +273,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     try {
       doTest();
       fail("Should not work for assignment expression");
-    } catch (PrepareFailedException e){
+    } catch (PrepareFailedException ignored) {
     }
   }
 
@@ -281,7 +281,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     try {
       doTest();
       fail("Should not work for assignment expression");
-    } catch (PrepareFailedException e){
+    } catch (PrepareFailedException ignored) {
     }
   }
 
@@ -816,6 +816,10 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
 
   public void testCodeDuplicatesVarargsShouldNotChangeReturnType() throws Exception {
     doDuplicatesTest();
+  }
+
+  public void testVarargsArguments() throws Exception {
+    doTest();
   }
 
   public void testParametersFromAnonymous() throws Exception {

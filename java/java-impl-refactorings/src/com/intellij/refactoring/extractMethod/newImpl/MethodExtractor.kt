@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.Nullability
@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.JavaRefactoringSettings
@@ -130,7 +131,8 @@ class MethodExtractor {
       val prepareStart = System.currentTimeMillis()
 
       readAction { JavaDuplicatesFinder.linkCopiedClassMembersWithOrigin(file) }
-      val copiedFile = readAction { file.copy() as PsiFile }
+      val copiedFile = readAction { file.copy() as PsiFileImpl }
+      copiedFile.originalFile = file
       val elementsInCopy = readAction { ExtractSelector().suggestElementsToExtract(copiedFile, range) }
 
       val descriptorsForAllTargetPlaces = prepareDescriptorsForAllTargetPlaces(file.project, editor, elementsInCopy)
