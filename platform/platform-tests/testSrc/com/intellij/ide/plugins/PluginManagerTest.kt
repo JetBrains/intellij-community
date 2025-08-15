@@ -359,7 +359,7 @@ class PluginManagerTest {
         }
       }
 
-      val list = ArrayList<PluginMainDescriptor>()
+      val plugins = ArrayList<PluginMainDescriptor>()
       for (element in root.children) {
         if (element.name != "idea-plugin") {
           continue
@@ -385,13 +385,13 @@ class PluginManagerTest {
           loadingContext = loadingContext,
           pathResolver = pathResolver,
           dataLoader = LocalFsDataLoader(pluginPath)
-        ).apply { initialize(context = initContext) }
-        list.add(descriptor)
+        )
+        plugins.add(descriptor)
         descriptor.jarFiles = emptyList()
       }
       loadingContext.close()
       val result = PluginLoadingResult()
-      val pluginList = DiscoveredPluginsList(list, if (isBundled) PluginsSourceContext.Bundled else PluginsSourceContext.Custom)
+      val pluginList = DiscoveredPluginsList(plugins, if (isBundled) PluginsSourceContext.Bundled else PluginsSourceContext.Custom)
       result.initAndAddAll(
         descriptorLoadingResult = PluginDescriptorLoadingResult.build(listOf(pluginList)),
         initContext = initContext
