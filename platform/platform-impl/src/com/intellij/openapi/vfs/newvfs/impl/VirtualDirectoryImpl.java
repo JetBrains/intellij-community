@@ -521,21 +521,22 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     VfsData vfsData = getVfsData();
     PersistentFSImpl pFS = vfsData.owningPersistentFS();
 
-    List<? extends ChildInfo> childrenInfo = pFS.listAll(this);
-
-    boolean reallyNeedsSorting = sortChildrenOnLoading && (childrenInfo.size() > 1);
-    if (reallyNeedsSorting) {
-      String someChildName = childrenInfo.get(0).getName().toString();
-      updateCaseSensitivityIfUnknown(someChildName);
-    }
-    boolean isCaseSensitive = isCaseSensitive();
-
     synchronized (directoryData) {
+      //TODO RC: listAll() could involve IO, which is not good to do under the lock -- but we need at least to check will it help
+      //         avoiding disappeared children (logDisappearedChildren), and then maybe refactor this code:
+      List<? extends ChildInfo> childrenInfo = pFS.listAll(this);
       if (childrenInfo.isEmpty()) {
         directoryData.clearAdoptedNames();
         directoryData.children = VfsData.ChildrenIds.EMPTY.withAllChildrenLoaded(true);
         return VirtualFile.EMPTY_ARRAY;
       }
+
+      boolean reallyNeedsSorting = sortChildrenOnLoading && (childrenInfo.size() > 1);
+      if (reallyNeedsSorting) {
+        String someChildName = childrenInfo.get(0).getName().toString();
+        updateCaseSensitivityIfUnknown(someChildName);
+      }
+      boolean isCaseSensitive = isCaseSensitive();
 
       //We could load children unsorted, and delay the sorting until someone really asks for it:
       if (reallyNeedsSorting) {
