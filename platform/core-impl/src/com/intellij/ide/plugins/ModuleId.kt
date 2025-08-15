@@ -12,6 +12,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @IntellijInternalApi
 value class ModuleId private constructor(val id: String){
+  override fun toString(): String = id
+
   companion object {
     // ModuleId can be either boxed or unboxed, so only interning of value matters
     private val interner = Interner.createWeakInterner<String>()
