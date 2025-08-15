@@ -112,7 +112,7 @@ class PluginDependenciesValidator private constructor(
       val pluginErrorRegexp = Regex("Plugin &#39;(.*?)&#39;.*")
       val matchResult = pluginErrorRegexp.matchEntire(errorMessage)
       val moduleName =
-        if (matchResult != null) "plugin_${matchResult.groupValues[1].replace(Regex("[^a-zA-Z0-9_]"), "_")}"
+        if (matchResult != null) "plugin_${matchResult.groupValues[1].replace(Regex("[^a-zA-Z0-9_+/]"), "_")}"
         else "unknown"
       errors.add(PluginModuleConfigurationError(moduleName, errorMessage))
     }
