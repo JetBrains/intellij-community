@@ -2,8 +2,14 @@ package org.jetbrains.jewel.markdown.rendering
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
+import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.BlockQuote
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock
@@ -144,6 +150,46 @@ public interface MarkdownBlockRenderer {
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         modifier: Modifier,
+    )
+
+    /**
+     * Renders a [Paragraph] into a Compose UI.
+     *
+     * @param block The paragraph to render.
+     * @param styling The [`Paragraph`][MarkdownStyling.Paragraph] styling to use to render.
+     * @param enabled True if the block should be enabled, false otherwise.
+     * @param onUrlClick The callback invoked when the user clicks on a URL.
+     * @param modifier The modifier to be applied to the composable.
+     * @param color [Color] to apply to the text. If [Color.Unspecified], and [style] has no color set, this will be
+     *   [LocalContentColor].
+     * @param fontSize The size of glyphs to use when painting the text. See [TextStyle.fontSize].
+     * @param fontStyle The typeface variant to use when drawing the letters (e.g., italic). See [TextStyle.fontStyle].
+     * @param fontWeight The typeface thickness to use when painting the text (e.g., [FontWeight.Bold]).
+     * @param fontFamily The font family to be used when rendering the text. See [TextStyle.fontFamily].
+     * @param letterSpacing The amount of space to add between each letter. See [TextStyle.letterSpacing].
+     * @param textDecoration The decorations to paint on the text (e.g., an underline). See [TextStyle.textDecoration].
+     * @param textAlign The alignment of the text within the lines of the paragraph. See [TextStyle.textAlign].
+     * @param lineHeight Line height for the paragraph in [TextUnit] unit, e.g., SP or EM. See [TextStyle.lineHeight].
+     * @param overflow How visual overflow should be handled.
+     * @param softWrap Whether the text should break at soft line breaks. If false, the glyphs in the text will be
+     *   positioned as if there was unlimited horizontal space. If [softWrap] is false, [overflow] and [textAlign] may
+     *   have unexpected effects.
+     * @param onTextLayout Callback that is executed when a new text layout is calculated. A [TextLayoutResult] object
+     *   that callback provides contains paragraph information, size of the text, baselines and other details. The
+     *   callback can be used to add additional decoration or functionality to the text. For example, to draw selection
+     *   around the text.
+     */
+    @Composable
+    public fun RenderParagraph(
+        block: Paragraph,
+        styling: MarkdownStyling.Paragraph,
+        enabled: Boolean,
+        onUrlClick: (String) -> Unit,
+        onTextLayout: (TextLayoutResult) -> Unit,
+        modifier: Modifier,
+        overflow: TextOverflow,
+        softWrap: Boolean,
+        maxLines: Int,
     )
 
     /**

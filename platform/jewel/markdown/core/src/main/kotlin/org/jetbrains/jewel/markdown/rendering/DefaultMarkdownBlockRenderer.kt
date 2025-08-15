@@ -30,8 +30,10 @@ import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection.Ltr
 import androidx.compose.ui.unit.dp
 import org.jetbrains.annotations.ApiStatus
@@ -166,6 +168,31 @@ public open class DefaultMarkdownBlockRenderer(
         onUrlClick: (String) -> Unit,
         modifier: Modifier,
     ) {
+        RenderParagraph(
+            block = block,
+            styling = styling,
+            enabled = enabled,
+            onUrlClick = onUrlClick,
+            onTextLayout = {},
+            modifier = modifier,
+            overflow = TextOverflow.Clip,
+            softWrap = true,
+            maxLines = Int.MAX_VALUE,
+        )
+    }
+
+    @Composable
+    override fun RenderParagraph(
+        block: Paragraph,
+        styling: MarkdownStyling.Paragraph,
+        enabled: Boolean,
+        onUrlClick: (String) -> Unit,
+        onTextLayout: (TextLayoutResult) -> Unit,
+        modifier: Modifier,
+        overflow: TextOverflow,
+        softWrap: Boolean,
+        maxLines: Int,
+    ) {
         val renderedContent = rememberRenderedContent(block, styling.inlinesStyling, enabled, onUrlClick)
         val textColor =
             styling.inlinesStyling.textStyle.color
@@ -173,7 +200,16 @@ public open class DefaultMarkdownBlockRenderer(
                 .takeOrElse { styling.inlinesStyling.textStyle.color }
         val mergedStyle = styling.inlinesStyling.textStyle.merge(TextStyle(color = textColor))
 
-        Text(modifier = modifier, text = renderedContent, style = mergedStyle, inlineContent = renderedImages(block))
+        Text(
+            modifier = modifier,
+            text = renderedContent,
+            overflow = overflow,
+            softWrap = softWrap,
+            maxLines = maxLines,
+            onTextLayout = onTextLayout,
+            inlineContent = renderedImages(block),
+            style = mergedStyle,
+        )
     }
 
     @Composable
