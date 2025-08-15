@@ -38,10 +38,9 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.utils.addIfNotNull
 
-class ExtractSuperRefactoring(
-    private var extractInfo: ExtractSuperInfo
-) {
+class ExtractSuperRefactoring {
     companion object {
         internal fun getElementsToMove(
             memberInfos: Collection<KotlinMemberInfo>,
@@ -79,30 +78,29 @@ class ExtractSuperRefactoring(
         }
     }
 
-    private val project = extractInfo.originalClass.project
-    private val psiFactory = KtPsiFactory(project)
-    private val typeParameters = LinkedHashSet<KtTypeParameter>()
-
-    private val bindingContext = extractInfo.originalClass.analyze(BodyResolveMode.PARTIAL)
-
-    private fun collectTypeParameters(refTarget: PsiElement?) {
+    private fun collectTypeParameters(
+        extractInfo: ExtractSuperInfo,
+        refTarget: PsiElement?,
+        typeParameters: MutableSet<KtTypeParameter>,
+    ) = with(typeParameters) {
         if (refTarget is KtTypeParameter && refTarget.getStrictParentOfType<KtTypeParameterListOwner>() == extractInfo.originalClass) {
-            typeParameters += refTarget
+            add(refTarget)
             refTarget.accept(
                 object : KtTreeVisitorVoid() {
                     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
-                        (expression.mainReference.resolve() as? KtTypeParameter)?.let { typeParameters += it }
+                        addIfNotNull(expression.mainReference.resolve() as? KtTypeParameter)
                     }
                 }
             )
         }
     }
 
-    private fun analyzeContext() {
+    private fun analyzeContext(extractInfo: ExtractSuperInfo): Set<KtTypeParameter> {
+        val typeParameters = LinkedHashSet<KtTypeParameter>()
         val visitor = object : KtTreeVisitorVoid() {
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                 val refTarget = expression.mainReference.resolve()
-                collectTypeParameters(refTarget)
+                collectTypeParameters(extractInfo, refTarget, typeParameters)
             }
         }
         getElementsToMove(extractInfo.memberInfos, extractInfo.originalClass, extractInfo.isInterface)
@@ -112,12 +110,20 @@ class ExtractSuperRefactoring(
                 info?.getChildrenToAnalyze()?.asSequence() ?: sequenceOf(element)
             }
             .forEach { it.accept(visitor) }
+        return typeParameters
     }
 
-    private fun createClass(superClassEntry: KtSuperTypeListEntry?): KtClass? {
+    private fun createClass(
+        extractInfo: ExtractSuperInfo,
+        bindingContext: BindingContext,
+        superClassEntry: KtSuperTypeListEntry?,
+        typeParameters: Set<KtTypeParameter>,
+    ): KtClass? {
+        val project = extractInfo.originalClass.project
         val targetParent = extractInfo.targetParent
         val newClassName = extractInfo.newClassName.quoteIfNeeded()
         val originalClass = extractInfo.originalClass
+        val psiFactory = KtPsiFactory(project)
 
         val kind = if (extractInfo.isInterface) "interface" else "class"
         val prototype = psiFactory.createClass("$kind $newClassName")
@@ -180,11 +186,14 @@ class ExtractSuperRefactoring(
         return newClass
     }
 
-    fun performRefactoring() {
+    fun performRefactoring(extractInfo: ExtractSuperInfo) {
+        val project = extractInfo.originalClass.project
         val originalClass = extractInfo.originalClass
 
         val handler = if (extractInfo.isInterface) KotlinExtractInterfaceHandler else KotlinExtractSuperclassHandler
         handler.getErrorMessage(originalClass)?.let { throw CommonRefactoringUtil.RefactoringErrorHintException(it) }
+
+        val bindingContext = extractInfo.originalClass.analyze(BodyResolveMode.PARTIAL)
 
         val superClassEntry = if (!extractInfo.isInterface) {
             val originalClassDescriptor = originalClass.unsafeResolveToDescriptor() as ClassDescriptor
@@ -194,10 +203,20 @@ class ExtractSuperRefactoring(
             }
         } else null
 
-        project.runSynchronouslyWithProgress(RefactoringBundle.message("progress.text"), true) { runReadAction { analyzeContext() } }
+        val typeParameters = project.runSynchronouslyWithProgress(
+            progressTitle = RefactoringBundle.message("progress.text"),
+            canBeCanceled = true,
+        ) {
+            runReadAction { analyzeContext(extractInfo) }
+        } ?: emptySet()
 
         project.executeWriteCommand(KotlinExtractSuperclassHandler.REFACTORING_NAME) {
-            val newClass = createClass(superClassEntry) ?: return@executeWriteCommand
+            val newClass = createClass(
+                extractInfo,
+                bindingContext,
+                superClassEntry,
+                typeParameters,
+            ) ?: return@executeWriteCommand
 
             val subClass = extractInfo.originalClass.toLightClass() ?: return@executeWriteCommand
             val superClass = newClass.toLightClass() ?: return@executeWriteCommand

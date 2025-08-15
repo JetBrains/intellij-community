@@ -466,7 +466,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                     isInterface,
                     DocCommentPolicy(DocCommentPolicy.ASIS)
                 )
-                ExtractSuperRefactoring(extractInfo).performRefactoring()
+                ExtractSuperRefactoring().performRefactoring(extractInfo)
             }
         }
     }
