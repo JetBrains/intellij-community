@@ -313,9 +313,7 @@ object PluginManagerCore {
       for (descriptor in getPluginSet().allPlugins) {
         if (pluginIds.contains(descriptor.getPluginId())) {
           descriptor.isMarkedForLoading = enabled
-          if (descriptor !is ContentModuleDescriptor) {
-            descriptors.add(descriptor)
-          }
+          descriptors.add(descriptor)
         }
       }
       val pluginEnabler = PluginEnabler.getInstance()
@@ -627,8 +625,7 @@ object PluginManagerCore {
     val corePlugin = idMap[CORE_ID]
     if (corePlugin != null) {
       val disabledModulesOfCorePlugin =
-        corePlugin.contentModules
-          .filter { it.moduleLoadingRule.required && !it.isMarkedForLoading }
+        corePlugin.contentModules.filter { it.moduleLoadingRule.required && !it.isMarkedForLoading }
       if (disabledModulesOfCorePlugin.isNotEmpty()) {
         throw EssentialPluginMissingException(disabledModulesOfCorePlugin.map { it.moduleId.id })
       }
