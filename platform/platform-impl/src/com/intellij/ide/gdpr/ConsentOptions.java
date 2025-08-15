@@ -225,6 +225,10 @@ public final class ConsentOptions implements ModificationTracker {
     setPermission(AI_DATA_COLLECTION_OPTION_ID, permitted);
   }
 
+  public void setTraceDataCollectionPermission(boolean permitted) {
+    setPermission(TRACE_DATA_COLLECTION_OPTION_ID, permitted);
+  }
+
   private Permission getPermission(String consentId) {
     var confirmedConsent = getConfirmedConsent(consentId);
     return confirmedConsent == null? Permission.UNDEFINED : confirmedConsent.isAccepted()? Permission.YES : Permission.NO;
