@@ -34,6 +34,7 @@ kotlin {
     "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi",
     "-Xcontext-parameters",
     "-Xwasm-kclass-fqn",
+    "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
   )
   jvm {}
   wasmJs {
