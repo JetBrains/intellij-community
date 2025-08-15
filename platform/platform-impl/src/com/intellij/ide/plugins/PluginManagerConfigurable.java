@@ -2073,7 +2073,6 @@ public final class PluginManagerConfigurable
     pluginsState.runShutdownCallback();
     pluginsState.resetChangesAppliedWithoutRestart();
 
-    myPluginModelFacade.closeSession();
     if (myDisposer != null) {
       Disposer.dispose(myDisposer);
       CoroutineScopeKt.cancel(myCoroutineScope, null);
@@ -2084,6 +2083,7 @@ public final class PluginManagerConfigurable
   @Override
   public void cancel() {
     myPluginModelFacade.getModel().cancel(myCardPanel, true);
+    myPluginModelFacade.closeSession();
   }
 
   @Override
@@ -2111,6 +2111,7 @@ public final class PluginManagerConfigurable
       if (myPluginModelFacade.getModel().createShutdownCallback) {
         installedPluginsState.setShutdownCallback(() -> {
           ApplicationManager.getApplication().invokeLater(() -> {
+            myPluginModelFacade.closeSession();
             if (ApplicationManager.getApplication().isExitInProgress()) return; // already shutting down
             shutdownOrRestartApp();
           });
@@ -2119,6 +2120,7 @@ public final class PluginManagerConfigurable
 
       if (myDisposer == null) {
         installedPluginsState.runShutdownCallback();
+        myPluginModelFacade.closeSession();
       }
     });
   }

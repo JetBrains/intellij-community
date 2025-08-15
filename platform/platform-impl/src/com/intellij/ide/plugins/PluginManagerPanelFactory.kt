@@ -32,7 +32,6 @@ object PluginManagerPanelFactory {
       val suggestedPlugins = if (project != null) findSuggestedPlugins(project, customRepositoriesMap) else emptyList()
       val pluginManager = UiPluginManager.getInstance()
       val marketplaceData = mutableMapOf<String, PluginSearchResult>()
-      val installationStates = pluginManager.getInstallationStates()
       val internalPluginsGroupDescriptor = getPluginsViewCustomizer().getInternalPluginsGroupDescriptor()
 
       val queries = listOf(

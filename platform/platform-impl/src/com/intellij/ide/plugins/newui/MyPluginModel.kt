@@ -14,6 +14,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.Configurable.TopComponentController
@@ -34,6 +35,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.SystemProperties
@@ -103,7 +105,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   }
 
   fun applyWithCallback(parent: JComponent?, callback: Consumer<Boolean>) {
-    coroutineScope.launch {
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       val installedWithoutRestart = applyAsync(parent)
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         callback.accept(installedWithoutRestart)
