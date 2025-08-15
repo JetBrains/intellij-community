@@ -83,7 +83,7 @@ def try_get_type_renderer_for_var(var, renderers_dict):
             target = _resolve_type(getattr(render, 'type_canonical_import_path', '')) or _resolve_type(getattr(render, 'type_qualified_name', ''))
             if target is not None:
                 try:
-                    if issubclass(cls, target):
+                    if cls is target:
                         return render
                 except Exception:
                     # target is not a class or cls is not suitable for issubclass
