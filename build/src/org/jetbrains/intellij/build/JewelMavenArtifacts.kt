@@ -109,6 +109,10 @@ internal object JewelMavenArtifacts {
           // Add CommonMark dependencies as "compile" dependencies when present
           add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
         }
+        coordinates.groupId == "io.coil-kt.coil3" -> {
+          // Add Coil 3 dependencies as "compile" dependencies when present
+          add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
+        }
 
         // else -> ignore the dependency, as it comes through transitively, usually from Compose.
 

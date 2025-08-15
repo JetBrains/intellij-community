@@ -2,7 +2,7 @@
 assertJ = "3.26.3"
 coil = "3.2.0"
 commonmark = "0.24.0"
-composeDesktop = "1.9.0-beta01"
+composeDesktop = "1.9.0-beta03"
 detekt = "1.23.8"
 dokka = "2.0.0"
 filepicker = "3.1.0"
