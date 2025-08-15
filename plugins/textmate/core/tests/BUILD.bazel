@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.textmate.core.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.textmate.core.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "srcMultiplatform/**/*.kt", "srcMultiplatform/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-test",
+    "@lib//:junit5",
+    "//plugins/textmate/core",
+    "//platform/util/xmlDom",
+    "//platform/util",
+  ]
+)
+### auto-generated section `build intellij.textmate.core.tests` end
+
+### auto-generated section `test intellij.textmate.core.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.textmate.core.tests` end

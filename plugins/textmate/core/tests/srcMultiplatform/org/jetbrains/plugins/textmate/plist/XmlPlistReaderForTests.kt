@@ -4,6 +4,9 @@ import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import java.io.IOException
 import java.lang.Boolean
+import kotlin.ByteArray
+import kotlin.String
+import kotlin.let
 
 class XmlPlistReaderForTests : PlistReaderCore {
   override fun read(bytes: ByteArray): Plist {

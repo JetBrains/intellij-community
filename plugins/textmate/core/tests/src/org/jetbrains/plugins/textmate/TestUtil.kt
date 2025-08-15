@@ -2,7 +2,6 @@ package org.jetbrains.plugins.textmate
 
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.textmate.bundles.*
-import org.jetbrains.plugins.textmate.bundles.BundleType.Companion.detectBundleType
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableBuilder
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.plist.JsonOrXmlPlistReader
@@ -48,7 +47,7 @@ object TestUtil {
 
   fun readBundle(bundleName: String, xmlPlistReader: PlistReaderCore): TextMateBundleReader {
     val resourceReader = TestUtilMultiplatform.getResourceReader(bundleName)
-    val bundleType = detectBundleType(resourceReader, bundleName)
+    val bundleType = BundleType.Companion.detectBundleType(resourceReader, bundleName)
     val plistReader = JsonOrXmlPlistReader(jsonReader = JsonPlistReader(), xmlReader = xmlPlistReader)
     return when (bundleType) {
       BundleType.TEXTMATE -> readTextMateBundle(bundleName, plistReader, resourceReader)
@@ -59,7 +58,7 @@ object TestUtil {
   }
 
   fun scopeFromString(scopeString: String): TextMateScope {
-    return scopeString.split(' ').dropLastWhile { it.isEmpty() }.fold(TextMateScope.EMPTY) { acc, i -> acc.add(i) }
+    return scopeString.split(' ').dropLastWhile { it.isEmpty() }.fold(TextMateScope.Companion.EMPTY) { acc, i -> acc.add(i) }
   }
 
   fun TextMateSyntaxTableBuilder.loadBundle(bundleName: String): Map<TextMateFileNameMatcher, CharSequence> {
@@ -94,7 +93,7 @@ object TestUtil {
   }
 
   private fun fileNameExtension(fileName: CharSequence): CharSequence? {
-    return when(val i = fileName.indexOf('.')) {
+    return when (val i = fileName.indexOf('.')) {
       -1 -> null
       else -> fileName.subSequence(i + 1, fileName.length).ifEmpty { null }
     }

@@ -1253,6 +1253,7 @@ plugins/textmate
 plugins/textmate/backend
 plugins/textmate/common
 plugins/textmate/core
+plugins/textmate/core/tests
 plugins/textmate/joni
 plugins/textmate/plugin
 plugins/textmate/tests
