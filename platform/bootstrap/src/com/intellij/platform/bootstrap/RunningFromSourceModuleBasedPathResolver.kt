@@ -2,6 +2,7 @@
 package com.intellij.platform.bootstrap
 
 import com.intellij.ide.plugins.DataLoader
+import com.intellij.ide.plugins.ModuleId
 import com.intellij.ide.plugins.PathResolver
 import com.intellij.ide.plugins.toXIncludeLoader
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
@@ -31,8 +32,8 @@ internal class RunningFromSourceModuleBasedPathResolver(
     return fallbackResolver.resolveModuleFile(readContext = readContext, dataLoader = dataLoader, path = path)
   }
 
-  override fun resolveCustomModuleClassesRoots(moduleId: String): List<Path> {
-    val moduleDescriptor = moduleRepository.resolveModule(RuntimeModuleId.raw(moduleId)).resolvedModule
+  override fun resolveCustomModuleClassesRoots(moduleId: ModuleId): List<Path> {
+    val moduleDescriptor = moduleRepository.resolveModule(RuntimeModuleId.raw(moduleId.id)).resolvedModule
     if (moduleDescriptor?.moduleId?.stringId?.contains(".charts") == true) {
     }
     return moduleDescriptor?.resourceRootPaths ?: emptyList()

@@ -59,5 +59,5 @@ abstract class ProductLoadingStrategy {
    * Returns the path to a JAR or directory containing classes from [moduleId] registered as a content module in the product, or `null`
    * if the mentioned content module isn't present in the distribution.
    */
-  abstract fun findProductContentModuleClassesRoot(moduleId: String, moduleDir: Path): Path?
+  abstract fun findProductContentModuleClassesRoot(moduleId: ModuleId, moduleDir: Path): Path?
 }

@@ -174,7 +174,7 @@ sealed class IdeaPluginDescriptorImpl(
       for (dep in dependencies) {
         when (dep) {
           is DependenciesElement.PluginDependency -> pluginDeps.add(ModuleDependencies.PluginReference(PluginId.getId(dep.pluginId)))
-          is DependenciesElement.ModuleDependency -> moduleDeps.add(ModuleDependencies.ModuleReference(dep.moduleName))
+          is DependenciesElement.ModuleDependency -> moduleDeps.add(ModuleDependencies.ModuleReference(ModuleId(dep.moduleName)))
           else -> LOG.error("Unknown dependency type: $dep")
         }
       }
@@ -411,7 +411,7 @@ class PluginMainDescriptor(
   fun initialize(context: PluginInitializationContext): PluginNonLoadReason? {
     content.modules.forEach { it.requireDescriptor() }
     if (content.modules.size > 1) {
-      val duplicates = HashSet<String>()
+      val duplicates = HashSet<ModuleId>()
       for (item in content.modules) {
         if (!duplicates.add(item.moduleId)) {
           return onInitError(PluginHasDuplicateContentModuleDeclaration(this, item.moduleId))
@@ -481,7 +481,11 @@ class PluginMainDescriptor(
         val configFile: String? = if (index != -1) {
           "${elem.name.substring(0, index)}.${elem.name.substring(index + 1)}.xml"
         } else null
-        PluginContentDescriptor.ModuleItem(moduleId = elem.name, configFile, descriptorContent = elem.embeddedDescriptorContent, elem.loadingRule.convert())
+        PluginContentDescriptor.ModuleItem(
+          moduleId = ModuleId(elem.name),
+          configFile = configFile,
+          descriptorContent = elem.embeddedDescriptorContent,
+          loadingRule = elem.loadingRule.convert())
       }
     }
     
@@ -590,11 +594,11 @@ class DependsSubDescriptor(
 class ContentModuleDescriptor(
   val parent: PluginMainDescriptor,
   raw: RawPluginDescriptor,
-  moduleId: String,
+  moduleId: ModuleId,
   moduleLoadingRule: ModuleLoadingRule,
   private val descriptorPath: String
 ): PluginModuleDescriptor(raw) {
-  val moduleId: String = moduleId
+  val moduleId: ModuleId = moduleId
   val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
 
   override val useCoreClassLoader: Boolean
@@ -603,6 +607,9 @@ class ContentModuleDescriptor(
   override val isIndependentFromCoreClassLoader: Boolean = raw.isIndependentFromCoreClassLoader
 
   private val resourceBundleBaseName: String? = raw.resourceBundleBaseName
+
+  /** java helper */
+  fun getModuleIdString(): String = moduleId.id
 
   override fun getDescriptorPath(): String = descriptorPath
 

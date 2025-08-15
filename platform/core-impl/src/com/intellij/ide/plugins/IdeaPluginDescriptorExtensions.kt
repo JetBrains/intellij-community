@@ -8,11 +8,11 @@ import org.jetbrains.annotations.ApiStatus
 @Deprecated("Use `contentModuleId`", ReplaceWith("contentModuleId"))
 @get:ApiStatus.Experimental
 val IdeaPluginDescriptor.contentModuleName: String?
-  get() = (this as? ContentModuleDescriptor)?.moduleId
+  get() = (this as? ContentModuleDescriptor)?.moduleId?.id
 
 @get:ApiStatus.Experimental
 val IdeaPluginDescriptor.contentModuleId: String?
-  get() = (this as? ContentModuleDescriptor)?.moduleId
+  get() = (this as? ContentModuleDescriptor)?.moduleId?.id
 
 @get:ApiStatus.Experimental
 val IdeaPluginDescriptor.isRequiredContentModule: Boolean
@@ -32,7 +32,7 @@ class ModuleDependenciesApi(val pluginIds: List<String>, val moduleIds: List<Str
 @get:ApiStatus.Experimental
 val IdeaPluginDescriptor.moduleDependencies: ModuleDependenciesApi
   get() = (this as IdeaPluginDescriptorImpl).moduleDependencies.let {
-    ModuleDependenciesApi(it.plugins.map { it.id.idString }, it.modules.map { it.id })
+    ModuleDependenciesApi(it.plugins.map { it.id.idString }, it.modules.map { it.id.id })
   }
 
 @get:ApiStatus.Experimental

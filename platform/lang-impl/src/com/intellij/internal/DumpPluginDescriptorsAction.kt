@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.internal
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -19,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.lang.UrlClassLoader
 import kotlinx.coroutines.CoroutineScope
@@ -137,7 +140,7 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
     writeArrayFieldStart("modules")
     for (module in modules) {
       writeStartObject()
-      writeStringField("name", module.moduleId)
+      writeStringField("name", module.moduleId.id)
       val isEnabled = module in PluginManagerCore.getPluginSet().getEnabledModules()
       writeBooleanField("enabled", isEnabled)
       if (isEnabled) {

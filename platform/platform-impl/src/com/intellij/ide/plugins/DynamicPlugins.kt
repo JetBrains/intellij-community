@@ -1251,7 +1251,7 @@ private fun processDependenciesOnPlugin(
   val wantedIds = HashSet<String>(1 + dependencyTarget.contentModules.size)
   wantedIds.add(dependencyTarget.pluginId.idString)
   for (module in dependencyTarget.contentModules) {
-    wantedIds.add(module.moduleId)
+    wantedIds.add(module.moduleId.id)
   }
   // FIXME plugin aliases probably missing?
 
@@ -1276,7 +1276,7 @@ private fun processDependenciesOnPlugin(
         }
       }
       for (item in module.moduleDependencies.modules) {
-        if (wantedIds.contains(item.name) && !processor(plugin, module)) {
+        if (wantedIds.contains(item.id.id) && !processor(plugin, module)) {
           return
         }
       }
@@ -1462,7 +1462,7 @@ private inline fun processDirectDependencies(module: IdeaPluginDescriptorImpl,
                                              pluginSet: PluginSet,
                                              processor: (IdeaPluginDescriptorImpl) -> Unit) {
    for (item in module.moduleDependencies.modules) {
-     val descriptor = pluginSet.findEnabledModule(item.name)
+     val descriptor = pluginSet.findEnabledModule(item.id)
      if (descriptor != null) {
        processor(descriptor)
     }

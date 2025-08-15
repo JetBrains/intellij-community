@@ -33,14 +33,14 @@ internal class ClassLoaderConfiguratorTest {
     val kotlinGradleJava = kotlin.createContentModuleInTest(
       subBuilder = emptyBuilder,
       descriptorPath = "",
-      module = PluginContentDescriptor.ModuleItem(moduleId = "kotlin.gradle.gradle-java",
+      module = PluginContentDescriptor.ModuleItem(moduleId = ModuleId("kotlin.gradle.gradle-java"),
                                                   loadingRule = ModuleLoadingRule.OPTIONAL,
                                                   configFile = null,
                                                   descriptorContent = null))
     val kotlinCompilerGradle = kotlin.createContentModuleInTest(
       subBuilder = emptyBuilder,
       descriptorPath = "",
-      module = PluginContentDescriptor.ModuleItem(moduleId = "kotlin.compiler-plugins.annotation-based-compiler-support.gradle",
+      module = PluginContentDescriptor.ModuleItem(moduleId = ModuleId("kotlin.compiler-plugins.annotation-based-compiler-support.gradle"),
                                                   loadingRule = ModuleLoadingRule.OPTIONAL,
                                                   configFile = null,
                                                   descriptorContent = null))
@@ -62,7 +62,7 @@ internal class ClassLoaderConfiguratorTest {
       return plugin.createContentModuleInTest(
         subBuilder = PluginDescriptorBuilder.builder().apply { `package` = moduleId },
         descriptorPath = "",
-        module = PluginContentDescriptor.ModuleItem(moduleId = moduleId, configFile = null, descriptorContent = null, loadingRule = ModuleLoadingRule.OPTIONAL),
+        module = PluginContentDescriptor.ModuleItem(moduleId = ModuleId(moduleId), configFile = null, descriptorContent = null, loadingRule = ModuleLoadingRule.OPTIONAL),
       )
     }
     val modules = arrayOf(
@@ -70,7 +70,7 @@ internal class ClassLoaderConfiguratorTest {
       createModuleDescriptor("com.foo.bar"),
     )
     sortDependenciesInPlace(modules)
-    assertThat(modules.map { it.moduleId }).containsExactly("com.foo.bar", "com.foo")
+    assertThat(modules.map { it.moduleId.id }).containsExactly("com.foo.bar", "com.foo")
   }
 
   @Test

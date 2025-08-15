@@ -18,9 +18,9 @@ class ModuleDependencies(
     val EMPTY: ModuleDependencies = ModuleDependencies(Collections.emptyList(), Collections.emptyList())
   }
 
-  class ModuleReference(val id: String) {
+  class ModuleReference(val id: ModuleId) {
     @Deprecated("Use id", ReplaceWith("id"))
-    val name: String get() = id
+    val name: String get() = id.id
     override fun toString(): String = "Module(id=$id)"
   }
 

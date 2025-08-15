@@ -968,7 +968,7 @@ private fun loadContentModuleDescriptors(
     val subDescriptorFile = "$moduleId.xml"
 
     if (moduleDirExists &&
-        !isRunningFromSourcesWithoutDevBuild && moduleId.startsWith("intellij.") &&
+        !isRunningFromSourcesWithoutDevBuild && moduleId.id.startsWith("intellij.") &&
         loadProductModule(
           loadingStrategy = loadingStrategy,
           moduleDir = moduleDir,

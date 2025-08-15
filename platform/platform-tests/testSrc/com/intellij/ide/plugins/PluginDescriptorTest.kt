@@ -388,7 +388,7 @@ class PluginDescriptorTest {
     assertThat(descriptor.pluginId.idString).isEqualTo("bar")
     assertThat(descriptor.resourceBundleBaseName).isEqualTo("resourceBundle")
     assertThat(descriptor.contentModules).hasSize(3)
-    assertThat(descriptor.contentModules).allMatch { it.resourceBundleBaseName == it.moduleId }
+    assertThat(descriptor.contentModules).allMatch { it.resourceBundleBaseName == it.moduleId.id }
   }
 
   @Test

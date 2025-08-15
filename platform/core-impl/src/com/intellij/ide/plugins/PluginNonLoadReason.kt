@@ -210,14 +210,14 @@ class PluginModuleDependencyCannotBeLoadedOrMissing(
   override val shouldNotifyUser: Boolean,
 ): PluginNonLoadReason {
   private val dependencyName: String
-    get() = containingPlugin?.idString ?: moduleDependency.name
+    get() = containingPlugin?.idString ?: moduleDependency.id.id
   // FIXME VERY confusing message
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = CoreBundle.message("plugin.loading.error.long.depends.on.not.installed.plugin", plugin.name, dependencyName)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.depends.on.not.installed.plugin", dependencyName)
   override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) has module dependency '${moduleDependency.name}' which cannot be loaded or missing"
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) has module dependency '${moduleDependency.id.id}' which cannot be loaded or missing"
 }
 
 @ApiStatus.Internal
@@ -251,7 +251,7 @@ class PluginDependencyIsNotInstalled(
 @ApiStatus.Internal
 class PluginHasDuplicateContentModuleDeclaration(
   override val plugin: IdeaPluginDescriptor,
-  val moduleId: String,
+  val moduleId: ModuleId,
 ): PluginNonLoadReason {
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = CoreBundle.message("plugin.loading.error.long.content.modules.are.invalid.duplicate.module", plugin.name, moduleId)

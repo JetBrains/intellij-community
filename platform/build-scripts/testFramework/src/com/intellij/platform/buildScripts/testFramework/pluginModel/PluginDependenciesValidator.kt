@@ -1,10 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.platform.buildScripts.testFramework.pluginModel
 
 import com.intellij.ide.plugins.ContentModuleDescriptor
 import com.intellij.ide.plugins.DataLoader
 import com.intellij.ide.plugins.DependsSubDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.ModuleId
 import com.intellij.ide.plugins.ModuleLoadingRule
 import com.intellij.ide.plugins.PathResolver
 import com.intellij.ide.plugins.PluginDescriptorLoadingContext
@@ -14,6 +17,7 @@ import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.plugins.contentModuleId
 import com.intellij.ide.plugins.loadPluginSubDescriptors
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.platform.plugins.parser.impl.LoadPathUtil
@@ -335,12 +339,12 @@ class PluginDependenciesValidator private constructor(
     )
     val embeddedContentModules = descriptor.content.modules.filter { it.loadingRule == ModuleLoadingRule.EMBEDDED }.map { it.moduleId }
     val customConfigFileToModule = descriptor.content.modules.mapNotNull { 
-      moduleItem -> moduleItem.configFile?.let { it to moduleItem.moduleId.substringBefore('/') }
+      moduleItem -> moduleItem.configFile?.let { it to moduleItem.moduleId.id.substringBefore('/') }
     }.toMap()
     val pathResolver = LoadFromSourcePathResolver(pluginLayout, customConfigFileToModule, embeddedContentModules, xIncludeLoader)
     val dataLoader = LoadFromSourceDataLoader(mainPluginModule = mainModule) 
     loadPluginSubDescriptors(descriptor, pathResolver, loadingContext = loadingContext, dataLoader = dataLoader, pluginDir = pluginDir, pool = zipPool)
-    descriptor.jarFiles = (pluginLayout.jpsModulesInClasspath + embeddedContentModules).map { getModuleOutputDir(it) }
+    descriptor.jarFiles = (pluginLayout.jpsModulesInClasspath + embeddedContentModules.map { it.id }).map { getModuleOutputDir(it) }
     return descriptor
   }
 
@@ -398,7 +402,7 @@ class PluginDependenciesValidator private constructor(
   private inner class LoadFromSourcePathResolver(
     private val layout: PluginLayoutDescription,
     private val customConfigFileToModule: Map<String, String>,
-    embeddedContentModules: List<String>,
+    embeddedContentModules: List<ModuleId>,
     private val xIncludeLoader: PluginMainModuleFromSourceXIncludeLoader
   ) : PathResolver {
     
@@ -439,11 +443,11 @@ class PluginDependenciesValidator private constructor(
       }
     }
 
-    override fun resolveCustomModuleClassesRoots(moduleId: String): List<Path> {
+    override fun resolveCustomModuleClassesRoots(moduleId: ModuleId): List<Path> {
       if (moduleId in embeddedContentModules) {
         return emptyList()
       }
-      return listOf(getModuleOutputDir(moduleId.substringBefore('/')))
+      return listOf(getModuleOutputDir(moduleId.id.substringBefore('/')))
     }
   }
 

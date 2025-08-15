@@ -440,7 +440,7 @@ public class Invoker implements InvokerMBean {
 
       List<ContentModuleDescriptor> modules = IdeaPluginDescriptorImplKt.getContentModules((IdeaPluginDescriptorImpl)plugin);
       for (var module : modules) {
-        if (Objects.equals(moduleId, module.getModuleId())) {
+        if (Objects.equals(moduleId, module.getModuleIdString())) {
           return requireNonNull(module.getPluginClassLoader());
         }
       }

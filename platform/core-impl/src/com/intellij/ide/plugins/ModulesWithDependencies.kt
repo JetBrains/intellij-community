@@ -41,7 +41,7 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
     modules.add(module)
     for (subModule in module.contentModules) {
       modules.add(subModule)
-      moduleMap.put(subModule.moduleId, subModule)
+      moduleMap.put(subModule.moduleId.id, subModule) // FIXME module and plugin id namespaces should be separate
       for (pluginAlias in subModule.pluginAliases) {
         moduleMap.put(pluginAlias.idString, subModule)
       }
@@ -261,7 +261,7 @@ private fun collectDirectDependenciesInNewFormat(
   additionalEdges: MutableSet<PluginModuleDescriptor>
 ) {
   for (item in module.moduleDependencies.modules) {
-    val dependency = idMap.get(item.name)
+    val dependency = idMap.get(item.id.id)
     if (dependency != null) {
       dependenciesCollector.add(dependency)
       if (dependency.isRequiredContentModule) {
@@ -288,7 +288,7 @@ private fun collectDirectDependenciesInNewFormat(
        can be loaded or not. */
     for (item in module.contentModules) {
       if (item.moduleLoadingRule.required) {
-        val descriptor = idMap.get(item.moduleId)
+        val descriptor = idMap.get(item.moduleId.id) // FIXME module and plugin id namespaces should be separate
         if (descriptor != null) {
           additionalEdges.add(descriptor)
         }
