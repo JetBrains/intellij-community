@@ -22,24 +22,6 @@ JB_DISABLE_BUFFERING = "JB_DISABLE_BUFFERING" in os.environ
 PROJECT_DIR = os.getenv('PWD', os.getcwd())
 
 
-def _parse_parametrized(part):
-    """
-
-    Support nose generators / pytest parameters and other functions that provides names like foo(1,2)
-    Until https://github.com/JetBrains/teamcity-messages/issues/121, all such tests are provided
-    with parentheses.
-    
-    Tests with docstring are reported in similar way but they have space before parenthesis and should be ignored
-    by this function
-    
-    """
-    match = re.match("^([^\\s)(]+)(\\(.+\\))$", part)
-    if not match:
-        return [part]
-    else:
-        return [match.group(1), match.group(2)]
-
-
 class _TreeManagerHolder(object):
     def __init__(self):
         self.parallel = "JB_USE_PARALLEL_TREE_MANAGER" in os.environ
@@ -129,17 +111,6 @@ class NewTeamcityServiceMessages(_old_service_messages):
             self._test_suites[full_name] = (full_name, current, parent, is_test)
         _old_service_messages.message(self, messageName, **properties)
 
-    def _test_to_list(self, test_name):
-        """
-        Splits test name to parts to use it as list.
-        It most cases dot is used, but runner may provide custom function
-        """
-        parts = test_name.split(".")
-        result = []
-        for part in parts:
-            result += _parse_parametrized(part)
-        return result
-
     def _fix_setup_teardown_name(self, test_name):
         """
 
@@ -180,7 +151,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
         self._latest_subtest_result = subTestResult
 
     def testStarted(self, testName, captureStandardOutput=None, flowId=None, is_suite=False, metainfo=None):
-        test_name_as_list = self._test_to_list(testName)
+        test_name_as_list = _jb_utils.test_to_list(testName)
         testName = ".".join(test_name_as_list)
 
         def _write_start_message():
@@ -191,17 +162,17 @@ class NewTeamcityServiceMessages(_old_service_messages):
             else:
                 self.message("testStarted", **args)
 
-        commands = _TREE_MANAGER_HOLDER.manager.level_opened(self._test_to_list(testName), _write_start_message)
+        commands = _TREE_MANAGER_HOLDER.manager.level_opened(test_name_as_list, _write_start_message)
         if commands:
             self.do_commands(commands)
             self.testStarted(testName, captureStandardOutput, metainfo=metainfo)
 
     def testFailed(self, testName, message='', details='', flowId=None, comparison_failure=None):
-        testName = ".".join(self._test_to_list(testName))
+        testName = ".".join(_jb_utils.test_to_list(testName))
         _old_service_messages.testFailed(self, testName, message, details, comparison_failure=comparison_failure)
 
     def testFinished(self, testName, testDuration=None, flowId=None, is_suite=False):
-        test_parts = self._test_to_list(testName)
+        test_parts = _jb_utils.test_to_list(testName)
         testName = ".".join(test_parts)
 
         def _write_finished_message():
@@ -228,7 +199,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
                 del self._test_suites[testName]
 
         commands = _TREE_MANAGER_HOLDER.manager.level_closed(
-            self._test_to_list(testName), _write_finished_message)
+            test_parts, _write_finished_message)
         if commands:
             self.do_commands(commands)
             self.testFinished(testName, testDuration)
