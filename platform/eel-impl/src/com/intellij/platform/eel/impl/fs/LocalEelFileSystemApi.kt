@@ -12,12 +12,14 @@ import com.intellij.platform.eel.fs.EelFileSystemApi.FileWriterCreationMode.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
+import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.*
@@ -176,7 +178,25 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
 
   override suspend fun delete(path: EelPath, removeContent: Boolean): EelResult<Unit, EelFileSystemApi.DeleteError> =
     wrapIntoEelResult {
-      Files.delete(path.toNioPath())
+      if (removeContent) {
+        Files.walkFileTree(path.asNioPath(), object : SimpleFileVisitor<Path>() {
+          override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+            Files.delete(file)
+            return FileVisitResult.CONTINUE
+          }
+
+          override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
+            if (exc != null) {
+              throw exc
+            }
+            Files.delete(dir)
+            return FileVisitResult.CONTINUE
+          }
+        })
+      }
+      else {
+        Files.delete(path.toNioPath())
+      }
     }
 
   override suspend fun copy(options: EelFileSystemApi.CopyOptions): EelResult<Unit, EelFileSystemApi.CopyError> =
