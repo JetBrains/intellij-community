@@ -16,6 +16,8 @@ class PluginLoadingResult {
   @ApiStatus.Internal
   val enabledPluginsById: HashMap<PluginId, PluginMainDescriptor> = HashMap()
 
+  fun getPluginsToAttemptLoading(): Set<PluginMainDescriptor> = enabledPluginsById.values.toSet()
+
   private val idMap = HashMap<PluginId, PluginMainDescriptor>() // FIXME this does not account plugin aliases in content modules
   @JvmField var duplicateModuleMap: MutableMap<PluginId, MutableList<PluginMainDescriptor>>? = null
   // the order of errors matters
