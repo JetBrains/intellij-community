@@ -42,6 +42,8 @@ interface XBreakpointManagerProxy {
   fun rememberRemovedBreakpoint(breakpoint: XBreakpointProxy)
   fun restoreRemovedBreakpoint(breakpoint: XBreakpointProxy)
 
+  fun copyLineBreakpoint(breakpoint: XLineBreakpointProxy, file: VirtualFile, line: Int)
+
   fun findBreakpointAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): XLineBreakpointProxy? =
     findBreakpointsAtLine(type, file, line).firstOrNull()
 
@@ -114,6 +116,13 @@ interface XBreakpointManagerProxy {
       WriteAction.run<RuntimeException?>(ThrowableRunnable {
         breakpointManager.restoreLastRemovedBreakpoint()
       })
+    }
+
+    override fun copyLineBreakpoint(breakpoint: XLineBreakpointProxy, file: VirtualFile, line: Int) {
+      if (breakpoint !is XLineBreakpointProxy.Monolith) {
+        return
+      }
+      breakpointManager.copyLineBreakpoint(breakpoint.breakpoint, file.url, line)
     }
 
     override fun rememberRemovedBreakpoint(breakpoint: XBreakpointProxy) {

@@ -633,9 +633,9 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   }
 
   @Nullable
-  <T extends XBreakpointProperties> XLineBreakpoint<T> copyLineBreakpoint(@NotNull XLineBreakpoint<T> source,
-                                                                          @NotNull String fileUrl,
-                                                                          int line) {
+  public <T extends XBreakpointProperties> XLineBreakpoint<T> copyLineBreakpoint(@NotNull XLineBreakpoint<T> source,
+                                                                                 @NotNull String fileUrl,
+                                                                                 int line) {
     return withLockMaybeCancellable(myLock, () -> {
       if (!(source instanceof XLineBreakpointImpl<?>)) {
         return null;

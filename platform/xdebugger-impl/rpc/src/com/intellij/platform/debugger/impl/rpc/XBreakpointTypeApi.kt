@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.ide.ui.icons.IconId
+import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
@@ -42,6 +43,8 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
 
   suspend fun rememberRemovedBreakpoint(breakpointId: XBreakpointId)
   suspend fun restoreRemovedBreakpoint(projectId: ProjectId)
+
+  suspend fun copyLineBreakpoint(breakpointId: XBreakpointId, fileId: VirtualFileId, line: Int)
 }
 
 @ApiStatus.Internal
