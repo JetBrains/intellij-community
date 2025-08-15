@@ -307,6 +307,7 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
 
   private static final PsiElementPattern.Capture<PsiElement> IN_PARAM_LIST = psiElement().inside(PyParameterList.class);
   private static final PsiElementPattern.Capture<PsiElement> IN_ARG_LIST = psiElement().inside(PyArgumentList.class);
+  private static final PsiElementPattern.Capture<PsiElement> IN_DECORATOR_ARG_LIST = psiElement().inside(PyArgumentList.class).inside(PyDecorator.class);
 
   private static final PsiElementPattern.Capture<PsiElement> IN_DEF_BODY =
     psiElement().inside(false, psiElement(PyFunction.class), psiElement(PyClass.class));
@@ -647,6 +648,7 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
   }
 
   private void addPy3kLiterals() {
+    // Add literals in normal contexts
     extend(
       CompletionType.BASIC, psiElement()
       .withLanguage(PythonLanguage.getInstance())
@@ -659,6 +661,17 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
       .andNot(TARGET_AFTER_QUALIFIER)
       ,
       new PyKeywordCompletionProvider(TailTypes.noneType(), PyNames.TRUE, PyNames.FALSE, PyNames.NONE));
+
+    // Add literals specifically in decorator argument lists
+    extend(
+      CompletionType.BASIC, psiElement()
+      .withLanguage(PythonLanguage.getInstance())
+      .and(IN_DECORATOR_ARG_LIST)
+      .andNot(IN_COMMENT)
+      .andNot(IN_STRING_LITERAL)
+      ,
+      new PyKeywordCompletionProvider(TailTypes.noneType(), PyNames.TRUE, PyNames.FALSE, PyNames.NONE));
+
     extend(CompletionType.BASIC,
            psiElement()
              .withLanguage(PythonLanguage.getInstance())
