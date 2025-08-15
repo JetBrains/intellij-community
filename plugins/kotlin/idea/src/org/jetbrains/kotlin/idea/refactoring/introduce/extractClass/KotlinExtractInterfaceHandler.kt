@@ -26,6 +26,6 @@ object KotlinExtractInterfaceHandler : KotlinExtractSuperHandlerBase(true) {
             originalClass = klass,
             targetParent = targetParent,
             conflictChecker = { checkConflicts(klass, it) },
-            refactoring = { ExtractSuperRefactoring().performRefactoring(it) }
+            refactoring = { KotlinExtractSuperRefactoring.getInstance().performRefactoring(it) }
         )
 }

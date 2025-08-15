@@ -40,7 +40,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addIfNotNull
 
-class ExtractSuperRefactoring {
+internal class ExtractSuperRefactoring private constructor(): KotlinExtractSuperRefactoring {
     companion object {
         internal fun getElementsToMove(
             memberInfos: Collection<KotlinMemberInfo>,
@@ -186,7 +186,7 @@ class ExtractSuperRefactoring {
         return newClass
     }
 
-    fun performRefactoring(extractInfo: ExtractSuperInfo) {
+    override fun performRefactoring(extractInfo: ExtractSuperInfo) {
         val project = extractInfo.originalClass.project
         val originalClass = extractInfo.originalClass
 

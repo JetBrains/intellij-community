@@ -49,8 +49,8 @@ import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.chooseMembers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuperInfo
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuperRefactoring
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperConflictSearcher
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperRefactoring
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.AbstractExtractKotlinFunctionHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.EXTRACT_FUNCTION
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ExtractKotlinFunctionHandler
@@ -466,7 +466,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                     isInterface,
                     DocCommentPolicy(DocCommentPolicy.ASIS)
                 )
-                ExtractSuperRefactoring().performRefactoring(extractInfo)
+                KotlinExtractSuperRefactoring.getInstance().performRefactoring(extractInfo)
             }
         }
     }

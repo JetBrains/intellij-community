@@ -106,6 +106,10 @@
             serviceInterface="org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperConflictSearcher"
             serviceImplementation="org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.K1ExtractSuperConflictSearcher"/>
 
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperRefactoring"
+            serviceImplementation="org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuperRefactoring"/>
+
     <moveFileHandler
             implementation="org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.MoveKotlinFileHandler"/>
 
