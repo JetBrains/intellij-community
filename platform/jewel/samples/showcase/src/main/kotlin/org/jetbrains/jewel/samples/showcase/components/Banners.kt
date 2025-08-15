@@ -9,14 +9,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.markdown.Markdown
+import org.jetbrains.jewel.markdown.MarkdownText
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.DefaultErrorBanner
 import org.jetbrains.jewel.ui.component.DefaultInformationBanner
@@ -77,7 +83,9 @@ public fun Banners(modifier: Modifier = Modifier) {
                         )
                     },
                     content = {
-                        Markdown("This is a **Markdown** banner — [watch](https://youtu.be/dQw4w9WgXcQ) `this` out ;)")
+                        MarkdownText(
+                            "This is a **Markdown** banner — [watch](https://youtu.be/dQw4w9WgXcQ) `this` out ;)"
+                        )
                     },
                 )
 
@@ -176,8 +184,29 @@ public fun Banners(modifier: Modifier = Modifier) {
                     },
                     style = JewelTheme.inlineBannerStyle.information,
                     content = {
-                        Markdown("This is a **Markdown** banner — [watch](https://youtu.be/dQw4w9WgXcQ) `this` out ;)")
+                        MarkdownText(
+                            "This is a **Markdown** banner with a custom font — [watch](https://youtu.be/dQw4w9WgXcQ) `this` out ;)",
+                            fontFamily = FontFamily.Cursive,
+                            fontSize = 22.sp,
+                        )
                     },
+                )
+
+                var restart by remember { mutableIntStateOf(0) }
+                var timer by remember { mutableDoubleStateOf(0.0) }
+                LaunchedEffect(restart) {
+                    val initialTime = withFrameMillis { it }
+                    while (true) {
+                        withFrameMillis { timer = (it - initialTime) / 1000.0 }
+                    }
+                }
+
+                InlineInformationBanner(
+                    title = optionalTitle,
+                    icon = null,
+                    iconActions = { iconAction(AllIconsKeys.General.Refresh, "Restart", onClick = { restart += 1 }) },
+                    style = JewelTheme.inlineBannerStyle.information,
+                    content = { MarkdownText("Timer — **${"%.2f".format(timer)}** _seconds remaining_.") },
                 )
 
                 InlineInformationBanner(

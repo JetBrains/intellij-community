@@ -1,5 +1,8 @@
 f:org.jetbrains.jewel.markdown.MarkdownKt
 f:org.jetbrains.jewel.markdown.MarkdownModeKt
+f:org.jetbrains.jewel.markdown.MarkdownTextKt
+- sf:MarkdownText-LbmSmu0(java.lang.String,androidx.compose.ui.Modifier,Z,J,J,androidx.compose.ui.text.font.FontStyle,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontFamily,J,androidx.compose.ui.text.style.TextDecoration,I,J,I,Z,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.markdown.rendering.MarkdownStyling$Paragraph,org.jetbrains.jewel.markdown.processing.MarkdownProcessor,org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer,androidx.compose.runtime.Composer,I,I,I):V
+- sf:MarkdownText-q43SfUc(org.jetbrains.jewel.markdown.MarkdownBlock$Paragraph,androidx.compose.ui.Modifier,Z,J,J,androidx.compose.ui.text.font.FontStyle,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontFamily,J,androidx.compose.ui.text.style.TextDecoration,I,J,I,Z,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.markdown.rendering.MarkdownStyling$Paragraph,org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer,androidx.compose.runtime.Composer,I,I,I):V
 f:org.jetbrains.jewel.markdown.SemanticsKt
 f:org.jetbrains.jewel.markdown.extensions.MarkdownKt
 f:org.jetbrains.jewel.markdown.processing.MarkdownParserFactory
