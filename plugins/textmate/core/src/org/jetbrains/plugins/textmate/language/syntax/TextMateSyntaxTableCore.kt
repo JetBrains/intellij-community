@@ -20,7 +20,7 @@ class TextMateSyntaxTableCore(private val languageDescriptors: Map<CharSequence,
   private var rulesRepository: Array<SyntaxNodeDescriptor?>? = null
 
   fun getLanguageDescriptor(scopeName: CharSequence): TextMateLanguageDescriptor {
-    return languageDescriptors[scopeName] ?: TextMateLanguageDescriptor(scopeName, SyntaxNodeDescriptor.EMPTY_NODE, emptyList())
+    return languageDescriptors[scopeName] ?: TextMateLanguageDescriptor(SyntaxNodeDescriptor.EMPTY_NODE, emptyList())
   }
 
   /**

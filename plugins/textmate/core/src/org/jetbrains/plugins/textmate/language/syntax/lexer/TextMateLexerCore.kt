@@ -44,7 +44,7 @@ class TextMateLexerCore(
     myCurrentOffset = startCharOffset
 
     myStates = persistentListOf(notMatched(languageDescriptor.rootSyntaxNode))
-    myCurrentScope = TextMateScope(languageDescriptor.scopeName, null)
+    myCurrentScope = TextMateScope(languageDescriptor.rootScopeName, null)
     myNestedScope = ArrayDeque<Int>().also { it.addLast(1) }
   }
 
