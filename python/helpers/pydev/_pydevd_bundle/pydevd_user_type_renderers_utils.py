@@ -1,7 +1,40 @@
 #  Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import inspect
 
+from functools import lru_cache
+import importlib
+
 from _pydevd_bundle import pydevd_utils
+
+try:
+    # Prefer the IDE's own importer if available (handles namespace packages, zip, etc.)
+    from _pydevd_bundle import pydevd_import_class as _pydevd_import_class
+except Exception:
+    _pydevd_import_class = None
+
+@lru_cache(maxsize=256)
+def _resolve_type(path: str):
+    """Resolve 'pkg.mod.Class' -> class object, or None."""
+    if not path:
+        return None
+    # Try pydevd importer first (if present)
+    if _pydevd_import_class is not None:
+        for attr in ('import_name', 'ImportName'):
+            fn = getattr(_pydevd_import_class, attr, None)
+            if callable(fn):
+                try:
+                    return fn(path)
+                except Exception:
+                    pass
+    # Fallback to standard importlib
+    try:
+        mod, _, name = path.rpartition('.')
+        if not mod or not name:
+            return None
+        m = importlib.import_module(mod)
+        return getattr(m, name, None)
+    except Exception:
+        return None
 
 
 class TypeRenderersConstants:
@@ -43,6 +76,18 @@ def try_get_type_renderer_for_var(var, renderers_dict):
         for render in renderers_for_name:
             if render.type_qualified_name == qualified_name:
                 return render
+
+        # generic fallback: resolve target type and match by subclassing
+        # (handles cases where runtime __module__ differs from the canonical/qualified path provided by UI/stubs)
+        for render in renderers_for_name:
+            target = _resolve_type(getattr(render, 'type_canonical_import_path', '')) or _resolve_type(getattr(render, 'type_qualified_name', ''))
+            if target is not None:
+                try:
+                    if issubclass(cls, target):
+                        return render
+                except Exception:
+                    # target is not a class or cls is not suitable for issubclass
+                    pass
 
         # by module root and class name
         # (if module contains only one class with the same name)
