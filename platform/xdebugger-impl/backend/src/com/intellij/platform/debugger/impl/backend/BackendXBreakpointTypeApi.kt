@@ -142,7 +142,8 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
 
     val singleVariant = variants.singleOrNull()
     if (singleVariant != null) {
-      LOG.info("[$requestId] Single variant found: ${singleVariant.text}")
+      val variantText = readAction { singleVariant.text }
+      LOG.info("[$requestId] Single variant found: $variantText")
 
       if (request.hasBreakpoints) {
         LOG.info("[$requestId] Breakpoint exists, returning XRemoveBreakpointResponse")
@@ -176,7 +177,8 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
       breakpointCallback.use {
         val variant = variants[selectedVariantIndex]
         val breakpoint = createBreakpointByVariant(project, variant, position, request)
-        LOG.info("[$requestId] Received variant selection: $receivedResponse Selected variant: ${variant.text}" +
+        val variantText = readAction { variant.text }
+        LOG.info("[$requestId] Received variant selection: $receivedResponse Selected variant: $variantText" +
                  "[$requestId] Created breakpoint from selected variant: $breakpoint")
 
         it.send(breakpoint.breakpointId)
