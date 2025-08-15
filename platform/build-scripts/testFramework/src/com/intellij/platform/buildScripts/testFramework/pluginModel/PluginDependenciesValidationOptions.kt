@@ -15,9 +15,15 @@ class PluginDependenciesValidationOptions(
    * Prefixes of plugin loading error messages which shouldn't be reported by the validator.
    */
   val pluginErrorPrefixesToIgnore: List<String>,
-  
+
   /**
    * Relative paths to XML files which are located in libraries and included in plugin descriptors via `<xi:include>`.
    */
   val pathsIncludedFromLibrariesViaXiInclude: Set<String>,
+
+  /**
+   * Specifies the minimum number of modules which should be checked by the validator.
+   * This is used to ensure that the validator won't stop checking many modules due to some mistake in the validation code.
+   */
+  val minimumNumberOfModulesToBeChecked: Int,
 )

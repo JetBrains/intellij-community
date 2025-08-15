@@ -133,11 +133,11 @@ class PluginDependenciesValidator private constructor(
 
     val unusedIgnoredDependenciesPatterns = options.missingDependenciesToIgnore.toMutableSet()
 
-    checkSourceModule@ for ((sourceModuleName, sourceDescriptors) in jpsModuleToRuntimeDescriptors) {
+    val modulesToCheck = jpsModuleToRuntimeDescriptors.entries.mapNotNull { (sourceModuleName, sourceDescriptors) ->
       val sourceModule = project.findModuleByName(sourceModuleName) ?: error("Cannot find module $sourceModuleName")
       if (sourceModule.getSourceRoots(JavaSourceRootType.SOURCE).toList().isEmpty()) {
         //for now only dependencies used in source code are checked
-        continue
+        return@mapNotNull null
       }
 
       for (descriptor in sourceDescriptors) {
@@ -145,11 +145,26 @@ class PluginDependenciesValidator private constructor(
           if (pluginDependency.isOptional && !pluginDependency.pluginId.idString.startsWith("com.intellij.modules.")
               && pluginDependency.subDescriptor != null && pluginDependency.subDescriptor?.pluginClassLoader == null) {
             //println("Skip checking '$sourceModuleName' because an optional dependency from its plugin '${descriptor.pluginId.idString}' on '${pluginDependency.pluginId}' is not loaded")
-            continue@checkSourceModule
+            return@mapNotNull null
           }
         }
       }
-
+      
+      sourceModule to sourceDescriptors
+    }
+    if (modulesToCheck.size < options.minimumNumberOfModulesToBeChecked) {
+      errors.add(PluginModuleConfigurationError(
+        moduleName = "too-few-modules",
+        errorMessage = """
+          |Too few modules (${modulesToCheck.size}) are checked (at least ${options.minimumNumberOfModulesToBeChecked} are expected).
+          |Most probably this indicates a problem in the validation code which caused the validator to skip too many modules.
+          |If there is a legitimate reason why the number of checked modules decreases (e.g., some modules are removed), you can decrease 'minimumNumberOfModulesToBeChecked'
+          |option.
+        """.trimMargin())
+      )
+    }
+    
+    for ((sourceModule, sourceDescriptors) in modulesToCheck) {
       val moduleDependenciesAtRuntime =
         sourceDescriptors
           .asSequence()
@@ -165,7 +180,7 @@ class PluginDependenciesValidator private constructor(
       enumerator.processModules { targetModule ->
         val targetModuleName = targetModule.name
         if (targetModuleName !in moduleDependenciesAtRuntime) {
-          val ignoredDependencyPattern = findIgnoredDependencyPattern(sourceModuleName, targetModuleName)
+          val ignoredDependencyPattern = findIgnoredDependencyPattern(sourceModule.name, targetModuleName)
           if (ignoredDependencyPattern != null) {
             unusedIgnoredDependenciesPatterns.remove(ignoredDependencyPattern)
             return@processModules
@@ -193,18 +208,18 @@ class PluginDependenciesValidator private constructor(
           val fix = suggestFix(sourceModule, sourceDescriptors, targetModule, expectedTargets)
 
           val errorMessage = """
-            |'$sourceModuleName' has compile dependency on '$targetModuleName' in *.iml,
+            |'${sourceModule.name}' has compile dependency on '$targetModuleName' in *.iml,
             |but at runtime $sourceDescriptorsString on $expectedTargetsString.
             |This may cause NoClassDefFoundError at runtime.
-            |Check if classes from '$sourceModuleName' really use classes from '$targetModuleName' using 'Analyze This Dependency' action in the Project Structure dialog:
+            |Check if classes from '${sourceModule.name}' really use classes from '$targetModuleName' using 'Analyze This Dependency' action in the Project Structure dialog:
             |If no, remove the dependency. 
-            |${if (sourceModule.getSourceRoots(JavaSourceRootType.TEST_SOURCE).toList().isNotEmpty()) 
-              "If only tests of '$sourceModuleName' use it, use 'Test' scope for the dependency.\n" else ""}
+            |${if (sourceModule.getSourceRoots(JavaSourceRootType.TEST_SOURCE).toList().isNotEmpty()){ 
+              "If only tests of '${sourceModule.name}' use it, use 'Test' scope for the dependency.\n"} else ""}
             |If the dependency is really used, ensure that it'll be added at runtime${if (fix == null) "." else ":\n$fix"}
             |
             |$messageDescribingHowToUpdateLayoutData 
             |""".trimMargin()
-          errors.add(PluginModuleConfigurationError(moduleName = sourceModuleName, errorMessage = errorMessage))
+          errors.add(PluginModuleConfigurationError(moduleName = sourceModule.name, errorMessage = errorMessage))
         }
       }
     }
