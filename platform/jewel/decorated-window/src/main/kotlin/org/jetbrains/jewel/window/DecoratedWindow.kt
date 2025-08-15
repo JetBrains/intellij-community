@@ -27,7 +27,6 @@ import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.offset
 import androidx.compose.ui.window.FrameWindowScope
-import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.rememberWindowState
@@ -36,10 +35,13 @@ import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
+import javax.swing.JComponent
+import org.jetbrains.jewel.foundation.LocalComponent
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.modifier.trackWindowActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.intui.standalone.window.Window
 import org.jetbrains.jewel.window.styling.DecoratedWindowStyle
 import org.jetbrains.jewel.window.utils.DesktopPlatform
 
@@ -153,7 +155,12 @@ public fun DecoratedWindow(
                 Modifier
             }
 
-        CompositionLocalProvider(LocalTitleBarInfo provides TitleBarInfo(title, icon)) {
+        val currentComponent = remember(window) { window.contentPane.components.filterIsInstance<JComponent>().first() }
+
+        CompositionLocalProvider(
+            LocalComponent provides currentComponent,
+            LocalTitleBarInfo provides TitleBarInfo(title, icon),
+        ) {
             Layout(
                 content = {
                     val scope =

@@ -34,6 +34,7 @@ jvm_library(
     "//platform/jewel/ui",
     "//libraries/compose-foundation-desktop",
     "//platform/jewel/foundation",
+    "@lib//:jbr-api",
   ],
   runtime_deps = [":jewel-intUi-standalone_resources"],
   plugins = ["@lib//:compose-plugin"]

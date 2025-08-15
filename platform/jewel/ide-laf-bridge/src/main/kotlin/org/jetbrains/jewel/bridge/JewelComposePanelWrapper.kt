@@ -3,7 +3,6 @@ package org.jetbrains.jewel.bridge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ProvidableCompositionLocal
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.awt.ComposePanel
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
@@ -18,6 +17,7 @@ import org.jetbrains.jewel.bridge.actionSystem.ComponentDataProviderBridge
 import org.jetbrains.jewel.bridge.component.JBPopupRenderer
 import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
+import org.jetbrains.jewel.foundation.LocalComponent as JewelLocalComponent
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.component.LocalPopupRenderer
 import org.jetbrains.jewel.ui.util.LocalMessageResourceResolverProvider
@@ -50,7 +50,7 @@ public fun JewelComposePanel(config: ComposePanel.() -> Unit = {}, content: @Com
         setContent {
             SwingBridgeTheme {
                 CompositionLocalProvider(
-                    LocalComponent provides this@createJewelComposePanel,
+                    JewelLocalComponent provides this@createJewelComposePanel,
                     LocalPopupRenderer provides JBPopupRenderer,
                 ) {
                     ComponentDataProviderBridge(jewelPanel, content = content)
@@ -95,7 +95,7 @@ public fun JewelComposeNoThemePanel(config: ComposePanel.() -> Unit = {}, conten
         config()
         setContent {
             CompositionLocalProvider(
-                LocalComponent provides this@createJewelComposePanel,
+                JewelLocalComponent provides this@createJewelComposePanel,
                 LocalPopupRenderer provides JBPopupRenderer,
                 LocalMessageResourceResolverProvider provides BridgeMessageResourceResolver(),
             ) {
@@ -151,6 +151,8 @@ internal class JewelComposePanelWrapper : JPanel(), UiDataProvider {
 @Suppress("CompositionLocalAllowlist")
 @ApiStatus.Experimental
 @ExperimentalJewelApi
-public val LocalComponent: ProvidableCompositionLocal<JComponent> = staticCompositionLocalOf {
-    error("CompositionLocal LocalComponent not provided")
-}
+@Deprecated(
+    "Use the LocalComponent from the foundation API",
+    replaceWith = ReplaceWith("LocalComponent", "org.jetbrains.jewel.foundation.LocalComponent"),
+)
+public val LocalComponent: ProvidableCompositionLocal<JComponent> = JewelLocalComponent
