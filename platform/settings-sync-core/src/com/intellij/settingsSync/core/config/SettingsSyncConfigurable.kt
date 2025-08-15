@@ -832,7 +832,9 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           icon(AllIcons.General.QuestionDialog).align(AlignY.TOP)
           panel {
             row {
-              text(message("enable.dialog.source.option.title")).bold()
+              text(message("enable.dialog.source.option.title")).applyToComponent {
+                font = JBFont.h3()
+              }
             }
             row {
               text(message("enable.dialog.source.option.text"), 50)
@@ -875,7 +877,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           panel {
             row {
               text(message("enable.sync.choose.data.provider.title")).applyToComponent {
-                font = JBFont.h4()
+                font = JBFont.h3()
               }
             }
             val availableProviders = RemoteCommunicatorHolder.getAvailableProviders().filter { it.isAvailable() }
