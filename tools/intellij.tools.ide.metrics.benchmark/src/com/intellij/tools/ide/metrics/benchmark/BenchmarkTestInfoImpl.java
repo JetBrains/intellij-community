@@ -61,6 +61,9 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
   private final @NotNull IJTracer tracer;
   private final ArrayList<MetricsCollector> metricsCollectors = new ArrayList<>();
 
+  /** sets {@link ApplicationManagerEx#setInStressTest(boolean)} to true before the benchmark, restores original value after */
+  private boolean setInStressTest = false;
+
   private boolean useDefaultSpanMetricExporter = true;
 
   /**
@@ -214,6 +217,14 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
   }
 
   @Override
+  @Contract(pure = true) // to warn about not calling .start() in the end
+  public BenchmarkTestInfoImpl runAsStressTest() {
+    setInStressTest = true;
+    return this;
+  }
+
+
+  @Override
   public String getUniqueTestName() {
     return uniqueTestName;
   }
@@ -263,15 +274,27 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
 
   @Override
   public void start() {
-    Application app = ApplicationManager.getApplication();
-    if (app != null) {
-      if (!ApplicationManagerEx.isInStressTest()) {
-        Logger log = Logger.getInstance(BenchmarkTestInfoImpl.class);
-        log.error("ApplicationManagerEx.isInStressTest=false -- not good for reliable benchmarks!\n" +
-                  "Either set it 'true' explicitly, or use @StressTestApplication");
+    if (setInStressTest) {
+      boolean wasInStressTestBefore = ApplicationManagerEx.isInStressTest();
+      ApplicationManagerEx.setInStressTest(true);
+      try {
+        start(getCallingTestMethod(), launchName);
+      }
+      finally {
+        ApplicationManagerEx.setInStressTest(wasInStressTestBefore);
       }
     }
-    start(getCallingTestMethod(), launchName);
+    else {
+      Application app = ApplicationManager.getApplication();
+      if (app != null) {//if app == null then we probably don't use platform at all
+        if (!ApplicationManagerEx.isInStressTest()) {
+          Logger log = Logger.getInstance(BenchmarkTestInfoImpl.class);
+          log.error("ApplicationManagerEx.isInStressTest=false -- not good for reliable benchmarks!\n" +
+                    "Either use .runInStressTest() on the benchmark, or @StressTestApplication on the test itself");
+        }
+      }
+      start(getCallingTestMethod(), launchName);
+    }
   }
 
   /**
