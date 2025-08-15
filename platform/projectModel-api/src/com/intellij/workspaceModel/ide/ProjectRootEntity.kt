@@ -16,6 +16,15 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
 @Internal
+suspend fun registerProjectRoot(project: Project, projectDir: VirtualFileUrl) {
+  val entity = ProjectRootEntity(projectDir, ProjectRootEntitySource)
+  val workspaceModel = project.serviceAsync<WorkspaceModel>()
+  workspaceModel.update("Add project root the project creation") { storage ->
+    storage.addEntity(entity)
+  }
+}
+
+@Internal
 suspend fun registerProjectRoot(project: Project, projectDir: Path) {
   val workspaceModel = project.serviceAsync<WorkspaceModel>()
   val projectBaseDirUrl = projectDir.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())
