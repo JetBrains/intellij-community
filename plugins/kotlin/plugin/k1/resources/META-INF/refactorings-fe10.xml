@@ -102,6 +102,10 @@
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.pushDown.JavaToKotlinPushDownDelegate"/>
 
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperConflictSearcher"
+            serviceImplementation="org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.K1ExtractSuperConflictSearcher"/>
+
     <moveFileHandler
             implementation="org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.MoveKotlinFileHandler"/>
 

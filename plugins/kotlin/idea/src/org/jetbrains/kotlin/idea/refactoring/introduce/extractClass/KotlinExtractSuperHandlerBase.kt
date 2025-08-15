@@ -92,7 +92,7 @@ abstract class KotlinExtractSuperHandlerBase(private val isExtractInterface: Boo
     }
 
     protected fun checkConflicts(originalClass: KtClassOrObject, dialog: KotlinExtractSuperDialogBase): Boolean {
-        val conflicts = ExtractSuperRefactoring.collectConflicts(
+        val conflicts = KotlinExtractSuperConflictSearcher.getInstance().collectConflicts(
             originalClass,
             dialog.selectedMembers,
             dialog.selectedTargetParent,
