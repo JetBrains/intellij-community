@@ -205,7 +205,7 @@ class PluginIsIncompatibleWithAnotherPlugin(
 @ApiStatus.Internal
 class PluginModuleDependencyCannotBeLoadedOrMissing(
   override val plugin: IdeaPluginDescriptor,
-  val moduleDependency: ModuleId,
+  val moduleDependency: PluginModuleId,
   val containingPlugin: PluginId?,
   override val shouldNotifyUser: Boolean,
 ): PluginNonLoadReason {
@@ -251,7 +251,7 @@ class PluginDependencyIsNotInstalled(
 @ApiStatus.Internal
 class PluginHasDuplicateContentModuleDeclaration(
   override val plugin: IdeaPluginDescriptor,
-  val moduleId: ModuleId,
+  val moduleId: PluginModuleId,
 ): PluginNonLoadReason {
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = CoreBundle.message("plugin.loading.error.long.content.modules.are.invalid.duplicate.module", plugin.name, moduleId)

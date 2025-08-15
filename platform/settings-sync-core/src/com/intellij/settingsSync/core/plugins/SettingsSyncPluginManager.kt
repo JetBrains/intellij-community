@@ -120,7 +120,7 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
   private fun isUltimate(
     plugin: IdeaPluginDescriptor,
     pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-    contentModuleIdMap: Map<ModuleId, ContentModuleDescriptor>,
+    contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>,
   ): Boolean {
     var isUltimate = false
     PluginManagerCore.processAllNonOptionalDependencyIds(plugin as IdeaPluginDescriptorImpl, pluginIdMap, contentModuleIdMap) {

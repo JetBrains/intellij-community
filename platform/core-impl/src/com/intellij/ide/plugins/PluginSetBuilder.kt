@@ -30,7 +30,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
   }
   
   private val enabledPluginIds = HashMap<PluginId, PluginModuleDescriptor>(unsortedPlugins.size)
-  private val enabledModuleV2Ids = HashMap<ModuleId, PluginModuleDescriptor>(unsortedPlugins.size * 2)
+  private val enabledModuleV2Ids = HashMap<PluginModuleId, PluginModuleDescriptor>(unsortedPlugins.size * 2)
 
   internal fun checkPluginCycles(errors: MutableList<Supplier<String>>) {
     if (builder.isAcyclic) {
@@ -90,12 +90,12 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
   internal fun computeEnabledModuleMap(
     incompletePlugins: Collection<PluginMainDescriptor>,
     currentProductModeEvaluator: () -> String = { ProductLoadingStrategy.strategy.currentModeId },
-    disabler: ((descriptor: IdeaPluginDescriptorImpl, disabledModuleToProblematicPlugin: Map<ModuleId, PluginId>) -> Boolean)? = null,
+    disabler: ((descriptor: IdeaPluginDescriptorImpl, disabledModuleToProblematicPlugin: Map<PluginModuleId, PluginId>) -> Boolean)? = null,
   ): List<PluginNonLoadReason> {
     val logMessages = ArrayList<String>()
     val loadingErrors = ArrayList<PluginNonLoadReason>()
-    val enabledRequiredContentModules = HashMap<ModuleId, ContentModuleDescriptor>()
-    val disabledModuleToProblematicPlugin = HashMap<ModuleId, PluginId>()
+    val enabledRequiredContentModules = HashMap<PluginModuleId, ContentModuleDescriptor>()
+    val disabledModuleToProblematicPlugin = HashMap<PluginModuleId, PluginId>()
     for (incompletePlugin in incompletePlugins) {
       incompletePlugin.contentModules.associateByTo(disabledModuleToProblematicPlugin, { it.moduleId }, { incompletePlugin.pluginId })
     }
@@ -190,7 +190,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
             enabledPluginIds.put(pluginAlias, module)
           }
           if (module.packagePrefix != null) {
-            enabledModuleV2Ids.put(ModuleId(module.pluginId.idString), module) // FIXME ???
+            enabledModuleV2Ids.put(PluginModuleId(module.pluginId.idString), module) // FIXME ???
           }
           if (module.pluginId != PluginManagerCore.CORE_ID) {
             for (contentModule in module.contentModules) {
@@ -232,17 +232,17 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
    * Returns a module which should be disabled because it's not relevant to the current com.intellij.platform.runtime.product.ProductMode.
    * All modules that depend on the specified module will be automatically disabled as well.
    */
-  private fun getModuleIncompatibleWithCurrentProductMode(currentProductModeEvaluator: () -> String): ModuleId? {
+  private fun getModuleIncompatibleWithCurrentProductMode(currentProductModeEvaluator: () -> String): PluginModuleId? {
     return when (currentProductModeEvaluator()) {
       /** intellij.platform.backend.split is currently available in 'monolith' mode because it's used as a backend in CodeWithMe */
       "monolith" -> "intellij.platform.frontend.split"
       "backend" -> "intellij.platform.frontend"
       "frontend" -> "intellij.platform.backend"
       else -> null
-    }?.let { ModuleId(it) }
+    }?.let { PluginModuleId(it) }
   }
 
-  private fun markModuleAsEnabled(moduleId: ModuleId, moduleDescriptor: ContentModuleDescriptor) {
+  private fun markModuleAsEnabled(moduleId: PluginModuleId, moduleDescriptor: ContentModuleDescriptor) {
     enabledModuleV2Ids.put(moduleId, moduleDescriptor)
     for (pluginAlias in moduleDescriptor.pluginAliases) {
       enabledPluginIds.put(pluginAlias, moduleDescriptor)
@@ -291,10 +291,10 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
     descriptor: IdeaPluginDescriptorImpl,
     idMap: Map<PluginId, IdeaPluginDescriptorImpl>,
     fullIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-    fullContentModuleIdMap: Map<ModuleId, ContentModuleDescriptor>,
+    fullContentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>,
     isPluginDisabled: (PluginId) -> Boolean,
     errors: MutableMap<PluginId, PluginNonLoadReason>,
-    disabledModuleToProblematicPlugin: Map<ModuleId, PluginId>,
+    disabledModuleToProblematicPlugin: Map<PluginModuleId, PluginId>,
   ): PluginNonLoadReason? {
     val isNotifyUser = !descriptor.isImplementationDetail && !pluginRequiresUltimatePluginButItsDisabled(descriptor.pluginId, fullIdMap, fullContentModuleIdMap)
     for (incompatibleId in descriptor.incompatiblePlugins) {

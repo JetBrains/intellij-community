@@ -169,12 +169,12 @@ sealed class IdeaPluginDescriptorImpl(
       if (dependencies.isEmpty()) {
         return ModuleDependencies.EMPTY
       }
-      val moduleDeps = ArrayList<ModuleId>()
+      val moduleDeps = ArrayList<PluginModuleId>()
       val pluginDeps = ArrayList<PluginId>()
       for (dep in dependencies) {
         when (dep) {
           is DependenciesElement.PluginDependency -> pluginDeps.add(PluginId.getId(dep.pluginId))
-          is DependenciesElement.ModuleDependency -> moduleDeps.add(ModuleId(dep.moduleName))
+          is DependenciesElement.ModuleDependency -> moduleDeps.add(PluginModuleId(dep.moduleName))
           else -> LOG.error("Unknown dependency type: $dep")
         }
       }
@@ -411,7 +411,7 @@ class PluginMainDescriptor(
   fun initialize(context: PluginInitializationContext): PluginNonLoadReason? {
     content.modules.forEach { it.requireDescriptor() }
     if (content.modules.size > 1) {
-      val duplicates = HashSet<ModuleId>()
+      val duplicates = HashSet<PluginModuleId>()
       for (item in content.modules) {
         if (!duplicates.add(item.moduleId)) {
           return onInitError(PluginHasDuplicateContentModuleDeclaration(this, item.moduleId))
@@ -482,7 +482,7 @@ class PluginMainDescriptor(
           "${elem.name.substring(0, index)}.${elem.name.substring(index + 1)}.xml"
         } else null
         PluginContentDescriptor.ModuleItem(
-          moduleId = ModuleId(elem.name),
+          moduleId = PluginModuleId(elem.name),
           configFile = configFile,
           descriptorContent = elem.embeddedDescriptorContent,
           loadingRule = elem.loadingRule.convert())
@@ -594,11 +594,11 @@ class DependsSubDescriptor(
 class ContentModuleDescriptor(
   val parent: PluginMainDescriptor,
   raw: RawPluginDescriptor,
-  moduleId: ModuleId,
+  moduleId: PluginModuleId,
   moduleLoadingRule: ModuleLoadingRule,
   private val descriptorPath: String
 ): PluginModuleDescriptor(raw) {
-  val moduleId: ModuleId = moduleId
+  val moduleId: PluginModuleId = moduleId
   val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
 
   override val useCoreClassLoader: Boolean

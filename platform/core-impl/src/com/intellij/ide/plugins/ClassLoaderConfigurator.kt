@@ -404,13 +404,13 @@ fun createPluginDependencyAndContentBasedScope(descriptor: PluginMainDescriptor,
   }
 }
 
-private fun getPackagePrefixesLoadedBySeparateClassLoaders(descriptor: PluginMainDescriptor): List<Pair<String, ModuleId?>> {
+private fun getPackagePrefixesLoadedBySeparateClassLoaders(descriptor: PluginMainDescriptor): List<Pair<String, PluginModuleId?>> {
   val modules = descriptor.contentModules
   if (modules.isEmpty()) {
     return emptyList()
   }
 
-  val result = ArrayList<Pair<String, ModuleId?>>(modules.size)
+  val result = ArrayList<Pair<String, PluginModuleId?>>(modules.size)
   for (module in modules) {
     if (!module.jarFiles.isNullOrEmpty() || module.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
       continue

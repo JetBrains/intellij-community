@@ -1108,7 +1108,7 @@ class DynamicPluginsTest {
     PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").build()
     loadPluginInTest(fooPluginPath) {
       loadPluginInTest(barPluginPath) {
-        assertThat(PluginManagerCore.getPluginSet().findEnabledModule(ModuleId("foo.b"))).isNull()
+        assertThat(PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId("foo.b"))).isNull()
         assertThat(ActionManager.getInstance().getAction("foo.b.action")).isNull()
       }
     }
@@ -1134,7 +1134,7 @@ class DynamicPluginsTest {
     PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").build()
     loadPluginInTest(fooPluginPath) {
       loadPluginInTest(barPluginPath) {
-        assertThat(PluginManagerCore.getPluginSet().buildContentModuleIdMap().contains(ModuleId("foo.a"))).isTrue
+        assertThat(PluginManagerCore.getPluginSet().buildContentModuleIdMap().contains(PluginModuleId("foo.a"))).isTrue
       }
     }
   }
@@ -1270,7 +1270,7 @@ private inline fun runAndCheckThatNoNewPlugins(block: () -> Unit) {
 
 private fun lexicographicallySortedPluginIds() = PluginManagerCore.loadedPlugins.toSortedSet(compareBy { it.pluginId })
 
-private fun findEnabledModuleByName(id: String) = PluginManagerCore.getPluginSet().findEnabledModule(ModuleId(id))
+private fun findEnabledModuleByName(id: String) = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(id))
 
 private fun assertModuleIsNotLoaded(moduleName: String) {
   assertThat(findEnabledModuleByName(moduleName)).isNull()

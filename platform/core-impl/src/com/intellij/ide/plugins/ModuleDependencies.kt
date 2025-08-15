@@ -10,7 +10,7 @@ import java.util.*
  */
 @ApiStatus.Internal
 class ModuleDependencies(
-  val modules: List<ModuleId>,
+  val modules: List<PluginModuleId>,
   val plugins: List<PluginId>,
 ) {
   @ApiStatus.Internal

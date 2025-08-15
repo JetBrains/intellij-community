@@ -7,7 +7,7 @@ import com.intellij.ide.plugins.ContentModuleDescriptor
 import com.intellij.ide.plugins.DataLoader
 import com.intellij.ide.plugins.DependsSubDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.ModuleId
+import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.ModuleLoadingRule
 import com.intellij.ide.plugins.PathResolver
 import com.intellij.ide.plugins.PluginDescriptorLoadingContext
@@ -402,7 +402,7 @@ class PluginDependenciesValidator private constructor(
   private inner class LoadFromSourcePathResolver(
     private val layout: PluginLayoutDescription,
     private val customConfigFileToModule: Map<String, String>,
-    embeddedContentModules: List<ModuleId>,
+    embeddedContentModules: List<PluginModuleId>,
     private val xIncludeLoader: PluginMainModuleFromSourceXIncludeLoader
   ) : PathResolver {
     
@@ -443,7 +443,7 @@ class PluginDependenciesValidator private constructor(
       }
     }
 
-    override fun resolveCustomModuleClassesRoots(moduleId: ModuleId): List<Path> {
+    override fun resolveCustomModuleClassesRoots(moduleId: PluginModuleId): List<Path> {
       if (moduleId in embeddedContentModules) {
         return emptyList()
       }

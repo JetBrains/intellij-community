@@ -13,7 +13,7 @@ class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
 
   @ApiStatus.Internal
   class ModuleItem(
-    val moduleId: ModuleId,
+    val moduleId: PluginModuleId,
     val configFile: String?,
     internal val descriptorContent: CharArray?,
     val loadingRule: ModuleLoadingRule,

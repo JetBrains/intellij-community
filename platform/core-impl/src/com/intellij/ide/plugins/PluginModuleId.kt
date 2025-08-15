@@ -11,13 +11,13 @@ import org.jetbrains.annotations.ApiStatus
 @JvmInline
 @ApiStatus.Internal
 @IntellijInternalApi
-value class ModuleId private constructor(val id: String){
+value class PluginModuleId private constructor(val id: String){
   override fun toString(): String = id
 
   companion object {
-    // ModuleId can be either boxed or unboxed, so only interning of value matters
+    // PluginModuleId can be either boxed or unboxed, so only interning of value matters
     private val interner = Interner.createWeakInterner<String>()
 
-    operator fun invoke(id: String): ModuleId = ModuleId(interner.intern(id))
+    operator fun invoke(id: String): PluginModuleId = PluginModuleId(interner.intern(id))
   }
 }

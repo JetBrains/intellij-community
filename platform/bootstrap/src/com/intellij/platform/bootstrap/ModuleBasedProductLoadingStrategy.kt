@@ -301,7 +301,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   override fun isOptionalProductModule(moduleId: String): Boolean =
     productModules.mainModuleGroup.optionalModuleIds.contains(RuntimeModuleId.raw(moduleId))
 
-  override fun findProductContentModuleClassesRoot(moduleId: ModuleId, moduleDir: Path): Path? {
+  override fun findProductContentModuleClassesRoot(moduleId: PluginModuleId, moduleDir: Path): Path? {
     val resolvedModule = moduleRepository.resolveModule(RuntimeModuleId.module(moduleId.id)).resolvedModule
     if (resolvedModule == null) {
       // https://youtrack.jetbrains.com/issue/CPP-38280

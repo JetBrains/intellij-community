@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework
 
-import com.intellij.ide.plugins.ModuleId
+import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.ModuleLoadingRule
 import com.intellij.ide.plugins.PluginContentDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
@@ -57,7 +57,7 @@ class PluginBuilder() {
   private val pluginAliases = mutableListOf<String>()
 
   private val content = mutableListOf<PluginContentDescriptor.ModuleItem>()
-  private val dependencies = mutableListOf<ModuleId>()
+  private val dependencies = mutableListOf<PluginModuleId>()
   private val pluginDependencies = mutableListOf<PluginId>()
   private val incompatibleWith = mutableListOf<PluginId>()
 
@@ -124,7 +124,7 @@ class PluginBuilder() {
     moduleFile: String = "$moduleId.xml",
   ): PluginBuilder {
     subDescriptors.add(SubDescriptor(moduleFile, moduleDescriptor))
-    content.add(PluginContentDescriptor.ModuleItem(moduleId = ModuleId(moduleId), configFile = null, descriptorContent = null, loadingRule = loadingRule))
+    content.add(PluginContentDescriptor.ModuleItem(moduleId = PluginModuleId(moduleId), configFile = null, descriptorContent = null, loadingRule = loadingRule))
     return this
   }
 
@@ -134,7 +134,7 @@ class PluginBuilder() {
   }
 
   fun dependency(moduleName: String): PluginBuilder {
-    dependencies.add(ModuleId(moduleName))
+    dependencies.add(PluginModuleId(moduleName))
     return this
   }
 

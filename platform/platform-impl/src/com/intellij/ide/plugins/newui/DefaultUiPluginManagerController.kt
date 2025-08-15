@@ -655,7 +655,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     allDescriptorsToUpdate: List<IdeaPluginDescriptor>,
     action: PluginEnableDisableAction,
     pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-    contentModuleIdMap: Map<ModuleId, ContentModuleDescriptor>,
+    contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>,
   ): SetEnabledStateResult {
     val changedStates = setNewEnabled(allDescriptorsToUpdate, session.pluginStates, action,
                                       { descriptor, pair -> handleBeforeChangeEnableState(session, descriptor, pair) })
@@ -861,7 +861,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     descriptors: List<IdeaPluginDescriptorImpl>,
     enabledMap: Map<PluginId, PluginEnabledState?>,
     pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-    contentModuleIdMap: Map<ModuleId, ContentModuleDescriptor>,
+    contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>,
   ): List<IdeaPluginDescriptor> {
     val result = mutableListOf<IdeaPluginDescriptor>()
     for (descriptor in descriptors) {
@@ -882,7 +882,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   private fun updatePluginDependencies(
     session: PluginManagerSession,
     pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>?,
-    contentModuleIdMap: Map<ModuleId, ContentModuleDescriptor>?,
+    contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>?,
   ): Set<PluginId> {
     val pluginsToEnable = mutableSetOf<PluginId>()
     var pluginIdMap = pluginIdMap
@@ -952,7 +952,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     pluginIds: List<PluginId>,
     enabledMap: MutableMap<PluginId, PluginEnabledState?>,
     pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-    contentModuleIdMap: Map<ModuleId, ContentModuleDescriptor>,
+    contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>,
   ): List<IdeaPluginDescriptor> {
     val result = mutableListOf<IdeaPluginDescriptor>()
 
@@ -984,7 +984,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     rootId: PluginId,
     applicationInfo: ApplicationInfoEx,
     pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-    contentModuleIdMap: Map<ModuleId, ContentModuleDescriptor>,
+    contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>,
   ): List<IdeaPluginDescriptorImpl> {
     val result = mutableListOf<IdeaPluginDescriptorImpl>()
     for (entry in pluginIdMap.entries) {
