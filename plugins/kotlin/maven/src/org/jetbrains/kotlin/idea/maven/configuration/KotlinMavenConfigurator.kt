@@ -64,7 +64,7 @@ abstract class KotlinMavenConfigurator protected constructor(
         }
 
         if (isKotlinModule(module)) {
-            return runReadAction { checkKotlinPlugin(module) }
+            return runReadAction { checkPluginConfiguration(module) }
         }
         return ConfigureKotlinStatus.CAN_BE_CONFIGURED
     }
@@ -73,7 +73,7 @@ abstract class KotlinMavenConfigurator protected constructor(
         return module.buildSystemType == BuildSystemType.Maven
     }
 
-    private fun checkKotlinPlugin(module: Module): ConfigureKotlinStatus {
+    protected open fun checkPluginConfiguration(module: Module): ConfigureKotlinStatus {
         val psi = findModulePomFile(module) as? XmlFile ?: return ConfigureKotlinStatus.BROKEN
         val pom = PomFile.forFileOrNull(psi) ?: return ConfigureKotlinStatus.NON_APPLICABLE
 
@@ -95,8 +95,8 @@ abstract class KotlinMavenConfigurator protected constructor(
         return ConfigureKotlinStatus.CAN_BE_CONFIGURED
     }
 
-    private fun hasKotlinPlugin(pom: PomFile): Boolean {
-        val plugin = pom.findPlugin(kotlinPluginId(null)) ?: return false
+    protected fun hasKotlinPlugin(pom: PomFile): Boolean {
+        val plugin = pom.findPlugin(kotlinPluginId()) ?: return false
 
         return plugin.executions.executions.any { execution ->
             execution.goals.goals.any { isRelevantGoal(it.stringValue ?: "") }
@@ -215,7 +215,7 @@ abstract class KotlinMavenConfigurator protected constructor(
         return true
     }
 
-    protected open fun configurePlugin(pom: PomFile, plugin: MavenDomPlugin, module: Module, version: IdeKotlinVersion) {
+    protected open fun configurePlugin(pom: PomFile, plugin: MavenDomPlugin, module: Module, version: IdeKotlinVersion?) {
     }
 
     protected fun createExecution(

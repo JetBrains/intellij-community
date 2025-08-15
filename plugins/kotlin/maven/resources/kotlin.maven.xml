@@ -4,7 +4,7 @@
   </dependencies>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <projectConfigurator implementation="org.jetbrains.kotlin.idea.maven.configuration.KotlinJavaMavenConfigurator"/>
+    <projectConfigurator id="kotlinJavaMavenConfigurator" implementation="org.jetbrains.kotlin.idea.maven.configuration.KotlinJavaMavenConfigurator"/>
     <buildSystemTypeDetector implementation="org.jetbrains.kotlin.idea.maven.MavenDetector"/>
 
     <failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor
