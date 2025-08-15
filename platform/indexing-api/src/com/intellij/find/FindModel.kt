@@ -18,8 +18,11 @@ import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.UnknownNullability
+import java.util.concurrent.CancellationException
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
+
+private val LOG = Logger.getInstance(FindModel::class.java)
 
 @Serializable
 open class FindModel : UserDataHolder, Cloneable {
@@ -744,9 +747,17 @@ open class FindModel : UserDataHolder, Cloneable {
     notifyObservers()
   }
 
-   private fun notifyObservers() {
+  private fun notifyObservers() {
     for (observer in myObservers) {
-      observer.findModelChanged(this)
+      try {
+        observer.findModelChanged(this)
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error("FindModelObserver threw an exception: $observer", e)
+      }
     }
   }
 
