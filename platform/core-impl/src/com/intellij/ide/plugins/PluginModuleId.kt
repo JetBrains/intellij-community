@@ -6,7 +6,9 @@ import com.intellij.util.containers.Interner
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * DO NOT use in API.
+ * In plugin configuration files modules are referred to by `name`s, but here we intentionally use `id` instead.
+ *
+ * This class is not supposed to be used in API.
  */
 @JvmInline
 @ApiStatus.Internal
