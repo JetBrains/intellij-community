@@ -67,7 +67,7 @@ class EqualityMembersRuleSpec {
             assertThat(findings).hasSize(1)
             assertThat(result)
                 .isEqualTo(
-                    $$"""
+                    """
                     |annotation class GenerateDataFunctions
                     |
                     |@GenerateDataFunctions
@@ -89,7 +89,7 @@ class EqualityMembersRuleSpec {
                     |}
                     |
                     |override fun toString(): String {
-                    |    return "DataFuncTest(a=$a)"
+                    |    return "DataFuncTest(a=${'$'}a)"
                     |}
                     |}
                     """
@@ -116,7 +116,7 @@ class EqualityMembersRuleSpec {
             assertThat(findings).hasSize(1)
             assertThat(result)
                 .isEqualTo(
-                    $$"""
+                    """
                     |annotation class GenerateDataFunctions
                     |
                     |@GenerateDataFunctions
@@ -138,7 +138,7 @@ class EqualityMembersRuleSpec {
                     |}
                     |
                     |override fun toString(): String {
-                    |    return "DataFuncTest(a=$a)"
+                    |    return "DataFuncTest(a=${'$'}a)"
                     |}
                     |}
                     """
