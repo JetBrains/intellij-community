@@ -91,7 +91,7 @@ object PluginAutoUpdater {
       updates.mapValues { (_, info) ->
         val updateFile = autoupdatesDir.resolve(info.updateFilename)
         async(Dispatchers.IO) {
-          runCatching { loadAndInitDescriptorFromArtifact(updateFile, null) }
+          runCatching { loadDescriptorFromArtifact(updateFile, null) }
         }
       }.mapValues { it.value.await() }
     }.filter {
