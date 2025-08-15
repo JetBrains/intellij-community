@@ -493,7 +493,8 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   fun setupProjectFromBuilder(project: Project) {
     val builder = object : AbstractGradleModuleBuilder() {}
 
-    builder.moduleJdk = jdkIntent?.prepareJdk()
+    val sdk = if (context.isCreatingNewProject) { context.projectJdk } else { jdkIntent?.prepareJdk() }
+    builder.moduleJdk = sdk
     builder.sdkDownloadTask = jdkIntent?.downloadTask
 
     builder.name = parentStep.name

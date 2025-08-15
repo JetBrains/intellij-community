@@ -173,16 +173,12 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
       instance.setLanguageLevel(extension.getLanguageLevel());
     }
     else {
-      //setup default flag and language level according to jdk
       instance.setDefault(true);
       Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
       LOG.debug("commit: projectSdk=" + sdk);
       if (sdk != null) {
         JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
         LOG.debug("commit: sdk.version=" + version);
-        if (version != null) {
-          instance.setLanguageLevel(version.getMaxLanguageLevel());
-        }
       }
     }
   }
