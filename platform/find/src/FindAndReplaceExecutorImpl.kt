@@ -22,8 +22,8 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.project.projectId
 import com.intellij.platform.scopes.ScopeModelApi
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.usageView.UsageInfo
 import com.intellij.usages.FindUsagesProcessPresentation
+import com.intellij.usages.UsageChangedListener
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
 import fleet.rpc.client.RpcTimeoutException
@@ -33,6 +33,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.util.function.Consumer
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 private val LOG = logger<FindAndReplaceExecutorImpl>()
@@ -53,7 +54,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     previousUsages: Set<UsageInfoAdapter>,
     shouldThrottle: Boolean,
     disposableParent: Disposable,
-    onDocumentUpdated: (usageInfos: List<UsageInfo>) -> Unit?,
+    onUpdateModelCallback: Consumer<UsageInfoAdapter>,
     onResult: (UsageInfoAdapter) -> Boolean,
     onFinish: () -> Unit?
   ) {
@@ -82,7 +83,12 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
           else it.map { event -> ThrottledOneItem(event) }
         }.collect { throttledItems ->
           throttledItems.items.forEach { item ->
-            val usage = UsageInfoModel.createUsageInfoModel(project, item, this.childScope("UsageInfoModel.init"), onDocumentUpdated)
+            val usage = UsageInfoModel.createUsageInfoModel(project, item, this.childScope("UsageInfoModel.init"))
+            usage.addInitializationListener(object : UsageChangedListener {
+              override fun modelInitialized() {
+                onUpdateModelCallback.accept(usage)
+              }
+            }, disposableParent)
             if (searchDisposable != null && Disposer.tryRegister(searchDisposable, usage)) {
               onResult(usage)
             }
