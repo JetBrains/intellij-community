@@ -16,6 +16,7 @@ import org.jetbrains.intellij.build.impl.maven.GeneratedMavenArtifacts
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactDependency
 import org.jetbrains.intellij.build.impl.maven.MavenCentralPublication
 import org.jetbrains.intellij.build.impl.maven.MavenCoordinates
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 
@@ -208,13 +209,15 @@ internal object JewelMavenArtifacts {
 
   /** See https://central.sonatype.org/publish/requirements */
   private fun validateForMavenCentralPublication(artifacts: GeneratedMavenArtifacts) {
-    val sources = artifacts.coordinates.getFileName("sources", "jar")
-    check(artifacts.files.any { it.name == sources }) {
-      "No $sources is generated for the module ${artifacts.module.name}"
-    }
-    val javadoc = artifacts.coordinates.getFileName("javadoc", "jar")
-    check(artifacts.files.any { it.name == javadoc }) {
-      "No $javadoc is generated for the module ${artifacts.module.name}"
+    if (artifacts.module.getSourceRoots(JavaSourceRootType.SOURCE).any()) {
+      val sources = artifacts.coordinates.getFileName("sources", "jar")
+      check(artifacts.files.any { it.name == sources }) {
+        "No $sources is generated for the module ${artifacts.module.name}"
+      }
+      val javadoc = artifacts.coordinates.getFileName("javadoc", "jar")
+      check(artifacts.files.any { it.name == javadoc }) {
+        "No $javadoc is generated for the module ${artifacts.module.name}"
+      }
     }
     val pom = artifacts.coordinates.getFileName(packaging = "pom")
     val pomXml = artifacts.files.singleOrNull { it.name == pom }
