@@ -38,7 +38,7 @@ class ExistingConfig(
   val command: String? = null,
   val args: List<String>? = null,
   val env: Map<String, String>? = null,
-  @JsonNames("url", "serverUrl")
+  @JsonNames("url", "serverUrl", "uri")
   val url: String? = null,
   val type: String? = null,
 )
