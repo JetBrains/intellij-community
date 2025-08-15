@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,8 +44,8 @@ public class LowLevelSearchUtilTest extends TestCase {
     IntList found = new IntArrayList(new int[]{-1});
     CharSequence text = StringUtil.repeat("xxx z ", 1000000);
 
-    Benchmark.newBenchmark("processTextOccurrences", ()-> {
-      for (int i=0; i<10000; i++) {
+    Benchmark.newBenchmark("processTextOccurrences", () -> {
+      for (int i = 0; i < 10000; i++) {
         found.removeInt(0);
         int startOffset = text.length() / 2 + i % 20;
         int endOffset = startOffset + 8;
@@ -54,8 +54,10 @@ public class LowLevelSearchUtilTest extends TestCase {
           return true;
         });
         assertTrue(success);
-        assertEquals(startOffset+","+endOffset, 1, found.size());
+        assertEquals(startOffset + "," + endOffset, 1, found.size());
       }
-    }).start();
+    })
+      .runAsStressTest()
+      .start();
   }
 }

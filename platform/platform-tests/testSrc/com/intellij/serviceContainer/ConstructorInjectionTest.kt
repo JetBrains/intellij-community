@@ -14,11 +14,12 @@ class ConstructorInjectionTest {
   fun `light service getService() performance`() {
     val componentManager = TestComponentManager()
     assertThat(componentManager.getService(BarService::class.java)).isNotNull()
+
     Benchmark.newBenchmark("getService() must be fast for cached service") {
       repeat(30_000_000) {
         componentManager.getService(BarService::class.java)!!
       }
-    }.start()
+    }.runAsStressTest().start()
   }
 
   @Test
