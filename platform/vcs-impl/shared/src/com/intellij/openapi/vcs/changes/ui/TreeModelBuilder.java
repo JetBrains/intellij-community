@@ -10,12 +10,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.vcs.VcsUtil;
 import com.intellij.platform.vcs.changes.ChangesUtil;
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewModelBuilderService;
 import com.intellij.ui.SimpleTextAttributes;
@@ -311,30 +311,6 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return this;
   }
 
-  /**
-   * @deprecated Kept for binary compatibility
-   */
-  @Deprecated(forRemoval = true)
-  public void insertChangeNode(@NotNull Object nodePath,
-                               @NotNull ChangesBrowserNode<?> subtreeRoot,
-                               @NotNull ChangesBrowserNode<?> node) {
-    @NotNull StaticFilePath result;
-    if (nodePath instanceof Change) {
-      result = staticFrom((Change)nodePath);
-    }
-    else if (nodePath instanceof VirtualFile) {
-      result = staticFrom((VirtualFile)nodePath);
-    }
-    else if (nodePath instanceof FilePath) {
-      result = staticFrom((FilePath)nodePath);
-    }
-    else {
-      throw new IllegalArgumentException("Unknown type - " + nodePath.getClass());
-    }
-
-    insertChangeNode(result, subtreeRoot, node);
-  }
-
   public void insertChangeNode(@NotNull FilePath nodePath,
                                @NotNull ChangesBrowserNode<?> subtreeRoot,
                                @NotNull ChangesBrowserNode<?> node) {
@@ -493,7 +469,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   public static @NotNull StaticFilePath staticFrom(@NotNull VirtualFile vf) {
-    return new StaticFilePath(VcsContextFactory.getInstance().createFilePathOn(vf));
+    return new StaticFilePath(VcsUtil.getFilePath(vf));
   }
 
   public static @NotNull StaticFilePath staticFrom(@NotNull Change change) {
@@ -505,7 +481,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
       return ChangesUtil.getFilePath(change);
     }
     else if (o instanceof VirtualFile virtualFile) {
-      return VcsContextFactory.getInstance().createFilePathOn(virtualFile);
+      return VcsUtil.getFilePath(virtualFile);
     }
     else if (o instanceof FilePath) {
       return (FilePath)o;

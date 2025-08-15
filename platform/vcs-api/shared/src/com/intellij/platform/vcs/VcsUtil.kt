@@ -8,6 +8,10 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object VcsUtil {
+  /**
+   * Interaction with [VirtualFile] is not supported in the Split mode
+   */
   @JvmStatic
+  @ApiStatus.Obsolete
   fun getFilePath(file: VirtualFile): FilePath = VcsContextFactory.getInstance().createFilePathOn(file)
 }

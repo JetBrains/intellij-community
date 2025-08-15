@@ -511,7 +511,6 @@ c:com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 - insertChangeNode(com.intellij.openapi.vcs.changes.ui.StaticFilePath,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):V
 - p:insertChangeNode(com.intellij.openapi.vcs.changes.ui.StaticFilePath,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode,java.util.function.Function):V
 - insertChangeNode(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):V
-- insertChangeNode(java.lang.Object,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):V
 - insertChanges(java.util.Collection,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):V
 - insertChanges(java.util.Collection,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode,com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator):V
 - insertFilesIntoNode(java.util.Collection,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):V
