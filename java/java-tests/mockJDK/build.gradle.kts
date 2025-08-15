@@ -22,7 +22,7 @@ val spacePassword: String by project
 
 val javaVersion: String = Runtime.version().feature().toString()
 
-val jmodDir = project.file("$buildDir/jmod")
+val jmodDir = project.file("${layout.buildDirectory}/jmod")
 
 tasks.register("ensureDirectory") {
   doLast {
@@ -30,7 +30,7 @@ tasks.register("ensureDirectory") {
   }
 }
 
-task<Exec>("jmodUnpack") {
+tasks.register<Exec>("jmodUnpack") {
   println("Preparing mockJDK-$javaVersion")
   dependsOn("ensureDirectory")
   workingDir = jmodDir
@@ -38,7 +38,7 @@ task<Exec>("jmodUnpack") {
   commandLine("$javaHome/bin/jmod", "extract", "$javaHome/jmods/java.base.jmod")
 }
 
-task<Copy>("jmodCopy") {
+tasks.register<Copy>("jmodCopy") {
   dependsOn("jmodUnpack")
   from("$jmodDir/classes") {
     include("java/**")
@@ -52,7 +52,8 @@ tasks {
     dependsOn("jmodCopy")
   }
   withType<Jar>() {
-    from("$buildDir/resources")
+    dependsOn("processTestResources")
+    from("${layout.buildDirectory}/resources")
   }
 }
 
