@@ -12,10 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.*;
-import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
-import com.intellij.openapi.keymap.impl.KeymapImpl;
-import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
-import com.intellij.openapi.keymap.impl.SystemShortcuts;
+import com.intellij.openapi.keymap.impl.*;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.OptionsBundle;
@@ -66,7 +63,7 @@ import java.util.Map;
 
 import static com.intellij.openapi.actionSystem.impl.ActionToolbarImpl.updateAllToolbarsImmediately;
 
-public final class KeymapPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll, KeymapListener, Disposable {
+public final class KeymapPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll, KeymapListener, SystemShortcutsListener, Disposable {
   private JCheckBox nationalKeyboardsSupport;
 
   private final KeymapSelector myKeymapSelector = new KeymapSelector(this::currentKeymapChanged);
@@ -284,6 +281,14 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
   public void processCurrentKeymapChanged(QuickList @NotNull [] ids) {
     myQuickLists = ids;
     currentKeymapChanged();
+  }
+
+  @Override
+  public void processSystemShortcutsChanged() {
+    var selectedKeymap = myManager.getSelectedKeymap();
+    if (selectedKeymap != null) {
+      fillConflictsPanel(selectedKeymap);
+    }
   }
 
   private void currentKeymapChanged() {
@@ -590,7 +595,9 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
     }
     KeymapExtension.EXTENSION_POINT_NAME.addChangeListener(this::currentKeymapChanged, this);
     myKeymapSelector.attachKeymapListener(this);
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(CHANGE_TOPIC, this);
+    var messageBus = ApplicationManager.getApplication().getMessageBus();
+    messageBus.connect(this).subscribe(KeymapListener.CHANGE_TOPIC, this);
+    messageBus.connect(this).subscribe(SystemShortcutsListener.CHANGE_TOPIC, this);
     return this;
   }
 
