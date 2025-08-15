@@ -26,6 +26,7 @@ import com.intellij.notebook.editor.BackedVirtualFileProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.AsyncExecutionServiceImpl;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -1462,6 +1463,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                                   @NotNull Map<? super Pair<Document, Class<? extends ProgressableTextEditorHighlightingPass>>, ProgressableTextEditorHighlightingPass> mainDocumentPasses) {
     ThreadingAssertions.assertEventDispatchThread();
     BackgroundEditorHighlighter highlighter;
+
+    // since we are running on EDT under write-intent lock, write action can be either absent or pending (if it was invoked on background)
+    // in this case, the progress indicator needs to be canceled.
+    if (ApplicationManagerEx.getApplicationEx().isWriteActionPending()) {
+      stopProcess(false, "Background write action is pending");
+      throw new ProcessCanceledException();
+    }
 
     try (AccessToken ignored = ClientId.withExplicitClientId(ClientFileEditorManager.getClientId(fileEditor))) {
       highlighter = fileEditor.getBackgroundHighlighter();
