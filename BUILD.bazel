@@ -11,6 +11,7 @@ create_kotlinc_options(name= "k7", jvm_target = "7")
 create_kotlinc_options(name= "k8", jvm_target = "8")
 create_kotlinc_options(name= "k11", jvm_target = "11")
 create_kotlinc_options(name = "k17", jvm_target = "17")
+create_kotlinc_options(name = "k21", jvm_target = "21")
 
 java_binary(
     name = "monorepo-jvm-builder",

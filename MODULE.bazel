@@ -57,7 +57,7 @@ http_file(
 
 jbr_toolchains = use_extension("@community//build:jbr-toolchains.bzl", "jbr_toolchains")
 
-REMOTE_JBR17_REPOS = ["remotejbr17_" + platform for platform in [
+REMOTE_JBR21_REPOS = ["remotejbr21_" + platform for platform in [
     "linux",
     "linux_aarch64",
     "macos",
@@ -69,6 +69,6 @@ REMOTE_JBR17_REPOS = ["remotejbr17_" + platform for platform in [
 [use_repo(
     jbr_toolchains,
     repo + "_toolchain_config_repo",
-) for repo in REMOTE_JBR17_REPOS]
+) for repo in REMOTE_JBR21_REPOS]
 
-[register_toolchains("@" + repo + "_toolchain_config_repo//:all") for repo in REMOTE_JBR17_REPOS]
+[register_toolchains("@" + repo + "_toolchain_config_repo//:all") for repo in REMOTE_JBR21_REPOS]
