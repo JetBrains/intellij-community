@@ -1222,11 +1222,11 @@ plugins/search-everywhere-ml/ranking/yaml
 plugins/search-everywhere-ml/typos
 plugins/settings-repository
 plugins/settings-sync/jba
-plugins/sh
 plugins/sh/backend
 plugins/sh/copyright
 plugins/sh/core
 plugins/sh/markdown
+plugins/sh/plugin
 plugins/sh/python
 plugins/sh/terminal
 plugins/space/jps-plugin

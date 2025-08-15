@@ -36,7 +36,7 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
-    "//plugins/sh:sh-main",
+    "//plugins/sh/plugin:plugin-main",
     "//plugins/copyright",
     "//plugins/copyright:copyright_test_lib",
     "//platform/projectModel-impl",
