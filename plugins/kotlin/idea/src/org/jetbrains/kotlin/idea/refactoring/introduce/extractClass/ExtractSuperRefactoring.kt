@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.memberPullUp.PullUpProcessor
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import com.intellij.refactoring.util.DocCommentPolicy
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.actions.createKotlinFileFromTemplate
@@ -39,16 +38,6 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-
-data class ExtractSuperInfo(
-    val originalClass: KtClassOrObject,
-    val memberInfos: Collection<KotlinMemberInfo>,
-    val targetParent: PsiElement,
-    val targetFileName: String,
-    val newClassName: String,
-    val isInterface: Boolean,
-    val docPolicy: DocCommentPolicy
-)
 
 class ExtractSuperRefactoring(
     private var extractInfo: ExtractSuperInfo
