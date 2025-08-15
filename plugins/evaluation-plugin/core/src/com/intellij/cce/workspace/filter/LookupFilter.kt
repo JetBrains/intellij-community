@@ -1,7 +1,6 @@
 package com.intellij.cce.workspace.filter
 
 import com.intellij.cce.core.Lookup
-import com.intellij.cce.workspace.filter.CompareSessionsFilter.CompareFilterType
 
 interface LookupFilter: NamedFilter {
   companion object {
