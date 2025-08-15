@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ui
 
@@ -7,9 +7,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.classMembers.MemberInfoModel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuperInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractInterfaceHandler
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.refactoring.pullUp.mustBeAbstractInInterface
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
+@ApiStatus.Internal
 class KotlinExtractInterfaceDialog(
     originalClass: KtClassOrObject,
     targetParent: PsiElement,
@@ -78,20 +79,20 @@ class KotlinExtractInterfaceDialog(
 
             override fun checkForProblems(memberInfo: KotlinMemberInfo): Int {
                 val result = super.checkForProblems(memberInfo)
-                if (result != MemberInfoModel.OK) return result
+                if (result != OK) return result
 
-                if (!memberInfo.isSuperClass || memberInfo.overrides != false || memberInfo.isChecked) return MemberInfoModel.OK
+                if (!memberInfo.isSuperClass || memberInfo.overrides != false || memberInfo.isChecked) return OK
 
-                val psiSuperInterface = lightElementForMemberInfo(memberInfo.member) as? PsiClass ?: return MemberInfoModel.OK
+                val psiSuperInterface = lightElementForMemberInfo(memberInfo.member) as? PsiClass ?: return OK
 
                 for (info in memberInfos) {
                     if (!info.isChecked || info.isToAbstract) continue
                     val member = info.member ?: continue
                     val psiMethodToCheck = lightElementForMemberInfo(member) as? PsiMethod ?: continue
-                    if (psiSuperInterface.findMethodBySignature(psiMethodToCheck, true) != null) return MemberInfoModel.ERROR
+                    if (psiSuperInterface.findMethodBySignature(psiMethodToCheck, true) != null) return ERROR
                 }
 
-                return MemberInfoModel.OK
+                return OK
             }
         }
     }
@@ -106,10 +107,10 @@ class KotlinExtractInterfaceDialog(
 
     override fun getTopLabelText() = RefactoringBundle.message("extract.interface.from")
 
-    override fun getDocCommentPolicySetting() = KotlinRefactoringSettings.instance.EXTRACT_INTERFACE_JAVADOC
+    override fun getDocCommentPolicySetting() = KotlinCommonRefactoringSettings.getInstance().EXTRACT_INTERFACE_JAVADOC
 
     override fun setDocCommentPolicySetting(policy: Int) {
-        KotlinRefactoringSettings.instance.EXTRACT_INTERFACE_JAVADOC = policy
+        KotlinCommonRefactoringSettings.getInstance().EXTRACT_INTERFACE_JAVADOC = policy
     }
 
     override fun getExtractedSuperNameNotSpecifiedMessage() = RefactoringBundle.message("no.interface.name.specified")

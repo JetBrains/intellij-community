@@ -1,11 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ui
 
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuperInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperclassHandler
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 
+@ApiStatus.Internal
 class KotlinExtractSuperclassDialog(
     originalClass: KtClassOrObject,
     targetParent: PsiElement,
@@ -61,10 +63,10 @@ class KotlinExtractSuperclassDialog(
 
     override fun getTopLabelText(): String = RefactoringBundle.message("extract.superclass.from")
 
-    override fun getDocCommentPolicySetting() = KotlinRefactoringSettings.instance.EXTRACT_SUPERCLASS_JAVADOC
+    override fun getDocCommentPolicySetting() = KotlinCommonRefactoringSettings.getInstance().EXTRACT_SUPERCLASS_JAVADOC
 
     override fun setDocCommentPolicySetting(policy: Int) {
-        KotlinRefactoringSettings.instance.EXTRACT_SUPERCLASS_JAVADOC = policy
+        KotlinCommonRefactoringSettings.getInstance().EXTRACT_SUPERCLASS_JAVADOC = policy
     }
 
     override fun getExtractedSuperNameNotSpecifiedMessage(): String = RefactoringBundle.message("no.superclass.name.specified")

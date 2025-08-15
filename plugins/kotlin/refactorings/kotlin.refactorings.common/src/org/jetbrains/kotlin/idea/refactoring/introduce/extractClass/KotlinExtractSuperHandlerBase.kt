@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractClass
 
@@ -17,18 +17,19 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractSuperclass.ExtractSuperClassUtil
 import com.intellij.refactoring.lang.ElementsHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.SeparateFileWrapper
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ui.KotlinExtractSuperDialogBase
-import org.jetbrains.kotlin.idea.refactoring.showWithTransaction
-import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 
+@ApiStatus.Internal
 abstract class KotlinExtractSuperHandlerBase(private val isExtractInterface: Boolean) : RefactoringActionHandler, ElementsHandler {
     override fun isEnabledOnElements(elements: Array<out PsiElement>) = elements.singleOrNull() is KtClassOrObject
 
@@ -70,7 +71,7 @@ abstract class KotlinExtractSuperHandlerBase(private val isExtractInterface: Boo
     }
 
     private fun doInvoke(klass: KtClassOrObject, targetParent: PsiElement) {
-        createDialog(klass, targetParent).showWithTransaction()
+        createDialog(klass, targetParent).show()
     }
 
     private fun selectElements(klass: KtClassOrObject, editor: Editor?) {
@@ -103,7 +104,7 @@ abstract class KotlinExtractSuperHandlerBase(private val isExtractInterface: Boo
     }
 
     @NlsContexts.DialogMessage
-    internal open fun getErrorMessage(klass: KtClassOrObject): String? = when {
+    open fun getErrorMessage(klass: KtClassOrObject): String? = when {
         klass.isExpectDeclaration() -> KotlinBundle.message("error.text.extraction.from.expect.class.is.not.yet.supported")
         klass.toLightClass() == null -> KotlinBundle.message("error.text.extraction.from.non.jvm.class.is.not.yet.supported")
         else -> null
