@@ -378,15 +378,14 @@ class PluginManagerTest {
         else {
           pluginPath = Path.of(url.removePrefix("file://"))
         }
-        val descriptor = readAndInitDescriptorFromBytesForTest(
+        val descriptor = readDescriptorFromBytesForTest(
           path = pluginPath,
           isBundled = isBundled,
           data = elementAsBytes(element),
           loadingContext = loadingContext,
-          initContext = initContext,
           pathResolver = pathResolver,
           dataLoader = LocalFsDataLoader(pluginPath)
-        )
+        ).apply { initialize(context = initContext) }
         list.add(descriptor)
         descriptor.jarFiles = emptyList()
       }

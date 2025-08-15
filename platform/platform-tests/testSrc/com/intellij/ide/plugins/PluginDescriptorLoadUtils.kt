@@ -44,12 +44,11 @@ fun readDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input: ByteAr
   return result
 }
 
-fun readAndInitDescriptorFromBytesForTest(
+fun readDescriptorFromBytesForTest(
   path: Path,
   isBundled: Boolean,
   data: ByteArray,
   loadingContext: PluginDescriptorLoadingContext,
-  initContext: PluginInitializationContext,
   pathResolver: PathResolver,
   dataLoader: DataLoader,
 ): PluginMainDescriptor {
@@ -67,5 +66,5 @@ fun readAndInitDescriptorFromBytesForTest(
     pluginDir = path,
     pool = ZipFilePoolImpl()
   )
-  return result.apply { initialize(context = initContext) }
+  return result
 }
