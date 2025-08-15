@@ -13,6 +13,7 @@
     <module name="intellij.platform.ml.logs"/>
     <module name="intellij.libraries.microba"/>
     <module name="intellij.libraries.skiko"/>
+    <module name="intellij.libraries.coil"/>
     <module name="intellij.platform.compose"/>
     <module name="intellij.platform.compose.markdown"/>
     <module name="intellij.platform.jewel.foundation"/>
@@ -35,7 +36,7 @@
     <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
     <module name="intellij.spellchecker"/>
     <module name="intellij.spellchecker.xml"/>
-    
+
     <module name="intellij.emojipicker"/>
     <module name="intellij.platform.ide.impl.wsl"/>
     <module name="intellij.platform.diagnostic.telemetry.agent.extension"/>
