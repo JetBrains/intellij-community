@@ -61,11 +61,11 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
       setValid(true);
     }
 
-    public int getDelta() {
+    protected int getDelta() {
       return delta;
     }
 
-    public int getMaxEnd() {
+    protected int getMaxEnd() {
       return maxEnd;
     }
 
@@ -277,11 +277,11 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
       return TextRangeScalarUtil.endOffset(myRange);
     }
 
-    public long toScalarRange() {
+    protected long toScalarRange() {
       return myRange;
     }
 
-    public @NotNull IntervalTreeImpl<E> getTree() {
+    protected @NotNull IntervalTreeImpl<E> getTree() {
       return myTree;
     }
 
@@ -1355,10 +1355,10 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
 
   private boolean firingRemove; // accessed under l.writeLock() only
 
-  public void fireBeforeRemoved(@NotNull T marker) {
+  protected void fireBeforeRemoved(@NotNull T marker) {
   }
 
-  public void fireAfterRemoved(@NotNull T marker) {
+  protected void fireAfterRemoved(@NotNull T marker) {
   }
 
   void fireAfterRemoved(@NotNull List<? extends T> markers) {
