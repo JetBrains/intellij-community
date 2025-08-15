@@ -3,7 +3,6 @@ package com.intellij.cce.evaluation.step
 
 
 import com.intellij.cce.core.Language
-import com.intellij.cce.core.Lookup
 import com.intellij.cce.evaluable.EvaluableFeature
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluation.FilteredSessionsStorage
@@ -14,6 +13,8 @@ import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.cce.workspace.filter.CompareSessionsFilter
 import com.intellij.cce.workspace.filter.CompareSessionsStorage
 import com.intellij.cce.workspace.filter.CompareSessionsStorageImpl
+import com.intellij.cce.workspace.filter.LookupFilter
+import com.intellij.cce.workspace.filter.SessionLookupsFilter
 import com.intellij.cce.workspace.filter.SessionsFilter
 import com.intellij.cce.workspace.info.FileEvaluationDataInfo
 import com.intellij.cce.workspace.info.FileEvaluationInfo
@@ -27,6 +28,7 @@ class ReportGenerationStep<T : EvaluationStrategy>(
   private val inputWorkspaces: List<EvaluationWorkspace>?,
   filters: List<SessionsFilter>,
   comparisonFilters: List<CompareSessionsFilter>,
+  lookupFilters: List<LookupFilter>,
   private val feature: EvaluableFeature<T>
 ) : BackgroundEvaluationStep {
   override val name: String = "Report generation"
@@ -39,6 +41,7 @@ class ReportGenerationStep<T : EvaluationStrategy>(
                                                                    CompareSessionsStorageImpl(it)
                                                                  }
                                                                  else emptyList()
+  private val sessionLookupFilter: SessionLookupsFilter = SessionLookupsFilter(lookupFilters)
 
   override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
     val workspaces = inputWorkspaces ?: listOf(workspace)
@@ -150,18 +153,7 @@ class ReportGenerationStep<T : EvaluationStrategy>(
           sessions = comparisonStorage.get(file.evaluationType)
         )
 
-        if (language == Language.PROPERTIES) {
-          for (session in sessionsEvaluation.sessions) {
-            val lastLookupIndex = session.lookups.size - 1
-            for (i in lastLookupIndex downTo 0) {
-              val lookup = session.lookups[i]
-              if (hasSuccessfulCacheRetrievedSuggestion(lookup)) {
-                session.removeLookup(lookup)
-              }
-            }
-          }
-        }
-
+        sessionLookupFilter.filter(sessionsEvaluation.sessions)
         val evaluator = title2evaluator.getValue(file.evaluationType)
         val metricsEvaluation = evaluator.evaluate(sessionsEvaluation.sessions, numberOfSessions)
 
@@ -202,9 +194,3 @@ class ReportGenerationStep<T : EvaluationStrategy>(
 }
 
 private val LOG = Logger.getInstance(ReportGenerationStep::class.java)
-
-private fun hasSuccessfulCacheRetrievedSuggestion(lookup: Lookup): Boolean =
-  lookup.rawFilteredList.isEmpty() && lookup.suggestions.any { it.isRelevant }
-
-private val Lookup.rawFilteredList: List<String>
-  get() = this.additionalInfo["raw_filtered"] as? List<String> ?: emptyList()

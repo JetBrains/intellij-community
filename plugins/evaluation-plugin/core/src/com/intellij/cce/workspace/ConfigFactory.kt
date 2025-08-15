@@ -9,6 +9,7 @@ import com.intellij.cce.interpreter.InterpretationOrder
 import com.intellij.cce.util.getAs
 import com.intellij.cce.util.getIfExists
 import com.intellij.cce.workspace.filter.CompareSessionsFilter
+import com.intellij.cce.workspace.filter.LookupFilter
 import com.intellij.cce.workspace.filter.SpanFilter
 import com.intellij.cce.workspace.filter.SessionsFilter
 import com.intellij.openapi.diagnostic.logger
@@ -196,6 +197,12 @@ object ConfigFactory {
       comparisonFilters.add(CompareSessionsFilter.create(it.getAs("filterType"), it.getAs("name"), it.getAs("evaluationType")))
     }
     builder.mergeComparisonFilters(comparisonFilters)
+    val lookupFiltersList = map.getIfExists<List<Map<String, Any>>>("lookupFilters")
+    val lookupFilters = mutableListOf<LookupFilter>()
+    lookupFiltersList?.forEach {
+      lookupFilters.add(LookupFilter.create(it.getAs("filterType"), it.getAs("name")))
+    }
+    builder.mergeLookupFilters(lookupFilters)
   }
 
   private fun Map<String, *>.handleEnv(key: String): String = StrSubstitutor.replaceSystemProperties(getAs(key))

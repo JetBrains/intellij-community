@@ -24,7 +24,7 @@ class BackgroundStepFactory(
 
   override fun generateReportStep(): EvaluationStep =
     ReportGenerationStep(inputWorkspacePaths?.map { EvaluationWorkspace.open(it, SetupStatsCollectorStep.statsCollectorLogsDirectory) },
-                         config.reports.sessionsFilters, config.reports.comparisonFilters, feature)
+                         config.reports.sessionsFilters, config.reports.comparisonFilters, config.reports.lookupFilters, feature)
 
   override fun interpretActionsOnNewWorkspaceStep(): EvaluationStep =
     ActionsInterpretationStep(config, environment, datasetContext, newWorkspace = true)
