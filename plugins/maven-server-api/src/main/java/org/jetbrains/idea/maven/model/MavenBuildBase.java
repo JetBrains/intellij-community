@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.model;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -27,9 +28,9 @@ public class MavenBuildBase implements Serializable {
   private String myFinalName;
   private String myDefaultGoal;
   private String myDirectory;
-  private final @NotNull List<@NotNull String> myFilters =new CopyOnWriteArrayList<>();
+  private final @NotNull CopyOnWriteArrayList<@NotNull String> myFilters =new CopyOnWriteArrayList<>();
 
-  private final @NotNull List<@NotNull MavenSource> myMavenSources = new CopyOnWriteArrayList<>();
+  private final @NotNull CopyOnWriteArrayList<@NotNull MavenSource> myMavenSources = new CopyOnWriteArrayList<>();
 
   public String getFinalName() {
     return myFinalName;
@@ -62,9 +63,11 @@ public class MavenBuildBase implements Serializable {
 
   public void setResources(@NotNull List<@NotNull MavenResource> resources) {
     myMavenSources.removeIf(it -> MavenSource.isResource(it));
-    resources.forEach(it -> {
-      myMavenSources.add(MavenSource.fromResource(it, false));
-    });
+    List<MavenSource> converted = new ArrayList<>(resources.size());
+    for (MavenResource r : resources) {
+      converted.add(MavenSource.fromResource(r, false));
+    }
+    myMavenSources.addAll(converted);
   }
 
 
@@ -76,9 +79,11 @@ public class MavenBuildBase implements Serializable {
 
   public void setTestResources(@NotNull List<@NotNull MavenResource> testResources) {
     myMavenSources.removeIf(it -> MavenSource.isTestResource(it));
-    testResources.forEach(it -> {
-      myMavenSources.add(MavenSource.fromResource(it, true));
-    });
+    List<MavenSource> converted = new ArrayList<>(testResources.size());
+    for (MavenResource r : testResources) {
+      converted.add(MavenSource.fromResource(r, true));
+    }
+    myMavenSources.addAll(converted);
   }
 
   public @NotNull List<@NotNull String> getFilters() {
