@@ -3,9 +3,6 @@ package org.jetbrains.plugins.textmate.plist
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import java.io.IOException
-import kotlin.ByteArray
-import kotlin.String
-import kotlin.let
 
 class XmlPlistReader : PlistReaderCore {
   override fun read(bytes: ByteArray): Plist {

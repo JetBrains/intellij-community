@@ -47,7 +47,7 @@ object TestUtil {
 
   fun readBundle(bundleName: String, xmlPlistReader: PlistReaderCore): TextMateBundleReader {
     val resourceReader = TestUtilMultiplatform.getResourceReader(bundleName)
-    val bundleType = BundleType.Companion.detectBundleType(resourceReader, bundleName)
+    val bundleType = BundleType.detectBundleType(resourceReader, bundleName)
     val plistReader = JsonOrXmlPlistReader(jsonReader = JsonPlistReader(), xmlReader = xmlPlistReader)
     return when (bundleType) {
       BundleType.TEXTMATE -> readTextMateBundle(bundleName, plistReader, resourceReader)
@@ -58,7 +58,7 @@ object TestUtil {
   }
 
   fun scopeFromString(scopeString: String): TextMateScope {
-    return scopeString.split(' ').dropLastWhile { it.isEmpty() }.fold(TextMateScope.Companion.EMPTY) { acc, i -> acc.add(i) }
+    return scopeString.split(' ').dropLastWhile { it.isEmpty() }.fold(TextMateScope.EMPTY) { acc, i -> acc.add(i) }
   }
 
   fun TextMateSyntaxTableBuilder.loadBundle(bundleName: String): Map<TextMateFileNameMatcher, CharSequence> {

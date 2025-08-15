@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.textmate.plist
 
 enum class PlistValueType {
-  STRING, INTEGER, REAL, BOOLEAN, DATE, ARRAY, DICT;
+  STRING, INTEGER, REAL, BOOLEAN, ARRAY, DICT;
 
   companion object {
     fun fromObject(o: Any?): PlistValueType {
