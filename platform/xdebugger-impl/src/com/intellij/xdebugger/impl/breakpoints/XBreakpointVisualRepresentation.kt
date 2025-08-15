@@ -284,15 +284,8 @@ class XBreakpointVisualRepresentation(
 
   private fun canMoveTo(line: Int, file: VirtualFile?): Boolean {
     if (file != null && myBreakpoint.type.canPutAtFast(file, line, myProject) == ThreeState.YES) {
-      if (myBreakpoint is XLineBreakpointProxy.Monolith) {
-        val monolithBreakpoint = myBreakpoint.breakpoint
-        val existing = monolithBreakpoint.breakpointManager.findBreakpointAtLine(monolithBreakpoint.getType(), file, line)
-        return existing == null || existing === monolithBreakpoint
-      }
-      else {
-        // TODO IJPL-185322 support findBreakpointAtLine check for split
-        return true
-      }
+      val existing = myBreakpointManager.findBreakpointAtLine(myBreakpoint.type, file, line)
+      return existing == null || existing == myBreakpoint
     }
     return false
   }
