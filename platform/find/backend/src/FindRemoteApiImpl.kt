@@ -28,10 +28,9 @@ import com.intellij.platform.project.findProjectOrNull
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewPresentation
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -98,16 +97,14 @@ internal class FindRemoteApiImpl : FindRemoteApi {
             usageInfos = adapter.mergedInfos.toList()
           )
 
-        launch (start = CoroutineStart.UNDISPATCHED) {
-          send(result)
-          if (sentItems.incrementAndGet() >= maxUsagesCount) {
-            close()
-          }
+        val sent = trySend(result)
+        if (sent.isSuccess && sentItems.incrementAndGet() >= maxUsagesCount) {
+          close()
         }
 
         usagesCount.get() <= maxUsagesCount
       }
-    }
+    }.buffer(capacity = maxUsagesCount)
   }
 
   override suspend fun performFindAllOrReplaceAll(findModel: FindModel, openInNewTab: Boolean, projectId: ProjectId) {
