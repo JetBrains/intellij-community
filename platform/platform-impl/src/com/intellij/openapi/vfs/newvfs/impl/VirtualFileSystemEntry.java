@@ -161,7 +161,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VfsData data = segment.owningVfsData();
     PersistentFSImpl owningPersistentFS = data.owningPersistentFS();
     if (!owningPersistentFS.isOwnData(data)) {
-      if (owningPersistentFS.isConnected()) {
+      if (!owningPersistentFS.isConnected()) {
         throw new AlreadyDisposedException("VFS is disconnected, all it's files are invalid now");
       }
       else {
@@ -601,9 +601,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       VfsData data = segment.owningVfsData();
       PersistentFSImpl owningPersistentFS = data.owningPersistentFS();
       if (!owningPersistentFS.isOwnData(data)) {
-        Logger.getInstance(VirtualFileSystemEntry.class).warn(
-          "'Alien' file object: was created before PersistentFS (re-)connected (id=" + id + ", parent=" + parent + ")"
-        );
+        Logger log = Logger.getInstance(VirtualFileSystemEntry.class);
+        if (!owningPersistentFS.isConnected()) {
+          log.warn("VFS is disconnected, all it's files are invalid now");
+        }
+        else {
+          log.warn("'Alien' file object: was created before PersistentFS (re-)connected (id=" + id + ", parent=" + parent + ")");
+        }
         return false;
       }
       return data.isFileValid(id);
@@ -615,11 +619,16 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VfsData owningVfsData = getSegment().owningVfsData();
     //don't use .owningPersistentFS() since it throws assertion if pFS not own current segment anymore,
     // but here we want to return some string always:
-    PersistentFSImpl persistentFs = owningVfsData.owningPersistentFS();
-    if (!persistentFs.isOwnData(owningVfsData)) {
-      //PersistentFSImpl re-creates VfsData on (re-)connect
-      return "'Alien' file object: was created before PersistentFS (re-)connected " +
-             "(id=" + id + ", parent=" + parent + ")";
+    PersistentFSImpl owningPersistentFS = owningVfsData.owningPersistentFS();
+    if (!owningPersistentFS.isOwnData(owningVfsData)) {
+      if (!owningPersistentFS.isConnected()) {
+        return "VFS is disconnected, all it's files are invalid now";
+      }
+      else {
+        //PersistentFSImpl re-creates VfsData on (re-)connect
+        return "'Alien' file object: was created before PersistentFS (re-)connected " +
+               "(id=" + id + ", parent=" + parent + ")";
+      }
     }
 
     if (exists()) {
