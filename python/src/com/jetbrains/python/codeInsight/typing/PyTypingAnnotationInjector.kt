@@ -3,16 +3,19 @@ package com.jetbrains.python.codeInsight.typing
 
 import com.intellij.lang.Language
 import com.intellij.lang.injection.MultiHostRegistrar
+import com.intellij.openapi.util.Condition
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.codeInsight.PyInjectionUtil
 import com.jetbrains.python.codeInsight.PyInjectorBase
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintDialect
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.testing.pyTestFixtures.resolve
 import java.util.regex.Pattern
 
 /**
@@ -50,6 +53,18 @@ class PyTypingAnnotationInjector : PyInjectorBase() {
         return PyTypeHintDialect.INSTANCE
       }
       if (isInsideNewStyleTypeVarBound(context)) {
+        return PyTypeHintDialect.INSTANCE
+      }
+      if (isTypingCastTypeArgument(context, typeEvalContext)) {
+        return PyTypeHintDialect.INSTANCE
+      }
+      if (isTypingTypeVarTypeArgument(context, typeEvalContext)) {
+        return PyTypeHintDialect.INSTANCE
+      }
+      if (isTypingNewTypeTypeArgument(context, typeEvalContext)) {
+        return PyTypeHintDialect.INSTANCE
+      }
+      if (isTypingAssertTypeTypeArgument(context, typeEvalContext)) {
         return PyTypeHintDialect.INSTANCE
       }
     }
@@ -135,5 +150,104 @@ class PyTypingAnnotationInjector : PyInjectorBase() {
     private fun isTypingAnnotation(s: String): Boolean {
       return RE_TYPING_ANNOTATION.matcher(s).matches()
     }
+  }
+
+  private fun isTypingCastTypeArgument(
+    expr: PyStringLiteralExpression,
+    context: TypeEvalContext,
+  ): Boolean {
+    val argList = PsiTreeUtil.getParentOfType(expr, PyArgumentList::class.java) ?: return false
+    val call = argList.getParent() as? PyCallExpression ?: return false
+    val callee = call.callee ?: return false
+
+    val resolvedNames = PyTypingTypeProvider.resolveToQualifiedNames(callee, context)
+    if (PyTypingTypeProvider.CAST !in resolvedNames && PyTypingTypeProvider.CAST_EXT !in resolvedNames) {
+      return false
+    }
+
+    val args = argList.arguments
+    if (args.isEmpty()) return false
+    argList.getKeywordArgument("typ")?.let {
+      return PsiTreeUtil.isAncestor(it, expr, false)
+    }
+
+    val firstArg = args[0]
+    return PsiTreeUtil.isAncestor(firstArg, expr, false)
+  }
+
+  private fun isTypingTypeVarTypeArgument(
+    expr: PyStringLiteralExpression,
+    context: TypeEvalContext,
+  ): Boolean {
+    val argList = PsiTreeUtil.getParentOfType(expr, PyArgumentList::class.java) ?: return false
+    val call = argList.getParent() as? PyCallExpression ?: return false
+    val callee = call.callee ?: return false
+
+    val resolvedNames = PyTypingTypeProvider.resolveToQualifiedNames(callee, context)
+    if (PyTypingTypeProvider.TYPE_VAR !in resolvedNames && PyTypingTypeProvider.TYPE_VAR_EXT !in resolvedNames) {
+      return false
+    }
+
+    // Positional constraints start from the second argument (index 1), the first one is the TypeVar name
+    for (arg in argList.arguments.drop(1)) {
+      if (arg is PyKeywordArgument) break
+      if (PsiTreeUtil.isAncestor(arg, expr, false)) return true
+    }
+
+    // Keyword 'bound'
+    val boundKw = argList.getKeywordArgument("bound")
+    if (boundKw != null) {
+      val value = boundKw.valueExpression
+      if (value != null && PsiTreeUtil.isAncestor(value, expr, false)) return true
+    }
+
+    // Keyword 'default' (PEP 696)
+    val defaultKw = argList.getKeywordArgument("default")
+    if (defaultKw != null) {
+      val value = defaultKw.valueExpression
+      if (value != null && PsiTreeUtil.isAncestor(value, expr, false)) return true
+    }
+
+    return false
+  }
+
+  private fun isTypingNewTypeTypeArgument(
+    expr: PyStringLiteralExpression,
+    context: TypeEvalContext,
+  ): Boolean {
+    val argList = PsiTreeUtil.getParentOfType(expr, PyArgumentList::class.java) ?: return false
+    val call = argList.getParent() as? PyCallExpression ?: return false
+    val callee = call.callee ?: return false
+
+    val resolvedNames = PyTypingTypeProvider.resolveToQualifiedNames(callee, context)
+    if (PyTypingTypeProvider.NEW_TYPE !in resolvedNames) {
+      return false
+    }
+
+    val args = argList.arguments
+    if (args.size < 2) return false
+
+    val secondArg = args[1]
+    return PsiTreeUtil.isAncestor(secondArg, expr, false)
+  }
+
+  private fun isTypingAssertTypeTypeArgument(
+    expr: PyStringLiteralExpression,
+    context: TypeEvalContext,
+  ): Boolean {
+    val argList = PsiTreeUtil.getParentOfType(expr, PyArgumentList::class.java) ?: return false
+    val call = argList.parent as? PyCallExpression ?: return false
+    val callee = call.callee ?: return false
+
+    val resolvedNames = PyTypingTypeProvider.resolveToQualifiedNames(callee, context)
+    if (PyTypingTypeProvider.ASSERT_TYPE !in resolvedNames) {
+      return false
+    }
+
+    val args = argList.arguments
+    if (args.size < 2) return false
+
+    val expectedTypeArg = args[1]
+    return PsiTreeUtil.isAncestor(expectedTypeArg, expr, false)
   }
 }
