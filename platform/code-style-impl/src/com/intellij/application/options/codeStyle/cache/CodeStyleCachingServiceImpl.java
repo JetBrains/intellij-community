@@ -183,7 +183,7 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
    * @param existingData the result of calling {@code getDataHolder(path)} within a same synchronized block
    */
   private @NotNull FileData createFileData(@NotNull String path, @Nullable FileData existingData) {
-    myFrequentCodeStyleComputationWatcher.beforeCacheEntryInserted(myRemoveQueue, maxCacheSize);
+    myFrequentCodeStyleComputationWatcher.beforeCacheEntryInserted(myFileDataCache.size(), maxCacheSize);
     if (existingData != null) {
       myFileDataCache.remove(path);
       myRemoveQueue.remove(existingData);

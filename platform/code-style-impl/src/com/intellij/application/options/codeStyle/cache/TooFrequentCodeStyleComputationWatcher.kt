@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
@@ -26,12 +25,23 @@ class TooFrequentCodeStyleComputationWatcher(val project: Project) {
 
   @Volatile
   private var cacheEvictionTrackingStart: Long = TRACKING_NOT_STARTED
+  private var lastCacheAccessTime: Long = System.currentTimeMillis()
   private var settingsModCountAtTrackingStart: Long = -1
 
+  // average duration between cache evictions in millis
+  private val rollingAvgBuffer = RollingAvgBuffer(
+    ROLLING_AVG_WINDOW_SIZE,
+    // some large enough value that does not trigger automatic recovery but does not overflow the rolling sum
+    //  -> 10x threshold
+    (1.0 / HIGH_CACHE_EVICTION_RATE_THRESHOLD * 1000 * 10).toLong()
+  )
+
+  private fun calcCurrentCacheEvictionRate(): Double = 1.0 / rollingAvgBuffer.rollingAvg * 1000
+
   @Synchronized
-  fun beforeCacheEntryInserted(removeQueue: PriorityQueue<CodeStyleCachingServiceImpl.FileData>, maxCacheSize: Int) {
+  fun beforeCacheEntryInserted(currentCacheSize: Int, maxCacheSize: Int) {
     if (Registry.`is`("code.style.cache.high.eviction.rate.automatic.recovery.enabled") && !isEvictionTrackingBlocked()) {
-      checkEvictionRate(removeQueue, maxCacheSize)
+      checkEvictionRate(currentCacheSize, maxCacheSize)
     }
   }
 
@@ -39,13 +49,11 @@ class TooFrequentCodeStyleComputationWatcher(val project: Project) {
     @Suppress("DEPRECATION")
     CodeStyleSettingsManager.getInstance().getCurrentSettings().modificationTracker.modificationCount
 
-  private fun checkEvictionRate(removeQueue: PriorityQueue<CodeStyleCachingServiceImpl.FileData>, maxCacheSize: Int) {
-    if (!isEvictionTrackingBlocked() && removeQueue.size >= maxCacheSize) {
-      val oldestEntry: CodeStyleCachingServiceImpl.FileData = removeQueue.peek()
-      val oldestEntryInsertTime = oldestEntry.lastRefTimeStamp
-      val currentTime = System.currentTimeMillis()
-      // evictions per second
-      val cacheEvictionRate = maxCacheSize.toDouble() / (currentTime - oldestEntryInsertTime) * 1000
+  private fun checkEvictionRate(currentCacheSize: Int, maxCacheSize: Int) {
+    val currentTime = System.currentTimeMillis()
+    if (!isEvictionTrackingBlocked() && currentCacheSize >= maxCacheSize) {
+      rollingAvgBuffer.update(currentTime - lastCacheAccessTime)
+      val cacheEvictionRate = calcCurrentCacheEvictionRate()
       if (cacheEvictionRate > HIGH_CACHE_EVICTION_RATE_THRESHOLD) {
         if (cacheEvictionTrackingStart == TRACKING_NOT_STARTED) {
           cacheEvictionTrackingStart = currentTime
@@ -60,17 +68,18 @@ class TooFrequentCodeStyleComputationWatcher(val project: Project) {
             val threadDump = ThreadDumper.dumpThreadsToString()
             val attachment2 = Attachment("threadDump.txt", threadDump)
             LOG.error("Too high code style cache eviction rate detected.", attachment, attachment2)
-            stopEvictionTracking(true)
+            stopEvictionTracking(true, cacheEvictionRate)
           }
         }
       }
       else {
-        stopEvictionTracking(false)
+        stopEvictionTracking(false, cacheEvictionRate)
       }
     }
     else {
-      stopEvictionTracking(false)
+      stopEvictionTracking(false, null)
     }
+    lastCacheAccessTime = currentTime
   }
 
   @Synchronized
@@ -99,16 +108,16 @@ class TooFrequentCodeStyleComputationWatcher(val project: Project) {
     return cacheEvictionTrackingStart == TRACKING_BLOCKED
   }
 
-  private fun stopEvictionTracking(blockTracking: Boolean) {
+  private fun stopEvictionTracking(blockTracking: Boolean, rate: Double?) {
     require(!isEvictionTrackingBlocked()) { "Tracking is already blocked" }
     if (blockTracking) {
       cacheEvictionTrackingStart = TRACKING_BLOCKED
-      LOG.info("High cache eviction rate tracking stopped and blocked")
+      LOG.info("High cache eviction rate (${rate}): tracking stopped and blocked")
       return
     }
     if (cacheEvictionTrackingStart != TRACKING_NOT_STARTED) {
       cacheEvictionTrackingStart = TRACKING_NOT_STARTED
-      LOG.info("High cache eviction rate tracking stopped")
+      LOG.info("High cache eviction rate ($rate): tracking stopped")
     }
   }
 }
@@ -116,6 +125,7 @@ class TooFrequentCodeStyleComputationWatcher(val project: Project) {
 // bulk operations (e.g., reformatting a directory) may exceed the eviction rate threshold for their duration
 private val HIGH_CACHE_EVICTION_RATE_MIN_DURATION: Long =
   Registry.intValue("code.style.cache.high.eviction.rate.automatic.recovery.threshold.duration").toLong()
+
 // evictions-per-second
 private val HIGH_CACHE_EVICTION_RATE_THRESHOLD: Long =
   Registry.intValue("code.style.cache.high.eviction.rate.automatic.recovery.threshold.frequency").toLong()
@@ -123,3 +133,21 @@ private val HIGH_CACHE_EVICTION_RATE_THRESHOLD: Long =
 private const val TRACKING_NOT_STARTED: Long = -1
 private const val TRACKING_BLOCKED: Long = -2
 
+private const val ROLLING_AVG_WINDOW_SIZE: Int = 100
+
+
+private class RollingAvgBuffer(private val windowSize: Int, initialBufferValue: Long) {
+  private var buffer: Array<Long> = Array(windowSize) { initialBufferValue }
+  private var i: Int = 0
+  private var rollingSum: Long = buffer.sum()
+  var rollingAvg: Double = rollingSum.toDouble() / windowSize
+    private set
+
+  fun update(value: Long) {
+    rollingSum -= buffer[i]
+    rollingSum += value
+    buffer[i] = value
+    i = (i + 1) % windowSize
+    rollingAvg = rollingSum.toDouble() / windowSize
+  }
+}
