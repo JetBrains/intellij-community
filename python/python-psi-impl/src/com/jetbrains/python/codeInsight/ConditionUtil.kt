@@ -77,7 +77,7 @@ fun negateComparisonExpression(project: Project, file: PsiFile, expression: PyBi
   val invertedExpression = elementGenerator.createBinaryExpression(
     comparisonStrings.getValue(invertedOperator),
     comparisonExpression.leftExpression,
-    comparisonExpression.rightExpression)
+    comparisonExpression.rightExpression!!)
 
   if (parent is PyPrefixExpression && parent.operator === PyTokenTypes.NOT_KEYWORD) {
     return parent.replace(invertedExpression)
@@ -158,14 +158,14 @@ private fun getInvertedConditionExpression(
     return generator.createBinaryExpression(
       if (isNegative) "is" else "is not",
       expression.leftExpression,
-      expression.rightExpression)
+      expression.rightExpression!!)
   }
 
   if (expression.operator == PyTokenTypes.IN_KEYWORD) {
     return generator.createBinaryExpression(
       "not in",
       expression.leftExpression,
-      expression.rightExpression)
+      expression.rightExpression!!)
   }
 
   if (expression.operator == PyTokenTypes.NOT_KEYWORD) {
@@ -175,7 +175,7 @@ private fun getInvertedConditionExpression(
     return generator.createBinaryExpression(
       "in",
       expression.leftExpression,
-      expression.rightExpression)
+      expression.rightExpression!!)
   }
 
   if (expression.operator == PyTokenTypes.OR_KEYWORD) {
