@@ -3,48 +3,51 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
-  name = "custom",
-  context_receivers = True,
+  name = "custom_ide-plugin",
   opt_in = [
     "androidx.compose.ui.ExperimentalComposeUiApi",
     "androidx.compose.foundation.ExperimentalFoundationApi",
     "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
     "org.jetbrains.jewel.foundation.InternalJewelApi",
-  ]
+  ],
+  x_context_receivers = True
 )
 
 jvm_resources(
-  name = "jewel-samples-idePlugin_resources",
+  name = "ide-plugin_resources",
   files = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
 jvm_library(
-  name = "jewel-samples-idePlugin",
+  name = "ide-plugin",
   module_name = "intellij.platform.jewel.samples.idePlugin",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_ide-plugin",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
-    "//platform/jewel/ide-laf-bridge:ideLafBridge",
+    "//platform/jewel/ide-laf-bridge",
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
     "//libraries/skiko",
     "//libraries/compose-foundation-desktop",
-    "//platform/jewel/markdown/ide-laf-bridge-styling:jewel-markdown-ideLafBridgeStyling",
-    "//platform/jewel/markdown/core:jewel-markdown-core",
+    "//platform/jewel/markdown/ide-laf-bridge-styling",
+    "//platform/jewel/markdown/core",
     "@lib//:kotlinx-datetime-jvm",
-    "//platform/jewel/samples/showcase:jewel-samples-showcase",
+    "//platform/jewel/samples/showcase",
+    "//platform/jewel/markdown/extensions/images",
   ],
-  runtime_deps = [":jewel-samples-idePlugin_resources"],
+  runtime_deps = [":ide-plugin_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.platform.jewel.samples.idePlugin` end

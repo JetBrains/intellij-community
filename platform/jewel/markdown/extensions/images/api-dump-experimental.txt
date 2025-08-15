@@ -7,12 +7,3 @@
 *f:org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension$Companion
 - *f:withDefaultLoader(androidx.compose.runtime.Composer,I):org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension
 - *f:withDefaultLoader(coil3.PlatformContext):org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension
-*f:org.jetbrains.jewel.markdown.extensions.images.DefaultImageSourceResolver
-- org.jetbrains.jewel.markdown.extensions.images.ImageSourceResolver
-- sf:$stable:I
-- <init>():V
-- resolve(java.lang.String):java.lang.String
-*:org.jetbrains.jewel.markdown.extensions.images.ImageSourceResolver
-- a:resolve(java.lang.String):java.lang.String
-f:org.jetbrains.jewel.markdown.extensions.images.ImageSourceResolverKt
-- *sf:getLocalMarkdownImageSourceResolver():androidx.compose.runtime.ProvidableCompositionLocal

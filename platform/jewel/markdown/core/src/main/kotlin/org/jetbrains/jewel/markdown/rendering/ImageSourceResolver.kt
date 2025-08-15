@@ -3,10 +3,10 @@ package org.jetbrains.jewel.markdown.rendering
 
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
+import java.net.URI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.util.myLogger
-import java.net.URI
 
 /**
  * Defines a contract for resolving a raw image source string from Markdown into a fully qualified, loadable path.
@@ -50,7 +50,7 @@ internal object DefaultImageSourceResolver : ImageSourceResolver {
             myLogger()
                 .warn(
                     "Markdown image '$rawDestination' expected at classpath '$rawDestination' but not found. " +
-                    "Please ensure it's in your 'src/main/resources/' folder."
+                        "Please ensure it's in your 'src/main/resources/' folder."
                 )
             return rawDestination // This will cause Coil to fail and not render anything.
         }
