@@ -64,6 +64,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.concurrent.CancellationException
 import javax.swing.*
+import javax.swing.border.Border
 import javax.swing.event.HyperlinkEvent
 
 internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineScope) : BoundConfigurable(message("title.settings.sync")),
@@ -860,6 +861,11 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     init {
       title = message("title.settings.sync")
       init()
+    }
+
+    override fun createContentPaneBorder(): Border {
+      val insets = JButton().insets
+      return JBUI.Borders.empty(14, 20, 20 - insets.bottom, 20 - insets.right)
     }
 
     override fun createCenterPanel(): JComponent {
