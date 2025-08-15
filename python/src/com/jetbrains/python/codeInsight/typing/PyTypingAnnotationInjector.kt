@@ -1,142 +1,139 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.codeInsight.typing;
+package com.jetbrains.python.codeInsight.typing
 
-import com.intellij.lang.Language;
-import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.codeInsight.PyInjectionUtil;
-import com.jetbrains.python.codeInsight.PyInjectorBase;
-import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect;
-import com.jetbrains.python.codeInsight.typeHints.PyTypeHintDialect;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.regex.Pattern;
-
-import static com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.*;
-import static com.jetbrains.python.psi.PyUtil.as;
+import com.intellij.lang.Language
+import com.intellij.lang.injection.MultiHostRegistrar
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.util.PsiTreeUtil
+import com.jetbrains.python.codeInsight.PyInjectionUtil
+import com.jetbrains.python.codeInsight.PyInjectorBase
+import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect
+import com.jetbrains.python.codeInsight.typeHints.PyTypeHintDialect
+import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.types.TypeEvalContext
+import java.util.regex.Pattern
 
 /**
  * Injects fragments for type annotations either in string literals (quoted annotations containing forward references) or
  * in type comments starting with <tt># type:</tt>.
  *
  */
-public final class PyTypingAnnotationInjector extends PyInjectorBase {
-  public static final Pattern RE_TYPING_ANNOTATION = Pattern.compile("\\s*\\S+(\\[.*\\])?\\s*");
-
-  @Override
-  protected PyInjectionUtil.InjectionResult registerInjection(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
+class PyTypingAnnotationInjector : PyInjectorBase() {
+  override fun registerInjection(registrar: MultiHostRegistrar, context: PsiElement): PyInjectionUtil.InjectionResult? {
     // Handles only string literals containing quoted types
-    final PyInjectionUtil.InjectionResult result = super.registerInjection(registrar, context);
+    val result = super.registerInjection(registrar, context)
 
-    if (result == PyInjectionUtil.InjectionResult.EMPTY &&
-        context instanceof PsiComment &&
-        context instanceof PsiLanguageInjectionHost &&
-        context.getContainingFile() instanceof PyFile) {
-      return registerCommentInjection(registrar, (PsiLanguageInjectionHost)context);
+    if (result === PyInjectionUtil.InjectionResult.EMPTY &&
+        context is PsiComment &&
+        context is PsiLanguageInjectionHost &&
+        context.containingFile is PyFile
+    ) {
+      return registerCommentInjection(registrar, context as PsiLanguageInjectionHost)
     }
-    return result;
+    return result
   }
 
-  @Override
-  public @Nullable Language getInjectedLanguage(@NotNull PsiElement context) {
-    if (context instanceof PyStringLiteralExpression expr) {
-      final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
-      if (isTypingLiteralArgument(expr, typeEvalContext) || isTypingAnnotatedMetadataArgument(expr, typeEvalContext)) {
-        return null;
+  override fun getInjectedLanguage(context: PsiElement): Language? {
+    if (context is PyStringLiteralExpression) {
+      val typeEvalContext = TypeEvalContext.codeAnalysis(context.project, context.containingFile)
+      if (isTypingLiteralArgument(context, typeEvalContext) || isTypingAnnotatedMetadataArgument(context, typeEvalContext)) {
+        return null
       }
-      if (PsiTreeUtil.getParentOfType(context, PyAnnotation.class, true, PyCallExpression.class) != null &&
-          isTypingAnnotation(expr.getStringValue())) {
-        return PyTypeHintDialect.INSTANCE;
+      if (PsiTreeUtil.getParentOfType(context, PyAnnotation::class.java, true, PyCallExpression::class.java) != null &&
+          isTypingAnnotation(context.stringValue)
+      ) {
+        return PyTypeHintDialect.INSTANCE
       }
-      if (isInsideValueOfExplicitTypeAnnotation(expr)) {
-        return PyTypeHintDialect.INSTANCE;
+      if (isInsideValueOfExplicitTypeAnnotation(context)) {
+        return PyTypeHintDialect.INSTANCE
       }
       if (isInsideNewStyleTypeVarBound(context)) {
-        return PyTypeHintDialect.INSTANCE;
+        return PyTypeHintDialect.INSTANCE
       }
     }
-    return null;
+    return null
   }
 
-  private static boolean isInsideValueOfExplicitTypeAnnotation(@NotNull PyStringLiteralExpression expr) {
-    PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(expr, PyAssignmentStatement.class);
-    if (assignment == null || !PsiTreeUtil.isAncestor(assignment.getAssignedValue(), expr, false)) {
-      return false;
+  companion object {
+    val RE_TYPING_ANNOTATION: Pattern = Pattern.compile("\\s*\\S+(\\[.*])?\\s*")
+
+    private fun isInsideValueOfExplicitTypeAnnotation(expr: PyStringLiteralExpression): Boolean {
+      val assignment = PsiTreeUtil.getParentOfType(expr, PyAssignmentStatement::class.java)
+      if (assignment == null || !PsiTreeUtil.isAncestor(assignment.assignedValue, expr, false)) {
+        return false
+      }
+      return PyTypingTypeProvider.isExplicitTypeAlias(assignment, TypeEvalContext.codeAnalysis(expr.project, expr.containingFile))
     }
-    return isExplicitTypeAlias(assignment, TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile()));
-  }
 
-  private static @NotNull PyInjectionUtil.InjectionResult registerCommentInjection(@NotNull MultiHostRegistrar registrar,
-                                                                                   @NotNull PsiLanguageInjectionHost host) {
-    final String text = host.getText();
-    final String annotationText = getTypeCommentValue(text);
-    if (annotationText != null) {
-      final Language language;
-      if (PyTypingTypeProvider.TYPE_IGNORE_PATTERN.matcher(text).matches()) {
-        language = null;
+    private fun registerCommentInjection(
+      registrar: MultiHostRegistrar,
+      host: PsiLanguageInjectionHost,
+    ): PyInjectionUtil.InjectionResult {
+      val text = host.text
+      val annotationText = PyTypingTypeProvider.getTypeCommentValue(text)
+      if (annotationText != null) {
+        val language: Language?
+        if (PyTypingTypeProvider.TYPE_IGNORE_PATTERN.matcher(text).matches()) {
+          language = null
+        }
+        else if (isFunctionTypeComment(host)) {
+          language = PyFunctionTypeAnnotationDialect.INSTANCE
+        }
+        else {
+          language = PyTypeHintDialect.INSTANCE
+        }
+        if (language != null) {
+          registrar.startInjecting(language)
+          registrar.addPlace("", "", host, PyTypingTypeProvider.getTypeCommentValueRange(text)!!)
+          registrar.doneInjecting()
+          return PyInjectionUtil.InjectionResult(true, true)
+        }
       }
-      else if (isFunctionTypeComment(host)) {
-        language = PyFunctionTypeAnnotationDialect.INSTANCE;
-      }
-      else {
-        language = PyTypeHintDialect.INSTANCE;
-      }
-      if (language != null) {
-        registrar.startInjecting(language);
-        //noinspection ConstantConditions
-        registrar.addPlace("", "", host, getTypeCommentValueRange(text));
-        registrar.doneInjecting();
-        return new PyInjectionUtil.InjectionResult(true, true);
+      return PyInjectionUtil.InjectionResult.EMPTY
+    }
+
+    private fun isTypingLiteralArgument(element: PsiElement, context: TypeEvalContext): Boolean {
+      var parent = element.parent
+      if (parent is PyTupleExpression) parent = parent.parent
+      val subscription = parent as? PySubscriptionExpression ?: return false
+      val operand = subscription.operand as? PyReferenceExpression ?: return false
+      val resolvedNames = PyTypingTypeProvider.resolveToQualifiedNames(operand, context)
+      return resolvedNames.any {
+        PyTypingTypeProvider.LITERAL == it || PyTypingTypeProvider.LITERAL_EXT == it
       }
     }
-    return PyInjectionUtil.InjectionResult.EMPTY;
-  }
 
-  private static boolean isTypingLiteralArgument(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
-    PsiElement parent = element.getParent();
-    if (parent instanceof PyTupleExpression) parent = parent.getParent();
-    PySubscriptionExpression subscription = ObjectUtils.tryCast(parent, PySubscriptionExpression.class);
-    if (subscription == null) return false;
-    PyReferenceExpression operand = ObjectUtils.tryCast(subscription.getOperand(), PyReferenceExpression.class);
-    if (operand == null) return false;
-    Collection<String> resolvedNames = resolveToQualifiedNames(operand, context);
-    return ContainerUtil.exists(resolvedNames, name -> LITERAL.equals(name) || LITERAL_EXT.equals(name));
-  }
+    private fun isTypingAnnotatedMetadataArgument(
+      element: PsiElement,
+      context: TypeEvalContext,
+    ): Boolean {
+      val tuple = PyUtil.`as`(element.parent, PyTupleExpression::class.java)
+      if (tuple == null) return false
+      val parent = PyUtil.`as`(tuple.parent, PySubscriptionExpression::class.java)
+      if (parent == null) return false
 
-  private static boolean isTypingAnnotatedMetadataArgument(@NotNull PsiElement element,
-                                                           @NotNull TypeEvalContext context) {
-    final PyTupleExpression tuple = as(element.getParent(), PyTupleExpression.class);
-    if (tuple == null) return false;
-    final PySubscriptionExpression parent = as(tuple.getParent(), PySubscriptionExpression.class);
-    if (parent == null) return false;
-
-    final PyExpression operand = parent.getOperand();
-    final Collection<String> resolvedNames = resolveToQualifiedNames(operand, context);
-    if (resolvedNames.stream().anyMatch(name -> ANNOTATED.equals(name) || ANNOTATED_EXT.equals(name))) {
-      return tuple.getElements()[0] != element;
+      val operand = parent.operand
+      val resolvedNames = PyTypingTypeProvider.resolveToQualifiedNames(operand, context)
+      if (resolvedNames.any { PyTypingTypeProvider.ANNOTATED == it || PyTypingTypeProvider.ANNOTATED_EXT == it }) {
+        return tuple.elements[0] !== element
+      }
+      return false
     }
-    return false;
-  }
 
-  private static boolean isFunctionTypeComment(@NotNull PsiElement comment) {
-   final PyFunction function = PsiTreeUtil.getParentOfType(comment, PyFunction.class);
-    return function != null && function.getTypeComment() == comment;
-  }
+    private fun isFunctionTypeComment(comment: PsiElement): Boolean {
+      val function = PsiTreeUtil.getParentOfType(comment, PyFunction::class.java)
+      return function != null && function.typeComment === comment
+    }
 
-  private static boolean isInsideNewStyleTypeVarBound(@NotNull PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PyTypeParameter.class, true, PyTypeParameterListOwner.class) != null;
-  }
+    private fun isInsideNewStyleTypeVarBound(element: PsiElement): Boolean {
+      return PsiTreeUtil.getParentOfType(element, PyTypeParameter::class.java, true,
+                                         PyTypeParameterListOwner::class.java) != null
+    }
 
-  private static boolean isTypingAnnotation(@NotNull String s) {
-    return RE_TYPING_ANNOTATION.matcher(s).matches();
+    private fun isTypingAnnotation(s: String): Boolean {
+      return RE_TYPING_ANNOTATION.matcher(s).matches()
+    }
   }
 }
