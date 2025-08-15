@@ -182,7 +182,7 @@ class PluginDescriptorTest {
   @Test
   fun `descriptor with vendor and release date loads`() {
     val pluginFile = pluginDirPath.resolve(PluginManagerCore.PLUGIN_XML_PATH)
-    val descriptor = readAndInitDescriptorFromBytesForTest(pluginFile, false, """
+    val descriptor = readDescriptorFromBytesForTest(pluginFile, false, """
     <idea-plugin>
       <id>bar</id>
       <vendor>JetBrains</vendor>

@@ -2,7 +2,7 @@
 package com.intellij.lang
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.readAndInitDescriptorFromBytesForTest
+import com.intellij.ide.plugins.readDescriptorFromBytesForTest
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -51,8 +51,8 @@ class LanguageExtensionOrderTest : LightPlatformTestCase() {
       val moduleXml = "<idea-plugin><extensions>$ext</extensions></idea-plugin>"
 
       val pluginDescriptor: IdeaPluginDescriptorImpl =
-        readAndInitDescriptorFromBytesForTest(Path.of(""), true, moduleXml.toByteArray(StandardCharsets.UTF_8),
-                                              myDescriptor.pluginId)
+        readDescriptorFromBytesForTest(Path.of(""), true, moduleXml.toByteArray(StandardCharsets.UTF_8),
+                                       myDescriptor.pluginId)
       pluginDescriptor.registerExtensions(area.nameToPointMap, null)
     }
   }
