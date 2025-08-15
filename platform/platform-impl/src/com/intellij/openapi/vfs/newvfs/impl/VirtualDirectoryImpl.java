@@ -595,9 +595,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
       directoryData.clearAdoptedNames();
       directoryData.children = new VfsData.ChildrenIds(newChildrenIds, sortChildrenOnLoading, /*allChildren: */ true);
-      if (CHECK_CONSISTENCY) {
-        assertConsistency(isCaseSensitive, childrenInfo);
-      }
+      assertConsistency(isCaseSensitive, childrenInfo);
 
       return newChildren;
     }
@@ -785,8 +783,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           @Attributes int attributes = nextInfo.getFileAttributeFlags();
           boolean isEmptyDirectory = nextInfo.getChildren() != null && nextInfo.getChildren().length == 0;
           directoryData.removeAdoptedName(nextInfo.getName());
-          VirtualFileSystemEntry file = initializeChildData(nextInfo.getId(), nextInfo.getNameId(), attributes, isEmptyDirectory);
-          callback.accept(file, nextInfo);
+          VirtualFileSystemEntry child = initializeChildData(nextInfo.getId(), nextInfo.getNameId(), attributes, isEmptyDirectory);
+          callback.accept(child, nextInfo);
         }
         mergedIds.add(nextInfo.getId());
       });
@@ -1222,7 +1220,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     sb.append("\nexisting children:");
     for (VirtualFile existingChild : newChildren) {
-      sb.append("\n\t[" + existingChild + "] ").append(verboseToString((VirtualFileSystemEntry)existingChild));
+      VirtualFileSystemEntry child = (VirtualFileSystemEntry)existingChild;
+      sb.append("\n\t[" + child.getId() + "] ").append(verboseToString(child));
     }
     sb.append("\nchildren infos:");
     for (final ChildInfo childInfo : childrenInfo) {

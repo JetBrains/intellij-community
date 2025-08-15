@@ -30,8 +30,8 @@ public final class ListResult {
     this.parentModStamp = parentModStamp;
     this.children = children;
     this.parentId = parentId;
-    Application app = ApplicationManager.getApplication();
 
+    Application app = ApplicationManager.getApplication();
     if (app != null && (app.isUnitTestMode() && !ApplicationManagerEx.isInStressTest() || app.isInternal())) {
       assertSortedById(children);
     }

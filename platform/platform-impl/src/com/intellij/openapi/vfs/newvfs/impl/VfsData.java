@@ -339,6 +339,11 @@ public final class VfsData implements Closeable {
     }
   }
 
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "{segments: " + segments.size() + ", connected: " + owningPersistentFS.isConnected() + "}";
+  }
+
   /** @return offset of fileId's data in {@link Segment#objectFieldsArray} */
   private static int objectOffsetInSegment(int fileId) {
     if (fileId <= 0) throw new IllegalArgumentException("invalid argument id: " + fileId);

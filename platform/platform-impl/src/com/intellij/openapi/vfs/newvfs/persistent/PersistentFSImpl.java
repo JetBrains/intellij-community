@@ -354,6 +354,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
 
+  /** @return list of children: either already cached in VFS or from an actual FS (and cache them then) */
   @Override
   @ApiStatus.Internal
   public @Unmodifiable @NotNull List<? extends ChildInfo> listAll(@NotNull VirtualFile dir) {
@@ -1071,7 +1072,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void updateContentForFile(int fileId,
-                                    @NotNull ByteArraySequence newContent) throws IOException, ContentTooBigException {
+                                    @NotNull ByteArraySequence newContent) throws ContentTooBigException {
     //VFS content storage is append-only, hence storing could be done outside the lock:
     int newContentId;
     try {
@@ -1677,7 +1678,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     boolean caseSensitive = parent.isCaseSensitive();
     //@formatter:off
     vfsPeer.update(parent, parentId, oldChildren -> oldChildren.merge(vfsPeer, childrenAdded, caseSensitive), /*setAllChildrenCached: */ false);
-    parent.initializeAndAddChildren(childrenAdded, false, (__, ___) -> { });
+    parent.initializeAndAddChildren(childrenAdded, /*allChildrenLoaded: */ false, (__, ___) -> { });
     //@formatter:on
 
     saveScannedChildrenRecursively(createEvents, fs, parent.isCaseSensitive());
@@ -1717,7 +1718,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             oldChildren -> oldChildren.merge(vfsPeer, added, isCaseSensitive),
             /*setAllChildrenCached: */ true
           );
-          directory.initializeAndAddChildren(added, true, (childCreated, childInfo) -> {
+          directory.initializeAndAddChildren(added, /*allChildrenLoaded: */ true, (childCreated, childInfo) -> {
             // enqueue recursive children
             if (childCreated instanceof VirtualDirectoryImpl && childInfo.getChildren() != null) {
               queue.add(new Pair<>((VirtualDirectoryImpl)childCreated, childInfo.getChildren()));

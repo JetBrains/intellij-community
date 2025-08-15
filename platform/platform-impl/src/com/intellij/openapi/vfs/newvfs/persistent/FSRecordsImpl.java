@@ -747,7 +747,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-
+  //TODO RC: remove the method, it is used in only 1 place for debug logging -- could be re-implemented there
   public @Unmodifiable @NotNull List<CharSequence> listNames(int parentId) {
     return ContainerUtil.map(list(parentId).children, ChildInfo::getName);
   }
