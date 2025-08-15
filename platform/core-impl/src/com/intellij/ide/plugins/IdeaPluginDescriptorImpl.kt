@@ -82,7 +82,9 @@ sealed class IdeaPluginDescriptorImpl(
 
   @Deprecated("Deprecated in Java")
   override fun setEnabled(enabled: Boolean) {
-    isMarkedForLoading = enabled
+    if (setEnabledLogCount++ < 10) {
+      LOG.warn("no-op deprecated method call on $this", Throwable())
+    }
   }
 
   override fun equals(other: Any?): Boolean {
@@ -237,6 +239,9 @@ sealed class IdeaPluginDescriptorImpl(
       if (raw.contentModules.isNotEmpty()) reporter(PluginXmlConst.CONTENT_ELEM)
       if (raw.incompatibleWith.isNotEmpty()) reporter(PluginXmlConst.INCOMPATIBLE_WITH_ELEM)
     }
+
+    @Volatile
+    private var setEnabledLogCount = 0
   }
 }
 
