@@ -62,7 +62,6 @@ jvm_library(
     "//platform/jewel/foundation",
     "//platform/jewel/foundation:foundation_test_lib",
     "//libraries/compose-foundation-desktop",
-    "@lib//:platform-jewel-markdown-core-io-coil-kt-coil3-test-jvm",
     "//libraries/compose-foundation-desktop-junit",
   ],
   exports = ["@lib//:platform-jewel-markdown-core-org-commonmark-commonmark"],

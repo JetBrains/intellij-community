@@ -24,9 +24,7 @@ public class DefaultImageSourceResolverTest {
         assert(result.startsWith("file:/") || result.startsWith("jar:file:/")) {
             "Expected result to start with 'file:/' or 'jar:file:/', but got '$result'"
         }
-        assert(result.endsWith(resourceName)) {
-            "Expected result to end with '$resourceName', but got '$result'"
-        }
+        assert(result.endsWith(resourceName)) { "Expected result to end with '$resourceName', but got '$result'" }
     }
 
     @Test
@@ -39,9 +37,7 @@ public class DefaultImageSourceResolverTest {
         assert(result.startsWith("file:/") || result.startsWith("jar:file:/")) {
             "Expected result to start with 'file:/' or 'jar:file:/', but got '$result'"
         }
-        assert(result.endsWith(resourceName)) {
-            "Expected result to end with '$resourceName', but got '$result'" 
-        }
+        assert(result.endsWith(resourceName)) { "Expected result to end with '$resourceName', but got '$result'" }
     }
 
     @Test
