@@ -207,7 +207,7 @@ private fun getInvertedConditionExpression(
     val chainedExpressions = mutableListOf<PyExpression>()
     var currentExpression = expression
     while (currentExpression is PyBinaryExpression && comparisonStrings.containsKey(currentExpression.operator)) {
-      val leftExpression = (currentExpression.leftExpression as? PyBinaryExpression)?.rightExpression
+      val leftExpression = (currentExpression.leftExpression as? PyBinaryExpression)?.takeIf { comparisonStrings.containsKey(it.operator) }?.rightExpression
                            ?: currentExpression.leftExpression
       val invertedOperator = invertedComparisons.getValue(currentExpression.operator)
       val invertedExpression = generator.createBinaryExpression(
