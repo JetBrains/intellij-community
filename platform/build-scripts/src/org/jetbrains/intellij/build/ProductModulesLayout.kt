@@ -5,7 +5,11 @@ package org.jetbrains.intellij.build
 
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
-import kotlinx.collections.immutable.*
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.plus
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -128,8 +132,8 @@ class ProductModulesLayout {
   /**
    * Module names which should be excluded from this product.
    * Allows filtering out default platform modules (both api and implementation) as well as product modules.
-   * This API is experimental, use it with care
    */
+  @set:Deprecated("Modules which aren't included in some product must be converted to content modules instead of excluding them in the build scripts")
   var excludedModuleNames: PersistentSet<String> = persistentSetOf()
 }
 
