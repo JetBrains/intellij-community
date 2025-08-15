@@ -6,6 +6,7 @@ jvm_library(
   module_name = "intellij.platform.buildScripts.downloader",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k17",
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:commons-compress",
