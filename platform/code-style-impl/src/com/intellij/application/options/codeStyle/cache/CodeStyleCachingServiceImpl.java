@@ -37,7 +37,7 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
 
   public CodeStyleCachingServiceImpl(Project project) {
     myProject = project;
-    maxCacheSize = Registry.intValue("code.style.cache.maximum.size", 100);
+    maxCacheSize = Math.max(Registry.intValue("code.style.cache.maximum.size", 100), 1);
     myRemoveQueue = new PriorityQueue<>(
       maxCacheSize,
       Comparator.comparingLong(fileData -> fileData.lastRefTimeStamp));
