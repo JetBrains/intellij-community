@@ -47,7 +47,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   private void doMultiFileTest(CompletionType completionType, int invocationCount) {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("a.py");
-    myFixture.complete(completionType, invocationCount);
+    @NotNull LookupElement[] variants = myFixture.complete(completionType, invocationCount);
     myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
   }
 
@@ -2231,6 +2231,14 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   // PY-62208
   public void testAlreadyImportedNamesNotSuggestedTwice() {
     doMultiFileTest();
+  }
+
+  // PY-83412
+  public void testImportableNamesNotSuggestedInTheMiddleOfAssignmentTargets() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.complete(CompletionType.BASIC, 1);
+    assertDoesntContain(myFixture.getLookupElementStrings(), "foo_func");
   }
 
   // PY-62208

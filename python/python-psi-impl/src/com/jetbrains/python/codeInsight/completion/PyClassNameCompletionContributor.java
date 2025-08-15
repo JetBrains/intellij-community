@@ -92,7 +92,11 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
     PsiElement position = parameters.getPosition();
     PyReferenceExpression refExpr = as(position.getParent(), PyReferenceExpression.class);
     PyTargetExpression targetExpr = as(position.getParent(), PyTargetExpression.class);
-    boolean insideUnqualifiedReference = refExpr != null && !refExpr.isQualified();
+    PsiElement originalPosition = parameters.getOriginalPosition();
+    // In cases like `fo<caret>o = 42` the target expression gets split by the trailing space at the end of DUMMY_IDENTIFIER as
+    // `foIntellijIdeaRulezzz o = 42`, so in the copied file we're still completing inside a standalone reference expression.
+    boolean originallyInsideTarget = originalPosition != null && originalPosition.getParent() instanceof PyTargetExpression;
+    boolean insideUnqualifiedReference = refExpr != null && !refExpr.isQualified() && !originallyInsideTarget;
     boolean insidePattern = targetExpr != null && position.getParent().getParent() instanceof PyCapturePattern;
     boolean insideStringLiteralInExtendedCompletion = position instanceof PyStringElement && isExtendedCompletion;
     if (!(insideUnqualifiedReference || insidePattern || insideStringLiteralInExtendedCompletion)) {
