@@ -2,8 +2,8 @@
 package com.intellij.platform.syntax.impl.builder
 
 import com.intellij.platform.syntax.impl.util.MutableBitSet
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import kotlin.test.assertTrue
 
 internal class BitSetTest {
   @Test
