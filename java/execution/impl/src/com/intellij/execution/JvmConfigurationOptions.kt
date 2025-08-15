@@ -15,5 +15,5 @@ abstract class JvmConfigurationOptions : ModuleBasedConfigurationOptions() {
   var alternativeJrePath: String? by string()
 
   @get:OptionTag("ALTERNATIVE_JRE_PATH_ENABLED")
-  var isAlternativeJrePathEnabled by property(false)
+  var isAlternativeJrePathEnabled: Boolean by property(false)
 }
