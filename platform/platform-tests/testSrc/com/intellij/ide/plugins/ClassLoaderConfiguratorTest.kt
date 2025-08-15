@@ -88,7 +88,7 @@ internal class ClassLoaderConfiguratorTest {
     assertThat(scope.isDefinitelyAlienClass(name = "dd", packagePrefix = "dd", force = false)).isNull()
     assertThat(scope.isDefinitelyAlienClass(name = "com.example.extraSupportedFeature.Foo", packagePrefix = "com.example.extraSupportedFeature.", force = false))
       .isEqualToIgnoringWhitespace("Class com.example.extraSupportedFeature.Foo must not be requested from main classloader of p_dependent plugin. " +
-                 "Matches content module (packagePrefix=com.example.extraSupportedFeature., moduleName=com.example.sub).")
+                 "Matches content module (packagePrefix=com.example.extraSupportedFeature., moduleId=com.example.sub).")
   }
 
   @Test
