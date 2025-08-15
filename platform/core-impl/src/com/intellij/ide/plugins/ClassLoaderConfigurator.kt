@@ -439,9 +439,9 @@ private fun getDependencyPackagePrefixes(descriptor: PluginMainDescriptor, plugi
 
   val result = ArrayList<String>(dependencies.size)
   for (item in dependencies) {
-    val packagePrefix = (pluginSet.findEnabledModule(item.id) ?: continue).packagePrefix
+    val packagePrefix = (pluginSet.findEnabledModule(item) ?: continue).packagePrefix
     // intellij.platform.commercial.verifier is injected
-    if (packagePrefix != null && item.id.id != "intellij.platform.commercial.verifier") {
+    if (packagePrefix != null && item.id != "intellij.platform.commercial.verifier") {
       result.add("$packagePrefix.")
     }
   }

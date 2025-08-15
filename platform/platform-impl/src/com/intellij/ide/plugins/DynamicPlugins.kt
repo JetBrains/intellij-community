@@ -1276,12 +1276,12 @@ private fun processDependenciesOnPlugin(
         }
       }
       for (item in module.moduleDependencies.modules) {
-        if (wantedIds.contains(item.id.id) && !processor(plugin, module)) {
+        if (wantedIds.contains(item.id) && !processor(plugin, module)) {
           return
         }
       }
       for (item in module.moduleDependencies.plugins) {
-        if (dependencyTarget.pluginId == item.id && !processor(plugin, module)) {
+        if (dependencyTarget.pluginId == item && !processor(plugin, module)) {
           return
         }
       }
@@ -1462,13 +1462,13 @@ private inline fun processDirectDependencies(module: IdeaPluginDescriptorImpl,
                                              pluginSet: PluginSet,
                                              processor: (IdeaPluginDescriptorImpl) -> Unit) {
    for (item in module.moduleDependencies.modules) {
-     val descriptor = pluginSet.findEnabledModule(item.id)
+     val descriptor = pluginSet.findEnabledModule(item)
      if (descriptor != null) {
        processor(descriptor)
     }
   }
   for (item in module.moduleDependencies.plugins) {
-    val descriptor = pluginSet.findEnabledPlugin(item.id)
+    val descriptor = pluginSet.findEnabledPlugin(item)
     if (descriptor != null) {
       processor(descriptor)
     }

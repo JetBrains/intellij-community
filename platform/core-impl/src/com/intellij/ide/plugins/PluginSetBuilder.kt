@@ -136,20 +136,20 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       }
 
       for (ref in module.moduleDependencies.modules) {
-        if (!enabledModuleV2Ids.containsKey(ref.id) && !enabledRequiredContentModules.containsKey(ref.id)) {
+        if (!enabledModuleV2Ids.containsKey(ref) && !enabledRequiredContentModules.containsKey(ref)) {
           logMessages.add("Module ${module.contentModuleId ?: module.pluginId} is not enabled because dependency ${ref.id} is not available")
           if (module is ContentModuleDescriptor) {
-            disabledModuleToProblematicPlugin.put(module.moduleId, disabledModuleToProblematicPlugin.get(ref.id)
-                                                                   ?: PluginId.getId(ref.id.id))
+            disabledModuleToProblematicPlugin.put(module.moduleId, disabledModuleToProblematicPlugin.get(ref)
+                                                                   ?: PluginId.getId(ref.id))
           }
           continue@m
         }
       }
       for (ref in module.moduleDependencies.plugins) {
-        if (!enabledPluginIds.containsKey(ref.id)) {
-          logMessages.add("Module ${module.contentModuleId ?: module.pluginId} is not enabled because dependency ${ref.id} is not available")
+        if (!enabledPluginIds.containsKey(ref)) {
+          logMessages.add("Module ${module.contentModuleId ?: module.pluginId} is not enabled because dependency ${ref} is not available")
           if (module is ContentModuleDescriptor) {
-            disabledModuleToProblematicPlugin.put(module.moduleId, ref.id)
+            disabledModuleToProblematicPlugin.put(module.moduleId, ref)
           }
           continue@m
         }
@@ -314,9 +314,9 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       }
 
     val missingDependency = descriptor.moduleDependencies.modules
-      .firstOrNull { it.id !in enabledModuleV2Ids }
+      .firstOrNull { it !in enabledModuleV2Ids }
     if (missingDependency != null) {
-      val problematicPlugin = disabledModuleToProblematicPlugin[missingDependency.id]
+      val problematicPlugin = disabledModuleToProblematicPlugin[missingDependency]
       if (problematicPlugin != null && isPluginDisabled(problematicPlugin)) {
         return PluginDependencyIsDisabled(plugin = descriptor, dependencyId = problematicPlugin, shouldNotifyUser = isNotifyUser)
       }
@@ -350,5 +350,4 @@ private fun getAllPluginDependencies(plugin: IdeaPluginDescriptorImpl): Sequence
            .filterNot { it.isOptional }
            .map { it.pluginId } +
          plugin.moduleDependencies.plugins.asSequence()
-           .map { it.id }
 }

@@ -32,7 +32,7 @@ class ModuleDependenciesApi(val pluginIds: List<String>, val moduleIds: List<Str
 @get:ApiStatus.Experimental
 val IdeaPluginDescriptor.moduleDependencies: ModuleDependenciesApi
   get() = (this as IdeaPluginDescriptorImpl).moduleDependencies.let {
-    ModuleDependenciesApi(it.plugins.map { it.id.idString }, it.modules.map { it.id.id })
+    ModuleDependenciesApi(it.plugins.map { it.idString }, it.modules.map { it.id })
   }
 
 @get:ApiStatus.Experimental

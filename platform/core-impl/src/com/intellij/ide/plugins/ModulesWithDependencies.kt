@@ -151,7 +151,7 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
 
 // alias in most cases points to Core plugin, so, we cannot use computed dependencies to check
 private fun doesDependOnPluginAlias(plugin: IdeaPluginDescriptorImpl, @Suppress("SameParameterValue") aliasId: PluginId): Boolean {
-  return plugin.dependencies.any { it.pluginId == aliasId } || plugin.moduleDependencies.plugins.any { it.id == aliasId }
+  return plugin.dependencies.any { it.pluginId == aliasId } || plugin.moduleDependencies.plugins.any { it == aliasId }
 }
 
 internal fun toCoreAwareComparator(comparator: Comparator<PluginModuleDescriptor>): Comparator<PluginModuleDescriptor> {
@@ -261,7 +261,7 @@ private fun collectDirectDependenciesInNewFormat(
   additionalEdges: MutableSet<PluginModuleDescriptor>
 ) {
   for (item in module.moduleDependencies.modules) {
-    val dependency = idMap.get(item.id.id)
+    val dependency = idMap.get(item.id)
     if (dependency != null) {
       dependenciesCollector.add(dependency)
       if (dependency.isRequiredContentModule) {
@@ -275,7 +275,7 @@ private fun collectDirectDependenciesInNewFormat(
     }
   }
   for (item in module.moduleDependencies.plugins) {
-    val targetModule = idMap.get(item.id.idString)
+    val targetModule = idMap.get(item.idString)
     // fake v1 module maybe located in a core plugin
     if (targetModule != null && (targetModule is ContentModuleDescriptor || targetModule.pluginId != PluginManagerCore.CORE_ID)) {
       dependenciesCollector.add(targetModule)

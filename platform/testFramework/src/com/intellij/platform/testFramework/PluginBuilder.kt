@@ -1,7 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.ModuleId
+import com.intellij.ide.plugins.ModuleLoadingRule
+import com.intellij.ide.plugins.PluginContentDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.createParentDirectories
@@ -54,9 +57,9 @@ class PluginBuilder() {
   private val pluginAliases = mutableListOf<String>()
 
   private val content = mutableListOf<PluginContentDescriptor.ModuleItem>()
-  private val dependencies = mutableListOf<ModuleDependencies.ModuleReference>()
-  private val pluginDependencies = mutableListOf<ModuleDependencies.PluginReference>()
-  private val incompatibleWith = mutableListOf<ModuleDependencies.PluginReference>()
+  private val dependencies = mutableListOf<ModuleId>()
+  private val pluginDependencies = mutableListOf<PluginId>()
+  private val incompatibleWith = mutableListOf<PluginId>()
 
   private data class SubDescriptor(val filename: String, val builder: PluginBuilder)
 
@@ -131,17 +134,17 @@ class PluginBuilder() {
   }
 
   fun dependency(moduleName: String): PluginBuilder {
-    dependencies.add(ModuleDependencies.ModuleReference(ModuleId(moduleName)))
+    dependencies.add(ModuleId(moduleName))
     return this
   }
 
   fun pluginDependency(pluginId: String): PluginBuilder {
-    pluginDependencies.add(ModuleDependencies.PluginReference(PluginId.getId(pluginId)))
+    pluginDependencies.add(PluginId.getId(pluginId))
     return this
   }
 
   fun incompatibleWith(pluginId: String): PluginBuilder {
-    incompatibleWith.add(ModuleDependencies.PluginReference(PluginId.getId(pluginId)))
+    incompatibleWith.add(PluginId.getId(pluginId))
     return this
   }
 
@@ -258,17 +261,17 @@ class PluginBuilder() {
 
       if (incompatibleWith.isNotEmpty()) {
         incompatibleWith.joinTo(this, separator = "\n  ") {
-          """<incompatible-with>${it.id}</incompatible-with>"""
+          """<incompatible-with>${it}</incompatible-with>"""
         }
       }
 
       if (dependencies.isNotEmpty() || pluginDependencies.isNotEmpty()) {
         append("\n<dependencies>\n  ")
         if (dependencies.isNotEmpty()) {
-          dependencies.joinTo(this, separator = "\n  ") { """<module name="${it.name}" />""" }
+          dependencies.joinTo(this, separator = "\n  ") { """<module name="${it}" />""" }
         }
         if (pluginDependencies.isNotEmpty()) {
-          pluginDependencies.joinTo(this, separator = "\n  ") { """<plugin id="${it.id}" />""" }
+          pluginDependencies.joinTo(this, separator = "\n  ") { """<plugin id="${it}" />""" }
         }
         append("\n</dependencies>")
       }

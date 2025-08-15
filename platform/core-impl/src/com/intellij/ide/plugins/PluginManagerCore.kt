@@ -817,10 +817,10 @@ object PluginManagerCore {
     }
     fun processModuleDependencies(moduleDependencies: ModuleDependencies): Boolean {
       for (plugin in moduleDependencies.plugins) {
-        if (!processDependency(plugin.id, null)) return false
+        if (!processDependency(plugin, null)) return false
       }
       for (module in moduleDependencies.modules) {
-        if (!processDependency(null, module.id)) return false
+        if (!processDependency(null, module)) return false
       }
       return true
     }
@@ -853,13 +853,13 @@ object PluginManagerCore {
       }
     }
     for (plugin in descriptor.moduleDependencies.plugins) {
-      dependencies.add(plugin.id)
+      dependencies.add(plugin)
     }
     if (descriptor is PluginMainDescriptor) {
       for (contentModule in descriptor.contentModules) {
         if (contentModule.moduleLoadingRule.required) {
           for (contentModuleDependency in contentModule.moduleDependencies.plugins) {
-            dependencies.add(contentModuleDependency.id)
+            dependencies.add(contentModuleDependency)
           }
         }
       }

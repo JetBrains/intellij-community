@@ -169,12 +169,12 @@ sealed class IdeaPluginDescriptorImpl(
       if (dependencies.isEmpty()) {
         return ModuleDependencies.EMPTY
       }
-      val moduleDeps = ArrayList<ModuleDependencies.ModuleReference>()
-      val pluginDeps = ArrayList<ModuleDependencies.PluginReference>()
+      val moduleDeps = ArrayList<ModuleId>()
+      val pluginDeps = ArrayList<PluginId>()
       for (dep in dependencies) {
         when (dep) {
-          is DependenciesElement.PluginDependency -> pluginDeps.add(ModuleDependencies.PluginReference(PluginId.getId(dep.pluginId)))
-          is DependenciesElement.ModuleDependency -> moduleDeps.add(ModuleDependencies.ModuleReference(ModuleId(dep.moduleName)))
+          is DependenciesElement.PluginDependency -> pluginDeps.add(PluginId.getId(dep.pluginId))
+          is DependenciesElement.ModuleDependency -> moduleDeps.add(ModuleId(dep.moduleName))
           else -> LOG.error("Unknown dependency type: $dep")
         }
       }
@@ -430,8 +430,8 @@ class PluginMainDescriptor(
       }
     }
     for (pluginDependency in moduleDependencies.plugins) {
-      if (context.isPluginDisabled(pluginDependency.id)) {
-        return onInitError(PluginDependencyIsDisabled(this, pluginDependency.id, false))
+      if (context.isPluginDisabled(pluginDependency)) {
+        return onInitError(PluginDependencyIsDisabled(this, pluginDependency, false))
       }
     }
     return null

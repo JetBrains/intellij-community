@@ -10,22 +10,12 @@ import java.util.*
  */
 @ApiStatus.Internal
 class ModuleDependencies(
-  val modules: List<ModuleReference>,
-  val plugins: List<PluginReference>,
+  val modules: List<ModuleId>,
+  val plugins: List<PluginId>,
 ) {
   @ApiStatus.Internal
   companion object {
     val EMPTY: ModuleDependencies = ModuleDependencies(Collections.emptyList(), Collections.emptyList())
-  }
-
-  class ModuleReference(val id: ModuleId) {
-    @Deprecated("Use id", ReplaceWith("id"))
-    val name: String get() = id.id
-    override fun toString(): String = "Module(id=$id)"
-  }
-
-  class PluginReference(val id: PluginId) {
-    override fun toString(): String = "Plugin(id=$id)"
   }
 
   override fun toString(): String = "ModuleDependencies(modules=${modules.joinToString()}, plugins=${plugins.joinToString()})"

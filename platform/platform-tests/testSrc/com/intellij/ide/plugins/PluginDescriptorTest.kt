@@ -81,7 +81,7 @@ class PluginDescriptorTest {
     assertThat(descriptor).isNotNull()
     val pluginDependencies = descriptor.moduleDependencies.plugins
     assertThat(pluginDependencies).hasSize(2)
-    assertThat(pluginDependencies.map { it.id.idString }).containsExactly("dep1", "dep2")
+    assertThat(pluginDependencies.map { it.idString }).containsExactly("dep1", "dep2")
   }
 
   @Test
