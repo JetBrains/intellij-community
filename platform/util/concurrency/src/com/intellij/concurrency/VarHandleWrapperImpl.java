@@ -54,6 +54,12 @@ public class VarHandleWrapperImpl extends VarHandleWrapper implements VarHandleW
   }
 
   @Override
+  public boolean compareAndSetByte(Object thisObject, byte expected, byte actual) {
+    assert !isArray;
+    return myVarHandle.compareAndSet(thisObject, expected, actual);
+  }
+
+  @Override
   public boolean compareAndSetLong(Object thisObject, long expected, long actual) {
     assert !isArray;
     return myVarHandle.compareAndSet(thisObject, expected, actual);
