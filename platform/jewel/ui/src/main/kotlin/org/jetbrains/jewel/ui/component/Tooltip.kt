@@ -93,6 +93,7 @@ public fun Tooltip(
         modifier = modifier,
         delayMillis = style.metrics.showDelay.inWholeMilliseconds.toInt(),
         tooltipPlacement = tooltipPlacement,
+        cornerSize = style.metrics.cornerSize,
         content = content,
     )
 }
@@ -134,6 +135,7 @@ public fun Tooltip(
         modifier = modifier,
         delayMillis = style.metrics.showDelay.inWholeMilliseconds.toInt(),
         tooltipPlacement = tooltipPlacement,
+        cornerSize = style.metrics.cornerSize,
         content = content,
     )
 }

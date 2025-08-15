@@ -75,6 +75,7 @@ internal fun ContextMenu(
             menuController.findAndExecuteShortcut(swingKeyStroke)
                 ?: handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuController)
         },
+        cornerSize = style.metrics.cornerSize,
     ) {
         @Suppress("AssignedValueIsNeverRead")
         focusManager = LocalFocusManager.current
