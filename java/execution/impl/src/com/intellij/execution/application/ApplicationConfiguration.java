@@ -109,14 +109,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
 
   @Override
   public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    if (Registry.is("ide.new.run.config", true)) {
-      return new JavaApplicationSettingsEditor(this);
-    }
-    SettingsEditorGroup<ApplicationConfiguration> group = new SettingsEditorGroup<>();
-    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new ApplicationConfigurable(getProject()));
-    JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
-    return group;
+    return new JavaApplicationSettingsEditor(this);
   }
 
   @Override
