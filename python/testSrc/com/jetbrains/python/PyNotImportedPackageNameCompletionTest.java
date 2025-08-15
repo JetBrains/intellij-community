@@ -12,6 +12,14 @@ public class PyNotImportedPackageNameCompletionTest extends PyTestCase {
     myFixture.checkResultByFile(testName + "/main.after.py");
   }
 
+  public void testPackageNameNotSuggestedForAssignmentTarget() {
+    final String testName = getTestName(false);
+    myFixture.copyDirectoryToProject(testName, "");
+    myFixture.configureByFile("main.py");
+    myFixture.completeBasic();
+    assertDoesntContain(myFixture.getLookupElementStrings(), "foobar");
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion/notImportedPackageName/";
