@@ -6,9 +6,9 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 /**
- * A dependency from [plugins] in fact means a module dependency on the *implicit main module* of a plugin.
+ * A dependency from [plugins] in fact means a module dependency on the *implicit main module* of the plugin.
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 class ModuleDependencies(
   val modules: List<ModuleReference>,
   val plugins: List<PluginReference>,
