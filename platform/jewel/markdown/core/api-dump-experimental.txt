@@ -324,6 +324,10 @@ f:org.jetbrains.jewel.markdown.processing.ProcessingUtilKt
 - render(org.jetbrains.jewel.markdown.MarkdownBlock$Paragraph,org.jetbrains.jewel.markdown.rendering.MarkdownStyling$Paragraph,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I):V
 - render(org.jetbrains.jewel.markdown.MarkdownBlock,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I):V
 - renderThematicBreak(org.jetbrains.jewel.markdown.rendering.MarkdownStyling$ThematicBreak,Z,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I):V
+*:org.jetbrains.jewel.markdown.rendering.ImageSourceResolver
+- a:resolve(java.lang.String):java.lang.String
+f:org.jetbrains.jewel.markdown.rendering.ImageSourceResolverKt
+- *sf:getLocalMarkdownImageSourceResolver():androidx.compose.runtime.ProvidableCompositionLocal
 *:org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer
 - *sf:Companion:org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer$Companion
 - a:renderAsAnnotatedString(java.lang.Iterable,org.jetbrains.jewel.markdown.rendering.InlinesStyling,Z,kotlin.jvm.functions.Function1):androidx.compose.ui.text.AnnotatedString

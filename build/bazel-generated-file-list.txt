@@ -334,6 +334,7 @@ jvm/jvm-analysis-refactoring
 jvm/jvm-analysis-testFramework
 libraries/ai.grazie.spell.gec.engine.local
 libraries/assertj-core
+libraries/coil
 libraries/compose-foundation-desktop
 libraries/compose-foundation-desktop-junit
 libraries/detekt-compose-rules

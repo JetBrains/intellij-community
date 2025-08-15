@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
+    <orderEntry type="module-library" exported="">
+      <library name="io.coil.kt.coil3.network.ktor3.jvm" type="repository">
+        <properties maven-id="io.coil-kt.coil3:coil-network-ktor3-jvm:3.2.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-network-ktor3-jvm/3.2.0/coil-network-ktor3-jvm-3.2.0.jar">
+              <sha256sum>377ea37e058df261bcc274ea0c947eccc67fec5a0499bdf646b99c2f34f74a6a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0.jar">
+              <sha256sum>2c64e5a3be4c59a2bf1ead26891cd9c455c37a2802d258ea50a960e7dd1e121a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0.jar">
+              <sha256sum>2d22541a192f901a45c95274567d6957ac1ed613d49e41db4e5e5d86139cf022</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-network-core-jvm/3.2.0/coil-network-core-jvm-3.2.0.jar">
+              <sha256sum>54cff2971fbcb1743b6d4cb6fb5bb863b4f6fae37002ec57a2fdf837b0c3242e</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="io.ktor:ktor-client-core-jvm" />
+            <dependency maven-id="io.ktor:ktor-events-jvm" />
+            <dependency maven-id="io.ktor:ktor-http-cio-jvm" />
+            <dependency maven-id="io.ktor:ktor-http-jvm" />
+            <dependency maven-id="io.ktor:ktor-io-jvm" />
+            <dependency maven-id="io.ktor:ktor-network-jvm" />
+            <dependency maven-id="io.ktor:ktor-serialization-jvm" />
+            <dependency maven-id="io.ktor:ktor-sse-jvm" />
+            <dependency maven-id="io.ktor:ktor-utils-jvm" />
+            <dependency maven-id="io.ktor:ktor-websocket-serialization-jvm" />
+            <dependency maven-id="io.ktor:ktor-websockets-jvm" />
+            <dependency maven-id="org.jetbrains:annotations" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-slf4j" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-io-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
+            <dependency maven-id="org.jetbrains.skiko:skiko-awt" />
+            <dependency maven-id="org.slf4j:slf4j-api" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-network-ktor3-jvm/3.2.0/coil-network-ktor3-jvm-3.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-network-core-jvm/3.2.0/coil-network-core-jvm-3.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-network-ktor3-jvm/3.2.0/coil-network-ktor3-jvm-3.2.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-network-core-jvm/3.2.0/coil-network-core-jvm-3.2.0-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-network-ktor3-jvm/3.2.0/coil-network-ktor3-jvm-3.2.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-network-core-jvm/3.2.0/coil-network-core-jvm-3.2.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="io.coil.kt.coil3.svg.jvm" type="repository">
+        <properties maven-id="io.coil-kt.coil3:coil-svg-jvm:3.2.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-svg-jvm/3.2.0/coil-svg-jvm-3.2.0.jar">
+              <sha256sum>e412715d1e447a43331f2ceb406435f28aafd7476a987de3d8222e6d39a8c84b</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0.jar">
+              <sha256sum>2c64e5a3be4c59a2bf1ead26891cd9c455c37a2802d258ea50a960e7dd1e121a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0.jar">
+              <sha256sum>2d22541a192f901a45c95274567d6957ac1ed613d49e41db4e5e5d86139cf022</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains:annotations" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="org.jetbrains.skiko:skiko-awt" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-svg-jvm/3.2.0/coil-svg-jvm-3.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-svg-jvm/3.2.0/coil-svg-jvm-3.2.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-svg-jvm/3.2.0/coil-svg-jvm-3.2.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="" scope="TEST">
+      <library name="io.coil.kt.coil3.test.jvm" type="repository">
+        <properties maven-id="io.coil-kt.coil3:coil-test-jvm:3.2.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-test-jvm/3.2.0/coil-test-jvm-3.2.0.jar">
+              <sha256sum>bea462cdc351c04dc4895f028b847d65a7dbae72a9b3999ea1089cd56ded43ad</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0.jar">
+              <sha256sum>2c64e5a3be4c59a2bf1ead26891cd9c455c37a2802d258ea50a960e7dd1e121a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt/0.9.4/skiko-awt-0.9.4.jar">
+              <sha256sum>8e26ab1ae75f65786f6b973a66e89a2836d199a5561c4c2edbc1f3f67ad2197f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0.jar">
+              <sha256sum>2d22541a192f901a45c95274567d6957ac1ed613d49e41db4e5e5d86139cf022</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-test-jvm/3.2.0/coil-test-jvm-3.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt/0.9.4/skiko-awt-0.9.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-test-jvm/3.2.0/coil-test-jvm-3.2.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt/0.9.4/skiko-awt-0.9.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="io.coil.kt.coil3.compose.jvm" type="repository">
+        <properties maven-id="io.coil-kt.coil3:coil-compose-jvm:3.2.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-compose-jvm/3.2.0/coil-compose-jvm-3.2.0.jar">
+              <sha256sum>b135eafcff7545cba7e39c0c8d4e724c0f42e91050b10df5d635a6c7dfd3fb42</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-jvm/3.2.0/coil-jvm-3.2.0.jar">
+              <sha256sum>7d0182c987052d6502135a6a6cc7cc68288ef48f990d75ad4c4ae03e25be786e</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0.jar">
+              <sha256sum>2c64e5a3be4c59a2bf1ead26891cd9c455c37a2802d258ea50a960e7dd1e121a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0.jar">
+              <sha256sum>2d22541a192f901a45c95274567d6957ac1ed613d49e41db4e5e5d86139cf022</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-compose-core-jvm/3.2.0/coil-compose-core-jvm-3.2.0.jar">
+              <sha256sum>a74b96cb179fe8f872d4e9f03468e0477d32787e9b6430a9d137aafb76012a60</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.skiko:skiko-awt" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.compose.foundation:foundation-desktop" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-compose-jvm/3.2.0/coil-compose-jvm-3.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-jvm/3.2.0/coil-jvm-3.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-compose-core-jvm/3.2.0/coil-compose-core-jvm-3.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-compose-jvm/3.2.0/coil-compose-jvm-3.2.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-jvm/3.2.0/coil-jvm-3.2.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-compose-core-jvm/3.2.0/coil-compose-core-jvm-3.2.0-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-compose-jvm/3.2.0/coil-compose-jvm-3.2.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-jvm/3.2.0/coil-jvm-3.2.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-compose-core-jvm/3.2.0/coil-compose-core-jvm-3.2.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

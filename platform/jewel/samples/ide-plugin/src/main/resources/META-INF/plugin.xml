@@ -18,6 +18,7 @@ See the <a href="https://github.com/JetBrains/jewel">Jewel repository</a> for mo
         <module name="intellij.libraries.skiko"/>
         <module name="intellij.platform.jewel.markdown.core"/>
         <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling"/>
+        <module name="intellij.platform.jewel.markdown.extensions.images"/>
     </dependencies>
 
     <resource-bundle>messages.JewelBundle</resource-bundle>

@@ -4,5 +4,6 @@ f:org.jetbrains.jewel.markdown.MarkdownTextKt
 f:org.jetbrains.jewel.markdown.SemanticsKt
 f:org.jetbrains.jewel.markdown.extensions.MarkdownKt
 f:org.jetbrains.jewel.markdown.processing.ProcessingUtilKt
+f:org.jetbrains.jewel.markdown.rendering.ImageSourceResolverKt
 f:org.jetbrains.jewel.markdown.rendering.InlineMarkdownRendererKt
 f:org.jetbrains.jewel.markdown.scrolling.AutoScrollingUtilKt

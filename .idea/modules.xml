@@ -611,6 +611,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/ai.grazie.spell.gec.engine.local/intellij.libraries.ai.grazie.spell.gec.engine.local.iml" filepath="$PROJECT_DIR$/libraries/ai.grazie.spell.gec.engine.local/intellij.libraries.ai.grazie.spell.gec.engine.local.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/assertj-core/intellij.libraries.assertj.core.iml" filepath="$PROJECT_DIR$/libraries/assertj-core/intellij.libraries.assertj.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/libraries/cglib/intellij.libraries.cglib.iml" filepath="$PROJECT_DIR$/platform/libraries/cglib/intellij.libraries.cglib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/coil/intellij.libraries.coil.iml" filepath="$PROJECT_DIR$/libraries/coil/intellij.libraries.coil.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/compose-foundation-desktop/intellij.libraries.compose.foundation.desktop.iml" filepath="$PROJECT_DIR$/libraries/compose-foundation-desktop/intellij.libraries.compose.foundation.desktop.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/compose-foundation-desktop-junit/intellij.libraries.compose.foundation.desktop.junit.iml" filepath="$PROJECT_DIR$/libraries/compose-foundation-desktop-junit/intellij.libraries.compose.foundation.desktop.junit.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/detekt-compose-rules/intellij.libraries.detekt.compose.rules.iml" filepath="$PROJECT_DIR$/libraries/detekt-compose-rules/intellij.libraries.detekt.compose.rules.iml" />

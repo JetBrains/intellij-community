@@ -55,46 +55,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
-    <orderEntry type="module-library" scope="TEST">
-      <library name="io.coil.kt.coil3.test.jvm" type="repository">
-        <properties maven-id="io.coil-kt.coil3:coil-test-jvm:3.2.0">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-test-jvm/3.2.0/coil-test-jvm-3.2.0.jar">
-              <sha256sum>bea462cdc351c04dc4895f028b847d65a7dbae72a9b3999ea1089cd56ded43ad</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0.jar">
-              <sha256sum>2c64e5a3be4c59a2bf1ead26891cd9c455c37a2802d258ea50a960e7dd1e121a</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt/0.9.4/skiko-awt-0.9.4.jar">
-              <sha256sum>8e26ab1ae75f65786f6b973a66e89a2836d199a5561c4c2edbc1f3f67ad2197f</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.10.2/kotlinx-coroutines-core-jvm-1.10.2.jar">
-              <sha256sum>5ca175b38df331fd64155b35cd8cae1251fa9ee369709b36d42e0a288ccce3fd</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0.jar">
-              <sha256sum>2d22541a192f901a45c95274567d6957ac1ed613d49e41db4e5e5d86139cf022</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.1.20/kotlin-stdlib-2.1.20.jar">
-              <sha256sum>1bcc74e8ce84e2c25eaafde10f1248349cce3062b6e36978cbeec610db1e930a</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar">
-              <sha256sum>ace2a10dc8e2d5fd34925ecac03e4988b2c0f851650c94b8cef49ba1bd111478</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-test-jvm/3.2.0/coil-test-jvm-3.2.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt/0.9.4/skiko-awt-0.9.4.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.10.2/kotlinx-coroutines-core-jvm-1.10.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.1.20/kotlin-stdlib-2.1.20.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop.junit" scope="TEST" />
   </component>
 </module>

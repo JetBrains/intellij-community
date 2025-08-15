@@ -33,17 +33,11 @@ jvm_library(
     "//platform/jewel/markdown/core",
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
-    "//libraries/compose-foundation-desktop",
-    "@lib//:platform-jewel-markdown-extensions-images-io-coil-kt-coil3-compose-jvm",
-    "@lib//:platform-jewel-markdown-extensions-images-io-coil-kt-coil3-network-ktor3-jvm",
-    "@lib//:platform-jewel-markdown-extensions-images-io-coil-kt-coil3-svg-jvm",
+    "//libraries/coil",
     "//libraries/ktor-client",
+    "//libraries/compose-foundation-desktop",
   ],
-  exports = [
-    "@lib//:platform-jewel-markdown-extensions-images-io-coil-kt-coil3-compose-jvm",
-    "@lib//:platform-jewel-markdown-extensions-images-io-coil-kt-coil3-network-ktor3-jvm",
-    "@lib//:platform-jewel-markdown-extensions-images-io-coil-kt-coil3-svg-jvm",
-  ],
+  exports = ["//libraries/coil"],
   runtime_deps = [":images_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
@@ -51,7 +45,7 @@ jvm_library(
 jvm_library(
   name = "images_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_images",
   associates = [":images"],
   deps = [
@@ -64,14 +58,12 @@ jvm_library(
     "//platform/jewel/ui:ui_test_lib",
     "//platform/jewel/foundation",
     "//platform/jewel/foundation:foundation_test_lib",
-    "//libraries/compose-foundation-desktop",
-    "@lib//:platform-jewel-markdown-extensions-images-io-coil-kt-coil3-compose-jvm",
-    "@lib//:platform-jewel-markdown-extensions-images-io-coil-kt-coil3-network-ktor3-jvm",
-    "@lib//:platform-jewel-markdown-extensions-images-io-coil-kt-coil3-svg-jvm",
-    "@lib//:platform-jewel-markdown-extensions-images-io-coil-kt-coil3-test-jvm",
+    "//libraries/coil",
     "//libraries/compose-foundation-desktop-junit",
     "//libraries/ktor-client",
+    "//libraries/compose-foundation-desktop",
   ],
+  exports = ["//libraries/coil"],
   runtime_deps = [":images_resources"],
   plugins = ["@lib//:compose-plugin"]
 )

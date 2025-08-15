@@ -16,10 +16,8 @@
     <module name="intellij.platform.ml.logs"/>
     <module name="intellij.libraries.microba"/>
     <module name="intellij.libraries.skiko"/>
-
+    <module name="intellij.libraries.coil"/>
     <module name="intellij.charts"/>
-
-
     <module name="intellij.platform.compose"/>
     <module name="intellij.platform.compose.markdown"/>
     <module name="intellij.platform.jewel.foundation"/>

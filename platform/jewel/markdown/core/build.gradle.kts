@@ -11,7 +11,6 @@ dependencies {
 
     testImplementation(compose.desktop.uiTestJUnit4)
     testImplementation(projects.ui)
-    testImplementation(libs.coil.test)
     testImplementation(compose.desktop.currentOs)
 }
 

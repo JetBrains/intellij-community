@@ -3,7 +3,6 @@ package org.jetbrains.jewel.markdown.extensions.images
 
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.appendInlineContent
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.test.assertHeightIsAtLeast
@@ -27,14 +26,12 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.StandardTestDispatcher
 import org.jetbrains.jewel.markdown.InlineMarkdown
-import org.jetbrains.jewel.markdown.rendering.LocalMarkdownImageSourceResolver
 import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoilApi::class)
 public class Coil3ImageRendererExtensionImplTest {
-    @get:Rule
-    public val composeTestRule: ComposeContentTestRule = createComposeRule()
+    @get:Rule public val composeTestRule: ComposeContentTestRule = createComposeRule()
 
     private val platformContext: PlatformContext = PlatformContext.Companion.INSTANCE
     private val imageUrl = "https://example.com/image.png"
