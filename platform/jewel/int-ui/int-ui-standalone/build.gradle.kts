@@ -6,7 +6,10 @@ plugins {
     `intellij-theme-generator`
 }
 
-dependencies { api(projects.ui) }
+dependencies {
+    api(projects.ui)
+    implementation(libs.jbr.api)
+}
 
 intelliJThemeGenerator {
     register("intUiLight") {

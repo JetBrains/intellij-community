@@ -51,6 +51,7 @@ f:org.jetbrains.jewel.foundation.GlobalMetricsKt
 f:org.jetbrains.jewel.foundation.JewelFlags
 - sf:$stable:I
 - sf:INSTANCE:org.jetbrains.jewel.foundation.JewelFlags
+f:org.jetbrains.jewel.foundation.LocalComponentKt
 f:org.jetbrains.jewel.foundation.OutlineColors
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.foundation.OutlineColors$Companion

@@ -143,6 +143,7 @@ public fun PopupMenu(
 
             handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuController)
         },
+        cornerSize = style.metrics.cornerSize,
     ) {
         @Suppress("AssignedValueIsNeverRead")
         focusManager = LocalFocusManager.current

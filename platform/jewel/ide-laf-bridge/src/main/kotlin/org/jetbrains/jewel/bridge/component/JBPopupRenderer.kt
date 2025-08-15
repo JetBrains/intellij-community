@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.bridge.component
 
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalContext
 import androidx.compose.runtime.CompositionLocalProvider
@@ -50,8 +51,8 @@ import java.awt.event.KeyEvent.KEY_LOCATION_UNKNOWN
 import java.awt.event.KeyEvent.KEY_PRESSED
 import java.awt.event.KeyEvent.KEY_RELEASED
 import org.jetbrains.jewel.bridge.JewelComposePanelWrapper
-import org.jetbrains.jewel.bridge.LocalComponent
 import org.jetbrains.jewel.bridge.compose
+import org.jetbrains.jewel.foundation.LocalComponent
 import org.jetbrains.jewel.ui.component.PopupRenderer
 
 internal object JBPopupRenderer : PopupRenderer {
@@ -62,6 +63,7 @@ internal object JBPopupRenderer : PopupRenderer {
         onDismissRequest: (() -> Unit)?,
         onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
         onKeyEvent: ((KeyEvent) -> Boolean)?,
+        cornerSize: CornerSize,
         content: @Composable () -> Unit,
     ) {
         JBPopup(
