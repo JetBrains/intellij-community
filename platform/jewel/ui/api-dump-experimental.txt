@@ -10,6 +10,7 @@ f:org.jetbrains.jewel.ui.component.LazyTreeKt
 f:org.jetbrains.jewel.ui.component.ListComboBoxKt
 - *sf:ListComboBox-xKBSf-U(java.util.List,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,kotlin.jvm.functions.Function5,androidx.compose.runtime.Composer,I,I,I):V
 f:org.jetbrains.jewel.ui.component.PopupKt
+- *sf:Popup(androidx.compose.ui.window.PopupPositionProvider,androidx.compose.foundation.shape.CornerSize,kotlin.jvm.functions.Function0,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - *sf:Popup(androidx.compose.ui.window.PopupPositionProvider,kotlin.jvm.functions.Function0,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - *sf:getLocalPopupRenderer():androidx.compose.runtime.ProvidableCompositionLocal
 *f:org.jetbrains.jewel.ui.component.PopupManager
@@ -26,7 +27,7 @@ f:org.jetbrains.jewel.ui.component.PopupKt
 - f:togglePopupVisibility():V
 *:org.jetbrains.jewel.ui.component.PopupRenderer
 - *sf:Companion:org.jetbrains.jewel.ui.component.PopupRenderer$Companion
-- a:Popup(androidx.compose.ui.window.PopupPositionProvider,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
+- a:Popup(androidx.compose.ui.window.PopupPositionProvider,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,androidx.compose.foundation.shape.CornerSize,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
 *f:org.jetbrains.jewel.ui.component.PopupRenderer$Companion
 f:org.jetbrains.jewel.ui.component.TabStripKt
 - *sf:TabStrip(java.util.List,org.jetbrains.jewel.ui.component.styling.TabStyle,androidx.compose.ui.Modifier,Z,androidx.compose.runtime.Composer,I,I):V
