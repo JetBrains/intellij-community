@@ -39,9 +39,13 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
+import com.intellij.xdebugger.impl.CoroutineUtilsKt;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
+import kotlin.Unit;
+import kotlinx.coroutines.flow.Flow;
+import kotlinx.coroutines.flow.MutableSharedFlow;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,8 +64,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   private final CompletableFuture<Void> myInitFuture;
 
   NodeRenderer myRenderer = null;
-
   NodeRenderer myAutoRenderer = null;
+  private final MutableSharedFlow<Unit> myRenderersChangedFlow = CoroutineUtilsKt.createMutableSharedFlow(0, 1);
 
   private Value myValue;
 
@@ -497,8 +501,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public void displayAs(NodeDescriptor descriptor) {
     if (descriptor instanceof ValueDescriptorImpl valueDescriptor) {
       myRenderer = valueDescriptor.myRenderer;
+      myRenderersChangedFlow.tryEmit(Unit.INSTANCE);
     }
     super.displayAs(descriptor);
+  }
+
+  @ApiStatus.Internal
+  public Flow<Renderer> getLastRendererFlow() {
+    return CoroutineUtilsKt.mapFlow(myRenderersChangedFlow, __ -> getLastRenderer());
   }
 
   public Renderer getLastRenderer() {
@@ -539,7 +549,11 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
       else {
         return DebuggerUtilsAsync.reschedule(debugProcess.getAutoRendererAsync(type))
-          .thenApply(r -> myAutoRenderer = r);
+          .thenApply(r -> {
+            myAutoRenderer = r;
+            myRenderersChangedFlow.tryEmit(Unit.INSTANCE);
+            return r;
+          });
       }
     });
   }
@@ -548,6 +562,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myRenderer = renderer;
     myAutoRenderer = null;
+    myRenderersChangedFlow.tryEmit(Unit.INSTANCE);
   }
 
 

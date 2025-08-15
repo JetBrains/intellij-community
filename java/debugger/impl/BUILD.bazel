@@ -65,6 +65,7 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
+    "//fleet/rpc",
   ],
   runtime_deps = [":impl_resources"]
 )

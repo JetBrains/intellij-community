@@ -523,17 +523,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   @Override
   public @Nullable CompletableFuture<XDescriptor> getXValueDescriptorAsync() {
-    return myValueDescriptor.getInitFuture().thenApply(ignored -> {
-      Value value = myValueDescriptor.getValue();
-      JavaValueObjectReferenceInfo objectReferenceInfo = null;
-      if (value instanceof ObjectReference ref) {
-        objectReferenceInfo = new JavaValueObjectReferenceInfo(ref.referenceType().name(), ref.virtualMachine().canGetInstanceInfo());
-      }
-      return new JavaValueDescriptor(
-        myValueDescriptor.isString(),
-        objectReferenceInfo
-      );
-    });
+    return myValueDescriptor.getInitFuture().thenCompose(ignored -> JavaValueUtilsKt.getJavaValueXDescriptor(this));
   }
 
   @Override

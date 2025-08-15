@@ -20,6 +20,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,8 +90,8 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
         public void threadAction(@NotNull SuspendContextImpl suspendContext) {
           for (XValueNodeImpl node : selectedNodes) {
             XValue container = node.getValueContainer();
-            if (container instanceof JavaValue) {
-              ((JavaValue)container).setRenderer(myNodeRenderer, node);
+            if (container instanceof JavaValue javaValue) {
+              javaValue.setRenderer(myNodeRenderer, node);
             }
           }
         }
@@ -158,14 +159,8 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
   private static @NotNull CompletableFuture<List<NodeRenderer>> getApplicableRenderers(List<JavaValue> values, DebugProcessImpl process) {
     List<CompletableFuture<List<NodeRenderer>>> futures = new ArrayList<>(values.size());
     for (JavaValue value : values) {
-      if (value instanceof JavaReferringObjectsValue) { // disable for any referrers at all
-        return CompletableFuture.completedFuture(Collections.emptyList());
-      }
-      ValueDescriptorImpl valueDescriptor = value.getDescriptor();
-      if (!valueDescriptor.isValueValid()) {
-        return CompletableFuture.completedFuture(Collections.emptyList());
-      }
-      futures.add(process.getApplicableRenderers(valueDescriptor.getType()));
+      CompletableFuture<List<NodeRenderer>> completedFuture = getApplicableNodeRenderers(value);
+      futures.add(completedFuture);
     }
 
     return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenApply(__ -> {
@@ -181,6 +176,19 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
       }
       return ContainerUtil.notNullize(res);
     });
+  }
+
+  @ApiStatus.Internal
+  public static CompletableFuture<List<NodeRenderer>> getApplicableNodeRenderers(JavaValue value) {
+    if (value instanceof JavaReferringObjectsValue) { // disable for any referrers at all
+      return CompletableFuture.completedFuture(Collections.emptyList());
+    }
+    ValueDescriptorImpl valueDescriptor = value.getDescriptor();
+    if (!valueDescriptor.isValueValid()) {
+      return CompletableFuture.completedFuture(Collections.emptyList());
+    }
+    DebugProcessImpl process = value.getEvaluationContext().getDebugProcess();
+    return process.getApplicableRenderers(valueDescriptor.getType());
   }
 
   @Override
