@@ -39,7 +39,6 @@ common:windows --disk_cache=~/AppData/Local/Temp/JetBrains/monorepo-bazel-cache
 ### The option was removed due to https://github.com/bazelbuild/bazel/issues/26361
 ### One experimental option less and also it looks like it won't enabled by default in the future
 
-common --@rules_jvm//:jvm-builder=@community//:monorepo-jvm-builder_deploy.jar
 common --@rules_jvm//:default-javac-opts=@community//:default-javac-opts
 common --@rules_jvm//:default-kotlinc-opts=@community//:k21
 common --@rules_jvm//:koltin_inc_threshold=0 --@rules_jvm//:java_inc_threshold=0

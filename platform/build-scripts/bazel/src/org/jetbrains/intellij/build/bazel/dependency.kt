@@ -352,12 +352,12 @@ internal fun generateDeps(
     }
     else if (it.name.startsWith("rpc-compiler-plugin-") && it.name.endsWith(".jar")) {
       if (module.module.name == "fleet.rpc") {  // other modules use exported_compiler_plugins
-        plugins.add("@lib//:rpc-plugin")
+        plugins.add("@community//fleet/compiler-plugins/rpc:rpc-plugin")
       }
     }
     else if (it.name.startsWith("noria-compiler-plugin-") && it.name.endsWith(".jar")) {
       if (module.module.name == "fleet.noria.cells") {
-        plugins.add("@lib//:noria-plugin")
+        plugins.add("@community//fleet/compiler-plugins/noria:noria-plugin")
       }
     }
   }

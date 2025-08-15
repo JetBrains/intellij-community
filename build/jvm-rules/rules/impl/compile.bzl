@@ -234,7 +234,7 @@ def _run_jvm_builder(
         },
         inputs = depset(srcs.all_srcs + all_resources, transitive = transitiveInputs),
         outputs = outputs,
-        tools = [ctx.file._jvm_builder_launcher, ctx.file.jvm_builder],
+        tools = [ctx.file._jvm_builder_launcher, ctx.file._jvm_builder],
         executable = java_runtime.java_executable_exec_path,
         execution_requirements = {
             "supports-workers": "1",
@@ -243,9 +243,9 @@ def _run_jvm_builder(
             "supports-path-mapping": "1",
             "supports-multiplex-sandboxing": "1",
         },
-        arguments = ctx.attr.jvm_builder_jvm_flags[BuildSettingInfo].value + [
+        arguments = ctx.attr._jvm_builder_jvm_flags[BuildSettingInfo].value + [
             ctx.file._jvm_builder_launcher.path,
-            ctx.file.jvm_builder.path,
+            ctx.file._jvm_builder.path,
             args,
         ],
         progress_message = "compile %%{label} (kt: %d, java: %d%s}" % (len(srcs.kt), javaCount, "" if isIncremental else ", non-incremental"),

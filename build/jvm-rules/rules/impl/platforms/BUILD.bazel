@@ -10,7 +10,7 @@ platform(
 )
 
 # Host-derived platform:
-# jvm_library and jvm_resources rules use it as the execution platform for jvm_builder and jvm_worker tools (see scrubbed_host_platform_transition),
+# jvm_library and jvm_resources rules use it as the execution platform for _jvm_builder and jvm_worker tools (see scrubbed_host_platform_transition),
 # so their deploy jars land under the output directory w/ platform-independent name (e.g. bazel-out/scrubbed_host-fastbuild/, not bazel-out/darwin_arm64-opt-exec/),
 # thus making their input hashes identical on all platforms and enabling remote cache hits across Linux/macOS/Windows.
 #

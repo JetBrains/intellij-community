@@ -1,5 +1,6 @@
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_kotlin//kotlin:kotlin.bzl", "kt_compiler_plugin")
 
 resourcegroup(
   name = "noria-compiler-plugin_resources",
@@ -21,8 +22,11 @@ jvm_library(
     "@rules_jvm//jvm-inc-builder:patched-kotlin-compiler-for-bazel",
   ],
   resources = [":noria-compiler-plugin_resources"],
-  # Override jvm_builder and jvm_builder_jvm_flags to use builder without compiler plugins
-  # We need it to build this compiler plugin
-  jvm_builder = "@rules_jvm//jvm-inc-builder:jvm-inc-builder_deploy.jar",
-  jvm_builder_jvm_flags = "@rules_jvm//jvm-inc-builder:jvm-inc-builder-jvm_flags",
+)
+
+kt_compiler_plugin(
+  name = "noria-plugin",
+  id = "jetbrains.fleet.noria-compiler-plugin",
+  visibility = ["//visibility:public"],
+  deps = [":noria-compiler-plugin"],
 )

@@ -7,7 +7,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  exported_compiler_plugins = ["@lib//:expects-plugin"],
+  exported_compiler_plugins = ["@community//fleet/compiler-plugins/expects:expects-plugin"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",

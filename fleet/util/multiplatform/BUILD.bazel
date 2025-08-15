@@ -15,7 +15,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
   kotlinc_opts = ":custom_multiplatform",
-  exported_compiler_plugins = ["@lib//:expects-plugin"],
+  exported_compiler_plugins = ["@community//fleet/compiler-plugins/expects:expects-plugin"],
   deps = ["@lib//:kotlin-stdlib"]
 )
 ### auto-generated section `build fleet.util.multiplatform` end

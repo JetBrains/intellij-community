@@ -578,17 +578,17 @@ internal class BazelBuildFileGenerator(
 
       @Suppress("CascadeIf")
       if (module.name == "fleet.util.multiplatform" || module.name == "intellij.platform.multiplatformSupport") {
-        option("exported_compiler_plugins", listOf("@lib//:expects-plugin"))
+        option("exported_compiler_plugins", listOf("@community//fleet/compiler-plugins/expects:expects-plugin"))
       }
       //else if (module.name == "fleet.rhizomedb") {
         // https://youtrack.jetbrains.com/issue/IJI-2662/RhizomedbCommandLineProcessor-requires-output-dir-but-we-dont-have-it-for-Bazel-compilation
         //option("exported_compiler_plugins", arrayOf("@lib//:rhizomedb-plugin"))
       //}
       else if (module.name == "fleet.rpc") {
-        option("exported_compiler_plugins", listOf("@lib//:rpc-plugin"))
+        option("exported_compiler_plugins", listOf("@community//fleet/compiler-plugins/rpc:rpc-plugin"))
       }
       else if (module.name == "fleet.noria.cells") {
-        option("exported_compiler_plugins", listOf("@lib//:noria-plugin"))
+        option("exported_compiler_plugins", listOf("@community//fleet/compiler-plugins/noria:noria-plugin"))
       }
 
       var deps = moduleList.deps.get(moduleDescriptor)

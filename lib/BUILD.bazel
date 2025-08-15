@@ -12,34 +12,6 @@ kt_compiler_plugin(
 )
 
 kt_compiler_plugin(
-  name = "rhizomedb-plugin",
-  id = "org.jetbrains.fleet.rhizomedb-compiler-plugin",
-  visibility = ["//visibility:public"],
-  deps = [":rhizomedb-compiler-plugin"],
-)
-
-kt_compiler_plugin(
-  name = "expects-plugin",
-  id = "jetbrains.fleet.expects-compiler-plugin",
-  visibility = ["//visibility:public"],
-  deps = [":expects-compiler-plugin"],
-)
-
-kt_compiler_plugin(
-  name = "rpc-plugin",
-  id = "com.jetbrains.fleet.rpc-compiler-plugin",
-  visibility = ["//visibility:public"],
-  deps = [":rpc-compiler-plugin"],
-)
-
-kt_compiler_plugin(
-  name = "noria-plugin",
-  id = "jetbrains.fleet.noria-compiler-plugin",
-  visibility = ["//visibility:public"],
-  deps = [":noria-compiler-plugin"],
-)
-
-kt_compiler_plugin(
   name = "compose-plugin",
   id = "org.jetbrains.kotlin.kotlin-compose-compiler-plugin",
   visibility = ["//visibility:public"],

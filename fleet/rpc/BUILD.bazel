@@ -27,7 +27,7 @@ jvm_library(
   srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
   resources = [":rpc_resources"],
   kotlinc_opts = ":custom_rpc",
-  exported_compiler_plugins = ["@lib//:rpc-plugin"],
+  exported_compiler_plugins = ["@community//fleet/compiler-plugins/rpc:rpc-plugin"],
   deps = [
     "//fleet/reporting/api",
     "//fleet/reporting/shared",

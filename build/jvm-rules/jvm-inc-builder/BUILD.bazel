@@ -14,9 +14,8 @@ java_binary(
 
 java_library(
     name = "patched-kotlin-compiler-for-bazel",
-    visibility = ["//visibility:public"],  # used by @community//:monorepo-jvm-builder (@community//fleet/compiler-plugins/expects:expects-compiler-plugin, etc.)
+    visibility = ["//visibility:public"],  # used by (@community//fleet/compiler-plugins/expects:expects-compiler-plugin, etc.)
     exports = [
-        ":jvm-abi-gen-embeddable_import",
         ":kotlin-compiler-embeddable_import",
         ":kotlin-reflect_import",
         ":kotlin-script-runtime_import",
@@ -102,6 +101,7 @@ kt_jvm_library(
         "//zip",
         ":forms_import",  # forms compilation support
         ":jaxen_import",  # forms compilation support
+        ":jvm-abi-gen-embeddable_import",
         "patched-kotlin-compiler-for-bazel",
     ],
 )
