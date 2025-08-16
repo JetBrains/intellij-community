@@ -2336,8 +2336,3 @@ f:com.intellij.terminal.ui.TtyConnectorAccessor
 - f:executeWithTtyConnector(java.util.function.Consumer):V
 - f:getTtyConnector():com.jediterm.terminal.TtyConnector
 - f:setTtyConnector(com.jediterm.terminal.TtyConnector):V
-c:com.jediterm.pty.PtyProcessTtyConnector
-- com.intellij.terminal.pty.PtyProcessTtyConnector
-- <init>(com.pty4j.PtyProcess,java.nio.charset.Charset):V
-- <init>(com.pty4j.PtyProcess,java.nio.charset.Charset,java.util.List):V
-- b:<init>(com.pty4j.PtyProcess,java.nio.charset.Charset,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
