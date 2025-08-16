@@ -537,14 +537,7 @@ internal class BazelBuildFileGenerator(
         else if (module.name == "fleet.rpc") {
           option("exported_compiler_plugins", listOf("@lib//:rpc-plugin"))
         }
-        else if (module.name == "fleet.noria.cells" ||
-                 module.name == "fleet.noria.html" ||
-                 module.name == "fleet.noria.ui" ||
-                 module.name == "fleet.noria.ui.examples" ||
-                 module.name == "fleet.noria.windowManagement.api" ||
-                 module.name == "fleet.noria.windowManagement.extensions" ||
-                 module.name == "fleet.noria.windowManagement.impl" ||
-                 module.name == "fleet.noria.windowManagement.implDesktopMacOS") {
+        else if (module.name == "fleet.noria.cells") {
           option("exported_compiler_plugins", listOf("@lib//:noria-plugin"))
         }
 
