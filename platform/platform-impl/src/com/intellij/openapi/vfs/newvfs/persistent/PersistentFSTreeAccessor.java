@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -24,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.IntPredicate;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER;
 
@@ -127,11 +127,14 @@ public class PersistentFSTreeAccessor {
   }
 
   /**
-   * @return array if children fileIds for the given fileId
-   * MAYBE rename to childrenIds()?
+   * Scan each child if parentId, and invokes consumer for each childId.
+   * Scanning is stopped early if the consumer returns true (='found')
+   *
+   * @return true, if consumer returns true for any childId passed in, false otherwise
    */
   @VisibleForTesting
-  public int @NotNull [] listIds(int fileId) throws IOException {
+  public boolean forEachChild(int fileId,
+                              @NotNull IntPredicate childConsumer) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
     if (fileId == SUPER_ROOT_ID) {
       throw new AssertionError(
@@ -139,19 +142,22 @@ public class PersistentFSTreeAccessor {
     }
 
     try (DataInputStream input = attributeAccessor.readAttribute(fileId, CHILDREN_ATTR)) {
-      if (input == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
+      if (input == null) return false;
 
       PersistentFSRecordsStorage records = connection.records();
       int maxID = records.maxAllocatedID();
 
       int count = DataInputOutputUtil.readINT(input);
-      int[] children = ArrayUtil.newIntArray(count);
       int prevId = fileId;
       for (int i = 0; i < count; i++) {
-        prevId = children[i] = DataInputOutputUtil.readINT(input) + prevId;
+        int childId = DataInputOutputUtil.readINT(input) + prevId;
+        if (childConsumer.test(childId)) {
+          return true;
+        }
+        prevId = childId;
         checkChildIdValid(fileId, prevId, i, maxID);
       }
-      return children;
+      return false;
     }
   }
 

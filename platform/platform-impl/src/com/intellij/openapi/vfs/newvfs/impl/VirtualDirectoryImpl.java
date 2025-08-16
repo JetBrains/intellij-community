@@ -900,7 +900,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         existingNames.add(vfsData.getNameByFileId(id));
       }
       int parentId = getId();
-      existingNames.addAll(peer.listNames(parentId));
+      existingNames.addAll(ContainerUtil.map(peer.list(parentId).children, ChildInfo::getName));
 
       validateAgainst(childrenToCreate, existingNames);
 
@@ -1044,15 +1044,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static boolean isInPersistentChildren(@NotNull PersistentFSImpl pFS,
                                                 int parentId,
                                                 int childId) {
-    //MAYBE RC: better to check childId is in children _without_ loading _all_ the children (which could be quite large)
-    //          Maybe create FSRecordsImpl.isInChildren(parentId, childId) method?
-    int[] childrenFromPersistence = pFS.peer().listIds(parentId);
-    for (int id : childrenFromPersistence) {
-      if (id == childId) {
-        return true;
-      }
-    }
-    return false;
+    return pFS.peer().forEachChildOf(
+      parentId,
+      _childId -> (_childId == childId)
+    );
   }
 
   /**

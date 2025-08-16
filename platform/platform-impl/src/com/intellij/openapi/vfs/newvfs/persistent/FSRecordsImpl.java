@@ -40,7 +40,6 @@ import java.io.*;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -550,8 +549,11 @@ public final class FSRecordsImpl implements Closeable {
     childrenIds.add(fileId);
     for (int i = 0; i < childrenIds.size(); i++) {
       int id = childrenIds.getInt(i);
-      //FIXME RC: what if id is already deleted -> listIds(id) fails with 'attribute already deleted'?
-      childrenIds.addElements(childrenIds.size(), listIds(id));
+      //FIXME RC: what if id is already deleted -> forEachChildOf(id) fails with 'attribute already deleted'?
+      forEachChildOf(id, childId -> {
+        childrenIds.add(childId);
+        return false;
+      });
     }
 
     PersistentFSRecordsStorage records = connection.records();
@@ -719,19 +721,28 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  public int @NotNull [] listIds(int fileId) {
+  /**
+   * Scan each child if parentId, and invokes consumer for each childId.
+   * Scanning is stopped early if the consumer returns true (='found')
+   * <p/>
+   * This method is intended to be used with fast childConsumers, that do nothing fancy -- it is called while storage lock(s)
+   * are acquired. If you need longer processing, use {@link #list(int)}, get children list in memory, and do whatever you like
+   * with it
+   *
+   * @return true, if consumer returns true for any childId passed in, false otherwise
+   */
+  public boolean forEachChildOf(int parentId,
+                                @NotNull IntPredicate childConsumer) {
+    StampedLock lock = fileRecordLock.lockFor(parentId);
+    long readLockStamp = lock.readLock();
     try {
-      StampedLock lock = fileRecordLock.lockFor(fileId);
-      long readLockStamp = lock.readLock();
-      try {
-        return treeAccessor.listIds(fileId);
-      }
-      finally {
-        lock.unlockRead(readLockStamp);
-      }
+      return treeAccessor.forEachChild(parentId, childConsumer);
     }
     catch (IOException | IllegalArgumentException e) {
       throw handleError(e);
+    }
+    finally {
+      lock.unlockRead(readLockStamp);
     }
   }
 
@@ -745,11 +756,6 @@ public final class FSRecordsImpl implements Closeable {
     catch (IOException | IllegalArgumentException e) {
       throw handleError(e);
     }
-  }
-
-  //TODO RC: remove the method, it is used in only 1 place for debug logging -- could be re-implemented there
-  public @Unmodifiable @NotNull List<CharSequence> listNames(int parentId) {
-    return ContainerUtil.map(list(parentId).children, ChildInfo::getName);
   }
 
   /**

@@ -345,12 +345,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   public String @NotNull [] listPersisted(@NotNull VirtualFile parent) {
     checkReadAccess();
 
-    int[] childrenIds = vfsPeer.listIds(fileId(parent));
-    String[] names = ArrayUtil.newStringArray(childrenIds.length);
-    for (int i = 0; i < childrenIds.length; i++) {
-      names[i] = vfsPeer.getName(childrenIds[i]);
-    }
-    return names;
+    int parentId = fileId(parent);
+    ListResult childrenList = vfsPeer.list(parentId);
+    return childrenList.children.stream()
+      .map(childInfo -> childInfo.getName().toString())
+      .toArray(String[]::new);
   }
 
 
@@ -2660,8 +2659,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     while (!ids.isEmpty()) {
       int id = ids.popInt();
       if (isDirectory(getFileAttributes(id))) {
-        int[] children = vfsPeer.listIds(id);
-        ids.addElements(ids.size(), children, 0, children.length);
+        vfsPeer.forEachChildOf(id, childId -> {
+          ids.add(childId);
+          return false;
+        });
       }
       else {
         doCleanPersistedContent(id);

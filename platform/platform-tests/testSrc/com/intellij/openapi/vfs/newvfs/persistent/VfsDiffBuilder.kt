@@ -99,8 +99,8 @@ internal object VfsDiffBuilder {
         diff.add(DiffElement.FileStatusChanged(id, removed, added))
       }
 
-      val baseChildren = baseVfs.listIds(id).toList().sorted()
-      val targetChildren = targetVfs.listIds(id).toList().sorted()
+      val baseChildren = baseVfs.list(id).children.map { it.id }.toList().sorted()
+      val targetChildren = targetVfs.list(id).children.map { it.id }.toList().sorted()
 
       if (baseChildren != targetChildren) {
         val removed = baseChildren - targetChildren.toSet()
