@@ -435,7 +435,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
         }
     }
 
-    protected fun doExtractSuperTest(unused: String, isInterface: Boolean) {
+    protected open fun doExtractSuperTest(unused: String, isInterface: Boolean) {
         doTest(checkAdditionalAfterdata = true) { file ->
             file as KtFile
 

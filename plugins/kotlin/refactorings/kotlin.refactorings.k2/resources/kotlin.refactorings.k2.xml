@@ -29,6 +29,12 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoStorageSupport"
             serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.pullUp.K2MemberInfoStorageSupport"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperConflictSearcher"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.extractClass.K2ExtractSuperConflictSearcher"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperRefactoring"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.extractClass.K2ExtractSuperRefactoring"/>
     <lang.refactoringSupport language="kotlin"
                              implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringSupportProvider"/>
     <refactoring.safeDeleteProcessor

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ui
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle
@@ -42,7 +43,9 @@ class KotlinExtractSuperclassDialog(
     override fun createMemberInfoModel(): MemberInfoModelBase {
         return object : MemberInfoModelBase(
             originalClass,
-            extractClassMembers(originalClass),
+            ActionUtil.underModalProgress(project, RefactoringBundle.message("refactoring.prepare.progress")) {
+                extractClassMembers(originalClass)
+            },
             getInterfaceContainmentVerifier { selectedMembers }
         ) {
             override fun isAbstractEnabled(memberInfo: KotlinMemberInfo): Boolean {

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ui
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -44,10 +45,15 @@ class KotlinExtractInterfaceDialog(
     }
 
     override fun createMemberInfoModel(): MemberInfoModelBase {
-        val extractableMemberInfos = extractClassMembers(originalClass).filterNot {
-            val member = it.member
-            member is KtClass && member.hasModifier(KtTokens.INNER_KEYWORD) ||
-                    member is KtParameter && member.hasModifier(KtTokens.PRIVATE_KEYWORD)
+        val extractableMemberInfos = ActionUtil.underModalProgress(
+            project,
+            RefactoringBundle.message("refactoring.prepare.progress"),
+        ) {
+            extractClassMembers(originalClass).filterNot {
+                val member = it.member
+                member is KtClass && member.hasModifier(KtTokens.INNER_KEYWORD) ||
+                        member is KtParameter && member.hasModifier(KtTokens.PRIVATE_KEYWORD)
+            }
         }
         extractableMemberInfos.forEach { it.isToAbstract = true }
         return object : MemberInfoModelBase(
