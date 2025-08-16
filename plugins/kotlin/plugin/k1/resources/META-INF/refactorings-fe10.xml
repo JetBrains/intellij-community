@@ -108,7 +108,7 @@
 
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperRefactoring"
-            serviceImplementation="org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuperRefactoring"/>
+            serviceImplementation="org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.K1ExtractSuperRefactoring"/>
 
     <moveFileHandler
             implementation="org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.MoveKotlinFileHandler"/>

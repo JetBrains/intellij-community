@@ -61,7 +61,7 @@ internal class K1ExtractSuperConflictSearcher : KotlinExtractSuperConflictSearch
                 }
         }
 
-        val elementsToMove = ExtractSuperRefactoring.getElementsToMove(memberInfos, originalClass, isExtractInterface).keys
+        val elementsToMove = K1ExtractSuperRefactoring.getElementsToMove(memberInfos, originalClass, isExtractInterface).keys
 
         val moveTarget = if (targetParent is PsiDirectory) {
             val targetPackage = targetParent.getPackage() ?: return conflicts

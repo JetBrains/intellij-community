@@ -40,7 +40,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addIfNotNull
 
-internal class ExtractSuperRefactoring private constructor(): KotlinExtractSuperRefactoring {
+internal class K1ExtractSuperRefactoring private constructor(): KotlinExtractSuperRefactoring {
     companion object {
         internal fun getElementsToMove(
             memberInfos: Collection<KotlinMemberInfo>,
