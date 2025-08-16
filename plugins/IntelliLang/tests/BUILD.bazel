@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.platform.langInjection.tests` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "tests_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
 
 jvm_library(
   name = "tests",
@@ -38,7 +44,8 @@ jvm_library(
     "//plugins/IntelliLang/plugin",
     "//plugins/IntelliLang/backend",
     "//plugins/markdown/plugin:plugin-main",
-  ]
+  ],
+  runtime_deps = [":tests_test_resources"]
 )
 ### auto-generated section `build intellij.platform.langInjection.tests` end
 
