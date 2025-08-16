@@ -1,6 +1,5 @@
 <idea-plugin>
   <dependencies>
-    <plugin id="com.intellij.java"/>
     <module name="intellij.platform.langInjection"/>
     <module name="intellij.platform.langInjection.backend"/>
     <module name="intellij.regexp"/>

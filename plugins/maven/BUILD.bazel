@@ -44,7 +44,6 @@ jvm_library(
     "//xml/impl",
     "//platform/util/progress",
     "//platform/usageView",
-    "//plugins/IntelliLang/xml-support:xml-langInjection",
     "//xml/dom-openapi:dom",
     "//xml/dom-impl",
     "//plugins/properties:properties-backend",

@@ -56,6 +56,8 @@
     <module name="intellij.java.syntax" loading="embedded"/>
     <module name="intellij.java.psi.impl" loading="embedded"/>
     <module name="intellij.java.psi" loading="embedded"/>
+    <module name="intellij.java.langInjection"/>
+    <module name="intellij.java.langInjection.jps"/>
 
     <module name="intellij.debugger.collections.visualizer.jvm"/>
     <module name="intellij.profiler.ultimate"/>

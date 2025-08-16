@@ -44,7 +44,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//plugins/IntelliLang:langInjection",
     "//plugins/kotlin/base/project-structure",
-    "//plugins/IntelliLang/java-support:java-langInjection",
+    "//java/langInjection",
     "//plugins/kotlin/base/psi",
     "@lib//:kotlinc-analysis-api",
     "//plugins/kotlin/base/analysis",

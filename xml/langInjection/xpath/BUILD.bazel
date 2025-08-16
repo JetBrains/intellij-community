@@ -13,7 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "//plugins/IntelliLang/xml-support:xml-langInjection",
+    "//xml/langInjection",
     "//plugins/xpath",
     "//xml/xml-psi-impl:psi-impl",
     "//xml/xml-parser:parser",

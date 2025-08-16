@@ -8,9 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.langInjection" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.xml.langInjection" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.langInjection.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.langInjection.backend" scope="RUNTIME" />
   </component>
 </module>

@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "java-langInjection-jps_resources",
+  name = "jps_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "java-langInjection-jps",
+  name = "jps",
   module_name = "intellij.java.langInjection.jps",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -24,6 +24,6 @@ jvm_library(
     "//platform/util/jdom",
     "@lib//:jetbrains-annotations",
   ],
-  runtime_deps = [":java-langInjection-jps_resources"]
+  runtime_deps = [":jps_resources"]
 )
 ### auto-generated section `build intellij.java.langInjection.jps` end

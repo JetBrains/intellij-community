@@ -159,8 +159,8 @@ jvm_library(
   runtime_deps = [
     ":tests_test_resources",
     "//community-resources:customization",
-    "//plugins/IntelliLang/java-support:java-langInjection",
-    "//plugins/IntelliLang/xml-support:xml-langInjection",
+    "//java/langInjection",
+    "//xml/langInjection",
   ]
 )
 ### auto-generated section `build intellij.java.tests` end

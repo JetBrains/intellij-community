@@ -1,6 +1,7 @@
 <idea-plugin>
   <dependencies>
     <plugin id="XPathView"/>
+    <plugin id="org.intellij.intelliLang"/>
     <module name="intellij.xml.langInjection"/>
     <module name="intellij.platform.backend"/>
   </dependencies>
