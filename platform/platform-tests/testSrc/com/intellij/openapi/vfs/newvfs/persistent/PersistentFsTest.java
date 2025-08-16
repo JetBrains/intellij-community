@@ -1016,7 +1016,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       return null;
     });
 
-    PersistentFSImpl.moveChildrenRecords(firstDirId, secondDirId);
+    PersistentFSImpl pFS = (PersistentFSImpl)PersistentFSImpl.getInstance();
+    pFS.moveChildren(firstDirId, secondDirId);
 
     assertEmpty(refreshAndFind(firstDirIoFile).getChildren());
 

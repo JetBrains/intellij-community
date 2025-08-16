@@ -2461,12 +2461,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return new ChildInfoImpl(newChildId, nameId, attributes, children, symLinkTarget);
   }
 
-  /** @deprecated use instance {@link PersistentFSImpl#moveChildren(int, int)} instead */
-  @Deprecated(forRemoval = true)
-  public static void moveChildrenRecords(int fromParentId, int toParentId) {
-    ((PersistentFSImpl)getInstance()).moveChildren(fromParentId, toParentId);
-  }
-
+  /**
+   * Move all the file-records that are currently children of fromParentId to toParentId.
+   * Operates on VFS persistent cache only, doesn't touch actual file system
+   */
   public void moveChildren(int fromParentId, int toParentId) {
     if (fromParentId == -1) return;
     if (fromParentId == FSRecords.NULL_FILE_ID) {
