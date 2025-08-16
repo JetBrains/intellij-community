@@ -149,6 +149,7 @@ class DisplayDataObject:
         self.image_width = width
         self.image_bytes = image_bytes
         self.html_string = html_string
+        self.session_id = os.getenv("PYCHARM_PLOTS_CONSOLE_ID") or str(os.getpid())
 
     def _repr_display_(self):
         image_bytes_base64 = base64.b64encode(self.image_bytes)
@@ -158,7 +159,8 @@ class DisplayDataObject:
             'plot_index': self.plot_index,
             'image_width': self.image_width,
             'image_base64': image_bytes_base64,
-            'html_string': self.html_string
+            'html_string': self.html_string,
+            'session_id': self.session_id,
         }
         return ('pycharm-matplotlib', body)
 
