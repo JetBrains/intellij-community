@@ -1,243 +1,204 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.fileEditor;
+package com.intellij.openapi.fileEditor
 
-import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContexts;
-import com.intellij.codeInsight.multiverse.EditorContextManager;
-import com.intellij.codeInsight.multiverse.SingleEditorContext;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.codeInsight.multiverse.EditorContextManager.Companion.getInstance
+import com.intellij.codeInsight.multiverse.SingleEditorContext
+import com.intellij.codeInsight.multiverse.anyContext
+import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataKey.Companion.create
+import com.intellij.openapi.editor.*
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Allows opening file in editor, optionally at specific line/column position.
  */
-public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<OpenFileDescriptor> {
-  /**
-   * Tells descriptor to navigate in specific editor rather than file editor in the main IDE window.
-   * For example, if you want to navigate in an editor embedded into modal dialog, you should provide this data.
-   */
-  public static final DataKey<Editor> NAVIGATE_IN_EDITOR = DataKey.create("NAVIGATE_IN_EDITOR");
+open class OpenFileDescriptor private constructor(
+  val project: Project,
+  private val myFile: VirtualFile,
+  @get:ApiStatus.Internal val context: CodeInsightContext,
+  val line: Int,
+  val column: Int,
+  private val myOffset: Int,
+  persistent: Boolean,
+) : FileEditorNavigatable, Comparable<OpenFileDescriptor> {
+  val rangeMarker: RangeMarker?
 
-  private final Project myProject;
-  private final VirtualFile myFile;
-  private final int myLogicalLine;
-  private final int myLogicalColumn;
-  private final int myOffset;
-  private final RangeMarker myRangeMarker;
-  private final @NotNull CodeInsightContext myContext;
-
-  private boolean myUseCurrentWindow;
-  private boolean myUsePreviewTab;
-  private ScrollType myScrollType = ScrollType.CENTER;
+  private var myUseCurrentWindow = false
+  private var myUsePreviewTab = false
+  private var myScrollType = ScrollType.CENTER
 
   @ApiStatus.Experimental
-  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, @NotNull CodeInsightContext context, int offset) {
-    this(project, file, context, -1, -1, offset, false);
-  }
+  constructor(project: Project, file: VirtualFile, context: CodeInsightContext, offset: Int) : this(project, file, context, -1, -1, offset,
+                                                                                                    false)
 
-  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int offset) {
-    this(project, file, CodeInsightContexts.anyContext(), - 1, -1, offset, false);
-  }
+  constructor(project: Project, file: VirtualFile, offset: Int) : this(project, file, anyContext(), -1, -1, offset, false)
 
-  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int logicalLine, int logicalColumn) {
-    this(project, file, CodeInsightContexts.anyContext(), logicalLine, logicalColumn, -1, false);
-  }
+  constructor(project: Project, file: VirtualFile, logicalLine: Int, logicalColumn: Int) : this(project, file, anyContext(), logicalLine,
+                                                                                                logicalColumn, -1, false)
 
-  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int logicalLine, int logicalColumn, boolean persistent) {
-    this(project, file, CodeInsightContexts.anyContext(), logicalLine, logicalColumn, -1, persistent);
-  }
+  constructor(project: Project, file: VirtualFile, logicalLine: Int, logicalColumn: Int, persistent: Boolean) : this(project, file,
+                                                                                                                     anyContext(),
+                                                                                                                     logicalLine,
+                                                                                                                     logicalColumn, -1,
+                                                                                                                     persistent)
 
-  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file) {
-    this(project, file, CodeInsightContexts.anyContext(), -1, -1, -1, false);
-  }
+  constructor(project: Project, file: VirtualFile) : this(project, file, anyContext(), -1, -1, -1, false)
 
-  private OpenFileDescriptor(
-    @NotNull Project project,
-    @NotNull VirtualFile file,
-    @NotNull CodeInsightContext context,
-    int logicalLine,
-    int logicalColumn,
-    int offset,
-    boolean persistent
-  ) {
-    myProject = project;
-    myFile = file;
-    myContext = context;
-    myLogicalLine = logicalLine;
-    myLogicalColumn = logicalColumn;
-    myOffset = offset;
-    if (offset >= 0) {
-      myRangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(file, offset);
+  init {
+    if (myOffset >= 0) {
+      this.rangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(myFile, myOffset)
     }
-    else if (logicalLine >= 0 ){
-      myRangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(file, logicalLine, Math.max(0, logicalColumn), persistent);
+    else if (line >= 0) {
+      this.rangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(myFile, line, max(0, column), persistent)
     }
     else {
-      myRangeMarker = null;
+      this.rangeMarker = null
     }
   }
 
-  @Override
-  public @NotNull VirtualFile getFile() {
-    return myFile;
+  override fun getFile(): VirtualFile {
+    return myFile
   }
 
-  @ApiStatus.Internal
-  public @NotNull CodeInsightContext getContext() {
-    return myContext;
+  open val offset: Int
+    get() = if (this.rangeMarker != null && rangeMarker.isValid()) rangeMarker.getStartOffset() else myOffset
+
+  override fun navigate(requestFocus: Boolean) {
+    FileNavigator.getInstance().navigate(this, requestFocus)
   }
 
-  public RangeMarker getRangeMarker() {
-    return myRangeMarker;
-  }
-
-  public int getOffset() {
-    return myRangeMarker != null && myRangeMarker.isValid() ? myRangeMarker.getStartOffset() : myOffset;
-  }
-
-  public int getLine() {
-    return myLogicalLine;
-  }
-
-  public int getColumn() {
-    return myLogicalColumn;
-  }
-
-  @Override
-  public void navigate(boolean requestFocus) {
-    FileNavigator.getInstance().navigate(this, requestFocus);
-  }
-
-  public boolean navigateInEditor(@NotNull Project project, boolean requestFocus) {
-    return FileNavigator.getInstance().navigateInEditor(this, requestFocus);
+  open fun navigateInEditor(project: Project, requestFocus: Boolean): Boolean {
+    return FileNavigator.getInstance().navigateInEditor(this, requestFocus)
   }
 
 
-  public void navigateIn(@NotNull Editor e) {
-    navigateInEditor(this, e);
+  open fun navigateIn(e: Editor) {
+    navigateInEditor(this, e)
   }
 
-  @ApiStatus.Internal
-  public static void navigateInEditor(@NotNull OpenFileDescriptor descriptor, @NotNull Editor e) {
-    int offset = descriptor.getOffset();
-    CaretModel caretModel = e.getCaretModel();
-    boolean caretMoved = false;
-    if (descriptor.getLine() >= 0) {
-      LogicalPosition pos = new LogicalPosition(descriptor.getLine(), Math.max(descriptor.getColumn(), 0));
-      if (offset < 0 || offset == e.logicalPositionToOffset(pos)) {
-        caretModel.removeSecondaryCarets();
-        caretModel.moveToLogicalPosition(pos);
-        caretMoved = true;
-      }
-    }
-    if (!caretMoved && offset >= 0) {
-      caretModel.removeSecondaryCarets();
-      caretModel.moveToOffset(Math.min(offset, e.getDocument().getTextLength()));
-      caretMoved = true;
-    }
+  private fun scrollToCaret(e: Editor) {
+    e.getScrollingModel().scrollToCaret(myScrollType)
+  }
 
-    if (caretMoved) {
-      e.getSelectionModel().removeSelection();
-      FileEditorManager.getInstance(descriptor.getProject()).runWhenLoaded(e, () -> {
-        descriptor.scrollToCaret(e);
-        unfoldCurrentLine(e);
-      });
-    }
+  override fun canNavigate(): Boolean {
+    return FileNavigator.getInstance().canNavigate(this)
+  }
 
-    if (CodeInsightContexts.isSharedSourceSupportEnabled(descriptor.getProject())) {
-      CodeInsightContext context = descriptor.getContext();
-      if (context != CodeInsightContexts.anyContext()) {
-        EditorContextManager.getInstance(descriptor.getProject()).setEditorContext(e, new SingleEditorContext(context));
-      }
+  override fun canNavigateToSource(): Boolean {
+    return FileNavigator.getInstance().canNavigateToSource(this)
+  }
+
+  fun setUseCurrentWindow(search: Boolean): OpenFileDescriptor {
+    myUseCurrentWindow = search
+    return this
+  }
+
+  override fun isUseCurrentWindow(): Boolean {
+    return myUseCurrentWindow
+  }
+
+  fun setUsePreviewTab(usePreviewTab: Boolean): OpenFileDescriptor {
+    myUsePreviewTab = usePreviewTab
+    return this
+  }
+
+  override fun isUsePreviewTab(): Boolean {
+    return myUsePreviewTab
+  }
+
+  fun setScrollType(scrollType: ScrollType) {
+    myScrollType = scrollType
+  }
+
+  fun dispose() {
+    if (this.rangeMarker != null) {
+      rangeMarker.dispose()
     }
   }
 
-  @ApiStatus.Internal
-  public static void unfoldCurrentLine(@NotNull Editor editor) {
-    FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
-    TextRange range = getRangeToUnfoldOnNavigation(editor);
-    editor.getFoldingModel().runBatchFoldingOperation(() -> {
-      for (FoldRegion region : allRegions) {
-        if (!region.isExpanded() && range.intersects(region)) {
-          region.setExpanded(true);
+  override fun compareTo(o: OpenFileDescriptor): Int {
+    var i = project.getName().compareTo(o.project.getName())
+    if (i != 0) return i
+    i = myFile.getName().compareTo(o.myFile.getName())
+    if (i != 0) return i
+    if (this.rangeMarker != null) {
+      if (o.rangeMarker == null) return 1
+      i = rangeMarker.getStartOffset() - o.rangeMarker.getStartOffset()
+      if (i != 0) return i
+      return rangeMarker.getEndOffset() - o.rangeMarker.getEndOffset()
+    }
+    return if (o.rangeMarker == null) 0 else -1
+  }
+
+  companion object {
+    /**
+     * Tells descriptor to navigate in specific editor rather than file editor in the main IDE window.
+     * For example, if you want to navigate in an editor embedded into modal dialog, you should provide this data.
+     */
+    val NAVIGATE_IN_EDITOR: DataKey<Editor?> = create<Editor?>("NAVIGATE_IN_EDITOR")
+
+    @ApiStatus.Internal
+    fun navigateInEditor(descriptor: OpenFileDescriptor, e: Editor) {
+      val offset = descriptor.offset
+      val caretModel = e.getCaretModel()
+      var caretMoved = false
+      if (descriptor.line >= 0) {
+        val pos = LogicalPosition(descriptor.line, max(
+          descriptor.column, 0))
+        if (offset < 0 || offset == e.logicalPositionToOffset(pos)) {
+          caretModel.removeSecondaryCarets()
+          caretModel.moveToLogicalPosition(pos)
+          caretMoved = true
         }
       }
-    });
-  }
+      if (!caretMoved && offset >= 0) {
+        caretModel.removeSecondaryCarets()
+        caretModel.moveToOffset(min(offset, e.getDocument().getTextLength()))
+        caretMoved = true
+      }
 
-  public static @NotNull TextRange getRangeToUnfoldOnNavigation(@NotNull Editor editor) {
-    int offset = editor.getCaretModel().getOffset();
-    int line = editor.getDocument().getLineNumber(offset);
-    int start = editor.getDocument().getLineStartOffset(line);
-    int end = editor.getDocument().getLineEndOffset(line);
-    return new TextRange(start, end);
-  }
+      if (caretMoved) {
+        e.getSelectionModel().removeSelection()
+        FileEditorManager.getInstance(descriptor.project).runWhenLoaded(e, Runnable {
+          descriptor.scrollToCaret(e)
+          unfoldCurrentLine(e)
+        })
+      }
 
-  private void scrollToCaret(@NotNull Editor e) {
-    e.getScrollingModel().scrollToCaret(myScrollType);
-  }
-
-  @Override
-  public boolean canNavigate() {
-    return FileNavigator.getInstance().canNavigate(this);
-  }
-
-  @Override
-  public boolean canNavigateToSource() {
-    return FileNavigator.getInstance().canNavigateToSource(this);
-  }
-
-  public @NotNull Project getProject() {
-    return myProject;
-  }
-
-  public @NotNull OpenFileDescriptor setUseCurrentWindow(boolean search) {
-    myUseCurrentWindow = search;
-    return this;
-  }
-
-  @Override
-  public boolean isUseCurrentWindow() {
-    return myUseCurrentWindow;
-  }
-
-  public @NotNull OpenFileDescriptor setUsePreviewTab(boolean usePreviewTab) {
-    myUsePreviewTab = usePreviewTab;
-    return this;
-  }
-
-  @Override
-  public boolean isUsePreviewTab() {
-    return myUsePreviewTab;
-  }
-
-  public void setScrollType(@NotNull ScrollType scrollType) {
-    myScrollType = scrollType;
-  }
-
-  public void dispose() {
-    if (myRangeMarker != null) {
-      myRangeMarker.dispose();
+      if (isSharedSourceSupportEnabled(descriptor.project)) {
+        val context = descriptor.context
+        if (context !== anyContext()) {
+          getInstance(descriptor.project).setEditorContext(e, SingleEditorContext(context))
+        }
+      }
     }
-  }
 
-  @Override
-  public int compareTo(@NotNull OpenFileDescriptor o) {
-    int i = myProject.getName().compareTo(o.myProject.getName());
-    if (i != 0) return i;
-    i = myFile.getName().compareTo(o.myFile.getName());
-    if (i != 0) return i;
-    if (myRangeMarker != null) {
-      if (o.myRangeMarker == null) return 1;
-      i = myRangeMarker.getStartOffset() - o.myRangeMarker.getStartOffset();
-      if (i != 0) return i;
-      return myRangeMarker.getEndOffset() - o.myRangeMarker.getEndOffset();
+    @ApiStatus.Internal
+    fun unfoldCurrentLine(editor: Editor) {
+      val allRegions = editor.getFoldingModel().getAllFoldRegions()
+      val range: TextRange = getRangeToUnfoldOnNavigation(editor)
+      editor.getFoldingModel().runBatchFoldingOperation(Runnable {
+        for (region in allRegions) {
+          if (!region.isExpanded() && range.intersects(region)) {
+            region.setExpanded(true)
+          }
+        }
+      })
     }
-    return o.myRangeMarker == null ? 0 : -1;
+
+    fun getRangeToUnfoldOnNavigation(editor: Editor): TextRange {
+      val offset = editor.getCaretModel().getOffset()
+      val line = editor.getDocument().getLineNumber(offset)
+      val start = editor.getDocument().getLineStartOffset(line)
+      val end = editor.getDocument().getLineEndOffset(line)
+      return TextRange(start, end)
+    }
   }
 }
