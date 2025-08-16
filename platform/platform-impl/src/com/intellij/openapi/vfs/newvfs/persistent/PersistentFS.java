@@ -116,6 +116,11 @@ public abstract class PersistentFS extends ManagingFS {
 
   public abstract int getCurrentContentId(@NotNull VirtualFile file);
 
-  // 'true' if the FS persisted at least one child, or it has never been queried for children
-  public abstract boolean mayHaveChildren(int id);
+  /**
+   * @return false if fileId's children are known to VFS, and they are empty (=have no children), true otherwise
+   * (=either do have known children, or children are unknown, hence _may_ be present)
+   */
+  //MAYBE RC: rename to maybeHaveChildren() or to !hasZeroChildren()?
+  //MAYBE RC: make it @Internal?
+  public abstract boolean mayHaveChildren(int fileId);
 }

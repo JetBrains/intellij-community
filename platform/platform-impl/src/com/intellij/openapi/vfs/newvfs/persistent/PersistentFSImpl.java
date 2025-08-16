@@ -298,8 +298,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     catch (ProcessCanceledException e) {
       // Application may be closed before `LocalFileSystem` gets initialized()
       //noinspection IncorrectCancellationExceptionHandling
-      LOG.warn("Detected cancellation during dispose of PersistentFS. Application was likely closed before VFS got completely initialized",
-               e);
+      LOG.warn("Detected cancellation during dispose of PersistentFS. " +
+               "Application was likely closed before VFS got completely initialized", e);
     }
     otelMonitoringHandle.close();
   }
@@ -2680,7 +2680,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   public boolean mayHaveChildren(int id) {
     try {
-      return vfsPeer.mayHaveChildren(id);
+      return vfsPeer.maybeHaveChildren(id);
     }
     catch (IllegalArgumentException e) {
       //here we +/- sure the id _should_ exist => give VFS a kick to rebuild

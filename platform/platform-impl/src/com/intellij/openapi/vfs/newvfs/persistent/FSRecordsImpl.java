@@ -689,12 +689,16 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  boolean mayHaveChildren(int fileId) {
+  /**
+   * @return false if fileId's children are known to VFS, and they are empty (=have no children),
+   * true otherwise (=either do have known children, or children are unknown, hence _may_ be present)
+   */
+  boolean maybeHaveChildren(int fileId) {
     try {
       StampedLock lock = fileRecordLock.lockFor(fileId);
       long readLockStamp = lock.readLock();
       try {
-        return treeAccessor.mayHaveChildren(fileId);
+        return treeAccessor.maybeHaveChildren(fileId);
       }
       finally {
         lock.unlockRead(readLockStamp);
@@ -705,6 +709,10 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
+  /**
+   * @return true if fileId's children were accessed -- i.e. the apt children record exists.
+   * The record could be empty, though: i.e. children.count=0
+   */
   boolean wereChildrenAccessed(int fileId) {
     try {
       StampedLock lock = fileRecordLock.lockFor(fileId);
@@ -746,9 +754,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  /**
-   * @return child infos (sorted by id) without (potentially expensive) name (or without even nameId if `loadNameId` is false)
-   */
+  /** @return child infos for parentId */
   public @NotNull ListResult list(int parentId) {
     try {
       return loadChildrenUnderRecordLock(parentId);
@@ -1662,8 +1668,8 @@ public final class FSRecordsImpl implements Closeable {
     //TODO RC: catch and rethrow InterruptedIOException & OoMError as in readContent(),
     //         thus bypassing handleError() and VFS rebuild. But I'm not sure that writeContent
     //         is really safe against thread-interruption/OoM: i.e. it could be InterruptedException
-    //         or OoM really left RefCountingContentStorage in a inconsistent state -- more
-    //         thoughtful analysis (and likely a tests!) needed
+    //         or OoM really left ContentStorage in a inconsistent state -- more thoughtful analysis
+    //         (and likely a tests!) needed
     catch (Throwable t) {
       throw handleError(t);
     }

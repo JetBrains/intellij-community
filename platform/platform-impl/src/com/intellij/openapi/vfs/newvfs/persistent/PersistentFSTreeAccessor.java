@@ -161,7 +161,7 @@ public class PersistentFSTreeAccessor {
     }
   }
 
-  boolean mayHaveChildren(int fileId) throws IOException {
+  boolean maybeHaveChildren(int fileId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
     if (fileId == SUPER_ROOT_ID) {
       throw new AssertionError(
