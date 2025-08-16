@@ -20,6 +20,8 @@ import kotlin.io.path.createParentDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.outputStream
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 import kotlin.reflect.jvm.javaMethod
 
 enum class MCPClientNames(val displayName: String){
@@ -32,6 +34,7 @@ enum class MCPClientNames(val displayName: String){
   CURSOR_GLOBAL("Cursor"),
   CLAUDE_CODE_PROJECT("Claude Code (Project)"),
   CLAUDE_CODE_GLOBAL("Claude Code"),
+  GOOSE_GLOBAL("Goose"),
 }
 
 open class McpClient(
@@ -239,5 +242,131 @@ class VSCodeClient(configPath: Path) : McpClient(MCPClientNames.VS_CODE_GLOBAL, 
         put(JETBRAINS_SERVER_KEY, json.encodeToJsonElement<ServerConfig>(serverEntry))
       })
     }
+  }
+}
+
+class GooseClient(configPath: Path) : McpClient(MCPClientNames.GOOSE_GLOBAL, configPath) {
+  companion object {
+    private const val JETBRAINS_EXTENSION_KEY = "jetbrains-mcp"
+    private val LEGACY_EXTENSION_KEYS = listOf("jetbrains2", "jetbrains")
+    private const val GOOSE_SSE_URI = "http://localhost:64342/sse"
+  }
+
+  override fun isConfigured(): Boolean? {
+    // Check if the jetbrains-mcp (or legacy jetbrains2) extension exists and is enabled in the YAML config
+    if (!configPath.exists()) return null
+
+    fun sectionEnabled(lines: List<String>, key: String): Boolean {
+      var inSection = false
+      for (line in lines) {
+        val trimmed = line.trim()
+        if (trimmed.startsWith("$key:")) { inSection = true; continue }
+        if (inSection) {
+          if (trimmed.isNotEmpty() && !line.startsWith(" ") && !line.startsWith("\t")) break
+          if (trimmed.startsWith("enabled:")) return trimmed.contains("true")
+        }
+      }
+      return false
+    }
+
+    return runCatching {
+      val content = configPath.readText()
+      if (!content.contains("extensions:")) return@runCatching null
+      val lines = content.lines()
+      // Prefer the new key; fall back to legacy keys
+      sectionEnabled(lines, JETBRAINS_EXTENSION_KEY) ||
+      LEGACY_EXTENSION_KEYS.any { sectionEnabled(lines, it) }
+    }.getOrNull()
+  }
+
+  override fun configure() {
+    val yamlContent = if (configPath.exists()) {
+      configPath.readText()
+    } else {
+      // Create a minimal config with extensions section
+      """
+      |extensions:
+      """.trimMargin()
+    }
+
+    fun ensureField(lines: MutableList<String>, startIdx: Int, field: String, value: String) {
+      var i = startIdx + 1
+      var updated = false
+      while (i < lines.size) {
+        val l = lines[i]
+        val trimmed = l.trim()
+        if (trimmed.isNotEmpty() && !l.startsWith(" ") && !l.startsWith("\t")) break
+        if (trimmed.startsWith("$field:")) { lines[i] = l.substringBefore("$field:") + "$field: $value"; updated = true; break }
+        i++
+      }
+      if (!updated) lines.add(startIdx + 1, "    $field: $value")
+    }
+
+    fun renameKey(lines: MutableList<String>, fromKey: String, toKey: String) {
+      val idx = lines.indexOfFirst { it.trim().startsWith("$fromKey:") }
+      if (idx >= 0) {
+        val indent = lines[idx].substringBefore(fromKey)
+        lines[idx] = "${indent}$toKey:"
+      }
+    }
+
+    val updatedContent = run {
+      val sseBlock = """
+        |  $JETBRAINS_EXTENSION_KEY:
+        |    type: sse
+        |    uri: $GOOSE_SSE_URI
+        |    enabled: true
+        |    description: JetBrains IDE MCP Server
+        |    timeout: 300
+      """.trimMargin()
+
+      if (yamlContent.contains("extensions:")) {
+        val lines = yamlContent.lines().toMutableList()
+        val extensionsIndex = lines.indexOfFirst { it.trim().startsWith("extensions:") }
+
+        // Prefer existing new key; otherwise migrate legacy if present; otherwise insert new
+        var keyIndex = lines.indexOfFirst { it.trim().startsWith("$JETBRAINS_EXTENSION_KEY:") }
+        if (keyIndex >= 0) {
+          ensureField(lines, keyIndex, "type", "sse")
+          ensureField(lines, keyIndex, "uri", GOOSE_SSE_URI)
+          ensureField(lines, keyIndex, "enabled", "true")
+          lines.joinToString("\n")
+        } else {
+          val legacyKey = LEGACY_EXTENSION_KEYS.firstOrNull { k -> lines.any { it.trim().startsWith("$k:") } }
+          if (legacyKey != null) {
+            renameKey(lines, legacyKey, JETBRAINS_EXTENSION_KEY)
+            keyIndex = lines.indexOfFirst { it.trim().startsWith("$JETBRAINS_EXTENSION_KEY:") }
+            if (keyIndex >= 0) {
+              ensureField(lines, keyIndex, "type", "sse")
+              ensureField(lines, keyIndex, "uri", GOOSE_SSE_URI)
+              ensureField(lines, keyIndex, "enabled", "true")
+            }
+            lines.joinToString("\n")
+          } else {
+            lines.add(extensionsIndex + 1, sseBlock)
+            lines.joinToString("\n")
+          }
+        }
+      } else {
+        yamlContent + "\n" + """
+        |extensions:
+        |$sseBlock
+        """.trimMargin()
+      }
+    }
+
+    // Write the updated YAML content
+    configPath.parent?.createParentDirectories()
+    configPath.writeText(updatedContent)
+  }
+
+  override fun readMcpServers(): Map<String, ExistingConfig>? {
+    // Goose doesn't use JSON mcpServers, return empty map
+    return emptyMap()
+  }
+
+  override fun getSSEConfig(): ServerConfig? {
+    // Goose uses STDIO configuration via YAML
+    return null
   }
 }
