@@ -347,26 +347,24 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     int parentId = fileId(parent);
     ListResult childrenList = vfsPeer.list(parentId);
-    return childrenList.children.stream()
-      .map(childInfo -> childInfo.getName().toString())
-      .toArray(String[]::new);
+    return ContainerUtil.map2Array(childrenList.children, String.class, info -> info.getName().toString());
   }
 
 
-  /** @return list of children: either already cached in VFS or from an actual FS (and cache them then) */
+  /** @return list of dir's children: either already cached in VFS or from an actual FS (and cache them then) */
   @Override
   @ApiStatus.Internal
   public @Unmodifiable @NotNull List<? extends ChildInfo> listAll(@NotNull VirtualFile dir) {
     checkReadAccess();
 
     int dirId = fileId(dir);
-    return areChildrenCached(dirId) ?
-           vfsPeer.list(dirId).children :
-           persistAllChildren(dir, dirId);
-  }
+    ListResult childrenList = vfsPeer.list(dirId);
+    if (childrenList.allChildrenCached()) {
+      return childrenList.children;
+    }
 
-  // return actual children
-  private @NotNull List<? extends ChildInfo> persistAllChildren(@NotNull VirtualFile dir, int dirId) {
+    //children are not (all) cached yet: request the actual children from FS, and cache them:
+
     NewVirtualFileSystem fs = fileSystemOf(dir);
     boolean caseSensitive = dir.isCaseSensitive();
     //MAYBE RC: .list()/.listWithAttributes() use DiskQueryRelay offloading under the hood -- which seems useless
@@ -401,11 +399,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     //         (See also an overall VFS thread-safety rant in FSRecordsImpl)
 
     //RC: interestingly, here we only _add_ childrenNames returned by FS to the children already in the directory, but
-    //    never remove the children that _were_ in directory, but currently FS reports they are not there anymore.
+    //    never remove the children that _were_ in the directory, even if FS reports they are not there anymore.
     //    It seems logical to remove those children from the directory, but we don't do that -- why?
-    //    Maybe it is because we'll need to remove those children, and hence issue a notification, that we don't want to
-    //    do here?
-    ListResult saved = vfsPeer.update(
+    //    Maybe it is because we'll need to remove (=mark deleted) those children, and hence issue a notification(s) about
+    //    that -- something we don't want to do here?
+    ListResult savedChildren = vfsPeer.update(
       dir,
       dirId,
       current -> {
@@ -433,10 +431,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         childrenToAdd.sort(ChildInfo.BY_ID);
         return current.merge(vfsPeer, childrenToAdd, caseSensitive);
       },
-      /*setAllChildrenCached: */ true
+      /*setAllChildrenCached: */ true  //=we're sure we load all the children at this point
     );
 
-    return saved.children;
+    return savedChildren.children;
   }
 
   private @NotNull List<ChildInfo> createNewChildrenRecords(@NotNull VirtualFile dir,
@@ -2637,7 +2635,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     VirtualFile oldParent = file.getParent();
     int oldParentId = fileId(oldParent);
 
-    vfsPeer.moveChildren(newParent::isCaseSensitive, oldParentId, newParentId, childToMoveId);
+    vfsPeer.moveChild(newParent::isCaseSensitive, oldParentId, newParentId, childToMoveId);
 
     ((VirtualFileSystemEntry)file).setParent(newParent);
   }

@@ -102,6 +102,7 @@ public class PersistentFSTreeAccessor {
 
     PersistentFSRecordsStorage records = connection.records();
     int parentModCount = records.getModCount(parentId);
+    int flags = records.getFlags(parentId);
     try (DataInputStream input = attributeAccessor.readAttribute(parentId, CHILDREN_ATTR)) {
       int count = (input == null) ? 0 : DataInputOutputUtil.readINT(input);
       List<ChildInfo> children = (count == 0) ? Collections.emptyList() : new ArrayList<>(count);
@@ -118,7 +119,12 @@ public class PersistentFSTreeAccessor {
         children.add(child);
       }
 
-      return new ListResult(parentModCount, children, parentId);
+      if (FSRecordsImpl.areAllChildrenCached(flags)) {
+        return ListResult.allCached(parentModCount, children, parentId);
+      }
+      else {
+        return ListResult.notAllCached(parentModCount, children, parentId);
+      }
     }
   }
 

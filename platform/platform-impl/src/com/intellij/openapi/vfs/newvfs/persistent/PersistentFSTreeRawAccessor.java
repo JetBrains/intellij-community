@@ -61,10 +61,11 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
     //}
 
     int parentModCount = records.getModCount(parentId);
-    ListResult result = attributeAccessor.readAttributeRaw(parentId, CHILDREN_ATTR, buffer -> {
+    int flags = records.getFlags(parentId);
+    List<? extends ChildInfo> childrenList = attributeAccessor.readAttributeRaw(parentId, CHILDREN_ATTR, buffer -> {
       int count = DataInputOutputUtil.readINT(buffer);
       if (count == 0) {
-        return new ListResult(parentModCount, Collections.emptyList(), parentId);
+        return Collections.emptyList();
       }
       List<ChildInfo> children = new ArrayList<>(count);
       int maxID = records.maxAllocatedID();
@@ -78,12 +79,18 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
         ChildInfo child = new ChildInfoImpl(childId, nameId, null, null, null);
         children.add(child);
       }
-      return new ListResult(parentModCount, children, parentId);
+      return children;
     });
-    if (result == null) {
-      return new ListResult(parentModCount, Collections.emptyList(), parentId);
+    if (childrenList == null) {
+      childrenList = Collections.emptyList();
     }
-    return result;
+
+    if (FSRecordsImpl.areAllChildrenCached(flags)) {
+      return ListResult.allCached(parentModCount, childrenList, parentId);
+    }
+    else {
+      return ListResult.notAllCached(parentModCount, childrenList, parentId);
+    }
   }
 
   @Override

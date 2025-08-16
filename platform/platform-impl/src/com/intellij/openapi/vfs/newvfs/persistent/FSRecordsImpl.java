@@ -20,10 +20,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.namecache.MRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.SLRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.serviceContainer.AlreadyDisposedException;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Processor;
-import com.intellij.util.SlowOperations;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ClosedStorageException;
@@ -831,6 +828,8 @@ public final class FSRecordsImpl implements Closeable {
       return;
     }
 
+    PersistentFSRecordsStorage records = connection.records();
+
     int minId = Math.min(fromParentId, toParentId);
     int maxId = Math.max(fromParentId, toParentId);
     fileRecordLock.lockForHierarchyUpdate(minId);
@@ -846,8 +845,18 @@ public final class FSRecordsImpl implements Closeable {
               LOG.error("Cyclic parent/child relations");
               continue;
             }
-            connection.records().setParent(fileId, toParentId);
+            records.setParent(fileId, toParentId);
           }
+
+          //TODO RC: it's unclear how to deal with CHILDREN_CACHED flags in from/to parents, because the whole semantic of this
+          //         method is not clear:
+          //         1. If semantics is 'move _all_ children from one parent to another', then fromParent should have
+          //            CHILDREN_CACHED=true afterwards (because we're sure there is no children in it anymore!), and toParent
+          //            should have CHILDREN_CACHED same as fromParent has before the move (because toParent now inherits all
+          //            fromParent children)
+          //         2. If semantics doesn't imply '...all children' part, then CHILDREN_CACHED flags should just remain untouched
+          //            for both parents -- this is the current implementation.
+          //         The actual semantics is unclear because the only use of this method is in dark parts of shared-indexes
 
           saveChildrenUnderRecordLock(
             toParentId, childrenToMove,
@@ -856,7 +865,7 @@ public final class FSRecordsImpl implements Closeable {
 
           saveChildrenUnderRecordLock(
             fromParentId,
-            new ListResult(getModCount(fromParentId), Collections.emptyList(), fromParentId),
+            new ListResult(childrenToMove.parentModCount(), Collections.emptyList(), fromParentId),
             /*setAllChildrenCached: */ false
           );
         }
@@ -882,10 +891,10 @@ public final class FSRecordsImpl implements Closeable {
    *                                Supplier instead of just value because getting case-sensitivity may be costly (may require
    *                                access an underlying FS), but it is not always necessary, so better make it lazy
    */
-  void moveChildren(@NotNull Supplier<Boolean> caseSensitivityAccessor,
-                    int fromParentId,
-                    int toParentId,
-                    int childToMoveId) {
+  void moveChild(@NotNull Supplier<Boolean> caseSensitivityAccessor,
+                 int fromParentId,
+                 int toParentId,
+                 int childToMoveId) {
     assert fromParentId > 0 : fromParentId;
     assert toParentId > 0 : toParentId;
 
@@ -970,6 +979,10 @@ public final class FSRecordsImpl implements Closeable {
     finally {
       recordLock.unlockRead(stamp);
     }
+  }
+
+  static boolean areAllChildrenCached(@PersistentFS.Attributes int flags) {
+    return BitUtil.isSet(flags, PersistentFS.Flags.CHILDREN_CACHED);
   }
 
   /**

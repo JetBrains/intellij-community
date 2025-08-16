@@ -22,12 +22,13 @@ import java.util.Objects;
 // Stores result of various `FSRecords#list*` methods and the current `FSRecords#getModCount` for optimistic locking support.
 @ApiStatus.Internal
 public final class ListResult {
-  private final int parentModStamp;
-  public final @Unmodifiable List<? extends ChildInfo> children;  // sorted by `#getId`
+  private final int parentModCount;
+  /** Sorted by `#getId`, never modified in place */
+  public final @Unmodifiable List<? extends ChildInfo> children;
   private final int parentId;
 
-  public ListResult(int parentModStamp, @NotNull @Unmodifiable List<? extends ChildInfo> children, int parentId) {
-    this.parentModStamp = parentModStamp;
+  public ListResult(int parentModCount, @NotNull @Unmodifiable List<? extends ChildInfo> children, int parentId) {
+    this.parentModCount = parentModCount;
     this.children = children;
     this.parentId = parentId;
 
@@ -37,13 +38,31 @@ public final class ListResult {
     }
   }
 
-  private void assertSortedById(@NotNull List<? extends ChildInfo> children) {
-    for (int i = 1; i < children.size(); i++) {
-      ChildInfo info = children.get(i);
-      if (info.getId() < children.get(i - 1).getId()) {
-        throw new IllegalArgumentException("Unsorted list: " + this);
-      }
+  public static @NotNull ListResult notAllCached(int parentModCount,
+                                                 @NotNull @Unmodifiable List<? extends ChildInfo> children,
+                                                 int parentId) {
+    if (parentModCount <= 0) {
+      throw new IllegalArgumentException("parentModCount(=" + parentModCount + ") must be >0 for parentId: " + parentId);
     }
+    //valid record modCount is >0, hence -modCount could be used as a marker of 'invalid stamp':
+    return new ListResult(-parentModCount, children, parentId);
+  }
+
+  public static @NotNull ListResult allCached(int parentModCount,
+                                              @NotNull @Unmodifiable List<? extends ChildInfo> children,
+                                              int parentId) {
+    if (parentModCount <= 0) {
+      throw new IllegalArgumentException("parentModCount(=" + parentModCount + ") must be >0 for parentId: " + parentId);
+    }
+    return new ListResult(parentModCount, children, parentId);
+  }
+
+  public boolean allChildrenCached() {
+    return parentModCount > 0;
+  }
+
+  public int parentModCount() {
+    return Math.abs(parentModCount);
   }
 
   @Contract(pure = true)
@@ -66,7 +85,7 @@ public final class ListResult {
         newChildren.add(children.get(j));
       }
     }
-    return new ListResult(parentModStamp, newChildren, parentId);
+    return new ListResult(parentModCount, newChildren, parentId);
   }
 
   @Contract(pure = true)
@@ -86,7 +105,7 @@ public final class ListResult {
         newChildren.add(children.get(j));
       }
     }
-    return new ListResult(parentModStamp, newChildren, parentId);
+    return new ListResult(parentModCount, newChildren, parentId);
   }
 
   @Contract(pure = true)
@@ -104,7 +123,7 @@ public final class ListResult {
     for (int j = toRemove + 1; j < children.size(); j++) {
       newChildren.add(children.get(j));
     }
-    return new ListResult(parentModStamp, newChildren, parentId);
+    return new ListResult(parentModCount, newChildren, parentId);
   }
 
   // Returns entries from this list plus `otherList';
@@ -185,7 +204,7 @@ public final class ListResult {
       result.sort(ChildInfo.BY_ID);
     }
     List<? extends ChildInfo> newRes = nameToIndex.isEmpty() ? newChildren : result;
-    return new ListResult(parentModStamp, newRes, parentId);
+    return new ListResult(parentModCount, newRes, parentId);
   }
 
   @Contract(pure = true)
@@ -213,11 +232,16 @@ public final class ListResult {
     for (int i = index1; i < children.size(); i++) {
       newChildren.add(children.get(i));
     }
-    return new ListResult(parentModStamp, newChildren, parentId);
+    return new ListResult(parentModCount, newChildren, parentId);
   }
 
   boolean childrenWereChangedSinceLastList(@NotNull FSRecordsImpl vfs) {
-    return parentModStamp != vfs.getModCount(parentId);
+    if (allChildrenCached()) {
+      return parentModCount != vfs.getModCount(parentId);
+    }
+    else {
+      return -parentModCount != vfs.getModCount(parentId);
+    }
   }
 
   @Override
@@ -225,16 +249,26 @@ public final class ListResult {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     ListResult result = (ListResult)o;
-    return parentModStamp == result.parentModStamp && children.equals(result.children);
+    return parentModCount == result.parentModCount && children.equals(result.children);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(parentModStamp, children);
+    return Objects.hash(parentModCount, children);
   }
 
   @Override
   public String toString() {
-    return "modStamp: " + parentModStamp + "; children: " + children;
+    return "[#" + parentId + "]{modStamp: " + parentModCount() + "; children: " + children +
+           (allChildrenCached() ? "(all cached)" : "(not all cached)") + "}";
+  }
+
+  private void assertSortedById(@NotNull List<? extends ChildInfo> children) {
+    for (int i = 1; i < children.size(); i++) {
+      ChildInfo info = children.get(i);
+      if (info.getId() < children.get(i - 1).getId()) {
+        throw new IllegalArgumentException("Unsorted list: " + this);
+      }
+    }
   }
 }
