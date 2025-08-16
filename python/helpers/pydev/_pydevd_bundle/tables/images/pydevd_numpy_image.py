@@ -3,6 +3,7 @@ import numpy as np
 from _pydevd_bundle.tables.images.pydevd_image_loader import (save_image_to_storage, GRAYSCALE_MODE, RGB_MODE, RGBA_MODE)
 
 MAX_PIXELS = 144_000_000
+MAX_DIMENSION = 15_000
 
 def create_image(arr):
     # type: (np.ndarray) -> str
@@ -26,10 +27,14 @@ def create_image(arr):
         h, w = arr_to_convert.shape[:2]
         channels = arr_to_convert.shape[2] if arr_to_convert.ndim == 3 else 1
         total_pixels = h * w * channels
-        if total_pixels > MAX_PIXELS:
-            scale = (MAX_PIXELS / total_pixels) ** 0.5
-            new_h, new_w = max(1, int(h * scale)), max(1, int(w * scale))
-            arr_to_convert = average_pooling(arr_to_convert, new_h, new_w)
+        if (total_pixels > MAX_PIXELS) or (h > MAX_DIMENSION) or (w > MAX_DIMENSION):
+            scale_h = min(1.0, MAX_DIMENSION / float(h))
+            scale_w = min(1.0, MAX_DIMENSION / float(w))
+            scale_p = (MAX_PIXELS / float(total_pixels)) ** 0.5 if total_pixels > MAX_PIXELS else 1.0
+            scale = min(scale_h, scale_w, scale_p)
+            new_h, new_w = max(1, int(round(h * scale))), max(1, int(round(w * scale)))
+            if new_h < h or new_w < w:
+                arr_to_convert = average_pooling(arr_to_convert, new_h, new_w)
 
         arr_min, arr_max = arr_to_convert.min(), arr_to_convert.max()
         is_float = np.issubdtype(arr_to_convert.dtype, np.floating)
