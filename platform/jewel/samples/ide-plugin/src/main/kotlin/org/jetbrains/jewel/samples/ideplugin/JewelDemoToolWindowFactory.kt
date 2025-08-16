@@ -20,6 +20,8 @@ internal class JewelDemoToolWindowFactory : ToolWindowFactory, DumbAware {
 
         toolWindow.addComposeTab("Components") { ComponentShowcaseTab(project) }
 
+        toolWindow.addComposeTab("Markdown") { MarkdownShowcaseTab(project) }
+
         toolWindow.addComposeTab("Releases Demo") { ReleasesSampleCompose(project) }
 
         toolWindow.addSwingTab(SwingComparisonTabPanel(), "Swing Comparison")
