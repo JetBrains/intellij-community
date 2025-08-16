@@ -88,7 +88,7 @@ public class InlineParameterTest extends LightRefactoringTestCase {
       doTest(false);
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Parameter initializer depends on <b><code>this<code></b> which is not accessible inside the parameter's method", e.getMessage());
+      assertEquals("Parameter initializer depends on <b><code>this</code></b> which is not accessible inside the parameter's method", e.getMessage());
     }
   }
 
@@ -263,7 +263,7 @@ public class InlineParameterTest extends LightRefactoringTestCase {
       doTest(false);
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Parameter initializer depends on <b><code>this<code></b> which is not accessible inside the parameter's method", e.getMessage());
+      assertEquals("Parameter initializer depends on <b><code>this</code></b> which is not accessible inside the parameter's method", e.getMessage());
     }
   }
 

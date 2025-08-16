@@ -365,18 +365,12 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     public void visitThisExpression(@NotNull PsiThisExpression thisExpression) {
       super.visitThisExpression(thisExpression);
       final PsiJavaCodeReferenceElement qualifier = thisExpression.getQualifier();
-      PsiElement containingClass;
-      if (qualifier != null) {
-        containingClass = qualifier.resolve();
-      }
-      else {
-        containingClass = PsiTreeUtil.getParentOfType(myMethodCall, PsiClass.class);
-      }
+      PsiElement containingClass = (qualifier != null) ? qualifier.resolve() : PsiTreeUtil.getParentOfType(myMethodCall, PsiClass.class);
       final PsiClass methodContainingClass = myMethod.getContainingClass();
       LOG.assertTrue(methodContainingClass != null);
       if (!PsiTreeUtil.isAncestor(containingClass, methodContainingClass, false) || myMethod.hasModifierProperty(PsiModifier.STATIC)) {
         myConflicts.putValue(thisExpression, JavaRefactoringBundle.message("inline.parameter.dependency.unavailable.in.parameter.method",
-                                                                           "<b><code>this<code></b>"));
+                                                                           "<b><code>this</code></b>"));
       }
     }
 
