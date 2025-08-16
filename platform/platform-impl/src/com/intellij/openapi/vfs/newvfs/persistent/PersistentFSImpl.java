@@ -306,7 +306,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public boolean areChildrenLoaded(@NotNull VirtualFile dir) {
-    return areChildrenCached(fileId(dir));
+    int flags = vfsPeer.getFlags(fileId(dir));
+    return FSRecordsImpl.areAllChildrenCached(flags);
   }
 
   @Override
@@ -487,10 +488,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return childrenToAdd;
   }
 
-  private boolean areChildrenCached(int dirId) {
-    return BitUtil.isSet(vfsPeer.getFlags(dirId), Flags.CHILDREN_CACHED);
-  }
-
   @Override
   public @Nullable AttributeInputStream readAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att) {
     checkReadAccess();
@@ -560,7 +557,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
     }
     else {
-      if (areChildrenCached(rootId)) {
+      int flags = vfsPeer.getFlags(rootId);
+      if (FSRecordsImpl.areAllChildrenCached(flags)) {
         return -1; // TODO: hack
       }
     }

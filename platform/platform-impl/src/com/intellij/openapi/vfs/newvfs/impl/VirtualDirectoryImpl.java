@@ -18,11 +18,8 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.*;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Attributes;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor;
 import com.intellij.psi.impl.PsiCachedValue;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -494,7 +491,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return Arrays.asList(getChildren()); // may load VFS from other projects
     }
 
-    loadPersistedChildren();
+    loadAllPersistedChildren();
 
     return getCachedChildren();
   }
@@ -506,15 +503,16 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return Collections.emptyList();
     }
     if (!pFS.areChildrenLoaded(this)) {
-      loadPersistedChildren();
+      loadAllPersistedChildren();
     }
     return getCachedChildren();
   }
 
-  private void loadPersistedChildren() {
-    String[] names = owningPersistentFS().listPersisted(this);
-    for (String name : names) {
-      findChild(name, /*doRefresh: */ false, /*canonicalizeName: */ false);
+  /** Loads into memory all the children cached in VFS persistent storage so far. This could be _not all_ the actual directory children */
+  private void loadAllPersistedChildren() {
+    ListResult childrenInPersistence = owningPersistentFS().peer().list(getId());
+    for (ChildInfo childInfo : childrenInPersistence.children) {
+      findChildById(childInfo.getId());
     }
   }
 

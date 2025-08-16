@@ -63,6 +63,9 @@ public abstract class PersistentFS extends ManagingFS {
   @Deprecated(forRemoval = true)
   public abstract void clearIdCache();
 
+  /** @return children already cached in VFS (persistent) storage. It may be _not all_ the actual children! */
+  //MAYBE RC: rename to listCachedNames()
+  //MAYBE RC: remove this method, use FSRecordsImpl.list() instead
   public abstract String @NotNull [] listPersisted(@NotNull VirtualFile parent);
 
   @ApiStatus.Internal
