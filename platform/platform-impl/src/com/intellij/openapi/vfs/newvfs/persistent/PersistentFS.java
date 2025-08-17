@@ -66,6 +66,7 @@ public abstract class PersistentFS extends ManagingFS {
   /** @return children already cached in VFS (persistent) storage. It may be _not all_ the actual children! */
   //MAYBE RC: rename to listCachedNames()
   //MAYBE RC: remove this method, use FSRecordsImpl.list() instead
+  @ApiStatus.Internal
   public abstract String @NotNull [] listPersisted(@NotNull VirtualFile parent);
 
   @ApiStatus.Internal

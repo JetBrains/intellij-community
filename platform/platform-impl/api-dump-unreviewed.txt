@@ -9787,7 +9787,6 @@ a:com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 - s:isSpecialFile(I):Z
 - s:isSymLink(I):Z
 - s:isWritable(I):Z
-- a:listPersisted(com.intellij.openapi.vfs.VirtualFile):java.lang.String[]
 - a:mayHaveChildren(I):Z
 - a:releaseContent(I):V
 - a:storeUnlinkedContent(B[]):I
