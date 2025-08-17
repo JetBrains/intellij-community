@@ -704,12 +704,12 @@ internal class BazelBuildFileGenerator(
     }
 
     if (!module.isCommunity && module.targetName.startsWith("dotenv-") && resources[0].baseDirectory.contains("community")) {
+      val productionLabel = "@community//plugins/env-files-support/${module.targetName.removePrefix("dotenv-")}:${module.targetName.removePrefix("dotenv-")}"
       val fixedTargetsList = if (forTests) {
-        // skip for now
-        emptyList()
+        listOf(BazelLabel("$productionLabel$TEST_RESOURCES_TARGET_SUFFIX", module))
       }
       else {
-        listOf(BazelLabel("@community//plugins/env-files-support:${module.targetName}_resources", module))
+        listOf(BazelLabel("$productionLabel$PRODUCTION_RESOURCES_TARGET_SUFFIX", module))
       }
       return GenerateResourcesResult(resourceTargets = fixedTargetsList)
     }
