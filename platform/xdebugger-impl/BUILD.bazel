@@ -63,7 +63,7 @@ jvm_library(
 jvm_library(
   name = "debugger-impl_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":debugger-impl"],
   deps = [
     "//platform/analysis-api:analysis",

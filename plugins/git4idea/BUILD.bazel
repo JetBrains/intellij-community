@@ -116,7 +116,7 @@ jvm_library(
 jvm_library(
   name = "vcs-git_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom_vcs-git",
   associates = [":vcs-git"],
   deps = [

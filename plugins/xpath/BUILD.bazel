@@ -58,7 +58,7 @@ jvm_library(
 jvm_library(
   name = "xpath_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["xpath-lang/test/**/*.kt", "xpath-lang/test/**/*.java", "xpath-lang/test/**/*.form"], allow_empty = True),
+  srcs = glob(["xpath-lang/test/**/*.kt", "xpath-lang/test/**/*.java"], allow_empty = True),
   associates = [":xpath"],
   deps = [
     "//platform/analysis-api:analysis",

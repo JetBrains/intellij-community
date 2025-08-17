@@ -44,7 +44,7 @@ jvm_library(
 jvm_library(
   name = "vcs-hg_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":vcs-hg"],
   deps = [
     "//platform/analysis-api:analysis",
