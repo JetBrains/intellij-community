@@ -20,6 +20,9 @@
                      key="inspection.injected.references.display.name" bundle="messages.IntelliLangBundle"/>
     <completion.contributor language="any"
                             implementationClass="org.intellij.plugins.intelliLang.references.LanguageWordInCommentCompletionContributor"/>
+    <projectConfigurable groupId="editor" bundle="messages.IntelliLangBundle" key="configurable.InjectionsSettingsUI.display.name"
+                         dynamic="true" id="IntelliLang.Configuration" instance="org.intellij.plugins.intelliLang.InjectionsSettingsUI"
+                         nonDefaultProject="true"/>
 
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.InjectLanguageAction</className>
