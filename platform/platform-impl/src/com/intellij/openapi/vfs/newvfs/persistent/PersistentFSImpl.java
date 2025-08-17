@@ -2747,13 +2747,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     var fileByIdCacheMissesCounter = meter.counterBuilder("VFS.fileByIdCache.misses").buildObserver();
     var fileChildByNameCounter = meter.counterBuilder("VFS.fileChildByName").buildObserver();
     var caseSensitivityReadsCounter = meter.counterBuilder("VFS.folderCaseSensitivityReads").buildObserver();
-    var invertedFileNameIndexRequestsCount = meter.counterBuilder("VFS.invertedFileNameIndex.requests").buildObserver();
+    var rootsCounter = meter.counterBuilder("VFS.rootsCount").buildObserver();
+    var invertedFileNameIndexRequestsCount = meter.gaugeBuilder("VFS.invertedFileNameIndex.requests").buildObserver();
     return meter.batchCallback(
       () -> {
         fileByIdCacheHitsCounter.record(fileByIdCacheHits.get());
         fileByIdCacheMissesCounter.record(fileByIdCacheMisses.get());
         fileChildByNameCounter.record(childByName.get());
         caseSensitivityReadsCounter.record(caseSensitivityReads.get());
+        rootsCounter.record(rootsByUrl.size());
         FSRecordsImpl vfs = vfsPeer;
         if (vfs != null) {
           invertedFileNameIndexRequestsCount.record(vfs.invertedNameIndexRequestsServed());
@@ -2761,6 +2763,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       },
       fileByIdCacheHitsCounter, fileByIdCacheMissesCounter, fileChildByNameCounter,
       caseSensitivityReadsCounter,
+      rootsCounter,
       invertedFileNameIndexRequestsCount
     );
   }
