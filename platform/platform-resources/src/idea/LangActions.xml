@@ -1071,7 +1071,8 @@
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="last"/>
     </action>
-    <action id="UpdateRunningApplication" class="com.intellij.execution.update.UpdateRunningApplicationAction">
+    <action id="UpdateRunningApplication" class="com.intellij.execution.update.UpdateRunningApplicationAction"
+            icon="AllIcons.Javaee.UpdateRunningApplication">
       <keyboard-shortcut first-keystroke="control F10" keymap="$default"/>
       <add-to-group group-id="DebugReloadGroup" anchor="last"/>
     </action>

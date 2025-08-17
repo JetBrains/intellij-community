@@ -6671,7 +6671,6 @@ c:com.intellij.ui.components.JBList
 - setDropTargetIndex(I):V
 - setEmptyText(java.lang.String):V
 - setExpandableItemsEnabled(Z):V
-- setOffsetFromElementTopForDnD(com.intellij.util.Function):V
 - setOffsetFromElementTopForDnD(java.util.function.Function):V
 - setPaintBusy(Z):V
 - setUI(javax.swing.plaf.ListUI):V
