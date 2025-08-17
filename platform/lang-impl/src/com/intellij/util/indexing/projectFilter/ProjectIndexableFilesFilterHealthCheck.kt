@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.projectFilter
 
 import com.intellij.openapi.application.ApplicationManager
@@ -21,7 +21,7 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileWithId
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.platform.backend.observation.Observation
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.FileBasedIndex
@@ -42,7 +42,7 @@ import kotlin.time.Duration.Companion.seconds
 private val LOG = Logger.getInstance(ProjectIndexableFilesFilterHealthCheck::class.java)
 
 internal typealias FileId = Int
-private fun FileId.fileInfo(): String = "file id=$this path=${PersistentFS.getInstance().findFileById(this)?.path}"
+private fun FileId.fileInfo(): String = "file id=$this path=${ManagingFS.getInstance().findFileById(this)?.path}"
 
 private class ProjectIndexableFilesFilterHealthCheckStarter : ProjectActivity {
   init {

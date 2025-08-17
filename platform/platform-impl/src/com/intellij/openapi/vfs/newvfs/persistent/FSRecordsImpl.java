@@ -1158,8 +1158,7 @@ public final class FSRecordsImpl implements Closeable {
 
   //========== file record fields accessors: ========================================
 
-  @PersistentFS.Attributes
-  public int getFlags(int fileId) {
+  public @PersistentFS.Attributes int getFlags(int fileId) {
     checkNotClosed();
     try {
       return connection.records().getFlags(fileId);
