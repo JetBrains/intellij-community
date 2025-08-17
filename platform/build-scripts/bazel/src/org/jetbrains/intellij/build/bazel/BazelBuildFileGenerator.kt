@@ -25,8 +25,10 @@ import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.nio.file.Path
 import java.util.IdentityHashMap
 import java.util.TreeMap
+import kotlin.io.path.extension
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeTo
+import kotlin.io.path.walk
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
@@ -816,9 +818,7 @@ private fun computeSources(module: JpsModule, contentRoots: List<Path>, bazelBui
       }
 
       if (type == JavaSourceRootType.SOURCE || type == JavaSourceRootType.TEST_SOURCE) {
-        val rootProperties = root.properties
-        if ((rootProperties !is JavaSourceRootProperties || !rootProperties.isForGeneratedSources) && moduleWithForm.contains (module.name)) {
-          // rootDir.walk().any { it.extension == "form" }
+        if (!(root.properties as JavaSourceRootProperties).isForGeneratedSources && rootDir.walk().any { it.extension == "form" }) {
           sequenceOf(SourceDirDescriptor(glob = listOf("$prefix**/*.kt", "$prefix**/*.java", "$prefix**/*.form"), excludes = excludes))
         }
         else {
