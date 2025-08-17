@@ -10,6 +10,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.ast.impl.ValueHolder;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -26,6 +27,10 @@ import java.util.Objects;
  * The "import foo" or "import foo as bar" parts.
  */
 public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> implements PyImportElement {
+  private volatile @Nullable ValueHolder<@Nullable QualifiedName> myImportedQName;
+  private volatile @Nullable ValueHolder<@Nullable String> myAsName;
+  private volatile @Nullable ValueHolder<@Nullable String> myVisibleName;
+
   public PyImportElementImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -39,7 +44,23 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   }
 
   @Override
-  public QualifiedName getImportedQName() {
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    myImportedQName = null;
+    myAsName = null;
+    myVisibleName = null;
+  }
+
+  @Override
+  public @Nullable QualifiedName getImportedQName() {
+    ValueHolder<QualifiedName> result = myImportedQName;
+    if (result == null) {
+      myImportedQName = result = new ValueHolder<>(doGetImportedQName());
+    }
+    return result.value;
+  }
+
+  private @Nullable QualifiedName doGetImportedQName() {
     final PyImportElementStub stub = getStub();
     if (stub != null) {
       return stub.getImportedQName();
@@ -49,6 +70,14 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
 
   @Override
   public String getAsName() {
+    ValueHolder<String> result = myAsName;
+    if (result == null) {
+      myAsName = result = new ValueHolder<>(doGetAsName());
+    }
+    return result.value;
+  }
+
+  private @Nullable String doGetAsName() {
     final PyImportElementStub stub = getStub();
     if (stub != null) {
       final String asName = stub.getAsName();
@@ -59,6 +88,14 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
 
   @Override
   public @Nullable String getVisibleName() {
+    ValueHolder<String> result = myVisibleName;
+    if (result == null) {
+      myVisibleName = result = new ValueHolder<>(doGetVisibleName());
+    }
+    return result.value;
+  }
+
+  private @Nullable String doGetVisibleName() {
     final PyImportElementStub stub = getStub();
     if (stub != null) {
       final String asName = stub.getAsName();
