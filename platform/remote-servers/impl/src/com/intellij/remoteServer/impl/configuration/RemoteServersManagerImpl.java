@@ -19,10 +19,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @State(name = "RemoteServers",
@@ -81,6 +78,17 @@ public final class RemoteServersManagerImpl extends RemoteServersManager impleme
   public @Nullable <C extends ServerConfiguration> RemoteServer<C> findByName(@NotNull String name, @NotNull ServerType<C> type) {
     for (RemoteServer<?> server : myServers) {
       if (server.getType().equals(type) && server.getName().equals(name)) {
+        //noinspection unchecked
+        return (RemoteServer<C>)server;
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public @Nullable <C extends ServerConfiguration> RemoteServer<C> findById(@NotNull UUID id) {
+    for (RemoteServer<?> server : myServers) {
+      if (id.equals(server.getUniqueId())) {
         //noinspection unchecked
         return (RemoteServer<C>)server;
       }
