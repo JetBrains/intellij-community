@@ -14,7 +14,6 @@ intellij.platform.langInjection.plugin
 intellij.properties
 intellij.restructuredtext
 intellij.searchEverywhereMl
-intellij.marketplaceMl
 intellij.sh
 intellij.statsCollector
 intellij.tasks.core
