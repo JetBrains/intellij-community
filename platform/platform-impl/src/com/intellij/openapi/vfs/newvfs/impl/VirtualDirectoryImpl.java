@@ -520,9 +520,16 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     VfsData vfsData = getVfsData();
     PersistentFSImpl pFS = vfsData.owningPersistentFS();
 
+    //.listAll() could involve underlying FS access, i.e. IO, which is freeze-producing if done under the lock.
+    // But we need it under the .directoryData lock for consistency: to ensure no children list's changes could
+    // sneak in between .listAll() and children processing under the lock below -- see comments in .logDisappearedChildren()
+    // for possible inconsistency.
+    // So the trick: execute .listAll() outside the lock, to trigger FS access, if needed, outside the lock, with
+    // its results being cached. Then repeat .listAll() under the lock to ensure consistency -- that second
+    // .listAll() call 99.99% returns cached data without FS access:
+    pFS.listAll(this);
+
     synchronized (directoryData) {
-      //TODO RC: listAll() could involve IO, which is not good to do under the lock -- but we need at least to check will it help
-      //         avoiding disappeared children (logDisappearedChildren), and then maybe refactor this code:
       List<? extends ChildInfo> childrenInfo = pFS.listAll(this);
       if (childrenInfo.isEmpty()) {
         directoryData.clearAdoptedNames();
@@ -1199,12 +1206,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                       @NotNull IntSet prevChildren,
                                       @NotNull VirtualFile @NotNull [] newChildren,
                                       @NotNull List<? extends ChildInfo> childrenInfo) {
-    //RC: why it is suspicious: because we _never remove_ the child(ren) from the directory on reading path -- even if
-    //    the FS reports some children are not there anymore (see comments in PersistentFSImpl.persistAllChildren()).
+    //IJPL-199690:
+    //RC: why it is suspicious: because we _never remove_ the child(ren) from the directory on the reading path -- even
+    //    if the FS reports some children are not there anymore (see comments in PersistentFSImpl.persistAllChildren()).
     //    We only _add_ new child(ren), if any -- but all previously existing children remain intact.
-    //    Hence it is unclear: how PersistentFSImpl.listAll() could return a children list there some of previously existing
-    //    children are absent? PersistentFSImpl.listAll() is either returns already cached children, or the previously cached
-    //    children with merged in FS data -- in both cases previous children must be there.
+    //    Hence, it is unclear: how PersistentFSImpl.listAll() could return a children list there some of the previously
+    //    existing children are absent? PersistentFSImpl.listAll() is either returns already cached children, or the
+    //    previously cached children with merged in FS data -- in both cases previous children must be there.
     //    But it seems there is some path to that -- the goal is to trace it, and verify is it benign or not.
     StringBuilder sb = new StringBuilder("Loaded child(ren) disappeared: \n" +
                                          "parent: " + verboseToString(this) + "\n" +
