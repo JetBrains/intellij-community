@@ -88,7 +88,7 @@ private suspend fun convertCommandToRemote(eelApi: EelApi, command: List<String>
   return command
 }
 
-private fun isWslCommand(command: List<String>): Boolean {
+internal fun isWslCommand(command: List<String>): Boolean {
   if (SystemInfo.isWindows) {
     val exePath = command.getOrNull(0) ?: return false
     val exeFileName = PathUtil.getFileName(exePath)
