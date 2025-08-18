@@ -48,8 +48,8 @@ internal class KaLibrarySdkModuleImpl @InternalKaModuleConstructor constructor(
     override val isSdk: Boolean get() = true
 
     override val targetPlatform: TargetPlatform
-        get() = when (sdk.sdkType) {
-            is KotlinSdkType -> CommonPlatforms.defaultCommonPlatform
+        get() = when (entityId.type) {
+            KotlinSdkType.NAME -> CommonPlatforms.defaultCommonPlatform
             else -> JvmPlatforms.unspecifiedJvmPlatform
         }
 
