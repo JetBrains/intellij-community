@@ -51,7 +51,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.application.ModalityState.stateForComponent;
-import static com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OPEN_IN_PREVIEW_TAB;
+import static com.intellij.openapi.fileEditor.FileEditorManagerKeys.OPEN_IN_PREVIEW_TAB;
 import static com.intellij.ui.ColorUtil.toHtmlColor;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.ui.scale.JBUIScale.scale;
