@@ -425,8 +425,8 @@ public final class DebuggerUIUtil {
 
   public static @Nullable String getNodeRawValue(@NotNull XValueNodeImpl valueNode) {
     String res = null;
-    if (valueNode.getValueContainer() instanceof XValueTextProvider) {
-      res = ((XValueTextProvider)valueNode.getValueContainer()).getValueText();
+    if (valueNode.getValueContainer() instanceof XValueTextProvider textValue && textValue.shouldShowTextValue()) {
+      res = textValue.getValueText();
     }
     if (res == null) {
       res = valueNode.getRawValue();

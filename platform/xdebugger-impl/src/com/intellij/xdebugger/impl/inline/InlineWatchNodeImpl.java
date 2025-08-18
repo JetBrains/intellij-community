@@ -155,8 +155,8 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     @Override
     public boolean shouldShowTextValue() {
       return myValue != null &&
-             myValue instanceof XValueTextProvider &&
-             ((XValueTextProvider)myValue).shouldShowTextValue();
+             myValue instanceof XValueTextProvider textValue &&
+             textValue.shouldShowTextValue();
     }
 
     private class MyEvaluationCallback extends XEvaluationCallbackBase implements XEvaluationCallbackWithOrigin, Obsolescent {
