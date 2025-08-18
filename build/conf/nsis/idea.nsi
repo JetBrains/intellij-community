@@ -927,7 +927,8 @@ skip_ipr:
   ; writing the uninstaller & creating the uninstall record
   WriteUninstaller "$INSTDIR\bin\Uninstall.exe"
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" "DisplayName" "${INSTALL_DIR_AND_SHORTCUT_NAME}"
-  WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" "UninstallString" "$INSTDIR\bin\Uninstall.exe"
+  WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" "UninstallString" '"$INSTDIR\bin\Uninstall.exe"'
+  WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" "QuietUninstallString" '"$INSTDIR\bin\Uninstall.exe" /S'
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" "InstallLocation" "$INSTDIR"
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" "DisplayIcon" "$productLauncher"
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" "DisplayVersion" "${VER_BUILD}"
