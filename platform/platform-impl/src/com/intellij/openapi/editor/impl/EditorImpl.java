@@ -10,6 +10,8 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.ui.laf.MouseDragSelectionEventHandler;
@@ -73,6 +75,7 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -158,6 +161,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK =
     Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
+  // A cache for CodeStyle.getSettings(myProject, myVirtualFile) and similar file-specific calls.
+  // Valid for this.myProject and this.myVirtualFile only.
+  // E.g., it is not a valid replacement for CodeStyle.getSettings(myProject).
+  @ApiStatus.Internal
+  public static final Key<CodeStyleSettings> CODE_STYLE_SETTINGS = Key.create("editor.code.style.settings");
   private final @NotNull DocumentEx myDocument;
 
   private final JPanel myPanel;
@@ -615,6 +623,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         case EditorState.myBorderPropertyName -> borderChanged();
       }
     }, myDisposable);
+
+    ApplicationManager.getApplication().getMessageBus().connect(myDisposable).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+        private void clearCachedCodeStyleSettings() {
+          putUserData(CODE_STYLE_SETTINGS, null);
+        }
+
+        @Override
+        public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+          clearCachedCodeStyleSettings();
+        }
+
+        @Override
+        public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          clearCachedCodeStyleSettings();
+        }
+      });
   }
 
   public void applyFocusMode() {
@@ -5663,6 +5687,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return;
       }
       int oldTabSize = EditorUtil.getTabSize(this);
+      final var eventSettings = event.getSettings();
+      if (eventSettings != null) {
+        this.putUserData(CODE_STYLE_SETTINGS, eventSettings);
+      }
       mySettings.reinitSettings();
       int newTabSize = EditorUtil.getTabSize(this);
       if (oldTabSize != newTabSize) {
