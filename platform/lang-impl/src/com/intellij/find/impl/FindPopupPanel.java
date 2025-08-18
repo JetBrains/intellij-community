@@ -1719,11 +1719,18 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
   }
 
   private @Nullable Map<Integer, Usage> getSelectedUsages() {
+    if (myResultsPreviewTable.isEmpty()) return null;
     int[] rows = myResultsPreviewTable.getSelectedRows();
     Map<Integer, Usage> result = null;
     for (int i = rows.length - 1; i >= 0; i--) {
       int row = rows[i];
-      Object valueAt = myResultsPreviewTable.getModel().getValueAt(row, 0);
+      Object valueAt;
+      try {
+        valueAt = myResultsPreviewTable.getModel().getValueAt(row, 0);
+      } catch (ArrayIndexOutOfBoundsException e) {
+        LOG.debug("Error getting value at row " + row, e);
+        return result;
+      }
       if (valueAt instanceof FindPopupItem) {
         if (result == null) result = new LinkedHashMap<>();
         result.put(row, ((FindPopupItem)valueAt).getUsage());
