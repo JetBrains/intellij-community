@@ -198,7 +198,7 @@ open class LocalHistoryFacade internal constructor() {
     listeners.remove(l)
   }
 
-  private fun fireChangeAdded(c: Change) {
+  fun fireChangeAdded(c: Change) {
     for (each in listeners) {
       each.changeAdded(c)
     }

@@ -49,8 +49,9 @@ open class ChangeList(private val storage: ChangeListStorage) {
     doBeginChangeSet()
   }
 
-  private fun doBeginChangeSet() {
+  private fun doBeginChangeSet(): ChangeSet? {
     currentChangeSet = ChangeSet(nextId(), Clock.getTime())
+    return currentChangeSet
   }
 
   @Synchronized
