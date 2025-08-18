@@ -518,7 +518,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
   }
 
   /**
-   * Override together with [isDefaultActionButtonImplementation]
+   * Override together with [canReuseActionButton]
    */
   protected open fun createToolbarButton(
     action: AnAction,
@@ -537,7 +537,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
   }
 
   /**
-   * Override together with [isDefaultActionButtonImplementation]
+   * Override together with [canReuseActionButton]
    */
   protected open fun createIconButton(
     action: AnAction,
@@ -549,7 +549,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
   }
 
   /**
-   * Override together with [isDefaultActionButtonImplementation]
+   * Override together with [canReuseActionButton]
    */
   protected open fun createTextButton(
     action: AnAction,
@@ -571,8 +571,10 @@ open class ActionToolbarImpl @JvmOverloads constructor(
   /**
    * Return `true` if the [oldActionButton] instance can be reused
    * Return `false` if the difference with new [newPresentation] from the prior one requres re-creation of the ActionButton
+   *
+   * If `true`, the [createToolbarButton] will be called to re-build the action UI.
    */
-  protected open fun isDefaultActionButtonImplementation(oldActionButton: ActionButton, newPresentation: Presentation): Boolean {
+  protected open fun canReuseActionButton(oldActionButton: ActionButton, newPresentation: Presentation): Boolean {
     val shouldHaveText = newPresentation.getClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR) == true
     if (shouldHaveText) {
       return oldActionButton.javaClass == ActionButtonWithText::class.java
@@ -1116,7 +1118,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       }
       if (actionButton == null) return false
 
-      if (next === prev && isDefaultActionButtonImplementation(actionButton, nextP)) {
+      if (next === prev && canReuseActionButton(actionButton, nextP)) {
         continue // keep old component untouched
       }
 

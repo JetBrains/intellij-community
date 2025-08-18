@@ -1776,9 +1776,9 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       }
 
       @Override
-      protected boolean isDefaultActionButtonImplementation(@NotNull ActionButton oldActionButton, @NotNull Presentation newPresentation) {
+      protected boolean canReuseActionButton(@NotNull ActionButton oldActionButton, @NotNull Presentation newPresentation) {
         if (!ExperimentalUI.isNewUI()) {
-          return super.isDefaultActionButtonImplementation(oldActionButton, newPresentation);
+          return super.canReuseActionButton(oldActionButton, newPresentation);
         }
 
         return oldActionButton instanceof ActionButtonWithText;
