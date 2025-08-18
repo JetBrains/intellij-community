@@ -90,7 +90,10 @@ public class CodeCompletionHandlerBase {
     return createHandler(completionType, true, false, true);
   }
 
-  public static CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType, boolean invokedExplicitly, boolean autopopup, boolean synchronous) {
+  public static CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType,
+                                                        boolean invokedExplicitly,
+                                                        boolean autopopup,
+                                                        boolean synchronous) {
     return createHandler(completionType, invokedExplicitly, autopopup, synchronous, "CodeCompletion");
   }
 
@@ -112,7 +115,10 @@ public class CodeCompletionHandlerBase {
     this(completionType, true, false, true);
   }
 
-  public CodeCompletionHandlerBase(@NotNull CompletionType completionType, boolean invokedExplicitly, boolean autopopup, boolean synchronous) {
+  public CodeCompletionHandlerBase(@NotNull CompletionType completionType,
+                                   boolean invokedExplicitly,
+                                   boolean autopopup,
+                                   boolean synchronous) {
     this.completionType = completionType;
     this.invokedExplicitly = invokedExplicitly;
     this.autopopup = autopopup;
@@ -124,12 +130,16 @@ public class CodeCompletionHandlerBase {
   }
 
   public void handleCompletionElementSelected(@NotNull LookupElement item,
-                                              char completionChar, OffsetMap offsetMap, OffsetsInFile hostOffsets, Editor editor, Integer initialOffset) {
+                                              char completionChar,
+                                              OffsetMap offsetMap,
+                                              OffsetsInFile hostOffsets,
+                                              Editor editor,
+                                              Integer initialOffset) {
     WatchingInsertionContext context = null;
     try {
       StatisticsUpdate update = StatisticsUpdate.collectStatisticChanges(item);
       //todo pass all relevant items
-      context = insertItemHonorBlockSelection(new ArrayList<>(),item, completionChar, offsetMap, hostOffsets, editor, initialOffset, update);
+      context = insertItemHonorBlockSelection(new ArrayList<>(), item, completionChar, offsetMap, hostOffsets, editor, initialOffset, update);
       update.trackStatistics(context);
     }
     finally {
@@ -216,8 +226,10 @@ public class CodeCompletionHandlerBase {
     }
     catch (IndexNotReadyException e) {
       if (invokedExplicitly) {
-        DumbService.getInstance(project).showDumbModeNotificationForFunctionality(CodeInsightBundle.message("completion.not.available.during.indexing"),
-                                                                                  DumbModeBlockedFunctionality.CodeCompletion);
+        DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+          CodeInsightBundle.message("completion.not.available.during.indexing"),
+          DumbModeBlockedFunctionality.CodeCompletion
+        );
       }
       throw e;
     }
@@ -268,7 +280,10 @@ public class CodeCompletionHandlerBase {
   }
 
   @ApiStatus.Internal
-  protected void doComplete(CompletionInitializationContextImpl initContext, boolean hasModifiers, boolean isValidContext, long startingTime) {
+  protected void doComplete(CompletionInitializationContextImpl initContext,
+                            boolean hasModifiers,
+                            boolean isValidContext,
+                            long startingTime) {
     Editor editor = initContext.getEditor();
     CompletionAssertions.checkEditorValid(editor);
 
@@ -446,7 +461,8 @@ public class CodeCompletionHandlerBase {
   }
 
   private static boolean isInsideIdentifier(final OffsetMap offsetMap) {
-    return offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != offsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
+    return offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) !=
+           offsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
   }
 
   protected void completionFinished(final CompletionProgressIndicator indicator, boolean hasModifiers) {
@@ -489,9 +505,10 @@ public class CodeCompletionHandlerBase {
         if (CompletionService.getCompletionService().getCurrentCompletion() == null &&
             // ...or scheduled another autopopup
             !CompletionServiceImpl.isPhase(CompletionPhase.CommittingDocuments.class)) {
-          CompletionServiceImpl.setCompletionPhase(hasModifiers? new CompletionPhase.InsertedSingleItem(indicator, restorePrefix) : CompletionPhase.NoCompletion);
+          CompletionServiceImpl.setCompletionPhase(hasModifiers ? new CompletionPhase.InsertedSingleItem(indicator, restorePrefix) : CompletionPhase.NoCompletion);
         }
-      } else if (decision == AutoCompletionDecision.CLOSE_LOOKUP) {
+      }
+      else if (decision == AutoCompletionDecision.CLOSE_LOOKUP) {
         LookupManager.hideActiveLookup(indicator.getProject());
       }
     }
@@ -504,7 +521,9 @@ public class CodeCompletionHandlerBase {
     }
   }
 
-  protected void lookupItemSelected(final CompletionProgressIndicator indicator, final @NotNull LookupElement item, final char completionChar,
+  protected void lookupItemSelected(final CompletionProgressIndicator indicator,
+                                    final @NotNull LookupElement item,
+                                    final char completionChar,
                                     final List<LookupElement> items) {
     WatchingInsertionContext context = null;
     try {
@@ -797,7 +816,7 @@ public class CodeCompletionHandlerBase {
     final int hOffset = editor.getScrollingModel().getHorizontalScrollOffset();
 
     return () -> {
-      DocumentEx document = (DocumentEx) editor.getDocument();
+      DocumentEx document = (DocumentEx)editor.getDocument();
 
       document.replaceString(0, document.getTextLength(), documentText);
       editor.getCaretModel().moveToOffset(caret);
