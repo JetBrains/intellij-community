@@ -2,8 +2,13 @@
 package com.jetbrains.python.sdk.conda.execution
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.execService.BinOnTarget
+import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.ZeroCodeJsonParserTransformer
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
@@ -13,8 +18,13 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.sdk.conda.execution.models.CondaEnvInfo
+import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
+import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
+import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.runExecutableWithProgress
+import com.jetbrains.python.sdk.targetEnvConfiguration
+import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
@@ -24,79 +34,79 @@ import kotlin.time.Duration.Companion.minutes
 
 @ApiStatus.Internal
 object CondaExecutor {
-  suspend fun createNamedEnv(condaPath: Path, envName: String, pythonVersion: String): PyResult<Unit> {
+  suspend fun createNamedEnv(binaryToExec: BinaryToExec, envName: String, pythonVersion: String): PyResult<Unit> {
     val args = listOf("create", "-y", "-n", envName, "python=${pythonVersion}")
     return runConda(
-      condaPath, args, null
+      binaryToExec, args, null
     ) { PyResult.success(Unit) }
   }
 
-  suspend fun createUnnamedEnv(condaPath: Path, envPrefix: String, pythonVersion: String): PyResult<Unit> {
+  suspend fun createUnnamedEnv(binaryToExec: BinaryToExec, envPrefix: String, pythonVersion: String): PyResult<Unit> {
     val args = listOf("create", "-y", "-p", envPrefix, "python=${pythonVersion}")
     return runConda(
-      condaPath, args, null
+      binaryToExec, args, null
     ) { PyResult.success(Unit) }
   }
 
-  suspend fun createFileEnv(condaPath: Path, environmentYaml: Path): PyResult<Unit> {
+  suspend fun createFileEnv(binaryToExec: BinaryToExec, environmentYaml: Path): PyResult<Unit> {
     val args = listOf("env", "create", "-f", environmentYaml.pathString)
     return runConda(
-      condaPath, args, null
+      binaryToExec, args, null
     ) { PyResult.success(Unit) }
   }
 
-  suspend fun updateFromEnvironmentFile(condaPath: Path, envYmlPath: String, envIdentity: PyCondaEnvIdentity): PyResult<Unit> {
+  suspend fun updateFromEnvironmentFile(binaryToExec: BinaryToExec, envYmlPath: String, envIdentity: PyCondaEnvIdentity): PyResult<Unit> {
     val args = listOf("env", "update", "--file", envYmlPath, "--prune")
     return runConda(
-      condaPath, args, envIdentity
+      binaryToExec, args, envIdentity
     ) { PyResult.success(Unit) }
   }
 
-  suspend fun listEnvs(condaPath: Path): PyResult<CondaEnvInfo> {
+  suspend fun listEnvs(binaryToExec: BinaryToExec): PyResult<CondaEnvInfo> {
     val args = listOf("env", "list", "--json")
     return runConda(
-      condaPath, args, null,
+      binaryToExec, args, null,
       transformer = ZeroCodeJsonParserTransformer { CondaExecutionParser.parseListEnvironmentsOutput(it) }
     )
   }
 
-  suspend fun exportEnvironmentFile(condaPath: Path, envIdentity: PyCondaEnvIdentity): PyResult<String> {
+  suspend fun exportEnvironmentFile(binaryToExec: BinaryToExec, envIdentity: PyCondaEnvIdentity): PyResult<String> {
     return runConda(
-      condaPath, listOf("env", "export") + listOf("--no-builds"), envIdentity,
+      binaryToExec, listOf("env", "export") + listOf("--no-builds"), envIdentity,
       transformer = ZeroCodeStdoutTransformer
     )
   }
 
-  suspend fun listPackages(condaPath: Path, envIdentity: PyCondaEnvIdentity): PyResult<List<PythonPackage>> {
+  suspend fun listPackages(binaryToExec: BinaryToExec, envIdentity: PyCondaEnvIdentity): PyResult<List<PythonPackage>> {
     return runConda(
-      condaPath, listOf("list", "--json"), envIdentity,
+      binaryToExec, listOf("list", "--json"), envIdentity,
       transformer = ZeroCodeJsonParserTransformer { CondaExecutionParser.parseCondaPackageList(it) }
     )
   }
 
-  suspend fun installPackages(condaPath: Path, envIdentity: PyCondaEnvIdentity, packages: List<String>, options: List<String>): PyResult<Unit> {
+  suspend fun installPackages(binaryToExec: BinaryToExec, envIdentity: PyCondaEnvIdentity, packages: List<String>, options: List<String>): PyResult<Unit> {
     return runConda(
-      condaPath, listOf("install") + packages + listOf("-y") + options, envIdentity
+      binaryToExec, listOf("install") + packages + listOf("-y") + options, envIdentity
     ) { PyResult.success(Unit) }
 
   }
 
-  suspend fun uninstallPackages(condaPath: Path, envIdentity: PyCondaEnvIdentity, packages: List<String>): PyResult<Unit> {
+  suspend fun uninstallPackages(binaryToExec: BinaryToExec, envIdentity: PyCondaEnvIdentity, packages: List<String>): PyResult<Unit> {
     return runConda(
-      condaPath, listOf("uninstall") + packages + "-y", envIdentity
+      binaryToExec, listOf("uninstall") + packages + "-y", envIdentity
     ) { PyResult.success(Unit) }
   }
 
 
-  suspend fun listOutdatedPackages(condaPath: Path, envIdentity: PyCondaEnvIdentity): PyResult<List<PythonOutdatedPackage>> {
+  suspend fun listOutdatedPackages(binaryToExec: BinaryToExec, envIdentity: PyCondaEnvIdentity): PyResult<List<PythonOutdatedPackage>> {
     return runConda(
-      condaPath, listOf("update", "--dry-run", "--all", "--json"), envIdentity,
+      binaryToExec, listOf("update", "--dry-run", "--all", "--json"), envIdentity,
       transformer = ZeroCodeJsonParserTransformer { CondaExecutionParser.parseOutdatedOutputs(it) }
     )
   }
 
   private suspend fun <T> runConda(
-    condaPath: Path,
+    binaryToExec: BinaryToExec,
     args: List<String>,
     condaEnvIdentity: PyCondaEnvIdentity?,
     timeout: Duration = 15.minutes,
@@ -115,21 +125,24 @@ object CondaExecutor {
       null -> emptyList()
     }
 
-    val envs = getFixedEnvs(condaPath).getOr {
+    val envs = getFixedEnvs(binaryToExec).getOr {
       return it
     }
 
     val runArgs = (args + condaEnv).toTypedArray()
-    return runExecutableWithProgress(condaPath, null, timeout, env = envs, *runArgs, transformer = transformer)
+    return runExecutableWithProgress(binaryToExec, timeout, env = envs, *runArgs, transformer = transformer)
   }
 
-  private fun getFixedEnvs(condaPath: Path): PyResult<Map<String, String>> {
-    val osFamily = condaPath.getEelDescriptor().osFamily
+  private fun getFixedEnvs(binaryToExec: BinaryToExec): PyResult<Map<String, String>> {
+    val pathOnEel = (binaryToExec as? BinOnEel)?.path
+                    ?: return PyResult.success(emptyMap())
+
+    val osFamily = pathOnEel.getEelDescriptor().osFamily
     if (!osFamily.isWindows) return PyResult.success(emptyMap())
-    if (!condaPath.exists()) {
+    if (!pathOnEel.exists()) {
       return PyResult.localizedError(PyBundle.message("python.add.sdk.conda.executable.path.is.not.found"))
     }
-    val activateBat = condaPath.resolveSibling("activate.bat")
+    val activateBat = pathOnEel.resolveSibling("activate.bat")
     if (!activateBat.isExecutable()) {
       thisLogger().warn("$activateBat doesn't exist or can't be read")
       return PyResult.success(emptyMap())
@@ -137,7 +150,7 @@ object CondaExecutor {
     try {
       val command = ShellEnvironmentReader.winShellCommand(activateBat, null)
       val envs = ShellEnvironmentReader.readEnvironment(command, 0).first
-      val transformed = transformEnvVars(envs, condaPath)
+      val transformed = transformEnvVars(envs, pathOnEel)
       return PyResult.success(transformed)
     }
     catch (e: IOException) {
@@ -168,4 +181,18 @@ object CondaExecutor {
       key to fixedVal
     }.toMap()
   }
+}
+
+
+@ApiStatus.Internal
+fun Sdk.getCondaBinToExecute(): BinaryToExec {
+  val targetConfig = targetEnvConfiguration
+  val pathOnTarget = (getOrCreateAdditionalData().flavorAndData.data as PyCondaFlavorData).env.fullCondaPathOnTarget
+
+  val binToExec = when (targetConfig) {
+    null -> BinOnEel(Path(pathOnTarget))
+    else -> BinOnTarget(pathOnTarget, targetConfig)
+  }
+
+  return binToExec
 }

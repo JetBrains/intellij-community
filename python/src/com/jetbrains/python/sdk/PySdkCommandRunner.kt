@@ -19,19 +19,9 @@ suspend fun runExecutableWithProgress(
   return runExecutableWithProgress(executable, workDir, timeout, env, *args, transformer = ZeroCodeStdoutTransformer)
 }
 
-
-/**
- * Executes a given executable with specified arguments within an optional project directory.
- * Progress is reported as `text` of the current progress (if any)
- *
- * @param [executable] The [Path] to the executable to run.
- * @param [workDir] The path to the project directory in which to run the executable, or null if no specific directory is required.
- * @param [args] The arguments to pass to the executable.
- * @return A [Result] object containing the output of the command execution.
- */
 @Internal
 suspend fun <T> runExecutableWithProgress(
-  executable: Path, workDir: Path?,
+  binaryToExec: BinaryToExec,
   timeout: Duration = 10.minutes,
   env: Map<String, String> = emptyMap(),
   vararg args: String,
@@ -47,9 +37,36 @@ suspend fun <T> runExecutableWithProgress(
   }
 
   return ExecService().execute(
-    binary = BinOnEel(executable, workDir),
+    binary = binaryToExec,
     args = Args(*args),
     options = execOptions,
     processOutputTransformer = errorHandlerTransformer
+  )
+}
+
+/**
+ * Executes a given executable with specified arguments within an optional project directory.
+ * Progress is reported as `text` of the current progress (if any)
+ *
+ * @param [executable] The [Path] to the executable to run.
+ * @param [workDir] The path to the project directory in which to run the executable, or null if no specific directory is required.
+ * @param [args] The arguments to pass to the executable.
+ * @return A [Result] object containing the output of the command execution.
+ */
+@Internal
+suspend fun <T> runExecutableWithProgress(
+  executable: Path,
+  workDir: Path?,
+  timeout: Duration = 10.minutes,
+  env: Map<String, String> = emptyMap(),
+  vararg args: String,
+  transformer: ProcessOutputTransformer<T>,
+): PyResult<T> {
+  return runExecutableWithProgress(
+    binaryToExec = BinOnEel(path = executable, workDir = workDir),
+    timeout = timeout,
+    env = env,
+    args = args,
+    transformer = transformer,
   )
 }

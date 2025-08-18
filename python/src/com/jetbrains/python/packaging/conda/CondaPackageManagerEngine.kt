@@ -11,6 +11,7 @@ import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecificatio
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManagerEngine
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
+import com.jetbrains.python.sdk.conda.execution.getCondaBinToExecute
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
@@ -18,29 +19,29 @@ import com.jetbrains.python.sdk.getOrCreateAdditionalData
 internal class CondaPackageManagerEngine(private val sdk: Sdk) : PythonPackageManagerEngine {
   suspend fun updateFromEnvironmentFile(envFile: VirtualFile): PyResult<Unit> {
     val env = getEnvData()
-    return CondaExecutor.updateFromEnvironmentFile(env.condaPath, envFile.path, env.envIdentity)
+    return CondaExecutor.updateFromEnvironmentFile(sdk.getCondaBinToExecute(), envFile.path, env.envIdentity)
   }
 
   suspend fun exportToEnvironmentFile(): PyResult<String> {
     val env = getEnvData()
-    return CondaExecutor.exportEnvironmentFile(env.condaPath, env.envIdentity)
+    return CondaExecutor.exportEnvironmentFile(sdk.getCondaBinToExecute(), env.envIdentity)
   }
 
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> {
     val env = getEnvData()
-    return CondaExecutor.listOutdatedPackages(env.condaPath, env.envIdentity)
+    return CondaExecutor.listOutdatedPackages(sdk.getCondaBinToExecute(), env.envIdentity)
   }
 
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
     val installationArgs = installRequest.buildInstallationArguments().getOr { return it }
     val env = getEnvData()
-    return CondaExecutor.installPackages(env.condaPath, env.envIdentity, installationArgs, options)
+    return CondaExecutor.installPackages(sdk.getCondaBinToExecute(), env.envIdentity, installationArgs, options)
   }
 
   override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
     val packages = specifications.map { it.name }
     val env = getEnvData()
-    return CondaExecutor.installPackages(env.condaPath, env.envIdentity, packages, emptyList())
+    return CondaExecutor.installPackages(sdk.getCondaBinToExecute(), env.envIdentity, packages, emptyList())
   }
 
   override suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit> {
@@ -48,12 +49,12 @@ internal class CondaPackageManagerEngine(private val sdk: Sdk) : PythonPackageMa
       return PyResult.success(Unit)
 
     val env = getEnvData()
-    return CondaExecutor.uninstallPackages(env.condaPath, env.envIdentity, pythonPackages.toList())
+    return CondaExecutor.uninstallPackages(sdk.getCondaBinToExecute(), env.envIdentity, pythonPackages.toList())
   }
 
   override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> {
     val env = getEnvData()
-    return CondaExecutor.listPackages(env.condaPath, env.envIdentity)
+    return CondaExecutor.listPackages(sdk.getCondaBinToExecute(), env.envIdentity)
   }
 
 

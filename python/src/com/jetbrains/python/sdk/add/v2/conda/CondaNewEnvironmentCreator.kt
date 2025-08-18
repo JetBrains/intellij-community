@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk.add.v2.conda
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
@@ -24,11 +23,11 @@ import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.ui.flow.bindText
 import kotlinx.coroutines.CoroutineScope
 
-internal class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel, private val errorSink: ErrorSink) : PythonNewEnvironmentCreator(model) {
+internal class CondaNewEnvironmentCreator<P: PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, private val errorSink: ErrorSink) : PythonNewEnvironmentCreator<P>(model) {
 
   private lateinit var pythonVersion: ObservableMutableProperty<LanguageLevel>
   private lateinit var versionComboBox: ComboBox<LanguageLevel>
-  private lateinit var condaExecutable: TextFieldWithBrowseButton
+  private lateinit var condaExecutable: ValidatedPathField<Version, P, ValidatedPath.Executable<P>>
 
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
@@ -44,17 +43,23 @@ internal class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpret
           .bindText(model.projectPathFlows.projectName) // default value getter
       }
 
-      condaExecutable = executableSelector(
-        executable = model.state.condaExecutable,
+      condaExecutable = validatableExecutableField(
+        propertyGraph = propertyGraph,
+        fileSystem = model.fileSystem,
+        backProperty = model.state.condaExecutable,
         validationRequestor = validationRequestor,
         labelText = message("sdk.create.custom.venv.executable.path", "conda"),
         missingExecutableText = message("sdk.create.custom.venv.missing.text", "conda"),
         installAction = createInstallCondaFix(model, errorSink)
-      ).component
+      ) {
+        val binaryToExec = model.fileSystem.getBinaryToExec(it)
+        ValidatedPath.Executable(it, binaryToExec.getToolVersion("conda"))
+      }
     }
   }
 
   override fun onShown(scope: CoroutineScope) {
+    condaExecutable.initialize(scope)
     condaExecutable.displayLoaderWhen(
       loading = model.condaEnvironmentsLoading,
       scope = scope,

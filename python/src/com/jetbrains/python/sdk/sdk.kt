@@ -16,11 +16,11 @@ import java.nio.file.Path
 @ApiStatus.Internal
 suspend fun createSdk(
   pythonBinaryPath: VirtualFile,
-  projectPath: Path?,
+  associatedPath: Path?,
   existingSdks: Array<Sdk>,
 ): Sdk {
   val newSdk = withContext(Dispatchers.IO) {
-    val suggestedName = suggestAssociatedSdkName(pythonBinaryPath.path, projectPath?.toString())
+    val suggestedName = suggestAssociatedSdkName(pythonBinaryPath.path, associatedPath?.toString())
     SdkConfigurationUtil.setupSdk(existingSdks, pythonBinaryPath,
                                   PythonSdkType.getInstance(),
                                   null, suggestedName)

@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector
@@ -15,12 +16,17 @@ import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationC
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.InputData
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
 import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewCondaEnvFromFilePanel
+import com.intellij.python.community.execService.BinOnEel
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.packaging.conda.environmentYml.CondaEnvironmentYmlSdkUtils
 import com.jetbrains.python.pathValidation.PlatformAndRoot
+import com.jetbrains.python.pathValidation.ValidationRequest
+import com.jetbrains.python.pathValidation.validateExecutableFile
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.basePath
@@ -29,7 +35,6 @@ import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.suggestCondaPath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.findAmongRoots
-import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
@@ -38,6 +43,7 @@ import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.SystemDependent
 import java.nio.file.Path
 
 
@@ -83,7 +89,7 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
     // Again: only local conda is supported for now
     val condaExecutable = suggestCondaPath()?.let { LocalFileSystem.getInstance().findFileByPath(it) }
 
-    if (source == Source.INSPECTION && CondaEnvSdkFlavor.validateCondaPath(condaExecutable?.path, PlatformAndRoot.local) == null) {
+    if (source == Source.INSPECTION && validateCondaPath(condaExecutable?.path, PlatformAndRoot.local) == null) {
       PySdkConfigurationCollector.logCondaEnvDialogSkipped(module.project, source, executableToEventField(condaExecutable?.path))
       return@withContext PyAddNewCondaEnvFromFilePanel.Data(condaExecutable!!.path, environmentYml.path)
     }
@@ -130,7 +136,8 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
   }
 
   private suspend fun createCondaEnv(project: Project, condaExecutable: String, environmentYml: String): Sdk? {
-    val existingEnvs = PyCondaEnv.getEnvs(condaExecutable).getOrNull() ?: emptyList()
+    val binaryToExec = BinOnEel(Path.of(condaExecutable))
+    val existingEnvs = PyCondaEnv.getEnvs(binaryToExec).getOrNull() ?: emptyList()
 
     val existingSdks = PyConfigurableInterpreterList.getInstance(project).model.sdks
     val newCondaEnvInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(Path.of(environmentYml),
@@ -147,4 +154,19 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
     PySdkConfigurationCollector.logCondaEnv(project, CondaEnvResult.CREATED)
     return sdk
   }
+}
+
+@RequiresBackgroundThread
+@ApiStatus.Internal
+fun validateCondaPath(
+  condaExecutable: @SystemDependent String?,
+  platformAndRoot: PlatformAndRoot,
+): ValidationInfo? {
+  return validateExecutableFile(
+    ValidationRequest(
+      condaExecutable,
+      PyBundle.message("python.add.sdk.conda.executable.path.is.empty"),
+      platformAndRoot,
+      null
+    ))
 }

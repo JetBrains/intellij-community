@@ -16,12 +16,20 @@
 package com.jetbrains.python.sdk.add
 
 import com.intellij.execution.target.*
+import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBoxWithWidePopup
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.TextComponentAccessor
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ComboboxSpeedSearch
@@ -29,10 +37,13 @@ import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.PySdkListCellRenderer
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.configuration.findPreferredVirtualEnvBaseSdk
+import com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.target.createDetectedSdk
 import com.jetbrains.python.ui.targetPathEditor.ManualPathEntryDialog
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.event.ActionListener
 import java.util.function.Supplier
@@ -48,11 +59,13 @@ import javax.swing.plaf.basic.BasicComboBoxEditor
 private class PySdkListCellRendererExt : ListCellRenderer<PySdkComboBoxItem> {
   private val component = PySdkListCellRenderer()
 
-  override fun getListCellRendererComponent(list: JList<out PySdkComboBoxItem>?,
-                                            value: PySdkComboBoxItem?,
-                                            index: Int,
-                                            isSelected: Boolean,
-                                            cellHasFocus: Boolean): Component {
+  override fun getListCellRendererComponent(
+    list: JList<out PySdkComboBoxItem>?,
+    value: PySdkComboBoxItem?,
+    index: Int,
+    isSelected: Boolean,
+    cellHasFocus: Boolean,
+  ): Component {
     val convertedValue = value?.run {
       when (this) {
         is NewPySdkComboBoxItem -> title
@@ -67,9 +80,13 @@ private class PySdkListCellRendererExt : ListCellRenderer<PySdkComboBoxItem> {
  * A combobox with browse button for choosing a path to SDK, also capable of showing progress indicator.
  * To toggle progress indicator visibility use [setBusy] method.
  *
- * To fill this box in async mode use [addInterpretersAsync]
+ * To fill this box in async mode use [addInterpretersToComboAsync]
  *
  */
+@Deprecated(
+  message ="this ComboBox was designed only for plain venv, not tool-specific pythons and doesn't supported anymore",
+  replaceWith = ReplaceWith("PythonInterpreterComboBox")
+)
 class PySdkPathChoosingComboBox @JvmOverloads constructor(
   sdks: List<Sdk> = emptyList(),
   suggestedFile: VirtualFile? = null,
@@ -197,3 +214,99 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(
     }
   }
 }
+
+@ApiStatus.Internal
+fun validateSdkComboBox(field: PySdkPathChoosingComboBox, @NlsContexts.Button defaultButtonName: String): ValidationInfo? {
+  return when (val sdk = field.selectedSdkIfExists) {
+    null -> ValidationInfo(PySdkBundle.message("python.sdk.field.is.empty"), field)
+    is PySdkToInstall -> {
+      val message = sdk.getInstallationWarning(defaultButtonName)
+      ValidationInfo(message).asWarning().withOKEnabled()
+    }
+    is PyDetectedSdk -> {
+      if (SystemInfo.isMac) MacPythonSdkFlavor.checkDetectedPython(sdk) else null
+    }
+    else -> null
+  }
+}
+
+/**
+ * Obtains a list of sdk on a pool using [sdkObtainer], then fills [sdkComboBox] on the EDT.
+ */
+internal fun addInterpretersToComboAsync(sdkComboBox: PySdkPathChoosingComboBox, sdkObtainer: () -> List<Sdk>) {
+  addInterpretersToComboAsync(sdkComboBox, sdkObtainer, {})
+}
+
+/**
+ * Obtains a list of sdk on a pool using [sdkObtainer], then fills [sdkComboBox] and calls [onAdded] on the EDT.
+ */
+internal fun addInterpretersToComboAsync(
+  sdkComboBox: PySdkPathChoosingComboBox,
+  sdkObtainer: () -> List<Sdk>,
+  onAdded: (List<Sdk>) -> Unit,
+) {
+  ApplicationManager.getApplication().executeOnPooledThread {
+    val executor = AppUIExecutor.onUiThread(ModalityState.any())
+    executor.execute { sdkComboBox.setBusy(true) }
+    var sdks = emptyList<Sdk>()
+    try {
+      sdks = sdkObtainer()
+    }
+    finally {
+      executor.execute {
+        sdkComboBox.setBusy(false)
+        sdkComboBox.removeAllItems()
+        sdks.forEach(sdkComboBox::addSdkItem)
+        onAdded(sdks)
+      }
+    }
+  }
+}
+
+/**
+ * Keeps [NewPySdkComboBoxItem] if it is present in the combobox.
+ */
+private fun PySdkPathChoosingComboBox.removeAllItems() {
+  if (childComponent.itemCount > 0 && childComponent.getItemAt(0) is NewPySdkComboBoxItem) {
+    while (childComponent.itemCount > 1) {
+      childComponent.removeItemAt(1)
+    }
+  }
+  else {
+    childComponent.removeAllItems()
+  }
+}
+
+/**
+ * Obtains a list of sdk to be used as a base for a virtual environment on a pool,
+ * then fills the [sdkComboBox] on the EDT and chooses [com.jetbrains.python.sdk.PySdkSettings.preferredVirtualEnvBaseSdk] or prepends it.
+ */
+@ApiStatus.Internal
+fun addBaseInterpretersAsync(
+  sdkComboBox: PySdkPathChoosingComboBox,
+  existingSdks: List<Sdk>,
+  module: Module?,
+  context: UserDataHolder,
+  callback: () -> Unit = {},
+) {
+  addInterpretersToComboAsync(
+    sdkComboBox,
+    { findBaseSdks(existingSdks, module, context).takeIf { it.isNotEmpty() } ?: getSdksToInstall() },
+    {
+      sdkComboBox.apply {
+        val preferredSdk = findPreferredVirtualEnvBaseSdk(items)
+        if (preferredSdk != null) {
+          if (items.find { it.homePath == preferredSdk.homePath } == null) {
+            addSdkItemOnTop(preferredSdk)
+          }
+          selectedSdk = preferredSdk
+        }
+      }
+      callback()
+    }
+  )
+}
+
+sealed class PySdkComboBoxItem
+class NewPySdkComboBoxItem(val title: String) : PySdkComboBoxItem()
+class ExistingPySdkComboBoxItem(val sdk: Sdk) : PySdkComboBoxItem()

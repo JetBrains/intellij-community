@@ -9,7 +9,6 @@ import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.psi.LanguageLevel
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Python binary itself (i.e python.exe)
@@ -22,13 +21,13 @@ typealias PythonBinaryOnEelOrTarget = BinaryToExec
  * Returns `stdout`
  */
 suspend fun ExecService.executeHelper(
-  python: PythonBinary,
+  python: BinaryToExec,
   helper: HelperName,
   args: List<String> = emptyList(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
 ): PyResult<String> =
-  executeHelperAdvanced(ExecutablePython.vanillaExecutablePython(python.asBinToExec()), helper, args, options, procListener, ZeroCodeStdoutTransformer)
+  executeHelperAdvanced(ExecutablePython.vanillaExecutablePython(python), helper, args, options, procListener, ZeroCodeStdoutTransformer)
 
 /**
  * Ensures that this python is executable and returns its version. Error if python is broken.

@@ -4,14 +4,12 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
-import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
@@ -27,28 +25,38 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
 @Internal
-internal abstract class CustomNewEnvironmentCreator(
+internal abstract class CustomNewEnvironmentCreator<P: PathHolder>(
   private val name: String,
-  model: PythonMutableTargetAddInterpreterModel,
+  model: PythonMutableTargetAddInterpreterModel<P>,
   protected val errorSink: ErrorSink,
-) : PythonNewEnvironmentCreator(model) {
-  internal lateinit var basePythonComboBox: PythonInterpreterComboBox
+) : PythonNewEnvironmentCreator<P>(model) {
+  internal lateinit var basePythonComboBox: PythonInterpreterComboBox<P>
+  internal lateinit var executablePath: ValidatedPathField<Version, P, ValidatedPath.Executable<P>>
+
+  open suspend fun onBinarySelection(pathOnFileSystem: P): ValidatedPath.Executable<P> {
+    val binaryToExec = model.fileSystem.getBinaryToExec(pathOnFileSystem)
+    return ValidatedPath.Executable(pathOnFileSystem, binaryToExec.getToolVersion(name))
+  }
 
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
       basePythonComboBox = pythonInterpreterComboBox(
+        model.fileSystem,
         title = message("sdk.create.custom.base.python"),
         selectedSdkProperty = model.state.baseInterpreter,
         validationRequestor = validationRequestor,
-        onPathSelected = model::addInterpreter,
+        onPathSelected = model::addManuallyAddedInterpreter,
       )
 
-      executableSelector(
-        executable = executable,
+      executablePath = validatableExecutableField(
+        propertyGraph = propertyGraph,
+        fileSystem = model.fileSystem,
+        backProperty = executable,
         validationRequestor = validationRequestor,
         labelText = message("sdk.create.custom.venv.executable.path", name),
         missingExecutableText = message("sdk.create.custom.venv.missing.text", name),
-        installAction = createInstallFix(errorSink)
+        installAction = createInstallFix(errorSink),
+        selectedPathValidator = ::onBinarySelection
       )
 
       row("") {
@@ -60,6 +68,7 @@ internal abstract class CustomNewEnvironmentCreator(
   }
 
   override fun onShown(scope: CoroutineScope) {
+    executablePath.initialize(scope)
     basePythonComboBox.initialize(scope, model.baseInterpreters)
   }
 
@@ -146,7 +155,8 @@ internal abstract class CustomNewEnvironmentCreator(
     val installedSdk = when (baseInterpreter) {
       is InstallableSelectableInterpreter -> installBaseSdk(baseInterpreter.sdk, model.existingSdks)
         ?.let {
-          val installed = model.addInstalledInterpreter(it.homePath!!.toNioPathOrNull()!!, baseInterpreter.languageLevel)
+          val sdkWrapper = model.fileSystem.wrapSdk(it)
+          val installed = model.addInstalledInterpreter(sdkWrapper.homePath, baseInterpreter.languageLevel)
           model.state.baseInterpreter.set(installed)
           installed
         }
@@ -155,13 +165,15 @@ internal abstract class CustomNewEnvironmentCreator(
 
     // installedSdk is null when the selected sdk isn't downloadable
     // model.state.baseInterpreter could be null if no SDK was selected
-    val pythonExecutable = Path.of(installedSdk?.homePath ?: model.state.baseInterpreter.get()?.homePath ?: getPythonExecutableString())
+    val pythonExecutablePath = installedSdk?.homePath ?: model.state.baseInterpreter.get()?.homePath
+    val pythonExecutable = pythonExecutablePath?.let { model.fileSystem.getBinaryToExec(it) } ?: return
 
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", name, "via pip")) {
       val versionArgs: List<String> = installationVersion?.let { listOf("-v", it) } ?: emptyList()
       when (val r = installExecutableViaPythonScript(pythonExecutable, "-n", name, *versionArgs.toTypedArray())) {
         is Result.Success -> {
-          savePathToExecutableToProperties(r.result)
+          val pathHolder = PathHolder.Eel(r.result)
+          savePathToExecutableToProperties(pathHolder)
         }
         is Result.Failure -> {
           errorSink.emit(r.error)
@@ -172,7 +184,7 @@ internal abstract class CustomNewEnvironmentCreator(
 
   internal abstract val interpreterType: InterpreterType
 
-  internal abstract val executable: ObservableMutableProperty<String>
+  internal abstract val executable: ObservableMutableProperty<ValidatedPath.Executable<P>?>
 
   internal open val installationVersion: String? = null
 
@@ -182,11 +194,21 @@ internal abstract class CustomNewEnvironmentCreator(
    *
    * @param [path] The path to the executable that needs to be saved. This may be null when tries to find automatically.
    */
-  internal abstract fun savePathToExecutableToProperties(path: Path?)
+  internal abstract suspend fun savePathToExecutableToProperties(pathHolder: PathHolder?)
 
-  protected abstract suspend fun setupEnvSdk(moduleBasePath: Path, baseSdks: List<Sdk>, basePythonBinaryPath: PythonBinary?, installPackages: Boolean): PyResult<Sdk>
+  protected abstract suspend fun setupEnvSdk(moduleBasePath: Path, baseSdks: List<Sdk>, basePythonBinaryPath: P?, installPackages: Boolean): PyResult<Sdk>
 
   internal abstract suspend fun detectExecutable()
 
   internal open fun onVenvSelectExisting() {}
+}
+
+private fun <P : PathHolder> PythonAddInterpreterModel<P>.installPythonIfNeeded(interpreter: PythonSelectableInterpreter<P>): P? {
+  // todo use target config
+  val path = if (interpreter is InstallableSelectableInterpreter<P>) {
+    installBaseSdk(interpreter.sdk, existingSdks)?.let { fileSystem.wrapSdk(it) }?.homePath
+  }
+  else interpreter.homePath
+
+  return path
 }

@@ -5,6 +5,7 @@ import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.testFramework.junit5.eel.params.api.*
 import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.asBinToExec
 import com.intellij.python.community.execService.python.executeHelper
 import com.intellij.python.community.execService.python.validatePythonAndGetVersion
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
@@ -49,7 +50,7 @@ class HelpersShowCaseTest() {
         """.trimIndent())
       }
 
-      val output = ExecService().executeHelper(python, helper.name, listOf("--version")).orThrow().trim()
+      val output = ExecService().executeHelper(python.asBinToExec(), helper.name, listOf("--version")).orThrow().trim()
       Assertions.assertEquals(hello, output, "wrong helper output")
 
       val langLevel = ExecService().validatePythonAndGetVersion(python).getOrThrow()

@@ -16,11 +16,11 @@ import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
+import com.jetbrains.python.sdk.add.v2.conda.getCondaVersion
+import com.jetbrains.python.sdk.conda.execution.getCondaBinToExecute
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
-import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.flavors.conda.addCondaPythonToTargetCommandLine
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.targetEnvConfiguration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -61,9 +61,9 @@ internal class CondaPackageCache : PythonPackageCache<String> {
 
   private suspend fun refreshAll(sdk: Sdk, project: Project) {
     withContext(Dispatchers.IO) {
-      val pathOnTarget = (sdk.getOrCreateAdditionalData().flavorAndData.data as PyCondaFlavorData).env.fullCondaPathOnTarget
       val targetConfig = sdk.targetEnvConfiguration
-      val baseConda = PyCondaEnv.getEnvs(pathOnTarget).getOrThrow()
+      val binaryToExec = sdk.getCondaBinToExecute()
+      val baseConda = PyCondaEnv.getEnvs(binaryToExec).getOrThrow()
         .first { it.envIdentity is PyCondaEnvIdentity.UnnamedEnv && it.envIdentity.isBase }
 
       val helpersAware = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project)

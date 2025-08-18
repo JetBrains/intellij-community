@@ -32,10 +32,9 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
+import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.getInterpreterVersion
-import com.jetbrains.python.target.ui.PyAddSdkPanelBase
-import com.jetbrains.python.target.ui.PyAddSdkPanelBase.Companion.isLocal
 import com.jetbrains.python.target.ui.TargetPanelExtension
 import com.jetbrains.python.ui.pyModalBlocking
 import kotlinx.coroutines.Dispatchers
@@ -110,7 +109,7 @@ fun createVirtualEnvAndSdkSynchronously(
   }
 
   project?.excludeInnerVirtualEnv(venvSdk)
-  if (targetEnvironmentConfiguration.isLocal()) {
+  if (targetEnvironmentConfiguration == null) {
     // The method `onVirtualEnvCreated(..)` stores preferred base path to virtual envs. Storing here the base path from the non-local
     // target (e.g. a path from SSH machine or a Docker image) ends up with a meaningless default for the local machine.
     // If we would like to store preferred paths for non-local targets we need to use some key to identify the exact target.
@@ -139,7 +138,7 @@ internal suspend fun createSdkForTarget(
   sdkName: String? = null,
 ): Sdk = withContext(Dispatchers.IO) {
   // TODO [targets] Should flavor be more flexible?
-  val data = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, PyAddSdkPanelBase.virtualEnvSdkFlavor)).also {
+  val data = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance())).also {
     it.interpreterPath = interpreterPath
     it.targetEnvironmentConfiguration = environmentConfiguration
     targetPanelExtension?.applyToAdditionalData(it)

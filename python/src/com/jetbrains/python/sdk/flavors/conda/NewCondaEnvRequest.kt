@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.flavors.conda
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.python.community.execService.BinaryToExec
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.jetbrains.python.psi.LanguageLevel
@@ -19,15 +20,15 @@ sealed class NewCondaEnvRequest {
   abstract val envName: @NonNls String
 
   @ApiStatus.Internal
-  abstract suspend fun create(condaPath: Path): PyResult<Unit>
+  abstract suspend fun create(binaryToExec: BinaryToExec): PyResult<Unit>
 
   /**
    * Create empty environment with [langLevel]
    */
   class EmptyNamedEnv(private val langLevel: LanguageLevel, @get:NonNls override val envName: String) : NewCondaEnvRequest() {
     @ApiStatus.Internal
-    override suspend fun create(condaPath: Path): PyResult<Unit> {
-      return CondaExecutor.createNamedEnv(condaPath, envName, langLevel.toPythonVersion())
+    override suspend fun create(binaryToExec: BinaryToExec): PyResult<Unit> {
+      return CondaExecutor.createNamedEnv(binaryToExec, envName, langLevel.toPythonVersion())
     }
   }
 
@@ -38,8 +39,8 @@ sealed class NewCondaEnvRequest {
     override val envName: String get() = envPrefix
 
     @ApiStatus.Internal
-    override suspend fun create(condaPath: Path): PyResult<Unit> {
-      return CondaExecutor.createUnnamedEnv(condaPath, envPrefix, langLevel.toPythonVersion())
+    override suspend fun create(binaryToExec: BinaryToExec): PyResult<Unit> {
+      return CondaExecutor.createUnnamedEnv(binaryToExec, envPrefix, langLevel.toPythonVersion())
     }
   }
 
@@ -58,16 +59,16 @@ sealed class NewCondaEnvRequest {
     override val envName: String = readEnvName()
 
     @ApiStatus.Internal
-    override suspend fun create(condaPath: Path): PyResult<Unit> {
+    override suspend fun create(binaryToExec: BinaryToExec): PyResult<Unit> {
       //If environment already exists we need to update it because it cannot be recreated on windows
       val existingNames = existingEnvs.mapNotNull { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName }
       return if (envName != DEFAULT_ENV_NAME && envName in existingNames) {
-        CondaExecutor.updateFromEnvironmentFile(condaPath,
+        CondaExecutor.updateFromEnvironmentFile(binaryToExec,
                                                 environmentYaml.toString(),
                                                 PyCondaEnvIdentity.NamedEnv(envName))
       }
       else {
-        CondaExecutor.createFileEnv(condaPath, environmentYaml)
+        CondaExecutor.createFileEnv(binaryToExec, environmentYaml)
       }
     }
 

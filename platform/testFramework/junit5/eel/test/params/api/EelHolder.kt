@@ -5,6 +5,7 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.platform.eel.EelApi
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.opentest4j.TestAbortedException
 
 /**
  * Accept as an argument of your test, be sure to use [EelSource]

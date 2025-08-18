@@ -5,10 +5,11 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.and
-import com.intellij.openapi.observable.util.notEqualsTo
+import com.intellij.openapi.observable.util.isNotNull
 import com.intellij.openapi.observable.util.or
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.util.asDisposable
@@ -23,6 +24,8 @@ import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
+import com.jetbrains.python.sdk.add.v2.conda.selectCondaEnvironment
+import com.jetbrains.python.sdk.add.v2.venv.setupVirtualenv
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
@@ -77,7 +80,8 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
   private var _custom = propertyGraph.booleanProperty(selectedMode, CUSTOM)
   private var venvHint = propertyGraph.property("")
 
-  private lateinit var pythonBaseVersionComboBox: PythonInterpreterComboBox
+  private lateinit var pythonBaseVersionComboBox: PythonInterpreterComboBox<PathHolder.Eel>
+  private lateinit var executablePath: ValidatedPathField<Version, PathHolder.Eel, ValidatedPath.Executable<PathHolder.Eel>>
 
   private suspend fun updateVenvLocationHint(): Unit = withContext(Dispatchers.EDT) {
     val get = selectedMode.get()
@@ -86,11 +90,11 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
     else if (get == BASE_CONDA && PROJECT_VENV in allowedInterpreterTypes) venvHint.set(message("sdk.create.simple.conda.hint"))
   }
 
-  private lateinit var custom: PythonAddCustomInterpreter
-  private lateinit var model: PythonMutableTargetAddInterpreterModel
+  private lateinit var custom: PythonAddCustomInterpreter<PathHolder.Eel>
+  private lateinit var model: PythonMutableTargetAddInterpreterModel<PathHolder.Eel>
 
   override fun buildPanel(outerPanel: Panel, projectPathFlows: ProjectPathFlows) {
-    model = PythonLocalAddInterpreterModel(projectPathFlows)
+    model = PythonLocalAddInterpreterModel(projectPathFlows, FileSystem.Eel(localEel))
     model.navigator.selectionMode = selectedMode
 
     custom = PythonAddCustomInterpreter(
@@ -111,25 +115,34 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
       }
 
       pythonBaseVersionComboBox = pythonInterpreterComboBox(
+        model.fileSystem,
         title = message("sdk.create.python.version"),
         selectedSdkProperty = model.state.baseInterpreter,
         validationRequestor = validationRequestor,
-        onPathSelected = model::addInterpreter
+        onPathSelected = model::addManuallyAddedInterpreter
       ) {
         visibleIf(_projectVenv)
       }
 
       rowsRange {
-        executableSelector(model.state.condaExecutable,
-                           validationRequestor,
-                           message("sdk.create.custom.venv.executable.path", "conda"),
-                           message("sdk.create.custom.venv.missing.text", "conda"),
-                           createInstallCondaFix(model, errorSink))
+        executablePath = validatableExecutableField(
+          propertyGraph = propertyGraph,
+          fileSystem = model.fileSystem,
+          backProperty = model.state.condaExecutable,
+          validationRequestor = validationRequestor,
+          labelText = message("sdk.create.custom.venv.executable.path", "conda"),
+          missingExecutableText = message("sdk.create.custom.venv.missing.text", "conda"),
+          installAction = createInstallCondaFix(model, errorSink),
+          selectedPathValidator = {
+            val binToExec = model.fileSystem.getBinaryToExec(it)
+            ValidatedPath.Executable(it, binToExec.getToolVersion("conda"))
+          }
+        )
       }.visibleIf(_baseConda)
 
       row("") {
         comment("").bindText(venvHint)
-      }.visibleIf(_projectVenv or (_baseConda and model.state.condaExecutable.notEqualsTo(UNKNOWN_EXECUTABLE)))
+      }.visibleIf(_projectVenv or (_baseConda and model.state.condaExecutable.isNotNull()))
 
       rowsRange {
         custom.setupUI(this, validationRequestor)
@@ -153,6 +166,7 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
     model.initialize(scope)
 
     pythonBaseVersionComboBox.initialize(scope, model.baseInterpreters)
+    executablePath.initialize(scope)
 
     model.projectPathFlows.projectPathWithDefault.onEach { updateVenvLocationHint() }.launchIn(scope)
     selectedMode.afterChange(scope.asDisposable()) { scope.launch { updateVenvLocationHint() } }
@@ -174,7 +188,8 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
       PROJECT_VENV -> {
         val projectPath = model.projectPathFlows.projectPathWithDefault.first()
         // todo just keep venv path, all the rest is in the model
-        model.setupVirtualenv(projectPath.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME), moduleOrProject)
+        val venvFolder = PathHolder.Eel(projectPath.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
+        model.setupVirtualenv(venvFolder, moduleOrProject)
       }
       BASE_CONDA -> model.selectCondaEnvironment(base = true)
       CUSTOM -> custom.currentSdkManager.getOrCreateSdkWithBackground(moduleOrProject)

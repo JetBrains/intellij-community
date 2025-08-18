@@ -12,19 +12,22 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ui.FormBuilder
-import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.impl.PySdkBundle
-import com.jetbrains.python.PythonFileType
-import com.jetbrains.python.pathValidation.PlatformAndRoot
-import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.sdk.add.PyAddSdkPanel
-import com.jetbrains.python.sdk.add.PyAddSdkPanel.Companion.validateSdkComboBox
-import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
-import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
 import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewEnvCollector.InputData
 import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewEnvCollector.RequirementsTxtOrSetupPyData
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.FormBuilder
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PythonFileType
+import com.jetbrains.python.pathValidation.PlatformAndRoot
+import com.jetbrains.python.pathValidation.ValidationRequest
+import com.jetbrains.python.pathValidation.validateEmptyDir
+import com.jetbrains.python.sdk.PySdkSettings
+import com.jetbrains.python.sdk.add.validateSdkComboBox
+import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
+import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
 import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.jetbrains.python.ui.pyModalBlocking
 import org.jetbrains.annotations.SystemDependent
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
@@ -83,7 +86,7 @@ class PyAddNewVirtualEnvFromFilePanel(
   }
 
   fun validateAll(@NlsContexts.Button defaultButtonName: String): List<ValidationInfo> =
-    listOfNotNull(PyAddSdkPanel.validateEnvironmentDirectoryLocation(pathField, PlatformAndRoot.local),
+    listOfNotNull(validateEnvironmentDirectoryLocation(pathField, PlatformAndRoot.local),
                   validateSdkComboBox(baseSdkField, defaultButtonName))
 
   /**
@@ -165,4 +168,20 @@ class PyAddNewVirtualEnvFromFilePanel(
     val baseSdk: Sdk?,
     val requirementsTxtOrSetupPyPath: @NlsSafe @SystemDependent String,
   )
+}
+
+@RequiresEdt
+fun validateEnvironmentDirectoryLocation(field: TextFieldWithBrowseButton, platformAndRoot: PlatformAndRoot): ValidationInfo? {
+  val path = field.text
+  return pyModalBlocking {
+    validateEmptyDir(
+      ValidationRequest(
+        path = path,
+        fieldIsEmpty = PySdkBundle.message("python.venv.location.field.empty"),
+        platformAndRoot = platformAndRoot
+      ),
+      notADirectory = PySdkBundle.message("python.venv.location.field.not.directory"),
+      directoryNotEmpty = PySdkBundle.message("python.venv.location.directory.not.empty")
+    )
+  }
 }

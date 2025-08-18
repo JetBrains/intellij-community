@@ -8,6 +8,7 @@ import com.intellij.util.PathUtil
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.uv.impl.createUvCli
@@ -69,7 +70,7 @@ suspend fun setupExistingEnvAndSdk(
   existingSdks: List<Sdk>,
 ): PyResult<Sdk> {
   val sdk = createSdk(
-    envExecutable,
+    PathHolder.Eel(envExecutable),
     existingSdks,
     projectDir.toString(),
     suggestedSdkName(envWorkingDir),

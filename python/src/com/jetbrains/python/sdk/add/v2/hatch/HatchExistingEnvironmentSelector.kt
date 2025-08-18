@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add.v2.hatch
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.hatch.HatchConfiguration
 import com.intellij.python.hatch.PythonVirtualEnvironment
 import com.intellij.python.hatch.resolveHatchWorkingDirectory
@@ -16,25 +17,23 @@ import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
-import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
-import com.jetbrains.python.sdk.add.v2.toStatisticsField
+import com.jetbrains.python.sdk.add.v2.*
 import com.jetbrains.python.sdk.destructured
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-internal class HatchExistingEnvironmentSelector(
-  override val model: PythonMutableTargetAddInterpreterModel,
-) : PythonExistingEnvironmentConfigurator(model) {
+internal class HatchExistingEnvironmentSelector<P: PathHolder>(
+  override val model: PythonMutableTargetAddInterpreterModel<P>,
+) : PythonExistingEnvironmentConfigurator<P>(model) {
   val interpreterType: InterpreterType = InterpreterType.HATCH
-  val executable: ObservableMutableProperty<String> = propertyGraph.property(model.state.hatchExecutable.get())
+  val executable: ObservableMutableProperty<ValidatedPath.Executable<P>?> = propertyGraph.property(model.state.hatchExecutable.get())
 
-  private lateinit var hatchFormFields: HatchFormFields
+  private lateinit var hatchFormFields: HatchFormFields<P>
 
   init {
     propertyGraph.dependsOn(executable, model.state.hatchExecutable, deleteWhenChildModified = false) {
@@ -47,7 +46,6 @@ internal class HatchExistingEnvironmentSelector(
       model = model,
       hatchEnvironmentProperty = state.selectedHatchEnv,
       hatchExecutableProperty = executable,
-      propertyGraph = propertyGraph,
       validationRequestor = validationRequestor,
       isGenerateNewMode = false,
     )
@@ -55,6 +53,20 @@ internal class HatchExistingEnvironmentSelector(
 
   override fun onShown(scope: CoroutineScope) {
     hatchFormFields.onShown(scope, model, state, isFilterOnlyExisting = true)
+    model.state.hatchExecutable.afterChange { commonExecutable ->
+      if (commonExecutable == null) {
+        model.hatchEnvironmentsResult.value = null
+        return@afterChange
+      }
+
+      val binaryToExec = commonExecutable.pathHolder?.let { model.fileSystem.getBinaryToExec(it) }
+                         ?: return@afterChange
+      scope.launch(Dispatchers.IO) {
+        model.detectHatchEnvironments(binaryToExec).also {
+          model.hatchEnvironmentsResult.value = it
+        }
+      }
+    }
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
@@ -77,8 +89,10 @@ internal class HatchExistingEnvironmentSelector(
         }
       }
     }.onSuccess {
-      val executablePath = executable.get().toPath().getOr { return@onSuccess }
-      HatchConfiguration.persistPathForTarget(hatchExecutablePath = executablePath)
+      when (val binaryToExec = executable.get()?.pathHolder) {
+        is BinOnEel -> HatchConfiguration.persistPathForTarget(hatchExecutablePath = binaryToExec.path)
+        else -> Unit
+      }
     }
 
     return result

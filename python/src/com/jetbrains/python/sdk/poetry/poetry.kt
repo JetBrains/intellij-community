@@ -16,6 +16,7 @@ import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -40,14 +41,14 @@ suspend fun createNewPoetrySdk(
 ): PyResult<Sdk> {
   val pythonBinaryPath = setUpPoetry(moduleBasePath, basePythonBinaryPath, installPackages).getOr { return it }
 
-  return createPoetrySdk(moduleBasePath, existingSdks, pythonBinaryPath)
+  return createPoetrySdk(moduleBasePath, existingSdks, PathHolder.Eel(pythonBinaryPath))
 }
 
 @Internal
 suspend fun createPoetrySdk(
   moduleBasePath: Path,
   existingSdks: List<Sdk>,
-  pythonBinaryPath: PythonBinary,
+  pythonBinaryPath: PathHolder.Eel,
 ): PyResult<Sdk> = createSdk(
   pythonBinaryPath = pythonBinaryPath,
   existingSdks = existingSdks,

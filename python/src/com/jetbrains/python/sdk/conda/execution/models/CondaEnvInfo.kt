@@ -11,7 +11,7 @@ data class CondaEnvInfo(
   @SerialName("envs")
   val envs: List<String>,
   @SerialName("envs_dirs")
-  val envsDirs: List<String>,
+  val envsDirs: List<String> = emptyList(),
   @SerialName("conda_prefix")
-  val condaPrefix: String,
+  val condaPrefix: String? = null,
 )

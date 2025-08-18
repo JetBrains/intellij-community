@@ -887,7 +887,7 @@
     <pythonPackageManagerProvider implementation="com.jetbrains.python.hatch.packaging.HatchPackageManagerProvider"/>
 
     <!-- SDK Flavors -->
-    <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor"/>
+    <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavorProvider"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor"/>

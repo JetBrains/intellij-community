@@ -2,9 +2,9 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.executeHelper
-import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -26,7 +26,7 @@ fun getPythonExecutableString(): String = if (SystemInfo.isWindows) "py" else "p
  * @return executable [Path]
  */
 @Internal
-suspend fun installExecutableViaPythonScript(pythonExecutable: PythonBinary, vararg args: String): PyResult<Path> {
+suspend fun installExecutableViaPythonScript(pythonExecutable: BinaryToExec, vararg args: String): PyResult<Path> {
   val output = ExecService().executeHelper(pythonExecutable, "pycharm_package_installer.py", args.toList()).getOr { return it }
   return Result.success(Path.of(output.split("\n").last()))
 }

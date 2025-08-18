@@ -75,7 +75,7 @@ private fun collectNewInterpreterOnTargetActions(
     .filterNot { project.isDefault && it.needAssociateWithModule() }
     .map { AddInterpreterOnTargetAction(project, it.getTargetType(), onSdkCreated) }
 
-private class AddLocalInterpreterAction(
+internal class AddLocalInterpreterAction(
   private val moduleOrProject: ModuleOrProject,
   private val onSdkCreated: Consumer<Sdk>,
 ) : DialogAction(

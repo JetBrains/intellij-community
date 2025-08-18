@@ -12,6 +12,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.runExecutableWithProgress
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -88,7 +89,7 @@ suspend fun setupPipEnvSdkWithProgressReport(
   val pythonExecutablePath = setUpPipEnv(moduleBasePath, basePythonBinaryPath, installPackages).getOr { return it }
 
   return createSdk(
-    pythonExecutablePath,
+    PathHolder.Eel(pythonExecutablePath),
     existingSdks, moduleBasePath.pathString,
     suggestedSdkName(moduleBasePath.pathString),
     PyPipEnvSdkAdditionalData()

@@ -12,6 +12,7 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.persist
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +32,7 @@ suspend fun HatchVirtualEnvironment.createSdk(workingDirectoryPath: Path): PyRes
 
   val hatchSdkAdditionalData = HatchSdkAdditionalData(workingDirectoryPath, this.hatchEnvironment.name)
   val sdk = createSdk(
-    pythonBinaryPath = pythonBinary,
+    pythonBinaryPath = PathHolder.Eel(pythonBinary),
     existingSdks = PythonSdkUtil.getAllSdks(),
     associatedProjectPath = workingDirectoryPath.toString(),
     suggestedSdkName = existingPythonEnvironment.suggestHatchSdkName(),

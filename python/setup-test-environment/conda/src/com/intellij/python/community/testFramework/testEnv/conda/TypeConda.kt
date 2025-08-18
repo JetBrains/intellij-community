@@ -3,12 +3,14 @@ package com.intellij.python.community.testFramework.testEnv.conda
 import com.intellij.execution.processTools.getResultStdout
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.testFramework.testEnv.PythonType
 import com.intellij.util.io.awaitExit
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
+import com.jetbrains.python.sdk.add.v2.conda.getCondaVersion
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.CancellationException
@@ -59,12 +61,19 @@ data object TypeConda : PythonType<PyCondaEnv>("conda") {
         }
       }
     }
-    return Pair(PyCondaEnv(PyCondaEnvIdentity.UnnamedEnv(envDir.toString(), isBase = true), condaPath.toString()), cleanupCondas)
+    return Pair(
+      PyCondaEnv(
+        envIdentity = PyCondaEnvIdentity.UnnamedEnv(envDir.toString(), isBase = true),
+        fullCondaPathOnTarget = condaPath.toString(),
+      ),
+      cleanupCondas
+    )
   }
 
-  private suspend fun getCondaNames(condaPath: Path) =
-    PyCondaEnv.getEnvs(
-      condaPath.toString()).getOrThrow()
+  private suspend fun getCondaNames(condaPath: Path): MutableSet<String> {
+    val envs = PyCondaEnv.getEnvs(BinOnEel(condaPath)).getOrThrow()
       .map { it.envIdentity.userReadableName }
       .toMutableSet()
+    return envs
+  }
 }

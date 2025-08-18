@@ -3,17 +3,19 @@ package com.jetbrains.python.sdk.add.v2.conda
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
-import com.intellij.openapi.observable.util.notEqualsTo
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
@@ -35,45 +37,59 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 
 
-internal class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel, private val errorSink: ErrorSink) : PythonExistingEnvironmentConfigurator(model) {
+internal class CondaExistingEnvironmentSelector<P : PathHolder>(model: PythonAddInterpreterModel<P>, private val errorSink: ErrorSink) : PythonExistingEnvironmentConfigurator<P>(model) {
   private lateinit var envComboBox: ComboBox<PyCondaEnv?>
-  private lateinit var condaExecutable: TextFieldWithBrowseButton
+  private lateinit var condaExecutable: ValidatedPathField<Version, P, ValidatedPath.Executable<P>>
   private lateinit var reloadLink: ActionLink
   private val isReloadLinkVisible = AtomicBooleanProperty(false)
 
 
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
-      condaExecutable = executableSelector(
-        executable = state.condaExecutable,
+      condaExecutable = validatableExecutableField(
+        propertyGraph = propertyGraph,
+        fileSystem = model.fileSystem,
+        backProperty = state.condaExecutable,
         validationRequestor = validationRequestor,
         labelText = message("sdk.create.custom.venv.executable.path", "conda"),
         missingExecutableText = message("sdk.create.custom.venv.missing.text", "conda"),
         installAction = createInstallCondaFix(model, errorSink)
-      ).component
+      ) {
+        val binaryToExec = model.fileSystem.getBinaryToExec(it)
+        ValidatedPath.Executable(it, binaryToExec.getToolVersion("conda"))
+      }
 
-      row(message("sdk.create.custom.env.creation.type")) {
-        envComboBox = comboBox(
-          items = emptyList(),
-          renderer = CondaEnvComboBoxListCellRenderer()
-        ).withExtendableTextFieldEditor()
-          .bindItem(state.selectedCondaEnv)
-          .validationRequestor(
-            validationRequestor
-              and WHEN_PROPERTY_CHANGED(state.selectedCondaEnv)
-              and WHEN_PROPERTY_CHANGED(state.condaExecutable)
+      rowsRange {
+        row(message("sdk.create.custom.env.creation.type")) {
+          envComboBox = comboBox(
+            items = emptyList(),
+            renderer = CondaEnvComboBoxListCellRenderer()
+          ).withExtendableTextFieldEditor()
+            .bindItem(state.selectedCondaEnv)
+            .validationRequestor(
+              validationRequestor
+                and WHEN_PROPERTY_CHANGED(state.selectedCondaEnv)
+                and WHEN_PROPERTY_CHANGED(state.condaExecutable)
+            )
+            .validationOnInput {
+              return@validationOnInput if (it.isVisible && it.selectedItem == null) ValidationInfo(message("python.sdk.conda.no.env.selected.error")) else null
+            }
+            .align(Align.FILL)
+            .applyToComponent {
+              preferredSize = JBUI.size(preferredSize)
+            }
+            .component
+        }
+
+        row {
+          reloadLink = link(
+            text = message("sdk.create.custom.conda.refresh.envs"),
+            action = { }
           )
-          .validationOnInput {
-            return@validationOnInput if (it.isVisible && it.selectedItem == null) ValidationInfo(message("python.sdk.conda.no.env.selected.error")) else null
-          }
-          .component
-
-        reloadLink = link(
-          text = message("sdk.create.custom.conda.refresh.envs"),
-          action = { }
-        ).visibleIf(isReloadLinkVisible).component
-
-      }.visibleIf(state.condaExecutable.notEqualsTo(UNKNOWN_EXECUTABLE))
+            .align(AlignX.RIGHT)
+            .visibleIf(isReloadLinkVisible).component
+        }
+      }.visibleIf(state.condaExecutable.transform { it?.validationResult?.successOrNull != null })
     }
   }
 
@@ -108,7 +124,7 @@ internal class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel
       makeTemporaryEditable = true,
       scope = scope,
     )
-
+    condaExecutable.initialize(scope)
     condaExecutable.displayLoaderWhen(
       loading = model.condaEnvironmentsLoading,
       scope = scope,
