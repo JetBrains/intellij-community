@@ -306,6 +306,16 @@ class DocumentTracker(
     return result
   }
 
+  @Internal
+  fun recreateBlocks(map: Map<Range, BlockData>) {
+    LOCK.write {
+      tracker.setRanges(map.keys.toList().sortedWith(compareBy<Range> { it.start1 }.thenBy { it.end1 }.thenBy { it.start2 }.thenBy { it.end2 } ), false)
+      for (block in tracker.blocks) {
+        block.data = map[block.range]
+      }
+    }
+  }
+
   fun setFrozenState(content1: CharSequence, content2: CharSequence, lineRanges: List<Range>): Boolean {
     assert(freezeHelper.isFrozen(Side.LEFT) && freezeHelper.isFrozen(Side.RIGHT))
     if (isDisposed) return false

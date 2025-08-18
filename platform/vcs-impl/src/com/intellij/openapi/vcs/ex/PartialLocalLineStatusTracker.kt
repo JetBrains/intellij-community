@@ -761,6 +761,25 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
   }
 
   @RequiresEdt
+  @ApiStatus.Internal
+  fun recreateBlocks(map: Map<Range, LocalChangeList>) {
+    changeListManager.executeUnderDataLock {
+      val rangesToBlockData = map.entries.associate { (range, changelist) ->
+        if (changeListManager.getChangeList(changelist.id) == null) return@executeUnderDataLock
+        val newMarker = ChangeListMarker(changelist)
+        com.intellij.diff.util.Range(range.vcsLine1, range.vcsLine2, range.line1, range.line2) to ChangeListBlockData(marker = newMarker) as DocumentTracker.BlockData
+      }
+
+      documentTracker.writeLock {
+        documentTracker.recreateBlocks(rangesToBlockData)
+        dropExistingUndoActions()
+        updateHighlighters()
+        updateAffectedChangeLists()
+      }
+    }
+  }
+
+  @RequiresEdt
   private fun moveToChangelist(condition: (Block) -> Boolean, changelist: LocalChangeList) {
     changeListManager.executeUnderDataLock {
       if (changeListManager.getChangeList(changelist.id) == null) return@executeUnderDataLock
