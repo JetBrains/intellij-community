@@ -152,7 +152,6 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     setRange(null);
   }
 
-  @ApiStatus.Internal
   public static @Nullable PsiFile restoreFileFromVirtual(@NotNull VirtualFile virtualFile,
                                                          @NotNull CodeInsightContext context,
                                                          @NotNull Project project,
