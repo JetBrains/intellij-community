@@ -44,24 +44,28 @@ public class VarHandleWrapperImpl extends VarHandleWrapper implements VarHandleW
   @Override
   public boolean compareAndSet(Object thisObject, Object expected, Object actual) {
     assert !isArray;
+    //assert !myVarHandle.varType().isPrimitive() : myVarHandle;
     return myVarHandle.compareAndSet(thisObject, expected, actual);
   }
 
   @Override
   public boolean compareAndSetInt(Object thisObject, int expected, int actual) {
     assert !isArray;
+    //assert myVarHandle.varType() == int.class : myVarHandle;
     return myVarHandle.compareAndSet(thisObject, expected, actual);
   }
 
   @Override
   public boolean compareAndSetByte(Object thisObject, byte expected, byte actual) {
     assert !isArray;
+    //assert myVarHandle.varType() == byte.class : myVarHandle;
     return myVarHandle.compareAndSet(thisObject, expected, actual);
   }
 
   @Override
   public boolean compareAndSetLong(Object thisObject, long expected, long actual) {
     assert !isArray;
+    //assert myVarHandle.varType() == long.class : myVarHandle;
     return myVarHandle.compareAndSet(thisObject, expected, actual);
   }
 
@@ -86,6 +90,7 @@ public class VarHandleWrapperImpl extends VarHandleWrapper implements VarHandleW
   @Override
   public int getAndAdd(Object thisObject, int value) {
     assert !isArray;
+    //assert myVarHandle.varType() == int.class : myVarHandle;
     return (int)myVarHandle.getAndAdd(thisObject, value);
   }
 
