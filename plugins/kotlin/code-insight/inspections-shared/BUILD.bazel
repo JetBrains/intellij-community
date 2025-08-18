@@ -30,6 +30,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinc-analysis-api",
     "//platform/code-style-api:codeStyle",
     "//platform/indexing-api:indexing",

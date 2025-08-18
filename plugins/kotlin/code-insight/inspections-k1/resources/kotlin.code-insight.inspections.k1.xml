@@ -3,13 +3,6 @@
     <module name="kotlin.code-insight.inspections.shared"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.k1.codeinsight.inspections.FunctionNameInspection"
-                     language="kotlin"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.naming.conventions"
-                     enabledByDefault="true"
-                     level="WEAK WARNING" key="inspection.function.name.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k1.codeinsight.inspections.KDocUnresolvedReferenceInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
