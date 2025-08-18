@@ -104,14 +104,14 @@ public final class StringUtilRt {
   }
 
   @NotNull
-  public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, @Nullable int[] offsetsToKeep) {
+  public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, int @Nullable [] offsetsToKeep) {
     return convertLineSeparators(text, newSeparator, offsetsToKeep, false);
   }
 
   @NotNull
   public static String convertLineSeparators(@NotNull String text,
                                              @NotNull String newSeparator,
-                                             @Nullable int[] offsetsToKeep,
+                                             int @Nullable [] offsetsToKeep,
                                              boolean keepCarriageReturn) {
     return unifyLineSeparators(text, newSeparator, offsetsToKeep, keepCarriageReturn).toString();
   }
@@ -119,7 +119,7 @@ public final class StringUtilRt {
   @NotNull
   private static CharSequence unifyLineSeparators(@NotNull CharSequence text,
                                                   @NotNull String newSeparator,
-                                                  @Nullable int[] offsetsToKeep,
+                                                  int @Nullable [] offsetsToKeep,
                                                   boolean keepCarriageReturn) {
     StringBuilder buffer = null;
     int intactLength = 0;
