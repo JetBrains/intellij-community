@@ -8,7 +8,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
-import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.NlsSafe
@@ -27,6 +26,7 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
+import com.intellij.ui.progress.ProgressUIUtil
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.ui.table.TableView
 import com.intellij.util.FontUtil
@@ -44,7 +44,7 @@ import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
 
 internal class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), Disposable {
-  private val POSTPONE_MAPPINGS_LOADING_PANEL = ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
+  private val POSTPONE_MAPPINGS_LOADING_PANEL = ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS
 
   private val isEditingDisabled = project.isDefault
 
@@ -141,7 +141,7 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
     scopeFilterConfigurable = VcsUpdateInfoScopeFilterConfigurable(project, vcsConfiguration)
 
     // don't start loading automatically
-    tableLoadingPanel = JBLoadingPanel(BorderLayout(), this, POSTPONE_MAPPINGS_LOADING_PANEL * 2)
+    tableLoadingPanel = JBLoadingPanel(BorderLayout(), this, POSTPONE_MAPPINGS_LOADING_PANEL.toInt() * 2)
 
     detectVcsMappingsCheckBox = JCheckBox(VcsBundle.message("directory.mapping.checkbox.detect.vcs.mappings.automatically"))
 
@@ -206,7 +206,7 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
             setDisplayedMappings(items)
           }
         }
-      }, { tableLoadingPanel.startLoading() }, POSTPONE_MAPPINGS_LOADING_PANEL.toLong(), false)
+      }, { tableLoadingPanel.startLoading() }, POSTPONE_MAPPINGS_LOADING_PANEL, false)
   }
 
   private fun createRegisteredInfo(mapping: VcsDirectoryMapping): RecordInfo {

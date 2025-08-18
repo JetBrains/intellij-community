@@ -871,6 +871,8 @@ com.intellij.ui.components.Interpolable
 - a:getValue():I
 - a:setCurrentValue(I):V
 - a:setValue(I):V
+c:com.intellij.ui.components.JBLoadingPanel
+- <init>(java.awt.LayoutManager,com.intellij.openapi.Disposable,J):V
 com.intellij.ui.components.JBLoadingPanelListener
 - a:onLoadingFinish():V
 - a:onLoadingStart():V

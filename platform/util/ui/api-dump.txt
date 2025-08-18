@@ -3268,6 +3268,9 @@ e:com.intellij.ui.paint.RectanglePainter2D
 - s:values():com.intellij.ui.paint.RectanglePainter2D[]
 com.intellij.ui.paint.RegionPainter2D
 - a:paint(java.awt.Graphics2D,D,D,D,D,java.lang.Object):V
+f:com.intellij.ui.progress.ProgressUIUtil
+- sf:DEFAULT_PROGRESS_DELAY_MILLIS:J
+- sf:INSTANCE:com.intellij.ui.progress.ProgressUIUtil
 f:com.intellij.ui.render.RenderingUtil
 - sf:ALWAYS_PAINT_SELECTION_AS_FOCUSED:com.intellij.openapi.util.Key
 - <init>():V

@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.paint.PaintUtil;
+import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.EDT;
@@ -46,7 +47,7 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
   private final Component myComponent;
   private final EventStealer myEventStealer;
   private final long myCreatedAt = System.nanoTime();
-  private int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS * 10;
+  private long myDelayInMillis = ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS * 10;
   private long myLastUiUpdate = myCreatedAt;
   private long myLastInteraction;
   private boolean myShowing;

@@ -331,7 +331,7 @@ a:com.intellij.diff.impl.CacheDiffRequestProcessor
 - <init>(com.intellij.openapi.project.Project,java.lang.String):V
 - p:dropCaches():V
 - pa:getCurrentRequestProvider():java.lang.Object
-- p:getFastLoadingTimeMillis():I
+- p:getFastLoadingTimeMillis():J
 - pa:getRequestName(java.lang.Object):java.lang.String
 - pa:loadRequest(java.lang.Object,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.requests.DiffRequest
 - p:loadRequestFast(java.lang.Object):com.intellij.diff.requests.DiffRequest

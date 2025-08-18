@@ -27,6 +27,10 @@ open class JBLoadingPanel(manager: LayoutManager?,
                                                                                             LoadingDecorator(panel, parent, startDelayMs)
                                                                                           })
 
+  constructor(manager: LayoutManager?, parent: Disposable, startDelayMs: Long)
+    : this(manager = manager,
+           createLoadingDecorator = { panel -> LoadingDecorator(panel, parent, startDelayMs.toInt()) })
+
   init {
     contentPanel = manager?.let { JPanel(it) } ?: JPanel()
     contentPanel.isOpaque = false

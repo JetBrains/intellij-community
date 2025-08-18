@@ -5,7 +5,6 @@ import com.intellij.diff.impl.DiffEditorViewer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
-import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -18,6 +17,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.navigation.History;
+import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -109,8 +109,7 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
     myChangesBrowser = new VcsLogChangesBrowser(logData.getProject(), myChangesTreeModel, this);
     myChangesBrowser.setShowDiffActionPreview(withEditorDiffPreview ? new VcsLogEditorDiffPreview(myChangesBrowser) : null);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
-    JBLoadingPanel changesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
-                                                           ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+    JBLoadingPanel changesLoadingPane = new JBLoadingPanel(new BorderLayout(), this, ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS) {
       @Override
       public Dimension getMinimumSize() {
         return VcsLogUiUtil.expandToFitToolbar(super.getMinimumSize(), myChangesBrowser.getToolbar().getComponent());

@@ -37,7 +37,6 @@ import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.util.Disposer;
@@ -53,6 +52,7 @@ import com.intellij.pom.NonNavigatable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.ui.render.RenderingHelper;
 import com.intellij.ui.split.SplitComponentFactory;
 import com.intellij.ui.tree.AsyncTreeModel;
@@ -1136,7 +1136,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
                        @NotNull List<? extends Filter> executionConsoleFilters) {
       myProject = project;
       myPanel = new NonOpaquePanel(new BorderLayout());
-      myPanelWithProgress = new BuildProgressStripe(myPanel, parentDisposable, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+      myPanelWithProgress = new BuildProgressStripe(myPanel, parentDisposable, (int)ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS);
       myExecutionConsoleFilters = executionConsoleFilters;
       Disposer.register(parentDisposable, this);
       myView = new CompositeView<>(null) {

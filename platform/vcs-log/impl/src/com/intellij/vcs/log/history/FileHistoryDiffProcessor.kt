@@ -24,7 +24,7 @@ internal class FileHistoryDiffProcessor(project: Project,
     return !isInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents)
   }
 
-  override fun getFastLoadingTimeMillis(): Int = 10
+  override fun getFastLoadingTimeMillis(): Long = 10
 
   override fun getCurrentRequestProvider(): DiffRequestProducer? {
     val change = changeGetter() ?: return null

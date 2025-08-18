@@ -8,12 +8,12 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.progress.ProgressUIUtil
 import com.intellij.util.concurrency.EdtScheduler
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.NamedColorUtil
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nls.Capitalization.Title
 import org.jetbrains.annotations.NotNull
 import javax.swing.JPanel
 import javax.swing.SwingConstants
+import kotlin.time.Duration.Companion.milliseconds
 
 internal interface InlineComponent {
   fun showProgress(@Nls(capitalization = Title) text: String): ProgressIndicator
@@ -117,7 +118,7 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
     }
 
     progressShown = true
-    EdtScheduler.getInstance().schedule(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, modalityState) {
+    EdtScheduler.getInstance().schedule(ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS.milliseconds, modalityState) {
       if (progressShown) {
         container.addToLeft(pi.component)
         panelToValidate?.validate()

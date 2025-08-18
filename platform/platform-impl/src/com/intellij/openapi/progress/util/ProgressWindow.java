@@ -4,8 +4,8 @@ package com.intellij.openapi.progress.util;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.InstantShutdown;
 import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind;
+import com.intellij.openapi.application.InstantShutdown;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -69,7 +70,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   private boolean myStoppedAlready;
   protected boolean myBackgrounded;
-  int delayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
+  int delayInMillis = (int)ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS;
   private boolean myModalityEntered;
 
   @FunctionalInterface
@@ -168,7 +169,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
    * Solution is to postpone showing progress dialog in assumption that the task may be already finished when it's
    * time to show the dialog.
    * <p/>
-   * Default value is {@link #DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS}
+   * Default value is {@link ProgressUIUtil#DEFAULT_PROGRESS_DELAY_MILLIS}
    *
    * @param delayInMillis   new delay time in milliseconds
    */
