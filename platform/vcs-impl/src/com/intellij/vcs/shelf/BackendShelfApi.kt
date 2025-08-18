@@ -4,25 +4,13 @@ package com.intellij.vcs.shelf
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
-import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeListRpc
 import com.intellij.platform.vcs.impl.shared.rpc.RemoteShelfApi
 import com.intellij.platform.vcs.impl.shared.rpc.UpdateStatus
 import fleet.kernel.DurableRef
-import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
-import org.jetbrains.annotations.ApiStatus
-
-@ApiStatus.Internal
-class ShelfApiProvider : RemoteApiProvider {
-  override fun RemoteApiProvider.Sink.remoteApis() {
-    remoteApi(remoteApiDescriptor<RemoteShelfApi>()) {
-      BackendShelfApi()
-    }
-  }
-}
 
 internal class BackendShelfApi : RemoteShelfApi {
   override suspend fun loadChanges(projectId: ProjectId) {

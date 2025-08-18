@@ -3,22 +3,12 @@ package com.intellij.vcs.shelf
 
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
-import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeListRpc
 import com.intellij.platform.vcs.impl.shared.rpc.RemoteShelfActionsApi
 import fleet.kernel.DurableRef
-import fleet.rpc.remoteApiDescriptor
 
-private class ShelfActionsApiProvider : RemoteApiProvider {
-  override fun RemoteApiProvider.Sink.remoteApis() {
-    remoteApi(remoteApiDescriptor<RemoteShelfActionsApi>()) {
-      BackendShelfActionsApi()
-    }
-  }
-}
-
-private class BackendShelfActionsApi : RemoteShelfActionsApi {
+internal class BackendShelfActionsApi : RemoteShelfActionsApi {
   override suspend fun unshelve(projectId: ProjectId, changeListRpc: List<ChangeListRpc>, withDialog: Boolean) {
     getShelfRemoteActionExecutor(projectId).unshelve(changeListRpc, withDialog)
   }
