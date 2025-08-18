@@ -16,11 +16,14 @@ import com.intellij.openapi.util.Key
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyPsiPackageUtil
+import com.jetbrains.python.ast.PyAstImportStatementBase
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction
@@ -36,6 +39,8 @@ import com.jetbrains.python.packaging.management.isNotInstalledAndCanBeInstalled
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.references.PyFromImportNameReference
 import com.jetbrains.python.psi.impl.references.PyImportReference
+import com.jetbrains.python.psi.resolve.fromModule
+import com.jetbrains.python.psi.resolve.resolveInRoot
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.isReadOnly
@@ -104,6 +109,37 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
 
     override fun getInstallAllPackagesQuickFix(): InstallAllPackagesQuickFix {
       return InstallAllPackagesQuickFix(myUnresolvedRefs.map { it.refName }.distinct())
+    }
+
+    override fun getAddSourceRootQuickFix(node: PyElement): LocalQuickFix? {
+      val importStatementBase = PsiTreeUtil.getParentOfType(node, PyAstImportStatementBase::class.java, true)
+                                ?: return null
+
+      val project = node.getProject()
+      val scope = GlobalSearchScope.projectScope(project)
+      val module = ModuleUtilCore.findModuleForPsiElement(node) ?: return null
+
+      val importObjectsFQNs = importStatementBase.getFullyQualifiedObjectNames()
+
+      val firstImportObject = importObjectsFQNs.firstOrNull() ?: return null
+      val qname = QualifiedName.fromDottedString(firstImportObject)
+      val folderNameToSearchFor = qname.getFirstComponent() ?: return null
+
+      val filesByName = FilenameIndex.getVirtualFilesByName(folderNameToSearchFor, scope)
+
+      for (file in filesByName) {
+        val containingDirectory = file.getParent() ?: continue
+
+        val context = fromModule(module)
+          .copyWithMembers()
+          .copyWithoutStubs()
+          .copyWithoutRoots()
+        val resolveResult: List<PsiElement> = resolveInRoot(qname, containingDirectory, context)
+        if (!resolveResult.isEmpty()) {
+          return PyMarkDirectoryAsSourceRootQuickFix(project, containingDirectory, module, context)
+        }
+      }
+      return null
     }
 
     override fun getAddIgnoredIdentifierQuickFixes(qualifiedNames: List<QualifiedName>): List<LocalQuickFix> {

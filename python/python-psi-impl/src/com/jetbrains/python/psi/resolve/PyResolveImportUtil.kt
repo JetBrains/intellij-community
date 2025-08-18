@@ -35,6 +35,7 @@ import com.jetbrains.python.psi.impl.PyImportResolver
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 /**
@@ -337,11 +338,18 @@ private fun isAcceptRootAsTopLevelPackage(context: PyQualifiedNameResolveContext
   return false
 }
 
-private fun resolveInRoot(name: QualifiedName, root: VirtualFile, context: PyQualifiedNameResolveContext): List<PsiElement> {
-  return if (root.isDirectory) resolveModuleAt(name, context.psiManager.findDirectory(root), context) else emptyList()
+@ApiStatus.Internal
+fun resolveInRoot(name: QualifiedName, root: VirtualFile, context: PyQualifiedNameResolveContext): List<PsiElement> {
+  return if (root.isDirectory) {
+    resolveModuleAt(name, context.psiManager.findDirectory(root), context)
+  }
+  else {
+    emptyList()
+  }
 }
 
-private fun findCache(context: PyQualifiedNameResolveContext): PythonPathCache? {
+@ApiStatus.Internal
+fun findCache(context: PyQualifiedNameResolveContext): PythonPathCache? {
   return when {
     context.visitAllModules -> null
     context.module != null ->

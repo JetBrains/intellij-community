@@ -41,8 +41,7 @@ import com.jetbrains.python.psi.impl.references.PyFromImportNameReference;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.impl.references.hasattr.PyHasAttrHelper;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
@@ -365,6 +364,8 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       myUnresolvedRefs.add(problemInfo);
       isAddedToInstallAllFix = true;
     }
+
+    ContainerUtil.addAll(fixes, getAddSourceRootQuickFix(node));
 
     if (reference instanceof PySubstitutionChunkReference) {
       return;
@@ -714,6 +715,10 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   }
 
   protected @Nullable LocalQuickFix getInstallAllPackagesQuickFix() {
+    return null;
+  }
+
+  protected @Nullable LocalQuickFix getAddSourceRootQuickFix(@NotNull PyElement node) {
     return null;
   }
 
