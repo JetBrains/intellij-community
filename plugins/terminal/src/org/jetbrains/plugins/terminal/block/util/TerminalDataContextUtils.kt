@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.block.util
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.actions.TerminalActionUtil
@@ -32,6 +33,9 @@ object TerminalDataContextUtils {
 
   @ApiStatus.Internal
   val IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY: Key<Boolean> = Key.create("AlternateBufferModelEditor")
+
+  @ApiStatus.Internal
+  val IS_ALTERNATE_BUFFER_DATA_KEY: DataKey<Boolean> = DataKey.create("IS_ALTERNATE_BUFFER")
 
   val Editor.isPromptEditor: Boolean
     get() = getUserData(IS_PROMPT_EDITOR_KEY) == true
