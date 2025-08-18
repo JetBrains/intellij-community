@@ -9,6 +9,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuperInfo
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.idea.refactoring.pullUp.isAbstractInInterface
 import org.jetbrains.kotlin.idea.refactoring.pullUp.mustBeAbstractInInterface
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import javax.swing.JTextField
 
 @ApiStatus.Internal
 class KotlinExtractInterfaceDialog(
@@ -103,25 +105,25 @@ class KotlinExtractInterfaceDialog(
         }
     }
 
-    override fun getDestinationPackageRecentKey() = DESTINATION_PACKAGE_RECENT_KEY
+    override fun getDestinationPackageRecentKey(): String = DESTINATION_PACKAGE_RECENT_KEY
 
-    override fun getClassNameLabelText() = RefactoringBundle.message("interface.name.prompt")
+    override fun getClassNameLabelText(): @Nls String = RefactoringBundle.message("interface.name.prompt")
 
-    override fun getPackageNameLabelText() = RefactoringBundle.message("package.for.new.interface")
+    override fun getPackageNameLabelText(): @Nls String = RefactoringBundle.message("package.for.new.interface")
 
-    override fun getEntityName() = RefactoringBundle.message("extractSuperInterface.interface")
+    override fun getEntityName(): @Nls String = RefactoringBundle.message("extractSuperInterface.interface")
 
-    override fun getTopLabelText() = RefactoringBundle.message("extract.interface.from")
+    override fun getTopLabelText(): @Nls String = RefactoringBundle.message("extract.interface.from")
 
-    override fun getDocCommentPolicySetting() = KotlinCommonRefactoringSettings.getInstance().EXTRACT_INTERFACE_JAVADOC
+    override fun getDocCommentPolicySetting(): Int = KotlinCommonRefactoringSettings.getInstance().EXTRACT_INTERFACE_JAVADOC
 
     override fun setDocCommentPolicySetting(policy: Int) {
         KotlinCommonRefactoringSettings.getInstance().EXTRACT_INTERFACE_JAVADOC = policy
     }
 
-    override fun getExtractedSuperNameNotSpecifiedMessage() = RefactoringBundle.message("no.interface.name.specified")
+    override fun getExtractedSuperNameNotSpecifiedMessage(): @Nls String = RefactoringBundle.message("no.interface.name.specified")
 
-    override fun getHelpId() = HelpID.EXTRACT_INTERFACE
+    override fun getHelpId(): String = HelpID.EXTRACT_INTERFACE
 
-    override fun createExtractedSuperNameField() = super.createExtractedSuperNameField().apply { text = "I${originalClass.name}" }
+    override fun createExtractedSuperNameField(): JTextField = super.createExtractedSuperNameField().apply { text = "I${originalClass.name}" }
 }

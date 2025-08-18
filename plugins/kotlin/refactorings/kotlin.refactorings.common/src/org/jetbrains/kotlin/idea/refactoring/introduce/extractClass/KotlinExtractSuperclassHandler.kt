@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 
 @ApiStatus.Internal
 object KotlinExtractSuperclassHandler : KotlinExtractSuperHandlerBase(false) {
-    val REFACTORING_NAME
+    val REFACTORING_NAME: String
         @Nls
         get() = KotlinBundle.message("text.extract.superclass")
 
@@ -29,7 +29,7 @@ object KotlinExtractSuperclassHandler : KotlinExtractSuperHandlerBase(false) {
         return null
     }
 
-    override fun createDialog(klass: KtClassOrObject, targetParent: PsiElement) =
+    override fun createDialog(klass: KtClassOrObject, targetParent: PsiElement): KotlinExtractSuperclassDialog =
         KotlinExtractSuperclassDialog(
             originalClass = klass,
             targetParent = targetParent,

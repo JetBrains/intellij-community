@@ -56,7 +56,7 @@ class KotlinExtractSuperclassDialog(
         }
     }
 
-    override fun getDestinationPackageRecentKey() = DESTINATION_PACKAGE_RECENT_KEY
+    override fun getDestinationPackageRecentKey(): String = DESTINATION_PACKAGE_RECENT_KEY
 
     override fun getClassNameLabelText(): String = RefactoringBundle.message("superclass.name")
 
@@ -66,7 +66,7 @@ class KotlinExtractSuperclassDialog(
 
     override fun getTopLabelText(): String = RefactoringBundle.message("extract.superclass.from")
 
-    override fun getDocCommentPolicySetting() = KotlinCommonRefactoringSettings.getInstance().EXTRACT_SUPERCLASS_JAVADOC
+    override fun getDocCommentPolicySetting(): Int = KotlinCommonRefactoringSettings.getInstance().EXTRACT_SUPERCLASS_JAVADOC
 
     override fun setDocCommentPolicySetting(policy: Int) {
         KotlinCommonRefactoringSettings.getInstance().EXTRACT_SUPERCLASS_JAVADOC = policy
@@ -74,5 +74,5 @@ class KotlinExtractSuperclassDialog(
 
     override fun getExtractedSuperNameNotSpecifiedMessage(): String = RefactoringBundle.message("no.superclass.name.specified")
 
-    override fun getHelpId() = HelpID.EXTRACT_SUPERCLASS
+    override fun getHelpId(): String = HelpID.EXTRACT_SUPERCLASS
 }

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 
 @ApiStatus.Internal
 object KotlinExtractInterfaceHandler : KotlinExtractSuperHandlerBase(true) {
-    val REFACTORING_NAME
+    val REFACTORING_NAME: String
         @Nls
         get() = KotlinBundle.message("name.extract.interface")
 
@@ -23,7 +23,7 @@ object KotlinExtractInterfaceHandler : KotlinExtractSuperHandlerBase(true) {
         return null
     }
 
-    override fun createDialog(klass: KtClassOrObject, targetParent: PsiElement) =
+    override fun createDialog(klass: KtClassOrObject, targetParent: PsiElement): KotlinExtractInterfaceDialog =
         KotlinExtractInterfaceDialog(
             originalClass = klass,
             targetParent = targetParent,
