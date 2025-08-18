@@ -127,6 +127,7 @@ f:org.jetbrains.jps.util.Iterators
 - s:asIterator(java.lang.Iterable):java.util.Iterator
 - s:asIterator(java.lang.Object):java.util.Iterator
 - s:collect(java.lang.Iterable,java.util.Collection):java.util.Collection
+- s:collect(java.util.Iterator,java.util.Collection):java.util.Collection
 - s:contains(java.lang.Iterable,java.lang.Object):Z
 - s:count(java.lang.Iterable):I
 - s:equals(java.lang.Iterable,java.lang.Iterable):Z

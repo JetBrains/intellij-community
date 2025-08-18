@@ -59,9 +59,13 @@ public final class Iterators {
   }
 
   public static <C extends Collection<? super T>, T> C collect(Iterable<? extends T> iterable, C acc) {
-    if (iterable != null) {
-      for (T t : iterable) {
-        acc.add(t);
+    return collect(iterable != null? iterable.iterator() : null, acc);
+  }
+
+  public static <C extends Collection<? super T>, T> C collect(Iterator<? extends T> it, C acc) {
+    if (it != null) {
+      while (it.hasNext()) {
+        acc.add(it.next());
       }
     }
     return acc;
