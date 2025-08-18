@@ -70,7 +70,7 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
   "lib/idea_rt.jar" to "1.8",
   "lib/forms_rt.jar" to "1.8",
   "lib/annotations.jar" to "1.8",
-  "lib/util_rt.jar" to "1.7",
+  "lib/util_rt.jar" to "1.8",
   "lib/util-8.jar" to "1.8",
   "lib/guava.jar" to "1.8",
   "lib/external-system-rt.jar" to "1.8",

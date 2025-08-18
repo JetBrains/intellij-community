@@ -3808,20 +3808,6 @@ http_file(
 )
 
 http_file(
-  name = "annotations-java5-24_0_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/annotations-java5/24.0.0/annotations-java5-24.0.0.jar",
-  sha256 = "2d033590350f9e936a787bfa407ecae221a80220762c9cf56c0066ff5e52fd10",
-  downloaded_file_path = "annotations-java5-24.0.0.jar"
-)
-
-http_file(
-  name = "annotations-java5-24_0_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/annotations-java5/24.0.0/annotations-java5-24.0.0-sources.jar",
-  sha256 = "63d784641f9a43353d6a3d12e279c6f88da59f3d2954ac8359d53c191e965f89",
-  downloaded_file_path = "annotations-java5-24.0.0-sources.jar"
-)
-
-http_file(
   name = "org_eclipse_jgit-6_6_1_202309021850-r-jb-202407181518_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/org.eclipse.jgit/6.6.1.202309021850-r-jb-202407181518/org.eclipse.jgit-6.6.1.202309021850-r-jb-202407181518.jar",
   sha256 = "84f1d58dbf19cd7d42a5301bd256d589af1f520b4c90b8836cee7747f8726992",

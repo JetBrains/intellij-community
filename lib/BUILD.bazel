@@ -2799,13 +2799,6 @@ java_library(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "jetbrains-annotations-java5",
-  jar = "@annotations-java5-24_0_0_http//file",
-  source_jar = "@annotations-java5-24_0_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
 java_library(
   name = "jetbrains-intellij-deps-eclipse-jgit",
   exports = [

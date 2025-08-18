@@ -130,9 +130,6 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   layout.withoutProjectLibrary("jps-javac-extension")
   layout.withoutProjectLibrary("Eclipse")
 
-  // this library is used in some modules compatible with Java 7, it's replaced by its superset 'jetbrains-annotations' in the distribution
-  layout.withoutProjectLibrary("jetbrains-annotations-java5")
-
   for (customizer in productLayout.platformLayoutSpec) {
     customizer(layout, context)
   }

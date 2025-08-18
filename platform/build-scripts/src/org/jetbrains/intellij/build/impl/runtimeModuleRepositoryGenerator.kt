@@ -183,7 +183,6 @@ private suspend fun generateRepositoryForDistribution(
     val actualDependencies = descriptor.dependencies.mapNotNull { dependency ->
       when (dependency) {
         in dependenciesToSkip -> null
-        "lib.jetbrains-annotations-java5" -> "lib.jetbrains-annotations" //'jetbrains-annotations-java5' isn't included in distribution, 'jetbrains-annotations' is included instead
         else -> dependency
       }
     }
