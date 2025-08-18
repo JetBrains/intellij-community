@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.local.FileTypeUsageSummary
+import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
@@ -121,23 +122,24 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?,
                                   correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
-    val item = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element)
-    val file = getContainingFile(item)
-
-    val project = ReadAction.compute<Project?, Nothing> {
-      item.takeIf { it.isValid }?.project
-    } ?: return listOf(IS_INVALID_DATA_KEY.with(true))
-
     return buildList {
-      if (file != null && cache != null) {
-        addAll(getFileFeatures(file, project, cache, currentTime))
-      }
+      add(ALL_INITIAL_LETTERS_MATCH_DATA_KEY.with(allInitialLettersMatch(element, searchQuery)))
 
-      if (item !is PsiFileSystemItem) {
-        addAll(isAccessibleFromModule(item, cache?.currentlyOpenedFile))
-      }
+      SearchEverywherePsiElementFeaturesProviderUtils.getPsiElementOrNull(element)?.let { item ->
+        val file = getContainingFile(item)
 
-      add(ALL_INITIAL_LETTERS_MATCH_DATA_KEY.with(allInitialLettersMatch(item, searchQuery)))
+        val project = ReadAction.compute<Project?, Nothing> {
+          item.takeIf { it.isValid }?.project
+        } ?: return listOf(IS_INVALID_DATA_KEY.with(true))
+
+        if (file != null && cache != null) {
+          addAll(getFileFeatures(file, project, cache, currentTime))
+        }
+
+        if (item !is PsiFileSystemItem) {
+          addAll(isAccessibleFromModule(item, cache?.currentlyOpenedFile))
+        }
+      }
     }
   }
 
@@ -314,21 +316,33 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
     return virtualFile in openedFiles
   }
 
-  private fun allInitialLettersMatch(element: PsiElement, query: String): Boolean {
-    val elementName = when (element) {
-      is PsiFileSystemItem -> element.virtualFile.nameWithoutExtension
-      is PsiNamedElement -> element.name ?: return false
-      else -> return false
-    }
+  private fun allInitialLettersMatch(element: Any, query: String): Boolean {
+    val name = getElementName(element) ?: return false
 
     // Transform the element name, so that the match yields true for the following three cases
     // - PascalCaseNames
     // - camelCaseNames
     // - snake_case_names
-    val transformedElementName = elementName.split("_")
+    val transformedElementName = name.split("_")
       .joinToString { substring -> substring.replaceFirstChar { it.uppercase() } }
       .filter { it.isUpperCase() }
 
     return query.filter { it.isUpperCase() } == transformedElementName
+  }
+
+  private fun getElementName(element: Any): String? {
+    SearchEverywherePsiElementFeaturesProviderUtils.getPsiElementOrNull(element)?.let { psiElement ->
+      return when (psiElement) {
+        is PsiFileSystemItem -> psiElement.virtualFile.nameWithoutExtension
+        is PsiNamedElement -> psiElement.name
+        else -> null
+      }
+    }
+
+    if (element is NavigationItem) {
+      return element.name
+    }
+
+    return null
   }
 }

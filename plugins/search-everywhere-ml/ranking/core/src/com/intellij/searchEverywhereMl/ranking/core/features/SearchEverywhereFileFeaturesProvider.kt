@@ -65,7 +65,7 @@ class SearchEverywhereFileFeaturesProvider
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?,
                                   correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
-    val item = (SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element) as? PsiFileSystemItem) ?: return emptyList()
+    val item = (SearchEverywherePsiElementFeaturesProviderUtils.getPsiElementOrNull(element) as? PsiFileSystemItem) ?: return emptyList()
 
     return buildList {
       add(IS_BOOKMARK_DATA_KEY.with(isBookmark(item)))

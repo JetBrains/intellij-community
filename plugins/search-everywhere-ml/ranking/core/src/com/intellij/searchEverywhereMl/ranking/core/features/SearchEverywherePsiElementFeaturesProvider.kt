@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.local.LanguageUsageStatistics
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
+import com.intellij.navigation.NavigationItem
 import com.intellij.navigation.PsiElementNavigationItem
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
@@ -91,9 +92,10 @@ class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElementFeatur
         }
       }
 
-      val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(item)
-      addAll(getLanguageFeatures(psiElement, cache))
-      addAll(getNameFeatures(item, searchQuery))
+      SearchEverywherePsiElementFeaturesProviderUtils.getPsiElementOrNull(item)?.let { psiElement ->
+        addAll(getLanguageFeatures(psiElement, cache))
+        addAll(getNameFeatures(item, searchQuery))
+      }
     }
   }
 
@@ -130,12 +132,13 @@ class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElementFeatur
   }
 
   private fun getNameFeatures(element: Any, searchQuery: String): Collection<EventPair<*>> {
-    val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element)
-    if (psiElement is PsiFileSystemItem) return getFileNameMatchingFeatures(psiElement, searchQuery)
+    val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElementOrNull(element)
+    if (psiElement is PsiFileSystemItem) {
+      return getFileNameMatchingFeatures(psiElement, searchQuery)
+    }
 
-    return getElementName(element)?.let {
-      getNameMatchingFeatures(it, searchQuery)
-    } ?: emptyList()
+    val name = getElementName(psiElement ?: element) ?: return emptyList()
+    return getNameMatchingFeatures(name, searchQuery)
   }
 
   private fun getElementName(element: Any): String? {
@@ -145,6 +148,10 @@ class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElementFeatur
 
     if (element is PsiNamedElement) {
       return ReadAction.compute<String, Nothing> { element.name }
+    }
+
+    if (element is NavigationItem) {
+      return element.name
     }
 
     return null
@@ -163,14 +170,12 @@ class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElementFeatur
 }
 
 object SearchEverywherePsiElementFeaturesProviderUtils {
-  fun getPsiElement(element: Any): PsiElement = when (element) {
-    is PsiItemWithSimilarity<*> -> getPsiElement(element.value)
+  fun getPsiElementOrNull(element: Any): PsiElement? = when (element) {
+    is PsiItemWithSimilarity<*> -> getPsiElementOrNull(element.value)
     is PsiItemWithPresentation -> element.item
     is PsiElementNavigationItem -> element.targetElement!!
     is PsiElement -> element
-    is ItemWithPresentation<*> -> getPsiElement(element.item)
-    else -> throw UnexpectedElementType(element::class.java)
+    is ItemWithPresentation<*> -> getPsiElementOrNull(element.item)
+    else -> null
   }
 }
-
-class UnexpectedElementType(type: Class<*>) : IllegalArgumentException("Unexpected element type: $type")

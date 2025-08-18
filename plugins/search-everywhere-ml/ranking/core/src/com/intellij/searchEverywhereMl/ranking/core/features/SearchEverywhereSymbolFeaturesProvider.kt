@@ -35,7 +35,7 @@ internal class SearchEverywhereSymbolFeaturesProvider
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?,
                                   correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
-    val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element)
+    val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElementOrNull(element) ?: return emptyList()
     return getParentStatisticianFeatures(psiElement)
   }
 

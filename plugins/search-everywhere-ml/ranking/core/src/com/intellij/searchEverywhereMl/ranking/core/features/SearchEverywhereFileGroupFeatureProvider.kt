@@ -26,7 +26,7 @@ class SearchEverywhereFileGroupFeatureProvider : SearchEverywhereElementFeatures
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?,
                                   correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
-    return SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element)
+    return SearchEverywherePsiElementFeaturesProviderUtils.getPsiElementOrNull(element)
       .asSafely<PsiFileSystemItem>()
       ?.name
       ?.let { FileGroup.findGroup(it) }
