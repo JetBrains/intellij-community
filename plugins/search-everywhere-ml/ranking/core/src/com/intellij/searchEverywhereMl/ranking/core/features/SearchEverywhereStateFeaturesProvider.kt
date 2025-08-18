@@ -32,7 +32,7 @@ internal class SearchEverywhereStateFeaturesProvider {
     private val IS_REGULAR_EXPRESSIONS = EventFields.Boolean("isRegularExpressions")
 
     fun getFeaturesDefinition(): List<EventField<*>> {
-      return arrayListOf(
+      return listOf(
         QUERY_LENGTH_DATA_KEY, IS_EMPTY_QUERY_DATA_KEY,
         QUERY_CONTAINS_PATH_DATA_KEY, QUERY_CONTAINS_COMMAND_CHAR_DATA_KEY,
         QUERY_CONTAINS_SPACES_DATA_KEY, QUERY_IS_CAMEL_CASE_DATA_KEY,
@@ -45,34 +45,36 @@ internal class SearchEverywhereStateFeaturesProvider {
 
   fun getSearchStateFeatures(project: Project?, tab: SearchEverywhereTab, query: String,
                              searchScope: ScopeDescriptor?, isSearchEverywhere: Boolean): List<EventPair<*>> {
-    val features = arrayListOf<EventPair<*>>(
-      QUERY_LENGTH_DATA_KEY.with(query.length),
-      IS_EMPTY_QUERY_DATA_KEY.with(query.isEmpty()),
-      QUERY_CONTAINS_SPACES_DATA_KEY.with(query.contains(" ")),
-      QUERY_IS_CAMEL_CASE_DATA_KEY.with(query.isCamelCase()),
-      QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY.with(query.containsAbbreviations()),
-      QUERY_IS_ALL_UPPERCASE_DATA_KEY.with(query.all { it.isUpperCase() }),
-      IS_SEARCH_EVERYWHERE_DATA_KEY.with(isSearchEverywhere)
-    )
+    return buildList {
+      add(QUERY_LENGTH_DATA_KEY.with(query.length))
+      add(IS_EMPTY_QUERY_DATA_KEY.with(query.isEmpty()))
+      add(QUERY_CONTAINS_SPACES_DATA_KEY.with(query.contains(" ")))
+      add(QUERY_IS_CAMEL_CASE_DATA_KEY.with(query.isCamelCase()))
+      add(QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY.with(query.containsAbbreviations()))
+      add(QUERY_IS_ALL_UPPERCASE_DATA_KEY.with(query.all { it.isUpperCase() }))
+      add(IS_SEARCH_EVERYWHERE_DATA_KEY.with(isSearchEverywhere))
 
-    project?.let {
-      val isDumb = DumbService.isDumb(project)
-      features.add(IS_DUMB_MODE.with(isDumb))
+      project?.let {
+        val isDumb = DumbService.isDumb(project)
+        add(IS_DUMB_MODE.with(isDumb))
+      }
+
+      if (hasSuitableContributor(tab, SearchEverywhereTab.Files)) {
+        addAll(getFileQueryFeatures(query))
+      }
+      if (hasSuitableContributor(tab, SearchEverywhereTab.All)) {
+        addAll(getAllTabQueryFeatures(query))
+      }
+
+      searchScope?.displayName?.let { searchScopeDisplayName ->
+        val scopeId = ScopeIdMapper.instance.getScopeSerializationId(searchScopeDisplayName)
+        add(SEARCH_SCOPE_DATA_KEY.with(scopeId))
+      }
+
+      if (project != null && isTabWithTextContributor(tab)) {
+        addAll(getTextContributorFeatures(project))
+      }
     }
-
-    if (hasSuitableContributor(tab, SearchEverywhereTab.Files)) features.addAll(getFileQueryFeatures(query))
-    if (hasSuitableContributor(tab, SearchEverywhereTab.All)) features.addAll(getAllTabQueryFeatures(query))
-
-    searchScope?.displayName?.let { searchScopeDisplayName ->
-      val scopeId = ScopeIdMapper.instance.getScopeSerializationId(searchScopeDisplayName)
-      features.add(SEARCH_SCOPE_DATA_KEY.with(scopeId))
-    }
-
-    if (project != null && isTabWithTextContributor(tab)) {
-      features.addAll(getTextContributorFeatures(project))
-    }
-
-    return features
   }
 
   private fun getFileQueryFeatures(query: String) = listOf(

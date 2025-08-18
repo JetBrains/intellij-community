@@ -66,35 +66,35 @@ class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElementFeatur
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?,
                                   correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
-    val result = mutableListOf<EventPair<*>>()
-    var similarityScore: Double? = null
+    return buildList {
+      var similarityScore: Double? = null
 
-    val item = if (element is PsiItemWithSimilarity<*>) {
-      result.add(IS_SEMANTIC_ONLY.with(element.isPureSemantic))
-      element.similarityScore?.let { similarityScore = it }
-      element.value
-    }
-    else {
-      result.add(IS_SEMANTIC_ONLY.with(false))
-      element
-    }
-
-    if (similarityScore != null) {
-      result.add(SIMILARITY_SCORE.with(roundDouble(similarityScore)))
-    }
-    else if (ApplicationManager.getApplication().isEAP) { // for now, we can collect the data only from EAP builds
-      val elementName = getElementName(item)
-      val elementEmbedding = elementName?.let { TextEmbeddingProvider.getProvider()?.embed(convertNameToNaturalLanguage(it)) }
-      val queryEmbedding = getQueryEmbedding(searchQuery, split = true)
-      if (elementEmbedding != null && queryEmbedding != null) {
-        result.add(SIMILARITY_SCORE.with(roundDouble(elementEmbedding.cosine(queryEmbedding).toDouble())))
+      val item = if (element is PsiItemWithSimilarity<*>) {
+        add(IS_SEMANTIC_ONLY.with(element.isPureSemantic))
+        element.similarityScore?.let { similarityScore = it }
+        element.value
       }
-    }
+      else {
+        add(IS_SEMANTIC_ONLY.with(false))
+        element
+      }
 
-    val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(item)
-    result.addAll(getLanguageFeatures(psiElement, cache))
-    result.addAll(getNameFeatures(item, searchQuery))
-    return result
+      if (similarityScore != null) {
+        add(SIMILARITY_SCORE.with(roundDouble(similarityScore)))
+      }
+      else if (ApplicationManager.getApplication().isEAP) { // for now, we can collect the data only from EAP builds
+        val elementName = getElementName(item)
+        val elementEmbedding = elementName?.let { TextEmbeddingProvider.getProvider()?.embed(convertNameToNaturalLanguage(it)) }
+        val queryEmbedding = getQueryEmbedding(searchQuery, split = true)
+        if (elementEmbedding != null && queryEmbedding != null) {
+          add(SIMILARITY_SCORE.with(roundDouble(elementEmbedding.cosine(queryEmbedding).toDouble())))
+        }
+      }
+
+      val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(item)
+      addAll(getLanguageFeatures(psiElement, cache))
+      addAll(getNameFeatures(item, searchQuery))
+    }
   }
 
   private fun getLanguageFeatures(element: PsiElement, cache: FeaturesProviderCache?): List<EventPair<*>> {
@@ -113,22 +113,20 @@ class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElementFeatur
 
     val timeSinceLastUsage = System.currentTimeMillis() - stats.lastUsed
 
-    val features = mutableListOf(
-      LANGUAGE_DATA_KEY.with(elementLanguage.id),
-      LANGUAGE_IS_MOST_USED_DATA_KEY.with(isMostUsed),
-      LANGUAGE_IS_IN_TOP_3_MOST_USED_DATA_KEY.with(isInTop3MostUsed),
-      LANGUAGE_USED_IN_LAST_DAY.with(timeSinceLastUsage <= DAY),
-      LANGUAGE_USED_IN_LAST_WEEK.with(timeSinceLastUsage <= WEEK),
-      LANGUAGE_USED_IN_LAST_MONTH.with(timeSinceLastUsage <= WEEK * 4L),
-      LANGUAGE_NEVER_USED_DATA_KEY.with(stats == LanguageUsageStatistics.NEVER_USED),
-    )
+    return buildList {
+      add(LANGUAGE_DATA_KEY.with(elementLanguage.id))
+      add(LANGUAGE_IS_MOST_USED_DATA_KEY.with(isMostUsed))
+      add(LANGUAGE_IS_IN_TOP_3_MOST_USED_DATA_KEY.with(isInTop3MostUsed))
+      add(LANGUAGE_USED_IN_LAST_DAY.with(timeSinceLastUsage <= DAY))
+      add(LANGUAGE_USED_IN_LAST_WEEK.with(timeSinceLastUsage <= WEEK))
+      add(LANGUAGE_USED_IN_LAST_MONTH.with(timeSinceLastUsage <= WEEK * 4L))
+      add(LANGUAGE_NEVER_USED_DATA_KEY.with(stats == LanguageUsageStatistics.NEVER_USED))
 
-    if (cache.currentlyOpenedFile != null) {
-      val openedFileLanguage = LanguageUtil.getFileLanguage(cache.currentlyOpenedFile)
-      features.add(LANGUAGE_IS_SAME_AS_OPENED_FILE.with(openedFileLanguage == elementLanguage))
+      if (cache.currentlyOpenedFile != null) {
+        val openedFileLanguage = LanguageUtil.getFileLanguage(cache.currentlyOpenedFile)
+        add(LANGUAGE_IS_SAME_AS_OPENED_FILE.with(openedFileLanguage == elementLanguage))
+      }
     }
-
-    return features
   }
 
   private fun getNameFeatures(element: Any, searchQuery: String): Collection<EventPair<*>> {

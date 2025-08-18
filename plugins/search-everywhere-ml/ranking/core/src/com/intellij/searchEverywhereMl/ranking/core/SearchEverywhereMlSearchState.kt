@@ -34,17 +34,20 @@ internal class SearchEverywhereMlSearchState(
                          priority: Int,
                          context: SearchEverywhereMLContextInfo,
                          correction: SearchEverywhereSpellCheckResult): SearchEverywhereMLItemInfo {
-    val features = arrayListOf<EventPair<*>>()
     val contributorId = contributor.searchProviderId
     val contributorFeatures = getContributorFeatures(contributor)
 
-    SearchEverywhereElementFeaturesProvider.getFeatureProvidersForContributor(contributorId).forEach { provider ->
-      features.addAll(provider.getElementFeatures(element, sessionStartTime, searchQuery, priority, providersCache, correction))
+    val elementFeatures = SearchEverywhereElementFeaturesProvider.getFeatureProvidersForContributor(contributorId).flatMap { provider ->
+      provider.getElementFeatures(element, sessionStartTime, searchQuery, priority, providersCache, correction)
     }
 
-    if (tab == SearchEverywhereTab.All) {
-      val mlScore = getElementMLScoreForAllTab(contributorId, context.features, features, contributorFeatures)
-      features.putIfValueNotNull(ML_SCORE_KEY, mlScore)
+    val features = buildList {
+      addAll(elementFeatures)
+
+      if (tab == SearchEverywhereTab.All) {
+        val mlScore = getElementMLScoreForAllTab(contributorId, context.features, elementFeatures, contributorFeatures)
+        putIfValueNotNull(ML_SCORE_KEY, mlScore)
+      }
     }
 
     return SearchEverywhereMLItemInfo(elementId, contributorId, features, contributorFeatures)
