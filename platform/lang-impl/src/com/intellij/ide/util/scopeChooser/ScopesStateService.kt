@@ -2,16 +2,14 @@
 package com.intellij.ide.util.scopeChooser
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.WindowFocusFrontendService
 import com.intellij.psi.search.SearchScope
-import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -24,13 +22,9 @@ class ScopesStateService(val project: Project) {
     return WindowFocusFrontendService.getInstance().performActionWithFocus(true) {
       val descriptor = scopesState.getScopeDescriptorById(scopeId) ?: return@performActionWithFocus null
       return@performActionWithFocus coroutineScope {
-        if (descriptor.needsUserInputForScope()) {
-          val uiJob = launch(Dispatchers.EDT) {
-            descriptor.scope
-          }
-          uiJob.join()
+       return@coroutineScope withContext(Dispatchers.EDT) {
+          descriptor.scope
         }
-        return@coroutineScope readAction { descriptor.scope }
       }
     }
   }
@@ -44,7 +38,7 @@ class ScopesStateService(val project: Project) {
   }
 
   fun getCachedScopeDescriptors(): List<ScopeDescriptor> {
-    return scopesState.cachedScopes
+    return scopesState.scopeIdToDescriptor.values.toList()
   }
 
   fun getIdByScopeName(scopeName: String): String? {
@@ -61,22 +55,18 @@ class ScopesStateService(val project: Project) {
 
 @ApiStatus.Internal
 class ScopesState internal constructor(val project: Project) {
-  internal val scopeIdToDescriptor: MutableMap<String, ScopeDescriptor> = ConcurrentHashMap()
-  internal val cachedScopes: MutableList<ScopeDescriptor> = mutableListOf()
+  internal val scopeIdToDescriptor: MutableMap<String, ScopeDescriptor> = Collections.synchronizedMap(LinkedHashMap())
 
   fun addScope(scopeDescriptor: ScopeDescriptor): String {
     val existingIdToDescriptor = scopeIdToDescriptor.entries.find { it.value.displayName == scopeDescriptor.displayName }
     val id = existingIdToDescriptor?.key ?: UUID.randomUUID().toString()
     scopeIdToDescriptor[id] = scopeDescriptor
-    cachedScopes.add(scopeDescriptor)
     return id
   }
 
   fun updateScopes(scopesStateMap: Map<String, ScopeDescriptor>) {
     scopeIdToDescriptor.clear()
     scopeIdToDescriptor.putAll(scopesStateMap)
-    cachedScopes.clear()
-    cachedScopes.addAll(scopesStateMap.values)
   }
 
   // This function is primarily used on the frontend to maintain actual scope IDs with placeholder descriptors (without a SearchScope).
@@ -85,7 +75,6 @@ class ScopesState internal constructor(val project: Project) {
     for ((id, descriptor) in scopesStateMap) {
       if (!scopeIdToDescriptor.containsKey(id)) {
         scopeIdToDescriptor[id] = descriptor
-        cachedScopes.add(descriptor)
       }
     }
   }

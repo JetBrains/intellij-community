@@ -17,7 +17,7 @@
 f:com.intellij.platform.project.ProjectIdKt
 - *sf:findProject(com.intellij.platform.project.ProjectId):com.intellij.openapi.project.Project
 - *sf:findProjectOrNull(com.intellij.platform.project.ProjectId):com.intellij.openapi.project.Project
-- *sf:findProjectOrNullWithLogError(com.intellij.platform.project.ProjectId,com.intellij.openapi.diagnostic.Logger):com.intellij.openapi.project.Project
+- *sf:findProjectOrNullWithLogWarn(com.intellij.platform.project.ProjectId,com.intellij.openapi.diagnostic.Logger):com.intellij.openapi.project.Project
 - *sf:projectId(com.intellij.openapi.project.Project):com.intellij.platform.project.ProjectId
 - *sf:projectIdOrNull(com.intellij.openapi.project.Project):com.intellij.platform.project.ProjectId
 - *sf:projectIdOrNullWithLogError(com.intellij.openapi.project.Project,com.intellij.openapi.diagnostic.Logger):com.intellij.platform.project.ProjectId
