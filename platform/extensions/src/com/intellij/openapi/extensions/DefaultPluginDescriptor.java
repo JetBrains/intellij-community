@@ -10,20 +10,24 @@ import java.util.Date;
 public final class DefaultPluginDescriptor implements PluginDescriptor {
   private final @NotNull PluginId myPluginId;
   private final ClassLoader myPluginClassLoader;
+  private final String myVendor;
 
   public DefaultPluginDescriptor(@NotNull String pluginId) {
-    myPluginId = PluginId.getId(pluginId);
-    myPluginClassLoader = null;
+    this(PluginId.getId(pluginId), null);
   }
 
   public DefaultPluginDescriptor(@NotNull PluginId pluginId) {
-    myPluginId = pluginId;
-    myPluginClassLoader = null;
+    this(pluginId, null);
   }
 
   public DefaultPluginDescriptor(@NotNull PluginId pluginId, @Nullable ClassLoader pluginClassLoader) {
+    this(pluginId, pluginClassLoader, null);
+  }
+
+  public DefaultPluginDescriptor(@NotNull PluginId pluginId, @Nullable ClassLoader pluginClassLoader, @Nullable String vendor) {
     myPluginId = pluginId;
     myPluginClassLoader = pluginClassLoader;
+    myVendor = vendor;
   }
 
   @Override
@@ -78,7 +82,7 @@ public final class DefaultPluginDescriptor implements PluginDescriptor {
 
   @Override
   public @Nullable String getVendor() {
-    return null;
+    return myVendor;
   }
 
   @Override

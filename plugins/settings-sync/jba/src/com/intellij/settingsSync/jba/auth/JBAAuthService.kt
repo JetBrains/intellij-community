@@ -1,13 +1,11 @@
 package com.intellij.settingsSync.jba.auth
 
 import com.intellij.CommonBundle
-import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performAction
-import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -48,13 +46,10 @@ import javax.swing.event.HyperlinkEvent
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
+private val LOG = logger<JBAAuthService>()
+private const val JBA_USER_ID = "jba"
+
 internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuthService {
-
-  companion object {
-    private val LOG = logger<JBAAuthService>()
-    private const val JBA_USER_ID = "jba"
-  }
-
   @Volatile
   private var invalidatedIdToken: String? = null
 
