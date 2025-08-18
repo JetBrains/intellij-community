@@ -3897,7 +3897,5 @@ f:org.jetbrains.jewel.ui.util.ColorExtensionsKt
 - sf:toRgbaHexString-8_81llA(J):java.lang.String
 - sf:toRgbaHexString-ek8zF_U(J,Z,Z):java.lang.String
 - bs:toRgbaHexString-ek8zF_U$default(J,Z,Z,I,java.lang.Object):java.lang.String
-f:org.jetbrains.jewel.ui.util.MessageResourceResolverKt
-- sf:getLocalMessageResourceResolverProvider():androidx.compose.runtime.ProvidableCompositionLocal
 f:org.jetbrains.jewel.ui.util.ModifierExtensionsKt
 - sf:thenIf(androidx.compose.ui.Modifier,Z,kotlin.jvm.functions.Function1):androidx.compose.ui.Modifier
