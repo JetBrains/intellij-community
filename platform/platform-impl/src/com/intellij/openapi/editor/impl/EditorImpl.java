@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.Dumpable;
@@ -5121,11 +5122,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
     if (myProject != null) {
       VirtualFile eventFile = event.getVirtualFile();
-      if (eventFile != null && !eventFile.equals(getVirtualFile())) {
+      final var file = getVirtualFile();
+      if (eventFile != null && !eventFile.equals(file)) {
         return;
       }
       int oldTabSize = EditorUtil.getTabSize(this);
       final var eventSettings = event.getSettings();
+      final var cachedSettings = this.getUserData(CODE_STYLE_SETTINGS);
+      if (cachedSettings != null && eventSettings == null) {
+        // This event is not a result of settings computation finishing, but also we already have settings cached.
+        // As editor settings are reinitialized, only the cached settings will be used.
+        // But settings for the file may have changed, so we must request the settings properly.
+        // If the settings indeed need to be recomputed, the request will trigger a background computation.
+        // Once that computation is finished, this method will be called again with eventSettings != null.
+        CodeStyle.getSettings(myProject, file);
+      }
       if (eventSettings != null) {
         this.putUserData(CODE_STYLE_SETTINGS, eventSettings);
       }
