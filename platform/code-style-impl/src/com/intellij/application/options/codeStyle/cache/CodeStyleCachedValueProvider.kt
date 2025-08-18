@@ -283,7 +283,8 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
          */
         if (!TooFrequentCodeStyleComputationWatcher.getInstance(project).isTooHighEvictionRateDetected()
             && !Registry.`is`("disable.codeStyleSettingsChanged.events.on.settings.cached")) {
-          settingsManager.fireCodeStyleSettingsChanged(file)
+          val eventSettings = if (Registry.`is`("code.style.cache.change.events.include.settings")) currentResult else null
+          settingsManager.fireCodeStyleSettingsChanged(file, eventSettings)
         }
       }
       computation.reset()

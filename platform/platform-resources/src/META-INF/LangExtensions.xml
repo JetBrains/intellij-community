@@ -118,6 +118,9 @@
                  description="Maximum size of the code style settings cache (>= 1)."
                  key="code.style.cache.maximum.size"
                  restartRequired="true" />
+    <registryKey defaultValue="true"
+                 description="Include code style settings in change events if the reason is computation of the settings has just finished."
+                 key="code.style.cache.change.events.include.settings" />"
     <!-- endregion -->
 
     <projectService serviceInterface="com.intellij.util.indexing.IndexableFilesIndex"
