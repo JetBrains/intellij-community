@@ -5,9 +5,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.customName
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
@@ -33,7 +35,7 @@ internal class KaLibrarySdkModuleImpl @InternalKaModuleConstructor constructor(
 
     @KaExperimentalApi
     override val binaryVirtualFiles: Collection<VirtualFile> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        sdk.rootProvider.getFiles(OrderRootType.CLASSES).toList()
+        computeRoots(OrderRootType.CLASSES)
     }
 
     override val libraryName: String get() = entity.name
@@ -52,6 +54,12 @@ internal class KaLibrarySdkModuleImpl @InternalKaModuleConstructor constructor(
         }
 
     override val entityInterface: Class<out WorkspaceEntity> get() = SdkEntity::class.java
+
+    internal fun computeRoots(orderRootType: OrderRootType): List<VirtualFile> {
+        return entity.roots
+            .filter { it.type.name == orderRootType.customName }
+            .mapNotNull { it.url.virtualFile }
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
