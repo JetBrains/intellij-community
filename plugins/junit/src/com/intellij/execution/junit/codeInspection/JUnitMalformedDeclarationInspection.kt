@@ -421,8 +421,14 @@ private class JUnitMalformedSignatureVisitor(
     param.javaPsi?.asSafely<PsiParameter>()?.let { AnnotationUtil.isAnnotated(it, ignorableAnnotations, 0) } == true
   }
 
+  private fun UMethod.hasSuspendModifier(): Boolean {
+    if (lang != Language.findLanguageByID("kotlin")) return false
+    if (!javaPsi.modifierList.text.contains("suspend")) return false
+    return uastParameters.firstOrNull()?.type?.canonicalText == COROUTINES_CONTINUATION_TYPE
+  }
+
   private fun checkSuspendFunction(method: UMethod): Boolean {
-    return if (method.lang == Language.findLanguageByID("kotlin") && method.javaPsi.modifierList.text.contains("suspend")) {
+    return if (method.hasSuspendModifier()) {
       val message = JUnitBundle.message("jvm.inspections.junit.malformed.suspend.function.descriptor")
       holder.registerUProblem(method, message)
       true
@@ -1076,7 +1082,7 @@ private class JUnitMalformedSignatureVisitor(
     }
   }
 
-  class AnnotatedSignatureProblem(
+  inner class AnnotatedSignatureProblem(
     private val annotations: List<String>,
     private val shouldBeStatic: Boolean? = null,
     private val ignoreOnRunWith: Boolean = false,
@@ -1185,7 +1191,7 @@ private class JUnitMalformedSignatureVisitor(
       val problems = modifierProblems(
         visibility, element.visibility, elementIsStatic, javaPsi.containingClass?.let { cls -> TestUtils.testInstancePerClass(cls) } == true
       )
-      if (element.lang == Language.findLanguageByID("kotlin") && element.javaPsi.modifierList.text.contains("suspend")) {
+      if (element.hasSuspendModifier()) {
         val message = JUnitBundle.message(
           "jvm.inspections.junit.malformed.annotated.suspend.function.descriptor", annotation
         )
@@ -1439,6 +1445,7 @@ private class JUnitMalformedSignatureVisitor(
     const val TEST_INSTANCE_PER_CLASS = "@org.junit.jupiter.api.TestInstance(TestInstance.Lifecycle.PER_CLASS)"
     const val METHOD_SOURCE_RETURN_TYPE = "java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments>"
     const val FIELD_SOURCE_TYPE = "java.util.Collection<org.junit.jupiter.params.provider.Arguments>"
+    const val COROUTINES_CONTINUATION_TYPE = "kotlin.coroutines.Continuation<? super kotlin.Unit>"
 
     val checkableRunners = listOf(
       "org.junit.runners.AllTests",

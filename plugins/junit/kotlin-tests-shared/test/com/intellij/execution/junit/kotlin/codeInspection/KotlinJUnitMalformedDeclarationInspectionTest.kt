@@ -2132,10 +2132,17 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
   fun `test malformed suspending test JUnit 5 function`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
-      class JUnit5Test {
-          @org.junit.jupiter.api.Test
-          suspend fun <error descr="Method 'testFoo' annotated with '@Test' should not be a suspending function">testFoo</error>() { }
-      }    
+        import org.junit.jupiter.api.DisplayName
+        import org.junit.jupiter.api.Test
+        
+        class JUnit5Test {
+            @DisplayName("suspend")
+            @Test
+            fun foo() { }
+            
+            @Test
+            suspend fun <error descr="Method 'testFoo' annotated with '@Test' should not be a suspending function">testFoo</error>() { }
+        }    
     """.trimIndent())
   }
 
