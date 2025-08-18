@@ -9,6 +9,8 @@ import com.intellij.database.settings.DataGridSettings
 import com.intellij.database.util.DataGridUIUtil
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopup
@@ -16,7 +18,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.awt.Component
 import java.util.*
 import javax.swing.JComponent
@@ -27,7 +32,7 @@ private val SHOW_COUNT_ALL_ACTION_KEY = Key<Boolean?>("DATA_GRID_SHOW_COUNT_ALL_
 
 class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+    return ActionUpdateThread.BGT
   }
 
   init {
@@ -54,12 +59,13 @@ class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, D
 
   override fun update(e: AnActionEvent) {
     val grid = e.getData(DatabaseDataKeys.DATA_GRID_KEY)
-    if (grid == null || grid.getDataHookup() is DocumentDataHookUp) {
-      e.presentation.setEnabledAndVisible(false)
-      return
-    }
-
-    if ((grid.getDataHookup().getPageModel() as? NestedTableGridPagingModel<GridRow?, GridColumn?>)?.isStatic == true) {
+    if (
+      grid == null ||
+      grid.getDataHookup().let { dataHookUp ->
+        dataHookUp is DocumentDataHookUp ||
+        (dataHookUp.pageModel as? NestedTableGridPagingModel<GridRow?, GridColumn?>)?.isStatic == true
+      }
+    ) {
       e.presentation.setEnabledAndVisible(false)
       return
     }
@@ -74,7 +80,15 @@ class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, D
     }
     else {
       e.presentation.setVisible(true)
-      updatePresentation(state, e.presentation, GridUtil.getSettings(grid))
+      val updateEdtJob = grid.coroutineScope.launch(Dispatchers.UI) {
+        updatePresentation(state, e.presentation, GridUtil.getSettings(grid))
+      }
+
+      // We wait for it because we need an updated presentation when the function returns,
+      // it's the contract of AnAction.update() method
+      runBlockingMaybeCancellable {
+        updateEdtJob.join()
+      }
     }
   }
 
@@ -92,6 +106,7 @@ class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, D
     return createCustomComponentForResultViewToolbar(this, presentation, place)
   }
 
+  @RequiresEdt
   private fun updatePresentation(state: ChangePageSizeActionState, presentation: Presentation, settings: DataGridSettings?) {
     val oldState = getActionState(presentation)
     if (oldState == state) return
