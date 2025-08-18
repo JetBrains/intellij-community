@@ -4,7 +4,7 @@
 
 package org.jetbrains.kotlin.idea.base.highlighting
 
-import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
+import com.intellij.codeInsight.daemon.SyntheticPsiFileSupport
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -65,7 +65,7 @@ private fun isIndexingInProgress(project: Project) = runReadAction { DumbService
 
 fun KtFile.shouldDefinitelyHighlight(): Boolean =
     (this is KtCodeFragment && context != null) ||
-            OutsidersPsiFileSupport.isOutsiderFile(virtualFile) ||
+            SyntheticPsiFileSupport.isOutsiderFile(virtualFile) ||
             (this !is KtCodeFragment && virtualFile?.fileSystem is NonPhysicalFileSystem)
 
 @OptIn(KaPlatformInterface::class)

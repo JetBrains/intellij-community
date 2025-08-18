@@ -1715,6 +1715,9 @@
     <saveAndSyncHandlerListener implementation="com.intellij.codeInsight.daemon.impl.EssentialHighlightingRestarter" />
 
     <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl"/>
+
+    <defaultHighlightingSettingProvider id="SyntheticSourcesHighlightingSettingProvider"
+                                        implementation="com.intellij.codeInsight.daemon.SyntheticPsiFileHighlightingSettingProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.platform.backend">

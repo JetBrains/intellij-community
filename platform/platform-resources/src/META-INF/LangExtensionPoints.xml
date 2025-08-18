@@ -68,10 +68,8 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.highlighting.BraceMatcher"/>
     </extensionPoint>
 
-    <extensionPoint name="daemon.highlightInfoFilter" interface="com.intellij.codeInsight.daemon.impl.HighlightInfoFilter" dynamic="true"/>
     <extensionPoint name="daemon.essentialHighlightingRestarterDisablement" interface="com.intellij.codeInsight.daemon.EssentialHighlightingRestarterDisablement" dynamic="true"/>
     <extensionPoint name="daemon.tooltipActionProvider" interface="com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider" dynamic="true"/>
-    <extensionPoint name="daemon.intentionActionFilter" interface="com.intellij.codeInsight.daemon.impl.IntentionActionFilter" dynamic="true"/>
     <extensionPoint name="daemon.externalAnnotatorsFilter" interface="com.intellij.lang.ExternalAnnotatorsFilter" dynamic="true"/>
     <extensionPoint name="daemon.changeLocalityDetector" interface="com.intellij.codeInsight.daemon.ChangeLocalityDetector" dynamic="true"/>
     <extensionPoint name="daemon.indentsPassFilter" interface="com.intellij.codeInsight.daemon.impl.IndentsPassFilter" dynamic="true"/>

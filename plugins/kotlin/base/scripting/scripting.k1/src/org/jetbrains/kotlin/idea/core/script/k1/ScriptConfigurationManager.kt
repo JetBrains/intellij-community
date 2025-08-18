@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k1
 
-import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
+import com.intellij.codeInsight.daemon.SyntheticPsiFileSupport
 import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.components.service
@@ -25,16 +25,16 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
-import org.jetbrains.kotlin.idea.core.script.shared.getScriptReports
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.DefaultScriptingSupport
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.ScriptingSupport
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.listener.ScriptChangesNotifier
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.ScriptClassRootsBuilder
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.ScriptClassRootsCache
-import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.shared.LightScriptInfo
+import org.jetbrains.kotlin.idea.core.script.shared.getScriptReports
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
+import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
@@ -102,7 +102,7 @@ class ScriptConfigurationManager(val myProject: Project, val scope: CoroutineSco
 
         // check that this script should be loaded later in special way (e.g. gradle project import)
         // (and not for syntactic diff files)
-        if (!OutsidersPsiFileSupport.isOutsiderFile(virtualFile)) {
+        if (!SyntheticPsiFileSupport.isOutsiderFile(virtualFile)) {
             val plugin = plugins.firstOrNull { it.isApplicable(virtualFile) }
             if (plugin != null) {
                 return plugin.getConfigurationImmediately(virtualFile)?.also {

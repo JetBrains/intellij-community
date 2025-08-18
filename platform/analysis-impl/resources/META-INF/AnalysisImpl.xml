@@ -20,6 +20,9 @@
 
     <extensionPoint name="liveTemplateOptionalProcessor" interface="com.intellij.codeInsight.template.impl.TemplateOptionalProcessor" dynamic="true"/>
     <extensionPoint name="liveTemplatePreprocessor" interface="com.intellij.codeInsight.template.impl.TemplatePreprocessor" dynamic="true"/>
+
+    <extensionPoint name="daemon.highlightInfoFilter" interface="com.intellij.codeInsight.daemon.impl.HighlightInfoFilter" dynamic="true"/>
+    <extensionPoint name="daemon.intentionActionFilter" interface="com.intellij.codeInsight.daemon.impl.IntentionActionFilter" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.profile.codeInspection.InspectionProjectProfileManager"
@@ -85,5 +88,8 @@
                       enabledByDefault="true" level="ERROR"
                       bundle="messages.InspectionsBundle" key="inspection.annotator.display.name"
                       implementationClass="com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection"/>
+
+    <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.SyntheticPsiFileSupport$HighlightFilter"/>
+    <daemon.intentionActionFilter implementation="com.intellij.codeInsight.daemon.SyntheticPsiFileSupport$IntentionFilter"/>
   </extensions>
 </idea-plugin>

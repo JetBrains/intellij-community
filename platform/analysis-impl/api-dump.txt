@@ -23,6 +23,15 @@ com.intellij.codeInsight.daemon.ReferenceImporter
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - autoImportReferenceAtCursor(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 - isAddUnambiguousImportsOnTheFlyEnabled(com.intellij.psi.PsiFile):Z
+f:com.intellij.codeInsight.daemon.SyntheticPsiFileSupport
+- <init>():V
+- s:getOriginalFilePath(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- s:getOriginalFileUrl(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- s:isOutsiderFile(com.intellij.openapi.vfs.VirtualFile):Z
+- s:isOutsiderFile(com.intellij.psi.PsiFile):Z
+- s:markFile(com.intellij.openapi.vfs.VirtualFile):V
+- s:markFile(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
+- s:markFileWithUrl(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
 com.intellij.codeInsight.daemon.impl.AsyncDescriptionSupplier
 - a:requestDescription():org.jetbrains.concurrency.Promise
 com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
