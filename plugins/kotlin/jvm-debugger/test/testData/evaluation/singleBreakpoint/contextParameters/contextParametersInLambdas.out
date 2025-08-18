@@ -1,0 +1,18 @@
+LineBreakpoint created at contextParametersInLambdas.kt:45
+Run Java
+Connected to the target VM
+contextParametersInLambdas.kt:45
+Compile bytecode for ctx1.name1
+Compile bytecode for ctx2.name2
+Compile bytecode for ctx1
+Compile bytecode for ctx2
+Compile bytecode for ctx1.foo1()
+Compile bytecode for ctx2.foo2()
+Compile bytecode for ctx1.bar()
+Compile bytecode for ctx2.bar()
+Compile bytecode for ctx1Foo()
+Compile bytecode for ctx2Foo()
+Compile bytecode for bar()
+Disconnected from the target VM
+
+Process finished with exit code 0

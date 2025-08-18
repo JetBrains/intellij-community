@@ -181,6 +181,55 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/evaluation/singleBreakpoint/contextParameters")
+        public static class ContextParameters extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+            }
+
+            @TestMetadata("contextParametersInFunction.kt")
+            public void testContextParametersInFunction() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/contextParametersInFunction.kt");
+            }
+
+            @TestMetadata("contextParametersInInlineFunction.kt")
+            public void testContextParametersInInlineFunction() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/contextParametersInInlineFunction.kt");
+            }
+
+            @TestMetadata("contextParametersInLambdas.kt")
+            public void testContextParametersInLambdas() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/contextParametersInLambdas.kt");
+            }
+
+            @TestMetadata("contextParametersInSamLambdas.kt")
+            public void testContextParametersInSamLambdas() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/contextParametersInSamLambdas.kt");
+            }
+
+            @TestMetadata("contextParametersInSuspendFunction.kt")
+            public void testContextParametersInSuspendFunction() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/contextParametersInSuspendFunction.kt");
+            }
+
+            @TestMetadata("functionCallWithImplicitContextParameterCapturing.kt")
+            public void testFunctionCallWithImplicitContextParameterCapturing() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/functionCallWithImplicitContextParameterCapturing.kt");
+            }
+
+            @TestMetadata("valContextParameter.kt")
+            public void testValContextParameter() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/valContextParameter.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint/contextReceivers")
         public static class ContextReceivers extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
             @java.lang.Override

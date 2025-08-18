@@ -1,0 +1,10 @@
+LineBreakpoint created at functionCallWithImplicitContextParameterCapturing.kt:26
+Run Java
+Connected to the target VM
+functionCallWithImplicitContextParameterCapturing.kt:26
+Compile bytecode for useWithCtx1()
+Compile bytecode for useWithCtx2()
+Compile bytecode for useWithCtx1Ctx2()
+Disconnected from the target VM
+
+Process finished with exit code 0
