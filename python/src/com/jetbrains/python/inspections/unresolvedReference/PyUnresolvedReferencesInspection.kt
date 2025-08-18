@@ -8,11 +8,15 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
+import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -130,6 +134,10 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       for (file in filesByName) {
         val containingDirectory = file.getParent() ?: continue
 
+        if (isAlreadySourceRoot(containingDirectory, module)) {
+          continue
+        }
+
         val context = fromModule(module)
           .copyWithMembers()
           .copyWithoutStubs()
@@ -140,6 +148,12 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
         }
       }
       return null
+    }
+
+    private fun isAlreadySourceRoot(virtualFile: VirtualFile, module: Module): Boolean {
+      val model = ModuleRootManager.getInstance(module).modifiableModel
+      val entry = MarkRootsManager.findContentEntry(model, virtualFile) ?: return false
+      return entry.getSourceFolders().any { it.file == virtualFile }
     }
 
     override fun getAddIgnoredIdentifierQuickFixes(qualifiedNames: List<QualifiedName>): List<LocalQuickFix> {
