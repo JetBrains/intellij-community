@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SeSymbolsTab(private val delegate: SeTabDelegate) : SeTab {
+open class SeSymbolsTab(private val delegate: SeTabDelegate) : SeTab {
   override val name: String get() = NAME
   override val id: String get() = ID
   override val isIndexingDependent: Boolean get() = true
