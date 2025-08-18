@@ -3,20 +3,16 @@ package com.jetbrains.python.codeInsight.typing
 
 import com.intellij.lang.Language
 import com.intellij.lang.injection.MultiHostRegistrar
-import com.intellij.openapi.util.Condition
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.codeInsight.PyInjectionUtil
 import com.jetbrains.python.codeInsight.PyInjectorBase
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintDialect
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.testing.pyTestFixtures.resolve
-import java.util.regex.Pattern
 
 /**
  * Injects fragments for type annotations either in string literals (quoted annotations containing forward references) or
@@ -26,16 +22,25 @@ import java.util.regex.Pattern
 class PyTypingAnnotationInjector : PyInjectorBase() {
   override fun registerInjection(registrar: MultiHostRegistrar, context: PsiElement): PyInjectionUtil.InjectionResult? {
     // Handles only string literals containing quoted types
-    val result = super.registerInjection(registrar, context)
+    getInjectedLanguage(context)?.let { language ->
+      val element = PyInjectionUtil.getLargestStringLiteral(context)
+      if (element != null) {
+        return if (language === PyTypeHintDialect.INSTANCE && "\n" in element.text) {
+          PyInjectionUtil.registerStringLiteralInjectionWithParenthesis(element, registrar, language)
+        }
+        else {
+          PyInjectionUtil.registerStringLiteralInjection(element, registrar, language)
+        }
+      }
+    }
 
-    if (result === PyInjectionUtil.InjectionResult.EMPTY &&
-        context is PsiComment &&
+    if (context is PsiComment &&
         context is PsiLanguageInjectionHost &&
         context.containingFile is PyFile
     ) {
-      return registerCommentInjection(registrar, context as PsiLanguageInjectionHost)
+      return registerCommentInjection(registrar, context)
     }
-    return result
+    return PyInjectionUtil.InjectionResult.EMPTY
   }
 
   override fun getInjectedLanguage(context: PsiElement): Language? {
@@ -72,7 +77,17 @@ class PyTypingAnnotationInjector : PyInjectorBase() {
   }
 
   companion object {
-    val RE_TYPING_ANNOTATION: Pattern = Pattern.compile("\\s*\\S+(\\[.*])?\\s*")
+    val RE_TYPING_ANNOTATION: Regex = Regex(
+      """(?x)
+      \s*
+      \S+(\[.*])?   # initial type like: "list[int]"
+      (\s*\|\s*     # union operator: " | "
+        \S+(\[.*])? # type between union operator
+      )*            # repeating
+      \s*
+      """.trimIndent(),
+      RegexOption.DOT_MATCHES_ALL,
+    )
 
     private fun isInsideValueOfExplicitTypeAnnotation(expr: PyStringLiteralExpression): Boolean {
       val assignment = PsiTreeUtil.getParentOfType(expr, PyAssignmentStatement::class.java)
@@ -148,7 +163,7 @@ class PyTypingAnnotationInjector : PyInjectorBase() {
     }
 
     private fun isTypingAnnotation(s: String): Boolean {
-      return RE_TYPING_ANNOTATION.matcher(s).matches()
+      return RE_TYPING_ANNOTATION matches s
     }
   }
 
