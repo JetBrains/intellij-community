@@ -701,6 +701,21 @@ com.intellij.openapi.fileEditor.FileOpenedSyncListener
 - sf:Companion:com.intellij.openapi.fileEditor.FileOpenedSyncListener$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic
 - fileOpenedSync(com.intellij.openapi.fileEditor.FileEditorManager,com.intellij.openapi.vfs.VirtualFile,java.util.List):V
+c:com.intellij.openapi.fileEditor.OpenFileDescriptor
+- com.intellij.pom.AsyncNavigatable
+- sf:Companion:com.intellij.openapi.fileEditor.OpenFileDescriptor$Companion
+- f:dispose():V
+- f:getColumn():I
+- f:getLine():I
+- f:getProject():com.intellij.openapi.project.Project
+- f:getRangeMarker():com.intellij.openapi.editor.RangeMarker
+- sf:getRangeToUnfoldOnNavigation(com.intellij.openapi.editor.Editor):com.intellij.openapi.util.TextRange
+- navigateAsync(Z,kotlin.coroutines.Continuation):java.lang.Object
+- f:setScrollType(com.intellij.openapi.editor.ScrollType):V
+- f:setUseCurrentWindow(Z):com.intellij.openapi.fileEditor.OpenFileDescriptor
+- f:setUsePreviewTab(Z):com.intellij.openapi.fileEditor.OpenFileDescriptor
+f:com.intellij.openapi.fileEditor.OpenFileDescriptor$Companion
+- f:getRangeToUnfoldOnNavigation(com.intellij.openapi.editor.Editor):com.intellij.openapi.util.TextRange
 com.intellij.openapi.ui.InputValidatorEx
 - com.intellij.openapi.ui.InputValidator
 - canClose(java.lang.String):Z

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
 interface FileNavigator {
   companion object {
@@ -18,6 +19,8 @@ interface FileNavigator {
   fun canNavigateToSource(descriptor: OpenFileDescriptor): Boolean = descriptor.file.isValid
 
   fun navigate(descriptor: OpenFileDescriptor, requestFocus: Boolean)
+
+  @ApiStatus.Experimental
   suspend fun navigateAsync(descriptor: OpenFileDescriptor, requestFocus: Boolean) {
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
@@ -27,6 +30,8 @@ interface FileNavigator {
   }
 
   fun navigateInEditor(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean
+
+  @ApiStatus.Experimental
   suspend fun navigateInEditorAsync(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
     return withContext(Dispatchers.EDT) {
       writeIntentReadAction {

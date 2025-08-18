@@ -298,6 +298,7 @@ a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - com.intellij.openapi.fileEditor.FileEditorManager
 - *a:openFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions,kotlin.coroutines.Continuation):java.lang.Object
 - *bs:openFile$default(com.intellij.openapi.fileEditor.ex.FileEditorManagerEx,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- *a:openFileEditorAsync(com.intellij.openapi.fileEditor.FileEditorNavigatable,Z,kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 - *a:reallyExcludeCurrentCommandAsNavigation():V
 *:com.intellij.openapi.options.ex.MutableConfigurableGroup
