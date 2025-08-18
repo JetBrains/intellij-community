@@ -71,6 +71,8 @@ jvm_library(
     "@lib//:grazie-core-ai-grazie-model-ner-jvm",
     "@lib//:kotlinx-html-jvm",
     "//platform/util/coroutines",
+    "//platform/util/progress",
+    "//platform/util/text-matching",
   ],
   exports = [
     "@lib//:grazie-core-org-jetbrains-intellij-deps-languagetool-languagetool-core",

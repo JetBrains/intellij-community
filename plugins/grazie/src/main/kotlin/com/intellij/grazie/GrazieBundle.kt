@@ -27,4 +27,9 @@ object GrazieBundle {
     val actualParams = if (params.isEmpty()) ArrayUtil.EMPTY_OBJECT_ARRAY else params
     return Supplier { message(key, *actualParams) }
   }
+
+  fun messageOrNull(@PropertyKey(resourceBundle = DEFAULT_BUNDLE_NAME) key: String, vararg params: String): @Nls String? {
+    val bundle = if (!GraziePlugin.isBundled && pluginBundle.containsKey(key)) pluginBundle else defaultBundle
+    return AbstractBundle.messageOrNull(bundle, key, *params)
+  }
 }

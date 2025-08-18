@@ -1,20 +1,28 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie
 
+import ai.grazie.nlp.langs.Language
+import ai.grazie.rules.settings.TextStyle
+import ai.grazie.rules.tree.Parameter
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.grazie.config.CheckingContext
 import com.intellij.grazie.config.DetectionContext
 import com.intellij.grazie.config.SuppressingContext
 import com.intellij.grazie.config.migration.VersionedState
 import com.intellij.grazie.grammar.grammarRules
+import com.intellij.grazie.ide.msg.CONFIG_STATE_TOPIC
 import com.intellij.grazie.ide.msg.GrazieInitializerManager
+import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.remote.GrazieRemote.isAvailableLocally
+import com.intellij.grazie.rule.RuleIdeClient
 import com.intellij.grazie.text.Rule
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.util.application
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
@@ -51,6 +59,10 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     }
   }
 
+  init {
+    subscribe(GrazieScope.getInstance()) { syncOxfordSpelling() }
+  }
+
   /**
    * State of Grazie plugin
    *
@@ -68,7 +80,12 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     @Property val suppressingContext: SuppressingContext = SuppressingContext(),
     @Property val detectionContext: DetectionContext.State = DetectionContext.State(),
     @Property val checkingContext: CheckingContext = CheckingContext(),
-    @Property override val version: Version = Version.CURRENT
+    @Property override val version: Version = Version.CURRENT,
+    //Ex. Grazie pro properties
+    @Property val styleProfile: String? = TextStyle.Unspecified.id,
+    @Property val parameters: Map<Language, Map<String, String>> = TreeMap(),
+    @Property val useOxfordSpelling: Boolean = false,
+    @Property val autoFix: Boolean = false,
   ) : VersionedState<Version, State> {
     /**
      * The available language set depends on currently loaded LanguageTool modules.
@@ -96,6 +113,39 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     fun isMissingLanguage(lang: Lang): Boolean {
       return !isAvailableLocally(lang) && lang.jLanguage == null
     }
+
+    fun withAutoFix(autoFix: Boolean): State = copy(autoFix = autoFix)
+    fun withOxfordSpelling(useOxford: Boolean): State = copy(useOxfordSpelling = useOxford)
+    fun withParameter(language: Language, parameter: Parameter, value: String?): State {
+      val newLangParams = TreeMap(parameters[language] ?: emptyMap())
+      if (value != null) {
+        newLangParams[parameter.id()] = value
+      }
+      else {
+        newLangParams.remove(parameter.id())
+      }
+
+      val newParams = TreeMap(parameters)
+      if (newLangParams.isEmpty()) {
+        newParams.remove(language)
+      }
+      else {
+        newParams[language] = newLangParams
+      }
+      return copy(parameters = newParams)
+    }
+
+    val textStyle: TextStyle
+      get() = TextStyle.styles(RuleIdeClient.INSTANCE).find { it.id == styleProfile } ?: TextStyle.Unspecified
+
+    fun paramValue(language: Language, parameter: Parameter): String? {
+      return parameters[language]?.get(parameter.id())
+    }
+
+    enum class Processing {
+      Local,
+      Cloud
+    }
   }
 
   companion object {
@@ -115,6 +165,13 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
         }.toSet()
 
       return state.copy(userEnabledRules = convert(state.userEnabledRules), userDisabledRules = convert(state.userDisabledRules))
+    }
+
+    fun subscribe(parent: Disposable, subscription: (State) -> Unit) {
+      application.messageBus.connect(parent)
+        .subscribe(CONFIG_STATE_TOPIC, object : GrazieStateLifecycle {
+          override fun update(prevState: State, newState: State) = subscription(newState)
+        })
     }
 
     /**
@@ -154,7 +211,25 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     myState = migrateLTRuleIds(VersionedState.migrate(state))
 
     if (prevState != myState) {
+      if (prevState.useOxfordSpelling != state.useOxfordSpelling) {
+        syncOxfordSpelling()
+      }
       stateChanged(prevState, myState)
+    }
+  }
+
+  private val oxfordSpellingLtRules = listOf("LanguageTool.EN.OXFORD_SPELLING_Z_NOT_S", "LanguageTool.EN.OXFORD_SPELLING_GRAM")
+  private fun syncOxfordSpelling() {
+    application.invokeLater {
+      update { state ->
+        val oxford = get().useOxfordSpelling
+        if (oxford) {
+          state.copy(userDisabledRules = state.userDisabledRules - oxfordSpellingLtRules.toSet())
+        }
+        else {
+          state.copy(userDisabledRules = state.userDisabledRules + oxfordSpellingLtRules)
+        }
+      }
     }
   }
 }

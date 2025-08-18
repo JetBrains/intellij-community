@@ -11,11 +11,15 @@ import com.intellij.grazie.text.CheckerRunner
 import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
+import com.intellij.grazie.text.TextExtractor.findAllTextContents
 import com.intellij.lang.Language
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.profile.codeInspection.InspectionProfileManager
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization
 import java.util.*
@@ -67,17 +71,6 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
       catch (e: ClassNotFoundException) {
         false
       }
-    }
-
-    @JvmStatic
-    fun findAllTextContents(vp: FileViewProvider, domains: Set<TextContent.TextDomain>): Set<TextContent> {
-      val allContents: MutableSet<TextContent> = HashSet()
-      for (root in vp.allFiles) {
-        for (element in SyntaxTraverser.psiTraverser(root)) {
-          allContents.addAll(TextExtractor.findTextsExactlyAt(element, domains))
-        }
-      }
-      return allContents
     }
 
     @JvmStatic

@@ -5,11 +5,10 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.grammar.LanguageToolChecker.Problem
+import com.intellij.grazie.ide.ui.components.utils.html
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.*
-import com.intellij.grazie.utils.html
-import com.intellij.grazie.utils.messageSanitized
 import com.intellij.grazie.utils.trimToNull
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.application.runReadAction
@@ -33,7 +32,12 @@ import org.languagetool.rules.RuleMatch
 import org.languagetool.rules.en.EnglishUnpairedQuotesRule
 import org.slf4j.LoggerFactory
 import java.util.*
+import java.util.concurrent.locks.ReentrantLock
 import java.util.function.Predicate
+import kotlin.concurrent.withLock
+
+
+private val lock = ReentrantLock()
 
 open class LanguageToolChecker : TextChecker() {
   @ApiStatus.Internal
@@ -46,14 +50,20 @@ open class LanguageToolChecker : TextChecker() {
   }
 
   override fun check(extracted: TextContent): List<Problem> {
-    val cache = extracted.getUserData(cacheKey)
-    val configStamp = service<GrazieConfig>().modificationCount
+    var cache = extracted.getUserData(cacheKey)
+    var configStamp = service<GrazieConfig>().modificationCount
     if (cache == null || cache.configStamp != configStamp) {
-      val problems = doCheck(extracted)
-      extracted.putUserData(cacheKey, CachedResults(configStamp, problems))
-      return problems
+      lock.withLock {
+        cache = extracted.getUserData(cacheKey)
+        configStamp = service<GrazieConfig>().modificationCount
+        if (cache == null || cache.configStamp != configStamp) {
+          val problems = doCheck(extracted)
+          extracted.putUserData(cacheKey, CachedResults(configStamp, problems))
+          return problems
+        }
+      }
     }
-    return cache.problems
+    return cache!!.problems
   }
 
   private fun doCheck(extracted: TextContent): List<Problem> {
@@ -263,6 +273,9 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
 
   return false
 }
+
+private val RuleMatch.messageSanitized
+  get() = message.replace("<suggestion>", "").replace("</suggestion>", "")
 
 private fun isPartOfQuotedLiteralText(match: RuleMatch, text: TextContent): Boolean {
   return quotedLiteralPattern.findAll(text.toString())

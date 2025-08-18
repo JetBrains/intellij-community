@@ -40,6 +40,14 @@
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationConfigurable
+      parentId="proofread"
+      instance="com.intellij.grazie.ide.ui.configurable.StyleConfigurable"
+      key="grazie.settings.style.configurable.name"
+      bundle="messages.GrazieBundle"
+      id="reference.settings.grazie.pro.style.in.ai.assistant"/>
+    <grazie.proofreadSettingsExtension implementation="com.intellij.grazie.ide.ui.configurable.GrazieProConfigurable" id="grazieProConfigurable"/>
+
     <applicationService serviceImplementation="com.intellij.grazie.GrazieConfig"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.grazie.ide.notification.GrazieNotificationComponent"/>
@@ -49,7 +57,8 @@
                      implementationClass="com.intellij.grazie.ide.inspection.grammar.GrazieInspection"
                      level="GRAMMAR_ERROR" key="grazie.grammar.inspection.grammar.text" language=""/>
 
-    <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="LanguageDetectionInspection"
+    <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true"
+                     shortName="LanguageDetectionInspection"
                      implementationClass="com.intellij.grazie.ide.inspection.detection.LanguageDetectionInspection"
                      level="WEAK WARNING" key="grazie.detection.inspection.text" language=""/>
 
@@ -67,7 +76,8 @@
     <statistics.notificationIdsHolder implementation="com.intellij.grazie.ide.notification.GrazieNotificationIds"/>
 
     <spellchecker.dictionary.runtimeDictionaryProvider implementation="com.intellij.grazie.spellcheck.GrazieDictionaryProvider"/>
-    <notificationGroup id="Proofreading missing languages information" displayType="STICKY_BALLOON" bundle="messages.GrazieBundle" key="grazie.notification.missing-languages.group"/>
+    <notificationGroup id="Proofreading missing languages information" displayType="STICKY_BALLOON" bundle="messages.GrazieBundle"
+                       key="grazie.notification.missing-languages.group"/>
 
     <notificationGroup displayType="STICKY_BALLOON"
                        id="Grazie notifications"
@@ -84,6 +94,34 @@
     <spellchecker.extension implementation="com.intellij.grazie.spellcheck.GrazieSpellcheckingExtension"/>
 
     <registryKey key="spellchecker.grazie.enabled" defaultValue="true" description="Enables Grazie text-level spellchecking"/>
+    <registryKey key="grazie.skip.precommit.checks"
+                 defaultValue="true"
+                 description="Controls whether expensive linguistic checks should be performed during pre-commit code analysis"/>
+    <grazie.problemFilter language="" implementationClass="com.intellij.grazie.style.LTStyleProblemFilter"/>
+    <annotator language="" implementationClass="com.intellij.grazie.style.StyleAnnotator"/>
+    <localInspection groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieStyle"
+                     implementationClass="com.intellij.grazie.style.StyleInspection"
+                     level="TYPO" key="grazie.style.inspection.display.name" language=""
+                     bundle="messages.GrazieBundle"/>
+
+    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$Grammar" id="treeRules"
+                        order="before languageTool"/>
+    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$GrammarLowPriority" id="grammarLowPriority"
+                        order="after languageTool"/>
+
+    <grazie.problemFilter language="" implementationClass="com.intellij.grazie.text.TreeRuleChecker$DocProblemFilter"/>
+
+    <intentionAction>
+      <language/>
+      <bundleName>messages.GrazieBundle</bundleName>
+      <categoryKey>intention.category.natural.languages</categoryKey>
+      <className>com.intellij.grazie.ide.inspection.rephrase.RephraseAction</className>
+      <descriptionDirectoryName>RephraseAction</descriptionDirectoryName>
+    </intentionAction>
+
+    <!--suppress PluginXmlValidity -->
+    <statistics.applicationUsagesCollector implementation="com.intellij.grazie.ide.fus.GrazieProApplicationUsagesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.grazie.ide.fus.GrazieProCounterUsagesCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">
@@ -122,5 +160,8 @@
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.grazie.text.TextContentModificationTrackerProvider"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.grazie.cloudConnector"
+                    interface="com.intellij.grazie.cloud.GrazieCloudConnector"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

@@ -14,8 +14,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -255,6 +257,21 @@ public abstract class TextExtractor {
 
     TextRange psiRange = psi.getTextRange();
     return ContainerUtil.filter(findTextsAt(psi, allowedDomains), c -> psiRange.contains(c.textOffsetToFile(0)));
+  }
+
+
+  /**
+   * Extract all text contents from a file view provider that match the specified domains.
+   * Traverses through all PSI elements in all root files of the view provider and collects matching text contents.
+   */
+  public static Set<TextContent> findAllTextContents(FileViewProvider vp, Set<TextContent.TextDomain> domains) {
+    Set<TextContent> allContents = new HashSet<>();
+    for (PsiFile root : vp.getAllFiles()) {
+      for (PsiElement element : SyntaxTraverser.psiTraverser(root)) {
+        allContents.addAll(findTextsExactlyAt(element, domains));
+      }
+    }
+    return allContents;
   }
 
   private static boolean hasIntersectingInjection(TextContent content, PsiFile file) {

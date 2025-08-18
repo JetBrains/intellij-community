@@ -5,9 +5,9 @@ import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.ide.ui.components.dsl.padding
 import com.intellij.grazie.ide.ui.components.dsl.panel
 import com.intellij.grazie.ide.ui.components.utils.GrazieLinkLabel
+import com.intellij.grazie.ide.ui.components.utils.html
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.Rule
-import com.intellij.grazie.utils.html
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.BrowserHyperlinkListener
@@ -16,7 +16,7 @@ import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
-import com.intellij.ui.layout.migLayout.*
+import com.intellij.ui.layout.migLayout.createLayoutConstraints
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBUI
 import kotlinx.html.unsafe
