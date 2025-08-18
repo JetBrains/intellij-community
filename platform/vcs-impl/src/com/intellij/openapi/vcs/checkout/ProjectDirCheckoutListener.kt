@@ -27,6 +27,7 @@ private class ProjectDirCheckoutListener : CheckoutListener {
       ProjectManagerEx.getInstanceEx().openProjectAsync(directory, OpenProjectTask {
         projectToClose = project
         forceReuseFrame = willOpenFromWelcomeScreenProject(project)
+        projectRootDir = directory
       })
     }
     return true
@@ -44,6 +45,7 @@ private class PlatformProjectCheckoutListener : CheckoutListener {
       ProjectUtil.openOrImportAsync(directory, OpenProjectTask {
         projectToClose = project
         forceReuseFrame = willOpenFromWelcomeScreenProject(project)
+        projectRootDir = directory
       }) != null
     }
   }
