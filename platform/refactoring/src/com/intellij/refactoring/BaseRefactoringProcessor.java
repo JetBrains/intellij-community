@@ -56,8 +56,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -284,6 +284,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         refErrorLanguage.set(e.getElementLanguage());
       }
       catch (ProcessCanceledException e) {
+        // wrapping the PCE to ISE as our logging infrastructure doesn't allow logging PCEs.
+        IllegalStateException exception = new IllegalStateException(e);
+        LOG.error("PCE is not expected here", exception);
+
         refProcessCanceled.set(Boolean.TRUE);
       }
       catch (IndexNotReadyException e) {
