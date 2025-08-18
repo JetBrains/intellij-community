@@ -133,7 +133,7 @@ data class Config private constructor(
    * @property defaultMetrics The list of default metrics rendered in the report.
    * @property sessionsFilters The list of session filters. These filters allow computing metrics and render reports on a subset of sessions.
    * @property comparisonFilters The list of comparison filters. These filters allow subsetting sessions based on multiple evaluations.
-   * @property lookupFilters The list of lookup filters. These filters allow to filter out certain lookups from the session.
+   * @property lookupFilters The list of lookup filters. These filters allow filtering out certain lookups from the session.
    */
   data class ReportGeneration internal constructor(
     val evaluationTitle: String,
@@ -207,7 +207,8 @@ data class Config private constructor(
 
     fun mergeFilters(filters: List<SessionsFilter>) = merge(filters, sessionsFilters as MutableList<NamedFilter>)
     fun mergeComparisonFilters(filters: List<CompareSessionsFilter>) = merge(filters, comparisonFilters as MutableList<NamedFilter>)
-    fun mergeLookupFilters(filters: List<LookupFilter>) = merge(filters, lookupFilters as MutableList<NamedFilter>)
+    fun mergeLookupFilters(filters: List<LookupFilter>) =
+      merge(filters, lookupFilters as MutableList<NamedFilter>)
 
     private fun merge(filters: List<NamedFilter>, existedFilters: MutableList<NamedFilter>) {
       for (filter in filters) {

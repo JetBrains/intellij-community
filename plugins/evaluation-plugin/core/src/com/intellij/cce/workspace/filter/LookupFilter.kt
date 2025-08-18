@@ -4,7 +4,7 @@ import com.intellij.cce.core.Lookup
 
 interface LookupFilter: NamedFilter {
   companion object {
-    fun create(filterType: String, name: String): RemoveSuccessfulCacheHitsFilter {
+    fun create(filterType: String, name: String): LookupFilter {
       return when (LookupFilterType.valueOf(filterType)) {
         LookupFilterType.REMOVE_SUCCESSFUL_CACHE_HITS -> RemoveSuccessfulCacheHitsFilter(name)
       }
