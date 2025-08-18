@@ -10,6 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -19,6 +20,8 @@ import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SystemProperties;
@@ -330,6 +333,17 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   //         LocalFileSystemImpl are really could/should deal with per-directory case-sensitivity though...
   @ApiStatus.Internal
   public @NotNull CaseSensitivity fetchCaseSensitivity(@NotNull VirtualFile parent, @NotNull String childName) {
+    if (Registry.is("vfs.fetch.case.sensitivity.using.eel")) {
+      EelPath eelPath = LocalFileSystemEelUtil.toEelPath(parent, childName);
+      if (
+        eelPath != null && (
+          !(eelPath.getDescriptor() instanceof LocalEelDescriptor)
+          || Registry.is("vfs.fetch.case.sensitivity.using.eel.local")  // TODO IJPL-204344
+        )
+      ) {
+        return LocalFileSystemEelUtil.fetchCaseSensitivityUsingEel(eelPath);
+      }
+    }
     return FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
   }
 
