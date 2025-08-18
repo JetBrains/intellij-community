@@ -249,6 +249,7 @@ internal class SettingsSyncPanelHolder() {
     val scrollPane = JBScrollPane(checkboxList)
     panel.add(scrollPane, BorderLayout.CENTER)
     scrollPane.border = JBUI.Borders.empty(5)
+    scrollPane.viewportBorder = JBUI.Borders.emptyRight(JBUI.scale(8))
     val chooserBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, checkboxList)
     chooserBuilder.createPopup().showUnderneathOf(owner)
   }
