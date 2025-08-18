@@ -3,6 +3,8 @@ package org.jetbrains.intellij.build.bazel
 
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.createParentDirectories
+import kotlin.io.path.writeText
 
 internal class BazelFileUpdater(private val file: Path) {
   private var originalContent: String? = runCatching { Files.readString(file) }.getOrNull()
@@ -61,9 +63,9 @@ internal class BazelFileUpdater(private val file: Path) {
   }
 
   fun save() {
-    val newContent = fileContent?.trim() ?: error("fileContent is not set")
+    val newContent = fileContent?.trim() ?: error("fileContent is not set for $file")
     if (originalContent != newContent) {
-      Files.writeString(file, newContent)
+      file.createParentDirectories().writeText(newContent)
     }
   }
 }

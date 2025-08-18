@@ -64,7 +64,7 @@ internal data class CustomModuleDescription(
   }
 }
 
-internal val customModules: Map<String, CustomModuleDescription> = listOf(
+internal val DEFAULT_CUSTOM_MODULES: Map<String, CustomModuleDescription> = listOf(
   CustomModuleDescription(moduleName = "intellij.idea.community.build.zip", bazelPackage = "@community//build", bazelTargetName = "zip",
                           outputDirectory = "out/bazel-out/jvm-fastbuild/bin/external/community+/build"),
   CustomModuleDescription(moduleName = "intellij.platform.jps.build.dependencyGraph", bazelPackage = "@community//build", bazelTargetName = "dependency-graph",
@@ -81,6 +81,7 @@ internal class BazelBuildFileGenerator(
   val communityRoot: Path,
   private val project: JpsProject,
   val urlCache: UrlCache,
+  val customModules: Map<String, CustomModuleDescription>,
 ) {
   @JvmField
   val javaExtensionService: JpsJavaExtensionService = JpsJavaExtensionService.getInstance()
@@ -776,6 +777,35 @@ internal class BazelBuildFileGenerator(
       else -> "17"
     }
   }
+
+  private fun jpsModuleNameToBazelBuildName(module: JpsModule, baseBuildDir: Path, communityRoot: Path, ultimateRoot: Path?): @NlsSafe String {
+    val moduleName = module.name
+    val customModule = customModules.get(moduleName)
+    if (customModule != null) {
+      return customModule.bazelTargetName
+    }
+
+    val baseDirFilename = if (baseBuildDir == communityRoot || baseBuildDir == ultimateRoot) null else baseBuildDir.fileName.toString()
+    if (baseDirFilename != null && baseDirFilename != "resources" &&
+        (moduleName.endsWith(".$baseDirFilename") || (camelToSnakeCase(moduleName, '-')).endsWith(".$baseDirFilename"))) {
+      return baseDirFilename
+    }
+
+    val result = moduleName
+      .removePrefix("intellij.platform.")
+      .removePrefix("intellij.idea.community.")
+      .removePrefix("intellij.")
+
+    val parentDirDirName = when {
+      baseBuildDir == ultimateRoot -> null
+      baseBuildDir.parent == ultimateRoot -> "idea"
+      else -> baseBuildDir.parent.fileName.toString()
+    }
+
+    return result
+      .let { if (parentDirDirName != null) it.removePrefix("$parentDirDirName.") else it }
+      .replace('.', '-')
+  }
 }
 
 // This is a usual convention in the intellij repository for storing classpath for running tests
@@ -868,35 +898,6 @@ private fun isUsed(
 ): Boolean {
   return deps.depsModuleSet.contains(referencedModule) ||
          deps.runtimeDepsModuleSet.contains(referencedModule)
-}
-
-private fun jpsModuleNameToBazelBuildName(module: JpsModule, baseBuildDir: Path, communityRoot: Path, ultimateRoot: Path?): @NlsSafe String {
-  val moduleName = module.name
-  val customModule = customModules.get(moduleName)
-  if (customModule != null) {
-    return customModule.bazelTargetName
-  }
-
-  val baseDirFilename = if (baseBuildDir == communityRoot || baseBuildDir == ultimateRoot) null else baseBuildDir.fileName.toString()
-  if (baseDirFilename != null && baseDirFilename != "resources" &&
-      (moduleName.endsWith(".$baseDirFilename") || (camelToSnakeCase(moduleName, '-')).endsWith(".$baseDirFilename"))) {
-    return baseDirFilename
-  }
-
-  val result = moduleName
-    .removePrefix("intellij.platform.")
-    .removePrefix("intellij.idea.community.")
-    .removePrefix("intellij.")
-
-  val parentDirDirName = when {
-    baseBuildDir == ultimateRoot -> null
-    baseBuildDir.parent == ultimateRoot -> "idea"
-    else -> baseBuildDir.parent.fileName.toString()
-  }
-
-  return result
-    .let { if (parentDirDirName != null) it.removePrefix("$parentDirDirName.") else it }
-    .replace('.', '-')
 }
 
 private fun checkAndGetRelativePath(parentDir: Path, childDir: Path): Path {
