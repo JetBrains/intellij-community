@@ -27,6 +27,7 @@ import com.intellij.psi.util.QualifiedName
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyPsiPackageUtil
+import com.jetbrains.python.ast.PyAstFromImportStatement
 import com.jetbrains.python.ast.PyAstImportStatementBase
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
@@ -139,9 +140,17 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
         }
 
         val context = fromModule(module)
-          .copyWithMembers()
           .copyWithoutStubs()
           .copyWithoutRoots()
+          .run {
+            // resolve members only for 'from .. import ..'
+            if (importStatementBase is PyAstFromImportStatement) {
+              copyWithMembers()
+            } else {
+              this
+            }
+          }
+        
         val resolveResult: List<PsiElement> = resolveInRoot(qname, containingDirectory, context)
         if (!resolveResult.isEmpty()) {
           return PyMarkDirectoryAsSourceRootQuickFix(project, containingDirectory, module, context)
