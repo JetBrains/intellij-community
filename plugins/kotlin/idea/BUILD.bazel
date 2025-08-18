@@ -111,8 +111,6 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/statistics",
-    "//platform/vcs-impl",
-    "//platform/diff-impl",
     "//jvm/jvm-analysis-api:analysis",
     "//java/openapi:java",
     "//java/java-impl:impl",

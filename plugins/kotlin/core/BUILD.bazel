@@ -54,7 +54,6 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-impl:externalSystem-impl",
-    "//platform/diff-impl",
     "//java/java-impl:impl",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/core-ui",

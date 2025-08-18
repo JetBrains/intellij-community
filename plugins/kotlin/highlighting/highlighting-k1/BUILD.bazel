@@ -35,7 +35,6 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
-    "//platform/diff-impl",
     "//java/java-analysis-impl:analysis-impl",
     "//platform/lang-impl",
     "//platform/core-ui",

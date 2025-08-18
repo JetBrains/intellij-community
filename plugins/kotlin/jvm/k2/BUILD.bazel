@@ -26,7 +26,6 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/util/coroutines",
-    "//platform/diff-impl",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/idea",
     "//plugins/kotlin/base/plugin",

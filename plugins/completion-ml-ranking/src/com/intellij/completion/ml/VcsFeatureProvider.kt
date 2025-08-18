@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.ex.LineStatusTrackerI
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiNameIdentifierOwner
@@ -40,7 +41,7 @@ private class VcsFeatureProvider : ElementFeatureProvider {
           val document = PsiDocumentManager.getInstance(project).getCachedDocument(psiFile)
           val range = psi.textRange
           if (document != null && range != null && range.endOffset <= document.textLength) {
-            val lineStatusTracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document)
+            val lineStatusTracker: LineStatusTrackerI<*>? = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document)
             if (lineStatusTracker != null && lineStatusTracker.isValid()) {
               if (lineStatusTracker.isRangeModified(document.getLineNumber(range.startOffset), document.getLineNumber(range.endOffset))) {
                 features["declaration_is_changed"] = MLFeatureValue.binary(true) // NON-NLS

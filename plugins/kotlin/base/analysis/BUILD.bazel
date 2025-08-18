@@ -61,7 +61,6 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader",
     "//platform/projectModel-impl",
     "//platform/analysis-impl",
-    "//platform/diff-impl",
     "//java/openapi:java",
     "//java/manifest",
     "//java/java-impl:impl",

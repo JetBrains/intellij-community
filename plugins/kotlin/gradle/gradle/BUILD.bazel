@@ -65,7 +65,6 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/external-system-api:externalSystem",
     "//platform/platform-impl:ide-impl",
-    "//platform/diff-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
