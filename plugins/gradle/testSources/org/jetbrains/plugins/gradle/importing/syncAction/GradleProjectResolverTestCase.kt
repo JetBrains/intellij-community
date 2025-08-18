@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.importing.syncAction
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.Disposable
-import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.testFramework.registerOrReplaceServiceInstance
 import com.intellij.util.application
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
@@ -59,12 +59,16 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
       })
   }
 
-  fun addSyncContributor(phase: GradleSyncPhase, parentDisposable: Disposable, action: suspend (ProjectResolverContext, MutableEntityStorage) -> Unit) {
+  fun addSyncContributor(
+    phase: GradleSyncPhase,
+    parentDisposable: Disposable,
+    action: suspend (ProjectResolverContext, ImmutableEntityStorage) -> ImmutableEntityStorage,
+  ) {
     GradleSyncContributor.EP_NAME.point.registerExtension(
       object : GradleSyncContributor {
         override val phase: GradleSyncPhase = phase
-        override suspend fun updateProjectModel(context: ProjectResolverContext, storage: MutableEntityStorage) {
-          action(context, storage)
+        override suspend fun createProjectModel(context: ProjectResolverContext, storage: ImmutableEntityStorage): ImmutableEntityStorage {
+          return action(context, storage)
         }
       }, parentDisposable)
   }

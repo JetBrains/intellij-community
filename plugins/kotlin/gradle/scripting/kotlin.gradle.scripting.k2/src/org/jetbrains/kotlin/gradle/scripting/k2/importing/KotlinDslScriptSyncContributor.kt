@@ -5,6 +5,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.psi.PsiManager
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptDefinitionsStorage
@@ -42,13 +43,13 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
 
     override val phase: GradleSyncPhase = GradleSyncPhase.ADDITIONAL_MODEL_PHASE
 
-    override suspend fun updateProjectModel(
+    override suspend fun createProjectModel(
         context: ProjectResolverContext,
-        storage: MutableEntityStorage
-    ) {
+        storage: ImmutableEntityStorage
+    ): ImmutableEntityStorage {
         val project = context.project
         val taskId = context.externalSystemTaskId
-        val tasks = kotlinDslSyncListenerInstance?.tasks ?: return
+        val tasks = kotlinDslSyncListenerInstance?.tasks ?: return storage
         val sync = synchronized(tasks) { tasks[taskId] }
 
         for (buildModel in context.allBuilds) {
@@ -69,7 +70,7 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
             }
         }
 
-        if (sync == null || sync.models.isEmpty()) return
+        if (sync == null || sync.models.isEmpty()) return storage
 
         val gradleHome = context.allBuilds.asSequence()
             .flatMap { it.projects.asSequence() }
@@ -97,13 +98,17 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
             )
         }
 
+        val builder = storage.toBuilder()
+
         GradleScriptRefinedConfigurationProvider.getInstance(project)
-            .processScripts(GradleScriptModelData(gradleScripts, sync.javaHome), storage)
+            .processScripts(GradleScriptModelData(gradleScripts, sync.javaHome), builder)
 
         val ktFiles = gradleScripts.mapNotNull {
             readAction { PsiManager.getInstance(project).findFile(it.virtualFile) as? KtFile }
         }.toTypedArray()
 
         DefaultScriptResolutionStrategy.getInstance(project).execute(*ktFiles).join()
+
+        return builder.toSnapshot()
     }
 }

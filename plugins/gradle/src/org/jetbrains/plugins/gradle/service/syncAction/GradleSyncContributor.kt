@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.service.syncAction
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
@@ -30,10 +30,10 @@ interface GradleSyncContributor {
    * @see ProjectResolverContext.getAllBuilds
    * @see ProjectResolverContext.getProjectModel
    */
-  suspend fun updateProjectModel(
+  suspend fun createProjectModel(
     context: ProjectResolverContext,
-    storage: MutableEntityStorage,
-  )
+    storage: ImmutableEntityStorage,
+  ): ImmutableEntityStorage
 
   companion object {
     @JvmField
