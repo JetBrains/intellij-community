@@ -45,7 +45,9 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -288,6 +290,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
     VirtualFile file = node.getVirtualFile();
 
     sink.set(PlatformCoreDataKeys.SELECTED_ITEM, node);
+    sink.set(PlatformCoreDataKeys.SELECTED_ITEMS, getSelectedNodes());
     sink.set(CommonDataKeys.VIRTUAL_FILE, node.getVirtualFile());
     sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, file == null ? null : new VirtualFile[]{file});
 
@@ -427,6 +430,15 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
 
   private @Nullable Node getSelectedNode() {
     return getNode(getTree().getSelectionPath());
+  }
+
+  private @NotNull Node @NotNull [] getSelectedNodes() {
+    TreePath[] selectionPaths = getTree().getSelectionPaths();
+    if (selectionPaths == null) return new Node[0];
+    return Arrays.stream(selectionPaths)
+      .map(ProblemsViewPanel::getNode)
+      .filter(Objects::nonNull)
+      .toList().toArray(new Node[0]);
   }
 
   @Nullable VirtualFile getSelectedFile() {

@@ -4,11 +4,10 @@ package com.intellij.analysis.problemsView.toolWindow
 import com.intellij.analysis.problemsView.Problem
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEMS
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
 import java.awt.datatransfer.StringSelection
-import javax.swing.JTree
 
 internal class CopyProblemDescriptionAction : NodeAction<Problem>() {
   override fun getData(node: Any?): Problem? = (node as? ProblemNodeI)?.problem
@@ -37,7 +36,7 @@ internal abstract class NodeAction<Data> : DumbAwareAction() {
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(event: AnActionEvent) {
@@ -49,6 +48,5 @@ internal abstract class NodeAction<Data> : DumbAwareAction() {
 }
 
 private fun getSelectedNodes(event: AnActionEvent): List<Any> {
-  val tree = event.getData(CONTEXT_COMPONENT) as? JTree
-  return tree?.selectionPaths?.map { it.lastPathComponent } ?: emptyList()
+  return event.getData(SELECTED_ITEMS)?.toList() ?: emptyList()
 }
