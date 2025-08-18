@@ -954,6 +954,9 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     finally {
       drainWriteActionFollowups()
       writeIntentInitResult.release()
+      if (myWriteActionsStack.isEmpty()) {
+        fireAfterWriteActionFinished(writeIntentInitResult.listeners, Any::class.java)
+      }
     }
   }
 
@@ -973,6 +976,9 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       // so here in release function we remove the thread-local not because it was added during the preparation of write-intent,
       // but because it was installed just before write action
       writeIntentInitResult.release()
+      if (myWriteActionsStack.isEmpty()) {
+        fireAfterWriteActionFinished(writeIntentInitResult.listeners, Any::class.java)
+      }
     }
   }
 
@@ -1168,9 +1174,6 @@ class NestedLocksThreadingSupport : ThreadingSupport {
             state.releaseWritePermit()
           }
           support.myTopmostReadAction.set(currentReadState)
-          if (shouldRelease) {
-            support.fireAfterWriteActionFinished(listeners, clazz)
-          }
           support.drainWriteActionFollowups()
         }
 

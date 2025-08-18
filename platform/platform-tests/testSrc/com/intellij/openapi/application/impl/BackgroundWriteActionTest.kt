@@ -734,4 +734,21 @@ class BackgroundWriteActionTest {
     job.complete()
   }
 
+  @Test
+  fun `invokeAndWait works in post-write-action listener`() = timeoutRunBlocking {
+    val threadingSupport = getGlobalThreadingSupport()
+    val listener = object : WriteActionListener {
+      override fun afterWriteActionFinished(action: Class<*>) {
+        application.invokeAndWait { }
+      }
+    }
+    try {
+      threadingSupport.addWriteActionListener(listener)
+      backgroundWriteAction {
+      }
+    }
+    finally {
+      threadingSupport.removeWriteActionListener(listener)
+    }
+  }
 }
