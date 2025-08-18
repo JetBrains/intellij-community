@@ -154,58 +154,58 @@ public class CodeCompletionHandlerBase {
 
   @ApiStatus.Internal
   protected void invokeCompletion(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers, @NotNull Caret caret) {
-      markCaretAsProcessed(caret);
+    markCaretAsProcessed(caret);
 
-      if (invokedExplicitly) {
-        StatisticsUpdate.applyLastCompletionStatisticsUpdate();
+    if (invokedExplicitly) {
+      StatisticsUpdate.applyLastCompletionStatisticsUpdate();
+    }
+
+    checkNoWriteAccess();
+
+    CompletionAssertions.checkEditorValid(editor);
+
+    int offset = editor.getCaretModel().getOffset();
+    if (editor.isViewer() || editor.getDocument().getRangeGuard(offset, offset) != null) {
+      editor.getDocument().fireReadOnlyModificationAttempt();
+      EditorModificationUtil.checkModificationAllowed(editor);
+      return;
+    }
+
+    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
+      return;
+    }
+    CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
+    boolean repeated = phase.indicator != null && phase.indicator.isRepeatedInvocation(completionType, editor);
+
+    final int newTime = phase.newCompletionStarted(time, repeated);
+    if (invokedExplicitly) {
+      time = newTime;
+    }
+    final int invocationCount = time;
+    if (CompletionServiceImpl.isPhase(CompletionPhase.InsertedSingleItem.class)) {
+      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+    }
+    CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass(), CompletionPhase.CommittingDocuments.class);
+
+    if (invocationCount > 1 && completionType == CompletionType.BASIC) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.SECOND_BASIC_COMPLETION);
+    }
+
+    long startingTime = System.currentTimeMillis();
+    Runnable initCmd = () -> {
+      WriteAction.run(() -> EditorUtil.fillVirtualSpaceUntilCaret(editor));
+      CompletionInitializationContextImpl context = withTimeout(calcSyncTimeOut(startingTime), () -> {
+        return CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret, invocationCount, completionType);
+      });
+
+      boolean hasValidContext = context != null;
+      if (!hasValidContext) {
+        PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(caret, project);
+        context = new CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount);
       }
 
-      checkNoWriteAccess();
-
-      CompletionAssertions.checkEditorValid(editor);
-
-      int offset = editor.getCaretModel().getOffset();
-      if (editor.isViewer() || editor.getDocument().getRangeGuard(offset, offset) != null) {
-        editor.getDocument().fireReadOnlyModificationAttempt();
-        EditorModificationUtil.checkModificationAllowed(editor);
-        return;
-      }
-
-      if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
-        return;
-      }
-      CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
-      boolean repeated = phase.indicator != null && phase.indicator.isRepeatedInvocation(completionType, editor);
-
-      final int newTime = phase.newCompletionStarted(time, repeated);
-      if (invokedExplicitly) {
-        time = newTime;
-      }
-      final int invocationCount = time;
-      if (CompletionServiceImpl.isPhase(CompletionPhase.InsertedSingleItem.class)) {
-        CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-      }
-      CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass(), CompletionPhase.CommittingDocuments.class);
-
-      if (invocationCount > 1 && completionType == CompletionType.BASIC) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.SECOND_BASIC_COMPLETION);
-      }
-
-      long startingTime = System.currentTimeMillis();
-      Runnable initCmd = () -> {
-        WriteAction.run(() -> EditorUtil.fillVirtualSpaceUntilCaret(editor));
-        CompletionInitializationContextImpl context = withTimeout(calcSyncTimeOut(startingTime), () -> {
-          return CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret, invocationCount, completionType);
-        });
-
-        boolean hasValidContext = context != null;
-        if (!hasValidContext) {
-          PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(caret, project);
-          context = new CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount);
-        }
-
-        doComplete(context, hasModifiers, hasValidContext, startingTime);
-      };
+      doComplete(context, hasModifiers, hasValidContext, startingTime);
+    };
     try {
       if (autopopup) {
         CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
