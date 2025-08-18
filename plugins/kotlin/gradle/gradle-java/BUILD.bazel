@@ -82,7 +82,7 @@ jvm_library(
     "//plugins/kotlin/project-wizard/core",
     "//platform/backend/observation",
     "//plugins/kotlin/code-insight/utils",
-    "//plugins/kotlin/jvm-debugger/coroutines"
+    "//plugins/kotlin/jvm-debugger/coroutines",
   ],
   runtime_deps = [":gradle-java_resources"]
 )

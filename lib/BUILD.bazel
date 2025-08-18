@@ -681,12 +681,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "android-tools-sdklib",
-  jar = "@sdklib-31_5_0-alpha08_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
   name = "apache-sshd-osgi",
   jar = "@sshd-osgi-2_15_0_http//file",
   source_jar = "@sshd-osgi-2_15_0-sources_http//file",
@@ -9048,8 +9042,8 @@ jvm_import(
 
 jvm_import(
   name = "studio-platform",
-  jar = "@studio-platform-2025_1_1-273_http//file",
-  source_jar = "@studio-platform-2025_1_1-273-sources_http//file",
+  jar = "@studio-platform-2025_1_2-287_http//file",
+  source_jar = "@studio-platform-2025_1_2-287-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9062,8 +9056,8 @@ java_library(
 
 jvm_import(
   name = "studio-test-platform",
-  jar = "@studio-test-platform-2025_1_1-273_http//file",
-  source_jar = "@studio-test-platform-2025_1_1-273-sources_http//file",
+  jar = "@studio-test-platform-2025_1_2-287_http//file",
+  source_jar = "@studio-test-platform-2025_1_2-287-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
