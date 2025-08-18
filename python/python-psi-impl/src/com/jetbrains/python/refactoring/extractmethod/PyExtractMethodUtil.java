@@ -656,7 +656,7 @@ public final class PyExtractMethodUtil {
           }
         }
         final StringBuilder builder = new StringBuilder();
-        PyFunctionBuilder.appendMethodSignature(builder, pySettings.getMethodName(), parameters,
+        PyFunctionBuilder.appendMethodSignature(builder, fragment.isAsync(), pySettings.getMethodName(), parameters,
                                                 pySettings.isUseTypeAnnotations() ? pySettings.getReturnTypeName() : null);
 
         return builder.toString();
