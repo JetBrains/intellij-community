@@ -605,6 +605,9 @@ com.intellij.ide.projectView.impl.nodes.DropTargetNode
 - a:drop(javax.swing.tree.TreeNode[],com.intellij.openapi.actionSystem.DataContext):V
 - drop(javax.swing.tree.TreePath[],com.intellij.openapi.actionSystem.DataContext):V
 - a:dropExternalFiles(com.intellij.psi.PsiFileSystemItem[],com.intellij.openapi.actionSystem.DataContext):V
+c:com.intellij.ide.projectView.impl.nodes.PsiFileNode
+- com.intellij.pom.AsyncNavigatable
+- navigateAsync(Z,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter
 - a:shouldShow(com.intellij.psi.PsiFileSystemItem):Z
 com.intellij.ide.structureView.newStructureView.TreeActionsOwner

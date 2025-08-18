@@ -411,6 +411,9 @@ f:com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 - a:presentableText(java.lang.String):com.intellij.platform.backend.presentation.TargetPresentationBuilder
 - a:presentableTextAttributes(com.intellij.openapi.editor.markup.TextAttributes):com.intellij.platform.backend.presentation.TargetPresentationBuilder
 - a:presentation():com.intellij.platform.backend.presentation.TargetPresentation
+*:com.intellij.pom.AsyncNavigatable
+- com.intellij.pom.Navigatable
+- a:navigateAsync(Z,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.pom.Navigatable
 - *:navigationRequest():com.intellij.platform.backend.navigation.NavigationRequest
 *f:com.intellij.psi.BasicInspectionVisitorBean
