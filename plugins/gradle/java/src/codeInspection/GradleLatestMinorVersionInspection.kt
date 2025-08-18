@@ -8,6 +8,7 @@ import com.intellij.lang.properties.psi.Property
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.fix.GradleWrapperVersionFix
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
@@ -15,11 +16,12 @@ import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 const val DISTRIBUTION_URL_KEY: String = "distributionUrl"
 
 class GradleLatestMinorVersionInspection : LocalInspectionTool() {
+  override fun isAvailableForFile(file: PsiFile): Boolean {
+    // TODO not sure if this should be limited to "gradle-wrapper.properties" file
+    return file.name == "gradle-wrapper.properties"
+  }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    // TODO not sure if this should be limited to "gradle-wrapper.properties" file
-    if (holder.file.name != "gradle-wrapper.properties") return PsiElementVisitor.EMPTY_VISITOR
-
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
         if (element !is Property) return
@@ -43,7 +45,7 @@ class GradleLatestMinorVersionInspection : LocalInspectionTool() {
         holder.registerProblem(
           element,
           GradleInspectionBundle.message("inspection.message.outdated.gradle.minor.version.descriptor"),
-          ProblemHighlightType.WARNING,
+          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
           versionTextRange,
           GradleWrapperVersionFix(element, latestMinorGradleVersion)
         )
