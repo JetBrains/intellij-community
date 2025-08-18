@@ -37,19 +37,19 @@ import kotlin.math.abs
  * @see buildHighlighting
  */
 @ApiStatus.Experimental
-sealed interface EditorDecorationApplier {
+sealed interface EditorTextDecorationApplier {
   /**
    * Adds the provided decorations to the editor.
    *
    * @see buildHyperlink
    * @see buildHighlighting
    */
-  fun addDecorations(decorations: Collection<EditorDecoration>)
+  fun addDecorations(decorations: Collection<EditorTextDecoration>)
 
   /**
    * Removes the decorations with the provided IDs from the editor.
    */
-  fun removeDecorations(decorationIds: Collection<EditorDecorationId>)
+  fun removeDecorations(decorationIds: Collection<EditorTextDecorationId>)
 
   /**
    * Returns the currently hovered hyperlink, if any.
@@ -63,13 +63,13 @@ sealed interface EditorDecorationApplier {
  * A parent disposable ensures that the applier unsubscribes from the editor listeners.
  */
 @ApiStatus.Experimental
-fun createDecorationApplier(editor: EditorEx, parentDisposable: Disposable): EditorDecorationApplier =
-  EditorDecorationApplierImpl(editor, parentDisposable)
+fun createDecorationApplier(editor: EditorEx, parentDisposable: Disposable): EditorTextDecorationApplier =
+  EditorTextDecorationApplierImpl(editor, parentDisposable)
 
 /** The base interface for editor decorations. */
 @ApiStatus.Experimental
-sealed interface EditorDecoration {
-  val id: EditorDecorationId
+sealed interface EditorTextDecoration {
+  val id: EditorTextDecorationId
 }
 
 /**
@@ -78,7 +78,7 @@ sealed interface EditorDecoration {
  * IDs are assigned by the caller, usually using an `AtomicLong` and [createTextDecorationId].
  */
 @ApiStatus.Experimental
-interface EditorDecorationId : Comparable<EditorDecorationId> {
+interface EditorTextDecorationId : Comparable<EditorTextDecorationId> {
   val value: Long
 }
 
@@ -88,7 +88,7 @@ interface EditorDecorationId : Comparable<EditorDecorationId> {
  * A highlighted clickable region.
  */
 @ApiStatus.Experimental
-sealed interface HyperlinkDecoration : EditorDecoration
+sealed interface HyperlinkDecoration : EditorTextDecoration
 
 /**
  * A highlighting.
@@ -96,7 +96,7 @@ sealed interface HyperlinkDecoration : EditorDecoration
  * A highlighted region.
  */
 @ApiStatus.Experimental
-sealed interface HighlightingDecoration : EditorDecoration
+sealed interface HighlightingDecoration : EditorTextDecoration
 
 /**
  * An inlay.
@@ -104,13 +104,13 @@ sealed interface HighlightingDecoration : EditorDecoration
  * A custom element inserted into the text.
  */
 @ApiStatus.Experimental
-sealed interface InlayDecoration : EditorDecoration
+sealed interface InlayDecoration : EditorTextDecoration
 
 /**
  * Creates a new ID with the given value.
  */
 @ApiStatus.Experimental
-fun createTextDecorationId(value: Long) : EditorDecorationId = EditorDecorationIdImpl(value)
+fun createTextDecorationId(value: Long) : EditorTextDecorationId = EditorTextDecorationIdImpl(value)
 
 /**
  * Builds a new hyperlink.
@@ -123,7 +123,7 @@ fun createTextDecorationId(value: Long) : EditorDecorationId = EditorDecorationI
  */
 @ApiStatus.Experimental
 fun buildHyperlink(
-  id: EditorDecorationId,
+  id: EditorTextDecorationId,
   startOffset: Int,
   endOffset: Int,
   action: (EditorMouseEvent) -> Unit,
@@ -177,7 +177,7 @@ sealed interface HyperlinkBuilder {
  */
 @ApiStatus.Experimental
 fun buildHighlighting(
-  id: EditorDecorationId,
+  id: EditorTextDecorationId,
   startOffset: Int,
   endOffset: Int,
   attributes: TextAttributes,
@@ -212,7 +212,7 @@ sealed interface HighlightingBuilder {
  */
 @ApiStatus.Experimental
 fun buildInlay(
-  id: EditorDecorationId,
+  id: EditorTextDecorationId,
   offset: Int,
   inlayProvider: InlayProvider,
   builder: (InlayBuilder.() -> Unit)? = null,
@@ -230,7 +230,7 @@ fun buildInlay(
 sealed interface InlayBuilder
 
 private class HyperlinkBuilderImpl(
-  private val id: EditorDecorationId,
+  private val id: EditorTextDecorationId,
   private val startOffset: Int,
   private val endOffset: Int,
   private val action: (EditorMouseEvent) -> Unit,
@@ -253,7 +253,7 @@ private class HyperlinkBuilderImpl(
 }
 
 private class HighlightingBuilderImpl(
-  private val id: EditorDecorationId,
+  private val id: EditorTextDecorationId,
   private val startOffset: Int,
   private val endOffset: Int,
   private val attributes: TextAttributes,
@@ -270,7 +270,7 @@ private class HighlightingBuilderImpl(
 }
 
 private class InlayBuilderImpl(
-  private val id: EditorDecorationId,
+  private val id: EditorTextDecorationId,
   private val offset: Int,
   private val inlayProvider: InlayProvider,
 ) : InlayBuilder {
@@ -281,13 +281,13 @@ private class InlayBuilderImpl(
   )
 }
 
-private data class EditorDecorationIdImpl(override val value: Long) : EditorDecorationId {
-  override fun compareTo(other: EditorDecorationId): Int = value.compareTo(other.value)
+private data class EditorTextDecorationIdImpl(override val value: Long) : EditorTextDecorationId {
+  override fun compareTo(other: EditorTextDecorationId): Int = value.compareTo(other.value)
   override fun toString(): String = value.toString()
 }
 
 private data class HyperlinkOrHighlightingImpl(
-  override val id: EditorDecorationId,
+  override val id: EditorTextDecorationId,
   val start: Int,
   val end: Int,
   val attributes: TextAttributes?,
@@ -298,14 +298,14 @@ private data class HyperlinkOrHighlightingImpl(
 ) : HyperlinkDecoration, HighlightingDecoration
 
 private data class InlayDecorationImpl(
-  override val id: EditorDecorationId,
+  override val id: EditorTextDecorationId,
   val offset: Int,
   val inlayProvider: InlayProvider,
 ) : InlayDecoration
 
-private class EditorDecorationApplierImpl(private val editor: EditorEx, parentDisposable: Disposable) : EditorDecorationApplier {
-  private val highlightersById = hashMapOf<EditorDecorationId, RangeHighlighterEx>()
-  private val inlaysById = hashMapOf<EditorDecorationId, com.intellij.openapi.editor.Inlay<*>>()
+private class EditorTextDecorationApplierImpl(private val editor: EditorEx, parentDisposable: Disposable) : EditorTextDecorationApplier {
+  private val highlightersById = hashMapOf<EditorTextDecorationId, RangeHighlighterEx>()
+  private val inlaysById = hashMapOf<EditorTextDecorationId, com.intellij.openapi.editor.Inlay<*>>()
   private val effectSupport = EditorHyperlinkEffectSupport(editor, MyEffectSupplier())
   private var hoveredHyperlink: HyperlinkDecoration? = null
 
@@ -314,7 +314,7 @@ private class EditorDecorationApplierImpl(private val editor: EditorEx, parentDi
     editor.addEditorMouseMotionListener(MyMouseMotionListener(), parentDisposable)
   }
 
-  override fun addDecorations(decorations: Collection<EditorDecoration>) {
+  override fun addDecorations(decorations: Collection<EditorTextDecoration>) {
     val inlays = mutableListOf<InlayDecorationImpl>()
     for (decoration in decorations) {
       if(decoration.id in highlightersById) {
@@ -333,7 +333,7 @@ private class EditorDecorationApplierImpl(private val editor: EditorEx, parentDi
     addInlays(inlays)
   }
 
-  override fun removeDecorations(decorationIds: Collection<EditorDecorationId>) {
+  override fun removeDecorations(decorationIds: Collection<EditorTextDecorationId>) {
     for (id in decorationIds) {
       removeDecoration(id)
     }
@@ -370,7 +370,7 @@ private class EditorDecorationApplierImpl(private val editor: EditorEx, parentDi
     }
   }
 
-  private fun removeDecoration(decorationId: EditorDecorationId) {
+  private fun removeDecoration(decorationId: EditorTextDecorationId) {
     val highlighter = highlightersById.remove(decorationId)
     val inlay = inlaysById.remove(decorationId)
     when {
@@ -385,13 +385,13 @@ private class EditorDecorationApplierImpl(private val editor: EditorEx, parentDi
     }
   }
 
-  private fun findDecoration(event: EditorMouseEvent): HighlightedDecoration? {
+  private fun findDecoration(event: EditorMouseEvent): HighlightedTextDecoration? {
     if (event.area != EditorMouseEventArea.EDITING_AREA || !event.isOverText) return null
     return findDecoration(event.offset)
   }
 
-  private fun findDecoration(offset: Int): HighlightedDecoration? {
-    var result: HighlightedDecoration? = null
+  private fun findDecoration(offset: Int): HighlightedTextDecoration? {
+    var result: HighlightedTextDecoration? = null
     editor.markupModel.processRangeHighlightersOverlappingWith(
       offset,
       offset
@@ -402,7 +402,7 @@ private class EditorDecorationApplierImpl(private val editor: EditorEx, parentDi
         hyperlink != null &&
         offset in highlighter.startOffset until highlighter.endOffset // process...() treats the end as inclusive, that's why
       ) {
-        result = HighlightedDecoration(hyperlink, highlighter)
+        result = HighlightedTextDecoration(hyperlink, highlighter)
         false
       }
       else {
@@ -458,12 +458,12 @@ private class EditorDecorationApplierImpl(private val editor: EditorEx, parentDi
     override fun mouseMoved(e: EditorMouseEvent) {
       val highlightedLink = findDecoration(e)
       if (highlightedLink?.link?.action == null) {
-        editor.setCustomCursor(EditorDecorationApplierImpl::class.java, null)
+        editor.setCustomCursor(EditorTextDecorationApplierImpl::class.java, null)
         effectSupport.linkHovered(null)
         hoveredHyperlink = null
       }
       else {
-        editor.setCustomCursor(EditorDecorationApplierImpl::class.java, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+        editor.setCustomCursor(EditorTextDecorationApplierImpl::class.java, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
         effectSupport.linkHovered(highlightedLink.highlighter)
         hoveredHyperlink = highlightedLink.link
       }
@@ -481,7 +481,7 @@ private class EditorDecorationApplierImpl(private val editor: EditorEx, parentDi
   }
 }
 
-private data class HighlightedDecoration(val link: HyperlinkOrHighlightingImpl, val highlighter: RangeHighlighterEx)
+private data class HighlightedTextDecoration(val link: HyperlinkOrHighlightingImpl, val highlighter: RangeHighlighterEx)
 
 private fun RangeHighlighterEx.getHyperlink(): HyperlinkOrHighlightingImpl = checkNotNull(getHyperlinkOrNull()) {
   "Highlighter provided to EditorHyperlinkEffectSupport doesn't have a hyperlink, highlighter = $this"
@@ -491,4 +491,4 @@ private fun RangeHighlighterEx.getHyperlinkOrNull(): HyperlinkOrHighlightingImpl
 
 private val HYPERLINK_OR_HIGHLIGHTING: Key<HyperlinkOrHighlightingImpl> = Key.create("HYPERLINK_OR_HIGHLIGHTING")
 
-private val LOG = logger<EditorDecorationApplierImpl>()
+private val LOG = logger<EditorTextDecorationApplierImpl>()

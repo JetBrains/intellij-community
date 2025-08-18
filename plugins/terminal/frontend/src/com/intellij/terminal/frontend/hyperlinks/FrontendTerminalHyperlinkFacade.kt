@@ -50,7 +50,7 @@ internal class FrontendTerminalHyperlinkFacade(
     applier.addDecorations(hyperlinks.mapNotNull { it.toEditorDecoration() })
   }
 
-  private fun TerminalFilterResultInfo.toEditorDecoration(): EditorDecoration? =
+  private fun TerminalFilterResultInfo.toEditorDecoration(): EditorTextDecoration? =
     when (this) {
       is TerminalHyperlinkInfo -> {
         buildHyperlink(
