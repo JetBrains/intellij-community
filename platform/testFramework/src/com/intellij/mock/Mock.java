@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.editor.Document;
@@ -338,6 +338,13 @@ public final class Mock {
                                      @NotNull FileEditorOpenOptions options,
                                      @NotNull Continuation<? super FileEditorComposite> $completion) {
       return FileEditorComposite.Companion.fromPair(new kotlin.Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY));
+    }
+
+    @Override
+    public @Nullable Object openFileEditorAsync(@NotNull FileEditorNavigatable descriptor,
+                                                boolean focusEditor,
+                                                @NotNull Continuation<? super @NotNull List<? extends @NotNull FileEditor>> $completion) {
+      return Collections.emptyList();
     }
   }
 
