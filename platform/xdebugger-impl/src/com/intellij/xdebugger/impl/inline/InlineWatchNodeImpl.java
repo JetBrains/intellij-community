@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @ApiStatus.Internal
 public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNode {
@@ -157,6 +158,14 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
       return myValue != null &&
              myValue instanceof XValueTextProvider textValue &&
              textValue.shouldShowTextValue();
+    }
+
+    @Override
+    public @NotNull CompletableFuture<@NotNull XValueTextProvider> getValueTextProviderAsync() {
+      if (myValue != null && myValue instanceof XValueTextProvider textValue) {
+        return textValue.getValueTextProviderAsync();
+      }
+      return CompletableFuture.completedFuture(this);
     }
 
     private class MyEvaluationCallback extends XEvaluationCallbackBase implements XEvaluationCallbackWithOrigin, Obsolescent {
