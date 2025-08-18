@@ -118,7 +118,6 @@ fun createTextDecorationId(value: Long) : EditorDecorationId = EditorDecorationI
  * @param id the hyperlink ID, unique within a given editor for all decorations combined
  * @param startOffset the start offset within the document
  * @param endOffset the end offset within the document
- * @param attributes the text attributes of a non-followed, non-hovered link, if `null` the default hyperlink attributes will be used
  * @param action the action to execute on click
  * @param builder the code block that, if not `null`, will be executed on a [HyperlinkBuilder] to set optional attributes
  */
@@ -127,10 +126,9 @@ fun buildHyperlink(
   id: EditorDecorationId,
   startOffset: Int,
   endOffset: Int,
-  attributes: TextAttributes?,
   action: (EditorMouseEvent) -> Unit,
   builder: (HyperlinkBuilder.() -> Unit)? = null,
-) : HyperlinkDecoration = HyperlinkBuilderImpl(id, startOffset, endOffset, attributes, action).run {
+) : HyperlinkDecoration = HyperlinkBuilderImpl(id, startOffset, endOffset, action).run {
   builder?.invoke(this)
   build()
 }
@@ -142,6 +140,12 @@ fun buildHyperlink(
  */
 @ApiStatus.Experimental
 sealed interface HyperlinkBuilder {
+  /**
+   * The text attributes of a non-followed, non-hovered link.
+   *
+   * If `null` the default hyperlink attributes will be used.
+   */
+  var attributes: TextAttributes?
   /**
    * The text attributes of a link that was followed (clicked).
    *
@@ -229,9 +233,9 @@ private class HyperlinkBuilderImpl(
   private val id: EditorDecorationId,
   private val startOffset: Int,
   private val endOffset: Int,
-  private val attributes: TextAttributes?,
   private val action: (EditorMouseEvent) -> Unit,
 ) : HyperlinkBuilder {
+  override var attributes: TextAttributes? = null
   override var followedAttributes: TextAttributes? = null
   override var hoveredAttributes: TextAttributes? = null
   override var layer: Int = HighlighterLayer.HYPERLINK

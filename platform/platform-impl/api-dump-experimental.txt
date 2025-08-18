@@ -7,8 +7,8 @@
 *f:com.intellij.execution.impl.EditorDecorationApplierKt
 - *sf:buildHighlighting(com.intellij.execution.impl.EditorDecorationId,I,I,com.intellij.openapi.editor.markup.TextAttributes,kotlin.jvm.functions.Function1):com.intellij.execution.impl.HighlightingDecoration
 - *bs:buildHighlighting$default(com.intellij.execution.impl.EditorDecorationId,I,I,com.intellij.openapi.editor.markup.TextAttributes,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.execution.impl.HighlightingDecoration
-- *sf:buildHyperlink(com.intellij.execution.impl.EditorDecorationId,I,I,com.intellij.openapi.editor.markup.TextAttributes,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.execution.impl.HyperlinkDecoration
-- *bs:buildHyperlink$default(com.intellij.execution.impl.EditorDecorationId,I,I,com.intellij.openapi.editor.markup.TextAttributes,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.execution.impl.HyperlinkDecoration
+- *sf:buildHyperlink(com.intellij.execution.impl.EditorDecorationId,I,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.execution.impl.HyperlinkDecoration
+- *bs:buildHyperlink$default(com.intellij.execution.impl.EditorDecorationId,I,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.execution.impl.HyperlinkDecoration
 - *sf:buildInlay(com.intellij.execution.impl.EditorDecorationId,I,com.intellij.execution.impl.InlayProvider,kotlin.jvm.functions.Function1):com.intellij.execution.impl.InlayDecoration
 - *bs:buildInlay$default(com.intellij.execution.impl.EditorDecorationId,I,com.intellij.execution.impl.InlayProvider,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.execution.impl.InlayDecoration
 - *sf:createDecorationApplier(com.intellij.openapi.editor.ex.EditorEx,com.intellij.openapi.Disposable):com.intellij.execution.impl.EditorDecorationApplier
@@ -22,9 +22,11 @@
 *:com.intellij.execution.impl.HighlightingDecoration
 - com.intellij.execution.impl.EditorDecoration
 *:com.intellij.execution.impl.HyperlinkBuilder
+- a:getAttributes():com.intellij.openapi.editor.markup.TextAttributes
 - a:getFollowedAttributes():com.intellij.openapi.editor.markup.TextAttributes
 - a:getHoveredAttributes():com.intellij.openapi.editor.markup.TextAttributes
 - a:getLayer():I
+- a:setAttributes(com.intellij.openapi.editor.markup.TextAttributes):V
 - a:setFollowedAttributes(com.intellij.openapi.editor.markup.TextAttributes):V
 - a:setHoveredAttributes(com.intellij.openapi.editor.markup.TextAttributes):V
 - a:setLayer(I):V

@@ -57,9 +57,9 @@ internal class FrontendTerminalHyperlinkFacade(
           id = id.toPlatformId(),
           startOffset = outputModel.absoluteOffset(absoluteStartOffset).toRelative(),
           endOffset = outputModel.absoluteOffset(absoluteEndOffset).toRelative(),
-          attributes = style,
           action = { terminalInput.sendLinkClicked(isInAlternateBuffer, id, it) },
         ) {
+          attributes = style
           followedAttributes = followedStyle
           hoveredAttributes = hoveredStyle
           layer = layer
