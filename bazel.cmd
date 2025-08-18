@@ -42,7 +42,6 @@ case $arch in
 esac
 
 binary_path="$target_dir/bazelisk-$bazelisk_version-${os}-${arch}"
-[ -n "${XDG_CACHE_HOME:-}" ] && mkdir -p "$XDG_CACHE_HOME"
 mkdir -p "$target_dir"
 
 if [ ! -x "$binary_path" ]; then
