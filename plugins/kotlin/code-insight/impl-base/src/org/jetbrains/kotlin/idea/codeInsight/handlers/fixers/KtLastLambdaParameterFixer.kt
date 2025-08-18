@@ -31,6 +31,7 @@ class KtLastLambdaParameterFixer : SmartEnterProcessorWithFixers.Fixer<KotlinSma
                 }
             }
         }
+       if (callElement.lambdaArguments.isNotEmpty()) return
 
         if (isFunctionType) {
             val doc = editor.document
