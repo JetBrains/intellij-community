@@ -28,6 +28,7 @@ f:com.intellij.openapi.extensions.DefaultPluginDescriptor
 - com.intellij.openapi.extensions.PluginDescriptor
 - <init>(com.intellij.openapi.extensions.PluginId):V
 - <init>(com.intellij.openapi.extensions.PluginId,java.lang.ClassLoader):V
+- <init>(com.intellij.openapi.extensions.PluginId,java.lang.ClassLoader,java.lang.String):V
 - <init>(java.lang.String):V
 - getCategory():java.lang.String
 - getChangeNotes():java.lang.String

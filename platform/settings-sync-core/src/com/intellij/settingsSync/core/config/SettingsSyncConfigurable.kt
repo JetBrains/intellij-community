@@ -1,3 +1,5 @@
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.settingsSync.core.config
 
 
@@ -27,6 +29,7 @@ import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -37,6 +40,7 @@ import com.intellij.settingsSync.core.auth.SettingsSyncAuthService.PendingUserAc
 import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
 import com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorProvider
 import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
+import com.intellij.settingsSync.core.communicator.getAvailableSyncProviders
 import com.intellij.settingsSync.core.config.SettingsSyncEnabler.State
 import com.intellij.settingsSync.core.statistics.SettingsSyncEventsStatistics
 import com.intellij.ui.RelativeFont
@@ -132,11 +136,15 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       val authService = userProviderHolder?.let { RemoteCommunicatorHolder.getProvider(userProviderHolder.providerCode) } ?.authService
       syncPanelHolder.crossSyncSupported.set(authService?.crossSyncSupported() ?: true)
       val infoRow = row {
+        @Suppress("DialogTitleCapitalization")
         text(message("settings.sync.info.message"))
-        SettingsSyncCommunicatorProvider.PROVIDER_EP.extensionList.firstOrNull { it.isAvailable() && it.learnMoreLinkPair != null }?.also {
-          val linkPair = it.learnMoreLinkPair!!
-          browserLink(linkPair.first, linkPair.second)
-        }
+        getAvailableSyncProviders()
+          .firstOrNull { it.learnMoreLinkPair != null }
+          ?.also {
+            val linkPair = it.learnMoreLinkPair!!
+            @Suppress("HardCodedStringLiteral")
+            browserLink(linkPair.first, linkPair.second)
+          }
       }
 
       rowsRange {
@@ -461,16 +469,15 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   }
 
   private suspend fun removeRemoteData(): DeleteServerDataResult {
-    val result = suspendCancellableCoroutine<DeleteServerDataResult> { continuation ->
+    val result = suspendCancellableCoroutine { continuation ->
       SettingsSyncEvents.getInstance().fireSettingsChanged(
         SyncSettingsEvent.DeleteServerData { deleteResult ->
-          continuation.resume(deleteResult) { cause, _, _ -> }
+          continuation.resume(deleteResult) { _, _, _ -> }
         }
       )
     }
     return result
   }
-
 
   @Suppress("HardCodedStringLiteral")
   private fun updateSyncOptionText() {
@@ -724,7 +731,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     }
   }
 
-  // triggers fake action, which causes SettingEditor to update and check if configurable was modified
+  // triggers a fake action, which causes SettingEditor to update and check if configurable was modified
   // must be called on EDT
   private fun triggerUpdateConfigurable() {
     val dumbAwareAction = DumbAwareAction.create(Consumer { _: AnActionEvent? ->

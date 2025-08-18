@@ -1,6 +1,9 @@
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.settingsSync.core
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorProvider
@@ -163,9 +166,10 @@ internal class MockRemoteCommunicator(override val userId: String) : AbstractSer
 internal class MockCommunicatorProvider (
   private val remoteCommunicator: SettingsSyncRemoteCommunicator,
   override val authService: SettingsSyncAuthService,
+  private val code: String? = null
 ): SettingsSyncCommunicatorProvider {
   override val providerCode: String
-    get() = MOCK_CODE
+    get() = code ?: MOCK_CODE
 
   override fun createCommunicator(userId: String): SettingsSyncRemoteCommunicator? = remoteCommunicator
 }

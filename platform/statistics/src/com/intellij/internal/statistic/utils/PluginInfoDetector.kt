@@ -27,22 +27,6 @@ fun getPluginInfo(aClass: Class<*>): PluginInfo {
   }
 }
 
-internal fun isPlatformOrJetBrainsBundled(aClass: Class<*>): Boolean {
-  val classLoader = aClass.classLoader
-  when {
-    classLoader is PluginAwareClassLoader -> {
-      val plugin = classLoader.pluginDescriptor
-      return plugin.isBundled && PluginManagerCore.isDevelopedByJetBrains(plugin)
-    }
-    PluginManagerCore.isRunningFromSources() -> {
-      return true
-    }
-    else -> {
-      return PluginUtils.getPluginDescriptorIfIdeaClassLoaderIsUsed(aClass) == null
-    }
-  }
-}
-
 @ApiStatus.Internal
 fun hasStandardExceptionPrefix(className: String): Boolean =
   className.startsWith("java.") || className.startsWith("javax.") ||

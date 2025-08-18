@@ -1,3 +1,5 @@
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.settingsSync.core.communicator
 
 import com.intellij.icons.AllIcons
@@ -12,6 +14,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
@@ -128,7 +131,7 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
 
   fun getAvailableProviders(): List<SettingsSyncCommunicatorProvider> {
     val extensionList = arrayListOf<SettingsSyncCommunicatorProvider>()
-    extensionList.addAll(SettingsSyncCommunicatorProvider.PROVIDER_EP.extensionList.filter { it.isAvailable() })
+    extensionList.addAll(getAvailableSyncProviders())
     if (extensionList.find { it.providerCode == DEFAULT_PROVIDER_CODE } == null) {
       extensionList.add(DelegatingDefaultCommunicatorProvider)
     }
@@ -229,7 +232,7 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
         return null
       }
 
-      val defaultProvider = SettingsSyncCommunicatorProvider.PROVIDER_EP.extensionList.find { it.providerCode == DEFAULT_PROVIDER_CODE }
+      val defaultProvider = getAvailableSyncProviders().find { it.providerCode == DEFAULT_PROVIDER_CODE }
                             ?: return null
       DelegatingDefaultCommunicatorProvider.delegate = defaultProvider
       return defaultProvider.authService.login(parentComponent)
