@@ -30,8 +30,8 @@ class BazelGeneratorIntegrationTests {
   @InjectSoftAssertions
   lateinit var softly: SoftAssertions
 
-  @Test
-  fun snapshotRepositoryLibrary() = doTest("snapshot-repository-library")
+  @Test fun snapshotRepositoryLibrary() = doTest("snapshot-repository-library")
+  @Test fun snapshotLibrary() = doTest("snapshot-library")
 
   private fun doTest(
     testName: String,
