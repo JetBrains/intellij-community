@@ -781,10 +781,6 @@
                     interface="com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider"
                     dynamic="true"/>
 
-    <extensionPoint qualifiedName="Pythonid.PyProjectDependenciesExtractorProvider"
-                    dynamic="true"
-                    interface="com.jetbrains.python.packaging.PythonDependenciesExtractorProvider"/>
-
     <extensionPoint qualifiedName="Pythonid.customProcessHandlerProvider"
                     interface="com.jetbrains.python.run.PyCustomProcessHandlerProvider"
                     dynamic="true"/>
@@ -908,9 +904,6 @@
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.pip.PipPackageManagerProvider" order="last"/>
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.conda.CondaPackageManagerProvider"/>
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.pipenv.PipEnvPackageManagerProvider"/>
-
-    <PyProjectDependenciesExtractorProvider implementation="com.jetbrains.python.sdk.poetry.PoetryDependenciesExtractorProvider"/>
-    <PyProjectDependenciesExtractorProvider implementation="com.jetbrains.python.sdk.uv.UvDependenciesExtractorProvider"/>
 
     <PythonPackageRequiresExtractorProvider implementation="com.jetbrains.python.poetry.packaging.PoetryRequiresExtractorProvider"/>
     <PythonPackageRequiresExtractorProvider implementation="com.jetbrains.python.uv.packaging.UvPackageRequiresExtractorProvider"/>
