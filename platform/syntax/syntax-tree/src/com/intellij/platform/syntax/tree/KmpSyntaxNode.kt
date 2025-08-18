@@ -119,7 +119,7 @@ class KmpSyntaxNode internal constructor(
 
   override fun hashCode(): Int = arrayOf(
     context, markerIndex, startLexemeIndex
-  ).hashCode()
+  ).contentHashCode()
 
   override val text: CharSequence
     get() = context.text.subSequence(
