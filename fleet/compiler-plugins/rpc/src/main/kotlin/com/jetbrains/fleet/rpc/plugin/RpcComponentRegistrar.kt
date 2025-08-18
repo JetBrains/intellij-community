@@ -15,6 +15,7 @@ class RpcComponentRegistrar : CompilerPluginRegistrar() {
   override val supportsK2: Boolean = true
   override fun ExtensionStorage.registerExtensions(configuration: CompilerConfiguration) {
     val messageCollector = configuration.get(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
-    IrGenerationExtension.registerExtension(ServiceGenerationExtension(messageCollector))
+    IrGenerationExtension.registerExtension(RpcIrGenerationExtension(messageCollector))
+    FirExtensionRegistrarAdapter.registerExtension(RpcFirExtensionRegistrar())
   }
 }
