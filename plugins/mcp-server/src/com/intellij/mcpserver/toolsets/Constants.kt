@@ -4,6 +4,8 @@ import com.intellij.mcpserver.util.TruncateMode
 
 object Constants {
   const val RELATIVE_PATH_IN_PROJECT_DESCRIPTION: String = "Path relative to the project root"
+  const val PROJECT_NAME_DESCRIPTION: String = "Name of the project to operate on. If not specified, uses the current project context. Use list_projects tool to get available project names."
+  const val PROJECT_PATH_DESCRIPTION: String = "Full path to the project directory. Takes precedence over projectName if both are specified. Use list_projects tool to get available project paths."
   const val TIMEOUT_MILLISECONDS_DESCRIPTION: String = "Timeout in milliseconds"
   const val TIMED_OUT_DESCRIPTION: String = "Indicates whether the operation was timed out. 'true' value may mean that the results may be incomplete or partial. " +
                                             "'false', 'null' or missing value means that the operation has not been timed out."

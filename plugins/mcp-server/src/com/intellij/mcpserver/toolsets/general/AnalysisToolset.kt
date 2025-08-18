@@ -204,9 +204,14 @@ class AnalysisToolset : McpToolset {
     |Get a list of all dependencies defined in the project.
     |Returns structured information about project library names.
   """)
-  suspend fun get_project_dependencies(): ProjectDependenciesResult {
+  suspend fun get_project_dependencies(
+    @McpDescription(Constants.PROJECT_NAME_DESCRIPTION)
+    projectName: String? = null,
+    @McpDescription(Constants.PROJECT_PATH_DESCRIPTION)
+    projectPath: String? = null,
+  ): ProjectDependenciesResult {
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.checking.dependencies"))
-    val project = currentCoroutineContext().project
+    val project = currentCoroutineContext().getProjectByNameOrPath(projectName, projectPath)
 
     val dependencies = readAction {
       val moduleManager = ModuleManager.getInstance(project)

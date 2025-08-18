@@ -2,6 +2,7 @@ package com.intellij.mcpserver
 
 import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import kotlinx.serialization.json.JsonObject
 import org.jetbrains.ide.RestService.Companion.getLastFocusedOrOpenedProject
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -63,4 +64,70 @@ fun CoroutineContext.getProjectOrNull(lookForAnyProject: Boolean): Project? {
   if (projectFromContext != null) return projectFromContext
   if (!lookForAnyProject) return null
   return getLastFocusedOrOpenedProject()
+}
+
+/**
+ * Resolves a project by name or path from the open projects.
+ * Prioritizes projectPath for uniqueness, falls back to projectName with ambiguity checking.
+ * If both are null or blank, falls back to the standard project resolution.
+ */
+fun CoroutineContext.getProjectByNameOrPathOrNull(projectName: String?, projectPath: String?): Project? {
+  val allOpenProjects = ProjectManager.getInstance().openProjects.toList()
+
+  // Option 1: Resolve by unique path (highest priority)
+  if (!projectPath.isNullOrBlank()) {
+    return allOpenProjects.find { it.basePath == projectPath }
+  }
+
+  // Option 2: Resolve by name with ambiguity check
+  if (!projectName.isNullOrBlank()) {
+    val matchingProjects = allOpenProjects.filter { it.name == projectName }
+    when (matchingProjects.size) {
+      0 -> return null
+      1 -> return matchingProjects.first()
+      else -> {
+        val paths = matchingProjects.joinToString(", ") { it.basePath ?: "unknown path" }
+        throw AmbiguousProjectNameException(
+          "Multiple projects found with name '$projectName'. " +
+          "Please specify the project using its full path via 'projectPath' parameter. " +
+          "Matching paths: [$paths]. Use 'list_projects' to view all open projects."
+        )
+      }
+    }
+  }
+
+  // Option 3: Fallback to context-based resolution (original behavior)
+  return projectOrNull
+}
+
+/**
+ * The same as [getProjectByNameOrPathOrNull], but throws an exception if no project is found.
+ */
+fun CoroutineContext.getProjectByNameOrPath(projectName: String?, projectPath: String?): Project {
+  return getProjectByNameOrPathOrNull(projectName, projectPath) ?: run {
+    when {
+      !projectPath.isNullOrBlank() -> throw ProjectNotFoundException("Project with path '$projectPath' not found")
+      !projectName.isNullOrBlank() -> throw ProjectNotFoundException("Project with name '$projectName' not found")
+      else -> throw ProjectNotFoundException("No project opened")
+    }
+  }
+}
+
+/**
+ * Resolves a project by name from the open projects.
+ * If projectName is null or blank, falls back to the standard project resolution.
+ * @deprecated Use getProjectByNameOrPath for better ambiguity handling
+ */
+@Deprecated("Use getProjectByNameOrPath for better ambiguity handling", ReplaceWith("getProjectByNameOrPath(projectName, null)"))
+fun CoroutineContext.getProjectByNameOrNull(projectName: String?): Project? {
+  return getProjectByNameOrPathOrNull(projectName, null)
+}
+
+/**
+ * The same as [getProjectByNameOrNull], but throws an McpExpectedError if no project is found.
+ * @deprecated Use getProjectByNameOrPath for better ambiguity handling
+ */
+@Deprecated("Use getProjectByNameOrPath for better ambiguity handling", ReplaceWith("getProjectByNameOrPath(projectName, null)"))
+fun CoroutineContext.getProjectByName(projectName: String?): Project {
+  return getProjectByNameOrPath(projectName, null)
 }

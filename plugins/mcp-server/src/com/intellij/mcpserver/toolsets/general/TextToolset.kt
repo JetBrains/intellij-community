@@ -49,9 +49,13 @@ class TextToolset : McpToolset {
     truncateMode: TruncateMode = TruncateMode.START,
     @McpDescription("Max number of lines to return. Truncation will be performed depending on truncateMode.")
     maxLinesCount: Int = 1000,
+    @McpDescription(Constants.PROJECT_NAME_DESCRIPTION)
+    projectName: String? = null,
+    @McpDescription(Constants.PROJECT_PATH_DESCRIPTION)
+    projectPath: String? = null,
   ): String {
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.reading.file", pathInProject))
-    val project = currentCoroutineContext().project
+    val project = currentCoroutineContext().getProjectByNameOrPath(projectName, projectPath)
     val resolvedPath = project.resolveInProject(pathInProject)
 
     val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
