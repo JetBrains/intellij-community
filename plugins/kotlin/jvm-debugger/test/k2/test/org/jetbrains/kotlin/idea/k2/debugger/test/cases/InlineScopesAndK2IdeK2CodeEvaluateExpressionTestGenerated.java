@@ -223,6 +223,11 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("../testData/evaluation/singleBreakpoint/contextParameters/functionCallWithImplicitContextParameterCapturing.kt");
             }
 
+            @TestMetadata("unnamedContextParameters.kt")
+            public void testUnnamedContextParameters() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/unnamedContextParameters.kt");
+            }
+
             @TestMetadata("valContextParameter.kt")
             public void testValContextParameter() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/contextParameters/valContextParameter.kt");
