@@ -16,23 +16,16 @@ class Test {
     myFoo4 = "";
   }
 
-  @NotNull
-  final String myFoo5;
-  @Nullable
-  final String myFoo6;
-  @NotNull
-  final String myFoo7;
-  @Nullable
-  final String myFoo8;
+  final @NotNull String myFoo5;
+  final @Nullable String myFoo6;
+  final @NotNull String myFoo7;
+  final @Nullable String myFoo8;
   final String myFoo9;
-  @Nullable
-  final String myFoo10;
+  final @Nullable String myFoo10;
 
   final String myFoo11 = "";
-  @NotNull
-  final String myFoo12;
-  @Nullable
-  final String myFoo13 = null;
+  final @NotNull String myFoo12;
+  final @Nullable String myFoo13 = null;
   final Runnable myFoo14 = new Runnable() {
     {foo();}
     @Nullable Object foo() {
