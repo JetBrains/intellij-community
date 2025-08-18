@@ -589,7 +589,6 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           }
           userDropDownLink.selectedItem = selectedValue
           enableCheckbox.doClick()
-          enableButtonAction()
         } else {
           userDropDownLink.selectedItem = selectedValue
           enableButtonAction()
