@@ -41,6 +41,10 @@ kotlin_test_dependencies = use_extension("//plugins/kotlin:kotlin_test_dependenc
 # call `bazel mod tidy` in community directory to automatically update dependencies list
 use_repo(
     kotlin_test_dependencies,
+    "kotlin_test_deps_org_jetbrains_kotlinx_kotlinx_coroutines_core_1_10_2",
+    "kotlin_test_deps_org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm_1_10_2",
+    "kotlin_test_deps_org_jetbrains_annotations_23_0_0",
+    "kotlin_test_deps_org_jetbrains_kotlin_kotlin_stdlib_2_1_0",
     "kotlin_test_deps_annotations",
     "kotlin_test_deps_compose-compiler-plugin-for-ide",
     "kotlin_test_deps_js-ir-runtime-for-ide",

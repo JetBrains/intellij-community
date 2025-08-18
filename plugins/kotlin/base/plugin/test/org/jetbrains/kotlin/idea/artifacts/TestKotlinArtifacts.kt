@@ -170,9 +170,12 @@ object TestKotlinArtifacts {
     }
 
     // @kotlin_test_deps_kotlin-stdlib//file:kotlin-stdlib.jar
-    private fun getKotlinDepsByLabel(bazelLabel: String): File {
+    fun getKotlinDepsByLabel(bazelLabel: String): File {
         val label = BazelLabel.fromString(bazelLabel)
+        return getKotlinDepsByLabel(label = label)
+    }
 
+    private fun getKotlinDepsByLabel(label: BazelLabel): File {
         // Why it is different
         val file = if (BazelTestUtil.isUnderBazelTest) {
             getFileFromBazelRuntime(label)
