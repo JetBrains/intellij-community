@@ -102,7 +102,10 @@ internal fun generateDeps(
       val jpsLibrary = element.library ?: error("library dependency '$element' from module ${module.module.name} is not resolved")
       val files: List<Path> = jpsLibrary.getPaths(JpsOrderRootType.COMPILED)
       val repositoryJpsLibrary = jpsLibrary.asTyped(JpsRepositoryLibraryType.INSTANCE)
-      val isSnapshotVersion = files.any { it.name.endsWith("-SNAPSHOT.jar") } ||
+      val isSnapshotOutsideOfTree = files.any { it.name.endsWith("-SNAPSHOT.jar") } &&
+                                    files.all { !it.startsWith(context.communityRoot) &&
+                                                context.ultimateRoot?.let { ultimateRoot -> !it.startsWith(ultimateRoot) } ?: true }
+      val isSnapshotVersion = isSnapshotOutsideOfTree ||
                               repositoryJpsLibrary?.properties?.data?.version?.endsWith("-SNAPSHOT") == true
       val targetNameSuffix = if (isProvided) PROVIDED_SUFFIX else ""
       val isModuleLibrary = element.libraryReference.parentReference is JpsModuleReference

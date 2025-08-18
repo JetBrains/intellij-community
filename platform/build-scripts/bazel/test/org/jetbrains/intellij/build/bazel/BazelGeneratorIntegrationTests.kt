@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
+import com.intellij.rt.execution.junit.FileComparisonFailure
 import org.assertj.core.api.SoftAssertions
 import org.assertj.core.api.junit.jupiter.InjectSoftAssertions
 import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension
@@ -32,6 +33,7 @@ class BazelGeneratorIntegrationTests {
 
   @Test fun snapshotRepositoryLibrary() = doTest("snapshot-repository-library")
   @Test fun snapshotLibrary() = doTest("snapshot-library")
+  @Test fun snapshotLibraryInTree() = doTest("snapshot-library-in-tree")
 
   private fun doTest(
     testName: String,
@@ -57,22 +59,22 @@ class BazelGeneratorIntegrationTests {
     val m2RepoPath = testDataPath.resolve("m2-repo")
 
     val tempDir = Files.createTempDirectory("test-$testName")
-    try {
-      projectDataPath.copyToRecursively(tempDir, followLinks = true, overwrite = false)
+    projectDataPath.copyToRecursively(tempDir, followLinks = true, overwrite = false)
 
-      JpsModuleToBazel.main(
-        arrayOf(
-          "--workspace_directory=$tempDir",
-          "--run_without_ultimate_root=$runWithoutUltimateRoot",
-          "--default-custom-modules=$defaultCustomModules",
-          "--m2-repo=$m2RepoPath",
-        )
+    JpsModuleToBazel.main(
+      arrayOf(
+        "--workspace_directory=$tempDir",
+        "--run_without_ultimate_root=$runWithoutUltimateRoot",
+        "--default-custom-modules=$defaultCustomModules",
+        "--m2-repo=$m2RepoPath",
       )
+    )
 
-      assertAndRemoveSameFiles(projectDataPath, tempDir)
-      compareDirectories(expectedDataPath, tempDir)
-    }
-    finally {
+    assertAndRemoveSameFiles(projectDataPath, tempDir)
+    compareDirectories(expectedDataPath, tempDir)
+
+    if (!softly.wasSuccess()) {
+      // do not delete tempDir on tests failure, it is used in IDE to update expected file
       tempDir.deleteRecursively()
     }
   }
@@ -155,14 +157,14 @@ class BazelGeneratorIntegrationTests {
       }
       else {
         if (actualChildPath.readText() != expectedChildPath.readText()) {
-          softly.collectAssertionError(
-            FileComparisonFailedError(
-              message = "Actual file $actualChildPath is different from $expectedChildPath",
-              expected = expectedChildPath.readText(),
-              expectedFilePath = expectedChildPath.toString(),
-              actual = actualChildPath.readText(),
-              actualFilePath = actualChildPath.toString(),
-            )
+          // for some reason, adding it to softly or using non-deprecated FileComparisonFailedError
+          // does not show a diff in IDEA
+          throw FileComparisonFailure(
+            "Actual file $actualChildPath is different from $expectedChildPath",
+            expectedChildPath.readText(),
+            actualChildPath.readText(),
+            expectedChildPath.toString(),
+            actualChildPath.toString(),
           )
         }
       }

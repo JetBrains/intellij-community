@@ -1,0 +1,10 @@
+### auto-generated section `build module` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "module",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//mylibs:dokka-core-1-4-10-2-dev-52-snapshot"]
+)
+### auto-generated section `build module` end
