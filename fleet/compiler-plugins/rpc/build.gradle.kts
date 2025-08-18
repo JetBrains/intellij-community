@@ -52,6 +52,7 @@ kotlin {
     apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(KOTLIN_LANGUAGE_VERSION))
     languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(KOTLIN_API_VERSION))
     // FREE COMPILER ARGS PLACEHOLDER PLEASE DO NOT CHANGE IT BEFORE DISCUSS IN #ij-monorepo-kotlin
+    freeCompilerArgs = listOf("-Xcontext-parameters")
   }
 }
 

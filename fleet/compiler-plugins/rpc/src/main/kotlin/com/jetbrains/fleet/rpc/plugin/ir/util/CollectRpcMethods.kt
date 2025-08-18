@@ -1,13 +1,16 @@
 package com.jetbrains.fleet.rpc.plugin.ir.util
 
+import com.jetbrains.fleet.rpc.plugin.REMOTE_RESOURCE_FQN
 import com.jetbrains.fleet.rpc.plugin.ir.remoteKind.FLOW_FQN
 import com.jetbrains.fleet.rpc.plugin.ir.remoteKind.RESOURCE_FQN
 import org.jetbrains.kotlin.backend.wasm.ir2wasm.allSuperInterfaces
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.superTypes
 
+@UnsafeDuringIrConstructionAPI
 fun collectRpcMethods(irClass: IrClass): List<IrSimpleFunction> {
   return irClass.allSuperInterfaces().flatMap { superType ->
     getRpcMethods(superType)
@@ -41,6 +44,7 @@ fun IrSimpleFunction.isNonSuspendResourceFunction(): Boolean {
 
 private val FUN_NAMES_TO_SKIP = listOf("equals", "hashCode", "toString", "dispatch", "signature")
 
+@UnsafeDuringIrConstructionAPI
 private fun getRpcMethods(rpcClass: IrClass): List<IrSimpleFunction> {
   return rpcClass.declarations.filterIsInstance<IrSimpleFunction>().filter { declaration ->
     !declaration.isFakeOverride && declaration.overriddenSymbols.isEmpty() && declaration.name.identifier !in FUN_NAMES_TO_SKIP

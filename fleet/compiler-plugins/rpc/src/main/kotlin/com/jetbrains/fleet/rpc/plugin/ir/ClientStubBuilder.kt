@@ -1,7 +1,6 @@
 package com.jetbrains.fleet.rpc.plugin.ir
 
 import com.jetbrains.fleet.rpc.plugin.ir.util.*
-import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.jvm.codegen.AnnotationCodegen.Companion.annotationClass
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.builders.declarations.addDefaultGetter
@@ -18,6 +17,7 @@ import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.fromSymbolOwner
+import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.CallableId
@@ -38,35 +38,38 @@ private val consumedClassId = ClassId(asyncPackage, "Consumed".name)
 
 private val coroutineScopeClassId = ClassId(FqName.fromSegments(listOf("kotlinx", "coroutines")), "CoroutineScope".name)
 
-fun buildClientStub(interfaceClass: IrClass, rpcMethods: List<IrSimpleFunction>, context: CompilerPluginContext): IrClass {
-  val pluginContext = context.pluginContext
+private val clientStubClassName = Name.identifier("\$ClientStub")
 
+@UnsafeDuringIrConstructionAPI
+fun buildClientStub(
+  interfaceClass: IrClass,
+  rpcMethods: List<IrSimpleFunction>,
+  context: FileContext,
+): IrClass {
   // Resolve necessary refs
-  val flowCollectorClass = pluginContext.referenceClass(flowCollectorClassId)!!
-  val flowFunction = pluginContext.referenceFunctions(flowFnId).first()
-  val collectFunction = pluginContext.referenceFunctions(flowCollectFnId).first()
-  val resourceFunction = pluginContext.referenceFunctions(resourceFnId).first()
-  val useFunction = pluginContext.referenceFunctions(resourceUseFnId).first()
-  val consumed = pluginContext.referenceClass(consumedClassId)!!
-  val coroutineScope = pluginContext.referenceClass(coroutineScopeClassId)!!
+  val flowCollectorClass = context.referenceClass(flowCollectorClassId)!!
+  val flowFunction = context.referenceFunctions(flowFnId).first()
+  val collectFunction = context.referenceFunctions(flowCollectFnId).first()
+  val resourceFunction = context.referenceFunctions(resourceFnId).first()
+  val useFunction = context.referenceFunctions(resourceUseFnId).first()
+  val consumed = context.referenceClass(consumedClassId)!!
+  val coroutineScope = context.referenceClass(coroutineScopeClassId)!!
 
-  val generatedClass = pluginContext.buildClassBase {
-    name = Name.identifier(interfaceClass.name.identifier + "ClientStub")
+  val generatedClass = context.buildClassBase {
+    name = clientStubClassName
     visibility = interfaceClass.visibility
   }.also {
-    it.parent = interfaceClass.parent
     it.superTypes = listOfNotNull(interfaceClass.defaultType)
+    // TODO who cares?
     it.annotations += interfaceClass.extractApiStatusAnnotations()
-
-    val container = interfaceClass.parent as? IrClass ?: interfaceClass.file
-    container.addChild(it)
+    interfaceClass.addChild(it)
   }
 
-  val invocationHandler = generatedClass.addInvocationHandlerToPrimaryConstructor(pluginContext)
+  val invocationHandler = generatedClass.addInvocationHandlerToPrimaryConstructor(context)
 
   for (rpcMethod in rpcMethods) {
     val originalFunction = rpcMethod.symbol.owner
-    pluginContext.addFunctionOverride(originalFunction, generatedClass) { generatedFunction ->
+    context.irFactory.addFunctionOverride(originalFunction, generatedClass) { generatedFunction ->
       generatedFunction.annotations += originalFunction.extractApiStatusAnnotations()
       generatedFunction.generateBody(context) {
         val irThis = irGet(generatedFunction.parameters[0])
@@ -80,10 +83,10 @@ fun buildClientStub(interfaceClass: IrClass, rpcMethods: List<IrSimpleFunction>,
           call.arguments[1] = irString(originalFunction.name.identifier) // methodName
 
           val args = createArrayOfExpression(
-            pluginContext.irBuiltIns.anyNType,
+            arrayElementType = context.irBuiltIns.anyNType,
             // All parameters except the first (dispatch receiver)
-            generatedFunction.parameters.drop(1).map { irGet(it) },
-            pluginContext
+            arrayElements = generatedFunction.parameters.drop(1).map { irGet(it) },
+            irBuiltIns = context.irBuiltIns,
           )
           call.arguments[2] = args // args
         }
@@ -91,18 +94,18 @@ fun buildClientStub(interfaceClass: IrClass, rpcMethods: List<IrSimpleFunction>,
         when {
           originalFunction.isNonSuspendFlowFunction() -> {
             val flowElementType = when (val arg = (originalFunction.returnType as IrSimpleType).arguments.first()) {
-              is IrStarProjection -> pluginContext.irBuiltIns.anyNType
+              is IrStarProjection -> context.irBuiltIns.anyNType
               is IrTypeProjection -> arg.type
             }
 
             // flow { it -> invocationHandler(...).collect(it) }
             val wrappedCall = irCall(flowFunction).also { flowCall ->
-              val flowLambda = pluginContext.irLambda(
+              val flowLambda = context.irLambda(
                 originalFunction,
                 parent = generatedFunction,
-                pluginContext.irBuiltIns.suspendFunctionN(1).typeWith(
+                context.irBuiltIns.suspendFunctionN(1).typeWith(
                   flowCollectorClass.typeWith(flowElementType),
-                  pluginContext.irBuiltIns.unitType
+                  context.irBuiltIns.unitType
                 )
               ) { flowLambda ->
                 flowLambda.generateBody(context) {
@@ -122,28 +125,29 @@ fun buildClientStub(interfaceClass: IrClass, rpcMethods: List<IrSimpleFunction>,
 
             +irReturn(wrappedCall)
           }
+
           originalFunction.isNonSuspendResourceFunction() -> {
             val resourceElementType =
               ((originalFunction.returnType as IrSimpleType)
                 .arguments
                 .first()
                 as IrTypeProjection
-              ).type
+                ).type
 
             /*
              * resource { consume -> remoteCall().use { it -> consume(it) } }
              */
             val wrappedCall = irCall(resourceFunction).also { flowCall ->
-              val consumerType = pluginContext.irBuiltIns.suspendFunctionN(1).typeWith(
+              val consumerType = context.irBuiltIns.suspendFunctionN(1).typeWith(
                 resourceElementType,
                 consumed.defaultType,
               )
-              val resourceLambda = pluginContext.irLambda(
+              val resourceLambda = context.irLambda(
                 originalFunction,
                 parent = generatedFunction,
 
                 // suspend CoroutineScope.(consumer: Consumer<T>) -> Consumed
-                pluginContext.irBuiltIns.suspendFunctionN(2).typeWith(
+                context.irBuiltIns.suspendFunctionN(2).typeWith(
                   coroutineScope.defaultType,
                   consumerType,
                   consumed.defaultType
@@ -154,11 +158,11 @@ fun buildClientStub(interfaceClass: IrClass, rpcMethods: List<IrSimpleFunction>,
                     // use { it -> consume(it) }
                     irCall(useFunction).also { useCall ->
                       useCall.arguments[0] = invocationHandlerCall
-                      useCall.arguments[1] = pluginContext.irLambda(
+                      useCall.arguments[1] = context.irLambda(
                         originalFunction,
                         parent = resourceLambda,
                         // suspend CoroutineScope.(T) -> U
-                        pluginContext.irBuiltIns.suspendFunctionN(2).typeWith(
+                        context.irBuiltIns.suspendFunctionN(2).typeWith(
                           coroutineScope.defaultType,
                           resourceElementType,
                           consumed.defaultType,
@@ -184,6 +188,7 @@ fun buildClientStub(interfaceClass: IrClass, rpcMethods: List<IrSimpleFunction>,
 
             +irReturn(wrappedCall)
           }
+
           else -> {
             +irReturn(invocationHandlerCall)
           }
@@ -195,6 +200,7 @@ fun buildClientStub(interfaceClass: IrClass, rpcMethods: List<IrSimpleFunction>,
   return generatedClass
 }
 
+@UnsafeDuringIrConstructionAPI
 private fun irGetValue(irProperty: IrProperty, receiver: IrExpression?): IrCall =
   IrCallImpl.fromSymbolOwner(
     startOffset = SYNTHETIC_OFFSET,
@@ -206,10 +212,11 @@ private fun irGetValue(irProperty: IrProperty, receiver: IrExpression?): IrCall 
     dispatchReceiver = receiver
   }
 
-private fun IrClass.addInvocationHandlerToPrimaryConstructor(pluginContext: IrPluginContext): IrProperty {
+@UnsafeDuringIrConstructionAPI
+private fun IrClass.addInvocationHandlerToPrimaryConstructor(pluginContext: FileContext): IrProperty {
   val primaryConstructor = this.primaryConstructor!!
 
-  val invocationHandlerType = pluginContext.getProxyType()
+  val invocationHandlerType = getProxyType(pluginContext.irBuiltIns)
   val invocationHandler = primaryConstructor.addValueParameter("invocationHandler".name, invocationHandlerType)
 
   return addIrValProperty(
@@ -228,7 +235,7 @@ private fun IrClass.addIrValProperty(
   valName: Name,
   valType: IrType,
   valInitializer: IrExpression,
-  pluginContext: IrPluginContext,
+  pluginContext: FileContext,
 ): IrProperty {
   val irClass = this
 

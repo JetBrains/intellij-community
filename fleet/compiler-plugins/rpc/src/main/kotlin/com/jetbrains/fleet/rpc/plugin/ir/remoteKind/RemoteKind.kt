@@ -1,8 +1,14 @@
 package com.jetbrains.fleet.rpc.plugin.ir.remoteKind
 
-import com.jetbrains.fleet.rpc.plugin.ir.CompilerPluginContext
-import com.jetbrains.fleet.rpc.plugin.ir.getRemoteApiDescriptorInstance
-import com.jetbrains.fleet.rpc.plugin.ir.util.RPC_FQN
+import com.jetbrains.fleet.rpc.plugin.REMOTE_KIND_DATA_CLASS_ID
+import com.jetbrains.fleet.rpc.plugin.REMOTE_KIND_REMOTE_OBJECT_CLASS_ID
+import com.jetbrains.fleet.rpc.plugin.REMOTE_KIND_RESOURCE_CLASS_ID
+import com.jetbrains.fleet.rpc.plugin.REMOTE_OBJECT_FQN
+import com.jetbrains.fleet.rpc.plugin.REMOTE_RESOURCE_FQN
+import com.jetbrains.fleet.rpc.plugin.THROWING_SERIALIZER_CLASS_ID
+import com.jetbrains.fleet.rpc.plugin.ir.FileContext
+import com.jetbrains.fleet.rpc.plugin.ir.getDescriptorInstance
+import com.jetbrains.fleet.rpc.plugin.ir.singleOrNullOrThrow
 import com.jetbrains.fleet.rpc.plugin.ir.util.name
 import org.jetbrains.kotlin.backend.wasm.ir2wasm.allSuperInterfaces
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
@@ -11,6 +17,7 @@ import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrParameterKind
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrFunctionAccessExpression
+import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeProjection
@@ -20,35 +27,42 @@ import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.typeOrFail
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 
-fun IrBuilderWithScope.toRemoteKind(irType: IrType, context: CompilerPluginContext, debugInfo: String): IrExpression {
+@UnsafeDuringIrConstructionAPI
+fun IrBuilderWithScope.toRemoteKind(
+  irType: IrType,
+  context: FileContext,
+  debugInfo: String,
+): IrExpression {
   return handleSpecialTypes(irType, context, debugInfo)
-         ?: handleRemoteObject(irType, context)
-         ?: handleResource(irType, context)
-         ?: run { // RemoteKind.Data
-           val serializer = generateSerializerCall(irType, context, debugInfo)
-
-           irCallConstructor(context.remoteKindDataConstructor, listOf(serializer.type)).apply {
-             arguments[0] = serializer
-           }
-         }
+    ?: handleRemoteObject(irType, context)
+    ?: handleResource(irType, context)
+    ?: run { // RemoteKind.Data
+      val serializer = generateSerializerCall(irType, context, debugInfo)
+      irCallConstructor(context.referenceClass(REMOTE_KIND_DATA_CLASS_ID)!!.constructors.single(), listOf(serializer.type)).apply {
+        arguments[0] = serializer
+      }
+    }
 }
 
-private fun IrBuilderWithScope.handleResource(irType: IrType, context: CompilerPluginContext): IrExpression? {
+@UnsafeDuringIrConstructionAPI
+private fun IrBuilderWithScope.handleResource(
+  irType: IrType,
+  context: FileContext,
+): IrExpression? {
   return if (irType.classFqName == RESOURCE_FQN) {
     // Get the class of the type argument
     val serviceType = ((irType as? IrSimpleType)?.arguments?.singleOrNull() as? IrTypeProjection)?.type
-    val irClass = serviceType?.classOrNull?.owner
+    val serviceIrClass = serviceType?.classOrNull?.owner
 
-    if (irClass != null && irClass.allSuperInterfaces().any { it.kotlinFqName == REMOTE_RESOURCE_FQN }) {
-      val remoteApiDescriptor = getRemoteApiDescriptorInstance(serviceType) {
-        "Resource generation"
-      }
-      irCallConstructor(context.remoteKindResourceConstructor, listOf(remoteApiDescriptor.type)).apply {
-        arguments[0] = remoteApiDescriptor
-      }
+    if (serviceIrClass != null && serviceIrClass.allSuperInterfaces().any { it.kotlinFqName == REMOTE_RESOURCE_FQN }) {
+      val remoteApiDescriptor = getDescriptorInstance(context, serviceType.classOrFail.owner)
+      val remoteKindResourceConstructor = context.referenceClass(REMOTE_KIND_RESOURCE_CLASS_ID)!!.constructors.first()
+      irCallConstructor(remoteKindResourceConstructor, listOf(remoteApiDescriptor.owner.defaultType))
+        .apply {
+          arguments[0] = irGetObject(remoteApiDescriptor)
+        }
     }
     else {
       null
@@ -60,15 +74,15 @@ private fun IrBuilderWithScope.handleResource(irType: IrType, context: CompilerP
 
 }
 
-private fun IrBuilderWithScope.handleRemoteObject(irType: IrType, context: CompilerPluginContext): IrExpression? {
-  val irClass = irType.classOrFail.owner
+@UnsafeDuringIrConstructionAPI
+private fun IrBuilderWithScope.handleRemoteObject(irType: IrType, context: FileContext): IrExpression? {
+  val serviceIrClass = irType.classOrFail.owner
 
-  return if (irClass.allSuperInterfaces().any { it.kotlinFqName == REMOTE_OBJECT_FQN }) {
-    val remoteApiDescriptor = getRemoteApiDescriptorInstance(irType) {
-      "RemoteObject generation"
-    }
-    irCallConstructor(context.remoteKindRemoteObjectConstructor, listOf(remoteApiDescriptor.type)).apply {
-      arguments[0] = remoteApiDescriptor
+  return if (serviceIrClass.allSuperInterfaces().any { it.kotlinFqName == REMOTE_OBJECT_FQN }) {
+    val remoteApiDescriptor = getDescriptorInstance(context, serviceIrClass)
+    val remoteKindRemoteObjectConstructor = context.referenceClass(REMOTE_KIND_REMOTE_OBJECT_CLASS_ID)!!.constructors.first()
+    irCallConstructor(remoteKindRemoteObjectConstructor, listOf(remoteApiDescriptor.owner.defaultType)).apply {
+      arguments[0] = irGetObject(remoteApiDescriptor)
     }
   }
   else {
@@ -76,10 +90,13 @@ private fun IrBuilderWithScope.handleRemoteObject(irType: IrType, context: Compi
   }
 }
 
-private fun IrBuilderWithScope.generateSerializerCall(irType: IrType,
-                                                      context: CompilerPluginContext,
-                                                      debugInfo: String,
-                                                      isTypeArgument: Boolean = false): IrExpression {
+@UnsafeDuringIrConstructionAPI
+private fun IrBuilderWithScope.generateSerializerCall(
+  irType: IrType,
+  context: FileContext,
+  debugInfo: String,
+  isTypeArgument: Boolean = false,
+): IrExpression {
   val irClass = irType.classOrFail.owner
 
   // fallback to the class itself, for example Unit serializer() is defined on Unit since it has no Companion
@@ -87,7 +104,7 @@ private fun IrBuilderWithScope.generateSerializerCall(irType: IrType,
 
   val serializerCall =
     // check if the class is one of the special ones that don't have serializer on Companion (List/Set/etc)
-    context.getSpecialSerializer(irClass.kotlinFqName)?.let { irCall(it) }
+    context.getBuiltInSerializer(irClass.kotlinFqName)?.let { irCall(it) }
       ?: findBuiltinSerializerExtensionFunctions(companionOrClass, context)
       // check that class has @Serializable annotation before trying to find serializer() method on it
       ?: irClass.getAnnotation(FqName.fromSegments(listOf("kotlinx", "serialization", "Serializable")))?.let {
@@ -110,18 +127,21 @@ private fun IrBuilderWithScope.generateSerializerCall(irType: IrType,
         CompilerMessageSeverity.WARNING,
         message
       )
-
-      irCallConstructor(context.throwingSerializerConstructor, listOf(this.context.irBuiltIns.stringType)).apply {
+      val throwingSerializerConstructor = context.referenceClass(THROWING_SERIALIZER_CLASS_ID)!!.constructors.single()
+      irCallConstructor(throwingSerializerConstructor, listOf(this.context.irBuiltIns.stringType)).apply {
         val errorString = "ThrowingSerializer was used for serialization/deserialization. " +
-                          "This could happen if there is a @Serializable class with non-serializable type argument in rpc interface.\n" +
-                          "Additional info:\n$debugInfo"
+          "This could happen if there is a @Serializable class with non-serializable type argument in rpc interface.\n" +
+          "Additional info:\n$debugInfo"
         arguments[0] = irString(errorString)
       }
-    } else {
+    }
+    else {
       error(message)
     }
-  } else if (irType.isNullable()) {
-    irCall(context.nullableSerializerProperty.getter!!).apply {
+  }
+  else if (irType.isNullable()) {
+    val nullableSerializerProperty = context.referenceProperties(nullableSerializerProperty).first().owner
+    irCall(nullableSerializerProperty.getter!!).apply {
       insertExtensionReceiver(serializer)
     }
   }
@@ -131,18 +151,18 @@ private fun IrBuilderWithScope.generateSerializerCall(irType: IrType,
 }
 
 // find .serializer() as an extension function
+@UnsafeDuringIrConstructionAPI
 private fun IrBuilderWithScope.findBuiltinSerializerExtensionFunctions(
   companionOrClass: IrClass,
-  context: CompilerPluginContext,
+  context: FileContext,
 ): IrFunctionAccessExpression? {
-  val serializerFunction =
-    context.pluginContext.referenceFunctions(CallableId(
-      packageName = FqName.fromSegments(listOf("kotlinx", "serialization", "builtins")),
-      className = null,
-      callableName = "serializer".name
-    )).singleOrNullOrThrow { fn ->
-      fn.owner.parameters.firstOrNull { it.kind == IrParameterKind.ExtensionReceiver }?.type == companionOrClass.defaultType
-    }
+  val serializerFunction = context.referenceFunctions(CallableId(
+    packageName = FqName.fromSegments(listOf("kotlinx", "serialization", "builtins")),
+    className = null,
+    callableName = "serializer".name
+  )).singleOrNullOrThrow { fn ->
+    fn.owner.parameters.firstOrNull { it.kind == IrParameterKind.ExtensionReceiver }?.type == companionOrClass.defaultType
+  }
 
   return serializerFunction?.let {
     irCall(serializerFunction).apply {
@@ -152,6 +172,7 @@ private fun IrBuilderWithScope.findBuiltinSerializerExtensionFunctions(
 }
 
 // find .serializer() as a method of irClass
+@UnsafeDuringIrConstructionAPI
 private fun IrBuilderWithScope.findSerializerAsMethod(irClass: IrClass): IrFunctionAccessExpression? {
   return irClass.functions.asIterable().singleOrNullOrThrow { function ->
     function.name.identifierOrNullIfSpecial == "serializer" &&
@@ -163,60 +184,8 @@ private fun IrBuilderWithScope.findSerializerAsMethod(irClass: IrClass): IrFunct
   }
 }
 
-private val CompilerPluginContext.nullableSerializerProperty
-  get() = cache.remember {
-    pluginContext.referenceProperties(CallableId(
-      packageName = FqName.fromSegments(listOf("kotlinx", "serialization", "builtins")),
-      className = null,
-      callableName = "nullable".name
-    )).first().owner
-  }
-
-private val CompilerPluginContext.remoteKindDataConstructor
-  get() = cache.remember {
-    pluginContext.referenceClass(
-      ClassId(RPC_FQN, FqName.fromSegments(listOf("RemoteKind", "Data")), false)
-    )!!.constructors.first()
-  }
-
-private val CompilerPluginContext.remoteKindRemoteObjectConstructor
-  get() = cache.remember {
-    pluginContext.referenceClass(
-      ClassId(RPC_FQN, FqName.fromSegments(listOf("RemoteKind", "RemoteObject")), false)
-    )!!.constructors.first()
-  }
-
-private val CompilerPluginContext.remoteKindResourceConstructor
-  get() = cache.remember {
-    pluginContext.referenceClass(
-      ClassId(RPC_FQN, FqName.fromSegments(listOf("RemoteKind", "Resource")), false)
-    )!!.constructors.first()
-  }
-
-private val CompilerPluginContext.throwingSerializerConstructor
-  get() = pluginContext.referenceClass(
-    ClassId.topLevel(RPC_FQN.child("core".name).child("ThrowingSerializer".name))
-  )!!.constructors.first()
-
-/**
- * Same idea as [kotlin.collections.singleOrNull] but will throw if the collection contains more than one element.
- * */
-private inline fun <T> Iterable<T>.singleOrNullOrThrow(p: (T) -> Boolean = { true }): T? {
-  var single: T? = null
-  var found = false
-  for (element in this) {
-    if (p(element)) {
-      if (found) {
-        throw IllegalArgumentException("Collection contains more than one matching element: $single, $element")
-      }
-      single = element
-      found = true
-    }
-  }
-  return single
-}
-
-val REMOTE_KIND_FQN = RPC_FQN.child("RemoteKind".name)
-
-private val REMOTE_OBJECT_FQN = FqName.fromSegments(listOf("fleet", "rpc", "core", "RemoteObject"))
-private val REMOTE_RESOURCE_FQN = FqName.fromSegments(listOf("fleet", "rpc", "core", "RemoteResource"))
+private val nullableSerializerProperty = CallableId(
+  packageName = FqName.fromSegments(listOf("kotlinx", "serialization", "builtins")),
+  className = null,
+  callableName = "nullable".name
+)
