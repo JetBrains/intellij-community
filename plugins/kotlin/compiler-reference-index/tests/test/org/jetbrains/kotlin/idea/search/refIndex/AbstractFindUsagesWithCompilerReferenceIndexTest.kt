@@ -25,7 +25,6 @@ abstract class AbstractFindUsagesWithCompilerReferenceIndexTest : KotlinCompiler
     }
 
     protected open val ignoreLog: Boolean get() = false
-    override val withK2Compiler: Boolean get() = false
 
     override fun getTestDataPath(): String = File(TestMetadataUtil.getTestDataPath(javaClass)).path
 
