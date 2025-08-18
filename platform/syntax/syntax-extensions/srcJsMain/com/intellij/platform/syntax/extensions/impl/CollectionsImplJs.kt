@@ -3,7 +3,7 @@ package com.intellij.platform.syntax.extensions.impl
 
 import fleet.util.multiplatform.Actual
 
-/** WasmJs implementation of [newConcurrentMap] */
+/** JS implementation of [newConcurrentMap] */
 @Suppress("unused")
 @Actual(linkedTo = "newConcurrentMap")
 internal fun <K : Any, V : Any> newConcurrentMapJs(): ConcurrentMap<K, V> =

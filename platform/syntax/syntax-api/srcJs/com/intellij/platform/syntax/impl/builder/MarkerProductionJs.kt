@@ -4,7 +4,7 @@ package com.intellij.platform.syntax.impl.builder
 import fleet.util.multiplatform.Actual
 
 /**
- * Wasm implementation of [makeStackTraceRelative]
+ * JS implementation of [makeStackTraceRelative]
  */
 @Suppress("unused")
 @Actual("makeStackTraceRelative")
