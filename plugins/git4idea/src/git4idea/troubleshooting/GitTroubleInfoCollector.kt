@@ -33,6 +33,7 @@ internal class GitTroubleInfoCollector : TroubleInfoCollector, PluginAware {
     writeGitConfig(project)
     writeModifiedGitAdvancedSettings()
     writeMappings(project)
+    writeGitReposStats(project)
   }
 
   override fun toString(): String = "Git"
@@ -109,6 +110,18 @@ internal class GitTroubleInfoCollector : TroubleInfoCollector, PluginAware {
     appendLine("==== $name ====")
     block()
     appendLine("\n")
+  }
+
+  private fun StringBuilder.writeGitReposStats(project: Project) {
+    section("Git repositories stats") {
+      GitRepositoryManager.getInstance(project).repositories.forEach {
+        val tags = it.tagHolder.getTags().size
+        val remoteBranches = it.branches.remoteBranches.size
+        val localBranches = it.branches.localBranches.size
+
+        appendLine("${it.root.name}: $localBranches branches, $remoteBranches remote branches, $tags tags")
+      }
+    }
   }
 }
 
