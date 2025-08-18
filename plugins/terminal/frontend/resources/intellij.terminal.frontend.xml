@@ -20,6 +20,9 @@
     <editorActionHandler action="Replace" implementationClass="com.intellij.terminal.frontend.action.TerminalReplaceHandler"
                          id="terminalReplace" order="first"/>
 
+    <extendWordSelectionHandler implementation="com.intellij.terminal.frontend.TerminalTextSelectioner"/>
+    <basicWordSelectionFilter implementation="com.intellij.terminal.frontend.TerminalWordSelectionFilter"/>
+
     <applicationService
       serviceInterface="org.jetbrains.plugins.terminal.fus.FrontendLatencyService"
       serviceImplementation="com.intellij.terminal.frontend.fus.FrontendLatencyServiceImpl"/>
