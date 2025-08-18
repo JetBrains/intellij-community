@@ -110,9 +110,10 @@ open class PythonFoldingBuilder : CustomFoldingBuilder(), DumbAware {
     val elementType = node.elementType
     if (node.psi is PyAstFile) {
       val imports = (node.psi as PyAstFile).importBlock
-      if (imports.size > 1) {
-        val firstImport: PyAstImportStatementBase = imports[0]
-        val lastImport: PyAstImportStatementBase = imports[imports.size - 1]
+      val firstIndex = imports.takeWhile { (it as? PyAstFromImportStatement)?.isFromFuture == true }.size
+      if (imports.size - firstIndex > 1) {
+        val firstImport: PyAstImportStatementBase = imports[firstIndex]
+        val lastImport: PyAstImportStatementBase = imports.last()
         descriptors.add(FoldingDescriptor(firstImport, TextRange(firstImport.textRange.startOffset,
                                                                  lastImport.textRange.endOffset)))
       }
