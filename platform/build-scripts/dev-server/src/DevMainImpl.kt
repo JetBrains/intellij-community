@@ -54,6 +54,7 @@ fun buildDevImpl(): BuildDevInfo {
     buildProductInProcess(
       BuildRequest(
         platformPrefix = System.getProperty("idea.platform.prefix", "idea"),
+        baseIdePlatformPrefixForFrontend = System.getProperty("dev.build.base.ide.platform.prefix.for.frontend"),
         additionalModules = getAdditionalPluginMainModules(),
         projectDir = ideaProjectRoot,
         keepHttpClient = false,

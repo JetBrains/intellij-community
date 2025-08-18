@@ -103,7 +103,7 @@ suspend fun buildProductInProcess(request: BuildRequest): Path {
         request = request,
         createProductProperties = { compilationContext ->
           val configuration = createConfiguration(homePath = request.projectDir, productionClassOutput = request.productionClassOutput)
-          val productConfiguration = getProductConfiguration(configuration, request.platformPrefix)
+          val productConfiguration = getProductConfiguration(configuration, request.platformPrefix, request.baseIdePlatformPrefixForFrontend)
           createProductProperties(productConfiguration = productConfiguration, compilationContext = compilationContext, request = request)
         },
       )
@@ -135,9 +135,10 @@ internal fun getProductPropertiesPath(homePath: Path): Path {
          ?: homePath.resolve(PRODUCTS_PROPERTIES_PATH)
 }
 
-private fun getProductConfiguration(configuration: Configuration, platformPrefix: String): ProductConfiguration {
-  return configuration.products[platformPrefix]
-         ?: throw ConfigurationException("No production configuration for platform prefix `${platformPrefix}`; please add to `${PRODUCTS_PROPERTIES_PATH}` if needed")
+private fun getProductConfiguration(configuration: Configuration, platformPrefix: String, baseIdePlatformPrefixForFrontend: String?): ProductConfiguration {
+  val key = if (baseIdePlatformPrefixForFrontend != null) "$baseIdePlatformPrefixForFrontend$platformPrefix" else platformPrefix
+  return configuration.products[key]
+         ?: throw ConfigurationException("No production configuration for `$key`; please add to `${PRODUCTS_PROPERTIES_PATH}` if needed")
 }
 
 internal class ConfigurationException(message: String) : RuntimeException(message)
