@@ -14,6 +14,10 @@ import kotlin.time.Duration.Companion.seconds
 @TestOnly
 val DEFAULT_TEST_TIMEOUT: Duration = 10.seconds
 
+@TestOnly
+@JvmField
+val DEFAULT_TEST_TIMEOUT_MS: Long = DEFAULT_TEST_TIMEOUT.inWholeMilliseconds
+
 /**
  * Runs a suspending block of code with a specified timeout within the given coroutine context.
  * During debug session, the timeout is ignored.

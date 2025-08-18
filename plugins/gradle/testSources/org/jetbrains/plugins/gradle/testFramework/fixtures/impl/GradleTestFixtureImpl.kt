@@ -5,6 +5,8 @@ import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificat
 import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.externalSystem.util.awaitOpenProjectActivity
+import com.intellij.openapi.externalSystem.util.awaitProjectActivity
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
@@ -12,8 +14,6 @@ import com.intellij.testFramework.openProjectAsync
 import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
-import org.jetbrains.plugins.gradle.testFramework.util.awaitGradleOpenProjectConfiguration
-import org.jetbrains.plugins.gradle.testFramework.util.awaitGradleProjectConfiguration
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 import org.junit.jupiter.api.Assertions
@@ -57,14 +57,14 @@ class GradleTestFixtureImpl: GradleTestFixture {
   override suspend fun awaitOpenProjectConfiguration(numProjectSyncs: Int, openProject: suspend () -> Project): Project {
     return closeOpenedProjectsIfFailAsync {
       reloadLeakTracker.withAllowedOperationAsync(numProjectSyncs) {
-        awaitGradleOpenProjectConfiguration(openProject)
+        awaitOpenProjectActivity(openProject)
       }
     }
   }
 
   override suspend fun <R> awaitProjectConfiguration(project: Project, numProjectSyncs: Int, action: suspend () -> R): R {
     return reloadLeakTracker.withAllowedOperationAsync(numProjectSyncs) {
-      awaitGradleProjectConfiguration(project, action)
+      awaitProjectActivity(project, action)
     }
   }
 
