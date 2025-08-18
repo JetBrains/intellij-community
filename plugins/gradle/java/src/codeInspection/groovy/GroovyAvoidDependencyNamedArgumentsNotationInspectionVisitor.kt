@@ -39,7 +39,7 @@ class GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(val holder: P
     holder.registerProblem(
       call.argumentList,
       GradleInspectionBundle.message("inspection.message.avoid.dependency.named.arguments.notation.descriptor"),
-      ProblemHighlightType.WEAK_WARNING,
+      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
       GradleDependencyNamedArgumentsFix(call)
     )
   }
