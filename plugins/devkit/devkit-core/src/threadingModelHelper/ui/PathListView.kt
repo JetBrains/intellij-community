@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
-import org.jetbrains.idea.devkit.threadingModelHelper.LockReqsAnalyzer
+import org.jetbrains.idea.devkit.threadingModelHelper.ExecutionPath
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
 import org.jetbrains.jewel.foundation.lazy.SelectionMode
 import org.jetbrains.jewel.foundation.lazy.items
@@ -16,14 +16,19 @@ import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 
 @Composable
 internal fun PathListView(
-  paths: List<LockReqsAnalyzer.Companion.ExecutionPath>,
+  paths: List<ExecutionPath>,
   searchQuery: TextFieldValue,
-  selectedPath: LockReqsAnalyzer.Companion.ExecutionPath?,
-  onPathSelected: (LockReqsAnalyzer.Companion.ExecutionPath?) -> Unit,
+  selectedPath: ExecutionPath?,
+  onPathSelected: (ExecutionPath?) -> Unit,
 ) {
   val filteredPaths = remember(paths, searchQuery.text) {
-    paths.filter { path ->
-      searchQuery.text.isEmpty() || path.pathString.contains(searchQuery.text, ignoreCase = true)
+    val query = searchQuery.text
+    if (query.isEmpty()) paths
+    else paths.filter { path ->
+      val chain = path.methodChain.joinToString(" -> ") {
+        "${it.method.containingClass?.qualifiedName}.${it.method.name}"
+      }
+      chain.contains(query, ignoreCase = true)
     }
   }
 
@@ -38,20 +43,19 @@ internal fun PathListView(
       state = listState,
       selectionMode = SelectionMode.Single,
       onSelectedIndexesChange = { indices ->
-        onPathSelected(
-          if (indices.isNotEmpty()) filteredPaths[indices.first()]
-          else null
-        )
+        onPathSelected(indices.firstOrNull()?.let { filteredPaths[it] })
       }
     ) {
       items(
         items = filteredPaths,
-        key = { it.pathString }
+        key = { path ->
+          val chain = path.methodChain.joinToString("->") { it.method.name }
+          "${chain}|${path.lockRequirement.lockType}|${path.lockRequirement.requirementReason}|${path.isSpeculative}"
+        }
       ) { path ->
         PathListItem(
           path = path,
-          isSelected = isSelected,
-          isActive = isActive,
+          isSelected = path == selectedPath,
           modifier = Modifier.fillMaxWidth()
         )
       }

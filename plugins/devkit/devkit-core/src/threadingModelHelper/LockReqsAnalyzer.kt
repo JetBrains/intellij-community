@@ -1,132 +1,127 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiMethodCallExpression
-import com.intellij.psi.JavaRecursiveElementVisitor
-import com.intellij.psi.PsiMethodReferenceExpression
+import com.intellij.psi.*
+import com.intellij.psi.search.searches.OverridingMethodsSearch
+import com.intellij.psi.search.searches.ClassInheritorsSearch
 
 
-class LockReqsAnalyzer {
+class LockReqsAnalyzer(private val detector: LockReqsDetector = LockReqsDetector()) {
 
-  companion object {
+  private data class TraversalContext(
+    val config: AnalysisConfig,
+    val paths: MutableList<ExecutionPath> = mutableListOf(),
+    val currentPath: MutableList<MethodCall> = mutableListOf(),
+    val visited: MutableSet<MethodSignature> = mutableSetOf(),
+    val messageBusTopics: MutableSet<String> = mutableSetOf(),
+    val swingComponents: MutableSet<MethodSignature> = mutableSetOf(),
+  )
 
-    private const val ASSERT_READ_ACCESS_METHOD = "assertReadAccess"
-    private const val THREADING_ASSERTIONS_CLASS = "com.intellij.util.concurrency.ThreadingAssertions"
-    private const val REQUIRES_READ_LOCK_ANNOTATION = "com.intellij.util.concurrency.annotations.RequiresReadLock"
-    private const val MAX_PATH_DEPTH = 1000
+  fun analyzeMethod(method: PsiMethod, config: AnalysisConfig = AnalysisConfig.forProject(method.project)): AnalysisResult {
+    val context = TraversalContext(config)
+    traverseMethod(method, context)
+    return AnalysisResult(method, context.paths, context.messageBusTopics, context.swingComponents)
+  }
 
-    private val ASYNC_METHODS = setOf("invokeLater", "invokeAndWait", "runInEdt")
+  private fun traverseMethod(method: PsiMethod, context: TraversalContext, isPolymorphic: Boolean = false) {
+    if (context.currentPath.size >= context.config.maxDepth) return
+    val signature = MethodSignature.fromMethod(method)
+    if (signature in context.visited) return
+    context.visited.add(signature)
+    context.currentPath.add(MethodCall(method, isPolymorphic))
 
-    enum class LockCheckType {
-      ANNOTATION, ASSERTION
-    }
-
-    data class LockRequirement(
-      val type: LockCheckType,
-      val method: PsiMethod,
-    )
-
-    data class ExecutionPath(
-      val methodChain: List<PsiMethod>,
-      val lockRequirement: LockRequirement,
-    ) {
-      val pathString: String
-        get() = buildString {
-          append(methodChain.joinToString(" -> ") {
-            "${it.containingClass?.name}.${it.name}"
-          })
-          append(" -> ")
-          when (lockRequirement.type) {
-            LockCheckType.ANNOTATION -> append("@RequiresReadLock")
-            LockCheckType.ASSERTION -> append("ThreadingAssertions.assertReadAccess()")
-          }
-        }
-    }
-
-    data class AnalysisResult(
-      val method: PsiMethod,
-      val paths: List<ExecutionPath>,
-    )
+    val annotationRequirements = detector.findAnnotationRequirements(method)
+    annotationRequirements.forEach { context.paths.add(ExecutionPath(context.currentPath.toList(), it)) }
+    processMethodBody(method, context)
+    context.currentPath.removeAt(context.currentPath.lastIndex)
   }
 
 
-  private val processed = mutableSetOf<PsiMethod>()
+  private fun processMethodBody(method: PsiMethod, context: TraversalContext) {
+    val body = method.body ?: return
+    val localRequirements = mutableListOf<LockRequirement>()
 
-  fun analyzeMethod(method: PsiMethod): List<ExecutionPath> {
-    processed.clear()
-    val paths = mutableListOf<ExecutionPath>()
-    val currentPath = mutableListOf<PsiMethod>()
-    processMethodDFS(method, currentPath, paths)
-    return paths
-  }
-
-  private fun processMethodDFS(
-    method: PsiMethod,
-    currentPath: MutableList<PsiMethod>,
-    paths: MutableList<ExecutionPath>,
-  ) {
-
-    if (method in processed || currentPath.size > MAX_PATH_DEPTH) return
-    processed.add(method)
-    currentPath.add(method)
-    findLockChecks(method).forEach { check ->
-      paths.add(ExecutionPath(currentPath.toList(), LockRequirement(check, method)))
-    }
-    getMethodCallees(method).forEach {
-      if (!isAsyncMethod(it)) {
-        processMethodDFS(it, currentPath, paths)
-      }
-    }
-    currentPath.removeAt(currentPath.lastIndex)
-  }
-
-  private fun isAsyncMethod(method: PsiMethod): Boolean {
-    return method.name in ASYNC_METHODS
-  }
-
-  private fun getMethodCallees(method: PsiMethod): List<PsiMethod> {
-    val callees = mutableListOf<PsiMethod>()
-    method.body?.accept(object : JavaRecursiveElementVisitor() {
+    body.accept(object : JavaRecursiveElementVisitor() {
       override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
         super.visitMethodCallExpression(expression)
-        expression.resolveMethod()?.let { callees.add(it) }
+
+        val resolvedMethod = expression.resolveMethod() ?: return
+        localRequirements += detector.findBodyRequirements(resolvedMethod, expression)
+        if (localRequirements.any { it.requirementReason == RequirementReason.SWING_COMPONENT }) context.swingComponents.add(MethodSignature.fromMethod(resolvedMethod))
+
+        handleMethodCall(resolvedMethod, expression, context)
       }
 
       override fun visitMethodReferenceExpression(expression: PsiMethodReferenceExpression) {
         super.visitMethodReferenceExpression(expression)
-        (expression.resolve() as? PsiMethod)?.let { callees.add(it) }
+        (expression.resolve() as? PsiMethod)?.let { resolvedMethod ->
+          localRequirements += detector.findBodyRequirements(resolvedMethod, expression)
+          if (!detector.isAsyncBoundary(resolvedMethod)) traverseMethod(resolvedMethod, context)
+        }
       }
-    })
-    return callees
-  }
 
-  private fun findLockChecks(method: PsiMethod): List<LockCheckType> {
-    return buildList {
-      if (hasRequiresReadLockAnnotation(method)) add(LockCheckType.ANNOTATION)
-      if (hasAssertReadAccessCall(method)) add(LockCheckType.ASSERTION)
-    }
-  }
-
-  private fun hasRequiresReadLockAnnotation(method: PsiMethod): Boolean {
-    return method.hasAnnotation(REQUIRES_READ_LOCK_ANNOTATION)
-  }
-
-  private fun isAssertReadAccess(expression: PsiMethodCallExpression): Boolean {
-    return ASSERT_READ_ACCESS_METHOD == expression.methodExpression.referenceName &&
-           THREADING_ASSERTIONS_CLASS == expression.resolveMethod()?.containingClass?.qualifiedName
-  }
-
-  private fun hasAssertReadAccessCall(method: PsiMethod): Boolean {
-    var found = false
-    method.body?.accept(object : JavaRecursiveElementVisitor() {
-      override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
-        if (!found) {
-          super.visitMethodCallExpression(expression)
-          if (isAssertReadAccess(expression)) found = true
+      override fun visitNewExpression(expression: PsiNewExpression) {
+        super.visitNewExpression(expression)
+        expression.resolveMethod()?.let { resolvedMethod ->
+          if (!detector.isAsyncBoundary(resolvedMethod)) traverseMethod(resolvedMethod, context)
         }
       }
     })
-    return found
+
+    localRequirements.forEach { requirement ->
+      val path = ExecutionPath(context.currentPath.toList(), requirement, isSpeculative = context.currentPath.any { it.isPolymorphic || it.isMessageBusCall })
+      context.paths.add(path)
+    }
+  }
+
+  private fun handleMethodCall(method: PsiMethod, expression: PsiMethodCallExpression, context: TraversalContext) {
+    when {
+      context.config.includeMessageBus && detector.isMessageBusCall(expression) -> handleMessageBusCall(method, expression, context)
+      context.config.includePolymorphic && detector.isPolymorphicCall(method) -> handlePolymorphicCall(method, context)
+      else -> traverseMethod(method, context)
+    }
+  }
+
+  private fun handleMessageBusCall(method: PsiMethod, expression: PsiMethodCallExpression, context: TraversalContext) {
+    detector.extractMessageBusTopic(expression)?.let { context.messageBusTopics.add(it) }
+    if (method.name != "syncPublisher") return
+
+    val topicType = method.returnType as? PsiClassType ?: return
+    val topicInterface = topicType.resolve() ?: return
+    if (!topicInterface.isInterface) return
+
+    findTopicListeners(topicInterface, context.config).forEach { listener ->
+      listener.methods.forEach { method -> traverseMethod(method, context) }
+    }
+  }
+
+
+  private fun handlePolymorphicCall(method: PsiMethod, context: TraversalContext) {
+    val implementations = findImplementations(method, context.config)
+
+    if (implementations.size > context.config.maxImplementations) {
+      val requirement = LockRequirement(method, LockType.READ, RequirementReason.IMPLICIT)
+      context.currentPath.add(MethodCall(method, isPolymorphic = true))
+      context.paths.add(ExecutionPath(context.currentPath.toList(), requirement, true))
+      return
+    }
+    implementations.forEach { traverseMethod(it, context) }
+  }
+
+  private fun findImplementations(method: PsiMethod, config: AnalysisConfig): List<PsiMethod> {
+    val implementations = mutableListOf<PsiMethod>()
+    if (method.body != null) implementations.add(method)
+
+    if (method.hasModifierProperty(PsiModifier.ABSTRACT) || method.containingClass?.isInterface == true) {
+      val query = OverridingMethodsSearch.search(method, config.scope, true)
+      implementations.addAll(query.findAll().take(config.maxImplementations))
+    }
+    return implementations
+  }
+
+
+  private fun findTopicListeners(topicInterface: PsiClass, config: AnalysisConfig): List<PsiClass> {
+    val query = ClassInheritorsSearch.search(topicInterface, config.scope, true)
+    return query.findAll().take(config.maxImplementations).toList()
   }
 }

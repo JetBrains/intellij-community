@@ -13,16 +13,15 @@ class LockReqsService(private val project: Project) {
     const val TOOL_WINDOW_ID: String = "Lock Requirements"
   }
 
-  private var _currentResult: LockReqsAnalyzer.Companion.AnalysisResult? = null
-  val currentResult: LockReqsAnalyzer.Companion.AnalysisResult?
+  private var _currentResult: AnalysisResult? = null
+  val currentResult: AnalysisResult?
     get() = _currentResult
 
-  var onResultsUpdated: ((LockReqsAnalyzer.Companion.AnalysisResult?) -> Unit)? = null
+  var onResultsUpdated: ((AnalysisResult?) -> Unit)? = null
 
   fun updateResults(method: PsiMethod) {
     val analyzer = LockReqsAnalyzer()
-    val paths = analyzer.analyzeMethod(method)
-    _currentResult = LockReqsAnalyzer.Companion.AnalysisResult(method, paths)
+    _currentResult = analyzer.analyzeMethod(method)
     onResultsUpdated?.invoke(_currentResult)
 
     ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID)?.show()

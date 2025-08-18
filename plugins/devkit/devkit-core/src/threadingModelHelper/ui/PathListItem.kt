@@ -11,10 +11,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import org.jetbrains.idea.devkit.threadingModelHelper.LockReqsAnalyzer
+import org.jetbrains.idea.devkit.threadingModelHelper.ExecutionPath
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Icon
@@ -23,28 +22,25 @@ import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
 @Composable
 internal fun PathListItem(
-  path: LockReqsAnalyzer.Companion.ExecutionPath,
+  path: ExecutionPath,
   isSelected: Boolean,
-  isActive: Boolean,
   modifier: Modifier = Modifier,
 ) {
-  val backgroundColor = when {
-    isSelected && isActive -> retrieveColorOrUnspecified("List.selectionBackground")
-    isSelected && !isActive -> retrieveColorOrUnspecified("List.selectionInactiveBackground")
-    else -> Color.Transparent
-  }
+  val colorKey = if (isSelected) "List.selectionBackground" else "List.selectionInactiveBackground"
+  val backgroundColor = retrieveColorOrUnspecified(colorKey)
+  val textColor = JewelTheme.globalColors.text.normal
 
   Column(
     modifier = modifier
       .background(backgroundColor)
-      .padding(horizontal = 16.dp, vertical = 12.dp)
+      .padding(horizontal = 16.dp, vertical = 10.dp)
   ) {
     Row(
       modifier = Modifier.fillMaxWidth(),
       horizontalArrangement = Arrangement.spacedBy(8.dp),
       verticalAlignment = Alignment.CenterVertically
     ) {
-      path.methodChain.forEachIndexed { index, method ->
+      path.methodChain.forEachIndexed { index, call ->
         if (index > 0) {
           Icon(
             key = AllIconsKeys.General.ArrowRight,
@@ -54,12 +50,15 @@ internal fun PathListItem(
           )
         }
 
+        val cls = call.method.containingClass?.name ?: "Unknown"
+        val methodName = call.method.name
+
         Text(
-          text = "${method.containingClass?.name?.substringAfterLast('.')}.${method.name}",
+          text = "$cls.$methodName",
           style = JewelTheme.defaultTextStyle,
           maxLines = 1,
           overflow = TextOverflow.Ellipsis,
-          color = if (isSelected && isActive) Color.White else JewelTheme.globalColors.text.normal
+          color = textColor
         )
       }
 
@@ -70,7 +69,7 @@ internal fun PathListItem(
         tint = JewelTheme.globalColors.text.disabled
       )
 
-      LockRequirementChip(path.lockRequirement, isSelected && isActive)
+      LockRequirementChip(path.lockRequirement, isHighlighted = isSelected)
     }
   }
 }

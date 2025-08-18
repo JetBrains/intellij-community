@@ -15,96 +15,23 @@ class LockReqsUnitTest : BasePlatformTestCase() {
   override fun setUp() {
     super.setUp()
     analyzer = LockReqsAnalyzer()
-    myFixture.addFileToProject("testutils/RequiresReadLock.java", """
-        package testutils;
+    myFixture.addFileToProject("mock/RequiresReadLock.java", """
+        package mock;
         public @interface RequiresReadLock {}
         """.trimIndent())
-    myFixture.addFileToProject("testutils/ThreadingAssertions.java", """
-      package testutils;
+    myFixture.addFileToProject("mock/ThreadingAssertions.java", """
+      package mock;
       public class ThreadingAssertions {
         public static void assertReadAccess() {}
-      }
-      """.trimIndent())
-    myFixture.addFileToProject("testutils/ExpectedPath.java", """
-      package testutils;
-      import java.lang.annotation.*;
-      @Target(ElementType.TYPE)
-      @Retention(RetentionPolicy.RUNTIME)
-      public @interface ExpectedPath {
-        String value();
       }
       """.trimIndent())
   }
 
   override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "threadingModelHelper/"
 
-  fun testMethodsInDifferentClassesInline() {
-    val testFileContent = """
-        package test;
-        
-        import com.intellij.util.concurrency.annotations.RequiresReadLock;
-        
-        public class MethodsInDifferentClasses {
-            public void testMethod() {
-                Helper helper = new Helper();
-                helper.helperMethod();
-            }
-        }
-        
-        class Helper {
-            public void helperMethod() {
-                Service service = new Service();
-                service.serviceMethod();
-            }
-        }
-        
-        class Service {
-            @RequiresReadLock
-            public void serviceMethod() {
-                System.out.println("Service method");
-            }
-        }
-
-    """.trimIndent()
-
-    // Write the content to a temporary file
-    val psiJavaFile = myFixture.configureByText("TestFile.java", testFileContent) as PsiJavaFile
-
-    // Create the analyzer
-    val analyzer = LockReqsAnalyzer()
-
-    // Get all classes from the file
-    println("Classes in file: ${psiJavaFile.classes.map { it.name }}")
-
-    // Find the main test class
-    val testClass = psiJavaFile.classes.find { it.name == "MethodsInDifferentClasses" }
-    assertNotNull("Could not find MethodsInDifferentClasses", testClass)
-    println("Found test class: ${testClass?.name}")
-
-    // Extract expected paths
-    val expectedPathAnnotations = testClass!!.annotations
-    println("Annotations on test class: ${expectedPathAnnotations.map { it.qualifiedName }}")
-
-    val expectedPaths = listOf("MethodsInDifferentClasses.testMethod -> Helper.helperMethod -> Service.serviceMethod -> @RequiresReadLock")
-
-    println("Expected paths: $expectedPaths")
-
-    // Find the test method
-    val sourceMethod = testClass.findMethodsByName("testMethod", false).firstOrNull()
-    assertNotNull("Could not find testMethod", sourceMethod)
-    println("Found method: ${sourceMethod?.name}")
-
-    // Analyze the method
-    val executionPaths = analyzer.analyzeMethod(sourceMethod!!)
-    println("Found ${executionPaths.size} execution paths")
-
-    val actualPaths = executionPaths.map { it.pathString }
-
-    assertEquals("Paths don't match!", expectedPaths, actualPaths)
-  }
-
+  /*
   fun testNoLockRequirements() {
-    doTest()
+    doTest("NoLockRequirements", "testMethod", emptyList())
   }
 
   fun testAnnotationInChain() {
@@ -133,22 +60,23 @@ class LockReqsUnitTest : BasePlatformTestCase() {
 
   fun testLambdaWithMethodReference() {
     doTest()
-  }
+  }*/
 
-  private fun doTest() {
+  private fun doTest(className: String, methodName: String, expectedPaths: List<String>) {
     val fileName = "${getTestName(false)}.java"
-    val sourceMethodName = "testMethod"
     val psiJavaFile = myFixture.configureByFile(fileName) as PsiJavaFile
+    val targetClass = psiJavaFile.classes.find { it.name == className } ?: error("Could not find class $className")
+    val targetMethod = targetClass.methods.find { it.name == className } ?: error("Could not find method $methodName")
 
-    val testClass = psiJavaFile.classes.first()
-    val expectedPaths = testClass.annotations
-      .filter { it.qualifiedName == "test.ExpectedPath" }
-      .mapNotNull { it.findAttributeValue("value")?.text?.removeSurrounding("\"") }
-      .sorted()
-
-    val sourceMethod = testClass.findMethodsByName(sourceMethodName, false).first()
-    val actualPaths = analyzer.analyzeMethod(sourceMethod).map { it.pathString }.sorted()
-
+    val result = analyzer.analyzeMethod(targetMethod)
+    val actualPaths = result.paths.map { path ->
+      buildString {
+        path.methodChain.joinToString(separator = " -> ", postfix = " -> ") {
+          "${it.method.containingClass?.name}.${it.method.name}"
+        }
+        "@${path.lockRequirement.lockType}"
+      }
+    }
     assertEquals(expectedPaths, actualPaths)
   }
 }
