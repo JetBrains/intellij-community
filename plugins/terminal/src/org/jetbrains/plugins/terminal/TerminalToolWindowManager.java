@@ -42,7 +42,6 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.docking.DockManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
@@ -87,7 +86,6 @@ public final class TerminalToolWindowManager implements Disposable {
   private ToolWindowEx myToolWindow;
   private final Project myProject;
   private final AbstractTerminalRunner<?> myTerminalRunner;
-  private TerminalDockContainer myDockContainer;
   private final Map<TerminalWidget, TerminalContainer> myContainerByWidgetMap = new HashMap<>();
   /**
    * Stores IDs of the {@link TerminalSessionTab} that is stored on backend.
@@ -189,10 +187,7 @@ public final class TerminalToolWindowManager implements Disposable {
 
     installDirectoryDnD(toolWindow);
 
-    if (myDockContainer == null) {
-      myDockContainer = new TerminalDockContainer(toolWindow);
-      DockManager.getInstance(myProject).register(myDockContainer, toolWindow.getDisposable());
-    }
+    TerminalDockContainer.install(myProject, toolWindow.getDecorator());
 
     var focusService = TerminalFocusFusService.getInstance();
     if (focusService != null) { // the service only exists on the frontend
