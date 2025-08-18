@@ -101,10 +101,9 @@ public final class VfsData implements Closeable {
   private final Object deadMarker = ObjectUtils.sentinel("dead file");
 
   //TODO RC: FSRecords was quite optimized recently, probably caching is not needed anymore?
-  //         indexingFlag/nameId caching was already removed -- need to think through about remaining (flag+modCount)
-  //         field: on the first sight they look like an additional data, independent from persistent VFS data?
-  //         .children is another thing that could be less cached -- in many cases children could be accessed directly from
-  //         FSRecords?
+  //         1. indexingFlag/nameId caching was already removed
+  //         2. (flag+modCount) field: this is additional data, partially-independent from persistent VFS data
+  //         3. .children: in many cases children could be accessed directly from FSRecords, without need to cache them
 
   /**
    * Map[segmentIndex -> Segment]
@@ -558,22 +557,12 @@ public final class VfsData implements Closeable {
 
         throw new FileAlreadyCreatedException(
           describeAlreadyCreatedFile(fileId)
-          +
-          " data: " +
-          fileData
-          +
-          ", alreadyExistingData: " +
-          existingData
-          +
-          ", parentData: " +
-          parentData
-          +
-          ((parent != null)
-           ? ", parent.data: " + parent.directoryData + " equals: " + (parentData == parent.directoryData)
-           : ", parent = null")
-          +
-          ", synchronized(parentData): " +
-          (parentData != null ? Thread.holdsLock(parentData) : "...")
+          + " data: " + fileData + ", alreadyExistingData: " + existingData + ", parentData: " + parentData +
+          ((parent != null) ?
+           ", parent.data: " + parent.directoryData + " equals: " + (parentData == parent.directoryData) :
+           ", parent = null"
+          )
+          + ", synchronized(parentData): " + (parentData != null ? Thread.holdsLock(parentData) : "...")
         );
       }
     }
