@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 
@@ -50,21 +49,9 @@ public sealed class TypeEvalContext {
 
   private final ThreadLocal<ProcessingContext> myProcessingContext = ThreadLocal.withInitial(ProcessingContext::new);
 
-  protected final Map<PyTypedElement, PyType> myEvaluated = createMap();
-  protected final Map<PyCallable, PyType> myEvaluatedReturn = createMap();
-  protected final Map<Pair<PyExpression, Object>, PyType> contextTypeCache = createMap();
-  /**
-   * AssumptionContext invariant requires that if type is in the map, 
-   * it's dependencies are also in the map, so we can't use softValueMap.
-   * Temporary solution until we know assumeType works as expected.
-   * @see TypeEvalContext#assumeType(PyTypedElement, PyType, Function) 
-   */
-  private static <T> Map<T, PyType> createMap() {
-    if (Registry.is("python.use.better.control.flow.type.inference")) {
-      return new ConcurrentHashMap<>();
-    }
-    return CollectionFactory.createConcurrentSoftValueMap();
-  }
+  protected final Map<PyTypedElement, PyType> myEvaluated = CollectionFactory.createConcurrentSoftValueMap();
+  protected final Map<PyCallable, PyType> myEvaluatedReturn = CollectionFactory.createConcurrentSoftValueMap();
+  protected final Map<Pair<PyExpression, Object>, PyType> contextTypeCache = CollectionFactory.createConcurrentSoftValueMap();
 
   private TypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, boolean allowCallContext, @Nullable PsiFile origin) {
     myConstraints = new TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, origin);
