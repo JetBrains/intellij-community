@@ -53,7 +53,7 @@ interface FindAndReplaceExecutor {
 
   fun validateModel(findModel: FindModel, onFinish: (Boolean) -> Any?)
 
-  fun performScopeSelection(scopeId: String, project: Project)
+  fun performScopeSelection(scopeId: String, scopesModelId:String, project: Project)
 
   fun cancelActivities()
 

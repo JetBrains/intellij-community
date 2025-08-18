@@ -163,10 +163,10 @@ fun ProjectId.findProjectOrNull(): Project? {
  * or null if there is no project with the given [ProjectId] and logs an error.
  */
 @ApiStatus.Experimental
-fun ProjectId.findProjectOrNullWithLogError(log: Logger): Project? {
+fun ProjectId.findProjectOrNullWithLogWarn(log: Logger): Project? {
   val project = ProjectIdsStorage.getInstance().findProject(this)
   if (project == null) {
-    log.error("Project is not found for $this. Opened projects: ${ProjectManager.getInstance().openProjects.joinToString { it.projectId().toString() }}")
+    log.warn("Project is not found for $this. Opened projects: ${ProjectManager.getInstance().openProjects.joinToString { it.projectId().toString() }}")
   }
   return project
 }
