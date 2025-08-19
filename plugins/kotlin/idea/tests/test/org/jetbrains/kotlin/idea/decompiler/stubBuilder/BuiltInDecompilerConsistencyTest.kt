@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.decompiler.stubBuilder
 
@@ -94,9 +94,9 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
             if (ClsKotlinBinaryClassCache.getInstance().getKotlinBinaryClassHeaderData(file) == null) continue
             val fileStub = classFileDecompiler.stubBuilder.buildFileStub(fileContent) ?: continue
             val classStub = fileStub.findChildStubByType(KtClassElementType.getStubType(false)) ?: continue
-            val classFqName = classStub.getFqName()!!
+            val classFqName = classStub.fqName!!
             val builtInClassStub = builtInFileStub.childrenStubs.firstOrNull {
-                it is KotlinClassStub && it.getFqName() == classFqName
+                it is KotlinClassStub && it.fqName == classFqName
             } ?: continue
             val classStubAsText = classStub.serializeToString()
 

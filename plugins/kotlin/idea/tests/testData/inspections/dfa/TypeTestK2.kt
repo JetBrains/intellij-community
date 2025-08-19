@@ -7,7 +7,7 @@ fun unrelatedTypes(obj : Any) {
 }
 fun nullableTypes(obj : Any?) {
     if (obj is X?) {
-        if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'.">obj is Y?</warning>) {
+        if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'false'.">obj is Y?</warning>) {
             if (<warning descr="Condition 'obj == null' is always true">obj == null</warning>) { }
         }
     }
