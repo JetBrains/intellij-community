@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
+import com.fasterxml.jackson.databind.JsonMappingException
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.externalComponents.ExternalComponentSource
@@ -261,7 +262,7 @@ object UpdateChecker {
     val allEnabled: Collection<PluginDownloader> = emptyList(),
     val allDisabled: Collection<PluginDownloader> = emptyList(),
     val incompatible: Collection<IdeaPluginDescriptor> = emptyList(),
-    val errors: Map<String?, Exception> = emptyMap()
+    val errors: Map<String?, Exception> = emptyMap(),
   ) {
     val all: List<PluginDownloader> by lazy {
       allEnabled + allDisabled
@@ -435,6 +436,7 @@ object UpdateChecker {
     return it is SocketTimeoutException
            || it is UnknownHostException
            || it is HttpRequests.HttpStatusException && it.statusCode == HttpURLConnection.HTTP_NOT_FOUND
+           || it is JsonMappingException && it.cause?.message?.contains("Unexpected end-of-input") == true
   }
 
   @RequiresBackgroundThread

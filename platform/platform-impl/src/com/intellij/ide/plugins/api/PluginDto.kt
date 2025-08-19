@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.api
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.newui.PluginDependencyModel
 import com.intellij.ide.plugins.newui.PluginSource
@@ -105,7 +106,7 @@ class PluginDto(
 
   companion object {
     @JvmStatic
-    fun fromModel(model: PluginUiModel): PluginDto {
+    fun fromModel(model: PluginUiModel, ignoreDescriptionForNotLoadedPluigns: Boolean = false): PluginDto {
       if (model is PluginDto) {
         return model
       }
@@ -159,7 +160,9 @@ class PluginDto(
         repositoryName = model.repositoryName
         channel = model.channel
         installSource = model.installSource
-        description = model.description
+        if (!ignoreDescriptionForNotLoadedPluigns || PluginManagerCore.isLoaded(model.pluginId)) {
+          description = model.description
+        }
         category = model.category
         sinceBuild = model.sinceBuild
         untilBuild = model.untilBuild

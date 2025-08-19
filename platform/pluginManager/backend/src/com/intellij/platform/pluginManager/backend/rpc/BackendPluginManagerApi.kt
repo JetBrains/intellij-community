@@ -43,7 +43,7 @@ class BackendPluginManagerApi : PluginManagerApi {
   }
 
   override suspend fun getInstalledPlugins(): List<PluginDto> {
-    return InstalledPluginsState.getInstance().installedPlugins.map(PluginDescriptorConverter::toPluginDto)
+    return InstalledPluginsState.getInstance().installedPlugins.map { PluginDescriptorConverter.toPluginDto(it, true) }
   }
 
   override suspend fun getUpdates(): List<PluginDto> {
@@ -221,7 +221,7 @@ class BackendPluginManagerApi : PluginManagerApi {
 
   override suspend fun initSession(sessionId: String): InitSessionResult {
     val initSessionResult = DefaultUiPluginManagerController.initSession(sessionId)
-    return InitSessionResult(initSessionResult.visiblePlugins.map { PluginDto.fromModel(it) }, initSessionResult.pluginStates)
+    return InitSessionResult(initSessionResult.visiblePlugins.map { PluginDto.fromModel(it, true) }, initSessionResult.pluginStates)
   }
 
   override suspend fun isPluginEnabled(pluginId: PluginId): Boolean {
