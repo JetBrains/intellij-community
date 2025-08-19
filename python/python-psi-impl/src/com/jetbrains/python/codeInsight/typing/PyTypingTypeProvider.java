@@ -783,6 +783,11 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     return false;
   }
 
+  @ApiStatus.Internal
+  public static @Nullable Ref<PyType> getType(@NotNull PyExpression expression, @NotNull TypeEvalContext context, boolean useFqn) {
+    return staticWithCustomContext(context, useFqn, customContext -> getType(expression, customContext));
+  }
+
   public static @Nullable Ref<PyType> getType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
     return staticWithCustomContext(context, customContext -> getType(expression, customContext));
   }
@@ -977,6 +982,9 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       final Ref<PyType> classType = getClassType(typeHint, resolved, context);
       if (classType != null) {
         return classType;
+      }
+      if (context.myUseFqn && resolved.getText().equals("Unknown")) {
+        return Ref.create();
       }
       return null;
     }
@@ -1176,7 +1184,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
   private static @Nullable Ref<PyType> getLiteralType(@NotNull PsiElement resolved, @NotNull Context context) {
     if (resolved instanceof PySubscriptionExpression subscriptionExpr) {
-      if (resolvesToQualifiedNames(subscriptionExpr.getOperand(), context.getTypeContext(), LITERAL, LITERAL_EXT)) {
+      if (resolvesToQualifiedNames(subscriptionExpr.getOperand(), context, LITERAL, LITERAL_EXT)) {
         return Optional
           .ofNullable(subscriptionExpr.getIndexExpression())
           .map(index -> PyLiteralType.Companion.fromLiteralParameter(index, context.getTypeContext()))
@@ -1283,6 +1291,13 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   public static <T extends PyAnnotationOwner & PyTypeCommentOwner> boolean isClassVar(@NotNull T owner, @NotNull TypeEvalContext context) {
     return PyUtil.getParameterizedCachedValue(owner, context, p ->
       typeHintedWithName(owner, context, CLASS_VAR));
+  }
+
+  private static boolean resolvesToQualifiedNames(@NotNull PyExpression expression, @NotNull Context context, String... names) {
+    if (!context.myUseFqn) return resolvesToQualifiedNames(expression, context.myContext, names);
+    if (!(expression instanceof PyReferenceExpression referenceExpression)) return false;
+    var qName = referenceExpression.getQualifier().getName() + "." + expression.getName();
+    return ContainerUtil.exists(names, name -> name.equals(qName));
   }
 
   private static boolean resolvesToQualifiedNames(@NotNull PyExpression expression, @NotNull TypeEvalContext context, String... names) {
@@ -2307,10 +2322,14 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   }
 
   private static <T> T staticWithCustomContext(@NotNull TypeEvalContext context, @NotNull Function<@NotNull Context, T> delegate) {
+    return staticWithCustomContext(context, false, delegate);
+  }
+
+  private static <T> T staticWithCustomContext(@NotNull TypeEvalContext context, boolean useFqn, @NotNull Function<@NotNull Context, T> delegate) {
     Context customContext = context.getProcessingContext().get(TYPE_HINT_EVAL_CONTEXT);
     boolean firstEntrance = customContext == null;
     if (firstEntrance) {
-      customContext = new Context(context);
+      customContext = new Context(context, useFqn);
       context.getProcessingContext().put(TYPE_HINT_EVAL_CONTEXT, customContext);
     }
     try {
@@ -2328,9 +2347,17 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     private final @NotNull TypeEvalContext myContext;
     private final @NotNull Stack<PyQualifiedNameOwner> myTypeAliasStack = new Stack<>();
     private boolean myComputeTypeParameterScope = true;
+    private final boolean myUseFqn;
 
     private Context(@NotNull TypeEvalContext context) {
       myContext = context;
+      myUseFqn = false;
+      recomputeStrongHashValue();
+    }
+
+    private Context(@NotNull TypeEvalContext context, boolean useFqn) {
+      myContext = context;
+      myUseFqn = useFqn;
       recomputeStrongHashValue();
     }
 
