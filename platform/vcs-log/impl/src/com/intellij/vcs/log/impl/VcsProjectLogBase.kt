@@ -44,12 +44,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.time.Duration.Companion.seconds
 
 private val LOG: Logger
   get() = logger<VcsProjectLogBase<*>>()
-
-private val CLOSE_LOG_TIMEOUT = 10.seconds
 
 @Internal
 abstract class VcsProjectLogBase<M : VcsLogManager>(
@@ -123,19 +120,11 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
     if (!shutDownStarted.compareAndSet(false, true)) return
 
     Disposer.dispose(listenersDisposable)
-
-    try {
-      withTimeout(CLOSE_LOG_TIMEOUT) {
-        mutex.withLock {
-          _logManagerState.getAndUpdate { null }?.let {
-            LOG.debug { "Disposing ${it.name}" }
-            it.dispose(useRawSwingDispatcher = useRawSwingDispatcher)
-          }
-        }
+    mutex.withLock {
+      _logManagerState.getAndUpdate { null }?.let {
+        LOG.debug { "Disposing ${it.name}" }
+        it.dispose(useRawSwingDispatcher = useRawSwingDispatcher)
       }
-    }
-    catch (e: TimeoutCancellationException) {
-      LOG.error("Cannot close VCS log in ${CLOSE_LOG_TIMEOUT.inWholeSeconds} seconds")
     }
   }
 
