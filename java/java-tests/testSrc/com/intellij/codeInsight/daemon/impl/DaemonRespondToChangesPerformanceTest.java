@@ -145,6 +145,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         watcher = ApplicationManager.getApplication().executeOnPooledThread(() -> {
           while (true) {
+            Thread.onSpinWait();
             final long start1 = typingStart.get();
             if (start1 == -1) break;
             if (start1 == 0) {
@@ -180,7 +181,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
           throw new ProcessCanceledException();
         };
         long hiStart = System.currentTimeMillis();
-        codeAnalyzer.runPasses(psiFile, editor.getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, interrupt);
+        codeAnalyzer.runPasses(psiFile, editor.getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, true, interrupt);
         long hiEnd = System.currentTimeMillis();
         DaemonProgressIndicator progress = ContainerUtil.getFirstItem(new ArrayList<>(codeAnalyzer.getUpdateProgress().values()));
         String message = "Should have been interrupted: " + progress + "; Elapsed: " + (hiEnd - hiStart) + "ms";
@@ -270,7 +271,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
         CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
         TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        codeAnalyzer.runPasses(psiFile, editor.getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, interrupt);
+        codeAnalyzer.runPasses(psiFile, editor.getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, true, interrupt);
 
         throw new RuntimeException("should have been interrupted");
       }
