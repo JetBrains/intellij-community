@@ -6,5 +6,8 @@
     <extensionPoint qualifiedName="com.intellij.xdebugger.additionalTabComponentConverter"
                     interface="com.intellij.platform.debugger.impl.shared.XDebugSessionAdditionalTabComponentConverter"
                     dynamic="true"/>
+    <extensionPoint name="xdebugger.descriptorStateManager"
+                    interface="com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManagerExtension"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

@@ -56,17 +56,21 @@ class BackendXValueModel internal constructor(
 
   init {
     if (precomputePresentation) {
-      xValue.computePresentation(
-        cs,
-        XValuePlace.TREE,
-        presentationHandler = {
-          _presentation.tryEmit(it)
-        },
-        fullValueEvaluatorHandler = {
-          _fullValueEvaluator.value = it
-        }
-      )
+      computeValuePresentation()
     }
+  }
+
+  fun computeValuePresentation() {
+    xValue.computePresentation(
+      cs,
+      XValuePlace.TREE,
+      presentationHandler = {
+        _presentation.tryEmit(it)
+      },
+      fullValueEvaluatorHandler = {
+        _fullValueEvaluator.value = it
+      }
+    )
   }
 
   fun computeTooltipPresentation(): Flow<XValueSerializedPresentation> {

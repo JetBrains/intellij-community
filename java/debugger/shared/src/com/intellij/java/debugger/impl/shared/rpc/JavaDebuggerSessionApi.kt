@@ -8,6 +8,7 @@ import com.intellij.platform.debugger.impl.rpc.SerializableSimpleTextAttributes
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XExecutionStackId
+import com.intellij.xdebugger.impl.rpc.XValueId
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.ReceiveChannelSerializer
@@ -33,6 +34,8 @@ interface JavaDebuggerSessionApi : RemoteApi<Unit> {
   suspend fun interruptThread(executionStackId: XExecutionStackId)
 
   suspend fun stepOutOfCodeBlock(sessionId: XDebugSessionId)
+
+  suspend fun setRenderer(rendererName: String?, xValueIds: List<XValueId>)
 
   companion object {
     @JvmStatic

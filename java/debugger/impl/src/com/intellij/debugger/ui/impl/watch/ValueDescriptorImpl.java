@@ -65,7 +65,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   NodeRenderer myRenderer = null;
   NodeRenderer myAutoRenderer = null;
-  private final MutableSharedFlow<Unit> myRenderersChangedFlow = CoroutineUtilsKt.createMutableSharedFlow(0, 1);
+  private final MutableSharedFlow<Unit> myRenderersChangedFlow = CoroutineUtilsKt.createMutableSharedFlow(1, 1);
 
   private Value myValue;
 
@@ -507,7 +507,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   @ApiStatus.Internal
-  public Flow<Renderer> getLastRendererFlow() {
+  public Flow<@Nullable Renderer> getLastRendererFlow() {
     return CoroutineUtilsKt.mapFlow(myRenderersChangedFlow, __ -> getLastRenderer());
   }
 

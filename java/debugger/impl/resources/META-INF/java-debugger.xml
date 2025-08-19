@@ -250,8 +250,9 @@
         <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend" anchor="last"/>
       </action>
       <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction" use-shortcut-of="EditSource"/>
-      <group id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
+      <group id="Debugger.ViewAsGroup" class="com.intellij.java.debugger.impl.shared.actions.ViewAsGroup">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+        <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend" anchor="last"/>
       </group>
       <action id="Debugger.FilterArray" class="com.intellij.debugger.actions.ArrayAction$FilterArrayAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
@@ -292,7 +293,7 @@
         <add-to-group group-id="XDebugger.Watches.Inline.Popup" anchor="last"/>
         <override-text place="XDebuggerTreePopup"/>
       </action>
-      <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
+      <action id="Debugger.AutoRenderer" class="com.intellij.java.debugger.impl.shared.actions.AutoRendererAction"/>
       <action id="Debugger.MuteRenderers" class="com.intellij.debugger.actions.ForceOnDemandRenderersAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>

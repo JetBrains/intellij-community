@@ -10,8 +10,6 @@
   <extensionPoints>
     <extensionPoint name="xdebugger.customQuickEvaluateActionProvider"
                     interface="com.intellij.platform.debugger.impl.frontend.actions.CustomQuickEvaluateActionProvider" dynamic="true"/>
-    <extensionPoint name="xdebugger.descriptorStateManager"
-                    interface="com.intellij.platform.debugger.impl.frontend.FrontendDescriptorStateManagerExtension" dynamic="true"/>
   </extensionPoints>
   <actions resource-bundle="messages.FrontendDebuggerImplBundle">
     <action id="QuickEvaluateExpression" class="com.intellij.platform.debugger.impl.frontend.actions.QuickEvaluateAction"/>

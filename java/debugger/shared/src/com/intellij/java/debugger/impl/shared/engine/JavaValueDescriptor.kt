@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 const val JAVA_VALUE_KIND: String = "JavaValue"
@@ -31,7 +32,7 @@ data class JavaValueDescriptor(
 
 @ApiStatus.Internal
 @Serializable
-data class NodeRendererDto(val id: String, val name: String)
+data class NodeRendererDto(val name: @Nls String)
 
 @ApiStatus.Internal
 @Serializable

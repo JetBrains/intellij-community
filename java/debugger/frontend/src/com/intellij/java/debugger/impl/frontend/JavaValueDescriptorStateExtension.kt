@@ -3,7 +3,7 @@ package com.intellij.java.debugger.impl.frontend
 
 import com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptor
 import com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptorState
-import com.intellij.platform.debugger.impl.frontend.FrontendDescriptorStateManagerExtension
+import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManagerExtension
 import com.intellij.xdebugger.frame.XDescriptor
 import kotlinx.coroutines.CoroutineScope
 

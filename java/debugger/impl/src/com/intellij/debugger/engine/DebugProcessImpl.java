@@ -278,6 +278,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return DebuggerUtilsImpl.getApplicableRenderers(myRenderers, type);
   }
 
+  @ApiStatus.Internal
+  public @Nullable NodeRenderer getRendererByName(String name) {
+    return ContainerUtil.find(myRenderers, r -> r.getName().equals(name));
+  }
+
   public @NotNull CompletableFuture<NodeRenderer> getAutoRendererAsync(@Nullable Type type) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     // in case evaluation is not possible, force default renderer

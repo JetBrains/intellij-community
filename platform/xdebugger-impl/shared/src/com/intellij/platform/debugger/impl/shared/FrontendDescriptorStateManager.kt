@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.debugger.impl.frontend
+package com.intellij.platform.debugger.impl.shared
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -33,7 +33,7 @@ interface FrontendDescriptorStateManagerExtension {
 class FrontendDescriptorStateManager {
   private val states = ConcurrentHashMap<XDescriptor, Any>()
 
-  internal fun registerDescriptor(descriptor: XDescriptor, cs: CoroutineScope) {
+  fun registerDescriptor(descriptor: XDescriptor, cs: CoroutineScope) {
     val state = FrontendDescriptorStateManagerExtension.createState(descriptor, cs) ?: return
     states[descriptor] = state
     cs.coroutineContext.job.invokeOnCompletion { states.remove(descriptor) }

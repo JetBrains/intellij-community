@@ -2,10 +2,7 @@
 package com.intellij.java.debugger.impl.backend
 
 import com.intellij.debugger.actions.*
-import com.intellij.debugger.engine.AsyncStacksUtils
-import com.intellij.debugger.engine.JavaDebugProcess
-import com.intellij.debugger.engine.JavaExecutionStack
-import com.intellij.debugger.engine.executeOnDMT
+import com.intellij.debugger.engine.*
 import com.intellij.execution.filters.ExceptionFilters
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.java.debugger.impl.shared.rpc.*
@@ -15,6 +12,8 @@ import com.intellij.unscramble.CompoundDumpItem
 import com.intellij.unscramble.DumpItem
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XExecutionStackId
+import com.intellij.xdebugger.impl.rpc.XValueId
+import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import fleet.util.channels.use
 import kotlinx.coroutines.*
@@ -63,6 +62,27 @@ internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
     val xSession = sessionId.findValue() ?: return
     withContext(Dispatchers.EDT) {
       StepOutOfBlockActionUtils.stepOutOfBlock(xSession)
+    }
+  }
+
+  override suspend fun setRenderer(rendererName: String?, xValueIds: List<XValueId>) {
+    val xValueModels = xValueIds.mapNotNull { BackendXValueModel.findById(it) }
+    val javaValues = xValueModels.mapNotNull { it.xValue as? JavaValue }
+    if (javaValues.isEmpty()) return
+    val renderer = if (rendererName != null) {
+      javaValues[0].evaluationContext.debugProcess.getRendererByName(rendererName) ?: return
+    }
+    else {
+      null
+    }
+
+    for (javaValue in javaValues) {
+      withDebugContext(javaValue.evaluationContext.suspendContext) {
+        javaValue.setRenderer(renderer, null)
+      }
+    }
+    for (xValueModel in xValueModels) {
+      xValueModel.computeValuePresentation()
     }
   }
 

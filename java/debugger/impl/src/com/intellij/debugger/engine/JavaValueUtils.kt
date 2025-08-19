@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine
 
-import com.intellij.debugger.actions.ViewAsGroup
+import com.intellij.debugger.actions.JavaReferringObjectsValue
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.PrioritizedTask
@@ -59,14 +59,14 @@ internal fun getJavaValueXDescriptor(javaValue: JavaValue): CompletableFuture<XD
   if (value is ObjectReference) {
     objectReferenceInfo = JavaValueObjectReferenceInfo(value.referenceType().name(), value.virtualMachine().canGetInstanceInfo())
   }
-  val cs = valueDescriptor.project.service<JavaValueDescriptorCreationService>().cs
+  val cs = javaValue.evaluationContext.suspendContext.coroutineScope
   return cs.future {
     val renderersUpdatedFlow = javaValue.evaluationContext.debugProcess.renderersUpdatedFlow
     JavaValueDescriptor(
       valueDescriptor.isString(),
       objectReferenceInfo,
       valueDescriptor.lastRenderer?.toRpc(),
-      valueDescriptor.lastRendererFlow.map { it.toRpc() }.toRpc(),
+      valueDescriptor.lastRendererFlow.map { it?.toRpc() }.toRpc(),
       renderersUpdatedFlow.map { fetchApplicableNodeRenderers(javaValue).map { it.toRpc() } }.toRpc()
     )
   }
@@ -74,13 +74,25 @@ internal fun getJavaValueXDescriptor(javaValue: JavaValue): CompletableFuture<XD
 
 private suspend fun fetchApplicableNodeRenderers(javaValue: JavaValue): List<NodeRenderer> {
   val renderersFuture = withDebugContext(javaValue.evaluationContext.suspendContext) {
-    ViewAsGroup.getApplicableNodeRenderers(javaValue)
+    getApplicableNodeRenderers(javaValue)
   }
   return renderersFuture.await()
 }
 
+private fun getApplicableNodeRenderers(value: JavaValue): CompletableFuture<List<NodeRenderer>> {
+  if (value is JavaReferringObjectsValue) { // disable for any referrers at all
+    return CompletableFuture.completedFuture(emptyList())
+  }
+  val valueDescriptor = value.descriptor
+  if (!valueDescriptor.isValueValid) {
+    return CompletableFuture.completedFuture(emptyList())
+  }
+  val process = value.evaluationContext.debugProcess
+  return process.getApplicableRenderers(valueDescriptor.getType())
+}
+
 private fun Renderer.toRpc() = (this as? NodeRenderer)?.toRpc()
-private fun NodeRenderer.toRpc() = NodeRendererDto(uniqueId, name)
+private fun NodeRenderer.toRpc() = NodeRendererDto(name)
 
 @Service(Service.Level.PROJECT)
 private class JavaValueDescriptorCreationService(val cs: CoroutineScope)
