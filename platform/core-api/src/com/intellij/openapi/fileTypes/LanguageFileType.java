@@ -4,6 +4,7 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +53,17 @@ public abstract class LanguageFileType implements FileType {
   }
 
   @Override
-  public boolean isBinary() {
+  public final boolean isBinary() {
+    return computeBinary();
+  }
+
+  /**
+   * Remote development only.
+   * Allows overriding {@code isBinary} when {@link LanguageFileType} is used
+   * as a placeholder for unsupported file types on the frontend.
+   */
+  @ApiStatus.Internal
+  protected boolean computeBinary() {
     return false;
   }
 
