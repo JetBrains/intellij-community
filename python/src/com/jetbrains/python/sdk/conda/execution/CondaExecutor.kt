@@ -4,12 +4,14 @@ package com.jetbrains.python.sdk.conda.execution
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.python.community.execService.ProcessOutputTransformer
+import com.intellij.python.community.execService.ZeroCodeJsonParserTransformer
+import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.util.ShellEnvironmentReader
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.pyRunCatching
 import com.jetbrains.python.sdk.conda.execution.models.CondaEnvInfo
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.runExecutableWithProgress
@@ -24,62 +26,82 @@ import kotlin.time.Duration.Companion.minutes
 object CondaExecutor {
   suspend fun createNamedEnv(condaPath: Path, envName: String, pythonVersion: String): PyResult<Unit> {
     val args = listOf("create", "-y", "-n", envName, "python=${pythonVersion}")
-    return runConda(condaPath, args, null).mapSuccess { }
+    return runConda(
+      condaPath, args, null
+    ) { PyResult.success(Unit) }
   }
 
   suspend fun createUnnamedEnv(condaPath: Path, envPrefix: String, pythonVersion: String): PyResult<Unit> {
     val args = listOf("create", "-y", "-p", envPrefix, "python=${pythonVersion}")
-    return runConda(condaPath, args, null).mapSuccess { }
+    return runConda(
+      condaPath, args, null
+    ) { PyResult.success(Unit) }
   }
 
   suspend fun createFileEnv(condaPath: Path, environmentYaml: Path): PyResult<Unit> {
     val args = listOf("env", "create", "-f", environmentYaml.pathString)
-    return runConda(condaPath, args, null).mapSuccess { }
+    return runConda(
+      condaPath, args, null
+    ) { PyResult.success(Unit) }
   }
 
   suspend fun updateFromEnvironmentFile(condaPath: Path, envYmlPath: String, envIdentity: PyCondaEnvIdentity): PyResult<Unit> {
     val args = listOf("env", "update", "--file", envYmlPath, "--prune")
-    return runConda(condaPath, args, envIdentity).mapSuccess { }
+    return runConda(
+      condaPath, args, envIdentity
+    ) { PyResult.success(Unit) }
   }
 
   suspend fun listEnvs(condaPath: Path): PyResult<CondaEnvInfo> {
     val args = listOf("env", "list", "--json")
-    val json = runConda(condaPath, args, null).getOr { return it }
-    return pyRunCatching {
-      CondaExecutionParser.parseListEnvironmentsOutput(json)
-    }
+    return runConda(
+      condaPath, args, null,
+      transformer = ZeroCodeJsonParserTransformer { CondaExecutionParser.parseListEnvironmentsOutput(it) }
+    )
   }
 
   suspend fun exportEnvironmentFile(condaPath: Path, envIdentity: PyCondaEnvIdentity): PyResult<String> {
-    return runConda(condaPath, listOf("env", "export") + listOf("--no-builds"), envIdentity)
+    return runConda(
+      condaPath, listOf("env", "export") + listOf("--no-builds"), envIdentity,
+      transformer = ZeroCodeStdoutTransformer
+    )
   }
 
   suspend fun listPackages(condaPath: Path, envIdentity: PyCondaEnvIdentity): PyResult<List<PythonPackage>> {
-    return runConda(condaPath, listOf("list", "--json"), envIdentity).mapSuccess {
-      CondaExecutionParser.parseCondaPackageList(it)
-    }
+    return runConda(
+      condaPath, listOf("list", "--json"), envIdentity,
+      transformer = ZeroCodeJsonParserTransformer { CondaExecutionParser.parseCondaPackageList(it) }
+    )
   }
 
   suspend fun installPackages(condaPath: Path, envIdentity: PyCondaEnvIdentity, packages: List<String>, options: List<String>): PyResult<Unit> {
-    return runConda(condaPath, listOf("install") + packages + listOf("-y") + options, envIdentity).mapSuccess { }
+    return runConda(
+      condaPath, listOf("install") + packages + listOf("-y") + options, envIdentity
+    ) { PyResult.success(Unit) }
 
   }
 
   suspend fun uninstallPackages(condaPath: Path, envIdentity: PyCondaEnvIdentity, packages: List<String>): PyResult<Unit> {
-    return runConda(condaPath, listOf("uninstall") + packages + "-y", envIdentity).mapSuccess { }
+    return runConda(
+      condaPath, listOf("uninstall") + packages + "-y", envIdentity
+    ) { PyResult.success(Unit) }
   }
 
 
   suspend fun listOutdatedPackages(condaPath: Path, envIdentity: PyCondaEnvIdentity): PyResult<List<PythonOutdatedPackage>> {
-    val jsonPyResult = runConda(condaPath, listOf("update", "--dry-run", "--all", "--json"), envIdentity).getOr {
-      return it
-    }
-    return pyRunCatching {
-      CondaExecutionParser.parseOutdatedOutputs(jsonPyResult)
-    }
+    return runConda(
+      condaPath, listOf("update", "--dry-run", "--all", "--json"), envIdentity,
+      transformer = ZeroCodeJsonParserTransformer { CondaExecutionParser.parseOutdatedOutputs(it) }
+    )
   }
 
-  private suspend fun runConda(condaPath: Path, args: List<String>, condaEnvIdentity: PyCondaEnvIdentity?, timeout: Duration = 15.minutes): PyResult<String> {
+  private suspend fun <T> runConda(
+    condaPath: Path,
+    args: List<String>,
+    condaEnvIdentity: PyCondaEnvIdentity?,
+    timeout: Duration = 15.minutes,
+    transformer: ProcessOutputTransformer<T>,
+  ): PyResult<T> {
     val condaEnv = when (condaEnvIdentity) {
       is PyCondaEnvIdentity.UnnamedEnv -> {
         if (condaEnvIdentity.isBase)
@@ -98,7 +120,7 @@ object CondaExecutor {
     }
 
     val runArgs = (args + condaEnv).toTypedArray()
-    return runExecutableWithProgress(condaPath, null, timeout, env = envs, *runArgs)
+    return runExecutableWithProgress(condaPath, null, timeout, env = envs, *runArgs, transformer = transformer)
   }
 
   private fun getFixedEnvs(condaPath: Path): PyResult<Map<String, String>> {
