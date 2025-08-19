@@ -2748,8 +2748,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     var fileByIdCacheMissesCounter = meter.counterBuilder("VFS.fileByIdCache.misses").buildObserver();
     var fileChildByNameCounter = meter.counterBuilder("VFS.fileChildByName").buildObserver();
     var caseSensitivityReadsCounter = meter.counterBuilder("VFS.folderCaseSensitivityReads").buildObserver();
-    var rootsCounter = meter.counterBuilder("VFS.rootsCount").buildObserver();
-    var invertedFileNameIndexRequestsCount = meter.gaugeBuilder("VFS.invertedFileNameIndex.requests").buildObserver();
+    var rootsCounter = meter.gaugeBuilder("VFS.rootsCount").buildObserver();
+    var invertedFileNameIndexRequestsCount = meter.counterBuilder("VFS.invertedFileNameIndex.requests").buildObserver();
     return meter.batchCallback(
       () -> {
         fileByIdCacheHitsCounter.record(fileByIdCacheHits.get());
