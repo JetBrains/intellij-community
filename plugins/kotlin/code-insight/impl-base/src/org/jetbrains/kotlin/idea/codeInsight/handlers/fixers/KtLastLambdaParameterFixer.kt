@@ -20,6 +20,7 @@ class KtLastLambdaParameterFixer : SmartEnterProcessorWithFixers.Fixer<KotlinSma
     @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     override fun apply(editor: Editor, processor: KotlinSmartEnterHandler, element: PsiElement) {
         val callElement = element as? KtCallElement ?: return
+        if (callElement.lambdaArguments.isNotEmpty()) return
 
         val isFunctionType = allowAnalysisFromWriteAction {
             allowAnalysisOnEdt {
@@ -31,7 +32,6 @@ class KtLastLambdaParameterFixer : SmartEnterProcessorWithFixers.Fixer<KotlinSma
                 }
             }
         }
-       if (callElement.lambdaArguments.isNotEmpty()) return
 
         if (isFunctionType) {
             val doc = editor.document
