@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.vcs.changes.ChangeListManagerState;
 import com.intellij.util.ThreeState;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -417,6 +418,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @Override
   public void unblockModalNotifications() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public @NotNull ChangeListManagerState getChangeListManagerState() {
     throw new UnsupportedOperationException();
   }
 }

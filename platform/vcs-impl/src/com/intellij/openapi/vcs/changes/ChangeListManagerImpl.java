@@ -48,6 +48,7 @@ import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.vcs.changes.ChangeListManagerState;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
@@ -1628,6 +1629,18 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
       VcsBalloonProblemNotifier.showOverChangesView(project, freezeReason, MessageType.WARNING);
     }
     return true;
+  }
+
+  @Override
+  public @NotNull ChangeListManagerState getChangeListManagerState() {
+    String freezeReason = isFreezed();
+    if (freezeReason != null) {
+      return new ChangeListManagerState.Frozen(freezeReason);
+    } else if (isInUpdate()) {
+      return ChangeListManagerState.Updating.INSTANCE;
+    } else {
+      return ChangeListManagerState.Default.INSTANCE;
+    }
   }
 
   public void replaceCommitMessage(@NotNull String oldMessage, @NotNull String newMessage) {

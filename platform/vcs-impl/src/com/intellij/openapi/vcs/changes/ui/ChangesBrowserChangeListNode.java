@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.platform.vcs.changes.ChangeListManagerState;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -27,11 +28,13 @@ import static one.util.streamex.StreamEx.of;
 
 
 public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList> {
-  private final Project myProject;
-  private final ChangeListManagerEx myClManager;
-  private final ChangeListRemoteState myChangeListRemoteState;
+  private final @NotNull Project myProject;
+  private final @NotNull ChangeListManagerEx myClManager;
+  private final @NotNull ChangeListRemoteState myChangeListRemoteState;
 
-  public ChangesBrowserChangeListNode(Project project, ChangeList userObject, final ChangeListRemoteState changeListRemoteState) {
+  public ChangesBrowserChangeListNode(@NotNull Project project,
+                                      @NotNull ChangeList userObject,
+                                      @NotNull final ChangeListRemoteState changeListRemoteState) {
     super(userObject);
     myProject = project;
     myChangeListRemoteState = changeListRemoteState;
@@ -53,11 +56,10 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       for (ChangeListDecorator decorator : ChangeListDecorator.getDecorators(myProject)) {
         decorator.decorateChangeList(list, renderer, selected, expanded, hasFocus);
       }
-      final String freezed = myClManager.isFreezed();
-      if (freezed != null) {
-        renderer.append(spaceAndThinSpace() + freezed, SimpleTextAttributes.GRAYED_ATTRIBUTES);
-      }
-      else if (myClManager.isInUpdate()) {
+      ChangeListManagerState clManagerState = myClManager.getChangeListManagerState();
+      if (clManagerState instanceof ChangeListManagerState.Frozen frozen) {
+        renderer.append(spaceAndThinSpace() + frozen.getReason(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      } else if (clManagerState instanceof ChangeListManagerState.Updating) {
         appendUpdatingState(renderer);
       }
       if (!myChangeListRemoteState.allUpToDate()) {
