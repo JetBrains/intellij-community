@@ -9,6 +9,7 @@ import com.intellij.platform.syntax.util.lexer.FlexLexer
 import com.intellij.platform.syntax.element.SyntaxTokenTypes.WHITE_SPACE
 import com.intellij.platform.syntax.element.SyntaxTokenTypes.BAD_CHARACTER
 import com.intellij.json.syntax.JsonSyntaxElementTypes
+import kotlin.jvm.JvmStatic
 
 
 class _Json5Lexer : FlexLexer {

@@ -2,6 +2,7 @@
 package com.intellij.json.syntax
 
 import com.intellij.platform.syntax.SyntaxElementType
+import kotlin.jvm.JvmField
 
 object JsonSyntaxElementTypes {
   @JvmField
