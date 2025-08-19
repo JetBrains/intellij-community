@@ -3,6 +3,7 @@ package com.intellij.java.debugger.impl.shared.rpc
 
 import com.intellij.execution.filters.Filter
 import com.intellij.ide.ui.icons.IconId
+import com.intellij.java.debugger.impl.shared.engine.NodeRendererId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.debugger.impl.rpc.SerializableSimpleTextAttributes
 import com.intellij.platform.rpc.RemoteApiProviderService
@@ -35,7 +36,7 @@ interface JavaDebuggerSessionApi : RemoteApi<Unit> {
 
   suspend fun stepOutOfCodeBlock(sessionId: XDebugSessionId)
 
-  suspend fun setRenderer(rendererName: String?, xValueIds: List<XValueId>)
+  suspend fun setRenderer(rendererId: NodeRendererId?, xValueIds: List<XValueId>)
 
   companion object {
     @JvmStatic

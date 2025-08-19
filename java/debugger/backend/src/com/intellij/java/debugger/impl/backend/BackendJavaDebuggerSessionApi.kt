@@ -5,6 +5,7 @@ import com.intellij.debugger.actions.*
 import com.intellij.debugger.engine.*
 import com.intellij.execution.filters.ExceptionFilters
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.java.debugger.impl.shared.engine.NodeRendererId
 import com.intellij.java.debugger.impl.shared.rpc.*
 import com.intellij.openapi.application.EDT
 import com.intellij.platform.debugger.impl.rpc.toRpc
@@ -65,12 +66,12 @@ internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
     }
   }
 
-  override suspend fun setRenderer(rendererName: String?, xValueIds: List<XValueId>) {
+  override suspend fun setRenderer(rendererId: NodeRendererId?, xValueIds: List<XValueId>) {
     val xValueModels = xValueIds.mapNotNull { BackendXValueModel.findById(it) }
     val javaValues = xValueModels.mapNotNull { it.xValue as? JavaValue }
     if (javaValues.isEmpty()) return
-    val renderer = if (rendererName != null) {
-      javaValues[0].evaluationContext.debugProcess.getRendererByName(rendererName) ?: return
+    val renderer = if (rendererId != null) {
+      javaValues[0].evaluationContext.debugProcess.getRendererById(rendererId) ?: return
     }
     else {
       null

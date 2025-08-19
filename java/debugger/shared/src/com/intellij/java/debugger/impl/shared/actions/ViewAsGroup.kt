@@ -4,6 +4,7 @@ package com.intellij.java.debugger.impl.shared.actions
 import com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptor
 import com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptorState
 import com.intellij.java.debugger.impl.shared.engine.NodeRendererDto
+import com.intellij.java.debugger.impl.shared.engine.NodeRendererId
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionApi
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
@@ -38,7 +39,7 @@ internal class ViewAsGroup : ActionGroup(Presentation.NULL_STRING, true), DumbAw
       }
       for (descriptor in descriptors) {
         val descriptorState = descriptor.getState(project) ?: return false
-        if (descriptorState.lastRenderer?.name != nodeRenderer.name) {
+        if (descriptorState.lastRenderer?.id != nodeRenderer.id) {
           return false
         }
       }
@@ -51,7 +52,7 @@ internal class ViewAsGroup : ActionGroup(Presentation.NULL_STRING, true), DumbAw
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       if (!state) return
-      setRendererForNodes(e, nodeRenderer)
+      setRendererForNodes(e, nodeRenderer.id)
     }
   }
 
@@ -122,14 +123,14 @@ internal class ViewAsGroup : ActionGroup(Presentation.NULL_STRING, true), DumbAw
   }
 }
 
-internal fun setRendererForNodes(e: AnActionEvent, nodeRenderer: NodeRendererDto?) {
+internal fun setRendererForNodes(e: AnActionEvent, rendererId: NodeRendererId?) {
   val session = DebuggerUIUtil.getSessionProxy(e) ?: return
   val selectedNodesWithJavaValues = ViewAsGroup.getSelectedNodesOfJavaValue(e)
 
   session.coroutineScope.launch {
     val xValues = selectedNodesWithJavaValues.map { it.second }
     xValues.withId(session) { ids ->
-      JavaDebuggerSessionApi.getInstance().setRenderer(nodeRenderer?.name, ids)
+      JavaDebuggerSessionApi.getInstance().setRenderer(rendererId, ids)
     }
     for ((node, value) in selectedNodesWithJavaValues) {
       node.invokeNodeUpdate {

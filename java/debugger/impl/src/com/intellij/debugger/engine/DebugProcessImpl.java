@@ -36,6 +36,7 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.java.debugger.impl.shared.engine.NodeRendererId;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -279,8 +280,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @ApiStatus.Internal
-  public @Nullable NodeRenderer getRendererByName(String name) {
-    return ContainerUtil.find(myRenderers, r -> r.getName().equals(name));
+  public @Nullable NodeRenderer getRendererById(@NotNull NodeRendererId id) {
+    return ContainerUtil.find(myRenderers, r -> id.equals(JavaValueUtilsKt.getId(r)));
   }
 
   public @NotNull CompletableFuture<NodeRenderer> getAutoRendererAsync(@Nullable Type type) {

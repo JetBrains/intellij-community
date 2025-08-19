@@ -66,6 +66,7 @@ jvm_library(
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
     "//fleet/rpc",
+    "//platform/kernel/rpc",
   ],
   runtime_deps = [":impl_resources"]
 )

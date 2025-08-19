@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.debugger.impl.shared.engine
 
+import com.intellij.platform.rpc.Id
+import com.intellij.platform.rpc.UID
 import com.intellij.xdebugger.frame.CustomXDescriptorSerializerProvider
 import com.intellij.xdebugger.frame.XDescriptor
 import fleet.rpc.core.RpcFlow
@@ -32,7 +34,11 @@ data class JavaValueDescriptor(
 
 @ApiStatus.Internal
 @Serializable
-data class NodeRendererDto(val name: @Nls String)
+data class NodeRendererId(override val uid: UID) : Id
+
+@ApiStatus.Internal
+@Serializable
+data class NodeRendererDto(val id: NodeRendererId, val name: @Nls String)
 
 @ApiStatus.Internal
 @Serializable

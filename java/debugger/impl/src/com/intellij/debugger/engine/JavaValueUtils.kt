@@ -11,6 +11,7 @@ import com.intellij.debugger.ui.tree.render.Renderer
 import com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptor
 import com.intellij.java.debugger.impl.shared.engine.JavaValueObjectReferenceInfo
 import com.intellij.java.debugger.impl.shared.engine.NodeRendererDto
+import com.intellij.java.debugger.impl.shared.engine.NodeRendererId
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -92,7 +93,8 @@ private fun getApplicableNodeRenderers(value: JavaValue): CompletableFuture<List
 }
 
 private fun Renderer.toRpc() = (this as? NodeRenderer)?.toRpc()
-private fun NodeRenderer.toRpc() = NodeRendererDto(name)
+private fun NodeRenderer.toRpc() = NodeRendererDto(id, name)
+internal val NodeRenderer.id: NodeRendererId get() = NodeRendererId(System.identityHashCode(this))
 
 @Service(Service.Level.PROJECT)
 private class JavaValueDescriptorCreationService(val cs: CoroutineScope)
