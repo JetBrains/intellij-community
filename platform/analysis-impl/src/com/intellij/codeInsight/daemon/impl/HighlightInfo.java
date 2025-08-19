@@ -418,23 +418,6 @@ public class HighlightInfo implements Segment {
     return isFlagSet(FILE_LEVEL_ANNOTATION_MASK);
   }
 
-  /**
-   * @deprecated do not use
-   * todo remove along with DefaultHighlightInfoProcessor
-   */
-  @Deprecated
-  void setVisitingTextRange(@NotNull PsiFile psiFile, @NotNull Document document, long range) {
-  }
-
-  /**
-   * @deprecated todo remove along with DefaultHighlightInfoProcessor
-   */
-  @Deprecated
-  @NotNull
-  Segment getVisitingTextRange() {
-    return TextRange.EMPTY_RANGE;
-  }
-
   public @NotNull HighlightSeverity getSeverity() {
     return severity;
   }
