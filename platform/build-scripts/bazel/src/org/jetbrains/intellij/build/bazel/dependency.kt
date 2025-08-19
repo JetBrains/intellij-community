@@ -25,7 +25,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.readBytes
-import kotlin.io.path.relativeTo
+import kotlin.io.path.relativeToOrNull
 
 internal data class BazelLabel(
   val label: String,
@@ -163,7 +163,12 @@ internal fun generateDeps(
           val libraryContainer = context.getLibraryContainer(isCommunityLib)
 
           val communityOrUltimateRoot = libraryContainer.moduleFile.parent.parent
-          val libBuildFileDir = firstFile.relativeTo(communityOrUltimateRoot).parent.invariantSeparatorsPathString
+          val libBuildFileDir = firstFile
+            .relativeToOrNull(communityOrUltimateRoot)
+            ?.parent?.invariantSeparatorsPathString
+            ?: error("Unable to get relative path for $firstFile under $communityOrUltimateRoot" +
+                     " for library ${jpsLibrary.name} from module ${module.module.name}" +
+                     " (isCommunityLib=$isCommunityLib)")
           val targetName = camelToSnakeCase(escapeBazelLabel(firstFile.nameWithoutExtension))
           val libraryTarget = LibraryTarget(
             targetName = targetName,
