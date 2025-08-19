@@ -20,6 +20,6 @@ public interface RemoteServer<C extends ServerConfiguration> {
 
   @ApiStatus.Internal
   default @NotNull UUID getUniqueId() {
-    return UUID.randomUUID();
+    return RemoteServersManager.getInstance().getId(this);
   }
 }
