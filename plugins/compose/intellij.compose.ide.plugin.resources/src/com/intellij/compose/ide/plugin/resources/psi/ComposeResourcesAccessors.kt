@@ -8,6 +8,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.createFile
+import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
 
 private const val ITEMS_PER_FILE_LIMIT = 100
@@ -111,6 +113,7 @@ private suspend fun getChunkFileSpec(
 @RequiresWriteLock
 private suspend fun writeAccessors(moduleDir: String, fileName: String, content: String): Unit = writeAction {
   val path = Path.of(moduleDir, fileName)
+  if (!path.exists()) path.createFile()
   val documentManager = FileDocumentManager.getInstance()
   val document = path.toVirtualFile()?.let { virtualFile -> documentManager.getDocument(virtualFile) } ?: return@writeAction
   runUndoTransparentWriteAction { document.setText(content) }
