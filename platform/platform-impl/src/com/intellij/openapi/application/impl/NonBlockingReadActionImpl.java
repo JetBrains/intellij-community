@@ -75,7 +75,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   private final ContextConstraint @NotNull [] myConstraints;
   private final BooleanSupplier @NotNull [] myCancellationConditions;
   private final Set<? extends Disposable> myDisposables;
-  private final @Nullable @Unmodifiable List<?> myCoalesceEquality;
+  private final @Nullable @Unmodifiable ListWithFixedHashCode myCoalesceEquality;
   private final @Nullable ProgressIndicator myProgressIndicator;
   /** Original computation passed in */
   private final Callable<? extends T> myOriginalComputation;
@@ -84,12 +84,37 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   @TestOnly
   private static final Set<Submission<?>> ourTasksForTestMode = ConcurrentCollectionFactory.createConcurrentSet();
-  private static final Map<List<?>, Submission<?>> ourTasksByEquality = new HashMap<>();
+  private static final Map<ListWithFixedHashCode, Submission<?>> ourTasksByEquality = new HashMap<>();
   private static final SubmissionTracker ourUnboundedSubmissionTracker = new SubmissionTracker();
 
   /* ======================== monitoring: ================================================= */
   private static final boolean ENABLE_OTEL_MONITORING = getBooleanProperty("idea.non-blocking-action.enable-monitoring", true);
   private static final @Nullable OTelMonitor MONITOR;
+  // to protect against incorrectly written hashCode() in equality objects
+  private static class ListWithFixedHashCode {
+    private final int myHashCode;
+    private final @NotNull Object @NotNull [] myEquality;
+
+    private ListWithFixedHashCode(@NotNull Object @NotNull... equality) {
+      myHashCode = Arrays.hashCode(equality);
+      myEquality = equality;
+    }
+
+    @Override
+    public int hashCode() {
+      return myHashCode;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof ListWithFixedHashCode ol && myHashCode == ol.myHashCode && Arrays.equals(myEquality, ol.myEquality);
+    }
+
+    @Override
+    public String toString() {
+      return "ListWithFixedHashCode:"+myHashCode+":"+Arrays.toString(myEquality);
+    }
+  }
 
   static {
     LOG.info("OTel monitoring for NonBlockingReadAction is " + (ENABLE_OTEL_MONITORING ? "enabled" : "disabled"));
@@ -116,7 +141,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
                                     ContextConstraint @NotNull [] constraints,
                                     BooleanSupplier @NotNull [] cancellationConditions,
                                     @NotNull Set<? extends Disposable> disposables,
-                                    @Unmodifiable @Nullable List<?> coalesceEquality,
+                                    @Unmodifiable @Nullable ListWithFixedHashCode coalesceEquality,
                                     @Nullable ProgressIndicator progressIndicator) {
     myOriginalComputation = computation;
     myActualComputation = MONITOR == null ? computation :
@@ -206,7 +231,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       throw new IllegalArgumentException("Equality must not contain null but got: " + Arrays.toString(equality));
     }
     return new NonBlockingReadActionImpl<>(myOriginalComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions,
-                                           myDisposables, List.of(equality), myProgressIndicator);
+                                           myDisposables, new ListWithFixedHashCode(equality.clone()), myProgressIndicator);
   }
 
   private static boolean isTooCommon(Object o) {
@@ -438,7 +463,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       }
     }
 
-    void submitOrScheduleCoalesced(@NotNull List<?> coalesceEquality) {
+    void submitOrScheduleCoalesced(@NotNull ListWithFixedHashCode coalesceEquality) {
       synchronized (ourTasksByEquality) {
         if (isDone()) return;
 
@@ -844,7 +869,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   @TestOnly
   @VisibleForTesting
-  public static @NotNull Map<List<?>, Submission<?>> getTasksByEquality() {
+  public static @NotNull Object getTasksByEquality() {
     return ourTasksByEquality;
   }
 
