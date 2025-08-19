@@ -14,7 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.time.Instant;
+import java.time.*;
 import java.util.*;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
@@ -25,7 +25,17 @@ import static com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder.*;
 import static org.jetbrains.jps.util.Iterators.*;
 
 public class ZipOutputBuilderImpl implements ZipOutputBuilder {
-  private static final long ZERO_TIME = Instant.parse("1980-01-01T00:00:00.000Z").toEpochMilli();
+  
+  // ZipEntry internally stores time adjusted to the system default timezone.
+  // Setting entry modification time in 'milliseconds since epoch' will always result in conversion of the specified milliseconds value into the local time.
+  // This means that entries created in different timezones will have different local time values and will be considered 'different' by this data.
+  // Using the 'LocalDateTime' data structure with the fixed date-time when setting the time to a zip entry guarantees that the actual time
+  // will be stored exactly as specified and not converted to a local time using system default timezone.
+  // Using '01-January-1980 00:00:01' fixed date time ensures that only 'xdostime' field will be populated leaving extra field data empty.
+  private static final LocalDateTime ZERO_TIME = LocalDateTime.of(
+    LocalDate.of(1980 /* year */, 1 /* month */, 1 /* day */),
+    LocalTime.of(0 /* hour */, 0 /* minute */, 1 /* second */, 0 /* nanosecond */)
+  );
 
   private final Map<String, EntryData> myEntries = new TreeMap<>();
   private final Map<String, ZipEntry> myExistingDirectories = new HashMap<>();
@@ -329,7 +339,8 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
     entry.setCrc(myCrc.getValue());
     
     // ensure zip content is not considered 'changed' because of changed timestamps
-    entry.setTime(ZERO_TIME);
+    // calling 'setTimeLocal()' ensures the passed value will be stored as-is and will not be further converted  
+    entry.setTimeLocal(ZERO_TIME);
     return entry;
   }
 
