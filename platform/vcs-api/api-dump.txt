@@ -1139,10 +1139,6 @@ c:com.intellij.openapi.vcs.changes.ExternallyRenamedChange
 - isCopied():Z
 - setCopied(Z):V
 - setRenamedOrMovedTarget(com.intellij.openapi.vcs.FilePath):V
-com.intellij.openapi.vcs.changes.FilePathIconProvider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- getIcon(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.project.Project):javax.swing.Icon
-- getIcon(com.intellij.openapi.vcs.FilePath,Z,com.intellij.openapi.project.Project):javax.swing.Icon
 e:com.intellij.openapi.vcs.changes.IgnoreSettingsType
 - java.lang.Enum
 - sf:FILE:com.intellij.openapi.vcs.changes.IgnoreSettingsType

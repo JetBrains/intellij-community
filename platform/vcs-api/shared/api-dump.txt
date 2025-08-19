@@ -26,6 +26,10 @@ f:com.intellij.openapi.vcs.changes.ChangeListChange
 - f:getChangeListName():java.lang.String
 f:com.intellij.openapi.vcs.changes.ChangeListChange$Companion
 - f:replaceChangeContents(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.changes.ContentRevision,com.intellij.openapi.vcs.changes.ContentRevision):com.intellij.openapi.vcs.changes.Change
+com.intellij.openapi.vcs.changes.FilePathIconProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- getIcon(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.project.Project):javax.swing.Icon
+- getIcon(com.intellij.openapi.vcs.FilePath,Z,com.intellij.openapi.project.Project):javax.swing.Icon
 com.intellij.openapi.vcs.changes.InclusionListener
 - java.util.EventListener
 - a:inclusionChanged():V

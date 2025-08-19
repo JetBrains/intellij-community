@@ -17,14 +17,12 @@ import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.platform.vcs.changes.ChangesUtil.getFilePath
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.PlatformIcons
 import com.intellij.vcs.commit.CommitSessionCollector
 import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vcsUtil.VcsUtil.getVcsFor
 import java.awt.Color
 import java.awt.event.MouseEvent
-import javax.swing.Icon
 import javax.swing.tree.TreePath
 
 internal class BackendChangesTreeCompatibilityProvider : ChangesTreeCompatibilityProvider {
@@ -40,19 +38,6 @@ internal class BackendChangesTreeCompatibilityProvider : ChangesTreeCompatibilit
 
   override fun getPresentablePath(project: Project?, path: VirtualFile, useRelativeRootPaths: Boolean, acceptEmptyPath: Boolean): @NlsSafe String =
     VcsUtil.getPresentablePath(project, path, true, true)
-
-  override fun getIcon(project: Project?, filePath: FilePath, isDirectory: Boolean): Icon? {
-    val icon = FilePathIconProvider.EP_NAME.computeSafeIfAny({ provider -> provider.getIcon(filePath, isDirectory, project) })
-    if (icon != null) {
-      return icon
-    }
-
-    if (isDirectory) {
-      return PlatformIcons.FOLDER_ICON
-    }
-
-    return VcsUtil.getIcon(project, filePath)
-  }
 
   override fun getFileStatus(project: Project, file: VirtualFile): FileStatus =
     ChangeListManager.getInstance(project).getStatus(file)

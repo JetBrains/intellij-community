@@ -5,13 +5,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider;
+import com.intellij.openapi.vcs.changes.FilePathIconProvider;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.vcs.VcsUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -101,7 +103,17 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
    * @param isDirectory directory flag is specified explicitly, as {@link FilePath#isDirectory()} can be unreliable
    */
   public void setIcon(@NotNull FilePath filePath, boolean isDirectory) {
-    setIcon(ChangesTreeCompatibilityProvider.getInstance().getIcon(myProject, filePath, isDirectory));
+    Icon icon = FilePathIconProvider.EP_NAME.computeSafeIfAny(provider -> provider.getIcon(filePath, isDirectory, myProject));
+    if (icon != null) {
+      setIcon(icon);
+      return;
+    }
+
+    if (isDirectory) {
+      setIcon(PlatformIcons.FOLDER_ICON);
+      return;
+    }
+    setIcon(VcsUtil.getIcon(myProject, filePath));
   }
 
   public void setBackgroundInsets(@Nullable JBInsets backgroundInsets) {
