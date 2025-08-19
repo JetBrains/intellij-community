@@ -26,7 +26,6 @@ import com.intellij.notebook.editor.BackedVirtualFileProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.AsyncExecutionServiceImpl;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -198,15 +197,24 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   private synchronized void clearReferences() {
-    myUpdateProgress.values().forEach(ProgressIndicator::cancel);
+    processIndicators(indicator -> {indicator.cancel(); return true;});
     // avoid leak of highlight session via user data
     myUpdateProgress.clear();
     myUpdateRunnableFuture.cancel(true);
     updateRequests.set(0);
   }
 
+  private boolean processIndicators(@NotNull Processor<? super DaemonProgressIndicator> action) {
+    for (DaemonProgressIndicator indicator : new ArrayList<>(myUpdateProgress.values())) {
+      if (!action.process(indicator)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   synchronized void clearProgressIndicator() {
-    myUpdateProgress.values().forEach(HighlightingSessionImpl::clearAllHighlightingSessions);
+    processIndicators(indicator -> {HighlightingSessionImpl.clearAllHighlightingSessions(indicator); return true;});
   }
 
   @TestOnly
@@ -929,12 +937,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   @Override
   public synchronized boolean isRunning() {
-    for (DaemonProgressIndicator indicator : myUpdateProgress.values()) {
-      if (!indicator.isCanceled()) {
-        return true;
-      }
-    }
-    return false;
+    return !processIndicators(indicator -> indicator.isCanceled());
   }
 
   @Override
@@ -1039,10 +1042,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     if (myDisposed || myProject.isDisposed() || myProject.getMessageBus().isDisposed()) {
       return;
     }
-    for (Map.Entry<FileEditor, DaemonProgressIndicator> entry : new ArrayList<>(myUpdateProgress.entrySet())) {
-      DaemonProgressIndicator updateProgress = entry.getValue();
-      cancelIndicator(updateProgress, toRestartAlarm, null, reason);
-    }
+    processIndicators(indicator -> {
+      cancelIndicator(indicator, toRestartAlarm, null, reason);
+      return true;
+    });
     myUpdateProgress.clear();
     myPassExecutorService.cancelAll(false, reason);
     daemonCancelEventCount.incrementAndGet();
