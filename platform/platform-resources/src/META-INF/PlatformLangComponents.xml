@@ -114,7 +114,7 @@
     <registryKey
       key="build.toolwindow.split.tree"
       description="Use split implementation (frontend/backend) of Build tool window"
-      defaultValue="false"
+      defaultValue="true"
     />
 
     <projectService serviceInterface="com.intellij.toolWindow.ToolWindowStripeManager"
