@@ -295,6 +295,9 @@
     <applicationService serviceInterface="com.intellij.ide.actions.searcheverywhere.TabsCustomizationStrategy"
                         serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlTabsCustomizationStrategy"/>
 
+    <applicationService serviceInterface="com.intellij.platform.searchEverywhere.frontend.SeTabCustomizer"
+                        serviceImplementation="com.intellij.platform.searchEverywhere.frontend.SeIdentityTabCustomizer"/>"
+
     <applicationService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"/>
 
     <applicationService serviceInterface="com.intellij.openapi.editor.EditorCopyPasteHelper"
