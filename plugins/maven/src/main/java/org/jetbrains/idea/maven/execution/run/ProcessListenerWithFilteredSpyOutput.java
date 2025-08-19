@@ -5,6 +5,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenSimpleConsoleEventsBuffer;
@@ -14,9 +15,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 //this listener used for proper console output in buildtools - to hide or show spy log in process out, it is unrelated to build events processing
 public class ProcessListenerWithFilteredSpyOutput implements ProcessListener {
+  private static final Pattern CMD_END_PATTERN
+    = Pattern.compile("\\((.)\\s*/\\s*[^)]\\)\\?");
   private final ProcessListener myListener;
   private final boolean myIsWindowsCmd;
   private final MavenSimpleConsoleEventsBuffer mySimpleConsoleEventsBuffer;
@@ -52,32 +57,41 @@ public class ProcessListenerWithFilteredSpyOutput implements ProcessListener {
   @Override
   public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
     myTerminateEventReceived.set(true);
-    if (myIsWindowsCmd) {
-      sayYes(2);
-    }
     myListener.processWillTerminate(event, willBeDestroyed);
-  }
-
-  private void sayYes(int times) {
-    for (int i = 0; i < times; i++) {
-      try {
-        OutputStream input = myProcessHandler.getProcessInput();
-        if (input == null) {
-          MavenLog.LOG.warn("Cannot say yes to exit because process unput is null");
-          break;
-        }
-        input.write("y\r\n".getBytes(StandardCharsets.UTF_8));
-      }
-      catch (IOException e) {
-        MavenLog.LOG.warn("exception while saying yes to exit:", e);
-        break;
-      }
-    }
   }
 
   @Override
   public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-    if (myTerminateEventReceived.get()) return;
+    if (myTerminateEventReceived.get() && myIsWindowsCmd) {
+      if (tryToExtractYesButton(event.getText()) && !Registry.is("maven.spy.events.debug")) return;
+    }
     mySimpleConsoleEventsBuffer.addText(event.getText(), outputType);
+  }
+
+  private boolean tryToExtractYesButton(@NlsSafe String text) {
+    Matcher m = CMD_END_PATTERN.matcher(text);
+    if (!m.find()) {
+      return false;
+    }
+
+    var yesKey = m.group(1);
+    MavenLog.LOG.debug("Exit message from bat script: " + text + "  extracted yesCode: " + yesKey);
+    sayYes(yesKey);
+    return true;
+  }
+
+  private void sayYes(String yes) {
+    try {
+      OutputStream input = myProcessHandler.getProcessInput();
+      if (input == null) {
+        MavenLog.LOG.warn("Cannot say yes to exit because process unput is null");
+        return;
+      }
+
+      input.write((yes + "\r\n").getBytes(StandardCharsets.UTF_8));
+    }
+    catch (IOException e) {
+      MavenLog.LOG.warn("exception while saying yes to exit:", e);
+    }
   }
 }
