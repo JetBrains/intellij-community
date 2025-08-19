@@ -581,6 +581,11 @@ com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager$Visib
 com.intellij.openapi.editor.markup.LineMarkerRendererEx
 - com.intellij.openapi.editor.markup.LineMarkerRenderer
 - a:getPosition():com.intellij.openapi.editor.markup.LineMarkerRendererEx$Position
+com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbarSuppressor
+- sf:Companion:com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbarSuppressor$Companion
+- a:isSuppressed(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider,com.intellij.openapi.actionSystem.DataContext):Z
+f:com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbarSuppressor$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 - a:getAutoHideable():Z
 - a:getBackgroundAlpha():F
