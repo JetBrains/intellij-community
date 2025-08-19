@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.impl.wsl.WslConstants.WSLENV
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.plugins.terminal.isWslCommand
 
 object TerminalEnvironment {
@@ -38,7 +39,7 @@ internal class WslEnvInterop(eelDescriptor: EelDescriptor, shellCommand: Mutable
   private val enabled: Boolean = eelDescriptor.osFamily.isWindows &&
                                  eelDescriptor == LocalEelDescriptor &&
                                  isWslCommand(shellCommand)
-  private val envNamesToPass: MutableSet<String> = mutableSetOf()
+  private val envNamesToPass: MutableSet<String> = CollectionFactory.createCaseInsensitiveStringSet()
 
   fun passEnvsToWsl(envNames: Collection<String>) {
     if (enabled) {
