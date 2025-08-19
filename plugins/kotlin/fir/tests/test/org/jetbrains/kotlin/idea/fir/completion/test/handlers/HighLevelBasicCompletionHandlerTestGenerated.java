@@ -2237,6 +2237,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             runTest("../../completion/testData/handlers/InnerClass.kt");
         }
 
+        @TestMetadata("InnerClassWithTypeArgument.kt")
+        public void testInnerClassWithTypeArgument() throws Exception {
+            runTest("../../completion/testData/handlers/InnerClassWithTypeArgument.kt");
+        }
+
         @TestMetadata("InsertFqnForJavaClass.kt")
         public void testInsertFqnForJavaClass() throws Exception {
             runTest("../../completion/testData/handlers/InsertFqnForJavaClass.kt");
