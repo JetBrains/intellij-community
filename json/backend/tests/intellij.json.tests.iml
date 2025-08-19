@@ -25,7 +25,6 @@
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.langInjection.plugin" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jsonpath" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />

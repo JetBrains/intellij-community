@@ -1,6 +1,5 @@
 <idea-plugin package="com.intellij.python.langInjection">
   <dependencies>
-    <plugin id="org.intellij.intelliLang"/>
     <module name="intellij.platform.langInjection"/>
   </dependencies>
   <extensions defaultExtensionNs="org.intellij.intelliLang">

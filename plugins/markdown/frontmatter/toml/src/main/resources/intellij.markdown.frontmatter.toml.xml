@@ -1,6 +1,5 @@
 <idea-plugin package="org.intellij.plugins.markdown.frontmatter.toml">
   <dependencies>
-    <plugin id="org.intellij.intelliLang"/>
     <module name="intellij.platform.langInjection"/>
     <module name="intellij.platform.backend"/>
     <plugin id="org.toml.lang"/>

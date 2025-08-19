@@ -35,7 +35,6 @@ jvm_library(
     "//RegExpSupport:regexp",
     "//RegExpSupport:regexp_test_lib",
     "//plugins/IntelliLang:langInjection",
-    "//plugins/IntelliLang/plugin",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/IntelliLang/backend",
   ]

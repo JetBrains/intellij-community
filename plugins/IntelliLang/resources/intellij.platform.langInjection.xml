@@ -1,4 +1,6 @@
 <idea-plugin>
+  <module value="org.intellij.intelliLang"/>
+
   <dependencies>
     <module name="intellij.regexp"/>
   </dependencies>

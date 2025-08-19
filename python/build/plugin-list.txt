@@ -10,7 +10,6 @@ intellij.editorconfig.plugin
 intellij.featuresTrainer
 intellij.grazie
 intellij.markdown
-intellij.platform.langInjection.plugin
 intellij.properties
 intellij.restructuredtext
 intellij.searchEverywhereMl

@@ -186,7 +186,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates.shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.scripting.k1" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.langInjection.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.langInjection.backend" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.scripting.shared" scope="TEST" />
   </component>

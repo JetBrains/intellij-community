@@ -706,7 +706,6 @@ platform/xdebugger-testFramework
 plugins/ByteCodeViewer
 plugins/IntelliLang
 plugins/IntelliLang/backend
-plugins/IntelliLang/plugin
 plugins/IntelliLang/tests
 plugins/ant
 plugins/ant/jps-plugin

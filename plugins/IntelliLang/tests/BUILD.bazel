@@ -41,7 +41,6 @@ jvm_library(
     "//java/langInjection/jps",
     "@lib//:asm",
     "//platform/util/jdom",
-    "//plugins/IntelliLang/plugin",
     "//plugins/IntelliLang/backend",
     "//plugins/markdown/plugin:plugin-main",
   ],

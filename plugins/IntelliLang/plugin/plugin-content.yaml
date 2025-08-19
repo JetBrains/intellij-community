@@ -1,9 +1,0 @@
-- name: lib/modules/intellij.platform.langInjection.backend.jar
-  contentModules:
-  - name: intellij.platform.langInjection.backend
-- name: lib/modules/intellij.platform.langInjection.jar
-  contentModules:
-  - name: intellij.platform.langInjection
-- name: lib/platform-langInjection-plugin.jar
-  modules:
-  - name: intellij.platform.langInjection.plugin
