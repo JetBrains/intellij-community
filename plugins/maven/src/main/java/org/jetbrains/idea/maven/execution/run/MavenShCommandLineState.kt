@@ -187,6 +187,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
               onTerminate?.invoke()
             }
           })
+          it.setShouldKillProcessSoftly(true)
         }
     }
     catch (e: ExecuteProcessException) {
