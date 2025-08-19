@@ -14,7 +14,7 @@ import com.intellij.java.debugger.impl.shared.engine.NodeRendererDto
 import com.intellij.java.debugger.impl.shared.engine.NodeRendererId
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManager
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.XDescriptor
 import com.sun.jdi.ObjectReference
@@ -63,13 +63,16 @@ internal fun getJavaValueXDescriptor(javaValue: JavaValue): CompletableFuture<XD
   val cs = javaValue.evaluationContext.suspendContext.coroutineScope
   return cs.future {
     val renderersUpdatedFlow = javaValue.evaluationContext.debugProcess.renderersUpdatedFlow
-    JavaValueDescriptor(
+    val xDescriptor = JavaValueDescriptor(
       valueDescriptor.isString(),
       objectReferenceInfo,
       valueDescriptor.lastRenderer?.toRpc(),
       valueDescriptor.lastRendererFlow.map { it?.toRpc() }.toRpc(),
       renderersUpdatedFlow.map { fetchApplicableNodeRenderers(javaValue).map { it.toRpc() } }.toRpc()
     )
+    // for actions to work in monolith
+    FrontendDescriptorStateManager.getInstance(valueDescriptor.project).registerDescriptor(xDescriptor, cs)
+    xDescriptor
   }
 }
 
