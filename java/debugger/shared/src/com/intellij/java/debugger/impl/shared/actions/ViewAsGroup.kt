@@ -21,7 +21,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import kotlinx.coroutines.launch
 
-internal class ViewAsGroup : ActionGroup(Presentation.NULL_STRING, true), DumbAware {
+internal class ViewAsGroup : ActionGroup(Presentation.NULL_STRING, true), DumbAware, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
@@ -65,17 +65,10 @@ internal class ViewAsGroup : ActionGroup(Presentation.NULL_STRING, true), DumbAw
     if (rs.isEmpty()) return EMPTY_ARRAY
     val children = mutableListOf<AnAction>()
     val actionManager = ActionManager.getInstance()
-    val viewAsActions = (actionManager.getAction("Debugger.Representation") as DefaultActionGroup)
-      .getChildren(actionManager)
-    for (viewAsAction in viewAsActions) {
-      if (viewAsAction is AutoRendererAction) {
-        if (rs.size > 1) {
-          children.add(viewAsAction)
-        }
-      }
-      else {
-        children.add(viewAsAction)
-      }
+    children.add(actionManager.getAction("Debugger.CreateRenderer"))
+    if (rs.size > 1) {
+      children.add(Separator.getInstance())
+      children.add(actionManager.getAction("Debugger.AutoRenderer"))
     }
 
     if (!children.isEmpty()) {
@@ -88,44 +81,38 @@ internal class ViewAsGroup : ActionGroup(Presentation.NULL_STRING, true), DumbAw
   override fun update(event: AnActionEvent) {
     event.presentation.setEnabledAndVisible(getSelectedJavaValuesWithDescriptors(event).isNotEmpty())
   }
+}
 
-  companion object {
-    private fun getApplicableRenderers(project: Project, values: List<JavaValueDescriptor>): List<NodeRendererDto> {
-      var res: MutableList<NodeRendererDto>? = null
-      for (descriptor in values) {
-        val state = descriptor.getState(project) ?: return emptyList()
-        val list = state.applicableRenderers
-        if (res == null) {
-          res = list.toMutableList()
-        }
-        else {
-          res.retainAll(list)
-        }
-      }
-      return res ?: emptyList()
+private fun getApplicableRenderers(project: Project, values: List<JavaValueDescriptor>): List<NodeRendererDto> {
+  var res: MutableList<NodeRendererDto>? = null
+  for (descriptor in values) {
+    val state = descriptor.getState(project) ?: return emptyList()
+    val list = state.applicableRenderers
+    if (res == null) {
+      res = list.toMutableList()
     }
-
-    private fun getSelectedJavaValuesWithDescriptors(event: AnActionEvent): List<Triple<XValueNodeImpl, XValue, JavaValueDescriptor>> {
-      val selectedNodes = XDebuggerTree.getSelectedNodes(event.dataContext)
-      return selectedNodes.map { it to it.valueContainer }
-        .map { it to it.second.xValueDescriptorAsync?.getNow(null) }
-        .filter { it.second is JavaValueDescriptor }
-        .map { Triple(it.first.first, it.first.second, it.second as JavaValueDescriptor) }
-    }
-
-    private fun getSelectedJavaValueDescriptors(event: AnActionEvent): List<JavaValueDescriptor> {
-      return getSelectedJavaValuesWithDescriptors(event).map { it.third }
-    }
-
-    internal fun getSelectedNodesOfJavaValue(event: AnActionEvent): List<Pair<XValueNodeImpl, XValue>> {
-      return getSelectedJavaValuesWithDescriptors(event).map { it.first to it.second }
+    else {
+      res.retainAll(list)
     }
   }
+  return res ?: emptyList()
+}
+
+private fun getSelectedJavaValuesWithDescriptors(event: AnActionEvent): List<Triple<XValueNodeImpl, XValue, JavaValueDescriptor>> {
+  val selectedNodes = XDebuggerTree.getSelectedNodes(event.dataContext)
+  return selectedNodes.map { it to it.valueContainer }
+    .map { it to it.second.xValueDescriptorAsync?.getNow(null) }
+    .filter { it.second is JavaValueDescriptor }
+    .map { Triple(it.first.first, it.first.second, it.second as JavaValueDescriptor) }
+}
+
+private fun getSelectedJavaValueDescriptors(event: AnActionEvent): List<JavaValueDescriptor> {
+  return getSelectedJavaValuesWithDescriptors(event).map { it.third }
 }
 
 internal fun setRendererForNodes(e: AnActionEvent, rendererId: NodeRendererId?) {
   val session = DebuggerUIUtil.getSessionProxy(e) ?: return
-  val selectedNodesWithJavaValues = ViewAsGroup.getSelectedNodesOfJavaValue(e)
+  val selectedNodesWithJavaValues = getSelectedJavaValuesWithDescriptors(e).map { it.first to it.second }
 
   session.coroutineScope.launch {
     val xValues = selectedNodesWithJavaValues.map { it.second }

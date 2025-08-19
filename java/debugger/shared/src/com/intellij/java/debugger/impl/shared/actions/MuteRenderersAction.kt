@@ -2,7 +2,6 @@
 package com.intellij.java.debugger.impl.shared.actions
 
 import com.intellij.java.debugger.impl.shared.SharedJavaDebuggerSession
-import com.intellij.java.debugger.impl.shared.SharedJavaDebuggerSession.Companion
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionApi
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -28,7 +27,7 @@ internal class MuteRenderersAction : ToggleAction(), DumbAware, ActionRemoteBeha
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    val javaSession = Companion.findSession(e)
+    val javaSession = SharedJavaDebuggerSession.findSession(e)
     e.presentation.isEnabledAndVisible = javaSession != null
   }
 

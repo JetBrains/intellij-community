@@ -55,5 +55,14 @@
       <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend" anchor="last"/>
     </action>
+    <group id="Debugger.ViewAsGroup" class="com.intellij.java.debugger.impl.shared.actions.ViewAsGroup">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend" anchor="last"/>
+    </group>
+    <action id="Debugger.AutoRenderer" class="com.intellij.java.debugger.impl.shared.actions.AutoRendererAction"/>
+    <action id="Debugger.MuteRenderers" class="com.intellij.java.debugger.impl.shared.actions.MuteRenderersAction">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.ViewAsGroup"/>
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend" anchor="after" relative-to-action="Debugger.ViewAsGroup"/>
+    </action>
   </actions>
 </idea-plugin>
