@@ -6,20 +6,34 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class SharedJavaDebuggerSession(dto: JavaDebuggerSessionDto, private val cs: CoroutineScope) {
   private val stateFlow = dto.stateFlow.toFlow()
     .stateIn(cs, SharingStarted.Eagerly, dto.initialState)
-  private val areRenderersMutedFlow = dto.areRenderersMutedFlow.toFlow()
-    .stateIn(cs, SharingStarted.Eagerly, dto.areRenderersMutedInitial)
+  private val areRenderersMutedFlow = MutableStateFlow(dto.areRenderersMutedInitial)
+
+  init {
+    cs.launch {
+      dto.areRenderersMutedFlow.toFlow().collect {
+        areRenderersMutedFlow.value = it
+      }
+    }
+  }
 
   val isAttached: Boolean get() = stateFlow.value.isAttached
   val isEvaluationPossible: Boolean get() = stateFlow.value.isEvaluationPossible
-  val areRenderersMuted: Boolean get() = areRenderersMutedFlow.value
+
+  var areRenderersMuted: Boolean
+    get() = areRenderersMutedFlow.value
+    set(value) {
+      areRenderersMutedFlow.value = value
+    }
 
   internal var isAsyncStacksEnabled: Boolean = true
 

@@ -19,7 +19,9 @@ internal class MuteRenderersAction : ToggleAction(), DumbAware, ActionRemoteBeha
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
+    val javaSession = SharedJavaDebuggerSession.findSession(e) ?: return
     val session = DebuggerUIUtil.getSessionProxy(e) ?: return
+    javaSession.areRenderersMuted = state
     session.coroutineScope.launch {
       JavaDebuggerSessionApi.getInstance().muteRenderers(session.id, state)
     }
