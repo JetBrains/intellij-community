@@ -199,7 +199,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
   }
 
   override fun getMergedInfos(): Array<UsageInfo> {
-    if (isLoaded && defaultMergedRanges.isNotEmpty() && cachedUsageInfos.isEmpty()) {
+    if (!isLoaded && defaultMergedRanges.isNotEmpty() && cachedUsageInfos.isEmpty()) {
       initialize()
     }
     return cachedUsageInfos.toTypedArray()
