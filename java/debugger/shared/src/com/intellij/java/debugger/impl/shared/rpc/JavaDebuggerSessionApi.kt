@@ -38,6 +38,8 @@ interface JavaDebuggerSessionApi : RemoteApi<Unit> {
 
   suspend fun setRenderer(rendererId: NodeRendererId?, xValueIds: List<XValueId>)
 
+  suspend fun muteRenderers(sessionId: XDebugSessionId, state: Boolean)
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): JavaDebuggerSessionApi {

@@ -3,6 +3,7 @@ package com.intellij.java.debugger.impl.backend
 
 import com.intellij.debugger.actions.*
 import com.intellij.debugger.engine.*
+import com.intellij.debugger.settings.NodeRendererSettings
 import com.intellij.execution.filters.ExceptionFilters
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.java.debugger.impl.shared.engine.NodeRendererId
@@ -85,6 +86,13 @@ internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
     for (xValueModel in xValueModels) {
       xValueModel.computeValuePresentation()
     }
+  }
+
+  override suspend fun muteRenderers(sessionId: XDebugSessionId, state: Boolean) {
+    val xSession = sessionId.findValue() ?: return
+    val renderersFlow = MuteRendererUtils.getFlow(xSession.sessionData)
+    renderersFlow.value = state
+    NodeRendererSettings.getInstance().fireRenderersChanged()
   }
 
   override suspend fun resumeThread(executionStackId: XExecutionStackId) {

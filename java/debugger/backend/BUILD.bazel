@@ -33,6 +33,8 @@ jvm_library(
     "//java/execution/openapi:java-execution",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/jdom",
   ],
   runtime_deps = [":backend_resources"]
 )

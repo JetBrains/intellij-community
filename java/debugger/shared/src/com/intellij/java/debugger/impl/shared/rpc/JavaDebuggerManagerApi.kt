@@ -28,6 +28,8 @@ interface JavaDebuggerManagerApi : RemoteApi<Unit> {
 data class JavaDebuggerSessionDto(
   val initialState: JavaSessionState,
   val stateFlow: RpcFlow<JavaSessionState>,
+  val areRenderersMutedInitial: Boolean,
+  val areRenderersMutedFlow: RpcFlow<Boolean>,
 )
 
 @ApiStatus.Internal

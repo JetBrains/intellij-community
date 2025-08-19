@@ -2,6 +2,8 @@
 package com.intellij.java.debugger.impl.shared
 
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionDto
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.SharingStarted
@@ -12,13 +14,24 @@ import org.jetbrains.annotations.ApiStatus
 class SharedJavaDebuggerSession(dto: JavaDebuggerSessionDto, private val cs: CoroutineScope) {
   private val stateFlow = dto.stateFlow.toFlow()
     .stateIn(cs, SharingStarted.Eagerly, dto.initialState)
+  private val areRenderersMutedFlow = dto.areRenderersMutedFlow.toFlow()
+    .stateIn(cs, SharingStarted.Eagerly, dto.areRenderersMutedInitial)
 
   val isAttached: Boolean get() = stateFlow.value.isAttached
   val isEvaluationPossible: Boolean get() = stateFlow.value.isEvaluationPossible
+  val areRenderersMuted: Boolean get() = areRenderersMutedFlow.value
 
   internal var isAsyncStacksEnabled: Boolean = true
 
   fun close() {
     cs.cancel()
+  }
+
+  companion object {
+    fun findSession(e: AnActionEvent): SharedJavaDebuggerSession? {
+      val project = e.project ?: return null
+      val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return null
+      return SharedJavaDebuggerManager.getInstance(project).getJavaSession(sessionProxy.id)
+    }
   }
 }
