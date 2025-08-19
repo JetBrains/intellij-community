@@ -48,7 +48,10 @@ private class EelTestFileSystemPosixApi(override val descriptor: EelTestDescript
   }
 
   override suspend fun createTemporaryFile(options: EelFileSystemApi.CreateTemporaryEntryOptions): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> {
-    TODO("Not yet implemented")
+    return wrapIntoEelResult {
+      val nioTempFile = Files.createTempFile(options.prefix, options.suffix)
+      Path.of(nioTempFile.toString()).asEelPath()
+    }
   }
 }
 
