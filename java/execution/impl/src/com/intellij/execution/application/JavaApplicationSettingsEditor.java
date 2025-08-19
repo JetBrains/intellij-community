@@ -177,8 +177,18 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     final var mainClassPanel = new MainClassPanel(classpathCombo);
     myMainClassFragment =
       new SettingsEditorFragment<>("mainClass", ExecutionBundle.message("application.configuration.main.class"), null, mainClassPanel, 20,
-                                   (configuration, component) -> mainClassPanel.setClassName(configuration.getMainClassName()),
-                                   (configuration, component) -> configuration.setMainClassName(mainClassPanel.getClassName()),
+                                   (configuration, component) -> {
+                                     // Copy run configuration settings into the editor state.
+                                     // Called on the initial display of the run configuration.
+                                     String classNameInSettings = configuration.getMainClassName();
+                                     mainClassPanel.setClassName(classNameInSettings);
+                                   },
+                                   (configuration, component) -> {
+                                     // Copy the editor state into the run configuration settings.
+                                     // Note: Some alarm calls this closure (the one we are in right now) every 0.5 seconds.
+                                     String classNameInEditor = mainClassPanel.getClassName();
+                                     configuration.setMainClassName(classNameInEditor);
+                                   },
                                    Predicates.alwaysTrue()) {
         @Override
         public boolean isReadyForApply() {
