@@ -37,7 +37,10 @@ interface FloatingToolbarProvider {
 
   val actionGroup: ActionGroup
 
-  fun isApplicable(dataContext: DataContext): Boolean = true
+  fun isApplicable(dataContext: DataContext): Boolean {
+    val suppressors = EditorFloatingToolbarSuppressor.EP_NAME.extensionList
+    return !suppressors.any { it.isSuppressed(this, dataContext) }
+  }
 
   fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {}
 
