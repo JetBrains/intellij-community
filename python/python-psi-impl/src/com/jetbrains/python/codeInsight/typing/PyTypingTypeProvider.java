@@ -4,11 +4,14 @@ package com.jetbrains.python.codeInsight.typing;
 import com.dynatrace.hash4j.hashing.HashValue128;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -39,6 +42,8 @@ import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.search.PySearchUtilBase;
+import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.psi.types.PyTypeParameterMapping.Option;
 import one.util.streamex.StreamEx;
@@ -1130,7 +1135,13 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   private static @Nullable Ref<PyType> getClassType(@NotNull PyExpression typeHint, @NotNull PsiElement element, @NotNull Context context) {
     if (typeHint instanceof PyReferenceExpression && element instanceof PyTypedElement) {
       TypeEvalContext typeContext = context.getTypeContext();
-      final PyType type = typeContext.getType((PyTypedElement)element);
+      final PyType type;
+      if (context.myUseFqn) {
+        var class_ = PyPsiFacade.getInstance(element.getProject()).createClassByQName(element.getText(), element);
+        type = class_ != null ? class_.getType(typeContext) : null;
+      }
+      else
+        type = typeContext.getType((PyTypedElement)element);
       if (type instanceof PyClassLikeType classLikeType) {
         if (classLikeType.isDefinition()) {
           // If we're interpreting a type hint like "MyGeneric" that is not followed by a list of type arguments (e.g. MyGeneric[int]),
@@ -1296,7 +1307,9 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   private static boolean resolvesToQualifiedNames(@NotNull PyExpression expression, @NotNull Context context, String... names) {
     if (!context.myUseFqn) return resolvesToQualifiedNames(expression, context.myContext, names);
     if (!(expression instanceof PyReferenceExpression referenceExpression)) return false;
-    var qName = referenceExpression.getQualifier().getName() + "." + expression.getName();
+    var qualifier = referenceExpression.getQualifier();
+    if (qualifier == null) return false;
+    var qName = qualifier.getName() + "." + expression.getName();
     return ContainerUtil.exists(names, name -> name.equals(qName));
   }
 
