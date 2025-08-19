@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.platform.locking.impl.IntelliJLockingUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.RunnableCallable;
@@ -83,7 +82,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   /** Computation to be executed -- possible, wrapped into some monitoring */
   private final Callable<? extends T> myActualComputation;
 
-  private static final Set<Submission<?>> ourTasks = ConcurrentCollectionFactory.createConcurrentSet();
+  @TestOnly
+  private static final Set<Submission<?>> ourTasksForTestMode = ConcurrentCollectionFactory.createConcurrentSet();
   private static final Map<List<?>, Submission<?>> ourTasksByEquality = new HashMap<>();
   private static final SubmissionTracker ourUnboundedSubmissionTracker = new SubmissionTracker();
 
@@ -301,7 +301,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
       myStartTrace = hasUnboundedExecutor() ? ourUnboundedSubmissionTracker.preventTooManySubmissions() : null;
       if (shouldTrackInTests()) {
-        ourTasks.add(this);
+        ourTasksForTestMode.add(this);
       }
       if (!builder.myDisposables.isEmpty()) {
         ApplicationManager.getApplication().runReadAction(() -> expireWithDisposables(this.builder.myDisposables));
@@ -408,7 +408,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         ourUnboundedSubmissionTracker.unregisterSubmission(myStartTrace);
       }
       if (shouldTrackInTests()) {
-        ourTasks.remove(this);
+        ourTasksForTestMode.remove(this);
       }
     }
 
@@ -464,7 +464,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
 
     private void reportCoalescingConflict(@NotNull Submission<?> current) {
-      ourTasks.remove(this); // the next line will throw in tests and leave this submission hanging forever
+      ourTasksForTestMode.remove(this); // the next line will throw in tests and leave this submission hanging forever
       LOG.error("Same coalesceBy arguments are already used by " + current.getComputationOrigin() + " so they can cancel each other. " +
                 "Please make them more unique.");
     }
@@ -502,7 +502,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
             boolean computationSuccessful;
             if (AppExecutorUtil.propagateContext()) {
               computationSuccessful = ThreadContext.installThreadContext(myChildContext.getContext(), true, () -> attemptComputation());
-            } else {
+            }
+            else {
               computationSuccessful = attemptComputation();
             }
             if (!computationSuccessful) {
@@ -804,7 +805,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   public static void waitForAsyncTaskCompletion() {
     ThreadingAssertions.assertEventDispatchThread();
     assert ApplicationManager.getApplication()==null || !ApplicationManager.getApplication().isWriteAccessAllowed();
-    for (Submission<?> task : ourTasks) {
+    for (Submission<?> task : ourTasksForTestMode) {
       TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
         waitForTask(task);
         return Unit.INSTANCE;
