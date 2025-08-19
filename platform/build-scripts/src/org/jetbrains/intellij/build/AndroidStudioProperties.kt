@@ -21,6 +21,7 @@ import org.jetbrains.intellij.build.impl.PatchOverwriteMode
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAuto
+import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiPredicate
@@ -177,6 +178,10 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
         copyCidrLicense(spec)
       },
     ))
+
+    // Fill in the remaining plugin layouts (including "trivial-layout" plugins)
+    // so we can correctly patch all plugin layouts below.
+    productLayout.pluginLayouts = getPluginLayoutsByJpsModuleNames(bundledPlugins, productLayout).toPersistentList()
 
     // Patch plugin.xml files to ensure plugins are non-updatable. We want platform
     // plugins to always come from our own IntelliJ fork (which may have patches, for example).
