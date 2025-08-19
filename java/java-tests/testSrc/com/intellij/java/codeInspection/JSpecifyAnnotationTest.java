@@ -223,7 +223,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
     return container;
   }
 
-  private static class JSpecifyNullableStuffInspection extends NullableStuffInspection {
+  static class JSpecifyNullableStuffInspection extends NullableStuffInspection {
     private final Map<PsiElement, String> warnings;
 
     JSpecifyNullableStuffInspection(Map<PsiElement, String> warnings) {
@@ -273,7 +273,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   // Reports dataflow problems in code-analysis-conformant way
-  private static class JSpecifyDataFlowInspection extends DataFlowInspectionBase {
+  static class JSpecifyDataFlowInspection extends DataFlowInspectionBase {
     private final Map<PsiElement, String> warnings;
 
     JSpecifyDataFlowInspection(Map<PsiElement, String> warnings) {
