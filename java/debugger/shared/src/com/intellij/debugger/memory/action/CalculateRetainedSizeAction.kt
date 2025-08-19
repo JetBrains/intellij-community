@@ -2,7 +2,7 @@
 package com.intellij.debugger.memory.action
 
 import com.intellij.debugger.settings.DebuggerSettings
-import com.intellij.java.debugger.impl.shared.SharedJavaDebuggerManager
+import com.intellij.java.debugger.impl.shared.SharedJavaDebuggerSession
 import com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptor
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerLuxActionsApi
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -28,9 +28,7 @@ class CalculateRetainedSizeAction : XDebuggerTreeActionBase(), ActionRemoteBehav
   override fun isEnabled(node: XValueNodeImpl, e: AnActionEvent): Boolean {
     if (!super.isEnabled(node, e)) return false
 
-    val project = e.project ?: return false
-    val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return false
-    val javaSession = SharedJavaDebuggerManager.getInstance(project).getJavaSession(sessionProxy.id)
+    val javaSession = SharedJavaDebuggerSession.findSession(e)
 
     if (javaSession == null || !javaSession.isEvaluationPossible || !DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) {
       e.presentation.setVisible(false)

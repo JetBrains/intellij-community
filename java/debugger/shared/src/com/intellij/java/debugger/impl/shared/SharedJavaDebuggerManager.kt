@@ -14,11 +14,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
-@ApiStatus.Internal
-class SharedJavaDebuggerManager(private val project: Project, private val cs: CoroutineScope) {
+internal class SharedJavaDebuggerManager(private val project: Project, private val cs: CoroutineScope) {
   private val synchronousExecutor = Channel<suspend () -> Unit>(capacity = Integer.MAX_VALUE)
   private val debugSessions = hashMapOf<XDebugSessionId, SharedJavaDebuggerSession>()
 
