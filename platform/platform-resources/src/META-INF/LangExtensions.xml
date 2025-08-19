@@ -114,7 +114,7 @@
     <registryKey defaultValue="250"
                  description="Minimum code style cache evictions per second to trigger automatic recovery."
                  key="code.style.cache.high.eviction.rate.automatic.recovery.threshold.frequency" />
-    <registryKey defaultValue="100"
+    <registryKey defaultValue="250"
                  description="Maximum size of the code style settings cache (>= 1)."
                  key="code.style.cache.maximum.size"
                  restartRequired="true" />
