@@ -67,7 +67,7 @@ class GithubCreateGistDialog(
         .align(AlignY.TOP)
       scrollCell(descriptionField)
         .align(Align.FILL)
-        .columns(COLUMNS_MEDIUM)
+        .columns(60)
         .resizableColumn()
     }.layout(RowLayout.LABEL_ALIGNED).resizableRow()
 
