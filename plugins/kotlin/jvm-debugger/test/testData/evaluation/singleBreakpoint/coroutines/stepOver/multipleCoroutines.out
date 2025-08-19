@@ -1,11 +1,11 @@
-LineBreakpoint created at multipleCoroutines.kt:11
+LineBreakpoint created at multipleCoroutines.kt:12
 Run Java
 Connected to the target VM
-multipleCoroutines.kt:11
-multipleCoroutines.kt:13
+multipleCoroutines.kt:12
 multipleCoroutines.kt:14
-multipleCoroutines.kt:17
+multipleCoroutines.kt:15
 multipleCoroutines.kt:18
+multipleCoroutines.kt:19
 Compile bytecode for i
 Disconnected from the target VM
 
