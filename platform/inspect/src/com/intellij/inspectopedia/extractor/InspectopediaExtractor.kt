@@ -50,12 +50,12 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
     }
     catch (e: IOException) {
       LOG.error("Output directory does not exist and could not be created")
-      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
+      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1)
     }
 
     if (!Files.isDirectory(outputPath) || !Files.isWritable(outputPath)) {
       LOG.error("Output path is invalid")
-      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
+      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1)
     }
 
     try {
@@ -115,7 +115,7 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
         catch (e: Throwable) {
           System.err.println("Error while processing ${wrapper.extension}")
           e.printStackTrace()
-          ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
+          ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1)
         }
       }
 
@@ -141,9 +141,9 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
     }
     catch (e: Exception) {
       e.printStackTrace()
-      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
+      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1)
     }
-    ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true )
+    ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true)
   }
 }
 
@@ -169,7 +169,13 @@ private fun getMyText(cmp: OptComponent): LocMessage? {
 private fun retrievePanelStructure(component: OptComponent, controller: OptionController): OptionsPanelInfo {
   val result = OptionsPanelInfo()
   result.type = component.javaClass.simpleName
-  result.value = if (component is OptControl) controller.getOption(component.bindId()) else null
+
+  if (component is OptControl) {
+    val bindId = component.bindId()
+    result.id = bindId
+    result.value = controller.getOption(bindId)
+  }
+
   if (component is OptDropdown) {
     result.value?.let {
       result.value = component.findOption(it)?.label?.label()
