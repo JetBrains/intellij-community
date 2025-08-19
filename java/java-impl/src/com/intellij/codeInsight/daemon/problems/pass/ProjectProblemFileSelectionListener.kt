@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.problems.pass
 
 import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
@@ -10,11 +10,14 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.jvm.JvmLanguage
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.project.Project
@@ -32,6 +35,7 @@ import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.util.SlowOperations
+import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
@@ -179,6 +183,18 @@ private class ProjectProblemFileSelectionListenerStartupActivity : ProjectActivi
     }
 
     val parentDisposable = project.serviceAsync<FileStateCache>()
+
+    // Remove fragments from the cache once the editor gets released
+    EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
+      override fun editorReleased(event: EditorFactoryEvent) {
+        val virtualFile = FileDocumentManager.getInstance().getFile(event.editor.document) ?: return
+        ReadAction.nonBlocking<Any> {
+          val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return@nonBlocking null
+          if (psiFile.viewProvider.isPhysical) return@nonBlocking null // will already be removed by the vfs file listener
+          removeState(psiFile)
+        }.expireWith(parentDisposable).submit(AppExecutorUtil.getAppExecutorService())
+      }
+    }, parentDisposable)
 
     VirtualFileManager.getInstance().addAsyncFileListener({ events ->
       val fileIndex = ProjectRootManager.getInstance(project).fileIndex
