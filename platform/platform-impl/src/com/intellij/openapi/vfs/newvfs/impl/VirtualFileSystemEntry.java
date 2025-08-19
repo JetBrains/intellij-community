@@ -73,6 +73,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     static final int SYSTEM_LINE_SEPARATOR_DETECTED = 0x0800_0000; // applicable only to non-directory files
     /** The case-sensitivity of the directory children is known, so the value of {@link #CHILDREN_CASE_SENSITIVE} is actual. */
     static final int CHILDREN_CASE_SENSITIVITY_CACHED = SYSTEM_LINE_SEPARATOR_DETECTED; // applicable only to directories
+    /** Used to mark directories that need refresh */
     private static final int DIRTY_FLAG = 0x1000_0000;
     /** This file is a symlink. */
     static final int IS_SYMLINK_FLAG = 0x2000_0000;

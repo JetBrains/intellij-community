@@ -1768,65 +1768,36 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       rootName = rootPath = path;
       attributes = loadAttributes(fs, rootPath);
     }
+    failIfPathIsLocalButNotLocalRoot(fs, path, rootPath, rootUrl);
 
     if (attributes == null || !attributes.isDirectory()) {
       return null;
     }
-    // assume roots have the FS default case sensitivity (which may not be the case!)
+    // assume roots have the FS default case sensitivity (TODO RC: which may not be the case!)
     attributes = attributes.withCaseSensitivity(
       CaseSensitivity.fromBoolean(fs.isCaseSensitive())
     );
-    // avoid creating gazillions of roots which are not actual roots
-    String parentPath;
-    if (fs instanceof LocalFileSystem && !(parentPath = PathUtil.getParentPath(rootPath)).isEmpty()) {
-      FileAttributes parentAttributes = loadAttributes(fs, parentPath);
-      if (parentAttributes != null) {
-        throw new IllegalArgumentException(
-          "Must pass FS root path, but got: '" + path + "' (url: '" + rootUrl + "'), " +
-          "which has a parent '" + parentPath + "'. " +
-          "Use NewVirtualFileSystem.extractRootPath() for obtaining root path");
-      }
-    }
 
+    FSRecordsImpl vfsPeer = this.vfsPeer;//local copy
     int rootId = vfsPeer.findOrCreateRootRecord(rootUrl);
     vfsPeer.loadRootData(rootId, path, fs);
 
-
-    int rootNameId = vfsPeer.getNameId(rootName);
     boolean markModified;
     FsRoot newRoot;
     synchronized (rootsByUrl) {
       root = rootsByUrl.get(rootUrl);
       if (root != null) return root;
 
-      try {
-        String pathBeforeSlash = UriUtil.trimTrailingSlashes(rootPath);
-        boolean offlineByDefault = isOfflineByDefault(getFileAttributes(rootId));
-        VfsData.Segment segment = vfsData.segmentForFileId(rootId, /* create: */ true);
-        newRoot = FsRoot.create(rootId, segment, fs, pathBeforeSlash, attributes, offlineByDefault, path);
-      }
-      catch (VfsData.FileAlreadyCreatedException e) {
-        for (Map.Entry<String, VirtualFileSystemEntry> entry : rootsByUrl.entrySet()) {
-          VirtualFileSystemEntry existingRoot = entry.getValue();
-          if (existingRoot.getId() == rootId) {
-            throw new RuntimeException(
-              "Tried to create FS root => conflicted with already existing root: " +
-              "(path='" + path + "', fs=" + fs + ", rootUrl='" + rootUrl + "'), conflicted with existing " +
-              "(rootUrl='" + entry.getKey() + "', rootId=" + rootId + ", valid=" + existingRoot.isValid() + ")", e);
-          }
-        }
-        VirtualFileSystemEntry cachedDir = vfsData.cachedDir(rootId);
-        throw new RuntimeException(
-          "Tried to create FS root => conflicted with already existing file: " +
-          "(path='" + path + "', fs=" + fs + ", rootUrl='" + rootUrl + "') -> " +
-          "(rootName='" + rootName + "', rootNameId=" + rootNameId + ", rootId=" + rootId + "), " +
-          "cachedDir: " + cachedDir, e);
-      }
+      String pathBeforeSlash = UriUtil.trimTrailingSlashes(rootPath);
+      boolean offlineByDefault = isOfflineByDefault(getFileAttributes(rootId));
+      VfsData.Segment segment = vfsData.segmentForFileId(rootId, /* create: */ true);
+      newRoot = FsRoot.create(rootId, segment, fs, pathBeforeSlash, attributes, offlineByDefault, path);
+
       incStructuralModificationCount();
       markModified = writeRootFields(rootId, rootName, fs.isCaseSensitive(), attributes) != -1;
 
       rootsByUrl.put(rootUrl, newRoot);
-      //To be on a safe side: remove rootId from missed, to prevent any possibility of covering an actually existing root
+      //To be on a safe side: remove rootId from missed, to prevent any possibility of hiding an existing root
       missedRootIds.remove(rootId);
     }
 
@@ -1834,9 +1805,26 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       newRoot.markDirtyRecursively();
     }
 
-    LOG.assertTrue(rootId == newRoot.getId(), "root=" + newRoot + " expected=" + rootId + " actual=" + newRoot.getId());
-
     return newRoot;
+  }
+
+  private static void failIfPathIsLocalButNotLocalRoot(@NotNull NewVirtualFileSystem fs,
+                                                       @NotNull String path,
+                                                       String rootPath,
+                                                       String rootUrl) {
+    // avoid creating gazillions of roots which are not actual roots
+    if (fs instanceof LocalFileSystem) {
+      String parentPath = PathUtil.getParentPath(rootPath);
+      if (!parentPath.isEmpty()) {
+        FileAttributes parentAttributes = loadAttributes(fs, parentPath);
+        if (parentAttributes != null) {
+          throw new IllegalArgumentException(
+            "Must pass FS root path, but got: '" + path + "' (url: '" + rootUrl + "'), " +
+            "which has a parent '" + parentPath + "'. " +
+            "Use NewVirtualFileSystem.extractRootPath() for obtaining root path");
+        }
+      }
+    }
   }
 
   private static @Nullable FileAttributes loadAttributes(@NotNull NewVirtualFileSystem fs, @NotNull String path) {
@@ -2393,7 +2381,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public String toString() {
-    return "PersistentFS[connected: " + isConnected() + ", ownData: " + vfsData + "]";
+    return "PersistentFSImpl[connected: " + isConnected() + ", ownData: " + vfsData + "]";
   }
 
   private void executeCreateChild(@NotNull VirtualFile parent,
@@ -2511,10 +2499,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       String rootUrl = UriUtil.trimTrailingSlashes(file.getUrl());
       synchronized (rootsByUrl) {
         rootsByUrl.remove(rootUrl);
-        //TODO RC: (deleting root entry from roots catalog) AND (deleting the root record and it's subtree (deleteRecordRecursively))
-        //         are not executed atomically! So there is a time-window there root file-record is still exist, but roots
-        //         catalog doesn't contain it. Maybe delete the file-records first (we don't actually delete them, but
-        //         mark them as 'deleted'), and then remove them from the catalog?
+        //(deleting root entry from roots catalog) AND (deleting the root record and it's subtree (deleteRecordRecursively))
+        // are not executed atomically! So there is a time-window there root file-record is still exist, but roots
+        // catalog doesn't contain it. I don't see what could be broken by this order, so I mimic here the regular path
+        // (below), there we first remove a file from it's parent children list, and only remove (=mark deleted) the file
+        // itself afterward:
         vfsPeer.deleteRootRecord(fileIdToDelete);
       }
     }
