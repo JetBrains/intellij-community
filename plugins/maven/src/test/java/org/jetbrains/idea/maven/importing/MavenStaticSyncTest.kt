@@ -565,7 +565,6 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
   @Test
   fun testImportSourceDirectoryWithSystemVariable() = runBlocking {
-
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -576,9 +575,9 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                     </build>
                     """.trimIndent())
 
-
+    val mount = System.getenv("EEL_FIXTURE_MOUNT") ?: ""
     readAction {
-      val expectedValue = "${getFileSystemMount()}${System.getProperty("user.home")}/some/path"
+      val expectedValue = "$mount${System.getProperty("user.home")}/some/path"
       assertContentRootSources("project", expectedValue, "")
     }
   }

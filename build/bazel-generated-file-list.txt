@@ -630,6 +630,7 @@ platform/testFramework
 platform/testFramework/bootstrap
 platform/testFramework/common
 platform/testFramework/core
+platform/testFramework/eelJava
 platform/testFramework/extensions
 platform/testFramework/impl
 platform/testFramework/junit5

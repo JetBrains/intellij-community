@@ -4,7 +4,6 @@ package com.intellij.maven.testFramework
 import com.intellij.UtilBundle
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.DataManager
-import com.intellij.maven.testFramework.wsl2.JdkWslTestInstaller
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.*
@@ -28,6 +27,8 @@ import com.intellij.openapi.util.io.*
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
+import com.intellij.platform.testFramework.eelJava.EelTestJdkProvider
+import com.intellij.platform.testFramework.eelJava.EelTestRootProvider
 import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -128,7 +129,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     myProject = myTestFixture!!.project
     myPathTransformer = RemotePathTransformerFactory.createForProject(project)
     setupCustomJdk()
-    ensureTempDirCreated()
+    ourTempDir = EelTestRootProvider.getTestRoot("mavenTests")
 
     myDir = ourTempDir.resolve(getTestName(false))
     myDir.ensureExists()
@@ -165,19 +166,9 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   private fun setupCustomJdk() {
-    var jdkPath: String? = null
-    if (isProjectInEelEnvironment()) {
-      jdkPath = getEelFixtureEngineJavaHome()
-    }
+    val jdkPath = EelTestJdkProvider.getJdkPath()
     if (myJdk == null && jdkPath != null) {
-      if (isProjectInWslEelEnvironment()) {
-        val definition = getTeamcityJavaItemDefinition()
-        if(definition!= null) {
-          val jdkToInstall = JdkWslTestInstaller.readJdkItem(Path.of(definition))
-          JdkWslTestInstaller(Path.of(jdkPath), jdkToInstall).checkOrInstallJDK()
-        }
-      }
-      myJdk = JavaSdk.getInstance().createJdk("Maven Test JDK", jdkPath)
+      myJdk = JavaSdk.getInstance().createJdk("Maven Test JDK", jdkPath.toString())
       val jdkTable = ProjectJdkTable.getInstance()
       WriteAction.runAndWait<RuntimeException> { jdkTable.addJdk(myJdk!!) }
     }
@@ -193,23 +184,6 @@ abstract class MavenTestCase : UsefulTestCase() {
         jdkTable.removeJdk(myJdk!!)
       }
     }
-  }
-
-
-  private fun isProjectInEelEnvironment(): Boolean {
-    return System.getenv("EEL_FIXTURE_ENGINE") != null
-  }
-
-  private fun isProjectInWslEelEnvironment(): Boolean {
-    return "wsl".equals(System.getenv("EEL_FIXTURE_ENGINE"), true)
-  }
-
-  private fun getEelFixtureEngineJavaHome(): String {
-    return System.getenv("EEL_FIXTURE_ENGINE_JAVA_HOME") ?: throw IllegalArgumentException("The system environment variable EEL_FIXTURE_ENGINE_JAVA_HOME should be explicitly specified")
-  }
-
-  private fun getTeamcityJavaItemDefinition(): String? {
-    return System.getenv("TEAMCITY_WSL_JDK_DEFINITION")
   }
 
   protected fun waitForMavenUtilRunnablesComplete() {
@@ -232,8 +206,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     return "LicenseManager is not installed" == message
   }
 
-
-
   override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
     LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
       override fun processError(
@@ -246,16 +218,6 @@ abstract class MavenTestCase : UsefulTestCase() {
         return if (intercept) Action.NONE else Action.ALL
       }
     }) { super.runBare(testRunnable) }
-  }
-  
-
-  private fun findExisingJdkByPath(jdkPath: String): Sdk? {
-    val sdk = ProjectJdkTable.getInstance().allJdks.find { jdkPath == it.homePath }!!
-    val jdkTable = ProjectJdkTable.getInstance()
-    for (existingSdk in jdkTable.allJdks) {
-      if (existingSdk === sdk) return sdk
-    }
-    return null
   }
 
   override fun tearDown() {
@@ -295,28 +257,6 @@ abstract class MavenTestCase : UsefulTestCase() {
         }
       }
     }
-  }
-
-  private fun ensureTempDirCreated() {
-    ourTempDir = when {
-      isProjectInWslEelEnvironment() -> {
-        val fileSystemMount = getFileSystemMount()
-        if (fileSystemMount.isBlank()) {
-          throw IllegalArgumentException("The EEL_FIXTURE_MOUNT environment variable is not specified")
-        }
-        Path(fileSystemMount).resolve("/tmp/mavenTests")
-      }
-      isProjectInEelEnvironment() -> {
-        val fileSystemMount = getFileSystemMount()
-        if (fileSystemMount.isBlank()) {
-          throw IllegalArgumentException("The EEL_FIXTURE_MOUNT environment variable is not specified")
-        }
-        Path(fileSystemMount).resolve("mavenTests")
-      }
-      else -> FileUtil.getTempDirectory().toNioPathOrNull()!!.resolve("mavenTests")
-    }
-    FileUtil.delete(ourTempDir)
-    ourTempDir.ensureExists()
   }
 
   protected open fun setUpFixtures() {
@@ -780,10 +720,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
     assertTrue(connector.checkConnected())
     return connector
-  }
-
-  protected fun getFileSystemMount(): String {
-    return System.getenv("EEL_FIXTURE_MOUNT") ?: ""
   }
 
   private val testMavenHome: String?

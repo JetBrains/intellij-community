@@ -33,6 +33,7 @@ jvm_library(
     "//platform/backend/workspace",
     "//platform/workspace/storage",
     "@lib//:bouncy-castle-provider",
+    "//platform/testFramework/eelJava",
   ]
 )
 ### auto-generated section `build intellij.maven.testFramework` end
