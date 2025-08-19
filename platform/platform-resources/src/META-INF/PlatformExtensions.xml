@@ -8,6 +8,11 @@
     />
 
     <applicationService
+            serviceInterface="com.intellij.openapi.application.impl.TransferredWriteActionService"
+            serviceImplementation="com.intellij.openapi.application.impl.TransferredWriteActionServiceImpl"
+    />
+
+    <applicationService
       serviceInterface="com.intellij.openapi.editor.EditorThreading"
       serviceImplementation="com.intellij.openapi.editor.impl.EditorThreadingImpl"
     />
