@@ -122,6 +122,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     applyResult.pluginsToEnable.forEach { id -> super.setEnabled(id, PluginEnabledState.ENABLED) }
     myUninstalled.clear()
     updateButtons()
+    myPluginManagerCustomizer?.updateAfterModification {  }
     return !applyResult.needRestart
   }
 
