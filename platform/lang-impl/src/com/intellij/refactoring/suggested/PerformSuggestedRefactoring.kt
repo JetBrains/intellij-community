@@ -409,7 +409,7 @@ private fun performRename(refactoringSupport: SuggestedRefactoringSupport, data:
   }
 }
 
-private fun performChangeSignature(
+fun performChangeSignature(
   refactoringSupport: SuggestedRefactoringSupport,
   data: SuggestedChangeSignatureData,
   newParameterValues: List<NewParameterValue>,
