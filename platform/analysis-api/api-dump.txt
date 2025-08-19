@@ -710,7 +710,6 @@ c:com.intellij.openapi.fileEditor.OpenFileDescriptor
 - f:getProject():com.intellij.openapi.project.Project
 - f:getRangeMarker():com.intellij.openapi.editor.RangeMarker
 - sf:getRangeToUnfoldOnNavigation(com.intellij.openapi.editor.Editor):com.intellij.openapi.util.TextRange
-- navigateAsync(Z,kotlin.coroutines.Continuation):java.lang.Object
 - f:setScrollType(com.intellij.openapi.editor.ScrollType):V
 - f:setUseCurrentWindow(Z):com.intellij.openapi.fileEditor.OpenFileDescriptor
 - f:setUsePreviewTab(Z):com.intellij.openapi.fileEditor.OpenFileDescriptor

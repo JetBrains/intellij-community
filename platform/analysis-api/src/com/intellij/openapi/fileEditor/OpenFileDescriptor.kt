@@ -7,12 +7,15 @@ import com.intellij.codeInsight.multiverse.SingleEditorContext
 import com.intellij.codeInsight.multiverse.anyContext
 import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.actionSystem.DataKey.Companion.create
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.AsyncNavigatable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.max
 import kotlin.math.min
@@ -22,11 +25,11 @@ import kotlin.math.min
  */
 open class OpenFileDescriptor private constructor(
   val project: Project,
-  private val myFile: VirtualFile,
+  private val file: VirtualFile,
   @get:ApiStatus.Internal val context: CodeInsightContext,
   val line: Int,
   val column: Int,
-  private val myOffset: Int,
+  private val _offset: Int,
   persistent: Boolean,
 ) : FileEditorNavigatable, AsyncNavigatable, Comparable<OpenFileDescriptor> {
   val rangeMarker: RangeMarker?
@@ -53,11 +56,11 @@ open class OpenFileDescriptor private constructor(
   constructor(project: Project, file: VirtualFile) : this(project, file, anyContext(), -1, -1, -1, false)
 
   init {
-    if (myOffset >= 0) {
-      this.rangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(myFile, myOffset)
+    if (_offset >= 0) {
+      this.rangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(file, _offset)
     }
     else if (line >= 0) {
-      this.rangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(myFile, line, max(0, column), persistent)
+      this.rangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(file, line, max(0, column), persistent)
     }
     else {
       this.rangeMarker = null
@@ -65,18 +68,26 @@ open class OpenFileDescriptor private constructor(
   }
 
   override fun getFile(): VirtualFile {
-    return myFile
+    return file
   }
 
   open val offset: Int
-    get() = if (this.rangeMarker != null && rangeMarker.isValid()) rangeMarker.getStartOffset() else myOffset
+    get() = if (this.rangeMarker != null && rangeMarker.isValid()) rangeMarker.getStartOffset() else _offset
 
   override fun navigate(requestFocus: Boolean) {
     FileNavigator.getInstance().navigate(this, requestFocus)
   }
 
+  @ApiStatus.Experimental
   override suspend fun navigateAsync(requestFocus: Boolean) {
-    FileNavigator.getInstance().navigateAsync(this, requestFocus)
+    if (Registry.`is`("ide.open.file.descriptor.async", false)) {
+      FileNavigator.getInstance().navigateAsync(this, requestFocus)
+    }
+    else {
+      withContext(Dispatchers.EDT) {
+        FileNavigator.getInstance().navigate(this@OpenFileDescriptor, requestFocus)
+      }
+    }
   }
 
   open fun navigateInEditor(project: Project, requestFocus: Boolean): Boolean {
@@ -131,7 +142,7 @@ open class OpenFileDescriptor private constructor(
   override fun compareTo(o: OpenFileDescriptor): Int {
     var i = project.getName().compareTo(o.project.getName())
     if (i != 0) return i
-    i = myFile.getName().compareTo(o.myFile.getName())
+    i = file.getName().compareTo(o.file.getName())
     if (i != 0) return i
     if (this.rangeMarker != null) {
       if (o.rangeMarker == null) return 1
@@ -148,7 +159,7 @@ open class OpenFileDescriptor private constructor(
      * For example, if you want to navigate in an editor embedded into modal dialog, you should provide this data.
      */
     @JvmField
-    val NAVIGATE_IN_EDITOR: DataKey<Editor> = create<Editor>("NAVIGATE_IN_EDITOR")
+    val NAVIGATE_IN_EDITOR: DataKey<Editor> = DataKey.create<Editor>("NAVIGATE_IN_EDITOR")
 
     @ApiStatus.Internal
     @JvmStatic
