@@ -9,6 +9,12 @@ kotlinCompilerCliVersion = "2.3.0-dev-5493"
 kotlincKotlinJpsPluginTestsVersion = "2.2.0"
 
 download_file(
+  name = "kotlinx-coroutines-core-1.4.2.jar",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.4.2/kotlinx-coroutines-core-1.4.2.jar",
+  sha256 = "4cd24a06b2a253110d8afd250e9eec6c6faafea6463d740824743d637e761f12",
+)
+
+download_file(
   name = "kotlinx-coroutines-debug-1.3.8.jar",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-debug/1.3.8/kotlinx-coroutines-debug-1.3.8.jar",
   sha256 = "9390452e85f3e2e41304af56882de73ab5deb8c9cfe0addd05e18af17922b342",
