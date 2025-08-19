@@ -105,7 +105,6 @@ class IntelliJProjectConfiguration {
     fun loadIntelliJProject(projectHome: String): JpsProject {
       val m2Repo = getLocalMavenRepo().invariantSeparatorsPathString
       val project = JpsSerializationManager.getInstance().loadProject(projectHome, mapOf(PathMacrosImpl.MAVEN_REPOSITORY to m2Repo), true)
-      val relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation()
       val pathUtilJarPath = Path.of(PathUtil.getJarPathForClass(PathUtil::class.java))
       val outPath: Path?
       val jpsJavaProjectExtension = JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project)
@@ -113,11 +112,8 @@ class IntelliJProjectConfiguration {
         outPath = pathUtilJarPath.parent.parent
         jpsJavaProjectExtension.outputUrl = outPath.toString()
       }
-      else if (relevantJarsRoot != null && pathUtilJarPath.startsWith(relevantJarsRoot)) {
-        println("Running from jars, would not change JpsJavaExtensionService.outputUrl, current is '${jpsJavaProjectExtension.outputUrl}'")
-      }
       else {
-        error("Unexpected path '$pathUtilJarPath'")
+        println("Running from jars, would not change JpsJavaExtensionService.outputUrl, current is '${jpsJavaProjectExtension.outputUrl}'")
       }
       return project
     }
