@@ -11,7 +11,7 @@ jvm_library(
   name = "declarativeSync",
   module_name = "intellij.gradle.declarativeSync",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
@@ -37,7 +37,7 @@ jvm_library(
   name = "declarativeSync-tests_test_lib",
   module_name = "intellij.gradle.declarativeSync.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/gradle:gradle-tests_test_lib",

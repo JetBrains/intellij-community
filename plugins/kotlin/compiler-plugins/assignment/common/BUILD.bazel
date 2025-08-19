@@ -17,7 +17,7 @@ jvm_library(
   name = "kotlin-compiler-plugins-assignment-common-k2",
   module_name = "kotlin.compiler-plugins.assignment.common.k2",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_kotlin-compiler-plugins-assignment-common-k2",
   deps = [
     "//platform/core-api:core",

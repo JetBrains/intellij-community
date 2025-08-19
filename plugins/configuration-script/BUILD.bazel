@@ -11,7 +11,7 @@ jvm_library(
   name = "configuration-script",
   module_name = "intellij.configurationScript",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-reflect",
@@ -38,7 +38,7 @@ jvm_library(
 jvm_library(
   name = "configuration-script_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":configuration-script"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -94,7 +94,7 @@ jvm_library(
   name = "configurationScript-test-java_test_lib",
   module_name = "intellij.configurationScript.test.java",
   visibility = ["//visibility:public"],
-  srcs = glob(["testJava/**/*.kt", "testJava/**/*.java"], allow_empty = True),
+  srcs = glob(["testJava/**/*.kt", "testJava/**/*.java", "testJava/**/*.form"], allow_empty = True),
   deps = [
     "//plugins/configuration-script",
     "//plugins/configuration-script:configuration-script_test_lib",

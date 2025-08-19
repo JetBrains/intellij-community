@@ -17,7 +17,7 @@ jvm_library(
   name = "community-execService",
   module_name = "intellij.python.community.execService",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_community-execService",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -41,7 +41,7 @@ jvm_library(
 jvm_library(
   name = "community-execService_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_community-execService",
   associates = [":community-execService"],
   deps = [

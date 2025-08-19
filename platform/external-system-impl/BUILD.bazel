@@ -76,7 +76,7 @@ jvm_library(
   name = "externalSystem-tests_test_lib",
   module_name = "intellij.platform.externalSystem.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",

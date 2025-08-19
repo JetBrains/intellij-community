@@ -20,7 +20,7 @@ jvm_library(
   name = "telemetry.exporters",
   module_name = "intellij.platform.diagnostic.telemetry.exporters",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_telemetry.exporters",
   deps = [
     "@lib//:kotlin-stdlib",

@@ -11,7 +11,7 @@ jvm_library(
   name = "dotenv",
   module_name = "intellij.dotenv",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/gen/**/*.kt", "src/main/gen/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form", "src/main/gen/**/*.kt", "src/main/gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",

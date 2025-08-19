@@ -11,7 +11,7 @@ jvm_library(
   name = "vcs-git-coverage",
   module_name = "intellij.vcs.git.coverage",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
@@ -32,7 +32,7 @@ jvm_library(
 jvm_library(
   name = "vcs-git-coverage_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":vcs-git-coverage"],
   deps = [
     "@lib//:junit5",

@@ -11,7 +11,7 @@ jvm_library(
   name = "debugger",
   module_name = "intellij.devkit.debugger",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//java/debugger/openapi:java-debugger",
@@ -33,7 +33,7 @@ jvm_library(
 jvm_library(
   name = "debugger_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":debugger"],
   deps = [
     "@lib//:kotlin-stdlib",

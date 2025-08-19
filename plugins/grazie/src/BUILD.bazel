@@ -11,7 +11,7 @@ jvm_library(
   name = "core",
   module_name = "intellij.grazie.core",
   visibility = ["//visibility:public"],
-  srcs = glob(["main/kotlin/**/*.kt", "main/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["main/kotlin/**/*.kt", "main/kotlin/**/*.java", "main/kotlin/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jackson-module-kotlin",

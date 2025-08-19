@@ -11,7 +11,7 @@ jvm_library(
   name = "python",
   module_name = "intellij.sh.python",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//python/python-psi-api:psi",
     "//plugins/sh/core",

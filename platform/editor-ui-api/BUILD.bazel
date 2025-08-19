@@ -11,7 +11,7 @@ jvm_library(
   name = "editor-ui",
   module_name = "intellij.platform.editor.ui",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//jps/model-api:model",

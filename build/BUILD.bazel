@@ -73,7 +73,7 @@ jvm_library(
   name = "build",
   module_name = "intellij.idea.community.build",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/build-scripts",
     "@lib//:kotlin-stdlib",

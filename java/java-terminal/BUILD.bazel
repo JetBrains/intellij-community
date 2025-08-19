@@ -11,7 +11,7 @@ jvm_library(
   name = "terminal",
   module_name = "intellij.java.terminal",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib-provided",
     "//plugins/terminal",
@@ -35,7 +35,7 @@ jvm_library(
   name = "terminal-tests_test_lib",
   module_name = "intellij.java.terminal.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//java/testFramework",

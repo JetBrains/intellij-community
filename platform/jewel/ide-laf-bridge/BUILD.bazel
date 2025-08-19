@@ -24,7 +24,7 @@ jvm_library(
   name = "ide-laf-bridge",
   module_name = "intellij.platform.jewel.ideLafBridge",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_ide-laf-bridge",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -51,7 +51,7 @@ jvm_library(
 jvm_library(
   name = "ide-laf-bridge_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["ide-laf-bridge-tests/src/test/kotlin/**/*.kt", "ide-laf-bridge-tests/src/test/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["ide-laf-bridge-tests/src/test/kotlin/**/*.kt", "ide-laf-bridge-tests/src/test/kotlin/**/*.java", "ide-laf-bridge-tests/src/test/kotlin/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_ide-laf-bridge",
   associates = [":ide-laf-bridge"],
   deps = [

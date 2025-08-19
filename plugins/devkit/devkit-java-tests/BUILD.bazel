@@ -16,7 +16,7 @@ jvm_library(
 jvm_library(
   name = "java-tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = ["//plugins/devkit/devkit-core:core"],
   deps = [
     "@lib//:jetbrains-annotations",

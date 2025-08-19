@@ -18,7 +18,7 @@ jvm_library(
   name = "ide-plugin-gradleTooling-rt",
   module_name = "intellij.compose.ide.plugin.gradleTooling.rt",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_ide-plugin-gradleTooling-rt",
   deps = [
     "@lib//:kotlin-stdlib",

@@ -11,7 +11,7 @@ jvm_library(
   name = "themes",
   module_name = "intellij.devkit.themes",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//json/backend",
@@ -39,7 +39,7 @@ jvm_library(
 jvm_library(
   name = "themes_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":themes"],
   deps = [
     "//platform/analysis-api:analysis",

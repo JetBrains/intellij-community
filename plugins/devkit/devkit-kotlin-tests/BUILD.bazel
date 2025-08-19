@@ -16,7 +16,7 @@ jvm_library(
 jvm_library(
   name = "kotlin-tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = ["//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit"],
   deps = [
     "//plugins/devkit/devkit-tests:testFramework",

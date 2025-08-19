@@ -11,7 +11,7 @@ jvm_library(
   name = "remoteDev-util",
   module_name = "intellij.remoteDev.util",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "modelGenerated/**/*.kt", "modelGenerated/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "modelGenerated/**/*.kt", "modelGenerated/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:rd-core",
@@ -61,7 +61,7 @@ jvm_library(
 jvm_library(
   name = "remoteDev-util_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":remoteDev-util"],
   deps = [
     "@lib//:kotlin-stdlib",

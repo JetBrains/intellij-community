@@ -11,7 +11,7 @@ jvm_library(
   name = "coverage",
   module_name = "intellij.platform.coverage",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
@@ -45,7 +45,7 @@ jvm_library(
 jvm_library(
   name = "coverage_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":coverage"],
   deps = [
     "@lib//:junit5",

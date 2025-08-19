@@ -11,7 +11,7 @@ jvm_library(
   name = "psi",
   module_name = "intellij.python.psi",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",

@@ -11,7 +11,7 @@ jvm_library(
   name = "configurationStore-impl",
   module_name = "intellij.platform.configurationStore.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util/concurrency",
@@ -69,7 +69,7 @@ jvm_library(
 jvm_library(
   name = "configurationStore-tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = ["//platform/configuration-store-impl:configurationStore-impl"],
   deps = [
     "@lib//:kotlin-stdlib",

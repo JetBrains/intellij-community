@@ -11,7 +11,7 @@ jvm_library(
   name = "service-container",
   module_name = "intellij.platform.serviceContainer",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
@@ -32,7 +32,7 @@ jvm_library(
 jvm_library(
   name = "service-container_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":service-container"],
   deps = [
     "@lib//:kotlin-stdlib",

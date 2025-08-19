@@ -22,7 +22,7 @@ jvm_library(
   name = "kotlin-devkit",
   module_name = "intellij.kotlin.devkit",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_kotlin-devkit",
   deps = [
     "@lib//:kotlin-stdlib",

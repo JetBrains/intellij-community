@@ -11,7 +11,7 @@ jvm_library(
   name = "graphImplementationTests_test_lib",
   module_name = "kotlin.jps.graphImplementationTests",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   deps = [
     "//platform/util",
     "@lib//:kotlinc-kotlin-jps-plugin-classpath-bootstrap-for-tests",

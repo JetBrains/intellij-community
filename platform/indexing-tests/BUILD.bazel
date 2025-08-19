@@ -11,7 +11,7 @@ jvm_library(
   name = "indexing-tests_test_lib",
   module_name = "intellij.platform.indexing.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/core-impl",

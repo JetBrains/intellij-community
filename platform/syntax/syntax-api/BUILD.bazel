@@ -18,7 +18,7 @@ jvm_library(
   name = "syntax",
   module_name = "intellij.platform.syntax",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvm/**/*.kt", "srcJvm/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "srcJvm/**/*.kt", "srcJvm/**/*.java", "srcJvm/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_syntax",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -31,7 +31,7 @@ jvm_library(
 jvm_library(
   name = "syntax_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_syntax",
   associates = [":syntax"],
   deps = [

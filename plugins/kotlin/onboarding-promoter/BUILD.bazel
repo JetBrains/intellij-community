@@ -11,7 +11,7 @@ jvm_library(
   name = "onboarding-promoter",
   module_name = "intellij.kotlin.onboarding-promoter",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/core-ui",

@@ -5,7 +5,7 @@ jvm_library(
   name = "java",
   module_name = "intellij.tasks.java",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",

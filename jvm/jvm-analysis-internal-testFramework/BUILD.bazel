@@ -5,7 +5,7 @@ jvm_library(
   name = "analysis-internal-testFramework",
   module_name = "intellij.jvm.analysis.internal.testFramework",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//jvm/jvm-analysis-impl:analysis-impl",
     "//jvm/jvm-analysis-testFramework:analysis-testFramework",

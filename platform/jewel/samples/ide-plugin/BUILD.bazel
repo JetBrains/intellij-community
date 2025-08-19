@@ -23,7 +23,7 @@ jvm_library(
   name = "ide-plugin",
   module_name = "intellij.platform.jewel.samples.idePlugin",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_ide-plugin",
   deps = [
     "@lib//:kotlin-stdlib",

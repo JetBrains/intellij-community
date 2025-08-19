@@ -24,7 +24,7 @@ jvm_library(
   name = "jewel-intUi-standalone",
   module_name = "intellij.platform.jewel.intUi.standalone",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "generated/**/*.kt", "generated/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form", "generated/**/*.kt", "generated/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom_jewel-intUi-standalone",
   deps = [
     "@lib//:kotlin-stdlib",

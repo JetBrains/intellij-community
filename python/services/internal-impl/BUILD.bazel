@@ -11,7 +11,7 @@ jvm_library(
   name = "python-community-services-internal-impl",
   module_name = "intellij.python.community.services.internal.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//python/python-parser:parser",
@@ -29,7 +29,7 @@ jvm_library(
 jvm_library(
   name = "python-community-services-internal-impl_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   associates = [":python-community-services-internal-impl"],
   deps = [
     "@lib//:kotlin-stdlib",

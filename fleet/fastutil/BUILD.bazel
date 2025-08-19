@@ -17,7 +17,7 @@ jvm_library(
   name = "fastutil",
   module_name = "fleet.fastutil",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
   kotlinc_opts = ":custom_fastutil",
   deps = ["@lib//:kotlin-stdlib"]
 )

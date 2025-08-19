@@ -16,7 +16,7 @@ jvm_library(
   name = "fenceInjection",
   module_name = "intellij.markdown.fenceInjection",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form"], allow_empty = True),
   deps = [
     "//plugins/markdown/core:markdown",
     "//platform/core-api:core",

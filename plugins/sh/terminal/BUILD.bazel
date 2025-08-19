@@ -11,7 +11,7 @@ jvm_library(
   name = "terminal",
   module_name = "intellij.sh.terminal",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",

@@ -11,7 +11,7 @@ jvm_library(
   name = "vcs-log",
   module_name = "intellij.platform.vcs.log",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/util-rt",
     "//platform/vcs-log/graph-api:vcs-log-graph",

@@ -64,7 +64,7 @@ jvm_library(
   name = "vcs-svn-tests_test_lib",
   module_name = "intellij.vcs.svn.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSource/**/*.kt", "testSource/**/*.java"], allow_empty = True),
+  srcs = glob(["testSource/**/*.kt", "testSource/**/*.java", "testSource/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:junit4",
     "//platform/analysis-api:analysis",

@@ -47,7 +47,7 @@ jvm_library(
 jvm_library(
   name = "eclipse_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
   associates = [":eclipse"],
   deps = [
     "//platform/analysis-api:analysis",

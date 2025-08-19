@@ -11,7 +11,7 @@ jvm_library(
   name = "structuralSearch",
   module_name = "intellij.platform.structuralSearch",
   visibility = ["//visibility:public"],
-  srcs = glob(["source/**/*.kt", "source/**/*.java"], allow_empty = True),
+  srcs = glob(["source/**/*.kt", "source/**/*.java", "source/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -53,7 +53,7 @@ jvm_library(
   name = "structuralSearch-tests_test_lib",
   module_name = "intellij.platform.structuralSearch.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSource/**/*.kt", "testSource/**/*.java"], allow_empty = True),
+  srcs = glob(["testSource/**/*.kt", "testSource/**/*.java", "testSource/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",

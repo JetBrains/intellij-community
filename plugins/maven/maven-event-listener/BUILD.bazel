@@ -11,7 +11,7 @@ jvm_library(
   name = "server-eventListener",
   module_name = "intellij.maven.server.eventListener",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:maven-server-event_listener-org-apache-maven-maven-core-3-3-9-provided",
@@ -23,7 +23,7 @@ jvm_library(
 jvm_library(
   name = "server-eventListener_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/test/java/**/*.kt", "src/test/java/**/*.java"], allow_empty = True),
+  srcs = glob(["src/test/java/**/*.kt", "src/test/java/**/*.java", "src/test/java/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   associates = [":server-eventListener"],
   deps = [

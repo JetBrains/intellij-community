@@ -5,6 +5,6 @@ jvm_library(
   name = "android-extensions-stubs",
   module_name = "kotlin.compiler-plugins.android-extensions-stubs",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True)
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True)
 )
 ### auto-generated section `build kotlin.compiler-plugins.android-extensions-stubs` end

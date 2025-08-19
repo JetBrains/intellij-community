@@ -15,7 +15,7 @@ jvm_library(
   name = "base",
   module_name = "kotlin.searching.base",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_base",
   deps = [
     "@lib//:kotlin-stdlib",

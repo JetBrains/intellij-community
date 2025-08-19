@@ -11,7 +11,7 @@ jvm_library(
   name = "inspect",
   module_name = "intellij.platform.inspect",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/util/concurrency",
     "//platform/core-api:core",
@@ -52,7 +52,7 @@ jvm_library(
 jvm_library(
   name = "inspect_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":inspect"],
   deps = [
     "//platform/util/concurrency",

@@ -15,7 +15,7 @@ jvm_library(
   name = "progress",
   module_name = "intellij.platform.util.progress",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_progress",
   deps = [
     "@lib//:jetbrains-annotations",
@@ -43,7 +43,7 @@ jvm_library(
   name = "progress-tests_test_lib",
   module_name = "intellij.platform.util.progress.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",

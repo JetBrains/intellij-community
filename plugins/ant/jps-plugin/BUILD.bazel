@@ -11,7 +11,7 @@ jvm_library(
   name = "jps",
   module_name = "intellij.ant.jps",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k11",
   deps = [
     "//jps/model-api:model",
@@ -36,7 +36,7 @@ jvm_library(
   name = "jps-tests_test_lib",
   module_name = "intellij.ant.jps.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//plugins/ant/jps-plugin:jps",
     "//jps/model-api:model",

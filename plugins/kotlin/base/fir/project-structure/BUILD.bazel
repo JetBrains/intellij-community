@@ -24,7 +24,7 @@ jvm_library(
   name = "project-structure",
   module_name = "kotlin.base.fir.project-structure",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_project-structure",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -55,7 +55,7 @@ jvm_library(
 jvm_library(
   name = "project-structure_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_project-structure",
   associates = [":project-structure"],
   deps = [

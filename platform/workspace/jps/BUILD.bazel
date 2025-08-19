@@ -21,7 +21,7 @@ jvm_library(
   name = "jps",
   module_name = "intellij.platform.workspace.jps",
   visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_jps",
   deps = [
     "@lib//:kotlin-stdlib",

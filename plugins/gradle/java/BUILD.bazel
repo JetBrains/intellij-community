@@ -11,7 +11,7 @@ jvm_library(
   name = "java",
   module_name = "intellij.gradle.java",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/gradle",
@@ -101,7 +101,7 @@ jvm_library(
   name = "java-tests_test_lib",
   module_name = "intellij.gradle.java.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:jmock",
     "@lib//:junit4",

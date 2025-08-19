@@ -11,7 +11,7 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.java.guiForms.jps.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//jps/jps-builders:build-tests_test_lib",
     "//jps/model-api:model",

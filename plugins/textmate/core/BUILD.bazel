@@ -17,7 +17,7 @@ jvm_library(
   name = "core",
   module_name = "intellij.textmate.core",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcMultiplatform/**/*.kt", "srcMultiplatform/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form", "srcMultiplatform/**/*.kt", "srcMultiplatform/**/*.java", "srcMultiplatform/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_core",
   deps = [
     "@lib//:jetbrains-annotations",

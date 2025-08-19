@@ -11,7 +11,7 @@ jvm_library(
   name = "ide-plugin-resources",
   module_name = "intellij.compose.ide.plugin.resources",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
@@ -49,7 +49,7 @@ jvm_library(
 jvm_library(
   name = "ide-plugin-resources_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   associates = [":ide-plugin-resources"],
   deps = [
     "@lib//:kotlin-stdlib",

@@ -11,7 +11,7 @@ jvm_library(
   name = "build",
   module_name = "intellij.platform.jps.build",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   kotlinc_opts = "@community//:k11",
   deps = [
     "//platform/util",
@@ -76,7 +76,7 @@ jvm_library(
   name = "build-tests_test_lib",
   module_name = "intellij.platform.jps.build.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//jps/jps-builders:build",

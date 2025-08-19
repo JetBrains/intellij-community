@@ -11,7 +11,7 @@ jvm_library(
   name = "images",
   module_name = "intellij.markdown.images",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
   deps = [
     "//plugins/markdown/core:markdown",
     "//platform/analysis-api:analysis",

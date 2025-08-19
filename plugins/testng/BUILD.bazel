@@ -66,7 +66,7 @@ jvm_library(
 jvm_library(
   name = "testng_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
   associates = [":testng"],
   deps = [
     "//java/openapi:java",

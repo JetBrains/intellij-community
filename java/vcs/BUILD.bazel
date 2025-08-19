@@ -11,7 +11,7 @@ jvm_library(
   name = "vcs",
   module_name = "intellij.java.vcs",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//java/execution/openapi:java-execution",
     "//platform/core-api:core",

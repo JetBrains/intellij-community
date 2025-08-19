@@ -16,7 +16,7 @@ jvm_library(
   name = "kotlin-completion-impl-k1",
   module_name = "kotlin.completion.impl.k1",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_kotlin-completion-impl-k1",
   deps = [
     "@lib//:kotlin-stdlib",

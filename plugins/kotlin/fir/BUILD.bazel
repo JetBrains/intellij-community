@@ -17,7 +17,7 @@ jvm_library(
   name = "fir",
   module_name = "kotlin.fir",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_fir",
   deps = [
     "//platform/analysis-api:analysis",

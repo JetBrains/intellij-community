@@ -11,7 +11,7 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.textmate.core.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "srcMultiplatform/**/*.kt", "srcMultiplatform/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "srcMultiplatform/**/*.kt", "srcMultiplatform/**/*.java", "srcMultiplatform/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",

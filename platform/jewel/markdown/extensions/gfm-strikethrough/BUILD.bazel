@@ -24,7 +24,7 @@ jvm_library(
   name = "gfm-strikethrough",
   module_name = "intellij.platform.jewel.markdown.extensions.gfmStrikethrough",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_gfm-strikethrough",
   deps = [
     "@lib//:kotlin-stdlib",

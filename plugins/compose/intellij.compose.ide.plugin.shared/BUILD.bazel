@@ -17,7 +17,7 @@ jvm_library(
   name = "ide-plugin-shared",
   module_name = "intellij.compose.ide.plugin.shared",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_ide-plugin-shared",
   deps = [
     "//plugins/compose:compose-ide-plugin",
@@ -56,7 +56,7 @@ jvm_library(
 jvm_library(
   name = "ide-plugin-shared-tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   associates = ["//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared"],
   deps = [
     "//platform/analysis-api:analysis",

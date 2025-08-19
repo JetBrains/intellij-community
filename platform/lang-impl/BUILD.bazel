@@ -148,7 +148,7 @@ jvm_library(
   name = "lang-tests_test_lib",
   module_name = "intellij.platform.lang.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/boot",

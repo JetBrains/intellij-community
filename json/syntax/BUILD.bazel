@@ -18,7 +18,7 @@ jvm_library(
   name = "syntax",
   module_name = "intellij.json.syntax",
   visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_syntax",
   deps = [
     "@lib//:kotlin-stdlib",

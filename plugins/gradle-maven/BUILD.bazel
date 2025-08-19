@@ -11,7 +11,7 @@ jvm_library(
   name = "gradle-java-maven",
   module_name = "intellij.gradle.java.maven",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//plugins/gradle/java",
     "//plugins/maven",
@@ -31,7 +31,7 @@ jvm_library(
 jvm_library(
   name = "gradle-java-maven_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
   associates = [":gradle-java-maven"],
   deps = [
     "//plugins/gradle/java",

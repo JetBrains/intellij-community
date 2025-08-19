@@ -17,7 +17,7 @@ jvm_library(
   name = "ide-plugin-k1",
   module_name = "intellij.compose.ide.plugin.k1",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_ide-plugin-k1",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -48,7 +48,7 @@ jvm_library(
 jvm_library(
   name = "ide-plugin-k1-tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   associates = ["//plugins/compose/intellij.compose.ide.plugin.k1:ide-plugin-k1"],
   deps = [
     "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared-tests_test_lib",

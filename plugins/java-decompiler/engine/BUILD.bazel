@@ -11,7 +11,7 @@ jvm_library(
   name = "engine",
   module_name = "intellij.java.decompiler.engine",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = ["@lib//:jetbrains-annotations"],
   runtime_deps = [":engine_resources"]
 )
@@ -19,7 +19,7 @@ jvm_library(
 jvm_library(
   name = "engine_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":engine"],
   deps = [
     "@lib//:junit4",

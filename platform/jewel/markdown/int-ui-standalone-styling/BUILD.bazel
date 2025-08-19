@@ -24,7 +24,7 @@ jvm_library(
   name = "int-ui-standalone-styling",
   module_name = "intellij.platform.jewel.markdown.intUiStandaloneStyling",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_int-ui-standalone-styling",
   deps = [
     "@lib//:kotlin-stdlib",

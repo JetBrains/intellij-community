@@ -11,7 +11,7 @@ jvm_library(
   name = "frontend",
   module_name = "intellij.platform.debugger.impl.frontend",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlin-stdlib",
@@ -45,7 +45,7 @@ jvm_library(
 jvm_library(
   name = "frontend_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   associates = [":frontend"],
   deps = [
     "@lib//:kotlinx-coroutines-core",

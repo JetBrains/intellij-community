@@ -5,7 +5,7 @@ jvm_library(
   name = "xslt-debugger-impl-rt",
   module_name = "intellij.xslt.debugger.impl.rt",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   deps = [
     "//plugins/xpath/xslt-rt:rt",
@@ -20,7 +20,7 @@ jvm_library(
 jvm_library(
   name = "xslt-debugger-impl-rt_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   associates = [":xslt-debugger-impl-rt"],
   deps = [

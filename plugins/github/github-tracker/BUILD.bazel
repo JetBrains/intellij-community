@@ -11,7 +11,7 @@ jvm_library(
   name = "vcs-github-tracker",
   module_name = "intellij.vcs.github.tracker",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/credential-store",

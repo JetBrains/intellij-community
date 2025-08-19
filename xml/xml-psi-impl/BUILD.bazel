@@ -17,7 +17,7 @@ jvm_library(
   name = "psi-impl",
   module_name = "intellij.xml.psi.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",

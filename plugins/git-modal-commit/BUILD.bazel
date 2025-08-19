@@ -11,7 +11,7 @@ jvm_library(
   name = "vcs-git-commit-modal",
   module_name = "intellij.vcs.git.commit.modal",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/vcs-api:vcs",

@@ -17,7 +17,7 @@ jvm_library(
   name = "lsp.protocol",
   module_name = "fleet.lsp.protocol",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/**/*.kt", "src/main/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["src/main/**/*.kt", "src/main/**/*.java", "src/main/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
   kotlinc_opts = ":custom_lsp.protocol",
   deps = [
     "@lib//:kotlin-stdlib",

@@ -17,7 +17,7 @@ jvm_library(
   name = "pycharm-community",
   module_name = "intellij.pycharm.community",
   visibility = ["//visibility:public"],
-  srcs = glob(["ide-common/src/**/*.kt", "ide-common/src/**/*.java"], allow_empty = True),
+  srcs = glob(["ide-common/src/**/*.kt", "ide-common/src/**/*.java", "ide-common/src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
@@ -177,7 +177,7 @@ jvm_library(
   name = "python-commonTests_test_lib",
   module_name = "intellij.python.commonTests",
   visibility = ["//visibility:public"],
-  srcs = glob(["python-common-tests/**/*.kt", "python-common-tests/**/*.java"], allow_empty = True),
+  srcs = glob(["python-common-tests/**/*.kt", "python-common-tests/**/*.java", "python-common-tests/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:junit4",
     "//python/python-psi-api:psi",
@@ -425,7 +425,7 @@ jvm_library(
   name = "python-community-tests_test_lib",
   module_name = "intellij.python.community.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -576,7 +576,7 @@ jvm_library(
   name = "python-helpers-tests_test_lib",
   module_name = "intellij.python.helpers.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["helpers/tests/**/*.kt", "helpers/tests/**/*.java"], allow_empty = True, exclude = [
+  srcs = glob(["helpers/tests/**/*.kt", "helpers/tests/**/*.java", "helpers/tests/**/*.form"], allow_empty = True, exclude = [
     "helpers/tests/.gradle/**/*",
     "helpers/tests/.tox/**/*",
     "helpers/tests/build/**/*",
@@ -610,7 +610,7 @@ jvm_library(
   name = "python-pydev",
   module_name = "intellij.python.pydev",
   visibility = ["//visibility:public"],
-  srcs = glob(["pydevSrc/src/**/*.kt", "pydevSrc/src/**/*.java"], allow_empty = True),
+  srcs = glob(["pydevSrc/src/**/*.kt", "pydevSrc/src/**/*.java", "pydevSrc/src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/xdebugger-api:debugger",

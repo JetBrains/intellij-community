@@ -26,7 +26,7 @@ jvm_library(
 jvm_library(
   name = "tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_tests",
   associates = ["//platform/workspace/storage"],
   deps = [

@@ -83,7 +83,7 @@ jvm_library(
   name = "execution-tests_test_lib",
   module_name = "intellij.platform.execution.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/platform-util-io:ide-util-io",

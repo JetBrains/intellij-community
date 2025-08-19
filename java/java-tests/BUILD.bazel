@@ -17,7 +17,7 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.java.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True, exclude = ["testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/precompiledData/**/*"]),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True, exclude = ["testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/precompiledData/**/*"]),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",

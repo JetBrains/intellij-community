@@ -17,7 +17,7 @@ jvm_library(
   name = "compose",
   module_name = "kotlin.project-wizard.compose",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
@@ -40,7 +40,7 @@ jvm_library(
 jvm_library(
   name = "compose_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":compose"],
   deps = [
     "@lib//:kotlin-stdlib",

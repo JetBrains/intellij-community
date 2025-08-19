@@ -11,7 +11,7 @@ jvm_library(
   name = "completion-ml-ranking-models",
   module_name = "intellij.completionMlRankingModels",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/completion-ml-ranking",
@@ -51,7 +51,7 @@ jvm_library(
   name = "completionMlRankingModels-tests_test_lib",
   module_name = "intellij.completionMlRankingModels.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//java/testFramework",
     "@lib//:junit4",

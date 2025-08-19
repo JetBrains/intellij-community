@@ -11,7 +11,7 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "kotlin.uast.uast-kotlin.k2.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//plugins/kotlin/plugin/k2",
     "@lib//:kotlin-stdlib",

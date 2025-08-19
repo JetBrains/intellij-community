@@ -5,7 +5,7 @@ jvm_library(
   name = "devLauncher",
   module_name = "intellij.tools.devLauncher",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/runtime/loader",
     "//platform/runtime/repository",

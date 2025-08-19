@@ -11,7 +11,7 @@ jvm_library(
   name = "analysis-kotlin-tests-k1_test_lib",
   module_name = "intellij.jvm.analysis.kotlin.tests.k1",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//java/testFramework",
     "//platform/core-api:core",

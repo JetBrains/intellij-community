@@ -11,7 +11,7 @@ jvm_library(
   name = "startUpPerformanceReporter",
   module_name = "intellij.platform.diagnostic.startUpPerformanceReporter",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_startUpPerformanceReporter",
   deps = [
     "@lib//:kotlin-stdlib",

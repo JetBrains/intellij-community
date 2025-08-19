@@ -11,7 +11,7 @@ jvm_library(
   name = "terminal",
   module_name = "intellij.python.terminal",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//python:python-community-impl",
     "//plugins/terminal",
@@ -27,7 +27,7 @@ jvm_library(
 jvm_library(
   name = "terminal_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   associates = [":terminal"],
   deps = [
     "//python:python-community-impl",

@@ -17,7 +17,7 @@ jvm_library(
   name = "ide-metrics-benchmark",
   module_name = "intellij.tools.ide.metrics.benchmark",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jackson",
@@ -38,7 +38,7 @@ jvm_library(
 jvm_library(
   name = "ide-metrics-benchmark_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":ide-metrics-benchmark"],
   deps = [
     "@lib//:kotlin-stdlib",

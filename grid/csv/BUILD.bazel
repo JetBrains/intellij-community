@@ -11,7 +11,7 @@ jvm_library(
   name = "csv-core-impl",
   module_name = "intellij.grid.csv.core.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:jetbrains-annotations",
     "//platform/util",

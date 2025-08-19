@@ -11,7 +11,7 @@ jvm_library(
   name = "community",
   module_name = "intellij.python.community",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//python/python-psi-api:psi",
     "//platform/analysis-api:analysis",
@@ -36,7 +36,7 @@ jvm_library(
 jvm_library(
   name = "community_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   associates = [":community"],
   deps = [
     "//python/python-psi-api:psi",

@@ -5,7 +5,7 @@ jvm_library(
   name = "util-rt",
   module_name = "intellij.platform.util.rt",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   deps = ["@lib//:jetbrains-annotations"]
 )
@@ -13,7 +13,7 @@ jvm_library(
 jvm_library(
   name = "util-rt_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   associates = [":util-rt"],
   deps = [

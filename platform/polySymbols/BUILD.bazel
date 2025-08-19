@@ -11,7 +11,7 @@ jvm_library(
   name = "polySymbols",
   module_name = "intellij.platform.polySymbols",
   visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src-web/**/*.kt", "src-web/**/*.java"], allow_empty = True),
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form", "src-web/**/*.kt", "src-web/**/*.java", "src-web/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
@@ -40,7 +40,7 @@ jvm_library(
   name = "polySymbols-testFramework",
   module_name = "intellij.platform.polySymbols.testFramework",
   visibility = ["//visibility:public"],
-  srcs = glob(["testFramework/**/*.kt", "testFramework/**/*.java"], allow_empty = True),
+  srcs = glob(["testFramework/**/*.kt", "testFramework/**/*.java", "testFramework/**/*.form"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/polySymbols",
@@ -80,7 +80,7 @@ jvm_library(
   name = "polySymbols-tests_test_lib",
   module_name = "intellij.platform.polySymbols.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/lang-impl",

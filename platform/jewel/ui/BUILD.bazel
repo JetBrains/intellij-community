@@ -30,7 +30,7 @@ jvm_library(
   name = "ui",
   module_name = "intellij.platform.jewel.ui",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "generated/**/*.kt", "generated/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form", "generated/**/*.kt", "generated/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom_ui",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -53,7 +53,7 @@ jvm_library(
 jvm_library(
   name = "ui_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_ui",
   associates = [":ui"],
   deps = [

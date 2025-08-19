@@ -11,7 +11,7 @@ jvm_library(
   name = "java-debugger-streams",
   module_name = "intellij.java.debugger.streams",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//java/debugger/openapi:java-debugger",
@@ -35,7 +35,7 @@ jvm_library(
 jvm_library(
   name = "java-debugger-streams_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":java-debugger-streams"],
   deps = [
     "@lib//:kotlin-stdlib",

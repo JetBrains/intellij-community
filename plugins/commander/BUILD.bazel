@@ -11,7 +11,7 @@ jvm_library(
   name = "commander",
   module_name = "intellij.commander",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//java/java-impl:impl",
     "//platform/analysis-api:analysis",
@@ -33,7 +33,7 @@ jvm_library(
 jvm_library(
   name = "commander_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":commander"],
   deps = [
     "//java/java-impl:impl",

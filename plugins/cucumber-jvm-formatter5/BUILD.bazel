@@ -5,7 +5,7 @@ jvm_library(
   name = "cucumber-jvmFormatter5",
   module_name = "intellij.cucumber.jvmFormatter5",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   deps = [
     "//plugins/cucumber-jvm-formatter:cucumber-jvmFormatter",

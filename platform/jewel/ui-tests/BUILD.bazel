@@ -23,7 +23,7 @@ jvm_library(
   name = "ui-tests_test_lib",
   module_name = "intellij.platform.jewel.uiTests",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_ui-tests",
   deps = [
     "@lib//:kotlinx-coroutines-core",

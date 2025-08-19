@@ -17,7 +17,7 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.markdown.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//plugins/markdown/core:markdown",
     "//plugins/markdown/fenceInjection",

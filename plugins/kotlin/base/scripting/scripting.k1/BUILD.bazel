@@ -70,7 +70,7 @@ jvm_library(
 jvm_library(
   name = "scripting.k1_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":scripting.k1"],
   deps = [
     "//platform/core-api:core",

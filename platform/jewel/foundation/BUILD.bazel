@@ -24,7 +24,7 @@ jvm_library(
   name = "foundation",
   module_name = "intellij.platform.jewel.foundation",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/generated-kotlin/**/*.kt", "src/main/generated-kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form", "src/main/generated-kotlin/**/*.kt", "src/main/generated-kotlin/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom_foundation",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -44,7 +44,7 @@ jvm_library(
 jvm_library(
   name = "foundation_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_foundation",
   associates = [":foundation"],
   deps = [

@@ -56,7 +56,7 @@ jvm_library(
 jvm_library(
   name = "lombok_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/test/java/**/*.kt", "src/test/java/**/*.java"], allow_empty = True),
+  srcs = glob(["src/test/java/**/*.kt", "src/test/java/**/*.java", "src/test/java/**/*.form"], allow_empty = True),
   associates = [":lombok"],
   deps = [
     "//plugins/lombok/generated",

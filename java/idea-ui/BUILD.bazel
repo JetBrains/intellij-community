@@ -78,7 +78,7 @@ jvm_library(
   name = "ui-tests_test_lib",
   module_name = "intellij.java.ui.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//java/idea-ui:ui",
     "//java/testFramework",

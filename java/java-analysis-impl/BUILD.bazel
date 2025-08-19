@@ -17,7 +17,7 @@ jvm_library(
   name = "analysis-impl",
   module_name = "intellij.java.analysis.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_analysis-impl",
   deps = [
     "//java/java-indexing-api:indexing",
