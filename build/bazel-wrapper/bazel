@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e -u -o pipefail
+
+script_root="$(cd "$(dirname "$0")"; pwd)"
+
+. "$script_root/common.sh"
+
+# shellcheck disable=SC2154
+# $output_user_root_opt is defined in common.sh
+exec "$BAZEL_REAL" "$output_user_root_opt" "$@"
