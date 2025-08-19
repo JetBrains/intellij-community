@@ -411,7 +411,7 @@ class EditorWindow internal constructor(
           withContext(Dispatchers.Default) {
             composite.waitForAvailable()
           }
-          focusEditorOnComposite(composite = composite, splitters = owner)
+          focusEditorOnComposite(composite = composite, splitters = owner, forceFocus = options.forceFocus)
         }
       }
     }
@@ -487,7 +487,8 @@ class EditorWindow internal constructor(
     virtualFile: VirtualFile?,
     focusNew: Boolean,
     fileIsSecondaryComponent: Boolean = true,
-  ): EditorWindow? = split(orientation, forceSplit, virtualFile, focusNew, fileIsSecondaryComponent, null)
+    forceFocus: Boolean = false,
+  ): EditorWindow? = split(orientation, forceSplit, virtualFile, focusNew, fileIsSecondaryComponent, forceFocus, null)
 
   internal fun split(
     orientation: Int,
@@ -495,6 +496,7 @@ class EditorWindow internal constructor(
     virtualFile: VirtualFile?,
     focusNew: Boolean,
     fileIsSecondaryComponent: Boolean = true,
+    forceFocus: Boolean = false,
     explicitlySetCompositeProvider: (() -> EditorComposite?)?,
   ): EditorWindow? {
     checkConsistency()
@@ -510,7 +512,7 @@ class EditorWindow internal constructor(
           window = target,
           _file = virtualFile,
           entry = selectedComposite.takeIf { it.file == virtualFile }?.currentStateAsFileEntry(),
-          options = FileEditorOpenOptions(requestFocus = focusNew, explicitlyOpenCompositeProvider = null),
+          options = FileEditorOpenOptions(requestFocus = focusNew, forceFocus = forceFocus, explicitlyOpenCompositeProvider = null),
         )
       }
       return target
@@ -552,6 +554,7 @@ class EditorWindow internal constructor(
         isExactState = true,
         pin = getComposite(nextFile)?.isPinned ?: false,
         selectAsCurrent = focusNew,
+        forceFocus = forceFocus,
         explicitlyOpenCompositeProvider = explicitlySetCompositeProvider
       ),
     ) ?: return newWindow

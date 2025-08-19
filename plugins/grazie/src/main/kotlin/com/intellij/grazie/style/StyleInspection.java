@@ -21,13 +21,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-import static com.intellij.grazie.utils.CloudUtilsKt.isFunctionallyDisabled;
-
 public class StyleInspection extends LocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly,
                                                  @NotNull LocalInspectionToolSession session) {
-    if (isFunctionallyDisabled()) return PsiElementVisitor.EMPTY_VISITOR;
     if (isOnTheFly) return PsiElementVisitor.EMPTY_VISITOR;
 
     PsiFile file = holder.getFile();

@@ -13,6 +13,8 @@ import org.apache.tuweni.toml.TomlParseError
 import org.apache.tuweni.toml.TomlTable
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.InputStream
+import java.nio.file.Path
+import kotlin.io.path.isRegularFile
 
 /**
  * Stores the file name of `pyproject.toml`.
@@ -240,6 +242,9 @@ data class PyProjectToml(
         findAmongRoots(module, PY_PROJECT_TOML)
       }
 
+    suspend fun findInRoot(moduleBasePath: Path): Path? = withContext(Dispatchers.IO) {
+      moduleBasePath.resolve(PY_PROJECT_TOML).takeIf { it.isRegularFile() }
+    }
 
     private fun TomlTable.parseContacts(
       key: String,

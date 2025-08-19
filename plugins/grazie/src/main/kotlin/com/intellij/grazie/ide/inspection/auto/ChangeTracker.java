@@ -21,15 +21,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.intellij.grazie.utils.CloudUtilsKt.isFunctionallyDisabled;
-
 @Service
 public final class ChangeTracker implements Disposable {
   private static final Key<List<RecentChange>> DATA_KEY = Key.create("Grazie.Pro.RecentChanges");
   private static final Key<List<RangeMarker>> UNDONE_RANGES = Key.create("Grazie.Pro.UndoneChanges");
 
   ChangeTracker() {
-    if (isFunctionallyDisabled()) return;
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     multicaster.addDocumentListener(new DocumentListener() {
       @Override

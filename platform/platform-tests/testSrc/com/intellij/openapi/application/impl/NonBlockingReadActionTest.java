@@ -585,4 +585,28 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
       futuresList.forEach(f -> PlatformTestUtil.waitForFuture(f, 50_000));
     }
   }
+
+  public void testOurTasksByEqualityMapMustNotLeakItsTaskEvenWhenTheirEqualityObjectsHaveHorribleEqualsHashCode()
+    throws ExecutionException, InterruptedException {
+
+    class MyHorribleEquality {
+      private static final AtomicInteger screwYouHash = new AtomicInteger();
+      @Override
+      public int hashCode() {
+        return screwYouHash.incrementAndGet();
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+        return false;
+      }
+    }
+
+    MyHorribleEquality equality = new MyHorribleEquality();
+    CancellablePromise<Void> f1 = ReadAction.nonBlocking(() -> {}).coalesceBy(equality).submit(AppExecutorUtil.getAppExecutorService());
+    CancellablePromise<Void> f2 = ReadAction.nonBlocking(() -> {}).coalesceBy(equality).submit(AppExecutorUtil.getAppExecutorService());
+    f2.get();
+    f1.get();
+    LeakHunter.checkLeak(NonBlockingReadActionImpl.getTasksByEquality(), MyHorribleEquality.class);
+  }
 }

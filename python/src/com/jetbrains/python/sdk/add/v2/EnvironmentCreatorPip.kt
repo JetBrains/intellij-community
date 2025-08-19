@@ -2,11 +2,10 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.text.nullize
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.pipenv.pipEnvPath
@@ -24,8 +23,9 @@ internal class EnvironmentCreatorPip(model: PythonMutableTargetAddInterpreterMod
     PropertiesComponent.getInstance().pipEnvPath = savingPath
   }
 
-  override suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): PyResult<Sdk> =
-    setupPipEnvSdkWithProgressReport(project, module, baseSdks, projectPath, homePath, installPackages)
+  override suspend fun setupEnvSdk(moduleBasePath: Path, baseSdks: List<Sdk>, basePythonBinaryPath: PythonBinary?, installPackages: Boolean): PyResult<Sdk> {
+    return setupPipEnvSdkWithProgressReport(moduleBasePath, baseSdks, basePythonBinaryPath, installPackages)
+  }
 
   override suspend fun detectExecutable() {
     model.detectPipEnvExecutable()

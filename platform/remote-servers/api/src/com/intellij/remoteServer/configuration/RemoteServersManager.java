@@ -22,6 +22,9 @@ public abstract class RemoteServersManager {
   public abstract @Nullable <C extends ServerConfiguration> RemoteServer<C> findByName(@NotNull String name, @NotNull ServerType<C> type);
 
   @ApiStatus.Internal
+  public abstract @NotNull UUID getId(RemoteServer<?> server);
+
+  @ApiStatus.Internal
   public abstract @Nullable <C extends ServerConfiguration> RemoteServer<C> findById(@NotNull UUID id);
 
   public abstract @NotNull <C extends ServerConfiguration> RemoteServer<C> createServer(@NotNull ServerType<C> type, @NotNull String name);

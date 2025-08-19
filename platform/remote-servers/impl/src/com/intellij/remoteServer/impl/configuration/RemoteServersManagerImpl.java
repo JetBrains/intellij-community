@@ -12,6 +12,7 @@ import com.intellij.remoteServer.configuration.RemoteServerListener;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.util.CloudConfigurationBase;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -30,6 +31,7 @@ public final class RemoteServersManagerImpl extends RemoteServersManager impleme
   private SkipDefaultValuesSerializationFilters myDefaultValuesFilter = new SkipDefaultValuesSerializationFilters();
   private final List<RemoteServer<?>> myServers = new CopyOnWriteArrayList<>();
   private final List<RemoteServerState> myUnknownServers = new ArrayList<>();
+  private final Map<RemoteServer<?>, UUID> myThirdPartyServerIds = CollectionFactory.createWeakIdentityMap(2, .75f);
 
   public RemoteServersManagerImpl() {
     ServerType.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
@@ -86,9 +88,19 @@ public final class RemoteServersManagerImpl extends RemoteServersManager impleme
   }
 
   @Override
+  public @NotNull UUID getId(RemoteServer<?> server) {
+    if (server instanceof RemoteServerImpl<?> impl) {
+      return impl.getUniqueId();
+    }
+    synchronized (myThirdPartyServerIds) {
+      return myThirdPartyServerIds.computeIfAbsent(server, s -> UUID.randomUUID());
+    }
+  }
+
+  @Override
   public @Nullable <C extends ServerConfiguration> RemoteServer<C> findById(@NotNull UUID id) {
     for (RemoteServer<?> server : myServers) {
-      if (id.equals(server.getUniqueId())) {
+      if (id.equals(getId(server))) {
         //noinspection unchecked
         return (RemoteServer<C>)server;
       }

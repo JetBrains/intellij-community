@@ -2237,6 +2237,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             runTest("../../completion/testData/handlers/InnerClass.kt");
         }
 
+        @TestMetadata("InnerClassWithTypeArgument.kt")
+        public void testInnerClassWithTypeArgument() throws Exception {
+            runTest("../../completion/testData/handlers/InnerClassWithTypeArgument.kt");
+        }
+
         @TestMetadata("InsertFqnForJavaClass.kt")
         public void testInsertFqnForJavaClass() throws Exception {
             runTest("../../completion/testData/handlers/InsertFqnForJavaClass.kt");
@@ -2260,6 +2265,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
         @TestMetadata("InsertVoidJavaMethod.kt")
         public void testInsertVoidJavaMethod() throws Exception {
             runTest("../../completion/testData/handlers/InsertVoidJavaMethod.kt");
+        }
+
+        @TestMetadata("JavaPlatformTypeInferredType.kt")
+        public void testJavaPlatformTypeInferredType() throws Exception {
+            runTest("../../completion/testData/handlers/JavaPlatformTypeInferredType.kt");
         }
 
         @TestMetadata("KeywordClassName.kt")

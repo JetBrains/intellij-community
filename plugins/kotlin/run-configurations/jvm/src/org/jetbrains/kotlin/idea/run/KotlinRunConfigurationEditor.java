@@ -128,16 +128,8 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
 
     private void createUIComponents() {
         mainClass = new LabeledComponent<>();
-        mainClass.setComponent(ClassEditorField.createClassField(project, () -> moduleSelector.getModule(), (declaration, place) -> {
-            if (declaration instanceof KtLightClass aClass) {
-              if (ConfigurationUtil.MAIN_CLASS.value(aClass)
-                    && (PsiMethodUtil.findMainMethod(aClass) != null || place.getParent() != null)
-                    && moduleSelector.findClass(((PsiClass)declaration).getQualifiedName()) != null) {
-                    return JavaCodeFragment.VisibilityChecker.Visibility.VISIBLE;
-                }
-            }
-            return JavaCodeFragment.VisibilityChecker.Visibility.NOT_VISIBLE;
-        },  createApplicationClassBrowser(project, () -> moduleSelector.getModule(), moduleChooser)));
+        mainClass.setComponent(ClassEditorField.createClassField(project, () -> moduleSelector.getModule(), VISIBILITY_CHECKER,
+                                createApplicationClassBrowser(project, () -> moduleSelector.getModule(), moduleChooser)));
     }
 
     @Override
@@ -154,4 +146,15 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
         moduleChooser.setAnchor(anchor);
         shortenClasspathModeCombo.setAnchor(anchor);
     }
+
+    public static final JavaCodeFragment.VisibilityChecker VISIBILITY_CHECKER = (declaration, place) -> {
+        if (declaration instanceof KtLightClass aClass) {
+            if (ConfigurationUtil.MAIN_CLASS.value(aClass)
+                    && (PsiMethodUtil.findMainMethod(aClass) != null || place.getParent() != null)
+                    && ModuleUtilCore.findModuleForPsiElement(declaration) != null) {
+                return JavaCodeFragment.VisibilityChecker.Visibility.VISIBLE;
+            }
+        }
+        return JavaCodeFragment.VisibilityChecker.Visibility.NOT_VISIBLE;
+    };
 }

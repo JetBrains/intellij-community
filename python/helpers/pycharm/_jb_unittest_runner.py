@@ -4,13 +4,15 @@ import sys
 from unittest import main
 
 from _jb_runner_tools import jb_start_tests, jb_doc_args, JB_DISABLE_BUFFERING, \
-    PROJECT_DIR, jb_finish_tests
+JB_VERBOSE, PROJECT_DIR, jb_finish_tests
 from teamcity import unittestpy
 
 if __name__ == '__main__':
     path, targets, additional_args = jb_start_tests()
 
-    args = ["python -m unittest"]
+    args = ["python -m unittest", "--quiet"]
+    if JB_VERBOSE:
+        args.append("--verbose")  # additional args may override this (unittest argparser works left-to-right)
     if path:
         assert os.path.exists(path), "{0}: No such file or directory".format(path)
         if sys.version_info > (3, 0) and os.path.isfile(path):

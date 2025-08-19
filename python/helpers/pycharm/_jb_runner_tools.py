@@ -8,7 +8,7 @@ import sys
 from collections import OrderedDict
 
 import _jb_utils
-from teamcity import teamcity_presence_env_var, messages
+from teamcity import teamcity_presence_env_var, messages, output
 
 # Some runners need it to "detect" TC and start protocol
 if teamcity_presence_env_var not in os.environ:
@@ -17,7 +17,10 @@ if teamcity_presence_env_var not in os.environ:
 # Providing this env variable disables output buffering.
 # anything sent to stdout/stderr goes to IDE directly, not after test is over like it is done by default.
 # out and err are not in sync, so output may go to wrong test
+# This also affects stack traces of tests.
 JB_DISABLE_BUFFERING = "JB_DISABLE_BUFFERING" in os.environ
+# More verbose output of testing framework to aid structured display of output in IDE.
+JB_VERBOSE = "JB_VERBOSE" in os.environ
 # getcwd resolves symlinks, but PWD is not supported by some shells
 PROJECT_DIR = os.getenv('PWD', os.getcwd())
 
@@ -71,11 +74,45 @@ def set_parallel_mode():
 def is_parallel_mode():
     return _TREE_MANAGER_HOLDER.parallel
 
+_socket = None
+
+def _try_open_socket():
+    if os.environ.get('JB_TEAMCITY_SOCKET_PATH'):
+        family = 'AF_UNIX'
+        address = os.environ.get('JB_TEAMCITY_SOCKET_PATH')
+    elif os.environ.get('JB_TEAMCITY_SOCKET_PORT'):
+        family = 'AF_INET'
+        address = (os.environ.get('JB_TEAMCITY_SOCKET_HOST', 'localhost'), int(os.environ.get('JB_TEAMCITY_SOCKET_PORT')))
+    else:
+        return None
+
+    import socket
+    new_socket = socket.socket(getattr(socket, family), socket.SOCK_STREAM)
+    new_socket.connect(address)
+    import atexit
+    atexit.register(new_socket.close)  # good style and avoids warning
+    return new_socket
+
+
+class _SocketTeamCityMessagesPrinter(output.TeamCityMessagesPrinter):
+    def __init__(self, context_manager=None):
+        super(_SocketTeamCityMessagesPrinter, self).__init__(output=_socket, context_manager=context_manager)
+
+    def _output(self, message):
+        self.output.sendall(message)
 
 # Monkeypatching TC
 _old_service_messages = messages.TeamcityServiceMessages
 
 PARSE_FUNC = None
+
+class TestSuiteInfo:
+    def __init__(self, full_name, node_id, parent_node_id, is_test, was_stopped):
+        self.full_name = full_name
+        self.node_id = node_id
+        self.parent_node_id = parent_node_id
+        self.is_test = is_test
+        self.was_stopped = was_stopped
 
 
 class NewTeamcityServiceMessages(_old_service_messages):
@@ -87,6 +124,17 @@ class NewTeamcityServiceMessages(_old_service_messages):
     def __init__(self, *args, **kwargs):
         super(NewTeamcityServiceMessages, self).__init__(*args, **kwargs)
         NewTeamcityServiceMessages.INSTANCE = self
+
+        global _socket  # reuse socket to ensure order of messages
+        if _socket is None:
+            _socket = _try_open_socket()
+        if _socket is not None:
+            self.output_handler = _SocketTeamCityMessagesPrinter(self.output_handler.context_manager)
+
+        self.stderr_output_manager = output.TeamCityMessagesPrinter(
+            output=sys.stderr,
+            context_manager=self.output_handler.context_manager
+        )
 
     def message(self, messageName, **properties):
         if messageName in {"enteredTheMatrix", "testCount"}:
@@ -126,7 +174,14 @@ class NewTeamcityServiceMessages(_old_service_messages):
 
         is_test = messageName == "testStarted"
         if messageName == "testSuiteStarted" or is_test:
-            self._test_suites[full_name] = (full_name, current, parent, is_test)
+            self._test_suites[full_name] = TestSuiteInfo(full_name, current, parent, is_test, False)
+        elif messageName == "testIgnored" and properties.get("stopped") == "true":
+            ancestors = self._test_to_list(full_name)
+            # mark ancestors as explicitly stopped
+            for i in range(len(ancestors), 0, -1):
+                ancestor = ".".join(ancestors[:i])
+                # keep old entries intact; only change was_stopped
+                self._test_suites[ancestor].was_stopped = True
         _old_service_messages.message(self, messageName, **properties)
 
     def _test_to_list(self, test_name):
@@ -194,11 +249,21 @@ class NewTeamcityServiceMessages(_old_service_messages):
         commands = _TREE_MANAGER_HOLDER.manager.level_opened(self._test_to_list(testName), _write_start_message)
         if commands:
             self.do_commands(commands)
-            self.testStarted(testName, captureStandardOutput, metainfo=metainfo)
+            self.testStarted(testName, captureStandardOutput, is_suite=is_suite, metainfo=metainfo)
 
     def testFailed(self, testName, message='', details='', flowId=None, comparison_failure=None):
         testName = ".".join(self._test_to_list(testName))
+        if JB_DISABLE_BUFFERING:
+            self._print_error(details)
+            details = None
         _old_service_messages.testFailed(self, testName, message, details, comparison_failure=comparison_failure)
+
+    def _print_error(self, message):
+        if not message.endswith("\n"):
+            message += "\n"
+        if self.stderr_output_manager.output.isatty():
+            message = "\033[31m" + message + "\033[0m"
+        self.stderr_output_manager.send_message(self.encode(message))
 
     def testFinished(self, testName, testDuration=None, flowId=None, is_suite=False):
         test_parts = self._test_to_list(testName)
@@ -255,15 +320,17 @@ class NewTeamcityServiceMessages(_old_service_messages):
 
     def close_suites(self):
         # Go in reverse order and close all suites
-        for (test_suite, node_id, parent_node_id, is_test) in \
-                reversed(list(self._test_suites.values())):
-            # suits are explicitly closed, but if test can't been finished, it is skipped
-            message = "testIgnored" if is_test else "testSuiteFinished"
-            _old_service_messages.message(self, message, **{
-                "name": test_suite,
-                "nodeId": str(node_id),
-                "parentNodeId": str(parent_node_id)
-            })
+        for suite in reversed(list(self._test_suites.values())):
+            # suites are explicitly closed, but if test can't been finished, it was either stopped or skipped
+            message = "testIgnored" if suite.is_test or suite.was_stopped else "testSuiteFinished"
+            kwargs = {
+                "name": suite.full_name,
+                "nodeId": str(suite.node_id),
+                "parentNodeId": str(suite.parent_node_id),
+            }
+            if suite.was_stopped:
+                kwargs["stopped"] = "true"
+            _old_service_messages.message(self, message, **kwargs)
         self._test_suites = OrderedDict()
 
 

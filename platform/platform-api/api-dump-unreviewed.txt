@@ -3275,7 +3275,6 @@ c:com.intellij.openapi.ui.LoadingDecorator
 - startLoading(Z):V
 - stopLoading():V
 f:com.intellij.openapi.ui.LoadingDecorator$Companion
-com.intellij.openapi.ui.LoadingDecorator$CursorAware
 a:com.intellij.openapi.ui.MasterDetailsComponent
 - com.intellij.openapi.options.Configurable
 - com.intellij.openapi.options.MasterDetails

@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.util.io.toNioPathOrNull
@@ -13,6 +11,7 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
@@ -69,19 +68,20 @@ internal abstract class CustomNewEnvironmentCreator(
 
     // todo think about better error handling
     val selectedBasePython = model.state.baseInterpreter.get()!!
-    val homePath = model.installPythonIfNeeded(selectedBasePython)
+    val basePythonBinaryPath = model.installPythonIfNeeded(selectedBasePython)
 
     val module = when (moduleOrProject) {
       is ModuleOrProject.ModuleAndProject -> moduleOrProject.module
       is ModuleOrProject.ProjectOnly -> null
     }
+    val moduleBasePath = module?.basePath?.let { Path.of(it) }
+                         ?: model.projectPathFlows.projectPath.first()
+                         ?: error("module base path can't be recognized, both module and project are nulls")
 
     val newSdk = setupEnvSdk(
-      project = moduleOrProject.project,
-      module = module,
+      moduleBasePath = moduleBasePath,
       baseSdks = PythonSdkUtil.getAllSdks(),
-      projectPath = model.projectPathFlows.projectPathWithDefault.first().toString(),
-      homePath = homePath,
+      basePythonBinaryPath = basePythonBinaryPath,
       installPackages = false
     ).getOr { return it }
 
@@ -184,7 +184,7 @@ internal abstract class CustomNewEnvironmentCreator(
    */
   internal abstract fun savePathToExecutableToProperties(path: Path?)
 
-  protected abstract suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): PyResult<Sdk>
+  protected abstract suspend fun setupEnvSdk(moduleBasePath: Path, baseSdks: List<Sdk>, basePythonBinaryPath: PythonBinary?, installPackages: Boolean): PyResult<Sdk>
 
   internal abstract suspend fun detectExecutable()
 

@@ -30,6 +30,7 @@ internal suspend fun createDevModeProductRunner(context: BuildContext, additiona
         isUnpackedDist = false,
         writeCoreClasspath = false,
         platformPrefix = context.productProperties.platformPrefix ?: "idea",
+        baseIdePlatformPrefixForFrontend = context.productProperties.baseIdePlatformPrefixForFrontend,
         additionalModules = additionalPluginModules,
         projectDir = homeDir,
         devRootDir = context.paths.tempDir.resolve("dev-run"),

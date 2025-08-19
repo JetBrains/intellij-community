@@ -43,7 +43,7 @@ internal class PyHatchSdkConfiguration : PyProjectSdkConfigurationExtension {
     val createdEnvironment = hatchService.createVirtualEnvironment().getOr { return@runWithModalBlockingOrInBackground it }
 
     val hatchVenv = HatchVirtualEnvironment(HatchEnvironment.DEFAULT, createdEnvironment)
-    val sdk = hatchVenv.createSdk(hatchService.getWorkingDirectoryPath(), module)
+    val sdk = hatchVenv.createSdk(hatchService.getWorkingDirectoryPath())
     sdk
   }
   override suspend fun createAndAddSdkForConfigurator(module: Module): PyResult<Sdk> = createSdk(module)

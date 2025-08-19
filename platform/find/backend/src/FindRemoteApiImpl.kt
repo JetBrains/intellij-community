@@ -18,7 +18,6 @@ import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.platform.find.FindInFilesResult
@@ -41,8 +40,7 @@ internal class FindRemoteApiImpl : FindRemoteApi {
   override suspend fun findByModel(findModel: FindModel, projectId: ProjectId, filesToScanInitially: List<VirtualFileId>, maxUsagesCount: Int): Flow<FindInFilesResult> {
     val sentItems = AtomicInteger(0)
     return channelFlow {
-      //TODO rewrite find function without using progress indicator and presentation
-      val progressIndicator = EmptyProgressIndicator()
+      //TODO rewrite find function without using presentation
       val presentation = FindUsagesProcessPresentation(UsageViewPresentation())
 
       val isReplaceState = findModel.isReplaceState
@@ -59,7 +57,7 @@ internal class FindRemoteApiImpl : FindRemoteApi {
       setCustomScopeById(project, findModel)
       //read action is necessary in case of the loading from a directory
       val scope = readAction { FindInProjectUtil.getGlobalSearchScope(project, findModel) }
-      FindInProjectUtil.findUsages(findModel, project, progressIndicator, presentation, filesToScanInitially) { usageInfo ->
+      FindInProjectUtil.findUsages(findModel, project, presentation, filesToScanInitially) { usageInfo ->
         val usageNum = usagesCount.incrementAndGet()
         if (usageNum > maxUsagesCount) {
           return@findUsages false

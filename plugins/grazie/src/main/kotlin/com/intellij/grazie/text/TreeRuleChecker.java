@@ -20,12 +20,12 @@ import ai.grazie.rules.tree.Tree.ParameterValues;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.grazie.GrazieBundle;
 import com.intellij.grazie.GrazieConfig;
+import com.intellij.grazie.ide.inspection.auto.AutoFix;
+import com.intellij.grazie.ide.ui.configurable.StyleConfigurable;
 import com.intellij.grazie.rule.ParsedSentence;
 import com.intellij.grazie.rule.RuleIdeClient;
 import com.intellij.grazie.rule.SentenceBatcher;
 import com.intellij.grazie.rule.SentenceTokenizer;
-import com.intellij.grazie.ide.inspection.auto.AutoFix;
-import com.intellij.grazie.ide.ui.configurable.StyleConfigurable;
 import com.intellij.grazie.style.ConfigureSuggestedParameter;
 import com.intellij.grazie.style.TextLevelFix;
 import com.intellij.grazie.text.TextContent.TextDomain;
@@ -59,7 +59,6 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.grazie.utils.CloudUtilsKt.isFunctionallyDisabled;
 import static com.intellij.grazie.utils.IdeUtils.ijRange;
 import static com.intellij.grazie.utils.IdeUtils.visualizeSpace;
 
@@ -648,7 +647,6 @@ public final class TreeRuleChecker {
 
     @Override
     public boolean shouldIgnore(@NotNull TextProblem problem) {
-      if (isFunctionallyDisabled()) return false;
       TextContent text = problem.getText();
       if (text.getDomain() == TextDomain.DOCUMENTATION) {
         List<TextRange> ranges = problem.getHighlightRanges();

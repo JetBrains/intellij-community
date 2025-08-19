@@ -253,15 +253,15 @@ public final class PlatformTestUtil {
     }
   }
 
-  public static void assertTreeEqual(@NotNull JTree tree, @NonNls String expected) {
+  public static void assertTreeEqual(@NotNull JTree tree, @NotNull @NonNls String expected) {
     assertTreeEqual(tree, expected, false);
   }
 
-  public static void assertTreeEqual(@NotNull JTree tree, String expected, boolean checkSelected) {
+  public static void assertTreeEqual(@NotNull JTree tree, @NotNull @NonNls String expected, boolean checkSelected) {
     assertTreeEqual(tree, expected, checkSelected, false);
   }
 
-  public static void assertTreeEqual(@NotNull JTree tree, @NotNull String expected, boolean checkSelected, boolean ignoreOrder) {
+  public static void assertTreeEqual(@NotNull JTree tree, @NotNull @NonNls String expected, boolean checkSelected, boolean ignoreOrder) {
     String treeStringPresentation = print(tree, checkSelected);
     if (ignoreOrder) {
       List<String> actualLines = sorted(ContainerUtil.map(splitByLines(treeStringPresentation), String::trim));
