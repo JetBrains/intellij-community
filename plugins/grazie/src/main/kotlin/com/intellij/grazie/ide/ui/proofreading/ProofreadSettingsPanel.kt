@@ -1,5 +1,6 @@
 package com.intellij.grazie.ide.ui.proofreading
 
+import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.ui.components.dsl.border
 import com.intellij.grazie.ide.ui.components.dsl.msg
@@ -13,15 +14,18 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.ConfigurableUi
+import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessCurrentProject
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable
 import com.intellij.ui.HyperlinkLabel
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.layout.migLayout.createLayoutConstraints
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.JBUI
@@ -30,14 +34,15 @@ import kotlinx.coroutines.withContext
 import net.miginfocom.layout.CC
 import net.miginfocom.swing.MigLayout
 import java.util.concurrent.ConcurrentHashMap
+import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.event.HyperlinkEvent
 
-private val logger = logger<ProofreadSettingsPanel>()
-
-class ProofreadSettingsPanel : ConfigurableUi<GrazieConfig> {
-  private val EP: ExtensionPointName<Configurable> = ExtensionPointName("com.intellij.grazie.proofreadSettingsExtension")
+class ProofreadSettingsPanel : BoundConfigurable(
+  GrazieBundle.message("grazie.settings.configurable.name"),
+  null
+), ConfigurableUi<GrazieConfig>, SearchableConfigurable {
   private val languages = GrazieLanguagesComponent(::download)
   private val project: Project = guessCurrentProject(languages.component)
 
@@ -49,6 +54,12 @@ class ProofreadSettingsPanel : ConfigurableUi<GrazieConfig> {
     AsyncProcessIcon("Downloading language models").apply { isVisible = false }
   }
 
+  private val config get() = GrazieConfig.get()
+
+  var autoFix: Boolean
+    get() = config.autoFix
+    set(value) = GrazieConfig.update { it.copy(autoFix = value) }
+
   private suspend fun download(langs: Collection<Lang>) {
     withProcessIcon(langs) {
       LanguageDownloader.startDownloading(it)
@@ -57,16 +68,17 @@ class ProofreadSettingsPanel : ConfigurableUi<GrazieConfig> {
   }
 
   override fun reset(settings: GrazieConfig) {
+    super<SearchableConfigurable>.reset()
+    super<BoundConfigurable>.reset()
     languages.reset(settings.state)
-    EP.extensionList.forEach { it.reset() }
   }
 
   override fun isModified(settings: GrazieConfig): Boolean = languages.isModified(settings.state)
-                                                             || EP.extensionList.any { it.isModified }
+                                                             || super<BoundConfigurable>.isModified
 
   override fun apply(settings: GrazieConfig) {
+    super.apply()
     GrazieConfig.update { state ->
-      EP.extensionList.forEach { it.apply() }
       languages.apply(state)
     }
   }
@@ -99,8 +111,36 @@ class ProofreadSettingsPanel : ConfigurableUi<GrazieConfig> {
     }
 
     add(link, CC().wrap())
+    add(super.createComponent(), CC().wrap())
+  }
 
-    EP.extensionList.forEach { add(it.createComponent(), CC().wrap()) }
+  private val component: DialogPanel by lazy {
+    com.intellij.ui.dsl.builder.panel {
+      generalSettings()
+    }
+  }
+
+  private fun Panel.generalSettings(): Row {
+    return group {
+      row {
+        checkBox(GrazieBundle.message("grazie.settings.auto.apply.fixes.label")).bindSelected(::autoFix)
+      }
+
+      row {
+        @Suppress("DialogTitleCapitalization")
+        val oxfordCb = checkBox(GrazieBundle.message("grazie.settings.use.oxford.spelling.checkbox"))
+          .bindSelected(
+            getter = { config.useOxfordSpelling },
+            setter = { GrazieConfig.update { state -> state.withOxfordSpelling(it) } }
+          )
+
+        fun updateAvailability() {
+          oxfordCb.enabled(Lang.BRITISH_ENGLISH in GrazieConfig.get().availableLanguages)
+        }
+        updateAvailability()
+        GrazieConfig.subscribe(disposable!!) { updateAvailability() }
+      }
+    }
   }
 
   private suspend fun withProcessIcon(langs: Collection<Lang>, download: suspend (Collection<Lang>) -> Unit) {
@@ -140,5 +180,21 @@ class ProofreadSettingsPanel : ConfigurableUi<GrazieConfig> {
         }
       }
     }
+  }
+
+  override fun createPanel(): DialogPanel = component
+
+  override fun getPreferredFocusedComponent(): JComponent? {
+    return super<ConfigurableUi>.preferredFocusedComponent
+  }
+
+  override fun enableSearch(option: String?): Runnable? {
+    return super<ConfigurableUi>.enableSearch(option)
+  }
+
+  override fun getId(): String = ID
+
+  companion object {
+    internal const val ID = "reference.settings.grazie"
   }
 }

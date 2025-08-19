@@ -13,7 +13,7 @@ import ai.grazie.rules.settings.RuleSetting;
 import ai.grazie.rules.settings.TextStyle;
 import ai.grazie.rules.toolkit.LanguageToolkit;
 import ai.grazie.rules.tree.ActionSuggestion;
-import ai.grazie.rules.tree.NodeMatch;
+import ai.grazie.rules.tree.NodeMatch.SuppressableKind;
 import ai.grazie.rules.tree.Parameter;
 import ai.grazie.rules.tree.Tree;
 import ai.grazie.rules.tree.Tree.ParameterValues;
@@ -21,6 +21,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.grazie.GrazieBundle;
 import com.intellij.grazie.GrazieConfig;
 import com.intellij.grazie.ide.inspection.auto.AutoFix;
+import com.intellij.grazie.ide.inspection.rephrase.RephraseAction;
 import com.intellij.grazie.ide.ui.configurable.StyleConfigurable;
 import com.intellij.grazie.rule.ParsedSentence;
 import com.intellij.grazie.rule.RuleIdeClient;
@@ -60,7 +61,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.grazie.utils.IdeUtils.ijRange;
-import static com.intellij.grazie.utils.IdeUtils.visualizeSpace;
 
 @SuppressWarnings("NonAsciiCharacters")
 public final class TreeRuleChecker {
@@ -128,7 +128,7 @@ public final class TreeRuleChecker {
       grammarCategories.get(langCode);
     String id = rule.globalId();
     List<String> categories = rule.isStyleLike()
-                              ? List.of(styleCategories.get(langCode), "Grazie Pro")
+                              ? List.of(styleCategories.get(langCode))
                               : List.of(category);
     return new Rule(id, rule.displayName, categories.get(0)) {
 
@@ -194,6 +194,10 @@ public final class TreeRuleChecker {
              "<td style='padding-bottom: 10px; width: 100%;'>" + visualizeSpace(corrections) + "</td></tr>";
     }
     return result;
+  }
+
+  private static String visualizeSpace(String s) {
+    return s.replaceAll("\n", "⏎");
   }
 
   private static List<MatchingResult> doCheck(TextContent text, List<ParsedSentence> sentences) {
@@ -324,7 +328,7 @@ public final class TreeRuleChecker {
       if (fixes == null) continue;
 
       result.add(problem.withCustomFixes(ContainerUtil.map(fixes, fix ->
-        new TextLevelFix(file, TreeProblem.getQuickFixText(fix), fileLevelChanges(fix, doc))))
+        new TextLevelFix(file, getQuickFixText(fix), fileLevelChanges(fix, doc))))
       );
     }
     return result;
@@ -334,7 +338,7 @@ public final class TreeRuleChecker {
     return Arrays.stream(fix.getChanges())
       .map(c -> {
         SentenceWithContent sentence = findSentence(doc, c.getRange().getStart(), c.getRange().getEndExclusive());
-        return StringOperation.replace(sentence.content.textRangeToFile(ijRange(c).shiftLeft(sentence.contentStart)), c.getText());
+        return StringOperation.replace(sentence.content.textRangeToFile(IdeUtils.ijRange(c).shiftLeft(sentence.contentStart)), c.getText());
       })
       .toList();
   }
@@ -492,6 +496,48 @@ public final class TreeRuleChecker {
     return match.problemFixes();
   }
 
+  private static boolean isAsciiContext(TextContent text) {
+    return text.getDomain() != TextDomain.PLAIN_TEXT ||
+           text.getContainingFile() instanceof PsiPlainTextFile;
+  }
+
+  private static boolean shouldSuppressByPlace(ai.grazie.rules.Rule rule, TextContent text) {
+    TextDomain domain = text.getDomain();
+    PsiFile file = text.getContainingFile();
+    TextStyle placeStyle =
+      CommitMessage.isCommitMessage(file) ? TextStyle.Commit :
+      domain == TextDomain.DOCUMENTATION ? TextStyle.CodeDocumentation :
+      domain == TextDomain.COMMENTS ? TextStyle.CodeComment :
+      "ChatInput".equals(file.getLanguage().getID()) ? TextStyle.AIPrompt :
+      null;
+
+    return placeStyle != null && placeStyle.disabledRules().contains(rule.globalId());
+  }
+
+  private static boolean touchesUnknownFragments(TextContent text, ai.grazie.rules.tree.TextRange range, ai.grazie.rules.Rule rule) {
+    var ruleRangeInText = toIdeaRange(range);
+    if (ruleRangeInText.getEndOffset() > text.length()) {
+      LOG.error(
+        "Invalid match range " + ruleRangeInText + " for rule " + rule + " in a text of length " + text.length(),
+        new Attachment("text.txt", text.toString()));
+      return true;
+    }
+    if (text.hasUnknownFragmentsIn(Text.expandToTouchWords(text, ruleRangeInText))) {
+      return true;
+    }
+    return false;
+  }
+
+  public static TextRange toIdeaRange(ai.grazie.rules.tree.TextRange reported) {
+    return new TextRange(reported.start(), reported.end());
+  }
+
+  private static String getQuickFixText(ProblemFix fix) {
+    if (fix.getCustomDisplayName() != null) return fix.getCustomDisplayName();
+
+    return visualizeSpace(StreamEx.of(fix.getParts()).map(p -> p.getDisplay()).joining());
+  }
+
   public static class TreeProblem extends TextProblem {
     public final RuleMatch match;
     final boolean concedeToOtherCheckers;
@@ -542,34 +588,34 @@ public final class TreeRuleChecker {
           }
           return new ConfigureSuggestedParameter(cp.parameter(), cp.quickFixText());
         }
+        if (sug == ActionSuggestion.REPHRASE) {
+          return new RephraseAction();
+        }
         return null;
       }));
     }
 
     public TreeProblem withCustomFixes(List<? extends LocalQuickFix> fixes) {
-      return new TreeProblem(getRule(), getText(), getHighlightRanges(), match, suggestions, ContainerUtil.concat(customFixes, fixes),
-                             concedeToOtherCheckers);
+      return new TreeProblem(getRule(), getText(), getHighlightRanges(), match, suggestions, ContainerUtil.concat(customFixes, fixes), concedeToOtherCheckers);
     }
 
     @Override
     public boolean fitsGroup(@NotNull RuleGroup group) {
       Set<String> rules = group.getRules();
-      NodeMatch.SuppressableKind kind = match.suppressableKind();
-      if (rules.contains(RuleGroup.INCOMPLETE_SENTENCE) && kind == NodeMatch.SuppressableKind.INCOMPLETE_SENTENCE) {
+      SuppressableKind kind = match.suppressableKind();
+      if (rules.contains(RuleGroup.INCOMPLETE_SENTENCE) && kind == SuppressableKind.INCOMPLETE_SENTENCE) {
         return true;
       }
-      if (rules.contains(RuleGroup.SENTENCE_START_CASE) && kind == NodeMatch.SuppressableKind.UPPERCASE_SENTENCE_START) {
+      if (rules.contains(RuleGroup.SENTENCE_START_CASE) && kind == SuppressableKind.UPPERCASE_SENTENCE_START) {
         return true;
       }
-      if (rules.contains(RuleGroup.SENTENCE_END_PUNCTUATION) && kind == NodeMatch.SuppressableKind.UNFINISHED_SENTENCE) {
+      if (rules.contains(RuleGroup.SENTENCE_END_PUNCTUATION) && kind == SuppressableKind.UNFINISHED_SENTENCE) {
         return true;
       }
-      if (rules.contains(RuleGroup.UNDECORATED_SENTENCE_SEPARATION) &&
-          kind == NodeMatch.SuppressableKind.UNDECORATED_SENTENCE_SEPARATION) {
+      if (rules.contains(RuleGroup.UNDECORATED_SENTENCE_SEPARATION) && kind == SuppressableKind.UNDECORATED_SENTENCE_SEPARATION) {
         return true;
       }
-      if (rules.contains(RuleGroup.UNLIKELY_OPENING_PUNCTUATION) &&
-          kind == NodeMatch.SuppressableKind.UNLIKELY_OPENING_PUNCTUATION) {
+      if (rules.contains(RuleGroup.UNLIKELY_OPENING_PUNCTUATION) && kind == SuppressableKind.UNLIKELY_OPENING_PUNCTUATION) {
         return true;
       }
 
@@ -581,11 +627,11 @@ public final class TreeRuleChecker {
       return match.rule().shouldSuppressInCodeLikeFragments();
     }
 
-    private record MySuggestion(ProblemFix fix, TextContent text) implements Suggestion {
+    private record MySuggestion(ProblemFix fix, TextContent text) implements TextProblem.Suggestion {
 
       @Override
       public List<StringOperation> getChanges() {
-        return ContainerUtil.map(fix.getChanges(), r -> StringOperation.replace(IdeUtils.ijRange(r), r.getText()));
+        return ContainerUtil.map(fix.getChanges(), r -> StringOperation.replace(ijRange(r), r.getText()));
       }
 
       @Override
@@ -598,48 +644,6 @@ public final class TreeRuleChecker {
         return fix.getBatchId();
       }
     }
-
-    public static String getQuickFixText(ProblemFix fix) {
-      if (fix.getCustomDisplayName() != null) return fix.getCustomDisplayName();
-
-      return visualizeSpace(StreamEx.of(fix.getParts()).map(p -> p.getDisplay()).joining());
-    }
-  }
-
-  private static boolean isAsciiContext(TextContent text) {
-    return text.getDomain() != TextDomain.PLAIN_TEXT ||
-           text.getContainingFile() instanceof PsiPlainTextFile;
-  }
-
-  private static boolean shouldSuppressByPlace(ai.grazie.rules.Rule rule, TextContent text) {
-    TextDomain domain = text.getDomain();
-    PsiFile file = text.getContainingFile();
-    TextStyle placeStyle =
-      CommitMessage.isCommitMessage(file) ? TextStyle.Commit :
-      domain == TextDomain.DOCUMENTATION ? TextStyle.CodeDocumentation :
-      domain == TextDomain.COMMENTS ? TextStyle.CodeComment :
-      "ChatInput".equals(file.getLanguage().getID()) ? TextStyle.AIPrompt :
-      null;
-
-    return placeStyle != null && placeStyle.disabledRules().contains(rule.globalId());
-  }
-
-  private static boolean touchesUnknownFragments(TextContent text, ai.grazie.rules.tree.TextRange range, ai.grazie.rules.Rule rule) {
-    var ruleRangeInText = toIdeaRange(range);
-    if (ruleRangeInText.getEndOffset() > text.length()) {
-      LOG.error(
-        "Invalid match range " + ruleRangeInText + " for rule " + rule + " in a text of length " + text.length(),
-        new Attachment("text.txt", text.toString()));
-      return true;
-    }
-    if (text.hasUnknownFragmentsIn(Text.expandToTouchWords(text, ruleRangeInText))) {
-      return true;
-    }
-    return false;
-  }
-
-  public static TextRange toIdeaRange(ai.grazie.rules.tree.TextRange reported) {
-    return new TextRange(reported.start(), reported.end());
   }
 
   public static class DocProblemFilter extends ProblemFilter {

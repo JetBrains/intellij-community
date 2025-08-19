@@ -10,7 +10,7 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.grazie.GrazieBundle;
 import com.intellij.grazie.cloud.GrazieCloudConnector;
 import com.intellij.grazie.detection.LangDetector;
-import com.intellij.grazie.ide.fus.GrazieProCounterUsagesCollector;
+import com.intellij.grazie.ide.fus.GrazieFUSCounter;
 import com.intellij.grazie.ide.ui.PaddedListCellRenderer;
 import com.intellij.grazie.rule.ParsedSentence;
 import com.intellij.grazie.rule.SentenceTokenizer;
@@ -46,7 +46,7 @@ import java.util.*;
 import static com.intellij.grazie.utils.HighlightingUtil.toIdeaRange;
 
 @SuppressWarnings("IntentionDescriptionNotFoundInspection")
-class RephraseAction extends IntentionAndQuickFixAction {
+public class RephraseAction extends IntentionAndQuickFixAction {
   private static final Set<Language> SUPPORTED_LANGUAGES = Set.of(Language.ENGLISH);
 
   @Override
@@ -118,8 +118,7 @@ class RephraseAction extends IntentionAndQuickFixAction {
         String rangeText = textRange.subSequence(sentence.text).toString();
         int wordsRangeCount = WhitespaceWordTokenizer.INSTANCE.words(rangeText).size();
         int rangeLength = textRange.getLength();
-        GrazieProCounterUsagesCollector.reportRephraseRequested(iso, sentence.text.length(), rangeLength,
-          wordsRangeCount);
+        GrazieFUSCounter.INSTANCE.reportRephraseRequested(iso, sentence.text.length(), rangeLength, wordsRangeCount);
         List<TextRange> ranges = getRangesToRephrase(sentence, textRange);
         List<String> result = GrazieCloudConnector.Companion.getEP_NAME().getExtensionList()
           .stream()
@@ -137,7 +136,7 @@ class RephraseAction extends IntentionAndQuickFixAction {
       }), GrazieBundle.message("intention.rephrase.progress.title"), true, project);
 
     if (rephraseData.suggestions().isEmpty()) {
-      GrazieProCounterUsagesCollector.reportRephraseEmpty(
+      GrazieFUSCounter.INSTANCE.reportRephraseEmpty(
         rephraseData.language, rephraseData.textLength, rephraseData.rangeLength, rephraseData.wordRangeCount
       );
       HintManager.getInstance().showErrorHint(editor, GrazieBundle.message("intention.rephrase.no.results.popup"));
@@ -188,7 +187,7 @@ class RephraseAction extends IntentionAndQuickFixAction {
         editor.getDocument().replaceString(item.fileRange.getStartOffset(), item.fileRange.getEndOffset(), item.replacement);
         int rephraseLength = item.replacement.length();
         int rephraseWordCount = WhitespaceWordTokenizer.INSTANCE.words(item.replacement).size();
-        GrazieProCounterUsagesCollector.reportRephraseApplied(
+        GrazieFUSCounter.INSTANCE.reportRephraseApplied(
           descriptor.language, suggestions.size(), rephraseLength, rephraseWordCount, selectedRank
         );
       }, file))
@@ -206,7 +205,7 @@ class RephraseAction extends IntentionAndQuickFixAction {
         public void onClosed(@NotNull LightweightWindowEvent event) {
           dropHighlighter(highlighter);
           if (!event.isOk()) {
-            GrazieProCounterUsagesCollector.reportRephraseRejected(descriptor.language(), suggestions.size());
+            GrazieFUSCounter.INSTANCE.reportRephraseRejected(descriptor.language(), suggestions.size());
           }
         }
       })

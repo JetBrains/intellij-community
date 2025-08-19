@@ -37,11 +37,12 @@ object DependencyParser {
 
   @JvmStatic
   fun getParser(text: TextContent, minimal: Boolean): AsyncBatchParser<Tree>? {
-    if (!GrazieCloudConnector.seemsCloudConnected()) {
-      return getLocalParser()
-    }
     val stripPrefixLength = HighlightingUtil.stripPrefix(text)
     val language = getLanguageIfAvailable(text.toString().substring(stripPrefixLength)) ?: return null
+
+    if (!GrazieCloudConnector.seemsCloudConnected()) {
+      return getLocalParser(language)
+    }
     val batcher = getBatcher(language) ?: return null
     val file = text.containingFile
     val cloud = when {
@@ -51,13 +52,19 @@ object DependencyParser {
     return CloudOrLocalBatchParser(
       project = file.project,
       cloud = cloud,
-      local = { getLocalParser() }
+      local = { getLocalParser(language) }
     )
   }
 
-  private fun getLocalParser(): AsyncBatchParser<Tree> {
-    return object: AsyncBatchParser<Tree> {
+  private fun getLocalParser(language: Language): AsyncBatchParser<Tree> {
+    return object : AsyncBatchParser<Tree> {
       override suspend fun parseAsync(sentences: List<SentenceWithExclusions>): LinkedHashMap<SentenceWithExclusions, Tree?> {
+        val support = obtainSupport(language)
+        if (support != null) {
+          @Suppress("UNCHECKED_CAST")
+          return sentences.associateWith { Tree.createFlatTree(support, it.sentence) } as LinkedHashMap<SentenceWithExclusions, Tree?>
+        }
+
         return LinkedHashMap()
       }
     }

@@ -5,7 +5,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.grazie.GrazieBundle;
 import com.intellij.grazie.GrazieConfig;
 import com.intellij.grazie.ide.fus.AcceptanceRateTracker;
-import com.intellij.grazie.ide.fus.GrazieProCounterUsagesCollector;
+import com.intellij.grazie.ide.fus.GrazieFUSCounter;
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix;
 import com.intellij.grazie.text.TextContent;
 import com.intellij.grazie.text.TreeRuleChecker.TreeProblem;
@@ -69,13 +69,13 @@ public final class AutoFix {
           var action = new BasicUndoableAction(file.getViewProvider().getVirtualFile()) {
             @Override
             public void undo() {
-              GrazieProCounterUsagesCollector.reportAutoFixUndone(tracker);
+              GrazieFUSCounter.INSTANCE.reportAutoFixUndone(tracker);
             }
 
             @Override
             public void redo() {
               fix.applyFix(project, file, null);
-              GrazieProCounterUsagesCollector.reportAutoFixApplied(tracker);
+              GrazieFUSCounter.INSTANCE.reportAutoFixApplied(tracker);
             }
           };
           action.redo();

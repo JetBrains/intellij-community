@@ -45,8 +45,7 @@
       instance="com.intellij.grazie.ide.ui.configurable.StyleConfigurable"
       key="grazie.settings.style.configurable.name"
       bundle="messages.GrazieBundle"
-      id="reference.settings.grazie.pro.style.in.ai.assistant"/>
-    <grazie.proofreadSettingsExtension implementation="com.intellij.grazie.ide.ui.configurable.GrazieProConfigurable" id="grazieProConfigurable"/>
+      id="reference.settings.grazie"/>
 
     <applicationService serviceImplementation="com.intellij.grazie.GrazieConfig"/>
 
@@ -118,10 +117,6 @@
       <className>com.intellij.grazie.ide.inspection.rephrase.RephraseAction</className>
       <descriptionDirectoryName>RephraseAction</descriptionDirectoryName>
     </intentionAction>
-
-    <!--suppress PluginXmlValidity -->
-    <statistics.applicationUsagesCollector implementation="com.intellij.grazie.ide.fus.GrazieProApplicationUsagesCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.grazie.ide.fus.GrazieProCounterUsagesCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">
@@ -148,8 +143,6 @@
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.grazie.text.ProblemFilter"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.grazie.proofreadSettingsExtension" interface="com.intellij.openapi.options.Configurable"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.grazie.textChecker" interface="com.intellij.grazie.text.TextChecker"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.grazie.disableChecking"

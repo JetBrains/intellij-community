@@ -28,7 +28,7 @@ class ExampleClassWithNoTypos<T> {
     /**
      * Adds a [member] to this group.
      *
-     * @param cancellable Whether the progress can be cancelled.
+     * @param cancellable Whether the progress can be <STYLE_SUGGESTION descr="American English does not double '-l-' in suffixes">cancelled</STYLE_SUGGESTION>.
      * @param member member to add
      * @return the new size of the group. And another sentence.
      */
