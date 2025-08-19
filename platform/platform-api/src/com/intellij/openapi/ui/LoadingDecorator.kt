@@ -50,7 +50,7 @@ open class LoadingDecorator @JvmOverloads constructor(
 
   var overlayBackground: Color? = null
 
-  private val pane: JLayeredPane = LoadingDecoratorLayeredPane(if (useMinimumSize) content else null)
+  private val pane: JLayeredPane = LoadingDecoratorLayeredPaneImpl(if (useMinimumSize) content else null)
   private val loadingLayer: LoadingLayer = LoadingLayer(icon)
   private val fadeOutAnimator: Animator?
   private var startRequestJob: Job? = null
@@ -253,8 +253,6 @@ open class LoadingDecorator @JvmOverloads constructor(
       super.paintChildren(g)
     }
   }
-
-  interface CursorAware
 }
 
 private class LoadingLayerAnimator(
@@ -278,7 +276,7 @@ private class LoadingLayerAnimator(
   }
 }
 
-private class LoadingDecoratorLayeredPane(private val content: JComponent?) : JBLayeredPane(), LoadingDecorator.CursorAware {
+private class LoadingDecoratorLayeredPaneImpl(private val content: JComponent?) : JBLayeredPane(), LoadingDecoratorLayeredPane {
   init {
     isFullOverlayLayout = true
   }
