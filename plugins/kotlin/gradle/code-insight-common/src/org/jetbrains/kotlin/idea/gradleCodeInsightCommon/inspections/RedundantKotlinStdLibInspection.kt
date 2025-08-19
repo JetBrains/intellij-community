@@ -5,9 +5,15 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.idea.gradle.configuration.readGradleProperty
 
 class RedundantKotlinStdLibInspection : LocalInspectionTool() {
     override fun isAvailableForFile(file: PsiFile): Boolean {
+        val kotlinStdlibDependencyByDefaultProp = readGradleProperty(file.project, "kotlin.stdlib.default.dependency")
+        // if the property is not set (null value), then the inspection should be active
+        // and only if it is "false" should it be deactivated as that is how it works in Gradle
+        if (kotlinStdlibDependencyByDefaultProp == "false") return false
+
         val language = file.language
         val inspectionProvider = GradleKotlinInspectionProvider.INSTANCE.forLanguage(language) ?: return false
         return inspectionProvider.isRedundantKotlinStdLibInspectionAvailable(file)
