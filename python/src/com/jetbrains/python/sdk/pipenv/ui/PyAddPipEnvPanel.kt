@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk.pipenv.ui
 
 import com.intellij.application.options.ModuleListCellRenderer
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
@@ -24,10 +23,13 @@ import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.*
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
+import com.jetbrains.python.sdk.associatedModulePath
+import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.installSdkIfNeeded
 import com.jetbrains.python.sdk.pipenv.*
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
@@ -36,6 +38,7 @@ import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
+import java.nio.file.Path
 import javax.swing.Icon
 import javax.swing.JComboBox
 import javax.swing.event.DocumentEvent
@@ -128,12 +131,17 @@ class PyAddPipEnvPanel(
   @RequiresEdt
   override fun getOrCreateSdk(): Sdk? {
     PropertiesComponent.getInstance().pipEnvPath = pipEnvPathField.text.nullize()
-    val baseSdk = installSdkIfNeeded(baseSdkField.selectedSdk, selectedModule, existingSdks, context).getOrLogException(LOGGER)?.homePath
+    val baseSdk = installSdkIfNeeded(baseSdkField.selectedSdk, selectedModule, existingSdks, context).getOrThrow()
+
+    val moduleBasePath = module?.basePath?.let { Path.of(it) }
+                         ?: error("module base path is invalid: ${module?.basePath}")
+
+    val basePythonBinaryPath = baseSdk.homePath?.let { Path.of(it) }
+                               ?: error("base python binary path is invalid: ${baseSdk.homePath}")
 
     return runWithModalProgressBlocking(ModalTaskOwner.guess(), PyBundle.message("python.sdk.setting.up.pipenv.title")) {
-      setupPipEnvSdkWithProgressReport(project, selectedModule, existingSdks, newProjectPath,
-                                       baseSdk, installPackagesCheckBox.isSelected).onSuccess {
-        PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdk
+      setupPipEnvSdkWithProgressReport(moduleBasePath, existingSdks, basePythonBinaryPath, installPackagesCheckBox.isSelected).onSuccess {
+        PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdk.homePath
       }
     }.getOrNull()
   }

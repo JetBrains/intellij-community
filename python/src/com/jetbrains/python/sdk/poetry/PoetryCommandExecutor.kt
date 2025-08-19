@@ -16,11 +16,8 @@ import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.impl.poetry.poetryPath
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.util.SystemProperties
-import com.jetbrains.python.PyBundle
+import com.jetbrains.python.*
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.getOrNull
-import com.jetbrains.python.isSuccess
-import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
@@ -41,7 +38,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.SystemDependent
 import org.jetbrains.annotations.SystemIndependent
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -114,32 +110,30 @@ suspend fun runPoetryWithSdk(sdk: Sdk, vararg args: String): PyResult<String> {
  * @return the path to the poetry environment.
  */
 @Internal
-suspend fun setupPoetry(projectPath: Path, python: String?, installPackages: Boolean, init: Boolean): PyResult<@SystemDependent String> {
+suspend fun setupPoetry(projectPath: Path, basePythonBinaryPath: PythonBinary?, installPackages: Boolean, init: Boolean): PyResult<PythonHomePath> {
   if (init) {
-    runPoetry(projectPath, *listOf("init", "-n").toTypedArray())
-      .getOr { return it }
+    runPoetry(projectPath, *listOf("init", "-n").toTypedArray()).getOr { return it }
 
-    if (python != null) { // Replace a python version in toml
-      ExecService().execGetStdout(BinOnEel(Path.of(python), workDir = projectPath), Args("-c", REPLACE_PYTHON_VERSION))
-        .getOr { return it }
+    if (basePythonBinaryPath != null) { // Replace a python version in toml
+      ExecService().execGetStdout(
+        binary = BinOnEel(path = basePythonBinaryPath, workDir = projectPath),
+        args = Args("-c", REPLACE_PYTHON_VERSION)
+      ).getOr { return it }
     }
   }
 
-  val env = if (python != null) {
-    runPoetry(projectPath, "env", "use", python)
+  if (basePythonBinaryPath != null) {
+    runPoetry(projectPath, "env", "use", basePythonBinaryPath.pathString).getOr { return it }
   }
   else {
-    runPoetry(projectPath, "run", "python", "-V")
+    runPoetry(projectPath, "run", "python", "-V").getOr { return it }
   }
-
-  env.onFailure { return PyResult.failure(it) }
 
   if (installPackages) {
-    runPoetry(projectPath, "install")
-      .onFailure { return PyResult.failure(it) }
+    runPoetry(projectPath, "install").getOr { return it }
   }
 
-  return runPoetry(projectPath, "env", "info", "-p")
+  return runPoetry(projectPath, "env", "info", "-p").mapSuccess { Path.of(it) }
 }
 
 internal suspend fun detectPoetryEnvs(module: Module?, existingSdkPaths: Set<String>?, projectPath: @SystemIndependent @NonNls String?): List<PyDetectedSdk> {

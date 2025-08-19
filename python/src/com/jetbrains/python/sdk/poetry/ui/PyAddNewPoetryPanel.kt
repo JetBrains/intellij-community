@@ -42,6 +42,7 @@ import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
+import java.nio.file.Path
 import javax.swing.Icon
 import javax.swing.JComboBox
 import javax.swing.event.DocumentEvent
@@ -139,8 +140,11 @@ class PyAddNewPoetryPanel(
   override fun getOrCreateSdk(): Sdk? {
     PropertiesComponent.getInstance().poetryPath = poetryPathField.text.nullize()
     return pyModalBlocking {
-      setupPoetrySdk(project, selectedModule, existingSdks, newProjectPath,
-                     baseSdkField.selectedSdk.homePath, installPackagesCheckBox.isSelected).onSuccess {
+      val moduleBasePath = selectedModule?.basePath?.let { Path.of(it) }
+                           ?: error("select module base path is invalid: ${selectedModule?.basePath}")
+      val basePythonBinaryPath = baseSdkField.selectedSdk.homePath?.let { Path.of(it) }
+
+      createNewPoetrySdk(moduleBasePath, existingSdks, basePythonBinaryPath, installPackagesCheckBox.isSelected).onSuccess {
         PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdkField.selectedSdk.homePath
       }
     }.getOrNull()
