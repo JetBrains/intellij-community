@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.idea.base.util.substringAfterLastOrNull
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.KOTLIN_GROUP_ID
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native.KotlinGradleCodeInsightCommonBundle
@@ -91,9 +92,14 @@ private class DependenciesVisitor(val holder: ProblemsHolder) : GroovyRecursiveE
 }
 
 private fun extractVersionStatic(callExpression: GrCallExpression): IdeKotlinVersion? {
-    val argument = callExpression.expressionArguments.firstOrNull() ?: return null
-    val coordinate = (argument as? GrLiteral).stringValue() ?: return null
-    val rawVersion = coordinate.split(':').lastOrNull() ?: return null
+    val rawVersion = if (callExpression.namedArguments.isNotEmpty()) {
+        val versionArgument = callExpression.namedArguments.firstOrNull { it.labelName == "version" } ?: return null
+        versionArgument.expression.let { it as? GrLiteral }.stringValue()
+    } else {
+        val argument = callExpression.expressionArguments.firstOrNull() ?: return null
+        val coordinate = (argument as? GrLiteral).stringValue() ?: return null
+        coordinate.substringAfterLastOrNull(":")
+    } ?: return null
     return IdeKotlinVersion.opt(rawVersion)
 }
 
