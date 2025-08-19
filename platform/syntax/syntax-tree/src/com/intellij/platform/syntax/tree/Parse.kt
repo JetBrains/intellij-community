@@ -60,7 +60,7 @@ fun parse(
     tokens,
     whitespaces,
     comments,
-  ).withWhitespaceOrCommentBindingPolicy(whitespaceOrCommentBindingPolicy) // todo this is incorrect!
+  ).withWhitespaceOrCommentBindingPolicy(whitespaceOrCommentBindingPolicy)
     .withStartOffset(startLexemeOffset)
     .build()
 
