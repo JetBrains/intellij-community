@@ -93,6 +93,7 @@ public final class GradleCommonClassNames {
   public static final @NonNls String GRADLE_API_PROVIDER_PROVIDER = "org.gradle.api.provider.Provider";
   public static final @NonNls String GRADLE_API_PROVIDER_PROVIDER_CONVERTIBLE = "org.gradle.api.provider.ProviderConvertible";
   public static final @NonNls String GRADLE_PLUGIN_USE_PLUGIN_DEPENDENCY = "org.gradle.plugin.use.PluginDependency";
+  public static final @NonNls String GRADLE_PLUGIN_USE_PLUGIN_DEPENDENCY_SPEC = "org.gradle.plugin.use.PluginDependencySpec";
   public static final @NonNls String GRADLE_PLUGIN_USE_PLUGIN_DEPENDENCIES_SPEC = "org.gradle.plugin.use.PluginDependenciesSpec";
   public static final @NonNls String GRADLE_API_SUPPORTS_KOTLIN_ASSIGNMENT_OVERLOADING = "org.gradle.api.SupportsKotlinAssignmentOverloading";
 
