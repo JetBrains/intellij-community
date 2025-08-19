@@ -2262,6 +2262,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             runTest("../../completion/testData/handlers/InsertVoidJavaMethod.kt");
         }
 
+        @TestMetadata("JavaPlatformTypeInferredType.kt")
+        public void testJavaPlatformTypeInferredType() throws Exception {
+            runTest("../../completion/testData/handlers/JavaPlatformTypeInferredType.kt");
+        }
+
         @TestMetadata("KeywordClassName.kt")
         public void testKeywordClassName() throws Exception {
             runTest("../../completion/testData/handlers/KeywordClassName.kt");
