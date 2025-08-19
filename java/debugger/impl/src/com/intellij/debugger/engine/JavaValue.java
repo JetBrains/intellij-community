@@ -72,6 +72,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   private final @NotNull EvaluationContextImpl myEvaluationContext;
   private final NodeManagerImpl myNodeManager;
   private final boolean myContextSet;
+  private final CompletableFuture<XDescriptor> myXDescriptorFuture;
 
   protected JavaValue(JavaValue parent,
                       @NotNull ValueDescriptorImpl valueDescriptor,
@@ -94,6 +95,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     myNodeManager = nodeManager;
     myContextSet = contextSet;
     myCanBePinned = doComputeCanBePinned();
+    myXDescriptorFuture = myValueDescriptor.getInitFuture()
+      .thenCompose(__ -> JavaValueUtilsKt.getJavaValueXDescriptor(this));
   }
 
   @Override
@@ -522,8 +525,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   }
 
   @Override
-  public @Nullable CompletableFuture<XDescriptor> getXValueDescriptorAsync() {
-    return myValueDescriptor.getInitFuture().thenCompose(ignored -> JavaValueUtilsKt.getJavaValueXDescriptor(this));
+  public @NotNull CompletableFuture<XDescriptor> getXValueDescriptorAsync() {
+    return myXDescriptorFuture;
   }
 
   @Override
