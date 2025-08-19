@@ -22,6 +22,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
@@ -256,7 +257,10 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
     }
 
     override fun getOpenapiLibrary(module: KaLibraryModule): Library? {
-        return (module as? KaLibraryEntityBasedLibraryModuleBase)?.library
+        return when (module)  {
+            is KaLibraryEntityBasedLibraryModuleBase -> module.entity.findLibraryBridge(project.workspaceModel.currentSnapshot)
+            else -> null
+        }
     }
 
     override fun getOpenapiSdk(module: KaLibraryModule): Sdk? {
