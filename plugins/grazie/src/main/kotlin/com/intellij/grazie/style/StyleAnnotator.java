@@ -31,8 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.grazie.utils.CloudUtilsKt.isFunctionallyDisabled;
-
 
 public class StyleAnnotator implements Annotator {
   private static final Key<Pair<Long, Map<PsiElement, List<Pair<TextRange, TextProblem>>>>> CACHE_KEY =
@@ -42,7 +40,6 @@ public class StyleAnnotator implements Annotator {
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (isFunctionallyDisabled()) return;
     PsiFile file = holder.getCurrentAnnotationSession().getFile();
     if (GrazieInspection.Companion.ignoreGrammarChecking(file) || !file.isPhysical() ||
         !HighlightingUtil.shouldEnableHighlighting(file) ||

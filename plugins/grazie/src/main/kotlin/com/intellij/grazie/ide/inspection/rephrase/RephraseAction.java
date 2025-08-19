@@ -43,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-import static com.intellij.grazie.utils.CloudUtilsKt.isFunctionallyDisabled;
 import static com.intellij.grazie.utils.HighlightingUtil.toIdeaRange;
 
 @SuppressWarnings("IntentionDescriptionNotFoundInspection")
@@ -62,7 +61,6 @@ class RephraseAction extends IntentionAndQuickFixAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
-    if (isFunctionallyDisabled()) return false;
     if (editor == null || CommitMessage.isCommitMessage(psiFile)) return false;
 
     if (!GrazieCloudConnector.Companion.seemsCloudConnected()) {

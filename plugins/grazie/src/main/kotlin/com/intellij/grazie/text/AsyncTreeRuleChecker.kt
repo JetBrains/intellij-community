@@ -5,13 +5,11 @@ import com.intellij.grazie.rule.ParsedSentence
 import com.intellij.grazie.text.TreeRuleChecker.TreeProblem
 import com.intellij.grazie.utils.HighlightingUtil
 import com.intellij.grazie.utils.blockingContext
-import com.intellij.grazie.utils.isFunctionallyDisabled
 import java.util.*
 
 sealed class AsyncTreeRuleChecker : ExternalTextChecker() {
 
   override suspend fun checkExternally(content: TextContent): Collection<TreeProblem> {
-    if (isFunctionallyDisabled()) return emptyList()
     if (HighlightingUtil.skipExpensivePrecommitAnalysis(content.containingFile)) return emptyList()
 
     val sentences = ParsedSentence.getSentencesAsync(content)
