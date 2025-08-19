@@ -176,8 +176,6 @@
                              dynamic="true" provider="com.intellij.application.options.emmet.EmmetConfigurableProvider"/>
     <applicationService serviceImplementation="com.intellij.application.options.emmet.EmmetOptions"/>
 
-    <applicationService serviceImplementation="com.intellij.application.options.editor.XmlFoldingSettings"/>
-
     <applicationService serviceImplementation="com.intellij.application.options.XmlSettings"/>
 
     <xml.zenCodingGenerator implementation="com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorImpl" order="last"/>
