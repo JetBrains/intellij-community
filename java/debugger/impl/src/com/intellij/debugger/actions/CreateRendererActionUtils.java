@@ -2,61 +2,30 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.UserRenderersConfigurable;
 import com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ConfigurableBase;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.Type;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
-public class CreateRendererAction extends AnAction {
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    final List<JavaValue> values = ViewAsGroup.getSelectedValues(e);
-    if (values.size() != 1) {
-      e.getPresentation().setEnabledAndVisible(false);
-    }
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
-
-  @Override
-  public void actionPerformed(final @NotNull AnActionEvent event) {
-    final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(event.getDataContext());
-    final List<JavaValue> values = ViewAsGroup.getSelectedValues(event);
-    if (values.size() != 1) {
-      return;
-    }
-
-    final JavaValue javaValue = values.get(0);
-
-    final DebugProcessImpl process = debuggerContext.getDebugProcess();
-    if (process == null) {
-      return;
-    }
-
-    final Project project = event.getProject();
-
-    javaValue.getEvaluationContext().getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
+@ApiStatus.Internal
+public final class CreateRendererActionUtils {
+  public static void showCreateRendererDialog(final JavaValue javaValue) {
+    EvaluationContextImpl evaluationContext = javaValue.getEvaluationContext();
+    Project project = evaluationContext.getProject();
+    evaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(evaluationContext.getSuspendContext()) {
       @Override
-      public void threadAction(@NotNull SuspendContextImpl suspendContext) {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         Type type = javaValue.getDescriptor().getType();
         final String name = type != null ? type.name() : null;
         DebuggerUIUtil.invokeLater(() -> {

@@ -11,6 +11,7 @@ import fleet.rpc.remoteApiDescriptor
 interface JavaDebuggerLuxActionsApi : RemoteApi<Unit> {
   suspend fun showInstancesDialog(xValueId: XValueId)
   suspend fun showCalculateRetainedSizeDialog(xValueId: XValueId, nodeName: String)
+  suspend fun showCreateRendererDialog(xValueId: XValueId)
 
   companion object {
     @JvmStatic

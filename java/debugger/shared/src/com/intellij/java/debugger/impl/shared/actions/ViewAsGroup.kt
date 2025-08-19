@@ -98,7 +98,7 @@ private fun getApplicableRenderers(project: Project, values: List<JavaValueDescr
   return res ?: emptyList()
 }
 
-private fun getSelectedJavaValuesWithDescriptors(event: AnActionEvent): List<Triple<XValueNodeImpl, XValue, JavaValueDescriptor>> {
+internal fun getSelectedJavaValuesWithDescriptors(event: AnActionEvent): List<Triple<XValueNodeImpl, XValue, JavaValueDescriptor>> {
   val selectedNodes = XDebuggerTree.getSelectedNodes(event.dataContext)
   return selectedNodes.map { it to it.valueContainer }
     .map { it to it.second.xValueDescriptorAsync?.getNow(null) }

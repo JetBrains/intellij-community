@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.debugger.impl.backend
 
+import com.intellij.debugger.actions.CreateRendererActionUtils
 import com.intellij.debugger.engine.JavaDebugProcess
+import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.memory.action.CalculateRetainedSizeActionUtil
 import com.intellij.debugger.memory.action.DebuggerTreeAction
 import com.intellij.debugger.memory.filtering.ClassInstancesProvider
@@ -33,6 +35,14 @@ internal class BackendJavaDebuggerLuxActionsApi : JavaDebuggerLuxActionsApi {
 
     withContext(Dispatchers.EDT) {
       CalculateRetainedSizeActionUtil.showDialog(xValue, nodeName, process)
+    }
+  }
+
+  override suspend fun showCreateRendererDialog(xValueId: XValueId) {
+    val xValueModel = BackendXValueModel.findById(xValueId) ?: return
+    val javaValue = xValueModel.xValue as? JavaValue ?: return
+    withContext(Dispatchers.EDT) {
+      CreateRendererActionUtils.showCreateRendererDialog(javaValue)
     }
   }
 }
