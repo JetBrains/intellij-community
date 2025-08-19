@@ -107,6 +107,9 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
             return getMainClassJvmName(container)
         }
 
+        @Deprecated(
+            "Use 'getMainClassQualifiedName()' instead. Do not store JVM class name in run configuration.",
+        )
         @ApiStatus.Internal
         fun getMainClassJvmName(container: KtDeclarationContainer): String? = when (container) {
             is KtFile -> container.javaFileFacadeFqName.asString()
@@ -119,6 +122,16 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
                 } else {
                     container.toLightClass()?.let { ClassUtil.getJVMClassName(it) }
                 }
+            }
+            else -> null
+        }
+
+        @ApiStatus.Internal
+        fun getMainClassQualifiedName(container: KtDeclarationContainer): String? = when (container) {
+            is KtFile -> container.javaFileFacadeFqName.asString()
+            is KtClassOrObject -> {
+                if (!container.isValid) null
+                else container.toLightClass()?.qualifiedName
             }
             else -> null
         }
