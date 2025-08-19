@@ -818,7 +818,7 @@ private fun computeSources(module: JpsModule, contentRoots: List<Path>, bazelBui
       }
 
       if (type == JavaSourceRootType.SOURCE || type == JavaSourceRootType.TEST_SOURCE) {
-        if (!(root.properties as JavaSourceRootProperties).isForGeneratedSources && rootDir.walk().any { it.extension == "form" }) {
+        if (!(root.properties as JavaSourceRootProperties).isForGeneratedSources) {
           sequenceOf(SourceDirDescriptor(glob = listOf("$prefix**/*.kt", "$prefix**/*.java", "$prefix**/*.form"), excludes = excludes))
         }
         else {
