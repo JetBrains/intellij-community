@@ -15,6 +15,7 @@ import com.intellij.platform.syntax.lexer.performLexing
 import com.intellij.platform.syntax.parser.DefaultWhitespaceBindingPolicy
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory
+import com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy
 import com.intellij.platform.syntax.util.language.SyntaxElementLanguageProvider
 import org.jetbrains.annotations.ApiStatus
 
@@ -27,6 +28,7 @@ fun parse(
   languageMapper: SyntaxElementLanguageProvider,
   cancellationProvider: CancellationProvider? = null,
   logger: Logger? = null,
+  whitespaceOrCommentBindingPolicy: WhitespaceOrCommentBindingPolicy? = DefaultWhitespaceBindingPolicy,
 ): KmpSyntaxNode {
   fun createBuilder(
     text: CharSequence,
@@ -37,7 +39,7 @@ fun parse(
     tokens,
     whitespaces,
     comments,
-  ).withWhitespaceOrCommentBindingPolicy(DefaultWhitespaceBindingPolicy) // todo this is incorrect!
+  ).withWhitespaceOrCommentBindingPolicy(whitespaceOrCommentBindingPolicy) // todo this is incorrect!
     .withStartOffset(startLexemeOffset)
     .build()
 
