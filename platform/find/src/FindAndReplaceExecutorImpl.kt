@@ -100,7 +100,6 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
 
             val shouldContinue = onResult(usage)
             if (!shouldContinue) {
-              Disposer.dispose(searchDisposable)
               return@collect
             }
           }
