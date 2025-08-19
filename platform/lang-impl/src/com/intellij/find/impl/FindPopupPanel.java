@@ -1221,10 +1221,10 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       public void run(@NotNull ProgressIndicator indicator) {
         startTime.set(System.currentTimeMillis());
         AtomicLong timeToFirstResult = new AtomicLong(-1);
-        GlobalSearchScope scope = ReadAction.nonBlocking(
-          () -> FindInProjectUtil.getGlobalSearchScope(project, myHelper.myPreviousModel)
-        ).wrapProgress(indicator).executeSynchronously();
-
+        GlobalSearchScope scope = FindKey.isEnabled()
+                                  ? null
+                                  : ReadAction.nonBlocking(() -> FindInProjectUtil.getGlobalSearchScope(project, myHelper.myPreviousModel))
+                                    .wrapProgress(indicator).executeSynchronously();
         FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myUsageViewPresentation);
         ThreadLocal<Reference<FindPopupItem>> recentItemRef = new ThreadLocal<>();
         Set<String> filePaths = ConcurrentHashMap.newKeySet();
