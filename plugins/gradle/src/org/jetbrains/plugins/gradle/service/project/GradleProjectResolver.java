@@ -133,7 +133,7 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
       GradleConnector.newCancellationTokenSource()
     );
     DefaultProjectResolverContext resolverContext = new DefaultProjectResolverContext(
-      syncTaskId, projectPath, effectiveSettings, listener, gradleResolverPolicy, projectResolverIndicator, false
+      projectPath, syncTaskId, projectPath, effectiveSettings, listener, gradleResolverPolicy, projectResolverIndicator, false
     );
     return computeCancellable(resolverContext, () -> {
       // Create project preview model w/o request to gradle, there are two main reasons for the it:

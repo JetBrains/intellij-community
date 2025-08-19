@@ -2,14 +2,17 @@
 package org.jetbrains.plugins.gradle.service.syncAction.impl.contributors
 
 import com.intellij.openapi.progress.checkCanceled
+import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntity
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.toBuilder
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.model.GradleLightProject
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeEntitySource
@@ -27,6 +30,8 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
     storage: ImmutableEntityStorage,
   ): ImmutableEntityStorage {
     val builder = storage.toBuilder()
+
+    addExternalProjectEntity(builder, context)
 
     val entitySource = GradleContentRootEntitySource(context.projectPath, phase)
 
@@ -98,4 +103,17 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
     override val projectPath: String,
     override val phase: GradleSyncPhase,
   ) : GradleBridgeEntitySource
+
+  private fun addExternalProjectEntity(
+    storage: MutableEntityStorage,
+    context: ProjectResolverContext,
+  ): ExternalProjectEntity {
+    val entitySource = GradleProjectModelEntitySource(context.projectPath, phase)
+    return storage addEntity ExternalProjectEntity(context.externalProjectPath, entitySource)
+  }
+
+  private data class GradleProjectModelEntitySource(
+    override val projectPath: String,
+    override val phase: GradleSyncPhase,
+  ) : GradleEntitySource
 }

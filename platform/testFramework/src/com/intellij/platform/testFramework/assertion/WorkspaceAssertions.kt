@@ -13,6 +13,14 @@ object WorkspaceAssertions {
 
   inline fun <reified T : WorkspaceEntityWithSymbolicId> assertEntities(
     project: Project,
+    vararg expectedIds: SymbolicEntityId<T>,
+    noinline messageSupplier: (() -> String)? = null,
+  ) {
+    assertEntities(project, expectedIds.toList(), messageSupplier)
+  }
+
+  inline fun <reified T : WorkspaceEntityWithSymbolicId> assertEntities(
+    project: Project,
     expectedIds: List<SymbolicEntityId<T>>,
     noinline messageSupplier: (() -> String)? = null,
   ) {
