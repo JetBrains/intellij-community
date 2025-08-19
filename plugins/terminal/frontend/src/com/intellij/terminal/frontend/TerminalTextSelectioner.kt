@@ -59,5 +59,6 @@ internal class TerminalWordSelectionFilter : Condition<PsiElement> {
 }
 
 private fun isTerminalPsiElement(e: PsiElement): Boolean {
+  // e.language can be also used there, but it might be more expensive when the language is not terminal
   return e.node?.elementType?.language == TerminalOutputLanguage
 }
