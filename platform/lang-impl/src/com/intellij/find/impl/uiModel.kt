@@ -84,8 +84,8 @@ internal fun usagePresentation(
 }
 
 internal class UsageInfo2UsageAdapterPresentationProvider : UsagePresentationProvider {
-  override fun getUsagePresentation(usageInfo: UsageInfoAdapter, project: Project, scope: GlobalSearchScope): UsagePresentation? {
-    if (usageInfo !is UsageInfo2UsageAdapter) return null
+  override fun getUsagePresentation(usageInfo: UsageInfoAdapter, project: Project, scope: GlobalSearchScope?): UsagePresentation? {
+    if (usageInfo !is UsageInfo2UsageAdapter || scope == null) return null
     return usagePresentation(project, scope, usageInfo)
   }
 }
