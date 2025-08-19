@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangeListDragBean
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Color
 import java.awt.event.MouseEvent
 
 /**
@@ -21,7 +20,7 @@ import java.awt.event.MouseEvent
 @ApiStatus.Obsolete
 @ApiStatus.Internal
 interface ChangesTreeCompatibilityProvider {
-  fun getBackgroundColorFor(project: Project, obj: Any?): Color?
+  fun getScopeVirtualFileFor(filePath: FilePath): VirtualFile?
 
   fun getPresentablePath(project: Project?, path: VirtualFile, useRelativeRootPaths: Boolean, acceptEmptyPath: Boolean): @NlsSafe String
 

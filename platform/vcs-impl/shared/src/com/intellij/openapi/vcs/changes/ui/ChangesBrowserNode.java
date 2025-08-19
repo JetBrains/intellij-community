@@ -16,9 +16,12 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListOwner;
 import com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
+import com.intellij.platform.vcs.changes.ChangesUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
@@ -362,7 +365,17 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   }
 
   protected static @Nullable Color getBackgroundColorFor(@NotNull Project project, @Nullable Object object) {
-    return ChangesTreeCompatibilityProvider.getInstance().getBackgroundColorFor(project, object);
+    @Nullable VirtualFile file;
+    if (object instanceof FilePath filePath) {
+      file = ChangesTreeCompatibilityProvider.getInstance().getScopeVirtualFileFor(filePath);
+    }
+    else if (object instanceof Change change) {
+      file = ChangesTreeCompatibilityProvider.getInstance().getScopeVirtualFileFor(ChangesUtil.getFilePath(change));
+    }
+    else {
+      file = ObjectUtils.tryCast(object, VirtualFile.class);
+    }
+    return file == null ? null : VfsPresentationUtil.getFileBackgroundColor(project, file);
   }
 
   public boolean shouldExpandByDefault() {
