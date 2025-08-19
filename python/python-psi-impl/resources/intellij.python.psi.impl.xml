@@ -93,6 +93,10 @@
     <lang.parserDefinition language="PyFunctionTypeComment"
                            implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationParserDefinition"/>
 
+    <!-- PyTypeRepresentation -->
+    <lang.parserDefinition language="PyTypeRepresentation"
+                           implementationClass="com.jetbrains.python.codeInsight.typeRepresentation.PyTypeRepresentationParserDefinition"/>
+
     <lang.parserDefinition language="PyTypeHint"
                            implementationClass="com.jetbrains.python.codeInsight.typeHints.PyTypeHintParserDefinition"/>
 

@@ -29,6 +29,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile;
+import com.jetbrains.python.codeInsight.typeRepresentation.psi.PyFunctionTypeRepresentation;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyEvaluator;
@@ -1018,8 +1019,16 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (classType != null) {
         return classType;
       }
-      if (context.myUseFqn && resolved.getText().equals("Unknown")) {
-        return Ref.create();
+      if (context.myUseFqn) {
+        if (resolved.getText().equals("Unknown")) {
+          return Ref.create();
+        }
+        if (resolved instanceof PyFunctionTypeRepresentation function) {
+          var result = context.myContext.getType(function);
+          if (result != null) {
+            return Ref.create(result);
+          }
+        }
       }
       return null;
     }
