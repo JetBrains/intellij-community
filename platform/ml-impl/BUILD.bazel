@@ -74,6 +74,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/statistics/testFramework",
   ],
+  exports = ["@lib//:ngram-slp"],
   runtime_deps = [
     ":ml-impl_resources",
     ":ml-impl_test_resources",

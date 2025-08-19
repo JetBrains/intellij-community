@@ -67,7 +67,8 @@ jvm_library(
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "@lib//:junit5Pioneer",
     "//platform/statistics/testFramework",
-  ]
+  ],
+  exports = ["//java/testFramework"]
 )
 ### auto-generated section `build kotlin.test-framework` end
 

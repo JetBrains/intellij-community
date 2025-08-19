@@ -169,6 +169,7 @@ jvm_library(
     "@lib//:gson",
     "@lib//:guava",
   ],
+  exports = ["//platform/external-system-api/testFramework"],
   runtime_deps = [
     ":gradle-tests_test_resources",
     "//platform/execution.dashboard",

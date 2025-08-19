@@ -156,6 +156,12 @@ jvm_library(
     "//platform/syntax/syntax-scripts:scripts",
     "@lib//:byte-buddy",
   ],
+  exports = [
+    "//plugins/java-i18n",
+    "//plugins/java-i18n:java-i18n_test_lib",
+    "//plugins/coverage",
+    "//plugins/coverage:coverage_test_lib",
+  ],
   runtime_deps = [
     ":tests_test_resources",
     "//community-resources:customization",

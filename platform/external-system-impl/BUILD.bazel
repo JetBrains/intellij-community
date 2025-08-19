@@ -119,6 +119,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
   ],
+  exports = ["//platform/lang-impl:lang-tests_test_lib"],
   runtime_deps = [":externalSystem-tests_test_resources"]
 )
 ### auto-generated section `build intellij.platform.externalSystem.tests` end

@@ -101,6 +101,12 @@ jvm_library(
     "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
     "@lib//:fastutil-min",
   ],
+  exports = [
+    "//plugins/coverage-common:coverage",
+    "//plugins/coverage-common:coverage_test_lib",
+    "//java/execution/openapi:java-execution",
+    "//java/openapi:java",
+  ],
   runtime_deps = [":coverage_resources"]
 )
 ### auto-generated section `build intellij.java.coverage` end

@@ -35,7 +35,8 @@ jvm_library(
     "//platform/diagnostic",
     "@lib//:junit5",
     "@lib//:kotlin-test-assertions-core-jvm",
-  ]
+  ],
+  exports = ["//platform/diagnostic"]
 )
 ### auto-generated section `build intellij.platform.diagnostic.telemetry` end
 

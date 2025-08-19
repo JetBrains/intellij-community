@@ -55,6 +55,10 @@ jvm_library(
     "//libraries/skiko",
     "//libraries/compose-foundation-desktop-junit",
   ],
+  exports = [
+    "//libraries/compose-foundation-desktop",
+    "//libraries/skiko",
+  ],
   runtime_deps = [":foundation_resources"],
   plugins = ["@lib//:compose-plugin"]
 )

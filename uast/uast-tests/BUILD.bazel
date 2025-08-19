@@ -32,6 +32,11 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
   ],
+  exports = [
+    "//uast/uast-common:uast",
+    "//uast/uast-java-ide:java-uast-ide",
+    "//uast/testFramework",
+  ],
   runtime_deps = ["//java/java-tests:tests"]
 )
 ### auto-generated section `build intellij.platform.uast.tests` end

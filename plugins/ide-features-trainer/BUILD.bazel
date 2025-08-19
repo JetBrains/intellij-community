@@ -105,6 +105,10 @@ jvm_library(
     "@lib//:mockito-kotlin",
     "//libraries/mockito",
   ],
+  exports = [
+    "@lib//:assert_j",
+    "@lib//:assertj-swing",
+  ],
   runtime_deps = [":featuresTrainer_resources"]
 )
 ### auto-generated section `build intellij.featuresTrainer` end

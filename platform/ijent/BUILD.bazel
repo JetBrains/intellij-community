@@ -39,6 +39,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/eel",
   ],
+  exports = ["//platform/eel"],
   runtime_deps = [":ijent_resources"]
 )
 ### auto-generated section `build intellij.platform.ijent` end

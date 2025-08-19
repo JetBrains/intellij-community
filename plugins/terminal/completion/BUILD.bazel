@@ -26,7 +26,8 @@ jvm_library(
     "@lib//:junit4",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-  ]
+  ],
+  exports = ["@lib//:terminal-completion-terminal-completion-spec"]
 )
 ### auto-generated section `build intellij.terminal.completion` end
 

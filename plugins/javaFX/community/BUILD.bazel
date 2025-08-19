@@ -48,6 +48,10 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//java/java-impl-refactorings:impl-refactorings",
   ],
+  exports = [
+    "//plugins/javaFX",
+    "//plugins/javaFX:javaFX_test_lib",
+  ],
   runtime_deps = [":community_resources"]
 )
 ### auto-generated section `build intellij.javaFX.community` end

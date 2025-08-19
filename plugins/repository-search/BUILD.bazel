@@ -92,6 +92,7 @@ jvm_library(
     "@lib//:kotlinx-document-store-mvstore",
     "@lib//:mvstore",
   ],
+  exports = ["@lib//:package-search-api-client"],
   runtime_deps = [
     ":repository-search_resources",
     ":repository-search_test_resources",

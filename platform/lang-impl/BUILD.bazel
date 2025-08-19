@@ -225,6 +225,16 @@ jvm_library(
     "//platform/statistics/testFramework",
     "//platform/testFramework/junit5/projectStructure",
     "//platform/testFramework/junit5/projectStructure:projectStructure_test_lib",
+  ],
+  exports = [
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/indexing-impl",
+    "//platform/projectModel-impl",
+    "//platform/ide-core-impl",
+    "//platform/analysis-impl",
+    "//platform/structure-view-impl:structureView-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.lang.tests` end

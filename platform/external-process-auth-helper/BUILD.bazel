@@ -54,6 +54,7 @@ jvm_library(
     "//platform/eel",
     "//platform/eel-provider",
   ],
+  exports = ["//platform/built-in-server:builtInServer-impl"],
   runtime_deps = [":external-process-auth-helper_resources"]
 )
 ### auto-generated section `build intellij.platform.externalProcessAuthHelper` end

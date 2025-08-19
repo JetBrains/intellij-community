@@ -32,7 +32,8 @@ jvm_library(
     "//java/testFramework",
     "//plugins/junit_rt:junit-rt",
     "@lib//:slf4j-api",
-  ]
+  ],
+  exports = ["//plugins/junit_rt:junit-rt"]
 )
 ### auto-generated section `build kotlin.base.test` end
 

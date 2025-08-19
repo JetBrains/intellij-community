@@ -139,6 +139,10 @@ jvm_library(
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
   ],
+  exports = [
+    "@lib//:kotlin-tooling-core",
+    "@lib//:kotlin-gradle-plugin-idea",
+  ],
   runtime_deps = [":k1_resources"]
 )
 ### auto-generated section `build kotlin.gradle.gradle-java.k1` end

@@ -82,6 +82,7 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
   ],
+  exports = ["@lib//:kotlin-tooling-core"],
   runtime_deps = [":tests_test_resources"]
 )
 ### auto-generated section `build kotlin.gradle.gradle.tests` end

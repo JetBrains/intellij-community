@@ -77,6 +77,10 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//python/python-psi-impl:psi-impl",
   ],
+  exports = [
+    "//python/services/shared",
+    "//python/services/shared:shared_test_lib",
+  ],
   runtime_deps = [
     ":system-python_resources",
     ":system-python_test_resources",

@@ -53,6 +53,10 @@ jvm_library(
     "//platform/eel",
     "//platform/eel-provider",
   ],
+  exports = [
+    "//python/python-psi-api:psi",
+    "//platform/platform-util-io:ide-util-io",
+  ],
   runtime_deps = [":community_resources"]
 )
 ### auto-generated section `build intellij.python.community` end

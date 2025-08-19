@@ -78,6 +78,11 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
   ],
+  exports = [
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
+    "@lib//:tc_service_messages",
+  ],
   runtime_deps = [":smRunner_resources"]
 )
 ### auto-generated section `build intellij.platform.smRunner` end

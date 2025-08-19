@@ -190,6 +190,16 @@ jvm_library(
     "@lib//:platform-test_framework-okhttp3-mockwebserver",
     "//platform/runtime/product",
   ],
+  exports = [
+    "@lib//:jet_check",
+    "@lib//:junit5-provided",
+    "@lib//:junit5Params-provided",
+    "//libraries/junit4",
+    "//platform/ide-core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/testFramework/common",
+    "//platform/testFramework/core",
+  ],
   runtime_deps = [
     ":testFramework_resources",
     ":testFramework_test_resources",

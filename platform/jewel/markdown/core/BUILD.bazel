@@ -58,6 +58,7 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//libraries/compose-foundation-desktop-junit",
   ],
+  exports = ["@lib//:platform-jewel-markdown-core-org-commonmark-commonmark"],
   runtime_deps = [":core_resources"],
   plugins = ["@lib//:compose-plugin"]
 )

@@ -62,6 +62,10 @@ jvm_library(
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
   ],
+  exports = [
+    "//plugins/java-decompiler/engine",
+    "//plugins/java-decompiler/engine:engine_test_lib",
+  ],
   runtime_deps = [":java-decompiler_resources"]
 )
 ### auto-generated section `build intellij.java.decompiler` end

@@ -34,6 +34,16 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
+  ],
+  exports = [
+    "//plugins/kotlin/plugin/common",
+    "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework",
+    "//java/java-tests:tests_test_lib",
+    "//java/java-impl-inspections:impl-inspections",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
   ]
 )
 ### auto-generated section `build intellij.jvm.analysis.kotlin.tests.shared` end

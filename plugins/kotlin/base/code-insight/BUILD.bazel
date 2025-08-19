@@ -120,6 +120,7 @@ jvm_library(
     "//plugins/kotlin/base/code-insight/minimal",
     "@lib//:kotlin-test",
   ],
+  exports = ["//plugins/kotlin/base/code-insight/minimal"],
   runtime_deps = [":code-insight_resources"]
 )
 ### auto-generated section `build kotlin.base.code-insight` end

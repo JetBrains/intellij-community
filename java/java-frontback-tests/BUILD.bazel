@@ -37,6 +37,17 @@ jvm_library(
     "//java/testFramework/shared",
     "//platform/syntax/syntax-psi:psi",
     "//java/java-syntax:syntax",
+  ],
+  exports = [
+    "@lib//:easymock",
+    "@lib//:mockito",
+    "@lib//:assert_j",
+    "@lib//:kotlin-test",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/platform-tests:tests_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.frontback.tests` end

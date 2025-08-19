@@ -316,6 +316,11 @@ jvm_library(
     "//platform/platform-impl/concurrency",
     "//platform/pratt",
   ],
+  exports = [
+    "//platform/platform-api:ide",
+    "@lib//:kotlin-stdlib",
+    "//platform/util:util-ui",
+  ],
   runtime_deps = [":ide-impl_resources"]
 )
 ### auto-generated section `build intellij.platform.ide.impl` end
