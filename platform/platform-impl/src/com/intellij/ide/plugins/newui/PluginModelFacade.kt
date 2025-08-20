@@ -60,7 +60,7 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
   }
 
   fun getErrors(model: PluginUiModel): List<HtmlChunk> {
-    return pluginModel.getErrors(model.getDescriptor())
+    return pluginModel.getErrorsSync(model.getDescriptor())
   }
 
   suspend fun enableRequiredPlugins(model: PluginUiModel) {

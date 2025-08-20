@@ -890,11 +890,20 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
   }
 
-  fun hasErrors(descriptor: IdeaPluginDescriptor): Boolean {
+  suspend fun hasErrors(descriptor: IdeaPluginDescriptor): Boolean {
     return getErrors(descriptor).isNotEmpty()
   }
 
-  fun getErrors(descriptor: IdeaPluginDescriptor): List<HtmlChunk> {
+  suspend fun getErrors(descriptor: IdeaPluginDescriptor): List<HtmlChunk> {
+    val pluginId = descriptor.getPluginId()
+    if (isDeleted(descriptor)) {
+      return emptyList()
+    }
+    val response = UiPluginManager.getInstance().getErrors(mySessionId.toString(), pluginId)
+    return getErrors(response)
+  }
+
+  fun getErrorsSync(descriptor: IdeaPluginDescriptor): List<HtmlChunk> {
     val pluginId = descriptor.getPluginId()
     if (isDeleted(descriptor)) {
       return emptyList()
