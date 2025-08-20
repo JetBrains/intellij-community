@@ -56,7 +56,6 @@ internal class DefaultIjentSessionProvider : IjentSessionProvider {
  * The process terminates automatically only when the IDE exits, or if [IjentApi.close] is called explicitly.
  */
 suspend fun <T : IjentApi> createIjentSession(strategy: IjentConnectionStrategy, binaryPath: String, platform: EelPlatform, mediator: IjentSessionMediator): IjentSession<T> {
-  mediator.myExitPolicy = IjentSessionMediator.ProcessExitPolicy.CHECK_CODE
   @Suppress("UNCHECKED_CAST")
   return IjentSessionProvider.instanceAsync().connect(strategy, platform, binaryPath, mediator) as IjentSession<T>
 }

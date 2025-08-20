@@ -51,12 +51,6 @@ abstract class IjentSessionMediator private constructor(
    */
   enum class ProcessExitPolicy {
     /**
-     * Treat any exit as an error.
-     * Used during initialization when process must stay alive.
-     */
-    ERROR,
-
-    /**
      * Check exit code to determine if it's an error.
      * Normal termination with expected exit codes is allowed.
      */
@@ -72,7 +66,7 @@ abstract class IjentSessionMediator private constructor(
   internal abstract suspend fun isExpectedProcessExit(exitCode: Int): Boolean
 
   @Volatile
-  internal var myExitPolicy: ProcessExitPolicy = ERROR
+  internal var myExitPolicy: ProcessExitPolicy = CHECK_CODE
 
   companion object {
     /**
@@ -324,7 +318,6 @@ private suspend fun ijentProcessExitAwaiter(
   LOG.debug { "IJent process $ijentLabel exited with code $exitCode" }
 
   val isExitExpected = when (mediator.myExitPolicy) {
-    ERROR -> false
     CHECK_CODE -> mediator.isExpectedProcessExit(exitCode)
     NORMAL -> true
   }
