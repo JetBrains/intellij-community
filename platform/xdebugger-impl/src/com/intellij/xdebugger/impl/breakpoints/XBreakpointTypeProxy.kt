@@ -85,18 +85,22 @@ interface XBreakpointTypeProxy {
 
     override fun getVisibleStandardPanels(): EnumSet<XBreakpointType.StandardPanels> = breakpointType.visibleStandardPanels
 
+    @Suppress("UNCHECKED_CAST")
     override fun createCustomPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
       return breakpointType.createCustomPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun createCustomConditionsPanel(): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
       return breakpointType.createCustomConditionsPanel() as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun createCustomRightPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
       return breakpointType.createCustomRightPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun createCustomTopPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
       return breakpointType.createCustomTopPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>
     }
@@ -137,5 +141,6 @@ fun <T : XBreakpointType<*, *>> T.asProxy(project: Project): XBreakpointTypeProx
   }
 }
 
+@Suppress("DEPRECATION")
 @ApiStatus.Internal
 fun <T : XLineBreakpointType<*>> T.asProxy(project: Project): XLineBreakpointTypeProxy = XLineBreakpointTypeProxy.Monolith(project, this)

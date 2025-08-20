@@ -20,6 +20,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
+import com.intellij.xdebugger.impl.util.MonolithUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import javax.swing.Icon
@@ -118,20 +119,32 @@ private open class FrontendXBreakpointType(
     return visibleStandardPanels
   }
 
+  @Suppress("UNCHECKED_CAST")
   override fun createCustomPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
-    return null
+    // TODO Custom panels are only supported in monolith
+    val monolithType = MonolithUtils.findBreakpointTypeById(id) ?: return null
+    return monolithType.createCustomPropertiesPanel(project) as XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   }
 
+  @Suppress("UNCHECKED_CAST")
   override fun createCustomConditionsPanel(): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
-    return null
+    // TODO Custom panels are only supported in monolith
+    val monolithType = MonolithUtils.findBreakpointTypeById(id) ?: return null
+    return monolithType.createCustomConditionsPanel() as XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   }
 
+  @Suppress("UNCHECKED_CAST")
   override fun createCustomRightPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
-    return null
+    // TODO Custom panels are only supported in monolith
+    val monolithType = MonolithUtils.findBreakpointTypeById(id) ?: return null
+    return monolithType.createCustomRightPropertiesPanel(project) as XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   }
 
+  @Suppress("UNCHECKED_CAST")
   override fun createCustomTopPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
-    return null
+    // TODO Custom panels are only supported in monolith
+    val monolithType = MonolithUtils.findBreakpointTypeById(id) ?: return null
+    return monolithType.createCustomTopPropertiesPanel(project) as XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   }
 
   override fun isAddBreakpointButtonVisible(): Boolean {
