@@ -98,6 +98,3 @@ private fun getApplicableNodeRenderers(value: JavaValue): CompletableFuture<List
 private fun Renderer.toRpc() = (this as? NodeRenderer)?.toRpc()
 private fun NodeRenderer.toRpc() = NodeRendererDto(id, name)
 internal val NodeRenderer.id: NodeRendererId get() = NodeRendererId(System.identityHashCode(this))
-
-@Service(Service.Level.PROJECT)
-private class JavaValueDescriptorCreationService(val cs: CoroutineScope)
