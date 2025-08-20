@@ -124,22 +124,25 @@ class PyProtocolInspection : PyInspection() {
     }
 
     private fun checkMemberCompatibility(
-      protocolElement: PyTypedElement,
-      subclassElements: List<PyTypedResolveResult>,
+      expectedMember: PyTypeMember,
+      subclassMembers: List<PyTypeMember>,
       type: PyClassType,
       protocol: PyClassType,
     ) {
-      val expectedMemberType = myTypeEvalContext.getType(protocolElement)
-
-      subclassElements
+      subclassMembers
         .asSequence()
-        .filter { it.element?.containingFile == type.pyClass.containingFile }
-        .filterNot { PyTypeChecker.match(expectedMemberType, it.type, myTypeEvalContext) }
+        .filter { it.mainElement?.containingFile == type.pyClass.containingFile }
         .forEach {
-          val element = it.element
+          val element = it.mainElement
           val place = if (element is PsiNameIdentifierOwner) element.nameIdentifier else element ?: return@forEach
           val elementName = if (element is PsiNameIdentifierOwner) element.name else return@forEach
-          registerProblem(place, PyPsiBundle.message("INSP.protocol.element.type.incompatible.with.protocol", elementName, protocol.name))
+
+          if (!PyTypeChecker.match(expectedMember.type, it.type, myTypeEvalContext)) {
+            registerProblem(place, PyPsiBundle.message("INSP.protocol.element.type.incompatible.with.protocol", elementName, protocol.name))
+          }
+          else if (expectedMember.isWritable && !it.isWritable || expectedMember.isDeletable && !it.isDeletable) {
+            registerProblem(place, PyPsiBundle.message("INSP.protocol.element.type.not.writable", elementName, protocol.name))
+          }
         }
     }
 

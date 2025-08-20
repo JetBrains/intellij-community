@@ -51,10 +51,10 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
     return if (type is PyNamedTupleType) Ref.create(type) else null
   }
 
-  override fun getMemberTypes(type: PyType, name: String, location: PyExpression?, direction: AccessDirection, context: PyResolveContext): List<PyTypedResolveResult>? {
+  override fun getMemberTypes(type: PyType, name: String, location: PyExpression?, direction: AccessDirection, context: PyResolveContext): List<PyTypeMember>? {
     if (type !is PyNamedTupleType) return null
     type.fields[name]?.let {
-      return listOf(PyTypedResolveResult(null, it.type))
+      return listOf(PyTypeMember(null, it.type))
     }
     return null
   }

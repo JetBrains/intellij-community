@@ -18,10 +18,7 @@ import com.jetbrains.python.codeInsight.PyCustomMemberUtils;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
-import com.jetbrains.python.psi.impl.PyResolveResultRater;
-import com.jetbrains.python.psi.impl.ResolveResultList;
+import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.pyi.PyiUtil;
@@ -589,6 +586,117 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     return result;
+  }
+
+  @Override
+  public @NotNull List<@NotNull PyTypeMember> getAllMembers(@NotNull PyResolveContext resolveContext) {
+    List<@NotNull PyTypeMember> result = new ArrayList<>();
+    Set<String> visited = new HashSet<>();
+    for (Map.Entry<String, Property> entry : myClass.getProperties().entrySet()) {
+      visited.add(entry.getKey());
+      Property property = entry.getValue();
+      PyType type = property.getType(null, resolveContext.getTypeEvalContext());
+      result.add(new PyTypeMember(property, type));
+    }
+
+    visitMembers(element -> {
+      if (element instanceof PsiNamedElement namedElement) {
+        if (visited.add(namedElement.getName())) {
+          PyType type = null;
+          if (element instanceof PyTypedElement typedElement) {
+            type = resolveContext.getTypeEvalContext().getType(typedElement);
+          }
+
+          result.add(new PyTypeMember(element, type));
+        }
+      }
+      return true;
+    }, false, resolveContext.getTypeEvalContext());
+
+    processProvidedMembers(
+      member -> {
+        PyTypeMember typeMember = convertCustomMemberToTypeMember(member, resolveContext);
+        if (typeMember != null) {
+          result.add(typeMember);
+        }
+        return true;
+      },
+      null,
+      resolveContext.getTypeEvalContext()
+    );
+
+    return result;
+  }
+
+  @Override
+  public @NotNull List<@NotNull PyTypeMember> findMember(@NotNull String name, @NotNull PyResolveContext resolveContext) {
+    Property property = myClass.findProperty(name, true, resolveContext.getTypeEvalContext());
+    if (property != null) {
+      PyType type = property.getType(null, resolveContext.getTypeEvalContext());
+      return List.of(new PyTypeMember(property, type));
+    }
+    List<PyTypeMember> customMembers = new ArrayList<>();
+    processProvidedMembers(
+      member -> {
+        if (member.getName().equals(name)) {
+          PyTypeMember typeMember = convertCustomMemberToTypeMember(member, resolveContext);
+          if (typeMember != null) {
+            customMembers.add(typeMember);
+          }
+        }
+        return true;
+      },
+      null,
+      resolveContext.getTypeEvalContext()
+    );
+    if (!customMembers.isEmpty()) {
+      return customMembers;
+    }
+    List<@NotNull PyTypeMember> types = getMemberTypes(name, resolveContext);
+    if (types != null && !types.isEmpty()) {
+      return types;
+    }
+    return List.of();
+  }
+
+  private @Nullable PyTypeMember convertCustomMemberToTypeMember(@NotNull PyCustomMember customMember,
+                                                                 @NotNull PyResolveContext resolveContext) {
+    PsiElement element = customMember.resolve(getPyClass(), resolveContext);
+    if (element != null) {
+      PyType type = null;
+      if (element instanceof PyTypedElement typedElement) {
+        type = resolveContext.getTypeEvalContext().getType(typedElement);
+      }
+      return new PyTypeMember(element, type, customMember.isClassVar());
+    }
+    return null;
+  }
+
+  @Nullable
+  private List<@NotNull PyTypeMember> getMemberTypes(@NotNull String name,
+                                                     final @NotNull PyResolveContext context) {
+    for (PyTypeProvider typeProvider : PyTypeProvider.EP_NAME.getExtensionList()) {
+      List<PyTypeMember> types = typeProvider.getMemberTypes(this, name, null, AccessDirection.READ, context);
+      if (types != null) {
+        return types;
+      }
+    }
+
+    List<? extends RatedResolveResult> results = resolveMember(name, null, AccessDirection.READ, context);
+    if (results == null) {
+      return null;
+    }
+
+    return ContainerUtil.map(results, result -> {
+      PsiElement element = result.getElement();
+      if (element instanceof PyTypedElement typedElement) {
+        return new PyTypeMember(typedElement,
+                                context.getTypeEvalContext().getType(typedElement), typedElement, typedElement, typedElement);
+      }
+      else {
+        return new PyTypeMember(element, null, element, element, element);
+      }
+    });
   }
 
   private void processMembers(@NotNull Processor<? super PsiElement> processor) {

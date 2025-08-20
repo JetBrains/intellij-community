@@ -112,7 +112,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testFunctionReturnTypePy3() {
     doTest();
   }
-  
+
   public void testFunctionYieldTypePy3() {
     doTest();
   }
@@ -2658,7 +2658,7 @@ def foo(param: str | int) -> TypeGuard[str]:
                    compatible: MyCallable[[int], object] = MyCallable[[object], str]()
                    incompatible1: MyCallable[[object], object] = <warning descr="Expected type 'MyCallable[[object], object]', got 'MyCallable[[int], str]' instead">MyCallable[[int], str]()</warning>
                    incompatible2: MyCallable[[int], str] = <warning descr="Expected type 'MyCallable[[int], str]', got 'MyCallable[[object], object]' instead">MyCallable[[object], object]()</warning>
-                   """);    
+                   """);
   }
 
   // PY-77541
@@ -3123,6 +3123,191 @@ def foo(param: str | int) -> TypeGuard[str]:
                    
                    
                    var: Template = Concrete("value", 42)
+                   """);
+  }
+
+  // PY-76822
+  public void testProtocolWithPropertyAndConcreteWithAttribute() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class Template(Protocol):
+                       @property
+                       def val1(self) -> int:
+                           ...
+                   
+                   
+                   class Concrete:
+                       val1: int = 0
+                   
+                   var: Template = Concrete()
+                   """);
+  }
+
+  // PY-76822
+  public void testProtocolWithPropertyAndConcreteWithProperty() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class Template(Protocol):
+                       @property
+                       def val1(self) -> int:
+                           ...
+                   
+                   
+                   class Concrete:
+                       @property
+                       def val1(self) -> int:
+                           ...
+                   
+                   var: Template = Concrete()
+                   """);
+  }
+
+  // PY-76822
+  public void testProtocolWithPropertySetterAndConcreteWithPropertyDeleter() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class Template(Protocol):
+                       @property
+                       def val1(self) -> int:
+                           ...
+                   
+                       @val1.setter
+                       def val1(self, val: int) -> None:
+                           ...
+                   
+                   
+                   class Concrete:
+                       @property
+                       def val1(self) -> int:
+                           ...
+                   
+                       @val1.deleter
+                       def val1(self, val: int) -> None:
+                           ...
+                   
+                   var: Template = <warning descr="Expected type 'Template', got 'Concrete' instead">Concrete()</warning>
+                   """);
+  }
+
+  // PY-76822
+  public void testProtocolWithPropertySetterAndFrozenDataclass() {
+    doTestByText("""
+                   from typing import Protocol
+                   from dataclasses import dataclass
+                   
+                   class Template(Protocol):
+                       @property
+                       def val(self) -> int:
+                           ...
+                   
+                       @val.setter
+                       def val(self, val: int) -> None:
+                           ...
+                   
+                   
+                   @dataclass(frozen=True)
+                   class Concrete:
+                       val: int = 0
+                   
+                   var: Template = <warning descr="Expected type 'Template', got 'Concrete' instead">Concrete()</warning>
+                   """);
+  }
+
+  // PY-76822
+  public void testProtocolWithPropertyDeleterAndFrozenDataclass() {
+    doTestByText("""
+                   from typing import Protocol
+                   from dataclasses import dataclass
+                   
+                   class Template(Protocol):
+                       @property
+                       def val(self) -> int:
+                           ...
+                   
+                       @val.deleter
+                       def val(self, val: int) -> None:
+                           ...
+                   
+                   
+                   @dataclass(frozen=True)
+                   class Concrete:
+                       val: int = 0
+                   
+                   var: Template = <warning descr="Expected type 'Template', got 'Concrete' instead">Concrete()</warning>
+                   """);
+  }
+
+  // PY-76822
+  public void testOverloadedMethodInConcreteClass() {
+    doTestByText("""
+                   from typing import Protocol, ClassVar, overload
+                   
+                   class Template(Protocol):
+                       def f(self, x: int) -> int: ...
+                   
+                   
+                   class Concrete:
+                       @overload
+                       def f(self, x: str) -> int: ...
+                   
+                       @overload
+                       def f(self, x: int) -> int: ...
+                   
+                       def f(self, x) -> int:
+                           return 1
+                   
+                   var: Template = Concrete()
+                   """);
+  }
+
+  // PY-76822
+  public void testExplicitAnyInConcreteType() {
+    doTestByText("""
+                   from typing import Protocol, Any
+                   
+                   class Template(Protocol):
+                       val: int
+                   
+                   
+                   class Concrete:
+                       val: Any
+                   
+                   var: Template = Concrete()
+                   """);
+  }
+
+  // PY-76822
+  public void testExplicitAnyInProtocol() {
+    doTestByText("""
+                   from typing import Protocol, Any
+                   
+                   class Template(Protocol):
+                       val: Any
+                   
+                   
+                   class Concrete:
+                       val: int
+                   
+                   var: Template = Concrete()
+                   """);
+  }
+
+  // PY-76822
+  public void testExplicitAnyInBothProtocolAndConcreteType() {
+    doTestByText("""
+                   from typing import Protocol, Any
+                   
+                   class Template(Protocol):
+                       val: Any
+                   
+                   
+                   class Concrete:
+                       val: Any
+                   
+                   var: Template = Concrete()
                    """);
   }
 }

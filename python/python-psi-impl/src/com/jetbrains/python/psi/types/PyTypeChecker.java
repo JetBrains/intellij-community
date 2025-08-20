@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -51,19 +52,18 @@ public final class PyTypeChecker {
 
   /**
    * Checks whether a type {@code actual} can be placed where {@code expected} is expected.
-   *
+   * <p>
    * For example {@code int} matches {@code object}, while {@code str} doesn't match {@code int}.
    * Work for builtin types, classes, tuples etc.
-   *
+   * <p>
    * Whether it's unknown if {@code actual} match {@code expected} the method returns {@code true}.
    *
-   * @implNote This behavior may be changed in future by replacing {@code boolean} with {@code Optional<Boolean>} and updating the clients.
-   *
-   * @param expected expected type
-   * @param actual type to be matched against expected
-   * @param context type evaluation context
+   * @param expected      expected type
+   * @param actual        type to be matched against expected
+   * @param context       type evaluation context
    * @param substitutions map of substitutions for {@code expected} type
    * @return {@code false} if {@code expected} and {@code actual} don't match, true otherwise
+   * @implNote This behavior may be changed in future by replacing {@code boolean} with {@code Optional<Boolean>} and updating the clients.
    */
   public static boolean match(@Nullable PyType expected,
                               @Nullable PyType actual,
@@ -93,7 +93,7 @@ public final class PyTypeChecker {
 
   /**
    * Perform type matching.
-   *
+   * <p>
    * Implementation details:
    * <ul>
    *  <li>The method mutates {@code context.substitutions} map adding new entries into it
@@ -243,7 +243,7 @@ public final class PyTypeChecker {
 
   /**
    * Check whether {@code expected} is Python *object* or *type*.
-   *
+   * <p>
    * {@see PyTypeChecker#match(PyType, PyType, TypeEvalContext, Map)}
    */
   private static @NotNull Optional<Boolean> matchObject(@NotNull PyClassType expected, @Nullable PyType actual) {
@@ -262,7 +262,7 @@ public final class PyTypeChecker {
 
   /**
    * Match {@code actual} versus {@link PyTypeVarType} expected.
-   *
+   * <p>
    * The method mutates {@code context.substitutions} map adding new entries into it
    */
   private static boolean match(@NotNull PyTypeVarType expected, @Nullable PyType actual, @NotNull MatchContext context) {
@@ -459,7 +459,9 @@ public final class PyTypeChecker {
     return false;
   }
 
-  private static boolean match(@NotNull PyCallableParameterListType expectedParameters, @Nullable PyType actual, @NotNull MatchContext context) {
+  private static boolean match(@NotNull PyCallableParameterListType expectedParameters,
+                               @Nullable PyType actual,
+                               @NotNull MatchContext context) {
     if (actual == null) return true;
     if (!(actual instanceof PyCallableParameterListType actualParameters)) return false;
     return matchCallableParameters(expectedParameters.getParameters(), actualParameters.getParameters(), context);
@@ -487,7 +489,9 @@ public final class PyTypeChecker {
     return ContainerUtil.or(actual.getMembers(), type -> match(expected, type, context).orElse(false));
   }
 
-  private static @NotNull Optional<Boolean> match(@NotNull PyTupleType expected, @NotNull PyUnionType actual, @NotNull MatchContext context) {
+  private static @NotNull Optional<Boolean> match(@NotNull PyTupleType expected,
+                                                  @NotNull PyUnionType actual,
+                                                  @NotNull MatchContext context) {
     final int elementCount = expected.getElementCount();
 
     if (!expected.isHomogeneous()) {
@@ -514,7 +518,9 @@ public final class PyTypeChecker {
     return ContainerUtil.or(expected.getMembers(), type -> match(type, actual, context).orElse(true));
   }
 
-  private static @NotNull Optional<Boolean> match(@NotNull PyClassType expected, @NotNull PyClassType actual, @NotNull MatchContext matchContext) {
+  private static @NotNull Optional<Boolean> match(@NotNull PyClassType expected,
+                                                  @NotNull PyClassType actual,
+                                                  @NotNull MatchContext matchContext) {
     if (expected.equals(actual)) {
       return Optional.of(true);
     }
@@ -574,32 +580,38 @@ public final class PyTypeChecker {
     GenericSubstitutions substitutions = collectTypeSubstitutions(actual, matchContext.context);
 
     MatchContext protocolContext = new MatchContext(matchContext.context, new GenericSubstitutions(), matchContext.reversedSubstitutions);
-    for (kotlin.Pair<PyTypedElement, List<PyTypedResolveResult>> pair : PyProtocolsKt.inspectProtocolSubclass(expected, actual, matchContext.context)) {
-      final List<PyType> subclassElementTypes = ContainerUtil.map(pair.getSecond(), member -> member.getType());
-      if (ContainerUtil.isEmpty(subclassElementTypes)) {
+    for (kotlin.Pair<PyTypeMember, List<PyTypeMember>> pair : PyProtocolsKt.inspectProtocolSubclass(expected, actual,
+                                                                                                    matchContext.context)) {
+      final PyTypeMember protocolMember = pair.getFirst();
+      final List<PyTypeMember> subclassElementMembers = pair.getSecond();
+      if (ContainerUtil.isEmpty(subclassElementMembers)) {
         return false;
       }
 
-      final PyType protocolElementType = dropSelfIfNeeded(expected, matchContext.context.getType(pair.getFirst()), matchContext.context);
-      final boolean elementResult = StreamEx
-        .of(subclassElementTypes)
-        .map(type -> dropSelfIfNeeded(actual, type, matchContext.context))
-        .map(type -> substitute(type, substitutions, matchContext.context))
-        .anyMatch(
-          subclassElementType -> {
-            boolean matched = match(protocolElementType, subclassElementType, protocolContext).orElse(true);
-            if (!matched) return false;
-            if (!(protocolElementType instanceof PyCallableType callableProtocolElement) ||
-                !(subclassElementType instanceof PyCallableType callableSubclassElement)) return matched;
-            var protocolReturnType = callableProtocolElement.getReturnType(protocolContext.context);
-            if (protocolReturnType instanceof PySelfType) {
-              var subclassReturnType = callableSubclassElement.getReturnType(protocolContext.context);
-              if (subclassReturnType instanceof PySelfType) return true;
-              return match(actual, subclassReturnType, matchContext).orElse(true);
-            }
-            return matched;
-          }
-        );
+      final PyType protocolElementType = dropSelfIfNeeded(expected, pair.getFirst().getType(), matchContext.context);
+      final boolean elementResult = ContainerUtil.exists(subclassElementMembers, subclassElementMember -> {
+        if (protocolMember.isWritable() && !subclassElementMember.isWritable()) {
+          return false;
+        }
+        if (protocolMember.isDeletable() && !subclassElementMember.isDeletable()) {
+          return false;
+        }
+        PyType subclassElementType = dropSelfIfNeeded(actual, subclassElementMember.getType(), matchContext.context);
+        subclassElementType = substitute(subclassElementType, substitutions, matchContext.context);
+        boolean matched = match(protocolElementType, subclassElementType, protocolContext).orElse(true);
+        if (!matched) return false;
+        if (!(protocolElementType instanceof PyCallableType callableProtocolElement) ||
+            !(subclassElementType instanceof PyCallableType callableSubclassElement)) {
+          return matched;
+        }
+        var protocolReturnType = callableProtocolElement.getReturnType(protocolContext.context);
+        if (protocolReturnType instanceof PySelfType) {
+          var subclassReturnType = callableSubclassElement.getReturnType(protocolContext.context);
+          if (subclassReturnType instanceof PySelfType) return true;
+          return match(actual, subclassReturnType, matchContext).orElse(true);
+        }
+        return matched;
+      });
 
       if (!elementResult) {
         return false;
@@ -610,7 +622,8 @@ public final class PyTypeChecker {
     if (expected instanceof PyCollectionType) {
       PyCollectionType genericSuperClass = findGenericDefinitionType(expected.getPyClass(), matchContext.context);
       if (genericSuperClass != null) {
-        PyCollectionType concreteSuperClass = (PyCollectionType)substitute(genericSuperClass, protocolContext.mySubstitutions, protocolContext.context);
+        PyCollectionType concreteSuperClass =
+          (PyCollectionType)substitute(genericSuperClass, protocolContext.mySubstitutions, protocolContext.context);
         assert concreteSuperClass != null;
         return matchGenericClassesParameterWise((PyCollectionType)expected, concreteSuperClass, matchContext);
       }
@@ -622,25 +635,29 @@ public final class PyTypeChecker {
   private static boolean match(PyClassType expectedProtocol, PyModuleType actualModule, MatchContext matchContext) {
     PyFile module = actualModule.getModule();
 
-    Map<String, PyTypedElement> moduleElements = StreamEx.of(ContainerUtil.concat(module.getTopLevelAttributes(), module.getTopLevelFunctions()))
-      .filter(e -> {
-        var name = ((PyQualifiedNameOwner)e).getName();
-        return name != null && !PyNamesKt.isPrivate(name) && !PyNamesKt.isProtected(name);
-      })
-      .toMap(PyTypedElement::getName, v -> v);
+    Map<String, PyTypedElement> moduleElements =
+      StreamEx.of(ContainerUtil.concat(module.getTopLevelAttributes(), module.getTopLevelFunctions()))
+        .filter(e -> {
+          var name = ((PyQualifiedNameOwner)e).getName();
+          return name != null && !PyNamesKt.isPrivate(name) && !PyNamesKt.isProtected(name);
+        })
+        .toMap(PyTypedElement::getName, v -> v);
 
     var protocolElements = PyProtocolsKt.inspectProtocolSubclass(expectedProtocol, expectedProtocol, matchContext.context);
 
     if (protocolElements.size() != moduleElements.size()) return false;
 
     GenericSubstitutions substitutions = collectTypeSubstitutions(expectedProtocol, matchContext.context);
-    for (kotlin.Pair<PyTypedElement, List<PyTypedResolveResult>> pair : protocolElements) {
-      PyTypedElement protocolMember = pair.getFirst();
+    for (kotlin.Pair<PyTypeMember, List<PyTypeMember>> pair : protocolElements) {
+      PsiElement pm = pair.getFirst().getMainElement();
+      if (!(pm instanceof PsiNamedElement protocolMember)) {
+        continue;
+      }
       String name = protocolMember.getName();
       PyTypedElement moduleElement = moduleElements.get(name);
       if (moduleElement != null) {
         PyType expectedProtocolMemberType =
-          substitute(dropSelfIfNeeded(expectedProtocol, matchContext.context.getType(pair.getFirst()), matchContext.context), substitutions,
+          substitute(dropSelfIfNeeded(expectedProtocol, pair.getFirst().getType(), matchContext.context), substitutions,
                      matchContext.context);
         PyType actualModuleElementType = matchContext.context.getType(moduleElement);
         if (!match(expectedProtocolMemberType, actualModuleElementType, matchContext.context)) {
@@ -665,7 +682,9 @@ public final class PyTypeChecker {
   }
 
   // https://typing.python.org/en/latest/spec/tuples.html#type-compatibility-rules
-  private static @NotNull Optional<Boolean> match(@NotNull PyTupleType expected, @NotNull PyTupleType actual, @NotNull MatchContext context) {
+  private static @NotNull Optional<Boolean> match(@NotNull PyTupleType expected,
+                                                  @NotNull PyTupleType actual,
+                                                  @NotNull MatchContext context) {
     if (actual.isHomogeneous()) {
       // The type tuple[Any, ...] is consistent with any tuple
       final PyType elementType = actual.getIteratedItemType();
@@ -939,7 +958,8 @@ public final class PyTypeChecker {
           assert entry.getValue() instanceof PyPositionalVariadicType;
           result.typeVarTuples.put(typeVarTuple, (PyPositionalVariadicType)entry.getValue());
         }
-        else if (entry.getKey() instanceof PyParamSpecType specType && entry.getValue() instanceof PyCallableParameterVariadicType paramSpecType) {
+        else if (entry.getKey() instanceof PyParamSpecType specType &&
+                 entry.getValue() instanceof PyCallableParameterVariadicType paramSpecType) {
           result.paramSpecs.put(specType, paramSpecType);
         }
       }
@@ -1104,8 +1124,8 @@ public final class PyTypeChecker {
         else {
           existingSubstitutions.paramSpecs.put(paramSpecType, new PyCallableParameterListTypeImpl(
             List.of(PyCallableParameterImpl.positionalNonPsi("args", null),
-                  PyCallableParameterImpl.keywordNonPsi("kwargs", null)))
-        );
+                    PyCallableParameterImpl.keywordNonPsi("kwargs", null)))
+          );
         }
       }
     }
@@ -1700,8 +1720,8 @@ public final class PyTypeChecker {
    */
   @ApiStatus.Internal
   public static @Nullable PyType parameterizeType(@NotNull PyType genericType,
-                                        @NotNull List<PyType> actualTypeParams,
-                                        @NotNull TypeEvalContext context) {
+                                                  @NotNull List<PyType> actualTypeParams,
+                                                  @NotNull TypeEvalContext context) {
     Generics typeParams = collectGenerics(genericType, context);
     if (!typeParams.isEmpty()) {
       List<PyType> expectedTypeParams = new ArrayList<>(new LinkedHashSet<>(typeParams.getAllTypeParameters()));

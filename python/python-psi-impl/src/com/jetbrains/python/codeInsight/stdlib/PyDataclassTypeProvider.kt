@@ -77,15 +77,13 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
     return null
   }
 
-  override fun getMemberTypes(type: PyType, name: String, location: PyExpression?, direction: AccessDirection, context: PyResolveContext): List<PyTypedResolveResult>? {
+  override fun getMemberTypes(type: PyType, name: String, location: PyExpression?, direction: AccessDirection, context: PyResolveContext): List<PyTypeMember>? {
     if (type !is PyClassType) {
       return null
     }
+    val dataclassParameters = parseDataclassParameters(type.pyClass, context.typeEvalContext) ?: return null
     if (PyNames.HASH == name) {
       // See `unsafe_hash` section here https://docs.python.org/3/library/dataclasses.html
-      val dataclassParameters = parseDataclassParameters(type.pyClass, context.typeEvalContext)
-      if (dataclassParameters == null) return null
-
       if (dataclassParameters.unsafeHash) {
         return null
       }
@@ -102,7 +100,24 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       if (resolvedMembers?.isNotEmpty() == true) {
         return null
       }
-      return listOf(PyTypedResolveResult(null, PyBuiltinCache.getInstance(type.pyClass).noneType))
+      return listOf(PyTypeMember(null, PyBuiltinCache.getInstance(type.pyClass).noneType))
+    }
+    else {
+      if (dataclassParameters.frozen) {
+        val resolvedMembers = type.resolveMember(name, location, direction, context, false)
+        if (resolvedMembers?.isNotEmpty() == true) {
+          return resolvedMembers.map {
+            val element = it.element
+            val type = if (element is PyTypedElement) {
+              context.typeEvalContext.getType(element)
+            }
+            else {
+              null
+            }
+            PyTypeMember(element, type, false, element, null, null)
+          }
+        }
+      }
     }
 
     return null

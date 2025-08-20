@@ -8,7 +8,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypedResolveResult;
+import com.jetbrains.python.psi.types.PyTypeMember;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -78,9 +78,9 @@ public interface PyTypeProvider {
                                                                    @NotNull TypeEvalContext context);
 
   @ApiStatus.Experimental
-  @Nullable List<@NotNull PyTypedResolveResult> getMemberTypes(@NotNull PyType type,
-                                                               @NotNull String name,
-                                                               @Nullable PyExpression location,
-                                                               @NotNull AccessDirection direction,
-                                                               @NotNull PyResolveContext context);
+  @Nullable List<@NotNull PyTypeMember> getMemberTypes(@NotNull PyType type,
+                                                       @NotNull String name,
+                                                       @Nullable PyExpression location,
+                                                       @NotNull AccessDirection direction,
+                                                       @NotNull PyResolveContext context);
 }

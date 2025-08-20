@@ -5,12 +5,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
-import com.jetbrains.python.psi.PyTypedElement;
-import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.ApiStatus;
@@ -51,34 +48,19 @@ public interface PyType {
                                                    final @NotNull AccessDirection direction,
                                                    final @NotNull PyResolveContext resolveContext);
 
+
   @ApiStatus.Experimental
-  @Nullable
-  default List<@NotNull PyTypedResolveResult> getMemberTypes(@NotNull String name,
-                                                             final @Nullable PyExpression location,
-                                                             final @NotNull AccessDirection direction,
-                                                             final @NotNull PyResolveContext context) {
-    for (PyTypeProvider typeProvider : PyTypeProvider.EP_NAME.getExtensionList()) {
-      List<PyTypedResolveResult> types = typeProvider.getMemberTypes(this, name, location, direction, context);
-      if (types != null) {
-        return types;
-      }
-    }
+  default @NotNull List<@NotNull PyTypeMember> getAllMembers(final @NotNull PyResolveContext resolveContext) {
+    return List.of();
+  }
 
-    List<? extends RatedResolveResult> results = resolveMember(name, location, direction, context);
-    if (results == null) {
-      return null;
-    }
-
-    return ContainerUtil.map(results, result -> {
-      PsiElement element = result.getElement();
-      if (element instanceof PyTypedElement typedElement) {
-        return new PyTypedResolveResult(typedElement,
-                                        context.getTypeEvalContext().getType(typedElement));
-      }
-      else {
-        return new PyTypedResolveResult(element, null);
-      }
-    });
+  /**
+   * Returns a list of members with a given name
+   * There can be several members with the same name (for example, methods with @overload)
+   */
+  @ApiStatus.Experimental
+  default @NotNull List<@NotNull PyTypeMember> findMember(@NotNull String name, final @NotNull PyResolveContext resolveContext) {
+    return List.of();
   }
 
   /**
