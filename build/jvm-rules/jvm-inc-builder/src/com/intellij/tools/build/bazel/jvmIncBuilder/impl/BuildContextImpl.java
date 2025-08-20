@@ -149,8 +149,8 @@ public class BuildContextImpl implements BuildContext {
     if (CLFlags.X_WASM_ATTACH_JS_EXCEPTION.isFlagSet(flags)) {
       options.add("-Xwasm-attach-js-exception");
     }
-    if ("+InlineClasses".equals(CLFlags.X_X_LANGUAGE.getOptionalScalarValue(flags))) {
-      options.add("-XXLanguage:+InlineClasses");
+    for (String flag : CLFlags.X_X_LANGUAGE.getValue(flags)) {
+      options.add("-XXLanguage:" + flag);
     }
 
     StringBuilder cp = new StringBuilder();
