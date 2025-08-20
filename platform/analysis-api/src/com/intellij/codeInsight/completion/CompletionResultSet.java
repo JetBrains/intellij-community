@@ -124,6 +124,9 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     return myStopped;
   }
 
+  /**
+   * Stops processing of completion candidates.
+   */
   public void stopHere() {
     myStopped = true;
   }
