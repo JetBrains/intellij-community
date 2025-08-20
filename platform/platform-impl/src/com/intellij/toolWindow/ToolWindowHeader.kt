@@ -233,7 +233,6 @@ abstract class ToolWindowHeader internal constructor(
 
   private fun manageWestPanelTabComponentAndToolbar(init: Boolean) {
     if (init) {
-      westPanel.growFirst = ToolWindowContentUi.isTabsReorderingAllowed(toolWindow)
       westPanel.setComponents(contentUi.tabComponent, sideComponent)
       contentUi.connectTabToolbar()
     }
@@ -380,8 +379,6 @@ private class WestPanel {
     MouseDragHelper.setComponentDraggable(this, true)
   }
 
-  var growFirst = false
-
   fun setComponents(first: Component, second: Component?) {
     clear()
     val layout = GroupLayout(component)
@@ -391,7 +388,7 @@ private class WestPanel {
     layout.setVerticalGroup(vg)
     component.layout = layout
 
-    hg.addComponent(first, DEFAULT_SIZE, DEFAULT_SIZE, if (growFirst) INFINITE_SIZE else PREFERRED_SIZE)
+    hg.addComponent(first, DEFAULT_SIZE, DEFAULT_SIZE, PREFERRED_SIZE)
     vg.addComponent(first, DEFAULT_SIZE, DEFAULT_SIZE, INFINITE_SIZE)
     if (second != null) {
       hg.addComponent(second, DEFAULT_SIZE, DEFAULT_SIZE, PREFERRED_SIZE)
