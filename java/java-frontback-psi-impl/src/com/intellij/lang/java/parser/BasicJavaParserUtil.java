@@ -3,7 +3,6 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.syntax.element.lazyParser.ParsingUtil;
-import com.intellij.java.syntax.lexer.JavaDocLexer;
 import com.intellij.java.syntax.lexer.JavaLexer;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderAdapter;
@@ -22,7 +21,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
 import com.intellij.psi.impl.source.WhiteSpaceAndCommentSetHolder;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
@@ -38,7 +36,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static com.intellij.platform.syntax.lexer.TokenListUtil.tokenListLexer;
-import static com.intellij.psi.impl.source.BasicJavaDocElementType.BASIC_DOC_COMMENT;
 
 @ApiStatus.Experimental
 public final class BasicJavaParserUtil {
@@ -286,10 +283,11 @@ public final class BasicJavaParserUtil {
   }
 
   public static @Nullable ASTNode parseFragmentWithHighestLanguageLevel(
-    ASTNode chameleon,
-    BasicJavaParserUtil.ParserWrapper wrapper
+    @NotNull ASTNode chameleon,
+    @NotNull BasicJavaParserUtil.ParserWrapper wrapper,
+    @NotNull Function<LanguageLevel, Lexer> lexer
   ) {
-    return parseFragment(chameleon, wrapper, true, LanguageLevel.HIGHEST, JavaLexer::new);
+    return parseFragment(chameleon, wrapper, true, LanguageLevel.HIGHEST, lexer);
   }
 
   public static @Nullable ASTNode parseFragment(
@@ -311,7 +309,7 @@ public final class BasicJavaParserUtil {
     assert psi != null : chameleon;
 
     PsiSyntaxBuilderFactory factory = PsiSyntaxBuilderFactory.getInstance();
-    Lexer lexer = BasicJavaAstTreeUtil.is(chameleon, BASIC_DOC_COMMENT) ? new JavaDocLexer(level) : javaLexer.apply(level);
+    Lexer lexer = javaLexer.apply(level);
     PsiSyntaxBuilder psiBuilder = factory.createBuilder(chameleon, lexer, chameleon.getElementType().getLanguage(), chameleon.getChars());
 
     long startTime = System.nanoTime();

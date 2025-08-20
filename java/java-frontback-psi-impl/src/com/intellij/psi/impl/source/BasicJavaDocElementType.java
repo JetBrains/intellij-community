@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.java.syntax.element.JavaDocSyntaxElementType;
+import com.intellij.java.syntax.lexer.JavaDocLexer;
 import com.intellij.java.syntax.lexer.JavaLexer;
 import com.intellij.java.syntax.lexer.JavaTypeEscapeLexer;
 import com.intellij.java.syntax.parser.JavaDocParser;
@@ -147,7 +148,7 @@ public interface BasicJavaDocElementType {
 
     @Override
     public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
-      return BasicJavaParserUtil.parseFragmentWithHighestLanguageLevel(chameleon, myParser);
+      return BasicJavaParserUtil.parseFragmentWithHighestLanguageLevel(chameleon, myParser, JavaDocLexer::new);
     }
 
     @Override
