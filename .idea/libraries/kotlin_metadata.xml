@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlin-metadata" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-metadata-jvm:2.2.0">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-metadata-jvm:2.2.20-RC">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.0/kotlin-metadata-jvm-2.2.0.jar">
-          <sha256sum>501222ae7d63527e55f2e5e645f18d4eff2c19074c85b9bc055866e3ed2b17bf</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.20-RC/kotlin-metadata-jvm-2.2.20-RC.jar">
+          <sha256sum>9ce0cf482138662edde6b06044a41f0b1a32c62529ba95beda3d1813b6148260</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.0/kotlin-metadata-jvm-2.2.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.20-RC/kotlin-metadata-jvm-2.2.20-RC.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.0/kotlin-metadata-jvm-2.2.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.20-RC/kotlin-metadata-jvm-2.2.20-RC-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

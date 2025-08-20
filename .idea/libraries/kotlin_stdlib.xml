@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="kotlin-stdlib" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-stdlib:2.2.0">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-stdlib:2.2.20-RC">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.2.0/kotlin-stdlib-2.2.0.jar">
-          <sha256sum>65d12d85a3b865c160db9147851712a64b10dadd68b22eea22a95bf8a8670dca</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.2.20-RC/kotlin-stdlib-2.2.20-RC.jar">
+          <sha256sum>f5adfc5de9b30c75e99430dc490ea4a2da8aebbf0b8853f93cb3ba718f713cfc</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -11,11 +11,11 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.2.0/kotlin-stdlib-2.2.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.2.20-RC/kotlin-stdlib-2.2.20-RC.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.2.0/kotlin-stdlib-2.2.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.2.20-RC/kotlin-stdlib-2.2.20-RC-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

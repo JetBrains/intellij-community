@@ -17,7 +17,7 @@
             <arrayArg name="pluginClasspaths">
               <args>
                 <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.2.0-0.2/rpc-compiler-plugin-2.2.0-0.2.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.2.20-RC-0.1/rpc-compiler-plugin-2.2.20-RC-0.1.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginOptions" />

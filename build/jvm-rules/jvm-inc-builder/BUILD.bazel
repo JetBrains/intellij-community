@@ -94,11 +94,11 @@ java_library(
   name = "patched-kotlin-compiler-for-bazel",
   visibility = ["//visibility:public"],  # used by @community//:monorepo-jvm-builder (@community//fleet/compiler-plugins/expects:expects-compiler-plugin, etc.)
   exports = [
-    ":kotlin-compiler-2_2_10-RC-359_http_import",
-    ":kotlin-stdlib-jdk8-2_2_10-RC-359_http_import",
-    ":kotlin-stdlib-2_2_10-RC-359_http_import",
-    ":kotlin-stdlib-jdk7-2_2_10-RC-359_http_import",
-    ":kotlin-script-runtime-2_2_10-RC-359_http_import",
+    ":kotlin-compiler-2_2_20-RC_http_import",
+    ":kotlin-stdlib-jdk8-2_2_20-RC_http_import",
+    ":kotlin-stdlib-2_2_20-RC_http_import",
+    ":kotlin-stdlib-jdk7-2_2_20-RC_http_import",
+    ":kotlin-script-runtime-2_2_20-RC_http_import",
     ":kotlin-reflect-1_6_10_http_import",
     #":kotlinx-coroutines-core-jvm-1_8_0_http_import",
     #":annotations-23_0_0_http_import",
@@ -108,32 +108,32 @@ java_library(
 
 jvm_import(
   name = "patched-jvm-abi-gen-for-bazel_http_import",
-  jar = "@jvm-abi-gen-2_2_10-RC-359_http//file",
+  jar = "@jvm-abi-gen-2_2_20-RC_http//file",
 )
 
 jvm_import(
-    name = "kotlin-compiler-2_2_10-RC-359_http_import",
-    jar = "@kotlin-compiler-2_2_10-RC-359_http//file",
+    name = "kotlin-compiler-2_2_20-RC_http_import",
+    jar = "@kotlin-compiler-2_2_20-RC_http//file",
 )
 
 jvm_import(
-    name = "kotlin-stdlib-jdk8-2_2_10-RC-359_http_import",
-    jar = "@kotlin-stdlib-jdk8-2_2_10-RC-359_http//file",
+    name = "kotlin-stdlib-jdk8-2_2_20-RC_http_import",
+    jar = "@kotlin-stdlib-jdk8-2_2_20-RC_http//file",
 )
 
 jvm_import(
-    name = "kotlin-stdlib-2_2_10-RC-359_http_import",
-    jar = "@kotlin-stdlib-2_2_10-RC-359_http//file",
+    name = "kotlin-stdlib-2_2_20-RC_http_import",
+    jar = "@kotlin-stdlib-2_2_20-RC_http//file",
 )
 
 jvm_import(
-    name = "kotlin-stdlib-jdk7-2_2_10-RC-359_http_import",
-    jar = "@kotlin-stdlib-jdk7-2_2_10-RC-359_http//file",
+    name = "kotlin-stdlib-jdk7-2_2_20-RC_http_import",
+    jar = "@kotlin-stdlib-jdk7-2_2_20-RC_http//file",
 )
 
 jvm_import(
-    name = "kotlin-script-runtime-2_2_10-RC-359_http_import",
-    jar = "@kotlin-script-runtime-2_2_10-RC-359_http//file",
+    name = "kotlin-script-runtime-2_2_20-RC_http_import",
+    jar = "@kotlin-script-runtime-2_2_20-RC_http//file",
 )
 
 jvm_import(

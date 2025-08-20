@@ -14,6 +14,6 @@
     <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi" />
   </component>
   <component name="KotlinJpsPluginSettings">
-    <option name="version" value="2.2.0" />
+    <option name="version" value="2.2.20-RC" />
   </component>
 </project>

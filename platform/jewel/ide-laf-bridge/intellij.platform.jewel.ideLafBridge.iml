@@ -15,7 +15,7 @@
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
               <args>
-                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.0/kotlin-compose-compiler-plugin-2.2.0.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.20-RC/kotlin-compose-compiler-plugin-2.2.20-RC.jar</arg>
               </args>
             </arrayArg>
           </arrayArguments>
