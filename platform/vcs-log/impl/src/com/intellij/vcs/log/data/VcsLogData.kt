@@ -354,19 +354,9 @@ class VcsLogData @ApiStatus.Internal constructor(
     cs.coroutineContext.job.cancelAndJoin()
     storageLocker.acquireLock(storageId)
     try {
-      for (persistentId in collectStorageIds()) {
-        try {
-          val deleted = withContext(Dispatchers.IO) { persistentId.cleanupAllStorageFiles() }
-          if (deleted) {
-            LOG.info("Deleted ${persistentId.storagePath}")
-          }
-          else {
-            LOG.error("Could not delete ${persistentId.storagePath}")
-          }
-        }
-        catch (t: Throwable) {
-          LOG.error(t)
-        }
+      val storageIds = collectStorageIds()
+      withContext(Dispatchers.IO) {
+        VcsLogStorageImpl.cleanupStorageFiles(storageIds)
       }
     }
     finally {
