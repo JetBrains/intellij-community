@@ -20,8 +20,6 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.selects.whileSelect
 import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.builtins.nullable
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.Json
 import fleet.multiplatform.shims.ConcurrentHashMap
 import fleet.multiplatform.shims.newSingleThreadCoroutineDispatcher
@@ -326,16 +324,7 @@ private class RpcClient(
               val (de, streamDescriptors) = withSerializationContext(rpc.call.displayName, rpc.token, this) {
                 val kser = rpc.returnType.serializer(rpc.call.classMethodDisplayName())
                 val json = rpcJsonImplementationDetail()
-                val isUnitData = (rpc.returnType is RemoteKind.Data) &&
-                                 (rpc.returnType.serializer.descriptor.serialName == "kotlin.Unit")
-                if (isUnitData && message.result is JsonNull) {
-                  @Suppress("UNCHECKED_CAST")
-                  val baseSer = rpc.returnType.serializer as kotlinx.serialization.KSerializer<Any>
-                  json.decodeFromJsonElement(baseSer.nullable, message.result)
-                }
-                else {
-                  json.decodeFromJsonElement(kser, message.result)
-                }
+                json.decodeFromJsonElement(kser, message.result)
               }
               val internalDescriptors = registerStreams(streamDescriptors, rpc.route, rpc.prefetchStrategy)
               // we register streams immediately to catch messages
