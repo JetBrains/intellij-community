@@ -75,6 +75,9 @@ public interface WorkspaceModelInternal: WorkspaceModel {
    */
   public fun replaceWorkspaceModel(description: @NonNls String, replacement: StorageReplacement): Boolean
 
+  /**
+   * Consider using [com.intellij.platform.workspace.storage.CachedValue] or [com.intellij.platform.workspace.storage.CachedValueWithParameter] instead.
+   */
   public val modificationTracker: ModificationTracker
 
   @Deprecated("Use replaceWorkspaceModel instead", ReplaceWith("replaceWorkspaceModel(replacement)"))
