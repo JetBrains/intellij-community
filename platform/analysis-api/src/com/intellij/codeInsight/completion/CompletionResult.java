@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -23,15 +23,15 @@ public final class CompletionResult {
     return null;
   }
 
-  public PrefixMatcher getPrefixMatcher() {
+  public @NotNull PrefixMatcher getPrefixMatcher() {
     return myMatcher;
   }
 
-  public CompletionSorter getSorter() {
+  public @NotNull CompletionSorter getSorter() {
     return mySorter;
   }
 
-  public LookupElement getLookupElement() {
+  public @NotNull LookupElement getLookupElement() {
     return myLookupElement;
   }
 

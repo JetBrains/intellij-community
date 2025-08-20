@@ -127,12 +127,10 @@ public class BaseCompletionService extends CompletionService {
     @Override
     public void passResult(@NotNull CompletionResult result) {
       LookupElement element = result.getLookupElement();
-      if (element != null) {
-        element.putUserDataIfAbsent(LOOKUP_ELEMENT_CONTRIBUTOR, contributor);
-        element.putUserData(LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS, System.currentTimeMillis());
-        element.putUserData(LOOKUP_ELEMENT_RESULT_SET_ORDER, itemCounter);
-        itemCounter += 1;
-      }
+      element.putUserDataIfAbsent(LOOKUP_ELEMENT_CONTRIBUTOR, contributor);
+      element.putUserData(LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS, System.currentTimeMillis());
+      element.putUserData(LOOKUP_ELEMENT_RESULT_SET_ORDER, itemCounter);
+      itemCounter += 1;
       super.passResult(result);
     }
 
