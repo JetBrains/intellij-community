@@ -661,7 +661,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testIsEnumMember() {
-    doTest("Literal[Answer.No, Answer.Yes]",
+    doTest("Literal[Answer.Yes, Answer.No]",
            """
              from enum import Enum
              
@@ -673,7 +673,7 @@ public class Py3TypeTest extends PyTestCase {
                  if v is Answer.Yes or v is Answer.No:
                      expr = v
              """);
-    doTest("Literal[Answer.No, Answer.Yes]",
+    doTest("Literal[Answer.Yes, Answer.No]",
            """
              from enum import Enum
              
@@ -686,7 +686,7 @@ public class Py3TypeTest extends PyTestCase {
                      raise ValueError("Invalid value")
                  expr = v
              """);
-    doTest("Literal[Answer.No, Answer.Yes]",
+    doTest("Literal[Answer.Yes, Answer.No]",
            """
              from enum import Enum
 

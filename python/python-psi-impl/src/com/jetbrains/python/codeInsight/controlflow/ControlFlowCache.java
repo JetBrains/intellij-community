@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.controlflow;
 
-import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.openapi.util.Key;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
@@ -29,7 +28,7 @@ import static com.intellij.reference.SoftReference.dereference;
 
 
 public final class ControlFlowCache {
-  private static final Key<SoftReference<ControlFlow>> CONTROL_FLOW_KEY = Key.create("com.jetbrains.python.codeInsight.controlflow.ControlFlow");
+  private static final Key<SoftReference<PyControlFlow>> CONTROL_FLOW_KEY = Key.create("com.jetbrains.python.codeInsight.controlflow.ControlFlow");
   private static final Key<SoftReference<Scope>> SCOPE_KEY = Key.create("com.jetbrains.python.codeInsight.controlflow.Scope");
 
   private ControlFlowCache() {
@@ -40,10 +39,10 @@ public final class ControlFlowCache {
     scopeOwner.putUserData(SCOPE_KEY, null);
   }
 
-  public static @NotNull ControlFlow getControlFlow(@NotNull ScopeOwner element,
-                                                    @NotNull PyControlFlowBuilder controlFlowBuilder) {
-    SoftReference<ControlFlow> ref = element.getUserData(CONTROL_FLOW_KEY);
-    ControlFlow flow = dereference(ref);
+  public static @NotNull PyControlFlow getControlFlow(@NotNull ScopeOwner element,
+                                                      @NotNull PyControlFlowBuilder controlFlowBuilder) {
+    SoftReference<PyControlFlow> ref = element.getUserData(CONTROL_FLOW_KEY);
+    PyControlFlow flow = dereference(ref);
     if (flow == null) {
       flow = controlFlowBuilder.buildControlFlow(element);
       element.putUserData(CONTROL_FLOW_KEY, new SoftReference<>(flow));
@@ -51,7 +50,7 @@ public final class ControlFlowCache {
     return flow;
   }
 
-  public static @NotNull ControlFlow getControlFlow(@NotNull ScopeOwner element) {
+  public static @NotNull PyControlFlow getControlFlow(@NotNull ScopeOwner element) {
     return getControlFlow(element, new PyControlFlowBuilder());
   }
 
